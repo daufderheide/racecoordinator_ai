@@ -132,6 +132,12 @@ enum FuelUsageType {
   CUBIC = 2;
 }
 
+enum OutOfFuelAction {
+  DO_NOT_COUNT_LAPS = 0;
+  END_HEAT = 1;
+  POWER_STUTTER = 2;
+}
+
 message AnalogFuelOptions {
   bool enabled = 1;
   bool reset_fuel_at_heat_start = 2;
@@ -143,6 +149,9 @@ message AnalogFuelOptions {
   double refuel_rate = 8;
   double pit_stop_delay = 9;
   double reference_time = 10;
+  OutOfFuelAction out_of_fuel_action = 11;
+  double power_stutter_off_time = 12;
+  double power_stutter_on_time = 13;
 }
 
 message DigitalFuelOptions {
@@ -155,5 +164,6 @@ message DigitalFuelOptions {
   double start_level = 7;
   double refuel_rate = 8;
   double pit_stop_delay = 9;
+  OutOfFuelAction out_of_fuel_action = 10;
 }
 

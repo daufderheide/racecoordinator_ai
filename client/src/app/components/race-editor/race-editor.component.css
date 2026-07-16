@@ -821,4 +821,34 @@
 .disabled {
   opacity: 0.4;
   pointer-events: none;
+}.graph-hover-card {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(30, 30, 30, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-family: monospace;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  transform: translate(-50%, -100%);
+  margin-top: -12px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.graph-hover-card .hover-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  line-height: 1.4;
+}
+.graph-hover-card .hover-label {
+  color: #9ba1a6;
+}
+.graph-hover-card .hover-value {
+  font-weight: 600;
+  color: #e2e8f0;
 }

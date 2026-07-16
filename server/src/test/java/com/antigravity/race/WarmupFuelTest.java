@@ -30,9 +30,12 @@ public class WarmupFuelTest {
   public void setUp() {
     fuelOptions =
         new AnalogFuelOptions(
-            true, // enabled
-            true, // resetFuelAtHeatStart
-            false, // endHeatOnOutOfFuel
+            true,
+            // enabled
+            true,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction
+                .DO_NOT_COUNT_LAPS, // endHeatOnOutOfFuel
             100.0, // capacity
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate
@@ -129,7 +132,8 @@ public class WarmupFuelTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0,

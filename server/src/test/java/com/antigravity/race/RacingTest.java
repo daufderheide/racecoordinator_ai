@@ -273,9 +273,12 @@ public class RacingTest {
     // Analog fuel options with capacity 100
     com.antigravity.models.AnalogFuelOptions fuelOptions =
         new com.antigravity.models.AnalogFuelOptions(
-            true, // enabled
-            false, // resetFuelAtHeatStart
-            false, // endHeatOnOutOfFuel
+            true,
+            // enabled
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction
+                .DO_NOT_COUNT_LAPS, // endHeatOnOutOfFuel
             100.0, // capacity
             null, // usageType (defaults to LINEAR)
             4.0, // usageRate
@@ -608,8 +611,18 @@ public class RacingTest {
     // Analog fuel options
     com.antigravity.models.AnalogFuelOptions fuelOptions =
         new com.antigravity.models.AnalogFuelOptions(
-            true, // enabled
-            false, false, 100.0, null, 4.0, 100.0, 10.0, 2.0, 6.0);
+            true,
+            // enabled
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            null,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0);
 
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()

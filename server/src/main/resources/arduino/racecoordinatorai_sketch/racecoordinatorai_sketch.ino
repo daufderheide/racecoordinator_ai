@@ -51,13 +51,6 @@
 // not all boards support it.
 // #define WITH_WATCH_DOG
 
-// Comment in to enable support for toggling on/off fuel stuttering
-// which causes relays to open/close when a driver is out of fuel in
-// a fuel race.  Additional configuration is required so if you enable
-// this support search for WITH_FUEL_STUTTER to find the clearly
-// marked places in code you also likely need to change.
-// #define WITH_FUEL_STUTTER
-
 // Enable to print clear text into a serial monitor.  This has
 // limitations and is only useful to debug the sketch.  If this is
 // enabled, RC will not work with the sketch.
@@ -155,23 +148,6 @@ unsigned long ulDebounceLowUs = 0;
 byte *pDebounceState = NULL;
 byte *pDebounceNextState = NULL;
 unsigned long *pDebounceTime = NULL;
-
-#ifdef WITH_FUEL_STUTTER
-
-// TODO: WITH_FUEL_STUTTER: Set these to the values you want
-#define FUEL_NUM_LANES 4
-#define FUEL_ON_TIME_US (1000L * 1000L)
-#define FUEL_OFF_TIME_US (1000L * 1000L)
-#define FUEL_POWER_ON HIGH
-#define FUEL_POWER_OFF LOW
-
-boolean fuelHeatInProgress;
-boolean fuelOOF[FUEL_NUM_LANES];
-boolean fuelPowerOn[FUEL_NUM_LANES];
-long fuelTimeUs[FUEL_NUM_LANES];
-byte fuelRelayPin[FUEL_NUM_LANES];
-byte fuelRCPower[FUEL_NUM_LANES];
-#endif
 
 boolean bReset = true;
 byte iNumWritePins = 0;
@@ -393,7 +369,7 @@ void setup() {
   // Mark all the rgb leds as unused
   for (int i = 0; i < MAX_RGB_LED_STRINGS; i++) {
     if (rgbLedStrings[i].numLeds > 0 && rgbLedInit) {
-      free(rgbLedStrings[i].leds);
+      ::free(rgbLedStrings[i].leds);
     }
     rgbLedStrings[i].numLeds = 0;
     rgbLedPins[i] = 0;
@@ -402,32 +378,6 @@ void setup() {
   }
   rgbLedInit = true;
   rgbLedUpdateTime = 0xffffffff;
-#endif
-
-#ifdef WITH_FUEL_STUTTER
-  // TODO: WITH_FUEL_STUTTER:
-  // This puts the lane relays on pins D2-D5, change
-  // this to your pin configuration as needed.  Make sure
-  // to comment in/out any lanes you are/are not using.
-  // The defaults here are assuming a 4 lane track.
-  fuelRelayPin[0] = 2; // Lane 1
-  fuelRelayPin[1] = 3; // Lane 2
-  fuelRelayPin[2] = 4; // Lane 3
-  fuelRelayPin[3] = 5; // Lane 4
-                       //  fuelRelayPin[4] = 6;  // Lane 5
-                       //  fuelRelayPin[5] = 7;  // Lane 6
-                       //  fuelRelayPin[6] = 8;  // Lane 7
-                       //  fuelRelayPin[7] = 9;  // Lane 8
-
-  fuelHeatInProgress = false;
-  for (int i = 0; i < FUEL_NUM_LANES; i++) {
-    fuelOOF[i] = false;
-    fuelPowerOn[i] = false;
-    fuelTimeUs[i] = 0;
-    fuelRCPower[i] = FUEL_POWER_OFF;
-    pinMode(fuelRelayPin[i], OUTPUT);
-  }
-
 #endif
 
   ulPrevHwTimeUs = micros();
@@ -441,50 +391,8 @@ void setup() {
 /*
    Main loop for processing lap counting
 */
-
 unsigned long ulStartMs = 0;
 unsigned long ulLoopCnt = 0;
-
-#ifdef WITH_FUEL_STUTTER
-void stutterRelays(unsigned long ulDeltaUs) {
-  if (fuelHeatInProgress) {
-    for (int i = 0; i < FUEL_NUM_LANES; i++) {
-      // Fuel Stuttering only occurs if RC wants the power
-      // on for a lane.  Otherwise don't touch it.
-      if (fuelRCPower[i] == FUEL_POWER_ON) {
-        if (fuelOOF[i]) {
-          fuelTimeUs[i] -= ulDeltaUs;
-          if (fuelTimeUs[i] < 0) {
-            if (fuelPowerOn[i]) {
-              // Turn power off
-              fuelTimeUs[i] = FUEL_OFF_TIME_US;
-              fuelPowerOn[i] = false;
-              digitalWrite(fuelRelayPin[i], FUEL_POWER_OFF);
-            } else {
-              // Turn power on
-              fuelTimeUs[i] = FUEL_ON_TIME_US;
-              fuelPowerOn[i] = true;
-              digitalWrite(fuelRelayPin[i], FUEL_POWER_ON);
-            }
-          }
-        } else {
-          if (!fuelPowerOn[i]) {
-            // Turn power on
-            fuelTimeUs[i] = FUEL_ON_TIME_US;
-            fuelPowerOn[i] = true;
-            digitalWrite(fuelRelayPin[i], FUEL_POWER_ON);
-          }
-        }
-      }
-    }
-  } else {
-    // Force the relay pin to the state RC wants.
-    for (int i = 0; i < FUEL_NUM_LANES; i++) {
-      digitalWrite(fuelRelayPin[i], fuelRCPower[i]);
-    }
-  }
-}
-#endif
 
 void loop() {
   // Need micros for debounce and milis for timing data
@@ -537,10 +445,6 @@ void loop() {
       }
     }
   }
-#endif
-
-#ifdef WITH_FUEL_STUTTER
-  stutterRelays(ulDeltaUs);
 #endif
 
   readAnalog(ulDeltaUs);
@@ -823,7 +727,7 @@ void processLedModeRequest() {
         pin != rgbLedPins[stringNum]) {
       needsController = true;
       if (rgbLedStrings[stringNum].numLeds > 0) {
-        free(rgbLedStrings[stringNum].leds);
+        ::free(rgbLedStrings[stringNum].leds);
       }
       rgbLedStrings[stringNum].numLeds = numLeds;
       rgbLedPins[stringNum] = pin;
@@ -844,7 +748,7 @@ void processLedModeRequest() {
       if (rgbLedControllers[stringNum] == NULL) {
         SERIAL_PRINTLN(F("Error: Pin not supported for RGB LEDs"));
         if (rgbLedStrings[stringNum].numLeds > 0) {
-          free(rgbLedStrings[stringNum].leds);
+          ::free(rgbLedStrings[stringNum].leds);
         }
         rgbLedStrings[stringNum].numLeds = 0;
         rgbLedPins[stringNum] = 0;
@@ -857,7 +761,7 @@ void processLedModeRequest() {
       SERIAL_PRINT(F("Disabling LED string on pin "));
       SERIAL_PRINTLN(pin);
       if (rgbLedStrings[stringNum].numLeds > 0) {
-        free(rgbLedStrings[stringNum].leds);
+        ::free(rgbLedStrings[stringNum].leds);
       }
       rgbLedStrings[stringNum].numLeds = 0;
       rgbLedPins[stringNum] = 0;
@@ -1088,32 +992,6 @@ void processWriteRequest() {
     pin += A0;
   }
 
-  byte state = inBuffer[3] TXT_TO_INT_CONVERSION;
-#ifdef WITH_FUEL_STUTTER
-  // Check if this is a per lane relay pin, if so,
-  // figure out what to do
-  boolean fuelPin = false;
-  for (int i = 0; i < FUEL_NUM_LANES; i++) {
-    if (fuelRelayPin[i] == pin) {
-      // This is a fuel relay pin
-      fuelPin = true;
-      fuelRCPower[i] = state;
-
-      if (state == FUEL_POWER_OFF) {
-        fuelPowerOn[i] = false;
-        fuelTimeUs[i] = 0;
-      }
-
-      break;
-    }
-  }
-
-  // Let the stutter code handle turning the relay back on
-  if (fuelPin && state == FUEL_POWER_ON) {
-    break;
-  }
-#endif
-
   digitalWrite(pin, inBuffer[3] TXT_TO_INT_CONVERSION);
 
   SERIAL_PRINTLN(F(""));
@@ -1183,10 +1061,6 @@ void processExtendedRequest() {
       // Heat not restarted (1) *** Not currently supported
       // NOTE: inBuffer[3] 0x01 auto-starting
       // NOTE: inBuffer[3] 0x02 warmup time
-
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = false;
-#endif
       break;
 
     case 2:
@@ -1195,46 +1069,28 @@ void processExtendedRequest() {
       // Heat re-started (3)
 
       // NOTE: inBuffer[3] is the countdown timer (4, 3, 2, 1, 0)
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = true;
-#endif
       break;
 
     case 4:
       // Heat is running
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = true;
-#endif
       break;
 
     case 5:
       // Heat is paused
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = false;
-#endif
       break;
 
     case 6:
       // Heat ended
       // NOTE: inBuffer[3] 0x01 auto-advancing
       // NOTE: inBuffer[3] 0x02 warmup time
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = false;
-#endif
       break;
 
     case 7:
       // Race ended
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = false;
-#endif
       break;
 
     case 8:
       // RC is closing
-#ifdef WITH_FUEL_STUTTER
-      fuelHeatInProgress = false;
-#endif
       break;
     }
     break;
@@ -1259,32 +1115,6 @@ void processExtendedRequest() {
 
   case extFuel:
     // Fuel
-#ifdef WITH_FUEL_STUTTER
-  {
-    SERIAL_PRINTLN("**********Got extFuel*********");
-
-    byte lane = inBuffer[2] TXT_TO_INT_CONVERSION;
-    if (lane < FUEL_NUM_LANES) {
-      byte level = inBuffer[3] TXT_TO_INT_CONVERSION;
-
-      SERIAL_PRINT("Got fuel for lane ");
-      SERIAL_PRINT(lane);
-      SERIAL_PRINT(" and value ");
-      SERIAL_PRINTLN(level);
-
-      if (level == 0 && !fuelOOF[lane]) {
-        // Assume power is on, setting time to 0 will cause it
-        // to turn off
-        fuelOOF[lane] = true;
-        fuelTimeUs[lane] = 0;
-        fuelPowerOn[lane] = true;
-      } else if (level > 0) {
-        // This will turn power back on if its not already
-        fuelOOF[lane] = false;
-      }
-    }
-  }
-#endif
   break;
 
   case extRefueling:

@@ -41,9 +41,12 @@ public class RefuelingTest {
   public void setUp() {
     fuelOptions =
         new AnalogFuelOptions(
-            true, // enabled
-            false, // resetFuelAtStart
-            false, // endHeatOnOutOfFuel
+            true,
+            // enabled
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction
+                .DO_NOT_COUNT_LAPS, // endHeatOnOutOfFuel
             100.0, // capacity
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate

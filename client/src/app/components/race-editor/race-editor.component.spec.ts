@@ -336,7 +336,7 @@ describe("RaceEditorComponent", () => {
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
@@ -348,7 +348,7 @@ describe("RaceEditorComponent", () => {
       digital_fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
@@ -398,7 +398,7 @@ describe("RaceEditorComponent", () => {
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
@@ -410,7 +410,7 @@ describe("RaceEditorComponent", () => {
       digital_fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
@@ -473,7 +473,7 @@ describe("RaceEditorComponent", () => {
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
@@ -485,7 +485,7 @@ describe("RaceEditorComponent", () => {
       digital_fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
@@ -644,7 +644,7 @@ describe("RaceEditorComponent", () => {
       component.onDigitalGraphMouseMove(mockEvent, "usage");
       expect(component.hoveredPoint).toBeDefined();
       expect(component.hoveredPoint?.type).toBe("digital_usage");
-      expect(component.hoveredPoint?.time).toBe(50); // 50% throttle at middle
+      expect(component.hoveredPoint?.xValue).toBe("50%"); // 50% throttle at middle
     });
   });
 
@@ -878,7 +878,7 @@ describe("RaceEditorComponent", () => {
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
@@ -890,7 +890,7 @@ describe("RaceEditorComponent", () => {
       digital_fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
@@ -930,7 +930,7 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: false,
           reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
+          out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
           usage_rate: 4.0,
@@ -1148,7 +1148,7 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: false,
           reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
+          out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
           usage_rate: 4.0,
@@ -1202,7 +1202,7 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: false,
           reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
+          out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
           usage_rate: 4.0,
@@ -1253,7 +1253,7 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: false,
           reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
+          out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
           usage_rate: 4.0,
@@ -1299,7 +1299,7 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: false,
           reset_fuel_at_heat_start: false,
-          end_heat_on_out_of_fuel: false,
+          out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
           usage_rate: 4.0,

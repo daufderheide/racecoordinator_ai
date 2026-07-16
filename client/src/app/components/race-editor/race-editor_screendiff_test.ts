@@ -380,6 +380,123 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
+  test("should display Analog Fuel section with Power Stutter options", async ({
+    page,
+  }) => {
+    // Setup mocks
+    await TestSetupHelper.setupStandardMocks(page);
+
+    // Navigate to Race Editor
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+
+    // Verify Editor Form is attached
+    await page.waitForTimeout(200);
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    // Ensure Fuel section is expanded
+    await ensureSectionState(page, "Analog Fuel Configuration", true);
+
+    // Toggle fuel enabled checkbox by label for reliability
+    const fuelLabel = page
+      .locator('.fuel-config-section label:has-text("Enable Analog Fuel")')
+      .first();
+    await fuelLabel.scrollIntoViewIfNeeded();
+    await fuelLabel.waitFor({ state: "visible", timeout: 5000 });
+    await fuelLabel.click();
+
+    // Select POWER_STUTTER in the out-of-fuel action dropdown
+    const outOfFuelSelect = page
+      .locator("#analog-fuel-section .config-section")
+      .filter({ hasText: "Out of Fuel Action" })
+      .locator("select");
+    await outOfFuelSelect.selectOption("POWER_STUTTER");
+
+    // Wait for the Power Stutter inputs to appear
+    await page
+      .locator("#analog-fuel-section .config-section label")
+      .filter({ hasText: "Power On Time" })
+      .waitFor({ state: "visible", timeout: 5000 });
+
+    // Wait for charts to render before screenshotting
+    const fuelContainer = page.locator(".fuel-graphs-container");
+    await fuelContainer.waitFor({ state: "visible", timeout: 10000 });
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the section
+    await expect(page.locator("#analog-fuel-section")).toHaveScreenshot(
+      "race-editor-analog-fuel-power-stutter.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
+  test("should display fuel graph hovercard", async ({ page }) => {
+    // Setup mocks
+    await TestSetupHelper.setupStandardMocks(page);
+
+    // Navigate to Race Editor
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+
+    // Verify Editor Form is attached
+    await page.waitForTimeout(200);
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    // Ensure Fuel section is expanded
+    await ensureSectionState(page, "Analog Fuel Configuration", true);
+
+    // Toggle fuel enabled
+    const fuelLabel = page
+      .locator('.fuel-config-section label:has-text("Enable Analog Fuel")')
+      .first();
+    await fuelLabel.scrollIntoViewIfNeeded();
+    await fuelLabel.waitFor({ state: "visible", timeout: 5000 });
+    await fuelLabel.click();
+
+    // Wait for charts to render
+    const fuelContainer = page.locator(".fuel-graphs-container");
+    await fuelContainer.waitFor({ state: "visible", timeout: 10000 });
+
+    // Hover over the first graph (usage graph) near the center
+    const svgGraph = page.locator(".fuel-graph").first();
+    await svgGraph.evaluate((svg) => {
+      const rect = svg.getBoundingClientRect();
+      const event = new MouseEvent("mousemove", {
+        clientX: rect.left + 200,
+        clientY: rect.top + 75,
+        bubbles: true,
+        cancelable: true,
+      });
+      svg.dispatchEvent(event);
+    });
+
+    // Wait for the hover card to appear
+    await expect(page.locator(".graph-hover-card").first()).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the graphs container
+    await expect(fuelContainer).toHaveScreenshot(
+      "race-editor-analog-fuel-hovercard.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
   test("should display Team Options section expanded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

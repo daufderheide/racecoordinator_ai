@@ -978,31 +978,83 @@
                           }}</span>
                         </label>
                       </div>
-                      <div class="config-section checkbox-section">
-                        <label
-                          class="checkbox-container"
-                          [class.disabled]="
+                      <div class="config-section">
+                        <label>{{ "RE_OUT_OF_FUEL_ACTION" | translate }}</label>
+                        <select
+                          [(ngModel)]="
+                            editingRace.fuel_options.out_of_fuel_action
+                          "
+                          (ngModelChange)="captureState()"
+                          [disabled]="
                             hasDigitalFuel || !editingRace.fuel_options.enabled
                           "
                         >
+                          @for (action of outOfFuelActions; track action) {
+                            <option
+                              [value]="action"
+                              [disabled]="
+                                action === 'POWER_STUTTER' &&
+                                !currentTrackHasPerLaneRelays
+                              "
+                              [title]="
+                                action === 'POWER_STUTTER' &&
+                                !currentTrackHasPerLaneRelays
+                                  ? ('RE_POWER_STUTTER_REQUIRES_RELAYS'
+                                    | translate)
+                                  : ''
+                              "
+                            >
+                              {{
+                                "RE_OUT_OF_FUEL_ACTION_" + action | translate
+                              }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                    @if (
+                      editingRace.fuel_options.out_of_fuel_action ===
+                      "POWER_STUTTER"
+                    ) {
+                      <div class="config-row">
+                        <div class="config-section">
+                          <label>{{
+                            "RE_POWER_STUTTER_ON_TIME" | translate
+                          }}</label>
                           <input
-                            type="checkbox"
+                            type="number"
                             [(ngModel)]="
-                              editingRace.fuel_options.end_heat_on_out_of_fuel
+                              editingRace.fuel_options.power_stutter_on_time
                             "
                             (ngModelChange)="captureState()"
                             [disabled]="
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
                             "
+                            min="0.1"
+                            step="0.1"
                           />
-                          <span class="checkmark"></span>
-                          <span class="checkbox-label">{{
-                            "RE_END_HEAT_ON_OUT_OF_FUEL" | translate
-                          }}</span>
-                        </label>
+                        </div>
+                        <div class="config-section">
+                          <label>{{
+                            "RE_POWER_STUTTER_OFF_TIME" | translate
+                          }}</label>
+                          <input
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.fuel_options.power_stutter_off_time
+                            "
+                            (ngModelChange)="captureState()"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
+                            min="0.1"
+                            step="0.1"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    }
                   </div>
                   <!-- Fuel Graphs -->
                   @if (editingRace.fuel_options.enabled) {
@@ -1086,6 +1138,36 @@
                                 </g>
                               }
                             </svg>
+                            @if (
+                              hoveredPoint && hoveredPoint.type === "usage"
+                            ) {
+                              <div
+                                class="graph-hover-card"
+                                [style.left.px]="hoveredPoint.screenX"
+                                [style.top.px]="hoveredPoint.screenY"
+                              >
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.xLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.xValue
+                                  }}</span>
+                                </div>
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.yLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.yValue
+                                  }}</span>
+                                </div>
+                              </div>
+                            }
                           </div>
                         </div>
                         <div class="x-axis-labels">
@@ -1165,6 +1247,34 @@
                                 </g>
                               }
                             </svg>
+                            @if (hoveredPoint && hoveredPoint.type === "pit") {
+                              <div
+                                class="graph-hover-card"
+                                [style.left.px]="hoveredPoint.screenX"
+                                [style.top.px]="hoveredPoint.screenY"
+                              >
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.xLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.xValue
+                                  }}</span>
+                                </div>
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.yLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.yValue
+                                  }}</span>
+                                </div>
+                              </div>
+                            }
                           </div>
                         </div>
                         <div class="x-axis-labels">
@@ -1356,31 +1466,29 @@
                           }}</span>
                         </label>
                       </div>
-                      <div class="config-section checkbox-section">
-                        <label
-                          class="checkbox-container"
-                          [class.disabled]="
+                      <div class="config-section">
+                        <label>{{ "RE_OUT_OF_FUEL_ACTION" | translate }}</label>
+                        <select
+                          [(ngModel)]="
+                            editingRace.digital_fuel_options.out_of_fuel_action
+                          "
+                          (ngModelChange)="captureState()"
+                          [disabled]="
                             !hasDigitalFuel ||
                             !editingRace.digital_fuel_options.enabled
                           "
                         >
-                          <input
-                            type="checkbox"
-                            [(ngModel)]="
-                              editingRace.digital_fuel_options
-                                .end_heat_on_out_of_fuel
-                            "
-                            (ngModelChange)="captureState()"
-                            [disabled]="
-                              !hasDigitalFuel ||
-                              !editingRace.digital_fuel_options.enabled
-                            "
-                          />
-                          <span class="checkmark"></span>
-                          <span class="checkbox-label">{{
-                            "RE_END_HEAT_ON_OUT_OF_FUEL" | translate
-                          }}</span>
-                        </label>
+                          @for (
+                            action of digitalOutOfFuelActions;
+                            track action
+                          ) {
+                            <option [value]="action">
+                              {{
+                                "RE_OUT_OF_FUEL_ACTION_" + action | translate
+                              }}
+                            </option>
+                          }
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -1473,6 +1581,37 @@
                                 </g>
                               }
                             </svg>
+                            @if (
+                              hoveredPoint &&
+                              hoveredPoint.type === "digital_usage"
+                            ) {
+                              <div
+                                class="graph-hover-card"
+                                [style.left.px]="hoveredPoint.screenX"
+                                [style.top.px]="hoveredPoint.screenY"
+                              >
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.xLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.xValue
+                                  }}</span>
+                                </div>
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.yLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.yValue
+                                  }}</span>
+                                </div>
+                              </div>
+                            }
                           </div>
                         </div>
                         <div class="x-axis-labels">
@@ -1555,6 +1694,37 @@
                                 </g>
                               }
                             </svg>
+                            @if (
+                              hoveredPoint &&
+                              hoveredPoint.type === "digital_pit"
+                            ) {
+                              <div
+                                class="graph-hover-card"
+                                [style.left.px]="hoveredPoint.screenX"
+                                [style.top.px]="hoveredPoint.screenY"
+                              >
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.xLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.xValue
+                                  }}</span>
+                                </div>
+                                <div class="hover-row">
+                                  <span class="hover-label"
+                                    >{{
+                                      hoveredPoint.yLabel | translate
+                                    }}:</span
+                                  >
+                                  <span class="hover-value">{{
+                                    hoveredPoint.yValue
+                                  }}</span>
+                                </div>
+                              </div>
+                            }
                           </div>
                         </div>
                         <div class="x-axis-labels">

@@ -122,7 +122,8 @@ public class RaceConverterTest {
         new AnalogFuelOptions(
             true,
             false,
-            true,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             120.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             5.0,

@@ -17,7 +17,7 @@ import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.co
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
-import { FuelUsageType } from "@app/models/fuel_options";
+import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -75,6 +75,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     "Custom",
   ];
   raceScoringTypes = ["Points", "Time"];
+  outOfFuelActions = [
+    OutOfFuelAction.DO_NOT_COUNT_LAPS,
+    OutOfFuelAction.END_HEAT,
+    OutOfFuelAction.POWER_STUTTER,
+  ];
+  digitalOutOfFuelActions = [
+    OutOfFuelAction.DO_NOT_COUNT_LAPS,
+    OutOfFuelAction.END_HEAT,
+  ];
 
   private static readonly EMPTY_LABELS: string[] = [];
   private subscriptions: Subscription[] = [];
@@ -264,6 +273,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
 
     return false;
+  }
+
+  get currentTrackHasPerLaneRelays(): boolean {
+    if (!this.editingRace || !this.editingRace.track_entity_id) return false;
+    const track = this.tracks.find(
+      (t) => t.entity_id === this.editingRace.track_entity_id,
+    );
+    return track ? !!track.has_per_lane_relays : false;
   }
 
   constructor(
@@ -533,7 +550,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.editingRace.fuel_options = {
               enabled: false,
               reset_fuel_at_heat_start: false,
-              end_heat_on_out_of_fuel: false,
+              out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
               capacity: 100,
               usage_type: FuelUsageType.LINEAR,
               usage_rate: 4.0,
@@ -565,7 +582,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           this.editingRace.digital_fuel_options = {
             enabled: false,
             reset_fuel_at_heat_start: false,
-            end_heat_on_out_of_fuel: false,
+            out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
             capacity: 100,
             usage_type: FuelUsageType.LINEAR,
             usage_rate: 4.0,
@@ -605,6 +622,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               num_track_sections: t.num_track_sections || 100,
               lanes: t.lanes || [],
               has_digital_fuel: t.has_digital_fuel ?? false,
+              has_per_lane_relays: t.has_per_lane_relays ?? false,
+              has_main_relay: t.has_main_relay ?? false,
               arduino_configs: t.arduino_configs,
             }),
         );
@@ -738,7 +757,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
@@ -750,7 +769,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       digital_fuel_options: {
         enabled: false,
         reset_fuel_at_heat_start: false,
-        end_heat_on_out_of_fuel: false,
+        out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
         usage_type: FuelUsageType.LINEAR,
         usage_rate: 4.0,
         start_level: 100,
@@ -1253,9 +1272,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     svgY: number;
     screenX: number;
     screenY: number;
-    time: number;
-    value: number;
     type: "usage" | "pit" | "digital_usage" | "digital_pit";
+    xLabel: string;
+    xValue: string;
+    yLabel: string;
+    yValue: string;
   } | null = null;
 
   // Cache for graph performance
@@ -1606,9 +1627,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         svgY: Number((150 - (yPercent || 0) * 150).toFixed(2)) || 0,
         screenX: mouseX || 0,
         screenY: mouseY || 0,
-        time: throttle || 0, // we use 'time' field for 'throttle' here
-        value: fuel || 0,
         type: "digital_usage",
+        xLabel: "RE_HOVER_THROTTLE",
+        xValue: Math.round(throttle || 0) + "%",
+        yLabel: "RE_HOVER_FUEL_USED",
+        yValue: (fuel || 0).toFixed(1),
       };
     } else {
       const yPercent = 1 - Math.max(0, Math.min(1, mouseY / (height || 1)));
@@ -1633,9 +1656,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         svgY: Number(((1 - (yPercent || 0)) * 150).toFixed(2)) || 0,
         screenX: mouseX || 0,
         screenY: mouseY || 0,
-        time: throttle || 0,
-        value: timeToEmpty || 0,
         type: "digital_pit",
+        xLabel: "RE_HOVER_TIME_TO_PIT",
+        xValue: (timeToEmpty || 0).toFixed(2) + "s",
+        yLabel: "RE_HOVER_THROTTLE",
+        yValue: Math.round(throttle || 0) + "%",
       };
     }
   }
@@ -1706,9 +1731,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         svgY: Number((150 - yPercent * 150).toFixed(2)),
         screenX: mouseX,
         screenY: mouseY,
-        time: time,
-        value: fuel,
         type: "usage",
+        xLabel: "RE_HOVER_LAP_TIME",
+        xValue: time.toFixed(2) + "s",
+        yLabel: "RE_HOVER_FUEL_USED",
+        yValue: fuel.toFixed(1),
       };
     } else {
       // Pit Graph: Y is Lap Time (bottom 2, top 15)
@@ -1739,9 +1766,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         svgY: Number(((1 - yPercent) * 150).toFixed(2)),
         screenX: mouseX,
         screenY: mouseY,
-        time: lapTime,
-        value: pitTime,
         type: "pit",
+        xLabel: "RE_HOVER_TIME_TO_PIT",
+        xValue: pitTime.toFixed(2) + "s",
+        yLabel: "RE_HOVER_LAP_TIME",
+        yValue: lapTime.toFixed(2) + "s",
       };
     }
   }
@@ -1773,7 +1802,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             enabled: race.fuel_options.enabled,
             reset_fuel_at_heat_start:
               race.fuel_options.reset_fuel_at_heat_start,
-            end_heat_on_out_of_fuel: race.fuel_options.end_heat_on_out_of_fuel,
+            out_of_fuel_action: race.fuel_options.out_of_fuel_action,
             capacity: race.fuel_options.capacity,
             usage_type: race.fuel_options.usage_type,
             usage_rate: race.fuel_options.usage_rate,
@@ -1781,6 +1810,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             refuel_rate: race.fuel_options.refuel_rate,
             pit_stop_delay: race.fuel_options.pit_stop_delay,
             reference_time: race.fuel_options.reference_time,
+            power_stutter_on_time: race.fuel_options.power_stutter_on_time,
+            power_stutter_off_time: race.fuel_options.power_stutter_off_time,
           }
         : undefined,
       digital_fuel_options: race.digital_fuel_options
@@ -1788,8 +1819,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             enabled: race.digital_fuel_options.enabled,
             reset_fuel_at_heat_start:
               race.digital_fuel_options.reset_fuel_at_heat_start,
-            end_heat_on_out_of_fuel:
-              race.digital_fuel_options.end_heat_on_out_of_fuel,
+            out_of_fuel_action: race.digital_fuel_options.out_of_fuel_action,
             capacity: race.digital_fuel_options.capacity,
             usage_type: race.digital_fuel_options.usage_type,
             usage_rate: race.digital_fuel_options.usage_rate,

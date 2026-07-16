@@ -35,6 +35,7 @@ public class HeatExecutionManager {
   private double[] accumulatedRefuelTime;
   private double[] timeSinceLastLap;
   private double[] excludedPendingLapTime;
+  private double[] stutterAccumulatedTime;
 
   public HeatExecutionManager(Race race) {
     this.race = race;
@@ -61,21 +62,60 @@ public class HeatExecutionManager {
     this.accumulatedRefuelTime = new double[laneCount];
     this.timeSinceLastLap = new double[laneCount];
     this.excludedPendingLapTime = new double[laneCount];
+    this.stutterAccumulatedTime = new double[laneCount];
     for (int i = 0; i < laneCount; i++) {
       this.refuelDelayRemaining[i] = -1.0;
       this.isRefueling[i] = false;
       this.accumulatedRefuelTime[i] = 0.0;
       this.timeSinceLastLap[i] = 0.0;
       this.excludedPendingLapTime[i] = 0.0;
+      this.stutterAccumulatedTime[i] = 0.0;
     }
   }
 
   public void processTicker(float delta) {
     handleRefueling(delta);
+    handlePowerStutter(delta);
     if (timeSinceLastLap != null) {
       for (int i = 0; i < timeSinceLastLap.length; i++) {
         if (!finishedLanes.contains(i)) {
           timeSinceLastLap[i] += delta;
+        }
+      }
+    }
+  }
+
+  private void handlePowerStutter(float delta) {
+    if (!isAnalogFuelEnabled()) {
+      return;
+    }
+    AnalogFuelOptions analogFuel = race.getRaceModel().getFuelOptions();
+    if (analogFuel.getOutOfFuelAction() != FuelOptions.OutOfFuelAction.POWER_STUTTER) {
+      return;
+    }
+
+    double offTime = analogFuel.getPowerStutterOffTime();
+    double cycleTime = analogFuel.getPowerStutterOnTime() + analogFuel.getPowerStutterOffTime();
+    if (cycleTime <= 0) cycleTime = 1.0;
+
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+    for (int i = 0; i < drivers.size(); i++) {
+      if (finishedLanes.contains(i)) {
+        continue;
+      }
+      double fuelLevel = drivers.get(i).getDriver().getFuelLevel();
+      if (fuelLevel <= 0) {
+        stutterAccumulatedTime[i] += delta;
+        double mod = stutterAccumulatedTime[i] % cycleTime;
+        if (mod < offTime) {
+          race.setLanePower(false, i);
+        } else {
+          race.setLanePower(true, i);
+        }
+      } else {
+        if (stutterAccumulatedTime[i] > 0) {
+          stutterAccumulatedTime[i] = 0.0;
+          race.setLanePower(true, i);
         }
       }
     }
@@ -177,7 +217,8 @@ public class HeatExecutionManager {
         fuelOptions != null
             && fuelOptions.isEnabled()
             && driverData.getDriver().getFuelLevel() <= 0;
-    if (outOfFuel) {
+    if (outOfFuel
+        && fuelOptions.getOutOfFuelAction() != FuelOptions.OutOfFuelAction.POWER_STUTTER) {
       logger.info("Lane {} lap rejected due to out of fuel", lane);
       handleRejection(driverData, lane, lapTime, RejectionReason.OUT_OF_FUEL);
       return false;
@@ -412,6 +453,10 @@ public class HeatExecutionManager {
     excludedPendingLapTime[from] = excludedPendingLapTime[to];
     excludedPendingLapTime[to] = tempExcludedPending;
 
+    double tempStutter = stutterAccumulatedTime[from];
+    stutterAccumulatedTime[from] = stutterAccumulatedTime[to];
+    stutterAccumulatedTime[to] = tempStutter;
+
     logger.info("Swapped transient lane state for lanes {} and {}", from, to);
   }
 
@@ -522,7 +567,7 @@ public class HeatExecutionManager {
           newFuel);
     }
 
-    if (newFuel <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
+    if (newFuel <= 0 && fuelOptions.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT) {
       logger.info("Lane {} (digital) out of fuel. Turning off power.", lane);
       this.race.setLanePower(false, lane);
     }
@@ -798,7 +843,7 @@ public class HeatExecutionManager {
 
     logger.debug("Lane {} fuel level: {} (used {})", lane, newFuel, lapFuelUsed);
 
-    if (newFuel <= 0 && fuelOptions.isEndHeatOnOutOfFuel()) {
+    if (newFuel <= 0 && fuelOptions.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT) {
       logger.info("Lane {} out of fuel. Turning off power.", lane);
       this.race.setLanePower(false, lane);
     }

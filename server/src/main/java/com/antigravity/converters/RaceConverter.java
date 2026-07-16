@@ -2,6 +2,7 @@ package com.antigravity.converters;
 
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.DigitalFuelOptions;
+import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
@@ -86,7 +87,11 @@ public class RaceConverter {
             com.antigravity.proto.AnalogFuelOptions.newBuilder() // fqn-collision
                 .setEnabled(fuel.isEnabled())
                 .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
-                .setEndHeatOnOutOfFuel(fuel.isEndHeatOnOutOfFuel())
+                .setEndHeatOnOutOfFuel(
+                    fuel.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT)
+                .setOutOfFuelAction(
+                    com.antigravity.proto.OutOfFuelAction.valueOf( // fqn-collision
+                        fuel.getOutOfFuelAction().name()))
                 .setCapacity(fuel.getCapacity())
                 .setUsageType(
                     com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision
@@ -96,6 +101,8 @@ public class RaceConverter {
                 .setRefuelRate(fuel.getRefuelRate())
                 .setPitStopDelay(fuel.getPitStopDelay())
                 .setReferenceTime(fuel.getReferenceTime())
+                .setPowerStutterOnTime(fuel.getPowerStutterOnTime())
+                .setPowerStutterOffTime(fuel.getPowerStutterOffTime())
                 .build());
       }
 
@@ -105,7 +112,11 @@ public class RaceConverter {
             com.antigravity.proto.DigitalFuelOptions.newBuilder() // fqn-collision
                 .setEnabled(fuel.isEnabled())
                 .setResetFuelAtHeatStart(fuel.isResetFuelAtHeatStart())
-                .setEndHeatOnOutOfFuel(fuel.isEndHeatOnOutOfFuel())
+                .setEndHeatOnOutOfFuel(
+                    fuel.getOutOfFuelAction() == FuelOptions.OutOfFuelAction.END_HEAT)
+                .setOutOfFuelAction(
+                    com.antigravity.proto.OutOfFuelAction.valueOf( // fqn-collision
+                        fuel.getOutOfFuelAction().name()))
                 .setCapacity(fuel.getCapacity())
                 .setUsageType(
                     com.antigravity.proto.FuelUsageType.valueOf( // fqn-collision

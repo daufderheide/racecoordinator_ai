@@ -18,7 +18,9 @@ public class DigitalFuelOptions extends FuelOptions {
       @BsonProperty("reset_fuel_at_heat_start") @JsonProperty("reset_fuel_at_heat_start")
           boolean resetFuelAtHeatStart,
       @BsonProperty("end_heat_on_out_of_fuel") @JsonProperty("end_heat_on_out_of_fuel")
-          boolean endHeatOnOutOfFuel,
+          Boolean endHeatOnOutOfFuel,
+      @BsonProperty("out_of_fuel_action") @JsonProperty("out_of_fuel_action")
+          OutOfFuelAction outOfFuelAction,
       @BsonProperty("capacity") @JsonProperty("capacity") double capacity,
       @BsonProperty("usage_type") @JsonProperty("usage_type") FuelUsageType usageType,
       @BsonProperty("usage_rate") @JsonProperty("usage_rate") double usageRate,
@@ -28,7 +30,11 @@ public class DigitalFuelOptions extends FuelOptions {
     super(
         enabled,
         resetFuelAtHeatStart,
-        endHeatOnOutOfFuel,
+        outOfFuelAction != null
+            ? outOfFuelAction
+            : (endHeatOnOutOfFuel != null && endHeatOnOutOfFuel
+                ? OutOfFuelAction.END_HEAT
+                : OutOfFuelAction.DO_NOT_COUNT_LAPS),
         capacity,
         usageType,
         usageRate,

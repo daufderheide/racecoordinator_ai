@@ -246,7 +246,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0,
@@ -294,7 +295,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate (at reference time)
@@ -465,7 +467,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0,
@@ -549,7 +552,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0,
@@ -782,7 +786,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate
@@ -849,7 +854,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate
@@ -919,7 +925,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate
@@ -1047,7 +1054,8 @@ public class HeatExecutionManagerTest {
         new AnalogFuelOptions(
             true,
             false,
-            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             AnalogFuelOptions.FuelUsageType.LINEAR,
             4.0, // usageRate
@@ -1153,5 +1161,66 @@ public class HeatExecutionManagerTest {
     assertTrue(
         "Third crossing should be counted because second crossing time was accumulated", counted);
     assertEquals(3.1, driverData.getLaps().get(1).getLapTime(), 0.001);
+  }
+
+  @Test
+  public void testPowerStutterOutOfFuelAction() {
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true, // enabled
+            false, // resetFuelAtHeatStart
+            null, // endHeatOnOutOfFuel
+            com.antigravity.models.FuelOptions.OutOfFuelAction.POWER_STUTTER, // outOfFuelAction
+            100.0, // capacity
+            AnalogFuelOptions.FuelUsageType.LINEAR, // usageType
+            4.0, // usageRate
+            100.0, // startLevel
+            10.0, // refuelRate
+            2.0, // pitStopDelay
+            5.0, // referenceTime
+            1.5, // powerStutterOnTime
+            0.5 // powerStutterOffTime
+            );
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track1")
+            .withFuelOptions(fuelOptions)
+            .withEntityId("race1")
+            .build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
+    driverData.getDriver().setFuelLevel(0.0); // Run out of fuel
+
+    // Initial state: power should be ON until processed
+    race.setLanePower(true, 0);
+
+    // Process ticker, stutterAccumulatedTime becomes 0.2
+    // cycleTime = 1.5 (on) + 0.5 (off) = 2.0
+    // offTime = 0.5
+    // 0.2 % 2.0 = 0.2 -> < 0.5 (offTime) => Power OFF
+    executionManager.processTicker(0.2f);
+    assertFalse("Power should be off during the stutter off time", race.isLanePower(0));
+
+    // Process ticker, stutterAccumulatedTime becomes 0.6
+    // 0.6 % 2.0 = 0.6 -> >= 0.5 (offTime) => Power ON
+    executionManager.processTicker(0.4f);
+    assertTrue("Power should be on during the stutter on time", race.isLanePower(0));
+
+    // Refuel driver to > 0
+    driverData.getDriver().setFuelLevel(10.0);
+    executionManager.processTicker(0.1f);
+    assertTrue("Power should be restored and stutter cleared once fueled", race.isLanePower(0));
   }
 }

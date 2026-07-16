@@ -5,6 +5,7 @@ export const MOCK_TRACKS = [
   {
     entity_id: "t1",
     name: "Classic Circuit",
+    has_per_lane_relays: true,
     lanes: [
       {
         entity_id: "l1",

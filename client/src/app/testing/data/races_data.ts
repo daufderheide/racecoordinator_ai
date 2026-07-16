@@ -1,6 +1,6 @@
 import { AnalogFuelOptions } from "../../models/analog_fuel_options";
 import { DigitalFuelOptions } from "../../models/digital_fuel_options";
-import { FuelUsageType } from "../../models/fuel_options";
+import { FuelUsageType, OutOfFuelAction } from "../../models/fuel_options";
 import {
   AllowFinish,
   FinishMethod,
@@ -44,6 +44,9 @@ export const MOCK_RACES = [
       refuel_rate: 10,
       pit_stop_delay: 2.0,
       reference_time: 6.0,
+      out_of_fuel_action: OutOfFuelAction.POWER_STUTTER,
+      power_stutter_on_time: 0.5,
+      power_stutter_off_time: 1.5,
     },
     digital_fuel_options: {
       enabled: false,
@@ -53,6 +56,7 @@ export const MOCK_RACES = [
       start_level: 100,
       refuel_rate: 10,
       pit_stop_delay: 2.0,
+      out_of_fuel_action: OutOfFuelAction.POWER_STUTTER,
     },
     team_options: {
       heat_lap_limit: 0,
@@ -139,20 +143,22 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
   const fuelOptions = new AnalogFuelOptions(
     fo.enabled,
     false, // reset_fuel_at_heat_start
-    false, // end_heat_on_out_of_fuel
+    fo.out_of_fuel_action ?? OutOfFuelAction.DO_NOT_COUNT_LAPS, // out_of_fuel_action
     fo.capacity,
     fo.usage_type as FuelUsageType,
     fo.usage_rate,
     fo.start_level,
     fo.refuel_rate,
     fo.pit_stop_delay,
+    fo.power_stutter_on_time,
+    fo.power_stutter_off_time,
   );
 
   const df = r.digital_fuel_options || {};
   const digitalFuelOptions = new DigitalFuelOptions(
     df.enabled,
     false, // reset_fuel_at_heat_start
-    false, // end_heat_on_out_of_fuel
+    df.out_of_fuel_action ?? OutOfFuelAction.DO_NOT_COUNT_LAPS, // out_of_fuel_action
     df.capacity,
     df.usage_type as FuelUsageType,
     df.usage_rate,

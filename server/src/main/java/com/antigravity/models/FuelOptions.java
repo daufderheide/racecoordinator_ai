@@ -11,6 +11,12 @@ public abstract class FuelOptions {
     CUBIC
   }
 
+  public enum OutOfFuelAction {
+    DO_NOT_COUNT_LAPS,
+    END_HEAT,
+    POWER_STUTTER
+  }
+
   @BsonProperty("enabled")
   @JsonProperty("enabled")
   protected final boolean enabled;
@@ -19,9 +25,9 @@ public abstract class FuelOptions {
   @JsonProperty("reset_fuel_at_heat_start")
   protected final boolean resetFuelAtHeatStart;
 
-  @BsonProperty("end_heat_on_out_of_fuel")
-  @JsonProperty("end_heat_on_out_of_fuel")
-  protected final boolean endHeatOnOutOfFuel;
+  @BsonProperty("out_of_fuel_action")
+  @JsonProperty("out_of_fuel_action")
+  protected final OutOfFuelAction outOfFuelAction;
 
   @BsonProperty("capacity")
   @JsonProperty("capacity")
@@ -50,7 +56,7 @@ public abstract class FuelOptions {
   public FuelOptions() {
     this.enabled = false;
     this.resetFuelAtHeatStart = false;
-    this.endHeatOnOutOfFuel = false;
+    this.outOfFuelAction = OutOfFuelAction.DO_NOT_COUNT_LAPS;
     this.capacity = 100.0;
     this.usageType = FuelUsageType.LINEAR;
     this.usageRate = 4.0;
@@ -62,7 +68,7 @@ public abstract class FuelOptions {
   public FuelOptions(
       boolean enabled,
       boolean resetFuelAtHeatStart,
-      boolean endHeatOnOutOfFuel,
+      OutOfFuelAction outOfFuelAction,
       double capacity,
       FuelUsageType usageType,
       double usageRate,
@@ -71,7 +77,7 @@ public abstract class FuelOptions {
       double pitStopDelay) {
     this.enabled = enabled;
     this.resetFuelAtHeatStart = resetFuelAtHeatStart;
-    this.endHeatOnOutOfFuel = endHeatOnOutOfFuel;
+    this.outOfFuelAction = outOfFuelAction;
     this.capacity = capacity;
     this.usageType = usageType != null ? usageType : FuelUsageType.LINEAR;
     this.usageRate = usageRate;
@@ -88,8 +94,8 @@ public abstract class FuelOptions {
     return resetFuelAtHeatStart;
   }
 
-  public boolean isEndHeatOnOutOfFuel() {
-    return endHeatOnOutOfFuel;
+  public OutOfFuelAction getOutOfFuelAction() {
+    return outOfFuelAction;
   }
 
   public double getCapacity() {

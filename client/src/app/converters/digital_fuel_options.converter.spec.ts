@@ -1,4 +1,4 @@
-import { FuelUsageType } from "@app/models/fuel_options";
+import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
 
 import { DigitalFuelOptionsConverter } from "./digital_fuel_options.converter";
 
@@ -20,7 +20,7 @@ describe("DigitalFuelOptionsConverter", () => {
       refuelRate: 15,
       pitStopDelay: 3.0,
       resetFuelAtHeatStart: true,
-      endHeatOnOutOfFuel: true,
+      outOfFuelAction: OutOfFuelAction.END_HEAT,
     };
     const result = DigitalFuelOptionsConverter.fromProto(mockProto as any);
     expect(result.enabled).toBeTrue();
@@ -31,7 +31,7 @@ describe("DigitalFuelOptionsConverter", () => {
     expect(result.refuel_rate).toBe(15);
     expect(result.pit_stop_delay).toBe(3.0);
     expect(result.reset_fuel_at_heat_start).toBeTrue();
-    expect(result.end_heat_on_out_of_fuel).toBeTrue();
+    expect(result.out_of_fuel_action).toBe(OutOfFuelAction.END_HEAT);
   });
 
   it("should handle string usage types", () => {
@@ -40,5 +40,13 @@ describe("DigitalFuelOptionsConverter", () => {
     };
     const result = DigitalFuelOptionsConverter.fromProto(mockProto as any);
     expect(result.usage_type).toBe(FuelUsageType.CUBIC);
+  });
+
+  it("should fallback POWER_STUTTER to DO_NOT_COUNT_LAPS for digital fuel", () => {
+    const mockProto = {
+      outOfFuelAction: OutOfFuelAction.POWER_STUTTER,
+    };
+    const result = DigitalFuelOptionsConverter.fromProto(mockProto as any);
+    expect(result.out_of_fuel_action).toBe(OutOfFuelAction.DO_NOT_COUNT_LAPS);
   });
 });
