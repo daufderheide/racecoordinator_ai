@@ -707,12 +707,18 @@ export class DefaultRacedayComponent
   toggleLayoutEditorMinimize(event: Event) {
     event.stopPropagation();
     this.isLayoutEditorMinimized = !this.isLayoutEditorMinimized;
+
+    // Update the local instance/draft settings
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     settings.layoutEditorMinimized = this.isLayoutEditorMinimized;
-    if (!this.isUIEditorMode()) {
-      this.settingsService.saveSettings(settings);
-    } else {
+
+    // Persist to global settings
+    const globalSettings = this.settingsService.getSettings();
+    globalSettings.layoutEditorMinimized = this.isLayoutEditorMinimized;
+    this.settingsService.saveSettings(globalSettings);
+
+    if (this.isUIEditorMode()) {
       this.columnsChanged.emit();
     }
   }
@@ -720,13 +726,20 @@ export class DefaultRacedayComponent
   onLayoutEditorDragEnded(event: any) {
     const pos = event.source.getFreeDragPosition();
     this.layoutEditorPosition = pos;
+
+    // Update the local instance/draft settings
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     settings.layoutEditorPositionX = pos.x;
     settings.layoutEditorPositionY = pos.y;
-    if (!this.isUIEditorMode()) {
-      this.settingsService.saveSettings(settings);
-    } else {
+
+    // Persist to global settings
+    const globalSettings = this.settingsService.getSettings();
+    globalSettings.layoutEditorPositionX = pos.x;
+    globalSettings.layoutEditorPositionY = pos.y;
+    this.settingsService.saveSettings(globalSettings);
+
+    if (this.isUIEditorMode()) {
       this.columnsChanged.emit();
     }
   }
@@ -740,10 +753,14 @@ export class DefaultRacedayComponent
       const settings = this.editingSettings();
       if (settings) {
         this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
-        this.layoutEditorPosition = {
-          x: settings.layoutEditorPositionX ?? 0,
-          y: settings.layoutEditorPositionY ?? 0,
-        };
+        const targetX = settings.layoutEditorPositionX ?? 0;
+        const targetY = settings.layoutEditorPositionY ?? 0;
+        if (
+          this.layoutEditorPosition.x !== targetX ||
+          this.layoutEditorPosition.y !== targetY
+        ) {
+          this.layoutEditorPosition = { x: targetX, y: targetY };
+        }
         if (this.currentRacedayLayout?.widgets) {
           this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
         } else {
