@@ -10,6 +10,7 @@ import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.ProtocolListener;
+import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
@@ -144,6 +145,7 @@ public class TrackmateProtocolTest {
     config.useIR = false;
     config.normallyClosedLaneSensors = false;
     config.normallyClosedRelays = false;
+    config.lapPinPitBehavior = ArduinoConfig.LapPinPitBehavior.NONE;
 
     config.lapPinBehaviors = new ArrayList<>();
     config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 0);
