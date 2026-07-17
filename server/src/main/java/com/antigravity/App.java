@@ -1286,7 +1286,7 @@ public class App {
     }
   }
 
-  private static void triggerLogRollover() {
+  static void triggerLogRollover() {
     try {
       org.slf4j.ILoggerFactory factory = org.slf4j.LoggerFactory.getILoggerFactory();
       if (factory instanceof ch.qos.logback.classic.LoggerContext) {
@@ -1306,13 +1306,37 @@ public class App {
                       (ch.qos.logback.core.rolling.RollingFileAppender<
                               ch.qos.logback.classic.spi.ILoggingEvent>)
                           appender;
-              rfa.rollover();
+              String activeFileName = rfa.getFile();
+              if (activeFileName != null) {
+                java.io.File activeLogFile = new java.io.File(activeFileName);
+                if (activeLogFile.exists() && activeLogFile.length() > 0) {
+                  // Stop the appender to release file locks (critical for Windows)
+                  rfa.stop();
+
+                  // Determine the new file name (manually roll over)
+                  String dateStr =
+                      new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss")
+                          .format(new java.util.Date());
+                  java.io.File parentDir = activeLogFile.getParentFile();
+                  java.io.File rolledFile =
+                      new java.io.File(parentDir, "racecoordinator." + dateStr + "_session.log");
+
+                  boolean renamed = activeLogFile.renameTo(rolledFile);
+                  if (!renamed) {
+                    System.err.println("Failed to rename log file during manual rollover.");
+                  }
+
+                  // Restart the appender so it creates a fresh racecoordinator.log
+                  rfa.start();
+                }
+              }
             }
           }
         }
       }
     } catch (Exception e) {
       System.err.println("Failed to trigger log rollover: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 }
