@@ -198,6 +198,9 @@ public class HeatExecutionManager {
       double minCheckTime = driverData.getPendingLapTime() - excludedPendingLapTime[lane] + lapTime;
       if (minCheckTime < minLapTime) {
         handleRejection(driverData, lane, lapTime, RejectionReason.MIN_LAP_TIME);
+        if (this.race.getStatistics() != null) {
+          this.race.getStatistics().incrementMinLapTimeRejectionCount();
+        }
         Lap minLapMsg =
             Lap.newBuilder()
                 .setObjectId(driverData.getObjectId())
@@ -237,6 +240,9 @@ public class HeatExecutionManager {
 
     if (lapCounted) {
       timeSinceLastLap[lane] = 0.0;
+      if (isDrift && this.race.getStatistics() != null) {
+        this.race.getStatistics().incrementDriftLapCount();
+      }
     }
 
     // Check for finish condition immediately after a lap if requested

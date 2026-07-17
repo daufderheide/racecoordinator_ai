@@ -146,6 +146,8 @@ public class RaceStatisticsTest {
     assertTrue(csv.contains("yellowFlagCount"));
     assertTrue(csv.contains(String.valueOf(stats.getTotalPausedTimeMillis())));
     assertTrue(csv.contains("restartCount"));
+    assertTrue(csv.contains("driftLapCount"));
+    assertTrue(csv.contains("minLapTimeRejectionCount"));
 
     // Heat stats in CSV
     assertTrue(csv.contains("#Table: Heat 1 Statistics"));
@@ -185,6 +187,19 @@ public class RaceStatisticsTest {
 
     // Heat stats in CSV should also have headers
     assertTrue(csv.contains("#Table: Heat 1 Statistics"));
+  }
+
+  @Test
+  public void testDriftAndMinLapTimeCounts() {
+    RaceStatistics stats = new RaceStatistics();
+    assertEquals(0, stats.getDriftLapCount());
+    assertEquals(0, stats.getMinLapTimeRejectionCount());
+
+    stats.incrementDriftLapCount();
+    stats.incrementMinLapTimeRejectionCount();
+
+    assertEquals(1, stats.getDriftLapCount());
+    assertEquals(1, stats.getMinLapTimeRejectionCount());
   }
 
   @Test

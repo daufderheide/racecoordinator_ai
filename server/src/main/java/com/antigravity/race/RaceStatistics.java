@@ -11,6 +11,8 @@ public class RaceStatistics {
   private long totalPausedTimeMillis;
   private int yellowFlagCount;
   private int restartCount;
+  private int driftLapCount;
+  private int minLapTimeRejectionCount;
 
   public RaceStatistics() {}
 
@@ -94,5 +96,33 @@ public class RaceStatistics {
 
   public void addPausedTime(long millis) {
     this.totalPausedTimeMillis += millis;
+  }
+
+  @JsonProperty("driftLapCount")
+  public int getDriftLapCount() {
+    return driftLapCount;
+  }
+
+  @JsonProperty("driftLapCount")
+  public void setDriftLapCount(int driftLapCount) {
+    this.driftLapCount = driftLapCount;
+  }
+
+  @JsonProperty("minLapTimeRejectionCount")
+  public int getMinLapTimeRejectionCount() {
+    return minLapTimeRejectionCount;
+  }
+
+  @JsonProperty("minLapTimeRejectionCount")
+  public void setMinLapTimeRejectionCount(int minLapTimeRejectionCount) {
+    this.minLapTimeRejectionCount = minLapTimeRejectionCount;
+  }
+
+  public void incrementDriftLapCount() {
+    this.driftLapCount++;
+  }
+
+  public void incrementMinLapTimeRejectionCount() {
+    this.minLapTimeRejectionCount++;
   }
 }

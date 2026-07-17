@@ -231,6 +231,7 @@ public class HeatExecutionManagerTest {
     // Lap 1: 4.0s (accumulated: 4.0s) - below min 10.0s
     executionManager.onLap(0, 4.0, 1, false, true, false);
     assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getLapCount());
+    assertEquals(1, race.getStatistics().getMinLapTimeRejectionCount());
 
     // Lap 2: 7.0s (accumulated: 11.0s) - above min 10.0s
     executionManager.onLap(0, 7.0, 1, false, true, false);
@@ -702,6 +703,7 @@ public class HeatExecutionManagerTest {
 
     DriverHeatData.LapData lapData = race.getCurrentHeat().getDrivers().get(0).getLaps().get(0);
     assertTrue(lapData.isDrift());
+    assertEquals(1, race.getStatistics().getDriftLapCount());
   }
 
   @Test
