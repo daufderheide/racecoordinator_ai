@@ -197,7 +197,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.TAG }}
-          name: Release ${{ env.TAG }}
+          name: ${{ env.TAG }}
           prerelease: ${{ env.IS_PRERELEASE == 'true' }}
           files: |
             final-release/*
