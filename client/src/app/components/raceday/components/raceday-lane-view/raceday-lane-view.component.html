@@ -514,6 +514,16 @@
                       !parent().isTeam(hd)
                     ) {
                       <span
+                        [style.white-space]="
+                          [
+                            'gapLeader',
+                            'gapPosition',
+                            'gapLeaderF1',
+                            'gapPositionF1',
+                          ].includes(entry.property)
+                            ? 'nowrap'
+                            : 'normal'
+                        "
                         [style.padding-right]="
                           parent().race?.practice &&
                           (parent().isNameProperty(entry.property) ||
