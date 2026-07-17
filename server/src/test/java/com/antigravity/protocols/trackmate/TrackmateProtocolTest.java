@@ -118,6 +118,7 @@ public class TrackmateProtocolTest {
 
   private static class TestableTrackmateProtocol extends TrackmateProtocol {
     private final MockScheduler mockScheduler;
+    public long currentTime = 0;
 
     public TestableTrackmateProtocol(
         TrackmateConfig config,
@@ -131,6 +132,11 @@ public class TrackmateProtocolTest {
     @Override
     protected ScheduledExecutorService createScheduler() {
       return mockScheduler;
+    }
+
+    @Override
+    protected long now() {
+      return currentTime;
     }
   }
 
@@ -259,7 +265,7 @@ public class TrackmateProtocolTest {
   }
 
   @Test
-  public void testLfDebouncePitting() {
+  public void testTimeDebouncePitting() {
     // Configure PIT_IN_OUT behavior
     config.lapPinPitBehavior =
         com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT;
@@ -268,29 +274,37 @@ public class TrackmateProtocolTest {
     protocol.open();
 
     // 1. Trigger sensor for Lane 0 ('A')
+    protocol.currentTime = 1000;
     serialConnection.injectData(new byte[] {0x41});
     org.junit.Assert.assertTrue("Car should enter pits on sensor trigger", listener.laneInPits[0]);
 
-    // 2. First heartbeat (LF) - Car should still be in pits
-    serialConnection.injectData(new byte[] {0x0A});
-    org.junit.Assert.assertTrue("Car should remain in pits after 1 LF", listener.laneInPits[0]);
+    // 2. Advance time by 100ms - Car should still be in pits
+    protocol.currentTime = 1100;
+    scheduler.tick();
+    org.junit.Assert.assertTrue("Car should remain in pits after 100ms", listener.laneInPits[0]);
 
-    // 3. Second heartbeat (LF) - Car should leave pits
-    serialConnection.injectData(new byte[] {0x0A});
+    // 3. Advance time by 300ms total - Car should leave pits
+    protocol.currentTime = 1300;
+    scheduler.tick();
     org.junit.Assert.assertFalse(
-        "Car should leave pits after 2 LFs without trigger", listener.laneInPits[0]);
+        "Car should leave pits after 250ms without trigger", listener.laneInPits[0]);
 
     // 4. Trigger again - ensure it can re-enter pits
+    protocol.currentTime = 1500;
     serialConnection.injectData(new byte[] {0x41});
     org.junit.Assert.assertTrue("Car should re-enter pits", listener.laneInPits[0]);
 
-    // 5. Trigger once more before LF - shouldn't break anything, just resets LF counter
+    // 5. Trigger once more before timeout - resets timeout
+    protocol.currentTime = 1600;
     serialConnection.injectData(new byte[] {0x41});
     org.junit.Assert.assertTrue("Car still in pits", listener.laneInPits[0]);
 
-    serialConnection.injectData(new byte[] {0x0A}); // 1st LF
+    protocol.currentTime = 1700;
+    scheduler.tick(); // 100ms since last hit
     org.junit.Assert.assertTrue("Car still in pits", listener.laneInPits[0]);
-    serialConnection.injectData(new byte[] {0x0A}); // 2nd LF
+
+    protocol.currentTime = 1900;
+    scheduler.tick(); // 300ms since last hit
     org.junit.Assert.assertFalse("Car leaves pits", listener.laneInPits[0]);
   }
 }

@@ -8,6 +8,8 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public class TrackmateProtocol extends AbstractSerialProtocol {
 
@@ -15,8 +17,9 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   private int timeLength = 0;
   private final byte[] timeStream = new byte[3];
 
-  private final int[] lfCountSinceLastHit = new int[8];
+  private final long[] lastHitTimeMs = new long[8];
   private final boolean[] isSensorActive = new boolean[8];
+  private ScheduledFuture<?> debounceFuture;
 
   private static final byte START_COMMAND = 0x53; // 'S'
 
@@ -58,6 +61,42 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   protected void onPortConnected() {
     logger.info("Connected to {}. Initializing hardware.", config.commPort);
     initializeHardware();
+  }
+
+  @Override
+  protected void startStatusScheduler() {
+    super.startStatusScheduler();
+
+    if (debounceFuture != null) {
+      debounceFuture.cancel(false);
+    }
+    debounceFuture =
+        statusScheduler.scheduleAtFixedRate(
+            () -> {
+              long currentTime = now();
+              for (int i = 0; i < 8; i++) {
+                if (isSensorActive[i] && (currentTime - lastHitTimeMs[i] > 250)) {
+                  isSensorActive[i] = false;
+                  if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
+                    int behavior = config.lapPinBehaviors.get(i);
+                    int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
+                    triggerPinBehavior(behavior, inactiveState, i);
+                  }
+                }
+              }
+            },
+            0,
+            50,
+            TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public void close() {
+    if (debounceFuture != null) {
+      debounceFuture.cancel(false);
+      debounceFuture = null;
+    }
+    super.close();
   }
 
   private void initializeHardware() {
@@ -139,26 +178,9 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         commitTime();
       } else if (data == TERMINATOR_LF) {
         // Line feed acts as a heartbeat
-        if (listener != null) {
-          // LF acts as a timer to determine when the car has left the sensor.
-          // If we receive 2 LFs without seeing the sensor character, release the sensor.
-          for (int i = 0; i < 8; i++) {
-            if (isSensorActive[i]) {
-              lfCountSinceLastHit[i]++;
-              if (lfCountSinceLastHit[i] >= 2) {
-                isSensorActive[i] = false;
-                if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
-                  int behavior = config.lapPinBehaviors.get(i);
-                  int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
-                  triggerPinBehavior(behavior, inactiveState, i);
-                }
-              }
-            }
-          }
-        }
       } else if (data >= 0x41 && data <= 0x48) { // 'A' through 'H'
         int pinIndex = data - 0x41;
-        lfCountSinceLastHit[pinIndex] = 0;
+        lastHitTimeMs[pinIndex] = now();
 
         if (config.lapPinBehaviors != null && pinIndex < config.lapPinBehaviors.size()) {
           int behavior = config.lapPinBehaviors.get(pinIndex);
