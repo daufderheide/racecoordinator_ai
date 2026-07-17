@@ -702,19 +702,65 @@ public class App {
     System.setProperty("java.awt.headless", "false");
     try {
       SystemTray tray = SystemTray.getSystemTray();
-      Image image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g2d = (Graphics2D) image.getGraphics();
-      g2d.setColor(Color.RED);
-      g2d.fillRect(0, 0, 16, 16);
-      g2d.setColor(Color.WHITE);
-      g2d.drawString("RC", 1, 12);
-      g2d.dispose();
+      Image image = null;
+      try {
+        java.io.InputStream is = App.class.getResourceAsStream("/favicon.png");
+        if (is != null) {
+          Image originalImage = javax.imageio.ImageIO.read(is);
+          if (originalImage != null) {
+            // Attempt to set macOS Dock Icon (Java 9+)
+            try {
+              Class<?> taskbarClass = Class.forName("java.awt.Taskbar");
+              java.lang.reflect.Method getTaskbarMethod = taskbarClass.getMethod("getTaskbar");
+              Object taskbarInstance = getTaskbarMethod.invoke(null);
+              java.lang.reflect.Method setIconMethod =
+                  taskbarClass.getMethod("setIconImage", Image.class);
+              setIconMethod.invoke(taskbarInstance, originalImage);
+            } catch (Exception e1) {
+              // Attempt to set macOS Dock Icon (Java 8)
+              try {
+                Class<?> appClass = Class.forName("com.apple.eawt.Application");
+                java.lang.reflect.Method getAppMethod = appClass.getMethod("getApplication");
+                Object appInstance = getAppMethod.invoke(null);
+                java.lang.reflect.Method setDockIconMethod =
+                    appClass.getMethod("setDockIconImage", Image.class);
+                setDockIconMethod.invoke(appInstance, originalImage);
+              } catch (Exception e2) {
+                // Ignore
+              }
+            }
+
+            java.awt.Dimension trayIconSize = tray.getTrayIconSize();
+            BufferedImage scaledImage =
+                new BufferedImage(
+                    trayIconSize.width, trayIconSize.height, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2dScale = scaledImage.createGraphics();
+            g2dScale.setRenderingHint(
+                java.awt.RenderingHints.KEY_INTERPOLATION,
+                java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2dScale.drawImage(originalImage, 0, 0, trayIconSize.width, trayIconSize.height, null);
+            g2dScale.dispose();
+            image = scaledImage;
+          }
+        }
+      } catch (Exception ex) {
+        logger.warn("Could not load favicon.png for system tray, using fallback", ex);
+      }
+      if (image == null) {
+        image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = (Graphics2D) image.getGraphics();
+        g2d.setColor(Color.RED);
+        g2d.fillRect(0, 0, 16, 16);
+        g2d.setColor(Color.WHITE);
+        g2d.drawString("RC", 1, 12);
+        g2d.dispose();
+      }
 
       TrayIcon trayIcon = new TrayIcon(image, "Race Coordinator AI");
       trayIcon.setImageAutoSize(true);
 
       PopupMenu popup = new PopupMenu();
-      MenuItem openItem = new MenuItem("Open in Browser");
+      MenuItem openItem = new MenuItem("Open RaceCoordinator AI");
       openItem.addActionListener(e -> openBrowser("http://localhost:" + port));
 
       MenuItem exitItem = new MenuItem("Quit Server");

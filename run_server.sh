@@ -16,8 +16,8 @@ fi
 
 cd "$(dirname "$0")/server"
 
-# Find and kill any process using port 7070 or 8085
-for port in 7070 8085; do
+# Find and kill any process using port 7070, 8085, or 4200
+for port in 7070 8085 4200; do
   if command -v lsof >/dev/null 2>&1; then
     pids=$(lsof -t -i:$port 2>/dev/null)
     if [ ! -z "$pids" ]; then
