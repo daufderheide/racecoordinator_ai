@@ -76,8 +76,8 @@ Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; C
 Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist86; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
 
 ; Server
-Filename: "{app}\start_win.vbs"; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent 64bit; Check: not IsRestartAppRequested
-Filename: "{app}\start_win.vbs"; Parameters: "--headless"; WorkingDir: "{app}"; Flags: nowait 64bit; Check: IsRestartAppRequested
+Filename: "{app}\start_win.vbs"; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent 64bit shellexec; Check: not IsRestartAppRequested
+Filename: "{app}\start_win.vbs"; Parameters: "--headless"; WorkingDir: "{app}"; Flags: nowait 64bit shellexec; Check: IsRestartAppRequested
 
 [Code]
 function KillProcesses: Boolean;
