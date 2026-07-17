@@ -1229,6 +1229,37 @@ describe("UIEditorComponent", () => {
     }));
   });
 
+  describe("toolbox visual states undo/redo", () => {
+    it("should preserve toolbox visual states when undoing a change", fakeAsync(() => {
+      component.undoManager.initialize(component.editingState);
+
+      // Make a change that will be undoable
+      component.editingSettings.sortByStandings =
+        !component.editingSettings.sortByStandings;
+      component.undoManager.captureState();
+
+      expect(component.undoManager.undoStackCount).toBe(1);
+
+      // Simulate the user dragging or minimizing the toolbox after the change was made
+      component.editingSettings.layoutEditorMinimized = true;
+      component.editingSettings.layoutEditorPositionX = 123;
+      component.editingSettings.layoutEditorPositionY = 456;
+      component.editingSettings.columnEditorMinimized = true;
+      component.editingSettings.columnEditorPositionX = 321;
+      component.editingSettings.columnEditorPositionY = 654;
+
+      // Perform undo, which should rollback `sortByStandings` but NOT touch the editor positions
+      component.undoManager.undo();
+
+      expect(component.editingSettings.layoutEditorMinimized).toBeTrue();
+      expect(component.editingSettings.layoutEditorPositionX).toBe(123);
+      expect(component.editingSettings.layoutEditorPositionY).toBe(456);
+      expect(component.editingSettings.columnEditorMinimized).toBeTrue();
+      expect(component.editingSettings.columnEditorPositionX).toBe(321);
+      expect(component.editingSettings.columnEditorPositionY).toBe(654);
+    }));
+  });
+
   describe("theme management undo/redo", () => {
     let themes: Theme[];
 
@@ -1628,6 +1659,26 @@ describe("UIEditorComponent", () => {
     it("should report no changes when activeThemeId is the same", () => {
       const a = makeSettings({ activeThemeId: "t1" });
       const b = makeSettings({ activeThemeId: "t1" });
+      expect((component as any).areSettingsEqual(a, b)).toBeTrue();
+    });
+
+    it("should ignore layout and column editor visual states when comparing states", () => {
+      const a = makeSettings({
+        layoutEditorPositionX: 10,
+        layoutEditorPositionY: 20,
+        layoutEditorMinimized: false,
+        columnEditorPositionX: 5,
+        columnEditorPositionY: 10,
+        columnEditorMinimized: false,
+      });
+      const b = makeSettings({
+        layoutEditorPositionX: 100,
+        layoutEditorPositionY: 200,
+        layoutEditorMinimized: true,
+        columnEditorPositionX: 50,
+        columnEditorPositionY: 100,
+        columnEditorMinimized: true,
+      });
       expect((component as any).areSettingsEqual(a, b)).toBeTrue();
     });
 

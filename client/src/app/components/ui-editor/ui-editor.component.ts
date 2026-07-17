@@ -624,6 +624,20 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         equalizer: (a: UIEditorState, b: UIEditorState) =>
           this.areStatesEqual(a, b),
         applier: (s: UIEditorState) => {
+          if (this.editingState && this.editingState.settings && s.settings) {
+            s.settings.layoutEditorMinimized =
+              this.editingState.settings.layoutEditorMinimized;
+            s.settings.layoutEditorPositionX =
+              this.editingState.settings.layoutEditorPositionX;
+            s.settings.layoutEditorPositionY =
+              this.editingState.settings.layoutEditorPositionY;
+            s.settings.columnEditorMinimized =
+              this.editingState.settings.columnEditorMinimized;
+            s.settings.columnEditorPositionX =
+              this.editingState.settings.columnEditorPositionX;
+            s.settings.columnEditorPositionY =
+              this.editingState.settings.columnEditorPositionY;
+          }
           this.editingState = s;
           this.refreshDisplayProperties();
         },
@@ -955,12 +969,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       a.lampRedDim === b.lampRedDim &&
       a.lampGreen === b.lampGreen &&
       a.fuelGaugeImageSet === b.fuelGaugeImageSet &&
-      a.layoutEditorMinimized === b.layoutEditorMinimized &&
-      a.layoutEditorPositionX === b.layoutEditorPositionX &&
-      a.layoutEditorPositionY === b.layoutEditorPositionY &&
-      a.columnEditorMinimized === b.columnEditorMinimized &&
-      a.columnEditorPositionX === b.columnEditorPositionX &&
-      a.columnEditorPositionY === b.columnEditorPositionY &&
       JSON.stringify(a.demoConfig) === JSON.stringify(b.demoConfig) &&
       JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
       JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&

@@ -4311,7 +4311,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.layoutEditorPosition).toEqual({ x: 10, y: 10 });
     });
 
-    it("should save minimize state and emit columnsChanged on toggleLayoutEditorMinimize", () => {
+    it("should save minimize state and NOT emit columnsChanged on toggleLayoutEditorMinimize", () => {
       const settingsService = TestBed.inject(SettingsService);
       spyOn((component as any).columnsChanged, "emit");
       (settingsService.saveSettings as jasmine.Spy).calls.reset();
@@ -4329,7 +4329,7 @@ describe("DefaultRacedayComponent", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
       expect(component.isLayoutEditorMinimized).toBeTrue();
       expect(mockSettings.layoutEditorMinimized).toBeTrue();
-      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).not.toHaveBeenCalled();
       expect(settingsService.saveSettings).toHaveBeenCalled();
 
       // Test when isUIEditorMode is false
@@ -4339,10 +4339,11 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.isLayoutEditorMinimized).toBeFalse();
       expect(mockSettings.layoutEditorMinimized).toBeFalse();
+      expect((component as any).columnsChanged.emit).not.toHaveBeenCalled();
       expect(settingsService.saveSettings).toHaveBeenCalled();
     });
 
-    it("should save position and emit columnsChanged on onLayoutEditorDragEnded", () => {
+    it("should save position and NOT emit columnsChanged on onLayoutEditorDragEnded", () => {
       const settingsService = TestBed.inject(SettingsService);
       spyOn((component as any).columnsChanged, "emit");
       (settingsService.saveSettings as jasmine.Spy).calls.reset();
@@ -4360,7 +4361,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.layoutEditorPosition).toEqual({ x: 10, y: 10 });
       expect(mockSettings.layoutEditorPositionX).toBe(10);
       expect(mockSettings.layoutEditorPositionY).toBe(10);
-      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
+      expect((component as any).columnsChanged.emit).not.toHaveBeenCalled();
       expect(settingsService.saveSettings).toHaveBeenCalled();
 
       // Test when isUIEditorMode is false
@@ -4372,6 +4373,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.layoutEditorPosition).toEqual({ x: 500, y: 600 });
       expect(mockSettings.layoutEditorPositionX).toBe(500);
       expect(mockSettings.layoutEditorPositionY).toBe(600);
+      expect((component as any).columnsChanged.emit).not.toHaveBeenCalled();
       expect(settingsService.saveSettings).toHaveBeenCalled();
     });
 

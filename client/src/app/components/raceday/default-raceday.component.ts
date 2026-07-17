@@ -717,10 +717,6 @@ export class DefaultRacedayComponent
     const globalSettings = this.settingsService.getSettings();
     globalSettings.layoutEditorMinimized = this.isLayoutEditorMinimized;
     this.settingsService.saveSettings(globalSettings);
-
-    if (this.isUIEditorMode()) {
-      this.columnsChanged.emit();
-    }
   }
 
   onLayoutEditorDragEnded(event: any) {
@@ -738,10 +734,6 @@ export class DefaultRacedayComponent
     globalSettings.layoutEditorPositionX = pos.x;
     globalSettings.layoutEditorPositionY = pos.y;
     this.settingsService.saveSettings(globalSettings);
-
-    if (this.isUIEditorMode()) {
-      this.columnsChanged.emit();
-    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
