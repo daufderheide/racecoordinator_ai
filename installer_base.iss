@@ -48,11 +48,11 @@ Source: "release\RaceCoordinator\vcredist_x86.exe"; DestDir: "{tmp}"; Flags: ign
 
 [Icons]
 ; Desktop Icons
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\start_win.vbs"; \
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"""; \
     IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 ; Start Menu Icons
-Name: "{group}\{#MyAppName}"; Filename: "{app}\start_win.vbs"; \
+Name: "{group}\{#MyAppName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"""; \
     IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
@@ -76,8 +76,8 @@ Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; C
 Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist86; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
 
 ; Server
-Filename: "{app}\start_win.vbs"; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent shellexec; Check: not IsRestartAppRequested
-Filename: "{app}\start_win.vbs"; Parameters: "--headless"; WorkingDir: "{app}"; Flags: nowait shellexec; Check: IsRestartAppRequested
+Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
+Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"" --headless"; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested
 
 [Code]
 function KillProcesses: Boolean;
