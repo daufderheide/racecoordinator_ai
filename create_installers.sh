@@ -102,33 +102,55 @@ fi
 # 4. Extract and Bundle Dependencies
 if [ -r build_cache/java8.zip ]; then
     cp build_cache/java8.zip release/RaceCoordinator_Offline/bundled_jre8.zip
-    echo "Extracting JRE 8 (Legacy Support)..."
-    unzip -q build_cache/java8.zip -d release/RaceCoordinator/temp_jre8
-    mv release/RaceCoordinator/temp_jre8/*/* release/RaceCoordinator/jre8/
-    rm -rf release/RaceCoordinator/temp_jre8
+    
+    if [ ! -d build_cache/jre8_extracted ]; then
+        echo "Extracting JRE 8 (Legacy Support) to cache..."
+        unzip -q build_cache/java8.zip -d build_cache/temp_jre8
+        mkdir -p build_cache/jre8_extracted
+        mv build_cache/temp_jre8/*/* build_cache/jre8_extracted/
+        rm -rf build_cache/temp_jre8
+    fi
+    echo "Copying JRE 8 to release..."
+    cp -a build_cache/jre8_extracted/* release/RaceCoordinator/jre8/
 fi
 
 
 if [ -r build_cache/java17.zip ]; then
     cp build_cache/java17.zip release/RaceCoordinator_Offline/bundled_jre17.zip
-    echo "Extracting JRE 17 (Modern Support)..."
-    unzip -q build_cache/java17.zip -d release/RaceCoordinator/temp_jre17
-    mv release/RaceCoordinator/temp_jre17/*/* release/RaceCoordinator/jre17/
-    rm -rf release/RaceCoordinator/temp_jre17
+    
+    if [ ! -d build_cache/jre17_extracted ]; then
+        echo "Extracting JRE 17 (Modern Support) to cache..."
+        unzip -q build_cache/java17.zip -d build_cache/temp_jre17
+        mkdir -p build_cache/jre17_extracted
+        mv build_cache/temp_jre17/*/* build_cache/jre17_extracted/
+        rm -rf build_cache/temp_jre17
+    fi
+    echo "Copying JRE 17 to release..."
+    cp -a build_cache/jre17_extracted/* release/RaceCoordinator/jre17/
 fi
 
 if [ -r build_cache/mongodb32.zip ]; then
-    echo "Extracting MongoDB 3.2..."
-    unzip -q build_cache/mongodb32.zip -d release/RaceCoordinator/temp_mongo32
-    mv release/RaceCoordinator/temp_mongo32/*/* release/RaceCoordinator/mongodb32/
-    rm -rf release/RaceCoordinator/temp_mongo32
+    if [ ! -d build_cache/mongodb32_extracted ]; then
+        echo "Extracting MongoDB 3.2 to cache..."
+        unzip -q build_cache/mongodb32.zip -d build_cache/temp_mongo32
+        mkdir -p build_cache/mongodb32_extracted
+        mv build_cache/temp_mongo32/*/* build_cache/mongodb32_extracted/
+        rm -rf build_cache/temp_mongo32
+    fi
+    echo "Copying MongoDB 3.2 to release..."
+    cp -a build_cache/mongodb32_extracted/* release/RaceCoordinator/mongodb32/
 fi
 
 if [ -r build_cache/mongodb60.zip ]; then
-    echo "Extracting MongoDB 6.0..."
-    unzip -q build_cache/mongodb60.zip -d release/RaceCoordinator/temp_mongo60
-    mv release/RaceCoordinator/temp_mongo60/*/* release/RaceCoordinator/mongodb60/
-    rm -rf release/RaceCoordinator/temp_mongo60
+    if [ ! -d build_cache/mongodb60_extracted ]; then
+        echo "Extracting MongoDB 6.0 to cache..."
+        unzip -q build_cache/mongodb60.zip -d build_cache/temp_mongo60
+        mkdir -p build_cache/mongodb60_extracted
+        mv build_cache/temp_mongo60/*/* build_cache/mongodb60_extracted/
+        rm -rf build_cache/temp_mongo60
+    fi
+    echo "Copying MongoDB 6.0 to release..."
+    cp -a build_cache/mongodb60_extracted/* release/RaceCoordinator/mongodb60/
 fi
 
 if [ -f build_cache/vc_redist.x64.exe ]; then
@@ -138,9 +160,6 @@ fi
 if [ -f build_cache/vcredist_x86.exe ]; then
     cp build_cache/vcredist_x86.exe release/RaceCoordinator/vcredist_x86.exe
 fi
-
-
-
 
 # 5. Create Launch Scripts
 
