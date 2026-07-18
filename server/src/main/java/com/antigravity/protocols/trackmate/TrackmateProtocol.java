@@ -8,8 +8,6 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 public class TrackmateProtocol extends AbstractSerialProtocol {
 
@@ -19,7 +17,6 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   private final long[] lastHitTimeMs = new long[8];
   private final boolean[] isSensorActive = new boolean[8];
-  private ScheduledFuture<?> debounceFuture;
 
   private static final byte START_COMMAND = 0x53; // 'S'
 
@@ -66,36 +63,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   protected void startStatusScheduler() {
     super.startStatusScheduler();
-
-    if (debounceFuture != null) {
-      debounceFuture.cancel(false);
-    }
-    debounceFuture =
-        statusScheduler.scheduleAtFixedRate(
-            () -> {
-              long currentTime = now();
-              for (int i = 0; i < 8; i++) {
-                if (isSensorActive[i] && (currentTime - lastHitTimeMs[i] > 500)) {
-                  isSensorActive[i] = false;
-                  if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
-                    int behavior = config.lapPinBehaviors.get(i);
-                    int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
-                    triggerPinBehavior(behavior, inactiveState, i);
-                  }
-                }
-              }
-            },
-            0,
-            50,
-            TimeUnit.MILLISECONDS);
   }
 
   @Override
   public void close() {
-    if (debounceFuture != null) {
-      debounceFuture.cancel(false);
-      debounceFuture = null;
-    }
     super.close();
   }
 
@@ -177,7 +148,18 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       if (data == TERMINATOR_CR) {
         commitTime();
       } else if (data == TERMINATOR_LF) {
-        // Line feed acts as a heartbeat
+        // Line feed acts as a heartbeat, use it for debounce/pit checking
+        long currentTime = now();
+        for (int i = 0; i < 8; i++) {
+          if (isSensorActive[i] && (currentTime - lastHitTimeMs[i] > 500)) {
+            isSensorActive[i] = false;
+            if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
+              int behavior = config.lapPinBehaviors.get(i);
+              int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
+              triggerPinBehavior(behavior, inactiveState, i);
+            }
+          }
+        }
       } else if (data >= 0x41 && data <= 0x48) { // 'A' through 'H'
         int pinIndex = data - 0x41;
         lastHitTimeMs[pinIndex] = now();
