@@ -127,13 +127,32 @@ Before starting the server and client, it is highly recommended to update your l
 ##### Run the Headless Server
 The server manages the application logic, databases, and connection ports.
 1. Open a terminal tab inside the Google Antigravity IDE (by default this will be a PowerShell terminal on Windows).
-2. Run the server headless script:
+2. **Configure PowerShell execution policy** (required to run scripts):
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+   This allows running local scripts while maintaining security. If you see an error about execution policies, this command fixes it.
+3. **Install Java and set JAVA_HOME** (required for the server):
+   - The server requires Java Development Kit (JDK) 8 or higher
+   - Download and install a JDK from one of these sources:
+     - [Microsoft OpenJDK](https://www.microsoft.com/openjdk) (recommended, modern versions)
+     - [Oracle JDK](https://www.oracle.com/java/technologies/downloads/)
+     - [Adoptium](https://adoptium.net/)
+   - **Important**: During installation, enable the "Add Java to PATH" option if available
+   - Set JAVA_HOME environment variable (if not set automatically):
+     - Open System Properties → Advanced → Environment Variables
+     - Under "System variables", click "New"
+     - Variable name: `JAVA_HOME`
+     - Variable value: Your Java installation path (e.g., `C:\Program Files\Microsoft\jdk-17.0.x` or `C:\Program Files\Java\jdk-17`)
+     - Click "OK" to save
+   - **Restart your IDE** for the environment variable changes to take effect
+4. Run the server headless script:
    ```powershell
    .\run_server_headless.ps1
    ```
    *(This script: [run_server_headless.ps1](run_server_headless.ps1))*
-3. On first run it will automatically configure Java (if already installed), download and install Maven (if not found), install server dependencies, build the server, and start it on port 7070.
-4. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
+5. On first run it will automatically configure Java (if already installed), download and install Maven (if not found), install server dependencies, build the server, and start it on port 7070.
+6. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
 
 ##### Run the Client
 The client provides the web-based user interface.
@@ -146,6 +165,19 @@ The client provides the web-based user interface.
 3. On first run, it will automatically download and install dependencies (`npm install`), compile Protobuf schemas, and launch the dev server.
 4. Once running, access the user interface in your browser at:
    - [http://localhost:4200](http://localhost:4200)
+
+#### Troubleshooting Common Issues
+
+##### Java Installation Problems
+- **"JAVA_HOME is not defined correctly"**: Ensure JAVA_HOME points to your Java installation directory, not the bin subdirectory. For example: `C:\Program Files\Microsoft\jdk-17.0.x` not `C:\Program Files\Microsoft\jdk-17.0.x\bin`.
+- **Multiple Java versions installed**: Ensure JAVA_HOME points to your desired Java version, and that version appears first in your PATH environment variable.
+
+##### Java Runtime Warnings (Can Be Ignored)
+- **"WARNING: A restricted method in java.lang.System has been called"**: These warnings appear when using modern Java versions (17+) with certain libraries like Jansi and Guava that are used by Maven. These warnings are expected and do not prevent the server from running. They can be safely ignored.
+- **"WARNING: A terminally deprecated method in sun.misc.Unsafe has been called"**: Similar to above, these are deprecation warnings from libraries used by the build process. They do not affect functionality and can be ignored.
+
+##### PowerShell Script Execution Problems
+- **"running scripts is disabled on this system"**: Run the PowerShell execution policy command: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
 ---
 
