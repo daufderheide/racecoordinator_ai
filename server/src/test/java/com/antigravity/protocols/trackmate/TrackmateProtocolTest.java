@@ -283,28 +283,28 @@ public class TrackmateProtocolTest {
     scheduler.tick();
     org.junit.Assert.assertTrue("Car should remain in pits after 100ms", listener.laneInPits[0]);
 
-    // 3. Advance time by 300ms total - Car should leave pits
-    protocol.currentTime = 1300;
+    // 3. Advance time by 600ms total - Car should leave pits
+    protocol.currentTime = 1600;
     scheduler.tick();
     org.junit.Assert.assertFalse(
-        "Car should leave pits after 250ms without trigger", listener.laneInPits[0]);
+        "Car should leave pits after 500ms without trigger", listener.laneInPits[0]);
 
     // 4. Trigger again - ensure it can re-enter pits
-    protocol.currentTime = 1500;
+    protocol.currentTime = 1800;
     serialConnection.injectData(new byte[] {0x41});
     org.junit.Assert.assertTrue("Car should re-enter pits", listener.laneInPits[0]);
 
     // 5. Trigger once more before timeout - resets timeout
-    protocol.currentTime = 1600;
+    protocol.currentTime = 2000;
     serialConnection.injectData(new byte[] {0x41});
     org.junit.Assert.assertTrue("Car still in pits", listener.laneInPits[0]);
 
-    protocol.currentTime = 1700;
+    protocol.currentTime = 2100;
     scheduler.tick(); // 100ms since last hit
     org.junit.Assert.assertTrue("Car still in pits", listener.laneInPits[0]);
 
-    protocol.currentTime = 1900;
-    scheduler.tick(); // 300ms since last hit
+    protocol.currentTime = 2600;
+    scheduler.tick(); // 600ms since last hit
     org.junit.Assert.assertFalse("Car leaves pits", listener.laneInPits[0]);
   }
 }

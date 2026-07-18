@@ -75,7 +75,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
             () -> {
               long currentTime = now();
               for (int i = 0; i < 8; i++) {
-                if (isSensorActive[i] && (currentTime - lastHitTimeMs[i] > 250)) {
+                if (isSensorActive[i] && (currentTime - lastHitTimeMs[i] > 500)) {
                   isSensorActive[i] = false;
                   if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
                     int behavior = config.lapPinBehaviors.get(i);
@@ -235,6 +235,12 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       hwLapTime[i].reset();
       hwSegmentTime[i].reset();
     }
+    // Reset sensor states so that we can detect hits that occur immediately upon
+    // resume
+    for (int i = 0; i < 8; i++) {
+      isSensorActive[i] = false;
+      lastHitTimeMs[i] = 0;
+    }
   }
 
   @Override
@@ -312,7 +318,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   @Override
   protected boolean useLapsForSegments() {
-    return true;
+    return false;
   }
 
   @Override
