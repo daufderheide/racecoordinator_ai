@@ -228,8 +228,9 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public void startTimer() {
     super.startTimer();
-    logger.info("Starting timer");
-    writeData(new byte[] {START_COMMAND, TERMINATOR_LF});
+    logger.info("Starting timer (software timer only, hardware timer started at initialization)");
+    // Do not send START_COMMAND here, as it's already sent during initialization
+    // and sending it again can cause Trackmate to drop sensor readings.
   }
 
   @Override
@@ -246,7 +247,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
             + powerState
             + ", Command: "
             + (char) command);
-    writeData(new byte[] {command});
+    writeData(new byte[] {command, TERMINATOR_LF});
   }
 
   @Override
@@ -272,7 +273,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         on,
         (char) commandPrefix,
         bitmask);
-    byte[] message = new byte[] {commandPrefix, (byte) bitmask};
+    byte[] message = new byte[] {commandPrefix, (byte) bitmask, TERMINATOR_LF};
     writeData(message);
   }
 
