@@ -31,8 +31,51 @@ To collaborate and sync repository changes, you need a GitHub account. Follow th
 5. Verify your email address using the code sent to your inbox.
 6. Choose a plan (the free plan is sufficient for development and beta testing).
 
+### Step 3: Install Git
+
+Git is required to clone the repository and manage version control. Install it using one of these methods:
+
+#### Option 1: Install via Winget (Recommended)
+1. Open a Command Prompt or PowerShell terminal as **Administrator** (right-click and choose "Run as Administrator").
+2. Run the following command:
+   ```bash
+   winget install --id Git.Git -e --source winget
+   ```
+3. Follow the installation prompts and complete the setup.
+4. Restart your terminal after installation.
+
+> [!TIP]
+> If winget fails with exit code 1 or other errors, try Option 2 below.
+
+#### Option 2: Install via Official Installer
+1. Download the Git installer from the official website:
+   - [Git for Windows Download Page](https://git-scm.com/download/win)
+2. Run the downloaded installer as Administrator (right-click and choose "Run as Administrator").
+3. Follow the setup wizard with these recommended settings:
+   - Use default settings for most options
+   - Choose "Git from the command line and also from 3rd-party software" when asked about PATH environment
+   - Select "Checkout Windows-style, commit Unix-style line endings" for line ending conversions
+4. Complete the installation.
+5. **Manually add Git to PATH** (required):
+   - Open System Properties (Right-click "This PC" → Properties → Advanced system settings → Environment Variables)
+   - Under "System variables", find "Path" and click "Edit"
+   - Click "New" and add: `C:\Program Files\Git`
+   - Click "OK" to save all changes
+6. **Restart your IDE** (Google Antigravity IDE) for the PATH changes to take effect.
+
+#### Troubleshooting Git Installation
+- **Winget fails**: Ensure you're running the terminal as Administrator. If it still fails, use Option 2 (manual installer).
+- **Git not recognized after manual installation**: The manual installer may not add Git to your PATH automatically. You need to:
+  1. Add `C:\Program Files\Git` to your system PATH environment variable
+  2. **Restart your IDE** (Google Antigravity IDE) for the PATH changes to take effect
+- **Git not recognized after installation**: Restart your terminal or restart your computer to ensure PATH changes take effect.
+- **Permission errors**: Always run installers as Administrator on Windows.
+
+> [!WARNING]
+> After manually installing Git, you **must restart your IDE** for the PATH changes to be recognized, even if you've added Git to your system PATH.
+
 > [!IMPORTANT]
-> **Everything after Step 2** (including cloning, running dependencies, and launching the client/server) will be done directly inside the **Google Antigravity IDE**.
+> **Everything after Step 3** (including cloning, running dependencies, and launching the client/server) will be done directly inside the **Google Antigravity IDE**.
 
 ---
 
