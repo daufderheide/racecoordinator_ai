@@ -28,9 +28,9 @@ public class NotStarted implements IRaceState {
   public RaceFlag getFlagType(Race race) {
     if (race == null) return RaceFlag.RED;
 
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
-    double elapsed = autoStartTime - race.getAutoStartRemaining();
+    double autoStartTime = getAutoStartTime(race);
+    double autoStartWarmupTime = getAutoStartWarmupTime(race);
+    double elapsed = getElapsed(autoStartTime, race.getAutoStartRemaining());
     if (autoStartWarmupTime > 0
         && elapsed <= autoStartWarmupTime
         && race.getAutoStartRemaining() > 0) {
@@ -40,7 +40,7 @@ public class NotStarted implements IRaceState {
     return RaceFlag.RED;
   }
 
-  private ScheduledExecutorService scheduler;
+  private ScheduledExecutorService executorService;
   private ScheduledFuture<?> timerHandle;
   private Race race;
   private HeatExecutionManager executionManager;
@@ -89,7 +89,7 @@ public class NotStarted implements IRaceState {
     double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
     double elapsed = autoStartTime - race.getAutoStartRemaining();
 
-    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+    if (isWarmupActive(autoStartWarmupTime, elapsed)) {
       logger.info("NotStarted.start(): Warmup was active, resetting heat.");
       race.resetCurrentHeat();
     }
@@ -105,7 +105,7 @@ public class NotStarted implements IRaceState {
     double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
     double elapsed = autoStartTime - race.getAutoStartRemaining();
 
-    if (autoStartWarmupTime > 0 && elapsed <= autoStartWarmupTime) {
+    if (isWarmupActive(autoStartWarmupTime, elapsed)) {
       logger.info("NotStarted.pause(): Warmup was active, resetting heat.");
       race.resetCurrentHeat();
     }
@@ -280,7 +280,7 @@ public class NotStarted implements IRaceState {
               double delta = (now - lastTime) / 1_000_000_000.0;
               lastTime = now;
 
-              double remaining = race.getAutoStartRemaining() - delta;
+              double remaining = calculateRemainingTime(race.getAutoStartRemaining(), delta);
 
               // Handle warmup time power logic and refueling
               double autoStartTime = race.getRaceModel().getAutoStartTime();
