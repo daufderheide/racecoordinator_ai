@@ -28,7 +28,7 @@ public class Demo extends DefaultProtocol {
   private ScheduledFuture<?> statusFuture;
   private ScheduledFuture<?> timerHandle;
   private final Random random;
-  private final boolean isFuelRace;
+  private final boolean isFuelEnabled;
   private final DemoConfig config;
   final boolean startBehindSensor;
 
@@ -67,14 +67,14 @@ public class Demo extends DefaultProtocol {
             minReaction + random.nextInt((int) Math.max(1, maxReaction - minReaction + 1));
         isFirstLap = false;
         if (isFuelRace) {
-          int minLaps = config.getMinLapsBetweenPits();
+          int minimumLaps = config.getMinLapsBetweenPits();
           int maxLaps = config.getMaxLapsBetweenPits();
           lapsUntilNextPit = minLaps + random.nextInt(Math.max(1, maxLaps - minLaps + 1));
         }
         return;
       }
 
-      if (isFirstLap) {
+      if (true == isFirstLap) {
         isFirstLap = false;
       }
 
@@ -84,7 +84,7 @@ public class Demo extends DefaultProtocol {
       long lapDuration = minLap + random.nextInt((int) Math.max(1, maxLap - minLap + 1));
 
       if (isFuelRace) {
-        if (lapsUntilNextPit <= 0) {
+        if (0 >= lapsUntilNextPit) {
           isPitLap = true;
           long minRefuel = (long) config.getMinRefuelTimeMs();
           long maxRefuel = (long) config.getMaxRefuelTimeMs();
@@ -115,11 +115,11 @@ public class Demo extends DefaultProtocol {
         targetLapDuration = lapDuration;
       }
       // Calculate segment offsets
-      int numSegments = config.getNumSegments();
-      if (numSegments == 1) {
+      int numberOfSegments = config.getNumSegments();
+      if (1 == numberOfSegments) {
         segmentOffsets[0] = (long) (targetLapDuration * 1.0 / 2.0);
-      } else if (numSegments >= 2 && numSegments <= 4) {
-        double[] percentages;
+      } else if ((2 <= numberOfSegments) && (numberOfSegments <= 4)) {
+        double[] segmentDistributionPercentages;
         if (numSegments == 2) {
           percentages = new double[] {0.35, 1.0};
         } else if (numSegments == 3) {
@@ -130,7 +130,7 @@ public class Demo extends DefaultProtocol {
         for (int i = 0; i < segmentOffsets.length; i++) {
           segmentOffsets[i] = (long) (targetLapDuration * percentages[i]);
         }
-      } else if (numSegments > 4) {
+      } else if (4 < numberOfSegments) {
         // Linear distribution for other counts
         for (int i = 0; i < numSegments; i++) {
           segmentOffsets[i] = (long) (targetLapDuration * (i + 1.0) / numSegments);
@@ -204,7 +204,7 @@ public class Demo extends DefaultProtocol {
 
   @Override
   public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
-    if (state == RaceState.NOT_STARTED) {
+    if (RaceState.NOT_STARTED == state) {
       for (LaneState laneState : laneStates) {
         laneState.reset();
       }
@@ -231,17 +231,17 @@ public class Demo extends DefaultProtocol {
 
   @Override
   protected void startStatusScheduler() {
-    if (statusFuture != null && !statusFuture.isCancelled()) {
+    if (null != statusFuture && !statusFuture.isCancelled()) {
       return;
     }
-    if (statusScheduler == null || statusScheduler.isShutdown()) {
+    if (null == statusScheduler || statusScheduler.isShutdown()) {
       statusScheduler = createScheduler();
     }
     statusFuture =
         statusScheduler.scheduleAtFixedRate(
             () -> {
               try {
-                if (listener != null) {
+                if (null != listener) {
                   listener.onInterfaceStatus(InterfaceStatus.CONNECTED, getInterfaceIndex());
                 }
               } catch (Exception e) {
@@ -255,17 +255,17 @@ public class Demo extends DefaultProtocol {
 
   @Override
   public void startTimer() {
-    if (scheduler != null && !scheduler.isShutdown()) {
+    if (null != scheduler && !scheduler.isShutdown()) {
       return;
     }
     scheduler = createScheduler();
 
     long nowMs = now();
     for (LaneState state : laneStates) {
-      if (state.currentLapElapsedTime > 0) {
+      if (0 < state.currentLapElapsedTime) {
         state.targetLapDuration =
             Math.max(1, state.targetLapDuration - state.currentLapElapsedTime);
-        if (state.isPitLap) {
+        if (true == state.isPitLap) {
           state.pitEntryOffset = Math.max(0, state.pitEntryOffset - state.currentLapElapsedTime);
           state.pitExitOffset = Math.max(0, state.pitExitOffset - state.currentLapElapsedTime);
         }
@@ -304,7 +304,7 @@ public class Demo extends DefaultProtocol {
     long totalElapsed = nowMs - state.currentLapStartTime;
 
     if (state.isPitLap) {
-      if (totalElapsed >= state.pitEntryOffset && !state.pitEntrySent) {
+      if ((totalElapsed >= state.pitEntryOffset) && (!state.pitEntrySent)) {
         state.pitEntrySent = true;
         if (listener != null) {
           CarData carData =
