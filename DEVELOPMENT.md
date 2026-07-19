@@ -1,5 +1,7 @@
 # Race Coordinator AI Development Guide
 
+Date reviewed: 07/19/2026
+
 This guide provides instructions for setting up your environment and running the Race Coordinator AI application on Windows and macOS from the source code.
 
 If you encounter any problems with the steps in this document or with Race Coordinator AI itself, please report them by creating an issue on [GitHub](https://github.com/daufderheide/racecoordinator_ai/issues).
