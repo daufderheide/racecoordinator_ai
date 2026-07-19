@@ -12,7 +12,7 @@ import com.antigravity.protocols.AbstractSerialProtocol;
 import com.antigravity.protocols.CarData;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.DefaultProtocol;
-import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.protocols.interfaces.ISerialConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +67,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   protected ArduinoProtocol(
       ArduinoConfig config,
       int numLanes,
-      SerialConnection serialConnection,
+      ISerialConnection serialConnection,
       ScheduledExecutorService statusScheduler) {
     super(
         numLanes,

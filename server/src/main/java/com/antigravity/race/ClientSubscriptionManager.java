@@ -120,6 +120,7 @@ public class ClientSubscriptionManager {
     this.currentRace = race;
 
     if (this.currentRace != null) {
+      this.currentRace.dumpConfiguration();
       logger.info("New race set. Clients must explicitly subscribe to race data.");
       broadcastSystemState("RACE_RUNNING", "SYSTEM");
     } else {

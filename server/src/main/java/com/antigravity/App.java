@@ -138,6 +138,14 @@ public class App {
           System.getProperty("app.data.dir", Paths.get(projectDir, "app_data").toString());
       appDataDir = Paths.get(appDataDir).toAbsolutePath().normalize().toString();
       logger.info("Using app data directory: {}", appDataDir);
+
+      String logReplayFile = System.getProperty("enableLogReplay");
+      if (logReplayFile != null && !logReplayFile.trim().isEmpty()) {
+        DatabaseService.getInstance().setReplayMode(true); // Disable DB writes
+        com.antigravity.service.LogReplayService.init(logReplayFile); // fqn-collision
+        logger.info("Log Replay Mode Enabled. Reading from {}", logReplayFile);
+      }
+
       String tmpDir = Paths.get(appDataDir, "server_temp").toString();
       System.setProperty("de.flapdoodle.embed.io.tmpdir", tmpDir);
       logger.info("Set de.flapdoodle.embed.io.tmpdir to: {}", tmpDir);

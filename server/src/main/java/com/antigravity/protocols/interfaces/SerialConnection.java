@@ -10,11 +10,12 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SerialConnection {
+public class SerialConnection implements ISerialConnection {
 
   private static final Logger logger = LoggerFactory.getLogger(SerialConnection.class);
   private SerialPort serialPort;
   private OutputStream outputStream;
+  private String portName;
 
   public static List<String> getAvailableSerialPorts() {
     SerialPort[] ports = SerialPort.getCommPorts();
@@ -42,6 +43,7 @@ public class SerialConnection {
     for (SerialPort port : ports) {
       if (port.getSystemPortName().equals(portName)) {
         serialPort = port;
+        this.portName = portName;
         break;
       }
     }
@@ -98,7 +100,25 @@ public class SerialConnection {
 
   public void addListener(SerialPortDataListener listener) {
     if (serialPort != null) {
-      serialPort.addDataListener(listener);
+      serialPort.addDataListener(
+          new SerialPortDataListener() {
+            @Override
+            public int getListeningEvents() {
+              return listener.getListeningEvents();
+            }
+
+            @Override
+            public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
+              if (event.getEventType()
+                  == com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
+                byte[] data = event.getReceivedData();
+                if (data != null && data.length > 0) {
+                  logger.trace("[{}] Received: {}", portName, bytesToHex(data));
+                }
+              }
+              listener.serialEvent(event);
+            }
+          });
     }
   }
 

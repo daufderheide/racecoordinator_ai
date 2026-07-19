@@ -7,6 +7,7 @@ import com.antigravity.converters.TrackmateConfigConverter;
 import com.antigravity.models.AnalyticsToggleRequest;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
+import com.antigravity.models.ReplayCommandDump;
 import com.antigravity.models.Team;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
@@ -89,6 +90,27 @@ public class ClientCommandTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ClientCommandTaskHandler.class);
   private final DatabaseContext databaseContext;
+
+  private java.util.Map<String, Object> mapOf(Object... kv) {
+    java.util.Map<String, Object> map = new java.util.HashMap<>();
+    for (int i = 0; i < kv.length; i += 2) {
+      map.put((String) kv[i], kv[i + 1]);
+    }
+    return map;
+  }
+
+  private void logReplayCommand(String command, Object params) {
+    if (logger.isTraceEnabled()) {
+      try {
+        ReplayCommandDump dump = new ReplayCommandDump(command, params);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        logger.trace("ReplayCommandDump: {}", mapper.writeValueAsString(dump));
+      } catch (Exception e) {
+        logger.error("Failed to serialize replay command dump for " + command, e);
+      }
+    }
+  }
 
   public ClientCommandTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
@@ -399,6 +421,7 @@ public class ClientCommandTaskHandler {
   }
 
   private void startRace(Context ctx) {
+    logger.info("ClientCommand received: start-race");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -416,6 +439,9 @@ public class ClientCommandTaskHandler {
                 .setMessage(
                     success ? "Race started successfully" : "Track interface not connected.")
                 .build();
+        if (success) {
+          logReplayCommand("startRace", null);
+        }
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
         StartRaceResponse response =
@@ -430,6 +456,7 @@ public class ClientCommandTaskHandler {
   }
 
   private void pauseRace(Context ctx) {
+    logger.info("ClientCommand received: pause-race");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -446,6 +473,7 @@ public class ClientCommandTaskHandler {
                 .setSuccess(true)
                 .setMessage("Race paused successfully")
                 .build();
+        logReplayCommand("pauseRace", null);
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
         PauseRaceResponse response =
@@ -459,6 +487,7 @@ public class ClientCommandTaskHandler {
   }
 
   void endRace(Context ctx) {
+    logger.info("ClientCommand received: end-race");
     try {
       EndRaceRequest.parseFrom(ctx.bodyAsBytes()); // Validate payload
       logger.info("End race requested via HTTP API.");
@@ -469,6 +498,7 @@ public class ClientCommandTaskHandler {
               .setSuccess(true)
               .setMessage("Race ended successfully")
               .build();
+      logReplayCommand("endRace", null);
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (Exception e) {
       logger.error("Error processing endRace", e);
@@ -477,6 +507,7 @@ public class ClientCommandTaskHandler {
   }
 
   void abortTimers(Context ctx) {
+    logger.info("ClientCommand received: abort-timers");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -504,6 +535,7 @@ public class ClientCommandTaskHandler {
   }
 
   private void nextHeat(Context ctx) {
+    logger.info("ClientCommand received: next-heat");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -521,6 +553,7 @@ public class ClientCommandTaskHandler {
                 .setSuccess(true)
                 .setMessage("Moved to next heat successfully")
                 .build();
+        logReplayCommand("nextHeat", null);
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (Exception e) {
         NextHeatResponse response =
@@ -534,6 +567,7 @@ public class ClientCommandTaskHandler {
   }
 
   private void restartHeat(Context ctx) {
+    logger.info("ClientCommand received: restart-heat");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -551,6 +585,7 @@ public class ClientCommandTaskHandler {
                 .setSuccess(true)
                 .setMessage("Heat restarted successfully")
                 .build();
+        logReplayCommand("restartHeat", null);
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
         RestartHeatResponse response =
@@ -564,6 +599,7 @@ public class ClientCommandTaskHandler {
   }
 
   private void skipHeat(Context ctx) {
+    logger.info("ClientCommand received: skip-heat");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -581,6 +617,7 @@ public class ClientCommandTaskHandler {
                 .setSuccess(true)
                 .setMessage("Heat skipped successfully")
                 .build();
+        logReplayCommand("skipHeat", null);
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
         SkipHeatResponse response =
@@ -594,6 +631,7 @@ public class ClientCommandTaskHandler {
   }
 
   private void skipRace(Context ctx) {
+    logger.info("ClientCommand received: skip-race");
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -621,6 +659,7 @@ public class ClientCommandTaskHandler {
                 .setSuccess(true)
                 .setMessage("Race skipped successfully")
                 .build();
+        logReplayCommand("skipRace", null);
         ctx.contentType("application/octet-stream").result(response.toByteArray());
       } catch (IllegalStateException e) {
         SkipRaceResponse response =
@@ -634,6 +673,8 @@ public class ClientCommandTaskHandler {
   }
 
   private void deferHeat(Context ctx) {
+    logger.info("ClientCommand received: defer-heat");
+    logReplayCommand("deferHeat", null);
     try {
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -766,6 +807,8 @@ public class ClientCommandTaskHandler {
     try {
       int fromLane = Integer.parseInt(ctx.pathParam("fromLane"));
       int toLane = Integer.parseInt(ctx.pathParam("toLane"));
+      logger.info("ClientCommand received: change-lane from {} to {}", fromLane, toLane);
+      logReplayCommand("changeLane", mapOf("fromLane", fromLane, "toLane", toLane));
 
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -785,6 +828,8 @@ public class ClientCommandTaskHandler {
   private void setMainPower(Context ctx) {
     try {
       boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
+      logger.info("ClientCommand received: set-main-power {}", on);
+      logReplayCommand("setMainPower", mapOf("on", on));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
       if (race != null) {
@@ -809,6 +854,8 @@ public class ClientCommandTaskHandler {
     try {
       int lane = Integer.parseInt(ctx.pathParam("lane"));
       boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
+      logger.info("ClientCommand received: set-lane-power lane {} on {}", lane, on);
+      logReplayCommand("setLanePower", mapOf("lane", lane, "on", on));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
       if (race != null) {
@@ -944,6 +991,8 @@ public class ClientCommandTaskHandler {
     try {
       String laneParam = ctx.pathParam("lane");
       int lane = "all".equalsIgnoreCase(laneParam) ? -1 : Integer.parseInt(laneParam);
+      logger.info("ClientCommand received: reset-lane-heat-data lane {}", lane);
+      logReplayCommand("resetLaneHeatData", mapOf("lane", lane));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
@@ -984,6 +1033,9 @@ public class ClientCommandTaskHandler {
       int lane = Integer.parseInt(ctx.pathParam("lane"));
       Map<String, String> body = ctx.bodyAsClass(HashMap.class);
       String driverId = body.get("driverId");
+      logger.info(
+          "ClientCommand received: change-actual-driver lane {} driverId {}", lane, driverId);
+      logReplayCommand("changeActualDriver", mapOf("lane", lane, "driverId", driverId));
 
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -1070,6 +1122,14 @@ public class ClientCommandTaskHandler {
       int lane = Integer.parseInt(ctx.pathParam("lane"));
       Map<String, String> body = ctx.bodyAsClass(HashMap.class);
       String driverId = body.get("driverId");
+      logger.info(
+          "ClientCommand received: change-heat-actual-driver heat {} lane {} driverId {}",
+          heatNumber,
+          lane,
+          driverId);
+      logReplayCommand(
+          "changeHeatActualDriver",
+          mapOf("heatNumber", heatNumber, "lane", lane, "driverId", driverId));
 
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -1155,6 +1215,7 @@ public class ClientCommandTaskHandler {
 
   @SuppressWarnings("unchecked")
   void updateUserLaps(Context ctx) {
+    logger.info("ClientCommand received: update-user-laps");
     try {
       updateUserLaps(ctx, getPathParamMap(ctx), getBody(ctx));
     } catch (Exception e) {
@@ -1165,6 +1226,7 @@ public class ClientCommandTaskHandler {
   void updateUserLaps(Context ctx, Map<String, String> pathParams, Map<String, Object> body) {
     try {
       int lane = Integer.parseInt(pathParams.get("lane"));
+      logReplayCommand("updateUserLaps", mapOf("lane", lane, "body", body));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
@@ -1216,6 +1278,10 @@ public class ClientCommandTaskHandler {
       int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
       int lane = Integer.parseInt(ctx.pathParam("lane"));
       Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
+      logger.info(
+          "ClientCommand received: update-heat-user-laps heat {} lane {}", heatNumber, lane);
+      logReplayCommand(
+          "updateHeatUserLaps", mapOf("heatNumber", heatNumber, "lane", lane, "body", body));
 
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
@@ -1271,8 +1337,10 @@ public class ClientCommandTaskHandler {
 
   @SuppressWarnings("unchecked")
   private void updateBatchUserLaps(Context ctx) {
+    logger.info("ClientCommand received: update-batch-user-laps");
     try {
       List<Map<String, Object>> updates = ctx.bodyAsClass(List.class);
+      logReplayCommand("updateBatchUserLaps", mapOf("updates", updates));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
       if (race == null) {
@@ -1640,6 +1708,11 @@ public class ClientCommandTaskHandler {
       }
 
       ModifyHeatsResponse response = race.modifyHeats(request);
+      logReplayCommand(
+          "modifyHeats",
+          mapOf(
+              "requestBase64",
+              java.util.Base64.getEncoder().encodeToString(request.toByteArray())));
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (Exception e) {
       logger.error("Error modifying heats", e);
@@ -1658,6 +1731,11 @@ public class ClientCommandTaskHandler {
       }
 
       RegenerateHeatsResponse response = race.regenerateHeats(request);
+      logReplayCommand(
+          "regenerateHeats",
+          mapOf(
+              "requestBase64",
+              java.util.Base64.getEncoder().encodeToString(request.toByteArray())));
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (Exception e) {
       logger.error("Error regenerating heats", e);
@@ -1699,6 +1777,7 @@ public class ClientCommandTaskHandler {
           race.changeState(new RaceOver());
         }
       }
+      logReplayCommand("finalizeModifyHeats", null);
       ctx.status(200).result("OK");
     } catch (Exception e) {
       logger.error("Error finalizing modify heats", e);

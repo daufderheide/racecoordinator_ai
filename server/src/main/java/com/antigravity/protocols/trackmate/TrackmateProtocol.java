@@ -5,7 +5,7 @@ import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.AbstractSerialProtocol;
 import com.antigravity.protocols.arduino.ArduinoConfig;
-import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.protocols.interfaces.ISerialConnection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -34,7 +34,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   protected TrackmateProtocol(
       TrackmateConfig config,
       int numLanes,
-      SerialConnection serialConnection,
+      ISerialConnection serialConnection,
       ScheduledExecutorService statusScheduler) {
     super(
         numLanes,

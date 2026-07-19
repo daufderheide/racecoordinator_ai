@@ -1,13 +1,10 @@
 package com.antigravity.util;
 
 import java.nio.BufferOverflowException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** A thread-safe circular buffer for bytes. */
 public class CircularBuffer {
 
-  private static final Logger logger = LoggerFactory.getLogger(CircularBuffer.class);
   private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
   private final byte[] buffer;
@@ -103,9 +100,6 @@ public class CircularBuffer {
       count++;
       written++;
     }
-    if (logger.isDebugEnabled()) {
-      logger.debug("Wrote bytes: {}. Full buffer: {}", bytesToHex(data), toHexString());
-    }
     return written;
   }
 
@@ -122,9 +116,6 @@ public class CircularBuffer {
       result[i] = buffer[head];
       head = (head + 1) % capacity;
       count--;
-    }
-    if (logger.isDebugEnabled()) {
-      logger.debug("Read bytes: {}. Full buffer: {}", bytesToHex(result), toHexString());
     }
     return result;
   }
@@ -157,18 +148,6 @@ public class CircularBuffer {
       hexChars[i * 3] = HEX_ARRAY[v >>> 4];
       hexChars[i * 3 + 1] = HEX_ARRAY[v & 0x0F];
       hexChars[i * 3 + 2] = ' ';
-    }
-    return new String(hexChars, 0, hexChars.length - 1);
-  }
-
-  private static String bytesToHex(byte[] bytes) {
-    if (bytes == null || bytes.length == 0) return "";
-    char[] hexChars = new char[bytes.length * 3];
-    for (int j = 0; j < bytes.length; j++) {
-      int v = bytes[j] & 0xFF;
-      hexChars[j * 3] = HEX_ARRAY[v >>> 4];
-      hexChars[j * 3 + 1] = HEX_ARRAY[v & 0x0F];
-      hexChars[j * 3 + 2] = ' ';
     }
     return new String(hexChars, 0, hexChars.length - 1);
   }

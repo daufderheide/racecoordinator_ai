@@ -10,6 +10,7 @@ import com.antigravity.models.Driver;
 import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.OverallScoring.OverallRanking;
+import com.antigravity.models.RaceConfigDump;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.DemoConfig;
@@ -95,7 +96,7 @@ public class Race implements ProtocolListener {
             : new ArrayList<>();
 
     this.recordsManager = new RaceRecords(this);
-    loadExistingRecords(builder.isDemoMode);
+    loadExistingRecords(builder.isDemoMode, builder.existingRecords);
 
     this.heatManager = new RaceHeatManager(this);
     this.hardwareManager = new RaceHardwareManager(this);
@@ -167,7 +168,13 @@ public class Race implements ProtocolListener {
     updateAndBroadcastOverallStandings();
   }
 
-  private void loadExistingRecords(boolean isDemoMode) {
+  private void loadExistingRecords(boolean isDemoMode, RecordData injectedRecords) {
+    if (injectedRecords != null) {
+      if (injectedRecords.hasOverall()) {
+        this.recordsManager.loadOverallRaceRecords(injectedRecords.getOverall());
+      }
+      return;
+    }
     if (this.databaseContext != null && this.model != null && this.model.getEntityId() != null) {
       RecordData existingRecords =
           DatabaseService.getInstance()
@@ -242,12 +249,18 @@ public class Race implements ProtocolListener {
     private String stateClassName = null;
     private RaceStatistics statistics;
     private DemoConfig demoConfig;
+    private RecordData existingRecords;
 
     public Builder model(com.antigravity.models.Race model) { // fqn-collision
       this.model = model;
       if (model != null && model.getCustomRotations() != null) {
         this.customRotations = model.getCustomRotations();
       }
+      return this;
+    }
+
+    public Builder existingRecords(RecordData existingRecords) {
+      this.existingRecords = existingRecords;
       return this;
     }
 
@@ -1033,5 +1046,35 @@ public class Race implements ProtocolListener {
 
   public void saveGlobalRecords() {
     recordsManager.saveGlobalRecords();
+  }
+
+  public void dumpConfiguration() {
+    if (logger.isTraceEnabled()) {
+      try {
+        RaceConfigDump dump = new RaceConfigDump();
+        dump.setRace(model);
+        dump.setTrack(track);
+        dump.setDrivers(drivers);
+        dump.setCustomRotations(customRotations);
+        if (databaseContext != null && model != null && model.getEntityId() != null) {
+          RecordData existingRecords =
+              DatabaseService.getInstance()
+                  .getRaceRecords(
+                      this.databaseContext.getDatabase(), this.model.getEntityId(), isDemoMode);
+          if (existingRecords != null) {
+            dump.setRecordDataBase64(
+                java.util.Base64.getEncoder().encodeToString(existingRecords.toByteArray()));
+          }
+        }
+        com.fasterxml.jackson.databind.ObjectMapper mapper =
+            new com.fasterxml.jackson.databind.ObjectMapper();
+        mapper.configure(
+            com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        String json = mapper.writeValueAsString(dump);
+        logger.trace("RaceConfigDump: {}", json);
+      } catch (Exception e) {
+        logger.error("Failed to dump race configuration for log replay", e);
+      }
+    }
   }
 }

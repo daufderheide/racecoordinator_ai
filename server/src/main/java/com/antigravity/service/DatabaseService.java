@@ -48,6 +48,15 @@ public class DatabaseService {
   private static final org.slf4j.Logger logger =
       org.slf4j.LoggerFactory.getLogger(DatabaseService.class);
   private static DatabaseService instance = new DatabaseService();
+  private boolean replayMode = false;
+
+  public void setReplayMode(boolean replayMode) {
+    this.replayMode = replayMode;
+  }
+
+  public boolean isReplayMode() {
+    return replayMode;
+  }
 
   public static DatabaseService getInstance() {
     return instance;
@@ -541,7 +550,7 @@ public class DatabaseService {
 
   public void saveRaceHistory(
       MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
-    if (runtimeRace == null) {
+    if (runtimeRace == null || replayMode) {
       return;
     }
     boolean isDemo = runtimeRace.isDemoMode();
@@ -569,7 +578,7 @@ public class DatabaseService {
 
   public void saveRaceRecords(
       MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
-    if (runtimeRace == null || runtimeRace.getRaceModel() == null) return;
+    if (runtimeRace == null || runtimeRace.getRaceModel() == null || replayMode) return;
     boolean isDemo = runtimeRace.isDemoMode();
     String raceId = runtimeRace.getRaceModel().getEntityId();
     try {

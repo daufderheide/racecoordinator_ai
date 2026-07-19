@@ -1,7 +1,7 @@
 package com.antigravity.protocols;
 
 import com.antigravity.proto.InterfaceStatus;
-import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.protocols.interfaces.ISerialConnection;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
@@ -10,12 +10,20 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
-  protected SerialConnection serialConnection;
+  protected ISerialConnection serialConnection;
 
   public AbstractSerialProtocol(
-      int numLanes, SerialConnection serialConnection, ScheduledExecutorService statusScheduler) {
+      int numLanes, ISerialConnection serialConnection, ScheduledExecutorService statusScheduler) {
     super(numLanes);
-    this.serialConnection = serialConnection != null ? serialConnection : new SerialConnection();
+    if (serialConnection != null) {
+      this.serialConnection = serialConnection;
+    } else if (com.antigravity.service.LogReplayService.getInstance() != null) { // fqn-collision
+      this.serialConnection =
+          new com.antigravity.protocols.interfaces.LogReaderSerialConnection(); // fqn-collision
+    } else {
+      this.serialConnection =
+          new com.antigravity.protocols.interfaces.SerialConnection(); // fqn-collision
+    }
     this.statusScheduler = statusScheduler;
   }
 
