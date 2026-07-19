@@ -95,8 +95,24 @@ public class LogReaderSerialConnection implements ISerialConnection {
     // though the protocols mostly just call event.getReceivedData().
 
     // Let's create a standard SerialPortEvent object
-    SerialPort[] ports = SerialPort.getCommPorts();
-    SerialPort dummyPort = ports.length > 0 ? ports[0] : null;
+    SerialPort dummyPort = null;
+    try {
+      java.lang.reflect.Constructor<SerialPort> constructor =
+          SerialPort.class.getDeclaredConstructor();
+      constructor.setAccessible(true);
+      dummyPort = constructor.newInstance();
+    } catch (Exception e) {
+      SerialPort[] ports = SerialPort.getCommPorts();
+      if (ports.length > 0) {
+        dummyPort = ports[0];
+      }
+    }
+
+    if (dummyPort == null) {
+      logger.error("Could not create dummy SerialPort for LogReaderSerialConnection mock event.");
+      return; // Cannot proceed without a valid source for the event
+    }
+
     SerialPortEvent mockEvent =
         new SerialPortEvent(dummyPort, SerialPort.LISTENING_EVENT_DATA_RECEIVED, data);
 
