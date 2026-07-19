@@ -80,8 +80,9 @@ public class TrackmateProtocolTest {
   private static class TestListener implements ProtocolListener {
     int lapCount = 0;
     int lastLapLane = -1;
-    InterfaceStatus lastStatus = InterfaceStatus.DISCONNECTED;
     int callButtonCount = 0;
+    int digitalPinEventCount = 0;
+    com.antigravity.proto.InterfaceDigitalPinEvent lastDigitalPinEvent;
 
     @Override
     public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
@@ -98,9 +99,7 @@ public class TrackmateProtocolTest {
     }
 
     @Override
-    public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
-      lastStatus = status;
-    }
+    public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {}
 
     boolean[] laneInPits = new boolean[2];
 
@@ -113,7 +112,12 @@ public class TrackmateProtocolTest {
     }
 
     @Override
-    public void onInterfaceEvent(InterfaceEvent event) {}
+    public void onInterfaceEvent(InterfaceEvent event) {
+      if (event.hasDigitalPin()) {
+        digitalPinEventCount++;
+        lastDigitalPinEvent = event.getDigitalPin();
+      }
+    }
   }
 
   private static class TestableTrackmateProtocol extends TrackmateProtocol {
@@ -317,5 +321,28 @@ public class TrackmateProtocolTest {
     protocol.currentTime = 2600;
     serialConnection.injectData(new byte[] {0x0A}); // 600ms since last hit
     org.junit.Assert.assertFalse("Car leaves pits", listener.laneInPits[0]);
+  }
+
+  @Test
+  public void testDigitalPinEvent() {
+    protocol.open();
+    // Simulate 'A' for pin 0
+    serialConnection.injectData(new byte[] {0x41});
+    assertEquals(1, listener.digitalPinEventCount);
+    assertEquals(0, listener.lastDigitalPinEvent.getPin());
+    assertEquals(0, listener.lastDigitalPinEvent.getState()); // NC=false, so active is 0
+
+    // Simulate 'B' for pin 1
+    serialConnection.injectData(new byte[] {0x42});
+    assertEquals(2, listener.digitalPinEventCount);
+    assertEquals(1, listener.lastDigitalPinEvent.getPin());
+    assertEquals(0, listener.lastDigitalPinEvent.getState());
+
+    // Wait > 500ms and send Line Feed (0x0A) - pins should revert to inactive and
+    // emit event
+    protocol.currentTime = 600;
+    serialConnection.injectData(new byte[] {0x0A});
+    assertEquals(4, listener.digitalPinEventCount); // both pins emit an event when turning off
+    assertEquals(1, listener.lastDigitalPinEvent.getState()); // inactive state is 1
   }
 }

@@ -148,6 +148,29 @@ describe("TrakmateEditorComponent", () => {
     expect(component.readBadges[1]).toBeFalse();
   }));
 
+  it("should update readBadges on digitalPin event when tripped", fakeAsync(() => {
+    expect(component.readBadges[3]).toBeFalse();
+
+    // normallyClosedLaneSensors is false in test config, so state 0 is a trip
+    getInterfaceEventsSubject.next({
+      digitalPin: { interfaceIndex: 0, pin: 3, state: 0 },
+    });
+    expect(component.readBadges[3]).toBeTrue();
+
+    tick(500);
+    expect(component.readBadges[3]).toBeFalse();
+  }));
+
+  it("should not update readBadges on digitalPin event when not tripped", fakeAsync(() => {
+    expect(component.readBadges[3]).toBeFalse();
+
+    // normallyClosedLaneSensors is false in test config, so state 1 is NOT a trip
+    getInterfaceEventsSubject.next({
+      digitalPin: { interfaceIndex: 0, pin: 3, state: 1 },
+    });
+    expect(component.readBadges[3]).toBeFalse();
+  }));
+
   it("should update callbuttonStatus on callbutton event with explicit interfaceIndex", fakeAsync(() => {
     expect(component.callbuttonStatus).toBeFalse();
 
