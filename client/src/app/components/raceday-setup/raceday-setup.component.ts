@@ -421,7 +421,6 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           this.updateService.getUpdateProgress().subscribe({
             next: (prog) => {
               this.updateProgress = prog;
-              this.cdr.detectChanges();
               if (
                 prog.progress === 100 &&
                 prog.status === "RDS_UPDATE_STATUS_LAUNCHING"
@@ -436,6 +435,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
                 this.isUpdating = false;
                 this.updateProgress = null;
               }
+              this.cdr.detectChanges();
             },
           });
         });
@@ -462,6 +462,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         if (this.progressSubscription) {
           this.progressSubscription.unsubscribe();
         }
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.logger.error("Failed to cancel update", err);
