@@ -121,6 +121,19 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
             if ((event.segment.interfaceIndex ?? 0) === this.interfaceIndex()) {
               this.triggerPinActivity(event.segment.interfaceId ?? -1);
             }
+          } else if (event.digitalPin) {
+            if (
+              (event.digitalPin.interfaceIndex ?? 0) === this.interfaceIndex()
+            ) {
+              const pin = event.digitalPin.pin ?? -1;
+              const state = event.digitalPin.state ?? 0;
+              const nc = this.config()?.normallyClosedLaneSensors;
+              const isTrip = nc ? state === 1 : state === 0;
+
+              if (isTrip) {
+                this.triggerPinActivity(pin);
+              }
+            }
           } else if (event.callbutton) {
             if (
               (event.callbutton.interfaceIndex ?? 0) === this.interfaceIndex()

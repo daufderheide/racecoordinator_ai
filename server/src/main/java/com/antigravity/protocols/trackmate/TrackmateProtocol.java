@@ -1,5 +1,7 @@
 package com.antigravity.protocols.trackmate;
 
+import com.antigravity.proto.InterfaceDigitalPinEvent;
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
@@ -145,9 +147,20 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         for (int i = 0; i < 8; i++) {
           if (isSensorActive[i] && (currentTime - lastHitTimeMs[i] > 500)) {
             isSensorActive[i] = false;
+            int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
+            if (listener != null) {
+              listener.onInterfaceEvent(
+                  InterfaceEvent.newBuilder()
+                      .setDigitalPin(
+                          InterfaceDigitalPinEvent.newBuilder()
+                              .setInterfaceIndex(getInterfaceIndex())
+                              .setPin(i)
+                              .setIsDigital(true)
+                              .setState(inactiveState))
+                      .build());
+            }
             if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
               int behavior = config.lapPinBehaviors.get(i);
-              int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
               triggerPinBehavior(behavior, inactiveState, i);
             }
           }
@@ -155,13 +168,23 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
       } else if (data >= 0x41 && data <= 0x48) { // 'A' through 'H'
         int pinIndex = data - 0x41;
         lastHitTimeMs[pinIndex] = now();
+        int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
 
-        if (config.lapPinBehaviors != null && pinIndex < config.lapPinBehaviors.size()) {
-          int behavior = config.lapPinBehaviors.get(pinIndex);
-          int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
-
-          if (!isSensorActive[pinIndex]) {
-            isSensorActive[pinIndex] = true;
+        if (!isSensorActive[pinIndex]) {
+          isSensorActive[pinIndex] = true;
+          if (listener != null) {
+            listener.onInterfaceEvent(
+                InterfaceEvent.newBuilder()
+                    .setDigitalPin(
+                        InterfaceDigitalPinEvent.newBuilder()
+                            .setInterfaceIndex(getInterfaceIndex())
+                            .setPin(pinIndex)
+                            .setIsDigital(true)
+                            .setState(activeState))
+                    .build());
+          }
+          if (config.lapPinBehaviors != null && pinIndex < config.lapPinBehaviors.size()) {
+            int behavior = config.lapPinBehaviors.get(pinIndex);
             triggerPinBehavior(behavior, activeState, pinIndex);
           }
         }

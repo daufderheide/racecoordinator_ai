@@ -122,7 +122,8 @@ public class ArduinoLedHelper {
   private void sendRgbLedModeMessage(
       int pinId, int ledCount, int brightness, int ledType, int colorOrder) {
     // { 0x6C, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3B }
-    // opcode pin ledCount brightness updateRateLow updateRateHigh ledType colorOrder ;
+    // opcode pin ledCount brightness updateRateLow updateRateHigh ledType
+    // colorOrder ;
     byte[] message = new byte[9];
     int updateRate = 20;
 
@@ -271,8 +272,10 @@ public class ArduinoLedHelper {
               rgb = new int[] {255, 255, 255};
             } else {
               rgb = parseColor(colorHex);
-              // Safety: If the lane color is explicitly set to black, refueling LEDs appear "off".
-              // If we are struggling with fuel sync, let's ensure they at least show white if the
+              // Safety: If the lane color is explicitly set to black, refueling LEDs appear
+              // "off".
+              // If we are struggling with fuel sync, let's ensure they at least show white if
+              // the
               // parse resulted in black.
               if (rgb[0] == 0 && rgb[1] == 0 && rgb[2] == 0) {
                 rgb = new int[] {255, 255, 255};
@@ -376,8 +379,6 @@ public class ArduinoLedHelper {
     double countdown = lastCountdown;
 
     // Ensure we refresh when the state or flag changes
-    logger.debug("refreshRaceState: state={}, flag={}, countdown={}", state, flag, countdown);
-
     if (state == RaceState.UNKNOWN_STATE) {
       return;
     }
@@ -469,7 +470,8 @@ public class ArduinoLedHelper {
 
           if (state == RaceState.STARTING) {
             int n = behavior - raceStateBehavior;
-            // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec = 1 LED).
+            // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec =
+            // 1 LED).
             // This matches the updated UI countdown display (1, 2, 3, GO).
             int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
             boolean shouldBeOn = n >= startingDuration - onCount && n < startingDuration;
@@ -507,7 +509,8 @@ public class ArduinoLedHelper {
           int b = 0;
 
           if (state == RaceState.STARTING) {
-            // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec = 1 LED).
+            // Show the number of LEDs corresponding to the seconds elapsed (e.g., 1st sec =
+            // 1 LED).
             // This matches the updated UI countdown display (1, 2, 3, GO).
             int onCount = Math.max(1, startingDuration - (int) Math.ceil(countdown) + 1);
             if (n >= startingDuration - onCount && n < startingDuration) {
