@@ -97,16 +97,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     writeData(new byte[] {0x43, sensorByte, TERMINATOR_LF}); // Cn
 
     // Debounce
-    int hwDebounce = config.debounce;
-    if (config.lapPinPitBehavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
-      // Force hardware debounce to 0 so Trackmate continuously reports blocked
-      // sensors
-      // Software debounce via LF timeouts handles the actual release event
-      hwDebounce = 0;
-      logger.info("Forcing hardware debounce to 0 for Pit In/Out support");
-    }
-    byte debounceByte = (byte) (0x30 + hwDebounce);
-    logger.info("Setting debounce to {}", hwDebounce);
+    byte debounceByte = (byte) (0x30 + config.debounce);
+    logger.info("Setting debounce to {}", config.debounce);
     writeData(new byte[] {0x44, debounceByte, TERMINATOR_LF}); // Dn
 
     // Relay type 1 = normally on, 0 = normally off
