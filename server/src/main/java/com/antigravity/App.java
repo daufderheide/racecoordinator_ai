@@ -792,7 +792,10 @@ public class App {
 
   private static void openBrowser(String url) {
     try {
-      if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+      if (System.getProperty("os.name").toLowerCase().contains("win")) {
+        new ProcessBuilder("cmd", "/c", "start", url).start();
+      } else if (Desktop.isDesktopSupported()
+          && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
         Desktop.getDesktop().browse(new URI(url));
       } else {
         // Fallback for systems where Desktop is not supported (print link)
