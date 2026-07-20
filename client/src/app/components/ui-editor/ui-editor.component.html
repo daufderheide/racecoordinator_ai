@@ -2,14 +2,23 @@
   class="page-container ue-container"
   [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
 >
-  <app-editor-title titleKey="UE_TITLE" [undoManager]="undoManager">
+  <app-editor-title
+    titleKey="UE_TITLE"
+    [undoManager]="undoManager"
+    [helpSteps]="getHelpSteps()"
+    [helpRecordName]="'uiEditorHelpShown'"
+  >
   </app-editor-title>
 
   @if (!isLoading) {
     <div class="content-area sections-wrapper">
       <!-- Raceday Layout Section -->
       <div class="config-section">
-        <div class="section-header" (click)="toggleSection('racedayLayout')">
+        <div
+          class="section-header"
+          id="help-raceday-ui"
+          (click)="toggleSection('racedayLayout')"
+        >
           <span
             class="expander-icon"
             [class.collapsed]="!sectionsExpanded['racedayLayout']"
@@ -17,6 +26,7 @@
           >
           <h1>{{ "UE_LABEL_RACEDAY_LAYOUT" | translate }}</h1>
           <div
+            id="help-raceday-import-export"
             class="expander-actions"
             style="
               margin-left: auto;
@@ -85,6 +95,7 @@
                 >
                   <div style="display: flex; gap: 25px; align-items: center">
                     <label
+                      id="help-raceday-sort"
                       class="checkbox-container"
                       style="margin: 0; white-space: nowrap"
                     >
@@ -97,6 +108,7 @@
                       {{ "UE_LABEL_SORT_STANDINGS" | translate }}
                     </label>
                     <label
+                      id="help-raceday-highlight"
                       class="checkbox-container"
                       style="margin: 0; white-space: nowrap"
                     >
@@ -109,6 +121,7 @@
                       {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
                     </label>
                     <div
+                      id="help-raceday-resolution"
                       style="
                         display: flex;
                         align-items: center;
@@ -146,29 +159,35 @@
                           }
                         </select>
                       </div>
-                      <input
-                        type="number"
-                        class="input-sm"
-                        style="width: 70px"
-                        [ngModel]="editingSettings.racedayLayout?.baseWidth"
-                        (change)="
-                          onCustomResolutionChange(false, 'width', $event)
-                        "
-                      />
-                      <span style="color: #94a3b8">x</span>
-                      <input
-                        type="number"
-                        class="input-sm"
-                        style="width: 70px"
-                        [ngModel]="editingSettings.racedayLayout?.baseHeight"
-                        (change)="
-                          onCustomResolutionChange(false, 'height', $event)
-                        "
-                      />
+                      <div
+                        id="help-raceday-dimensions"
+                        style="display: flex; align-items: center; gap: 8px"
+                      >
+                        <input
+                          type="number"
+                          class="input-sm"
+                          style="width: 70px"
+                          [ngModel]="editingSettings.racedayLayout?.baseWidth"
+                          (change)="
+                            onCustomResolutionChange(false, 'width', $event)
+                          "
+                        />
+                        <span style="color: #94a3b8">x</span>
+                        <input
+                          type="number"
+                          class="input-sm"
+                          style="width: 70px"
+                          [ngModel]="editingSettings.racedayLayout?.baseHeight"
+                          (change)="
+                            onCustomResolutionChange(false, 'height', $event)
+                          "
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <button
+                    id="help-raceday-reset"
                     class="btn btn-danger"
                     (click)="resetRacedayLayout()"
                     style="
@@ -185,6 +204,7 @@
                 <div class="raceday-editor-workspace">
                   <!-- Raceday Full Integration -->
                   <div
+                    id="help-raceday-canvas"
                     class="raceday-preview-container"
                     [style.width.px]="getPreviewContainerWidth(false)"
                     [style.height.px]="getPreviewContainerHeight(false)"
@@ -214,6 +234,7 @@
                   <!-- Widget Inspector Sidebar -->
                   @if (selectedWidget) {
                     <div
+                      id="help-widget-inspector"
                       class="widget-inspector-panel"
                       [style.height.px]="getPreviewContainerHeight(false)"
                     >
@@ -296,6 +317,7 @@
       <div class="config-section">
         <div
           class="section-header"
+          id="help-practice-ui"
           (click)="toggleSection('practiceRacedayLayout')"
         >
           <span
@@ -846,7 +868,11 @@
       </ng-template>
       <!-- Themes Section -->
       <div class="config-section">
-        <div class="section-header" (click)="toggleSection('themes')">
+        <div
+          class="section-header"
+          id="help-themes"
+          (click)="toggleSection('themes')"
+        >
           <span
             class="expander-icon"
             [class.collapsed]="!sectionsExpanded['themes']"
@@ -1304,9 +1330,13 @@
       </div>
       <!-- Settings Grid Section -->
       <div class="config-row single-column">
-        <!-- Custom UI Settings -->
+        <!-- UI Editor Setting Section -->
         <div class="config-section">
-          <div class="section-header" (click)="toggleSection('config')">
+          <div
+            class="section-header"
+            id="help-custom-ui"
+            (click)="toggleSection('config')"
+          >
             <span
               class="expander-icon"
               [class.collapsed]="!sectionsExpanded['config']"

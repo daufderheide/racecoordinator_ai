@@ -101,6 +101,7 @@ export class Settings {
   raceManagerHelpShown: boolean = false;
   raceEditorHelpShown: boolean = false;
   databaseManagerHelpShown: boolean = false;
+  uiEditorHelpShown: boolean = false;
   layoutEditorMinimized: boolean = false;
   layoutEditorPositionX: number = 0;
   layoutEditorPositionY: number = 0;

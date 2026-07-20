@@ -17,6 +17,7 @@ import { CanComponentDeactivate } from "@app/guards/raceday.guard";
 import { AuthService } from "@app/services/auth.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
+import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
@@ -45,6 +46,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(ActivatedRoute) route: ActivatedRoute,
     @Inject(PrintService) printService: PrintService,
     @Inject(AuthService) authService: AuthService,
+    @Inject(HelpService) helpService: HelpService,
   ) {
     super(
       el,
@@ -61,6 +63,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       route,
       printService,
       authService,
+      helpService,
     );
   }
 }

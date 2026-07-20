@@ -28,6 +28,7 @@ import { LayoutConfig, Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FileSystemService } from "@app/services/file-system.service";
+import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -68,6 +69,7 @@ import { WIDGET_REGISTRY } from "./widget-registry";
 export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
+  private helpSubscription: Subscription | null = null;
   isLoading = true;
   isSaving = false;
   isAutoSaving = false;
@@ -599,6 +601,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private logger: LoggerService,
     private route: ActivatedRoute,
     private raceConnectionService: RaceConnectionService,
+    private helpService: HelpService,
   ) {
     this.layoutResolutionOptions = [
       {
@@ -672,6 +675,52 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         }
       });
+
+    this.helpSubscription = this.helpService.currentStep$.subscribe((step) => {
+      if (step && step.selector) {
+        let changed = false;
+        if (step.selector.startsWith("#help-raceday-")) {
+          if (!this.sectionsExpanded["racedayLayout"]) {
+            this.sectionsExpanded["racedayLayout"] = true;
+            changed = true;
+          }
+        } else if (step.selector.startsWith("#help-practice-ui")) {
+          if (!this.sectionsExpanded["practiceRacedayLayout"]) {
+            this.sectionsExpanded["practiceRacedayLayout"] = true;
+            changed = true;
+          }
+        } else if (step.selector.startsWith("#help-themes")) {
+          if (!this.sectionsExpanded["themes"]) {
+            this.sectionsExpanded["themes"] = true;
+            changed = true;
+          }
+        } else if (step.selector.startsWith("#help-custom-ui")) {
+          if (!this.sectionsExpanded["config"]) {
+            this.sectionsExpanded["config"] = true;
+            changed = true;
+          }
+        } else if (step.selector === "#help-widget-inspector") {
+          if (!this.selectedWidgetId) {
+            const widgets = this.editingSettings.racedayLayout?.widgets || [];
+            const laneView = widgets.find(
+              (w: any) => w.widgetType === "lane-view",
+            );
+            if (laneView) {
+              this.onWidgetSelected(laneView.id, false);
+              changed = true;
+            } else if (widgets.length > 0) {
+              this.onWidgetSelected(widgets[0].id, false);
+              changed = true;
+            }
+          }
+        }
+
+        if (changed) {
+          this.saveExpanderState();
+          this.cdr.markForCheck();
+        }
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -680,6 +729,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.dataService.setConnectionIntent("");
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
+    }
+    if (this.helpSubscription) {
+      this.helpSubscription.unsubscribe();
     }
     this.undoManager.destroy();
   }
@@ -1795,5 +1847,117 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
 
     return layout;
+  }
+
+  getHelpSteps(): GuideStep[] {
+    return [
+      {
+        title: this.translationService.translate("UE_TITLE"),
+        content: this.translationService.translate("UE_HELP_GENERAL"),
+        position: "center",
+      },
+      {
+        selector: "#help-raceday-ui",
+        title: this.translationService.translate("UE_LABEL_RACEDAY_LAYOUT"),
+        content: this.translationService.translate("UE_HELP_RACEDAY_UI"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-raceday-sort",
+        title: this.translationService.translate("UE_LABEL_SORT_STANDINGS"),
+        content: this.translationService.translate("UE_HELP_RACEDAY_SORT"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-raceday-highlight",
+        title: this.translationService.translate("UE_LABEL_HIGHLIGHT_LAP"),
+        content: this.translationService.translate("UE_HELP_RACEDAY_HIGHLIGHT"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-raceday-resolution",
+        title: this.translationService.translate("UI_EDITOR_LAYOUT_RESOLUTION"),
+        content: this.translationService.translate(
+          "UE_HELP_RACEDAY_RESOLUTION",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#help-raceday-dimensions",
+        title: this.translationService.translate("UI_EDITOR_LAYOUT_RESOLUTION"),
+        content: this.translationService.translate(
+          "UE_HELP_RACEDAY_DIMENSIONS",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#help-raceday-reset",
+        title: this.translationService.translate(
+          "UI_EDITOR_RESET_LAYOUT_DEFAULTS",
+        ),
+        content: this.translationService.translate("UE_HELP_RACEDAY_RESET"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-raceday-canvas",
+        title:
+          this.translationService.translate("UE_HELP_RACEDAY_CANVAS_TITLE") ||
+          "Canvas Area",
+        content: this.translationService.translate("UE_HELP_RACEDAY_CANVAS"),
+        position: "center",
+      },
+      {
+        selector: "#help-widget-toolbox",
+        title: this.translationService.translate("UE_LABEL_LAYOUT_EDITOR"),
+        content: this.translationService.translate(
+          "UE_HELP_RACEDAY_WIDGET_TOOLBOX",
+        ),
+        position: "right",
+      },
+      {
+        selector: "#help-widget-inspector",
+        title:
+          this.translationService.translate(
+            "UE_HELP_RACEDAY_WIDGET_INSPECTOR_TITLE",
+          ) || "Widget Inspector",
+        content: this.translationService.translate(
+          "UE_HELP_RACEDAY_WIDGET_INSPECTOR",
+        ),
+        position: "left",
+      },
+      {
+        selector: "#help-raceday-import-export",
+        title:
+          this.translationService.translate(
+            "UE_HELP_RACEDAY_IMPORT_EXPORT_TITLE",
+          ) || "Import / Export Layout",
+        content: this.translationService.translate(
+          "UE_HELP_RACEDAY_IMPORT_EXPORT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#help-practice-ui",
+        title: this.translationService.translate(
+          "UE_LABEL_RACEDAY_LAYOUT_PRACTICE",
+        ),
+        content: this.translationService.translate("UE_HELP_PRACTICE_UI"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-themes",
+        title: this.translationService.translate("UE_HEADER_THEMES"),
+        content: this.translationService.translate("UE_HELP_THEMES"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-custom-ui",
+        title: this.translationService.translate("UE_HEADER_CUSTOM_UI"),
+        content: this.translationService.translate(
+          "UE_HELP_CUSTOM_UI_SETTINGS",
+        ),
+        position: "top",
+      },
+    ];
   }
 }

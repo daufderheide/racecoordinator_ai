@@ -105,7 +105,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild("popoverRef") popoverRef!: ElementRef;
 
-  private updatePosition() {
+  private updatePosition(retries = 3) {
     if (!this.isVisible || !this.currentStep) {
       this.highlightStyle = null;
       return;
@@ -137,8 +137,12 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
         this.applyPosition(el, rectRefined);
         this.cdr.detectChanges();
       });
+    } else if (retries > 0) {
+      // Target not found, wait for DOM updates and retry
+      setTimeout(() => this.updatePosition(retries - 1), 50);
+      return;
     } else {
-      // Target not found, fallback to center
+      // Target not found after retries, fallback to center
       this.centerPopover();
     }
 

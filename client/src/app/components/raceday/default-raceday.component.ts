@@ -65,6 +65,7 @@ export interface LapDisplayInfo {
   segments: string[];
 }
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
+import { HelpService } from "@app/services/help.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -571,6 +572,7 @@ export class DefaultRacedayComponent
     private route: ActivatedRoute,
     private printService: PrintService,
     public authService: AuthService,
+    private helpService: HelpService,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -773,6 +775,26 @@ export class DefaultRacedayComponent
     this.subscribeToAssets();
     this.detectShortcutKey();
     this.updateScale();
+
+    this.subscriptions.push(
+      this.helpService.currentStep$.subscribe((step) => {
+        if (step && step.selector === "#help-widget-toolbox") {
+          if (this.isLayoutEditorMinimized) {
+            this.isLayoutEditorMinimized = false;
+
+            const settings =
+              this.editingSettings() || this.settingsService.getSettings();
+            settings.layoutEditorMinimized = false;
+
+            const globalSettings = this.settingsService.getSettings();
+            globalSettings.layoutEditorMinimized = false;
+            this.settingsService.saveSettings(globalSettings);
+
+            this.cdr.markForCheck();
+          }
+        }
+      }),
+    );
 
     if (this.isUIEditorMode()) {
       this.isLayoutCustomizing = true;
