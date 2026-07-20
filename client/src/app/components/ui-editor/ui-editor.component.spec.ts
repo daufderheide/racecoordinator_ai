@@ -1734,6 +1734,10 @@ describe("UIEditorComponent", () => {
   });
 
   describe("autoSaveState – Promise-based API", () => {
+    beforeEach(() => {
+      mockSettingsService.saveSettings.calls.reset();
+    });
+
     it("should resolve immediately if isLoading is true", async () => {
       component.isLoading = true;
       await expectAsync((component as any).autoSaveState()).toBeResolved();

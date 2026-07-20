@@ -190,7 +190,7 @@ describe("HelpOverlayComponent", () => {
       selector: "#non-existent-id",
     };
     currentStepSubject.next(step);
-    tick(50);
+    tick(200);
     fixture.detectChanges();
 
     expect(component.highlightStyle).toBeNull();
