@@ -8,6 +8,8 @@ export interface GuideStep {
   title: string;
   content: string;
   position?: "top" | "bottom" | "left" | "right" | "center"; // Preferred position relative to target
+  onEnter?: () => void;
+  onLeave?: () => void;
 }
 
 @Injectable({
@@ -45,6 +47,8 @@ export class HelpService {
 
   nextStep() {
     if (this.currentStepIndex < this.steps.length - 1) {
+      const current = this.steps[this.currentStepIndex];
+      if (current?.onLeave) current.onLeave();
       this.currentStepIndex++;
       this.updateState();
     } else {
@@ -54,6 +58,8 @@ export class HelpService {
 
   previousStep() {
     if (this.currentStepIndex > 0) {
+      const current = this.steps[this.currentStepIndex];
+      if (current?.onLeave) current.onLeave();
       this.currentStepIndex--;
       this.updateState();
     }
@@ -84,6 +90,7 @@ export class HelpService {
 
   private updateState() {
     const step = this.steps[this.currentStepIndex];
+    if (step?.onEnter) step.onEnter();
     this._currentStep.next(step);
     this._hasNext.next(this.currentStepIndex < this.steps.length - 1);
     this._hasPrevious.next(this.currentStepIndex > 0);

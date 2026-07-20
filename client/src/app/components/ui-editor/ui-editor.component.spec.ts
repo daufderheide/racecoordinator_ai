@@ -173,6 +173,12 @@ describe("UIEditorComponent", () => {
   let mockTranslationService: any;
   let mockRaceConnectionService: any;
 
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
+  });
+
   beforeEach(async () => {
     mockRaceConnectionService = jasmine.createSpyObj("RaceConnectionService", [
       "connect",
@@ -322,6 +328,12 @@ describe("UIEditorComponent", () => {
         },
       ],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    if (fixture) {
+      fixture.destroy();
+    }
   });
 
   beforeEach(async () => {

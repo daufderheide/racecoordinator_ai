@@ -1012,6 +1012,8 @@ export class TestSetupHelper {
         onclose: any = null;
         onerror: any = null;
         private heartbeatInterval: any;
+        private openTimeout: any;
+        private initialHeartbeatTimeout: any;
 
         constructor(url: string) {
           super();
@@ -1019,7 +1021,7 @@ export class TestSetupHelper {
           this.readyState = 0; // CONNECTING
           window.allMockSockets?.push(this);
 
-          setTimeout(() => {
+          this.openTimeout = setTimeout(() => {
             this.readyState = 1; // OPEN
             window.mockSocket = this;
             const openEvent = new Event("open");
@@ -1051,7 +1053,7 @@ export class TestSetupHelper {
               };
 
               // Initial heartbeat if not disabled
-              setTimeout(() => {
+              this.initialHeartbeatTimeout = setTimeout(() => {
                 // @ts-ignore
                 if (!window.disableMockHeartbeat) {
                   console.log("MockWebSocket: Sending initial pulse");
@@ -1087,6 +1089,9 @@ export class TestSetupHelper {
         }
         close() {
           if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+          if (this.openTimeout) clearTimeout(this.openTimeout);
+          if (this.initialHeartbeatTimeout)
+            clearTimeout(this.initialHeartbeatTimeout);
         }
 
         static get CONNECTING() {

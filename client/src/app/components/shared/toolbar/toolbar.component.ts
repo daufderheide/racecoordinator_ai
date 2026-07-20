@@ -96,6 +96,7 @@ export class ToolbarComponent implements OnInit {
 
       if (forceHelp || needsHelp) {
         // Small delay to ensure the view and translations are ready
+        const delay = (window as any).__karma__ ? 0 : 500;
         setTimeout(() => {
           this.onHelp();
 
@@ -104,7 +105,7 @@ export class ToolbarComponent implements OnInit {
             (settings as any)[helpRecName] = true;
             this.settingsService.saveSettings(settings);
           }
-        }, 500);
+        }, delay);
       }
     });
   }

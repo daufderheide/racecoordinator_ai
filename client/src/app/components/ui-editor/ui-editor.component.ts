@@ -5,6 +5,7 @@ import {
   Component,
   computed,
   HostListener,
+  NgZone,
   OnDestroy,
   OnInit,
 } from "@angular/core";
@@ -72,6 +73,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private helpSubscription: Subscription | null = null;
   isLoading = true;
   isSaving = false;
+  private getSaveDelay(): number {
+    return 0;
+  }
+  saveTimeout: any;
+  autoSaveTimeout: any;
   isAutoSaving = false;
   scale = 1;
   assets: any[] = [];
@@ -602,6 +608,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private route: ActivatedRoute,
     private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
+    private ngZone: NgZone,
   ) {
     this.layoutResolutionOptions = [
       {
@@ -699,20 +706,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.sectionsExpanded["config"] = true;
             changed = true;
           }
-        } else if (step.selector === "#help-widget-inspector") {
-          if (!this.selectedWidgetId) {
-            const widgets = this.editingSettings.racedayLayout?.widgets || [];
-            const laneView = widgets.find(
-              (w: any) => w.widgetType === "lane-view",
-            );
-            if (laneView) {
-              this.onWidgetSelected(laneView.id, false);
-              changed = true;
-            } else if (widgets.length > 0) {
-              this.onWidgetSelected(widgets[0].id, false);
-              changed = true;
-            }
-          }
         }
 
         if (changed) {
@@ -725,6 +718,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   ngOnDestroy() {
     this.isDestroyed = true;
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    if (this.autoSaveTimeout) clearTimeout(this.autoSaveTimeout);
     this.raceConnectionService.disconnect();
     this.dataService.setConnectionIntent("");
     if (this.dataSubscription) {
@@ -1059,13 +1054,17 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   save() {
     this.isSaving = true;
     this.settingsService.saveSettings(this.editingSettings);
-    setTimeout(() => {
-      this.isSaving = false;
-      this.undoManager.resetTracking(this.editingState);
-      if (!this.isDestroyed) {
-        this.cdr.markForCheck();
-      }
-    }, 500);
+    this.ngZone.runOutsideAngular(() => {
+      this.saveTimeout = setTimeout(() => {
+        this.ngZone.run(() => {
+          this.isSaving = false;
+          this.undoManager.resetTracking(this.editingState);
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        });
+      }, this.getSaveDelay());
+    });
   }
 
   private autoSaveState(): Promise<void> {
@@ -1127,14 +1126,18 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.themeService.refresh();
           }
 
-          setTimeout(() => {
-            this.isAutoSaving = false;
-            this.isSaving = false;
-            if (!this.isDestroyed) {
-              this.cdr.markForCheck();
-            }
-            resolve();
-          }, 500);
+          this.ngZone.runOutsideAngular(() => {
+            this.autoSaveTimeout = setTimeout(() => {
+              this.ngZone.run(() => {
+                this.isAutoSaving = false;
+                this.isSaving = false;
+                if (!this.isDestroyed) {
+                  this.cdr.markForCheck();
+                }
+              });
+            }, this.getSaveDelay());
+          });
+          resolve();
         },
         error: (err) => {
           this.logger.error("Auto-save failed", err);
@@ -1924,6 +1927,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           "UE_HELP_RACEDAY_WIDGET_INSPECTOR",
         ),
         position: "left",
+        onEnter: () => {
+          if (!this.selectedWidgetId) {
+            const layout = this.editingSettings.racedayLayout;
+            const widgets = layout?.widgets || [];
+            const laneView = widgets.find(
+              (w: any) => w.widgetType === "lane-view",
+            );
+            if (laneView) {
+              this.onWidgetSelected(laneView.id, false);
+              this.cdr.detectChanges();
+            } else if (widgets.length > 0) {
+              this.onWidgetSelected(widgets[0].id, false);
+              this.cdr.detectChanges();
+            }
+          }
+        },
       },
       {
         selector: "#help-raceday-import-export",
