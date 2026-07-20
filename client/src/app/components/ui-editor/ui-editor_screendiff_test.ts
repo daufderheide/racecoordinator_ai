@@ -15,6 +15,7 @@ test.describe("UI Editor Visuals", () => {
     await TestSetupHelper.setupSettings(page, {
       flagGreen: "/api/assets/download?filename=img1.png",
       flagRed: "/api/assets/download?filename=img1.png",
+      uiEditorHelpShown: true,
     });
 
     await TestSetupHelper.setupFileSystemMock(page, {});

@@ -27,6 +27,7 @@ export interface SetupOptions {
   assetManagerHelpShown?: boolean;
   raceManagerHelpShown?: boolean;
   raceEditorHelpShown?: boolean;
+  uiEditorHelpShown?: boolean;
 }
 
 export class TestSetupHelper {
@@ -128,6 +129,7 @@ export class TestSetupHelper {
       assetManagerHelpShown: options.assetManagerHelpShown ?? true,
       raceManagerHelpShown: options.raceManagerHelpShown ?? true,
       raceEditorHelpShown: options.raceEditorHelpShown ?? true,
+      uiEditorHelpShown: options.uiEditorHelpShown ?? true,
 
       racedayColumns: ["driver.name", "lapCount"],
 
@@ -1574,8 +1576,26 @@ export class TestSetupHelper {
    */
   static async setupSettings(page: Page, settings: any) {
     await page.addInitScript((s) => {
-      s.serverPort = parseInt(window.location.port) || 4250;
-      localStorage.setItem("racecoordinator_settings", JSON.stringify(s));
+      const existing = localStorage.getItem("racecoordinator_settings");
+      const parsedExisting = existing ? JSON.parse(existing) : {};
+
+      // Preserve help and walkthrough flags so we don't accidentally trigger UI overlays in tests
+      const preserved: any = {};
+      for (const key of Object.keys(parsedExisting)) {
+        if (
+          key.endsWith("HelpShown") ||
+          key === "racedaySetupWalkthroughSeen"
+        ) {
+          preserved[key] = parsedExisting[key];
+        }
+      }
+
+      const newSettings = { ...preserved, ...s };
+      newSettings.serverPort = parseInt(window.location.port) || 4250;
+      localStorage.setItem(
+        "racecoordinator_settings",
+        JSON.stringify(newSettings),
+      );
     }, settings);
   }
 
