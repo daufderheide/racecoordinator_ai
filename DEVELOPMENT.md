@@ -38,7 +38,7 @@ Git is required to clone the repository and manage version control. Install it u
 #### Option 1: Install via Winget (Recommended)
 1. Open a Command Prompt or PowerShell terminal as **Administrator** (right-click and choose "Run as Administrator").
 2. Run the following command:
-   ```bash
+   ```powershell
    winget install --id Git.Git -e --source winget
    ```
 3. Follow the installation prompts and complete the setup.
@@ -93,12 +93,12 @@ Once you have your GitHub account set up, clone the repository to your local mac
    - Clicking on **Terminal** in the top menu bar and selecting **New Terminal**, or
    - Pressing the keyboard shortcut key: ``Ctrl + ` `` (control + backtick).
 3. **Create and enter a directory** where you want to store your development projects. For example, run these commands to create and switch to a folder named `dev`:
-   ```bash
+   ```powershell
    mkdir dev
    cd dev
    ```
 4. Run the following command in that terminal to clone the project:
-   ```bash
+   ```powershell
    git clone https://github.com/daufderheide/racecoordinator_ai.git
    ```
 5. In the IDE, open the newly cloned project folder by going to **File -> Open Folder...** and selecting the `racecoordinator_ai` folder (located inside your `dev` directory).
