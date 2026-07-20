@@ -192,14 +192,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         logger.info("Trackmate hardware sent call button signal (0x57 / 'W')");
         handleCallButton(0, 1, 0); // Reset to unpressed state
         handleCallButton(0, 0, 0); // Fire a state 0 (pressed) transition
-      } else if (data == 0x77) { // 'w' Call button (lowercase variant)
-        logger.info("Trackmate hardware sent call button signal (0x77 / 'w')");
-        handleCallButton(0, 1, 0);
-        handleCallButton(0, 0, 0);
       } else if (data >= 0x30 && data <= 0x39) { // '0' through '9'
         handleTimeDigit(data);
       } else {
-        logger.debug(
+        logger.error(
             "Trackmate Protocol received unhandled byte: 0x{} ('{}')",
             String.format("%02X", data),
             (char) data);
