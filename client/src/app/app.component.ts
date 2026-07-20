@@ -12,6 +12,7 @@ import { slideInAnimation } from "@app/utils/animations";
 import { AnalyticsService } from "./analytics.service";
 import { LockOverlayComponent } from "./components/lock-overlay/lock-overlay.component";
 import { HelpOverlayComponent } from "./components/shared/help-overlay/help-overlay.component";
+import { ReplayStatusComponent } from "./components/shared/replay-status/replay-status.component";
 import { DataService } from "./data.service";
 import { AuthService } from "./services/auth.service";
 import { FileSystemService } from "./services/file-system.service";
@@ -29,6 +30,7 @@ import { ThemeService } from "./services/theme.service";
     </div>
     <app-help-overlay></app-help-overlay>
     <app-lock-overlay></app-lock-overlay>
+    <app-replay-status></app-replay-status>
   `,
   animations: [slideInAnimation],
   styles: [
@@ -42,7 +44,12 @@ import { ThemeService } from "./services/theme.service";
       }
     `,
   ],
-  imports: [RouterOutlet, HelpOverlayComponent, LockOverlayComponent],
+  imports: [
+    RouterOutlet,
+    HelpOverlayComponent,
+    LockOverlayComponent,
+    ReplayStatusComponent,
+  ],
 })
 export class AppComponent implements OnInit {
   private navigationCounter = 0;

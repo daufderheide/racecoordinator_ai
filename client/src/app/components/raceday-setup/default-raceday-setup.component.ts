@@ -291,6 +291,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.dataService.getSystemState().subscribe((state) => {
       if (state) {
         this.isRaceRunning = state.resourceLockState === "RACE_RUNNING";
+        if (this.isRaceRunning && (state as any).isReplayMode) {
+          this.router.navigate(["/raceday"]);
+        }
         this.cdr.detectChanges();
       }
     });

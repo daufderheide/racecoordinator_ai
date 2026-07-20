@@ -10,4 +10,13 @@ message SystemState {
   string owner_id = 2;
   bool has_main_relay = 3;
   bool has_per_lane_relays = 4;
+  bool is_replay_mode = 5;
+  LogReplayStatus log_replay_status = 6;
+}
+
+message LogReplayStatus {
+  int32 lines_processed = 1;
+  int32 total_lines = 2;
+  string current_log_time = 3;
+  bool is_finished = 4;
 }

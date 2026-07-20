@@ -5,8 +5,10 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
+import com.antigravity.proto.SystemState;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.LogReplayService;
 import com.antigravity.util.NetworkUtils;
 import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
@@ -175,6 +177,7 @@ public class ClientSubscriptionManager {
           com.antigravity.proto.SystemState.newBuilder() // fqn-collision
               .setResourceLockState("RACE_RUNNING")
               .setOwnerId("SYSTEM")
+              .setIsReplayMode(DatabaseService.getInstance().isReplayMode())
               .build();
       RaceData snapshot = currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
       if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
@@ -190,6 +193,7 @@ public class ClientSubscriptionManager {
           com.antigravity.proto.SystemState.newBuilder() // fqn-collision
               .setResourceLockState("IDLE")
               .setOwnerId("")
+              .setIsReplayMode(DatabaseService.getInstance().isReplayMode())
               .build();
       RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build(); // fqn-collision
       ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
@@ -479,11 +483,24 @@ public class ClientSubscriptionManager {
         });
   }
 
+  public void broadcastSystemState() {
+    broadcastSystemState(
+        currentRace != null ? "RACE_RUNNING" : "IDLE", currentRace != null ? "SYSTEM" : "");
+  }
+
   public void broadcastSystemState(String resourceLockState, String ownerId) {
-    com.antigravity.proto.SystemState.Builder stateBuilder = // fqn-collision
-        com.antigravity.proto.SystemState.newBuilder() // fqn-collision
+    SystemState.Builder stateBuilder =
+        SystemState.newBuilder()
             .setResourceLockState(resourceLockState)
-            .setOwnerId(ownerId);
+            .setOwnerId(ownerId)
+            .setIsReplayMode(DatabaseService.getInstance().isReplayMode());
+
+    if (DatabaseService.getInstance().isReplayMode()) {
+      LogReplayService replayService = LogReplayService.getInstance();
+      if (replayService != null) {
+        stateBuilder.setLogReplayStatus(replayService.getLogReplayStatus());
+      }
+    }
 
     if (this.currentRace != null && this.currentRace.getHardwareManager() != null) {
       stateBuilder.setHasMainRelay(this.currentRace.getHardwareManager().hasMainRelay());

@@ -96,18 +96,44 @@ public class LogReplayService {
     }
   }
 
+  private int totalLines = 0;
+  private int linesProcessed = 0;
+  private String currentLogTime = "";
+  private boolean isFinished = false;
+
+  public com.antigravity.proto.LogReplayStatus getLogReplayStatus() { // fqn-collision
+    return com.antigravity.proto.LogReplayStatus.newBuilder() // fqn-collision
+        .setLinesProcessed(this.linesProcessed)
+        .setTotalLines(this.totalLines)
+        .setCurrentLogTime(this.currentLogTime)
+        .setIsFinished(this.isFinished)
+        .build();
+  }
+
   private void replayLoop() {
+    try {
+      java.nio.file.Path path = java.nio.file.Paths.get(logFilePath);
+      try (java.util.stream.Stream<String> stream = java.nio.file.Files.lines(path)) {
+        this.totalLines = (int) stream.count();
+      }
+    } catch (Exception e) {
+      logger.warn("Could not pre-count lines in log file", e);
+    }
+
     long lastReportTime = System.currentTimeMillis();
-    long linesProcessed = 0;
+    this.linesProcessed = 0;
+    this.isFinished = false;
+
     try (BufferedReader reader = new BufferedReader(new FileReader(logFilePath))) {
       String line;
       LocalDateTime lastLogTime = null;
 
       while (isRunning && (line = reader.readLine()) != null) {
-        linesProcessed++;
+        this.linesProcessed++;
         Matcher matcher = LOG_LINE_PATTERN.matcher(line);
         if (matcher.matches()) {
           String timeStr = matcher.group(1);
+          this.currentLogTime = timeStr;
           String message = matcher.group(4);
 
           LocalDateTime logTime;
@@ -119,8 +145,9 @@ public class LogReplayService {
 
           if (System.currentTimeMillis() - lastReportTime > 5000) {
             logger.info(
-                "Replay Progress: Processed {} lines, current log time: {}",
-                linesProcessed,
+                "Replay Progress: Processed {}/{} lines, current log time: {}",
+                this.linesProcessed,
+                this.totalLines,
                 logTime);
             lastReportTime = System.currentTimeMillis();
           }
@@ -136,10 +163,17 @@ public class LogReplayService {
           lastLogTime = logTime;
 
           processLogMessage(message);
+
+          if (this.linesProcessed % 100 == 0) {
+            ClientSubscriptionManager.getInstance().broadcastSystemState();
+          }
         }
       }
+      this.linesProcessed = this.totalLines;
+      this.isFinished = true;
+      ClientSubscriptionManager.getInstance().broadcastSystemState();
       logger.info("=====================================================");
-      logger.info("  LOG REPLAY COMPLETED (Processed {} lines)", linesProcessed);
+      logger.info("  LOG REPLAY COMPLETED (Processed {} lines)", this.linesProcessed);
       logger.info("=====================================================");
     } catch (IOException e) {
       logger.error("Error reading log file for replay", e);
@@ -174,6 +208,7 @@ public class LogReplayService {
                 .build();
 
         ClientSubscriptionManager.getInstance().setRace(reconstructedRace);
+        reconstructedRace.init();
         logger.info("Successfully reconstructed Race from LogReplay config dump");
         return;
       } catch (Exception e) {
