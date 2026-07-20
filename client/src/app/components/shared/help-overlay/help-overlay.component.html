@@ -1,5 +1,5 @@
 @if (isVisible) {
-  <div class="help-overlay-container">
+  <div class="help-overlay-container" [ngClass]="{ ready: isInitialized }">
     <!-- The "Hole" Highlight -->
     @if (highlightStyle) {
       <div class="highlight-mask" [ngStyle]="highlightStyle"></div>

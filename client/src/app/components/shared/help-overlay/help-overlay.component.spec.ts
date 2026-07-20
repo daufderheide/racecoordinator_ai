@@ -142,7 +142,7 @@ describe("HelpOverlayComponent", () => {
     expect(helpServiceMock.endGuide).toHaveBeenCalled();
   }));
 
-  it("should calculate position correctly for target element", fakeAsync(() => {
+  it("should calculate position correctly for target element and delay isInitialized", fakeAsync(() => {
     // Create a dummy target element in the DOM
     const target = document.createElement("div");
     target.id = "test-target";
@@ -162,10 +162,24 @@ describe("HelpOverlayComponent", () => {
     };
     currentStepSubject.next(step);
 
-    // Trigger change detection and wait for async updates
+    // Initial change detection
     fixture.detectChanges();
-    tick(50);
+    expect(component.isInitialized).toBeFalse();
+
+    // Advance first rAF (position refined)
+    tick(16);
     fixture.detectChanges();
+    expect(component.isInitialized).toBeFalse(); // Still false because of double rAF
+
+    // Advance second rAF (first inner rAF of finalizeInitialization)
+    tick(16);
+    fixture.detectChanges();
+    expect(component.isInitialized).toBeFalse();
+
+    // Advance third rAF (second inner rAF of finalizeInitialization)
+    tick(16);
+    fixture.detectChanges();
+    expect(component.isInitialized).toBeTrue();
 
     expect(component.highlightStyle).toBeTruthy();
     // highlight should match target rect
@@ -182,7 +196,7 @@ describe("HelpOverlayComponent", () => {
     document.body.removeChild(target);
   }));
 
-  it("should fallback to center if target not found", fakeAsync(() => {
+  it("should fallback to center if target not found and delay isInitialized", fakeAsync(() => {
     isVisibleSubject.next(true);
     const step: GuideStep = {
       title: "No Target Step",
@@ -190,8 +204,24 @@ describe("HelpOverlayComponent", () => {
       selector: "#non-existent-id",
     };
     currentStepSubject.next(step);
-    tick(200);
+
+    // Initial change detection and wait for retries (3 * 50ms)
     fixture.detectChanges();
+    expect(component.isInitialized).toBeFalse();
+
+    tick(150);
+    fixture.detectChanges();
+    expect(component.isInitialized).toBeFalse(); // After retries, centerPopover is called but double rAF hasn't finished
+
+    // Advance first rAF
+    tick(16);
+    fixture.detectChanges();
+    expect(component.isInitialized).toBeFalse();
+
+    // Advance second rAF
+    tick(16);
+    fixture.detectChanges();
+    expect(component.isInitialized).toBeTrue();
 
     expect(component.highlightStyle).toBeNull();
     expect(component.popoverStyle.top).toBe("50%");

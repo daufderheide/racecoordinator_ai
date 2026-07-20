@@ -22,6 +22,7 @@ import { GuideStep, HelpService } from "@app/services/help.service";
 })
 export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   isVisible = false;
+  isInitialized = false;
   currentStep: GuideStep | null = null;
   hasNext = false;
   hasPrevious = false;
@@ -49,6 +50,9 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.add(
       this.helpService.isVisible$.subscribe((visible) => {
         this.isVisible = visible;
+        if (!visible) {
+          this.isInitialized = false;
+        }
         this.updatePosition();
       }),
     );
@@ -105,9 +109,21 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
 
   @ViewChild("popoverRef") popoverRef!: ElementRef;
 
+  private finalizeInitialization() {
+    if (this.isInitialized) return;
+    // Wait for the browser to paint the current styles without transitions
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.isInitialized = true;
+        this.cdr.detectChanges();
+      });
+    });
+  }
+
   private updatePosition(retries = 3) {
     if (!this.isVisible || !this.currentStep) {
       this.highlightStyle = null;
+      this.isInitialized = false;
       return;
     }
 
@@ -136,6 +152,8 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
         const rectRefined = el.getBoundingClientRect();
         this.applyPosition(el, rectRefined);
         this.cdr.detectChanges();
+
+        this.finalizeInitialization();
       });
     } else if (retries > 0) {
       // Target not found, wait for DOM updates and retry
@@ -144,6 +162,9 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     } else {
       // Target not found after retries, fallback to center
       this.centerPopover();
+      this.cdr.detectChanges();
+
+      this.finalizeInitialization();
     }
 
     this.cdr.detectChanges();
