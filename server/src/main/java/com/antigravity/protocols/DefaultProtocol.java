@@ -314,9 +314,18 @@ public abstract class DefaultProtocol implements IProtocol {
 
     Integer prevState = lastCallButtonState.get(interfaceId);
     if (state == 0 && prevState != null && prevState == 1) {
+      logger.info(
+          "Call button transition (1 -> 0) detected. Triggering listener for lane: {}", laneIndex);
       if (listener != null) {
         listener.onCallbutton(laneIndex, getInterfaceIndex());
+      } else {
+        logger.warn("Call button transition detected, but listener is null!");
       }
+    } else {
+      logger.debug(
+          "Call button state updated (state={}, prevState={}) without triggering listener",
+          state,
+          prevState);
     }
     lastCallButtonState.put(interfaceId, state);
   }

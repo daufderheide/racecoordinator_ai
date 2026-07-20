@@ -7,6 +7,8 @@ import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.LapEvent;
 import com.antigravity.proto.SegmentEvent;
 import com.antigravity.race.ClientSubscriptionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Interface listener for testing interface protocols. This is used when the client makes an
@@ -14,6 +16,8 @@ import com.antigravity.race.ClientSubscriptionManager;
  * unit test class and belongs in the main source folder.
  */
 public class TestInterfaceListener implements ProtocolListener {
+
+  private static final Logger logger = LoggerFactory.getLogger(TestInterfaceListener.class);
 
   @Override
   public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
@@ -55,6 +59,10 @@ public class TestInterfaceListener implements ProtocolListener {
                     .setInterfaceIndex(interfaceIndex)
                     .build())
             .build();
+
+    logger.info(
+        "TestInterfaceListener broadcasting call button event to client for interface index: {}",
+        interfaceIndex);
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
   }
 

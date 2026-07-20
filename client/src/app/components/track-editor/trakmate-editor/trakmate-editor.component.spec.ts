@@ -9,6 +9,7 @@ import { of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { TranslationServiceMock } from "@app/testing/translation-service.mock";
 
@@ -46,6 +47,14 @@ describe("TrakmateEditorComponent", () => {
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useClass: TranslationServiceMock },
+        {
+          provide: LoggerService,
+          useValue: jasmine.createSpyObj("LoggerService", [
+            "info",
+            "warn",
+            "error",
+          ]),
+        },
       ],
     }).compileComponents();
 

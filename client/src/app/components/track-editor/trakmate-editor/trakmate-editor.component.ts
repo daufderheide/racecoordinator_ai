@@ -15,6 +15,7 @@ import { DataService } from "@app/data.service";
 import { TrackmateConfig } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 
 @Component({
   selector: "app-trakmate-editor",
@@ -60,6 +61,7 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
   ) {}
 
   ngOnInit(): void {
@@ -113,6 +115,11 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
     this.subscriptions.add(
       this.dataService.getInterfaceEvents().subscribe({
         next: (event) => {
+          // DEBUG: Log every event received by this component
+          this.logger.info(
+            `[TrakmateEditor] Raw interface event received: ${JSON.stringify(event)}. Component interfaceIndex: ${this.interfaceIndex()}`,
+          );
+
           if (event.lap) {
             if ((event.lap.interfaceIndex ?? 0) === this.interfaceIndex()) {
               this.triggerPinActivity(event.lap.interfaceId ?? -1);
@@ -135,10 +142,20 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
               }
             }
           } else if (event.callbutton) {
+            this.logger.info(
+              `[TrakmateEditor] Received callbutton event. event.callbutton: ${JSON.stringify(event.callbutton)}. Current interfaceIndex: ${this.interfaceIndex()}`,
+            );
             if (
               (event.callbutton.interfaceIndex ?? 0) === this.interfaceIndex()
             ) {
+              this.logger.info(
+                `[TrakmateEditor] callbutton interfaceIndex matches! Triggering UI badge.`,
+              );
               this.triggerCallbuttonActivity();
+            } else {
+              this.logger.info(
+                `[TrakmateEditor] callbutton interfaceIndex mismatch. Expected ${this.interfaceIndex()}, got ${event.callbutton.interfaceIndex ?? 0}`,
+              );
             }
           } else if (event.status) {
             if ((event.status.interfaceIndex ?? 0) === this.interfaceIndex()) {
