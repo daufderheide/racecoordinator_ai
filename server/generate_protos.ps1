@@ -47,7 +47,9 @@ if (Test-Path $LOCAL_PROTOC) {
         # Run maven to download protoc
         Set-Location $SERVER_DIR
         $env:MAVEN_OPTS = '--add-opens java.base/java.lang=ALL-UNNAMED'
+        $ErrorActionPreference = "Continue"
         mvn protobuf:compile 2>&1 | Out-Null
+        $ErrorActionPreference = "Stop"
     }
 
     if (Test-Path $PROTOC_M2) {
