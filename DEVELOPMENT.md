@@ -116,7 +116,7 @@ Once you have your GitHub account set up, clone the repository to your local mac
    ```
 4. Run the following command in that terminal to clone the project:
    ```powershell
-      
+   git clone https://github.com/daufderheide/racecoordinator_ai.git
    ```
 5. In the IDE, open the newly cloned project folder by going to **File -> Open Folder...** and selecting the `racecoordinator_ai` folder (located inside your `dev` directory).
 6. Open a new terminal inside the IDE (which will now point directly to the project root directory).
