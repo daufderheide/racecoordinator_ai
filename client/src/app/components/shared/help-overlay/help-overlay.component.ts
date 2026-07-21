@@ -95,6 +95,27 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  @HostListener("window:keydown", ["$event"])
+  handleKeyDown(event: KeyboardEvent) {
+    if (!this.isVisible) return;
+
+    switch (event.key) {
+      case "Escape":
+        this.end();
+        break;
+      case "ArrowRight":
+        if (this.hasNext) {
+          this.next();
+        }
+        break;
+      case "ArrowLeft":
+        if (this.hasPrevious) {
+          this.previous();
+        }
+        break;
+    }
+  }
+
   next() {
     this.helpService.nextStep();
   }
@@ -116,8 +137,29 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
       requestAnimationFrame(() => {
         this.isInitialized = true;
         this.cdr.detectChanges();
+        this.focusNextButton();
       });
     });
+  }
+
+  private focusNextButton() {
+    setTimeout(() => {
+      if (this.popoverRef && this.popoverRef.nativeElement) {
+        const nextBtn = this.popoverRef.nativeElement.querySelector(
+          ".btn-next",
+        ) as HTMLElement;
+        if (nextBtn) {
+          nextBtn.focus();
+        } else {
+          const finishBtn = this.popoverRef.nativeElement.querySelector(
+            ".btn-finish",
+          ) as HTMLElement;
+          if (finishBtn) {
+            finishBtn.focus();
+          }
+        }
+      }
+    }, 10);
   }
 
   private updatePosition(retries = 3) {

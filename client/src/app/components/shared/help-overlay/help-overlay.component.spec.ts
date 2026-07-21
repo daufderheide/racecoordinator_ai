@@ -227,4 +227,68 @@ describe("HelpOverlayComponent", () => {
     expect(component.popoverStyle.top).toBe("50%");
     expect(component.popoverStyle.left).toBe("50%");
   }));
+
+  it("should call endGuide when Escape key is pressed", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    tick();
+    fixture.detectChanges();
+
+    const event = new KeyboardEvent("keydown", { key: "Escape" });
+    window.dispatchEvent(event);
+    tick();
+
+    expect(helpServiceMock.endGuide).toHaveBeenCalled();
+  }));
+
+  it("should call nextStep when ArrowRight key is pressed and hasNext is true", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    hasNextSubject.next(true);
+    tick();
+    fixture.detectChanges();
+
+    const event = new KeyboardEvent("keydown", { key: "ArrowRight" });
+    window.dispatchEvent(event);
+    tick();
+
+    expect(helpServiceMock.nextStep).toHaveBeenCalled();
+  }));
+
+  it("should not call nextStep when ArrowRight key is pressed and hasNext is false", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    hasNextSubject.next(false);
+    tick();
+    fixture.detectChanges();
+
+    const event = new KeyboardEvent("keydown", { key: "ArrowRight" });
+    window.dispatchEvent(event);
+    tick();
+
+    expect(helpServiceMock.nextStep).not.toHaveBeenCalled();
+  }));
+
+  it("should call previousStep when ArrowLeft key is pressed and hasPrevious is true", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    hasPreviousSubject.next(true);
+    tick();
+    fixture.detectChanges();
+
+    const event = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+    window.dispatchEvent(event);
+    tick();
+
+    expect(helpServiceMock.previousStep).toHaveBeenCalled();
+  }));
+
+  it("should not call previousStep when ArrowLeft key is pressed and hasPrevious is false", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    hasPreviousSubject.next(false);
+    tick();
+    fixture.detectChanges();
+
+    const event = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+    window.dispatchEvent(event);
+    tick();
+
+    expect(helpServiceMock.previousStep).not.toHaveBeenCalled();
+  }));
 });
