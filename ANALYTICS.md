@@ -29,7 +29,11 @@ All client-side events automatically include the following configuration paramet
    - `guide_name`: The descriptive name of the guide.
    - `step_index`: The actual numeric index they dropped off at.
    - `step_title`: The human-readable string title of the slide they closed.
-5. **`authority_level_set`**: Fired when a user connects and their role is determined, or when their role changes (e.g. they log in). Includes:
+5. **`help_center_link_clicked`**: Fired when a user clicks on a link or menu option to open the external Help Center. Includes:
+   - `article`: The slug of the article being opened (e.g., `raceday-setup`), or empty for the main Help Center.
+   - `section`: The specific anchor or heading on the page they are navigating to, if applicable.
+   - `url`: The full external URL that was opened in the new tab.
+6. **`authority_level_set`**: Fired when a user connects and their role is determined, or when their role changes (e.g. they log in). Includes:
    - `authority_level`: The determined role of the user (e.g. `viewer`, `director`, `admin`).
    - `connection_type`: A string indicating if the connection originated from `localhost`, `local_network`, or `remote_address`.
 
@@ -119,6 +123,11 @@ To retain custom strings and metrics into your timeline explorations, register t
 - Dimension Name: `Guide Name`, Event parameter: `guide_name`
 - Dimension Name: `Step Index`, Event parameter: `step_index`
 - Dimension Name: `Step Title`, Event parameter: `step_title`
+
+*For example, to map the external Help Center parameters:*
+- Dimension Name: `Help Article`, Event parameter: `article`
+- Dimension Name: `Help Section`, Event parameter: `section`
+- Dimension Name: `Help URL`, Event parameter: `url`
 
 *For example, to map the Authority Level parameters:*
 - Dimension Name: `Authority Level`, Event parameter: `authority_level`

@@ -1,4 +1,5 @@
 import { TestBed } from "@angular/core/testing";
+import { AnalyticsService } from "@app/analytics.service";
 
 import { HelpLinkService } from "./help-link.service";
 import { TranslationService } from "./translation.service";
@@ -6,6 +7,7 @@ import { TranslationService } from "./translation.service";
 describe("HelpLinkService", () => {
   let service: HelpLinkService;
   let translationServiceSpy: jasmine.SpyObj<TranslationService>;
+  let analyticsServiceSpy: jasmine.SpyObj<AnalyticsService>;
 
   beforeEach(() => {
     const spy = jasmine.createSpyObj("TranslationService", [
@@ -13,16 +15,24 @@ describe("HelpLinkService", () => {
     ]);
     spy.getCurrentLanguageValue.and.returnValue("en");
 
+    const analyticsSpy = jasmine.createSpyObj("AnalyticsService", [
+      "trackClick",
+    ]);
+
     TestBed.configureTestingModule({
       providers: [
         HelpLinkService,
         { provide: TranslationService, useValue: spy },
+        { provide: AnalyticsService, useValue: analyticsSpy },
       ],
     });
     service = TestBed.inject(HelpLinkService);
     translationServiceSpy = TestBed.inject(
       TranslationService,
     ) as jasmine.SpyObj<TranslationService>;
+    analyticsServiceSpy = TestBed.inject(
+      AnalyticsService,
+    ) as jasmine.SpyObj<AnalyticsService>;
   });
 
   it("should be created", () => {
@@ -128,7 +138,7 @@ describe("HelpLinkService", () => {
   });
 
   describe("openHelp", () => {
-    it("should open a new browser tab with the correct URL", () => {
+    it("should open a new browser tab with the correct URL and track the click", () => {
       spyOn(service, "isOnline").and.returnValue(true);
       translationServiceSpy.getCurrentLanguageValue.and.returnValue("en");
       spyOn(window, "open");
@@ -138,9 +148,17 @@ describe("HelpLinkService", () => {
         "https://daufderheide.github.io/racecoordinator_ai/race-editor/",
         "_blank",
       );
+      expect(analyticsServiceSpy.trackClick).toHaveBeenCalledWith(
+        "help_center_link_clicked",
+        {
+          article: "race-editor",
+          section: undefined,
+          url: "https://daufderheide.github.io/racecoordinator_ai/race-editor/",
+        },
+      );
     });
 
-    it("should open help with section anchor", () => {
+    it("should open help with section anchor and track the click", () => {
       spyOn(service, "isOnline").and.returnValue(true);
       translationServiceSpy.getCurrentLanguageValue.and.returnValue("en");
       spyOn(window, "open");
@@ -149,6 +167,14 @@ describe("HelpLinkService", () => {
       expect(window.open).toHaveBeenCalledWith(
         "https://daufderheide.github.io/racecoordinator_ai/race-editor/#scoring-options",
         "_blank",
+      );
+      expect(analyticsServiceSpy.trackClick).toHaveBeenCalledWith(
+        "help_center_link_clicked",
+        {
+          article: "race-editor",
+          section: "scoring-options",
+          url: "https://daufderheide.github.io/racecoordinator_ai/race-editor/#scoring-options",
+        },
       );
     });
   });

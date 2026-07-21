@@ -55,6 +55,9 @@ test.describe("Track Manager Guided Help Visuals", () => {
       await navigateToStep(page, harness, step.index);
       await waitForPopoverStable(harness);
 
+      // Force focus via Playwright to ensure consistency across browsers before taking a screenshot
+      await harness.focusActiveAction();
+
       await expect(page).toHaveScreenshot(
         `tm-help-step-${step.index}-${step.name}.png`,
       );

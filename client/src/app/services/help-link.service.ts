@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { AnalyticsService } from "@app/analytics.service";
 
 import { TranslationService } from "./translation.service";
 
@@ -19,7 +20,10 @@ export class HelpLinkService {
     "https://daufderheide.github.io/racecoordinator_ai";
   private readonly OFFLINE_PATH = "/help";
 
-  constructor(private translationService: TranslationService) {}
+  constructor(
+    private translationService: TranslationService,
+    private analyticsService: AnalyticsService,
+  ) {}
 
   /**
    * Opens the help article for the given topic in a new browser tab.
@@ -31,6 +35,11 @@ export class HelpLinkService {
    */
   openHelp(article: string, section?: string): void {
     const url = this.buildHelpUrl(article, section);
+    this.analyticsService.trackClick("help_center_link_clicked", {
+      article,
+      section,
+      url,
+    });
     window.open(url, "_blank");
   }
 

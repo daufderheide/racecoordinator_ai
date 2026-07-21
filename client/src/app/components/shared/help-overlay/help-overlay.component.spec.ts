@@ -9,6 +9,7 @@ import {
 import { BehaviorSubject } from "rxjs";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { HelpOverlayComponent } from "./help-overlay.component";
@@ -20,6 +21,7 @@ describe("HelpOverlayComponent", () => {
   let harness: HelpOverlayHarness;
   let helpServiceMock: any;
   let translationServiceMock: any;
+  let helpLinkServiceMock: any;
   let isVisibleSubject: BehaviorSubject<boolean>;
   let currentStepSubject: BehaviorSubject<GuideStep | null>;
   let hasNextSubject: BehaviorSubject<boolean>;
@@ -49,11 +51,16 @@ describe("HelpOverlayComponent", () => {
         .and.callFake((key: string) => key),
     };
 
+    helpLinkServiceMock = {
+      openHelp: jasmine.createSpy("openHelp"),
+    };
+
     await TestBed.configureTestingModule({
       imports: [HelpOverlayComponent, TranslatePipe],
       providers: [
         { provide: HelpService, useValue: helpServiceMock },
         { provide: TranslationService, useValue: translationServiceMock },
+        { provide: HelpLinkService, useValue: helpLinkServiceMock },
         ChangeDetectorRef,
       ],
     }).compileComponents();
@@ -290,5 +297,32 @@ describe("HelpOverlayComponent", () => {
     tick();
 
     expect(helpServiceMock.previousStep).not.toHaveBeenCalled();
+  }));
+
+  it("should intercept clicks on help-link elements and call helpLinkService with parsed article and section", fakeAsync(() => {
+    isVisibleSubject.next(true);
+    tick();
+    fixture.detectChanges();
+
+    const anchor = document.createElement("a");
+    anchor.href = "javascript:void(0)";
+    anchor.className =
+      "help-link help-article-test-article help-section-test-section";
+
+    // Stub preventDefault
+    const event = new MouseEvent("click", { bubbles: true });
+    spyOn(event, "preventDefault");
+
+    // We dispatch it on the component element because it's a HostListener
+    fixture.nativeElement.appendChild(anchor);
+    anchor.dispatchEvent(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(helpLinkServiceMock.openHelp).toHaveBeenCalledWith(
+      "test-article",
+      "test-section",
+    );
+
+    fixture.nativeElement.removeChild(anchor);
   }));
 });

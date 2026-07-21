@@ -520,7 +520,7 @@
   "RDS_HELP_START_DEMO_TITLE": "Comenzar Carrera de Demostración",
   "RDS_HELP_START_RACE_CONTENT": "Cuando estés listo, comienza la carrera oficial con la configuración seleccionada. Tu interfaz de pista debe estar configurada y encendida.",
   "RDS_HELP_START_RACE_TITLE": "Comenzar Carrera",
-  "RDS_HELP_WELCOME_CONTENT": "Aquí es donde configuras y comienzas tus carreras. Puedes seleccionar conductores, elegir un formato de carrera y personalizar la configuración.",
+  "RDS_HELP_WELCOME_CONTENT": "Aquí es donde configuras y comienzas tus carreras. Puedes seleccionar conductores, elegir un formato de carrera y personalizar la configuración.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-raceday-setup\">Más información sobre la página de configuración del día de la carrera</a>",
   "RDS_HELP_WELCOME_TITLE": "Bienvenido a la Configuración del Día de Carrera",
   "RDS_LABEL_IP": "Dirección IP:",
   "RDS_LABEL_NAME": "Nombre:",

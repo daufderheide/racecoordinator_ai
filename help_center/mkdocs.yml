@@ -62,8 +62,8 @@ nav:
     - Track Editor: track-editor.md
     - Race Manager: race-manager.md
     - Race Editor: race-editor.md
-  - Racing:
     - Race Day Setup: raceday-setup.md
+  - Racing:
     - Race Day Operation: raceday-operation.md
     - Heat Results: heat-results.md
     - Race Results: race-results.md

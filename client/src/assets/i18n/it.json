@@ -520,7 +520,7 @@
   "RDS_HELP_START_DEMO_TITLE": "Inizia Gara Demo",
   "RDS_HELP_START_RACE_CONTENT": "Quando sei pronto, inizia la gara ufficiale con la configurazione selezionata. La tua interfaccia di pista deve essere configurata e accesa.",
   "RDS_HELP_START_RACE_TITLE": "Inizia Gara",
-  "RDS_HELP_WELCOME_CONTENT": "Qui configuri e inizi le tue gare. Puoi selezionare i piloti, scegliere un formato di gara e personalizzare le impostazioni.",
+  "RDS_HELP_WELCOME_CONTENT": "Qui configuri e inizi le tue gare. Puoi selezionare i piloti, scegliere un formato di gara e personalizzare le impostazioni.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-raceday-setup\">Maggiori informazioni sulla pagina di configurazione del giorno della gara</a>",
   "RDS_HELP_WELCOME_TITLE": "Benvenuto nella Configurazione del Giorno di Gara",
   "RDS_LABEL_IP": "Indirizzo IP:",
   "RDS_LABEL_NAME": "Nome:",

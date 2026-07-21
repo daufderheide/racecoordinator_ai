@@ -520,7 +520,7 @@
   "RDS_HELP_START_DEMO_TITLE": "Demo-Rennen starten",
   "RDS_HELP_START_RACE_CONTENT": "Wenn Sie bereit sind, beginnt das offizielle Rennen mit der gewählten Konfiguration. Ihre Streckenschnittstelle muss konfiguriert und eingeschaltet sein.",
   "RDS_HELP_START_RACE_TITLE": "Rennen starten",
-  "RDS_HELP_WELCOME_CONTENT": "Hier konfigurieren und starten Sie Ihre Rennen. Sie können Fahrer auswählen, ein Rennformat wählen und Einstellungen anpassen.",
+  "RDS_HELP_WELCOME_CONTENT": "Hier konfigurieren und starten Sie Ihre Rennen. Sie können Fahrer auswählen, ein Rennformat wählen und Einstellungen anpassen.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-raceday-setup\">Erfahren Sie mehr über die Setup-Seite für den Renntag</a>",
   "RDS_HELP_WELCOME_TITLE": "Willkommen beim Renntag-Setup",
   "RDS_LABEL_IP": "IP-Adresse:",
   "RDS_LABEL_NAME": "Name:",

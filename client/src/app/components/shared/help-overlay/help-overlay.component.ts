@@ -12,6 +12,7 @@ import {
 import { Subscription } from "rxjs";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep, HelpService } from "@app/services/help.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 
 @Component({
   standalone: true,
@@ -42,6 +43,7 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     public helpService: HelpService,
     private cdr: ChangeDetectorRef,
+    private helpLinkService: HelpLinkService,
   ) {}
 
   ngOnInit() {
@@ -113,6 +115,33 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
           this.previous();
         }
         break;
+    }
+  }
+
+  @HostListener("click", ["$event"])
+  onClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const anchor = target.closest("a");
+    if (anchor && anchor.classList.contains("help-link")) {
+      event.preventDefault();
+      let article = "";
+      let section: string | undefined = undefined;
+
+      const articleClass = Array.from(anchor.classList).find((c) =>
+        c.startsWith("help-article-"),
+      );
+      if (articleClass) {
+        article = articleClass.replace("help-article-", "");
+      }
+
+      const sectionClass = Array.from(anchor.classList).find((c) =>
+        c.startsWith("help-section-"),
+      );
+      if (sectionClass) {
+        section = sectionClass.replace("help-section-", "");
+      }
+
+      this.helpLinkService.openHelp(article, section);
     }
   }
 
@@ -195,7 +224,11 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
         this.applyPosition(el, rectRefined);
         this.cdr.detectChanges();
 
-        this.finalizeInitialization();
+        if (!this.isInitialized) {
+          this.finalizeInitialization();
+        } else {
+          this.focusNextButton();
+        }
       });
     } else if (retries > 0) {
       // Target not found, wait for DOM updates and retry
@@ -206,7 +239,11 @@ export class HelpOverlayComponent implements OnInit, OnDestroy, AfterViewInit {
       this.centerPopover();
       this.cdr.detectChanges();
 
-      this.finalizeInitialization();
+      if (!this.isInitialized) {
+        this.finalizeInitialization();
+      } else {
+        this.focusNextButton();
+      }
     }
 
     this.cdr.detectChanges();

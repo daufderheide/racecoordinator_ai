@@ -520,7 +520,7 @@
   "RDS_HELP_START_DEMO_TITLE": "Start Demo Race",
   "RDS_HELP_START_RACE_CONTENT": "When you are ready, begins the official race with the selected configuration.  Your track interface must be configured and turned on.",
   "RDS_HELP_START_RACE_TITLE": "Start Racing",
-  "RDS_HELP_WELCOME_CONTENT": "This is where you configure and start your races. You can select drivers, choose a race format, and customize settings.",
+  "RDS_HELP_WELCOME_CONTENT": "This is where you configure and start your races. You can select drivers, choose a race format, and customize settings.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-raceday-setup\">Learn more about the raceday setup page</a>",
   "RDS_HELP_WELCOME_TITLE": "Welcome to Race Day Setup",
   "RDS_LABEL_IP": "IP Address:",
   "RDS_LABEL_NAME": "Name:",
