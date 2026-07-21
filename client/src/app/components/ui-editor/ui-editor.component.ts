@@ -204,42 +204,55 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     key: string;
     label: string;
     mode: "single" | "set";
+    helpId: string;
   }[] = [
     {
       key: "audio.yellowflag",
       label: "UE_LABEL_YELLOW_FLAG_AUDIO",
       mode: "single",
+      helpId: "help-audio-yellowflag",
     },
-    { key: "audio.countdown", label: "UE_LABEL_COUNTDOWN_AUDIO", mode: "set" },
+    {
+      key: "audio.countdown",
+      label: "UE_LABEL_COUNTDOWN_AUDIO",
+      mode: "set",
+      helpId: "help-audio-countdown",
+    },
     {
       key: "audio.seconds_left",
       label: "UE_LABEL_SECONDS_LEFT_AUDIO",
       mode: "set",
+      helpId: "help-audio-seconds-left",
     },
     {
       key: "audio.seconds_left.halfway",
       label: "UE_LABEL_SECONDS_LEFT_HALFWAY",
       mode: "single",
+      helpId: "help-audio-halfway",
     },
     {
       key: "audio.heat_over",
       label: "UE_LABEL_HEAT_OVER_AUDIO",
       mode: "single",
+      helpId: "help-audio-heat-over",
     },
     {
       key: "audio.race_over",
       label: "UE_LABEL_RACE_OVER_AUDIO",
       mode: "single",
+      helpId: "help-audio-race-over",
     },
     {
       key: "audio.min_lap_time",
       label: "UE_LABEL_MIN_LAP_TIME_AUDIO",
       mode: "single",
+      helpId: "help-audio-min-lap-time",
     },
     {
       key: "audio.drift_lap",
       label: "UE_LABEL_DRIFT_LAP_AUDIO",
       mode: "single",
+      helpId: "help-audio-drift-lap",
     },
   ];
 
@@ -1970,12 +1983,238 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
       {
+        selector: "#help-default-theme",
+        title: this.translationService.translate("UE_LABEL_DEFAULT_THEME"),
+        content: this.translationService.translate("UE_HELP_DEFAULT_THEME"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-default-badge",
+        title: this.translationService.translate("UE_BADGE_DEFAULT"),
+        content: this.translationService.translate("UE_HELP_DEFAULT_BADGE"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-readonly-badge",
+        title: this.translationService.translate("UE_BADGE_READONLY"),
+        content: this.translationService.translate("UE_HELP_READONLY_BADGE"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-active-badge",
+        title: this.translationService.translate("UE_LABEL_SELECTED"),
+        content: this.translationService.translate("UE_HELP_ACTIVE_BADGE"),
+        position: "bottom",
+      },
+      {
+        selector: "#activate-item-btn",
+        title: this.translationService.translate("TEM_BTN_ACTIVATE"),
+        content: this.translationService.translate(
+          "UE_HELP_ACTIVATE_THEME_BTN",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#copy-item-btn",
+        title: this.translationService.translate("UE_BTN_DUPLICATE_THEME"),
+        content: this.translationService.translate(
+          "UE_HELP_DUPLICATE_THEME_BTN",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#add-item-btn",
+        title: this.translationService.translate("UE_BTN_CREATE_THEME"),
+        content: this.translationService.translate("UE_HELP_CREATE_THEME_BTN"),
+        position: "bottom",
+      },
+      {
+        selector: "#help-theme-flags",
+        title: this.translationService.translate("UE_HEADER_FLAGS"),
+        content: this.translationService.translate("UE_HELP_THEME_FLAGS"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["flags"] = true;
+        },
+      },
+      {
+        selector: "#help-theme-countdown",
+        title: this.translationService.translate("UE_HEADER_COUNTDOWN"),
+        content: this.translationService.translate("UE_HELP_THEME_COUNTDOWN"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["countdown"] = true;
+        },
+      },
+      {
+        selector: "#help-theme-fuel",
+        title: this.translationService.translate("UE_HEADER_FUEL_GAUGE"),
+        content: this.translationService.translate("UE_HELP_THEME_FUEL"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["fuelGauge"] = true;
+        },
+      },
+      {
+        selector: "#help-theme-audio",
+        title: this.translationService.translate("UE_HEADER_AUDIO"),
+        content: this.translationService.translate("UE_HELP_THEME_AUDIO"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-yellowflag",
+        title: this.translationService.translate("UE_LABEL_YELLOW_FLAG_AUDIO"),
+        content: this.translationService.translate("UE_HELP_AUDIO_YELLOWFLAG"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-countdown",
+        title: this.translationService.translate("UE_LABEL_COUNTDOWN_AUDIO"),
+        content: this.translationService.translate("UE_HELP_AUDIO_COUNTDOWN"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-seconds-left",
+        title: this.translationService.translate("UE_LABEL_SECONDS_LEFT_AUDIO"),
+        content: this.translationService.translate(
+          "UE_HELP_AUDIO_SECONDS_LEFT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-halfway",
+        title: this.translationService.translate(
+          "UE_LABEL_SECONDS_LEFT_HALFWAY",
+        ),
+        content: this.translationService.translate("UE_HELP_AUDIO_HALFWAY"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-heat-over",
+        title: this.translationService.translate("UE_LABEL_HEAT_OVER_AUDIO"),
+        content: this.translationService.translate("UE_HELP_AUDIO_HEAT_OVER"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-race-over",
+        title: this.translationService.translate("UE_LABEL_RACE_OVER_AUDIO"),
+        content: this.translationService.translate("UE_HELP_AUDIO_RACE_OVER"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-min-lap-time",
+        title: this.translationService.translate("UE_LABEL_MIN_LAP_TIME_AUDIO"),
+        content: this.translationService.translate(
+          "UE_HELP_AUDIO_MIN_LAP_TIME",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
+        selector: "#help-audio-drift-lap",
+        title: this.translationService.translate("UE_LABEL_DRIFT_LAP_AUDIO"),
+        content: this.translationService.translate("UE_HELP_AUDIO_DRIFT_LAP"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["themes"] = true;
+          if (this.editingSettings?.activeThemeId) {
+            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
+          }
+          this.sectionsExpanded["audio"] = true;
+        },
+      },
+      {
         selector: "#help-custom-ui",
         title: this.translationService.translate("UE_HEADER_CUSTOM_UI"),
         content: this.translationService.translate(
           "UE_HELP_CUSTOM_UI_SETTINGS",
         ),
         position: "top",
+      },
+      {
+        selector: "#help-custom-ui-dir",
+        title: this.translationService.translate("UE_DIRECTORY_LABEL"),
+        content: this.translationService.translate("UE_HELP_CUSTOM_UI_DIR"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["config"] = true;
+        },
+      },
+      {
+        selector: "#help-page-transition",
+        title: this.translationService.translate("UE_LABEL_PAGE_TRANSITION"),
+        content: this.translationService.translate("UE_HELP_PAGE_TRANSITION"),
+        position: "bottom",
+        onEnter: () => {
+          this.sectionsExpanded["config"] = true;
+        },
       },
     ];
   }

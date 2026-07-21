@@ -887,6 +887,7 @@
               <div class="config-section sub-section theme-sub-section">
                 <div
                   class="section-header"
+                  [attr.id]="theme.is_default ? 'help-default-theme' : null"
                   (click)="toggleThemeSection(theme.entity_id)"
                 >
                   <span
@@ -900,12 +901,12 @@
                     </h1>
                   }
                   @if (theme.is_default) {
-                    <span class="default-badge">
+                    <span id="help-default-badge" class="default-badge">
                       {{ "UE_BADGE_DEFAULT" | translate }}
                     </span>
                   }
                   @if (theme.is_default) {
-                    <span class="readonly-badge">
+                    <span id="help-readonly-badge" class="readonly-badge">
                       {{ "UE_BADGE_READONLY" | translate }}
                     </span>
                   }
@@ -932,7 +933,7 @@
                     </div>
                   }
                   @if (theme.entity_id === editingSettings.activeThemeId) {
-                    <span class="selected-badge">
+                    <span id="help-active-badge" class="selected-badge">
                       {{ "UE_LABEL_SELECTED" | translate }}
                     </span>
                   }
@@ -964,6 +965,11 @@
                     <div class="config-section sub-section">
                       <div
                         class="section-header"
+                        [attr.id]="
+                          theme.entity_id === editingSettings.activeThemeId
+                            ? 'help-theme-flags'
+                            : null
+                        "
                         (click)="toggleSection('flags')"
                       >
                         <span
@@ -1128,6 +1134,11 @@
                     <div class="config-section sub-section">
                       <div
                         class="section-header"
+                        [attr.id]="
+                          theme.entity_id === editingSettings.activeThemeId
+                            ? 'help-theme-countdown'
+                            : null
+                        "
                         (click)="toggleSection('countdown')"
                       >
                         <span
@@ -1210,6 +1221,11 @@
                     <div class="config-section sub-section">
                       <div
                         class="section-header"
+                        [attr.id]="
+                          theme.entity_id === editingSettings.activeThemeId
+                            ? 'help-theme-fuel'
+                            : null
+                        "
                         (click)="toggleSection('fuelGauge')"
                       >
                         <span
@@ -1252,6 +1268,11 @@
                     <div class="config-section sub-section">
                       <div
                         class="section-header"
+                        [attr.id]="
+                          theme.entity_id === editingSettings.activeThemeId
+                            ? 'help-theme-audio'
+                            : null
+                        "
                         (click)="toggleSection('audio')"
                       >
                         <span
@@ -1267,6 +1288,12 @@
                             <div class="panel-content audio-grid">
                               @for (slot of mainAudioSlots; track slot.key) {
                                 <app-audio-selector
+                                  [attr.id]="
+                                    theme.entity_id ===
+                                    editingSettings.activeThemeId
+                                      ? slot.helpId
+                                      : null
+                                  "
                                   [label]="slot.label | translate"
                                   [mode]="slot.mode"
                                   [assets]="soundAssets"
@@ -1348,7 +1375,7 @@
             <div class="section-content">
               <div class="panel config-panel">
                 <div class="panel-content">
-                  <div class="directory-selector">
+                  <div class="directory-selector" id="help-custom-ui-dir">
                     <label>{{ "UE_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customDirectoryName) {
@@ -1379,7 +1406,7 @@
                       </button>
                     </div>
                   </div>
-                  <div class="transition-selector">
+                  <div class="transition-selector" id="help-page-transition">
                     <label>{{ "UE_LABEL_PAGE_TRANSITION" | translate }}</label>
                     <div class="select-container">
                       <select
