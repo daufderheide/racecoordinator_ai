@@ -593,8 +593,9 @@ describe("TrackEditorComponent", () => {
       expect(helpService.startGuide).toHaveBeenCalled();
     });
 
-    it("should expand lanes section if collapsed during help", fakeAsync(() => {
+    it("should expand lanes and interfaces sections if collapsed during help", fakeAsync(() => {
       component.sectionsExpanded.lanes = false;
+      component.sectionsExpanded.interfaces = false;
       component.lanes = [new Lane("l1", "white", "black", 100)];
 
       component.startHelp();
@@ -602,6 +603,7 @@ describe("TrackEditorComponent", () => {
       fixture.detectChanges();
 
       expect(component.sectionsExpanded.lanes).toBeTrue();
+      expect(component.sectionsExpanded.interfaces).toBeTrue();
     }));
   });
 });

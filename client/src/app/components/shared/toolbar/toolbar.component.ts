@@ -231,28 +231,6 @@ export class ToolbarComponent implements OnInit {
       });
     }
 
-    if (this.showAnalytics()) {
-      defaultSteps.push({
-        targetId: "analytics-btn",
-        title: this.translationService.translate(
-          "TOOLBAR_HELP_ANALYTICS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "TOOLBAR_HELP_ANALYTICS_CONTENT",
-        ),
-        position: "bottom",
-      });
-    }
-
-    if (this.showHelp()) {
-      defaultSteps.push({
-        targetId: "help-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
-        position: "bottom",
-      });
-    }
-
     if (this.showImport()) {
       defaultSteps.push({
         targetId: "import-btn",
@@ -282,6 +260,28 @@ export class ToolbarComponent implements OnInit {
         content: this.translationService.translate(
           "TOOLBAR_HELP_RESET_CONTENT",
         ),
+        position: "bottom",
+      });
+    }
+
+    if (this.showAnalytics()) {
+      defaultSteps.push({
+        targetId: "analytics-btn",
+        title: this.translationService.translate(
+          "TOOLBAR_HELP_ANALYTICS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_ANALYTICS_CONTENT",
+        ),
+        position: "bottom",
+      });
+    }
+
+    if (this.showHelp()) {
+      defaultSteps.push({
+        targetId: "help-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
         position: "bottom",
       });
     }

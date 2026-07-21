@@ -1891,9 +1891,53 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
       {
+        selector: "#heat-rotation-select",
+        title: this.translationService.translate("RE_HELP_HEAT_ROTATION_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_HEAT_ROTATION_CONTENT",
+        ),
+        position: "right",
+      },
+      {
+        selector: "#heat-list-section",
+        title: this.translationService.translate("RE_HELP_HEAT_LIST_TITLE"),
+        content: this.translationService.translate("RE_HELP_HEAT_LIST_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: "#driver-count-section",
+        title: this.translationService.translate("RE_HELP_DRIVER_COUNT_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_DRIVER_COUNT_CONTENT",
+        ),
+        position: "right",
+      },
+      {
         selector: "#track-select",
         title: this.translationService.translate("RM_LABEL_TRACK"),
         content: this.translationService.translate("RE_HELP_TRACK_CONTENT"),
+        position: "bottom",
+      },
+      {
+        selector: "#min-lap-time-input",
+        title: this.translationService.translate("RE_HELP_MIN_LAP_TIME_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_MIN_LAP_TIME_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#drift-time-input",
+        title: this.translationService.translate("RE_HELP_DRIFT_TIME_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_DRIFT_TIME_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#practice-input",
+        title: this.translationService.translate("RE_HELP_PRACTICE_TITLE"),
+        content: this.translationService.translate("RE_HELP_PRACTICE_CONTENT"),
         position: "bottom",
       },
     ];

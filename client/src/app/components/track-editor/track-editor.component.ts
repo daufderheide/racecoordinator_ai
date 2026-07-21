@@ -908,7 +908,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         content: this.translationService.translate(
           "TE_HELP_ADD_INTERFACE_CONTENT",
         ),
-        position: "left",
+        position: "right",
       },
     ];
 
@@ -936,13 +936,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       changed = true;
     }
 
-    // Add Arduino help steps if there are any configured
-    if (this.arduinoConfigs?.length > 0) {
-      // Ensure interfaces section is expanded
-      if (this.sectionsExpanded && !this.sectionsExpanded.interfaces) {
-        this.sectionsExpanded.interfaces = true;
-        changed = true;
-      }
+    // Ensure interfaces section is expanded so the Add Interface button is visible
+    if (this.sectionsExpanded && !this.sectionsExpanded.interfaces) {
+      this.sectionsExpanded.interfaces = true;
+      changed = true;
     }
 
     if (changed && !this.isDestroyed) {
@@ -951,6 +948,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   startHelp() {
+    this.ensureSectionsExpandedForHelp();
     this.updateHelpSteps();
     this.helpService.startGuide(this.helpSteps);
   }

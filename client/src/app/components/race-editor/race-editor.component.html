@@ -48,6 +48,7 @@
         <div class="editor-section" [class.invalid]="isRotationInvalid">
           <label>{{ "RM_LABEL_HEAT_ROTATION" | translate }}</label>
           <select
+            id="heat-rotation-select"
             [(ngModel)]="editingRace.heat_rotation_type"
             (ngModelChange)="onRotationTypeChange()"
           >
@@ -118,10 +119,10 @@
             />
           </div>
         }
-        <div class="heat-list-section">
+        <div id="heat-list-section" class="heat-list-section">
           <div class="heat-list-header">
             <h3>{{ "RE_HEAT_LIST_HEADER" | translate }}</h3>
-            <div class="driver-count-inline">
+            <div id="driver-count-section" class="driver-count-inline">
               <label>
                 {{ "RE_LABEL_DRIVER_COUNT" | translate }}
                 <span
@@ -193,6 +194,7 @@
                       {{ "RE_MIN_LAP_TIME" | translate }}
                     </label>
                     <input
+                      id="min-lap-time-input"
                       type="number"
                       [(ngModel)]="editingRace.min_lap_time"
                       (ngModelChange)="captureState()"
@@ -208,6 +210,7 @@
                       {{ "RE_DRIFT_TIME" | translate }}
                     </label>
                     <input
+                      id="drift-time-input"
                       type="number"
                       [(ngModel)]="editingRace.drift_time"
                       (ngModelChange)="captureState()"
@@ -221,6 +224,7 @@
                   <div class="config-section checkbox-section">
                     <label class="checkbox-container">
                       <input
+                        id="practice-input"
                         type="checkbox"
                         [(ngModel)]="editingRace.practice"
                         (ngModelChange)="captureState()"
