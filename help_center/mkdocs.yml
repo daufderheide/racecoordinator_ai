@@ -54,6 +54,7 @@ nav:
     - System Overview: system-overview.md
     - Installation: installation.md
   - Configuration:
+    - Race Day Setup: raceday-setup.md
     - Driver Manager: driver-manager.md
     - Driver Editor: driver-editor.md
     - Team Manager: team-manager.md
@@ -62,7 +63,6 @@ nav:
     - Track Editor: track-editor.md
     - Race Manager: race-manager.md
     - Race Editor: race-editor.md
-    - Race Day Setup: raceday-setup.md
   - Racing:
     - Race Day Operation: raceday-operation.md
     - Heat Results: heat-results.md
