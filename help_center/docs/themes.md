@@ -1,17 +1,9 @@
-# Assets and Themes
+# Themes
 
 !!! note "Content Coming Soon"
     This article is under development. Check back soon for detailed documentation.
 
 ## Overview
-
-*Content coming soon.*
-
-## Managing Image Sets
-
-*Content coming soon.*
-
-## Managing Audio Sets
 
 *Content coming soon.*
 
@@ -23,7 +15,15 @@
 
 *Content coming soon.*
 
-## Start Lamp Images
+## Countdown Images
+
+*Content coming soon.*
+
+## Fuel Images
+
+*Content coming soon.*
+
+## Audio
 
 *Content coming soon.*
 

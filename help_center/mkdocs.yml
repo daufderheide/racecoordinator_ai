@@ -70,8 +70,9 @@ nav:
     - Driver Results: driver-results.md
   - Customization:
     - UI Editor: ui-editor.md
-    - Assets & Themes: assets-and-themes.md
+    - Themes: themes.md
     - Custom Rotations: custom-rotations.md
+    - Custom Raceday: custom-raceday.md
   - Data Management:
     - Database Manager: database-manager.md
     - Saving & Loading Races: saving-loading.md
