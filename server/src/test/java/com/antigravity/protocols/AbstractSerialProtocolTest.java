@@ -233,7 +233,8 @@ public class AbstractSerialProtocolTest {
     assertTrue(serialConnection.isOpen());
     assertEquals("COM1", serialConnection.lastPortName);
     assertEquals(9600, serialConnection.lastBaudRate);
-    assertEquals(2, scheduler.commands.size()); // Status scheduler and reconnect scheduler
+    assertEquals(
+        3, scheduler.commands.size()); // Status scheduler, analog led, and refuel schedulers
 
     protocol.close();
     assertFalse(serialConnection.isOpen());
@@ -282,7 +283,7 @@ public class AbstractSerialProtocolTest {
   public void testSchedulerStartsOnlyOnOpen() {
     assertEquals(0, scheduler.commands.size());
     protocol.open();
-    assertEquals(2, scheduler.commands.size());
+    assertEquals(3, scheduler.commands.size());
   }
 
   @Test

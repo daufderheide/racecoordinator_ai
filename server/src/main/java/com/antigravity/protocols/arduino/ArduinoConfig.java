@@ -55,6 +55,13 @@ public class ArduinoConfig {
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_CALL_BUTTON.getNumber(), PinMode.READ);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_RELAY.getNumber(), PinMode.WRITE);
     PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_2.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_3.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_4.getNumber(), PinMode.WRITE);
+    PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5.getNumber(), PinMode.WRITE);
 
     for (int i = 0; i < MAX_LANES; i++) {
       PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_LAP_BASE.getNumber() + i, PinMode.READ);

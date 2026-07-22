@@ -192,6 +192,98 @@ public class ArduinoProtocolTest {
     assertTrue("LED clear must happen BEFORE serial disconnect", lastWrite < lastDisconnect);
   }
 
+  private void setupAnalogLedPins() {
+    ArduinoConfig newConfig = new ArduinoConfig();
+    newConfig.commPort = "COM1";
+    for (int i = 0; i < 9; i++) {
+      newConfig.digitalIds.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    }
+    newConfig.digitalIds.set(2, PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE);
+    newConfig.digitalIds.set(3, PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE);
+    newConfig.digitalIds.set(4, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE);
+    newConfig.digitalIds.set(5, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_2_VALUE);
+    newConfig.digitalIds.set(6, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_3_VALUE);
+    newConfig.digitalIds.set(7, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_4_VALUE);
+    newConfig.digitalIds.set(8, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE);
+    protocol = new TestableArduinoProtocol(newConfig, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Handshake
+    byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
+    serialConnection.injectData(versionMsg);
+    serialConnection.allWrittenData.clear();
+    protocol.clearPinStateCache();
+  }
+
+  private void assertPinState(int pin, boolean isHigh) {
+    byte stateByte = (byte) (isHigh ? 1 : 0);
+    byte[] expected = {0x4F, 0x44, (byte) pin, stateByte, 0x3B};
+    boolean found = false;
+    for (byte[] data : serialConnection.allWrittenData) {
+      if (Arrays.equals(data, expected)) {
+        found = true;
+        break;
+      }
+    }
+    assertTrue("Expected pin " + pin + " to be set to " + (isHigh ? "HIGH" : "LOW"), found);
+  }
+
+  @Test
+  public void testAnalogLed_RedFlag() {
+    setupAnalogLedPins();
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0);
+    // Green/Yellow OFF
+    assertPinState(2, false);
+    assertPinState(3, false);
+    // Countdowns ON
+    assertPinState(4, true);
+    assertPinState(5, true);
+    assertPinState(6, true);
+    assertPinState(7, true);
+    assertPinState(8, true);
+  }
+
+  @Test
+  public void testAnalogLed_WhiteFlag() {
+    setupAnalogLedPins();
+    protocol.setRaceState(RaceState.RACING, RaceFlag.WHITE, 0);
+    // Initial analogLedAlternatingToggle is false
+    // Green = false, Yellow = true
+    assertPinState(2, false);
+    assertPinState(3, true);
+    assertPinState(4, false); // Countdowns OFF
+  }
+
+  @Test
+  public void testAnalogLed_StartingState() {
+    setupAnalogLedPins();
+    // Countdown is at 5
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.RED, 5.0);
+    assertPinState(2, false); // Green OFF
+    assertPinState(3, true); // Yellow ON
+    assertPinState(8, true);
+    assertPinState(7, false);
+  }
+
+  @Test
+  public void testAnalogLed_RacingGreenFlag() {
+    setupAnalogLedPins();
+    protocol.setRaceState(RaceState.RACING, RaceFlag.GREEN, 0);
+    assertPinState(2, true); // Green ON
+    assertPinState(3, false); // Yellow OFF
+    assertPinState(4, false); // Countdowns OFF
+  }
+
+  @Test
+  public void testAnalogLed_OtherStates() {
+    setupAnalogLedPins();
+    // Any other state e.g. HEAT_OVER
+    protocol.setRaceState(RaceState.HEAT_OVER, RaceFlag.YELLOW, 0);
+    assertPinState(2, false); // Green OFF
+    assertPinState(3, true); // Yellow ON
+    assertPinState(4, false); // Countdowns OFF
+  }
+
   private static class TestableArduinoProtocol extends ArduinoProtocol {
 
     long mockedTime = 10000;
@@ -203,6 +295,10 @@ public class ArduinoProtocolTest {
     }
 
     private final MockScheduler mockScheduler;
+
+    public void clearPinStateCache() {
+      pinStateCache.clear();
+    }
 
     @Override
     protected ScheduledExecutorService createScheduler() {
@@ -2166,5 +2262,19 @@ public class ArduinoProtocolTest {
         "Should send closing state message on close",
         serialConnection.allWrittenData.stream()
             .anyMatch(d -> Arrays.equals(expectedClosingMsg, d)));
+  }
+
+  @Test
+  public void testAnalogLed_ClearLeds() {
+    setupAnalogLedPins();
+    protocol.setRaceState(RaceState.RACING, RaceFlag.GREEN, 0);
+    assertPinState(2, true); // Green is ON
+
+    serialConnection.allWrittenData.clear();
+
+    // Clear LEDs should turn off all analog LEDs
+    protocol.clearLeds();
+    assertPinState(2, false); // Green is OFF
+    // Note: Other pins were already off and cached, so they don't resend LOW messages
   }
 }

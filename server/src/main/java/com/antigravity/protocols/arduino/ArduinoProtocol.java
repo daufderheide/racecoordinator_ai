@@ -437,11 +437,13 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   @Override
   public void clearLeds() {
+    super.clearLeds();
     ledHelper.clearLeds();
   }
 
   @Override
   public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    super.setRaceState(state, flag, countdown);
     ledHelper.setRaceState(state, flag, countdown);
 
     int stateVal;
@@ -831,6 +833,35 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     for (PinConfig pinConfig : pinLookup.values()) {
       if (pinConfig.behavior == InputBehavior.MAIN_RELAY) {
         setPinState(pinConfig.isDigital, pinConfig.pin, isHigh);
+      }
+    }
+  }
+
+  @Override
+  protected void onAnalogLedsChanged() {
+    super.onAnalogLedsChanged();
+    updateAnalogLedPins(true, config.digitalIds);
+    updateAnalogLedPins(false, config.analogIds);
+  }
+
+  private void updateAnalogLedPins(boolean isDigital, List<Integer> ids) {
+    if (ids == null) return;
+    for (int pin = 0; pin < ids.size(); pin++) {
+      int behavior = ids.get(pin);
+      if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE) {
+        setPinState(isDigital, pin, isGreenFlagOn);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE) {
+        setPinState(isDigital, pin, isYellowFlagOn);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE) {
+        setPinState(isDigital, pin, isCountdownOn[0]);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_2_VALUE) {
+        setPinState(isDigital, pin, isCountdownOn[1]);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_3_VALUE) {
+        setPinState(isDigital, pin, isCountdownOn[2]);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_4_VALUE) {
+        setPinState(isDigital, pin, isCountdownOn[3]);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE) {
+        setPinState(isDigital, pin, isCountdownOn[4]);
       }
     }
   }

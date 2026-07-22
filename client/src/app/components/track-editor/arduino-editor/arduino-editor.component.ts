@@ -607,7 +607,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     const isRelay =
       behavior === PinBehavior.BEHAVIOR_RELAY ||
       (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE &&
-        behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000);
+        behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000) ||
+      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG ||
+      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG ||
+      (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1 &&
+        behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5);
 
     if (isRelay) {
       const key = isDigital ? `D${pin}` : `A${pin}`;
@@ -700,6 +704,18 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (val === (PinBehavior as any).BEHAVIOR_LED_RGB_STRING)
       return "led_string";
 
+    if (val === (PinBehavior as any).BEHAVIOR_ANALOG_LED_GREEN_FLAG) {
+      return "analogled_green";
+    }
+    if (val === (PinBehavior as any).BEHAVIOR_ANALOG_LED_YELLOW_FLAG) {
+      return "analogled_yellow";
+    }
+    for (let i = 1; i <= 5; i++) {
+      if (val === (PinBehavior as any)[`BEHAVIOR_ANALOG_LED_COUNTDOWN_${i}`]) {
+        return `analogled_countdown_${i}`;
+      }
+    }
+
     return "";
   }
 
@@ -734,6 +750,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       val = PinBehavior.BEHAVIOR_PIT_OUT_BASE + laneIndex;
     } else if (action === "led_string") {
       val = (PinBehavior as any).BEHAVIOR_LED_RGB_STRING;
+    } else if (action === "analogled_green") {
+      val = (PinBehavior as any).BEHAVIOR_ANALOG_LED_GREEN_FLAG;
+    } else if (action === "analogled_yellow") {
+      val = (PinBehavior as any).BEHAVIOR_ANALOG_LED_YELLOW_FLAG;
+    } else if (action.startsWith("analogled_countdown_")) {
+      const index = parseInt(action.split("_")[2], 10);
+      val = (PinBehavior as any)[`BEHAVIOR_ANALOG_LED_COUNTDOWN_${index}`];
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
@@ -1475,6 +1498,64 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           });
         }
       }
+
+      // Analog Led Group
+      const analogLedActions: PinAction[] = [
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_GREEN_FLAG",
+          ),
+          value: "analogled_green",
+        },
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_YELLOW_FLAG",
+          ),
+          value: "analogled_yellow",
+        },
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_COUNTDOWN",
+            { num: 1 },
+          ),
+          value: "analogled_countdown_1",
+        },
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_COUNTDOWN",
+            { num: 2 },
+          ),
+          value: "analogled_countdown_2",
+        },
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_COUNTDOWN",
+            { num: 3 },
+          ),
+          value: "analogled_countdown_3",
+        },
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_COUNTDOWN",
+            { num: 4 },
+          ),
+          value: "analogled_countdown_4",
+        },
+        {
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_COUNTDOWN",
+            { num: 5 },
+          ),
+          value: "analogled_countdown_5",
+        },
+      ];
+      groups.push({
+        key: "AE_BEHAVIOR_GROUP_ANALOG_LED",
+        label: this.translationService.translate(
+          "AE_BEHAVIOR_GROUP_ANALOG_LED",
+        ),
+        actions: analogLedActions,
+      });
 
       // 8. Other Group
       groups.push({

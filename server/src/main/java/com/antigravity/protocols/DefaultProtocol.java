@@ -24,6 +24,20 @@ public abstract class DefaultProtocol implements IProtocol {
   protected ProtocolListener listener;
   private int interfaceIndex = -1;
 
+  public static final long ANALOG_LED_BLINK_INTERVAL_MS = 500;
+
+  // Analog LED state
+  protected boolean isGreenFlagOn = false;
+  protected boolean isYellowFlagOn = false;
+  protected boolean[] isCountdownOn = new boolean[5];
+  protected int startingDuration = 0;
+  protected double maxCountdownSeen = 0.0;
+  protected RaceState currentRaceState = RaceState.UNKNOWN_STATE;
+  protected RaceFlag currentRaceFlag = RaceFlag.UNKNOWN_FLAG;
+  protected double currentCountdown = 0.0;
+  protected boolean analogLedAlternatingToggle = false;
+  protected ScheduledFuture<?> analogLedFuture;
+
   // Connection data
   protected CircularBuffer rxBuffer;
 
@@ -140,6 +154,27 @@ public abstract class DefaultProtocol implements IProtocol {
             1,
             TimeUnit.SECONDS);
 
+    analogLedFuture =
+        statusScheduler.scheduleAtFixedRate(
+            () -> {
+              try {
+                if (listener != null) {
+                  analogLedAlternatingToggle = !analogLedAlternatingToggle;
+                  if (currentRaceFlag == RaceFlag.WHITE
+                      || currentRaceFlag == RaceFlag.CHECKERED
+                      || currentRaceFlag == RaceFlag.GREEN_YELLOW) {
+                    evaluateAnalogLeds();
+                    onAnalogLedsChanged();
+                  }
+                }
+              } catch (Exception e) {
+                logger.error("Error in analog led scheduler", e);
+              }
+            },
+            0,
+            ANALOG_LED_BLINK_INTERVAL_MS,
+            TimeUnit.MILLISECONDS);
+
     refuelFuture =
         statusScheduler.scheduleAtFixedRate(
             () -> {
@@ -180,6 +215,10 @@ public abstract class DefaultProtocol implements IProtocol {
     if (statusFuture != null) {
       statusFuture.cancel(true);
       statusFuture = null;
+    }
+    if (analogLedFuture != null) {
+      analogLedFuture.cancel(true);
+      analogLedFuture = null;
     }
     if (refuelFuture != null) {
       refuelFuture.cancel(true);
@@ -382,7 +421,63 @@ public abstract class DefaultProtocol implements IProtocol {
 
   // Base IProtocol methods
   @Override
-  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {}
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    if (state == RaceState.STARTING) {
+      if (currentRaceState != RaceState.STARTING) {
+        maxCountdownSeen = countdown;
+        startingDuration = 0;
+      } else {
+        maxCountdownSeen = Math.max(maxCountdownSeen, countdown);
+      }
+      startingDuration = Math.max(startingDuration, (int) Math.ceil(maxCountdownSeen));
+    } else {
+      maxCountdownSeen = 0.0;
+      if (state == RaceState.UNKNOWN_STATE
+          || state == RaceState.RACE_OVER
+          || state == RaceState.HEAT_OVER) {
+        startingDuration = 0;
+      }
+    }
+
+    currentRaceState = state;
+    currentRaceFlag = flag;
+    currentCountdown = countdown;
+
+    evaluateAnalogLeds();
+    onAnalogLedsChanged();
+  }
+
+  protected void evaluateAnalogLeds() {
+    if (currentRaceState == RaceState.STARTING) {
+      isGreenFlagOn = false;
+      isYellowFlagOn = true;
+      for (int i = 0; i < 5; i++) {
+        int onCount = Math.max(1, startingDuration - (int) Math.ceil(currentCountdown) + 1);
+        boolean shouldBeOn = i >= startingDuration - onCount && i < startingDuration;
+        isCountdownOn[i] = shouldBeOn;
+      }
+    } else if (currentRaceFlag == RaceFlag.RED) {
+      isGreenFlagOn = false;
+      isYellowFlagOn = false;
+      for (int i = 0; i < 5; i++) isCountdownOn[i] = true;
+    } else if (currentRaceFlag == RaceFlag.WHITE
+        || currentRaceFlag == RaceFlag.CHECKERED
+        || currentRaceFlag == RaceFlag.GREEN_YELLOW) {
+      isGreenFlagOn = analogLedAlternatingToggle;
+      isYellowFlagOn = !analogLedAlternatingToggle;
+      for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
+    } else if (currentRaceState == RaceState.RACING && currentRaceFlag == RaceFlag.GREEN) {
+      isGreenFlagOn = true;
+      isYellowFlagOn = false;
+      for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
+    } else {
+      isGreenFlagOn = false;
+      isYellowFlagOn = true;
+      for (int i = 0; i < 5; i++) isCountdownOn[i] = false;
+    }
+  }
+
+  protected void onAnalogLedsChanged() {}
 
   @Override
   public void close() {
@@ -390,7 +485,14 @@ public abstract class DefaultProtocol implements IProtocol {
   }
 
   @Override
-  public void clearLeds() {}
+  public void clearLeds() {
+    isGreenFlagOn = false;
+    isYellowFlagOn = false;
+    for (int i = 0; i < 5; i++) {
+      isCountdownOn[i] = false;
+    }
+    onAnalogLedsChanged();
+  }
 
   @Override
   public boolean hasPerLaneRelays() {
