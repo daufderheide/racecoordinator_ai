@@ -1,5 +1,7 @@
 # Race Coordinator AI Development Guide
 
+Date reviewed: 07/19/2026
+
 This guide provides instructions for setting up your environment and running the Race Coordinator AI application on Windows and macOS from the source code.
 
 If you encounter any problems with the steps in this document or with Race Coordinator AI itself, please report them by creating an issue on [GitHub](https://github.com/daufderheide/racecoordinator_ai/issues).
@@ -23,14 +25,13 @@ Please install **Google Antigravity IDE** from the official product page:
 
 ### Step 2: Create a GitHub Account
 
-To collaborate and sync repository changes, you need a GitHub account. Follow these steps:
+To collaborate and sync repository changes, you need a GitHub account. Follow these steps (if you don't already have an account):
 1. Go to [GitHub](https://github.com/).
 2. Click the **Sign up** button in the upper-right corner.
 3. Enter your email address, create a strong password, and choose a unique username.
 4. Complete the security verification puzzle.
 5. Verify your email address using the code sent to your inbox.
 6. Choose a plan (the free plan is sufficient for development and beta testing).
-
 ### Step 3: Install Git
 
 Git is required to clone the repository and manage version control. Install it using one of these methods:
@@ -74,8 +75,24 @@ Git is required to clone the repository and manage version control. Install it u
 > [!WARNING]
 > After manually installing Git, you **must restart your IDE** for the PATH changes to be recognized, even if you've added Git to your system PATH.
 
+### Step 4: Install Java and Set JAVA_HOME
+
+The server requires Java Development Kit (JDK) 8 or higher.
+1. Download and install a JDK from one of these sources:
+   - [Microsoft OpenJDK](https://www.microsoft.com/openjdk)
+   - [Oracle JDK](https://www.oracle.com/java/technologies/downloads/)
+   - [Adoptium](https://adoptium.net/)
+2. **Important**: During installation, enable the "Add Java to PATH" option if available.
+3. Set JAVA_HOME environment variable (if not set automatically):
+   - Open System Properties → Advanced → Environment Variables
+   - Under "System variables", click "New"
+   - Variable name: `JAVA_HOME`
+   - Variable value: Your Java installation path (e.g., `C:\Program Files\Microsoft\jdk-17.0.x` or `C:\Program Files\Java\jdk-17`)
+   - Click "OK" to save
+4. **Restart your IDE** for the environment variable changes to take effect.
+
 > [!IMPORTANT]
-> **Everything after Step 3** (including cloning, running dependencies, and launching the client/server) will be done directly inside the **Google Antigravity IDE**.
+> **Everything below** (including cloning, running dependencies, and launching the client/server) will be done directly inside the **Google Antigravity IDE**.
 
 ---
 
@@ -111,10 +128,9 @@ All required dependencies are installed automatically by the application's build
 To run the application, you need to start both the Java backend server and the Angular frontend client. We provide PowerShell scripts to streamline this.
 
 > [!IMPORTANT]
-> As a beta tester, there are only 3 commands you will ever need to run, and in general they should be run in this order:
+> As a beta tester, there are only 2 commands you will ever need to run, and in general they should be run in this order:
 > 1. `git pull` -- syncs your local codebase to the absolute latest version on GitHub.
-> 2. `.\run_server_headless.ps1` -- installs dependencies, builds, and starts the server on port 7070
-> 3. `.\run_client.ps1` -- installs dependencies, builds, and starts the client on port 4200
+> 2. `.\run_server.ps1` -- installs dependencies, builds, and starts both the server (port 7070) and client (port 4200)
 
 ##### Update the Codebase
 Before starting the server and client, it is highly recommended to update your local codebase with the latest changes.
@@ -124,28 +140,37 @@ Before starting the server and client, it is highly recommended to update your l
    git pull
    ```
 
-##### Run the Headless Server
-The server manages the application logic, databases, and connection ports.
+##### Run the Application
+The server manages the application logic, databases, and connection ports. The client provides the web-based user interface.
 1. Open a terminal tab inside the Google Antigravity IDE (by default this will be a PowerShell terminal on Windows).
-2. Run the server headless script:
+2. **Ensure you're in the project directory**: The terminal should be in the `racecoordinator_ai` folder where the script is located. If you see an error like "The term '.\run_server.ps1' is not recognized", navigate to the project directory using `cd` command.
+3. **Configure PowerShell execution policy** (required to run scripts):
    ```powershell
-   .\run_server_headless.ps1
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
    ```
-   *(This script: [run_server_headless.ps1](run_server_headless.ps1))*
-3. On first run it will automatically configure Java (if already installed), download and install Maven (if not found), install server dependencies, build the server, and start it on port 7070.
-4. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
-
-##### Run the Client
-The client provides the web-based user interface.
-1. Open a **second** terminal tab in the IDE (click the `+` button in the terminal panel).
-2. Run the client script:
+   This allows running local scripts while maintaining security. If you see an error about execution policies, this command fixes it.
+4. Run the server script:
    ```powershell
-   .\run_client.ps1
+   .\run_server.ps1
    ```
-   *(This script: [run_client.ps1](run_client.ps1))*
-3. On first run, it will automatically download and install dependencies (`npm install`), compile Protobuf schemas, and launch the dev server.
-4. Once running, access the user interface in your browser at:
+   *(This script: [run_server.ps1](run_server.ps1))*
+5. On first run it will automatically configure Java (if already installed), download and install Maven (if not found), install server dependencies, build the server, and start it on port 7070.
+6. The client will also be started automatically. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
+7. Once running, access the user interface in your browser at:
    - [http://localhost:4200](http://localhost:4200)
+
+#### Troubleshooting Common Issues
+
+##### Java Installation Problems
+- **"JAVA_HOME is not defined correctly"**: Ensure JAVA_HOME points to your Java installation directory, not the bin subdirectory. For example: `C:\Program Files\Microsoft\jdk-17.0.x` not `C:\Program Files\Microsoft\jdk-17.0.x\bin`.
+- **Multiple Java versions installed**: Ensure JAVA_HOME points to your desired Java version, and that version appears first in your PATH environment variable.
+
+##### Java Runtime Warnings (Can Be Ignored)
+- **"WARNING: A restricted method in java.lang.System has been called"**: These warnings appear when using modern Java versions (17+) with certain libraries like Jansi and Guava that are used by Maven. These warnings are expected and do not prevent the server from running. They can be safely ignored.
+- **"WARNING: A terminally deprecated method in sun.misc.Unsafe has been called"**: Similar to above, these are deprecation warnings from libraries used by the build process. They do not affect functionality and can be ignored.
+
+##### PowerShell Script Execution Problems
+- **"running scripts is disabled on this system"**: Run the PowerShell execution policy command: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
 
 ---
 
