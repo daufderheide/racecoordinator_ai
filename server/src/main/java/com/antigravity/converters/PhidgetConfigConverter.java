@@ -1,5 +1,7 @@
 package com.antigravity.converters;
 
+import com.antigravity.proto.LapPinPitBehavior;
+import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 
 public class PhidgetConfigConverter {
@@ -18,13 +20,10 @@ public class PhidgetConfigConverter {
     config.useLapsForPits = proto.getUseLapsForPits();
     config.useLapsForPitEnd = proto.getUseLapsForPitEnd();
 
-    com.antigravity.proto.LapPinPitBehavior protoBehavior =
-        proto.getLapPinPitBehavior(); // fqn-collision
+    LapPinPitBehavior protoBehavior = proto.getLapPinPitBehavior();
     if (protoBehavior != null) {
       config.lapPinPitBehavior =
-          com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior
-              .fromValue( // fqn-collision
-                  protoBehavior.getNumber());
+          ArduinoConfig.LapPinPitBehavior.fromValue(protoBehavior.getNumber());
     }
 
     config.digitalInIds.clear();

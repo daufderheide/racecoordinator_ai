@@ -15,6 +15,7 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.DeferHeatResponse;
 import com.antigravity.proto.EndRaceRequest;
 import com.antigravity.proto.EndRaceResponse;
+import com.antigravity.proto.GetPhidgetDevicesResponse;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
 import com.antigravity.proto.InitializeRaceRequest;
@@ -23,6 +24,7 @@ import com.antigravity.proto.ModifyHeatsRequest;
 import com.antigravity.proto.ModifyHeatsResponse;
 import com.antigravity.proto.NextHeatResponse;
 import com.antigravity.proto.PauseRaceResponse;
+import com.antigravity.proto.PhidgetDeviceInfo;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RegenerateHeatsRequest;
 import com.antigravity.proto.RegenerateHeatsResponse;
@@ -791,8 +793,8 @@ public class ClientCommandTaskHandler {
       List<com.antigravity.proto.PhidgetConfig> phidgetConfigsList = // fqn-collision
           request.getPhidgetConfigsList();
       for (int i = 0; i < phidgetConfigsList.size(); i++) {
-        com.antigravity.proto.PhidgetConfig protoConfig =
-            phidgetConfigsList.get(i); // fqn-collision
+        com.antigravity.proto.PhidgetConfig protoConfig = // fqn-collision
+            phidgetConfigsList.get(i);
         PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
         PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
         phidget.setInterfaceIndex(interfaceIndex++);
@@ -920,19 +922,18 @@ public class ClientCommandTaskHandler {
 
   private void getPhidgetDevices(Context ctx) {
     try {
-      com.antigravity.proto.GetPhidgetDevicesResponse.Builder responseBuilder = // fqn-collision
-          com.antigravity.proto.GetPhidgetDevicesResponse.newBuilder(); // fqn-collision
+      GetPhidgetDevicesResponse.Builder responseBuilder = GetPhidgetDevicesResponse.newBuilder();
 
-      java.util.Map<Integer, com.antigravity.proto.PhidgetDeviceInfo> deviceMap =
-          new java.util.concurrent.ConcurrentHashMap<>(); // fqn-collision
+      java.util.Map<Integer, PhidgetDeviceInfo> deviceMap =
+          new java.util.concurrent.ConcurrentHashMap<>();
       com.phidget22.Manager manager = new com.phidget22.Manager();
 
       manager.addAttachListener(
           e -> {
             try {
               com.phidget22.Phidget p = e.getChannel();
-              com.antigravity.proto.PhidgetDeviceInfo info =
-                  com.antigravity.proto.PhidgetDeviceInfo.newBuilder() // fqn-collision
+              PhidgetDeviceInfo info =
+                  PhidgetDeviceInfo.newBuilder()
                       .setSerialNumber(p.getDeviceSerialNumber())
                       .setName(p.getDeviceName())
                       .setIsHubPort(p.getIsHubPortDevice())
