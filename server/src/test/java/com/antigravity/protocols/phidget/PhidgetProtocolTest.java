@@ -2,11 +2,14 @@ package com.antigravity.protocols.phidget;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
+import com.antigravity.protocols.ProtocolListener;
 import java.util.Arrays;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +47,7 @@ public class PhidgetProtocolTest {
     assertFalse(protocol.hasMainRelay()); // Not open yet
     assertFalse(protocol.hasPerLaneRelays()); // Not open yet
     assertFalse(protocol.hasDigitalFuel());
-    assertTrue(protocol.isHealthy());
+    assertFalse(protocol.isHealthy()); // Not open yet
   }
 
   @Test
@@ -60,13 +63,19 @@ public class PhidgetProtocolTest {
     // open() should gracefully return false without throwing uncaught exceptions.
     boolean result = protocol.open();
     assertFalse(result);
+    assertFalse(protocol.isHealthy());
   }
 
   @Test
-  public void testCloseSafety() {
-    // Closing unopened protocol should be a safe no-op
+  public void testCloseSafetyAndStatusNotification() {
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    protocol.setListener(mockListener);
+
+    // Closing protocol should update health and notify listener of DISCONNECTED state
     protocol.close();
     assertFalse(protocol.hasMainRelay());
+    assertFalse(protocol.isHealthy());
+    verify(mockListener).onInterfaceStatus(InterfaceStatus.DISCONNECTED, 0);
   }
 
   @Test

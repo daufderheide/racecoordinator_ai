@@ -3,6 +3,7 @@ package com.antigravity.protocols.phidget;
 import com.antigravity.proto.InterfaceAnalogDataEvent;
 import com.antigravity.proto.InterfaceDigitalPinEvent;
 import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
@@ -22,6 +23,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +36,8 @@ public class PhidgetProtocol implements IProtocol {
   private final int numLanes;
   private ProtocolListener listener;
   private int interfaceIndex;
+  private volatile boolean opened = false;
+  private ScheduledExecutorService statusScheduler;
 
   private final List<DigitalInput> digitalInputs = new ArrayList<>();
   private final List<DigitalOutput> digitalOutputs = new ArrayList<>();
@@ -149,11 +155,40 @@ public class PhidgetProtocol implements IProtocol {
         }
       }
 
+      opened = true;
+      startStatusScheduler();
       return true;
     } catch (Throwable e) {
       logger.error("Error opening Phidget interface index " + interfaceIndex, e);
       close();
       return false;
+    }
+  }
+
+  private synchronized void startStatusScheduler() {
+    stopStatusScheduler();
+    statusScheduler = Executors.newSingleThreadScheduledExecutor();
+    statusScheduler.scheduleAtFixedRate(
+        () -> {
+          try {
+            if (listener != null) {
+              InterfaceStatus status =
+                  isHealthy() ? InterfaceStatus.CONNECTED : InterfaceStatus.DISCONNECTED;
+              listener.onInterfaceStatus(status, interfaceIndex);
+            }
+          } catch (Exception e) {
+            logger.error("Error in status scheduler for Phidget interface " + interfaceIndex, e);
+          }
+        },
+        0,
+        1,
+        TimeUnit.SECONDS);
+  }
+
+  private synchronized void stopStatusScheduler() {
+    if (statusScheduler != null) {
+      statusScheduler.shutdownNow();
+      statusScheduler = null;
     }
   }
 
@@ -223,6 +258,8 @@ public class PhidgetProtocol implements IProtocol {
 
   @Override
   public void close() {
+    opened = false;
+    stopStatusScheduler();
     try {
       for (DigitalInput di : digitalInputs) {
         try {
@@ -249,6 +286,10 @@ public class PhidgetProtocol implements IProtocol {
       relayOutputs.clear();
       analogLedOutputs.clear();
       mainRelayOutput = null;
+
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, interfaceIndex);
+      }
     } catch (Throwable e) {
       logger.error("Error closing phidget", e);
     }
@@ -347,7 +388,40 @@ public class PhidgetProtocol implements IProtocol {
 
   @Override
   public boolean isHealthy() {
-    return true; // We can check attached state if needed
+    if (!opened) {
+      return false;
+    }
+    if (digitalInputs.isEmpty() && digitalOutputs.isEmpty() && analogInputs.isEmpty()) {
+      return false;
+    }
+    for (DigitalInput di : digitalInputs) {
+      try {
+        if (!di.getAttached()) {
+          return false;
+        }
+      } catch (PhidgetException e) {
+        return false;
+      }
+    }
+    for (DigitalOutput out : digitalOutputs) {
+      try {
+        if (!out.getAttached()) {
+          return false;
+        }
+      } catch (PhidgetException e) {
+        return false;
+      }
+    }
+    for (VoltageRatioInput vi : analogInputs) {
+      try {
+        if (!vi.getAttached()) {
+          return false;
+        }
+      } catch (PhidgetException e) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

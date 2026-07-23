@@ -1,9 +1,9 @@
 import { ComponentRef } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { PhidgetConfig } from "@app/models/track";
-import { PinBehavior } from "@app/proto/antigravity";
+import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
 import { TranslationService } from "@app/services/translation.service";
 
 import { PhidgetEditorComponent } from "./phidget-editor.component";
@@ -14,6 +14,7 @@ describe("PhidgetEditorComponent", () => {
   let fixture: ComponentFixture<PhidgetEditorComponent>;
   let mockDataService: jasmine.SpyObj<DataService>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
+  let eventsSubject: Subject<any>;
 
   const sampleConfig: PhidgetConfig = {
     name: "Phidget 8/8/8",
@@ -37,6 +38,7 @@ describe("PhidgetEditorComponent", () => {
   };
 
   beforeEach(async () => {
+    eventsSubject = new Subject<any>();
     mockDataService = jasmine.createSpyObj("DataService", [
       "getPhidgetDevices",
       "getInterfaceEvents",
@@ -63,7 +65,7 @@ describe("PhidgetEditorComponent", () => {
         },
       ]),
     );
-    mockDataService.getInterfaceEvents.and.returnValue(of({}));
+    mockDataService.getInterfaceEvents.and.returnValue(eventsSubject);
 
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
@@ -204,5 +206,30 @@ describe("PhidgetEditorComponent", () => {
     expect(component.getBoardImagePath()).toBe(
       "assets/images/phidget_composite_boards.png",
     );
+  });
+
+  it("should update status and status badge element class on interface status events", () => {
+    eventsSubject.next({
+      status: {
+        interfaceIndex: 0,
+        status: InterfaceStatus.CONNECTED,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.status).toBe("CONNECTED");
+    const badgeEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#phidget-status-badge-0",
+    );
+    expect(badgeEl.classList.contains("connected")).toBeTrue();
+
+    eventsSubject.next({
+      status: {
+        interfaceIndex: 0,
+        status: InterfaceStatus.DISCONNECTED,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.status).toBe("DISCONNECTED");
+    expect(badgeEl.classList.contains("connected")).toBeFalse();
   });
 });
