@@ -340,9 +340,19 @@ export class DataService {
   initializeInterface(
     configs: ArduinoConfig[],
     trackmateConfigs: TrackmateConfig[],
-    phidgetConfigs: any[], // TODO: Fix type to PhidgetConfig when we import it properly
-    laneCount: number,
+    phidgetConfigsOrLaneCount: any[] | number = [],
+    laneCountParam?: number,
   ): Observable<InitializeInterfaceResponse> {
+    let phidgetConfigs: any[] = [];
+    let laneCount = 0;
+
+    if (typeof phidgetConfigsOrLaneCount === "number") {
+      laneCount = phidgetConfigsOrLaneCount;
+    } else {
+      phidgetConfigs = phidgetConfigsOrLaneCount;
+      laneCount = laneCountParam || 0;
+    }
+
     const request = InitializeInterfaceRequest.create({
       configs: this.mapArduinoConfigsToProto(configs),
       trackmateConfigs: this.mapTrackmateConfigsToProto(trackmateConfigs),

@@ -69,7 +69,7 @@ describe("DataService", () => {
     ];
 
     service
-      .initializeInterface(arduinoConfigs, trackmateConfigs, 4)
+      .initializeInterface(arduinoConfigs, trackmateConfigs, [], 4)
       .subscribe((response) => {
         expect(response).toBeTruthy();
         expect(response.success).toBeTrue();
