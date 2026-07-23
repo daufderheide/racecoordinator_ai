@@ -1731,10 +1731,10 @@ export class DefaultRacedayComponent
       ) {
         const duration =
           this.isRestarting || this.raceState === RaceState.PAUSED
-            ? race.restart_time
-            : race.start_time;
-        this.countdownTotalLamps = Math.ceil(duration || 5.0);
-        this.updateCountdownLamps(this.autoStartRemaining || duration || 5.0);
+            ? (race.restart_time ?? 5.0)
+            : (race.start_time ?? 5.0);
+        this.countdownTotalLamps = Math.ceil(duration);
+        this.updateCountdownLamps(this.autoStartRemaining ?? duration);
       }
     } else {
       this.logger.debug("RacedayComponent: Waiting for race data...");
@@ -3900,8 +3900,8 @@ export class DefaultRacedayComponent
       // Determine duration based on entry path
       const r = this.raceService.getRace() || this.race;
       const duration = this.isRestarting
-        ? r?.restart_time || 5.0
-        : r?.start_time || 5.0;
+        ? (r?.restart_time ?? 5.0)
+        : (r?.start_time ?? 5.0);
 
       this.countdownTotalLamps = Math.ceil(duration);
       this.updateCountdownLamps(duration);
@@ -4210,12 +4210,11 @@ export class DefaultRacedayComponent
     const url =
       this.resolveAssetUrlBySlot("lamp.green") ||
       this.getAssetUrl("Start Lamp Green");
-    this.countdownLamps = Array.from({ length: this.countdownTotalLamps }).map(
-      () => ({
-        url: url,
-        state: "go",
-      }),
-    );
+    const count = this.countdownTotalLamps > 0 ? this.countdownTotalLamps : 5;
+    this.countdownLamps = Array.from({ length: count }).map(() => ({
+      url: url,
+      state: "go",
+    }));
     this.countdownText = "GO!";
     this.countdownColor = "lime";
   }

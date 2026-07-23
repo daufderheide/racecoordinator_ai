@@ -3364,6 +3364,77 @@ describe("DefaultRacedayComponent", () => {
 
       expect(window.Audio).not.toHaveBeenCalled();
     }));
+
+    it("should play only 'GO' sound and NOT '5' when start_time is 0", fakeAsync(() => {
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          return { type: "audio_set", url: "default_countdown_set" };
+        }
+        return null;
+      });
+
+      const race = { ...MOCK_RACES[0], start_time: 0 } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      (window.Audio as any).calls.reset();
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/5`,
+      );
+
+      raceStateSubject.next(RaceState.RACING);
+      tick();
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/go`,
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/5`,
+      );
+      expect(component["countdownLamps"].length).toBe(5);
+      expect(
+        component["countdownLamps"].every((l) => l.state === "go"),
+      ).toBeTrue();
+    }));
+
+    it("should play only 'GO' sound and NOT '5' when restart_time is 0", fakeAsync(() => {
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          return { type: "audio_set", url: "default_countdown_set" };
+        }
+        return null;
+      });
+
+      const race = { ...MOCK_RACES[0], restart_time: 0 } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      component["raceState"] = RaceState.PAUSED;
+      (window.Audio as any).calls.reset();
+      raceStateSubject.next(RaceState.STARTING);
+      tick();
+
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/5`,
+      );
+
+      raceStateSubject.next(RaceState.RACING);
+      tick();
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/go`,
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        `${mockDataService.serverUrl}api/assets/download/5`,
+      );
+      expect(component["countdownLamps"].length).toBe(5);
+      expect(
+        component["countdownLamps"].every((l) => l.state === "go"),
+      ).toBeTrue();
+    }));
   });
 
   describe("Themed and Lap Audio - None Type Support", () => {

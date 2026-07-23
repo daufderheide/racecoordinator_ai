@@ -264,6 +264,68 @@ public class StartingStateTest {
     assertFalse("Ticker thread should not be interrupted by exit()", wasInterrupted.get());
   }
 
+  @Test
+  public void testStartingWithZeroStartTimeTransitionsImmediately() throws InterruptedException {
+    com.antigravity.models.Race zeroStartTimeModel =
+        new com.antigravity.models.Race.Builder().withStartTime(0.0).build();
+
+    race =
+        new Race.Builder()
+            .model(zeroStartTimeModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .databaseContext(mockDbCtx)
+            .isDemoMode(true)
+            .build();
+    manager.setRace(race);
+
+    race.setHasRacedInCurrentHeat(false);
+    long start = System.currentTimeMillis();
+    race.changeState(starting);
+
+    long deadline = System.currentTimeMillis() + 3000;
+    while (!(race.getState() instanceof Racing) && System.currentTimeMillis() < deadline) {
+      Thread.sleep(50);
+    }
+
+    assertTrue(
+        "Race should transition immediately to Racing state when startTime is 0.0",
+        race.getState() instanceof Racing);
+    long duration = System.currentTimeMillis() - start;
+    assertTrue("Duration should be fast (< 500ms), was " + duration, duration < 500);
+  }
+
+  @Test
+  public void testStartingWithZeroRestartTimeTransitionsImmediately() throws InterruptedException {
+    com.antigravity.models.Race zeroRestartTimeModel =
+        new com.antigravity.models.Race.Builder().withRestartTime(0.0).build();
+
+    race =
+        new Race.Builder()
+            .model(zeroRestartTimeModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .databaseContext(mockDbCtx)
+            .isDemoMode(true)
+            .build();
+    manager.setRace(race);
+
+    race.setHasRacedInCurrentHeat(true);
+    long start = System.currentTimeMillis();
+    race.changeState(starting);
+
+    long deadline = System.currentTimeMillis() + 3000;
+    while (!(race.getState() instanceof Racing) && System.currentTimeMillis() < deadline) {
+      Thread.sleep(50);
+    }
+
+    assertTrue(
+        "Race should transition immediately to Racing state when restartTime is 0.0",
+        race.getState() instanceof Racing);
+    long duration = System.currentTimeMillis() - start;
+    assertTrue("Duration should be fast (< 500ms), was " + duration, duration < 500);
+  }
+
   @After
   public void tearDown() {
     if (race != null) {

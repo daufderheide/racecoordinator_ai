@@ -148,4 +148,18 @@ describe("RaceConverter", () => {
     const result = RaceConverter.fromProto(mockProto);
     expect(result.heat_scoring.finishValue).toBe(0);
   });
+
+  it("should preserve startTime and restartTime when set to 0", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r12" },
+      name: "Test Race 0 Duration",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      startTime: 0,
+      restartTime: 0,
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.start_time).toBe(0);
+    expect(result.restart_time).toBe(0);
+  });
 });
