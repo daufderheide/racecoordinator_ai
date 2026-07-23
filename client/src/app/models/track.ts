@@ -20,6 +20,7 @@ export interface TrackParams {
   has_per_lane_relays?: boolean;
   has_main_relay?: boolean;
   arduino_configs?: ArduinoConfig[];
+  phidget_configs?: PhidgetConfig[];
   trackmate_configs?: TrackmateConfig[];
 }
 
@@ -32,6 +33,7 @@ export class Track implements Model {
   readonly has_per_lane_relays!: boolean;
   readonly has_main_relay!: boolean;
   readonly arduino_configs!: ArduinoConfig[];
+  readonly phidget_configs!: PhidgetConfig[];
   readonly trackmate_configs!: TrackmateConfig[];
 
   constructor(params: TrackParams) {
@@ -121,5 +123,28 @@ export interface ArduinoConfig {
   analogIds: number[];
 
   ledStrings: LedString[];
+  voltageConfigs?: { [lane: number]: number };
+}
+
+export interface PhidgetConfig {
+  name: string;
+  serialNumber: number;
+  isHubPort: boolean;
+  hubPort: number;
+  debounceUs: number;
+
+  normallyClosedLaneSensors: boolean;
+  normallyClosedRelays: boolean;
+
+  useLapsForPits: number;
+  useLapsForPitEnd: number;
+  usePitsAsLaps: boolean;
+  useLapsForSegments: boolean;
+  lapPinPitBehavior: number;
+
+  digitalInIds: number[];
+  digitalOutIds: number[];
+  analogIds: number[];
+
   voltageConfigs?: { [lane: number]: number };
 }

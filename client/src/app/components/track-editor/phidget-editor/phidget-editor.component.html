@@ -1,0 +1,126 @@
+@if (config()) {
+  <div
+    class="arduino-config-container"
+    [id]="'phidget-editor-' + interfaceIndex()"
+  >
+    <div class="config-section">
+      <div class="section-header" (click)="toggleSection('phidget')">
+        <span
+          class="expander-icon"
+          [class.collapsed]="!sectionsExpanded.phidget"
+          >▼</span
+        >
+        <h1>
+          {{ "PHIDGET_HEADER" | translate }}
+        </h1>
+        <div class="spacer"></div>
+        <button
+          class="action-btn danger small"
+          (click)="onRemove()"
+          title="{{ 'PHIDGET_REMOVE_INTERFACE' | translate }}"
+        >
+          X
+        </button>
+      </div>
+
+      @if (sectionsExpanded.phidget) {
+        <div class="section-content">
+          <div class="sections-wrapper">
+            <!-- Main Configuration Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('main')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.main"
+                  >▼</span
+                >
+                <h4>{{ "PHIDGET_MAIN_HEADER" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.main) {
+                <div class="section-content">
+                  <div class="config-top-section">
+                    <div class="board-controls">
+                      <div class="control-group">
+                        <label>{{ "PHIDGET_DEVICE" | translate }}</label>
+                        <div class="com-port-row">
+                          <select
+                            [id]="'device-' + interfaceIndex()"
+                            [ngModel]="selectedDeviceKeyStr"
+                            (ngModelChange)="onDeviceSelectChange($event)"
+                          >
+                            <option value="" disabled>
+                              {{ "PHIDGET_SELECT_DEVICE" | translate }}
+                            </option>
+                            @for (
+                              device of devices;
+                              track getDeviceKey(device)
+                            ) {
+                              <option [value]="getDeviceKey(device)">
+                                {{ device.name }} ({{ device.serialNumber }})
+                                @if (device.isHubPort) {
+                                  - Port {{ device.hubPort }}
+                                }
+                              </option>
+                            }
+                          </select>
+                          <button
+                            type="button"
+                            [id]="'phidget-status-badge-' + interfaceIndex()"
+                            class="status-badge"
+                            [class.connected]="status === 'CONNECTED'"
+                            [title]="'PHIDGET_STATUS_' + status | translate"
+                          >
+                            <div class="status-dot"></div>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="control-group">
+                        <label>{{ "PHIDGET_DEBOUNCE" | translate }}</label>
+                        <select
+                          [id]="'debounce-' + interfaceIndex()"
+                          [(ngModel)]="config()!.debounceUs"
+                          (change)="onConfigChange()"
+                        >
+                          <option [ngValue]="5000">5 ms</option>
+                          <option [ngValue]="10000">10 ms</option>
+                          <option [ngValue]="20000">20 ms</option>
+                          <option [ngValue]="50000">50 ms</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="right-controls">
+                      <div class="control-group">
+                        <label class="checkbox-label">
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="config()!.normallyClosedLaneSensors"
+                            (change)="onConfigChange()"
+                          />
+                          {{ "PHIDGET_NORMALLY_CLOSED_SENSORS" | translate }}
+                        </label>
+                      </div>
+
+                      <div class="control-group">
+                        <label class="checkbox-label">
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="config()!.normallyClosedRelays"
+                            (change)="onConfigChange()"
+                          />
+                          {{ "PHIDGET_NORMALLY_CLOSED_RELAYS" | translate }}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

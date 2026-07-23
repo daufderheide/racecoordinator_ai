@@ -4,7 +4,11 @@ import { Injectable, NgZone } from "@angular/core";
 import { Reader } from "protobufjs/minimal";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
-import { ArduinoConfig, TrackmateConfig } from "@app/models/track";
+import {
+  ArduinoConfig,
+  PhidgetConfig,
+  TrackmateConfig,
+} from "@app/models/track";
 import {
   ArduinoConfig as ProtoArduinoConfig,
   DeferHeatRequest,
@@ -13,6 +17,7 @@ import {
   DeleteAssetResponse,
   EndRaceRequest,
   EndRaceResponse,
+  GetPhidgetDevicesResponse,
   IAssetMessage,
   ICarData,
   ICustomRotation,
@@ -27,6 +32,7 @@ import {
   InitializeRaceResponse,
   InterfaceEvent,
   IOverallStandingsUpdate,
+  IPhidgetDeviceInfo,
   IRace,
   IRaceParticipant,
   IRaceTime,
@@ -45,6 +51,7 @@ import {
   NextHeatResponse,
   PauseRaceRequest,
   PauseRaceResponse,
+  PhidgetConfig as ProtoPhidgetConfig,
   RaceData,
   RaceFlag,
   RaceState,
@@ -284,6 +291,19 @@ export class DataService {
     return this.http.get<string[]>(`${this.baseUrl}/api/serial-ports`);
   }
 
+  getPhidgetDevices(): Observable<IPhidgetDeviceInfo[]> {
+    return this.http
+      .get(`${this.baseUrl}/api/phidgets`, { responseType: "arraybuffer" })
+      .pipe(
+        map((buffer) => {
+          const response = GetPhidgetDevicesResponse.decode(
+            new Uint8Array(buffer),
+          );
+          return response.devices;
+        }),
+      );
+  }
+
   initializeRace(
     raceId: string,
     driverIds: string[],
@@ -320,59 +340,13 @@ export class DataService {
   initializeInterface(
     configs: ArduinoConfig[],
     trackmateConfigs: TrackmateConfig[],
+    phidgetConfigs: any[], // TODO: Fix type to PhidgetConfig when we import it properly
     laneCount: number,
   ): Observable<InitializeInterfaceResponse> {
     const request = InitializeInterfaceRequest.create({
-      configs: configs.map((config) =>
-        ProtoArduinoConfig.create({
-          name: config.name,
-          commPort: config.commPort,
-          baudRate: config.baudRate,
-          debounceUs: config.debounceUs,
-          hardwareType: config.hardwareType,
-          normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-          normallyClosedRelays: config.normallyClosedRelays,
-          globalInvertLights: config.globalInvertLights,
-          usePitsAsLaps: config.usePitsAsLaps,
-          useLapsForSegments: config.useLapsForSegments,
-          digitalIds: config.digitalIds,
-          analogIds: config.analogIds,
-          ledStrings:
-            config.ledStrings?.map((ls) =>
-              ProtoLedString.create({
-                pin: ls.pin,
-                leds: ls.leds,
-                numUsedLeds: ls.numUsedLeds,
-                addressableLeds: ls.addressableLeds,
-                brightness: ls.brightness,
-                colorOrder: ls.colorOrder,
-                flagFlashRate: ls.flagFlashRate,
-                ledLaneColorOverrides: ls.ledLaneColorOverrides,
-              }),
-            ) || [],
-          voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
-            ([lane, maxVoltage]) =>
-              ProtoVoltageConfig.create({
-                lane: parseInt(lane, 10),
-                maxVoltage: maxVoltage as number,
-              }),
-          ),
-        }),
-      ),
-      trackmateConfigs: trackmateConfigs.map((config) =>
-        ProtoTrackmateConfig.create({
-          name: config.name,
-          commPort: config.commPort,
-          normallyClosedRelays: config.normallyClosedRelays,
-          useIr: config.useIR,
-          debounce: config.debounce,
-          numLanes: config.numLanes,
-          normallyClosedLaneSensors: config.normallyClosedLaneSensors,
-          hasPerLaneRelays: config.hasPerLaneRelays,
-          lapPinPitBehavior: config.lapPinPitBehavior,
-          lapPinBehaviors: config.lapPinBehaviors,
-        }),
-      ),
+      configs: this.mapArduinoConfigsToProto(configs),
+      trackmateConfigs: this.mapTrackmateConfigsToProto(trackmateConfigs),
+      phidgetConfigs: this.mapPhidgetConfigsToProto(phidgetConfigs),
       laneCount,
     });
     const buffer = InitializeInterfaceRequest.encode(request).finish();
@@ -400,12 +374,9 @@ export class DataService {
       );
   }
 
-  updateInterfaceConfig(
-    config: ArduinoConfig,
-    interfaceIndex: number,
-  ): Observable<UpdateInterfaceConfigResponse> {
-    const request = UpdateInterfaceConfigRequest.create({
-      config: ProtoArduinoConfig.create({
+  private mapArduinoConfigsToProto(configs: ArduinoConfig[]) {
+    return configs.map((config) =>
+      ProtoArduinoConfig.create({
         name: config.name,
         commPort: config.commPort,
         baudRate: config.baudRate,
@@ -433,12 +404,128 @@ export class DataService {
           ) || [],
         voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
           ([lane, maxVoltage]) =>
-            VoltageConfig.create({
+            ProtoVoltageConfig.create({
               lane: parseInt(lane, 10),
               maxVoltage: maxVoltage as number,
             }),
         ),
       }),
+    );
+  }
+
+  private mapTrackmateConfigsToProto(trackmateConfigs: TrackmateConfig[]) {
+    return trackmateConfigs.map((config) =>
+      ProtoTrackmateConfig.create({
+        name: config.name,
+        commPort: config.commPort,
+        normallyClosedRelays: config.normallyClosedRelays,
+        useIr: config.useIR,
+        debounce: config.debounce,
+        numLanes: config.numLanes,
+        normallyClosedLaneSensors: config.normallyClosedLaneSensors,
+        hasPerLaneRelays: config.hasPerLaneRelays,
+        lapPinPitBehavior: config.lapPinPitBehavior,
+        lapPinBehaviors: config.lapPinBehaviors,
+      }),
+    );
+  }
+
+  private mapPhidgetConfigsToProto(phidgetConfigs: any[]) {
+    return (
+      phidgetConfigs?.map((config) =>
+        ProtoPhidgetConfig.create({
+          name: config.name,
+          serialNumber: config.serialNumber,
+          isHubPort: config.isHubPort,
+          hubPort: config.hubPort,
+          debounceUs: config.debounceUs,
+          normallyClosedLaneSensors: config.normallyClosedLaneSensors,
+          normallyClosedRelays: config.normallyClosedRelays,
+          usePitsAsLaps: config.usePitsAsLaps,
+          useLapsForSegments: config.useLapsForSegments,
+          lapPinPitBehavior: config.lapPinPitBehavior,
+          digitalInIds: config.digitalInIds,
+          digitalOutIds: config.digitalOutIds,
+          analogIds: config.analogIds,
+          voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
+            ([lane, maxVoltage]) =>
+              ProtoVoltageConfig.create({
+                lane: parseInt(lane, 10),
+                maxVoltage: maxVoltage as number,
+              }),
+          ),
+        }),
+      ) || []
+    );
+  }
+
+  updateInterfaceConfig(
+    config: ArduinoConfig | null,
+    interfaceIndex: number,
+    phidgetConfig?: PhidgetConfig | null,
+  ): Observable<UpdateInterfaceConfigResponse> {
+    const request = UpdateInterfaceConfigRequest.create({
+      config: config
+        ? ProtoArduinoConfig.create({
+            name: config.name,
+            commPort: config.commPort,
+            baudRate: config.baudRate,
+            debounceUs: config.debounceUs,
+            hardwareType: config.hardwareType,
+            normallyClosedLaneSensors: config.normallyClosedLaneSensors,
+            normallyClosedRelays: config.normallyClosedRelays,
+            globalInvertLights: config.globalInvertLights,
+            usePitsAsLaps: config.usePitsAsLaps,
+            useLapsForSegments: config.useLapsForSegments,
+            digitalIds: config.digitalIds,
+            analogIds: config.analogIds,
+            ledStrings:
+              config.ledStrings?.map((ls) =>
+                ProtoLedString.create({
+                  pin: ls.pin,
+                  leds: ls.leds,
+                  numUsedLeds: ls.numUsedLeds,
+                  addressableLeds: ls.addressableLeds,
+                  brightness: ls.brightness,
+                  colorOrder: ls.colorOrder,
+                  flagFlashRate: ls.flagFlashRate,
+                  ledLaneColorOverrides: ls.ledLaneColorOverrides,
+                }),
+              ) || [],
+            voltageConfigs: Object.entries(config.voltageConfigs || {}).map(
+              ([lane, maxVoltage]) =>
+                VoltageConfig.create({
+                  lane: parseInt(lane, 10),
+                  maxVoltage: maxVoltage as number,
+                }),
+            ),
+          })
+        : undefined,
+      phidgetConfig: phidgetConfig
+        ? ProtoPhidgetConfig.create({
+            name: phidgetConfig.name,
+            serialNumber: phidgetConfig.serialNumber,
+            isHubPort: phidgetConfig.isHubPort,
+            hubPort: phidgetConfig.hubPort,
+            debounceUs: phidgetConfig.debounceUs,
+            normallyClosedLaneSensors: phidgetConfig.normallyClosedLaneSensors,
+            normallyClosedRelays: phidgetConfig.normallyClosedRelays,
+            usePitsAsLaps: phidgetConfig.usePitsAsLaps,
+            useLapsForSegments: phidgetConfig.useLapsForSegments,
+            lapPinPitBehavior: phidgetConfig.lapPinPitBehavior,
+            digitalInIds: phidgetConfig.digitalInIds,
+            digitalOutIds: phidgetConfig.digitalOutIds,
+            analogIds: phidgetConfig.analogIds,
+            voltageConfigs: Object.entries(
+              phidgetConfig.voltageConfigs || {},
+            ).map(([lane, maxVoltage]) =>
+              ProtoVoltageConfig.create({
+                lane: parseInt(lane, 10),
+                maxVoltage: maxVoltage as number,
+              }),
+            ),
+          })
+        : undefined,
       interfaceIndex,
     });
     const buffer = UpdateInterfaceConfigRequest.encode(request).finish();

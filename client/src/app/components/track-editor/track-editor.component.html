@@ -218,6 +218,36 @@
                       font-weight: 600;
                       text-transform: uppercase;
                     "
+                    >Phidget</span
+                  >
+                  <div class="spacer"></div>
+                  <button
+                    id="add-phidget-btn"
+                    class="action-btn small add-list-btn"
+                    (click)="addPhidgetConfig(); $event.stopPropagation()"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="editor-section">
+                <div
+                  class="section-header"
+                  style="
+                    cursor: default;
+                    background: transparent;
+                    padding-left: 0;
+                    min-height: auto;
+                    margin-bottom: 0;
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 1.1rem;
+                      color: #94a3b8;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                    "
                     >Trakmate</span
                   >
                   <div class="spacer"></div>
@@ -245,32 +275,22 @@
       <div
         class="preview-panel"
         [style.overflow-y]="
-          arduinoConfigs.length + trackmateConfigs.length > 0
+          arduinoConfigs.length +
+            trackmateConfigs.length +
+            phidgetConfigs.length >
+          0
             ? 'auto'
             : 'hidden'
         "
       >
-        @if (arduinoConfigs.length === 0 && trackmateConfigs.length === 0) {
+        @if (
+          arduinoConfigs.length === 0 &&
+          trackmateConfigs.length === 0 &&
+          phidgetConfigs.length === 0
+        ) {
           <div class="empty-state">
             <h3>{{ "TE_NO_INTERFACES_ADDED" | translate }}</h3>
             <p>{{ "TE_NO_INTERFACES_DESC" | translate }}</p>
-          </div>
-        }
-
-        @for (
-          config of trackmateConfigs;
-          track trackByTrackmateConfig(i, config);
-          let i = $index
-        ) {
-          <div class="interface-container">
-            <app-trakmate-editor
-              [config]="config"
-              [lanes]="lanes.length"
-              [interfaceIndex]="i"
-              (change)="captureState()"
-              (remove)="removeTrackmateConfig(i)"
-            >
-            </app-trakmate-editor>
           </div>
         }
 
@@ -284,12 +304,49 @@
               [config]="config"
               [lanes]="lanes"
               (configChange)="captureState()"
-              [index]="i + trackmateConfigs.length"
+              [index]="i"
               [count]="arduinoConfigs.length"
               (remove)="removeArduinoConfig(i)"
               (requestLedStringDialog)="onRequestLedStringDialog(i)"
             >
             </app-arduino-editor>
+          </div>
+        }
+
+        @for (
+          config of phidgetConfigs;
+          track trackByPhidgetConfig(i, config);
+          let i = $index
+        ) {
+          <div class="interface-container">
+            <app-phidget-editor
+              [config]="config"
+              [lanes]="lanes.length"
+              [interfaceIndex]="i + arduinoConfigs.length"
+              (change)="captureState()"
+              (remove)="removePhidgetConfig(i)"
+              (driverError)="onPhidgetDriverError()"
+            >
+            </app-phidget-editor>
+          </div>
+        }
+
+        @for (
+          config of trackmateConfigs;
+          track trackByTrackmateConfig(i, config);
+          let i = $index
+        ) {
+          <div class="interface-container">
+            <app-trakmate-editor
+              [config]="config"
+              [lanes]="lanes.length"
+              [interfaceIndex]="
+                i + arduinoConfigs.length + phidgetConfigs.length
+              "
+              (change)="captureState()"
+              (remove)="removeTrackmateConfig(i)"
+            >
+            </app-trakmate-editor>
           </div>
         }
       </div>
@@ -325,3 +382,11 @@
   (cancel)="onCancelDiscard()"
 >
 </app-confirmation-modal>
+
+<app-acknowledgement-modal
+  [visible]="driverMissingError"
+  title="PHIDGET_MISSING_DRIVER"
+  message="PHIDGET_MISSING_DRIVER"
+  (acknowledge)="driverMissingError = false"
+>
+</app-acknowledgement-modal>

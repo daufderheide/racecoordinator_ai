@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.converters.ArduinoConfigConverter;
+import com.antigravity.converters.PhidgetConfigConverter;
 import com.antigravity.converters.TrackmateConfigConverter;
 import com.antigravity.models.AnalyticsToggleRequest;
 import com.antigravity.models.Driver;
@@ -42,6 +43,8 @@ import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.interfaces.SerialConnection;
+import com.antigravity.protocols.phidget.PhidgetConfig;
+import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.antigravity.protocols.trackmate.TrackmateProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -151,6 +154,7 @@ public class ClientCommandTaskHandler {
         this::changeLane,
         Role.DIRECTOR);
     app.get("/api/serial-ports", this::getSerialPorts, Role.VIEWER);
+    app.get("/api/phidgets", this::getPhidgetDevices, Role.VIEWER);
     app.get("/api/races/current/export-csv", this::exportRaceCsv, Role.VIEWER);
     app.post("/api/save-race", this::saveRace, Role.DIRECTOR);
     app.get("/api/saved-races", this::getSavedRaces, Role.VIEWER);
@@ -703,24 +707,35 @@ public class ClientCommandTaskHandler {
     try {
       UpdateInterfaceConfigRequest request =
           UpdateInterfaceConfigRequest.parseFrom(ctx.bodyAsBytes());
-      ArduinoConfig config = ArduinoConfigConverter.fromProto(request.getConfig());
+      ArduinoConfig config = null;
+      if (request.hasConfig()) {
+        config = ArduinoConfigConverter.fromProto(request.getConfig());
+      }
+      PhidgetConfig phidgetConfig = null;
+      if (request.hasPhidgetConfig()) {
+        phidgetConfig = PhidgetConfigConverter.fromProto(request.getPhidgetConfig());
+      }
       int interfaceIndex = request.getInterfaceIndex();
 
       ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
-      ArduinoProtocol target = null;
+      IProtocol target = null;
 
       if (current != null) {
         List<IProtocol> protocols = current.getProtocols();
         if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
           IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol) {
-            target = (ArduinoProtocol) p;
+          if (p instanceof ArduinoProtocol || p instanceof PhidgetProtocol) {
+            target = p;
           }
         }
       }
 
       if (target != null) {
-        target.updateConfig(config);
+        if (target instanceof ArduinoProtocol && config != null) {
+          ((ArduinoProtocol) target).updateConfig(config);
+        } else if (target instanceof PhidgetProtocol && phidgetConfig != null) {
+          ((PhidgetProtocol) target).updateConfig(phidgetConfig);
+        }
 
         UpdateInterfaceConfigResponse response =
             UpdateInterfaceConfigResponse.newBuilder()
@@ -773,6 +788,18 @@ public class ClientCommandTaskHandler {
         protocols.add(trackmate);
       }
 
+      List<com.antigravity.proto.PhidgetConfig> phidgetConfigsList = // fqn-collision
+          request.getPhidgetConfigsList();
+      for (int i = 0; i < phidgetConfigsList.size(); i++) {
+        com.antigravity.proto.PhidgetConfig protoConfig =
+            phidgetConfigsList.get(i); // fqn-collision
+        PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
+        PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
+        phidget.setInterfaceIndex(interfaceIndex++);
+        phidget.setListener(new TestInterfaceListener());
+        protocols.add(phidget);
+      }
+
       ProtocolDelegate finalProtocol;
       if (protocols.size() >= 1) {
         finalProtocol = new ProtocolDelegate(protocols);
@@ -793,13 +820,18 @@ public class ClientCommandTaskHandler {
                       : "Failed to open one or more interfaces")
               .build();
       ctx.contentType("application/octet-stream").result(response.toByteArray());
-    } catch (IllegalStateException e) {
-      ctx.status(409).result(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
-      ctx.status(400).result("Invalid message: " + e.getMessage());
-    } catch (Exception e) {
-      logger.error("Error initializing interface", e);
-      ctx.status(500).result("Internal Server Error: " + e.toString());
+    } catch (Throwable e) {
+      if (e instanceof ExceptionInInitializerError || e instanceof NoClassDefFoundError) {
+        logger.error("Phidget driver not installed. The Mac Phidget22 DMG must be installed.");
+        ctx.status(500).result("MISSING_PHIDGET_DRIVER");
+      } else if (e instanceof IllegalStateException) {
+        ctx.status(409).result(e.getMessage());
+      } else if (e instanceof InvalidProtocolBufferException) {
+        ctx.status(400).result("Invalid message: " + e.getMessage());
+      } else {
+        logger.error("Error initializing interface", e);
+        ctx.status(500).result("Internal Server Error: " + e.toString());
+      }
     }
   }
 
@@ -883,6 +915,49 @@ public class ClientCommandTaskHandler {
     } catch (Exception e) {
       logger.error("Error getting serial ports", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void getPhidgetDevices(Context ctx) {
+    try {
+      com.antigravity.proto.GetPhidgetDevicesResponse.Builder responseBuilder = // fqn-collision
+          com.antigravity.proto.GetPhidgetDevicesResponse.newBuilder(); // fqn-collision
+
+      java.util.Map<Integer, com.antigravity.proto.PhidgetDeviceInfo> deviceMap =
+          new java.util.concurrent.ConcurrentHashMap<>(); // fqn-collision
+      com.phidget22.Manager manager = new com.phidget22.Manager();
+
+      manager.addAttachListener(
+          e -> {
+            try {
+              com.phidget22.Phidget p = e.getChannel();
+              com.antigravity.proto.PhidgetDeviceInfo info =
+                  com.antigravity.proto.PhidgetDeviceInfo.newBuilder() // fqn-collision
+                      .setSerialNumber(p.getDeviceSerialNumber())
+                      .setName(p.getDeviceName())
+                      .setIsHubPort(p.getIsHubPortDevice())
+                      .setHubPort(p.getHubPort())
+                      .build();
+              deviceMap.put(p.getDeviceSerialNumber(), info);
+            } catch (com.phidget22.PhidgetException ex) {
+              logger.error("Error getting phidget info", ex);
+            }
+          });
+
+      manager.open();
+      Thread.sleep(500);
+      manager.close();
+
+      responseBuilder.addAllDevices(deviceMap.values());
+      ctx.contentType("application/octet-stream").result(responseBuilder.build().toByteArray());
+    } catch (Throwable e) {
+      if (e instanceof ExceptionInInitializerError || e instanceof NoClassDefFoundError) {
+        logger.error("Phidget driver not installed. The Mac Phidget22 DMG must be installed.");
+        ctx.status(500).result("MISSING_PHIDGET_DRIVER");
+      } else {
+        logger.error("Error getting Phidget devices", e);
+        ctx.status(500).result("Internal Server Error: " + e.getMessage());
+      }
     }
   }
 

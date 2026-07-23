@@ -14,8 +14,13 @@
     <generated.sources.dir>${build.dist.dir}/generated-sources/protobuf/java</generated.sources.dir>
     <protobuf.java.version>3.25.1</protobuf.java.version>
     <skipProtobuf>false</skipProtobuf>
-    <argLine></argLine>
   </properties>
+  <repositories>
+    <repository>
+      <id>local-project-repo</id>
+      <url>file://${project.basedir}/repo</url>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>io.javalin</groupId>
@@ -60,6 +65,11 @@
       <version>2.10.4</version>
     </dependency>
     <dependency>
+      <groupId>com.phidget22</groupId>
+      <artifactId>phidget22</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>4.11.0</version>
@@ -77,6 +87,27 @@
       </extension>
     </extensions>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>install-phidget22</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <groupId>com.phidget22</groupId>
+              <artifactId>phidget22</artifactId>
+              <version>1.0</version>
+              <packaging>jar</packaging>
+              <file>${project.basedir}/lib/phidget22.jar</file>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>

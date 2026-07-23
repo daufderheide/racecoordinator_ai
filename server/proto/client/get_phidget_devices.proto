@@ -1,0 +1,19 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "GetPhidgetDevicesProto";
+
+message GetPhidgetDevicesRequest {}
+
+message PhidgetDeviceInfo {
+  int32 serial_number = 1;
+  string name = 2;
+  bool is_hub_port = 3;
+  int32 hub_port = 4;
+}
+
+message GetPhidgetDevicesResponse {
+  repeated PhidgetDeviceInfo devices = 1;
+}

@@ -20,11 +20,13 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
+import { PhidgetEditorComponent } from "@app/components/track-editor/phidget-editor/phidget-editor.component";
 import { TrakmateEditorComponent } from "@app/components/track-editor/trakmate-editor/trakmate-editor.component";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
@@ -34,6 +36,7 @@ import {
   LedString,
   MAX_ANALOG_PINS,
   MAX_DIGITAL_PINS,
+  PhidgetConfig,
   Track,
   TrackmateConfig,
 } from "@app/models/track";
@@ -64,9 +67,11 @@ import { deepCopy } from "@app/utils/clone.utils";
     CdkDragHandle,
     ArduinoEditorComponent,
     TrakmateEditorComponent,
+    PhidgetEditorComponent,
     InputDialogComponent,
     TranslatePipe,
     ConfirmationModalComponent,
+    AcknowledgementModalComponent,
   ],
 })
 export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
@@ -83,7 +88,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   editingTrack?: Track;
   arduinoConfigs: ArduinoConfig[] = [];
   trackmateConfigs: TrackmateConfig[] = [];
+  phidgetConfigs: PhidgetConfig[] = [];
   helpSteps: GuideStep[] = [];
+  driverMissingError = false;
 
   scale: number = 1;
   isLoading: boolean = true;
@@ -164,6 +171,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               );
             } else {
               this.trackmateConfigs = [];
+            }
+            // Restore Phidget Configs
+            if (
+              this.editingTrack.phidget_configs &&
+              this.editingTrack.phidget_configs.length > 0
+            ) {
+              this.phidgetConfigs = JSON.parse(
+                JSON.stringify(this.editingTrack.phidget_configs),
+              );
+            } else {
+              this.phidgetConfigs = [];
             }
             this.cdr.detectChanges();
           }
@@ -420,6 +438,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                       factoryTrack.has_per_lane_relays || false,
                     has_main_relay: factoryTrack.has_main_relay || false,
                     trackmate_configs: factoryTrack.trackmate_configs,
+                    phidget_configs: factoryTrack.phidget_configs,
                   });
                   this.initializeEditingState();
                 },
@@ -507,6 +526,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.trackmateConfigs = [];
       }
 
+      // Restore Phidget Config
+      if (
+        this.editingTrack.phidget_configs &&
+        this.editingTrack.phidget_configs.length > 0
+      ) {
+        this.phidgetConfigs = JSON.parse(
+          JSON.stringify(this.editingTrack.phidget_configs),
+        );
+      } else {
+        this.phidgetConfigs = [];
+      }
+
       this.trackName = this.editingTrack.name;
       this.numTrackSections = this.editingTrack.num_track_sections;
       this.lanes = [...this.editingTrack.lanes];
@@ -526,6 +557,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.lanes = [];
       this.arduinoConfigs = [];
       this.trackmateConfigs = [];
+      this.phidgetConfigs = [];
       this.undoManager.initialize(this.editingTrack);
     }
 
@@ -540,11 +572,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private initializeInterfaces() {
-    if (this.arduinoConfigs.length > 0 || this.trackmateConfigs.length > 0) {
+    if (
+      this.arduinoConfigs.length > 0 ||
+      this.trackmateConfigs.length > 0 ||
+      this.phidgetConfigs.length > 0
+    ) {
       this.dataService
         .initializeInterface(
           this.arduinoConfigs,
           this.trackmateConfigs,
+          this.phidgetConfigs,
           this.lanes.length,
         )
         .subscribe({
@@ -585,6 +622,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const trackmateCopy = track.trackmate_configs
       ? JSON.parse(JSON.stringify(track.trackmate_configs))
       : [];
+    const phidgetCopy = track.phidget_configs
+      ? JSON.parse(JSON.stringify(track.phidget_configs))
+      : [];
     return new Track({
       entity_id: track.entity_id,
       name: track.name,
@@ -595,6 +635,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       has_per_lane_relays: track.has_per_lane_relays,
       has_main_relay: track.has_main_relay,
       trackmate_configs: trackmateCopy,
+      phidget_configs: phidgetCopy,
     });
   }
 
@@ -612,6 +653,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const tmConfigs = this.trackmateConfigs
       ? deepCopy(this.trackmateConfigs)
       : [];
+    const phConfigs = this.phidgetConfigs ? deepCopy(this.phidgetConfigs) : [];
     return new Track({
       entity_id: this.editingTrack.entity_id,
       name: this.trackName,
@@ -630,6 +672,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       has_per_lane_relays: this.editingTrack.has_per_lane_relays,
       has_main_relay: this.editingTrack.has_main_relay,
       trackmate_configs: tmConfigs,
+      phidget_configs: phConfigs,
     });
   }
 
@@ -730,6 +773,55 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           if (v1.length !== v2Arr.length) return false;
           for (let i = 0; i < v1.length; i++) {
             if (v1[i] !== v2Arr[i]) return false;
+          }
+        } else if (v1 !== v2) {
+          return false;
+        }
+      }
+    }
+
+    // Check Phidget Configs equality
+    if (
+      !this.arePhidgetConfigsEqual(
+        t1.phidget_configs || [],
+        t2.phidget_configs || [],
+      )
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private arePhidgetConfigsEqual(
+    pcs1: PhidgetConfig[],
+    pcs2: PhidgetConfig[],
+  ): boolean {
+    if (pcs1.length !== pcs2.length) return false;
+
+    for (let c = 0; c < pcs1.length; c++) {
+      const pc1 = pcs1[c];
+      const pc2 = pcs2[c];
+
+      const keys = Object.keys(pc1) as (keyof PhidgetConfig)[];
+      for (const key of keys) {
+        const v1 = pc1[key];
+        const v2 = (pc2 as any)[key];
+
+        if (Array.isArray(v1)) {
+          const v2Arr = Array.isArray(v2) ? v2 : [];
+          if (v1.length !== v2Arr.length) return false;
+          for (let i = 0; i < v1.length; i++) {
+            if (v1[i] !== v2Arr[i]) return false;
+          }
+        } else if (key === "voltageConfigs") {
+          const vc1 = (v1 || {}) as { [lane: number]: number };
+          const vc2 = (v2 || {}) as { [lane: number]: number };
+          const entries1 = Object.entries(vc1);
+          const entries2 = Object.entries(vc2);
+          if (entries1.length !== entries2.length) return false;
+          for (const [lane, val] of entries1) {
+            if (vc2[lane as any] !== val) return false;
           }
         } else if (v1 !== v2) {
           return false;
@@ -1397,6 +1489,49 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return index;
   }
 
+  // --- Phidget Configuration ---
+
+  addPhidgetConfig() {
+    this.phidgetConfigs.push({
+      name: `Phidget ${this.phidgetConfigs.length + 1}`,
+      serialNumber: -1,
+      isHubPort: false,
+      hubPort: 0,
+      debounceUs: 5000,
+      normallyClosedLaneSensors: true,
+      normallyClosedRelays: true,
+      useLapsForPits: 0,
+      useLapsForPitEnd: 0,
+      usePitsAsLaps: false,
+      useLapsForSegments: false,
+      lapPinPitBehavior: 0,
+      digitalInIds: Array(60).fill(0),
+      digitalOutIds: Array(60).fill(0),
+      analogIds: Array(16).fill(0),
+    });
+    this.phidgetConfigs = [...this.phidgetConfigs];
+    this.captureState();
+    this.initializeInterfaces();
+  }
+
+  removePhidgetConfig(index: number) {
+    this.phidgetConfigs.splice(index, 1);
+    this.phidgetConfigs = [...this.phidgetConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  onPhidgetDriverError() {
+    this.driverMissingError = true;
+  }
+
+  trackByPhidgetConfig(index: number, _config: any): number {
+    return index;
+  }
+
   saveAsNew() {
     this.trackName = this.generateUniqueName(this.trackName);
     this.updateTrack(true);
@@ -1482,6 +1617,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             has_per_lane_relays: result.has_per_lane_relays ?? false,
             has_main_relay: result.has_main_relay ?? false,
             trackmate_configs: result.trackmate_configs,
+            phidget_configs: result.phidget_configs,
           });
 
           // Update allTracks cache to ensure name uniqueness checks stay in sync
@@ -1539,6 +1675,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           } else {
             if (this.trackmateConfigs.length > 0) {
               this.trackmateConfigs = [];
+            }
+          }
+
+          if (
+            this.editingTrack.phidget_configs &&
+            this.editingTrack.phidget_configs.length > 0
+          ) {
+            const newPhConfigsJson = JSON.stringify(
+              this.editingTrack.phidget_configs,
+            );
+            if (newPhConfigsJson !== JSON.stringify(this.phidgetConfigs)) {
+              this.phidgetConfigs = JSON.parse(newPhConfigsJson);
+            }
+          } else {
+            if (this.phidgetConfigs.length > 0) {
+              this.phidgetConfigs = [];
             }
           }
 

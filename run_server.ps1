@@ -146,6 +146,15 @@ if ($null -eq $MvnCmd) {
 }
 
 $DATA_DIR = Join-Path $PSScriptRoot "data"
+
+if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
+    $env:MAVEN_OPTS = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\arm64')"
+} elseif ([Environment]::Is64BitProcess) {
+    $env:MAVEN_OPTS = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\x64')"
+} else {
+    $env:MAVEN_OPTS = "-Djava.library.path=$(Join-Path $SERVER_DIR 'lib\windows\x86')"
+}
+
 # Use BUILD_DIR for both proto generation and maven build to avoid conflicts
 $MvnArgs = @("compile", "exec:java", "-Dbuild.dist.dir=$BUILD_DIR", "-Dexec.mainClass=com.antigravity.App", "-Dexec.args=--headless", "-Dapp.data.dir=$DATA_DIR", "-DskipProtobuf=true")
 if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {

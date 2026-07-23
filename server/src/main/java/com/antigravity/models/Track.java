@@ -4,6 +4,7 @@ import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.LedString;
+import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -25,6 +26,7 @@ public class Track extends Model {
   private final List<Lane> lanes;
   private final List<ArduinoConfig> arduinoConfigs;
   private final List<TrackmateConfig> trackmateConfigs;
+  private final List<PhidgetConfig> phidgetConfigs;
 
   @BsonCreator
   @JsonCreator
@@ -38,6 +40,8 @@ public class Track extends Model {
           List<ArduinoConfig> arduinoConfigs,
       @BsonProperty("trackmate_configs") @JsonProperty("trackmate_configs")
           List<TrackmateConfig> trackmateConfigs,
+      @BsonProperty("phidget_configs") @JsonProperty("phidget_configs")
+          List<PhidgetConfig> phidgetConfigs,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -52,6 +56,10 @@ public class Track extends Model {
         trackmateConfigs != null
             ? Collections.unmodifiableList(trackmateConfigs)
             : Collections.emptyList();
+    this.phidgetConfigs =
+        phidgetConfigs != null
+            ? Collections.unmodifiableList(phidgetConfigs)
+            : Collections.emptyList();
   }
 
   public static class Builder {
@@ -60,6 +68,7 @@ public class Track extends Model {
     private List<Lane> lanes = new ArrayList<>();
     private List<ArduinoConfig> arduinoConfigs = new ArrayList<>();
     private List<TrackmateConfig> trackmateConfigs = new ArrayList<>();
+    private List<PhidgetConfig> phidgetConfigs = new ArrayList<>();
     private String entityId;
     private ObjectId id;
 
@@ -88,6 +97,11 @@ public class Track extends Model {
       return this;
     }
 
+    public Builder phidgetConfigs(List<PhidgetConfig> phidgetConfigs) {
+      this.phidgetConfigs = phidgetConfigs;
+      return this;
+    }
+
     public Builder entityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -100,7 +114,14 @@ public class Track extends Model {
 
     public Track build() {
       return new Track(
-          name, numTrackSections, lanes, arduinoConfigs, trackmateConfigs, entityId, id);
+          name,
+          numTrackSections,
+          lanes,
+          arduinoConfigs,
+          trackmateConfigs,
+          phidgetConfigs,
+          entityId,
+          id);
     }
   }
 
@@ -128,6 +149,16 @@ public class Track extends Model {
         }
       }
     }
+
+    for (PhidgetConfig config : this.phidgetConfigs) {
+      if (config != null && config.analogIds != null) {
+        for (Integer code : config.analogIds) {
+          if (code != null && code >= base && code < max) {
+            return true;
+          }
+        }
+      }
+    }
     return false;
   }
 
@@ -140,6 +171,25 @@ public class Track extends Model {
       if (config != null) {
         if (config.digitalIds != null) {
           for (Integer code : config.digitalIds) {
+            if (code != null && code >= base && code < max) {
+              return true;
+            }
+          }
+        }
+        if (config.analogIds != null) {
+          for (Integer code : config.analogIds) {
+            if (code != null && code >= base && code < max) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    for (PhidgetConfig config : this.phidgetConfigs) {
+      if (config != null) {
+        if (config.digitalOutIds != null) {
+          for (Integer code : config.digitalOutIds) {
             if (code != null && code >= base && code < max) {
               return true;
             }
@@ -179,6 +229,25 @@ public class Track extends Model {
         }
       }
     }
+
+    for (PhidgetConfig config : this.phidgetConfigs) {
+      if (config != null) {
+        if (config.digitalOutIds != null) {
+          for (Integer code : config.digitalOutIds) {
+            if (code != null && code == mainRelay) {
+              return true;
+            }
+          }
+        }
+        if (config.analogIds != null) {
+          for (Integer code : config.analogIds) {
+            if (code != null && code == mainRelay) {
+              return true;
+            }
+          }
+        }
+      }
+    }
     return false;
   }
 
@@ -196,6 +265,12 @@ public class Track extends Model {
   @BsonProperty("trackmate_configs")
   public List<TrackmateConfig> getTrackmateConfigs() {
     return trackmateConfigs;
+  }
+
+  @JsonProperty("phidget_configs")
+  @BsonProperty("phidget_configs")
+  public List<PhidgetConfig> getPhidgetConfigs() {
+    return phidgetConfigs;
   }
 
   /**
@@ -281,6 +356,7 @@ public class Track extends Model {
         .lanes(this.lanes)
         .arduinoConfigs(syncedConfigs)
         .trackmateConfigs(this.trackmateConfigs)
+        .phidgetConfigs(this.phidgetConfigs)
         .entityId(this.getEntityId())
         .id(this.getId())
         .build();

@@ -1,0 +1,31 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/arduino_config.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "PhidgetConfigProto";
+
+message PhidgetConfig {
+  string name = 1;
+  int32 serial_number = 2;
+  bool is_hub_port = 3;
+  int32 hub_port = 4;
+  int32 debounce_us = 5;
+  bool normally_closed_lane_sensors = 6;
+  bool normally_closed_relays = 7;
+  bool use_pits_as_laps = 8;
+  bool use_laps_for_segments = 9;
+  int32 use_laps_for_pits = 15;
+  int32 use_laps_for_pit_end = 16;
+  LapPinPitBehavior lap_pin_pit_behavior = 10;
+  
+  // These lists represent the behavior mapped to each channel index
+  // For example, digital_in_ids[0] is the behavior for Digital Input Channel 0
+  repeated int32 digital_in_ids = 11;
+  repeated int32 digital_out_ids = 12;
+  repeated int32 analog_ids = 13;
+  
+  repeated VoltageConfig voltage_configs = 14;
+}

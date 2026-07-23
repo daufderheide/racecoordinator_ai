@@ -35,6 +35,10 @@ public class TrackConverter {
               track.getTrackmateConfigs().stream()
                   .map(TrackmateConfigConverter::toProto)
                   .collect(Collectors.toList()))
+          .addAllPhidgetConfigs(
+              track.getPhidgetConfigs().stream()
+                  .map(PhidgetConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
   }

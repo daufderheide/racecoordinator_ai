@@ -1478,5 +1478,17 @@
   "AE_BEHAVIOR_GROUP_ANALOG_LED": "Analog Leds",
   "AE_PIN_ANALOG_LED_GREEN_FLAG": "Green Flag",
   "AE_PIN_ANALOG_LED_YELLOW_FLAG": "Yellow Flag",
-  "AE_PIN_ANALOG_LED_COUNTDOWN": "Countdown {{num}}"
+  "AE_PIN_ANALOG_LED_COUNTDOWN": "Countdown {{num}}",
+  "PHIDGET_HEADER": "Phidget Interface",
+  "PHIDGET_REMOVE_INTERFACE": "Remove Phidget Interface",
+  "PHIDGET_MAIN_HEADER": "Main Configuration",
+  "PHIDGET_DEVICE": "Device",
+  "PHIDGET_SELECT_DEVICE": "Select Device...",
+  "PHIDGET_STATUS_CONNECTED": "Connected",
+  "PHIDGET_STATUS_DISCONNECTED": "Disconnected",
+  "PHIDGET_STATUS_NO_DATA": "No Data",
+  "PHIDGET_DEBOUNCE": "Debounce",
+  "PHIDGET_NORMALLY_CLOSED_SENSORS": "Normally Closed Sensors",
+  "PHIDGET_NORMALLY_CLOSED_RELAYS": "Normally Closed Relays",
+  "PHIDGET_MISSING_DRIVER": "Bibliotecas Phidget ausentes! Instale os drivers Phidget22 para o seu sistema operacional."
 }

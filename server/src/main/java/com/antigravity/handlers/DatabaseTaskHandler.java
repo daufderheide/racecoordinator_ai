@@ -525,6 +525,7 @@ public class DatabaseTaskHandler {
                 .lanes(track.getLanes())
                 .arduinoConfigs(track.getArduinoConfigs())
                 .trackmateConfigs(track.getTrackmateConfigs())
+                .phidgetConfigs(track.getPhidgetConfigs())
                 .entityId(nextId)
                 .id(null)
                 .build();
@@ -559,6 +560,7 @@ public class DatabaseTaskHandler {
               .lanes(track.getLanes())
               .arduinoConfigs(track.getArduinoConfigs())
               .trackmateConfigs(track.getTrackmateConfigs())
+              .phidgetConfigs(track.getPhidgetConfigs())
               .entityId(id)
               .id(track.getId())
               .build();
