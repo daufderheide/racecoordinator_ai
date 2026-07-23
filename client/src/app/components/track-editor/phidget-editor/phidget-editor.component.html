@@ -91,6 +91,14 @@
                       </div>
                     </div>
 
+                    <div class="board-preview">
+                      <img
+                        [src]="getBoardImagePath()"
+                        [alt]="config().name || 'Phidget Device'"
+                        class="board-image"
+                      />
+                    </div>
+
                     <div class="right-controls">
                       <div class="control-group">
                         <label class="checkbox-label">
@@ -117,6 +125,438 @@
                   </div>
                 </div>
               }
+            </div>
+
+            <!-- Pins / Channel Assignments Section -->
+            <div class="pins-section scrollable">
+              <div class="pins-config">
+                <!-- Digital Inputs Section -->
+                @if (availableDigitalInputPins.length > 0) {
+                  <div class="config-section">
+                    <div
+                      class="section-header"
+                      (click)="toggleSection('digitalIn')"
+                    >
+                      <span
+                        class="expander-icon"
+                        [class.collapsed]="!sectionsExpanded.digitalIn"
+                        >▼</span
+                      >
+                      <h4>{{ "PHIDGET_DIGITAL_INPUTS" | translate }}</h4>
+                    </div>
+                    @if (sectionsExpanded.digitalIn) {
+                      <div class="section-content">
+                        <div class="pin-grid">
+                          @for (pin of availableDigitalInputPins; track pin) {
+                            <div class="pin-item">
+                              <div class="pin-header">
+                                <label>In {{ pin }}</label>
+                                <span
+                                  [id]="'phidget-in-status-' + pin"
+                                  class="status-badge small"
+                                  [class.connected]="isPinActive('in', pin)"
+                                ></span>
+                              </div>
+                              <div
+                                class="custom-dropdown-container pin-selector"
+                              >
+                                <div
+                                  class="dropdown-trigger"
+                                  [class.open]="isPinDropdownOpen('in-' + pin)"
+                                  (click)="
+                                    togglePinDropdown('in-' + pin, $event)
+                                  "
+                                >
+                                  <span class="selected-value">{{
+                                    getCurrentActionLabel("in", pin)
+                                  }}</span>
+                                  <div
+                                    class="dropdown-arrow"
+                                    [class.open]="
+                                      isPinDropdownOpen('in-' + pin)
+                                    "
+                                  >
+                                    ▼
+                                  </div>
+                                </div>
+                                @if (isPinDropdownOpen("in-" + pin)) {
+                                  <div
+                                    class="dropdown-menu"
+                                    [class.open-up]="
+                                      dropdownOpenUp['in-' + pin]
+                                    "
+                                    (click)="$event.stopPropagation()"
+                                  >
+                                    @for (
+                                      group of getFilteredActions("in", pin);
+                                      track group.key
+                                    ) {
+                                      @if (group.label) {
+                                        <div
+                                          class="group-header"
+                                          (click)="
+                                            toggleGroupCollapse(
+                                              group.key,
+                                              $event
+                                            )
+                                          "
+                                        >
+                                          <span
+                                            class="expander-icon"
+                                            [class.collapsed]="
+                                              isGroupCollapsed(group.key)
+                                            "
+                                            >▼</span
+                                          >
+                                          {{ group.label }}
+                                        </div>
+                                        @if (!isGroupCollapsed(group.key)) {
+                                          <div class="group-items">
+                                            @for (
+                                              action of group.actions;
+                                              track action.value
+                                            ) {
+                                              <div
+                                                class="dropdown-item"
+                                                [class.selected]="
+                                                  getPinAction('in', pin) ===
+                                                  action.value
+                                                "
+                                                (click)="
+                                                  selectPinAction(
+                                                    'in',
+                                                    pin,
+                                                    action.value
+                                                  )
+                                                "
+                                              >
+                                                {{ action.label }}
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+                                      } @else {
+                                        @for (
+                                          action of group.actions;
+                                          track action.value
+                                        ) {
+                                          <div
+                                            class="dropdown-item"
+                                            [class.selected]="
+                                              getPinAction('in', pin) ===
+                                              action.value
+                                            "
+                                            (click)="
+                                              selectPinAction(
+                                                'in',
+                                                pin,
+                                                action.value
+                                              )
+                                            "
+                                          >
+                                            {{ action.label }}
+                                          </div>
+                                        }
+                                      }
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Digital Outputs / Relays Section -->
+                @if (availableDigitalOutputPins.length > 0) {
+                  <div class="config-section">
+                    <div
+                      class="section-header"
+                      (click)="toggleSection('digitalOut')"
+                    >
+                      <span
+                        class="expander-icon"
+                        [class.collapsed]="!sectionsExpanded.digitalOut"
+                        >▼</span
+                      >
+                      <h4>{{ "PHIDGET_DIGITAL_OUTPUTS" | translate }}</h4>
+                    </div>
+                    @if (sectionsExpanded.digitalOut) {
+                      <div class="section-content">
+                        <div class="pin-grid">
+                          @for (pin of availableDigitalOutputPins; track pin) {
+                            <div class="pin-item">
+                              <div class="pin-header">
+                                <label>Out {{ pin }}</label>
+                                <span
+                                  [id]="'phidget-out-status-' + pin"
+                                  class="status-badge small"
+                                  [class.connected]="isPinActive('out', pin)"
+                                ></span>
+                              </div>
+                              <div
+                                class="custom-dropdown-container pin-selector"
+                              >
+                                <div
+                                  class="dropdown-trigger"
+                                  [class.open]="isPinDropdownOpen('out-' + pin)"
+                                  (click)="
+                                    togglePinDropdown('out-' + pin, $event)
+                                  "
+                                >
+                                  <span class="selected-value">{{
+                                    getCurrentActionLabel("out", pin)
+                                  }}</span>
+                                  <div
+                                    class="dropdown-arrow"
+                                    [class.open]="
+                                      isPinDropdownOpen('out-' + pin)
+                                    "
+                                  >
+                                    ▼
+                                  </div>
+                                </div>
+                                @if (isPinDropdownOpen("out-" + pin)) {
+                                  <div
+                                    class="dropdown-menu"
+                                    [class.open-up]="
+                                      dropdownOpenUp['out-' + pin]
+                                    "
+                                    (click)="$event.stopPropagation()"
+                                  >
+                                    @for (
+                                      group of getFilteredActions("out", pin);
+                                      track group.key
+                                    ) {
+                                      @if (group.label) {
+                                        <div
+                                          class="group-header"
+                                          (click)="
+                                            toggleGroupCollapse(
+                                              group.key,
+                                              $event
+                                            )
+                                          "
+                                        >
+                                          <span
+                                            class="expander-icon"
+                                            [class.collapsed]="
+                                              isGroupCollapsed(group.key)
+                                            "
+                                            >▼</span
+                                          >
+                                          {{ group.label }}
+                                        </div>
+                                        @if (!isGroupCollapsed(group.key)) {
+                                          <div class="group-items">
+                                            @for (
+                                              action of group.actions;
+                                              track action.value
+                                            ) {
+                                              <div
+                                                class="dropdown-item"
+                                                [class.selected]="
+                                                  getPinAction('out', pin) ===
+                                                  action.value
+                                                "
+                                                (click)="
+                                                  selectPinAction(
+                                                    'out',
+                                                    pin,
+                                                    action.value
+                                                  )
+                                                "
+                                              >
+                                                {{ action.label }}
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+                                      } @else {
+                                        @for (
+                                          action of group.actions;
+                                          track action.value
+                                        ) {
+                                          <div
+                                            class="dropdown-item"
+                                            [class.selected]="
+                                              getPinAction('out', pin) ===
+                                              action.value
+                                            "
+                                            (click)="
+                                              selectPinAction(
+                                                'out',
+                                                pin,
+                                                action.value
+                                              )
+                                            "
+                                          >
+                                            {{ action.label }}
+                                          </div>
+                                        }
+                                      }
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <!-- Analog Inputs Section -->
+                @if (availableAnalogInputPins.length > 0) {
+                  <div class="config-section">
+                    <div
+                      class="section-header"
+                      (click)="toggleSection('analogIn')"
+                    >
+                      <span
+                        class="expander-icon"
+                        [class.collapsed]="!sectionsExpanded.analogIn"
+                        >▼</span
+                      >
+                      <h4>{{ "PHIDGET_ANALOG_INPUTS" | translate }}</h4>
+                    </div>
+                    @if (sectionsExpanded.analogIn) {
+                      <div class="section-content">
+                        <div class="pin-grid">
+                          @for (pin of availableAnalogInputPins; track pin) {
+                            <div class="pin-item">
+                              <div class="pin-header">
+                                <label>Analog {{ pin }}</label>
+                                <span
+                                  [id]="'phidget-analog-status-' + pin"
+                                  class="status-badge small"
+                                  [class.connected]="isPinActive('analog', pin)"
+                                ></span>
+                              </div>
+                              <div
+                                class="custom-dropdown-container pin-selector"
+                              >
+                                <div
+                                  class="dropdown-trigger"
+                                  [class.open]="
+                                    isPinDropdownOpen('analog-' + pin)
+                                  "
+                                  (click)="
+                                    togglePinDropdown('analog-' + pin, $event)
+                                  "
+                                >
+                                  <span class="selected-value">{{
+                                    getCurrentActionLabel("analog", pin)
+                                  }}</span>
+                                  <div
+                                    class="dropdown-arrow"
+                                    [class.open]="
+                                      isPinDropdownOpen('analog-' + pin)
+                                    "
+                                  >
+                                    ▼
+                                  </div>
+                                </div>
+                                @if (isPinDropdownOpen("analog-" + pin)) {
+                                  <div
+                                    class="dropdown-menu"
+                                    [class.open-up]="
+                                      dropdownOpenUp['analog-' + pin]
+                                    "
+                                    (click)="$event.stopPropagation()"
+                                  >
+                                    @for (
+                                      group of getFilteredActions(
+                                        "analog",
+                                        pin
+                                      );
+                                      track group.key
+                                    ) {
+                                      @if (group.label) {
+                                        <div
+                                          class="group-header"
+                                          (click)="
+                                            toggleGroupCollapse(
+                                              group.key,
+                                              $event
+                                            )
+                                          "
+                                        >
+                                          <span
+                                            class="expander-icon"
+                                            [class.collapsed]="
+                                              isGroupCollapsed(group.key)
+                                            "
+                                            >▼</span
+                                          >
+                                          {{ group.label }}
+                                        </div>
+                                        @if (!isGroupCollapsed(group.key)) {
+                                          <div class="group-items">
+                                            @for (
+                                              action of group.actions;
+                                              track action.value
+                                            ) {
+                                              <div
+                                                class="dropdown-item"
+                                                [class.selected]="
+                                                  getPinAction(
+                                                    'analog',
+                                                    pin
+                                                  ) === action.value
+                                                "
+                                                (click)="
+                                                  selectPinAction(
+                                                    'analog',
+                                                    pin,
+                                                    action.value
+                                                  )
+                                                "
+                                              >
+                                                {{ action.label }}
+                                              </div>
+                                            }
+                                          </div>
+                                        }
+                                      } @else {
+                                        @for (
+                                          action of group.actions;
+                                          track action.value
+                                        ) {
+                                          <div
+                                            class="dropdown-item"
+                                            [class.selected]="
+                                              getPinAction('analog', pin) ===
+                                              action.value
+                                            "
+                                            (click)="
+                                              selectPinAction(
+                                                'analog',
+                                                pin,
+                                                action.value
+                                              )
+                                            "
+                                          >
+                                            {{ action.label }}
+                                          </div>
+                                        }
+                                      }
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </div>
         </div>

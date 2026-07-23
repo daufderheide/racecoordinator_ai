@@ -1490,5 +1490,10 @@
   "PHIDGET_DEBOUNCE": "Debounce",
   "PHIDGET_NORMALLY_CLOSED_SENSORS": "Normally Closed Sensors",
   "PHIDGET_NORMALLY_CLOSED_RELAYS": "Normally Closed Relays",
-  "PHIDGET_MISSING_DRIVER": "Phidget-bibliotheken ontbreken! Installeer de Phidget22-stuurprogramma's voor uw besturingssysteem."
+  "PHIDGET_MISSING_DRIVER": "Phidget-bibliotheken ontbreken! Installeer de Phidget22-stuurprogramma's voor uw besturingssysteem.",
+  "PHIDGET_PINS_HEADER": "Kanaaltoewijzingen",
+  "PHIDGET_DIGITAL_INPUTS": "Digitale ingangen",
+  "PHIDGET_DIGITAL_OUTPUTS": "Digitale uitgangen / Relais",
+  "PHIDGET_ANALOG_INPUTS": "Analoge ingangen",
+  "PHIDGET_NO_PINS": "Geen kanalen beschikbaar voor deze sectie"
 }

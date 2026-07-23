@@ -823,8 +823,15 @@ public class ClientCommandTaskHandler {
               .build();
       ctx.contentType("application/octet-stream").result(response.toByteArray());
     } catch (Throwable e) {
-      if (e instanceof ExceptionInInitializerError || e instanceof NoClassDefFoundError) {
-        logger.error("Phidget driver not installed. The Mac Phidget22 DMG must be installed.");
+      if (e instanceof ExceptionInInitializerError
+          || e instanceof NoClassDefFoundError
+          || e instanceof UnsatisfiedLinkError
+          || e instanceof LinkageError
+          || (e.getCause() != null
+              && (e.getCause() instanceof UnsatisfiedLinkError
+                  || e.getCause() instanceof LinkageError))) {
+        // TODO(dave): Phidget specific code should not be here.
+        logger.error("Phidget driver not installed. The Phidget22 driver must be installed.");
         ctx.status(500).result("MISSING_PHIDGET_DRIVER");
       } else if (e instanceof IllegalStateException) {
         ctx.status(409).result(e.getMessage());
@@ -932,12 +939,35 @@ public class ClientCommandTaskHandler {
           e -> {
             try {
               com.phidget22.Phidget p = e.getChannel();
+              int digitalInputs = 0;
+              int digitalOutputs = 0;
+              int analogInputs = 0;
+              try {
+                digitalInputs = p.getDeviceChannelCount(com.phidget22.ChannelClass.DIGITAL_INPUT);
+              } catch (Throwable ignored) {
+              }
+              try {
+                digitalOutputs = p.getDeviceChannelCount(com.phidget22.ChannelClass.DIGITAL_OUTPUT);
+              } catch (Throwable ignored) {
+              }
+              try {
+                analogInputs =
+                    p.getDeviceChannelCount(com.phidget22.ChannelClass.VOLTAGE_RATIO_INPUT);
+                if (analogInputs == 0) {
+                  analogInputs = p.getDeviceChannelCount(com.phidget22.ChannelClass.VOLTAGE_INPUT);
+                }
+              } catch (Throwable ignored) {
+              }
+
               PhidgetDeviceInfo info =
                   PhidgetDeviceInfo.newBuilder()
                       .setSerialNumber(p.getDeviceSerialNumber())
                       .setName(p.getDeviceName())
                       .setIsHubPort(p.getIsHubPortDevice())
                       .setHubPort(p.getHubPort())
+                      .setDigitalInputCount(digitalInputs)
+                      .setDigitalOutputCount(digitalOutputs)
+                      .setAnalogInputCount(analogInputs)
                       .build();
               deviceMap.put(p.getDeviceSerialNumber(), info);
             } catch (com.phidget22.PhidgetException ex) {
@@ -952,8 +982,14 @@ public class ClientCommandTaskHandler {
       responseBuilder.addAllDevices(deviceMap.values());
       ctx.contentType("application/octet-stream").result(responseBuilder.build().toByteArray());
     } catch (Throwable e) {
-      if (e instanceof ExceptionInInitializerError || e instanceof NoClassDefFoundError) {
-        logger.error("Phidget driver not installed. The Mac Phidget22 DMG must be installed.");
+      if (e instanceof ExceptionInInitializerError
+          || e instanceof NoClassDefFoundError
+          || e instanceof UnsatisfiedLinkError
+          || e instanceof LinkageError
+          || (e.getCause() != null
+              && (e.getCause() instanceof UnsatisfiedLinkError
+                  || e.getCause() instanceof LinkageError))) {
+        logger.error("Phidget driver not installed. The Phidget22 driver must be installed.");
         ctx.status(500).result("MISSING_PHIDGET_DRIVER");
       } else {
         logger.error("Error getting Phidget devices", e);
@@ -1652,7 +1688,8 @@ public class ClientCommandTaskHandler {
       race.init(); // Open protocols
       AnalyticsService.getInstance().trackRaceStart(race);
 
-      // Broadcast full race state to all current subscribers so they render the loaded race in the
+      // Broadcast full race state to all current subscribers so they render the
+      // loaded race in the
       // UI.
       ClientSubscriptionManager.getInstance().broadcast(race.createSnapshot());
 
@@ -1844,7 +1881,8 @@ public class ClientCommandTaskHandler {
       } else if (race.getCurrentHeat() != null
           && race.getCurrentHeat().isStarted()
           && race.getState() instanceof NotStarted) {
-        // Safety net: current heat is already completed but state allows re-starting it.
+        // Safety net: current heat is already completed but state allows re-starting
+        // it.
         // Advance to the first unstarted heat, or transition to RaceOver if none.
         if (firstUnstarted != null) {
           race.setCurrentHeat(firstUnstarted);

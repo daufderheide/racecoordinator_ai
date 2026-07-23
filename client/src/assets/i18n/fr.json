@@ -1490,5 +1490,10 @@
   "PHIDGET_DEBOUNCE": "Debounce",
   "PHIDGET_NORMALLY_CLOSED_SENSORS": "Normally Closed Sensors",
   "PHIDGET_NORMALLY_CLOSED_RELAYS": "Normally Closed Relays",
-  "PHIDGET_MISSING_DRIVER": "Bibliothèques Phidget manquantes ! Veuillez installer les pilotes Phidget22 pour votre système d'exploitation."
+  "PHIDGET_MISSING_DRIVER": "Bibliothèques Phidget manquantes ! Veuillez installer les pilotes Phidget22 pour votre système d'exploitation.",
+  "PHIDGET_PINS_HEADER": "Affectations des canaux",
+  "PHIDGET_DIGITAL_INPUTS": "Entrées numériques",
+  "PHIDGET_DIGITAL_OUTPUTS": "Sorties numériques / Relais",
+  "PHIDGET_ANALOG_INPUTS": "Entrées analogiques",
+  "PHIDGET_NO_PINS": "Aucun canal disponible pour cette section"
 }

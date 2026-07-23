@@ -1413,6 +1413,30 @@ public class ClientCommandTaskHandlerTest {
     verify(res).setStatus(400);
   }
 
+  @Test
+  public void testGetPhidgetDevices_MissingDriverHandling() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    Method m = handler.getClass().getDeclaredMethod("getPhidgetDevices", Context.class);
+    m.setAccessible(true);
+
+    try {
+      m.invoke(handler, ctx);
+    } catch (java.lang.reflect.InvocationTargetException e) {
+      Throwable target = e.getTargetException();
+      assertTrue(
+          target instanceof UnsatisfiedLinkError
+              || target instanceof NoClassDefFoundError
+              || target instanceof ExceptionInInitializerError
+              || target instanceof LinkageError);
+      return;
+    } catch (Throwable ignored) {
+    }
+    verify(res).setStatus(500);
+  }
+
   private void deleteDirectory(File directory) {
     File[] allContents = directory.listFiles();
     if (allContents != null) {

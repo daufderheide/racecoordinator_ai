@@ -12,6 +12,9 @@ message PhidgetDeviceInfo {
   string name = 2;
   bool is_hub_port = 3;
   int32 hub_port = 4;
+  int32 digital_input_count = 5;
+  int32 digital_output_count = 6;
+  int32 analog_input_count = 7;
 }
 
 message GetPhidgetDevicesResponse {

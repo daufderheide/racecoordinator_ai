@@ -38,6 +38,7 @@ public class PhidgetProtocol implements IProtocol {
   private final List<VoltageRatioInput> analogInputs = new ArrayList<>();
 
   private final Map<Integer, DigitalOutput> relayOutputs = new HashMap<>();
+  private final Map<Integer, DigitalOutput> analogLedOutputs = new HashMap<>();
   private DigitalOutput mainRelayOutput;
 
   public PhidgetProtocol(PhidgetConfig config, int numLanes, ProtocolListener listener) {
@@ -108,6 +109,11 @@ public class PhidgetProtocol implements IProtocol {
               && behavior < PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 64) {
             int lane = behavior - PinBehavior.BEHAVIOR_RELAY_BASE_VALUE;
             relayOutputs.put(lane, out);
+          } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE
+              || behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE
+              || (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE
+                  && behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE)) {
+            analogLedOutputs.put(behavior, out);
           }
         }
       }
@@ -144,8 +150,8 @@ public class PhidgetProtocol implements IProtocol {
       }
 
       return true;
-    } catch (PhidgetException e) {
-      logger.error("Error opening phidget", e);
+    } catch (Throwable e) {
+      logger.error("Error opening Phidget interface index " + interfaceIndex, e);
       close();
       return false;
     }
@@ -218,22 +224,46 @@ public class PhidgetProtocol implements IProtocol {
   @Override
   public void close() {
     try {
-      for (DigitalInput di : digitalInputs) di.close();
-      for (DigitalOutput out : digitalOutputs) out.close();
-      for (VoltageRatioInput vi : analogInputs) vi.close();
+      for (DigitalInput di : digitalInputs) {
+        try {
+          di.close();
+        } catch (Throwable ignored) {
+        }
+      }
+      for (DigitalOutput out : digitalOutputs) {
+        try {
+          out.close();
+        } catch (Throwable ignored) {
+        }
+      }
+      for (VoltageRatioInput vi : analogInputs) {
+        try {
+          vi.close();
+        } catch (Throwable ignored) {
+        }
+      }
 
       digitalInputs.clear();
       digitalOutputs.clear();
       analogInputs.clear();
       relayOutputs.clear();
+      analogLedOutputs.clear();
       mainRelayOutput = null;
-    } catch (PhidgetException e) {
+    } catch (Throwable e) {
       logger.error("Error closing phidget", e);
     }
   }
 
   @Override
-  public void clearLeds() {}
+  public void clearLeds() {
+    for (DigitalOutput out : analogLedOutputs.values()) {
+      try {
+        out.setState(false);
+      } catch (PhidgetException e) {
+        logger.error("Error clearing analog LED", e);
+      }
+    }
+  }
 
   @Override
   public boolean hasPerLaneRelays() {
@@ -329,5 +359,40 @@ public class PhidgetProtocol implements IProtocol {
   }
 
   @Override
-  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {}
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    // Green flag LED
+    DigitalOutput greenOut = analogLedOutputs.get(PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE);
+    if (greenOut != null) {
+      try {
+        greenOut.setState(flag == RaceFlag.GREEN);
+      } catch (PhidgetException e) {
+        logger.error("Error setting green flag LED", e);
+      }
+    }
+
+    // Yellow flag LED
+    DigitalOutput yellowOut =
+        analogLedOutputs.get(PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE);
+    if (yellowOut != null) {
+      try {
+        yellowOut.setState(flag == RaceFlag.YELLOW);
+      } catch (PhidgetException e) {
+        logger.error("Error setting yellow flag LED", e);
+      }
+    }
+
+    // Countdown LEDs 1..5
+    int countInt = (int) Math.ceil(countdown);
+    for (int i = 1; i <= 5; i++) {
+      int behaviorVal = PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE + (i - 1);
+      DigitalOutput cdOut = analogLedOutputs.get(behaviorVal);
+      if (cdOut != null) {
+        try {
+          cdOut.setState(state == RaceState.STARTING && countInt >= i);
+        } catch (PhidgetException e) {
+          logger.error("Error setting countdown LED " + i, e);
+        }
+      }
+    }
+  }
 }
