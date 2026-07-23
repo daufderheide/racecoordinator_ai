@@ -185,8 +185,16 @@ export class RaceConverter {
           proto.autoStartWarmupTime || 0,
           p.driftTime || p.drift_time || 0.5,
           p.minLapTime || p.min_lap_time || 1.5,
-          p.startTime ?? p.start_time ?? 5.0,
-          p.restartTime ?? p.restart_time ?? 5.0,
+          p.start_time !== undefined && p.start_time !== null
+            ? Number(p.start_time)
+            : p.startTime !== undefined && p.startTime !== null
+              ? Number(p.startTime)
+              : 5.0,
+          p.restart_time !== undefined && p.restart_time !== null
+            ? Number(p.restart_time)
+            : p.restartTime !== undefined && p.restartTime !== null
+              ? Number(p.restartTime)
+              : 5.0,
           p.startRandomizer ||
             p.start_randomizer ||
             p.startDelay ||

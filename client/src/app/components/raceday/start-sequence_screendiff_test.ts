@@ -102,7 +102,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Test Race",
-          start_time: 5.0,
+          startTime: 5.0,
           track: {
             lanes: [
               {
@@ -150,7 +150,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Test Race",
-          start_time: 5.0,
+          startTime: 5.0,
           track: {
             lanes: [
               {
@@ -200,7 +200,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Test Race",
-          start_time: 5.0,
+          startTime: 5.0,
           track: {
             lanes: [
               {
