@@ -45,6 +45,7 @@ export class Track implements Model {
     this.has_per_lane_relays ??= false;
     this.has_main_relay ??= false;
     this.arduino_configs ??= [];
+    this.phidget_configs ??= [];
     this.trackmate_configs ??= [];
   }
 
@@ -56,16 +57,26 @@ export class Track implements Model {
     if (this.has_digital_fuel) {
       return true;
     }
-    if (!this.arduino_configs || this.arduino_configs.length === 0) {
-      return false;
+    // Check Arduino configs
+    if (this.arduino_configs) {
+      for (const config of this.arduino_configs) {
+        if (
+          config.voltageConfigs != null &&
+          Object.keys(config.voltageConfigs).length > 0
+        ) {
+          return true;
+        }
+      }
     }
-    // For now, if any config has digital fuel, track has digital fuel.
-    for (const config of this.arduino_configs) {
-      if (
-        config.voltageConfigs != null &&
-        Object.keys(config.voltageConfigs).length > 0
-      ) {
-        return true;
+    // Check Phidget configs
+    if (this.phidget_configs) {
+      for (const config of this.phidget_configs) {
+        if (
+          config.voltageConfigs != null &&
+          Object.keys(config.voltageConfigs).length > 0
+        ) {
+          return true;
+        }
       }
     }
     return false;

@@ -7,6 +7,9 @@ import com.antigravity.protocols.phidget.PhidgetConfig;
 public class PhidgetConfigConverter {
   public static PhidgetConfig fromProto(
       com.antigravity.proto.PhidgetConfig proto) { // fqn-collision
+    if (proto == null) {
+      return null;
+    }
     PhidgetConfig config = new PhidgetConfig();
     config.name = proto.getName();
     config.serialNumber = proto.getSerialNumber();

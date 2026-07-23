@@ -479,6 +479,51 @@ describe("TrackEditorComponent", () => {
     expect(component.captureState).toHaveBeenCalled();
   });
 
+  it("should reorder lanes and update Phidget configs on drop", () => {
+    component.lanes = [
+      new Lane("l1", "white", "black", 100),
+      new Lane("l2", "white", "black", 100),
+    ];
+
+    component.addPhidgetConfig();
+    const config = component.phidgetConfigs[0];
+    config.digitalInIds = [1000, 1001]; // Lap Lane 1 (index 0), Lap Lane 2 (index 1)
+
+    const event = {
+      previousIndex: 0,
+      currentIndex: 1,
+      container: { data: component.lanes },
+      item: { data: component.lanes[0] },
+    } as any;
+
+    component.onLaneDropped(event);
+
+    const updatedConfig = component.phidgetConfigs[0];
+    expect(updatedConfig.digitalInIds[0]).toBe(1001);
+    expect(updatedConfig.digitalInIds[1]).toBe(1000);
+  });
+
+  it("should update Phidget configs on lane deletion", () => {
+    component.lanes = [
+      new Lane("l1", "white", "black", 100),
+      new Lane("l2", "white", "black", 100),
+      new Lane("l3", "white", "black", 100),
+    ];
+
+    component.addPhidgetConfig();
+    const config = component.phidgetConfigs[0];
+    config.digitalInIds = [1000, 1001, 1002]; // Lap Lane 1, Lane 2, Lane 3
+    config.voltageConfigs = { 1: 500, 2: 600 };
+
+    component.removeLane(1); // Delete Lane 2 (index 1)
+
+    const updatedConfig = component.phidgetConfigs[0];
+    expect(updatedConfig.digitalInIds[0]).toBe(1000);
+    expect(updatedConfig.digitalInIds[1]).toBe(0); // Deleted lane becomes UNUSED
+    expect(updatedConfig.digitalInIds[2]).toBe(1001); // Lane 3 shifted to index 1
+    expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Shifted
+  });
+
   describe("Auto-save and Duplicate", () => {
     it("should auto-save on valid name change after debounce", fakeAsync(() => {
       component.trackName = "Valid New Name";

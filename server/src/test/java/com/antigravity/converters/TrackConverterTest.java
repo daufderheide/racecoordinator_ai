@@ -37,4 +37,27 @@ public class TrackConverterTest {
     assertEquals(4, proto.getTrackmateConfigs(0).getNumLanes());
     assertEquals(2, proto.getTrackmateConfigs(0).getDebounce());
   }
+
+  @Test
+  public void testToProto_WithPhidgetConfig() {
+    com.antigravity.protocols.phidget.PhidgetConfig phidgetConfig =
+        new com.antigravity.protocols.phidget.PhidgetConfig();
+    phidgetConfig.name = "My Phidget";
+    phidgetConfig.serialNumber = 5551212;
+
+    Track track =
+        new Track.Builder()
+            .name("Phidget Track")
+            .lanes(new ArrayList<>())
+            .phidgetConfigs(Collections.singletonList(phidgetConfig))
+            .entityId("t2")
+            .build();
+
+    TrackModel proto = TrackConverter.toProto(track, new HashSet<>());
+
+    assertEquals("Phidget Track", proto.getName());
+    assertEquals(1, proto.getPhidgetConfigsCount());
+    assertEquals("My Phidget", proto.getPhidgetConfigs(0).getName());
+    assertEquals(5551212, proto.getPhidgetConfigs(0).getSerialNumber());
+  }
 }

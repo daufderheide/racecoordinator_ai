@@ -42,7 +42,11 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     "getRaceFlag",
     "getDrivers",
     "getSystemState",
+    "getPhidgetDevices",
   ]);
+  mock.getPhidgetDevices = jasmine
+    .createSpy("getPhidgetDevices")
+    .and.returnValue(of([]));
   mock.updateRaceSubscription = jasmine.createSpy("updateRaceSubscription");
   mock.getRaceUpdate = jasmine
     .createSpy("getRaceUpdate")

@@ -4,6 +4,7 @@ import { ITrackModel } from "@app/proto/antigravity";
 import { ArduinoConfigConverter } from "./arduino_config.converter";
 import { ConverterCache } from "./converter_cache";
 import { LaneConverter } from "./lane.converter";
+import { PhidgetConfigConverter } from "./phidget_config.converter";
 import { TrackmateConfigConverter } from "./trackmate_config.converter";
 
 export class TrackConverter {
@@ -22,6 +23,7 @@ export class TrackConverter {
         lanes: [],
         has_digital_fuel: false,
         arduino_configs: [],
+        phidget_configs: [],
       });
     }
     const objectId = proto.model?.entityId || "";
@@ -54,6 +56,9 @@ export class TrackConverter {
           has_main_relay: proto.hasMainRelay ?? false,
           trackmate_configs: (proto.trackmateConfigs || []).map((tc) =>
             TrackmateConfigConverter.fromProto(tc),
+          ),
+          phidget_configs: (proto.phidgetConfigs || []).map((pc) =>
+            PhidgetConfigConverter.fromProto(pc),
           ),
         });
       },

@@ -1,16 +1,12 @@
 package com.antigravity.race;
 
 import com.antigravity.models.FuelOptions;
-import com.antigravity.models.Lane;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.proto.RaceFlag;
+import com.antigravity.protocols.HardwareProtocolFactory;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
-import com.antigravity.protocols.arduino.ArduinoConfig;
-import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.demo.Demo;
-import com.antigravity.protocols.trackmate.TrackmateConfig;
-import com.antigravity.protocols.trackmate.TrackmateProtocol;
 import com.antigravity.race.states.Starting;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,33 +36,8 @@ public class RaceHardwareManager {
       protocol.setInterfaceIndex(0);
       protocols_list.add(protocol);
     } else {
-      List<ArduinoConfig> configs = race.getTrack().getArduinoConfigs();
-      List<TrackmateConfig> tmConfigs = race.getTrack().getTrackmateConfigs();
-      List<String> laneColors = new ArrayList<>();
-      int numLanes = race.getTrack().getLanes().size();
-      if (race.getTrack().getLanes() != null) {
-        for (Lane lane : race.getTrack().getLanes()) {
-          laneColors.add(lane.getBackground_color());
-        }
-      }
-
-      if ((configs != null && !configs.isEmpty()) || (tmConfigs != null && !tmConfigs.isEmpty())) {
-        int interfaceIndex = 0;
-        if (configs != null) {
-          for (ArduinoConfig config : configs) {
-            ArduinoProtocol protocol = new ArduinoProtocol(config, numLanes, laneColors);
-            protocol.setInterfaceIndex(interfaceIndex++);
-            protocols_list.add(protocol);
-          }
-        }
-        if (tmConfigs != null) {
-          for (TrackmateConfig config : tmConfigs) {
-            TrackmateProtocol protocol = new TrackmateProtocol(config, numLanes);
-            protocol.setInterfaceIndex(interfaceIndex++);
-            protocols_list.add(protocol);
-          }
-        }
-      } else {
+      protocols_list = HardwareProtocolFactory.createProtocolsForTrack(race.getTrack(), race);
+      if (protocols_list.isEmpty()) {
         throw new IllegalArgumentException(
             "Race created in Real Mode, but no hardware configs found for track: "
                 + race.getTrack().getName());
