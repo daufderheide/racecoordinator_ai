@@ -1119,10 +1119,12 @@ export class DefaultRacedayComponent
       } else {
         this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
       }
+      return;
     }
 
     if (lap.type === LapType.MIN_LAP_TIME) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME, ttsContext);
+      return;
     }
 
     if (

@@ -16,7 +16,7 @@ import { FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { RaceFlag, RaceState } from "@app/proto/antigravity";
+import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
@@ -177,6 +177,30 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             const driver = driverData.driver;
             const isBestLap = lap.lapTime === lap.bestLapTime;
             const ttsContext = createTTSContext(driver, driverData);
+
+            if (lap.type === LapType.FALSE_START) {
+              if (
+                driver.penaltyAudio?.type &&
+                driver.penaltyAudio.type !== "none" &&
+                (driver.penaltyAudio.url ||
+                  (driver.penaltyAudio.type === "tts" &&
+                    driver.penaltyAudio.text))
+              ) {
+                playSound(
+                  driver.penaltyAudio.type,
+                  driver.penaltyAudio.url,
+                  driver.penaltyAudio.text,
+                  this.dataService.serverUrl,
+                  ttsContext,
+                  this.logger,
+                );
+              }
+              return;
+            }
+
+            if (lap.type === LapType.MIN_LAP_TIME) {
+              return;
+            }
 
             if (
               isBestLap &&

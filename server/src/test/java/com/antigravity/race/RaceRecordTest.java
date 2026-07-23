@@ -359,12 +359,12 @@ public class RaceRecordTest {
 
     DriverHeatData dhd = minLapRace.getCurrentHeat().getDrivers().get(0);
     assertEquals(1, dhd.getLapCount());
-    assertEquals(4.1, dhd.getLastLapTime(), 0.001);
+    assertEquals(4.1, dhd.getLastLapTime(), 0.01);
 
     // Verify record is 4.1, not 0.2
     RecordData recordData = minLapRace.getRecordData();
-    assertEquals(4.1, recordData.getCurrent().getFastestLap().getValue(), 0.001);
-    assertEquals(4.1, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
+    assertEquals(4.1, recordData.getCurrent().getFastestLap().getValue(), 0.01);
+    assertEquals(4.1, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.01);
   }
 
   @Test

@@ -117,4 +117,39 @@ public class LogReplayServiceTest {
     org.junit.Assert.assertEquals("Should have processed 2 lines", 2, status.getLinesProcessed());
     org.junit.Assert.assertEquals("Total lines should be 2", 2, status.getTotalLines());
   }
+
+  @Test
+  public void testPreRaceIdleTimeIsFastForwarded() throws Exception {
+    try (FileWriter writer = new FileWriter(tempLogFile)) {
+      writer.write(
+          "2026-07-18 12:12:00.000 [Thread-1] INFO com.antigravity.App - Starting server\n");
+      writer.write(
+          "2026-07-18 12:12:30.000 [Thread-1] INFO com.antigravity.App - Setup page idle\n");
+      writer.write("2026-07-18 12:13:00.000 [Thread-1] INFO com.antigravity.App - Still idle\n");
+    }
+
+    LogReplayService.reset();
+
+    java.lang.reflect.Constructor<LogReplayService> constructor =
+        LogReplayService.class.getDeclaredConstructor(String.class);
+    constructor.setAccessible(true);
+    replayService = constructor.newInstance(tempLogFile.getAbsolutePath());
+
+    java.lang.reflect.Field instanceField = LogReplayService.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    instanceField.set(null, replayService);
+
+    long startMs = System.currentTimeMillis();
+    replayService.start();
+
+    // Wait briefly for replay to finish - with 60 seconds of log gaps, fast forwarding should take
+    // < 500ms
+    Thread.sleep(500);
+    long elapsed = System.currentTimeMillis() - startMs;
+
+    com.antigravity.proto.LogReplayStatus status = replayService.getLogReplayStatus();
+    assertTrue("Log should be finished", status.getIsFinished());
+    org.junit.Assert.assertEquals("Should have processed 3 lines", 3, status.getLinesProcessed());
+    assertTrue("Pre-race idle time (60s total) should finish in < 2000ms", elapsed < 2000);
+  }
 }

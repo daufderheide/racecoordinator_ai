@@ -154,10 +154,12 @@ public class LogReplayService {
 
           if (lastLogTime != null) {
             long millisToWait = ChronoUnit.MILLIS.between(lastLogTime, logTime);
-            if (millisToWait > 0
-                && millisToWait
-                    < 60000) { // Max 1 minute sleep to avoid stalling completely on huge gaps
-              Thread.sleep(millisToWait);
+            Race currentRace = ClientSubscriptionManager.getInstance().getRace();
+            boolean isPreRaceIdle =
+                (currentRace == null || currentRace.getState() instanceof NotStarted);
+            if (!isPreRaceIdle && millisToWait > 0) {
+              long actualSleep = Math.min(millisToWait, 60000L);
+              Thread.sleep(actualSleep);
             }
           }
           lastLogTime = logTime;

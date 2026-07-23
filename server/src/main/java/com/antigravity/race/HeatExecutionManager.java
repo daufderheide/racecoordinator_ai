@@ -174,6 +174,78 @@ public class HeatExecutionManager {
     }
   }
 
+  private boolean checkMinLapTime(
+      DriverHeatData driverData, int lane, double lapTime, int interfaceId) {
+    double minLapTime = this.race.getRaceModel().getMinLapTime();
+    if (minLapTime > 0) {
+      double minCheckTime = driverData.getPendingLapTime() - excludedPendingLapTime[lane] + lapTime;
+      if (minCheckTime < minLapTime) {
+        logger.warn(
+            "Lane {} lap rejected due to min lap time: {}s < {}s", lane, lapTime, minLapTime);
+        handleRejection(driverData, lane, lapTime, RejectionReason.MIN_LAP_TIME);
+        if (this.race.getStatistics() != null) {
+          this.race.getStatistics().incrementMinLapTimeRejectionCount();
+        }
+        Lap minLapMsg =
+            Lap.newBuilder()
+                .setObjectId(driverData.getObjectId())
+                .setLapTime(lapTime)
+                .setInterfaceId(interfaceId)
+                .setType(Lap.LapType.MIN_LAP_TIME)
+                .setFlag(race.getState().getLaneFlagType(race, lane))
+                .build();
+        driverData.setFlag(minLapMsg.getFlag());
+        race.broadcast(RaceData.newBuilder().setLap(minLapMsg).build());
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void checkFinishCondition(DriverHeatData driverData, int lane) {
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    if (scoring == null) {
+      return;
+    }
+    AllowFinish allowFinish = scoring.getAllowFinish();
+    boolean isTimed = scoring.getFinishMethod() == FinishMethod.Timed;
+    boolean driverFinished = false;
+
+    if (isTimed) {
+      if (race.getRaceTime() <= 0) {
+        driverFinished = true;
+      }
+    } else {
+      if (driverData.getLapCount() >= scoring.getFinishValue()) {
+        driverFinished = true;
+      } else if (scoring.getAllowFinish() == AllowFinish.SingleLap && !finishedLanes.isEmpty()) {
+        driverFinished = true;
+      }
+    }
+
+    if (driverFinished) {
+      finishedLanes.add(lane);
+      logger.info(
+          "Driver {} finished on lane {} ({} laps)",
+          driverData.getDriver().getDriver().getName(),
+          lane,
+          driverData.getLapCount());
+
+      if (allowFinish == AllowFinish.None
+          || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
+        // Heat ends
+        if (race.isLastHeat()) {
+          race.changeState(new RaceOver());
+        } else {
+          race.changeState(new HeatOver());
+        }
+      } else {
+        // Other drivers still racing so turn off power to this lane
+        race.setLanePower(false, lane);
+      }
+    }
+  }
+
   public boolean onLap(
       int lane,
       double lapTime,
@@ -193,26 +265,8 @@ public class HeatExecutionManager {
       return false;
     }
 
-    double minLapTime = this.race.getRaceModel().getMinLapTime();
-    if (minLapTime > 0) {
-      double minCheckTime = driverData.getPendingLapTime() - excludedPendingLapTime[lane] + lapTime;
-      if (minCheckTime < minLapTime) {
-        handleRejection(driverData, lane, lapTime, RejectionReason.MIN_LAP_TIME);
-        if (this.race.getStatistics() != null) {
-          this.race.getStatistics().incrementMinLapTimeRejectionCount();
-        }
-        Lap minLapMsg =
-            Lap.newBuilder()
-                .setObjectId(driverData.getObjectId())
-                .setLapTime(lapTime)
-                .setInterfaceId(interfaceId)
-                .setType(Lap.LapType.MIN_LAP_TIME)
-                .setFlag(race.getState().getLaneFlagType(race, lane))
-                .build();
-        driverData.setFlag(minLapMsg.getFlag());
-        race.broadcast(RaceData.newBuilder().setLap(minLapMsg).build());
-        return false;
-      }
+    if (checkMinLapTime(driverData, lane, lapTime, interfaceId)) {
+      return false;
     }
 
     AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
@@ -247,48 +301,9 @@ public class HeatExecutionManager {
 
     // Check for finish condition immediately after a lap if requested
     if (lapCounted && checkFinish) {
-      HeatScoring scoring = race.getRaceModel().getHeatScoring();
-      if (scoring != null) {
-        AllowFinish allowFinish = scoring.getAllowFinish();
-        boolean isTimed = scoring.getFinishMethod() == FinishMethod.Timed;
-        boolean driverFinished = false;
-
-        if (isTimed) {
-          if (race.getRaceTime() <= 0) {
-            driverFinished = true;
-          }
-        } else {
-          if (driverData.getLapCount() >= scoring.getFinishValue()) {
-            driverFinished = true;
-          } else if (scoring.getAllowFinish() == AllowFinish.SingleLap
-              && !finishedLanes.isEmpty()) {
-            driverFinished = true;
-          }
-        }
-
-        if (driverFinished) {
-          finishedLanes.add(lane);
-          logger.info(
-              "Driver {} finished on lane {} ({} laps)",
-              driverData.getDriver().getDriver().getName(),
-              lane,
-              driverData.getLapCount());
-
-          if (allowFinish == AllowFinish.None
-              || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
-            // Heat ends
-            if (race.isLastHeat()) {
-              race.changeState(new RaceOver());
-            } else {
-              race.changeState(new HeatOver());
-            }
-          } else {
-            // Other drivers still racing so turn off power to this lane
-            race.setLanePower(false, lane);
-          }
-        }
-      }
+      checkFinishCondition(driverData, lane);
     }
+
     return lapCounted;
   }
 
