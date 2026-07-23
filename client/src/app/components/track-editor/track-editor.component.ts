@@ -700,8 +700,42 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
 
     // Check Arduino Configs equality
-    const acs1 = t1.arduino_configs || [];
-    const acs2 = t2.arduino_configs || [];
+    if (
+      !this.areArduinoConfigsEqual(
+        t1.arduino_configs || [],
+        t2.arduino_configs || [],
+      )
+    ) {
+      return false;
+    }
+
+    // Check Trackmate Configs equality
+    if (
+      !this.areTrackmateConfigsEqual(
+        t1.trackmate_configs || [],
+        t2.trackmate_configs || [],
+      )
+    ) {
+      return false;
+    }
+
+    // Check Phidget Configs equality
+    if (
+      !this.arePhidgetConfigsEqual(
+        t1.phidget_configs || [],
+        t2.phidget_configs || [],
+      )
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private areArduinoConfigsEqual(
+    acs1: ArduinoConfig[],
+    acs2: ArduinoConfig[],
+  ): boolean {
     if (acs1.length !== acs2.length) {
       return false;
     }
@@ -710,7 +744,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       const ac1 = acs1[c];
       const ac2 = acs2[c];
 
-      // Robust comparison of ArduinoConfig fields
       const keys = Object.keys(ac1) as (keyof ArduinoConfig)[];
       for (const key of keys) {
         const v1 = ac1[key];
@@ -752,9 +785,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       }
     }
 
-    // Check Trackmate Configs equality
-    const tcs1 = t1.trackmate_configs || [];
-    const tcs2 = t2.trackmate_configs || [];
+    return true;
+  }
+
+  private areTrackmateConfigsEqual(
+    tcs1: TrackmateConfig[],
+    tcs2: TrackmateConfig[],
+  ): boolean {
     if (tcs1.length !== tcs2.length) {
       return false;
     }
@@ -778,16 +815,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           return false;
         }
       }
-    }
-
-    // Check Phidget Configs equality
-    if (
-      !this.arePhidgetConfigsEqual(
-        t1.phidget_configs || [],
-        t2.phidget_configs || [],
-      )
-    ) {
-      return false;
     }
 
     return true;
