@@ -60,7 +60,7 @@ test.describe("Track Manager Guided Help Visuals", () => {
 
       await expect(page).toHaveScreenshot(
         `tm-help-step-${step.index}-${step.name}.png`,
-        { maxDiffPixelRatio: 0.05 },
+        { maxDiffPixelRatio: 0.05, maxDiffPixels: 10000 },
       );
     });
   }

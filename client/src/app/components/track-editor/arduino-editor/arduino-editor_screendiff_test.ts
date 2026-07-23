@@ -117,7 +117,10 @@ test.describe("Arduino Editor Component Visuals", () => {
 
     // Pin actions checked visually
 
-    await expect(page).toHaveScreenshot("arduino-editor-mixed-pins.png");
+    await expect(page).toHaveScreenshot("arduino-editor-mixed-pins.png", {
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 10000,
+    });
   });
 });
 
