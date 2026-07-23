@@ -273,4 +273,43 @@ describe("TrackManagerComponent", () => {
     expect(component.selectedTrack?.name).toBe(longName);
     // Logic should remain sound even if CSS truncates it visually
   });
+
+  it("should render phidget summary component when track has phidget_configs", () => {
+    const mockTrack = new Track({
+      entity_id: "t-phidget",
+      name: "Phidget Track",
+      num_track_sections: 100,
+      lanes: [],
+      has_digital_fuel: false,
+      arduino_configs: [],
+      phidget_configs: [
+        {
+          name: "Phidget 1",
+          serialNumber: 12345,
+          isHubPort: false,
+          hubPort: 0,
+          debounceUs: 5000,
+          normallyClosedLaneSensors: false,
+          normallyClosedRelays: false,
+          useLapsForPits: 0,
+          useLapsForPitEnd: 0,
+          usePitsAsLaps: false,
+          useLapsForSegments: false,
+          lapPinPitBehavior: 0,
+          digitalInIds: [1000],
+          digitalOutIds: [],
+          analogIds: [],
+        },
+      ],
+    });
+
+    component.tracks = [mockTrack];
+    component.selectTrack(mockTrack);
+    fixture.detectChanges();
+
+    const phidgetSummary = fixture.nativeElement.querySelector(
+      "app-phidget-summary",
+    );
+    expect(phidgetSummary).toBeTruthy();
+  });
 });

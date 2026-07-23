@@ -5,7 +5,8 @@ This guide documents the complete checklist and step-by-step procedure for addin
 Following this checklist ensures that the new hardware interface:
 1. Persists properly in track configurations (DB <-> Proto <-> Client Models).
 2. Renders and syncs correctly in the Angular track editor (including lane reordering and lane deletion).
-3. Instantiates correctly on the server during real race execution.
+3. Displays a clear interface summary in the Track Manager summary dashboard.
+4. Instantiates correctly on the server during real race execution.
 
 ---
 
@@ -17,6 +18,7 @@ A hardware interface spans the full stack:
 - **Server DB & Models (`server/.../models`, `converters`)**: Jackson/Mongo annotations in `Track.java`, DB handlers, and `TrackConverter.java`.
 - **Client Models & Converters (`client/src/app/models`, `converters`)**: TypeScript interface in `track.ts`, converter class (`[Interface]ConfigConverter`), and mapping in `TrackConverter.ts`.
 - **Client UI Editor (`client/src/app/components/track-editor`)**: Editor component (`[interface]-editor`), rendering in `track-editor.component.html`, state handling & pin remapping in `track-editor.component.ts`.
+- **Client Track Manager Summary (`client/src/app/components/track-manager`)**: Summary component (`[interface]-summary`), displaying connection details (board/device type, port/serial number, hub port, configured pin count) and active pin behavior badges on the Track Manager screen.
 
 ---
 
@@ -54,8 +56,22 @@ A hardware interface spans the full stack:
 - [ ] Add UI tab and `*ngFor="let config of myInterfaceConfigs"` section in `track-editor.component.html`.
 - [ ] Add "Add MyInterface" button handler (`addMyInterfaceConfig()`) and removal handler (`removeMyInterfaceConfig(index)`).
 
-### 5. Automated Tests
+### 5. Client Track Manager Summary Component (`client/src/app/components/track-manager/`)
+- [ ] Create `my-interface-summary` component in `track-manager/my-interface-summary/`.
+- [ ] Implement `MyInterfaceSummaryComponent` with standalone inputs `config = input<MyInterfaceConfig>()` and optional `index = input<number>()`.
+- [ ] Display core device connection fields (Device Name, Port/Serial Number, Hub Port, Configured Pin count).
+- [ ] Implement behavior check indicators (`hasBehavior(...)`) for active pin features (Laps, Segments, Call Buttons, Relays, Voltage level, LEDs).
+- [ ] Add `MyInterfaceSummaryComponent` to `TrackManagerComponent` imports array in `track-manager.component.ts`.
+- [ ] Ensure `loadTracks()` in `track-manager.component.ts` maps `my_interface_configs: t.my_interface_configs`.
+- [ ] Add conditional template block in `track-manager.component.html` rendering `<app-my-interface-summary>` for each item in `selectedTrack.my_interface_configs`.
+- [ ] Create ComponentHarness (`my-interface-summary.harness.ts` and `my-interface-summary.harness.base.ts`).
+- [ ] Add translation keys for summary titles and field labels in all `i18n/*.json` files.
+
+### 6. Automated Tests
 - [ ] Add server unit test verifying `TrackConverter` round-trip with `MyInterfaceConfig`.
 - [ ] Add server unit test verifying `HardwareProtocolFactory` creates `MyInterfaceProtocol`.
 - [ ] Add client unit test verifying `TrackConverter.fromProto` preserves `my_interface_configs`.
 - [ ] Add client component test verifying track editor saving, lane reordering, and lane deletion for `MyInterfaceConfig`.
+- [ ] Add client unit test verifying `MyInterfaceSummaryComponent` logic (pin counting, behavior checking, collapsed/expanded toggling).
+- [ ] Add client test verifying `TrackManagerComponent` renders `<app-my-interface-summary>` when track has `my_interface_configs`.
+

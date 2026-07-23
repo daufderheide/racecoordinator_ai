@@ -1,0 +1,89 @@
+@if (config()) {
+  <div class="arduino-summary">
+    <div
+      class="section-header"
+      (click)="toggleExpanded()"
+      style="cursor: pointer"
+    >
+      <span class="expander-icon" [class.collapsed]="!isExpanded">▼</span>
+      <h1>
+        {{ "PS_TITLE" | translate
+        }}{{ index() !== undefined ? " " + index() : "" }}
+      </h1>
+    </div>
+    @if (isExpanded) {
+      <div class="section-content">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">{{ "PS_DEVICE" | translate }}:</span>
+            <span class="value">{{ getDeviceName() }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "PS_SERIAL_NUMBER" | translate }}:</span>
+            <span class="value">{{ getSerialNumberStr() | translate }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "PS_HUB_PORT" | translate }}:</span>
+            <span class="value">{{ getHubPortStr() | translate }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "PS_CONFIGURED_PINS" | translate }}:</span>
+            <span class="value">{{
+              "AS_PINS_COUNT" | translate: { count: getConfiguredPinCount() }
+            }}</span>
+          </div>
+        </div>
+        <div class="behavior-checkboxes">
+          <div class="behavior-check">
+            <span class="check-box" [class.checked]="hasBehavior('lap')"></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_LAPS" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span
+              class="check-box"
+              [class.checked]="hasBehavior('segment')"
+            ></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_SEGMENTS" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span
+              class="check-box"
+              [class.checked]="hasBehavior('call')"
+            ></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_CALL_BUTTONS" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span
+              class="check-box"
+              [class.checked]="hasBehavior('relay')"
+            ></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_RELAYS" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span
+              class="check-box"
+              [class.checked]="hasBehavior('voltage')"
+            ></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_VOLTAGE" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span class="check-box" [class.checked]="hasBehavior('led')"></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_LEDS" | translate
+            }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

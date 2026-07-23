@@ -1495,5 +1495,12 @@
   "PHIDGET_DIGITAL_INPUTS": "Digitale ingangen",
   "PHIDGET_DIGITAL_OUTPUTS": "Digitale uitgangen / Relais",
   "PHIDGET_ANALOG_INPUTS": "Analoge ingangen",
-  "PHIDGET_NO_PINS": "Geen kanalen beschikbaar voor deze sectie"
+  "PHIDGET_NO_PINS": "Geen kanalen beschikbaar voor deze sectie",
+  "PS_CONFIGURED_PINS": "Geconfigureerde Pins",
+  "PS_DEVICE": "Apparaat",
+  "PS_HUB_PORT": "Hub Poort",
+  "PS_NO_HUB": "Geen",
+  "PS_NO_SERIAL": "Geen",
+  "PS_SERIAL_NUMBER": "Serienummer",
+  "PS_TITLE": "Phidget Overzicht"
 }

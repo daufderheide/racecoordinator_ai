@@ -1495,5 +1495,12 @@
   "PHIDGET_DIGITAL_INPUTS": "Ingressi digitali",
   "PHIDGET_DIGITAL_OUTPUTS": "Uscite digitali / Relè",
   "PHIDGET_ANALOG_INPUTS": "Ingressi analogici",
-  "PHIDGET_NO_PINS": "Nessun canale disponibile per questa sezione"
+  "PHIDGET_NO_PINS": "Nessun canale disponibile per questa sezione",
+  "PS_CONFIGURED_PINS": "Pin Configurati",
+  "PS_DEVICE": "Dispositivo",
+  "PS_HUB_PORT": "Porta Hub",
+  "PS_NO_HUB": "Nessuno",
+  "PS_NO_SERIAL": "Nessuno",
+  "PS_SERIAL_NUMBER": "Numero di Serie",
+  "PS_TITLE": "Riepilogo Phidget"
 }

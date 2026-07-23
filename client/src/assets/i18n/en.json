@@ -1497,5 +1497,12 @@
   "PHIDGET_DIGITAL_INPUTS": "Digital Inputs",
   "PHIDGET_DIGITAL_OUTPUTS": "Digital Outputs / Relays",
   "PHIDGET_ANALOG_INPUTS": "Analog Inputs",
-  "PHIDGET_NO_PINS": "No channels available for this section"
+  "PHIDGET_NO_PINS": "No channels available for this section",
+  "PS_CONFIGURED_PINS": "Configured Pins",
+  "PS_DEVICE": "Device",
+  "PS_HUB_PORT": "Hub Port",
+  "PS_NO_HUB": "None",
+  "PS_NO_SERIAL": "None",
+  "PS_SERIAL_NUMBER": "Serial Number",
+  "PS_TITLE": "Phidget Summary"
 }

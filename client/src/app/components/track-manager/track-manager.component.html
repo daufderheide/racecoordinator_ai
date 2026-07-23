@@ -119,6 +119,35 @@
               }
             </div>
           }
+          @if (
+            selectedTrack.phidget_configs &&
+            selectedTrack.phidget_configs.length > 0
+          ) {
+            <div
+              class="arduino-summary-container"
+              style="
+                padding: 0;
+                border: none;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+              "
+            >
+              @for (
+                config of selectedTrack.phidget_configs;
+                track config;
+                let i = $index
+              ) {
+                <app-phidget-summary
+                  [config]="config"
+                  [index]="
+                    selectedTrack.phidget_configs.length > 1 ? i + 1 : undefined
+                  "
+                >
+                </app-phidget-summary>
+              }
+            </div>
+          }
           <div class="lane-viz-container">
             <div
               class="section-header"

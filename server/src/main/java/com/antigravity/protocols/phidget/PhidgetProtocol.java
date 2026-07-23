@@ -159,7 +159,8 @@ public class PhidgetProtocol implements IProtocol {
       startStatusScheduler();
       return true;
     } catch (Throwable e) {
-      logger.error("Error opening Phidget interface index " + interfaceIndex, e);
+      String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+      logger.error("Phidget interface index {} could not be opened: {}", interfaceIndex, msg);
       close();
       return false;
     }
@@ -177,7 +178,11 @@ public class PhidgetProtocol implements IProtocol {
               listener.onInterfaceStatus(status, interfaceIndex);
             }
           } catch (Exception e) {
-            logger.error("Error in status scheduler for Phidget interface " + interfaceIndex, e);
+            String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+            logger.error(
+                "Error in status scheduler for Phidget interface index {}: {}",
+                interfaceIndex,
+                msg);
           }
         },
         0,
@@ -223,8 +228,10 @@ public class PhidgetProtocol implements IProtocol {
     } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + 64) {
       // Note: Pit tracking is normally handled via DefaultProtocol.
-      // Since PhidgetProtocol implements IProtocol directly, we just emit the event or
-      // rely on the race timer to handle pit stops if not using DefaultProtocol's pit tracking.
+      // Since PhidgetProtocol implements IProtocol directly, we just emit the event
+      // or
+      // rely on the race timer to handle pit stops if not using DefaultProtocol's pit
+      // tracking.
     }
 
     // Emit raw event for UI
@@ -291,7 +298,8 @@ public class PhidgetProtocol implements IProtocol {
         listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, interfaceIndex);
       }
     } catch (Throwable e) {
-      logger.error("Error closing phidget", e);
+      String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+      logger.error("Error closing Phidget interface index {}: {}", interfaceIndex, msg);
     }
   }
 
