@@ -150,6 +150,11 @@
   background: #0069d9;
 }
 
+.actions button:focus {
+  outline: 2px solid #0056b3;
+  outline-offset: 1px;
+}
+
 
 /* Arrow styles */
 .help-popover::after {
