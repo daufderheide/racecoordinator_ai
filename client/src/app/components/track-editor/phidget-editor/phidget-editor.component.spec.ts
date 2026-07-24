@@ -3,7 +3,11 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { PhidgetConfig } from "@app/models/track";
-import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
+import {
+  InterfaceStatus,
+  PinBehavior,
+  SetInterfacePinStateResponse,
+} from "@app/proto/antigravity";
 import { TranslationService } from "@app/services/translation.service";
 
 import { PhidgetEditorComponent } from "./phidget-editor.component";
@@ -42,7 +46,11 @@ describe("PhidgetEditorComponent", () => {
     mockDataService = jasmine.createSpyObj("DataService", [
       "getPhidgetDevices",
       "getInterfaceEvents",
+      "setInterfacePinState",
     ]);
+    mockDataService.setInterfacePinState.and.returnValue(
+      of(SetInterfacePinStateResponse.create({ success: true, message: "OK" })),
+    );
     mockDataService.getPhidgetDevices.and.returnValue(
       of([
         {
@@ -231,5 +239,84 @@ describe("PhidgetEditorComponent", () => {
     fixture.detectChanges();
     expect(component.status).toBe("DISCONNECTED");
     expect(badgeEl.classList.contains("connected")).toBeFalse();
+  });
+
+  it("should toggle output pin state high/low when output status badge is pressed", () => {
+    // Digital Output pin 0 is set to BEHAVIOR_RELAY in sampleConfig
+    fixture.detectChanges();
+    const outBadgeEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#phidget-out-status-0",
+    );
+    expect(outBadgeEl).toBeTruthy();
+    expect(outBadgeEl.classList.contains("connected")).toBeFalse();
+
+    // Click badge to toggle high (true)
+    outBadgeEl.click();
+    fixture.detectChanges();
+
+    expect(mockDataService.setInterfacePinState).toHaveBeenCalledWith(
+      0,
+      true,
+      true,
+      0,
+    );
+    expect(component.isPinActive("out", 0)).toBeTrue();
+    expect(outBadgeEl.classList.contains("connected")).toBeTrue();
+
+    // Click badge again to toggle low (false)
+    outBadgeEl.click();
+    fixture.detectChanges();
+
+    expect(mockDataService.setInterfacePinState).toHaveBeenCalledWith(
+      0,
+      true,
+      false,
+      0,
+    );
+    expect(component.isPinActive("out", 0)).toBeFalse();
+    expect(outBadgeEl.classList.contains("connected")).toBeFalse();
+  });
+
+  it("should disable phidget device options in dropdown if selected by another interface on the track", () => {
+    const config1: PhidgetConfig = {
+      ...sampleConfig,
+      serialNumber: 12345,
+    };
+    const config2: PhidgetConfig = {
+      ...sampleConfig,
+      serialNumber: 67890,
+    };
+
+    componentRef.setInput("config", config2);
+    componentRef.setInput("allPhidgetConfigs", [config1, config2]);
+    fixture.detectChanges();
+
+    const device1 = {
+      serialNumber: 12345,
+      name: "PhidgetInterfaceKit 8/8/8 (12345)",
+      isHubPort: false,
+      hubPort: 0,
+    };
+    const device2 = {
+      serialNumber: 67890,
+      name: "PhidgetInterfaceKit 0/0/4 (67890)",
+      isHubPort: false,
+      hubPort: 0,
+    };
+
+    // device1 is selected by config1, which is another interface
+    expect(component.isDeviceSelectedByOther(device1)).toBeTrue();
+    // device2 is selected by config2, which is the current interface
+    expect(component.isDeviceSelectedByOther(device2)).toBeFalse();
+
+    const selectEl: HTMLSelectElement =
+      fixture.nativeElement.querySelector("#device-0");
+    const options = Array.from(selectEl.options);
+
+    const option1 = options.find((opt) => opt.value === "12345_false_0");
+    const option2 = options.find((opt) => opt.value === "67890_false_0");
+
+    expect(option1?.disabled).toBeTrue();
+    expect(option2?.disabled).toBeFalse();
   });
 });

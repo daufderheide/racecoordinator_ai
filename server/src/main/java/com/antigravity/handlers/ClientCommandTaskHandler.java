@@ -1005,21 +1005,25 @@ public class ClientCommandTaskHandler {
       int interfaceIndex = request.getInterfaceIndex();
 
       ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
-      ArduinoProtocol target = null;
+      IProtocol target = null;
 
       if (current != null) {
         List<IProtocol> protocols = current.getProtocols();
         if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
           IProtocol p = protocols.get(interfaceIndex);
           if (p instanceof ArduinoProtocol) {
-            target = (ArduinoProtocol) p;
+            target = p;
+            ((ArduinoProtocol) p)
+                .setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
+          } else if (p instanceof PhidgetProtocol) {
+            target = p;
+            ((PhidgetProtocol) p)
+                .setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
           }
         }
       }
 
       if (target != null) {
-        target.setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
-
         SetInterfacePinStateResponse response =
             SetInterfacePinStateResponse.newBuilder()
                 .setSuccess(true)

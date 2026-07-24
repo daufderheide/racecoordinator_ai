@@ -45,6 +45,7 @@ public class PhidgetProtocol implements IProtocol {
 
   private final Map<Integer, DigitalOutput> relayOutputs = new HashMap<>();
   private final Map<Integer, DigitalOutput> analogLedOutputs = new HashMap<>();
+  private final Map<Integer, DigitalOutput> digitalOutputsByChannel = new HashMap<>();
   private DigitalOutput mainRelayOutput;
 
   public PhidgetProtocol(PhidgetConfig config, int numLanes, ProtocolListener listener) {
@@ -107,6 +108,7 @@ public class PhidgetProtocol implements IProtocol {
           out.setChannel(i);
           out.open(5000);
           digitalOutputs.add(out);
+          digitalOutputsByChannel.put(i, out);
           logger.info("Opened Phidget Digital Output channel {}", i);
 
           if (behavior == PinBehavior.BEHAVIOR_RELAY_VALUE) {
@@ -292,6 +294,7 @@ public class PhidgetProtocol implements IProtocol {
       analogInputs.clear();
       relayOutputs.clear();
       analogLedOutputs.clear();
+      digitalOutputsByChannel.clear();
       mainRelayOutput = null;
 
       if (listener != null) {
@@ -300,6 +303,17 @@ public class PhidgetProtocol implements IProtocol {
     } catch (Throwable e) {
       String msg = e.getMessage() != null ? e.getMessage() : e.toString();
       logger.error("Error closing Phidget interface index {}: {}", interfaceIndex, msg);
+    }
+  }
+
+  public void setPinState(boolean isDigital, int pin, boolean isHigh) {
+    DigitalOutput out = digitalOutputsByChannel.get(pin);
+    if (out != null) {
+      try {
+        out.setState(isHigh);
+      } catch (PhidgetException e) {
+        logger.error("Error setting Phidget digital output channel {} state", pin, e);
+      }
     }
   }
 

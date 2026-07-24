@@ -89,5 +89,7 @@ public class PhidgetProtocolTest {
     protocol.setMainPower(false);
     protocol.setLanePower(true, 0);
     protocol.setLanePower(false, 0);
+    protocol.setPinState(true, 0, true);
+    protocol.setPinState(true, 0, false);
   }
 }

@@ -1568,6 +1568,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.driverMissingError = true;
   }
 
+  onPhidgetConfigChange() {
+    this.phidgetConfigs = [...this.phidgetConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+  }
+
   trackByPhidgetConfig(index: number, _config: any): number {
     return index;
   }

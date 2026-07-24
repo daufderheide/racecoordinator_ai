@@ -321,9 +321,10 @@
           <div class="interface-container">
             <app-phidget-editor
               [config]="config"
+              [allPhidgetConfigs]="phidgetConfigs"
               [lanes]="lanes.length"
               [interfaceIndex]="i + arduinoConfigs.length"
-              (change)="captureState()"
+              (change)="onPhidgetConfigChange()"
               (remove)="removePhidgetConfig(i)"
               (driverError)="onPhidgetDriverError()"
             >

@@ -56,10 +56,16 @@
                               device of devices;
                               track getDeviceKey(device)
                             ) {
-                              <option [value]="getDeviceKey(device)">
+                              <option
+                                [value]="getDeviceKey(device)"
+                                [disabled]="isDeviceSelectedByOther(device)"
+                              >
                                 {{ device.name }} ({{ device.serialNumber }})
                                 @if (device.isHubPort) {
                                   - Port {{ device.hubPort }}
+                                }
+                                @if (isDeviceSelectedByOther(device)) {
+                                  - ({{ "PHIDGET_DEVICE_IN_USE" | translate }})
                                 }
                               </option>
                             }
@@ -295,6 +301,8 @@
                                   [id]="'phidget-out-status-' + pin"
                                   class="status-badge small"
                                   [class.connected]="isPinActive('out', pin)"
+                                  (click)="togglePinState('out', pin)"
+                                  style="cursor: pointer"
                                 ></span>
                               </div>
                               <div

@@ -1486,6 +1486,7 @@
   "PHIDGET_MAIN_HEADER": "Main Configuration",
   "PHIDGET_DEVICE": "Device",
   "PHIDGET_SELECT_DEVICE": "Select Device...",
+  "PHIDGET_DEVICE_IN_USE": "In Use",
   "PHIDGET_STATUS_CONNECTED": "Connected",
   "PHIDGET_STATUS_DISCONNECTED": "Disconnected",
   "PHIDGET_STATUS_NO_DATA": "No Data",

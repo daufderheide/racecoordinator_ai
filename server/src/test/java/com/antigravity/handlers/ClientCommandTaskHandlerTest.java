@@ -32,7 +32,12 @@ import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.proto.InitializeRaceResponse;
+import com.antigravity.proto.PinBehavior;
+import com.antigravity.proto.SetInterfacePinStateRequest;
+import com.antigravity.proto.SetInterfacePinStateResponse;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.phidget.PhidgetConfig;
+import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.RaceParticipant;
@@ -1435,6 +1440,49 @@ public class ClientCommandTaskHandlerTest {
     } catch (Throwable ignored) {
     }
     verify(res).setStatus(500);
+  }
+
+  @Test
+  public void testSetInterfacePinState_PhidgetProtocol() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+
+    PhidgetConfig config = new PhidgetConfig();
+    config.serialNumber = 12345;
+    config.digitalOutIds = Arrays.asList(PinBehavior.BEHAVIOR_RELAY_VALUE);
+
+    PhidgetProtocol phidgetProtocol = spy(new PhidgetProtocol(config, 4, null));
+    phidgetProtocol.setInterfaceIndex(0);
+
+    ProtocolDelegate delegate = mock(ProtocolDelegate.class);
+    when(delegate.getProtocols()).thenReturn(Arrays.asList(phidgetProtocol));
+
+    ClientSubscriptionManager.getInstance().setProtocol(delegate);
+
+    SetInterfacePinStateRequest request =
+        SetInterfacePinStateRequest.newBuilder()
+            .setInterfaceIndex(0)
+            .setIsDigital(true)
+            .setPin(0)
+            .setIsHigh(true)
+            .build();
+
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+    doReturn(request.toByteArray()).when(ctx).bodyAsBytes();
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    doReturn(ctx).when(ctx).result(captor.capture());
+
+    Method m = handler.getClass().getDeclaredMethod("setInterfacePinState", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(phidgetProtocol).setPinState(true, 0, true);
+
+    SetInterfacePinStateResponse response =
+        SetInterfacePinStateResponse.parseFrom(captor.getValue());
+    assertTrue(response.getSuccess());
+    assertEquals("Pin state command sent", response.getMessage());
   }
 
   private void deleteDirectory(File directory) {

@@ -19,6 +19,7 @@ import {
   IPhidgetDeviceInfo,
   PinBehavior,
 } from "@app/proto/antigravity";
+import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
 export interface PinAction {
@@ -50,6 +51,7 @@ export interface PhidgetEditorSections {
 })
 export class PhidgetEditorComponent implements OnInit, OnDestroy {
   config = model.required<PhidgetConfig>();
+  allPhidgetConfigs = input<PhidgetConfig[]>([]);
   interfaceIndex = input.required<number>();
   lanes = input.required<number>();
 
@@ -74,6 +76,7 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   dropdownOpenUp: { [key: string]: boolean } = {};
   groupsCollapsed: { [key: string]: boolean } = {};
   pinActivity: { [key: string]: boolean } = {};
+  pinState: { [key: string]: boolean } = {};
 
   private subscriptions = new Subscription();
   private pinActivityTimers: { [key: string]: any } = {};
@@ -82,6 +85,7 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
     public translationService: TranslationService,
+    private logger: LoggerService,
   ) {}
 
   ngOnInit(): void {
@@ -192,6 +196,22 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     const isHubPort = !!device.isHubPort;
     const hubPort = device.hubPort || 0;
     return `${serial}_${isHubPort}_${hubPort}`;
+  }
+
+  isDeviceSelectedByOther(device: IPhidgetDeviceInfo): boolean {
+    if (!device || !device.serialNumber || device.serialNumber <= 0) {
+      return false;
+    }
+    const devKey = this.getDeviceKey(device);
+    const currentConf = this.config();
+    const allConfigs = this.allPhidgetConfigs();
+
+    return allConfigs.some((c) => {
+      if (!c || c === currentConf || !c.serialNumber || c.serialNumber <= 0) {
+        return false;
+      }
+      return this.getDeviceKey(c) === devKey;
+    });
   }
 
   onDeviceSelectChange(key: string) {
@@ -749,6 +769,47 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   isPinActive(type: "in" | "out" | "analog", pin: number): boolean {
-    return !!this.pinActivity[`${type}-${pin}`];
+    const key = `${type}-${pin}`;
+    if (this.pinState[key] !== undefined) {
+      return this.pinState[key];
+    }
+    return !!this.pinActivity[key];
+  }
+
+  togglePinState(type: "in" | "out" | "analog", pin: number) {
+    if (type !== "out") return;
+    const behavior = this.getPinBehaviorVal(type, pin);
+    const isOutput =
+      behavior === PinBehavior.BEHAVIOR_RELAY ||
+      (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE &&
+        behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000) ||
+      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG ||
+      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG ||
+      (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1 &&
+        behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5);
+
+    if (isOutput) {
+      const key = `${type}-${pin}`;
+      const currentState = !!this.pinState[key];
+      const newState = !currentState;
+
+      this.pinState[key] = newState;
+      this.dataService
+        .setInterfacePinState(pin, true, newState, this.interfaceIndex())
+        .subscribe({
+          next: (response) => {
+            if (!response.success) {
+              this.logger.warn("Failed to set pin state", response.message);
+              this.pinState[key] = currentState;
+              this.cdr.detectChanges();
+            }
+          },
+          error: (err) => {
+            this.logger.error("Error setting pin state", err);
+            this.pinState[key] = currentState;
+            this.cdr.detectChanges();
+          },
+        });
+    }
   }
 }
