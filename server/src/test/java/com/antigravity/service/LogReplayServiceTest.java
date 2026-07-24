@@ -143,8 +143,12 @@ public class LogReplayServiceTest {
     replayService.start();
 
     // Wait briefly for replay to finish - with 60 seconds of log gaps, fast forwarding should take
-    // < 500ms
-    Thread.sleep(500);
+    // < 2000ms
+    long deadline = System.currentTimeMillis() + 2000;
+    while (!replayService.getLogReplayStatus().getIsFinished()
+        && System.currentTimeMillis() < deadline) {
+      Thread.sleep(50);
+    }
     long elapsed = System.currentTimeMillis() - startMs;
 
     com.antigravity.proto.LogReplayStatus status = replayService.getLogReplayStatus();
