@@ -7,9 +7,12 @@ import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolListener;
+import com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior;
 import com.phidget22.DigitalInput;
 import com.phidget22.DigitalInputStateChangeEvent;
 import com.phidget22.DigitalInputStateChangeListener;
@@ -24,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,12 +54,27 @@ public class PhidgetProtocol implements IProtocol {
   private final long[] lastLapTimeNanos;
   private final long[] lastSegmentTimeNanos;
 
+  // Refueling and pit state tracking
+  private final boolean[] laneInPits;
+  private final long[] lastRefuelTimeMs;
+  private final int[] lastPitOutState;
+  private final int[] lastLapPinState;
+  private ScheduledFuture<?> refuelFuture;
+
   public PhidgetProtocol(PhidgetConfig config, int numLanes, ProtocolListener listener) {
     this.config = config;
     this.numLanes = numLanes;
     this.listener = listener;
     this.lastLapTimeNanos = new long[numLanes];
     this.lastSegmentTimeNanos = new long[numLanes];
+    this.laneInPits = new boolean[numLanes];
+    this.lastRefuelTimeMs = new long[numLanes];
+    this.lastPitOutState = new int[numLanes];
+    this.lastLapPinState = new int[numLanes];
+    for (int i = 0; i < numLanes; i++) {
+      this.lastPitOutState[i] = -1;
+      this.lastLapPinState[i] = -1;
+    }
   }
 
   public void updateConfig(PhidgetConfig newConfig) {
@@ -194,13 +213,133 @@ public class PhidgetProtocol implements IProtocol {
         0,
         1,
         TimeUnit.SECONDS);
+
+    refuelFuture =
+        statusScheduler.scheduleAtFixedRate(
+            () -> {
+              try {
+                if (listener != null) {
+                  long currentTime = System.currentTimeMillis();
+                  for (int lane = 0; lane < numLanes; lane++) {
+                    if (laneInPits[lane]) {
+                      double deltaTimeSeconds = 0.0;
+                      if (lastRefuelTimeMs[lane] > 0) {
+                        deltaTimeSeconds = (currentTime - lastRefuelTimeMs[lane]) / 1000.0;
+                      }
+                      lastRefuelTimeMs[lane] = currentTime;
+
+                      listener.onCarData(
+                          new CarData(
+                              lane,
+                              deltaTimeSeconds,
+                              0,
+                              0,
+                              true,
+                              CarLocation.PitRow,
+                              CarLocation.PitRow,
+                              -1));
+                    }
+                  }
+                }
+              } catch (Exception e) {
+                logger.error("Error in Phidget refuel scheduler", e);
+              }
+            },
+            0,
+            100,
+            TimeUnit.MILLISECONDS);
   }
 
   private synchronized void stopStatusScheduler() {
+    if (refuelFuture != null) {
+      refuelFuture.cancel(true);
+      refuelFuture = null;
+    }
     if (statusScheduler != null) {
       statusScheduler.shutdownNow();
       statusScheduler = null;
     }
+  }
+
+  private synchronized void updatePitState(int laneIndex, boolean inPits) {
+    if (laneIndex < 0 || laneIndex >= numLanes) return;
+    if (laneInPits[laneIndex] != inPits) {
+      logger.info(
+          "Phidget updatePitState: Lane {} transition to {}",
+          laneIndex,
+          inPits ? "IN_PITS" : "OUT_PITS");
+      laneInPits[laneIndex] = inPits;
+
+      if (inPits) {
+        lastRefuelTimeMs[laneIndex] = System.currentTimeMillis();
+        if (listener != null) {
+          listener.onCarData(
+              new CarData(laneIndex, 0.0, 0, 0, true, CarLocation.PitRow, CarLocation.Main, -1));
+        }
+      } else {
+        lastRefuelTimeMs[laneIndex] = 0;
+        if (listener != null) {
+          listener.onCarData(
+              new CarData(laneIndex, 0.0, 0, 0, false, CarLocation.Main, CarLocation.PitRow, -1));
+        }
+      }
+    }
+  }
+
+  private boolean hasPitInConfigured(int lane) {
+    if (config != null && config.lapPinPitBehavior != null) {
+      if (config.lapPinPitBehavior == LapPinPitBehavior.PIT_IN
+          || config.lapPinPitBehavior == LapPinPitBehavior.PIT_IN_OUT) {
+        return true;
+      }
+    }
+    if (config != null && config.digitalInIds != null) {
+      int pitInBehavior = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + lane;
+      int pitInOutBehavior = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + lane;
+      for (int behavior : config.digitalInIds) {
+        if (behavior == pitInBehavior || behavior == pitInOutBehavior) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void handleLapPinBehavior(int lane, int channel, boolean active) {
+    if (lane < 0 || lane >= numLanes) return;
+
+    if (active) {
+      long now = System.nanoTime();
+      double lapTimeSeconds =
+          (lastLapTimeNanos[lane] > 0) ? (now - lastLapTimeNanos[lane]) / 1_000_000_000.0 : 0.0;
+      lastLapTimeNanos[lane] = now;
+      lastSegmentTimeNanos[lane] = now;
+      listener.onLap(lane, lapTimeSeconds, channel, interfaceIndex);
+
+      LapPinPitBehavior lapPitBehavior = config.lapPinPitBehavior;
+      if (lapPitBehavior == LapPinPitBehavior.PIT_IN
+          || lapPitBehavior == LapPinPitBehavior.PIT_IN_OUT) {
+        updatePitState(lane, true);
+      } else if (lapPitBehavior == LapPinPitBehavior.PIT_OUT) {
+        if (hasPitInConfigured(lane)) {
+          if (lastLapPinState[lane] == 1) {
+            updatePitState(lane, false);
+          }
+        } else {
+          updatePitState(lane, false);
+        }
+      }
+    } else {
+      LapPinPitBehavior lapPitBehavior = config.lapPinPitBehavior;
+      if (lapPitBehavior == LapPinPitBehavior.PIT_IN_OUT) {
+        updatePitState(lane, false);
+      } else if (lapPitBehavior == LapPinPitBehavior.PIT_OUT) {
+        if (hasPitInConfigured(lane) && lastLapPinState[lane] == 1) {
+          updatePitState(lane, false);
+        }
+      }
+    }
+    lastLapPinState[lane] = active ? 1 : 0;
   }
 
   private synchronized void handleDigitalInputStateChange(
@@ -213,14 +352,7 @@ public class PhidgetProtocol implements IProtocol {
     if (behavior >= PinBehavior.BEHAVIOR_LAP_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 64) {
       int lane = behavior - PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
-      if (active && lane >= 0 && lane < numLanes) {
-        long now = System.nanoTime();
-        double lapTimeSeconds =
-            (lastLapTimeNanos[lane] > 0) ? (now - lastLapTimeNanos[lane]) / 1_000_000_000.0 : 0.0;
-        lastLapTimeNanos[lane] = now;
-        lastSegmentTimeNanos[lane] = now;
-        listener.onLap(lane, lapTimeSeconds, channel, interfaceIndex);
-      }
+      handleLapPinBehavior(lane, channel, active);
     } else if (behavior >= PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE + 64) {
       int lane = behavior - PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE;
@@ -245,11 +377,32 @@ public class PhidgetProtocol implements IProtocol {
       }
     } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + 64) {
-      // Note: Pit tracking is normally handled via DefaultProtocol.
-      // Since PhidgetProtocol implements IProtocol directly, we just emit the event
-      // or
-      // rely on the race timer to handle pit stops if not using DefaultProtocol's pit
-      // tracking.
+      int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
+      if (active && lane >= 0 && lane < numLanes) {
+        updatePitState(lane, true);
+      }
+    } else if (behavior >= PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE
+        && behavior < PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE + 64) {
+      int lane = behavior - PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
+      if (lane >= 0 && lane < numLanes) {
+        int activeState = active ? 1 : 0;
+        if (hasPitInConfigured(lane)) {
+          if (lastPitOutState[lane] == 1 && activeState == 0) {
+            updatePitState(lane, false);
+          }
+        } else {
+          if (activeState == 1) {
+            updatePitState(lane, false);
+          }
+        }
+        lastPitOutState[lane] = activeState;
+      }
+    } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE
+        && behavior < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 64) {
+      int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
+      if (lane >= 0 && lane < numLanes) {
+        updatePitState(lane, active);
+      }
     }
 
     // Emit raw event for UI

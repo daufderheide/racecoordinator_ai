@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -13,13 +14,17 @@ import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
+import com.antigravity.protocols.CarData;
+import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolListener;
+import com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 public class PhidgetProtocolTest {
 
@@ -137,5 +142,103 @@ public class PhidgetProtocolTest {
     m.invoke(protocol, 0, lapBehavior, true);
 
     verify(mockListener).onLap(eq(0), anyDouble(), eq(0), eq(0));
+  }
+
+  @Test
+  public void testPitInAndPitOutRefueling() throws Exception {
+    config.normallyClosedLaneSensors = false;
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    protocol.setListener(mockListener);
+
+    Method m =
+        PhidgetProtocol.class.getDeclaredMethod(
+            "handleDigitalInputStateChange", int.class, int.class, boolean.class);
+    m.setAccessible(true);
+
+    int pitInBehavior = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
+    int pitOutBehavior = PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
+
+    // Trigger Pit In for lane 0
+    m.invoke(protocol, 0, pitInBehavior, true);
+
+    ArgumentCaptor<CarData> captor = ArgumentCaptor.forClass(CarData.class);
+    verify(mockListener, atLeastOnce()).onCarData(captor.capture());
+    CarData lastData = captor.getValue();
+    assertEquals(0, lastData.getLane());
+    assertTrue(lastData.getCanRefuel());
+    assertEquals(CarLocation.PitRow, lastData.getLocation());
+
+    // Trigger Pit Out for lane 0
+    m.invoke(protocol, 1, pitOutBehavior, true);
+    m.invoke(protocol, 1, pitOutBehavior, false);
+
+    verify(mockListener, atLeastOnce()).onCarData(captor.capture());
+    CarData exitData = captor.getValue();
+    assertEquals(0, exitData.getLane());
+    assertFalse(exitData.getCanRefuel());
+    assertEquals(CarLocation.Main, exitData.getLocation());
+  }
+
+  @Test
+  public void testPitInOutRefueling() throws Exception {
+    config.normallyClosedLaneSensors = false;
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    protocol.setListener(mockListener);
+
+    Method m =
+        PhidgetProtocol.class.getDeclaredMethod(
+            "handleDigitalInputStateChange", int.class, int.class, boolean.class);
+    m.setAccessible(true);
+
+    int pitInOutBehavior = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 1; // lane 1
+
+    // Stopping over Pit In/Out sensor on lane 1 -> active (in pits)
+    m.invoke(protocol, 2, pitInOutBehavior, true);
+
+    ArgumentCaptor<CarData> captor = ArgumentCaptor.forClass(CarData.class);
+    verify(mockListener, atLeastOnce()).onCarData(captor.capture());
+    CarData enterData = captor.getValue();
+    assertEquals(1, enterData.getLane());
+    assertTrue(enterData.getCanRefuel());
+
+    // Driving off Pit In/Out sensor -> inactive (exits pits)
+    m.invoke(protocol, 2, pitInOutBehavior, false);
+
+    verify(mockListener, atLeastOnce()).onCarData(captor.capture());
+    CarData exitData = captor.getValue();
+    assertEquals(1, exitData.getLane());
+    assertFalse(exitData.getCanRefuel());
+  }
+
+  @Test
+  public void testLapSensorPitBehaviorRefueling() throws Exception {
+    config.normallyClosedLaneSensors = false;
+    config.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    protocol.setListener(mockListener);
+
+    Method m =
+        PhidgetProtocol.class.getDeclaredMethod(
+            "handleDigitalInputStateChange", int.class, int.class, boolean.class);
+    m.setAccessible(true);
+
+    int lapBehavior = PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 2; // lane 2
+
+    // Lap sensor active -> triggers lap AND enters pit
+    m.invoke(protocol, 3, lapBehavior, true);
+
+    ArgumentCaptor<CarData> captor = ArgumentCaptor.forClass(CarData.class);
+    verify(mockListener, atLeastOnce()).onCarData(captor.capture());
+    CarData enterData = captor.getValue();
+    assertEquals(2, enterData.getLane());
+    assertTrue(enterData.getCanRefuel());
+
+    // Lap sensor inactive -> exits pit
+    m.invoke(protocol, 3, lapBehavior, false);
+
+    verify(mockListener, atLeastOnce()).onCarData(captor.capture());
+    CarData exitData = captor.getValue();
+    assertEquals(2, exitData.getLane());
+    assertFalse(exitData.getCanRefuel());
   }
 }
