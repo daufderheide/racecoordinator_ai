@@ -232,8 +232,8 @@ public class PhidgetProtocol implements IProtocol {
                           new CarData(
                               lane,
                               deltaTimeSeconds,
-                              0,
-                              0,
+                              0.0,
+                              0.0,
                               true,
                               CarLocation.PitRow,
                               CarLocation.PitRow,
@@ -274,13 +274,15 @@ public class PhidgetProtocol implements IProtocol {
         lastRefuelTimeMs[laneIndex] = System.currentTimeMillis();
         if (listener != null) {
           listener.onCarData(
-              new CarData(laneIndex, 0.0, 0, 0, true, CarLocation.PitRow, CarLocation.Main, -1));
+              new CarData(
+                  laneIndex, 0.0, 0.0, 0.0, true, CarLocation.PitRow, CarLocation.Main, -1));
         }
       } else {
         lastRefuelTimeMs[laneIndex] = 0;
         if (listener != null) {
           listener.onCarData(
-              new CarData(laneIndex, 0.0, 0, 0, false, CarLocation.Main, CarLocation.PitRow, -1));
+              new CarData(
+                  laneIndex, 0.0, 0.0, 0.0, false, CarLocation.Main, CarLocation.PitRow, -1));
         }
       }
     }
@@ -313,7 +315,16 @@ public class PhidgetProtocol implements IProtocol {
       double lapTimeSeconds =
           (lastLapTimeNanos[lane] > 0) ? (now - lastLapTimeNanos[lane]) / 1_000_000_000.0 : 0.0;
       lastLapTimeNanos[lane] = now;
+
+      if (config != null && config.useLapsForSegments) {
+        double segmentTimeSeconds =
+            (lastSegmentTimeNanos[lane] > 0)
+                ? (now - lastSegmentTimeNanos[lane]) / 1_000_000_000.0
+                : 0.0;
+        listener.onSegment(lane, segmentTimeSeconds, channel, interfaceIndex);
+      }
       lastSegmentTimeNanos[lane] = now;
+
       listener.onLap(lane, lapTimeSeconds, channel, interfaceIndex);
 
       LapPinPitBehavior lapPitBehavior = config.lapPinPitBehavior;

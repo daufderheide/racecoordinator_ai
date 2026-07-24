@@ -43,8 +43,6 @@ describe("DataService", () => {
         normallyClosedLaneSensors: true,
         normallyClosedRelays: true,
         globalInvertLights: 0,
-        useLapsForPits: 0,
-        useLapsForPitEnd: 0,
         usePitsAsLaps: false,
         useLapsForSegments: false,
         lapPinPitBehavior: 0,

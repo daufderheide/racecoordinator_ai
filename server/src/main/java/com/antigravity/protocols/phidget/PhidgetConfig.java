@@ -20,12 +20,8 @@ public class PhidgetConfig {
   public boolean isHubPort;
   public int hubPort;
 
-  public int debounceUs;
   public boolean normallyClosedLaneSensors;
   public boolean normallyClosedRelays;
-  public int useLapsForPits;
-  public int useLapsForPitEnd;
-  public boolean usePitsAsLaps;
   public boolean useLapsForSegments;
   public LapPinPitBehavior lapPinPitBehavior;
 
@@ -67,12 +63,8 @@ public class PhidgetConfig {
     this.isHubPort = false;
     this.hubPort = 0;
 
-    this.debounceUs = 200;
     this.normallyClosedLaneSensors = true;
     this.normallyClosedRelays = true;
-    this.useLapsForPits = 0;
-    this.useLapsForPitEnd = 0;
-    this.usePitsAsLaps = false;
     this.useLapsForSegments = true;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
   }
@@ -83,12 +75,8 @@ public class PhidgetConfig {
       @JsonProperty("serialNumber") int serialNumber,
       @JsonProperty("isHubPort") boolean isHubPort,
       @JsonProperty("hubPort") int hubPort,
-      @JsonProperty("debounceUs") int debounceUs,
       @JsonProperty("normallyClosedLaneSensors") boolean normallyClosedLaneSensors,
       @JsonProperty("normallyClosedRelays") boolean normallyClosedRelays,
-      @JsonProperty("useLapsForPits") Integer useLapsForPits,
-      @JsonProperty("useLapsForPitEnd") Integer useLapsForPitEnd,
-      @JsonProperty("usePitsAsLaps") boolean usePitsAsLaps,
       @JsonProperty("useLapsForSegments") boolean useLapsForSegments,
       @JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
       @JsonProperty("digitalInIds") List<Integer> digitalInIds,
@@ -100,12 +88,8 @@ public class PhidgetConfig {
     this.serialNumber = serialNumber;
     this.isHubPort = isHubPort;
     this.hubPort = hubPort;
-    this.debounceUs = debounceUs;
     this.normallyClosedLaneSensors = normallyClosedLaneSensors;
     this.normallyClosedRelays = normallyClosedRelays;
-    this.useLapsForPits = useLapsForPits != null ? useLapsForPits : 0;
-    this.useLapsForPitEnd = useLapsForPitEnd != null ? useLapsForPitEnd : 0;
-    this.usePitsAsLaps = usePitsAsLaps;
     this.useLapsForSegments = useLapsForSegments;
     this.lapPinPitBehavior = lapPinPitBehavior;
     this.digitalInIds = digitalInIds;

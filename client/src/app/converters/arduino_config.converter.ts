@@ -43,9 +43,6 @@ export class ArduinoConfigConverter {
       analogIds: p.analogIds || p.analog_ids || [],
       ledStrings: ledStrings,
       voltageConfigs: voltageConfigs,
-      // Defaulting missing fields that are in model but not in proto
-      useLapsForPits: p.useLapsForPits || 0,
-      useLapsForPitEnd: p.useLapsForPitEnd || 0,
     };
   }
 }

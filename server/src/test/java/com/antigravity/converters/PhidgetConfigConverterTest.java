@@ -26,7 +26,6 @@ public class PhidgetConfigConverterTest {
     config.serialNumber = 123456;
     config.isHubPort = true;
     config.hubPort = 3;
-    config.debounceUs = 1000;
     config.normallyClosedLaneSensors = true;
     config.normallyClosedRelays = false;
     config.digitalInIds = Arrays.asList(1000, 1001);
@@ -42,7 +41,6 @@ public class PhidgetConfigConverterTest {
     assertEquals(123456, proto.getSerialNumber());
     assertTrue(proto.getIsHubPort());
     assertEquals(3, proto.getHubPort());
-    assertEquals(1000, proto.getDebounceUs());
     assertTrue(proto.getNormallyClosedLaneSensors());
     assertEquals(2, proto.getDigitalInIdsCount());
     assertEquals(1000, proto.getDigitalInIds(0));
@@ -65,7 +63,6 @@ public class PhidgetConfigConverterTest {
             .setSerialNumber(654321)
             .setIsHubPort(false)
             .setHubPort(0)
-            .setDebounceUs(2000)
             .setNormallyClosedLaneSensors(true)
             .addDigitalInIds(1000)
             .addDigitalOutIds(4000)
@@ -80,7 +77,6 @@ public class PhidgetConfigConverterTest {
     assertEquals("Proto Phidget", config.name);
     assertEquals(654321, config.serialNumber);
     assertEquals(false, config.isHubPort);
-    assertEquals(2000, config.debounceUs);
     assertEquals(1, config.digitalInIds.size());
     assertEquals(Integer.valueOf(1000), config.digitalInIds.get(0));
     assertNotNull(config.voltageConfigs);

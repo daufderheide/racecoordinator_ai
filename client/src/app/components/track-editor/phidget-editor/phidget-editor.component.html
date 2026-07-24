@@ -81,20 +81,6 @@
                           </button>
                         </div>
                       </div>
-
-                      <div class="control-group">
-                        <label>{{ "PHIDGET_DEBOUNCE" | translate }}</label>
-                        <select
-                          [id]="'debounce-' + interfaceIndex()"
-                          [(ngModel)]="config()!.debounceUs"
-                          (change)="onConfigChange()"
-                        >
-                          <option [ngValue]="5000">5 ms</option>
-                          <option [ngValue]="10000">10 ms</option>
-                          <option [ngValue]="20000">20 ms</option>
-                          <option [ngValue]="50000">50 ms</option>
-                        </select>
-                      </div>
                     </div>
 
                     <div class="board-preview">

@@ -10,7 +10,6 @@ describe("PhidgetConfigConverter", () => {
       serialNumber: 123456,
       isHubPort: true,
       hubPort: 2,
-      debounceUs: 500,
       normallyClosedLaneSensors: true,
       normallyClosedRelays: false,
       digitalInIds: [1000, 1001],

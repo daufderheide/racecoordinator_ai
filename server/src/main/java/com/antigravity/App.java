@@ -440,8 +440,8 @@ public class App {
         DatabaseService.getInstance().backfillRaces(db);
       }
 
-      // Determine client path once
-      String[] possiblePaths = {"web", "server/web", "client/dist/client", "../client/dist/client"};
+      // Determine client path once - check built Angular app first, then fallback directories
+      String[] possiblePaths = {"client/dist/client", "../client/dist/client", "web", "server/web"};
       String resolvedClientPath = null;
       for (String path : possiblePaths) {
         if (Files.exists(Paths.get(path))) {

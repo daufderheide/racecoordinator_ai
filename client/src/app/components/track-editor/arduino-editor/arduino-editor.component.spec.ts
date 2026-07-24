@@ -81,8 +81,6 @@ describe("ArduinoEditorComponent", () => {
       normallyClosedLaneSensors: false,
       normallyClosedRelays: true,
       globalInvertLights: 0,
-      useLapsForPits: 0,
-      useLapsForPitEnd: 0,
       usePitsAsLaps: false,
       useLapsForSegments: true,
       ledStrings: [],

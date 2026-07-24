@@ -1488,7 +1488,6 @@
   "PHIDGET_STATUS_CONNECTED": "Conectado",
   "PHIDGET_STATUS_DISCONNECTED": "Disconnected",
   "PHIDGET_STATUS_NO_DATA": "No Data",
-  "PHIDGET_DEBOUNCE": "Debounce",
   "PHIDGET_NORMALLY_CLOSED_SENSORS": "Normally Closed Sensors",
   "PHIDGET_NORMALLY_CLOSED_RELAYS": "Normally Closed Relays",
   "PHIDGET_MISSING_DRIVER": "¡Faltan las bibliotecas Phidget! Instale los controladores Phidget22 para su sistema operativo.",

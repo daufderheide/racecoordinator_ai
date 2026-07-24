@@ -25,12 +25,8 @@ describe("PhidgetEditorComponent", () => {
     serialNumber: 12345,
     isHubPort: false,
     hubPort: 0,
-    debounceUs: 5000,
     normallyClosedLaneSensors: true,
     normallyClosedRelays: true,
-    useLapsForPits: 0,
-    useLapsForPitEnd: 0,
-    usePitsAsLaps: false,
     useLapsForSegments: true,
     lapPinPitBehavior: 0,
     digitalInIds: [

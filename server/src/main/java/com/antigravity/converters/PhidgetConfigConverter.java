@@ -15,13 +15,9 @@ public class PhidgetConfigConverter {
     config.serialNumber = proto.getSerialNumber();
     config.isHubPort = proto.getIsHubPort();
     config.hubPort = proto.getHubPort();
-    config.debounceUs = proto.getDebounceUs();
     config.normallyClosedLaneSensors = proto.getNormallyClosedLaneSensors();
     config.normallyClosedRelays = proto.getNormallyClosedRelays();
-    config.usePitsAsLaps = proto.getUsePitsAsLaps();
     config.useLapsForSegments = proto.getUseLapsForSegments();
-    config.useLapsForPits = proto.getUseLapsForPits();
-    config.useLapsForPitEnd = proto.getUseLapsForPitEnd();
 
     LapPinPitBehavior protoBehavior = proto.getLapPinPitBehavior();
     if (protoBehavior != null) {
@@ -55,13 +51,9 @@ public class PhidgetConfigConverter {
             .setSerialNumber(config.serialNumber)
             .setIsHubPort(config.isHubPort)
             .setHubPort(config.hubPort)
-            .setDebounceUs(config.debounceUs)
             .setNormallyClosedLaneSensors(config.normallyClosedLaneSensors)
             .setNormallyClosedRelays(config.normallyClosedRelays)
-            .setUsePitsAsLaps(config.usePitsAsLaps)
-            .setUseLapsForSegments(config.useLapsForSegments)
-            .setUseLapsForPits(config.useLapsForPits)
-            .setUseLapsForPitEnd(config.useLapsForPitEnd);
+            .setUseLapsForSegments(config.useLapsForSegments);
     if (config.lapPinPitBehavior != null) {
       builder.setLapPinPitBehaviorValue(config.lapPinPitBehavior.getValue());
     }

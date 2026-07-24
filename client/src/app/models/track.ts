@@ -123,8 +123,6 @@ export interface ArduinoConfig {
   normallyClosedRelays: boolean;
   globalInvertLights: number;
 
-  useLapsForPits: number;
-  useLapsForPitEnd: number;
   usePitsAsLaps: boolean;
   useLapsForSegments: boolean;
   lapPinPitBehavior: number;
@@ -142,14 +140,10 @@ export interface PhidgetConfig {
   serialNumber: number;
   isHubPort: boolean;
   hubPort: number;
-  debounceUs: number;
 
   normallyClosedLaneSensors: boolean;
   normallyClosedRelays: boolean;
 
-  useLapsForPits: number;
-  useLapsForPitEnd: number;
-  usePitsAsLaps: boolean;
   useLapsForSegments: boolean;
   lapPinPitBehavior: number;
 

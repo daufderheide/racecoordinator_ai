@@ -12,13 +12,9 @@ message PhidgetConfig {
   int32 serial_number = 2;
   bool is_hub_port = 3;
   int32 hub_port = 4;
-  int32 debounce_us = 5;
   bool normally_closed_lane_sensors = 6;
   bool normally_closed_relays = 7;
-  bool use_pits_as_laps = 8;
   bool use_laps_for_segments = 9;
-  int32 use_laps_for_pits = 15;
-  int32 use_laps_for_pit_end = 16;
   LapPinPitBehavior lap_pin_pit_behavior = 10;
   
   // These lists represent the behavior mapped to each channel index
