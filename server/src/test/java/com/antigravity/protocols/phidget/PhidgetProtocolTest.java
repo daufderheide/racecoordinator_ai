@@ -2,6 +2,10 @@ package com.antigravity.protocols.phidget;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -9,8 +13,11 @@ import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
+import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolListener;
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -91,5 +98,44 @@ public class PhidgetProtocolTest {
     protocol.setLanePower(false, 0);
     protocol.setPinState(true, 0, true);
     protocol.setPinState(true, 0, false);
+  }
+
+  @Test
+  public void testStartTimerAndStopTimerPartialTimes() throws Exception {
+    protocol.startTimer();
+    Thread.sleep(20);
+
+    List<PartialTime> partialTimes = protocol.stopTimer();
+    assertNotNull(partialTimes);
+    assertEquals(4, partialTimes.size());
+
+    for (int i = 0; i < 4; i++) {
+      PartialTime pt = partialTimes.get(i);
+      assertEquals(i, pt.getLaneIndex());
+      assertTrue("Lap partial time should be positive", pt.getLapTime() > 0.0);
+      assertTrue("Lap partial time should be small", pt.getLapTime() < 1.0);
+      assertTrue("Segment partial time should be positive", pt.getSegmentTime() > 0.0);
+    }
+  }
+
+  @Test
+  public void testDigitalInputLapSoftwareTiming() throws Exception {
+    config.normallyClosedLaneSensors = false;
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    protocol.setListener(mockListener);
+
+    protocol.startTimer();
+    Thread.sleep(15);
+
+    Method m =
+        PhidgetProtocol.class.getDeclaredMethod(
+            "handleDigitalInputStateChange", int.class, int.class, boolean.class);
+    m.setAccessible(true);
+
+    // Channel 0, PinBehavior BEHAVIOR_LAP_BASE_VALUE (lane 0), state true
+    int lapBehavior = PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
+    m.invoke(protocol, 0, lapBehavior, true);
+
+    verify(mockListener).onLap(eq(0), anyDouble(), eq(0), eq(0));
   }
 }

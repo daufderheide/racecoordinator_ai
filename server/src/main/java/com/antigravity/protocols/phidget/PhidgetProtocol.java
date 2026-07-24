@@ -19,7 +19,6 @@ import com.phidget22.VoltageRatioInput;
 import com.phidget22.VoltageRatioInputVoltageRatioChangeEvent;
 import com.phidget22.VoltageRatioInputVoltageRatioChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +47,15 @@ public class PhidgetProtocol implements IProtocol {
   private final Map<Integer, DigitalOutput> digitalOutputsByChannel = new HashMap<>();
   private DigitalOutput mainRelayOutput;
 
+  private final long[] lastLapTimeNanos;
+  private final long[] lastSegmentTimeNanos;
+
   public PhidgetProtocol(PhidgetConfig config, int numLanes, ProtocolListener listener) {
     this.config = config;
     this.numLanes = numLanes;
     this.listener = listener;
+    this.lastLapTimeNanos = new long[numLanes];
+    this.lastSegmentTimeNanos = new long[numLanes];
   }
 
   public void updateConfig(PhidgetConfig newConfig) {
@@ -199,7 +203,8 @@ public class PhidgetProtocol implements IProtocol {
     }
   }
 
-  private void handleDigitalInputStateChange(int channel, int behavior, boolean state) {
+  private synchronized void handleDigitalInputStateChange(
+      int channel, int behavior, boolean state) {
     if (listener == null) return;
 
     // Invert if needed based on config
@@ -208,14 +213,25 @@ public class PhidgetProtocol implements IProtocol {
     if (behavior >= PinBehavior.BEHAVIOR_LAP_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 64) {
       int lane = behavior - PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
-      if (active) {
-        listener.onLap(lane, System.currentTimeMillis() / 1000.0, channel, interfaceIndex);
+      if (active && lane >= 0 && lane < numLanes) {
+        long now = System.nanoTime();
+        double lapTimeSeconds =
+            (lastLapTimeNanos[lane] > 0) ? (now - lastLapTimeNanos[lane]) / 1_000_000_000.0 : 0.0;
+        lastLapTimeNanos[lane] = now;
+        lastSegmentTimeNanos[lane] = now;
+        listener.onLap(lane, lapTimeSeconds, channel, interfaceIndex);
       }
     } else if (behavior >= PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE + 64) {
       int lane = behavior - PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE;
-      if (active) {
-        listener.onSegment(lane, System.currentTimeMillis() / 1000.0, channel, interfaceIndex);
+      if (active && lane >= 0 && lane < numLanes) {
+        long now = System.nanoTime();
+        double segmentTimeSeconds =
+            (lastSegmentTimeNanos[lane] > 0)
+                ? (now - lastSegmentTimeNanos[lane]) / 1_000_000_000.0
+                : 0.0;
+        lastSegmentTimeNanos[lane] = now;
+        listener.onSegment(lane, segmentTimeSeconds, channel, interfaceIndex);
       }
     } else if (behavior == PinBehavior.BEHAVIOR_CALL_BUTTON_VALUE) {
       if (active) {
@@ -349,11 +365,26 @@ public class PhidgetProtocol implements IProtocol {
   }
 
   @Override
-  public void startTimer() {}
+  public synchronized void startTimer() {
+    long now = System.nanoTime();
+    for (int i = 0; i < numLanes; i++) {
+      lastLapTimeNanos[i] = now;
+      lastSegmentTimeNanos[i] = now;
+    }
+  }
 
   @Override
-  public List<PartialTime> stopTimer() {
-    return Collections.emptyList();
+  public synchronized List<PartialTime> stopTimer() {
+    long now = System.nanoTime();
+    List<PartialTime> partialTimes = new ArrayList<>();
+    for (int i = 0; i < numLanes; i++) {
+      double lapPartial =
+          (lastLapTimeNanos[i] > 0) ? (now - lastLapTimeNanos[i]) / 1_000_000_000.0 : 0.0;
+      double segmentPartial =
+          (lastSegmentTimeNanos[i] > 0) ? (now - lastSegmentTimeNanos[i]) / 1_000_000_000.0 : 0.0;
+      partialTimes.add(new PartialTime(i, lapPartial, segmentPartial));
+    }
+    return partialTimes;
   }
 
   @Override
