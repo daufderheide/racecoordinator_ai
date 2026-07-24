@@ -1,8 +1,12 @@
 package com.antigravity.race.states;
 
+import com.antigravity.proto.Lap;
+import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
+import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Race;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -20,11 +24,13 @@ public class Starting implements IRaceState {
 
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> timerHandle;
+  private Race race;
 
   public Starting() {}
 
   @Override
   public void enter(Race race) {
+    this.race = race;
     logger.info("Starting state entered. Countdown initiating.");
     race.broadcastFlag(getFlagType(race));
 
@@ -148,8 +154,52 @@ public class Starting implements IRaceState {
 
   @Override
   public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
-    logger.info("Lap detected in lane {} during starting. Potential false start.", lane);
-    return false;
+    logger.info("Lap detected in lane {} during starting. Processing false start.", lane);
+    if (race == null || race.getCurrentHeat() == null) {
+      return false;
+    }
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+    if (lane < 0 || lane >= drivers.size()) {
+      return false;
+    }
+
+    DriverHeatData dhd = drivers.get(lane);
+    if (dhd == null) {
+      return false;
+    }
+
+    dhd.incrementFalseStarts();
+
+    double lapPenalty = race.getRaceModel().getFalseStartLapPenalty();
+    if (lapPenalty > 0) {
+      dhd.setPenaltyLaps(dhd.getPenaltyLaps() + lapPenalty);
+    }
+
+    double timePenalty = race.getRaceModel().getFalseStartTimePenalty();
+    if (timePenalty > 0) {
+      dhd.setRemainingFalseStartTimePenalty(timePenalty);
+    }
+
+    Lap falseStartMsg =
+        Lap.newBuilder()
+            .setObjectId(dhd.getObjectId())
+            .setLapTime(0.0)
+            .setInterfaceId(interfaceId)
+            .setType(Lap.LapType.FALSE_START)
+            .setFlag(getLaneFlagType(race, lane))
+            .build();
+    dhd.setFlag(falseStartMsg.getFlag());
+
+    RaceData falseStartDataMsg = RaceData.newBuilder().setLap(falseStartMsg).build();
+    race.broadcast(falseStartDataMsg);
+
+    if (race.getRaceModel().isRestartOnFalseStart()) {
+      logger.info("Restarting heat due to false start on lane {}", lane);
+      stopTimer();
+      race.restartHeatForFalseStart();
+    }
+
+    return true;
   }
 
   @Override

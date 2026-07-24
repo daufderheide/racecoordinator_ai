@@ -215,13 +215,77 @@ public class StartingStateTest {
   }
 
   @Test
-  public void testStartingFalseStartTriggersNotStarted() {
-    race.changeState(starting);
-    starting.onLap(0, 0.5, 1, false);
+  public void testStartingFalseStartWithRestartOnFalseStart() {
+    com.antigravity.models.Race falseStartModel =
+        new com.antigravity.models.Race.Builder()
+            .withRestartOnFalseStart(true)
+            .withFalseStartLapPenalty(1.0)
+            .withFalseStartTimePenalty(3.0)
+            .build();
 
+    race =
+        new Race.Builder()
+            .model(falseStartModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .databaseContext(mockDbCtx)
+            .isDemoMode(true)
+            .build();
+    manager.setRace(race);
+
+    race.changeState(starting);
+    boolean handled = starting.onLap(0, 0.5, 1, false);
+
+    assertTrue("onLap should return true for false start handling", handled);
     assertTrue(
-        "Race should stay in Starting state on false start in current implementation",
+        "Race state should transition to NotStarted on false start when restartOnFalseStart is true",
+        race.getState() instanceof com.antigravity.race.states.NotStarted);
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    assertEquals("False start count should be 1", 1, dhd.getFalseStarts());
+    assertEquals("Penalty laps should be 1.0", 1.0, dhd.getPenaltyLaps(), 0.001);
+    assertEquals(
+        "Remaining time penalty should be 3.0",
+        3.0,
+        dhd.getRemainingFalseStartTimePenalty(),
+        0.001);
+  }
+
+  @Test
+  public void testStartingFalseStartWithoutRestartOnFalseStart() {
+    com.antigravity.models.Race falseStartModel =
+        new com.antigravity.models.Race.Builder()
+            .withRestartOnFalseStart(false)
+            .withFalseStartLapPenalty(0.5)
+            .withFalseStartTimePenalty(2.0)
+            .build();
+
+    race =
+        new Race.Builder()
+            .model(falseStartModel)
+            .track(race.getTrack())
+            .drivers(race.getDrivers())
+            .databaseContext(mockDbCtx)
+            .isDemoMode(true)
+            .build();
+    manager.setRace(race);
+
+    race.changeState(starting);
+    boolean handled = starting.onLap(0, 0.5, 1, false);
+
+    assertTrue("onLap should return true for false start handling", handled);
+    assertTrue(
+        "Race state should remain in Starting state when restartOnFalseStart is false",
         race.getState() instanceof Starting);
+
+    DriverHeatData dhd = race.getCurrentHeat().getDrivers().get(0);
+    assertEquals("False start count should be 1", 1, dhd.getFalseStarts());
+    assertEquals("Penalty laps should be 0.5", 0.5, dhd.getPenaltyLaps(), 0.001);
+    assertEquals(
+        "Remaining time penalty should be 2.0",
+        2.0,
+        dhd.getRemainingFalseStartTimePenalty(),
+        0.001);
   }
 
   @Test

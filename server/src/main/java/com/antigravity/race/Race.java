@@ -798,6 +798,40 @@ public class Race implements ProtocolListener {
     }
   }
 
+  public void restartHeatForFalseStart() {
+    if (currentHeat != null) {
+      statistics.incrementRestartCount();
+      for (DriverHeatData driverData : currentHeat.getDrivers()) {
+        driverData.resetForFalseStart();
+      }
+      currentHeat.getHeatStandings().reset();
+      currentHeat.setStarted(false);
+      resetRaceTime();
+      initializeHeatExecutionState();
+      FuelOptions fuelOptions = getFuelOptions();
+      double capacity =
+          (fuelOptions != null && fuelOptions.isEnabled()) ? fuelOptions.getCapacity() : 0.0;
+      for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+        DriverHeatData heatData = currentHeat.getDrivers().get(i);
+        double fuelLevel = heatData.getInitialFuelLevel();
+        heatData.getDriver().setFuelLevel(fuelLevel);
+        setFuelLevel(i, fuelLevel, capacity);
+      }
+      broadcast(
+          RaceData.newBuilder()
+              .setRace(
+                  com.antigravity.proto.Race.newBuilder() // fqn-collision
+                      .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
+                      .build())
+              .build());
+      resetHeatRecords();
+      broadcastRecords();
+      broadcastTime();
+      updateAndBroadcastOverallStandings();
+      changeState(new NotStarted());
+    }
+  }
+
   public void updateAndBroadcastOverallStandings() {
     overallStandings.recalculate(this.drivers, this.heats);
     recordsManager.recalculateScoreRecords();

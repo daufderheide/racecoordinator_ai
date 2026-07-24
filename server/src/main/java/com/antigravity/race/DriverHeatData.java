@@ -259,6 +259,17 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
     lapsDownPosition = 0;
     falseStarts = 0;
     remainingFalseStartTimePenalty = 0.0;
+    penaltyLaps = 0.0;
+  }
+
+  public void resetForFalseStart() {
+    int savedFalseStarts = falseStarts;
+    double savedRemainingPenalty = remainingFalseStartTimePenalty;
+    double savedPenaltyLaps = penaltyLaps;
+    reset();
+    falseStarts = savedFalseStarts;
+    remainingFalseStartTimePenalty = savedRemainingPenalty;
+    penaltyLaps = savedPenaltyLaps;
   }
 
   @Override
