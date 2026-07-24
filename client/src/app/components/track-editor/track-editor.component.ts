@@ -1568,6 +1568,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
+    this.initializeInterfaces();
   }
 
   trackByPhidgetConfig(index: number, _config: any): number {

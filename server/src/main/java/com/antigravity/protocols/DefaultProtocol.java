@@ -193,8 +193,8 @@ public abstract class DefaultProtocol implements IProtocol {
                           new CarData(
                               laneIndex,
                               deltaTimeSeconds,
-                              0,
-                              0,
+                              0.0,
+                              0.0,
                               true,
                               CarLocation.PitRow,
                               CarLocation.PitRow,
@@ -581,7 +581,7 @@ public abstract class DefaultProtocol implements IProtocol {
 
   @Override
   public int getInterfaceIndex() {
-    return interfaceIndex;
+    return interfaceIndex >= 0 ? interfaceIndex : 0;
   }
 
   @Override

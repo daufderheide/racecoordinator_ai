@@ -241,4 +241,46 @@ public class PhidgetProtocolTest {
     assertEquals(2, exitData.getLane());
     assertFalse(exitData.getCanRefuel());
   }
+
+  @Test
+  public void testOpenFailsWhenNoDeviceSelected() {
+    PhidgetConfig noDeviceConfig = new PhidgetConfig();
+    noDeviceConfig.serialNumber = -1;
+    PhidgetProtocol unassignedProtocol = new PhidgetProtocol(noDeviceConfig, 4, null);
+
+    assertFalse(unassignedProtocol.open());
+    assertFalse(unassignedProtocol.isConnected());
+    assertFalse(unassignedProtocol.isHealthy());
+  }
+
+  @Test
+  public void testUseLapsForSegmentsRequiresSegmentSensors() throws Exception {
+    config.normallyClosedLaneSensors = false;
+    config.useLapsForSegments = true;
+    // Currently config.digitalInIds has no segment sensors configured
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    protocol.setListener(mockListener);
+
+    protocol.startTimer();
+    Method m =
+        PhidgetProtocol.class.getDeclaredMethod(
+            "handleDigitalInputStateChange", int.class, int.class, boolean.class);
+    m.setAccessible(true);
+
+    int lapBehavior = PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
+    m.invoke(protocol, 0, lapBehavior, true);
+
+    // Lap should be called, but onSegment should NOT be called because no segment sensors are
+    // configured
+    verify(mockListener).onLap(eq(0), anyDouble(), eq(0), eq(0));
+    verify(mockListener, org.mockito.Mockito.never()).onSegment(eq(0), anyDouble(), eq(0), eq(0));
+
+    // Now configure a segment sensor in digitalInIds
+    config.digitalInIds =
+        Arrays.asList(PinBehavior.BEHAVIOR_LAP_BASE_VALUE, PinBehavior.BEHAVIOR_SEGMENT_BASE_VALUE);
+    m.invoke(protocol, 0, lapBehavior, true);
+
+    // Now onSegment SHOULD be called
+    verify(mockListener).onSegment(eq(0), anyDouble(), eq(0), eq(0));
+  }
 }

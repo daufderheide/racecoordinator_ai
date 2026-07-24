@@ -192,9 +192,16 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   getDeviceKey(device: any): string {
+    if (!device) return "";
     const serial = device.serialNumber || 0;
     const isHubPort = !!device.isHubPort;
-    const hubPort = device.hubPort || 0;
+    const hubPort =
+      isHubPort &&
+      device.hubPort !== undefined &&
+      device.hubPort !== null &&
+      device.hubPort >= 0
+        ? device.hubPort
+        : 0;
     return `${serial}_${isHubPort}_${hubPort}`;
   }
 
@@ -220,7 +227,13 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     if (selected && c) {
       c.serialNumber = selected.serialNumber ?? 0;
       c.isHubPort = !!selected.isHubPort;
-      c.hubPort = selected.hubPort ?? 0;
+      c.hubPort =
+        c.isHubPort &&
+        selected.hubPort !== undefined &&
+        selected.hubPort !== null &&
+        selected.hubPort >= 0
+          ? selected.hubPort
+          : 0;
       c.name = selected.name || "Phidget Device";
     }
     this.onConfigChange();

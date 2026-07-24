@@ -315,4 +315,20 @@ describe("PhidgetEditorComponent", () => {
     expect(option1?.disabled).toBeTrue();
     expect(option2?.disabled).toBeFalse();
   });
+
+  it("should normalize hubPort to 0 when isHubPort is false or hubPort is negative", () => {
+    const usbDevice = {
+      serialNumber: 99999,
+      isHubPort: false,
+      hubPort: -1,
+    };
+    expect(component.getDeviceKey(usbDevice)).toBe("99999_false_0");
+
+    const hubDevice = {
+      serialNumber: 88888,
+      isHubPort: true,
+      hubPort: 2,
+    };
+    expect(component.getDeviceKey(hubDevice)).toBe("88888_true_2");
+  });
 });
