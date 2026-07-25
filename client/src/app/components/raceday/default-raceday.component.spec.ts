@@ -896,6 +896,146 @@ describe("DefaultRacedayComponent", () => {
       expect(component.ackModalMessage).toBe("Reset All Error");
     });
 
+    describe("Reset Lane Keyboard Shortcuts", () => {
+      beforeEach(() => {
+        mockDataService.resetLaneHeatData.and.returnValue(of(true));
+        component["race"] = { practice: true } as any;
+      });
+
+      it("should reset lane 1 on Ctrl+Alt+F1 in practice mode", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F1",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(0);
+      });
+
+      it("should reset lane 2 on Ctrl+Alt+F2 in practice mode", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F2",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(1);
+      });
+
+      it("should reset lane 3 on Ctrl+Alt+F3 in practice mode", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F3",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(2);
+      });
+
+      it("should reset lane 4 on Ctrl+Alt+F4 in practice mode", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F4",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(3);
+      });
+
+      it("should reset all lanes on Ctrl+Alt+F12 in practice mode", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F12",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith("all");
+      });
+
+      it("should not reset lanes on Ctrl+Alt+F1-F4 when not in practice mode", () => {
+        component["race"] = { practice: false } as any;
+        mockDataService.resetLaneHeatData.calls.reset();
+
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F1",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).not.toHaveBeenCalled();
+      });
+
+      it("should not reset all lanes on Ctrl+Alt+F12 when not in practice mode", () => {
+        component["race"] = { practice: false } as any;
+        mockDataService.resetLaneHeatData.calls.reset();
+
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F12",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).not.toHaveBeenCalled();
+      });
+
+      it("should work with Cmd+Alt on Mac (simulated with metaKey)", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          metaKey: true,
+          altKey: true,
+          key: "F1",
+        });
+        spyOn(mockEvent, "preventDefault");
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(0);
+      });
+
+      it("should not trigger on F5-F11 keys", () => {
+        const mockEvent = new KeyboardEvent("keydown", {
+          ctrlKey: true,
+          altKey: true,
+          key: "F5",
+        });
+        spyOn(mockEvent, "preventDefault");
+        mockDataService.resetLaneHeatData.calls.reset();
+
+        component["handleKeyboardEvent"](mockEvent);
+
+        expect(mockEvent.preventDefault).not.toHaveBeenCalled();
+        expect(mockDataService.resetLaneHeatData).not.toHaveBeenCalled();
+      });
+    });
+
     it("should call updateHeatUserLaps on confirm in menu mode", () => {
       fixture.detectChanges();
       component["isMenuModeForAddLap"] = true;
