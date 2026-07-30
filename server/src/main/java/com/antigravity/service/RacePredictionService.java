@@ -103,7 +103,7 @@ public class RacePredictionService {
       List<RaceParticipant> participants,
       List<Heat> heats,
       int currentHeatIndex,
-      Map<String, Double> actualDriverLapsSoFar,
+      Map<String, PredictionEngine.DriverHeatState> driverHeatStates,
       boolean isDemo) {
 
     String trackId = raceModel != null ? raceModel.getTrackEntityId() : "";
@@ -125,7 +125,7 @@ public class RacePredictionService {
 
     PredictionSnapshot snapshot =
         engine.generateRealtimePrediction(
-            raceModel, participants, heats, statsMap, currentHeatIndex, actualDriverLapsSoFar);
+            raceModel, participants, heats, statsMap, currentHeatIndex, driverHeatStates);
 
     if (database != null && raceId != null) {
       RacePredictionRecord record =

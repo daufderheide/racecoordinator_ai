@@ -24,12 +24,14 @@ public class LogReplayServiceTest {
 
   @Before
   public void setUp() throws IOException {
+    com.antigravity.race.ClientSubscriptionManager.setInstance(null);
     tempLogFile = File.createTempFile("test_log", ".txt");
   }
 
   @After
   public void tearDown() {
     LogReplayService.reset();
+    com.antigravity.race.ClientSubscriptionManager.setInstance(null);
     if (tempLogFile != null && tempLogFile.exists()) {
       tempLogFile.delete();
     }

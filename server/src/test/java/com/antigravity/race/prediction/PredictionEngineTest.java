@@ -90,9 +90,17 @@ public class PredictionEngineTest {
 
   @Test
   public void testRealtimePredictionUpdate() {
-    Map<String, Double> actualLapsSoFar = new HashMap<>();
-    actualLapsSoFar.put("d1", 20.0);
-    actualLapsSoFar.put("d2", 15.0);
+    Map<String, com.antigravity.race.prediction.PredictionEngine.DriverHeatState> actualLapsSoFar =
+        new HashMap<>();
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d1State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    d1State.totalLapsCompleted = 20.0;
+    actualLapsSoFar.put("d1", d1State);
+
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d2State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    d2State.totalLapsCompleted = 15.0;
+    actualLapsSoFar.put("d2", d2State);
 
     PredictionSnapshot snapshot =
         engine.generateRealtimePrediction(null, participants, heats, statsMap, 0, actualLapsSoFar);
@@ -248,5 +256,99 @@ public class PredictionEngineTest {
     assertEquals(1, snapshot.getProjectedStandings().size());
     assertEquals("team_1", snapshot.getProjectedStandings().get(0).getDriverId());
     assertEquals("The Racers", snapshot.getProjectedStandings().get(0).getDriverName());
+  }
+
+  @Test
+  public void testEmpiricalPaceBlending_WithHistory() {
+    Map<String, com.antigravity.race.prediction.PredictionEngine.DriverHeatState> actualLapsSoFar =
+        new HashMap<>();
+
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d1State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    d1State.totalLapsCompleted = 5.0;
+    d1State.currentHeatElapsedSec = 20.0;
+    d1State.currentHeatLapTimes = java.util.Arrays.asList(4.1, 4.2, 4.0, 4.15, 4.05);
+    actualLapsSoFar.put("d1", d1State);
+
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d2State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    actualLapsSoFar.put("d2", d2State);
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(null, participants, heats, statsMap, 0, actualLapsSoFar);
+
+    assertNotNull(snapshot);
+    assertTrue(snapshot.getProjectedStandings().size() > 0);
+  }
+
+  @Test
+  public void testEmpiricalPaceBlending_NoHistory() {
+    Map<String, com.antigravity.race.prediction.PredictionEngine.DriverHeatState> actualLapsSoFar =
+        new HashMap<>();
+
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d3State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    d3State.totalLapsCompleted = 3.0;
+    d3State.currentHeatElapsedSec = 15.0;
+    d3State.currentHeatLapTimes = java.util.Arrays.asList(3.9, 3.8, 3.95);
+    actualLapsSoFar.put("d3", d3State);
+
+    Driver d3 = new Driver("Eve", "Eve", "d3", null);
+    RaceParticipant rp3 = new RaceParticipant(d3);
+    List<RaceParticipant> newParticipants = new ArrayList<>(participants);
+    newParticipants.add(rp3);
+
+    DriverHeatData dhd3 = new DriverHeatData(rp3);
+    dhd3.setLane(2);
+    List<DriverHeatData> newHeatDrivers = new ArrayList<>(heats.get(0).getDrivers());
+    newHeatDrivers.add(dhd3);
+    List<Heat> newHeats = new ArrayList<>();
+    newHeats.add(new Heat(1, newHeatDrivers, false));
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(
+            null, newParticipants, newHeats, statsMap, 0, actualLapsSoFar);
+
+    assertNotNull(snapshot);
+    boolean d3Found = false;
+    for (DriverProjection dp : snapshot.getProjectedStandings()) {
+      if ("d3".equals(dp.getDriverId())) {
+        d3Found = true;
+        break;
+      }
+    }
+    assertTrue(d3Found);
+  }
+
+  @Test
+  public void testCurrentHeatElapsedSec() {
+    Map<String, com.antigravity.race.prediction.PredictionEngine.DriverHeatState> actualLapsSoFar =
+        new HashMap<>();
+
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d1State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    d1State.totalLapsCompleted = 40.0;
+    d1State.currentHeatElapsedSec = 179.0;
+    actualLapsSoFar.put("d1", d1State);
+
+    com.antigravity.race.prediction.PredictionEngine.DriverHeatState d2State =
+        new com.antigravity.race.prediction.PredictionEngine.DriverHeatState();
+    d2State.totalLapsCompleted = 30.0;
+    d2State.currentHeatElapsedSec = 179.0;
+    actualLapsSoFar.put("d2", d2State);
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(null, participants, heats, statsMap, 0, actualLapsSoFar);
+
+    assertNotNull(snapshot);
+
+    double d1ProjLaps = 0;
+    for (DriverProjection dp : snapshot.getProjectedStandings()) {
+      if ("d1".equals(dp.getDriverId())) {
+        d1ProjLaps = dp.getProjectedLaps();
+      }
+    }
+
+    assertTrue(d1ProjLaps >= 40.0 && d1ProjLaps < 42.0);
   }
 }

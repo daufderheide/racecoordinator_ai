@@ -1089,6 +1089,7 @@ export class DefaultRacedayComponent
 
   private handleLapEvent(lap: any, driverData: DriverHeatData) {
     if (!this.isDestroyed) {
+      this.loadPredictionsForCurrentRace();
       this.cdr.markForCheck();
     }
 

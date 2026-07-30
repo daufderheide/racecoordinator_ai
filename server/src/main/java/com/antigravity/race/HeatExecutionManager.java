@@ -14,6 +14,8 @@ import com.antigravity.proto.RaceData;
 import com.antigravity.proto.Segment;
 import com.antigravity.proto.StandingsUpdate;
 import com.antigravity.protocols.CarLocation;
+import com.antigravity.race.prediction.PredictionEngine;
+import com.antigravity.race.prediction.PredictionEngine.DriverHeatState;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.RacePredictionService;
@@ -983,27 +985,45 @@ public class HeatExecutionManager {
               ? this.race.getDatabaseContext().getDatabase()
               : null;
 
-      Map<String, Double> actualDriverLapsSoFar = new HashMap<>();
-      if (this.race.getCurrentHeat() != null && this.race.getCurrentHeat().getDrivers() != null) {
-        for (DriverHeatData dhd : this.race.getCurrentHeat().getDrivers()) {
-          if (dhd != null && dhd.getDriver() != null) {
-            String driverId =
-                dhd.getDriver().getDriver() != null
-                    ? dhd.getDriver().getDriver().getEntityId()
-                    : (dhd.getDriver().getTeam() != null
-                        ? dhd.getDriver().getTeam().getEntityId()
-                        : "");
-            if (driverId != null && !driverId.isEmpty()) {
-              actualDriverLapsSoFar.put(driverId, (double) dhd.getLapCount());
-            }
-          }
-        }
-      }
-
+      Map<String, DriverHeatState> actualDriverStates = new HashMap<>();
       List<Heat> heats = this.race.getHeats();
       int heatIdx = heats != null ? heats.indexOf(this.race.getCurrentHeat()) : 0;
       if (heatIdx < 0) {
         heatIdx = 0;
+      }
+
+      if (heats != null) {
+        for (int i = 0; i <= heatIdx; i++) {
+          Heat h = heats.get(i);
+          if (h != null && h.getDrivers() != null) {
+            for (DriverHeatData dhd : h.getDrivers()) {
+              if (dhd == null || dhd.getDriver() == null) continue;
+
+              String driverId = PredictionEngine.getParticipantId(dhd.getDriver());
+
+              if (driverId != null && !driverId.isEmpty()) {
+                DriverHeatState state =
+                    actualDriverStates.computeIfAbsent(driverId, k -> new DriverHeatState());
+
+                if (i < heatIdx) {
+                  state.totalLapsCompleted += dhd.getLapCount();
+                } else {
+                  state.totalLapsCompleted += dhd.getLapCount();
+
+                  double elapsed = Math.max(0, dhd.getReactionTime());
+                  for (DriverHeatData.LapData lap : dhd.getLaps()) {
+                    if (lap.getLapTime() > 0) {
+                      state.currentHeatLapTimes.add(lap.getLapTime());
+                      elapsed += lap.getLapTime();
+                    }
+                  }
+                  elapsed += Math.max(0, dhd.getPendingLapTime());
+                  state.currentHeatElapsedSec = elapsed;
+                }
+              }
+            }
+          }
+        }
       }
 
       RacePredictionService.getInstance()
@@ -1014,7 +1034,7 @@ public class HeatExecutionManager {
               this.race.getDrivers(),
               this.race.getHeats(),
               heatIdx,
-              actualDriverLapsSoFar,
+              actualDriverStates,
               this.race.isDemoMode());
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);

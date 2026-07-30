@@ -49,6 +49,7 @@ public class StartingStateTest {
     com.mongodb.client.MongoCollection mockCollection =
         mock(com.mongodb.client.MongoCollection.class);
     com.mongodb.client.FindIterable mockIterable = mock(com.mongodb.client.FindIterable.class);
+    when(mockDb.getCollection(anyString())).thenReturn(mockCollection);
     when(mockDb.getCollection(anyString(), any())).thenReturn(mockCollection);
     when(mockCollection.find(any(org.bson.conversions.Bson.class))).thenReturn(mockIterable);
 

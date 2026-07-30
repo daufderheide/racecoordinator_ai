@@ -11,6 +11,7 @@ import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,12 @@ public class PredictionEngine {
         participants, scheduledHeats, driverStatsMap, 0, new HashMap<>(), DEFAULT_SIMULATION_RUNS);
   }
 
+  public static class DriverHeatState {
+    public double totalLapsCompleted = 0.0;
+    public List<Double> currentHeatLapTimes = new ArrayList<>();
+    public double currentHeatElapsedSec = 0.0;
+  }
+
   /**
    * Generates a real-time prediction snapshot blending historical priors with empirical race pace.
    */
@@ -56,7 +63,7 @@ public class PredictionEngine {
       List<Heat> scheduledHeats,
       Map<String, DriverTrackStats> driverStatsMap,
       int currentHeatIndex,
-      Map<String, Double> actualDriverLapsSoFar) {
+      Map<String, DriverHeatState> driverHeatStates) {
     long baseSeed =
         (raceModel != null && raceModel.getEntityId() != null)
             ? (long) raceModel.getEntityId().hashCode()
@@ -64,14 +71,14 @@ public class PredictionEngine {
     long stateSeed =
         baseSeed
             + currentHeatIndex * 31L
-            + (actualDriverLapsSoFar != null ? (long) actualDriverLapsSoFar.hashCode() : 0L);
+            + (driverHeatStates != null ? (long) driverHeatStates.hashCode() : 0L);
     PredictionEngine seededEngine = new PredictionEngine(stateSeed);
     return seededEngine.runSimulation(
         participants,
         scheduledHeats,
         driverStatsMap,
         currentHeatIndex,
-        actualDriverLapsSoFar,
+        driverHeatStates,
         DEFAULT_SIMULATION_RUNS);
   }
 
@@ -80,7 +87,7 @@ public class PredictionEngine {
       List<Heat> scheduledHeats,
       Map<String, DriverTrackStats> driverStatsMap,
       int currentHeatIndex,
-      Map<String, Double> actualDriverLapsSoFar,
+      Map<String, DriverHeatState> driverHeatStates,
       int numSimulations) {
 
     if (participants == null
@@ -105,7 +112,7 @@ public class PredictionEngine {
           scheduledHeats,
           driverStatsMap,
           currentHeatIndex,
-          actualDriverLapsSoFar,
+          driverHeatStates,
           winCounts,
           podiumCounts,
           totalProjectedLaps,
@@ -122,7 +129,7 @@ public class PredictionEngine {
         heatWinnerCounts,
         heatProjectedLapsSum,
         currentHeatIndex,
-        actualDriverLapsSoFar,
+        driverHeatStates,
         numSimulations);
   }
 
@@ -148,8 +155,8 @@ public class PredictionEngine {
     return false;
   }
 
-  private String getParticipantId(RaceParticipant rp) {
-    if (rp == null || isParticipantEmpty(rp)) return null;
+  public static String getParticipantId(RaceParticipant rp) {
+    if (rp == null) return null;
     if (rp.getTeam() != null
         && rp.getTeam().getEntityId() != null
         && !rp.getTeam().getEntityId().isEmpty()) {
@@ -202,14 +209,19 @@ public class PredictionEngine {
       List<Heat> scheduledHeats,
       Map<String, DriverTrackStats> driverStatsMap,
       int currentHeatIndex,
-      Map<String, Double> actualDriverLapsSoFar,
+      Map<String, DriverHeatState> driverHeatStates,
       Map<String, Integer> winCounts,
       Map<String, Integer> podiumCounts,
       Map<String, Double> totalProjectedLaps,
       Map<Integer, Map<String, Integer>> heatWinnerCounts,
       Map<Integer, Map<String, Double>> heatProjectedLapsSum) {
 
-    Map<String, Double> simLapsMap = new HashMap<>(actualDriverLapsSoFar);
+    Map<String, Double> simLapsMap = new HashMap<>();
+    if (driverHeatStates != null) {
+      for (Map.Entry<String, DriverHeatState> entry : driverHeatStates.entrySet()) {
+        simLapsMap.put(entry.getKey(), entry.getValue().totalLapsCompleted);
+      }
+    }
 
     for (int h = currentHeatIndex; h < scheduledHeats.size(); h++) {
       Heat heat = scheduledHeats.get(h);
@@ -234,7 +246,11 @@ public class PredictionEngine {
                 : driverId;
 
         int laneIndex = dhd.getLane();
-        double simulatedHeatLaps = simulateHeatForDriver(statsDriverId, laneIndex, driverStatsMap);
+
+        DriverHeatState state = driverHeatStates != null ? driverHeatStates.get(driverId) : null;
+        double simulatedHeatLaps =
+            simulateHeatForDriver(
+                statsDriverId, laneIndex, driverStatsMap, state, h == currentHeatIndex);
 
         simLapsMap.put(driverId, simLapsMap.getOrDefault(driverId, 0.0) + simulatedHeatLaps);
 
@@ -280,7 +296,7 @@ public class PredictionEngine {
       Map<Integer, Map<String, Integer>> heatWinnerCounts,
       Map<Integer, Map<String, Double>> heatProjectedLapsSum,
       int currentHeatIndex,
-      Map<String, Double> actualDriverLapsSoFar,
+      Map<String, DriverHeatState> driverHeatStates,
       int numSimulations) {
 
     Map<String, Double> winProbabilities = new HashMap<>();
@@ -352,8 +368,12 @@ public class PredictionEngine {
       heatForecasts.add(hf);
     }
 
-    int completedLapsEstimate =
-        actualDriverLapsSoFar.values().stream().mapToInt(Double::intValue).sum();
+    int completedLapsEstimate = 0;
+    if (driverHeatStates != null) {
+      for (DriverHeatState state : driverHeatStates.values()) {
+        completedLapsEstimate += (int) state.totalLapsCompleted;
+      }
+    }
 
     return new PredictionSnapshot(
         currentHeatIndex,
@@ -365,35 +385,81 @@ public class PredictionEngine {
   }
 
   private double simulateHeatForDriver(
-      String driverId, int laneIndex, Map<String, DriverTrackStats> driverStatsMap) {
+      String driverId,
+      int laneIndex,
+      Map<String, DriverTrackStats> driverStatsMap,
+      DriverHeatState state,
+      boolean isCurrentHeat) {
 
-    double meanLapTime = DEFAULT_LAP_TIME;
-    double stdDev = DEFAULT_STD_DEV;
+    double histMean = DEFAULT_LAP_TIME;
+    double histStdDev = DEFAULT_STD_DEV;
+    boolean hasHistory = false;
 
     if (driverStatsMap != null && driverStatsMap.containsKey(driverId)) {
       DriverTrackStats stats = driverStatsMap.get(driverId);
       if (stats.getLaneStats() != null) {
         for (DriverTrackStats.LanePaceStats lps : stats.getLaneStats()) {
           if (lps.getLaneIndex() == laneIndex && lps.getMedianLapTime() > 0) {
-            meanLapTime = lps.getMedianLapTime();
+            histMean = lps.getMedianLapTime();
             if (lps.getStdDev() > 0) {
-              stdDev = lps.getStdDev();
+              histStdDev = lps.getStdDev();
             }
+            hasHistory = true;
             break;
           }
         }
       }
-      if (meanLapTime == DEFAULT_LAP_TIME && stats.getOverallMedianLapTime() > 0) {
-        meanLapTime = stats.getOverallMedianLapTime();
+      if (!hasHistory && stats.getOverallMedianLapTime() > 0) {
+        histMean = stats.getOverallMedianLapTime();
+        hasHistory = true;
       }
+    }
+
+    double blendedMean = histMean;
+    double blendedStdDev = histStdDev;
+
+    if (state != null
+        && state.currentHeatLapTimes != null
+        && !state.currentHeatLapTimes.isEmpty()) {
+      List<Double> laps = new ArrayList<>(state.currentHeatLapTimes);
+      Collections.sort(laps);
+
+      double empMean;
+      if (laps.size() % 2 == 0) {
+        empMean = (laps.get(laps.size() / 2 - 1) + laps.get(laps.size() / 2)) / 2.0;
+      } else {
+        empMean = laps.get(laps.size() / 2);
+      }
+
+      double sumSq = 0;
+      for (double l : laps) {
+        sumSq += Math.pow(l - empMean, 2);
+      }
+      double empStdDev = laps.size() > 1 ? Math.sqrt(sumSq / (laps.size() - 1)) : histStdDev;
+      if (empStdDev == 0) empStdDev = 0.05;
+
+      int N = laps.size();
+      double C = 10.0;
+      double wEmp = N / (N + C);
+
+      if (!hasHistory) {
+        wEmp = 1.0;
+      }
+
+      blendedMean = (wEmp * empMean) + ((1.0 - wEmp) * histMean);
+      blendedStdDev = (wEmp * empStdDev) + ((1.0 - wEmp) * histStdDev);
     }
 
     double heatDurationSec = 180.0;
     double simulatedLaps = 0;
     double elapsedSec = 0;
 
+    if (isCurrentHeat && state != null) {
+      elapsedSec = state.currentHeatElapsedSec;
+    }
+
     while (elapsedSec < heatDurationSec) {
-      double lapTime = meanLapTime + (random.nextGaussian() * stdDev);
+      double lapTime = blendedMean + (random.nextGaussian() * blendedStdDev);
       if (lapTime < 1.0) {
         lapTime = 1.0;
       }

@@ -7,6 +7,7 @@ import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.prediction.PredictionEngine.DriverHeatState;
 import com.antigravity.service.RacePredictionService;
 import com.mongodb.client.MongoDatabase;
 import java.time.OffsetDateTime;
@@ -61,13 +62,15 @@ public class HeatOver implements IRaceState {
             race.getHeats() != null && race.getCurrentHeat() != null
                 ? race.getHeats().indexOf(race.getCurrentHeat())
                 : 0;
-        Map<String, Double> actualLaps = new HashMap<>();
+        Map<String, DriverHeatState> actualLaps = new HashMap<>();
         if (race.getDrivers() != null) {
           for (RaceParticipant rp : race.getDrivers()) {
             if (rp != null) {
               String dId = rp.getDriver() != null ? rp.getDriver().getEntityId() : rp.getObjectId();
               if (dId != null) {
-                actualLaps.put(dId, rp.getTotalLaps());
+                DriverHeatState state = new DriverHeatState();
+                state.totalLapsCompleted = rp.getTotalLaps();
+                actualLaps.put(dId, state);
               }
             }
           }
