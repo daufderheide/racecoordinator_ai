@@ -1,10 +1,17 @@
 package com.antigravity.race.states;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.CarData;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceParticipant;
+import com.antigravity.service.RacePredictionService;
+import com.mongodb.client.MongoDatabase;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -43,6 +50,41 @@ public class HeatOver implements IRaceState {
         race.getCurrentHeat().getStatistics().setDurationMillis(System.currentTimeMillis() - start);
       }
       race.broadcast(race.createSnapshot());
+    }
+
+    try {
+      DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
+      if (dbCtx != null && dbCtx.getDatabase() != null && race != null) {
+        MongoDatabase db = dbCtx.getDatabase();
+        String raceId = race.getRaceModel() != null ? race.getRaceModel().getEntityId() : "current";
+        int heatIdx =
+            race.getHeats() != null && race.getCurrentHeat() != null
+                ? race.getHeats().indexOf(race.getCurrentHeat())
+                : 0;
+        Map<String, Double> actualLaps = new HashMap<>();
+        if (race.getDrivers() != null) {
+          for (RaceParticipant rp : race.getDrivers()) {
+            if (rp != null) {
+              String dId = rp.getDriver() != null ? rp.getDriver().getEntityId() : rp.getObjectId();
+              if (dId != null) {
+                actualLaps.put(dId, rp.getTotalLaps());
+              }
+            }
+          }
+        }
+        RacePredictionService.getInstance()
+            .updateRealtimePrediction(
+                db,
+                raceId == null || raceId.isEmpty() ? "current" : raceId,
+                race.getRaceModel(),
+                race.getDrivers(),
+                race.getHeats(),
+                heatIdx,
+                actualLaps,
+                race.isDemoMode());
+      }
+    } catch (Exception e) {
+      logger.error("Error updating realtime prediction snapshot", e);
     }
 
     double autoAdvanceTime = race.getRaceModel().getAutoAdvanceTime();

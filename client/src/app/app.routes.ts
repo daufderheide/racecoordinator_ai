@@ -7,6 +7,7 @@ import { DriverManagerComponent } from "@app/components/driver-manager/driver-ma
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
+import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
 import { RaceManagerComponent } from "@app/components/race-manager/race-manager.component";
 import { RaceResultsComponent } from "@app/components/race-results/race-results.component";
@@ -175,6 +176,12 @@ export const routes: Routes = [
     component: RaceResultsComponent,
     title: "Race Results",
     data: { animation: "RaceResultsPage" },
+  },
+  {
+    path: "prediction-results",
+    component: PredictionResultsComponent,
+    title: "Prediction Results",
+    data: { animation: "PredictionResultsPage" },
   },
   {
     path: "driver-results/:driverId",

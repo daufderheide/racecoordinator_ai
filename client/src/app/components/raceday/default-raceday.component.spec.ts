@@ -21,6 +21,7 @@ import { ColumnVisibility, Settings } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
+import { RacePredictionService } from "@app/services/race-prediction.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -370,6 +371,17 @@ describe("DefaultRacedayComponent", () => {
           ]),
         },
         { provide: AuthService, useValue: mockAuthService },
+        {
+          provide: RacePredictionService,
+          useValue: {
+            getRacePredictions: jasmine
+              .createSpy("getRacePredictions")
+              .and.returnValue(of(null)),
+            getPredictionEvaluation: jasmine
+              .createSpy("getPredictionEvaluation")
+              .and.returnValue(of(null)),
+          },
+        },
         ChangeDetectorRef,
       ],
     }).compileComponents();

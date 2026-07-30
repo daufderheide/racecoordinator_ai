@@ -59,6 +59,11 @@ import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
+import {
+  DriverProjection,
+  RacePredictionRecord,
+  RacePredictionService,
+} from "@app/services/race-prediction.service";
 
 export interface LapDisplayInfo {
   lapTime: string;
@@ -573,6 +578,7 @@ export class DefaultRacedayComponent
     private printService: PrintService,
     public authService: AuthService,
     private helpService: HelpService,
+    private predictionService?: RacePredictionService,
   ) {
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
@@ -1614,6 +1620,8 @@ export class DefaultRacedayComponent
         this.driverVisualPositions.set(hd.laneIndex, i),
       );
     }
+
+    this.loadPredictionsForCurrentRace();
     this.cdr.markForCheck();
   }
 
@@ -1900,6 +1908,90 @@ export class DefaultRacedayComponent
       return p.driver?.entity_id === entityId || p.driver?.name === entityId;
     });
     return match?.rank && match.rank > 0 ? match.rank : undefined;
+  }
+
+  protected loadPredictionsForCurrentRace() {
+    if (this.isUIEditorMode() || !this.predictionService) return;
+    const raceId = this.race?.entity_id || "current";
+    this.predictionService.getRacePredictions(raceId).subscribe((record) => {
+      if (record) {
+        this.applyPredictionsToDrivers(record);
+      }
+    });
+  }
+
+  protected applyPredictionsToDrivers(record: RacePredictionRecord) {
+    if (!record) return;
+    const snapshot =
+      record.realtime_snapshots && record.realtime_snapshots.length > 0
+        ? record.realtime_snapshots[record.realtime_snapshots.length - 1]
+        : record.pre_race;
+
+    if (!snapshot || !snapshot.projected_standings) return;
+
+    const projectionsMap = new Map<string, DriverProjection>();
+    for (const proj of snapshot.projected_standings) {
+      if (proj.driver_id) {
+        projectionsMap.set(proj.driver_id, proj);
+      }
+      if (proj.driver_name) {
+        projectionsMap.set(proj.driver_name, proj);
+      }
+    }
+
+    const allDrivers = [
+      ...(this.sortedHeatDrivers || []),
+      ...(this.heat?.heatDrivers || []),
+    ];
+
+    for (const hd of allDrivers) {
+      if (!hd) continue;
+      const d = hd.actualDriver || (hd.driver as any)?.driver || hd.driver;
+      const team = hd.participant?.team || (hd.driver as any)?.team;
+      const teamId = team?.entity_id;
+      const syntheticTeamId = teamId ? `t_${teamId}` : undefined;
+      const teamName = team?.name;
+
+      const driverId =
+        d?.entity_id ||
+        hd.participant?.driver?.entity_id ||
+        (hd.participant as any)?.driver_id ||
+        hd.objectId;
+      const driverName = d?.name || hd.participant?.driver?.name || d?.nickname;
+
+      const keysToTry = [
+        syntheticTeamId,
+        teamId,
+        teamName,
+        driverId,
+        driverName,
+      ].filter(Boolean) as string[];
+
+      let proj: DriverProjection | undefined;
+      for (const k of keysToTry) {
+        if (projectionsMap.has(k)) {
+          proj = projectionsMap.get(k);
+          break;
+        }
+      }
+
+      if (proj) {
+        (hd as any).winProbability = proj.win_probability;
+        (hd as any).projectedRank = proj.projected_rank;
+        (hd as any).projectedLaps = proj.projected_laps;
+        if (hd.driver) {
+          (hd.driver as any).winProbability = proj.win_probability;
+          (hd.driver as any).projectedRank = proj.projected_rank;
+          (hd.driver as any).projectedLaps = proj.projected_laps;
+        }
+        if (hd.participant) {
+          (hd.participant as any).winProbability = proj.win_probability;
+          (hd.participant as any).projectedRank = proj.projected_rank;
+          (hd.participant as any).projectedLaps = proj.projected_laps;
+        }
+      }
+    }
+    this.cdr.markForCheck();
   }
 
   getPropertyValue(heatDriver: DriverHeatData, propertyPath: string): any {
@@ -2397,6 +2489,11 @@ export class DefaultRacedayComponent
         this.router.createUrlTree(["/race-results"]),
       );
       this.raceResultsWindow = window.open(url, "_blank");
+    } else if (action === "PREDICTION_RESULTS") {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(["/prediction-results"]),
+      );
+      window.open(url, "_blank");
     }
   }
 

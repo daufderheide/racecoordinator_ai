@@ -1,0 +1,117 @@
+<div class="dashboard-wrapper">
+  <div class="header-bar">
+    <div class="title-glow-container">
+      <h1 class="page-title">RACE PREDICTIONS & MODEL ACCURACY</h1>
+      <div class="cyberpunk-line"></div>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-spinner">Loading Race Predictions...</div>
+  } @else {
+    <div class="results-container">
+      <!-- Accuracy Metrics Dashboard -->
+      @if (evaluationRecord) {
+        <div class="records-dashboard">
+          <div class="records-header">
+            <span class="records-title">POST-RACE MODEL EVALUATION</span>
+            <div class="records-subtitle-line"></div>
+          </div>
+          <div class="global-records-grid">
+            <div class="record-card border-cyan">
+              <div class="card-icon cyan-glow">
+                <span class="material-icons">analytics</span>
+              </div>
+              <div class="card-content">
+                <div class="record-label">BRIER SCORE</div>
+                <div class="record-value cyan-text">
+                  {{ evaluationRecord.brier_score }}
+                </div>
+              </div>
+            </div>
+            <div class="record-card border-gold">
+              <div class="card-icon gold-glow">
+                <span class="material-icons">leaderboard</span>
+              </div>
+              <div class="card-content">
+                <div class="record-label">RANK MAE</div>
+                <div class="record-value gold-text">
+                  {{ evaluationRecord.rank_mae }}
+                </div>
+              </div>
+            </div>
+            <div class="record-card border-magenta">
+              <div class="card-icon magenta-glow">
+                <span class="material-icons">speed</span>
+              </div>
+              <div class="card-content">
+                <div class="record-label">LAP PROJECTION ERROR</div>
+                <div class="record-value magenta-text">
+                  {{ evaluationRecord.lap_projection_mae }} Laps
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Standings Predictions Table -->
+      @if (predictionRecord?.pre_race) {
+        <div class="standings-table-wrapper">
+          <h2 class="section-title">PRE-RACE PROJECTIONS & ODDS</h2>
+          <table class="prediction-table">
+            <thead>
+              <tr>
+                <th>PROJ RANK</th>
+                <th>DRIVER</th>
+                <th>WIN PROBABILITY</th>
+                <th>PODIUM PROBABILITY</th>
+                <th>PROJECTED LAPS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (
+                proj of predictionRecord?.pre_race?.projected_standings;
+                track proj.driver_id
+              ) {
+                <tr
+                  [class.gold-row]="proj.projected_rank === 1"
+                  [class.silver-row]="proj.projected_rank === 2"
+                  [class.bronze-row]="proj.projected_rank === 3"
+                >
+                  <td class="rank-col">#{{ proj.projected_rank }}</td>
+                  <td class="driver-col">{{ proj.driver_name }}</td>
+                  <td class="prob-col">
+                    <div class="prob-bar-container">
+                      <div
+                        class="prob-bar win-bar"
+                        [style.width]="getWinProbPercent(proj.win_probability)"
+                      ></div>
+                      <span class="prob-text">{{
+                        getWinProbPercent(proj.win_probability)
+                      }}</span>
+                    </div>
+                  </td>
+                  <td class="prob-col">
+                    <div class="prob-bar-container">
+                      <div
+                        class="prob-bar podium-bar"
+                        [style.width]="
+                          getWinProbPercent(proj.podium_probability)
+                        "
+                      ></div>
+                      <span class="prob-text">{{
+                        getWinProbPercent(proj.podium_probability)
+                      }}</span>
+                    </div>
+                  </td>
+                  <td class="laps-col">{{ proj.projected_laps }} Laps</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

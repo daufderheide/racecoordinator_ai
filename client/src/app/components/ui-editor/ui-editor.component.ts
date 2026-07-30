@@ -163,6 +163,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
     { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },
     { key: "rankGroup", label: "RD_COL_RANK_GROUP" },
+    { key: "winProbability", label: "RD_COL_WIN_PROB" },
+    { key: "projectedRank", label: "RD_COL_PROJ_RANK" },
+    { key: "projectedLaps", label: "RD_COL_PROJ_LAPS" },
     { key: "participant.team.name", label: "RD_COL_TEAM" },
     { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
     { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
@@ -840,6 +843,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
           { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },
           { key: "rankGroup", label: "RD_COL_RANK_GROUP" },
+          { key: "winProbability", label: "RD_COL_WIN_PROB" },
+          { key: "projectedRank", label: "RD_COL_PROJ_RANK" },
+          { key: "projectedLaps", label: "RD_COL_PROJ_LAPS" },
           { key: "participant.team.name", label: "RD_COL_TEAM" },
           { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
           { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
@@ -994,7 +1000,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   isColumnSelected(columnKey: string): boolean {
-    return this.editingSettings.racedayColumns.includes(columnKey);
+    return this.editingSettings.racedayColumns.some(
+      (colKey) => colKey === columnKey || colKey.split("_").includes(columnKey),
+    );
   }
 
   private cloneState(s: UIEditorState): UIEditorState {

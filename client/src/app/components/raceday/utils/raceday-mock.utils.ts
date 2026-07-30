@@ -107,9 +107,21 @@ function createMockHeatDrivers(
     hd.gapPosition = p.gap_position || 0;
 
     // Add mock fuel and seed to participant if missing
+    // Prediction mock attributes
+    const mockWinProb = [0.65, 0.22, 0.09, 0.04][index] ?? 0.1;
+    const mockProjRank = index + 1;
+    const mockProjLaps = Math.max(10, 120 - index * 6) + 0.5;
+
+    (hd as any).winProbability = mockWinProb;
+    (hd as any).projectedRank = mockProjRank;
+    (hd as any).projectedLaps = mockProjLaps;
+
     if (hd.participant) {
       (hd.participant as any).fuelLevel = p.fuelLevel || 50;
       (hd.participant as any).seed = p.seed || index + 1;
+      (hd.participant as any).winProbability = mockWinProb;
+      (hd.participant as any).projectedRank = mockProjRank;
+      (hd.participant as any).projectedLaps = mockProjLaps;
       if (p.team) {
         (hd.participant as any).team = p.team;
       }
@@ -137,10 +149,20 @@ function createMockNextHeatDrivers(): DriverHeatData[] {
   return createMockNextHeatParticipants().map((p: any, index) => {
     const hd = new DriverHeatData(`mock_hd_next_${index}`, p, p.lane - 1);
     hd.reactionTime = 0.15;
+    const mockWinProb = [0.5, 0.3, 0.15, 0.05][index] ?? 0.1;
+    const mockProjRank = index + 1;
+    const mockProjLaps = Math.max(10, 118 - index * 5);
+    (hd as any).winProbability = mockWinProb;
+    (hd as any).projectedRank = mockProjRank;
+    (hd as any).projectedLaps = mockProjLaps;
+
     if (hd.participant) {
       (hd.participant as any).fuelLevel = p.fuelLevel || 100;
       (hd.participant as any).seed = p.seed || index + 5;
       (hd.participant as any).team = p.team;
+      (hd.participant as any).winProbability = mockWinProb;
+      (hd.participant as any).projectedRank = mockProjRank;
+      (hd.participant as any).projectedLaps = mockProjLaps;
     }
     return hd;
   });

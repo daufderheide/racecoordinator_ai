@@ -12,8 +12,10 @@ import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceHistoryRecord;
+import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -22,6 +24,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.repository.MongoRepository;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.RacePredictionService;
 import com.antigravity.util.CsvExporter;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -29,6 +32,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.ReturnDocument;
@@ -118,6 +122,8 @@ public class DatabaseTaskHandler {
     app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv, Role.VIEWER);
     app.get("/api/history/stats", this::getGlobalStatistics, Role.VIEWER);
     app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics, Role.VIEWER);
+    app.get("/api/predictions/races/{id}", this::getRacePredictionRecord, Role.VIEWER);
+    app.get("/api/predictions/evaluations/{id}", this::getPredictionEvaluationRecord, Role.VIEWER);
   }
 
   // Removed collection getters
@@ -1341,6 +1347,107 @@ public class DatabaseTaskHandler {
     } catch (Exception e) {
       logger.error("Error fetching driver statistics", e);
       ctx.status(500).result("Error fetching driver statistics: " + e.getMessage());
+    }
+  }
+
+  private boolean isStalePredictionRecord(RacePredictionRecord record) {
+    if (record == null || record.getPreRace() == null) return true;
+    List<RacePredictionRecord.DriverProjection> standings =
+        record.getPreRace().getProjectedStandings();
+    if (standings == null || standings.isEmpty()) return true;
+
+    double totalWinProb = 0.0;
+    Set<Integer> ranks = new HashSet<>();
+    for (RacePredictionRecord.DriverProjection dp : standings) {
+      if (dp == null || dp.getDriverId() == null) return true;
+      if ("EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())
+          || "Empty Lane".equalsIgnoreCase(dp.getDriverName())) {
+        return true;
+      }
+      if (ranks.contains(dp.getProjectedRank())) {
+        return true;
+      }
+      ranks.add(dp.getProjectedRank());
+      totalWinProb += dp.getWinProbability();
+    }
+
+    if (standings.size() > 1 && totalWinProb < 0.95) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private void getRacePredictionRecord(Context ctx) {
+    try {
+      String raceId = ctx.pathParam("id");
+      boolean isDemo =
+          "true".equals(ctx.queryParam("demo")) || "true".equals(ctx.queryParam("isDemo"));
+      boolean forceRecalc =
+          "true".equals(ctx.queryParam("force")) || "true".equals(ctx.queryParam("recalculate"));
+      DatabaseService dbService = DatabaseService.getInstance();
+      MongoDatabase database = databaseContext != null ? databaseContext.getDatabase() : null;
+
+      com.antigravity.race.Race activeRace = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+
+      String targetRaceId = raceId;
+      if ("current".equals(raceId) && activeRace != null && activeRace.getRaceModel() != null) {
+        targetRaceId = activeRace.getRaceModel().getEntityId();
+      }
+
+      RacePredictionRecord record = null;
+      if (!forceRecalc && database != null && targetRaceId != null && !targetRaceId.isEmpty()) {
+        record = dbService.getRacePredictionRecord(database, targetRaceId, isDemo);
+      }
+
+      boolean isStale = isStalePredictionRecord(record);
+
+      if ((record == null || isStale || forceRecalc)
+          && activeRace != null
+          && activeRace.getRaceModel() != null) {
+        String activeRaceId = activeRace.getRaceModel().getEntityId();
+        if (activeRaceId != null && !activeRaceId.isEmpty()) {
+          record =
+              RacePredictionService.getInstance()
+                  .generateAndSavePreRacePrediction(
+                      database,
+                      activeRaceId,
+                      activeRace.getRaceModel(),
+                      activeRace.getDrivers(),
+                      activeRace.getHeats(),
+                      isDemo,
+                      true);
+        }
+      }
+
+      if (record == null) {
+        ctx.status(404).result("Race prediction record not found");
+        return;
+      }
+      ctx.json(record);
+    } catch (Exception e) {
+      logger.error("Error fetching race prediction record", e);
+      ctx.status(500).result("Error fetching race prediction record: " + e.getMessage());
+    }
+  }
+
+  private void getPredictionEvaluationRecord(Context ctx) {
+    try {
+      String raceId = ctx.pathParam("id");
+      boolean isDemo =
+          "true".equals(ctx.queryParam("demo")) || "true".equals(ctx.queryParam("isDemo"));
+      DatabaseService dbService = DatabaseService.getInstance();
+      PredictionEvaluationRecord eval =
+          dbService.getPredictionEvaluationRecord(databaseContext.getDatabase(), raceId, isDemo);
+      if (eval == null) {
+        ctx.status(404).result("Prediction evaluation record not found");
+        return;
+      }
+      ctx.json(eval);
+    } catch (Exception e) {
+      logger.error("Error fetching prediction evaluation record", e);
+      ctx.status(500).result("Error fetching prediction evaluation record: " + e.getMessage());
     }
   }
 }

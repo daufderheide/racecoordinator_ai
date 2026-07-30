@@ -263,6 +263,109 @@
       </div>
     </div>
 
+    <!-- Prediction Performance Section -->
+    @if (driverPredictionEvaluation) {
+      <div class="stats-dashboard-container section-container">
+        <h2 class="section-title">PREDICTION PERFORMANCE</h2>
+        <div
+          class="global-records-grid"
+          style="
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            display: grid;
+            gap: 16px;
+          "
+        >
+          <div
+            class="record-card border-cyan"
+            style="
+              background: rgba(30, 41, 59, 0.6);
+              padding: 16px;
+              border-radius: 8px;
+              border-left: 4px solid #38bdf8;
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            "
+          >
+            <div class="card-icon cyan-glow">
+              <span class="material-icons">query_stats</span>
+            </div>
+            <div class="card-content">
+              <div class="record-label" style="font-size: 12px; color: #94a3b8">
+                PRE-RACE WIN ODDS
+              </div>
+              <div
+                class="record-value cyan-text"
+                style="font-size: 20px; font-weight: 800; color: #38bdf8"
+              >
+                {{
+                  driverPredictionEvaluation.pre_race_win_prob * 100
+                    | number: "1.0-0"
+                }}%
+              </div>
+            </div>
+          </div>
+          <div
+            class="record-card border-gold"
+            style="
+              background: rgba(30, 41, 59, 0.6);
+              padding: 16px;
+              border-radius: 8px;
+              border-left: 4px solid #fbbf24;
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            "
+          >
+            <div class="card-icon gold-glow">
+              <span class="material-icons">analytics</span>
+            </div>
+            <div class="card-content">
+              <div class="record-label" style="font-size: 12px; color: #94a3b8">
+                PROJ RANK vs ACTUAL
+              </div>
+              <div
+                class="record-value gold-text"
+                style="font-size: 20px; font-weight: 800; color: #fbbf24"
+              >
+                #{{ driverPredictionEvaluation.projected_rank }} / #{{
+                  driverPredictionEvaluation.actual_rank
+                }}
+              </div>
+            </div>
+          </div>
+          <div
+            class="record-card border-magenta"
+            style="
+              background: rgba(30, 41, 59, 0.6);
+              padding: 16px;
+              border-radius: 8px;
+              border-left: 4px solid #f43f5e;
+              display: flex;
+              align-items: center;
+              gap: 16px;
+            "
+          >
+            <div class="card-icon magenta-glow">
+              <span class="material-icons">speed</span>
+            </div>
+            <div class="card-content">
+              <div class="record-label" style="font-size: 12px; color: #94a3b8">
+                PROJ LAPS vs ACTUAL
+              </div>
+              <div
+                class="record-value magenta-text"
+                style="font-size: 20px; font-weight: 800; color: #f43f5e"
+              >
+                {{ driverPredictionEvaluation.projected_laps }} /
+                {{ driverPredictionEvaluation.actual_laps }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
     <!-- Heats Expanders -->
     <div class="heats-section-container">
       <h2 class="section-title">{{ "DR_HEAT_PARTICIPATIONS" | translate }}</h2>

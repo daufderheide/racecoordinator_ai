@@ -23,6 +23,7 @@ import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
+import { RacePredictionService } from "@app/services/race-prediction.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -47,6 +48,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(PrintService) printService: PrintService,
     @Inject(AuthService) authService: AuthService,
     @Inject(HelpService) helpService: HelpService,
+    @Inject(RacePredictionService) predictionService: RacePredictionService,
   ) {
     super(
       el,
@@ -64,6 +66,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       printService,
       authService,
       helpService,
+      predictionService,
     );
   }
 }

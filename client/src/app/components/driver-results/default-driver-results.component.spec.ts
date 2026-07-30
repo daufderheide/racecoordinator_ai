@@ -14,6 +14,7 @@ import { Heat } from "@app/race/heat";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { RacePredictionService } from "@app/services/race-prediction.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultDriverResultsComponent } from "./default-driver-results.component";
@@ -171,6 +172,17 @@ describe("DefaultDriverResultsComponent", () => {
         {
           provide: DataService,
           useValue: mockDataService,
+        },
+        {
+          provide: RacePredictionService,
+          useValue: {
+            getRacePredictions: jasmine
+              .createSpy("getRacePredictions")
+              .and.returnValue(of(null)),
+            getPredictionEvaluation: jasmine
+              .createSpy("getPredictionEvaluation")
+              .and.returnValue(of(null)),
+          },
         },
       ],
     }).compileComponents();

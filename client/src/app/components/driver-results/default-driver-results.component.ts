@@ -20,6 +20,10 @@ import { Heat } from "@app/race/heat";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import {
+  DriverEvaluation,
+  RacePredictionService,
+} from "@app/services/race-prediction.service";
 import { TranslationService } from "@app/services/translation.service";
 
 interface StandingsRow {
@@ -71,6 +75,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
 
   protected driverStats: any = null;
   protected raceState: RaceState = RaceState.UNKNOWN_STATE;
+  public driverPredictionEvaluation?: DriverEvaluation;
   private loadedDriverId: string = "";
   private loadedRaceId: string = "";
 
@@ -82,6 +87,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
     private printService: PrintService,
     private cdr: ChangeDetectorRef,
     private dataService: DataService,
+    private predictionService?: RacePredictionService,
   ) {}
 
   private loadDriverStats(force = false) {
@@ -112,7 +118,21 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (stats) => {
           this.driverStats = stats;
-          this.cdr.detectChanges();
+          if (this.predictionService && currentRaceId) {
+            this.predictionService
+              .getPredictionEvaluation(currentRaceId, isDemo)
+              ?.subscribe((evalRec) => {
+                if (evalRec && evalRec.driver_evaluations) {
+                  this.driverPredictionEvaluation =
+                    evalRec.driver_evaluations.find(
+                      (e) => e.driver_id === this.driverId,
+                    );
+                }
+                this.cdr.detectChanges();
+              });
+          } else {
+            this.cdr.detectChanges();
+          }
         },
         error: (err) => {
           console.warn("Failed to load driver statistics", err);

@@ -234,6 +234,12 @@
         <div class="menu-item" (click)="onWindowsMenuSelect('RACE_RESULTS')">
           {{ "RD_WIN_RACE_RESULTS" | translate }}
         </div>
+        <div
+          class="menu-item"
+          (click)="onWindowsMenuSelect('PREDICTION_RESULTS')"
+        >
+          {{ "RD_WIN_PREDICTION_RESULTS" | translate }}
+        </div>
         @if (track() && track()!.lanes) {
           <div class="menu-separator"></div>
           <div

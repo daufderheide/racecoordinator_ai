@@ -85,6 +85,8 @@ export class RacedayActionButtonComponent {
         return "RD_WIN_HEAT_RESULTS";
       case "action-open-race-results":
         return "RD_WIN_RACE_RESULTS";
+      case "action-open-prediction-results":
+        return "PREDICTIONS & ODDS";
       default:
         return "";
     }
@@ -138,6 +140,9 @@ export class RacedayActionButtonComponent {
       case "action-open-race-results":
         actionString = "RACE_RESULTS";
         break;
+      case "action-open-prediction-results":
+        actionString = "PREDICTION_RESULTS";
+        break;
     }
 
     if (actionString) {
@@ -149,7 +154,8 @@ export class RacedayActionButtonComponent {
         this.parent().onFileMenuSelect(actionString);
       } else if (
         actionString === "HEAT_RESULTS" ||
-        actionString === "RACE_RESULTS"
+        actionString === "RACE_RESULTS" ||
+        actionString === "PREDICTION_RESULTS"
       ) {
         this.parent().onWindowsMenuSelect(actionString);
       } else {

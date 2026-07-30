@@ -58,7 +58,12 @@ export class LaneViewInspectorComponent {
 
   get unusedColumns(): { key: string; label: string }[] {
     const current = this.currentColumns;
-    return this.availableColumns().filter((c) => !current.includes(c.key));
+    return this.availableColumns().filter(
+      (c) =>
+        !current.some(
+          (colKey) => colKey === c.key || colKey.split("_").includes(c.key),
+        ),
+    );
   }
 
   get columnVisibility(): { [key: string]: ColumnVisibility } {

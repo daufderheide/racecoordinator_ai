@@ -5,6 +5,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverStatistics;
+import com.antigravity.models.DriverTrackStats;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -13,8 +14,10 @@ import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
 import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
+import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceHistoryRecord;
+import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
@@ -1363,6 +1366,137 @@ public class DatabaseService {
     } catch (Exception e) {
       logger.error("Failed to query driver statistics for driver: {}", driverId, e);
       return null;
+    }
+  }
+
+  public DriverTrackStats getDriverTrackStats(
+      MongoDatabase database, String driverId, String trackId, boolean isDemo) {
+    if (database == null || driverId == null || trackId == null) {
+      return null;
+    }
+    try {
+      MongoCollection<DriverTrackStats> col =
+          database.getCollection(
+              getCollectionName("driver_track_stats", isDemo), DriverTrackStats.class);
+      if (col == null) {
+        return null;
+      }
+      Bson filter = Filters.and(Filters.eq("driver_id", driverId), Filters.eq("track_id", trackId));
+      return col.find(filter).first();
+    } catch (Exception e) {
+      logger.error(
+          "Failed to get driver track stats for driver: {}, track: {}", driverId, trackId, e);
+      return null;
+    }
+  }
+
+  public void saveDriverTrackStats(MongoDatabase database, DriverTrackStats stats, boolean isDemo) {
+    if (database == null
+        || stats == null
+        || stats.getDriverId() == null
+        || stats.getTrackId() == null) {
+      return;
+    }
+    try {
+      MongoCollection<DriverTrackStats> col =
+          database.getCollection(
+              getCollectionName("driver_track_stats", isDemo), DriverTrackStats.class);
+      if (col == null) {
+        return;
+      }
+      Bson filter =
+          Filters.and(
+              Filters.eq("driver_id", stats.getDriverId()),
+              Filters.eq("track_id", stats.getTrackId()));
+      ReplaceOptions opts = new ReplaceOptions().upsert(true);
+      col.replaceOne(filter, stats, opts);
+    } catch (Exception e) {
+      logger.error("Failed to save driver track stats for driver: {}", stats.getDriverId(), e);
+    }
+  }
+
+  public RacePredictionRecord getRacePredictionRecord(
+      MongoDatabase database, String raceId, boolean isDemo) {
+    if (database == null || raceId == null) {
+      return null;
+    }
+    try {
+      MongoCollection<RacePredictionRecord> col =
+          database.getCollection(
+              getCollectionName("race_predictions", isDemo), RacePredictionRecord.class);
+      if (col == null) {
+        return null;
+      }
+      return col.find(Filters.eq("race_id", raceId)).first();
+    } catch (Exception e) {
+      logger.error("Failed to get race prediction record for race: {}", raceId, e);
+      return null;
+    }
+  }
+
+  public void saveRacePredictionRecord(
+      MongoDatabase database, RacePredictionRecord record, boolean isDemo) {
+    if (database == null || record == null || record.getRaceId() == null) {
+      return;
+    }
+    try {
+      MongoCollection<RacePredictionRecord> col =
+          database.getCollection(
+              getCollectionName("race_predictions", isDemo), RacePredictionRecord.class);
+      if (col == null) {
+        return;
+      }
+      RacePredictionRecord existing = col.find(Filters.eq("race_id", record.getRaceId())).first();
+      if (existing != null && existing.getId() != null) {
+        record.setId(existing.getId());
+      } else if (record.getId() == null) {
+        record.setId(new ObjectId());
+      }
+      ReplaceOptions opts = new ReplaceOptions().upsert(true);
+      col.replaceOne(Filters.eq("race_id", record.getRaceId()), record, opts);
+    } catch (Exception e) {
+      logger.error("Failed to save race prediction record for race: {}", record.getRaceId(), e);
+    }
+  }
+
+  public PredictionEvaluationRecord getPredictionEvaluationRecord(
+      MongoDatabase database, String raceId, boolean isDemo) {
+    if (database == null || raceId == null) {
+      return null;
+    }
+    try {
+      MongoCollection<PredictionEvaluationRecord> col =
+          database.getCollection(
+              getCollectionName("prediction_evaluations", isDemo),
+              PredictionEvaluationRecord.class);
+      if (col == null) {
+        return null;
+      }
+      return col.find(Filters.eq("race_id", raceId)).first();
+    } catch (Exception e) {
+      logger.error("Failed to get prediction evaluation record for race: {}", raceId, e);
+      return null;
+    }
+  }
+
+  public void savePredictionEvaluationRecord(
+      MongoDatabase database, PredictionEvaluationRecord record, boolean isDemo) {
+    if (database == null || record == null || record.getRaceId() == null) {
+      return;
+    }
+    try {
+      MongoCollection<PredictionEvaluationRecord> col =
+          database.getCollection(
+              getCollectionName("prediction_evaluations", isDemo),
+              PredictionEvaluationRecord.class);
+      if (col == null) {
+        return;
+      }
+      ReplaceOptions opts = new ReplaceOptions().upsert(true);
+      col.replaceOne(Filters.eq("race_id", record.getRaceId()), record, opts);
+    } catch (Exception e) {
+      logger.error(
+          "Failed to save prediction evaluation record for race: {}", record.getRaceId(), e);
     }
   }
 

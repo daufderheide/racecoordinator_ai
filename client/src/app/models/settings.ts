@@ -36,7 +36,8 @@ export type WidgetType =
   | "action-export-csv"
   | "action-export-xls"
   | "action-open-heat-results"
-  | "action-open-race-results";
+  | "action-open-race-results"
+  | "action-open-prediction-results";
 
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page

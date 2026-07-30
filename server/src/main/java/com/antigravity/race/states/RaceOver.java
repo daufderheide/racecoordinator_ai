@@ -2,12 +2,18 @@ package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.HeatScoring;
+import com.antigravity.models.RacePredictionRecord.DriverProjection;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
+import com.antigravity.race.RaceParticipant;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.service.RacePredictionService;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +74,28 @@ public class RaceOver implements IRaceState {
             dbService.updateGlobalStatistics(db, race);
             dbService.saveDriverStatistics(db, race);
             dbService.saveRaceRecords(db, race);
+
+            List<DriverProjection> actuals = new ArrayList<>();
+            if (race.getDrivers() != null) {
+              List<RaceParticipant> sorted = new ArrayList<>(race.getDrivers());
+              sorted.sort(Comparator.comparingInt(RaceParticipant::getRank));
+              for (int i = 0; i < sorted.size(); i++) {
+                RaceParticipant rp = sorted.get(i);
+                DriverProjection dp = new DriverProjection();
+                dp.setDriverId(
+                    rp.getDriver() != null ? rp.getDriver().getEntityId() : rp.getObjectId());
+                dp.setDriverName(rp.getDriver() != null ? rp.getDriver().getName() : "");
+                dp.setProjectedRank(rp.getRank() > 0 ? rp.getRank() : i + 1);
+                dp.setProjectedLaps(rp.getTotalLaps());
+                actuals.add(dp);
+              }
+            }
+            RacePredictionService.getInstance()
+                .evaluateAndSavePostRacePrediction(
+                    db,
+                    race.getRaceModel() != null ? race.getRaceModel().getEntityId() : "current",
+                    actuals,
+                    race.isDemoMode());
           } finally {
             if (wasInterrupted) {
               Thread.currentThread().interrupt(); // restore the interrupted status
