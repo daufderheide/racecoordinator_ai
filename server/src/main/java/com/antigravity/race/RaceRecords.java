@@ -600,8 +600,6 @@ public class RaceRecords {
     boolean changed = updateHeatFastestLap(driverData, lapTime);
     if (updateSessionFastestLap(driverData, lapTime)) changed = true;
     if (updateLaneFastestLap(driverData, lapTime, lane)) changed = true;
-    if (updateOverallFastestLap(driverData, lapTime)) changed = true;
-    if (updateOverallLaneFastestLap(driverData, lapTime, lane)) changed = true;
     if (changed) broadcastRecords();
   }
 
@@ -663,52 +661,6 @@ public class RaceRecords {
         || raceLaneFastestLapHolderNicknames.get(lane).isEmpty())
       raceLaneFastestLapHolderNicknames.set(lane, raceLaneFastestLapHolders.get(lane));
     raceLaneFastestLapHolderTeamNames.set(
-        lane,
-        driverData.getDriver().getTeam() != null ? driverData.getDriver().getTeam().getName() : "");
-    return true;
-  }
-
-  private boolean updateOverallFastestLap(DriverHeatData driverData, double lapTime) {
-    if (lapTime >= overallFastestLap) return false;
-    overallFastestLap = lapTime;
-    overallFastestLapDate = System.currentTimeMillis();
-    Driver actualDriver = driverData.getActualDriver();
-    overallFastestLapHolder =
-        (actualDriver != null && actualDriver != Driver.EMPTY_DRIVER)
-            ? actualDriver.getName()
-            : driverData.getDriver().getDriver().getName();
-    overallFastestLapHolderNickname =
-        (actualDriver != null && actualDriver != Driver.EMPTY_DRIVER)
-            ? actualDriver.getNickname()
-            : driverData.getDriver().getDriver().getNickname();
-    if (overallFastestLapHolderNickname == null || overallFastestLapHolderNickname.isEmpty())
-      overallFastestLapHolderNickname = overallFastestLapHolder;
-    overallFastestLapHolderTeamName =
-        driverData.getDriver().getTeam() != null ? driverData.getDriver().getTeam().getName() : "";
-    return true;
-  }
-
-  private boolean updateOverallLaneFastestLap(DriverHeatData driverData, double lapTime, int lane) {
-    if (lane < 0
-        || lane >= overallLaneFastestLapTimes.size()
-        || lapTime >= overallLaneFastestLapTimes.get(lane)) return false;
-    overallLaneFastestLapTimes.set(lane, lapTime);
-    overallLaneFastestLapDates.set(lane, System.currentTimeMillis());
-    Driver actualDriver = driverData.getActualDriver();
-    overallLaneFastestLapHolders.set(
-        lane,
-        (actualDriver != null && actualDriver != Driver.EMPTY_DRIVER)
-            ? actualDriver.getName()
-            : driverData.getDriver().getDriver().getName());
-    overallLaneFastestLapHolderNicknames.set(
-        lane,
-        (actualDriver != null && actualDriver != Driver.EMPTY_DRIVER)
-            ? actualDriver.getNickname()
-            : driverData.getDriver().getDriver().getNickname());
-    if (overallLaneFastestLapHolderNicknames.get(lane) == null
-        || overallLaneFastestLapHolderNicknames.get(lane).isEmpty())
-      overallLaneFastestLapHolderNicknames.set(lane, overallLaneFastestLapHolders.get(lane));
-    overallLaneFastestLapHolderTeamNames.set(
         lane,
         driverData.getDriver().getTeam() != null ? driverData.getDriver().getTeam().getName() : "");
     return true;

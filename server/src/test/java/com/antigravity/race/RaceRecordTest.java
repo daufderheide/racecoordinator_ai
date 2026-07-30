@@ -122,8 +122,8 @@ public class RaceRecordTest {
     race.onLap(0, 5.0, 0, 0);
 
     RecordData recordData = race.getRecordData();
-    // Check Overall (Updated immediately)
-    assertEquals(6.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    // Check Overall (Not updated immediately)
+    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
 
     // Check Current (Updated immediately)
     assertEquals(6.0, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
@@ -140,8 +140,8 @@ public class RaceRecordTest {
     recordData = race.getRecordData();
     assertEquals(4.5, recordData.getCurrent().getLaneFastestLap(0).getValue(), 0.001);
 
-    // Overall updated immediately
-    assertEquals(4.5, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
+    // Overall not updated immediately
+    assertEquals(0.0, recordData.getOverall().getLaneFastestLap(0).getValue(), 0.001);
 
     // End race to see Overall update
     race.changeState(new RaceOver());
