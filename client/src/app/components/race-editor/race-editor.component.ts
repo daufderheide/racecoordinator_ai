@@ -1138,8 +1138,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace || !this.canSaveAsNew()) return;
 
     this.isSaving = true;
-    this.editingRace.name = this.generateUniqueName(this.editingRace.name);
+    const newName = this.generateUniqueName(this.editingRace.name);
     const payload = this.buildRacePayload(this.editingRace);
+    payload.name = newName;
+    delete payload.entity_id;
+    delete payload.id;
+    delete payload._id;
 
     this.dataService.createRace(payload).subscribe({
       next: (created) => {

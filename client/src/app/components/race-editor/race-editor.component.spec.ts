@@ -929,26 +929,45 @@ describe("RaceEditorComponent", () => {
     });
   }));
 
-  it("should create a duplicate with unique name when Duplicate is clicked", fakeAsync(async () => {
+  it("should create a duplicate with unique name when Duplicate is clicked and strip ids", fakeAsync(async () => {
     const _harness = await TestbedHarnessEnvironment.harnessForFixture(
       fixture,
       RaceEditorHarness,
     );
     component.editingRace.name = "Grand Prix";
     component.editingRace.entity_id = "1"; // Ensure button is not disabled
+    component.editingRace.id = "some_id";
+    component.editingRace._id = "some_id";
     component.races = [{ entity_id: "1", name: "Grand Prix" }];
 
     dataService.createRace.and.returnValue(
-      of({ ...component.editingRace, entity_id: "2", name: "Grand Prix_1" }),
+      of({
+        ...component.editingRace,
+        entity_id: "2",
+        name: "Grand Prix_1",
+        id: "new_id",
+        _id: "new_id",
+      }),
     );
 
+    const originalEditingRace = component.editingRace;
+
     component.saveAsNew();
+
+    // Check that the original editing race name is not mutated
+    expect(originalEditingRace.name).toBe("Grand Prix");
+    // Check that the component is now editing the newly created race
+    expect(component.editingRace.name).toBe("Grand Prix_1");
+
     fixture.detectChanges();
     tick();
 
     expect(dataService.createRace).toHaveBeenCalled();
     const calledArg = dataService.createRace.calls.mostRecent().args[0];
     expect(calledArg.name).toBe("Grand Prix_1");
+    expect(calledArg.entity_id).toBeUndefined();
+    expect(calledArg.id).toBeUndefined();
+    expect(calledArg._id).toBeUndefined();
   }));
 
   it("should trigger autoSaveRace when name is modified through harness", fakeAsync(async () => {
