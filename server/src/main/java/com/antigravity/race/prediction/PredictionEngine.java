@@ -82,6 +82,51 @@ public class PredictionEngine {
         DEFAULT_SIMULATION_RUNS);
   }
 
+  private boolean checkHasAnyData(
+      Map<String, DriverTrackStats> driverStatsMap, Map<String, DriverHeatState> driverHeatStates) {
+    if (driverStatsMap != null) {
+      for (Map.Entry<String, DriverTrackStats> entry : driverStatsMap.entrySet()) {
+        DriverTrackStats stats = entry.getValue();
+        if (stats.getOverallMedianLapTime() > 0) {
+          System.out.println(
+              "PREDICTION_ENGINE: Found data for driver "
+                  + entry.getKey()
+                  + " (OverallMedianLapTime="
+                  + stats.getOverallMedianLapTime()
+                  + ")");
+          return true;
+        }
+        if (stats.getLaneStats() != null) {
+          for (DriverTrackStats.LanePaceStats lps : stats.getLaneStats()) {
+            if (lps.getMedianLapTime() > 0) {
+              System.out.println(
+                  "PREDICTION_ENGINE: Found data for driver "
+                      + entry.getKey()
+                      + " (Lane "
+                      + lps.getLaneIndex()
+                      + " MedianLapTime="
+                      + lps.getMedianLapTime()
+                      + ")");
+              return true;
+            }
+          }
+        }
+      }
+    }
+    if (driverHeatStates != null) {
+      for (Map.Entry<String, DriverHeatState> entry : driverHeatStates.entrySet()) {
+        DriverHeatState state = entry.getValue();
+        if (state.currentHeatLapTimes != null && !state.currentHeatLapTimes.isEmpty()) {
+          System.out.println(
+              "PREDICTION_ENGINE: Found empirical data for driver " + entry.getKey());
+          return true;
+        }
+      }
+    }
+    System.out.println("PREDICTION_ENGINE: No data found for any driver. Returning false.");
+    return false;
+  }
+
   private PredictionSnapshot runSimulation(
       List<RaceParticipant> participants,
       List<Heat> scheduledHeats,
@@ -107,17 +152,22 @@ public class PredictionEngine {
     Map<Integer, Map<String, Double>> heatProjectedLapsSum = new HashMap<>();
     initializeHeatStats(scheduledHeats, heatWinnerCounts, heatProjectedLapsSum);
 
-    for (int sim = 0; sim < numSimulations; sim++) {
-      executeSingleSimulationRun(
-          scheduledHeats,
-          driverStatsMap,
-          currentHeatIndex,
-          driverHeatStates,
-          winCounts,
-          podiumCounts,
-          totalProjectedLaps,
-          heatWinnerCounts,
-          heatProjectedLapsSum);
+    boolean hasAnyData = checkHasAnyData(driverStatsMap, driverHeatStates);
+    if (!hasAnyData) {
+      numSimulations = 0; // Skip simulation loop
+    } else {
+      for (int sim = 0; sim < numSimulations; sim++) {
+        executeSingleSimulationRun(
+            scheduledHeats,
+            driverStatsMap,
+            currentHeatIndex,
+            driverHeatStates,
+            winCounts,
+            podiumCounts,
+            totalProjectedLaps,
+            heatWinnerCounts,
+            heatProjectedLapsSum);
+      }
     }
 
     return compileSnapshot(
@@ -315,17 +365,23 @@ public class PredictionEngine {
                   ? rp.getDriver().getName()
                   : "Participant " + driverId);
 
-      double winProb = (double) winCounts.getOrDefault(driverId, 0) / numSimulations;
-      double podiumProb = (double) podiumCounts.getOrDefault(driverId, 0) / numSimulations;
-      double avgLaps = totalProjectedLaps.getOrDefault(driverId, 0.0) / numSimulations;
+      double winProb = -1.0;
+      double podiumProb = -1.0;
+      double avgLaps = -1.0;
+
+      if (numSimulations > 0) {
+        winProb = (double) winCounts.getOrDefault(driverId, 0) / numSimulations;
+        podiumProb = (double) podiumCounts.getOrDefault(driverId, 0) / numSimulations;
+        avgLaps = totalProjectedLaps.getOrDefault(driverId, 0.0) / numSimulations;
+      }
 
       DriverProjection dp = new DriverProjection();
       dp.setDriverId(driverId);
       dp.setDriverName(driverName);
-      dp.setProjectedLaps(Math.round(avgLaps * 10.0) / 10.0);
+      dp.setProjectedLaps(numSimulations > 0 ? Math.round(avgLaps * 10.0) / 10.0 : -1.0);
       dp.setProjectedTimeSeconds(0.0);
-      dp.setWinProbability(Math.round(winProb * 1000.0) / 1000.0);
-      dp.setPodiumProbability(Math.round(podiumProb * 1000.0) / 1000.0);
+      dp.setWinProbability(numSimulations > 0 ? Math.round(winProb * 1000.0) / 1000.0 : -1.0);
+      dp.setPodiumProbability(numSimulations > 0 ? Math.round(podiumProb * 1000.0) / 1000.0 : -1.0);
 
       driverProjections.add(dp);
     }
@@ -339,7 +395,7 @@ public class PredictionEngine {
 
     for (int r = 0; r < driverProjections.size(); r++) {
       DriverProjection dp = driverProjections.get(r);
-      dp.setProjectedRank(r + 1);
+      dp.setProjectedRank(numSimulations > 0 ? r + 1 : -1);
       winProbabilities.put(dp.getDriverId(), dp.getWinProbability());
       podiumProbabilities.put(dp.getDriverId(), dp.getPodiumProbability());
     }
@@ -350,21 +406,26 @@ public class PredictionEngine {
       HeatForecast hf = new HeatForecast();
       hf.setHeatNumber(forecastHeat.getHeatNumber());
 
-      Map<String, Integer> hWinners = heatWinnerCounts.get(h);
-      String topWinnerId =
-          hWinners.entrySet().stream()
-              .max(Map.Entry.comparingByValue())
-              .map(Map.Entry::getKey)
-              .orElse("");
-      hf.setPredictedWinnerId(topWinnerId);
+      if (numSimulations > 0) {
+        Map<String, Integer> hWinners = heatWinnerCounts.get(h);
+        String topWinnerId =
+            hWinners.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("");
+        hf.setPredictedWinnerId(topWinnerId);
 
-      Map<String, Double> avgHeatLaps = new HashMap<>();
-      Map<String, Double> sums = heatProjectedLapsSum.get(h);
-      for (Map.Entry<String, Double> entry : sums.entrySet()) {
-        avgHeatLaps.put(
-            entry.getKey(), Math.round((entry.getValue() / numSimulations) * 10.0) / 10.0);
+        Map<String, Double> avgHeatLaps = new HashMap<>();
+        Map<String, Double> sums = heatProjectedLapsSum.get(h);
+        for (Map.Entry<String, Double> entry : sums.entrySet()) {
+          avgHeatLaps.put(
+              entry.getKey(), Math.round((entry.getValue() / numSimulations) * 10.0) / 10.0);
+        }
+        hf.setDriverProjectedLaps(avgHeatLaps);
+      } else {
+        hf.setPredictedWinnerId("");
+        hf.setDriverProjectedLaps(new HashMap<>());
       }
-      hf.setDriverProjectedLaps(avgHeatLaps);
       heatForecasts.add(hf);
     }
 

@@ -37,12 +37,16 @@ export class DefaultPredictionResultsComponent implements OnInit {
   }
 
   loadPredictions() {
-    const raceId = this.raceService.getRace()?.entity_id || "current";
-    this.predictionService.getRacePredictions(raceId).subscribe((record) => {
-      this.predictionRecord = record;
-      this.isLoading = false;
-      this.cdr.markForCheck();
-    });
+    const race = this.raceService.getRace();
+    const raceId = race?.entity_id || "current";
+    const isDemo = race?.practice || false;
+    this.predictionService
+      .getRacePredictions(raceId, isDemo)
+      .subscribe((record) => {
+        this.predictionRecord = record;
+        this.isLoading = false;
+        this.cdr.markForCheck();
+      });
 
     this.predictionService
       .getPredictionEvaluation(raceId)

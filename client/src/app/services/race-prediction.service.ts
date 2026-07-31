@@ -78,7 +78,7 @@ export class RacePredictionService {
     isDemo: boolean = false,
   ): Observable<RacePredictionRecord | null> {
     const baseUrl = this.dataService.serverUrl || "";
-    const url = `${baseUrl}/api/predictions/races/${raceId}?isDemo=${isDemo}`;
+    const url = `${baseUrl}/api/predictions/races/${raceId}?isDemo=${isDemo}&t=${Date.now()}`;
     return this.http
       .get<RacePredictionRecord>(url)
       .pipe(catchError(() => of(null)));

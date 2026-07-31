@@ -1351,28 +1351,43 @@ public class DatabaseTaskHandler {
   }
 
   private boolean isStalePredictionRecord(RacePredictionRecord record) {
-    if (record == null || record.getPreRace() == null) return true;
+    if (record == null || record.getPreRace() == null) {
+      logger.info("PREDICTION: Stale because record or preRace is null");
+      return true;
+    }
     List<RacePredictionRecord.DriverProjection> standings =
         record.getPreRace().getProjectedStandings();
-    if (standings == null || standings.isEmpty()) return true;
+    if (standings == null || standings.isEmpty()) {
+      logger.info("PREDICTION: Stale because standings is null or empty");
+      return true;
+    }
 
     double totalWinProb = 0.0;
     Set<Integer> ranks = new HashSet<>();
     for (RacePredictionRecord.DriverProjection dp : standings) {
-      if (dp == null || dp.getDriverId() == null) return true;
+      if (dp == null || dp.getDriverId() == null) {
+        logger.info("PREDICTION: Stale because driver projection is null");
+        return true;
+      }
       if ("EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())
           || "Empty Lane".equalsIgnoreCase(dp.getDriverName())) {
+        logger.info("PREDICTION: Stale because empty lane driver found");
         return true;
       }
-      if (ranks.contains(dp.getProjectedRank())) {
-        return true;
+      if (dp.getProjectedRank() != -1) {
+        if (ranks.contains(dp.getProjectedRank())) {
+          logger.info("PREDICTION: Stale because duplicate rank found: " + dp.getProjectedRank());
+          return true;
+        }
+        ranks.add(dp.getProjectedRank());
       }
-      ranks.add(dp.getProjectedRank());
       totalWinProb += dp.getWinProbability();
     }
 
-    if (standings.size() > 1 && totalWinProb < 0.95) {
-      return true;
+    if (standings.size() > 1 && totalWinProb >= 0.0 && totalWinProb < 0.95) {
+      logger.info("PREDICTION: Stale because totalWinProb < 0.95: " + totalWinProb);
+      // return true; // Disabled because this causes an infinite loop of overwriting realtime
+      // snapshots
     }
 
     return false;
@@ -1386,10 +1401,21 @@ public class DatabaseTaskHandler {
       boolean forceRecalc =
           "true".equals(ctx.queryParam("force")) || "true".equals(ctx.queryParam("recalculate"));
       DatabaseService dbService = DatabaseService.getInstance();
-      MongoDatabase database = databaseContext != null ? databaseContext.getDatabase() : null;
+      DatabaseContext reqCtx = (DatabaseContext) ctx.attribute(DatabaseContext.class.getName());
+      MongoDatabase database =
+          reqCtx != null
+              ? reqCtx.getDatabase()
+              : (databaseContext != null ? databaseContext.getDatabase() : null);
 
       com.antigravity.race.Race activeRace = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
+
+      // Auto-detect demo mode from the active running race
+      if (!isDemo && activeRace != null && activeRace.getRaceModel() != null) {
+        if ("current".equals(raceId) || activeRace.getRaceModel().getEntityId().equals(raceId)) {
+          isDemo = activeRace.isDemoMode();
+        }
+      }
 
       String targetRaceId = raceId;
       if ("current".equals(raceId) && activeRace != null && activeRace.getRaceModel() != null) {
@@ -1438,8 +1464,25 @@ public class DatabaseTaskHandler {
       boolean isDemo =
           "true".equals(ctx.queryParam("demo")) || "true".equals(ctx.queryParam("isDemo"));
       DatabaseService dbService = DatabaseService.getInstance();
+
+      com.antigravity.race.Race activeRace = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+
+      // Auto-detect demo mode from the active running race
+      if (!isDemo && activeRace != null && activeRace.getRaceModel() != null) {
+        if ("current".equals(raceId) || activeRace.getRaceModel().getEntityId().equals(raceId)) {
+          isDemo = activeRace.isDemoMode();
+        }
+      }
+
+      String targetRaceId = raceId;
+      if ("current".equals(raceId) && activeRace != null && activeRace.getRaceModel() != null) {
+        targetRaceId = activeRace.getRaceModel().getEntityId();
+      }
+
       PredictionEvaluationRecord eval =
-          dbService.getPredictionEvaluationRecord(databaseContext.getDatabase(), raceId, isDemo);
+          dbService.getPredictionEvaluationRecord(
+              databaseContext.getDatabase(), targetRaceId, isDemo);
       if (eval == null) {
         ctx.status(404).result("Prediction evaluation record not found");
         return;

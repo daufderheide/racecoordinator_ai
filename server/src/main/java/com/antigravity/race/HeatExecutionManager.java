@@ -994,7 +994,12 @@ public class HeatExecutionManager {
 
       if (heats != null) {
         for (int i = 0; i <= heatIdx; i++) {
-          Heat h = heats.get(i);
+          Heat h;
+          if (i == heatIdx && this.race.getCurrentHeat() != null) {
+            h = this.race.getCurrentHeat();
+          } else {
+            h = heats.get(i);
+          }
           if (h != null && h.getDrivers() != null) {
             for (DriverHeatData dhd : h.getDrivers()) {
               if (dhd == null || dhd.getDriver() == null) continue;
@@ -1038,6 +1043,14 @@ public class HeatExecutionManager {
               this.race.isDemoMode());
     } catch (Exception e) {
       logger.error("Error updating realtime prediction on lap", e);
+      try {
+        java.io.PrintWriter pw =
+            new java.io.PrintWriter(new java.io.FileWriter("/tmp/antigravity_error.log", true));
+        pw.println("ERROR IN updateRealtimePredictionOnLap:");
+        e.printStackTrace(pw);
+        pw.close();
+      } catch (Exception ex) {
+      }
     }
   }
 }

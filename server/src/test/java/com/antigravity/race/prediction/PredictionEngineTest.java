@@ -351,4 +351,47 @@ public class PredictionEngineTest {
 
     assertTrue(d1ProjLaps >= 40.0 && d1ProjLaps < 42.0);
   }
+
+  @Test
+  public void testColdStartNoData() {
+    PredictionSnapshot snapshot =
+        engine.generatePreRacePrediction(null, participants, heats, new HashMap<>());
+
+    assertNotNull(snapshot);
+
+    for (DriverProjection dp : snapshot.getProjectedStandings()) {
+      assertEquals(-1.0, dp.getWinProbability(), 0.001);
+      assertEquals(-1.0, dp.getProjectedLaps(), 0.001);
+      assertEquals(-1, dp.getProjectedRank());
+    }
+  }
+
+  @Test
+  public void testColdStartWithOneLap() {
+    Map<String, PredictionEngine.DriverHeatState> driverHeatStates = new HashMap<>();
+
+    PredictionEngine.DriverHeatState state = new PredictionEngine.DriverHeatState();
+    state.totalLapsCompleted = 0;
+    state.currentHeatLapTimes = new ArrayList<>();
+    state.currentHeatLapTimes.add(5.5); // One lap!
+    state.currentHeatElapsedSec = 5.5;
+
+    driverHeatStates.put("d1", state);
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(
+            null, participants, heats, new HashMap<>(), 0, driverHeatStates);
+
+    assertNotNull(snapshot);
+
+    for (DriverProjection dp : snapshot.getProjectedStandings()) {
+      System.out.println(
+          "Driver "
+              + dp.getDriverId()
+              + " winProb: "
+              + dp.getWinProbability()
+              + " laps: "
+              + dp.getProjectedLaps());
+    }
+  }
 }

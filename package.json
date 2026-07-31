@@ -31,5 +31,8 @@
     "server/**/*.java": [
       "bash -c 'cd server && mvn spotless:apply'"
     ]
+  },
+  "dependencies": {
+    "mongodb": "^7.5.0"
   }
 }

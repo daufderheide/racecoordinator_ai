@@ -25,6 +25,7 @@ import {
 } from "@angular/router";
 import * as QRCode from "qrcode";
 import { Observable, Subject, Subscription } from "rxjs";
+import { debounceTime } from "rxjs/operators";
 import { LoginDialogComponent } from "@app/components/login-dialog/login-dialog.component";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
@@ -601,6 +602,7 @@ export class DefaultRacedayComponent
 
   private dropdownIconCache = new Map<string, string>();
   private deactivateSubject = new Subject<boolean>();
+  private livePredictionSubject = new Subject<void>();
 
   // Layout customization state
   isUIEditorMode = input<boolean>(false);
@@ -813,6 +815,15 @@ export class DefaultRacedayComponent
     this.subscribeToLapEvents();
     this.subscribeToLiveUpdates();
     this.subscribeToUIEvents();
+
+    this.subscriptions.push(
+      this.livePredictionSubject.pipe(debounceTime(500)).subscribe(() => {
+        if (!this.isDestroyed) {
+          this.loadPredictionsForCurrentRace();
+          this.cdr.markForCheck();
+        }
+      }),
+    );
   }
 
   private setupInitialState() {
@@ -1089,8 +1100,7 @@ export class DefaultRacedayComponent
 
   private handleLapEvent(lap: any, driverData: DriverHeatData) {
     if (!this.isDestroyed) {
-      this.loadPredictionsForCurrentRace();
-      this.cdr.markForCheck();
+      this.livePredictionSubject.next();
     }
 
     const driver = driverData.driver;
@@ -1914,11 +1924,15 @@ export class DefaultRacedayComponent
   protected loadPredictionsForCurrentRace() {
     if (this.isUIEditorMode() || !this.predictionService) return;
     const raceId = this.race?.entity_id || "current";
-    this.predictionService.getRacePredictions(raceId).subscribe((record) => {
-      if (record) {
-        this.applyPredictionsToDrivers(record);
-      }
-    });
+    const isDemo = this.race?.practice || false;
+    this.predictionService
+      .getRacePredictions(raceId, isDemo)
+      .subscribe((record) => {
+        if (record) {
+          this.applyPredictionsToDrivers(record);
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   protected applyPredictionsToDrivers(record: RacePredictionRecord) {
@@ -1928,7 +1942,56 @@ export class DefaultRacedayComponent
         ? record.realtime_snapshots[record.realtime_snapshots.length - 1]
         : record.pre_race;
 
-    if (!snapshot || !snapshot.projected_standings) return;
+    const allDrivers = [
+      ...(this.sortedHeatDrivers || []),
+      ...(this.heat?.heatDrivers || []),
+    ];
+
+    let actualLapsRun = 0;
+    if (this.participants && this.participants.length > 0) {
+      for (const p of this.participants) {
+        if (p.totalLaps) {
+          actualLapsRun += p.totalLaps;
+        }
+      }
+    } else {
+      for (const hd of allDrivers) {
+        if (hd && (hd as any).totalLaps !== undefined) {
+          actualLapsRun += (hd as any).totalLaps;
+        } else if (hd && hd.lapTimes) {
+          actualLapsRun += hd.lapTimes.length;
+        }
+      }
+    }
+
+    console.log("[DEBUG-V3] applyPredictionsToDrivers", {
+      completed_laps: snapshot?.completed_laps,
+      actualLapsRun: actualLapsRun,
+      standings: snapshot?.projected_standings,
+    });
+
+    if (!snapshot || !snapshot.projected_standings || actualLapsRun === 0) {
+      console.log("[DEBUG-V3] Hiding predictions, actual laps is 0");
+      // Hide predictions until at least one lap is run
+      for (const hd of allDrivers) {
+        if (!hd) continue;
+        (hd as any).winProbability = undefined;
+        (hd as any).projectedRank = undefined;
+        (hd as any).projectedLaps = undefined;
+        if (hd.driver) {
+          (hd.driver as any).winProbability = undefined;
+          (hd.driver as any).projectedRank = undefined;
+          (hd.driver as any).projectedLaps = undefined;
+        }
+        if (hd.participant) {
+          (hd.participant as any).winProbability = undefined;
+          (hd.participant as any).projectedRank = undefined;
+          (hd.participant as any).projectedLaps = undefined;
+        }
+      }
+      this.cdr.markForCheck();
+      return;
+    }
 
     const projectionsMap = new Map<string, DriverProjection>();
     for (const proj of snapshot.projected_standings) {
@@ -1939,11 +2002,6 @@ export class DefaultRacedayComponent
         projectionsMap.set(proj.driver_name, proj);
       }
     }
-
-    const allDrivers = [
-      ...(this.sortedHeatDrivers || []),
-      ...(this.heat?.heatDrivers || []),
-    ];
 
     for (const hd of allDrivers) {
       if (!hd) continue;
@@ -1957,6 +2015,7 @@ export class DefaultRacedayComponent
         d?.entity_id ||
         hd.participant?.driver?.entity_id ||
         (hd.participant as any)?.driver_id ||
+        hd.participant?.objectId ||
         hd.objectId;
       const driverName = d?.name || hd.participant?.driver?.name || d?.nickname;
 

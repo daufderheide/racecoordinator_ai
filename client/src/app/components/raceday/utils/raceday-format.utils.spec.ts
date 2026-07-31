@@ -117,4 +117,66 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("--.---");
     });
   });
+
+  describe("formatValue - Predictions", () => {
+    it("should return --% if prob is less than 0", () => {
+      const mockHd = { winProbability: -1 } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "winProbability",
+        -1,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--%");
+    });
+
+    it("should return the formatted percentage if prob is valid", () => {
+      const mockHd = { winProbability: 0.85 } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "winProbability",
+        0.85,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("85%");
+    });
+
+    it("should return projected laps if type is laps", () => {
+      const mockHd = { projectedLaps: 12.5 } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "projectedLaps",
+        12.5,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("12.5");
+    });
+
+    it("should return -- if projected laps is less than 0", () => {
+      const mockHd = { projectedLaps: -1.0 } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "projectedLaps",
+        -1.0,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--");
+    });
+
+    it("should return -- if projected rank is less than 0", () => {
+      const mockHd = { projectedRank: -1 } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "projectedRank",
+        -1,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--");
+    });
+  });
 });

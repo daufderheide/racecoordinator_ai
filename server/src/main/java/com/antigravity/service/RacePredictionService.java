@@ -9,6 +9,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
 import com.mongodb.client.MongoDatabase;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,11 +84,20 @@ public class RacePredictionService {
     PredictionSnapshot preRaceSnapshot =
         engine.generatePreRacePrediction(raceModel, participants, heats, statsMap);
 
-    RacePredictionRecord record = new RacePredictionRecord();
-    record.setId(new ObjectId());
-    record.setRaceId(raceId);
+    RacePredictionRecord record = null;
+    if (database != null) {
+      record = DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
+    }
+    if (record == null) {
+      record = new RacePredictionRecord();
+      record.setId(new ObjectId());
+      record.setRaceId(raceId);
+    }
     record.setTimestamp(System.currentTimeMillis());
     record.setPreRace(preRaceSnapshot);
+    if (record.getRealtimeSnapshots() == null) {
+      record.setRealtimeSnapshots(new ArrayList<>());
+    }
 
     if (database != null) {
       DatabaseService.getInstance().saveRacePredictionRecord(database, record, isDemo);
@@ -130,10 +140,24 @@ public class RacePredictionService {
     if (database != null && raceId != null) {
       RacePredictionRecord record =
           DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
-      if (record != null) {
-        record.getRealtimeSnapshots().add(snapshot);
-        DatabaseService.getInstance().saveRacePredictionRecord(database, record, isDemo);
+      if (record == null) {
+        record = new RacePredictionRecord();
+        record.setRaceId(raceId);
+        record.setTimestamp(System.currentTimeMillis());
+        record.setRealtimeSnapshots(new ArrayList<>());
+        record.setPreRace(snapshot);
       }
+      if (record.getRealtimeSnapshots() == null) {
+        record.setRealtimeSnapshots(new ArrayList<>());
+      }
+      record.getRealtimeSnapshots().add(snapshot);
+
+      // Keep only last N to prevent unbounded growth?
+      if (record.getRealtimeSnapshots().size() > 50) { // e.g. keep last 50
+        record.getRealtimeSnapshots().remove(0);
+      }
+
+      DatabaseService.getInstance().saveRacePredictionRecord(database, record, isDemo);
     }
 
     return snapshot;

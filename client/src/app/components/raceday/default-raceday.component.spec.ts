@@ -4972,4 +4972,119 @@ describe("DefaultRacedayComponent", () => {
       expect(component.dashboardHeight).toBe(500);
     });
   });
+
+  describe("applyPredictionsToDrivers (Cold Start)", () => {
+    it("should hide predictions (set to undefined) if no laps have been run across all drivers", () => {
+      // Mock participants and heat drivers with 0 laps
+      const hd1 = {
+        actualDriver: { entity_id: "1" },
+        participant: { entity_id: "1" },
+        driver: { entity_id: "1" },
+        totalLaps: 0,
+      };
+      const hd2 = {
+        actualDriver: { entity_id: "2" },
+        participant: { entity_id: "2" },
+        driver: { entity_id: "2" },
+        totalLaps: 0,
+      };
+
+      (component as any).participants = [
+        { entity_id: "1", totalLaps: 0 } as any,
+        { entity_id: "2", totalLaps: 0 } as any,
+      ];
+      (component as any).heat = {
+        heatDrivers: [hd1, hd2],
+      } as any;
+      (component as any).sortedHeatDrivers = [];
+
+      const mockSnapshot = {
+        projected_standings: [
+          {
+            driver_id: "1",
+            win_probability: 0.8,
+            podium_probability: 0.9,
+            projected_laps: 10,
+            projected_rank: 1,
+          },
+          {
+            driver_id: "2",
+            win_probability: 0.2,
+            podium_probability: 0.3,
+            projected_laps: 8,
+            projected_rank: 2,
+          },
+        ],
+        heat_forecasts: [],
+      } as any;
+
+      const mockRecord = {
+        pre_race: mockSnapshot,
+      } as any;
+
+      (component as any).applyPredictionsToDrivers(mockRecord);
+
+      expect((hd1 as any).winProbability).toBeUndefined();
+      expect((hd1 as any).projectedLaps).toBeUndefined();
+
+      expect((hd2 as any).winProbability).toBeUndefined();
+      expect((hd2 as any).projectedLaps).toBeUndefined();
+    });
+
+    it("should apply predictions normally if at least one lap has been run", () => {
+      const hd1 = {
+        actualDriver: { entity_id: "1" },
+        participant: { entity_id: "1" },
+        driver: { entity_id: "1" },
+        totalLaps: 0,
+      };
+      const hd2 = {
+        actualDriver: { entity_id: "2" },
+        participant: { entity_id: "2" },
+        driver: { entity_id: "2" },
+        totalLaps: 1,
+      }; // one lap run!
+
+      (component as any).participants = [
+        { entity_id: "1", totalLaps: 0 } as any,
+        { entity_id: "2", totalLaps: 1 } as any,
+      ];
+      (component as any).heat = {
+        heatDrivers: [hd1, hd2],
+      } as any;
+      (component as any).sortedHeatDrivers = [];
+
+      const mockSnapshot = {
+        projected_standings: [
+          {
+            driver_id: "1",
+            win_probability: 0.8,
+            podium_probability: 0.9,
+            projected_laps: 10,
+            projected_rank: 1,
+          },
+          {
+            driver_id: "2",
+            win_probability: 0.2,
+            podium_probability: 0.3,
+            projected_laps: 8,
+            projected_rank: 2,
+          },
+        ],
+        heat_forecasts: [],
+      } as any;
+
+      const mockRecord = {
+        pre_race: mockSnapshot,
+      } as any;
+
+      (component as any).applyPredictionsToDrivers(mockRecord);
+
+      expect((hd1 as any).winProbability).toBe(0.8);
+      expect((hd1 as any).projectedLaps).toBe(10);
+
+      expect((hd2 as any).winProbability).toBe(0.2);
+      expect((hd2 as any).projectedLaps).toBe(8);
+    });
+  });
 });
