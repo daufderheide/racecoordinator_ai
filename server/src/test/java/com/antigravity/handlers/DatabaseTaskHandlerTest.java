@@ -40,7 +40,7 @@ public class DatabaseTaskHandlerTest {
 
     Method method =
         DatabaseTaskHandler.class.getDeclaredMethod(
-            "isStalePredictionRecord", RacePredictionRecord.class);
+            "isStalePredictionRecord", RacePredictionRecord.class, com.antigravity.race.Race.class);
     method.setAccessible(true);
 
     RacePredictionRecord record = new RacePredictionRecord();
@@ -57,7 +57,7 @@ public class DatabaseTaskHandlerTest {
     preRace.setProjectedStandings(standings);
     record.setPreRace(preRace);
 
-    boolean isStale = (Boolean) method.invoke(handler, record);
+    boolean isStale = (Boolean) method.invoke(handler, record, null);
     assertTrue("Record should be stale if any rank is -1", isStale);
 
     // Test with valid ranks
@@ -67,7 +67,7 @@ public class DatabaseTaskHandlerTest {
     standings.add(
         new RacePredictionRecord.DriverProjection("d_2", "Driver 2", 2, 98.0, 0.0, 0.4, 0.8));
 
-    isStale = (Boolean) method.invoke(handler, record);
+    isStale = (Boolean) method.invoke(handler, record, null);
     assertFalse(
         "Record should not be stale if ranks are valid and no empty lane/duplicates", isStale);
   }

@@ -1351,10 +1351,6 @@ public class DatabaseTaskHandler {
     }
   }
 
-  private boolean isStalePredictionRecord(RacePredictionRecord record) {
-    return isStalePredictionRecord(record, null);
-  }
-
   private boolean isStalePredictionRecord(
       RacePredictionRecord record, com.antigravity.race.Race activeRace) { // fqn-collision
     if (record == null || record.getPreRace() == null) {
