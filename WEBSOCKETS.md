@@ -1,6 +1,6 @@
 # Race Coordinator AI: WebSocket API Reference
 
-Date reviewed: 07/14/2026
+Date reviewed: 08/01/2026
 
 The server exposes two WebSocket channels to broadcast real-time state changes and hardware events. Both channels stream binary payloads containing serialized **Protocol Buffers (Protobuf)** messages and enforce connection parameters.
 
@@ -221,6 +221,24 @@ If a race has already been started by a Director on the host machine, connecting
 * **Endpoint Path**: `/api/interface-data`
 * **Data Format**: Binary payloads (`ByteBuffer` containing `InterfaceEvent` Protobuf bytes).
 * **Purpose**: Streams real-time connection statuses, serial communication statistics, pin events, and diagnostic alerts from the track hardware interfaces.
+
+### [PROPOSAL] Bi-directional Writing (Client-to-Server)
+
+> [!IMPORTANT]
+> **API Proposal**: The following capability is currently a proposed design and documentation-only PR. Actual code implementation in the server will occur in a separate phase after codeowners review and merge this proposal.
+
+* **Direction**: Client-to-Server
+* **Allowed Client Roles**: `DIRECTOR` (Requires local IP origin or valid security token query parameter). Non-director sessions attempting to write will be ignored or terminated.
+* **Payload Format**: Binary `ByteBuffer` containing serialized `InterfaceEvent` Protobuf bytes.
+* **Supported Messages**:
+  - `LapEvent` (`lap`): Injects a lap trigger for the specified lane (`lane`), duration (`lap_time` in seconds), and virtual interface details.
+  - `SegmentEvent` (`segment`): Injects a sector/segment crossing time.
+  - `CallbuttonEvent` (`callbutton`): Simulates call button presses to pause/resume the race status.
+* **Server Processing Flow**:
+  1. The server receives the binary payload and decodes it as an `InterfaceEvent`.
+  2. The server verifies that the client has `DIRECTOR` elevation.
+  3. If a race is running, the server forwards the event to the active `Race` object, invoking `onLap`, `onSegment`, or `onCallbutton` directly as if the event originated from a physical interface protocol.
+  4. The server broadcasts the event to all other clients connected to `/api/interface-data` for live UI rendering.
 
 ### Hardware Resource Management
 * **Auto-Release Protocol**: To free up serial ports and host resources, the server monitors active interface subscribers:
