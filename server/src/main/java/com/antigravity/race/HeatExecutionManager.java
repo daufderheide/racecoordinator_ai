@@ -1012,9 +1012,14 @@ public class HeatExecutionManager {
 
                 if (i < heatIdx) {
                   state.totalLapsCompleted += dhd.getLapCount();
+                  double pastElapsed = Math.max(0, dhd.getReactionTime());
+                  for (DriverHeatData.LapData lap : dhd.getLaps()) {
+                    if (lap.getLapTime() > 0) pastElapsed += lap.getLapTime();
+                  }
+                  state.totalElapsedSec += pastElapsed;
                 } else {
                   state.totalLapsCompleted += dhd.getLapCount();
-
+                  state.currentHeatLapsCompleted = dhd.getLapCount();
                   double elapsed = Math.max(0, dhd.getReactionTime());
                   for (DriverHeatData.LapData lap : dhd.getLaps()) {
                     if (lap.getLapTime() > 0) {
@@ -1023,6 +1028,7 @@ public class HeatExecutionManager {
                     }
                   }
                   elapsed += Math.max(0, dhd.getPendingLapTime());
+                  state.currentHeatPendingLapTime = Math.max(0, dhd.getPendingLapTime());
                   state.currentHeatElapsedSec = elapsed;
                 }
               }

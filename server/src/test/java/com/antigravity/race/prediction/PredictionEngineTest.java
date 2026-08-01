@@ -337,8 +337,16 @@ public class PredictionEngineTest {
     d2State.currentHeatElapsedSec = 179.0;
     actualLapsSoFar.put("d2", d2State);
 
+    com.antigravity.models.Race raceModel = mock(com.antigravity.models.Race.class);
+    com.antigravity.models.HeatScoring scoring = mock(com.antigravity.models.HeatScoring.class);
+    when(raceModel.getHeatScoring()).thenReturn(scoring);
+    when(scoring.getFinishMethod())
+        .thenReturn(com.antigravity.models.HeatScoring.FinishMethod.Timed);
+    when(scoring.getFinishValue()).thenReturn(180L);
+
     PredictionSnapshot snapshot =
-        engine.generateRealtimePrediction(null, participants, heats, statsMap, 0, actualLapsSoFar);
+        engine.generateRealtimePrediction(
+            raceModel, participants, heats, statsMap, 0, actualLapsSoFar);
 
     assertNotNull(snapshot);
 
@@ -393,5 +401,136 @@ public class PredictionEngineTest {
               + " laps: "
               + dp.getProjectedLaps());
     }
+  }
+
+  @Test
+  public void testWinProbabilityCappedAt99() {
+    Map<String, PredictionEngine.DriverHeatState> actualLapsSoFar = new HashMap<>();
+
+    // Driver 1 is massively ahead, should win 100% of simulations
+    PredictionEngine.DriverHeatState d1State = new PredictionEngine.DriverHeatState();
+    d1State.totalLapsCompleted = 100.0;
+    actualLapsSoFar.put("d1", d1State);
+
+    PredictionEngine.DriverHeatState d2State = new PredictionEngine.DriverHeatState();
+    d2State.totalLapsCompleted = 0.0;
+    actualLapsSoFar.put("d2", d2State);
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(null, participants, heats, statsMap, 0, actualLapsSoFar);
+
+    assertNotNull(snapshot);
+    // Because there is more than 1 participant, max win prob is capped at 0.99
+    assertEquals(0.99, snapshot.getWinProbabilities().get("d1"), 0.001);
+  }
+
+  @Test
+  public void testPendingLapTimeCreditedInTimedRace() {
+    Map<String, PredictionEngine.DriverHeatState> actualLapsSoFar = new HashMap<>();
+
+    // Both drivers have completed 10 laps in 100 seconds
+    PredictionEngine.DriverHeatState d1State = new PredictionEngine.DriverHeatState();
+    d1State.totalLapsCompleted = 10.0;
+    d1State.currentHeatLapsCompleted = 10.0;
+    d1State.currentHeatElapsedSec = 100.0;
+    // But d1 has spent 4s on the current lap
+    d1State.currentHeatPendingLapTime = 4.0;
+    actualLapsSoFar.put("d1", d1State);
+
+    PredictionEngine.DriverHeatState d2State = new PredictionEngine.DriverHeatState();
+    d2State.totalLapsCompleted = 10.0;
+    d2State.currentHeatLapsCompleted = 10.0;
+    d2State.currentHeatElapsedSec = 100.0;
+    // d2 has only spent 1s on the current lap
+    d2State.currentHeatPendingLapTime = 1.0;
+    actualLapsSoFar.put("d2", d2State);
+
+    // Give them identical stats
+    statsMap.get("d1").setOverallMedianLapTime(5.0);
+    statsMap.get("d2").setOverallMedianLapTime(5.0);
+
+    com.antigravity.models.Race raceModel = mock(com.antigravity.models.Race.class);
+    com.antigravity.models.HeatScoring scoring = mock(com.antigravity.models.HeatScoring.class);
+    when(raceModel.getHeatScoring()).thenReturn(scoring);
+    when(scoring.getFinishMethod())
+        .thenReturn(com.antigravity.models.HeatScoring.FinishMethod.Timed);
+    when(scoring.getFinishValue()).thenReturn(180L);
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(
+            raceModel, participants, heats, statsMap, 0, actualLapsSoFar);
+
+    // Driver 1 should get more simulated laps because they have a larger pending lap time credit
+    double d1Laps =
+        snapshot.getProjectedStandings().stream()
+            .filter(p -> p.getDriverId().equals("d1"))
+            .findFirst()
+            .get()
+            .getProjectedLaps();
+    double d2Laps =
+        snapshot.getProjectedStandings().stream()
+            .filter(p -> p.getDriverId().equals("d2"))
+            .findFirst()
+            .get()
+            .getProjectedLaps();
+
+    assertTrue("Driver 1 should project more laps due to pending time", d1Laps > d2Laps);
+    assertTrue(
+        "Driver 1 should have a higher win probability",
+        snapshot.getWinProbabilities().get("d1") > snapshot.getWinProbabilities().get("d2"));
+  }
+
+  @Test
+  public void testPendingLapTimeCreditedInLapRace() {
+    Map<String, PredictionEngine.DriverHeatState> actualLapsSoFar = new HashMap<>();
+
+    PredictionEngine.DriverHeatState d1State = new PredictionEngine.DriverHeatState();
+    d1State.totalLapsCompleted = 10.0;
+    d1State.currentHeatLapsCompleted = 10.0;
+    d1State.currentHeatElapsedSec = 100.0;
+    d1State.currentHeatPendingLapTime = 4.0;
+    actualLapsSoFar.put("d1", d1State);
+
+    PredictionEngine.DriverHeatState d2State = new PredictionEngine.DriverHeatState();
+    d2State.totalLapsCompleted = 10.0;
+    d2State.currentHeatLapsCompleted = 10.0;
+    d2State.currentHeatElapsedSec = 100.0;
+    d2State.currentHeatPendingLapTime = 1.0;
+    actualLapsSoFar.put("d2", d2State);
+
+    statsMap.get("d1").setOverallMedianLapTime(5.0);
+    statsMap.get("d2").setOverallMedianLapTime(5.0);
+
+    com.antigravity.models.Race raceModel = mock(com.antigravity.models.Race.class);
+    com.antigravity.models.HeatScoring scoring = mock(com.antigravity.models.HeatScoring.class);
+    when(raceModel.getHeatScoring()).thenReturn(scoring);
+    when(scoring.getFinishMethod()).thenReturn(com.antigravity.models.HeatScoring.FinishMethod.Lap);
+    when(scoring.getFinishValue()).thenReturn(20L); // Race to 20 laps
+
+    PredictionSnapshot snapshot =
+        engine.generateRealtimePrediction(
+            raceModel, participants, heats, statsMap, 0, actualLapsSoFar);
+
+    // In a Lap race, both drivers finish with exactly 20 laps
+    double d1Laps =
+        snapshot.getProjectedStandings().stream()
+            .filter(p -> p.getDriverId().equals("d1"))
+            .findFirst()
+            .get()
+            .getProjectedLaps();
+    double d2Laps =
+        snapshot.getProjectedStandings().stream()
+            .filter(p -> p.getDriverId().equals("d2"))
+            .findFirst()
+            .get()
+            .getProjectedLaps();
+
+    assertEquals(20.0, d1Laps, 0.001);
+    assertEquals(20.0, d2Laps, 0.001);
+
+    // But Driver 1 finishes in less time, so they win
+    assertTrue(
+        "Driver 1 should win the lap race",
+        snapshot.getWinProbabilities().get("d1") > snapshot.getWinProbabilities().get("d2"));
   }
 }
