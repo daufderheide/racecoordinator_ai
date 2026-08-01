@@ -1380,6 +1380,9 @@ public class DatabaseTaskHandler {
           return true;
         }
         ranks.add(dp.getProjectedRank());
+      } else {
+        logger.info("PREDICTION: Stale because rank is -1 (fallback prediction)");
+        return true;
       }
       totalWinProb += dp.getWinProbability();
     }

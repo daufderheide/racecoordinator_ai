@@ -1390,6 +1390,150 @@ public class DatabaseService {
     }
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
+  public void updateDriverTrackStats(
+      MongoDatabase database, com.antigravity.race.Race race, boolean isDemo) { // fqn-collision
+    try {
+      if (database == null || race == null || race.getRaceModel() == null) return;
+      String trackId = race.getRaceModel().getTrackEntityId();
+      if (trackId == null || trackId.isEmpty()) return;
+
+      double minLapTime = race.getRaceModel().getMinLapTime();
+
+      for (RaceParticipant rp : race.getDrivers()) {
+        if (rp.getDriver() == null
+            || rp.getDriver().getEntityId() == null
+            || rp.getDriver().getEntityId().isEmpty()) {
+          continue;
+        }
+        String driverId = rp.getDriver().getEntityId();
+
+        DriverTrackStats stats = getDriverTrackStats(database, driverId, trackId, isDemo);
+        if (stats == null) {
+          stats = new DriverTrackStats();
+          stats.setId(new ObjectId());
+          stats.setDriverId(driverId);
+          stats.setTrackId(trackId);
+        }
+
+        stats.setTotalRaces(stats.getTotalRaces() + 1);
+
+        int heatsCompleted = 0;
+        int lapsCompleted = 0;
+        Map<Integer, List<Double>> laneLaps = new HashMap<>();
+
+        if (race.getHeats() != null) {
+          for (Heat heat : race.getHeats()) {
+            if (heat.getDrivers() != null) {
+              for (int laneIdx = 0; laneIdx < heat.getDrivers().size(); laneIdx++) {
+                DriverHeatData dhd = heat.getDrivers().get(laneIdx);
+                if (dhd.getDriver() != null) {
+                  String heatDriverId =
+                      dhd.getDriver().getDriver() != null
+                          ? dhd.getDriver().getDriver().getEntityId()
+                          : null;
+                  if (driverId.equals(heatDriverId)) {
+                    heatsCompleted++;
+                    lapsCompleted += dhd.getLapCount();
+
+                    if (dhd.getLaps() != null) {
+                      logger.info(
+                          "updateDriverTrackStats: dhd laps count: {}", dhd.getLaps().size());
+                      List<Double> validLaps = new ArrayList<>();
+                      for (DriverHeatData.LapData lap : dhd.getLaps()) {
+                        if (lap.getLapTime() > 0
+                            && (minLapTime == 0 || lap.getLapTime() >= minLapTime)) {
+                          validLaps.add(lap.getLapTime());
+                        }
+                      }
+                      logger.info("updateDriverTrackStats: valid laps count: {}", validLaps.size());
+                      if (!validLaps.isEmpty()) {
+                        laneLaps.computeIfAbsent(laneIdx, k -> new ArrayList<>()).addAll(validLaps);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        stats.setTotalHeats(stats.getTotalHeats() + heatsCompleted);
+        stats.setTotalLaps(stats.getTotalLaps() + lapsCompleted);
+
+        List<DriverTrackStats.LanePaceStats> laneStatsList = stats.getLaneStats();
+        for (Map.Entry<Integer, List<Double>> entry : laneLaps.entrySet()) {
+          int laneIdx = entry.getKey();
+          List<Double> currentLaps = entry.getValue();
+          Collections.sort(currentLaps);
+          double currentMedian;
+          int size = currentLaps.size();
+          if (size % 2 == 0) {
+            currentMedian = (currentLaps.get(size / 2 - 1) + currentLaps.get(size / 2)) / 2.0;
+          } else {
+            currentMedian = currentLaps.get(size / 2);
+          }
+
+          double sum = 0;
+          for (double l : currentLaps) sum += l;
+          double mean = sum / size;
+          double sumSq = 0;
+          for (double l : currentLaps) sumSq += Math.pow(l - mean, 2);
+          double currentStdDev = Math.sqrt(sumSq / size);
+
+          DriverTrackStats.LanePaceStats existingLane = null;
+          for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
+            if (lps.getLaneIndex() == laneIdx) {
+              existingLane = lps;
+              break;
+            }
+          }
+          if (existingLane == null) {
+            existingLane = new DriverTrackStats.LanePaceStats();
+            existingLane.setLaneIndex(laneIdx);
+            existingLane.setMedianLapTime(currentMedian);
+            existingLane.setStdDev(currentStdDev);
+            laneStatsList.add(existingLane);
+          } else {
+            int oldHeats = Math.max(1, stats.getTotalHeats() - heatsCompleted);
+            double newMedian =
+                ((existingLane.getMedianLapTime() * oldHeats) + (currentMedian * heatsCompleted))
+                    / (oldHeats + heatsCompleted);
+            double newStdDev =
+                ((existingLane.getStdDev() * oldHeats) + (currentStdDev * heatsCompleted))
+                    / (oldHeats + heatsCompleted);
+            existingLane.setMedianLapTime(newMedian);
+            existingLane.setStdDev(newStdDev);
+          }
+        }
+
+        if (!laneStatsList.isEmpty()) {
+          double sumMedians = 0;
+          int count = 0;
+          for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
+            if (lps.getMedianLapTime() > 0) {
+              sumMedians += lps.getMedianLapTime();
+              count++;
+            }
+          }
+          if (count > 0) {
+            stats.setOverallMedianLapTime(sumMedians / count);
+          }
+        }
+
+        stats.setLastUpdated(System.currentTimeMillis());
+
+        logger.info(
+            "updateDriverTrackStats: About to save stats for driverId={} with overallMedianLapTime={}",
+            stats.getDriverId(),
+            stats.getOverallMedianLapTime());
+        saveDriverTrackStats(database, stats, isDemo);
+      }
+    } catch (Throwable t) {
+      logger.error("updateDriverTrackStats: FAILED with throwable!", t);
+    }
+  }
+
   public void saveDriverTrackStats(MongoDatabase database, DriverTrackStats stats, boolean isDemo) {
     if (database == null
         || stats == null
@@ -1472,7 +1616,19 @@ public class DatabaseService {
       if (col == null) {
         return null;
       }
-      return col.find(Filters.eq("race_id", raceId)).first();
+      PredictionEvaluationRecord record = col.find(Filters.eq("race_id", raceId)).first();
+
+      // If we found a record but it's a baseline "no data" evaluation (rank == -1),
+      // it's meaningless and shouldn't be shown to the user. Delete it and return null.
+      if (record != null
+          && record.getDriverEvaluations() != null
+          && !record.getDriverEvaluations().isEmpty()
+          && record.getDriverEvaluations().get(0).getProjectedRank() == -1) {
+        col.deleteOne(Filters.eq("race_id", raceId));
+        return null;
+      }
+
+      return record;
     } catch (Exception e) {
       logger.error("Failed to get prediction evaluation record for race: {}", raceId, e);
       return null;

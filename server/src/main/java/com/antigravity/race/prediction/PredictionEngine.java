@@ -2,6 +2,7 @@ package com.antigravity.race.prediction;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverTrackStats;
+import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
 import com.antigravity.models.RacePredictionRecord.DriverProjection;
@@ -20,9 +21,6 @@ import java.util.Random;
 public class PredictionEngine {
 
   private static final int DEFAULT_SIMULATION_RUNS = 1000;
-  private static final double DEFAULT_LAP_TIME = 5.0; // Seconds fallback
-  private static final double DEFAULT_STD_DEV = 0.25;
-
   private final Random random;
 
   public PredictionEngine() {
@@ -59,6 +57,7 @@ public class PredictionEngine {
     public double totalElapsedSec = 0.0;
     public double currentHeatLapsCompleted = 0.0;
     public List<Double> currentHeatLapTimes = new ArrayList<>();
+    public List<Double> allRaceLapTimes = new ArrayList<>();
     public double currentHeatElapsedSec = 0.0;
     public double currentHeatPendingLapTime = 0.0;
   }
@@ -142,6 +141,7 @@ public class PredictionEngine {
     return false;
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   private PredictionSnapshot runSimulation(
       Race raceModel,
       List<RaceParticipant> participants,
@@ -168,13 +168,64 @@ public class PredictionEngine {
     Map<Integer, Map<String, Double>> heatProjectedLapsSum = new HashMap<>();
     initializeHeatStats(scheduledHeats, heatWinnerCounts, heatProjectedLapsSum);
 
-    com.antigravity.models.HeatScoring.FinishMethod finishMethod =
-        com.antigravity.models.HeatScoring.FinishMethod.Lap; // fqn-collision
+    FinishMethod finishMethod = FinishMethod.Lap;
     long finishValue = 15;
     if (raceModel != null && raceModel.getHeatScoring() != null) {
       finishMethod = raceModel.getHeatScoring().getFinishMethod();
       finishValue = raceModel.getHeatScoring().getFinishValue();
     }
+
+    double fallbackLapTime = 5.0;
+    double sum = 0;
+    int count = 0;
+
+    for (RaceParticipant rp : participants) {
+      if (rp == null || isParticipantEmpty(rp)) continue;
+      String driverId = getParticipantId(rp);
+      if (driverId == null || driverId.isEmpty()) continue;
+
+      double pace = 0;
+
+      if (driverHeatStates != null && driverHeatStates.containsKey(driverId)) {
+        DriverHeatState state = driverHeatStates.get(driverId);
+        if (state.allRaceLapTimes != null && !state.allRaceLapTimes.isEmpty()) {
+          List<Double> laps = new ArrayList<>(state.allRaceLapTimes);
+          Collections.sort(laps);
+          double m = laps.get(laps.size() / 2);
+          if (laps.size() % 2 == 0) m = (m + laps.get(laps.size() / 2 - 1)) / 2.0;
+          pace = m;
+        }
+      }
+
+      if (pace <= 0 && driverStatsMap != null && driverStatsMap.containsKey(driverId)) {
+        DriverTrackStats s = driverStatsMap.get(driverId);
+        if (s.getOverallMedianLapTime() > 0) {
+          pace = s.getOverallMedianLapTime();
+        } else if (s.getLaneStats() != null && !s.getLaneStats().isEmpty()) {
+          double laneSum = 0;
+          int laneCount = 0;
+          for (DriverTrackStats.LanePaceStats lps : s.getLaneStats()) {
+            if (lps.getMedianLapTime() > 0) {
+              laneSum += lps.getMedianLapTime();
+              laneCount++;
+            }
+          }
+          if (laneCount > 0) pace = laneSum / laneCount;
+        }
+      }
+
+      if (pace > 0) {
+        sum += pace;
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      fallbackLapTime = sum / count;
+    } else if (raceModel != null && raceModel.getMinLapTime() > 0) {
+      fallbackLapTime = raceModel.getMinLapTime() * 1.5;
+    }
+    double fallbackStdDev = fallbackLapTime * 0.05; // 5% variance fallback
 
     Map<String, Double> totalProjectedTime = new HashMap<>();
 
@@ -195,7 +246,9 @@ public class PredictionEngine {
             heatWinnerCounts,
             heatProjectedLapsSum,
             finishMethod,
-            finishValue);
+            finishValue,
+            fallbackLapTime,
+            fallbackStdDev);
       }
     }
 
@@ -296,8 +349,10 @@ public class PredictionEngine {
       Map<String, Double> totalProjectedTime,
       Map<Integer, Map<String, Integer>> heatWinnerCounts,
       Map<Integer, Map<String, Double>> heatProjectedLapsSum,
-      com.antigravity.models.HeatScoring.FinishMethod finishMethod, // fqn-collision
-      long finishValue) {
+      FinishMethod finishMethod,
+      long finishValue,
+      double fallbackLapTime,
+      double fallbackStdDev) {
 
     Map<String, Double> simLapsMap = new HashMap<>();
     Map<String, Double> simTimeMap = new HashMap<>();
@@ -341,7 +396,9 @@ public class PredictionEngine {
                 state,
                 h == currentHeatIndex,
                 finishMethod,
-                finishValue);
+                finishValue,
+                fallbackLapTime,
+                fallbackStdDev);
 
         simLapsMap.put(driverId, simLapsMap.getOrDefault(driverId, 0.0) + simRes.laps);
         simTimeMap.put(driverId, simTimeMap.getOrDefault(driverId, 0.0) + simRes.timeSec);
@@ -355,7 +412,7 @@ public class PredictionEngine {
                 : simRes.laps;
         double totalHeatTime = simRes.timeSec;
 
-        if (finishMethod == com.antigravity.models.HeatScoring.FinishMethod.Lap) { // fqn-collision
+        if (finishMethod == FinishMethod.Lap) {
           if (bestHeatLaps < 0 || totalHeatTime < bestHeatLaps) {
             bestHeatLaps = totalHeatTime;
             heatWinnerId = driverId;
@@ -523,11 +580,13 @@ public class PredictionEngine {
       Map<String, DriverTrackStats> driverStatsMap,
       DriverHeatState state,
       boolean isCurrentHeat,
-      com.antigravity.models.HeatScoring.FinishMethod finishMethod, // fqn-collision
-      long finishValue) {
+      FinishMethod finishMethod,
+      long finishValue,
+      double fallbackLapTime,
+      double fallbackStdDev) {
 
-    double histMean = DEFAULT_LAP_TIME;
-    double histStdDev = DEFAULT_STD_DEV;
+    double histMean = fallbackLapTime;
+    double histStdDev = fallbackStdDev;
     boolean hasHistory = false;
 
     if (driverStatsMap != null && driverStatsMap.containsKey(driverId)) {
@@ -553,10 +612,8 @@ public class PredictionEngine {
     double blendedMean = histMean;
     double blendedStdDev = histStdDev;
 
-    if (state != null
-        && state.currentHeatLapTimes != null
-        && !state.currentHeatLapTimes.isEmpty()) {
-      List<Double> laps = new ArrayList<>(state.currentHeatLapTimes);
+    if (state != null && state.allRaceLapTimes != null && !state.allRaceLapTimes.isEmpty()) {
+      List<Double> laps = new ArrayList<>(state.allRaceLapTimes);
       Collections.sort(laps);
 
       double empMean;
@@ -571,7 +628,7 @@ public class PredictionEngine {
         sumSq += Math.pow(l - empMean, 2);
       }
       double empStdDev = laps.size() > 1 ? Math.sqrt(sumSq / (laps.size() - 1)) : histStdDev;
-      if (empStdDev == 0) empStdDev = 0.05;
+      if (empStdDev == 0) empStdDev = fallbackStdDev;
       if (empStdDev < 0.15) empStdDev = 0.15; // Inject minimum variance
 
       int N = laps.size();
@@ -588,7 +645,7 @@ public class PredictionEngine {
       if (blendedStdDev < 0.15) blendedStdDev = 0.15;
     }
 
-    if (finishMethod == com.antigravity.models.HeatScoring.FinishMethod.Timed) { // fqn-collision
+    if (finishMethod == FinishMethod.Timed) {
       return simulateTimedHeat(blendedMean, blendedStdDev, finishValue, state, isCurrentHeat);
     } else {
       return simulateLapHeat(blendedMean, blendedStdDev, finishValue, state, isCurrentHeat);
@@ -706,6 +763,12 @@ public class PredictionEngine {
 
     Map<String, Integer> actualRankMap = new HashMap<>();
     Map<String, Double> actualLapsMap = new HashMap<>();
+
+    // Check if this was a baseline "no data" prediction (rank == -1)
+    if (!preRaceSnapshot.getProjectedStandings().isEmpty()
+        && preRaceSnapshot.getProjectedStandings().get(0).getProjectedRank() == -1) {
+      return null;
+    }
 
     for (int i = 0; i < actualStandings.size(); i++) {
       DriverProjection dp = actualStandings.get(i);

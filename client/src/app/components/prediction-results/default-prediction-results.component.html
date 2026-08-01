@@ -79,7 +79,13 @@
                   [class.silver-row]="proj.projected_rank === 2"
                   [class.bronze-row]="proj.projected_rank === 3"
                 >
-                  <td class="rank-col">#{{ proj.projected_rank }}</td>
+                  <td class="rank-col">
+                    @if (proj.projected_rank > 0) {
+                      #{{ proj.projected_rank }}
+                    } @else {
+                      --
+                    }
+                  </td>
                   <td class="driver-col">{{ proj.driver_name }}</td>
                   <td class="prob-col">
                     <div class="prob-bar-container">
@@ -105,7 +111,13 @@
                       }}</span>
                     </div>
                   </td>
-                  <td class="laps-col">{{ proj.projected_laps }} Laps</td>
+                  <td class="laps-col">
+                    @if (proj.projected_laps > 0) {
+                      {{ proj.projected_laps }} Laps
+                    } @else {
+                      --
+                    }
+                  </td>
                 </tr>
               }
             </tbody>

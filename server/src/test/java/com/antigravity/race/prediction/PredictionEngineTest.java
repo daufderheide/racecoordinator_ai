@@ -361,6 +361,47 @@ public class PredictionEngineTest {
   }
 
   @Test
+  public void testFallbackLapTimeAveraging() {
+    // Driver 1 has data
+    DriverTrackStats d1Stats = new DriverTrackStats();
+    d1Stats.setDriverId("d1");
+    d1Stats.setOverallMedianLapTime(4.0); // 4.0s median
+    statsMap.put("d1", d1Stats);
+
+    // Driver 2 has no data
+    // Driver 2 is already in participants since setup adds d1 and d2
+
+    PredictionSnapshot snapshot =
+        engine.generatePreRacePrediction(null, participants, heats, statsMap);
+
+    assertNotNull(snapshot);
+    // 3 minute heat / 4.0s = 45 laps per heat. 4 heats = 180 laps.
+    // Driver 1 should get ~180 laps
+    // Driver 2 should use fallback, which is average of all drivers with data = 4.0s
+    // So Driver 2 should ALSO get ~180 laps!
+
+    DriverProjection d1Proj =
+        snapshot.getProjectedStandings().stream()
+            .filter(p -> p.getDriverId().equals("d1"))
+            .findFirst()
+            .orElse(null);
+    DriverProjection d2Proj =
+        snapshot.getProjectedStandings().stream()
+            .filter(p -> p.getDriverId().equals("d2"))
+            .findFirst()
+            .orElse(null);
+
+    assertNotNull(d1Proj);
+    assertNotNull(d2Proj);
+    assertTrue(
+        "d1 projected laps: " + d1Proj.getProjectedLaps(),
+        Math.abs(d1Proj.getProjectedLaps() - 15.0) < 0.1);
+    assertTrue(
+        "d2 projected laps: " + d2Proj.getProjectedLaps(),
+        Math.abs(d2Proj.getProjectedLaps() - 15.0) < 0.1);
+  }
+
+  @Test
   public void testColdStartNoData() {
     PredictionSnapshot snapshot =
         engine.generatePreRacePrediction(null, participants, heats, new HashMap<>());

@@ -57,8 +57,8 @@ export class DefaultPredictionResultsComponent implements OnInit {
   }
 
   getWinProbPercent(prob: number | undefined): string {
-    if (prob === undefined || prob === null) {
-      return "0%";
+    if (prob === undefined || prob === null || prob < 0) {
+      return "--%";
     }
     return Math.round(prob * 100) + "%";
   }

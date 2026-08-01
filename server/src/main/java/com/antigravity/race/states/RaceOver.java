@@ -73,6 +73,7 @@ public class RaceOver implements IRaceState {
             dbService.saveRaceHistory(db, race);
             dbService.updateGlobalStatistics(db, race);
             dbService.saveDriverStatistics(db, race);
+            dbService.updateDriverTrackStats(db, race, race.isDemoMode());
             dbService.saveRaceRecords(db, race);
 
             List<DriverProjection> actuals = new ArrayList<>();
