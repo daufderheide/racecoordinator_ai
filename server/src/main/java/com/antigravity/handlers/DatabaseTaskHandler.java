@@ -22,6 +22,7 @@ import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.repository.MongoRepository;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.RacePredictionService;
@@ -1351,6 +1352,11 @@ public class DatabaseTaskHandler {
   }
 
   private boolean isStalePredictionRecord(RacePredictionRecord record) {
+    return isStalePredictionRecord(record, null);
+  }
+
+  private boolean isStalePredictionRecord(
+      RacePredictionRecord record, com.antigravity.race.Race activeRace) { // fqn-collision
     if (record == null || record.getPreRace() == null) {
       logger.info("PREDICTION: Stale because record or preRace is null");
       return true;
@@ -1360,6 +1366,35 @@ public class DatabaseTaskHandler {
     if (standings == null || standings.isEmpty()) {
       logger.info("PREDICTION: Stale because standings is null or empty");
       return true;
+    }
+
+    if (activeRace != null && activeRace.getDrivers() != null) {
+      Set<String> activeDriverIds = new HashSet<>();
+      for (RaceParticipant rp : activeRace.getDrivers()) {
+        if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
+          String pId = PredictionEngine.getParticipantId(rp);
+          if (pId != null && !pId.isEmpty() && !"EMPTY_LANE".equals(pId)) {
+            activeDriverIds.add(pId);
+          }
+        }
+      }
+
+      Set<String> standingDriverIds = new HashSet<>();
+      for (RacePredictionRecord.DriverProjection dp : standings) {
+        if (dp != null
+            && dp.getDriverId() != null
+            && !"EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())) {
+          standingDriverIds.add(dp.getDriverId());
+        }
+      }
+
+      if (!standingDriverIds.equals(activeDriverIds)) {
+        logger.info(
+            "PREDICTION: Stale because active race drivers do not match prediction standings (active: {}, prediction: {})",
+            activeDriverIds.size(),
+            standingDriverIds.size());
+        return true;
+      }
     }
 
     double totalWinProb = 0.0;
@@ -1430,7 +1465,7 @@ public class DatabaseTaskHandler {
         record = dbService.getRacePredictionRecord(database, targetRaceId, isDemo);
       }
 
-      boolean isStale = isStalePredictionRecord(record);
+      boolean isStale = isStalePredictionRecord(record, activeRace);
 
       if ((record == null || isStale || forceRecalc)
           && activeRace != null
@@ -1447,6 +1482,39 @@ public class DatabaseTaskHandler {
                       activeRace.getHeats(),
                       isDemo,
                       true);
+
+          int currentHeatIdx =
+              activeRace.getHeats() != null && activeRace.getCurrentHeat() != null
+                  ? activeRace.getHeats().indexOf(activeRace.getCurrentHeat())
+                  : 0;
+          if (currentHeatIdx < 0) currentHeatIdx = 0;
+
+          Map<String, PredictionEngine.DriverHeatState> actualLaps = new HashMap<>();
+          if (activeRace.getDrivers() != null) {
+            for (RaceParticipant rp : activeRace.getDrivers()) {
+              if (rp != null) {
+                String dId = PredictionEngine.getParticipantId(rp);
+                if (dId != null) {
+                  PredictionEngine.DriverHeatState state = new PredictionEngine.DriverHeatState();
+                  state.totalLapsCompleted = rp.getTotalLaps();
+                  actualLaps.put(dId, state);
+                }
+              }
+            }
+          }
+
+          RacePredictionService.getInstance()
+              .updateRealtimePrediction(
+                  database,
+                  activeRaceId,
+                  activeRace.getRaceModel(),
+                  activeRace.getDrivers(),
+                  activeRace.getHeats(),
+                  currentHeatIdx,
+                  actualLaps,
+                  isDemo);
+
+          record = dbService.getRacePredictionRecord(database, activeRaceId, isDemo);
         }
       }
 

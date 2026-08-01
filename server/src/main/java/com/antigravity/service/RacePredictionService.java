@@ -11,8 +11,10 @@ import com.antigravity.race.prediction.PredictionEngine;
 import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bson.types.ObjectId;
 
 public class RacePredictionService {
@@ -60,7 +62,30 @@ public class RacePredictionService {
       RacePredictionRecord existing =
           DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
       if (existing != null && existing.getPreRace() != null) {
-        return existing;
+        List<RacePredictionRecord.DriverProjection> standings =
+            existing.getPreRace().getProjectedStandings();
+        if (standings != null && !standings.isEmpty()) {
+          Set<String> existingIds = new HashSet<>();
+          for (RacePredictionRecord.DriverProjection dp : standings) {
+            if (dp != null
+                && dp.getDriverId() != null
+                && !"EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())) {
+              existingIds.add(dp.getDriverId());
+            }
+          }
+          Set<String> currentIds = new HashSet<>();
+          for (RaceParticipant rp : participants) {
+            if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
+              String pId = PredictionEngine.getParticipantId(rp);
+              if (pId != null && !pId.isEmpty() && !"EMPTY_LANE".equals(pId)) {
+                currentIds.add(pId);
+              }
+            }
+          }
+          if (existingIds.equals(currentIds)) {
+            return existing;
+          }
+        }
       }
     }
 
@@ -69,13 +94,15 @@ public class RacePredictionService {
 
     if (database != null && trackId != null && !trackId.isEmpty()) {
       for (RaceParticipant rp : participants) {
-        if (rp != null && rp.getDriver() != null && rp.getDriver().getEntityId() != null) {
-          String driverId = rp.getDriver().getEntityId();
-          DriverTrackStats dts =
-              DatabaseService.getInstance()
-                  .getDriverTrackStats(database, driverId, trackId, isDemo);
-          if (dts != null) {
-            statsMap.put(driverId, dts);
+        if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
+          String driverId = PredictionEngine.getParticipantId(rp);
+          if (driverId != null && !driverId.isEmpty()) {
+            DriverTrackStats dts =
+                DatabaseService.getInstance()
+                    .getDriverTrackStats(database, driverId, trackId, isDemo);
+            if (dts != null) {
+              statsMap.put(driverId, dts);
+            }
           }
         }
       }
@@ -121,13 +148,15 @@ public class RacePredictionService {
 
     if (database != null && trackId != null && !trackId.isEmpty()) {
       for (RaceParticipant rp : participants) {
-        if (rp != null && rp.getDriver() != null && rp.getDriver().getEntityId() != null) {
-          String driverId = rp.getDriver().getEntityId();
-          DriverTrackStats dts =
-              DatabaseService.getInstance()
-                  .getDriverTrackStats(database, driverId, trackId, isDemo);
-          if (dts != null) {
-            statsMap.put(driverId, dts);
+        if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
+          String driverId = PredictionEngine.getParticipantId(rp);
+          if (driverId != null && !driverId.isEmpty()) {
+            DriverTrackStats dts =
+                DatabaseService.getInstance()
+                    .getDriverTrackStats(database, driverId, trackId, isDemo);
+            if (dts != null) {
+              statsMap.put(driverId, dts);
+            }
           }
         }
       }

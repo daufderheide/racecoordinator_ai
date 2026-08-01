@@ -1372,6 +1372,7 @@ export class DefaultRacedayComponent
   private leaderBoardWindow: Window | null = null;
   private heatResultsWindow: Window | null = null;
   private raceResultsWindow: Window | null = null;
+  private predictionResultsWindow: Window | null = null;
   private driverStationTabs: Window[] = [];
 
   private setupMockDataForEditor() {
@@ -1437,6 +1438,10 @@ export class DefaultRacedayComponent
     if (this.raceResultsWindow) {
       this.raceResultsWindow.close();
       this.raceResultsWindow = null;
+    }
+    if (this.predictionResultsWindow) {
+      this.predictionResultsWindow.close();
+      this.predictionResultsWindow = null;
     }
     this.driverStationTabs.forEach((tab) => {
       if (tab && !tab.closed) {
@@ -1937,11 +1942,6 @@ export class DefaultRacedayComponent
 
   protected applyPredictionsToDrivers(record: RacePredictionRecord) {
     if (!record) return;
-    const snapshot =
-      record.realtime_snapshots && record.realtime_snapshots.length > 0
-        ? record.realtime_snapshots[record.realtime_snapshots.length - 1]
-        : record.pre_race;
-
     const allDrivers = [
       ...(this.sortedHeatDrivers || []),
       ...(this.heat?.heatDrivers || []),
@@ -1964,14 +1964,23 @@ export class DefaultRacedayComponent
       }
     }
 
+    const snapshot =
+      actualLapsRun > 0 &&
+      record.realtime_snapshots &&
+      record.realtime_snapshots.length > 0
+        ? record.realtime_snapshots[record.realtime_snapshots.length - 1]
+        : record.pre_race;
+
     console.log("[DEBUG-V3] applyPredictionsToDrivers", {
       completed_laps: snapshot?.completed_laps,
       actualLapsRun: actualLapsRun,
       standings: snapshot?.projected_standings,
     });
 
-    if (!snapshot || !snapshot.projected_standings || actualLapsRun === 0) {
-      console.log("[DEBUG-V3] Hiding predictions, actual laps is 0");
+    if (!snapshot || !snapshot.projected_standings) {
+      console.log(
+        "[DEBUG-V3] Hiding predictions, snapshot or projected_standings missing",
+      );
       // Hide predictions until at least one lap is run
       for (const hd of allDrivers) {
         if (!hd) continue;
@@ -2553,7 +2562,7 @@ export class DefaultRacedayComponent
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/prediction-results"]),
       );
-      window.open(url, "_blank");
+      this.predictionResultsWindow = window.open(url, "_blank");
     }
   }
 
@@ -2578,6 +2587,10 @@ export class DefaultRacedayComponent
     if (this.raceResultsWindow) {
       this.raceResultsWindow.close();
       this.raceResultsWindow = null;
+    }
+    if (this.predictionResultsWindow) {
+      this.predictionResultsWindow.close();
+      this.predictionResultsWindow = null;
     }
     this.driverStationTabs.forEach((tab) => {
       if (tab && !tab.closed) {

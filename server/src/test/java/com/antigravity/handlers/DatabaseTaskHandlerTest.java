@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Race;
@@ -69,5 +70,45 @@ public class DatabaseTaskHandlerTest {
     isStale = (Boolean) method.invoke(handler, record);
     assertFalse(
         "Record should not be stale if ranks are valid and no empty lane/duplicates", isStale);
+  }
+
+  @Test
+  public void testIsStalePredictionRecord_DriverMismatchIsStale() throws Exception {
+    DatabaseContext mockDbCtx = mock(DatabaseContext.class);
+    Javalin mockJavalin = mock(Javalin.class);
+    DatabaseTaskHandler handler = new DatabaseTaskHandler(mockDbCtx, mockJavalin);
+
+    Method method =
+        DatabaseTaskHandler.class.getDeclaredMethod(
+            "isStalePredictionRecord", RacePredictionRecord.class, com.antigravity.race.Race.class);
+    method.setAccessible(true);
+
+    RacePredictionRecord record = new RacePredictionRecord();
+    RacePredictionRecord.PredictionSnapshot preRace = new RacePredictionRecord.PredictionSnapshot();
+    List<RacePredictionRecord.DriverProjection> standings = new ArrayList<>();
+    standings.add(
+        new RacePredictionRecord.DriverProjection("d_1", "Driver 1", 1, 100.0, 0.0, 0.6, 0.9));
+    standings.add(
+        new RacePredictionRecord.DriverProjection("d_2", "Driver 2", 2, 98.0, 0.0, 0.4, 0.8));
+    preRace.setProjectedStandings(standings);
+    record.setPreRace(preRace);
+
+    com.antigravity.race.Race activeRace = mock(com.antigravity.race.Race.class);
+    List<com.antigravity.race.RaceParticipant> activeDrivers = new ArrayList<>();
+    activeDrivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Driver 1", "D1", "d_1", null)));
+    activeDrivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Driver 2", "D2", "d_2", null)));
+    activeDrivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Driver 3", "D3", "d_3", null)));
+    when(activeRace.getDrivers()).thenReturn(activeDrivers);
+
+    boolean isStale = (Boolean) method.invoke(handler, record, activeRace);
+    assertTrue(
+        "Record should be stale when active race drivers do not match prediction standings",
+        isStale);
   }
 }

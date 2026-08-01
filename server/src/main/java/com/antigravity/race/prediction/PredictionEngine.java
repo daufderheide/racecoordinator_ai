@@ -235,6 +235,7 @@ public class PredictionEngine {
     } else {
       for (int sim = 0; sim < numSimulations; sim++) {
         executeSingleSimulationRun(
+            participants,
             scheduledHeats,
             driverStatsMap,
             currentHeatIndex,
@@ -266,7 +267,7 @@ public class PredictionEngine {
         totalProjectedTime);
   }
 
-  private boolean isParticipantEmpty(RaceParticipant rp) {
+  public static boolean isParticipantEmpty(RaceParticipant rp) {
     if (rp == null) return true;
     if (rp.getDriver() != null) {
       if (rp.getDriver().isEmpty()) return true;
@@ -338,7 +339,9 @@ public class PredictionEngine {
     }
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   private void executeSingleSimulationRun(
+      List<RaceParticipant> participants,
       List<Heat> scheduledHeats,
       Map<String, DriverTrackStats> driverStatsMap,
       int currentHeatIndex,
@@ -356,10 +359,26 @@ public class PredictionEngine {
 
     Map<String, Double> simLapsMap = new HashMap<>();
     Map<String, Double> simTimeMap = new HashMap<>();
+
+    if (participants != null) {
+      for (RaceParticipant rp : participants) {
+        if (rp == null || isParticipantEmpty(rp)) {
+          continue;
+        }
+        String id = getParticipantId(rp);
+        if (id != null && !id.isEmpty() && !"EMPTY_LANE".equals(id)) {
+          simLapsMap.put(id, 0.0);
+          simTimeMap.put(id, 0.0);
+        }
+      }
+    }
+
     if (driverHeatStates != null) {
       for (Map.Entry<String, DriverHeatState> entry : driverHeatStates.entrySet()) {
-        simLapsMap.put(entry.getKey(), entry.getValue().totalLapsCompleted);
-        simTimeMap.put(entry.getKey(), entry.getValue().totalElapsedSec);
+        if (entry.getValue() != null) {
+          simLapsMap.put(entry.getKey(), entry.getValue().totalLapsCompleted);
+          simTimeMap.put(entry.getKey(), entry.getValue().totalElapsedSec);
+        }
       }
     }
 

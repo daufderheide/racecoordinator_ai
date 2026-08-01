@@ -4973,8 +4973,8 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
-  describe("applyPredictionsToDrivers (Cold Start)", () => {
-    it("should hide predictions (set to undefined) if no laps have been run across all drivers", () => {
+  describe("applyPredictionsToDrivers (Pre-Race & Realtime)", () => {
+    it("should apply pre-race predictions even if no laps have been run across all drivers", () => {
       // Mock participants and heat drivers with 0 laps
       const hd1 = {
         actualDriver: { entity_id: "1" },
@@ -5024,11 +5024,11 @@ describe("DefaultRacedayComponent", () => {
 
       (component as any).applyPredictionsToDrivers(mockRecord);
 
-      expect((hd1 as any).winProbability).toBeUndefined();
-      expect((hd1 as any).projectedLaps).toBeUndefined();
+      expect((hd1 as any).winProbability).toBe(0.8);
+      expect((hd1 as any).projectedLaps).toBe(10);
 
-      expect((hd2 as any).winProbability).toBeUndefined();
-      expect((hd2 as any).projectedLaps).toBeUndefined();
+      expect((hd2 as any).winProbability).toBe(0.2);
+      expect((hd2 as any).projectedLaps).toBe(8);
     });
 
     it("should apply predictions normally if at least one lap has been run", () => {
@@ -5085,6 +5085,35 @@ describe("DefaultRacedayComponent", () => {
 
       expect((hd2 as any).winProbability).toBe(0.2);
       expect((hd2 as any).projectedLaps).toBe(8);
+    });
+  });
+
+  describe("predictionResultsWindow management", () => {
+    let mockChildWindow: any;
+
+    beforeEach(() => {
+      mockChildWindow = { close: jasmine.createSpy("close"), closed: false };
+      spyOn(window, "open").and.returnValue(mockChildWindow);
+    });
+
+    it("should open predictionResultsWindow when PREDICTION_RESULTS action is called", () => {
+      (component as any).onWindowsMenuSelect("PREDICTION_RESULTS");
+      expect(window.open).toHaveBeenCalledWith("mock-url", "_blank");
+      expect((component as any).predictionResultsWindow).toBe(mockChildWindow);
+    });
+
+    it("should close predictionResultsWindow on onPageHide", () => {
+      (component as any).onWindowsMenuSelect("PREDICTION_RESULTS");
+      component.onPageHide({});
+      expect(mockChildWindow.close).toHaveBeenCalled();
+      expect((component as any).predictionResultsWindow).toBeNull();
+    });
+
+    it("should close predictionResultsWindow on ngOnDestroy", () => {
+      (component as any).onWindowsMenuSelect("PREDICTION_RESULTS");
+      component.ngOnDestroy();
+      expect(mockChildWindow.close).toHaveBeenCalled();
+      expect((component as any).predictionResultsWindow).toBeNull();
     });
   });
 });

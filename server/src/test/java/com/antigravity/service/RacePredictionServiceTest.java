@@ -91,4 +91,42 @@ public class RacePredictionServiceTest {
     assertNotNull(record);
     assertNotNull(record.getPreRace());
   }
+
+  @Test
+  public void testGeneratePreRacePrediction_RegeneratesWhenParticipantsChange() {
+    RacePredictionRecord initialRecord =
+        service.generateAndSavePreRacePrediction(
+            null, "race_test_participants", mockRace, participants, heats, true);
+
+    assertNotNull(initialRecord);
+    org.junit.Assert.assertEquals(2, initialRecord.getPreRace().getProjectedStandings().size());
+
+    // Add new driver
+    Driver d3 = new Driver("Charlie", "Charlie", "d3", null);
+    RaceParticipant rp3 = new RaceParticipant(d3);
+    List<RaceParticipant> updatedParticipants = new ArrayList<>(participants);
+    updatedParticipants.add(rp3);
+
+    DriverHeatData dhd3 = new DriverHeatData(rp3);
+    dhd3.setLane(2);
+    List<DriverHeatData> updatedHeatDrivers = new ArrayList<>(heats.get(0).getDrivers());
+    updatedHeatDrivers.add(dhd3);
+    List<Heat> updatedHeats = new ArrayList<>();
+    updatedHeats.add(new Heat(1, updatedHeatDrivers, false));
+
+    // Calling generateAndSavePreRacePrediction with updated participants should return a snapshot
+    // with 3 drivers
+    RacePredictionRecord updatedRecord =
+        service.generateAndSavePreRacePrediction(
+            null,
+            "race_test_participants",
+            mockRace,
+            updatedParticipants,
+            updatedHeats,
+            true,
+            false);
+
+    assertNotNull(updatedRecord);
+    org.junit.Assert.assertEquals(3, updatedRecord.getPreRace().getProjectedStandings().size());
+  }
 }

@@ -1,9 +1,18 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
 .dashboard-wrapper {
   background: #0b0f19;
   color: #e2e8f0;
   padding: 24px;
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .header-bar {
@@ -83,12 +92,18 @@
   color: #cbd5e1;
 }
 
+.standings-table-wrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 70vh;
+  border-radius: 8px;
+}
+
 .prediction-table {
   width: 100%;
   border-collapse: collapse;
   background: rgba(15, 23, 42, 0.6);
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .prediction-table th, .prediction-table td {
@@ -101,6 +116,9 @@
   color: #94a3b8;
   font-size: 13px;
   letter-spacing: 0.8px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .prediction-table tr {
@@ -134,4 +152,28 @@
   font-size: 12px;
   font-weight: 700;
   color: #ffffff;
+}
+
+/* Custom scrollbar styling */
+.dashboard-wrapper::-webkit-scrollbar,
+.standings-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dashboard-wrapper::-webkit-scrollbar-track,
+.standings-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 4px;
+}
+
+.dashboard-wrapper::-webkit-scrollbar-thumb,
+.standings-table-wrapper::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.dashboard-wrapper::-webkit-scrollbar-thumb:hover,
+.standings-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
 }

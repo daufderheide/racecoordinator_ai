@@ -574,4 +574,25 @@ public class PredictionEngineTest {
         "Driver 1 should win the lap race",
         snapshot.getWinProbabilities().get("d1") > snapshot.getWinProbabilities().get("d2"));
   }
+
+  @Test
+  public void testPredictionIncludesNewDriversNotYetRunInHeats() {
+    List<RaceParticipant> updatedParticipants = new ArrayList<>(participants);
+    for (int i = 3; i <= 22; i++) {
+      Driver d = new Driver("Driver " + i, "D" + i, "d" + i, null);
+      updatedParticipants.add(new RaceParticipant(d));
+    }
+
+    PredictionSnapshot snapshot =
+        engine.generatePreRacePrediction(null, updatedParticipants, heats, statsMap);
+
+    assertNotNull(snapshot);
+    assertEquals(22, snapshot.getProjectedStandings().size());
+
+    for (int i = 1; i <= 22; i++) {
+      String id = "d" + i;
+      assertTrue(
+          "Win probabilities should include " + id, snapshot.getWinProbabilities().containsKey(id));
+    }
+  }
 }
