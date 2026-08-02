@@ -1,6 +1,8 @@
 package com.antigravity.protocols.bart;
 
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
@@ -52,6 +54,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
             : new BleConnection(config.deviceName, config.deviceAddress);
     this.statusScheduler =
         statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1);
+    this.detectedChannels = numLanes;
     this.connection.addDataListener(this);
   }
 
@@ -113,6 +116,9 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   @Override
   public void onDataReceived(byte[] data) {
     if (data != null && data.length > 0) {
+      if (logger.isTraceEnabled()) {
+        logger.trace("BART RX Raw {} bytes: {}", data.length, bytesToHex(data));
+      }
       rxBuffer.write(data);
       processData();
     }
@@ -139,15 +145,24 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
 
       byte[] packet = rxBuffer.read(packetLen);
 
+      if (logger.isTraceEnabled()) {
+        logger.trace(
+            "BART Packet Parsed - Type: 0x{}, Length: {}, Bytes: {}",
+            String.format("%02X", msgType),
+            packetLen,
+            bytesToHex(packet));
+      }
+
       // Verify CRC8
       byte computedCrc = BartCrc.calculateCrc(packet, 0, packetLen - 1);
       byte actualCrc = packet[packetLen - 1];
 
       if (computedCrc != actualCrc) {
         logger.warn(
-            "CRC error in BART packet: computed=0x{}, actual=0x{}",
+            "CRC error in BART packet: computed=0x{}, actual=0x{}, packet={}",
             String.format("%02X", computedCrc),
-            String.format("%02X", actualCrc));
+            String.format("%02X", actualCrc),
+            bytesToHex(packet));
         continue;
       }
 
@@ -212,7 +227,20 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
     } else if (msgType == TYPE_STATUS_SNAPSHOT) {
       int raceState = packet[3] & 0xFF;
       int activeLanes = packet[6] & 0xFF;
-      logger.debug("BART Status Snapshot - State: {}, Active Lanes: {}", raceState, activeLanes);
+      this.detectedChannels = activeLanes;
+      logger.info(
+          "BART Status Snapshot Received - State: {}, Active Lanes (Detected Channels): {}",
+          raceState,
+          activeLanes);
+      if (listener != null) {
+        InterfaceStatusEvent statusEvent =
+            InterfaceStatusEvent.newBuilder()
+                .setStatus(InterfaceStatus.CONNECTED)
+                .setInterfaceIndex(getInterfaceIndex())
+                .setDetectedChannels(activeLanes)
+                .build();
+        listener.onInterfaceEvent(InterfaceEvent.newBuilder().setStatus(statusEvent).build());
+      }
     }
   }
 
@@ -256,6 +284,10 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
     }
     byte crc = BartCrc.calculateCrc(frame, 0, len - 1);
     frame[len - 1] = crc;
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("BART TX Command OP 0x{}: {}", String.format("%02X", opCode), bytesToHex(frame));
+    }
 
     try {
       connection.writeData(frame);
@@ -322,6 +354,15 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   @Override
   protected boolean isConnected() {
     return connection != null && connection.isOpen();
+  }
+
+  private static String bytesToHex(byte[] bytes) {
+    if (bytes == null) return "";
+    StringBuilder sb = new StringBuilder();
+    for (byte b : bytes) {
+      sb.append(String.format("%02X ", b));
+    }
+    return sb.toString().trim();
   }
 
   @Override

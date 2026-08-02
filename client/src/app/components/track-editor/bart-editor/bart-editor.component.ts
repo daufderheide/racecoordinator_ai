@@ -43,6 +43,8 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
 
   lapPinBehaviors: { label: string; value: number; lane?: number }[] = [];
 
+  detectedChannels = 0;
+
   readBadges: boolean[] = Array(32).fill(false);
 
   sectionsExpanded = {
@@ -94,6 +96,15 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
             const statusCode = event.status.status as number;
             if (statusCode === InterfaceStatus.CONNECTED) {
               this.status = "CONNECTED";
+              if (
+                event.status.detectedChannels &&
+                event.status.detectedChannels > 0
+              ) {
+                this.detectedChannels = event.status.detectedChannels;
+                this.logger.debug(
+                  `BART Editor [index ${this.interfaceIndex()}]: CONNECTED with ${this.detectedChannels} detected channels. Showing ${this.visibleChannelsCount} channel selectors.`,
+                );
+              }
             } else if (statusCode === InterfaceStatus.NO_DATA) {
               this.status = "NO_DATA";
             } else {
@@ -132,6 +143,20 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
     this.readTimeouts.forEach((t) => clearTimeout(t));
+  }
+
+  get visibleChannelsCount(): number {
+    if (this.detectedChannels > 0) {
+      return Math.min(this.detectedChannels, 32);
+    }
+    return Math.min(this.lanes() || 4, 32);
+  }
+
+  get visibleLapPinBehaviors(): number[] {
+    return (this.config()?.lapPinBehaviors || []).slice(
+      0,
+      this.visibleChannelsCount,
+    );
   }
 
   rebuildBehaviors(): void {

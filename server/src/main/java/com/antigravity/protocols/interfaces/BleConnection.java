@@ -75,6 +75,9 @@ public class BleConnection implements IBleConnection {
 
   public void injectReceivedData(byte[] data) {
     if (!open || data == null) return;
+    if (logger.isTraceEnabled()) {
+      logger.trace("BLE Connection RX <- {}", bytesToHex(data));
+    }
     for (ConnectionDataListener listener : listeners) {
       listener.onDataReceived(data);
     }

@@ -32,6 +32,7 @@ message InterfaceDigitalPinEvent {
 message InterfaceStatusEvent {
   InterfaceStatus status = 1;
   int32 interface_index = 2;
+  int32 detected_channels = 3;
 }
 
 message LapEvent {

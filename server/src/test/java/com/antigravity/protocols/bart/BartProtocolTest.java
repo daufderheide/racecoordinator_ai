@@ -130,4 +130,48 @@ public class BartProtocolTest {
     assertEquals(InterfaceStatus.CONNECTED, statusRef.get());
     protocol.close();
   }
+
+  @Test
+  public void testStatusSnapshotBroadcastingDetectedChannels() {
+    AtomicInteger detectedChannels = new AtomicInteger(0);
+    protocol.setListener(
+        new ProtocolListener() {
+          @Override
+          public void onLap(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onSegment(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onCallbutton(int laneIndex, int interfaceIndex) {}
+
+          @Override
+          public void onCarData(CarData carData) {}
+
+          @Override
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {}
+
+          @Override
+          public void onInterfaceEvent(InterfaceEvent event) {
+            if (event.hasStatus()) {
+              detectedChannels.set(event.getStatus().getDetectedChannels());
+            }
+          }
+        });
+
+    protocol.open();
+
+    // Construct valid status snapshot packet: A5 20 01 00 (IDLE) 01 (minlap=1) 00 (uptime) 06
+    // (lanes=6) 00 (reserved) CRC
+    byte[] packetNoCrc = new byte[] {(byte) 0xA5, 0x20, 0x01, 0x00, 0x01, 0x00, 0x06, 0x00};
+    byte crc = BartCrc.calculateCrc(packetNoCrc);
+    byte[] packet = new byte[9];
+    System.arraycopy(packetNoCrc, 0, packet, 0, 8);
+    packet[8] = crc;
+
+    connection.injectReceivedData(packet);
+
+    assertEquals(6, detectedChannels.get());
+    protocol.close();
+  }
 }

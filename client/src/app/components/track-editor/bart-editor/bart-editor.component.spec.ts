@@ -155,4 +155,36 @@ describe("BartEditorComponent", () => {
     );
     expect(component.change.emit).toHaveBeenCalled();
   });
+
+  it("should restrict visible channel count when detectedChannels is received on CONNECTED status", () => {
+    expect(component.visibleChannelsCount).toBe(4);
+
+    getInterfaceEventsSubject.next({
+      status: {
+        interfaceIndex: 0,
+        status: InterfaceStatus.CONNECTED,
+        detectedChannels: 4,
+      },
+    });
+
+    expect(component.detectedChannels).toBe(4);
+    expect(component.visibleChannelsCount).toBe(4);
+    expect(component.visibleLapPinBehaviors.length).toBe(4);
+  });
+
+  it("should update visible channel count when hardware reports 8 detectedChannels", () => {
+    expect(component.visibleChannelsCount).toBe(4);
+
+    getInterfaceEventsSubject.next({
+      status: {
+        interfaceIndex: 0,
+        status: InterfaceStatus.CONNECTED,
+        detectedChannels: 8,
+      },
+    });
+
+    expect(component.detectedChannels).toBe(8);
+    expect(component.visibleChannelsCount).toBe(8);
+    expect(component.visibleLapPinBehaviors.length).toBe(8);
+  });
 });

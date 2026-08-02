@@ -1,6 +1,8 @@
 package com.antigravity.protocols;
 
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.arduino.ArduinoConfig;
@@ -122,41 +124,7 @@ public abstract class DefaultProtocol implements IProtocol {
       statusScheduler = createScheduler();
     }
     statusFuture =
-        statusScheduler.scheduleAtFixedRate(
-            () -> {
-              try {
-                if (listener != null) {
-                  InterfaceStatus status;
-                  if (!isConnected()) {
-                    status = InterfaceStatus.DISCONNECTED;
-                  } else if (!requiresHeartbeat()) {
-                    status = InterfaceStatus.CONNECTED;
-                  } else if (lastHeartbeatTimeMs == 0) {
-                    status = InterfaceStatus.NO_DATA;
-                  } else {
-                    long age = now() - lastHeartbeatTimeMs;
-                    logger.trace(
-                        "Timeout age: {}ms (now: {}, lastHeartbeat: {})",
-                        age,
-                        now(),
-                        lastHeartbeatTimeMs);
-                    if (age < 2000) {
-                      status = InterfaceStatus.CONNECTED;
-                    } else {
-                      status = InterfaceStatus.DISCONNECTED;
-                      logger.warn(
-                          "status dropping to DISCONNECTED due to heartbeat age: {}ms", age);
-                    }
-                  }
-                  listener.onInterfaceStatus(status, getInterfaceIndex());
-                }
-              } catch (Exception e) {
-                logger.error("Error in status scheduler", e);
-              }
-            },
-            0,
-            1,
-            TimeUnit.SECONDS);
+        statusScheduler.scheduleAtFixedRate(this::checkAndPublishStatus, 0, 1, TimeUnit.SECONDS);
 
     analogLedFuture =
         statusScheduler.scheduleAtFixedRate(
@@ -231,6 +199,41 @@ public abstract class DefaultProtocol implements IProtocol {
     if (statusScheduler != null) {
       statusScheduler.shutdownNow();
       statusScheduler = null;
+    }
+  }
+
+  private void checkAndPublishStatus() {
+    try {
+      if (listener != null) {
+        InterfaceStatus status;
+        if (!isConnected()) {
+          status = InterfaceStatus.DISCONNECTED;
+        } else if (!requiresHeartbeat()) {
+          status = InterfaceStatus.CONNECTED;
+        } else if (lastHeartbeatTimeMs == 0) {
+          status = InterfaceStatus.NO_DATA;
+        } else {
+          long age = now() - lastHeartbeatTimeMs;
+          logger.trace(
+              "Timeout age: {}ms (now: {}, lastHeartbeat: {})", age, now(), lastHeartbeatTimeMs);
+          if (age < 2000) {
+            status = InterfaceStatus.CONNECTED;
+          } else {
+            status = InterfaceStatus.DISCONNECTED;
+            logger.warn("status dropping to DISCONNECTED due to heartbeat age: {}ms", age);
+          }
+        }
+        InterfaceStatusEvent statusEvent =
+            InterfaceStatusEvent.newBuilder()
+                .setStatus(status)
+                .setInterfaceIndex(getInterfaceIndex())
+                .setDetectedChannels(getDetectedChannels())
+                .build();
+        listener.onInterfaceEvent(InterfaceEvent.newBuilder().setStatus(statusEvent).build());
+        listener.onInterfaceStatus(status, getInterfaceIndex());
+      }
+    } catch (Exception e) {
+      logger.error("Error in status scheduler", e);
     }
   }
 
@@ -516,6 +519,12 @@ public abstract class DefaultProtocol implements IProtocol {
   @Override
   public void setListener(ProtocolListener listener) {
     this.listener = listener;
+  }
+
+  protected int detectedChannels = 0;
+
+  public int getDetectedChannels() {
+    return detectedChannels;
   }
 
   protected boolean requiresHeartbeat() {
