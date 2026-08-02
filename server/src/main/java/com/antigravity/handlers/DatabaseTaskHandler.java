@@ -537,6 +537,7 @@ public class DatabaseTaskHandler {
                 .arduinoConfigs(track.getArduinoConfigs())
                 .trackmateConfigs(track.getTrackmateConfigs())
                 .phidgetConfigs(track.getPhidgetConfigs())
+                .bartConfigs(track.getBartConfigs())
                 .entityId(nextId)
                 .id(null)
                 .build();
@@ -571,6 +572,7 @@ public class DatabaseTaskHandler {
               .arduinoConfigs(track.getArduinoConfigs())
               .trackmateConfigs(track.getTrackmateConfigs())
               .phidgetConfigs(track.getPhidgetConfigs())
+              .bartConfigs(track.getBartConfigs())
               .entityId(id)
               .id(track.getId())
               .build();

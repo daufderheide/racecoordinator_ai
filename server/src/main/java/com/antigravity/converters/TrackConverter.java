@@ -39,6 +39,10 @@ public class TrackConverter {
               track.getPhidgetConfigs().stream()
                   .map(PhidgetConfigConverter::toProto)
                   .collect(Collectors.toList()))
+          .addAllBartConfigs(
+              track.getBartConfigs().stream()
+                  .map(BartConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
   }

@@ -1,5 +1,8 @@
+import { BartConfig } from "./bart_config";
 import { Lane } from "./lane";
 import { Model } from "./model";
+
+export { BartConfig } from "./bart_config";
 
 export const MAX_DIGITAL_PINS = 60;
 export const MAX_ANALOG_PINS = 16;
@@ -22,6 +25,7 @@ export interface TrackParams {
   arduino_configs?: ArduinoConfig[];
   phidget_configs?: PhidgetConfig[];
   trackmate_configs?: TrackmateConfig[];
+  bart_configs?: BartConfig[];
 }
 
 export class Track implements Model {
@@ -35,6 +39,7 @@ export class Track implements Model {
   readonly arduino_configs!: ArduinoConfig[];
   readonly phidget_configs!: PhidgetConfig[];
   readonly trackmate_configs!: TrackmateConfig[];
+  readonly bart_configs!: BartConfig[];
 
   constructor(params: TrackParams) {
     Object.assign(this, params);
@@ -47,6 +52,7 @@ export class Track implements Model {
     this.arduino_configs ??= [];
     this.phidget_configs ??= [];
     this.trackmate_configs ??= [];
+    this.bart_configs ??= [];
   }
 
   get objectId(): string {

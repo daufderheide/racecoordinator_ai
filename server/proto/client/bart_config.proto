@@ -1,0 +1,19 @@
+syntax = "proto3";
+package com.antigravity;
+
+import "client/arduino_config.proto";
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "BartConfigProto";
+
+message BartConfig {
+  string name = 1;
+  string device_name = 2;
+  string device_address = 3;
+  int32 debounce = 4;
+  int32 num_lanes = 5;
+  LapPinPitBehavior lap_pin_pit_behavior = 6;
+  repeated int32 lap_pin_behaviors = 7;
+  int32 min_lap_ms = 8;
+}

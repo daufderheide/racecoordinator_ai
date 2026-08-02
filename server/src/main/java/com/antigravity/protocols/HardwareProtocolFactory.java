@@ -4,6 +4,8 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
+import com.antigravity.protocols.bart.BartConfig;
+import com.antigravity.protocols.bart.BartProtocol;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
@@ -59,6 +61,18 @@ public class HardwareProtocolFactory {
       for (PhidgetConfig config : track.getPhidgetConfigs()) {
         PhidgetProtocol protocol = new PhidgetProtocol(config, numLanes, listener);
         protocol.setInterfaceIndex(interfaceIndex++);
+        protocols.add(protocol);
+      }
+    }
+
+    // 4. BART Configs
+    if (track.getBartConfigs() != null) {
+      for (BartConfig config : track.getBartConfigs()) {
+        BartProtocol protocol = new BartProtocol(config, numLanes);
+        protocol.setInterfaceIndex(interfaceIndex++);
+        if (listener != null) {
+          protocol.setListener(listener);
+        }
         protocols.add(protocol);
       }
     }

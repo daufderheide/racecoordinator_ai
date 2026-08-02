@@ -4,6 +4,7 @@ import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.context.RaceScope;
 import com.antigravity.converters.ArduinoConfigConverter;
+import com.antigravity.converters.BartConfigConverter;
 import com.antigravity.converters.PhidgetConfigConverter;
 import com.antigravity.converters.TrackmateConfigConverter;
 import com.antigravity.models.AnalyticsToggleRequest;
@@ -45,6 +46,8 @@ import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
+import com.antigravity.protocols.bart.BartConfig;
+import com.antigravity.protocols.bart.BartProtocol;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
@@ -842,6 +845,17 @@ public class ClientCommandTaskHandler {
         phidget.setInterfaceIndex(interfaceIndex++);
         phidget.setListener(new TestInterfaceListener());
         protocols.add(phidget);
+      }
+
+      List<com.antigravity.proto.BartConfig> bartConfigsList = // fqn-collision
+          request.getBartConfigsList();
+      for (int i = 0; i < bartConfigsList.size(); i++) {
+        com.antigravity.proto.BartConfig protoConfig = bartConfigsList.get(i); // fqn-collision
+        BartConfig config = BartConfigConverter.fromProto(protoConfig);
+        BartProtocol bart = new BartProtocol(config, request.getLaneCount());
+        bart.setInterfaceIndex(interfaceIndex++);
+        bart.setListener(new TestInterfaceListener());
+        protocols.add(bart);
       }
 
       ProtocolDelegate finalProtocol;

@@ -1,0 +1,178 @@
+@if (config()) {
+  <div
+    class="arduino-config-container"
+    [id]="'bart-editor-' + interfaceIndex()"
+  >
+    <div class="config-section">
+      <div class="section-header" (click)="toggleSection('bart')">
+        <span class="expander-icon" [class.collapsed]="!sectionsExpanded.bart"
+          >▼</span
+        >
+        <h1>
+          {{ "BART_HEADER" | translate }}
+        </h1>
+        <div class="spacer"></div>
+        <button
+          class="action-btn danger small"
+          (click)="$event.stopPropagation(); onRemove()"
+          title="{{ 'BART_REMOVE_INTERFACE' | translate }}"
+        >
+          X
+        </button>
+      </div>
+
+      @if (sectionsExpanded.bart) {
+        <div class="section-content">
+          <div class="sections-wrapper">
+            <!-- Main Configuration Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('main')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.main"
+                  >▼</span
+                >
+                <h4>{{ "BART_MAIN_HEADER" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.main) {
+                <div class="section-content">
+                  <div class="config-top-section">
+                    <div class="board-controls">
+                      <div class="control-group">
+                        <label>{{ "BART_DEVICE_NAME" | translate }}</label>
+                        <div class="com-port-row">
+                          <input
+                            type="text"
+                            [id]="'deviceName-' + interfaceIndex()"
+                            [(ngModel)]="config().deviceName"
+                            (change)="onConfigChange()"
+                            placeholder="BART_xxxx"
+                          />
+                          <button
+                            type="button"
+                            [id]="'bart-status-badge-' + interfaceIndex()"
+                            class="status-badge"
+                            [class.connected]="status === 'CONNECTED'"
+                            [title]="status"
+                          >
+                            <div class="status-dot"></div>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="control-group">
+                        <label>{{ "BART_MIN_LAP_MS" | translate }}</label>
+                        <input
+                          type="number"
+                          [id]="'minLapMs-' + interfaceIndex()"
+                          [(ngModel)]="config().minLapMs"
+                          (change)="onConfigChange()"
+                          min="100"
+                          max="30000"
+                        />
+                      </div>
+
+                      <div class="control-group">
+                        <label>{{ "BART_DEBOUNCE" | translate }}</label>
+                        <input
+                          type="number"
+                          [id]="'debounce-' + interfaceIndex()"
+                          [(ngModel)]="config().debounce"
+                          (change)="onConfigChange()"
+                          min="0"
+                          max="1000"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="right-controls">
+                      <div class="control-group">
+                        <label>{{
+                          "BART_LAP_PIN_PIT_BEHAVIOR" | translate
+                        }}</label>
+                        <select
+                          [id]="'lapPinPitBehavior-' + interfaceIndex()"
+                          [(ngModel)]="config().lapPinPitBehavior"
+                          (change)="onConfigChange()"
+                        >
+                          @for (
+                            option of lapPinPitBehaviors;
+                            track option.value
+                          ) {
+                            <option [ngValue]="option.value">
+                              {{ option.label | translate }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Read / Write Channel Sensor Configuration Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('rw')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.rw"
+                  >▼</span
+                >
+                <h4>{{ "BART_SENSOR_HEADER" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.rw) {
+                <div class="section-content">
+                  <div class="pins-section">
+                    <div class="pins-config">
+                      <div class="pin-grid">
+                        @for (
+                          behavior of config().lapPinBehaviors;
+                          track $index
+                        ) {
+                          <div class="pin-item">
+                            <div class="pin-header">
+                              <label>Channel {{ $index + 1 }}</label>
+                              <span
+                                class="status-badge small"
+                                [class.connected]="readBadges[$index]"
+                              ></span>
+                            </div>
+
+                            <div
+                              class="control-group"
+                              style="padding: 0 10px 10px 10px"
+                            >
+                              <select
+                                [(ngModel)]="config().lapPinBehaviors![$index]"
+                                (change)="onConfigChange()"
+                              >
+                                @for (pb of lapPinBehaviors; track pb.value) {
+                                  <option [ngValue]="pb.value">
+                                    @if (pb.lane) {
+                                      {{
+                                        pb.label | translate: { lane: pb.lane }
+                                      }}
+                                    } @else {
+                                      {{ pb.label | translate }}
+                                    }
+                                  </option>
+                                }
+                              </select>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

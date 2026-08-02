@@ -4,6 +4,7 @@ package com.antigravity;
 import "client/arduino_config.proto";
 import "client/trackmate_config.proto";
 import "client/phidget_config.proto";
+import "client/bart_config.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -14,6 +15,7 @@ message InitializeInterfaceRequest {
   int32 lane_count = 2;
   repeated TrackmateConfig trackmate_configs = 3;
   repeated PhidgetConfig phidget_configs = 4;
+  repeated BartConfig bart_configs = 5;
 }
 
 message InitializeInterfaceResponse {

@@ -1,0 +1,331 @@
+package com.antigravity.protocols.bart;
+
+import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.PinBehavior;
+import com.antigravity.proto.RaceFlag;
+import com.antigravity.proto.RaceState;
+import com.antigravity.protocols.DefaultProtocol;
+import com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior;
+import com.antigravity.protocols.interfaces.BleConnection;
+import com.antigravity.protocols.interfaces.ConnectionDataListener;
+import com.antigravity.protocols.interfaces.IConnection;
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+public class BartProtocol extends DefaultProtocol implements ConnectionDataListener {
+
+  private final BartConfig config;
+  private IConnection connection;
+
+  // Packet headers & types
+  public static final byte SYNC_BYTE = (byte) 0xA5;
+  public static final byte TYPE_LAP_EVENT = 0x01;
+  public static final byte TYPE_STATUS_SNAPSHOT = 0x20;
+  public static final byte TYPE_ACK = 0x7F;
+  public static final byte TYPE_COMMAND = (byte) 0x90;
+
+  // Opcodes
+  public static final byte OP_START = 0x01;
+  public static final byte OP_STOP = 0x02;
+  public static final byte OP_SET_MINLAP = 0x10;
+  public static final byte OP_READ_STAT = 0x20;
+
+  public BartProtocol(BartConfig config, int numLanes) {
+    this(
+        config,
+        numLanes,
+        new BleConnection(config.deviceName, config.deviceAddress),
+        Executors.newScheduledThreadPool(1));
+  }
+
+  public BartProtocol(
+      BartConfig config,
+      int numLanes,
+      IConnection connection,
+      ScheduledExecutorService statusScheduler) {
+    super(numLanes);
+    this.config = config;
+    this.connection =
+        connection != null
+            ? connection
+            : new BleConnection(config.deviceName, config.deviceAddress);
+    this.statusScheduler =
+        statusScheduler != null ? statusScheduler : Executors.newScheduledThreadPool(1);
+    this.connection.addDataListener(this);
+  }
+
+  @Override
+  public synchronized boolean open() {
+    if (connection != null && connection.isOpen()) {
+      logger.info("BartProtocol connection already open");
+      return true;
+    }
+
+    String target =
+        config.deviceAddress != null && !config.deviceAddress.isEmpty()
+            ? config.deviceAddress
+            : config.deviceName;
+
+    if (target == null || target.isEmpty()) {
+      logger.info("No BLE device specified for BartProtocol, status DISCONNECTED");
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
+      }
+      startStatusScheduler();
+      return true;
+    }
+
+    try {
+      logger.info("Connecting to BART BLE peripheral: {}", target);
+      connection.connect(target);
+      lastHeartbeatTimeMs = now();
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.CONNECTED, getInterfaceIndex());
+      }
+      sendMinLap(config.minLapMs);
+      sendReadStatus();
+      startStatusScheduler();
+      return true;
+    } catch (IOException e) {
+      logger.error("Failed to connect to BART peripheral {}: {}", target, e.getMessage());
+      if (listener != null) {
+        listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
+      }
+      return false;
+    }
+  }
+
+  @Override
+  public void close() {
+    logger.info("Closing BartProtocol");
+    super.close();
+    if (connection != null && connection.isOpen()) {
+      try {
+        sendStop();
+      } catch (Exception ignored) {
+      }
+      connection.disconnect();
+    }
+    lastHeartbeatTimeMs = 0;
+  }
+
+  @Override
+  public void onDataReceived(byte[] data) {
+    if (data != null && data.length > 0) {
+      rxBuffer.write(data);
+      processData();
+    }
+  }
+
+  private void processData() {
+    while (rxBuffer.size() >= 4) {
+      // Find SYNC byte 0xA5
+      byte b = rxBuffer.peek(0);
+      if (b != SYNC_BYTE) {
+        rxBuffer.get(); // Discard unaligned byte
+        continue;
+      }
+
+      byte msgType = rxBuffer.peek(1);
+      int packetLen = getExpectedPacketLength(msgType);
+      if (packetLen < 4 || rxBuffer.size() < packetLen) {
+        // Wait for full packet to arrive or unknown type discard
+        if (packetLen == -1) {
+          rxBuffer.get(); // Discard corrupted sync
+        }
+        break;
+      }
+
+      byte[] packet = rxBuffer.read(packetLen);
+
+      // Verify CRC8
+      byte computedCrc = BartCrc.calculateCrc(packet, 0, packetLen - 1);
+      byte actualCrc = packet[packetLen - 1];
+
+      if (computedCrc != actualCrc) {
+        logger.warn(
+            "CRC error in BART packet: computed=0x{}, actual=0x{}",
+            String.format("%02X", computedCrc),
+            String.format("%02X", actualCrc));
+        continue;
+      }
+
+      handlePacket(packet, msgType);
+    }
+  }
+
+  private int getExpectedPacketLength(byte msgType) {
+    switch (msgType) {
+      case TYPE_LAP_EVENT:
+        return 10; // A5 01 01 lane laps lap_ms_low lap_ms_high ts_d10 reserved CRC
+      case TYPE_STATUS_SNAPSHOT:
+        return 9; // A5 20 01 race_state minlap uptime_d10 lanes reserved CRC
+      case TYPE_ACK:
+        return 4; // A5 7F op CRC
+      default:
+        return -1;
+    }
+  }
+
+  private void handlePacket(byte[] packet, byte msgType) {
+    lastHeartbeatTimeMs = now();
+
+    if (msgType == TYPE_LAP_EVENT) {
+      int rawLane = packet[3] & 0xFF;
+      int lapCount = packet[4] & 0xFF;
+      int lapMs = (packet[5] & 0xFF) | ((packet[6] & 0xFF) << 8);
+
+      logger.debug(
+          "BART Lap Event - Raw Lane: {}, Laps: {}, Lap Time ms: {}", rawLane, lapCount, lapMs);
+
+      int behavior = getSignalBehaviorForChannel(rawLane);
+      int lapBase = PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
+      int pitInBase = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
+      int pitOutBase = PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
+      int pitInOutBase = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
+      int callBtnBase = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE_VALUE;
+
+      int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
+
+      if (behavior >= lapBase && behavior < lapBase + getNumLanes()) {
+        int mappedLane = behavior - lapBase;
+        handleLapCounter(mappedLane, activeState, rawLane);
+      } else if (behavior >= pitInBase && behavior < pitInBase + getNumLanes()) {
+        int mappedLane = behavior - pitInBase;
+        handlePitIn(mappedLane, activeState);
+      } else if (behavior >= pitOutBase && behavior < pitOutBase + getNumLanes()) {
+        int mappedLane = behavior - pitOutBase;
+        handlePitOut(mappedLane, activeState);
+      } else if (behavior >= pitInOutBase && behavior < pitInOutBase + getNumLanes()) {
+        int mappedLane = behavior - pitInOutBase;
+        handlePitInOut(mappedLane, activeState);
+      } else if (behavior >= callBtnBase && behavior < callBtnBase + getNumLanes()) {
+        int mappedLane = behavior - callBtnBase;
+        handleCallButton(mappedLane, activeState, rawLane);
+      } else {
+        // Fallback: direct 0-indexed lane mapping
+        if (rawLane < getNumLanes()) {
+          handleLapCounter(rawLane, activeState, rawLane);
+        }
+      }
+    } else if (msgType == TYPE_STATUS_SNAPSHOT) {
+      int raceState = packet[3] & 0xFF;
+      int activeLanes = packet[6] & 0xFF;
+      logger.debug("BART Status Snapshot - State: {}, Active Lanes: {}", raceState, activeLanes);
+    }
+  }
+
+  private int getSignalBehaviorForChannel(int channel) {
+    if (config.lapPinBehaviors != null && channel >= 0 && channel < config.lapPinBehaviors.size()) {
+      return config.lapPinBehaviors.get(channel);
+    }
+    return PinBehavior.BEHAVIOR_LAP_BASE_VALUE + channel;
+  }
+
+  public void sendStart() {
+    sendCommand(OP_START, new byte[0]);
+  }
+
+  public void sendStop() {
+    sendCommand(OP_STOP, new byte[0]);
+  }
+
+  public void sendMinLap(int minLapMs) {
+    byte[] payload = new byte[2];
+    payload[0] = (byte) (minLapMs & 0xFF);
+    payload[1] = (byte) ((minLapMs >> 8) & 0xFF);
+    sendCommand(OP_SET_MINLAP, payload);
+  }
+
+  public void sendReadStatus() {
+    sendCommand(OP_READ_STAT, new byte[0]);
+  }
+
+  private void sendCommand(byte opCode, byte[] payload) {
+    if (connection == null || !connection.isOpen()) {
+      return;
+    }
+    int len = 4 + (payload != null ? payload.length : 0);
+    byte[] frame = new byte[len];
+    frame[0] = SYNC_BYTE;
+    frame[1] = TYPE_COMMAND;
+    frame[2] = opCode;
+    if (payload != null && payload.length > 0) {
+      System.arraycopy(payload, 0, frame, 3, payload.length);
+    }
+    byte crc = BartCrc.calculateCrc(frame, 0, len - 1);
+    frame[len - 1] = crc;
+
+    try {
+      connection.writeData(frame);
+    } catch (IOException e) {
+      logger.error(
+          "Failed to send BART command OP 0x{}: {}", String.format("%02X", opCode), e.getMessage());
+    }
+  }
+
+  @Override
+  public void setRaceState(RaceState state, RaceFlag flag, double countdown) {
+    super.setRaceState(state, flag, countdown);
+    if (state == RaceState.RACING) {
+      sendStart();
+    } else if (state == RaceState.PAUSED
+        || state == RaceState.RACE_OVER
+        || state == RaceState.HEAT_OVER) {
+      sendStop();
+    }
+  }
+
+  // Base IProtocol & DefaultProtocol contract methods
+  @Override
+  protected boolean isNormallyClosedLaneSensors() {
+    return false;
+  }
+
+  @Override
+  protected boolean isNormallyClosedRelays() {
+    return false;
+  }
+
+  @Override
+  protected LapPinPitBehavior getLapPinPitBehavior() {
+    return config.lapPinPitBehavior != null
+        ? config.lapPinPitBehavior
+        : LapPinPitBehavior.PIT_IN_OUT;
+  }
+
+  @Override
+  protected boolean useLapsForSegments() {
+    return false;
+  }
+
+  @Override
+  protected double getHardwareDebounceUs() {
+    return config.debounce * 1000.0;
+  }
+
+  @Override
+  protected boolean hasPitInConfigured(int laneIndex) {
+    if (config.lapPinBehaviors != null) {
+      for (Integer behavior : config.lapPinBehaviors) {
+        if (behavior != null
+            && (behavior == PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex
+                || behavior == PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + laneIndex)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  protected boolean isConnected() {
+    return connection != null && connection.isOpen();
+  }
+
+  @Override
+  public boolean requiresHeartbeat() {
+    return false;
+  }
+}
