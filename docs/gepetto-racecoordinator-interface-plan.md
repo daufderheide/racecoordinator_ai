@@ -119,3 +119,42 @@ We propose adding JmDNS (`org.jmdns:jmdns:3.5.8` or similar) to `pom.xml`. On se
 * **Port**: `7070`
 
 This enables automatic zero-configuration discovery so that Gepetto Lap Counter nodes on the local Wi-Fi network can discover and connect to the server without needing the user to look up and type local IP addresses.
+
+---
+
+## 5. Proposed Verification & Testing Plan
+
+To ensure the stability and correctness of the new interface, we propose a comprehensive verification strategy combining automated tests and manual integration checks.
+
+### A. Automated Testing
+
+#### 1. Unit Tests
+* **`WebSocketProtocolTest.java`**:
+  - Test instantiation of `WebSocketProtocol` (verifying it successfully extends `DefaultProtocol` and inherits base parameters).
+  - Test that calling `updatePitState` on the virtual protocol triggers the expected `CarData` events.
+  - Test that state changes (e.g., green/yellow flag power relay triggers) correctly invoke main power or per-lane power methods.
+* **`HardwareProtocolFactoryTest.java`**:
+  - Test that a `Track` configured with `WebSocketConfig` is successfully processed.
+  - Test that the factory instantiates `WebSocketProtocol` and registers it in the active protocols list, assigning the correct `interfaceIndex`.
+
+#### 2. Integration / WebSocket Handler Tests
+* **`WebSocketInterfaceEventTest.java`**:
+  - Spin up a local mock Javalin server with the `/api/interface-data` WebSocket endpoint.
+  - Connect a test client.
+  - **Unauthorized write check**: Attempt to send a binary `LapEvent` from a non-director session; verify that the server ignores or rejects it.
+  - **Authorized write check**: Connect as a `DIRECTOR` role, send a binary `LapEvent` (lane, lapTime, index); verify that the server decodes the payload, forwards it to the active race, and registers the lap.
+  - **Refueling trigger check**: Send a binary `PitInEvent` followed by a `PitOutEvent`; verify that the active race driver transition state logs pit entry and exit times, triggering the refueling calculation engine.
+
+### B. Manual Verification & Diagnostics
+
+#### 1. Network Discovery Check
+* Verify JmDNS advertising is active using a network discovery utility (such as `dns-sd` on Mac/Linux or Bonjour Browser):
+  `dns-sd -B _racecoordinator._tcp.local.`
+  Confirm the service name resolves to the correct IP address and port `7070`.
+
+#### 2. E2E simulated loop
+* Run the server locally.
+* Start a race in the web frontend.
+* Run a mock script (e.g. in Python or Java) that connects to `ws://localhost:7070/api/interface-data?intent=director` and sends simulated timing events (`LapEvent`, `PitInEvent`).
+* Verify that the frontend leaderboard UI updates instantly and displays the expected lap counts, times, and pit status indicators.
+
