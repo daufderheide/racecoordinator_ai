@@ -20,8 +20,8 @@ The goal is to allow the external camera-based **Gepetto Lap Counter** Kotlin Mu
 
 ## 2. Proposed Database & Configuration Changes
 
-### A. Protobuf Configuration Schema (`track_model.proto`)
-We propose representing the virtual network-based lap counter with a new config message `WebSocketConfig`:
+### A. Protobuf Configuration & Interface Schema (`track_model.proto` & `interface_event.proto`)
+We propose representing the virtual network-based lap counter with a new config message `WebSocketConfig` in `track_model.proto`:
 ```protobuf
 syntax = "proto3";
 package com.antigravity;
@@ -39,6 +39,32 @@ message TrackModel {
 }
 ```
 
+To support section-based pit stop entry and exit (refueling), we propose adding `PitInEvent` and `PitOutEvent` to `InterfaceEvent` in `interface_event.proto`:
+```protobuf
+message InterfaceEvent {
+  oneof event {
+    LapEvent lap = 1;
+    SegmentEvent segment = 2;
+    InterfaceStatusEvent status = 3;
+    CallbuttonEvent callbutton = 4;
+    InterfaceAnalogDataEvent analogData = 5;
+    InterfaceDigitalPinEvent digitalPin = 6;
+    PitInEvent pit_in = 7;
+    PitOutEvent pit_out = 8;
+  }
+}
+
+message PitInEvent {
+  int32 lane = 1;
+  int32 interface_index = 2;
+}
+
+message PitOutEvent {
+  int32 lane = 1;
+  int32 interface_index = 2;
+}
+```
+
 ### B. Track Configurations & UI
 When a user defines a slot car track in the settings, they can add a WebSocket interface. If selected, the Race Coordinator will register a virtual client listener.
 
@@ -47,9 +73,9 @@ When a user defines a slot car track in the settings, they can add a WebSocket i
 ## 3. Proposed Backend & Routing Changes
 
 ### A. Virtual Protocol Class (`WebSocketProtocol.java`)
-We will create a virtual protocol `WebSocketProtocol` implementing `IProtocol`:
-* Since the connection is handled by the Javalin server WebSocket thread rather than a dedicated serial reader loop, `WebSocketProtocol` acts as a dummy protocol to satisfy the setup validation.
-* It stores the `interfaceIndex` assigned by the `HardwareProtocolFactory` and handles standard state transitions (`initializeHardwareState`, `close`, `open`).
+We will create a virtual protocol `WebSocketProtocol` that **extends `DefaultProtocol`**:
+* By extending the abstract `DefaultProtocol` class instead of directly implementing `IProtocol`, `WebSocketProtocol` inherits all the shared, robust logic implemented for physical track hardware (e.g. pit-lane state tracking, trigger throttle trims, refueling timer loops, and lane power relay sync).
+* It registers the assigned `interfaceIndex` and delegates standard state transitions (`initializeHardwareState`, `close`, `open`) to the base implementations.
 
 ### B. WebSocket Handler Expansion (`App.java`)
 We will update the `/api/interface-data` WebSocket endpoint to process incoming message payloads from clients:
@@ -79,6 +105,8 @@ We will implement `handleIncomingInterfaceEvent(WsContext ctx, InterfaceEvent ev
    - **LapEvent**: Call `currentRace.onLap(lap.getLane(), lap.getLapTime(), lap.getInterfaceId(), resolvedInterfaceIndex)`
    - **SegmentEvent**: Call `currentRace.onSegment(...)`
    - **CallbuttonEvent**: Call `currentRace.onCallbutton(...)`
+   - **PitInEvent**: Extract `WebSocketProtocol` from the active race and invoke `webSocketProtocol.updatePitState(pit_in.getLane(), true)`
+   - **PitOutEvent**: Extract `WebSocketProtocol` from the active race and invoke `webSocketProtocol.updatePitState(pit_out.getLane(), false)`
 4. **Re-broadcast**: Broadcast the event to all other clients connected to `/api/interface-data` for overlay updates.
 
 ---

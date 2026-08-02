@@ -234,10 +234,12 @@ If a race has already been started by a Director on the host machine, connecting
   - `LapEvent` (`lap`): Injects a lap trigger for the specified lane (`lane`), duration (`lap_time` in seconds), and virtual interface details.
   - `SegmentEvent` (`segment`): Injects a sector/segment crossing time.
   - `CallbuttonEvent` (`callbutton`): Simulates call button presses to pause/resume the race status.
+  - `PitInEvent` (`pit_in`): Proposed event to trigger pit entry and begin refueling logic for the specified lane (`lane`).
+  - `PitOutEvent` (`pit_out`): Proposed event to trigger pit exit and stop refueling logic for the specified lane (`lane`).
 * **Server Processing Flow**:
   1. The server receives the binary payload and decodes it as an `InterfaceEvent`.
   2. The server verifies that the client has `DIRECTOR` elevation.
-  3. If a race is running, the server forwards the event to the active `Race` object, invoking `onLap`, `onSegment`, or `onCallbutton` directly as if the event originated from a physical interface protocol.
+  3. If a race is running, the server forwards the event to the active `Race` object, invoking `onLap`, `onSegment`, `onCallbutton`, or updating pit states (`updatePitState` in the virtual `WebSocketProtocol` inheriting from `DefaultProtocol`) as if the event originated from a physical interface hardware.
   4. The server broadcasts the event to all other clients connected to `/api/interface-data` for live UI rendering.
 
 ### Hardware Resource Management
