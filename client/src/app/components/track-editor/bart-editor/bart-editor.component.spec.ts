@@ -223,4 +223,12 @@ describe("BartEditorComponent", () => {
     );
     expect(hasPitInOutBase).toBeFalse();
   });
+
+  it("should render minLapMs input as disabled", () => {
+    const minLapInput: HTMLInputElement = fixture.nativeElement.querySelector(
+      `input[id="minLapMs-0"]`,
+    );
+    expect(minLapInput).toBeTruthy();
+    expect(minLapInput.disabled).toBeTrue();
+  });
 });

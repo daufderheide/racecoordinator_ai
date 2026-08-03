@@ -8,7 +8,7 @@ export class BartConfigConverter {
       deviceName: proto.deviceName || "BART_0001",
       deviceAddress: proto.deviceAddress || "",
       numLanes: proto.numLanes || 8,
-      minLapMs: proto.minLapMs || 1000,
+      minLapMs: proto.minLapMs != null ? proto.minLapMs : 1,
       lapPinPitBehavior: proto.lapPinPitBehavior || 0,
       lapPinBehaviors: proto.lapPinBehaviors || [],
     };

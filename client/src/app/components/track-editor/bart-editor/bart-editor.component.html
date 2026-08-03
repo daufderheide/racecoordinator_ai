@@ -76,7 +76,8 @@
                           [id]="'minLapMs-' + interfaceIndex()"
                           [(ngModel)]="config().minLapMs"
                           (change)="onConfigChange()"
-                          min="100"
+                          disabled
+                          min="0"
                           max="30000"
                         />
                       </div>

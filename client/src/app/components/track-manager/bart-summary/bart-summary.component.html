@@ -20,7 +20,7 @@
           </div>
           <div class="summary-item">
             <span class="label">{{ "BS_MIN_LAP_TIME" | translate }}:</span>
-            <span class="value">{{ config()?.minLapMs || 1000 }} ms</span>
+            <span class="value">{{ config()?.minLapMs ?? 1 }} ms</span>
           </div>
           <div class="summary-item">
             <span class="label">{{ "BS_PIT_BEHAVIOR" | translate }}:</span>
