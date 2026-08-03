@@ -461,7 +461,32 @@ export class RaceConnectionService implements OnDestroy {
       update,
     );
     if (update.race) {
+      const currentRace = this.raceService.getRace();
+      const newRaceId = update.race.model?.entityId;
+      const newPractice = (update.race as any).practice || false;
+      if (
+        currentRace &&
+        ((newRaceId && currentRace.entity_id !== newRaceId) ||
+          currentRace.practice !== newPractice)
+      ) {
+        RaceConverter.clearCache();
+        DriverConverter.clearCache();
+        HeatConverter.clearCache();
+        TrackConverter.clearCache();
+        LaneConverter.clearCache();
+        RaceParticipantConverter.clearCache();
+        TeamConverter.clearCache();
+      }
       const race = RaceConverter.fromProto(update.race);
+      if (update.isEvent) {
+        (race as any).is_event = update.isEvent;
+        (race as any).event_id = update.eventId;
+        (race as any).event_name = update.eventName;
+        (race as any).current_event_race_index = update.currentEventRaceIndex;
+        (race as any).total_event_races = update.totalEventRaces;
+        (race as any).auto_advance_remaining_seconds =
+          update.autoAdvanceRemainingSeconds;
+      }
       this.raceService.setRace(race);
     }
 

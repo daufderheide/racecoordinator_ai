@@ -184,18 +184,33 @@ public class RaceConverter {
 
   public static com.antigravity.proto.Race toProto( // fqn-collision
       com.antigravity.race.Race race, Set<String> sentObjectIds) { // fqn-collision
-    return com.antigravity.proto.Race.newBuilder() // fqn-collision
-        .setRace(toProto(race.getRaceModel(), race.getTrack(), sentObjectIds))
-        .addAllDrivers(
-            race.getDrivers().stream()
-                .map(p -> RaceParticipantConverter.toProto(p, sentObjectIds))
-                .collect(Collectors.toList()))
-        .addAllHeats(
-            race.getHeats().stream()
-                .map(h -> HeatConverter.toProto(h, sentObjectIds))
-                .collect(Collectors.toList()))
-        .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
-        .setRecordData(race.getRecordData())
-        .build();
+    com.antigravity.proto.Race.Builder builder = // fqn-collision
+        com.antigravity.proto.Race.newBuilder() // fqn-collision
+            .setRace(toProto(race.getRaceModel(), race.getTrack(), sentObjectIds))
+            .addAllDrivers(
+                race.getDrivers().stream()
+                    .map(p -> RaceParticipantConverter.toProto(p, sentObjectIds))
+                    .collect(Collectors.toList()))
+            .addAllHeats(
+                race.getHeats().stream()
+                    .map(h -> HeatConverter.toProto(h, sentObjectIds))
+                    .collect(Collectors.toList()))
+            .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
+            .setRecordData(race.getRecordData());
+
+    com.antigravity.race.EventExecutionManager eventMgr = // fqn-collision
+        com.antigravity.race.EventExecutionManager.getInstance(); // fqn-collision
+    if (eventMgr.isEventActive()) {
+      builder.setIsEvent(true);
+      if (eventMgr.getActiveEvent() != null) {
+        builder.setEventId(eventMgr.getActiveEvent().getEntityId());
+        builder.setEventName(eventMgr.getActiveEvent().getName());
+        builder.setTotalEventRaces(eventMgr.getActiveEvent().getRaces().size());
+      }
+      builder.setCurrentEventRaceIndex(eventMgr.getCurrentRaceIndex());
+      builder.setAutoAdvanceRemainingSeconds(eventMgr.getAutoAdvanceRemainingSeconds());
+    }
+
+    return builder.build();
   }
 }

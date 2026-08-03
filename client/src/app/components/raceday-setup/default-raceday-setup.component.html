@@ -771,11 +771,11 @@
                     <div class="event-race-item">
                       <span
                         >Race {{ idx + 1 }}:
-                        {{ getRaceName(item.raceId) }}</span
+                        {{ getRaceName(getItemRaceId(item)) }}</span
                       >
                       <span class="limit-tag">
-                        @if (item.maxDrivers > 0) {
-                          Max {{ item.maxDrivers }} drivers
+                        @if (getItemMaxDrivers(item) > 0) {
+                          Max {{ getItemMaxDrivers(item) }} drivers
                         } @else {
                           Unlimited
                         }

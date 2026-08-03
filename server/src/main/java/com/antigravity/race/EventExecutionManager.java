@@ -99,41 +99,51 @@ public class EventExecutionManager {
     }
 
     // Determine standings order for seeding the next race
+    List<String> standingsOrder = new ArrayList<>();
     List<RaceParticipant> drivers = completedRace.getDrivers();
     if (drivers != null && !drivers.isEmpty()) {
       List<RaceParticipant> sorted = new ArrayList<>(drivers);
       sorted.sort(Comparator.comparingInt(RaceParticipant::getRank));
 
-      List<String> standingsOrder = new ArrayList<>();
       for (RaceParticipant rp : sorted) {
+        if (rp.getDriver() != null && Driver.isEmpty(rp.getDriver())) {
+          continue;
+        }
         String pid = null;
-        if (rp.getDriver() != null) {
+        if (rp.getDriver() != null && !Driver.isEmpty(rp.getDriver())) {
           pid = "d_" + rp.getDriver().getEntityId();
         } else if (rp.getTeam() != null) {
           pid = "t_" + rp.getTeam().getEntityId();
-        } else if (rp.getObjectId() != null) {
+        } else if (rp.getObjectId() != null && !rp.getObjectId().contains("EMPTY")) {
           pid = rp.getObjectId();
         }
-        if (pid != null) {
+        if (pid != null && !standingsOrder.contains(pid)) {
           standingsOrder.add(pid);
         }
       }
+    }
 
-      int nextIndex = currentRaceIndex + 1;
-      if (nextIndex < activeEvent.getRaces().size()) {
-        EventRaceItem nextRaceItem = activeEvent.getRaces().get(nextIndex);
-        if (nextRaceItem.getMaxDrivers() > 0
-            && standingsOrder.size() > nextRaceItem.getMaxDrivers()) {
-          logger.info(
-              "Seeding race {}: Dropping worst seeded drivers (from {} down to {} max drivers)",
-              nextIndex + 1,
-              standingsOrder.size(),
-              nextRaceItem.getMaxDrivers());
-          this.currentQualifiedParticipantIds =
-              new ArrayList<>(standingsOrder.subList(0, nextRaceItem.getMaxDrivers()));
-        } else {
-          this.currentQualifiedParticipantIds = new ArrayList<>(standingsOrder);
-        }
+    // Preserve any active event participants that were not in completedRace standings
+    for (String pid : currentQualifiedParticipantIds) {
+      if (!standingsOrder.contains(pid)) {
+        standingsOrder.add(pid);
+      }
+    }
+
+    int nextIndex = currentRaceIndex + 1;
+    if (nextIndex < activeEvent.getRaces().size()) {
+      EventRaceItem nextRaceItem = activeEvent.getRaces().get(nextIndex);
+      if (nextRaceItem.getMaxDrivers() > 0
+          && standingsOrder.size() > nextRaceItem.getMaxDrivers()) {
+        logger.info(
+            "Seeding race {}: Dropping worst seeded drivers (from {} down to {} max drivers)",
+            nextIndex + 1,
+            standingsOrder.size(),
+            nextRaceItem.getMaxDrivers());
+        this.currentQualifiedParticipantIds =
+            new ArrayList<>(standingsOrder.subList(0, nextRaceItem.getMaxDrivers()));
+      } else {
+        this.currentQualifiedParticipantIds = new ArrayList<>(standingsOrder);
       }
     }
 
@@ -281,6 +291,7 @@ public class EventExecutionManager {
 
     ClientSubscriptionManager.getInstance().setRace(runtimeRace);
     runtimeRace.init();
-    runtimeRace.startRace();
+    com.antigravity.proto.RaceData raceDataSnapshot = runtimeRace.createSnapshot(); // fqn-collision
+    runtimeRace.broadcast(raceDataSnapshot);
   }
 }

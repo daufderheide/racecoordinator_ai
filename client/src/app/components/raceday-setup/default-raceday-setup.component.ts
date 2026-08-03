@@ -775,10 +775,23 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
   }
 
+  getItemRaceId(item: any): string {
+    if (!item) return "";
+    return item.raceId || item.race_id || "";
+  }
+
+  getItemMaxDrivers(item: any): number {
+    if (!item) return 0;
+    return item.maxDrivers !== undefined
+      ? item.maxDrivers
+      : item.max_drivers !== undefined
+        ? item.max_drivers
+        : 0;
+  }
+
   getRaceName(raceId: string): string {
-    const r = this.races.find(
-      (rc) => rc.entity_id === raceId || (rc as any)._id === raceId,
-    );
+    if (!raceId) return "";
+    const r = this.races.find((rc) => rc.entity_id === raceId);
     return r ? r.name : raceId;
   }
 
@@ -790,17 +803,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.selectedEvent.races.length > 0
     ) {
       const race0 = this.selectedEvent.races[0];
-      if (
-        race0.maxDrivers > 0 &&
-        this.selectedParticipants.length > race0.maxDrivers
-      ) {
-        const raceName = this.getRaceName(race0.raceId);
+      const maxDrivers = this.getItemMaxDrivers(race0);
+      const raceId = this.getItemRaceId(race0);
+      if (maxDrivers > 0 && this.selectedParticipants.length > maxDrivers) {
+        const raceName = this.getRaceName(raceId);
         return (
           this.translationService.translate("RDS_EVENT_WARNING_LIMIT", {
-            limit: race0.maxDrivers,
+            limit: maxDrivers,
             raceName: raceName,
           }) ||
-          `Warning: Only the top ${race0.maxDrivers} drivers will participate in ${raceName}.`
+          `Warning: Only the top ${maxDrivers} drivers will participate in ${raceName}.`
         );
       }
     }

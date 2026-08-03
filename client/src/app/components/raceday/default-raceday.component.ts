@@ -1758,6 +1758,12 @@ export class DefaultRacedayComponent
       );
       this.race = race;
       this.track = race.track;
+      if (
+        race.entity_id &&
+        typeof this.themeService?.activateForRace === "function"
+      ) {
+        this.themeService.activateForRace(race.entity_id);
+      }
       this.generateAllLaneQrCodes();
 
       if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
