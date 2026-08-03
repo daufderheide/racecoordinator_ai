@@ -38,7 +38,6 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
     { label: "TME_LAP_PIN_PIT_NONE", value: 0 },
     { label: "TME_LAP_PIN_PIT_IN", value: 1 },
     { label: "TME_LAP_PIN_PIT_OUT", value: 2 },
-    { label: "TME_LAP_PIN_PIT_IN_OUT", value: 3 },
   ];
 
   lapPinBehaviors: { label: string; value: number; lane?: number }[] = [];
@@ -204,14 +203,6 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
       this.lapPinBehaviors.push({
         label: "BART_PIT_OUT_LANE",
         value: PinBehavior.BEHAVIOR_PIT_OUT_BASE + i,
-        lane: i + 1,
-      });
-    }
-
-    for (let i = 0; i < numLanes; i++) {
-      this.lapPinBehaviors.push({
-        label: "BART_PIT_IN_OUT_LANE",
-        value: PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + i,
         lane: i + 1,
       });
     }

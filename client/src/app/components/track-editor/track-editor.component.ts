@@ -1568,7 +1568,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       deviceAddress: "",
       numLanes: this.lanes.length,
       minLapMs: 1000,
-      lapPinPitBehavior: 3,
+      lapPinPitBehavior: 0,
       lapPinBehaviors: Array(this.lanes.length)
         .fill(0)
         .map((_, i) => PinBehavior.BEHAVIOR_LAP_BASE + i),

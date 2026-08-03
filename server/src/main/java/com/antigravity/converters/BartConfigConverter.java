@@ -20,7 +20,7 @@ public class BartConfigConverter {
         .setLapPinPitBehaviorValue(
             config.lapPinPitBehavior != null
                 ? config.lapPinPitBehavior.getValue()
-                : LapPinPitBehavior.LAP_PIN_PIT_IN_OUT_VALUE)
+                : LapPinPitBehavior.LAP_PIN_PIT_NONE_VALUE)
         .addAllLapPinBehaviors(
             config.lapPinBehaviors != null ? config.lapPinBehaviors : new ArrayList<>())
         .build();

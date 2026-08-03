@@ -62,7 +62,7 @@ describe("BartEditorComponent", () => {
         PinBehavior.BEHAVIOR_LAP_BASE + 2,
         PinBehavior.BEHAVIOR_LAP_BASE + 3,
       ],
-      lapPinPitBehavior: 3,
+      lapPinPitBehavior: 0,
     });
     fixture.componentRef.setInput("lanes", 4);
     fixture.componentRef.setInput("interfaceIndex", 0);
@@ -205,5 +205,22 @@ describe("BartEditorComponent", () => {
     component.ngOnInit();
 
     expect(component.detectedBleDevices).toEqual(["MY_BART_UNIT"]);
+  });
+
+  it("should not include PIT_IN_OUT option (value 3) in lapPinPitBehaviors dropdown options", () => {
+    const hasPitInOutOption = component.lapPinPitBehaviors.some(
+      (item) => item.value === 3,
+    );
+    expect(hasPitInOutOption).toBeFalse();
+  });
+
+  it("should not include BEHAVIOR_PIT_IN_OUT_BASE channel behaviors when rebuildBehaviors is called", () => {
+    component.rebuildBehaviors();
+    const hasPitInOutBase = component.lapPinBehaviors.some(
+      (b) =>
+        b.value >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE &&
+        b.value < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 32,
+    );
+    expect(hasPitInOutBase).toBeFalse();
   });
 });

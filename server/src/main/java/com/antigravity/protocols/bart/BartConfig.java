@@ -25,7 +25,7 @@ public class BartConfig {
     this.deviceAddress = "";
     this.numLanes = 8;
     this.minLapMs = 1000;
-    this.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
+    this.lapPinPitBehavior = LapPinPitBehavior.NONE;
 
     this.lapPinBehaviors = new ArrayList<>();
     for (int i = 0; i < 8; i++) {
@@ -47,8 +47,7 @@ public class BartConfig {
     this.deviceAddress = deviceAddress != null ? deviceAddress : "";
     this.numLanes = numLanes != null ? numLanes : 8;
     this.minLapMs = minLapMs != null ? minLapMs : 1000;
-    this.lapPinPitBehavior =
-        lapPinPitBehavior != null ? lapPinPitBehavior : LapPinPitBehavior.PIT_IN_OUT;
+    this.lapPinPitBehavior = lapPinPitBehavior != null ? lapPinPitBehavior : LapPinPitBehavior.NONE;
 
     if (lapPinBehaviors != null && !lapPinBehaviors.isEmpty()) {
       this.lapPinBehaviors = new ArrayList<>(lapPinBehaviors);

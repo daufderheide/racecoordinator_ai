@@ -199,7 +199,6 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       int lapBase = PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
       int pitInBase = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
       int pitOutBase = PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
-      int pitInOutBase = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
       int callBtnBase = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE_VALUE;
 
       int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
@@ -213,9 +212,6 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       } else if (behavior >= pitOutBase && behavior < pitOutBase + getNumLanes()) {
         int mappedLane = behavior - pitOutBase;
         handlePitOut(mappedLane, activeState);
-      } else if (behavior >= pitInOutBase && behavior < pitInOutBase + getNumLanes()) {
-        int mappedLane = behavior - pitInOutBase;
-        handlePitInOut(mappedLane, activeState);
       } else if (behavior >= callBtnBase && behavior < callBtnBase + getNumLanes()) {
         int mappedLane = behavior - callBtnBase;
         handleCallButton(mappedLane, activeState, rawLane);
@@ -338,9 +334,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
 
   @Override
   protected LapPinPitBehavior getLapPinPitBehavior() {
-    return config.lapPinPitBehavior != null
-        ? config.lapPinPitBehavior
-        : LapPinPitBehavior.PIT_IN_OUT;
+    return config.lapPinPitBehavior != null ? config.lapPinPitBehavior : LapPinPitBehavior.NONE;
   }
 
   @Override
@@ -357,9 +351,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   protected boolean hasPitInConfigured(int laneIndex) {
     if (config.lapPinBehaviors != null) {
       for (Integer behavior : config.lapPinBehaviors) {
-        if (behavior != null
-            && (behavior == PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex
-                || behavior == PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + laneIndex)) {
+        if (behavior != null && (behavior == PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex)) {
           return true;
         }
       }
