@@ -350,7 +350,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
 
   @Override
   protected double getHardwareDebounceUs() {
-    return config.debounce * 1000.0;
+    return 0.0;
   }
 
   @Override

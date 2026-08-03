@@ -1192,7 +1192,6 @@
   "BART_DEVICE_NAME": "Nom de l'Appareil BLE",
   "BART_SELECT_DEVICE": "Sélectionner un appareil BLE",
   "BART_MIN_LAP_MS": "Temps de Tour Minimum (ms)",
-  "BART_DEBOUNCE": "Anti-rebond (ms)",
   "BART_LAP_PIN_PIT_BEHAVIOR": "Comportement du Capteur de Tour/Stand",
   "BART_REMOVE_INTERFACE": "Supprimer l'Interface",
   "BART_BEHAVIOR_UNUSED": "Inutilisé",

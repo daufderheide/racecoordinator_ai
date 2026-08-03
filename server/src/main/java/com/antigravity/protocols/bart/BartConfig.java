@@ -14,7 +14,6 @@ public class BartConfig {
   public String name;
   public String deviceName;
   public String deviceAddress;
-  public int debounce;
   public int numLanes;
   public int minLapMs;
   public LapPinPitBehavior lapPinPitBehavior;
@@ -24,7 +23,6 @@ public class BartConfig {
     this.name = "BART";
     this.deviceName = "BART_0001";
     this.deviceAddress = "";
-    this.debounce = 1;
     this.numLanes = 8;
     this.minLapMs = 1000;
     this.lapPinPitBehavior = LapPinPitBehavior.PIT_IN_OUT;
@@ -40,7 +38,6 @@ public class BartConfig {
       @JsonProperty("name") String name,
       @JsonProperty("deviceName") String deviceName,
       @JsonProperty("deviceAddress") String deviceAddress,
-      @JsonProperty("debounce") Integer debounce,
       @JsonProperty("numLanes") Integer numLanes,
       @JsonProperty("minLapMs") Integer minLapMs,
       @JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
@@ -48,7 +45,6 @@ public class BartConfig {
     this.name = name != null ? name : "BART";
     this.deviceName = deviceName != null ? deviceName : "BART_0001";
     this.deviceAddress = deviceAddress != null ? deviceAddress : "";
-    this.debounce = debounce != null ? debounce : 1;
     this.numLanes = numLanes != null ? numLanes : 8;
     this.minLapMs = minLapMs != null ? minLapMs : 1000;
     this.lapPinPitBehavior =

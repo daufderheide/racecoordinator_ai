@@ -21,7 +21,6 @@ public class BartConfigConverterTest {
     config.name = "Custom BART";
     config.deviceName = "BART_9999";
     config.deviceAddress = "11:22:33:44:55:66";
-    config.debounce = 2;
     config.numLanes = 4;
     config.minLapMs = 1500;
 
@@ -29,7 +28,6 @@ public class BartConfigConverterTest {
     assertEquals("Custom BART", proto.getName());
     assertEquals("BART_9999", proto.getDeviceName());
     assertEquals("11:22:33:44:55:66", proto.getDeviceAddress());
-    assertEquals(2, proto.getDebounce());
     assertEquals(4, proto.getNumLanes());
     assertEquals(1500, proto.getMinLapMs());
 
@@ -37,7 +35,6 @@ public class BartConfigConverterTest {
     assertEquals("Custom BART", roundTrip.name);
     assertEquals("BART_9999", roundTrip.deviceName);
     assertEquals("11:22:33:44:55:66", roundTrip.deviceAddress);
-    assertEquals(2, roundTrip.debounce);
     assertEquals(4, roundTrip.numLanes);
     assertEquals(1500, roundTrip.minLapMs);
   }

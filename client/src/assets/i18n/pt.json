@@ -1192,7 +1192,6 @@
   "BART_DEVICE_NAME": "Nome do Dispositivo BLE",
   "BART_SELECT_DEVICE": "Selecionar dispositivo BLE",
   "BART_MIN_LAP_MS": "Tempo Mínimo de Volta (ms)",
-  "BART_DEBOUNCE": "Debounce (ms)",
   "BART_LAP_PIN_PIT_BEHAVIOR": "Comportamento do Sensor de Volta/Pit",
   "BART_REMOVE_INTERFACE": "Remover Interface",
   "BART_BEHAVIOR_UNUSED": "Não Utilizado",

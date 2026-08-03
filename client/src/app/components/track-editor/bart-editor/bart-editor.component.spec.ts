@@ -56,7 +56,6 @@ describe("BartEditorComponent", () => {
       deviceName: "BART_0001",
       deviceAddress: "AA:BB:CC:DD:EE:FF",
       minLapMs: 1000,
-      debounce: 1,
       lapPinBehaviors: [
         PinBehavior.BEHAVIOR_LAP_BASE,
         PinBehavior.BEHAVIOR_LAP_BASE + 1,

@@ -15,7 +15,6 @@ public class BartConfigConverter {
         .setName(config.name != null ? config.name : "")
         .setDeviceName(config.deviceName != null ? config.deviceName : "")
         .setDeviceAddress(config.deviceAddress != null ? config.deviceAddress : "")
-        .setDebounce(config.debounce)
         .setNumLanes(config.numLanes)
         .setMinLapMs(config.minLapMs)
         .setLapPinPitBehaviorValue(
@@ -36,7 +35,6 @@ public class BartConfigConverter {
     config.name = protoConfig.getName();
     config.deviceName = protoConfig.getDeviceName();
     config.deviceAddress = protoConfig.getDeviceAddress();
-    config.debounce = protoConfig.getDebounce();
     config.numLanes = protoConfig.getNumLanes();
     config.minLapMs = protoConfig.getMinLapMs();
     config.lapPinPitBehavior =

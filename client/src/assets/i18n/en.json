@@ -1194,7 +1194,6 @@
   "BART_DEVICE_NAME": "BLE Device Name",
   "BART_SELECT_DEVICE": "Select BLE Device",
   "BART_MIN_LAP_MS": "Minimum Lap Time (ms)",
-  "BART_DEBOUNCE": "Debounce (ms)",
   "BART_LAP_PIN_PIT_BEHAVIOR": "Lap Sensor Pit Behavior",
   "BART_REMOVE_INTERFACE": "Remove Interface",
   "BART_BEHAVIOR_UNUSED": "Unused",
