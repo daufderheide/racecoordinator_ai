@@ -199,27 +199,31 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       int lapBase = PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
       int pitInBase = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE;
       int pitOutBase = PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
-      int callBtnBase = PinBehavior.BEHAVIOR_CALL_BUTTON_BASE_VALUE;
 
       int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
+      long lapUs = (long) lapMs * 1000L;
 
       if (behavior >= lapBase && behavior < lapBase + getNumLanes()) {
         int mappedLane = behavior - lapBase;
+        if (mappedLane >= 0 && mappedLane < getNumLanes()) {
+          hwLapTime[mappedLane].add(lapUs);
+          hwSegmentTime[mappedLane].add(lapUs);
+        }
         handleLapCounter(mappedLane, activeState, rawLane);
       } else if (behavior >= pitInBase && behavior < pitInBase + getNumLanes()) {
         int mappedLane = behavior - pitInBase;
         handlePitIn(mappedLane, activeState);
       } else if (behavior >= pitOutBase && behavior < pitOutBase + getNumLanes()) {
         int mappedLane = behavior - pitOutBase;
-        handlePitOut(mappedLane, activeState);
-      } else if (behavior >= callBtnBase && behavior < callBtnBase + getNumLanes()) {
-        int mappedLane = behavior - callBtnBase;
-        handleCallButton(mappedLane, activeState, rawLane);
+        handlePitOutPulse(mappedLane);
       } else {
-        // Fallback: direct 0-indexed lane mapping
-        if (rawLane < getNumLanes()) {
-          handleLapCounter(rawLane, activeState, rawLane);
-        }
+        logger.error(
+            "Unknown BART channel behavior: {} for raw lane: {}, lapCount: {}, lapMs: {}, packet: {}",
+            behavior,
+            rawLane,
+            lapCount,
+            lapMs,
+            bytesToHex(packet));
       }
     } else if (msgType == TYPE_STATUS_SNAPSHOT) {
       int raceState = packet[3] & 0xFF;

@@ -122,7 +122,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     } else if (behavior >= PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE) {
       int lane = behavior - PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
-      handlePitOut(lane, state);
+      handlePitOutPulse(lane);
     } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 1000) {
       int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;

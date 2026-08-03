@@ -398,6 +398,13 @@ public abstract class DefaultProtocol implements IProtocol {
     lastPitOutState[laneIndex] = state;
   }
 
+  protected void handlePitOutPulse(int laneIndex) {
+    int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
+    int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
+    handlePitOut(laneIndex, activeState);
+    handlePitOut(laneIndex, inactiveState);
+  }
+
   protected void handlePitInOut(int laneIndex, int state) {
     if (laneIndex < 0 || laneIndex >= numLanes) return;
     int wantState = isNormallyClosedLaneSensors() ? 1 : 0;

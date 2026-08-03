@@ -84,6 +84,7 @@ public class BartProtocolTest {
     connection.injectReceivedData(packet);
 
     assertEquals(0, lapLane.get());
+    assertEquals(1.25, lapTime.get(), 0.0001);
     protocol.close();
   }
 
@@ -172,6 +173,83 @@ public class BartProtocolTest {
     connection.injectReceivedData(packet);
 
     assertEquals(6, detectedChannels.get());
+    protocol.close();
+  }
+
+  @Test
+  public void testPitInAndPitOutRefueling() {
+    config.lapPinBehaviors = new java.util.ArrayList<>();
+    config.lapPinBehaviors.add(com.antigravity.proto.PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + 0);
+    config.lapPinBehaviors.add(com.antigravity.proto.PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE + 0);
+
+    AtomicReference<CarData> carDataRef = new AtomicReference<>();
+
+    protocol.setListener(
+        new ProtocolListener() {
+          @Override
+          public void onLap(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onSegment(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onCallbutton(int laneIndex, int interfaceIndex) {}
+
+          @Override
+          public void onCarData(CarData carData) {
+            carDataRef.set(carData);
+          }
+
+          @Override
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {}
+
+          @Override
+          public void onInterfaceEvent(InterfaceEvent event) {}
+        });
+
+    protocol.open();
+
+    // 1. Inject Pit In packet on channel 0
+    byte[] pitInNoCrc =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x00, 0x01, (byte) 0xE8, 0x03, 0x64, 0x00};
+    byte[] pitInPacket = new byte[10];
+    System.arraycopy(pitInNoCrc, 0, pitInPacket, 0, 9);
+    pitInPacket[9] = BartCrc.calculateCrc(pitInNoCrc);
+
+    connection.injectReceivedData(pitInPacket);
+
+    assertEquals(0, carDataRef.get().getLane());
+    assertEquals(true, carDataRef.get().getCanRefuel());
+
+    // 2. Inject Pit Out packet on channel 1
+    byte[] pitOutNoCrc =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x01, 0x01, (byte) 0xE8, 0x03, 0x64, 0x00};
+    byte[] pitOutPacket = new byte[10];
+    System.arraycopy(pitOutNoCrc, 0, pitOutPacket, 0, 9);
+    pitOutPacket[9] = BartCrc.calculateCrc(pitOutNoCrc);
+
+    connection.injectReceivedData(pitOutPacket);
+
+    assertEquals(0, carDataRef.get().getLane());
+    assertEquals(false, carDataRef.get().getCanRefuel());
+
+    protocol.close();
+  }
+
+  @Test
+  public void testUnknownBehaviorHandling() {
+    config.lapPinBehaviors = new java.util.ArrayList<>();
+    config.lapPinBehaviors.add(9999); // Unknown behavior value
+
+    protocol.open();
+
+    byte[] packetNoCrc =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x00, 0x01, (byte) 0xE2, 0x04, 0x64, 0x00};
+    byte[] packet = new byte[10];
+    System.arraycopy(packetNoCrc, 0, packet, 0, 9);
+    packet[9] = BartCrc.calculateCrc(packetNoCrc);
+
+    connection.injectReceivedData(packet);
     protocol.close();
   }
 }

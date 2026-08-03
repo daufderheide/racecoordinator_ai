@@ -386,4 +386,26 @@ public class TrackmateProtocolTest {
     assertEquals(4, listener.digitalPinEventCount); // both pins emit an event when turning off
     assertEquals(1, listener.lastDigitalPinEvent.getState()); // inactive state is 1
   }
+
+  @Test
+  public void testPitInAndPitOutChannelBehaviors() {
+    config.lapPinBehaviors = new ArrayList<>();
+    config.lapPinBehaviors.add(
+        PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + 0); // Pin 0 -> Pit In lane 0
+    config.lapPinBehaviors.add(
+        PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE + 0); // Pin 1 -> Pit Out lane 0
+
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // 1. Inject 'A' (Pin 0) -> Pit In
+    serialConnection.injectData(new byte[] {0x41});
+    org.junit.Assert.assertTrue("Car should enter pits on Pit In trigger", listener.laneInPits[0]);
+
+    // 2. Inject 'B' (Pin 1) -> Pit Out
+    serialConnection.injectData(new byte[] {0x42});
+    org.junit.Assert.assertFalse(
+        "Car should leave pits immediately on Pit Out trigger", listener.laneInPits[0]);
+  }
 }
