@@ -145,6 +145,7 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
       has_main_relay: t.has_main_relay || false,
       trackmate_configs: t.trackmate_configs,
       phidget_configs: t.phidget_configs,
+      bart_configs: t.bart_configs,
     }),
 );
 

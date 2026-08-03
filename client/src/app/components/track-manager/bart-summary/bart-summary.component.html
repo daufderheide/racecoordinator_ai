@@ -1,0 +1,70 @@
+@if (config()) {
+  <div class="arduino-summary">
+    <div
+      class="section-header"
+      (click)="toggleExpanded()"
+      style="cursor: pointer"
+    >
+      <span class="expander-icon" [class.collapsed]="!isExpanded">▼</span>
+      <h1>
+        {{ "BS_TITLE" | translate
+        }}{{ index() !== undefined ? " " + index() : "" }}
+      </h1>
+    </div>
+    @if (isExpanded) {
+      <div class="section-content">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">{{ "BS_DEVICE_NAME" | translate }}:</span>
+            <span class="value">{{ getDeviceName() | translate }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "BS_MIN_LAP_TIME" | translate }}:</span>
+            <span class="value">{{ config()?.minLapMs || 1000 }} ms</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">{{ "BS_PIT_BEHAVIOR" | translate }}:</span>
+            <span class="value">{{
+              getLapPinPitBehaviorText() | translate
+            }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="label"
+              >{{ "BS_CONFIGURED_CHANNELS" | translate }}:</span
+            >
+            <span class="value">{{
+              "AS_PINS_COUNT"
+                | translate: { count: getConfiguredChannelCount() }
+            }}</span>
+          </div>
+        </div>
+        <div class="behavior-checkboxes">
+          <div class="behavior-check">
+            <span class="check-box" [class.checked]="hasBehavior('lap')"></span>
+            <span class="behavior-label">{{
+              "AS_BEHAVIOR_LAPS" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span
+              class="check-box"
+              [class.checked]="hasBehavior('pit_in')"
+            ></span>
+            <span class="behavior-label">{{
+              "BS_BEHAVIOR_PIT_IN" | translate
+            }}</span>
+          </div>
+          <div class="behavior-check">
+            <span
+              class="check-box"
+              [class.checked]="hasBehavior('pit_out')"
+            ></span>
+            <span class="behavior-label">{{
+              "BS_BEHAVIOR_PIT_OUT" | translate
+            }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

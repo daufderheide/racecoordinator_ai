@@ -289,6 +289,60 @@ describe("TrackEditorComponent", () => {
     expect(component.editingTrack?.has_per_lane_relays).toBeTrue();
   }));
 
+  it("should preserve bart_configs when cloning track for editing", () => {
+    const track = MOCK_TRACK_INSTANCES[0];
+    const mockBartConfig = [
+      {
+        name: "BART 1",
+        deviceName: "BART_0001",
+        numLanes: 4,
+        minLapMs: 1000,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [0, 1],
+      },
+    ];
+    const cloned = (component as any).cloneTrack({
+      ...track,
+      bart_configs: mockBartConfig,
+    });
+    expect(cloned.bart_configs).toEqual(mockBartConfig as any);
+  });
+
+  it("should retain bart_configs after a successful track update", fakeAsync(() => {
+    const mockBartConfig = [
+      {
+        name: "BART 1",
+        deviceName: "BART_0001",
+        numLanes: 4,
+        minLapMs: 1000,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [0, 1],
+      },
+    ];
+    dataService.updateTrack.and.returnValue(
+      of({
+        entity_id: "t1",
+        name: "Updated Track",
+        lanes: component.lanes,
+        arduino_configs: component.arduinoConfigs,
+        has_per_lane_relays: true,
+        has_main_relay: false,
+        bart_configs: mockBartConfig,
+      }),
+    );
+
+    component.bartConfigs = mockBartConfig as any;
+    component.trackName = "Updated Track";
+
+    component.updateTrack();
+
+    flush();
+    fixture.detectChanges();
+
+    expect(component.bartConfigs).toEqual(mockBartConfig as any);
+    expect(component.editingTrack?.bart_configs).toEqual(mockBartConfig as any);
+  }));
+
   it("should save as new track", () => {
     component.saveAsNew();
 

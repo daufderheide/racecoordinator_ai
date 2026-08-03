@@ -32,6 +32,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.component";
+import { BartSummaryComponent } from "./bart-summary/bart-summary.component";
 import { PhidgetSummaryComponent } from "./phidget-summary/phidget-summary.component";
 import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.component";
 
@@ -44,6 +45,7 @@ import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.co
     ConfirmationModalComponent,
     ManagerHeaderComponent_1,
     ArduinoSummaryComponent,
+    BartSummaryComponent,
     PhidgetSummaryComponent,
     TrakmateSummaryComponent,
     TranslatePipe,
@@ -184,6 +186,7 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
               has_main_relay: t.has_main_relay ?? false,
               trackmate_configs: t.trackmate_configs,
               phidget_configs: t.phidget_configs,
+              bart_configs: t.bart_configs,
             }),
         );
         if (this.tracks.length > 0) {

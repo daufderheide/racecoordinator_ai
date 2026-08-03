@@ -443,6 +443,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                     has_main_relay: factoryTrack.has_main_relay || false,
                     trackmate_configs: factoryTrack.trackmate_configs,
                     phidget_configs: factoryTrack.phidget_configs,
+                    bart_configs: factoryTrack.bart_configs,
                   });
                   this.initializeEditingState();
                 },
@@ -1729,6 +1730,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             has_main_relay: result.has_main_relay ?? false,
             trackmate_configs: result.trackmate_configs,
             phidget_configs: result.phidget_configs,
+            bart_configs: result.bart_configs,
           });
 
           // Update allTracks cache to ensure name uniqueness checks stay in sync
@@ -1802,6 +1804,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           } else {
             if (this.phidgetConfigs.length > 0) {
               this.phidgetConfigs = [];
+            }
+          }
+
+          if (
+            this.editingTrack.bart_configs &&
+            this.editingTrack.bart_configs.length > 0
+          ) {
+            const newBartConfigsJson = JSON.stringify(
+              this.editingTrack.bart_configs,
+            );
+            if (newBartConfigsJson !== JSON.stringify(this.bartConfigs)) {
+              this.bartConfigs = JSON.parse(newBartConfigsJson);
+            }
+          } else {
+            if (this.bartConfigs.length > 0) {
+              this.bartConfigs = [];
             }
           }
 
