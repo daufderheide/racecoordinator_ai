@@ -58,6 +58,10 @@ public class EventExecutionManager {
     return autoAdvanceRemainingSeconds;
   }
 
+  public synchronized List<String> getCurrentQualifiedParticipantIds() {
+    return new ArrayList<>(currentQualifiedParticipantIds);
+  }
+
   public synchronized void startEvent(
       Event event,
       List<String> participantIds,

@@ -3,14 +3,26 @@ package com.antigravity.race;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import com.antigravity.models.Driver;
 import com.antigravity.models.Event;
 import com.antigravity.models.Event.EventRaceItem;
+import com.antigravity.models.Track;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class EventExecutionManagerTest {
+
+  @Before
+  @After
+  public void resetEventExecutionManager() {
+    EventExecutionManager.getInstance().cancelEvent();
+  }
 
   @Test
   public void testEventExecutionManagerSingletonAndStatus() {
@@ -30,5 +42,141 @@ public class EventExecutionManagerTest {
     assertEquals(2, event.getRaces().size());
     assertEquals(0, event.getRaces().get(0).getMaxDrivers());
     assertEquals(2, event.getRaces().get(1).getMaxDrivers());
+  }
+
+  @Test
+  public void
+      testOnRaceOver_IgnoresEmptyDriversAndPreservesAllQualifiedDriversForUnlimitedNextRace()
+          throws Exception {
+    List<EventRaceItem> raceItems = new ArrayList<>();
+    raceItems.add(new EventRaceItem("race_1", 0)); // Practice (Unlimited)
+    raceItems.add(new EventRaceItem("race_2", 0)); // Timed (Unlimited)
+
+    Event event = new Event("Event1", "Test Event", 0.0, raceItems, "e1", null);
+
+    List<String> initialParticipants = Arrays.asList("d_driver1", "d_driver2", "d_driver3");
+
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    // Simulate starting event internal state
+    manager.cancelEvent();
+
+    // Set internal state directly for test
+    java.lang.reflect.Field activeEventField =
+        EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(manager, event);
+
+    java.lang.reflect.Field currentIndexField =
+        EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+    currentIndexField.set(manager, 0);
+
+    java.lang.reflect.Field qualifiedField =
+        EventExecutionManager.class.getDeclaredField("currentQualifiedParticipantIds");
+    qualifiedField.setAccessible(true);
+    qualifiedField.set(manager, new ArrayList<>(initialParticipants));
+
+    // Construct mock completed race with 3 real drivers + 1 EMPTY_DRIVER
+    Driver d1 = new Driver("Driver 1", "D1", "driver1", null);
+    Driver d2 = new Driver("Driver 2", "D2", "driver2", null);
+    Driver d3 = new Driver("Driver 3", "D3", "driver3", null);
+
+    RaceParticipant rp1 = new RaceParticipant(d1);
+    rp1.setRank(1);
+    RaceParticipant rp2 = new RaceParticipant(d2);
+    rp2.setRank(2);
+    RaceParticipant rp3 = new RaceParticipant(d3);
+    rp3.setRank(3);
+    RaceParticipant rpEmpty = new RaceParticipant(Driver.EMPTY_DRIVER);
+    rpEmpty.setRank(99);
+
+    Track track =
+        new Track.Builder().name("Track 1").lanes(new ArrayList<>()).entityId("t1").build();
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Practice Race")
+            .withTrackEntityId("t1")
+            .build();
+
+    Race completedRace =
+        new Race.Builder()
+            .model(raceModel)
+            .track(track)
+            .drivers(Arrays.asList(rp1, rp2, rp3, rpEmpty))
+            .isDemoMode(true)
+            .build();
+
+    manager.onRaceOver(completedRace);
+
+    List<String> nextQualified = manager.getCurrentQualifiedParticipantIds();
+    assertEquals(3, nextQualified.size());
+    assertTrue(nextQualified.contains("d_driver1"));
+    assertTrue(nextQualified.contains("d_driver2"));
+    assertTrue(nextQualified.contains("d_driver3"));
+    assertFalse(nextQualified.contains("d_EMPTY_LANE"));
+  }
+
+  @Test
+  public void testOnRaceOver_TruncatesDriversWhenNextRaceHasMaxDriversLimit() throws Exception {
+    List<EventRaceItem> raceItems = new ArrayList<>();
+    raceItems.add(new EventRaceItem("race_1", 0)); // Unlimited
+    raceItems.add(new EventRaceItem("race_2", 2)); // Top 2 qualify
+
+    Event event = new Event("Event2", "Test Event", 0.0, raceItems, "e2", null);
+
+    List<String> initialParticipants = Arrays.asList("d_driver1", "d_driver2", "d_driver3");
+
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    manager.cancelEvent();
+
+    java.lang.reflect.Field activeEventField =
+        EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(manager, event);
+
+    java.lang.reflect.Field currentIndexField =
+        EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+    currentIndexField.set(manager, 0);
+
+    java.lang.reflect.Field qualifiedField =
+        EventExecutionManager.class.getDeclaredField("currentQualifiedParticipantIds");
+    qualifiedField.setAccessible(true);
+    qualifiedField.set(manager, new ArrayList<>(initialParticipants));
+
+    Driver d1 = new Driver("Driver 1", "D1", "driver1", null);
+    Driver d2 = new Driver("Driver 2", "D2", "driver2", null);
+    Driver d3 = new Driver("Driver 3", "D3", "driver3", null);
+
+    RaceParticipant rp1 = new RaceParticipant(d1);
+    rp1.setRank(1);
+    RaceParticipant rp2 = new RaceParticipant(d2);
+    rp2.setRank(2);
+    RaceParticipant rp3 = new RaceParticipant(d3);
+    rp3.setRank(3);
+
+    Track track =
+        new Track.Builder().name("Track 1").lanes(new ArrayList<>()).entityId("t1").build();
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Race 1")
+            .withTrackEntityId("t1")
+            .build();
+
+    Race completedRace =
+        new Race.Builder()
+            .model(raceModel)
+            .track(track)
+            .drivers(Arrays.asList(rp1, rp2, rp3))
+            .isDemoMode(true)
+            .build();
+
+    manager.onRaceOver(completedRace);
+
+    List<String> nextQualified = manager.getCurrentQualifiedParticipantIds();
+    assertEquals(2, nextQualified.size());
+    assertEquals("d_driver1", nextQualified.get(0));
+    assertEquals("d_driver2", nextQualified.get(1));
+    assertFalse(nextQualified.contains("d_driver3"));
   }
 }
