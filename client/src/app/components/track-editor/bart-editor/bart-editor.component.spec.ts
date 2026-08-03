@@ -5,7 +5,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
-import { Subject } from "rxjs";
+import { of, Subject, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
@@ -28,6 +28,9 @@ describe("BartEditorComponent", () => {
       getInterfaceEvents: jasmine
         .createSpy("getInterfaceEvents")
         .and.returnValue(getInterfaceEventsSubject),
+      getBleDevices: jasmine
+        .createSpy("getBleDevices")
+        .and.returnValue(of(["BART_0001", "BART_0002"])),
     };
 
     await TestBed.configureTestingModule({
@@ -186,5 +189,22 @@ describe("BartEditorComponent", () => {
     expect(component.detectedChannels).toBe(8);
     expect(component.visibleChannelsCount).toBe(8);
     expect(component.visibleLapPinBehaviors.length).toBe(8);
+  });
+
+  it("should populate detectedBleDevices from dataService and bind selected device to config", () => {
+    expect(mockDataService.getBleDevices).toHaveBeenCalled();
+    expect(component.detectedBleDevices).toContain("BART_0001");
+    expect(component.detectedBleDevices).toContain("BART_0002");
+    expect(component.config().deviceName).toBe("BART_0001");
+  });
+
+  it("should handle error gracefully when getBleDevices fails", () => {
+    mockDataService.getBleDevices.and.returnValue(
+      throwError(() => new Error("BLE fetch error")),
+    );
+    component.config().deviceName = "MY_BART_UNIT";
+    component.ngOnInit();
+
+    expect(component.detectedBleDevices).toEqual(["MY_BART_UNIT"]);
   });
 });

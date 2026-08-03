@@ -1190,6 +1190,7 @@
   "BART_MAIN_HEADER": "Hoofdconfiguratie",
   "BART_SENSOR_HEADER": "Lees / Schrijf Configuratie",
   "BART_DEVICE_NAME": "BLE Apparaatnaam",
+  "BART_SELECT_DEVICE": "Selecteer BLE-apparaat",
   "BART_MIN_LAP_MS": "Minimale Rondetijd (ms)",
   "BART_DEBOUNCE": "Debounce (ms)",
   "BART_LAP_PIN_PIT_BEHAVIOR": "Rondesensor Pit Gedrag",

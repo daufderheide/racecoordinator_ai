@@ -1564,7 +1564,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   addBartConfig() {
     this.bartConfigs.push({
       name: `BART ${this.bartConfigs.length + 1}`,
-      deviceName: `BART_000${this.bartConfigs.length + 1}`,
+      deviceName: "",
       deviceAddress: "",
       debounce: 1,
       numLanes: this.lanes.length,

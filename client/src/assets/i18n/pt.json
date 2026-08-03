@@ -1190,6 +1190,7 @@
   "BART_MAIN_HEADER": "Configuração Principal",
   "BART_SENSOR_HEADER": "Configuração de Leitura / Escrita",
   "BART_DEVICE_NAME": "Nome do Dispositivo BLE",
+  "BART_SELECT_DEVICE": "Selecionar dispositivo BLE",
   "BART_MIN_LAP_MS": "Tempo Mínimo de Volta (ms)",
   "BART_DEBOUNCE": "Debounce (ms)",
   "BART_LAP_PIN_PIT_BEHAVIOR": "Comportamento do Sensor de Volta/Pit",

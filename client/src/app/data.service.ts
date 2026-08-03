@@ -358,6 +358,10 @@ export class DataService {
     return this.http.get<string[]>(`${this.baseUrl}/api/serial-ports`);
   }
 
+  getBleDevices(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/ble-devices`);
+  }
+
   getPhidgetDevices(): Observable<IPhidgetDeviceInfo[]> {
     return this.http
       .get(`${this.baseUrl}/api/phidgets`, { responseType: "arraybuffer" })

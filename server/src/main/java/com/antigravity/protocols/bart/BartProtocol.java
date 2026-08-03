@@ -116,9 +116,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   @Override
   public void onDataReceived(byte[] data) {
     if (data != null && data.length > 0) {
-      if (logger.isTraceEnabled()) {
-        logger.trace("BART RX Raw {} bytes: {}", data.length, bytesToHex(data));
-      }
+      logger.info("BART Raw RX {} bytes: {}", data.length, bytesToHex(data));
       rxBuffer.write(data);
       processData();
     }
@@ -145,13 +143,12 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
 
       byte[] packet = rxBuffer.read(packetLen);
 
-      if (logger.isTraceEnabled()) {
-        logger.trace(
-            "BART Packet Parsed - Type: 0x{}, Length: {}, Bytes: {}",
-            String.format("%02X", msgType),
-            packetLen,
-            bytesToHex(packet));
-      }
+      logger.info(
+          "BART Packet Received - Type: 0x{} ({}), Length: {}, Bytes: {}",
+          String.format("%02X", msgType),
+          getPacketTypeName(msgType),
+          packetLen,
+          bytesToHex(packet));
 
       // Verify CRC8
       byte computedCrc = BartCrc.calculateCrc(packet, 0, packetLen - 1);
@@ -191,8 +188,12 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       int lapCount = packet[4] & 0xFF;
       int lapMs = (packet[5] & 0xFF) | ((packet[6] & 0xFF) << 8);
 
-      logger.debug(
-          "BART Lap Event - Raw Lane: {}, Laps: {}, Lap Time ms: {}", rawLane, lapCount, lapMs);
+      logger.info(
+          "BART Lap Event - Raw Lane: {}, Laps: {}, Lap Time: {} ms, Full Packet: {}",
+          rawLane,
+          lapCount,
+          lapMs,
+          bytesToHex(packet));
 
       int behavior = getSignalBehaviorForChannel(rawLane);
       int lapBase = PinBehavior.BEHAVIOR_LAP_BASE_VALUE;
@@ -226,12 +227,18 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       }
     } else if (msgType == TYPE_STATUS_SNAPSHOT) {
       int raceState = packet[3] & 0xFF;
+      int minLapMs = (packet[4] & 0xFF) | ((packet[5] & 0xFF) << 8);
       int activeLanes = packet[6] & 0xFF;
+      int reserved = packet[7] & 0xFF;
       this.detectedChannels = activeLanes;
       logger.info(
-          "BART Status Snapshot Received - State: {}, Active Lanes (Detected Channels): {}",
+          "BART Status Snapshot Received - Device: '{}', Race State: {}, Active Lanes (Detected Channels): {}, Min Lap: {} ms, Reserved: 0x{}, Full Packet: {}",
+          config.deviceName != null ? config.deviceName : "Unknown",
           raceState,
-          activeLanes);
+          activeLanes,
+          minLapMs,
+          String.format("%02X", reserved),
+          bytesToHex(packet));
       if (listener != null) {
         InterfaceStatusEvent statusEvent =
             InterfaceStatusEvent.newBuilder()
@@ -241,6 +248,13 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
                 .build();
         listener.onInterfaceEvent(InterfaceEvent.newBuilder().setStatus(statusEvent).build());
       }
+    } else if (msgType == TYPE_ACK) {
+      int ackOp = packet[2] & 0xFF;
+      logger.info(
+          "BART ACK Received for OP 0x{} ({}) - Full Packet: {}",
+          String.format("%02X", ackOp),
+          getOpCodeName((byte) ackOp),
+          bytesToHex(packet));
     }
   }
 
@@ -285,9 +299,11 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
     byte crc = BartCrc.calculateCrc(frame, 0, len - 1);
     frame[len - 1] = crc;
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("BART TX Command OP 0x{}: {}", String.format("%02X", opCode), bytesToHex(frame));
-    }
+    logger.info(
+        "BART TX Command OP 0x{} ({}) - Frame: {}",
+        String.format("%02X", opCode),
+        getOpCodeName(opCode),
+        bytesToHex(frame));
 
     try {
       connection.writeData(frame);
@@ -363,6 +379,34 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       sb.append(String.format("%02X ", b));
     }
     return sb.toString().trim();
+  }
+
+  private String getOpCodeName(byte opCode) {
+    switch (opCode) {
+      case OP_START:
+        return "START";
+      case OP_STOP:
+        return "STOP";
+      case OP_SET_MINLAP:
+        return "SET_MINLAP";
+      case OP_READ_STAT:
+        return "READ_STAT";
+      default:
+        return "UNKNOWN_OP";
+    }
+  }
+
+  private String getPacketTypeName(byte msgType) {
+    switch (msgType) {
+      case TYPE_LAP_EVENT:
+        return "LAP_EVENT";
+      case TYPE_STATUS_SNAPSHOT:
+        return "STATUS_SNAPSHOT";
+      case TYPE_ACK:
+        return "ACK";
+      default:
+        return "UNKNOWN_TYPE";
+    }
   }
 
   @Override

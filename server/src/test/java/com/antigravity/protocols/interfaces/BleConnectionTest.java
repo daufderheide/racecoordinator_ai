@@ -66,4 +66,22 @@ public class BleConnectionTest {
 
     assertEquals(payload, receivedData.get());
   }
+
+  @Test
+  public void testDiscoveredBleDevicesRegistration() {
+    BleConnection.clearDiscoveredBleDevices();
+    assertTrue(BleConnection.getDiscoveredBleDevices().isEmpty());
+
+    BleConnection.registerDiscoveredBleDevice("BART_UNIT_A");
+    BleConnection.registerDiscoveredBleDevice("BART_UNIT_B");
+    BleConnection.registerDiscoveredBleDevice("BART_UNIT_A"); // Duplicate ignored
+
+    java.util.List<String> discovered = BleConnection.getDiscoveredBleDevices();
+    assertEquals(2, discovered.size());
+    assertTrue(discovered.contains("BART_UNIT_A"));
+    assertTrue(discovered.contains("BART_UNIT_B"));
+
+    BleConnection.clearDiscoveredBleDevices();
+    assertTrue(BleConnection.getDiscoveredBleDevices().isEmpty());
+  }
 }

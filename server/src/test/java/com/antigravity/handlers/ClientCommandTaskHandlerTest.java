@@ -36,6 +36,7 @@ import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.SetInterfacePinStateRequest;
 import com.antigravity.proto.SetInterfacePinStateResponse;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.interfaces.BleConnection;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -1455,6 +1456,23 @@ public class ClientCommandTaskHandlerTest {
     } catch (Throwable ignored) {
     }
     verify(res).setStatus(500);
+  }
+
+  @Test
+  public void testGetBleDevices() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    BleConnection.clearDiscoveredBleDevices();
+    BleConnection.registerDiscoveredBleDevice("BART_UNIT_01");
+
+    Method m = handler.getClass().getDeclaredMethod("getBleDevices", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(ctx).json(Arrays.asList("BART_UNIT_01"));
+    BleConnection.clearDiscoveredBleDevices();
   }
 
   @Test

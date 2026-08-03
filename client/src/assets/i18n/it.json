@@ -1190,6 +1190,7 @@
   "BART_MAIN_HEADER": "Configurazione Principale",
   "BART_SENSOR_HEADER": "Configurazione Lettura / Scrittura",
   "BART_DEVICE_NAME": "Nome Dispositivo BLE",
+  "BART_SELECT_DEVICE": "Seleziona dispositivo BLE",
   "BART_MIN_LAP_MS": "Tempo Minimo Giro (ms)",
   "BART_DEBOUNCE": "Debounce (ms)",
   "BART_LAP_PIN_PIT_BEHAVIOR": "Comportamento Sensore Giro/Pit",

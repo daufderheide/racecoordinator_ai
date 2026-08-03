@@ -45,10 +45,18 @@
                           <input
                             type="text"
                             [id]="'deviceName-' + interfaceIndex()"
+                            [attr.list]="'bart-device-list-' + interfaceIndex()"
                             [(ngModel)]="config().deviceName"
                             (change)="onConfigChange()"
-                            placeholder="BART_xxxx"
+                            placeholder="{{ 'BART_SELECT_DEVICE' | translate }}"
                           />
+                          <datalist
+                            [id]="'bart-device-list-' + interfaceIndex()"
+                          >
+                            @for (device of detectedBleDevices; track device) {
+                              <option [value]="device"></option>
+                            }
+                          </datalist>
                           <button
                             type="button"
                             [id]="'bart-status-badge-' + interfaceIndex()"

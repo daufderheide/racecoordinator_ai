@@ -44,6 +44,7 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
   lapPinBehaviors: { label: string; value: number; lane?: number }[] = [];
 
   detectedChannels = 0;
+  detectedBleDevices: string[] = [];
 
   readBadges: boolean[] = Array(32).fill(false);
 
@@ -84,6 +85,24 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     this.rebuildBehaviors();
+
+    this.dataService.getBleDevices().subscribe({
+      next: (devices: string[]) => {
+        let list = devices ? [...devices] : [];
+        const currentName = this.config()?.deviceName;
+        if (currentName && !list.includes(currentName)) {
+          list.unshift(currentName);
+        }
+        this.detectedBleDevices = Array.from(new Set(list));
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to load BLE devices", err);
+        const currentName = this.config()?.deviceName;
+        this.detectedBleDevices = currentName ? [currentName] : [];
+        this.cdr.detectChanges();
+      },
+    });
 
     // Subscribe to interface events for live status & sensor triggers
     this.subscriptions.add(

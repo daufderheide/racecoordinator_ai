@@ -48,6 +48,7 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
 import com.antigravity.protocols.bart.BartConfig;
 import com.antigravity.protocols.bart.BartProtocol;
+import com.antigravity.protocols.interfaces.BleConnection;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
@@ -167,6 +168,7 @@ public class ClientCommandTaskHandler {
         this::changeLane,
         Role.DIRECTOR);
     app.get("/api/serial-ports", this::getSerialPorts, Role.VIEWER);
+    app.get("/api/ble-devices", this::getBleDevices, Role.VIEWER);
     app.get("/api/phidgets", this::getPhidgetDevices, Role.VIEWER);
     app.get("/api/races/current/export-csv", this::exportRaceCsv, Role.VIEWER);
     app.post("/api/races/current/export-xls", this::exportRaceXls, Role.VIEWER);
@@ -994,6 +996,18 @@ public class ClientCommandTaskHandler {
       ctx.json(ports);
     } catch (Exception e) {
       logger.error("Error getting serial ports", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void getBleDevices(Context ctx) {
+    try {
+      List<String> devices = BleConnection.getDiscoveredBleDevices();
+      logger.info(
+          "GET /api/ble-devices - Discovered BLE devices (count={}): {}", devices.size(), devices);
+      ctx.json(devices);
+    } catch (Exception e) {
+      logger.error("Error getting BLE devices", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

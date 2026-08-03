@@ -235,4 +235,17 @@ describe("DataService", () => {
     expect(req.request.responseType).toBe("blob");
     req.flush(new Blob(["mock data"]));
   });
+
+  it("should call getBleDevices endpoint", (done) => {
+    service.getBleDevices().subscribe((devices) => {
+      expect(devices).toEqual(["BART_0001", "BART_0002"]);
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/ble-devices"),
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush(["BART_0001", "BART_0002"]);
+  });
 });

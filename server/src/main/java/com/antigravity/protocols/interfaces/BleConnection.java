@@ -15,12 +15,31 @@ public class BleConnection implements IBleConnection {
   private String deviceAddress;
   private boolean open = false;
   private final List<ConnectionDataListener> listeners = new ArrayList<>();
+  private static final List<String> discoveredBleDevices =
+      new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public static List<String> getDiscoveredBleDevices() {
+    return new ArrayList<>(discoveredBleDevices);
+  }
+
+  public static void registerDiscoveredBleDevice(String name) {
+    if (name != null && !name.trim().isEmpty() && !discoveredBleDevices.contains(name)) {
+      discoveredBleDevices.add(name);
+    }
+  }
+
+  public static void clearDiscoveredBleDevices() {
+    discoveredBleDevices.clear();
+  }
 
   public BleConnection() {}
 
   public BleConnection(String deviceName, String deviceAddress) {
     this.deviceName = deviceName;
     this.deviceAddress = deviceAddress;
+    if (deviceName != null && !deviceName.isEmpty()) {
+      registerDiscoveredBleDevice(deviceName);
+    }
   }
 
   @Override
@@ -43,7 +62,7 @@ public class BleConnection implements IBleConnection {
     if (!open) {
       throw new IOException("BLE connection not open");
     }
-    logger.debug("BLE Outbound -> {}", bytesToHex(data));
+    logger.info("BLE Outbound -> {}", bytesToHex(data));
   }
 
   @Override
@@ -75,9 +94,7 @@ public class BleConnection implements IBleConnection {
 
   public void injectReceivedData(byte[] data) {
     if (!open || data == null) return;
-    if (logger.isTraceEnabled()) {
-      logger.trace("BLE Connection RX <- {}", bytesToHex(data));
-    }
+    logger.info("BLE Connection RX <- {}", bytesToHex(data));
     for (ConnectionDataListener listener : listeners) {
       listener.onDataReceived(data);
     }
