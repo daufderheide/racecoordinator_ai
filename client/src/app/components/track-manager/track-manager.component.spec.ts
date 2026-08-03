@@ -105,7 +105,7 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should load tracks on init", () => {
-    expect(component.tracks.length).toBe(3);
+    expect(component.tracks.length).toBe(_MOCK_TRACKS.length);
     expect(component.selectedTrack?.name).toBe("Classic Circuit");
   });
 

@@ -94,6 +94,24 @@ test.describe("Track Manager Visuals", () => {
     await expect(page).toHaveScreenshot("track-manager-trackmate-summary.png");
   });
 
+  test("should show bart summary", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-manager"),
+    );
+
+    const managerHost = page.locator("app-track-manager");
+    const harness = new TrackManagerHarnessE2e(managerHost);
+
+    await harness.selectTrack("BART Track");
+    await page.waitForTimeout(1000);
+
+    const summary = page.locator("app-bart-summary");
+    await expect(summary).toBeVisible();
+    await expect(page).toHaveScreenshot("track-manager-bart-summary.png");
+  });
+
   test("should navigate to editor when Create New is clicked", async ({
     page,
   }) => {
