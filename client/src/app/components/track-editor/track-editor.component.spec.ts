@@ -308,6 +308,12 @@ describe("TrackEditorComponent", () => {
     expect(cloned.bart_configs).toEqual(mockBartConfig as any);
   });
 
+  it("should call initializeInterfaces when onBartConfigChange is called", () => {
+    dataService.initializeInterface.calls.reset();
+    component.onBartConfigChange();
+    expect(dataService.initializeInterface).toHaveBeenCalled();
+  });
+
   it("should retain bart_configs after a successful track update", fakeAsync(() => {
     const mockBartConfig = [
       {

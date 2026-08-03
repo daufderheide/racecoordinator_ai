@@ -1003,9 +1003,21 @@ public class ClientCommandTaskHandler {
   private void getBleDevices(Context ctx) {
     try {
       List<String> devices = BleConnection.getDiscoveredBleDevices();
-      logger.info(
-          "GET /api/ble-devices - Discovered BLE devices (count={}): {}", devices.size(), devices);
-      ctx.json(devices);
+      logger.debug(
+          "GET /api/ble-devices - Raw hardware discovered BLE devices (count={}): {}",
+          devices.size(),
+          devices);
+      List<String> bartDevices = new ArrayList<>();
+      for (String dev : devices) {
+        if (dev != null && dev.toUpperCase().startsWith("BART")) {
+          bartDevices.add(dev);
+        }
+      }
+      logger.debug(
+          "GET /api/ble-devices - Filtered BART devices (count={}): {}",
+          bartDevices.size(),
+          bartDevices);
+      ctx.json(bartDevices);
     } catch (Exception e) {
       logger.error("Error getting BLE devices", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());

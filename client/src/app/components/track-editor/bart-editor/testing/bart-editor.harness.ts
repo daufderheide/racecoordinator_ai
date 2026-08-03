@@ -57,9 +57,8 @@ export class BartEditorHarness
   }
 
   async setDeviceName(name: string): Promise<void> {
-    const input = await this.getDeviceNameInput();
-    await input.clear();
-    await input.sendKeys(name);
+    const select = await this.getDeviceNameInput();
+    await select.selectOptions(name);
   }
 
   async getMinLapMs(): Promise<number> {

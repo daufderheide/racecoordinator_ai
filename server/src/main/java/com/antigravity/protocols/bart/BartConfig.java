@@ -21,7 +21,7 @@ public class BartConfig {
 
   public BartConfig() {
     this.name = "BART";
-    this.deviceName = "BART_0001";
+    this.deviceName = "";
     this.deviceAddress = "";
     this.numLanes = 8;
     this.minLapMs = 1;
@@ -43,7 +43,7 @@ public class BartConfig {
       @JsonProperty("lapPinPitBehavior") LapPinPitBehavior lapPinPitBehavior,
       @JsonProperty("lapPinBehaviors") List<Integer> lapPinBehaviors) {
     this.name = name != null ? name : "BART";
-    this.deviceName = deviceName != null ? deviceName : "BART_0001";
+    this.deviceName = deviceName != null ? deviceName : "";
     this.deviceAddress = deviceAddress != null ? deviceAddress : "";
     this.numLanes = numLanes != null ? numLanes : 8;
     this.minLapMs = minLapMs != null ? minLapMs : 1;

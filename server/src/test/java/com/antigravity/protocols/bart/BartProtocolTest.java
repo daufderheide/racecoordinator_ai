@@ -25,6 +25,7 @@ public class BartProtocolTest {
 
   @Before
   public void setUp() {
+    BleConnection.mockMode = true;
     config = new BartConfig();
     config.deviceName = "BART_TEST";
     config.deviceAddress = "AA:BB:CC:DD:EE:FF";

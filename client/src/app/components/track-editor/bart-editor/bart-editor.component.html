@@ -42,21 +42,28 @@
                       <div class="control-group">
                         <label>{{ "BART_DEVICE_NAME" | translate }}</label>
                         <div class="com-port-row">
-                          <input
-                            type="text"
+                          <select
                             [id]="'deviceName-' + interfaceIndex()"
-                            [attr.list]="'bart-device-list-' + interfaceIndex()"
-                            [(ngModel)]="config().deviceName"
-                            (change)="onConfigChange()"
-                            placeholder="{{ 'BART_SELECT_DEVICE' | translate }}"
-                          />
-                          <datalist
-                            [id]="'bart-device-list-' + interfaceIndex()"
+                            [ngModel]="config().deviceName"
+                            (ngModelChange)="onDeviceSelect($event)"
                           >
+                            <option value="" disabled selected hidden>
+                              {{ "BART_SELECT_DEVICE" | translate }}
+                            </option>
                             @for (device of detectedBleDevices; track device) {
-                              <option [value]="device"></option>
+                              <option [value]="device">
+                                {{ device }}
+                              </option>
                             }
-                          </datalist>
+                            @if (
+                              config().deviceName &&
+                              !detectedBleDevices.includes(config().deviceName)
+                            ) {
+                              <option [value]="config().deviceName">
+                                {{ config().deviceName }}
+                              </option>
+                            }
+                          </select>
                           <button
                             type="button"
                             [id]="'bart-status-badge-' + interfaceIndex()"
@@ -81,6 +88,14 @@
                           max="30000"
                         />
                       </div>
+                    </div>
+
+                    <div class="board-preview">
+                      <img
+                        src="assets/images/policar.png"
+                        alt="Policar"
+                        class="board-image"
+                      />
                     </div>
 
                     <div class="right-controls">

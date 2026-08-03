@@ -1657,4 +1657,24 @@ public class ClientCommandTaskHandlerTest {
     verify(activeRace).updateAndBroadcastOverallStandings();
     verify(activeRace).broadcast(any());
   }
+
+  @Test
+  public void testGetBleDevicesFiltersBartDevicesOnly() throws Exception {
+    BleConnection.clearDiscoveredBleDevices();
+    BleConnection.registerDiscoveredBleDevice("BART_MST");
+    BleConnection.registerDiscoveredBleDevice("BART_LANE1");
+    BleConnection.registerDiscoveredBleDevice("iPhone (239)");
+    BleConnection.registerDiscoveredBleDevice("Govee_H5151");
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse resp = mock(HttpServletResponse.class);
+    Context localCtx = spy(new Context(req, resp, new HashMap<>()));
+
+    Method m = handler.getClass().getDeclaredMethod("getBleDevices", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, localCtx);
+
+    verify(localCtx).json(any());
+    BleConnection.clearDiscoveredBleDevices();
+  }
 }

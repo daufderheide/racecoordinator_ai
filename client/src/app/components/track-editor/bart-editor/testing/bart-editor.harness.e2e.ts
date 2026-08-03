@@ -52,7 +52,7 @@ export class BartEditorHarnessE2e implements BartEditorHarnessBase {
   }
 
   async setDeviceName(name: string): Promise<void> {
-    await this.deviceNameInput.fill(name);
+    await this.deviceNameInput.selectOption(name);
   }
 
   async getMinLapMs(): Promise<number> {

@@ -190,22 +190,29 @@ describe("BartEditorComponent", () => {
     expect(component.visibleLapPinBehaviors.length).toBe(8);
   });
 
-  it("should populate detectedBleDevices from dataService and bind selected device to config", () => {
+  it("should populate detectedBleDevices from dataService and bind selected device to config", fakeAsync(() => {
+    component.ngOnInit();
+    tick();
     expect(mockDataService.getBleDevices).toHaveBeenCalled();
     expect(component.detectedBleDevices).toContain("BART_0001");
     expect(component.detectedBleDevices).toContain("BART_0002");
-    expect(component.config().deviceName).toBe("BART_0001");
-  });
 
-  it("should handle error gracefully when getBleDevices fails", () => {
+    const deviceSelect: HTMLSelectElement = fixture.nativeElement.querySelector(
+      `select[id="deviceName-0"]`,
+    );
+    expect(deviceSelect).toBeTruthy();
+  }));
+
+  it("should handle error gracefully when getBleDevices fails", fakeAsync(() => {
     mockDataService.getBleDevices.and.returnValue(
       throwError(() => new Error("BLE fetch error")),
     );
     component.config().deviceName = "MY_BART_UNIT";
     component.ngOnInit();
+    tick();
 
     expect(component.detectedBleDevices).toEqual(["MY_BART_UNIT"]);
-  });
+  }));
 
   it("should not include PIT_IN_OUT option (value 3) in lapPinPitBehaviors dropdown options", () => {
     const hasPitInOutOption = component.lapPinPitBehaviors.some(

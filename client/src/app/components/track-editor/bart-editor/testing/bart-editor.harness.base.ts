@@ -5,7 +5,7 @@ export abstract class BartEditorHarnessBase {
     section: ".config-section",
     sectionHeader: ".section-header",
     sectionContent: ".section-content",
-    deviceNameInput: "input[id^='deviceName-']",
+    deviceNameInput: "select[id^='deviceName-']",
     minLapMsInput: "input[id^='minLapMs-']",
     lapPinPitBehaviorSelect: "select[id^='lapPinPitBehavior-']",
     pinItem: ".pin-item",

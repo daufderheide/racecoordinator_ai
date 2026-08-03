@@ -335,7 +335,7 @@
             <app-arduino-editor
               [config]="config"
               [lanes]="lanes"
-              (configChange)="captureState()"
+              (configChange)="onArduinoConfigChange()"
               [index]="i"
               [count]="arduinoConfigs.length"
               (remove)="removeArduinoConfig(i)"
@@ -376,7 +376,7 @@
               [interfaceIndex]="
                 i + arduinoConfigs.length + phidgetConfigs.length
               "
-              (change)="captureState()"
+              (change)="onTrackmateConfigChange()"
               (remove)="removeTrackmateConfig(i)"
             >
             </app-trakmate-editor>
@@ -398,7 +398,7 @@
                 phidgetConfigs.length +
                 trackmateConfigs.length
               "
-              (change)="captureState()"
+              (change)="onBartConfigChange()"
               (remove)="removeBartConfig(i)"
             >
             </app-bart-editor>

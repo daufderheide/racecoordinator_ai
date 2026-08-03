@@ -5,7 +5,7 @@ export class BartConfigConverter {
   static fromProto(proto: IBartConfig): BartConfig {
     return {
       name: proto.name || "BART",
-      deviceName: proto.deviceName || "BART_0001",
+      deviceName: proto.deviceName || "",
       deviceAddress: proto.deviceAddress || "",
       numLanes: proto.numLanes || 8,
       minLapMs: proto.minLapMs != null ? proto.minLapMs : 1,

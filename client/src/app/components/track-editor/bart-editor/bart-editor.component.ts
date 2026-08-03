@@ -10,7 +10,8 @@ import {
   SimpleChanges,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import { Subscription } from "rxjs";
+import { of, Subscription, timer } from "rxjs";
+import { catchError, switchMap } from "rxjs/operators";
 import { DataService } from "@app/data.service";
 import { BartConfig } from "@app/models/bart_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -85,23 +86,31 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
 
     this.rebuildBehaviors();
 
-    this.dataService.getBleDevices().subscribe({
-      next: (devices: string[]) => {
-        let list = devices ? [...devices] : [];
-        const currentName = this.config()?.deviceName;
-        if (currentName && !list.includes(currentName)) {
-          list.unshift(currentName);
-        }
-        this.detectedBleDevices = Array.from(new Set(list));
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.logger.error("Failed to load BLE devices", err);
-        const currentName = this.config()?.deviceName;
-        this.detectedBleDevices = currentName ? [currentName] : [];
-        this.cdr.detectChanges();
-      },
-    });
+    this.subscriptions.add(
+      timer(0, 3000)
+        .pipe(
+          switchMap(() =>
+            this.dataService.getBleDevices().pipe(
+              catchError((err) => {
+                this.logger.error("Failed to load BLE devices", err);
+                const currentName = this.config()?.deviceName;
+                return of(currentName ? [currentName] : []);
+              }),
+            ),
+          ),
+        )
+        .subscribe({
+          next: (devices: string[]) => {
+            let list = devices ? [...devices] : [];
+            const currentName = this.config()?.deviceName;
+            if (currentName && !list.includes(currentName)) {
+              list.unshift(currentName);
+            }
+            this.detectedBleDevices = Array.from(new Set(list));
+            this.cdr.detectChanges();
+          },
+        }),
+    );
 
     // Subscribe to interface events for live status & sensor triggers
     this.subscriptions.add(
@@ -218,6 +227,11 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
       }, 1500);
       this.readTimeouts.push(t);
     }
+  }
+
+  onDeviceSelect(newDevice: string): void {
+    this.config().deviceName = newDevice;
+    this.onConfigChange();
   }
 
   onConfigChange(): void {

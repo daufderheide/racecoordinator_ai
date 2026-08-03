@@ -84,4 +84,28 @@ public class BleConnectionTest {
     BleConnection.clearDiscoveredBleDevices();
     assertTrue(BleConnection.getDiscoveredBleDevices().isEmpty());
   }
+
+  @Test
+  public void testCrossPlatformBleStrategyScriptPaths() {
+    String macPath = BleConnectionMac.getBleBridgeScriptPath();
+    String winPath = BleConnectionWindows.getBleBridgeScriptPath();
+    String linuxPath = BleConnectionLinux.getBleBridgeScriptPath();
+
+    assertTrue(macPath != null && macPath.contains("ble_bridge.swift"));
+    assertTrue(winPath != null && winPath.contains("ble_bridge_win.ps1"));
+    assertTrue(linuxPath != null && linuxPath.contains("ble_bridge_linux.py"));
+  }
+
+  @Test
+  public void testMultipleDisconnectCallsAreSafeAndIdempotent() throws IOException {
+    connection.connect("BART_TEST");
+    assertTrue(connection.isOpen());
+
+    connection.disconnect();
+    assertFalse(connection.isOpen());
+
+    // Second disconnect call should be safe and idempotent
+    connection.disconnect();
+    assertFalse(connection.isOpen());
+  }
 }

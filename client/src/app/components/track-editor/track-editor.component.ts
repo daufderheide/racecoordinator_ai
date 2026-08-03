@@ -1592,6 +1592,33 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.initializeInterfaces();
   }
 
+  onArduinoConfigChange() {
+    this.arduinoConfigs = [...this.arduinoConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  onTrackmateConfigChange() {
+    this.trackmateConfigs = [...this.trackmateConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  onBartConfigChange() {
+    this.bartConfigs = [...this.bartConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
   trackByBartConfig(index: number, _config: any): number {
     return index;
   }
