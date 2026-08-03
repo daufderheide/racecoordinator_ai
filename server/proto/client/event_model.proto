@@ -1,0 +1,21 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "EventModelProto";
+
+import "client/model.proto";
+
+message EventRaceItem {
+  string race_id = 1;
+  int32 max_drivers = 2;
+}
+
+message EventModel {
+  Model model = 1;
+  string name = 2;
+  string description = 3;
+  double auto_advance_time = 4;
+  repeated EventRaceItem races = 5;
+}

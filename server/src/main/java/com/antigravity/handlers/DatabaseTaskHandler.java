@@ -7,6 +7,7 @@ import com.antigravity.models.CustomHeat;
 import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverStatistics;
+import com.antigravity.models.Event;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
@@ -66,6 +67,7 @@ public class DatabaseTaskHandler {
   private final MongoRepository<Team> teamRepository;
   private final MongoRepository<Track> trackRepository;
   private final MongoRepository<Race> raceRepository;
+  private final MongoRepository<Event> eventRepository;
 
   public static class RaceResponse {
     @com.fasterxml.jackson.annotation.JsonUnwrapped public Race race;
@@ -85,6 +87,7 @@ public class DatabaseTaskHandler {
     this.teamRepository = new MongoRepository<>(databaseContext, "teams", Team.class);
     this.trackRepository = new MongoRepository<>(databaseContext, "tracks", Track.class);
     this.raceRepository = new MongoRepository<>(databaseContext, "races", Race.class);
+    this.eventRepository = new MongoRepository<>(databaseContext, "events", Event.class);
 
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);
     app.post("/api/drivers", this::createDriver, Role.DIRECTOR);
@@ -96,6 +99,12 @@ public class DatabaseTaskHandler {
     app.post("/api/teams", this::createTeam, Role.DIRECTOR);
     app.put("/api/teams/{id}", this::updateTeam, Role.DIRECTOR);
     app.delete("/api/teams/{id}", this::deleteTeam, Role.DIRECTOR);
+
+    app.get("/api/events", this::getEvents, Role.VIEWER);
+    app.get("/api/events/{id}", this::getEventById, Role.VIEWER);
+    app.post("/api/events", this::handleCreateEvent, Role.DIRECTOR);
+    app.put("/api/events/{id}", this::handleUpdateEvent, Role.DIRECTOR);
+    app.delete("/api/events/{id}", this::handleDeleteEvent, Role.DIRECTOR);
 
     app.get("/api/tracks/factory-settings", this::getFactoryTrack, Role.VIEWER);
 
@@ -721,6 +730,106 @@ public class DatabaseTaskHandler {
     DatabaseService.getInstance().deleteAllRaceData(databaseContext.getDatabase(), id);
 
     raceRepository.delete(id);
+  }
+
+  public void getEvents(Context ctx) {
+    try {
+      List<Event> events = eventRepository.findAll();
+      ctx.json(events);
+    } catch (Exception e) {
+      logger.error("Error getting events", e);
+      ctx.status(500).result("Error getting events: " + e.getMessage());
+    }
+  }
+
+  public void getEventById(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      Event event = eventRepository.findByEntityId(id);
+      if (event != null) {
+        ctx.json(event);
+      } else {
+        ctx.status(404).result("Event not found");
+      }
+    } catch (Exception e) {
+      logger.error("Error getting event", e);
+      ctx.status(500).result("Error getting event: " + e.getMessage());
+    }
+  }
+
+  public void handleCreateEvent(Context ctx) {
+    try {
+      Event event = bodyAsClassWithId(ctx.body(), Event.class);
+      if (event.getName() == null || event.getName().trim().isEmpty()) {
+        ctx.status(400).result("Event name cannot be empty");
+        return;
+      }
+      Event existing = eventRepository.findOne(Filters.eq("name", event.getName()));
+      if (existing != null) {
+        ctx.status(400).result("Event name already exists");
+        return;
+      }
+      String nextId = eventRepository.getNextSequence();
+      Event created =
+          new Event(
+              event.getName(),
+              event.getDescription(),
+              event.getAutoAdvanceTime(),
+              event.getRaces(),
+              nextId,
+              null);
+      eventRepository.insert(created);
+      ctx.status(201).json(created);
+    } catch (Exception e) {
+      logger.error("Error creating event", e);
+      ctx.status(500).result("Error creating event: " + e.getMessage());
+    }
+  }
+
+  public void handleUpdateEvent(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      Event event = bodyAsClassWithId(ctx.body(), Event.class);
+      if (event.getName() == null || event.getName().trim().isEmpty()) {
+        ctx.status(400).result("Event name cannot be empty");
+        return;
+      }
+      Event existing =
+          eventRepository.findOne(
+              Filters.and(Filters.eq("name", event.getName()), Filters.ne("entity_id", id)));
+      if (existing != null) {
+        ctx.status(400).result("Event name already exists");
+        return;
+      }
+      Event updated =
+          new Event(
+              event.getName(),
+              event.getDescription(),
+              event.getAutoAdvanceTime(),
+              event.getRaces(),
+              id,
+              event.getId());
+      UpdateResult result = eventRepository.replace(id, updated);
+      if (result.getMatchedCount() == 0) {
+        ctx.status(404).result("Event not found");
+        return;
+      }
+      ctx.json(updated);
+    } catch (Exception e) {
+      logger.error("Error updating event", e);
+      ctx.status(500).result("Error updating event: " + e.getMessage());
+    }
+  }
+
+  public void handleDeleteEvent(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      eventRepository.delete(id);
+      ctx.status(204);
+    } catch (Exception e) {
+      logger.error("Error deleting event", e);
+      ctx.status(500).result("Error deleting event: " + e.getMessage());
+    }
   }
 
   private String getNextSequence(String collectionName) {

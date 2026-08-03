@@ -1,0 +1,335 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
+  position: relative;
+}
+
+.page-container {
+  width: 1600px;
+  height: 900px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  background-image: url('../../../assets/images/track_manager_bg.png');
+  background-size: 1600px 900px;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+
+.content-split {
+  flex: 1;
+  display: flex;
+  gap: 30px;
+  margin: 0 55px 20px 55px;
+  overflow: hidden;
+}
+
+.editor-panel {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editor-section.invalid input {
+  border-color: #ef4444 !important;
+}
+
+.section-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+}
+
+.editor-section input[type="text"],
+.editor-section input[type="number"],
+.editor-section textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 6px;
+  color: #f8fafc;
+  font-size: 1.1rem;
+  font-family: inherit;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.9rem;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h3 {
+  font-size: 1.4rem;
+  color: #38bdf8;
+  margin: 0;
+}
+
+.btn-add-race {
+  padding: 8px 16px;
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-add-race:hover {
+  background: #0369a1;
+}
+
+.empty-races {
+  padding: 40px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  border: 2px dashed rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+}
+
+.race-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.race-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  padding: 12px 18px;
+  cursor: grab;
+  user-select: none;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.race-card:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.race-card:active {
+  cursor: grabbing;
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+
+.race-card:hover .drag-handle {
+  color: #38bdf8;
+}
+
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(56, 189, 248, 0.4);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 18px;
+  color: #f8fafc;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.2;
+  border: 2px dashed #38bdf8;
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.race-list.cdk-drop-list-dragging .race-card:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.race-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.race-step-number {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.race-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.driver-limit-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.limit-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unlimited-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.driver-limit-input {
+  width: 70px;
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 4px;
+  color: #fff;
+}
+
+.btn-remove {
+  padding: 6px 12px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-remove:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.bottom-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin: 0 55px 35px 55px;
+}
+
+.btn-primary {
+  padding: 10px 24px;
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.btn-primary:disabled {
+  background: #475569;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 10px 24px;
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* Modal Styling */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  width: 450px;
+  background: #0f172a;
+  border: 1px solid #38bdf8;
+  border-radius: 12px;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-card h2 {
+  color: #38bdf8;
+  margin: 0;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-body select {
+  padding: 10px;
+  background: #1e293b;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

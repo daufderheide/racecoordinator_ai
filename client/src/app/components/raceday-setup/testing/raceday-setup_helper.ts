@@ -17,6 +17,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "getDrivers",
     "getTeams",
     "getRaces",
+    "getEvents",
     "initializeRace",
     "getSavedRaces",
     "loadRace",
@@ -30,6 +31,7 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
   mock.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
   mock.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
   mock.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
+  mock.getEvents.and.returnValue(of([]));
   mock.getSavedRaces.and.callFake(() => of(deepCopy(MOCK_AUTOSAVE_RACES)));
   mock.loadRace.and.returnValue(of("OK"));
   mock.deleteSavedRace.and.returnValue(of("OK"));

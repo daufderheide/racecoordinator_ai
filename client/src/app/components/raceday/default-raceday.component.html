@@ -91,6 +91,23 @@
       style="position: relative; width: 100%; height: 100%"
       (pointerdown)="onCanvasPointerDown($event)"
     >
+      @if (isEvent) {
+        <div class="event-progress-banner">
+          <div class="event-banner-info">
+            <span class="event-banner-title">{{ eventName }}</span>
+            <span class="event-banner-step">
+              {{ "RD_EVENT_RACE_LABEL" | translate }}
+              {{ currentEventRaceIndex }} / {{ totalEventRaces }}
+            </span>
+          </div>
+          @if (autoAdvanceRemainingSeconds > 0) {
+            <div class="event-auto-advance">
+              {{ "RD_EVENT_NEXT_RACE_IN" | translate }}:
+              {{ autoAdvanceRemainingSeconds }}s
+            </div>
+          }
+        </div>
+      }
       @for (widget of getWidgets(); track widget.id) {
         <app-raceday-absolute-widget
           [widget]="widget"

@@ -1,0 +1,152 @@
+<div
+  class="page-container"
+  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+>
+  <app-editor-title
+    titleKey="EE_TITLE"
+    [undoManager]="undoManager"
+    [showCopy]="true"
+    [disabledCopy]="!isConfigValid()"
+    [isSaving]="isSaving"
+    (copy)="saveAsNew()"
+  >
+  </app-editor-title>
+
+  @if (!isLoading) {
+    <div class="content-split">
+      <!-- Left Panel: Form Settings -->
+      <div class="editor-panel">
+        <div
+          class="editor-section"
+          [class.invalid]="!editingEvent.name || isDuplicateName()"
+        >
+          <label class="section-label">{{ "EE_LABEL_NAME" | translate }}</label>
+          <input
+            type="text"
+            [(ngModel)]="editingEvent.name"
+            (ngModelChange)="onInputChange()"
+            autocomplete="off"
+          />
+          @if (isDuplicateName()) {
+            <span class="error-text">{{
+              "EE_ERR_DUPLICATE_NAME" | translate
+            }}</span>
+          }
+        </div>
+
+        <div class="editor-section">
+          <label class="section-label">{{
+            "EE_LABEL_DESCRIPTION" | translate
+          }}</label>
+          <textarea
+            rows="3"
+            [(ngModel)]="editingEvent.description"
+            (ngModelChange)="onInputChange()"
+          ></textarea>
+        </div>
+
+        <div class="editor-section">
+          <label class="section-label">{{
+            "EE_LABEL_AUTO_ADVANCE" | translate
+          }}</label>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="editingEvent.auto_advance_time"
+            (ngModelChange)="onInputChange()"
+          />
+        </div>
+      </div>
+
+      <!-- Right Panel: Race Sequence List -->
+      <div class="editor-panel">
+        <div class="panel-header">
+          <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
+          <button class="btn-add-race" (click)="openAddRaceModal()">
+            + {{ "EE_BTN_ADD_RACE" | translate }}
+          </button>
+        </div>
+
+        @if (editingEvent.races.length === 0) {
+          <div class="empty-races">
+            <p>{{ "EE_ERR_RACES_REQUIRED" | translate }}</p>
+          </div>
+        } @else {
+          <div
+            class="race-list"
+            cdkDropList
+            (cdkDropListDropped)="dropRace($event)"
+          >
+            @for (item of editingEvent.races; track idx; let idx = $index) {
+              <div class="race-card" cdkDrag>
+                <div class="drag-handle" title="Drag to reorder">
+                  <span class="material-icons">drag_indicator</span>
+                </div>
+
+                <div class="race-info">
+                  <span class="race-step-number">#{{ idx + 1 }}</span>
+                  <span class="race-name">{{
+                    getRaceName(getItemRaceId(item))
+                  }}</span>
+                </div>
+
+                <div class="driver-limit-section">
+                  <label>{{ "EE_LABEL_MAX_DRIVERS" | translate }}:</label>
+                  <div class="limit-input-group">
+                    <label class="unlimited-toggle">
+                      <input
+                        type="checkbox"
+                        [name]="'unlimited_' + idx"
+                        [checked]="getItemMaxDrivers(item) === 0"
+                        (change)="toggleUnlimited(item)"
+                      />
+                      <span>{{ "EE_UNLIMITED" | translate }}</span>
+                    </label>
+                    @if (getItemMaxDrivers(item) > 0) {
+                      <input
+                        type="number"
+                        min="1"
+                        [name]="'maxDrivers_' + idx"
+                        [ngModel]="getItemMaxDrivers(item)"
+                        (ngModelChange)="setMaxDrivers(item, $event)"
+                        class="driver-limit-input"
+                      />
+                    }
+                  </div>
+                </div>
+
+                <button class="btn-remove" (click)="removeRace(idx)">
+                  {{ "EE_BTN_REMOVE_RACE" | translate }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Add Race Modal -->
+@if (showAddRaceModal) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <h2>{{ "EE_BTN_ADD_RACE" | translate }}</h2>
+      <div class="modal-body">
+        <label>Select Race:</label>
+        <select [(ngModel)]="selectedRaceToAddId" name="selectedRaceToAddId">
+          @for (r of availableRaces; track getRaceId(r)) {
+            <option [value]="getRaceId(r)">{{ r.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeAddRaceModal()">
+          Cancel
+        </button>
+        <button class="btn-primary" (click)="confirmAddRace()">Add</button>
+      </div>
+    </div>
+  </div>
+}

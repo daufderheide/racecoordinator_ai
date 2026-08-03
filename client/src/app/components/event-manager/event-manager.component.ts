@@ -1,0 +1,218 @@
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  ViewChild,
+  ViewChildren,
+} from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { ActivatedRoute, Router } from "@angular/router";
+import { forkJoin, Subscription } from "rxjs";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
+import { DataService } from "@app/data.service";
+import { Event } from "@app/models/event";
+import { Race } from "@app/models/race";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
+import {
+  ConnectionMonitorService,
+  ConnectionState,
+} from "@app/services/connection-monitor.service";
+import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
+import { SettingsService } from "@app/services/settings.service";
+import { TranslationService } from "@app/services/translation.service";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
+
+@Component({
+  standalone: true,
+  selector: "app-event-manager",
+  templateUrl: "./event-manager.component.html",
+  styleUrls: ["./event-manager.component.css"],
+  imports: [
+    ManagerHeaderComponent,
+    ConfirmationModalComponent,
+    TranslatePipe,
+    FormsModule,
+  ],
+})
+export class EventManagerComponent implements OnInit, OnDestroy {
+  @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
+  events: Event[] = [];
+  races: Race[] = [];
+  selectedEvent?: Event;
+  isLoading: boolean = true;
+  isSaving: boolean = false;
+  scale: number = 1;
+  searchQuery: string = "";
+  showDeleteConfirmation: boolean = false;
+
+  @ViewChildren("eventRow") eventRows!: QueryList<ElementRef>;
+
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private dataService = inject(DataService);
+  private cdr = inject(ChangeDetectorRef);
+  private logger = inject(LoggerService);
+  private navigationService = inject(NavigationService);
+  private settingsService = inject(SettingsService);
+  private translationService = inject(TranslationService);
+  private connectionMonitor = inject(ConnectionMonitorService);
+  private raceConnectionService = inject(RaceConnectionService);
+
+  private connectionSub?: Subscription;
+
+  get filteredEvents(): Event[] {
+    let filtered = this.events;
+    if (this.searchQuery && this.searchQuery.trim() !== "") {
+      const query = this.searchQuery.toLowerCase().trim();
+      filtered = this.events.filter(
+        (e) =>
+          (e.name && e.name.toLowerCase().includes(query)) ||
+          (e.description && e.description.toLowerCase().includes(query)),
+      );
+    }
+    return filtered.sort((a, b) =>
+      naturalSortCompare(a.name || "", b.name || ""),
+    );
+  }
+
+  ngOnInit(): void {
+    this.updateScale();
+    this.loadData();
+
+    this.connectionSub = this.connectionMonitor.connectionState$.subscribe(
+      (state) => {
+        if (state === ConnectionState.DISCONNECTED) {
+          this.logger.warn("Connection lost in EventManagerComponent");
+        }
+      },
+    );
+  }
+
+  ngOnDestroy(): void {
+    if (this.connectionSub) {
+      this.connectionSub.unsubscribe();
+    }
+  }
+
+  @HostListener("window:resize")
+  onResize(): void {
+    this.updateScale();
+  }
+
+  private updateScale(): void {
+    const baseWidth = 1024;
+    const baseHeight = 768;
+    const scaleX = window.innerWidth / baseWidth;
+    const scaleY = window.innerHeight / baseHeight;
+    this.scale = Math.min(scaleX, scaleY);
+  }
+
+  loadData(): void {
+    this.isLoading = true;
+    forkJoin({
+      events: this.dataService.getEvents(),
+      races: this.dataService.getRaces(),
+    }).subscribe({
+      next: (result) => {
+        this.events = result.events || [];
+        this.races = result.races || [];
+        if (this.events.length > 0 && !this.selectedEvent) {
+          this.selectedEvent = this.events[0];
+        }
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to load event manager data", err);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  selectEvent(event: Event): void {
+    this.selectedEvent = event;
+  }
+
+  createNewEvent(): void {
+    this.router.navigate(["/event-editor"], {
+      queryParams: { id: "new" },
+    });
+  }
+
+  updateEvent(): void {
+    if (this.selectedEvent && this.selectedEvent.entity_id) {
+      this.router.navigate(["/event-editor"], {
+        queryParams: { id: this.selectedEvent.entity_id },
+      });
+    }
+  }
+
+  deleteEvent(): void {
+    if (!this.selectedEvent) return;
+    this.showDeleteConfirmation = true;
+  }
+
+  onConfirmDelete(): void {
+    if (!this.selectedEvent || !this.selectedEvent.entity_id) return;
+    this.showDeleteConfirmation = false;
+    this.isSaving = true;
+    this.dataService.deleteEvent(this.selectedEvent.entity_id).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.selectedEvent = undefined;
+        this.loadData();
+      },
+      error: (err) => {
+        this.logger.error("Failed to delete event", err);
+        this.isSaving = false;
+      },
+    });
+  }
+
+  onCancelDelete(): void {
+    this.showDeleteConfirmation = false;
+  }
+
+  getRaceId(r: any): string {
+    if (!r) return "";
+    return r.entity_id || "";
+  }
+
+  getItemRaceId(item: any): string {
+    if (!item) return "";
+    return item.raceId || item.race_id || "";
+  }
+
+  getItemMaxDrivers(item: any): number {
+    if (!item) return 0;
+    return item.maxDrivers !== undefined
+      ? item.maxDrivers
+      : item.max_drivers !== undefined
+        ? item.max_drivers
+        : 0;
+  }
+
+  getRaceName(raceId: string): string {
+    if (!raceId) return "";
+    const race = this.races.find((r) => r.entity_id === raceId);
+    return race ? race.name : raceId;
+  }
+
+  getDeleteMessage(): string {
+    return (
+      this.translationService.translate("EM_CONFIRM_DELETE_MSG", {
+        name: this.selectedEvent?.name || "",
+      }) ||
+      `Are you sure you want to delete event "${this.selectedEvent?.name}"?`
+    );
+  }
+}

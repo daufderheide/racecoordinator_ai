@@ -14,6 +14,7 @@ message InitializeRaceRequest {
   repeated string driver_ids = 2;
   bool is_demo_mode = 3;
   DemoConfig demo_config = 4;
+  string event_id = 5;
 }
 
 message InitializeRaceResponse {

@@ -27,6 +27,7 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
+import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
 import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
@@ -87,15 +88,19 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // Search State
   raceSearchQuery: string = "";
 
-  // Race State
+  // Race / Event State
+  isEventMode: boolean = false;
   races: Race[] = [];
   selectedRace?: Race;
   quickStartRaces: Race[] = [];
+  events: EventModel[] = [];
+  selectedEvent?: EventModel;
 
   // UI State
   scale: number = 1;
   translationsLoaded: boolean = false;
   isDropdownOpen: boolean = false;
+  isEventDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
   showLoadRaceModal: boolean = false;
@@ -177,6 +182,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       drivers: this.dataService.getDrivers(),
       teams: this.dataService.getTeams(),
       races: this.dataService.getRaces(),
+      events: this.dataService.getEvents(),
     }).subscribe({
       next: (result) => {
         const drivers = (result.drivers as any).map(
@@ -236,8 +242,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
           );
         }
 
-        if (!this.selectedRace && this.races.length > 0) {
-          this.selectedRace = this.races[0];
+        this.events = (result.events || []).sort((a: any, b: any) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+        if (this.events.length > 0) {
+          this.selectedEvent = this.events[0];
         }
 
         // --- Participant Setup ---
@@ -675,6 +684,27 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   closeDropdown() {
     this.isDropdownOpen = false;
+    this.isEventDropdownOpen = false;
+  }
+
+  toggleEventDropdown(e: MouseEvent) {
+    e.stopPropagation();
+    const newState = !this.isEventDropdownOpen;
+    if (newState) {
+      this.closeFileDropdown();
+      this.closeConfigDropdown();
+      this.closeOptionsDropdown();
+      this.closeHelpDropdown();
+      this.closeDropdown();
+    }
+    this.isEventDropdownOpen = newState;
+    this.cdr.detectChanges();
+  }
+
+  selectEvent(event: EventModel) {
+    this.selectedEvent = event;
+    this.isEventDropdownOpen = false;
+    this.cdr.detectChanges();
   }
 
   selectRace(race: Race) {
@@ -714,12 +744,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   startRace(isDemo: boolean = false) {
-    if (this.selectedRace && this.selectedParticipants.length > 0) {
-      console.log(
-        `Starting race: ${this.selectedRace.name} with ${this.selectedParticipants.length} participants`,
-      );
+    const hasSelection = this.isEventMode
+      ? this.selectedEvent && this.selectedParticipants.length > 0
+      : this.selectedRace && this.selectedParticipants.length > 0;
 
-      const raceId = this.selectedRace.entity_id;
+    if (hasSelection) {
+      const raceId = this.isEventMode
+        ? this.selectedEvent?.entity_id || ""
+        : this.selectedRace!.entity_id;
 
       this.dataService.getSavedRaces().subscribe({
         next: (races) => {
@@ -741,6 +773,38 @@ export class DefaultRacedaySetupComponent implements OnInit {
         },
       });
     }
+  }
+
+  getRaceName(raceId: string): string {
+    const r = this.races.find(
+      (rc) => rc.entity_id === raceId || (rc as any)._id === raceId,
+    );
+    return r ? r.name : raceId;
+  }
+
+  getEventDriverLimitWarning(): string | null {
+    if (
+      this.isEventMode &&
+      this.selectedEvent &&
+      this.selectedEvent.races &&
+      this.selectedEvent.races.length > 0
+    ) {
+      const race0 = this.selectedEvent.races[0];
+      if (
+        race0.maxDrivers > 0 &&
+        this.selectedParticipants.length > race0.maxDrivers
+      ) {
+        const raceName = this.getRaceName(race0.raceId);
+        return (
+          this.translationService.translate("RDS_EVENT_WARNING_LIMIT", {
+            limit: race0.maxDrivers,
+            raceName: raceName,
+          }) ||
+          `Warning: Only the top ${race0.maxDrivers} drivers will participate in ${raceName}.`
+        );
+      }
+    }
+    return null;
   }
 
   joinRace() {
@@ -814,72 +878,86 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.saveSettings(true);
     const settings = this.settingsService.getSettings();
 
-    this.dataService
-      .initializeRace(
-        this.selectedRace!.entity_id,
-        settings.selectedDriverIds,
-        isDemo,
-        isDemo
-          ? this.demoConfig || this.dataService.getDefaultDemoConfig()
-          : undefined,
-      )
-      .subscribe({
-        next: (response) => {
-          if (response.success) {
-            this.router.navigate(["/raceday"]);
+    const raceId = this.isEventMode ? "" : this.selectedRace?.entity_id || "";
+    const eventId = this.isEventMode
+      ? this.selectedEvent?.entity_id || ""
+      : undefined;
+    const demoConfig = isDemo
+      ? this.demoConfig || this.dataService.getDefaultDemoConfig()
+      : undefined;
+
+    const initializeObservable = eventId
+      ? this.dataService.initializeRace(
+          raceId,
+          settings.selectedDriverIds,
+          isDemo,
+          demoConfig,
+          eventId,
+        )
+      : this.dataService.initializeRace(
+          raceId,
+          settings.selectedDriverIds,
+          isDemo,
+          demoConfig,
+        );
+
+    initializeObservable.subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.router.navigate(["/raceday"]);
+        } else {
+          // Handle validation error
+          this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
+
+          if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
+            this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
+            this.errorMessageParams = {
+              driver: response.driverName,
+              team: response.teamNames.join(", "),
+            };
+          } else if (response.errorCode === "DUPE_MULTIPLE_TEAMS") {
+            this.errorMessage = "RDS_ERR_DRIVER_DUPE_TEAMS";
+            this.errorMessageParams = {
+              driver: response.driverName,
+              teams: response.teamNames.join(", "),
+            };
+          } else if (response.errorCode === "TRACK_DELETED") {
+            this.errorMessage = "RDS_ERR_TRACK_DELETED";
+            this.errorMessageParams = {
+              race: this.selectedRace?.name || "",
+            };
+          } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
+            this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
+            this.errorMessageParams = {};
           } else {
-            // Handle validation error
-            this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-
-            if (response.errorCode === "DUPE_INDIVIDUAL_TEAM") {
-              this.errorMessage = "RDS_ERR_DRIVER_DUPE_IND_TEAM";
-              this.errorMessageParams = {
-                driver: response.driverName,
-                team: response.teamNames.join(", "),
-              };
-            } else if (response.errorCode === "DUPE_MULTIPLE_TEAMS") {
-              this.errorMessage = "RDS_ERR_DRIVER_DUPE_TEAMS";
-              this.errorMessageParams = {
-                driver: response.driverName,
-                teams: response.teamNames.join(", "),
-              };
-            } else if (response.errorCode === "TRACK_DELETED") {
-              this.errorMessage = "RDS_ERR_TRACK_DELETED";
-              this.errorMessageParams = {
-                race: this.selectedRace?.name || "",
-              };
-            } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
-              this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
-              this.errorMessageParams = {};
-            } else {
-              this.errorMessage = response.errorCode || "Unknown error";
-              this.errorMessageParams = {};
-            }
-
-            // Append fix description if it's a known error
-            if (response.errorCode) {
-              const translatedMessage = this.translationService.translate(
-                this.errorMessage,
-                this.errorMessageParams,
-              );
-              const fixKey =
-                response.errorCode === "NO_CUSTOM_ROTATIONS"
-                  ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
-                  : response.errorCode === "TRACK_DELETED"
-                    ? "RDS_ERR_TRACK_DELETED_FIX"
-                    : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
-              const fixDescription = this.translationService.translate(fixKey);
-              this.errorMessage = translatedMessage + "\n\n" + fixDescription;
-              // Clear messageParams since we've already done the translation for the main part
-              this.errorMessageParams = {};
-            }
-
-            this.showErrorModal = true;
-            this.cdr.detectChanges();
+            this.errorMessage = response.errorCode || "Unknown error";
+            this.errorMessageParams = {};
           }
-        },
-        error: (err) => this.logger.error("Failed to initialize race", err),
-      });
+
+          // Append fix description if it's a known error
+          if (response.errorCode) {
+            const translatedMessage = this.translationService.translate(
+              this.errorMessage,
+              this.errorMessageParams,
+            );
+            const fixKey =
+              response.errorCode === "NO_CUSTOM_ROTATIONS"
+                ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
+                : response.errorCode === "TRACK_DELETED"
+                  ? "RDS_ERR_TRACK_DELETED_FIX"
+                  : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
+            const fixDescription = this.translationService.translate(fixKey);
+            this.errorMessage = translatedMessage + "\n\n" + fixDescription;
+            // Clear messageParams since we've already done the translation for the main part
+            this.errorMessageParams = {};
+          }
+
+          this.showErrorModal = true;
+          this.cdr.detectChanges();
+        }
+      },
+      error: (err) => this.logger.error("Failed to initialize race", err),
+    });
   }
 
   updateQuickStartRaces(recentRaceIds: string[] = []) {
@@ -1207,6 +1285,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
     queryParams.driverCount = this.selectedParticipants.length;
     this.closeConfigDropdown();
     this.router.navigate(["/race-manager"], { queryParams });
+  }
+
+  openEventManager() {
+    const queryParams: any = this.selectedEvent
+      ? { id: this.selectedEvent.entity_id }
+      : {};
+    this.closeConfigDropdown();
+    this.router.navigate(["/event-manager"], { queryParams });
   }
 
   toggleConfigDropdown(event: Event) {

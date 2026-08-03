@@ -20,6 +20,15 @@ export const mockDataService = {
   getRaces: jasmine
     .createSpy("getRaces")
     .and.callFake(() => of(deepCopy(MOCK_RACES))),
+  getEvents: jasmine.createSpy("getEvents").and.returnValue(of([])),
+  getEvent: jasmine.createSpy("getEvent").and.returnValue(of({})),
+  createEvent: jasmine
+    .createSpy("createEvent")
+    .and.returnValue(of({ entity_id: "evt_1" })),
+  updateEvent: jasmine
+    .createSpy("updateEvent")
+    .and.returnValue(of({ entity_id: "evt_1" })),
+  deleteEvent: jasmine.createSpy("deleteEvent").and.returnValue(of(true)),
   createTeam: jasmine
     .createSpy("createTeam")
     .and.returnValue(of({ entity_id: "new_t" })),
@@ -211,6 +220,7 @@ export function resetMocks() {
   mockDataService.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
   mockDataService.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
   mockDataService.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
+  mockDataService.getEvents.and.returnValue(of([]));
   mockDataService.listAssets.and.returnValue(of([]));
   mockDataService.resetLaneHeatData.and.returnValue(of(true));
   mockDataService.getDatabases.and.returnValue(of([]));

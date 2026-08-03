@@ -190,6 +190,26 @@ export class DefaultRacedayComponent
     return this.race?.group_options?.enabled || false;
   }
 
+  get isEvent(): boolean {
+    return !!(this.race as any)?.is_event;
+  }
+
+  get eventName(): string {
+    return (this.race as any)?.event_name || "";
+  }
+
+  get currentEventRaceIndex(): number {
+    return ((this.race as any)?.current_event_race_index || 0) + 1;
+  }
+
+  get totalEventRaces(): number {
+    return (this.race as any)?.total_event_races || 0;
+  }
+
+  get autoAdvanceRemainingSeconds(): number {
+    return (this.race as any)?.auto_advance_remaining_seconds || 0;
+  }
+
   /**
    * Update leaderboard entries while maintaining stable DOM order.
    * Existing entries are updated in-place; new ones are appended.

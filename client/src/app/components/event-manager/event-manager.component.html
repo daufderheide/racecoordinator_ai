@@ -1,0 +1,124 @@
+<app-confirmation-modal
+  [visible]="showDeleteConfirmation"
+  [title]="'EM_CONFIRM_DELETE_TITLE' | translate"
+  [message]="getDeleteMessage()"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+>
+</app-confirmation-modal>
+
+<div
+  class="page-container"
+  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+>
+  <app-manager-header
+    [title]="'EM_TITLE'"
+    [showActions]="true"
+    [showEdit]="selectedEvent != null"
+    [showDelete]="selectedEvent != null"
+    [isSaving]="isSaving"
+    (add)="createNewEvent()"
+    (edit)="updateEvent()"
+    (delete)="deleteEvent()"
+  >
+  </app-manager-header>
+
+  @if (!isLoading) {
+    <div class="content-area">
+      <div class="sidebar-list">
+        <div class="search-bar">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            [placeholder]="'EM_SEARCH_PLACEHOLDER' | translate"
+          />
+        </div>
+        <div class="list-container">
+          @for (event of filteredEvents; track event; let i = $index) {
+            <div
+              #eventRow
+              class="list-item"
+              [class.selected]="event.entity_id === selectedEvent?.entity_id"
+              (click)="selectEvent(event)"
+              [class.odd]="i % 2 !== 0"
+            >
+              <div class="item-name">{{ event.name }}</div>
+              <div class="item-subtitle">
+                {{ event.races ? event.races.length : 0 }} races
+              </div>
+            </div>
+          }
+          @if (filteredEvents.length === 0) {
+            <div class="no-items">{{ "EM_NO_EVENTS" | translate }}</div>
+          }
+        </div>
+      </div>
+
+      @if (selectedEvent) {
+        <div class="detail-panel">
+          <div class="detail-header">
+            <h2>{{ selectedEvent.name }}</h2>
+          </div>
+          <div class="detail-content">
+            <div class="summary-section">
+              <div class="summary-grid">
+                <div class="summary-item">
+                  <span class="summary-label"
+                    >{{ "EE_LABEL_DESCRIPTION" | translate }}:</span
+                  >
+                  <span class="summary-value">{{
+                    selectedEvent.description || "N/A"
+                  }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label"
+                    >{{ "EE_LABEL_AUTO_ADVANCE" | translate }}:</span
+                  >
+                  <span class="summary-value">
+                    {{ selectedEvent.auto_advance_time || 0 }}s
+                  </span>
+                </div>
+              </div>
+
+              <div class="section-title">
+                <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
+              </div>
+              <table class="race-sequence-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Race Name</th>
+                    <th>{{ "EE_LABEL_MAX_DRIVERS" | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    item of selectedEvent.races;
+                    track item;
+                    let idx = $index
+                  ) {
+                    <tr>
+                      <td>{{ idx + 1 }}</td>
+                      <td>{{ getRaceName(getItemRaceId(item)) }}</td>
+                      <td>
+                        @if (getItemMaxDrivers(item) > 0) {
+                          {{ getItemMaxDrivers(item) }}
+                        } @else {
+                          {{ "EE_UNLIMITED" | translate }}
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="detail-panel empty-selection">
+          <p>{{ "EM_SELECT_EVENT" | translate }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -7,6 +7,7 @@ import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.DriverTrackStats;
+import com.antigravity.models.Event;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -479,6 +480,18 @@ public class DatabaseService {
   public Race getRace(MongoDatabase database, String entityId) {
     MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
     return raceCollection.find(Filters.eq("entity_id", entityId)).first();
+  }
+
+  public Event getEvent(MongoDatabase database, String entityId) {
+    MongoCollection<Event> eventCollection = database.getCollection("events", Event.class);
+    return eventCollection.find(Filters.eq("entity_id", entityId)).first();
+  }
+
+  public List<Event> getEvents(MongoDatabase database) {
+    MongoCollection<Event> eventCollection = database.getCollection("events", Event.class);
+    List<Event> list = new ArrayList<>();
+    eventCollection.find().into(list);
+    return list;
   }
 
   public Track getTrack(MongoDatabase database, String entityId) {

@@ -237,6 +237,33 @@ public class ClientCommandTaskHandler {
   @SuppressWarnings("checkstyle:MethodLength")
   TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
     DatabaseService dbService = DatabaseService.getInstance();
+
+    if (request.getEventId() != null && !request.getEventId().isEmpty()) {
+      com.antigravity.models.Event event = // fqn-collision
+          dbService.getEvent(databaseContext.getDatabase(), request.getEventId());
+      if (event == null) {
+        return TaskResult.error(404, "Event not found: " + request.getEventId());
+      }
+      if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
+          && ClientSubscriptionManager.getInstance().getRace() != null
+          && ClientSubscriptionManager.getInstance().getRace().isActive()) {
+        return TaskResult.error(
+            409, "Cannot start new race while client is watching an active race");
+      }
+      com.antigravity.race.EventExecutionManager.getInstance() // fqn-collision
+          .startEvent(
+              event,
+              request.getDriverIdsList(),
+              request.getIsDemoMode(),
+              request.getDemoConfig(),
+              databaseContext);
+      InitializeRaceResponse response =
+          InitializeRaceResponse.newBuilder().setSuccess(true).build();
+      return TaskResult.success(response.toByteArray());
+    }
+
+    com.antigravity.race.EventExecutionManager.getInstance().cancelEvent(); // fqn-collision
+
     Race raceModel = dbService.getRace(databaseContext.getDatabase(), request.getRaceId());
 
     if (raceModel == null) {

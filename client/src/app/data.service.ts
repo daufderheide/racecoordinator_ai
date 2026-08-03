@@ -4,6 +4,7 @@ import { Injectable, NgZone } from "@angular/core";
 import { Reader } from "protobufjs/minimal";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
+import { Event } from "@app/models/event";
 import {
   ArduinoConfig,
   PhidgetConfig,
@@ -119,6 +120,10 @@ export class DataService {
   private get racesUrl(): string {
     return `${this.baseUrl}/api/races`;
   }
+
+  private get eventsUrl(): string {
+    return `${this.baseUrl}/api/events`;
+  }
   private connectionIntent = "";
 
   constructor(
@@ -205,6 +210,26 @@ export class DataService {
 
   deleteRace(id: string): Observable<any> {
     return this.http.delete<any>(`${this.racesUrl}/${id}`);
+  }
+
+  getEvents(): Observable<Event[]> {
+    return this.http.get<Event[]>(this.eventsUrl);
+  }
+
+  getEvent(id: string): Observable<Event> {
+    return this.http.get<Event>(`${this.eventsUrl}/${id}`);
+  }
+
+  createEvent(event: Event): Observable<Event> {
+    return this.http.post<Event>(this.eventsUrl, event);
+  }
+
+  updateEvent(id: string, event: Event): Observable<Event> {
+    return this.http.put<Event>(`${this.eventsUrl}/${id}`, event);
+  }
+
+  deleteEvent(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.eventsUrl}/${id}`);
   }
 
   exportRaceToCsv(): Observable<string> {
@@ -320,12 +345,14 @@ export class DataService {
     driverIds: string[],
     isDemoMode: boolean,
     demoConfig?: IDemoConfig,
+    eventId?: string,
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
       driverIds,
       isDemoMode,
       demoConfig,
+      eventId,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 

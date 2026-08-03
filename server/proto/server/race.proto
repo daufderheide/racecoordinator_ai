@@ -19,4 +19,10 @@ message Race {
   RaceState state = 5;
   RaceFlag flag = 6;
   RecordData record_data = 7;
+  bool is_event = 8;
+  string event_id = 9;
+  string event_name = 10;
+  int32 current_event_race_index = 11;
+  int32 total_event_races = 12;
+  double auto_advance_remaining_seconds = 13;
 }

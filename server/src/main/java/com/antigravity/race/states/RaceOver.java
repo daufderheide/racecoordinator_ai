@@ -6,6 +6,7 @@ import com.antigravity.models.RacePredictionRecord.DriverProjection;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
@@ -57,6 +58,13 @@ public class RaceOver implements IRaceState {
     }
 
     race.broadcast(race.createSnapshot());
+
+    // Notify EventExecutionManager if running as part of an Event
+    try {
+      EventExecutionManager.getInstance().onRaceOver(race);
+    } catch (Exception e) {
+      logger.error("Error notifying EventExecutionManager on race over", e);
+    }
 
     // Save history and update stats (separately if in demo mode)
     try {
@@ -125,6 +133,18 @@ public class RaceOver implements IRaceState {
 
   @Override
   public void nextHeat(Race race) {
+    if (EventExecutionManager.getInstance().isEventActive()) {
+      try {
+        boolean advanced = EventExecutionManager.getInstance().advanceToNextRace();
+        if (advanced) {
+          return;
+        }
+      } catch (Exception e) {
+        logger.error("Error advancing to next race in event via nextHeat", e);
+        throw new IllegalStateException(
+            "Failed to advance to next race in event: " + e.getMessage(), e);
+      }
+    }
     throw new IllegalStateException(
         "Cannot move to next heat from state: " + this.getClass().getSimpleName());
   }

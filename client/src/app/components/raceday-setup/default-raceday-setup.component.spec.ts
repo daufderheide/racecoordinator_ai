@@ -1022,5 +1022,13 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(title).toBeTruthy();
       expect(selector).toBeTruthy();
     });
+
+    it("should navigate to event manager on openEventManager", () => {
+      component.openEventManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ["/event-manager"],
+        jasmine.any(Object),
+      );
+    });
   });
 });

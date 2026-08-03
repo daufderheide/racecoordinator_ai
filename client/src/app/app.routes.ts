@@ -6,6 +6,8 @@ import { DriverEditorComponent } from "@app/components/driver-editor/driver-edit
 import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
+import { EventEditorComponent } from "@app/components/event-editor/event-editor.component";
+import { EventManagerComponent } from "@app/components/event-manager/event-manager.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
 import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
@@ -117,6 +119,22 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     title: "Database Manager",
     data: { animation: "DatabaseManagerPage" },
+  },
+  {
+    path: "event-manager",
+    component: EventManagerComponent,
+    canActivate: [AuthGuard],
+    title: "Event Manager",
+    data: { animation: "EventManagerPage" },
+  },
+  {
+    path: "event-editor",
+    component: EventEditorComponent,
+    canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
+    title: "Event Editor",
+    data: { animation: "EventEditorPage" },
   },
   {
     path: "race-manager",

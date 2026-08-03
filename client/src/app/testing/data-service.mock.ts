@@ -16,6 +16,16 @@ export class DataServiceMock {
     ]),
   );
 
+  getEvents = jasmine.createSpy("getEvents").and.returnValue(of([]));
+  getEvent = jasmine.createSpy("getEvent").and.returnValue(of({}));
+  createEvent = jasmine
+    .createSpy("createEvent")
+    .and.returnValue(of({ entity_id: "e1" }));
+  updateEvent = jasmine
+    .createSpy("updateEvent")
+    .and.returnValue(of({ entity_id: "e1" }));
+  deleteEvent = jasmine.createSpy("deleteEvent").and.returnValue(of(true));
+
   getTracks = jasmine.createSpy("getTracks").and.returnValue(of([]));
 
   initializeRace = jasmine
