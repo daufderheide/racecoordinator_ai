@@ -20,6 +20,9 @@ import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.RacePredictionRecord;
+import com.antigravity.models.Season;
+import com.antigravity.models.SeasonRaceRecord;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
@@ -594,6 +597,43 @@ public class DatabaseService {
       logger.info("Race successfully saved to {}", collection.getNamespace().getCollectionName());
     } catch (Exception e) {
       logger.error("Failed to save race to history", e);
+    }
+  }
+
+  public void commitRaceToSeason(
+      MongoDatabase database,
+      String seasonId,
+      String raceName,
+      List<SeasonDriverResult> driverResults) {
+    if (seasonId == null
+        || seasonId.trim().isEmpty()
+        || driverResults == null
+        || driverResults.isEmpty()) {
+      return;
+    }
+    try {
+      MongoCollection<Season> collection = database.getCollection("seasons", Season.class);
+      Season season =
+          collection.find(com.mongodb.client.model.Filters.eq("entity_id", seasonId)).first();
+      if (season == null) {
+        logger.warn("Season not found for entity_id: {}", seasonId);
+        return;
+      }
+      List<SeasonRaceRecord> races = season.getRaces();
+      String nextRaceId = String.valueOf(races.size() + 1);
+      SeasonRaceRecord newRecord =
+          new SeasonRaceRecord(
+              nextRaceId, raceName, System.currentTimeMillis(), driverResults);
+      races.add(newRecord);
+
+      Season updatedSeason =
+          new Season(
+              season.getName(), season.getDrops(), races, season.getEntityId(), season.getId());
+      collection.replaceOne(
+          com.mongodb.client.model.Filters.eq("entity_id", seasonId), updatedSeason);
+      logger.info("Committed race '{}' results to season '{}'", raceName, season.getName());
+    } catch (Exception e) {
+      logger.error("Failed to commit race to season", e);
     }
   }
 

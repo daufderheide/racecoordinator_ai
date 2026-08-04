@@ -4,12 +4,16 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Event;
 import com.antigravity.models.Event.EventRaceItem;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.util.SeasonPointsCalculator;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -29,6 +33,8 @@ public class EventExecutionManager {
   private boolean isDemoMode;
   private DemoConfig demoConfig;
   private DatabaseContext databaseContext;
+  private String seasonEntityId;
+  private Map<String, SeasonDriverResult> eventDriverResultsMap = new HashMap<>();
 
   private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
   private ScheduledFuture<?> autoAdvanceFuture;
@@ -69,6 +75,17 @@ public class EventExecutionManager {
       DemoConfig demoConfig,
       DatabaseContext dbCtx)
       throws Exception {
+    startEvent(event, participantIds, isDemoMode, demoConfig, dbCtx, null);
+  }
+
+  public synchronized void startEvent(
+      Event event,
+      List<String> participantIds,
+      boolean isDemoMode,
+      DemoConfig demoConfig,
+      DatabaseContext dbCtx,
+      String seasonEntityId)
+      throws Exception {
     cancelAutoAdvanceTimer();
     this.activeEvent = event;
     this.currentRaceIndex = 0;
@@ -76,6 +93,8 @@ public class EventExecutionManager {
     this.isDemoMode = isDemoMode;
     this.demoConfig = demoConfig;
     this.databaseContext = dbCtx;
+    this.seasonEntityId = seasonEntityId;
+    this.eventDriverResultsMap = new HashMap<>();
     this.autoAdvanceRemainingSeconds = 0;
 
     if (event.getRaces().isEmpty()) {
@@ -158,6 +177,44 @@ public class EventExecutionManager {
         startAutoAdvanceTimer((long) autoAdvanceSecs);
       }
     }
+
+    // Accumulate points if running as part of a season
+    if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
+      List<SeasonDriverResult> raceResults =
+          SeasonPointsCalculator.calculateDriverResultsForRace(completedRace);
+      for (SeasonDriverResult r : raceResults) {
+        String dId = r.getDriverId();
+        SeasonDriverResult existing = eventDriverResultsMap.get(dId);
+        if (existing != null) {
+          int combinedPosPts = existing.getOverallPoints() + r.getOverallPoints();
+          int combinedHeatPts = existing.getHeatPoints() + r.getHeatPoints();
+          int combinedTotal = combinedPosPts + combinedHeatPts;
+          int bestRank = Math.min(existing.getOverallRank(), r.getOverallRank());
+          eventDriverResultsMap.put(
+              dId,
+              new SeasonDriverResult(
+                  dId, r.getDriverName(), bestRank, combinedPosPts, combinedHeatPts, combinedTotal));
+        } else {
+          eventDriverResultsMap.put(dId, r);
+        }
+      }
+
+      // If this is the last race in the Event, commit to season
+      if (currentRaceIndex == activeEvent.getRaces().size() - 1) {
+        List<SeasonDriverResult> finalEventResults =
+            new ArrayList<>(eventDriverResultsMap.values());
+        finalEventResults.sort(
+            Comparator.comparingInt(SeasonDriverResult::getTotalPoints).reversed());
+        if (databaseContext != null && databaseContext.getDatabase() != null) {
+          DatabaseService.getInstance()
+              .commitRaceToSeason(
+                  databaseContext.getDatabase(),
+                  seasonEntityId,
+                  activeEvent.getName(),
+                  finalEventResults);
+        }
+      }
+    }
   }
 
   private synchronized void startAutoAdvanceTimer(long seconds) {
@@ -234,6 +291,10 @@ public class EventExecutionManager {
     this.initialParticipantIds.clear();
     this.currentQualifiedParticipantIds.clear();
     this.autoAdvanceRemainingSeconds = 0;
+    this.seasonEntityId = null;
+    if (this.eventDriverResultsMap != null) {
+      this.eventDriverResultsMap.clear();
+    }
   }
 
   private void initializeAndStartRace(String raceId, List<String> participantIds) throws Exception {
@@ -296,6 +357,7 @@ public class EventExecutionManager {
             .databaseContext(databaseContext)
             .isDemoMode(isDemoMode)
             .demoConfig(demoConfig)
+            .seasonEntityId(seasonEntityId)
             .build();
 
     ClientSubscriptionManager.getInstance().setRace(runtimeRace);

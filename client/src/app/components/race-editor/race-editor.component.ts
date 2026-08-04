@@ -550,6 +550,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               tiebreaker: "FASTEST_LAP_TIME",
             };
           }
+          if (!this.editingRace.season_scoring) {
+            this.editingRace.season_scoring = {
+              position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+              heat_position_points: [3, 2, 1, 0],
+            };
+          }
           if (!this.editingRace.fuel_options) {
             this.editingRace.fuel_options = {
               enabled: false,
@@ -1870,6 +1876,22 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
     ];
+  }
+
+  addSeasonPositionPoint(): void {
+    if (!this.editingRace) return;
+    if (!this.editingRace.season_scoring) {
+      this.editingRace.season_scoring = { position_points: [], heat_position_points: [] };
+    }
+    if (!this.editingRace.season_scoring.position_points) {
+      this.editingRace.season_scoring.position_points = [];
+    }
+    this.editingRace.season_scoring.position_points.push(0);
+  }
+
+  removeSeasonPositionPoint(index: number): void {
+    if (!this.editingRace || !this.editingRace.season_scoring || !this.editingRace.season_scoring.position_points) return;
+    this.editingRace.season_scoring.position_points.splice(index, 1);
   }
 
   startHelp() {

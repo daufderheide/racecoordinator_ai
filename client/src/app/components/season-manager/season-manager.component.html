@@ -1,0 +1,145 @@
+<div class="manager-container" [style.transform]="'scale(' + scale + ')'">
+  <app-manager-header
+    [title]="'SM_TITLE'"
+    [showEdit]="selectedSeason != null"
+    [showDelete]="selectedSeason != null"
+    (add)="onNew()"
+    (edit)="onEdit()"
+    (delete)="onDelete()"
+  ></app-manager-header>
+
+  <div class="manager-content">
+    <!-- Left Sidebar: Season List -->
+    <div class="sidebar">
+      <div class="search-container">
+        <input
+          type="text"
+          class="search-input"
+          [placeholder]="'SM_SEARCH_PLACEHOLDER' | translate"
+          [(ngModel)]="searchQuery"
+        />
+      </div>
+
+      <div class="season-list">
+        @if (isLoading) {
+          <div class="empty-state">Loading...</div>
+        } @else if (filteredSeasons.length === 0) {
+          <div class="empty-state">{{ "SM_NO_SEASONS" | translate }}</div>
+        } @else {
+          @for (season of filteredSeasons; track season.entity_id) {
+            <div
+              #seasonRow
+              class="season-item"
+              [class.selected]="selectedSeason?.entity_id === season.entity_id"
+              (click)="selectSeason(season)"
+            >
+              <div class="season-name">{{ season.name }}</div>
+              <div class="season-sub">
+                {{ "SM_DROPS_COUNT" | translate }}: {{ season.drops }} |
+                {{ "SM_RACES_RUN" | translate }}: {{ season.races ? season.races.length : 0 }}
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Right Content: Standings & Breakdown -->
+    <div class="detail-panel">
+      @if (selectedSeason) {
+        <div class="season-details-header">
+          <h2 class="season-title">{{ selectedSeason.name }}</h2>
+          <div class="season-meta">
+            <span class="meta-pill"
+              >{{ "SM_DROPS_COUNT" | translate }}: <strong>{{ selectedSeason.drops }}</strong></span
+            >
+            <span class="meta-pill"
+              >{{ "SM_RACES_RUN" | translate }}: <strong>{{ selectedSeason.races ? selectedSeason.races.length : 0 }}</strong></span
+            >
+          </div>
+        </div>
+
+        <div class="section-container">
+          <h3 class="section-title">{{ "SM_STANDINGS_TITLE" | translate }}</h3>
+
+          @if (standings.length === 0) {
+            <div class="empty-standings">
+              No races completed in this season yet. Run races with this season selected on Raceday Setup!
+            </div>
+          } @else {
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th class="col-rank">{{ "SM_RANK" | translate }}</th>
+                  <th class="col-driver">{{ "SM_DRIVER" | translate }}</th>
+                  <th class="col-pts">{{ "SM_NET_POINTS" | translate }}</th>
+                  <th class="col-pts">{{ "SM_GROSS_POINTS" | translate }}</th>
+                  <th class="col-races">{{ "SM_RACES" | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of standings; track item.driver_id; let rankIdx = $index) {
+                  <tr [class.podium-1]="rankIdx === 0" [class.podium-2]="rankIdx === 1" [class.podium-3]="rankIdx === 2">
+                    <td class="col-rank">
+                      @if (rankIdx === 0) { 🥇 1 }
+                      @else if (rankIdx === 1) { 🥈 2 }
+                      @else if (rankIdx === 2) { 🥉 3 }
+                      @else { {{ rankIdx + 1 }} }
+                    </td>
+                    <td class="col-driver"><strong>{{ item.driver_name }}</strong></td>
+                    <td class="col-pts net-highlight"><strong>{{ item.net_points }}</strong></td>
+                    <td class="col-pts">{{ item.gross_points }}</td>
+                    <td class="col-races">{{ item.races_run }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <!-- Detailed Breakdown Section -->
+            <div class="section-container breakdown-section">
+              <h3 class="section-title">{{ "SM_BREAKDOWN_TITLE" | translate }}</h3>
+              <div class="breakdown-cards">
+                @for (item of standings; track item.driver_id) {
+                  <div class="driver-breakdown-card">
+                    <div class="driver-card-header">
+                      <span class="driver-card-name">{{ item.driver_name }}</span>
+                      <span class="driver-card-score">{{ item.net_points }} net pts</span>
+                    </div>
+                    <div class="driver-card-races">
+                      @for (score of item.race_scores; track score.race_id) {
+                        <div class="race-score-row" [class.dropped-score]="score.is_dropped">
+                          <span class="score-race-name">{{ score.race_name }}</span>
+                          <span class="score-rank">#{{ score.overall_rank }}</span>
+                          <span class="score-details">
+                            (Pos: {{ score.overall_points }} + Heat: {{ score.heat_points }})
+                          </span>
+                          <span class="score-total">{{ score.total_points }} pts</span>
+                          @if (score.is_dropped) {
+                            <span class="dropped-badge">{{ "SM_DROPPED_TAG" | translate }}</span>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="no-selection">
+          {{ "SM_SELECT_SEASON" | translate }}
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+@if (showDeleteConfirmation && selectedSeason) {
+  <app-confirmation-modal
+    [title]="'SM_CONFIRM_DELETE_TITLE' | translate"
+    [message]="'SM_CONFIRM_DELETE_MSG' | translate: { name: selectedSeason.name }"
+    (confirm)="confirmDelete()"
+    (cancel)="cancelDelete()"
+  ></app-confirmation-modal>
+}

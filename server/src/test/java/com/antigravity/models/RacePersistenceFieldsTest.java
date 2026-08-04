@@ -43,43 +43,11 @@ public class RacePersistenceFieldsTest {
   @Test
   public void testRaceConstructorWithNulls() {
     Race race =
-        new Race(
-            "Race",
-            "track1",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            false,
-            null,
-            "race1",
-            new ObjectId());
+        new Race.Builder()
+            .withName("Race")
+            .withTrackEntityId("track1")
+            .withEntityId("race1")
+            .build();
 
     assertNotNull(race.getGroupOptions());
     assertFalse(race.getGroupOptions().isEnabled());

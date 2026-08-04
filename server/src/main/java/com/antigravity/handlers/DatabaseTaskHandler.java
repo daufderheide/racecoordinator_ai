@@ -18,6 +18,7 @@ import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.RacePredictionRecord;
+import com.antigravity.models.Season;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -68,6 +69,7 @@ public class DatabaseTaskHandler {
   private final MongoRepository<Track> trackRepository;
   private final MongoRepository<Race> raceRepository;
   private final MongoRepository<Event> eventRepository;
+  private final MongoRepository<Season> seasonRepository;
 
   public static class RaceResponse {
     @com.fasterxml.jackson.annotation.JsonUnwrapped public Race race;
@@ -88,6 +90,7 @@ public class DatabaseTaskHandler {
     this.trackRepository = new MongoRepository<>(databaseContext, "tracks", Track.class);
     this.raceRepository = new MongoRepository<>(databaseContext, "races", Race.class);
     this.eventRepository = new MongoRepository<>(databaseContext, "events", Event.class);
+    this.seasonRepository = new MongoRepository<>(databaseContext, "seasons", Season.class);
 
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);
     app.post("/api/drivers", this::createDriver, Role.DIRECTOR);
@@ -105,6 +108,12 @@ public class DatabaseTaskHandler {
     app.post("/api/events", this::handleCreateEvent, Role.DIRECTOR);
     app.put("/api/events/{id}", this::handleUpdateEvent, Role.DIRECTOR);
     app.delete("/api/events/{id}", this::handleDeleteEvent, Role.DIRECTOR);
+
+    app.get("/api/seasons", this::getSeasons, Role.VIEWER);
+    app.get("/api/seasons/{id}", this::getSeasonById, Role.VIEWER);
+    app.post("/api/seasons", this::handleCreateSeason, Role.DIRECTOR);
+    app.put("/api/seasons/{id}", this::handleUpdateSeason, Role.DIRECTOR);
+    app.delete("/api/seasons/{id}", this::handleDeleteSeason, Role.DIRECTOR);
 
     app.get("/api/tracks/factory-settings", this::getFactoryTrack, Role.VIEWER);
 
@@ -829,6 +838,104 @@ public class DatabaseTaskHandler {
     } catch (Exception e) {
       logger.error("Error deleting event", e);
       ctx.status(500).result("Error deleting event: " + e.getMessage());
+    }
+  }
+
+  public void getSeasons(Context ctx) {
+    try {
+      List<Season> seasons = seasonRepository.findAll();
+      ctx.json(seasons);
+    } catch (Exception e) {
+      logger.error("Error getting seasons", e);
+      ctx.status(500).result("Error getting seasons: " + e.getMessage());
+    }
+  }
+
+  public void getSeasonById(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      Season season = seasonRepository.findByEntityId(id);
+      if (season != null) {
+        ctx.json(season);
+      } else {
+        ctx.status(404).result("Season not found");
+      }
+    } catch (Exception e) {
+      logger.error("Error getting season", e);
+      ctx.status(500).result("Error getting season: " + e.getMessage());
+    }
+  }
+
+  public void handleCreateSeason(Context ctx) {
+    try {
+      Season season = bodyAsClassWithId(ctx.body(), Season.class);
+      if (season.getName() == null || season.getName().trim().isEmpty()) {
+        ctx.status(400).result("Season name cannot be empty");
+        return;
+      }
+      Season existing = seasonRepository.findOne(Filters.eq("name", season.getName()));
+      if (existing != null) {
+        ctx.status(400).result("Season name already exists");
+        return;
+      }
+      String nextId = seasonRepository.getNextSequence();
+      Season created =
+          new Season(
+              season.getName(),
+              season.getDrops(),
+              season.getRaces(),
+              nextId,
+              null);
+      seasonRepository.insert(created);
+      ctx.status(201).json(created);
+    } catch (Exception e) {
+      logger.error("Error creating season", e);
+      ctx.status(500).result("Error creating season: " + e.getMessage());
+    }
+  }
+
+  public void handleUpdateSeason(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      Season season = bodyAsClassWithId(ctx.body(), Season.class);
+      if (season.getName() == null || season.getName().trim().isEmpty()) {
+        ctx.status(400).result("Season name cannot be empty");
+        return;
+      }
+      Season existing =
+          seasonRepository.findOne(
+              Filters.and(Filters.eq("name", season.getName()), Filters.ne("entity_id", id)));
+      if (existing != null) {
+        ctx.status(400).result("Season name already exists");
+        return;
+      }
+      Season updated =
+          new Season(
+              season.getName(),
+              season.getDrops(),
+              season.getRaces(),
+              id,
+              season.getId());
+      UpdateResult result = seasonRepository.replace(id, updated);
+      if (result.getMatchedCount() == 0) {
+        ctx.status(404).result("Season not found");
+        return;
+      }
+      ctx.json(updated);
+    } catch (Exception e) {
+      logger.error("Error updating season", e);
+      ctx.status(500).result("Error updating season: " + e.getMessage());
+    }
+  }
+
+  public void handleDeleteSeason(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      seasonRepository.delete(id);
+      ctx.status(204);
+    } catch (Exception e) {
+      logger.error("Error deleting season", e);
+      ctx.status(500).result("Error deleting season: " + e.getMessage());
     }
   }
 

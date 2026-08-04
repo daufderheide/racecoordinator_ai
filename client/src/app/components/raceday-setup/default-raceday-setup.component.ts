@@ -29,6 +29,7 @@ import { LanguageSelectorComponent } from "@app/components/shared/language-selec
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
+import { Season } from "@app/models/season";
 import { Race } from "@app/models/race";
 import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
@@ -126,6 +127,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   showDemoConfigModal: boolean = false;
   demoConfig?: IDemoConfig;
 
+  // Season State
+  seasons: Season[] = [];
+  selectedSeason?: Season;
+
   // Race State Additions
   isRaceRunning: boolean = false;
   showEndRacePrompt: boolean = false;
@@ -186,6 +191,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       teams: this.dataService.getTeams(),
       races: this.dataService.getRaces(),
       events: this.dataService.getEvents(),
+      seasons: this.dataService.getSeasons(),
     }).subscribe({
       next: (result) => {
         const drivers = (result.drivers as any).map(
@@ -231,6 +237,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
         );
 
         this.events = (result.events || []).sort((a: any, b: any) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+
+        this.seasons = (result.seasons || []).sort((a: any, b: any) =>
           (a.name || "").localeCompare(b.name || ""),
         );
 
@@ -1419,6 +1429,18 @@ export class DefaultRacedaySetupComponent implements OnInit {
       : {};
     this.closeConfigDropdown();
     this.router.navigate(["/event-manager"], { queryParams });
+  }
+
+  selectSeason(season?: Season) {
+    this.selectedSeason = season;
+  }
+
+  openSeasonManager() {
+    const queryParams: any = this.selectedSeason
+      ? { id: this.selectedSeason.entity_id }
+      : {};
+    this.closeConfigDropdown();
+    this.router.navigate(["/season-manager"], { queryParams });
   }
 
   toggleConfigDropdown(event: Event) {

@@ -571,6 +571,80 @@
                       />
                     </div>
                   </div>
+
+                  <!-- Season Points Section -->
+                  <div class="scoring-column">
+                    <h2 class="config-header">
+                      {{ "SS_TITLE" | translate }}
+                    </h2>
+                    @if (editingRace.season_scoring) {
+                      <div class="config-section">
+                        <label>{{ "SS_POSITION_POINTS" | translate }}</label>
+                        <div class="season-points-list">
+                          @for (
+                            pts of editingRace.season_scoring.position_points;
+                            track $index;
+                            let idx = $index
+                          ) {
+                            <div class="season-point-row">
+                              <span class="season-pos-label">#{{ idx + 1 }}:</span>
+                              <input
+                                type="number"
+                                [(ngModel)]="
+                                  editingRace.season_scoring.position_points[idx]
+                                "
+                                (ngModelChange)="captureState()"
+                                min="0"
+                                class="season-point-input"
+                              />
+                              <button
+                                type="button"
+                                class="btn-remove-pos"
+                                (click)="removeSeasonPositionPoint(idx)"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          }
+                          <button
+                            type="button"
+                            class="btn-add-pos"
+                            (click)="addSeasonPositionPoint()"
+                          >
+                            {{ "SS_ADD_POS" | translate }}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="config-section">
+                        <label>{{ "SS_HEAT_POSITION_POINTS" | translate }}</label>
+                        <div class="season-points-list">
+                          @for (
+                            hpts of editingRace.season_scoring.heat_position_points;
+                            track $index;
+                            let lidx = $index
+                          ) {
+                            <div class="season-point-row">
+                              <span class="season-pos-label"
+                                >Lane {{ lidx + 1 }}:</span
+                              >
+                              <input
+                                type="number"
+                                [(ngModel)]="
+                                  editingRace.season_scoring.heat_position_points[
+                                    lidx
+                                  ]
+                                "
+                                (ngModelChange)="captureState()"
+                                min="0"
+                                class="season-point-input"
+                              />
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
             }

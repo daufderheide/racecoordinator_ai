@@ -1,0 +1,53 @@
+<div class="editor-container" [style.transform]="'scale(' + scale + ')'">
+  <app-editor-title
+    [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
+    [undoManager]="undoManager"
+  ></app-editor-title>
+
+  <div class="editor-content">
+    @if (isLoading) {
+      <div class="loading-spinner">Loading season...</div>
+    } @else {
+      <div class="editor-card">
+        <div class="form-group">
+          <label class="form-label" for="season-name">
+            {{ "SE_LABEL_NAME" | translate }} <span class="required">*</span>
+          </label>
+          <input
+            id="season-name"
+            type="text"
+            class="form-input"
+            [class.invalid]="isNameDuplicate || (!editingSeason.name && isDirty)"
+            [(ngModel)]="editingSeason.name"
+            (ngModelChange)="captureState()"
+            placeholder="e.g. 2026 Winter Championship"
+          />
+          @if (!editingSeason.name && isDirty) {
+            <span class="error-msg">{{ "SE_NAME_REQUIRED" | translate }}</span>
+          }
+          @if (isNameDuplicate) {
+            <span class="error-msg">{{ "SE_NAME_EXISTS" | translate }}</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="season-drops">
+            {{ "SE_LABEL_DROPS" | translate }}
+          </label>
+          <input
+            id="season-drops"
+            type="number"
+            class="form-input number-input"
+            min="0"
+            max="50"
+            [(ngModel)]="editingSeason.drops"
+            (ngModelChange)="captureState()"
+          />
+          <span class="help-text">
+            {{ "SE_DROPS_HELP" | translate }}
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

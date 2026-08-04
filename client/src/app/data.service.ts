@@ -5,6 +5,7 @@ import { Reader } from "protobufjs/minimal";
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 import { map } from "rxjs/operators";
 import { Event } from "@app/models/event";
+import { Season } from "@app/models/season";
 import {
   ArduinoConfig,
   PhidgetConfig,
@@ -138,6 +139,10 @@ export class DataService {
   private get eventsUrl(): string {
     return `${this.baseUrl}/api/events`;
   }
+
+  private get seasonsUrl(): string {
+    return `${this.baseUrl}/api/seasons`;
+  }
   private connectionIntent = "";
 
   constructor(
@@ -260,6 +265,26 @@ export class DataService {
     return this.http.delete<any>(`${this.eventsUrl}/${id}`);
   }
 
+  getSeasons(): Observable<Season[]> {
+    return this.http.get<Season[]>(this.seasonsUrl);
+  }
+
+  getSeason(id: string): Observable<Season> {
+    return this.http.get<Season>(`${this.seasonsUrl}/${id}`);
+  }
+
+  createSeason(season: Season): Observable<Season> {
+    return this.http.post<Season>(this.seasonsUrl, season);
+  }
+
+  updateSeason(id: string, season: Season): Observable<Season> {
+    return this.http.put<Season>(`${this.seasonsUrl}/${id}`, season);
+  }
+
+  deleteSeason(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.seasonsUrl}/${id}`);
+  }
+
   exportRaceToCsv(): Observable<string> {
     return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, {
       responseType: "text",
@@ -374,6 +399,7 @@ export class DataService {
     isDemoMode: boolean,
     demoConfig?: IDemoConfig,
     eventId?: string,
+    seasonId?: string,
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
@@ -381,6 +407,7 @@ export class DataService {
       isDemoMode,
       demoConfig,
       eventId,
+      seasonId,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 

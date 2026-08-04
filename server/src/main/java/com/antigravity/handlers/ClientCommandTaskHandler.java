@@ -256,7 +256,8 @@ public class ClientCommandTaskHandler {
               request.getDriverIdsList(),
               request.getIsDemoMode(),
               request.getDemoConfig(),
-              databaseContext);
+              databaseContext,
+              request.getSeasonId());
       InitializeRaceResponse response =
           InitializeRaceResponse.newBuilder().setSuccess(true).build();
       return TaskResult.success(response.toByteArray());
@@ -420,6 +421,7 @@ public class ClientCommandTaskHandler {
               .databaseContext(databaseContext)
               .isDemoMode(request.getIsDemoMode())
               .demoConfig(request.getDemoConfig())
+              .seasonEntityId(request.getSeasonId())
               .build();
 
       ClientSubscriptionManager.getInstance().setRace(runtimeRace);
