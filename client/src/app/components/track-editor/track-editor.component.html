@@ -158,7 +158,7 @@
           }
         </div>
 
-        <div class="config-section">
+        <div class="config-section interface-config-section">
           <div class="section-header" (click)="toggleSection('interfaces')">
             <span
               class="expander-icon"
@@ -218,8 +218,40 @@
                       font-weight: 600;
                       text-transform: uppercase;
                     "
+                    >BART (BLE)</span
+                  >
+                  <span class="interface-badge alpha-badge">ALPHA</span>
+                  <div class="spacer"></div>
+                  <button
+                    id="add-bart-btn"
+                    class="action-btn small add-list-btn"
+                    (click)="addBartConfig(); $event.stopPropagation()"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div class="editor-section">
+                <div
+                  class="section-header"
+                  style="
+                    cursor: default;
+                    background: transparent;
+                    padding-left: 0;
+                    min-height: auto;
+                    margin-bottom: 0;
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 1.1rem;
+                      color: #94a3b8;
+                      font-weight: 600;
+                      text-transform: uppercase;
+                    "
                     >Phidget</span
                   >
+                  <span class="interface-badge alpha-badge">ALPHA</span>
                   <div class="spacer"></div>
                   <button
                     id="add-phidget-btn"
@@ -248,43 +280,14 @@
                       font-weight: 600;
                       text-transform: uppercase;
                     "
-                    >Trakmate</span
+                    >Trackmate</span
                   >
+                  <span class="interface-badge beta-badge">BETA</span>
                   <div class="spacer"></div>
                   <button
                     id="add-trakmate-btn"
                     class="action-btn small add-list-btn"
                     (click)="addTrackmateConfig(); $event.stopPropagation()"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div class="editor-section">
-                <div
-                  class="section-header"
-                  style="
-                    cursor: default;
-                    background: transparent;
-                    padding-left: 0;
-                    min-height: auto;
-                    margin-bottom: 0;
-                  "
-                >
-                  <span
-                    style="
-                      font-size: 1.1rem;
-                      color: #94a3b8;
-                      font-weight: 600;
-                      text-transform: uppercase;
-                    "
-                    >BART (BLE)</span
-                  >
-                  <div class="spacer"></div>
-                  <button
-                    id="add-bart-btn"
-                    class="action-btn small add-list-btn"
-                    (click)="addBartConfig(); $event.stopPropagation()"
                   >
                     +
                   </button>
@@ -306,9 +309,9 @@
         class="preview-panel"
         [style.overflow-y]="
           arduinoConfigs.length +
-            trackmateConfigs.length +
+            bartConfigs.length +
             phidgetConfigs.length +
-            bartConfigs.length >
+            trackmateConfigs.length >
           0
             ? 'auto'
             : 'hidden'
@@ -316,9 +319,9 @@
       >
         @if (
           arduinoConfigs.length === 0 &&
-          trackmateConfigs.length === 0 &&
+          bartConfigs.length === 0 &&
           phidgetConfigs.length === 0 &&
-          bartConfigs.length === 0
+          trackmateConfigs.length === 0
         ) {
           <div class="empty-state">
             <h3>{{ "TE_NO_INTERFACES_ADDED" | translate }}</h3>
@@ -346,6 +349,23 @@
         }
 
         @for (
+          config of bartConfigs;
+          track trackByBartConfig(i, config);
+          let i = $index
+        ) {
+          <div class="interface-container">
+            <app-bart-editor
+              [config]="config"
+              [lanes]="lanes.length"
+              [interfaceIndex]="i + arduinoConfigs.length"
+              (change)="onBartConfigChange()"
+              (remove)="removeBartConfig(i)"
+            >
+            </app-bart-editor>
+          </div>
+        }
+
+        @for (
           config of phidgetConfigs;
           track trackByPhidgetConfig(i, config);
           let i = $index
@@ -355,7 +375,7 @@
               [config]="config"
               [allPhidgetConfigs]="phidgetConfigs"
               [lanes]="lanes.length"
-              [interfaceIndex]="i + arduinoConfigs.length"
+              [interfaceIndex]="i + arduinoConfigs.length + bartConfigs.length"
               (change)="onPhidgetConfigChange()"
               (remove)="removePhidgetConfig(i)"
               (driverError)="onPhidgetDriverError()"
@@ -374,34 +394,15 @@
               [config]="config"
               [lanes]="lanes.length"
               [interfaceIndex]="
-                i + arduinoConfigs.length + phidgetConfigs.length
+                i +
+                arduinoConfigs.length +
+                bartConfigs.length +
+                phidgetConfigs.length
               "
               (change)="onTrackmateConfigChange()"
               (remove)="removeTrackmateConfig(i)"
             >
             </app-trakmate-editor>
-          </div>
-        }
-
-        @for (
-          config of bartConfigs;
-          track trackByBartConfig(i, config);
-          let i = $index
-        ) {
-          <div class="interface-container">
-            <app-bart-editor
-              [config]="config"
-              [lanes]="lanes.length"
-              [interfaceIndex]="
-                i +
-                arduinoConfigs.length +
-                phidgetConfigs.length +
-                trackmateConfigs.length
-              "
-              (change)="onBartConfigChange()"
-              (remove)="removeBartConfig(i)"
-            >
-            </app-bart-editor>
           </div>
         }
       </div>

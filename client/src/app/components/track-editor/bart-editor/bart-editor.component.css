@@ -274,3 +274,22 @@
 .action-btn.danger:hover {
   background: rgba(239, 68, 68, 0.4);
 }
+
+.interface-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-left: 8px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.interface-badge.alpha-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+}

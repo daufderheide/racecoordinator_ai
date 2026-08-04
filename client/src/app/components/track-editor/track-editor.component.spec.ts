@@ -728,4 +728,40 @@ describe("TrackEditorComponent", () => {
       expect(component.sectionsExpanded.interfaces).toBeTrue();
     }));
   });
+
+  describe("Interface List Ordering & Badges", () => {
+    it("should render interfaces in alphabetical order with correct badges", fakeAsync(() => {
+      component.sectionsExpanded.interfaces = true;
+      fixture.detectChanges();
+      tick();
+
+      const interfaceHeaders = fixture.nativeElement.querySelectorAll(
+        ".config-section .section-content .editor-section .section-header",
+      );
+      expect(interfaceHeaders.length).toBe(4);
+
+      const names = Array.from(interfaceHeaders).map((header: any) =>
+        header.querySelector("span")?.textContent?.trim(),
+      );
+      expect(names).toEqual(["Arduino", "BART (BLE)", "Phidget", "Trackmate"]);
+
+      // Check badges
+      const bartBadge = interfaceHeaders[1].querySelector(".interface-badge");
+      expect(bartBadge).toBeTruthy();
+      expect(bartBadge.textContent.trim()).toBe("ALPHA");
+      expect(bartBadge.classList.contains("alpha-badge")).toBeTrue();
+
+      const phidgetBadge =
+        interfaceHeaders[2].querySelector(".interface-badge");
+      expect(phidgetBadge).toBeTruthy();
+      expect(phidgetBadge.textContent.trim()).toBe("ALPHA");
+      expect(phidgetBadge.classList.contains("alpha-badge")).toBeTrue();
+
+      const trakmateBadge =
+        interfaceHeaders[3].querySelector(".interface-badge");
+      expect(trakmateBadge).toBeTruthy();
+      expect(trakmateBadge.textContent.trim()).toBe("BETA");
+      expect(trakmateBadge.classList.contains("beta-badge")).toBeTrue();
+    }));
+  });
 });
