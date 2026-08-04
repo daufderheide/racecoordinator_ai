@@ -193,7 +193,12 @@ public class EventExecutionManager {
           eventDriverResultsMap.put(
               dId,
               new SeasonDriverResult(
-                  dId, r.getDriverName(), bestRank, combinedPosPts, combinedHeatPts, combinedTotal));
+                  dId,
+                  r.getDriverName(),
+                  bestRank,
+                  combinedPosPts,
+                  combinedHeatPts,
+                  combinedTotal));
         } else {
           eventDriverResultsMap.put(dId, r);
         }

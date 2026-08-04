@@ -622,8 +622,7 @@ public class DatabaseService {
       List<SeasonRaceRecord> races = season.getRaces();
       String nextRaceId = String.valueOf(races.size() + 1);
       SeasonRaceRecord newRecord =
-          new SeasonRaceRecord(
-              nextRaceId, raceName, System.currentTimeMillis(), driverResults);
+          new SeasonRaceRecord(nextRaceId, raceName, System.currentTimeMillis(), driverResults);
       races.add(newRecord);
 
       Season updatedSeason =

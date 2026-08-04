@@ -29,8 +29,8 @@ import { LanguageSelectorComponent } from "@app/components/shared/language-selec
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
-import { Season } from "@app/models/season";
 import { Race } from "@app/models/race";
+import { Season } from "@app/models/season";
 import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";

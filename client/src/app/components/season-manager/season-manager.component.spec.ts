@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
-import { SeasonManagerComponent } from "./season-manager.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
@@ -15,6 +14,8 @@ import {
   mockSettingsService,
   mockTranslationService,
 } from "@app/testing/unit-test-mocks";
+
+import { SeasonManagerComponent } from "./season-manager.component";
 
 @Component({
   standalone: true,
@@ -44,12 +45,18 @@ describe("SeasonManagerComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: SettingsService, useValue: mockSettingsService },
-        { provide: ConnectionMonitorService, useValue: mockConnectionMonitorService },
+        {
+          provide: ConnectionMonitorService,
+          useValue: mockConnectionMonitorService,
+        },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParams: {} } },
         },
-        { provide: Router, useValue: { navigate: jasmine.createSpy("navigate") } },
+        {
+          provide: Router,
+          useValue: { navigate: jasmine.createSpy("navigate") },
+        },
       ],
     })
       .overrideComponent(SeasonManagerComponent, {

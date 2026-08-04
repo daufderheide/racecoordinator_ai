@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
-import { SeasonEditorComponent } from "./season-editor.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
@@ -12,6 +11,8 @@ import {
   mockLoggerService,
   mockTranslationService,
 } from "@app/testing/unit-test-mocks";
+
+import { SeasonEditorComponent } from "./season-editor.component";
 
 @Component({
   standalone: true,
@@ -27,8 +28,10 @@ describe("SeasonEditorComponent", () => {
   beforeEach(async () => {
     const mockDataService = {
       getSeasons: () => of([]),
-      createSeason: () => of({ entity_id: "s1", name: "Test Season", drops: 0 }),
-      updateSeason: () => of({ entity_id: "s1", name: "Test Season", drops: 0 }),
+      createSeason: () =>
+        of({ entity_id: "s1", name: "Test Season", drops: 0 }),
+      updateSeason: () =>
+        of({ entity_id: "s1", name: "Test Season", drops: 0 }),
     };
 
     await TestBed.configureTestingModule({
@@ -41,7 +44,10 @@ describe("SeasonEditorComponent", () => {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParams: {} } },
         },
-        { provide: Router, useValue: { navigate: jasmine.createSpy("navigate") } },
+        {
+          provide: Router,
+          useValue: { navigate: jasmine.createSpy("navigate") },
+        },
       ],
     })
       .overrideComponent(SeasonEditorComponent, {

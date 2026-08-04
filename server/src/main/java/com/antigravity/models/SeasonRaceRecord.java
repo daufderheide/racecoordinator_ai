@@ -48,8 +48,7 @@ public class SeasonRaceRecord {
       this.overallRank = overallRank != null ? overallRank : 0;
       this.overallPoints = overallPoints != null ? overallPoints : 0;
       this.heatPoints = heatPoints != null ? heatPoints : 0;
-      this.totalPoints =
-          totalPoints != null ? totalPoints : (this.overallPoints + this.heatPoints);
+      this.totalPoints = totalPoints != null ? totalPoints : (this.overallPoints + this.heatPoints);
     }
 
     public String getDriverId() {

@@ -880,12 +880,7 @@ public class DatabaseTaskHandler {
       }
       String nextId = seasonRepository.getNextSequence();
       Season created =
-          new Season(
-              season.getName(),
-              season.getDrops(),
-              season.getRaces(),
-              nextId,
-              null);
+          new Season(season.getName(), season.getDrops(), season.getRaces(), nextId, null);
       seasonRepository.insert(created);
       ctx.status(201).json(created);
     } catch (Exception e) {
@@ -910,12 +905,7 @@ public class DatabaseTaskHandler {
         return;
       }
       Season updated =
-          new Season(
-              season.getName(),
-              season.getDrops(),
-              season.getRaces(),
-              id,
-              season.getId());
+          new Season(season.getName(), season.getDrops(), season.getRaces(), id, season.getId());
       UpdateResult result = seasonRepository.replace(id, updated);
       if (result.getMatchedCount() == 0) {
         ctx.status(404).result("Season not found");

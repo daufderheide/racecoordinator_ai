@@ -87,11 +87,14 @@ public class RaceOver implements IRaceState {
 
             if (race.getSeasonEntityId() != null
                 && !race.getSeasonEntityId().isEmpty()
-                && !com.antigravity.race.EventExecutionManager.getInstance().isEventActive()) { // fqn-collision
+                && !com.antigravity.race.EventExecutionManager.getInstance()
+                    .isEventActive()) { // fqn-collision
               String raceName =
                   race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
-              List<com.antigravity.models.SeasonRaceRecord.SeasonDriverResult> seasonResults = // fqn-collision
-                  com.antigravity.util.SeasonPointsCalculator.calculateDriverResultsForRace(race); // fqn-collision
+              List<com.antigravity.models.SeasonRaceRecord.SeasonDriverResult>
+                  seasonResults = // fqn-collision
+                  com.antigravity.util.SeasonPointsCalculator.calculateDriverResultsForRace(
+                          race); // fqn-collision
               dbService.commitRaceToSeason(db, race.getSeasonEntityId(), raceName, seasonResults);
             }
 

@@ -198,8 +198,7 @@ public class SeasonPointsCalculator {
           if (laneIdx < heatPosPointsList.size()) {
             heatPoints = heatPosPointsList.get(laneIdx);
           }
-          driverHeatPoints.put(
-              driverId, driverHeatPoints.getOrDefault(driverId, 0) + heatPoints);
+          driverHeatPoints.put(driverId, driverHeatPoints.getOrDefault(driverId, 0) + heatPoints);
         }
       }
     }
@@ -213,8 +212,7 @@ public class SeasonPointsCalculator {
       int heatPts = driverHeatPoints.getOrDefault(driverId, 0);
       int totalPts = overallPts + heatPts;
 
-      results.add(
-          new SeasonDriverResult(driverId, name, rank, overallPts, heatPts, totalPts));
+      results.add(new SeasonDriverResult(driverId, name, rank, overallPts, heatPts, totalPts));
     }
 
     results.sort(Comparator.comparingInt(SeasonDriverResult::getOverallRank));
@@ -266,8 +264,7 @@ public class SeasonPointsCalculator {
         for (int i = 0; i < K; i++) {
           indices.add(i);
         }
-        indices.sort(
-            Comparator.comparingInt(i -> raceEntries.get(i).getValue().getTotalPoints()));
+        indices.sort(Comparator.comparingInt(i -> raceEntries.get(i).getValue().getTotalPoints()));
         for (int i = 0; i < numDrops; i++) {
           droppedIndices.add(indices.get(i));
         }
@@ -302,8 +299,7 @@ public class SeasonPointsCalculator {
       }
 
       standings.add(
-          new DriverSeasonStanding(
-              driverId, driverName, netPoints, grossPoints, K, scoreDetails));
+          new DriverSeasonStanding(driverId, driverName, netPoints, grossPoints, K, scoreDetails));
     }
 
     // Sort standings by Net Points descending, then Gross Points descending

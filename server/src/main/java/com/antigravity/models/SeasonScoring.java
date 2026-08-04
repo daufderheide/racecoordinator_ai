@@ -28,7 +28,8 @@ public class SeasonScoring {
   @BsonCreator
   @JsonCreator
   public SeasonScoring(
-      @BsonProperty("position_points") @JsonProperty("position_points") List<Integer> positionPoints,
+      @BsonProperty("position_points") @JsonProperty("position_points")
+          List<Integer> positionPoints,
       @BsonProperty("heat_position_points") @JsonProperty("heat_position_points")
           List<Integer> heatPositionPoints) {
     this.positionPoints =
