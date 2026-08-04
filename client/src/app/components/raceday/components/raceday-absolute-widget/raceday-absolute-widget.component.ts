@@ -8,6 +8,7 @@ import {
 } from "@angular/core";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
+import { RacedayEventNameComponent } from "@app/components/raceday/components/raceday-event-name/raceday-event-name.component";
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
 import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/components/raceday-group-leaderboard/raceday-group-leaderboard.component";
 import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
@@ -35,6 +36,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     DragDropModule,
     RacedayMenuBarComponent,
     RacedayRaceNameComponent,
+    RacedayEventNameComponent,
     RacedayHeatInfoComponent,
     RacedayTrackNameComponent,
     RacedayBrandingComponent,

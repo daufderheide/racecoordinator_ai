@@ -51,4 +51,19 @@ describe("RacedayRaceNameComponent", () => {
     expect(await harness.getLabel()).toBe("RD_LABEL_RACE");
     expect(await harness.getRaceName()).toBe("Championship Race");
   });
+
+  it("should display race name with x / y when race is running under an event", async () => {
+    fixture.componentRef.setInput("race", {
+      name: "Heat 1",
+      is_event: true,
+      event_name: "Summer Championship",
+      current_event_race_index: 0,
+      total_event_races: 4,
+    } as any);
+
+    fixture.detectChanges();
+
+    expect(await harness.getLabel()).toBe("RD_LABEL_RACE");
+    expect(await harness.getRaceName()).toBe("Heat 1 1 / 4");
+  });
 });

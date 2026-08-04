@@ -10,6 +10,7 @@ export enum ColumnVisibility {
 export type WidgetType =
   | "menu-bar"
   | "race-name"
+  | "event-name"
   | "heat-info"
   | "track-name"
   | "branding"

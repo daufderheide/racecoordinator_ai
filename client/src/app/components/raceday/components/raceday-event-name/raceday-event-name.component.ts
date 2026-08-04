@@ -15,13 +15,13 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
   standalone: true,
-  selector: "app-raceday-race-name",
-  templateUrl: "./raceday-race-name.component.html",
-  styleUrls: ["./raceday-race-name.component.css"],
+  selector: "app-raceday-event-name",
+  templateUrl: "./raceday-event-name.component.html",
+  styleUrls: ["./raceday-event-name.component.css"],
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, TranslatePipe],
 })
-export class RacedayRaceNameComponent implements AfterViewInit, OnDestroy {
+export class RacedayEventNameComponent implements AfterViewInit, OnDestroy {
   race = input<Race | undefined>(undefined);
   widget = input<AbsoluteWidgetNode | null>(null);
 
@@ -30,29 +30,8 @@ export class RacedayRaceNameComponent implements AfterViewInit, OnDestroy {
   private valueText = viewChild<ElementRef<HTMLElement>>("valueText");
   private resizeObserver?: ResizeObserver;
 
-  get isEvent(): boolean {
-    return !!(this.race() as any)?.is_event;
-  }
-
   get eventName(): string {
     return (this.race() as any)?.event_name || "";
-  }
-
-  get currentEventRaceIndex(): number {
-    return ((this.race() as any)?.current_event_race_index || 0) + 1;
-  }
-
-  get totalEventRaces(): number {
-    return (this.race() as any)?.total_event_races || 0;
-  }
-
-  get formattedRaceName(): string {
-    const r = this.race();
-    if (!r) return "";
-    if (this.isEvent) {
-      return `${r.name} ${this.currentEventRaceIndex} / ${this.totalEventRaces}`;
-    }
-    return r.name;
   }
 
   constructor() {
@@ -81,9 +60,11 @@ export class RacedayRaceNameComponent implements AfterViewInit, OnDestroy {
 
   private fitText() {
     const panelEl = this.infoPanel()?.nativeElement;
+    const labelEl = this.labelText()?.nativeElement;
+    const valueEl = this.valueText()?.nativeElement;
     const widgetData = this.widget();
 
-    if (!panelEl) return;
+    if (!panelEl || !labelEl || !valueEl) return;
 
     const isAuto = !widgetData || widgetData.scaleMode === "auto";
     if (!isAuto) {
@@ -92,15 +73,11 @@ export class RacedayRaceNameComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const labelEls = panelEl.querySelectorAll<HTMLElement>(".label-text");
-    const valueEls = panelEl.querySelectorAll<HTMLElement>(".value-text");
+    const labelString = labelEl.textContent?.trim() || "";
+    const valueString = valueEl.textContent?.trim() || "";
 
-    if (labelEls.length === 0 && valueEls.length === 0) return;
-
-    const labelStyle =
-      labelEls.length > 0 ? window.getComputedStyle(labelEls[0]) : null;
-    const valueStyle =
-      valueEls.length > 0 ? window.getComputedStyle(valueEls[0]) : null;
+    const labelStyle = window.getComputedStyle(labelEl);
+    const valueStyle = window.getComputedStyle(valueEl);
 
     const labelRatio = 55 / 80;
 
@@ -109,28 +86,16 @@ export class RacedayRaceNameComponent implements AfterViewInit, OnDestroy {
     let totalTextWidth = 100;
 
     if (context) {
-      let labelWidth = 0;
-      if (labelStyle) {
-        context.font = `${labelStyle.fontWeight || "600"} ${100 * labelRatio}px ${labelStyle.fontFamily || "sans-serif"}`;
-        labelEls.forEach((el) => {
-          const str = el.textContent?.trim() || "";
-          labelWidth += context.measureText(str.toUpperCase()).width || 0;
-        });
-      }
+      context.font = `${labelStyle.fontWeight || "600"} ${100 * labelRatio}px ${labelStyle.fontFamily || "sans-serif"}`;
+      const labelWidth =
+        context.measureText(labelString.toUpperCase()).width || 0;
 
-      let valueWidth = 0;
-      if (valueStyle) {
-        context.font = `${valueStyle.fontWeight || "700"} 100px ${valueStyle.fontFamily || "sans-serif"}`;
-        valueEls.forEach((el) => {
-          const str = el.textContent?.trim() || "";
-          valueWidth += context.measureText(str).width || 0;
-        });
-      }
+      context.font = `${valueStyle.fontWeight || "700"} 100px ${valueStyle.fontFamily || "sans-serif"}`;
+      const valueWidth = context.measureText(valueString).width || 0;
 
       const marginWidth = (8 / 18) * 100;
-      const marginCount = labelEls.length + valueEls.length - 1;
       totalTextWidth =
-        labelWidth + valueWidth + Math.max(0, marginCount) * marginWidth;
+        labelWidth + valueWidth + (labelWidth > 0 ? marginWidth : 0);
     }
 
     const textHeight = 100;

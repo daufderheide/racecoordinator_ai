@@ -114,6 +114,16 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueTextColor: "",
     }),
   },
+  "event-name": {
+    defaultSettings: () => ({
+      labelFontFamily: "",
+      labelFontSize: 13,
+      labelTextColor: "",
+      valueFontFamily: "",
+      valueFontSize: 18,
+      valueTextColor: "",
+    }),
+  },
   "track-name": {
     defaultSettings: () => ({
       labelFontFamily: "",

@@ -179,4 +179,51 @@ public class EventExecutionManagerTest {
     assertEquals("d_driver2", nextQualified.get(1));
     assertFalse(nextQualified.contains("d_driver3"));
   }
+
+  @Test
+  public void testCancelAutoAdvanceTimer() throws Exception {
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    manager.cancelEvent();
+
+    java.lang.reflect.Field autoAdvanceRemainingSecondsField =
+        EventExecutionManager.class.getDeclaredField("autoAdvanceRemainingSeconds");
+    autoAdvanceRemainingSecondsField.setAccessible(true);
+    autoAdvanceRemainingSecondsField.set(manager, 10.0);
+
+    assertEquals(10.0, manager.getAutoAdvanceRemainingSeconds(), 0.001);
+
+    manager.cancelAutoAdvanceTimer();
+    assertEquals(0.0, manager.getAutoAdvanceRemainingSeconds(), 0.001);
+  }
+
+  @Test
+  public void testRaceGetAutoAdvanceRemaining_DelegatesToEventExecutionManager() throws Exception {
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    manager.cancelEvent();
+
+    EventRaceItem item1 = new EventRaceItem("r1", 0);
+    EventRaceItem item2 = new EventRaceItem("r2", 0);
+    Event event = new Event("Event1", "Test Event", 10.0, Arrays.asList(item1, item2), "e1", null);
+
+    java.lang.reflect.Field activeEventField =
+        EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(manager, event);
+
+    java.lang.reflect.Field currentIndexField =
+        EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+    currentIndexField.set(manager, 0);
+
+    java.lang.reflect.Field autoAdvanceRemainingSecondsField =
+        EventExecutionManager.class.getDeclaredField("autoAdvanceRemainingSeconds");
+    autoAdvanceRemainingSecondsField.setAccessible(true);
+    autoAdvanceRemainingSecondsField.set(manager, 7.5);
+
+    assertTrue(manager.isEventActive());
+    assertEquals(7.5, manager.getAutoAdvanceRemainingSeconds(), 0.001);
+
+    manager.cancelAutoAdvanceTimer();
+    assertEquals(0.0, manager.getAutoAdvanceRemainingSeconds(), 0.001);
+  }
 }

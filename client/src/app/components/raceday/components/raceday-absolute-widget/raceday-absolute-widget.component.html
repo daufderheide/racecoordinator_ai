@@ -76,6 +76,12 @@
           [widget]="widget()"
         ></app-raceday-race-name>
       }
+      @case ("event-name") {
+        <app-raceday-event-name
+          [race]="parentComponent().race"
+          [widget]="widget()"
+        ></app-raceday-event-name>
+      }
       @case ("heat-info") {
         <app-raceday-heat-info
           [heat]="parentComponent().heat"

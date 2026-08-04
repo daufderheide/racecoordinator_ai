@@ -166,15 +166,20 @@ public class EventExecutionManager {
 
     logger.info("Starting Event auto-advance timer for {} seconds", seconds);
 
+    Race currentRace = ClientSubscriptionManager.getInstance().getRace();
+    if (currentRace != null) {
+      currentRace.broadcast(currentRace.createSnapshot());
+    }
+
     autoAdvanceFuture =
         scheduler.scheduleAtFixedRate(
             () -> {
               synchronized (EventExecutionManager.this) {
                 if (autoAdvanceRemainingSeconds > 0) {
                   autoAdvanceRemainingSeconds -= 1.0;
-                  Race currentRace = ClientSubscriptionManager.getInstance().getRace();
-                  if (currentRace != null) {
-                    currentRace.broadcast(currentRace.createSnapshot());
+                  Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+                  if (activeRace != null) {
+                    activeRace.broadcast(activeRace.createSnapshot());
                   }
                 }
 

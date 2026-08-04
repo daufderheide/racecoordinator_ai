@@ -157,6 +157,11 @@ public class RaceOver implements IRaceState {
 
   @Override
   public void pause(Race race) {
+    if (EventExecutionManager.getInstance().getAutoAdvanceRemainingSeconds() > 0) {
+      EventExecutionManager.getInstance().cancelAutoAdvanceTimer();
+      race.broadcast(race.createSnapshot());
+      return;
+    }
     throw new IllegalStateException("Cannot pause race: Race is not in Starting or Racing state.");
   }
 

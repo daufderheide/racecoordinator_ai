@@ -625,9 +625,31 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isNextHeatDisabled).toBeFalse();
     });
 
-    it("should be disabled when state is RACE_OVER", () => {
+    it("should be disabled when state is RACE_OVER for a non-event race", () => {
       fixture.detectChanges();
       component["raceState"] = RaceState.RACE_OVER;
+      expect(component.isNextHeatDisabled).toBeTrue();
+    });
+
+    it("should be enabled when state is RACE_OVER for an event with remaining races", () => {
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACE_OVER;
+      component["race"] = {
+        is_event: true,
+        current_event_race_index: 0,
+        total_event_races: 3,
+      } as any;
+      expect(component.isNextHeatDisabled).toBeFalse();
+    });
+
+    it("should be disabled when state is RACE_OVER for an event with no remaining races", () => {
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACE_OVER;
+      component["race"] = {
+        is_event: true,
+        current_event_race_index: 2,
+        total_event_races: 3,
+      } as any;
       expect(component.isNextHeatDisabled).toBeTrue();
     });
 
@@ -635,6 +657,52 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
       component["raceState"] = RaceState.NOT_STARTED;
       expect(component.isNextHeatDisabled).toBeTrue();
+    });
+  });
+
+  describe("loadRaceData timer state handling", () => {
+    it("should reset timer state when loading a new race with different entity_id", () => {
+      fixture.detectChanges();
+      component["race"] = {
+        entity_id: "race_1",
+        current_event_race_index: 0,
+      } as any;
+      component["autoAdvanceRemaining"] = 10;
+      component["time"] = 10;
+
+      const newRace = {
+        entity_id: "race_2",
+        current_event_race_index: 1,
+        track: {},
+      } as any;
+      ((component as any).raceService.getRace as jasmine.Spy).and.returnValue(
+        newRace,
+      );
+
+      component["loadRaceData"]();
+
+      expect(component["autoAdvanceRemaining"]).toBe(0);
+      expect(component["time"]).toBe(0);
+    });
+
+    it("should retain autoAdvanceRemaining and update time when loading data for the same race", () => {
+      fixture.detectChanges();
+      const sameRace = {
+        entity_id: "race_1",
+        current_event_race_index: 0,
+        auto_advance_remaining_seconds: 8.5,
+        track: {},
+      } as any;
+
+      component["race"] = sameRace;
+      ((component as any).raceService.getRace as jasmine.Spy).and.returnValue(
+        sameRace,
+      );
+
+      component["loadRaceData"]();
+
+      expect(component["autoAdvanceRemaining"]).toBe(8.5);
+      expect(component["time"]).toBe(8.5);
     });
   });
 
@@ -4952,6 +5020,48 @@ describe("DefaultRacedayComponent", () => {
       expect(droppedWidget.customSettings).toBeDefined();
       expect(droppedWidget.customSettings?.["backgroundColor"]).toBe("");
       expect(droppedWidget.customSettings?.["fontSize"]).toBe(24);
+    });
+
+    it("should set default size 200x18 for header widgets (event-name, race-name, track-name, heat-info) when dropping onto canvas", () => {
+      const headerWidgetTypes = [
+        "event-name",
+        "race-name",
+        "track-name",
+        "heat-info",
+      ];
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      for (const wType of headerWidgetTypes) {
+        component.layout = { widgets: [] } as any;
+        component.isLayoutCustomizing = true;
+        component.draggedWidgetType = wType;
+
+        const event = {
+          preventDefault: jasmine.createSpy("preventDefault"),
+          clientX: 100,
+          clientY: 50,
+        } as any;
+
+        component.onCanvasDrop(event);
+
+        expect(component.layout.widgets.length).toBe(1);
+        const droppedWidget = component.layout.widgets[0];
+        expect(droppedWidget.widgetType).toBe(wType);
+        expect(droppedWidget.width).toBe(200);
+        expect(droppedWidget.height).toBe(18);
+      }
     });
   });
 

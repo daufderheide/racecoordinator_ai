@@ -561,7 +561,12 @@ public class ClientCommandTaskHandler {
       race.clearAutoTimers();
       // If we're in Starting or HeatOver, a pause is the appropriate state transition
       // for an "abort" action.
-      race.pauseRace();
+      if (race.getState() != null
+          && !(race.getState() instanceof com.antigravity.race.states.RaceOver)) { // fqn-collision
+        race.pauseRace();
+      } else {
+        race.broadcast(race.createSnapshot());
+      }
 
       ctx.status(200);
       PauseRaceResponse response =
@@ -587,6 +592,7 @@ public class ClientCommandTaskHandler {
       }
 
       try {
+        race.clearAutoTimers();
         race.moveToNextHeat();
         ClientSubscriptionManager.getInstance().autoSave(race);
 

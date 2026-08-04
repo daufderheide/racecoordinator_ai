@@ -423,6 +423,10 @@ public class Race implements ProtocolListener {
   }
 
   public double getAutoAdvanceRemaining() {
+    EventExecutionManager eventMgr = EventExecutionManager.getInstance();
+    if (eventMgr.isEventActive() && eventMgr.getAutoAdvanceRemainingSeconds() > 0) {
+      return eventMgr.getAutoAdvanceRemainingSeconds();
+    }
     return autoAdvanceRemaining;
   }
 
@@ -433,6 +437,7 @@ public class Race implements ProtocolListener {
   public void clearAutoTimers() {
     this.autoStartRemaining = 0;
     this.autoAdvanceRemaining = 0;
+    EventExecutionManager.getInstance().cancelAutoAdvanceTimer();
   }
 
   public boolean isMainPower() {

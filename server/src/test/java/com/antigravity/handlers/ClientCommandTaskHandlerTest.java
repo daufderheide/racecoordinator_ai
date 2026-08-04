@@ -536,12 +536,27 @@ public class ClientCommandTaskHandlerTest {
   @Test
   public void testAbortTimers_Success() throws Exception {
     com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getState()).thenReturn(mock(com.antigravity.race.states.Starting.class));
     ClientSubscriptionManager.getInstance().setRace(mockRace);
 
     handler.abortTimers(ctx);
 
     verify(mockRace).clearAutoTimers();
     verify(mockRace).pauseRace();
+    verify(res).setStatus(200);
+  }
+
+  @Test
+  public void testAbortTimers_InRaceOver_BroadcastsSnapshotWithoutPause() throws Exception {
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getState()).thenReturn(mock(com.antigravity.race.states.RaceOver.class));
+    ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    handler.abortTimers(ctx);
+
+    verify(mockRace).clearAutoTimers();
+    verify(mockRace, never()).pauseRace();
+    verify(mockRace).broadcast(any());
     verify(res).setStatus(200);
   }
 

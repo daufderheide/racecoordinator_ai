@@ -12,7 +12,7 @@
           : null
       "
       [style.color]="widget()?.customSettings?.['labelTextColor'] || null"
-      >{{ "RD_LABEL_RACE" | translate }}</span
+      >{{ "RD_LABEL_EVENT" | translate }}</span
     >
     <span
       class="value-text"
@@ -26,7 +26,7 @@
           : null
       "
       [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
-      >{{ formattedRaceName }}</span
+      >{{ eventName }}</span
     >
   </div>
 }
