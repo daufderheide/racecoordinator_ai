@@ -64,13 +64,13 @@ The Gepetto Lap Counter is available as a prebuilt application on multiple platf
 
 ### Installation
 * **Android / Android TV / Fire TV**: Download and install the **Gepetto Slot Car Lap Counter** app from the Google Play Store (or Amazon Appstore).
-* **Desktop (macOS / Windows / Linux)**: Download the ready-to-install desktop application from:
+* **Desktop (macOS / Windows)**: Download the ready-to-install desktop application from:
   [https://gepetto.club/lapcounter/gepettolapcounterdesktop.html](https://gepetto.club/lapcounter/gepettolapcounterdesktop.html)
 
 ### Connecting to Race Coordinator
 1. Inside the Gepetto application, navigate to the **Settings** screen.
 2. Enable the **Connect to Race Coordinator** option.
-3. (Optional) Provide the **Race Coordinator Password** if access control tokens are configured on your server.
+3. (Optional) Provide the **Race Coordinator Password** if access control tokens are configured on your server. *(Note: If both Gepetto and the Race Coordinator server are running on the same physical machine, no password is required, as the connection will be automatically elevated to a Director role.)*
 4. Save the settings.
 5. The application will leverage JmDNS / Network Service Discovery (NSD) to locate the running `RaceCoordinatorServer` on the local network (`_racecoordinator._tcp.local.`) on port `7070` and automatically establish a WebSocket session.
 
