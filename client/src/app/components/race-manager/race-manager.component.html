@@ -72,9 +72,7 @@
                       >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      formatEnumDisplay(
-                        $any(selectedRace).heat_scoring?.heat_ranking
-                      )
+                      getHeatRankingDisplay(selectedRace)
                     }}</span>
                   </div>
                   <div class="summary-item">
@@ -103,9 +101,7 @@
                       >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      formatEnumDisplay(
-                        $any(selectedRace).overall_scoring?.ranking_method
-                      )
+                      getOverallRankingDisplay(selectedRace)
                     }}</span>
                   </div>
                   <div class="summary-item">
@@ -113,7 +109,7 @@
                       >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
                     >
                     <span class="summary-value">{{
-                      $any(selectedRace).heat_scoring?.finish_value
+                      getFinishValueDisplay(selectedRace)
                     }}</span>
                   </div>
                   <div class="summary-item">

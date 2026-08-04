@@ -1030,5 +1030,179 @@ describe("DefaultRacedaySetupComponent", () => {
         jasmine.any(Object),
       );
     });
+
+    it("should not render single race or event mode toggle buttons", () => {
+      const modeToggleBar =
+        fixture.nativeElement.querySelector(".mode-toggle-bar");
+      expect(modeToggleBar).toBeFalsy();
+    });
+  });
+
+  describe("Unified Race and Event Selection", () => {
+    beforeEach(() => {
+      component.events = [
+        {
+          entity_id: "e1",
+          name: "Championship 2026",
+          races: [{ raceId: "r1", maxDrivers: 4 }],
+        } as any,
+        {
+          entity_id: "e2",
+          name: "Grand Prix Series",
+          races: [{ raceId: "r2", maxDrivers: 0 }],
+        } as any,
+      ];
+    });
+
+    it("should include events in filteredEvents and render them in the pulldown", () => {
+      component.raceSearchQuery = "Champ";
+      expect(component.filteredEvents.length).toBeGreaterThan(0);
+      expect(component.filteredEvents[0].name).toContain("Championship");
+    });
+
+    it("should select an event from the pulldown, set selectedEvent and clear selectedRace", () => {
+      const eventToSelect = component.events[0];
+      component.selectEvent(eventToSelect);
+
+      expect(component.selectedEvent).toBe(eventToSelect);
+      expect(component.selectedRace).toBeUndefined();
+      expect(component.isEventMode).toBeTrue();
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    });
+
+    it("should filter both races and events matching search query", () => {
+      component.raceSearchQuery = "Grand";
+      const matchingRaces = component.filteredRaces;
+      const matchingEvents = component.filteredEvents;
+
+      expect(
+        matchingRaces.every((r) => r.name.toLowerCase().includes("grand")),
+      ).toBeTrue();
+      expect(
+        matchingEvents.every((e) => e.name.toLowerCase().includes("grand")),
+      ).toBeTrue();
+    });
+
+    it("should render race summary card when a single race is selected", () => {
+      component.selectedRace = component.races[0];
+      component.selectedEvent = undefined;
+      fixture.detectChanges();
+
+      const raceSummaryCard =
+        fixture.nativeElement.querySelector(".race-summary-card");
+      expect(raceSummaryCard).toBeTruthy();
+
+      const summaryGrid = raceSummaryCard.querySelector(".summary-grid");
+      expect(summaryGrid).toBeTruthy();
+      expect(summaryGrid.querySelectorAll(".summary-item").length).toBe(6);
+    });
+
+    it("should update recentRaceIds and quickStartRaces when an event is started", fakeAsync(() => {
+      const eventToStart = component.events[0];
+      component.selectEvent(eventToStart);
+      component.selectedParticipants = [component.unselectedParticipants[0]];
+
+      const response = InitializeRaceResponse.fromObject({ success: true });
+      mockDataService.getSavedRaces.and.returnValue(of([]));
+      mockDataService.initializeRace.and.returnValue(of(response));
+
+      component.startRace(false);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.quickStartRaces[0].entity_id).toBe("e1");
+      const savedSettings =
+        mockSettingsService.saveSettings.calls.mostRecent().args[0];
+      expect(savedSettings.recentRaceIds[0]).toBe("e1");
+    }));
+
+    it("should select event on setup page load when selectedRaceId is an event ID", () => {
+      mockSettingsService.getSettings.and.returnValue({
+        selectedRaceId: "e1",
+        recentRaceIds: ["e1", "r1"],
+      } as any);
+
+      component.events = [
+        { entity_id: "e1", name: "Championship 2026" },
+      ] as any;
+      component.races = [{ entity_id: "r1", name: "Grand Prix" }] as any;
+
+      const localSettings = mockSettingsService.getSettings();
+      if (localSettings && localSettings.selectedRaceId) {
+        const matchedEvent = component.events.find(
+          (e) => e.entity_id === localSettings.selectedRaceId,
+        );
+        if (matchedEvent) {
+          component.selectedEvent = matchedEvent;
+          component.selectedRace = undefined;
+        }
+      }
+
+      fixture.detectChanges();
+
+      expect(component.selectedEvent).toBeDefined();
+      expect(component.selectedEvent?.entity_id).toBe("e1");
+      expect(component.selectedRace).toBeUndefined();
+    });
+
+    it("should return GEN_INFINITE for finish value of 0", () => {
+      const infiniteRace = {
+        heat_scoring: { finish_value: 0 },
+      };
+      expect(component.getFinishValueDisplay(infiniteRace)).toBe(
+        "GEN_INFINITE",
+      );
+
+      const finiteRace = {
+        heat_scoring: { finish_value: 10 },
+      };
+      expect(component.getFinishValueDisplay(finiteRace)).toBe("10");
+    });
+
+    it("should return GEN_UNRANKED for heat and overall ranking on practice races", () => {
+      const practiceRace = {
+        practice: true,
+        heat_scoring: { heat_ranking: "LAP_COUNT" },
+        overall_scoring: { ranking_method: "LAP_COUNT" },
+      };
+
+      expect(component.isPracticeRace(practiceRace)).toBeTrue();
+      expect(component.getHeatRankingDisplay(practiceRace)).toBe(
+        "GEN_UNRANKED",
+      );
+      expect(component.getOverallRankingDisplay(practiceRace)).toBe(
+        "GEN_UNRANKED",
+      );
+
+      const regularRace = {
+        practice: false,
+        heat_scoring: { heat_ranking: "LAP_COUNT" },
+        overall_scoring: { ranking_method: "LAP_COUNT" },
+      };
+
+      expect(component.isPracticeRace(regularRace)).toBeFalse();
+      expect(component.getHeatRankingDisplay(regularRace)).toBe("Lap Count");
+      expect(component.getOverallRankingDisplay(regularRace)).toBe("Lap Count");
+    });
+
+    it("should select event when selectQuickStartItem is called with an event", () => {
+      const eventItem = component.events[0];
+      component.selectQuickStartItem(eventItem);
+
+      expect(component.selectedEvent).toBe(eventItem);
+      expect(component.selectedRace).toBeUndefined();
+      expect(component.isEventMode).toBeTrue();
+    });
+
+    it("should prioritize event resolution in updateQuickStartRaces when recent ID matches an event", () => {
+      component.events = [{ entity_id: "e1", name: "Endurance 500" }] as any;
+      component.races = [{ entity_id: "r1", name: "Time Trial" }] as any;
+
+      component.updateQuickStartRaces(["e1", "r1"]);
+
+      expect(component.quickStartRaces.length).toBe(2);
+      expect(component.quickStartRaces[0].entity_id).toBe("e1");
+      expect(component.quickStartRaces[0].name).toBe("Endurance 500");
+    });
   });
 });

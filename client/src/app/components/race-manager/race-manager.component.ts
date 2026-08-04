@@ -430,6 +430,32 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       .replace(/\b\w/g, (l) => l.toUpperCase());
   }
 
+  isPracticeRace(race: any): boolean {
+    return !!(race?.practice || race?.heat_rotation_type === "Practice");
+  }
+
+  getHeatRankingDisplay(race: any): string {
+    if (this.isPracticeRace(race)) {
+      return this.translationService.translate("GEN_UNRANKED");
+    }
+    return this.formatEnumDisplay(race?.heat_scoring?.heat_ranking);
+  }
+
+  getOverallRankingDisplay(race: any): string {
+    if (this.isPracticeRace(race)) {
+      return this.translationService.translate("GEN_UNRANKED");
+    }
+    return this.formatEnumDisplay(race?.overall_scoring?.ranking_method);
+  }
+
+  getFinishValueDisplay(race: any): string {
+    const val = race?.heat_scoring?.finish_value;
+    if (val === 0 || val === "0") {
+      return this.translationService.translate("GEN_INFINITE");
+    }
+    return val !== undefined && val !== null ? String(val) : "";
+  }
+
   getHelpSteps(): GuideStep[] {
     return [
       {

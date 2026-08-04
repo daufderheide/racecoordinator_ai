@@ -89,7 +89,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   raceSearchQuery: string = "";
 
   // Race / Event State
-  isEventMode: boolean = false;
+  get isEventMode(): boolean {
+    return !!this.selectedEvent;
+  }
   races: Race[] = [];
   selectedRace?: Race;
   quickStartRaces: Race[] = [];
@@ -227,26 +229,67 @@ export class DefaultRacedaySetupComponent implements OnInit {
           (a.name || "").localeCompare(b.name || ""),
         );
 
-        const localSettings = this.settingsService.getSettings();
-        this.updateQuickStartRaces(localSettings.recentRaceIds);
-
-        if (
-          localSettings &&
-          (localSettings.selectedRaceId ||
-            localSettings.recentRaceIds?.length > 0)
-        ) {
-          const defaultRaceId =
-            localSettings.selectedRaceId || localSettings.recentRaceIds[0];
-          this.selectedRace = this.races.find(
-            (r) => r.entity_id === defaultRaceId,
-          );
-        }
-
         this.events = (result.events || []).sort((a: any, b: any) =>
           (a.name || "").localeCompare(b.name || ""),
         );
-        if (this.events.length > 0) {
-          this.selectedEvent = this.events[0];
+
+        const localSettings = this.settingsService.getSettings();
+        this.updateQuickStartRaces(localSettings.recentRaceIds);
+
+        if (localSettings && localSettings.selectedRaceId) {
+          const matchedEvent = this.events.find(
+            (e) => e.entity_id === localSettings.selectedRaceId,
+          );
+          if (matchedEvent) {
+            this.selectedEvent = matchedEvent;
+            this.selectedRace = undefined;
+          } else {
+            const matchedRace = this.races.find(
+              (r) => r.entity_id === localSettings.selectedRaceId,
+            );
+            if (matchedRace) {
+              this.selectedRace = matchedRace;
+              this.selectedEvent = undefined;
+            }
+          }
+        }
+
+        if (!this.selectedRace && !this.selectedEvent) {
+          if (
+            localSettings &&
+            localSettings.recentRaceIds &&
+            localSettings.recentRaceIds.length > 0
+          ) {
+            const defaultId = localSettings.recentRaceIds[0];
+            const matchedEvent = this.events.find(
+              (e) => e.entity_id === defaultId,
+            );
+            if (matchedEvent) {
+              this.selectedEvent = matchedEvent;
+              this.selectedRace = undefined;
+            } else {
+              const matchedRace = this.races.find(
+                (r) => r.entity_id === defaultId,
+              );
+              if (matchedRace) {
+                this.selectedRace = matchedRace;
+                this.selectedEvent = undefined;
+              }
+            }
+          }
+          if (
+            !this.selectedRace &&
+            !this.selectedEvent &&
+            this.races.length > 0
+          ) {
+            this.selectedRace = this.races[0];
+          } else if (
+            !this.selectedRace &&
+            !this.selectedEvent &&
+            this.events.length > 0
+          ) {
+            this.selectedEvent = this.events[0];
+          }
         }
 
         // --- Participant Setup ---
@@ -703,12 +746,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   selectEvent(event: EventModel) {
     this.selectedEvent = event;
-    this.isEventDropdownOpen = false;
+    this.selectedRace = undefined;
+    this.saveSettings();
+    this.closeDropdown();
     this.cdr.detectChanges();
   }
 
   selectRace(race: Race) {
     this.selectedRace = race;
+    this.selectedEvent = undefined;
     this.saveSettings();
     this.closeDropdown();
     this.cdr.detectChanges();
@@ -717,14 +763,18 @@ export class DefaultRacedaySetupComponent implements OnInit {
   private saveSettings(updateRecent: boolean = false) {
     const settings = this.settingsService.getSettings();
 
-    if (this.selectedRace) {
-      settings.selectedRaceId = this.selectedRace.entity_id;
+    const selectedId = this.isEventMode
+      ? this.selectedEvent?.entity_id || ""
+      : this.selectedRace?.entity_id || "";
+
+    if (selectedId) {
+      settings.selectedRaceId = selectedId;
 
       if (updateRecent) {
         let recentRaceIds = settings.recentRaceIds || [];
         recentRaceIds = [
-          this.selectedRace.entity_id,
-          ...recentRaceIds.filter((id) => id !== this.selectedRace?.entity_id),
+          selectedId,
+          ...recentRaceIds.filter((id) => id !== selectedId),
         ];
         // Keep only the last two
         settings.recentRaceIds = recentRaceIds.slice(0, 2);
@@ -850,6 +900,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   onConfirmAutoSave() {
     this.showAutoSavePrompt = false;
+    this.saveSettings(true);
     if (this.autoSaveFileToLoad) {
       this.dataService.loadRace(this.autoSaveFileToLoad).subscribe({
         next: () => this.router.navigate(["/raceday"]),
@@ -972,15 +1023,33 @@ export class DefaultRacedaySetupComponent implements OnInit {
     });
   }
 
+  selectQuickStartItem(item: any) {
+    if (!item) return;
+    const foundEvent = this.events.find((e) => e.entity_id === item.entity_id);
+    if (foundEvent) {
+      this.selectEvent(foundEvent);
+    } else {
+      const foundRace = this.races.find((r) => r.entity_id === item.entity_id);
+      if (foundRace) {
+        this.selectRace(foundRace);
+      }
+    }
+  }
+
   updateQuickStartRaces(recentRaceIds: string[] = []) {
     this.quickStartRaces = [];
 
-    // 1. Try to populate from recent list
+    // 1. Try to populate from recent list (supports both races and events, checking events first)
     if (recentRaceIds && recentRaceIds.length > 0) {
       for (const id of recentRaceIds) {
-        const race = this.races.find((r) => r.entity_id === id);
-        if (race) {
-          this.quickStartRaces.push(race);
+        const event = this.events.find((e) => e.entity_id === id);
+        if (event) {
+          this.quickStartRaces.push(event as any);
+        } else {
+          const race = this.races.find((r) => r.entity_id === id);
+          if (race) {
+            this.quickStartRaces.push(race);
+          }
         }
       }
     }
@@ -1003,15 +1072,27 @@ export class DefaultRacedaySetupComponent implements OnInit {
       }
     }
 
-    // 3. Last fallback: just pick first available races
+    // 3. Last fallback: pick first available races/events
     if (this.quickStartRaces.length < 2) {
-      const remaining = this.races.filter(
+      const remainingRaces = this.races.filter(
         (r) =>
           !this.quickStartRaces.some((qsr) => qsr.entity_id === r.entity_id),
       );
-      for (const r of remaining) {
+      for (const r of remainingRaces) {
         if (this.quickStartRaces.length < 2) {
           this.quickStartRaces.push(r);
+        }
+      }
+    }
+
+    if (this.quickStartRaces.length < 2) {
+      const remainingEvents = this.events.filter(
+        (e) =>
+          !this.quickStartRaces.some((qsr) => qsr.entity_id === e.entity_id),
+      );
+      for (const e of remainingEvents) {
+        if (this.quickStartRaces.length < 2) {
+          this.quickStartRaces.push(e as any);
         }
       }
     }
@@ -1034,6 +1115,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
     if (!this.raceSearchQuery) return this.races;
     const q = this.raceSearchQuery.toLowerCase();
     return this.races.filter((r) => r.name.toLowerCase().includes(q));
+  }
+
+  get filteredEvents(): EventModel[] {
+    if (!this.raceSearchQuery) return this.events;
+    const q = this.raceSearchQuery.toLowerCase();
+    return this.events.filter((e) => e.name.toLowerCase().includes(q));
   }
 
   public updateUnselectedParticipants() {
@@ -1379,6 +1466,52 @@ export class DefaultRacedaySetupComponent implements OnInit {
       }
       this.cdr.detectChanges();
     }
+  }
+
+  formatEnumDisplay(value: string | undefined): string {
+    if (!value) return "";
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  }
+
+  getHeatRotationTypeDisplay(type: string | undefined): string {
+    if (!type) return "";
+    const key = `RE_ROTATION_${type
+      .replace(/([A-Z])/g, "_$1")
+      .toUpperCase()
+      .replace(/^_/, "")}`;
+    const translated = this.translationService.translate(key);
+    return translated && translated !== key
+      ? translated
+      : type.replace(/([A-Z])/g, " $1").trim();
+  }
+
+  isPracticeRace(race: any): boolean {
+    return !!(race?.practice || race?.heat_rotation_type === "Practice");
+  }
+
+  getHeatRankingDisplay(race: any): string {
+    if (this.isPracticeRace(race)) {
+      return this.translationService.translate("GEN_UNRANKED");
+    }
+    return this.formatEnumDisplay(race?.heat_scoring?.heat_ranking);
+  }
+
+  getOverallRankingDisplay(race: any): string {
+    if (this.isPracticeRace(race)) {
+      return this.translationService.translate("GEN_UNRANKED");
+    }
+    return this.formatEnumDisplay(race?.overall_scoring?.ranking_method);
+  }
+
+  getFinishValueDisplay(race: any): string {
+    const val = race?.heat_scoring?.finish_value;
+    if (val === 0 || val === "0") {
+      return this.translationService.translate("GEN_INFINITE");
+    }
+    return val !== undefined && val !== null ? String(val) : "";
   }
 
   openHelpCenter() {
