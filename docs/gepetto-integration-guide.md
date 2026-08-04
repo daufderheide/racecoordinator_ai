@@ -90,7 +90,7 @@ To verify the bi-directional communication between Gepetto (client) and Race Coo
    In the Race Coordinator web interface (http://localhost:4200), start a new race/heat session.
 3. **Simulate a Crossing Trigger**:
    - Ensure the Gepetto client is running with the lap counter/camera view open.
-   - Trigger a simulated lap crossing (e.g. wave your hand in front of the camera, or click a lane test/trigger button in the client GUI).
+   - Trigger a simulated lap crossing (e.g. wave your hand or pass a slot car in front of the camera).
 4. **Inspect the Leaderboard**:
    - Check the active leaderboard/timing table in the Race Coordinator web frontend.
    - The lap count and lap times for the respective lane must update instantly on the screen.
