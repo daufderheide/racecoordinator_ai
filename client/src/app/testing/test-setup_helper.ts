@@ -67,6 +67,7 @@ export class TestSetupHelper {
     await this.setupRaceRestMocks(page);
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
+    await this.setupEventMocks(page);
     await this.setupAssetMocks(page);
     await this.setupThemeMocks(page);
 
@@ -428,6 +429,77 @@ export class TestSetupHelper {
           contentType: "application/json",
           body: JSON.stringify({ success: true }),
         });
+      } else {
+        await route.continue();
+      }
+    });
+  }
+
+  static async setupEventMocks(page: Page) {
+    let currentEvents: any[] = [
+      {
+        entity_id: "evt_1",
+        name: "Grand Prix Event",
+        description: "Standard grand prix event",
+        auto_advance_time: 5,
+        races: [{ raceId: "r1", maxDrivers: 0 }],
+      },
+    ];
+
+    await page.route("**/api/events", async (route) => {
+      const method = route.request().method();
+      if (method === "POST") {
+        const postData = route.request().postDataJSON();
+        const newEvent = { ...postData, entity_id: `evt-${Date.now()}` };
+        currentEvents.push(newEvent);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newEvent),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentEvents),
+        });
+      }
+    });
+
+    await page.route("**/api/events/*", async (route) => {
+      const method = route.request().method();
+      const url = route.request().url();
+      const id = url.split("/").pop();
+
+      if (method === "PUT") {
+        const postData = route.request().postDataJSON();
+        const index = currentEvents.findIndex((e) => e.entity_id === id);
+        if (index !== -1) {
+          currentEvents[index] = { ...currentEvents[index], ...postData };
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(postData),
+        });
+      } else if (method === "DELETE") {
+        currentEvents = currentEvents.filter((e) => e.entity_id !== id);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true }),
+        });
+      } else if (method === "GET") {
+        const found = currentEvents.find((e) => e.entity_id === id);
+        if (found) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(found),
+          });
+        } else {
+          await route.fulfill({ status: 404 });
+        }
       } else {
         await route.continue();
       }
