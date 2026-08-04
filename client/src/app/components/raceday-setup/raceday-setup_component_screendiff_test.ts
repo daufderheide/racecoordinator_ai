@@ -175,4 +175,22 @@ test.describe("Raceday Setup Functional - en", () => {
       timeout: 10000,
     });
   });
+
+  test("Event selected", async ({ page }) => {
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.clickRaceDropdown();
+    const eventItem = page.locator(".dropdown-item.event-item").first();
+    await expect(eventItem).toBeVisible();
+    await eventItem.click();
+
+    await page.waitForTimeout(300);
+
+    await expect(page).toHaveScreenshot(`event-selected-en.png`, {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
+  });
 });
