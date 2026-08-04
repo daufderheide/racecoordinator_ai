@@ -222,10 +222,7 @@ If a race has already been started by a Director on the host machine, connecting
 * **Data Format**: Binary payloads (`ByteBuffer` containing `InterfaceEvent` Protobuf bytes).
 * **Purpose**: Streams real-time connection statuses, serial communication statistics, pin events, and diagnostic alerts from the track hardware interfaces.
 
-### [PROPOSAL] Bi-directional Writing (Client-to-Server)
-
-> [!IMPORTANT]
-> **API Proposal**: The following capability is currently a proposed design and documentation-only PR. Actual code implementation in the server will occur in a separate phase after codeowners review and merge this proposal.
+### Bi-directional Writing (Client-to-Server)
 
 * **Direction**: Client-to-Server
 * **Allowed Client Roles**: `DIRECTOR` (Requires local IP origin or valid security token query parameter). Non-director sessions attempting to write will be ignored or terminated.
@@ -234,8 +231,8 @@ If a race has already been started by a Director on the host machine, connecting
   - `LapEvent` (`lap`): Injects a lap trigger for the specified lane (`lane`), duration (`lap_time` in seconds), and virtual interface details.
   - `SegmentEvent` (`segment`): Injects a sector/segment crossing time.
   - `CallbuttonEvent` (`callbutton`): Simulates call button presses to pause/resume the race status.
-  - `PitInEvent` (`pit_in`): Proposed event to trigger pit entry and begin refueling logic for the specified lane (`lane`).
-  - `PitOutEvent` (`pit_out`): Proposed event to trigger pit exit and stop refueling logic for the specified lane (`lane`).
+  - `PitInEvent` (`pit_in`): Triggers pit entry and begins refueling logic for the specified lane (`lane`).
+  - `PitOutEvent` (`pit_out`): Triggers pit exit and stops refueling logic for the specified lane (`lane`).
 * **Server Processing Flow**:
   1. The server receives the binary payload and decodes it as an `InterfaceEvent`.
   2. The server verifies that the client has `DIRECTOR` elevation.

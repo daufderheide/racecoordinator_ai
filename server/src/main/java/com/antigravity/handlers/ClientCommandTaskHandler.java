@@ -6,6 +6,7 @@ import com.antigravity.context.RaceScope;
 import com.antigravity.converters.ArduinoConfigConverter;
 import com.antigravity.converters.PhidgetConfigConverter;
 import com.antigravity.converters.TrackmateConfigConverter;
+import com.antigravity.converters.WebSocketConfigConverter;
 import com.antigravity.models.AnalyticsToggleRequest;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
@@ -50,6 +51,8 @@ import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.antigravity.protocols.trackmate.TrackmateProtocol;
+import com.antigravity.protocols.websocket.WebSocketConfig;
+import com.antigravity.protocols.websocket.WebSocketProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverAnalysisSummary;
 import com.antigravity.race.DriverHeatData;
@@ -759,6 +762,10 @@ public class ClientCommandTaskHandler {
       if (request.hasPhidgetConfig()) {
         phidgetConfig = PhidgetConfigConverter.fromProto(request.getPhidgetConfig());
       }
+      WebSocketConfig websocketConfig = null;
+      if (request.hasWebsocketConfig()) {
+        websocketConfig = WebSocketConfigConverter.fromProto(request.getWebsocketConfig());
+      }
       int interfaceIndex = request.getInterfaceIndex();
 
       ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
@@ -768,7 +775,7 @@ public class ClientCommandTaskHandler {
         List<IProtocol> protocols = current.getProtocols();
         if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
           IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol || p instanceof PhidgetProtocol) {
+          if (p instanceof ArduinoProtocol || p instanceof PhidgetProtocol || p instanceof WebSocketProtocol) {
             target = p;
           }
         }
@@ -779,6 +786,8 @@ public class ClientCommandTaskHandler {
           ((ArduinoProtocol) target).updateConfig(config);
         } else if (target instanceof PhidgetProtocol && phidgetConfig != null) {
           ((PhidgetProtocol) target).updateConfig(phidgetConfig);
+        } else if (target instanceof WebSocketProtocol && websocketConfig != null) {
+          ((WebSocketProtocol) target).updateConfig(websocketConfig);
         }
 
         UpdateInterfaceConfigResponse response =
@@ -842,6 +851,18 @@ public class ClientCommandTaskHandler {
         phidget.setInterfaceIndex(interfaceIndex++);
         phidget.setListener(new TestInterfaceListener());
         protocols.add(phidget);
+      }
+
+      List<com.antigravity.proto.WebSocketConfig> wsConfigsList = // fqn-collision
+          request.getWebsocketConfigsList();
+      for (int i = 0; i < wsConfigsList.size(); i++) {
+        com.antigravity.proto.WebSocketConfig protoConfig = wsConfigsList.get(i); // fqn-collision
+
+        WebSocketConfig config = WebSocketConfigConverter.fromProto(protoConfig);
+        WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
+        websocket.setInterfaceIndex(interfaceIndex++);
+        websocket.setListener(new TestInterfaceListener());
+        protocols.add(websocket);
       }
 
       ProtocolDelegate finalProtocol;

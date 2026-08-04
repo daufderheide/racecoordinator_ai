@@ -1,27 +1,17 @@
-# Proposed Integration: Gepetto Lap Counter & Race Coordinator
+# Integration: Gepetto Lap Counter & Race Coordinator
 
-Date: 08/01/2026
-
-## IMPORTANT: Proposal Scope
-
-> [!IMPORTANT]
-> **Documentation Proposal Only**:
-> This document is submitted as a design blueprint and API proposal for the Race Coordinator codeowners to review and approve. **No code modifications are included in this PR**.
-> 
-> Once the codeowners review, provide feedback, and merge this proposal, we will proceed with the code implementation phase and submit a separate PR containing the complete code changes.
-
----
+Date: 08/04/2026
 
 ## 1. Overview
 
-The goal is to allow the external camera-based **Gepetto Lap Counter** Kotlin Multiplatform (KMP) app to connect over WebSockets to the **Race Coordinator AI** backend and act as a virtual track hardware interface. This allows counting laps, recording sector times, and handling track pause events without needing direct physical connection (like Arduino/Trackmate serial cables) to the host computer.
+The external camera-based **Gepetto Lap Counter** Kotlin Multiplatform (KMP) app connects over WebSockets to the **Race Coordinator AI** backend and acts as a virtual track hardware interface. This allows counting laps, recording sector times, and handling track pause events without needing direct physical connection (like Arduino/Trackmate serial cables) to the host computer.
 
 ---
 
-## 2. Proposed Database & Configuration Changes
+## 2. Database & Configuration Changes
 
 ### A. Protobuf Configuration & Interface Schema (`track_model.proto` & `interface_event.proto`)
-We propose representing the virtual network-based lap counter with a new config message `WebSocketConfig` in `track_model.proto`:
+We represent the virtual network-based lap counter with a new config message `WebSocketConfig` in `track_model.proto`:
 ```protobuf
 syntax = "proto3";
 package com.antigravity;
@@ -39,7 +29,7 @@ message TrackModel {
 }
 ```
 
-To support section-based pit stop entry and exit (refueling), we propose adding `PitInEvent` and `PitOutEvent` to `InterfaceEvent` in `interface_event.proto`:
+To support section-based pit stop entry and exit (refueling), we added `PitInEvent` and `PitOutEvent` to `InterfaceEvent` in `interface_event.proto`:
 ```protobuf
 message InterfaceEvent {
   oneof event {
@@ -70,7 +60,7 @@ When a user defines a slot car track in the settings, they can add a WebSocket i
 
 ---
 
-## 3. Proposed Backend & Routing Changes
+## 3. Backend & Routing Changes
 
 ### A. Virtual Protocol Class (`WebSocketProtocol.java`)
 We will create a virtual protocol `WebSocketProtocol` that **extends `DefaultProtocol`**:
@@ -111,9 +101,9 @@ We will implement `handleIncomingInterfaceEvent(WsContext ctx, InterfaceEvent ev
 
 ---
 
-## 4. Proposed Network Discovery
+## 4. Network Discovery
 
-We propose adding JmDNS (`org.jmdns:jmdns:3.5.8` or similar) to `pom.xml`. On server startup, the server will advertise itself:
+JmDNS (`org.jmdns:jmdns:3.5.8`) is added to `pom.xml`. On server startup, the server will advertise itself:
 * **Service Type**: `_racecoordinator._tcp.local.`
 * **Service Name**: `RaceCoordinatorServer`
 * **Port**: `7070`
@@ -122,9 +112,9 @@ This enables automatic zero-configuration discovery so that Gepetto Lap Counter 
 
 ---
 
-## 5. Proposed Verification & Testing Plan
+## 5. Verification & Testing Plan
 
-To ensure the stability and correctness of the new interface, we propose a comprehensive verification strategy combining automated tests and manual integration checks.
+To ensure the stability and correctness of the new interface, we implement a comprehensive verification strategy combining automated tests and manual integration checks.
 
 ### A. Automated Testing
 

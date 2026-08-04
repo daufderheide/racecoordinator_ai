@@ -3,10 +3,15 @@ package com.antigravity.race;
 import com.antigravity.auth.AuthService;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.LapEvent;
+import com.antigravity.proto.SegmentEvent;
+import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.proto.SystemState;
+import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.websocket.WebSocketProtocol;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.LogReplayService;
 import com.antigravity.util.NetworkUtils;
@@ -549,6 +554,79 @@ public class ClientSubscriptionManager {
         session.send(ByteBuffer.wrap(bytes));
       } catch (Exception e) {
         // Ignore or log
+      }
+    }
+  }
+
+  public synchronized void handleIncomingInterfaceEvent(WsContext ctx, InterfaceEvent event) {
+    if (!isDirectorSession(ctx)) {
+      logger.warn("Unauthorized interface event write attempt from session {}", ctx.session.getRemoteAddress());
+      return;
+    }
+
+    // Broadcast event to all other clients connected to /api/interface-data for overlay updates
+    interfaceSubscribers.forEach(sub -> {
+      if (sub != ctx) {
+        try {
+          sub.send(ByteBuffer.wrap(event.toByteArray()));
+        } catch (Exception e) {
+          // ignore or log
+        }
+      }
+    });
+
+    if (currentRace != null) {
+      int eventInterfaceIndex = -1;
+      if (event.hasLap()) {
+        eventInterfaceIndex = event.getLap().getInterfaceIndex();
+      } else if (event.hasSegment()) {
+        eventInterfaceIndex = event.getSegment().getInterfaceIndex();
+      } else if (event.hasCallbutton()) {
+        eventInterfaceIndex = event.getCallbutton().getInterfaceIndex();
+      } else if (event.hasPitIn()) {
+        eventInterfaceIndex = event.getPitIn().getInterfaceIndex();
+      } else if (event.hasPitOut()) {
+        eventInterfaceIndex = event.getPitOut().getInterfaceIndex();
+      }
+
+      int resolvedInterfaceIndex = eventInterfaceIndex;
+      WebSocketProtocol activeWebSocketProtocol = null;
+      if (currentProtocol != null) {
+        for (IProtocol p : currentProtocol.getProtocols()) {
+          if (p.getInterfaceIndex() == resolvedInterfaceIndex && p instanceof WebSocketProtocol) {
+            activeWebSocketProtocol = (WebSocketProtocol) p;
+            break;
+          }
+        }
+        // Fallback to first WebSocketProtocol if matching index is not found
+        if (activeWebSocketProtocol == null) {
+          for (IProtocol p : currentProtocol.getProtocols()) {
+            if (p instanceof WebSocketProtocol) {
+              activeWebSocketProtocol = (WebSocketProtocol) p;
+              resolvedInterfaceIndex = p.getInterfaceIndex();
+              break;
+            }
+          }
+        }
+      }
+
+      if (event.hasLap()) {
+        LapEvent lap = event.getLap();
+        currentRace.onLap(lap.getLane(), lap.getLapTime(), lap.getInterfaceId(), resolvedInterfaceIndex);
+      } else if (event.hasSegment()) {
+        SegmentEvent segment = event.getSegment();
+        currentRace.onSegment(segment.getLane(), segment.getSegmentTime(), segment.getInterfaceId(), resolvedInterfaceIndex);
+      } else if (event.hasCallbutton()) {
+        CallbuttonEvent call = event.getCallbutton();
+        currentRace.onCallbutton(call.getLane(), resolvedInterfaceIndex);
+      } else if (event.hasPitIn()) {
+        if (activeWebSocketProtocol != null) {
+          activeWebSocketProtocol.updatePitState(event.getPitIn().getLane(), true);
+        }
+      } else if (event.hasPitOut()) {
+        if (activeWebSocketProtocol != null) {
+          activeWebSocketProtocol.updatePitState(event.getPitOut().getLane(), false);
+        }
       }
     }
   }

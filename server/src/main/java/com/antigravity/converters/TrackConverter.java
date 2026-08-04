@@ -39,8 +39,13 @@ public class TrackConverter {
               track.getPhidgetConfigs().stream()
                   .map(PhidgetConfigConverter::toProto)
                   .collect(Collectors.toList()))
+          .addAllWebsocketConfigs(
+              track.getWebsocketConfigs().stream()
+                  .map(WebSocketConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
+
   }
 
   private static boolean hasDigitalFuel(Track track) {

@@ -6,6 +6,7 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.LedString;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
+import com.antigravity.protocols.websocket.WebSocketConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,6 +28,7 @@ public class Track extends Model {
   private final List<ArduinoConfig> arduinoConfigs;
   private final List<TrackmateConfig> trackmateConfigs;
   private final List<PhidgetConfig> phidgetConfigs;
+  private final List<WebSocketConfig> websocketConfigs;
 
   @BsonCreator
   @JsonCreator
@@ -42,6 +44,8 @@ public class Track extends Model {
           List<TrackmateConfig> trackmateConfigs,
       @BsonProperty("phidget_configs") @JsonProperty("phidget_configs")
           List<PhidgetConfig> phidgetConfigs,
+      @BsonProperty("websocket_configs") @JsonProperty("websocket_configs")
+          List<WebSocketConfig> websocketConfigs,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -60,6 +64,10 @@ public class Track extends Model {
         phidgetConfigs != null
             ? Collections.unmodifiableList(phidgetConfigs)
             : Collections.emptyList();
+    this.websocketConfigs =
+        websocketConfigs != null
+            ? Collections.unmodifiableList(websocketConfigs)
+            : Collections.emptyList();
   }
 
   public static class Builder {
@@ -69,6 +77,7 @@ public class Track extends Model {
     private List<ArduinoConfig> arduinoConfigs = new ArrayList<>();
     private List<TrackmateConfig> trackmateConfigs = new ArrayList<>();
     private List<PhidgetConfig> phidgetConfigs = new ArrayList<>();
+    private List<WebSocketConfig> websocketConfigs = new ArrayList<>();
     private String entityId;
     private ObjectId id;
 
@@ -102,6 +111,11 @@ public class Track extends Model {
       return this;
     }
 
+    public Builder websocketConfigs(List<WebSocketConfig> websocketConfigs) {
+      this.websocketConfigs = websocketConfigs;
+      return this;
+    }
+
     public Builder entityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -120,6 +134,7 @@ public class Track extends Model {
           arduinoConfigs,
           trackmateConfigs,
           phidgetConfigs,
+          websocketConfigs,
           entityId,
           id);
     }
@@ -273,6 +288,12 @@ public class Track extends Model {
     return phidgetConfigs;
   }
 
+  @JsonProperty("websocket_configs")
+  @BsonProperty("websocket_configs")
+  public List<WebSocketConfig> getWebsocketConfigs() {
+    return websocketConfigs;
+  }
+
   /**
    * Synchronizes all Arduino configurations with the current lane model. This heals color mappings,
    * removes stale behaviors, and ensures array lengths match.
@@ -357,6 +378,7 @@ public class Track extends Model {
         .arduinoConfigs(syncedConfigs)
         .trackmateConfigs(this.trackmateConfigs)
         .phidgetConfigs(this.phidgetConfigs)
+        .websocketConfigs(this.websocketConfigs)
         .entityId(this.getEntityId())
         .id(this.getId())
         .build();

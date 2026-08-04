@@ -19,8 +19,11 @@ message InterfaceEvent {
     CallbuttonEvent callbutton = 4;
     InterfaceAnalogDataEvent analogData = 5;
     InterfaceDigitalPinEvent digitalPin = 6;
+    PitInEvent pit_in = 7;
+    PitOutEvent pit_out = 8;
   }
 }
+
 
 message InterfaceDigitalPinEvent {
   int32 pin = 1;
@@ -57,4 +60,14 @@ message InterfaceAnalogDataEvent {
   int32 pin = 1;
   int32 value = 2;
   int32 interface_index = 3;
+}
+
+message PitInEvent {
+  int32 lane = 1;
+  int32 interface_index = 2;
+}
+
+message PitOutEvent {
+  int32 lane = 1;
+  int32 interface_index = 2;
 }
