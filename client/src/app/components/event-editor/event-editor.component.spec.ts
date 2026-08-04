@@ -7,6 +7,7 @@ import { DataService } from "@app/data.service";
 import { Event } from "@app/models/event";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
@@ -53,6 +54,11 @@ describe("EventEditorComponent", () => {
     mockDataService.updateEvent.and.callFake((id: string, e: Event) => of(e));
 
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    const mockNavigationService = jasmine.createSpyObj("NavigationService", [
+      "setLastEditedId",
+      "getLastEditedId",
+      "clearLastEditedId",
+    ]);
 
     await TestBed.configureTestingModule({
       imports: [EventEditorComponent, FormsModule, TranslatePipe],
@@ -62,6 +68,7 @@ describe("EventEditorComponent", () => {
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: NavigationService, useValue: mockNavigationService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -126,5 +133,57 @@ describe("EventEditorComponent", () => {
     component.editingEvent.description = "Updated Description";
     component.onInputChange();
     expect(mockDataService.updateEvent).toHaveBeenCalled();
+  });
+
+  it("should append _1 if 'New Event' already exists", () => {
+    component.existingEvents = [
+      { entity_id: "e1", name: "New Event", races: [] },
+    ];
+    const unique = component.generateUniqueName("New Event");
+    expect(unique).toBe("New Event_1");
+  });
+
+  it("should append _2 if 'New Event' and 'New Event_1' already exist", () => {
+    component.existingEvents = [
+      { entity_id: "e1", name: "New Event", races: [] },
+      { entity_id: "e2", name: "New Event_1", races: [] },
+    ];
+    const unique = component.generateUniqueName("New Event");
+    expect(unique).toBe("New Event_2");
+  });
+
+  it("should force suffix and stay on editor page when duplicating event on saveAsNew", () => {
+    fixture.detectChanges();
+    component.editingEvent = {
+      entity_id: "evt_1",
+      name: "Existing Event",
+      description: "Description",
+      races: [{ raceId: "r1", maxDrivers: 0 }],
+    };
+    component.saveAsNew();
+    expect(mockDataService.createEvent).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        name: "Existing Event_1",
+        description: "Description",
+      }),
+    );
+    expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+      queryParams: { id: "evt_new" },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
+    });
+    expect(component.editingEvent.name).toBe("Existing Event_1");
+  });
+
+  it("should add race and close modal on onRaceSelect", () => {
+    fixture.detectChanges();
+    component.openAddRaceModal();
+    expect(component.showAddRaceModal).toBeTrue();
+
+    component.onRaceSelect("r2");
+    expect(component.showAddRaceModal).toBeFalse();
+    expect(
+      component.editingEvent.races.some((r) => r.raceId === "r2"),
+    ).toBeTrue();
   });
 });

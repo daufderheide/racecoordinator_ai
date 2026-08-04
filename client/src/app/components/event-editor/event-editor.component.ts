@@ -22,6 +22,7 @@ import { Event, EventRaceItem } from "@app/models/event";
 import { Race } from "@app/models/race";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 
 @Component({
   standalone: true,
@@ -57,6 +58,7 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private logger = inject(LoggerService);
+  private navigationService = inject(NavigationService);
 
   constructor() {
     this.undoManager = new UndoManager<Event>(
@@ -161,9 +163,12 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           );
           if (found) {
             this.editingEvent = this.cloneEvent(found);
+            if (found.entity_id) {
+              this.navigationService.setLastEditedId("event", found.entity_id);
+            }
           } else {
             this.editingEvent = {
-              name: "New Event",
+              name: this.generateUniqueName("New Event"),
               description: "",
               auto_advance_time: 0,
               races: [],
@@ -171,7 +176,7 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         } else {
           this.editingEvent = {
-            name: "New Event",
+            name: this.generateUniqueName("New Event"),
             description: "",
             auto_advance_time: 0,
             races: [],
@@ -188,6 +193,25 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
+    const pattern = /(_\d+)$/;
+    const base = (baseName || "").replace(pattern, "");
+
+    let counter = forceSuffix ? 1 : 0;
+    while (true) {
+      const candidate = counter === 0 ? baseName : `${base}_${counter}`;
+      const exists = this.existingEvents.some(
+        (e) =>
+          (e.name || "").trim().toLowerCase() ===
+          candidate.trim().toLowerCase(),
+      );
+      if (!exists && candidate.trim() !== "") {
+        return candidate;
+      }
+      counter++;
+    }
   }
 
   onInputChange(): void {
@@ -236,6 +260,9 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         if (saved) {
           this.editingEvent = this.cloneEvent(saved);
           this.undoManager.resetTracking(this.editingEvent);
+          if (saved.entity_id) {
+            this.navigationService.setLastEditedId("event", saved.entity_id);
+          }
         }
         this.isSaving = false;
         this.cdr.detectChanges();
@@ -256,19 +283,30 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.isConfigValid() || this.isSaving) return;
     this.isSaving = true;
 
+    const uniqueName = this.generateUniqueName(this.editingEvent.name, true);
     const newCopy: Event = {
       ...this.cloneEvent(this.editingEvent),
       entity_id: undefined,
-      name: `${this.editingEvent.name} (Copy)`,
+      name: uniqueName,
     };
 
     this.dataService.createEvent(newCopy).subscribe({
       next: (saved) => {
         this.isSaving = false;
-        this.isNavigationApproved = true;
         this.editingEvent = this.cloneEvent(saved);
+        if (saved) {
+          this.existingEvents.push(saved);
+        }
         this.undoManager.resetTracking(this.editingEvent);
-        this.router.navigate(["/event-manager"]);
+        if (saved?.entity_id) {
+          this.navigationService.setLastEditedId("event", saved.entity_id);
+        }
+        this.router.navigate([], {
+          queryParams: { id: saved?.entity_id },
+          queryParamsHandling: "merge",
+          replaceUrl: true,
+        });
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.logger.error("Failed to copy event", err);
@@ -280,7 +318,20 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   cancel(): void {
     this.isNavigationApproved = true;
-    this.router.navigate(["/event-manager"]);
+    if (this.editingEvent?.entity_id) {
+      this.navigationService.setLastEditedId(
+        "event",
+        this.editingEvent.entity_id,
+      );
+    }
+    this.router.navigate(["/event-manager"], {
+      queryParams: {
+        id: this.editingEvent?.entity_id,
+        selectedId: this.editingEvent?.entity_id,
+        from: this.route.snapshot.queryParamMap.get("from"),
+        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+      },
+    });
   }
 
   getRaceId(r: any): string {
@@ -311,26 +362,30 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   openAddRaceModal(): void {
-    if (this.availableRaces.length > 0) {
-      this.selectedRaceToAddId = this.getRaceId(this.availableRaces[0]);
-    } else {
-      this.selectedRaceToAddId = "";
-    }
+    this.selectedRaceToAddId = "";
     this.showAddRaceModal = true;
   }
 
   closeAddRaceModal(): void {
     this.showAddRaceModal = false;
+    this.selectedRaceToAddId = "";
   }
 
-  confirmAddRace(): void {
-    if (!this.selectedRaceToAddId) return;
+  onRaceSelect(raceId: string): void {
+    if (!raceId) return;
     this.editingEvent.races.push({
-      raceId: this.selectedRaceToAddId,
+      raceId: raceId,
       maxDrivers: 0, // Default to Unlimited
     });
     this.showAddRaceModal = false;
+    this.selectedRaceToAddId = "";
     this.onInputChange();
+  }
+
+  confirmAddRace(): void {
+    if (this.selectedRaceToAddId) {
+      this.onRaceSelect(this.selectedRaceToAddId);
+    }
   }
 
   removeRace(index: number): void {

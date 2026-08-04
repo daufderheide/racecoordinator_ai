@@ -29,21 +29,38 @@
 .content-split {
   flex: 1;
   display: flex;
-  gap: 30px;
-  margin: 0 55px 20px 55px;
   overflow: hidden;
+  margin: 0 55px 45px 55px;
 }
 
-.editor-panel {
-  flex: 1;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(56, 189, 248, 0.2);
-  border-radius: 12px;
-  padding: 25px;
+.editor-panel-left {
+  margin-left: 90px;
+  width: 320px;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  height: calc(100% - 40px - 20px);
   display: flex;
   flex-direction: column;
   gap: 20px;
   overflow-y: auto;
+  padding-top: 10px;
+  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+.editor-panel-right {
+  flex: 1;
+  min-width: 0;
+  margin-left: 160px;
+  margin-top: 40px;
+  margin-right: 85px;
+  margin-bottom: 20px;
+  height: calc(100% - 40px - 20px);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .editor-section {
@@ -76,6 +93,11 @@
   font-family: inherit;
 }
 
+.description-textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
 .error-text {
   color: #ef4444;
   font-size: 0.9rem;
@@ -85,6 +107,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+  padding-right: 10px;
 }
 
 .panel-header h3 {
@@ -106,6 +130,33 @@
 
 .btn-add-race:hover {
   background: #0369a1;
+}
+
+.race-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.race-list-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.race-list-container::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.race-list-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.5);
+}
+
+.race-list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
 }
 
 .empty-races {

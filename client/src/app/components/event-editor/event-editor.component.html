@@ -15,7 +15,7 @@
   @if (!isLoading) {
     <div class="content-split">
       <!-- Left Panel: Form Settings -->
-      <div class="editor-panel">
+      <div class="editor-panel-left">
         <div
           class="editor-section"
           [class.invalid]="!editingEvent.name || isDuplicateName()"
@@ -34,14 +34,15 @@
           }
         </div>
 
-        <div class="editor-section">
+        <div class="editor-section description-section">
           <label class="section-label">{{
             "EE_LABEL_DESCRIPTION" | translate
           }}</label>
           <textarea
-            rows="3"
+            rows="7"
             [(ngModel)]="editingEvent.description"
             (ngModelChange)="onInputChange()"
+            class="description-textarea"
           ></textarea>
         </div>
 
@@ -60,7 +61,7 @@
       </div>
 
       <!-- Right Panel: Race Sequence List -->
-      <div class="editor-panel">
+      <div class="editor-panel-right">
         <div class="panel-header">
           <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
           <button class="btn-add-race" (click)="openAddRaceModal()">
@@ -68,61 +69,63 @@
           </button>
         </div>
 
-        @if (editingEvent.races.length === 0) {
-          <div class="empty-races">
-            <p>{{ "EE_ERR_RACES_REQUIRED" | translate }}</p>
-          </div>
-        } @else {
-          <div
-            class="race-list"
-            cdkDropList
-            (cdkDropListDropped)="dropRace($event)"
-          >
-            @for (item of editingEvent.races; track idx; let idx = $index) {
-              <div class="race-card" cdkDrag>
-                <div class="drag-handle" title="Drag to reorder">
-                  <span class="material-icons">drag_indicator</span>
-                </div>
-
-                <div class="race-info">
-                  <span class="race-step-number">#{{ idx + 1 }}</span>
-                  <span class="race-name">{{
-                    getRaceName(getItemRaceId(item))
-                  }}</span>
-                </div>
-
-                <div class="driver-limit-section">
-                  <label>{{ "EE_LABEL_MAX_DRIVERS" | translate }}:</label>
-                  <div class="limit-input-group">
-                    <label class="unlimited-toggle">
-                      <input
-                        type="checkbox"
-                        [name]="'unlimited_' + idx"
-                        [checked]="getItemMaxDrivers(item) === 0"
-                        (change)="toggleUnlimited(item)"
-                      />
-                      <span>{{ "EE_UNLIMITED" | translate }}</span>
-                    </label>
-                    @if (getItemMaxDrivers(item) > 0) {
-                      <input
-                        type="number"
-                        min="1"
-                        [name]="'maxDrivers_' + idx"
-                        [ngModel]="getItemMaxDrivers(item)"
-                        (ngModelChange)="setMaxDrivers(item, $event)"
-                        class="driver-limit-input"
-                      />
-                    }
+        <div class="race-list-container">
+          @if (editingEvent.races.length === 0) {
+            <div class="empty-races">
+              <p>{{ "EE_ERR_RACES_REQUIRED" | translate }}</p>
+            </div>
+          } @else {
+            <div
+              class="race-list"
+              cdkDropList
+              (cdkDropListDropped)="dropRace($event)"
+            >
+              @for (item of editingEvent.races; track idx; let idx = $index) {
+                <div class="race-card" cdkDrag>
+                  <div class="drag-handle" title="Drag to reorder">
+                    <span class="material-icons">drag_indicator</span>
                   </div>
-                </div>
 
-                <button class="btn-remove" (click)="removeRace(idx)">
-                  {{ "EE_BTN_REMOVE_RACE" | translate }}
-                </button>
-              </div>
-            }
-          </div>
-        }
+                  <div class="race-info">
+                    <span class="race-step-number">#{{ idx + 1 }}</span>
+                    <span class="race-name">{{
+                      getRaceName(getItemRaceId(item))
+                    }}</span>
+                  </div>
+
+                  <div class="driver-limit-section">
+                    <label>{{ "EE_LABEL_MAX_DRIVERS" | translate }}:</label>
+                    <div class="limit-input-group">
+                      <label class="unlimited-toggle">
+                        <input
+                          type="checkbox"
+                          [name]="'unlimited_' + idx"
+                          [checked]="getItemMaxDrivers(item) === 0"
+                          (change)="toggleUnlimited(item)"
+                        />
+                        <span>{{ "EE_UNLIMITED" | translate }}</span>
+                      </label>
+                      @if (getItemMaxDrivers(item) > 0) {
+                        <input
+                          type="number"
+                          min="1"
+                          [name]="'maxDrivers_' + idx"
+                          [ngModel]="getItemMaxDrivers(item)"
+                          (ngModelChange)="setMaxDrivers(item, $event)"
+                          class="driver-limit-input"
+                        />
+                      }
+                    </div>
+                  </div>
+
+                  <button class="btn-remove" (click)="removeRace(idx)">
+                    {{ "EE_BTN_REMOVE_RACE" | translate }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
     </div>
   }
@@ -135,7 +138,12 @@
       <h2>{{ "EE_BTN_ADD_RACE" | translate }}</h2>
       <div class="modal-body">
         <label>Select Race:</label>
-        <select [(ngModel)]="selectedRaceToAddId" name="selectedRaceToAddId">
+        <select
+          [ngModel]="selectedRaceToAddId"
+          (ngModelChange)="onRaceSelect($event)"
+          name="selectedRaceToAddId"
+        >
+          <option value="" disabled selected>-- Select Race --</option>
           @for (r of availableRaces; track getRaceId(r)) {
             <option [value]="getRaceId(r)">{{ r.name }}</option>
           }
@@ -145,7 +153,6 @@
         <button class="btn-secondary" (click)="closeAddRaceModal()">
           Cancel
         </button>
-        <button class="btn-primary" (click)="confirmAddRace()">Add</button>
       </div>
     </div>
   </div>

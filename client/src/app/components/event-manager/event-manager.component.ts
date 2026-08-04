@@ -108,8 +108,8 @@ export class EventManagerComponent implements OnInit, OnDestroy {
   }
 
   private updateScale(): void {
-    const baseWidth = 1024;
-    const baseHeight = 768;
+    const baseWidth = 1600;
+    const baseHeight = 900;
     const scaleX = window.innerWidth / baseWidth;
     const scaleY = window.innerHeight / baseHeight;
     this.scale = Math.min(scaleX, scaleY);
@@ -124,9 +124,33 @@ export class EventManagerComponent implements OnInit, OnDestroy {
       next: (result) => {
         this.events = result.events || [];
         this.races = result.races || [];
-        if (this.events.length > 0 && !this.selectedEvent) {
+
+        const lastEdited = this.navigationService.getLastEditedId("event");
+        let selectedId =
+          this.route.snapshot.queryParamMap.get("id") ||
+          this.route.snapshot.queryParamMap.get("selectedId");
+
+        if (lastEdited) {
+          selectedId = lastEdited;
+          this.navigationService.clearLastEditedId("event");
+          this.router.navigate([], {
+            queryParams: { id: lastEdited },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        }
+
+        if (selectedId) {
+          const found = this.events.find((e) => e.entity_id === selectedId);
+          if (found) {
+            this.selectedEvent = found;
+          } else if (this.events.length > 0) {
+            this.selectedEvent = this.events[0];
+          }
+        } else if (this.events.length > 0 && !this.selectedEvent) {
           this.selectedEvent = this.events[0];
         }
+
         this.isLoading = false;
         this.cdr.detectChanges();
       },

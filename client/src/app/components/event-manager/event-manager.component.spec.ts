@@ -25,6 +25,7 @@ describe("EventManagerComponent", () => {
   let fixture: import("@angular/core/testing").ComponentFixture<EventManagerComponent>;
   let mockDataService: any;
   let mockRouter: any;
+  let mockNavigationService: any;
 
   const mockEvents: Event[] = [
     {
@@ -71,6 +72,13 @@ describe("EventManagerComponent", () => {
       },
     );
 
+    mockNavigationService = jasmine.createSpyObj("NavigationService", [
+      "getLastEditedId",
+      "setLastEditedId",
+      "clearLastEditedId",
+    ]);
+    mockNavigationService.getLastEditedId.and.returnValue(null);
+
     await TestBed.configureTestingModule({
       imports: [EventManagerComponent, FormsModule, TranslatePipe],
       providers: [
@@ -79,14 +87,16 @@ describe("EventManagerComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: LoggerService, useValue: mockLoggerService },
-        { provide: NavigationService, useValue: {} },
+        { provide: NavigationService, useValue: mockNavigationService },
         { provide: SettingsService, useValue: mockSettingsService },
         { provide: RaceConnectionService, useValue: {} },
         {
           provide: ActivatedRoute,
           useValue: {
             queryParams: of({}),
-            snapshot: { queryParamMap: { get: () => null } },
+            snapshot: {
+              queryParamMap: jasmine.createSpyObj("queryParamMap", ["get"]),
+            },
           },
         },
       ],
@@ -95,6 +105,8 @@ describe("EventManagerComponent", () => {
 
     fixture = TestBed.createComponent(EventManagerComponent);
     component = fixture.componentInstance;
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot.queryParamMap.get as jasmine.Spy).and.returnValue(null);
   });
 
   it("should create component and load events on init", () => {
@@ -146,5 +158,14 @@ describe("EventManagerComponent", () => {
     component.onConfirmDelete();
     expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_1");
     expect(component.showDeleteConfirmation).toBeFalse();
+  });
+
+  it("should select event specified in route queryParams on init", () => {
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot.queryParamMap.get as jasmine.Spy).and.callFake(
+      (key: string) => (key === "selectedId" ? "evt_2" : null),
+    );
+    fixture.detectChanges();
+    expect(component.selectedEvent?.entity_id).toBe("evt_2");
   });
 });
