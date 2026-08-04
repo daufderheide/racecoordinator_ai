@@ -4,7 +4,8 @@ import com.antigravity.protocols.websocket.WebSocketConfig;
 
 public class WebSocketConfigConverter {
 
-  public static com.antigravity.proto.WebSocketConfig toProto(WebSocketConfig config) { // fqn-collision
+  public static com.antigravity.proto.WebSocketConfig toProto( // fqn-collision
+      WebSocketConfig config) { // fqn-collision
     if (config == null) {
       return com.antigravity.proto.WebSocketConfig.getDefaultInstance(); // fqn-collision
     }
@@ -14,7 +15,8 @@ public class WebSocketConfigConverter {
         .build();
   }
 
-  public static WebSocketConfig fromProto(com.antigravity.proto.WebSocketConfig protoConfig) { // fqn-collision
+  public static WebSocketConfig fromProto(
+      com.antigravity.proto.WebSocketConfig protoConfig) { // fqn-collision
 
     if (protoConfig == null) {
       return null;

@@ -775,7 +775,9 @@ public class ClientCommandTaskHandler {
         List<IProtocol> protocols = current.getProtocols();
         if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
           IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol || p instanceof PhidgetProtocol || p instanceof WebSocketProtocol) {
+          if (p instanceof ArduinoProtocol
+              || p instanceof PhidgetProtocol
+              || p instanceof WebSocketProtocol) {
             target = p;
           }
         }

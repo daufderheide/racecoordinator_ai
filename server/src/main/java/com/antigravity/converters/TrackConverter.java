@@ -45,7 +45,6 @@ public class TrackConverter {
                   .collect(Collectors.toList()))
           .build();
     }
-
   }
 
   private static boolean hasDigitalFuel(Track track) {

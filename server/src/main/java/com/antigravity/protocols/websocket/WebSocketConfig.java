@@ -16,9 +16,7 @@ public class WebSocketConfig {
   }
 
   @JsonCreator
-  public WebSocketConfig(
-      @JsonProperty("name") String name,
-      @JsonProperty("port") Integer port) {
+  public WebSocketConfig(@JsonProperty("name") String name, @JsonProperty("port") Integer port) {
     this.name = name != null ? name : "WebSocket";
     this.port = port != null ? port : 7070;
   }
