@@ -43,5 +43,7 @@ export interface SeasonStandingItem {
   net_points: number;
   gross_points: number;
   races_run: number;
-  race_scores: SeasonStandingDetail[];
+  current_race_points?: number;
+  currentRacePoints?: number;
+  race_scores?: SeasonStandingDetail[];
 }

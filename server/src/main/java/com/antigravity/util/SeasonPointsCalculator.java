@@ -70,6 +70,17 @@ public class SeasonPointsCalculator {
     public List<DriverRaceScoreDetail> getRaceScores() {
       return raceScores;
     }
+
+    public int getCurrentRacePoints() {
+      if (raceScores != null) {
+        for (DriverRaceScoreDetail detail : raceScores) {
+          if ("live_race".equals(detail.getRaceId()) || "live_event".equals(detail.getRaceId())) {
+            return detail.getTotalPoints();
+          }
+        }
+      }
+      return 0;
+    }
   }
 
   public static class DriverRaceScoreDetail {

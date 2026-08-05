@@ -148,6 +148,20 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       restTextColor: "",
     }),
   },
+  "season-race-leaderboard": {
+    defaultSettings: () => ({
+      decimalPlaces: 0,
+      titleFontFamily: "",
+      titleFontSize: 18,
+      titleTextColor: "",
+      overallLeaderFontFamily: "",
+      overallLeaderFontSize: 16,
+      overallLeaderTextColor: "",
+      restFontFamily: "",
+      restFontSize: 16,
+      restTextColor: "",
+    }),
+  },
   "track-name": {
     defaultSettings: () => ({
       labelFontFamily: "",

@@ -224,7 +224,7 @@ public class RaceConverter {
       com.antigravity.context.DatabaseContext dbCtx = race.getDatabaseContext(); // fqn-collision
       if (dbCtx == null) {
         dbCtx =
-            com.antigravity.race.ClientSubscriptionManager.getInstance()
+            com.antigravity.race.ClientSubscriptionManager.getInstance() // fqn-collision
                 .getDatabaseContext(); // fqn-collision
       }
       if (dbCtx != null && dbCtx.getDatabase() != null) {
@@ -236,10 +236,11 @@ public class RaceConverter {
           java.util.List<
                   com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding> // fqn-collision
               standings =
-                  com.antigravity.util.SeasonPointsCalculator.calculateLiveStandings(
-                      season, race); // fqn-collision
+                  com.antigravity.util.SeasonPointsCalculator
+                      .calculateLiveStandings( // fqn-collision
+                          season, race); // fqn-collision
           if (standings != null) {
-            for (com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding
+            for (com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding // fqn-collision
                 standing : // fqn-collision
                 standings) {
               builder.addSeasonStandings(
@@ -249,6 +250,7 @@ public class RaceConverter {
                       .setNetPoints(standing.getNetPoints())
                       .setGrossPoints(standing.getGrossPoints())
                       .setRacesRun(standing.getRacesRun())
+                      .setCurrentRacePoints(standing.getCurrentRacePoints())
                       .build());
             }
           }

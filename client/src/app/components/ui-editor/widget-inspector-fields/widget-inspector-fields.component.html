@@ -95,7 +95,8 @@
       (change)="onSettingsChange()"
     ></app-text-info-inspector>
   }
-  @case ("season-leaderboard") {
+  @case ("season-leaderboard")
+  @case ("season-race-leaderboard") {
     <app-leaderboard-inspector
       [settings]="widget().customSettings"
       [disableFontSizes]="widget().scaleMode === 'auto'"

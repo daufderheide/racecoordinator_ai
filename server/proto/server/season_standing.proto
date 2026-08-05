@@ -1,0 +1,14 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+
+message SeasonStanding {
+  string driver_id = 1;
+  string driver_name = 2;
+  double net_points = 3;
+  double gross_points = 4;
+  int32 races_run = 5;
+  double current_race_points = 6;
+}

@@ -23,6 +23,7 @@ import { RacedayRaceNameComponent } from "@app/components/raceday/components/rac
 import { RacedayRecordsComponent } from "@app/components/raceday/components/raceday-records/raceday-records.component";
 import { RacedaySeasonLeaderboardComponent } from "@app/components/raceday/components/raceday-season-leaderboard/raceday-season-leaderboard.component";
 import { RacedaySeasonNameComponent } from "@app/components/raceday/components/raceday-season-name/raceday-season-name.component";
+import { RacedaySeasonRaceLeaderboardComponent } from "@app/components/raceday/components/raceday-season-race-leaderboard/raceday-season-race-leaderboard.component";
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
 import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
@@ -50,6 +51,7 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     RacedayLeaderboardComponent,
     RacedayGroupLeaderboardComponent,
     RacedaySeasonLeaderboardComponent,
+    RacedaySeasonRaceLeaderboardComponent,
     RacedayLaneViewComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,

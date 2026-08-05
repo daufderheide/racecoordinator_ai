@@ -685,6 +685,7 @@ export class DefaultRacedayComponent
             net_points: 150,
             gross_points: 175,
             races_run: 5,
+            current_race_points: 25,
           },
           {
             driver_id: "d2",
@@ -692,6 +693,7 @@ export class DefaultRacedayComponent
             net_points: 135,
             gross_points: 150,
             races_run: 5,
+            current_race_points: 20,
           },
           {
             driver_id: "d3",
@@ -699,6 +701,7 @@ export class DefaultRacedayComponent
             net_points: 120,
             gross_points: 140,
             races_run: 5,
+            current_race_points: 18,
           },
           {
             driver_id: "d4",
@@ -706,6 +709,7 @@ export class DefaultRacedayComponent
             net_points: 110,
             gross_points: 125,
             races_run: 5,
+            current_race_points: 15,
           },
           {
             driver_id: "d5",
@@ -713,6 +717,7 @@ export class DefaultRacedayComponent
             net_points: 95,
             gross_points: 105,
             races_run: 4,
+            current_race_points: 12,
           },
           {
             driver_id: "d6",
@@ -720,6 +725,7 @@ export class DefaultRacedayComponent
             net_points: 80,
             gross_points: 90,
             races_run: 4,
+            current_race_points: 10,
           },
         ]
       : [];
@@ -4737,6 +4743,7 @@ export class DefaultRacedayComponent
       "leaderboard",
       "group-leaderboard",
       "season-leaderboard",
+      "season-race-leaderboard",
       "lane-view",
       "on-deck",
       "next-heat",
@@ -4789,6 +4796,7 @@ export class DefaultRacedayComponent
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||
       this.draggedWidgetType === "season-leaderboard" ||
+      this.draggedWidgetType === "season-race-leaderboard" ||
       this.draggedWidgetType === "on-deck" ||
       this.draggedWidgetType === "next-heat" ||
       this.draggedWidgetType === "image";
@@ -4814,6 +4822,7 @@ export class DefaultRacedayComponent
       : this.draggedWidgetType === "leaderboard" ||
           this.draggedWidgetType === "group-leaderboard" ||
           this.draggedWidgetType === "season-leaderboard" ||
+          this.draggedWidgetType === "season-race-leaderboard" ||
           this.draggedWidgetType === "image"
         ? 239
         : isActionButton

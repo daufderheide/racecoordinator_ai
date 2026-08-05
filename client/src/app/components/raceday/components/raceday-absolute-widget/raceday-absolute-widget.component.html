@@ -157,6 +157,12 @@
           [widget]="widget()"
         ></app-raceday-season-leaderboard>
       }
+      @case ("season-race-leaderboard") {
+        <app-raceday-season-race-leaderboard
+          [seasonStandings]="parentComponent().seasonStandings"
+          [widget]="widget()"
+        ></app-raceday-season-race-leaderboard>
+      }
       @case ("lane-view") {
         <app-raceday-lane-view
           [parent]="parentComponent()"

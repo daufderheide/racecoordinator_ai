@@ -22,6 +22,7 @@ export type WidgetType =
   | "leaderboard"
   | "group-leaderboard"
   | "season-leaderboard"
+  | "season-race-leaderboard"
   | "lane-view"
   | "on-deck"
   | "next-heat"
