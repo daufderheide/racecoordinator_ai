@@ -101,10 +101,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     logger.info("Setting debounce to {}", config.debounce);
     writeData(new byte[] {0x44, debounceByte, TERMINATOR_LF}); // Dn
 
-    // Relay type 1 = normally on, 0 = normally off
-    byte relayByte = config.normallyClosedRelays ? (byte) 0x31 : (byte) 0x30;
-    logger.info("Setting relay normally closed to {}", config.normallyClosedRelays);
-    writeData(new byte[] {0x49, relayByte, TERMINATOR_LF}); // I0 / I1
+    logger.info("Setting relay forced for software no relay support");
+    writeData(new byte[] {0x49, 0x30, TERMINATOR_LF}); // I0 / I1
 
     // Start sending data
     logger.info("Sending START_COMMAND");
@@ -276,8 +274,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   public void setLanePower(boolean on, int lane) {
     super.setLanePower(on, lane);
     // Trackmate supports per-lane relays via 'n' (0x6E) and a bitmask.
-    // 'n' sets the power state for relays (bit = 1 for power ON, bit = 0 for power OFF).
-    // The hardware handles NO vs NC relay logic internally based on configuration ('I0'/'I1').
+    // 'n' sets the power state for relays (bit = 1 for power ON, bit = 0 for power
+    // OFF).
+    // The hardware handles NO vs NC relay logic internally based on configuration
+    // ('I0'/'I1').
     int bitmask = 0;
     for (int i = 0; i < getNumLanes(); i++) {
       Boolean lanePower = lastLanePower.get(i);
