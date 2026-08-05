@@ -571,15 +571,34 @@
                       />
                     </div>
                   </div>
+                </div>
+              </div>
+            }
+          </div>
 
-                  <!-- Season Points Section -->
+          <!-- Season Points Section -->
+          <div id="season-points-section" class="config-section">
+            <div
+              class="section-header"
+              (click)="toggleSection('season_points')"
+            >
+              <span
+                class="expander-icon"
+                [class.collapsed]="!sectionsExpanded.season_points"
+                >▼</span
+              >
+              <h1>{{ "SS_TITLE" | translate }}</h1>
+            </div>
+            @if (sectionsExpanded.season_points) {
+              <div class="section-content">
+                <div class="scoring-layout">
+                  <!-- Overall Position Points -->
                   <div class="scoring-column">
                     <h2 class="config-header">
-                      {{ "SS_TITLE" | translate }}
+                      {{ "SS_POSITION_POINTS" | translate }}
                     </h2>
                     @if (editingRace.season_scoring) {
                       <div class="config-section">
-                        <label>{{ "SS_POSITION_POINTS" | translate }}</label>
                         <div class="season-points-list">
                           @for (
                             pts of editingRace.season_scoring.position_points;
@@ -587,11 +606,15 @@
                             let idx = $index
                           ) {
                             <div class="season-point-row">
-                              <span class="season-pos-label">#{{ idx + 1 }}:</span>
+                              <span class="season-pos-label"
+                                >#{{ idx + 1 }}:</span
+                              >
                               <input
                                 type="number"
                                 [(ngModel)]="
-                                  editingRace.season_scoring.position_points[idx]
+                                  editingRace.season_scoring.position_points[
+                                    idx
+                                  ]
                                 "
                                 (ngModelChange)="captureState()"
                                 min="0"
@@ -615,12 +638,20 @@
                           </button>
                         </div>
                       </div>
+                    }
+                  </div>
 
+                  <!-- Heat Position Points -->
+                  <div class="scoring-column">
+                    <h2 class="config-header">
+                      {{ "SS_HEAT_POSITION_POINTS" | translate }}
+                    </h2>
+                    @if (editingRace.season_scoring) {
                       <div class="config-section">
-                        <label>{{ "SS_HEAT_POSITION_POINTS" | translate }}</label>
                         <div class="season-points-list">
                           @for (
-                            hpts of editingRace.season_scoring.heat_position_points;
+                            hpts of editingRace.season_scoring
+                              .heat_position_points;
                             track $index;
                             let lidx = $index
                           ) {
@@ -631,9 +662,8 @@
                               <input
                                 type="number"
                                 [(ngModel)]="
-                                  editingRace.season_scoring.heat_position_points[
-                                    lidx
-                                  ]
+                                  editingRace.season_scoring
+                                    .heat_position_points[lidx]
                                 "
                                 (ngModelChange)="captureState()"
                                 min="0"

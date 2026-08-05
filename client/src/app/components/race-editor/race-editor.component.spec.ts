@@ -1585,6 +1585,32 @@ describe("RaceEditorComponent", () => {
       );
       expect(payload.start_at_current).toBe(true);
     });
+
+    it("should call captureState when adding a season position point", () => {
+      spyOn(component, "captureState");
+      component.editingRace.season_scoring = {
+        position_points: [10],
+        heat_position_points: [5],
+      };
+      component.addSeasonPositionPoint();
+      expect(component.editingRace.season_scoring.position_points).toEqual([
+        10, 0,
+      ]);
+      expect(component.captureState).toHaveBeenCalled();
+    });
+
+    it("should call captureState when removing a season position point", () => {
+      spyOn(component, "captureState");
+      component.editingRace.season_scoring = {
+        position_points: [10, 5, 2],
+        heat_position_points: [5],
+      };
+      component.removeSeasonPositionPoint(1);
+      expect(component.editingRace.season_scoring.position_points).toEqual([
+        10, 2,
+      ]);
+      expect(component.captureState).toHaveBeenCalled();
+    });
   });
 
   describe("Guided Help", () => {
