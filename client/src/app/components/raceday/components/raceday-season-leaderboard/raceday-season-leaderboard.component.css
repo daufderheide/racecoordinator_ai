@@ -1,0 +1,96 @@
+app-raceday-season-leaderboard {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.season-leaderboard-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.leaderboard-title {
+  color: #38bdf8;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.leaderboard-list {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+}
+
+.leaderboard-scroll-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.leaderboard-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.leaderboard-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.5);
+}
+
+.leaderboard-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+.leaderboard-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  min-height: var(--row-height, 30px);
+  height: auto;
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  box-sizing: border-box;
+  transition: background 0.2s ease;
+}
+
+.leaderboard-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.leader-gold {
+  color: #fbbf24;
+}
+
+.leader-white {
+  color: #f8fafc;
+}
+
+.leaderboard-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.leaderboard-empty-message {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 15px;
+  text-align: center;
+  padding: 40px 10px;
+  font-style: italic;
+}
