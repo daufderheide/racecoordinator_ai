@@ -606,7 +606,7 @@ public class ClientCommandTaskHandlerTest {
 
     setLanePowerHandler.handle(mockCtx);
 
-    verify(mockRace).setLanePower(false, 1);
+    verify(mockRace).setLanePower(false, 0);
     verify(mockCtx).status(200);
     verify(mockCtx).result("Lane 1 power set to false");
   }
@@ -683,7 +683,7 @@ public class ClientCommandTaskHandlerTest {
 
     setLanePowerHandler.handle(mockCtx);
 
-    verify(mockProtocol).setLanePower(false, 1);
+    verify(mockProtocol).setLanePower(false, 0);
     verify(mockCtx).status(200);
     verify(mockCtx).result("Lane 1 power set to false");
   }

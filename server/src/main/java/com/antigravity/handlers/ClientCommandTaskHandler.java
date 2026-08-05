@@ -878,6 +878,16 @@ public class ClientCommandTaskHandler {
       ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
 
       boolean success = finalProtocol.open();
+      if (success) {
+        logger.info(
+            "Interface initialized successfully. Setting initial relay power state to OFF for {} lanes.",
+            request.getLaneCount());
+        finalProtocol.setMainPower(false);
+        for (int i = 0; i < request.getLaneCount(); i++) {
+          finalProtocol.setLanePower(false, i);
+        }
+      }
+
       InitializeInterfaceResponse response =
           InitializeInterfaceResponse.newBuilder()
               .setSuccess(success)
@@ -960,17 +970,22 @@ public class ClientCommandTaskHandler {
     try {
       int lane = Integer.parseInt(ctx.pathParam("lane"));
       boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
-      logger.info("ClientCommand received: set-lane-power lane {} on {}", lane, on);
+      int laneIndex = lane - 1;
+      logger.info(
+          "ClientCommand received: set-lane-power lane param: {}, 0-based laneIndex: {}, on: {}",
+          lane,
+          laneIndex,
+          on);
       logReplayCommand("setLanePower", mapOf("lane", lane, "on", on));
       com.antigravity.race.Race race = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
       if (race != null) {
-        race.setLanePower(on, lane);
+        race.setLanePower(on, laneIndex);
         ctx.status(200).result("Lane " + lane + " power set to " + on);
       } else {
         ProtocolDelegate protocol = ClientSubscriptionManager.getInstance().getProtocol();
         if (protocol != null) {
-          protocol.setLanePower(on, lane);
+          protocol.setLanePower(on, laneIndex);
           ctx.status(200).result("Lane " + lane + " power set to " + on);
         } else {
           ctx.status(404).result("No active race or interface found");

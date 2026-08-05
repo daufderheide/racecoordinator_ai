@@ -22,10 +22,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
 
   private static final byte START_COMMAND = 0x53; // 'S'
 
-  // NC Relay turns track power on with 'E'
-  private static final byte DEENERGIZE_COMMAND = 0x45; // 'E'
-  // NC Relay turns track power off with 'R'
-  private static final byte ENERGIZE_COMMAND = 0x52; // 'R'
+  private static final byte MAIN_POWER_ON_COMMAND = 0x52; // 'R'
+  private static final byte MAIN_POWER_OFF_COMMAND = 0x45; // 'E'
   private static final byte TERMINATOR_LF = 0x0A;
   private static final byte TERMINATOR_CR = 0x0D;
 
@@ -257,17 +255,20 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public void setMainPower(boolean on) {
     super.setMainPower(on);
-    boolean powerState = config.normallyClosedRelays ? !on : on;
-    byte command = powerState ? ENERGIZE_COMMAND : DEENERGIZE_COMMAND;
+    byte command;
+    if (config.normallyClosedRelays) {
+      command =
+          on ? MAIN_POWER_OFF_COMMAND : MAIN_POWER_ON_COMMAND; // 'E' for ON, 'R' for OFF in NC mode
+    } else {
+      command =
+          on ? MAIN_POWER_ON_COMMAND : MAIN_POWER_OFF_COMMAND; // 'R' for ON, 'E' for OFF in NO mode
+    }
     logger.info(
-        "Setting main power. on: "
-            + on
-            + ", NC: "
-            + config.normallyClosedRelays
-            + ", State: "
-            + powerState
-            + ", Command: "
-            + (char) command);
+        "Setting main power. Requested ON: {}, NC: {}, Command: {} (0x{})",
+        on,
+        config.normallyClosedRelays,
+        (char) command,
+        String.format("%02X", command));
     writeData(new byte[] {command, TERMINATOR_LF});
   }
 
@@ -275,27 +276,26 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   public void setLanePower(boolean on, int lane) {
     super.setLanePower(on, lane);
     // Trackmate supports per-lane relays via 'n' (0x6E) and a bitmask.
-    // 'n' sets the energize state for relays (bit = 1 to energize, bit = 0 to de-energize).
-    // For Normally Open relays (NC=false): energize (1) = power ON, de-energize (0) = power OFF.
-    // For Normally Closed relays (NC=true): de-energize (0) = power ON, energize (1) = power OFF.
+    // 'n' sets the power state for relays (bit = 1 for power ON, bit = 0 for power OFF).
+    // The hardware handles NO vs NC relay logic internally based on configuration ('I0'/'I1').
     int bitmask = 0;
     for (int i = 0; i < getNumLanes(); i++) {
       Boolean lanePower = lastLanePower.get(i);
       boolean lanePowerOn = lanePower != null && lanePower;
-      boolean energize = config.normallyClosedRelays ? !lanePowerOn : lanePowerOn;
-      if (energize) {
+      if (lanePowerOn) {
         bitmask |= (1 << i);
       }
     }
     byte commandPrefix = (byte) 0x6E; // 'n'
 
+    String bitmaskBin = String.format("%8s", Integer.toBinaryString(bitmask)).replace(' ', '0');
     logger.info(
-        "Setting lane power. NC: {},  Lane: {}, On: {}, Command: {}, Bitmask: {}",
-        config.normallyClosedRelays,
-        lane,
+        "Setting lane power. Requested ON: {}, 0-based LaneIndex: {}, NC: {}, Bitmask: 0x{} (bin: {})",
         on,
-        (char) commandPrefix,
-        bitmask);
+        lane,
+        config.normallyClosedRelays,
+        String.format("%02X", bitmask),
+        bitmaskBin);
     byte[] message = new byte[] {commandPrefix, (byte) bitmask, TERMINATOR_LF};
     writeData(message);
   }
