@@ -9,8 +9,9 @@ This guide explains how to start, configure, and verify the network-based WebSoc
 ## 1. Start the Race Coordinator Server
 
 Start the Race Coordinator application on your host machine:
+* Go to the directory where race coordinator is installed.
 * **Linux/macOS**: `./run_server.sh`
-* **Windows**: `.\run_server.ps1`
+* **Windows (from PowerShell)**: `.\run_server.ps1`
 
 Once started, ensure the application is running and accessible (typically via a browser window at http://localhost:4200).
 
