@@ -14,6 +14,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
@@ -29,10 +30,18 @@ import { NavigationService } from "@app/services/navigation.service";
   selector: "app-event-editor",
   templateUrl: "./event-editor.component.html",
   styleUrls: ["./event-editor.component.css"],
-  imports: [EditorTitleComponent, TranslatePipe, FormsModule, DragDropModule],
+  imports: [
+    EditorTitleComponent,
+    TranslatePipe,
+    FormsModule,
+    DragDropModule,
+    ConfirmationModalComponent,
+  ],
 })
 export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   isNavigationApproved = false;
+  showDiscardConfirm = false;
+  private pendingDeactivate: ((confirm: boolean) => void) | null = null;
 
   editingEvent: Event = {
     name: "",
@@ -77,8 +86,14 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
 
     this.subscriptions.push(
-      this.undoManager.stateCommitted$.subscribe(() => {
-        this.autoSaveEvent();
+      this.undoManager.stateCommitted$.subscribe((event) => {
+        if (
+          event.type === "push" ||
+          event.type === "undo" ||
+          event.type === "redo"
+        ) {
+          this.autoSaveEvent();
+        }
       }),
     );
   }
@@ -242,6 +257,32 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   hasChanges(): boolean {
     return this.isDirtyState();
+  }
+
+  confirmDiscard(): Promise<boolean> {
+    this.showDiscardConfirm = true;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    return new Promise((resolve) => {
+      this.pendingDeactivate = resolve;
+    });
+  }
+
+  onConfirmDiscard(): void {
+    this.showDiscardConfirm = false;
+    this.isNavigationApproved = true;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(true);
+      this.pendingDeactivate = null;
+    }
+  }
+
+  onCancelDiscard(): void {
+    this.showDiscardConfirm = false;
+    if (this.pendingDeactivate) {
+      this.pendingDeactivate(false);
+      this.pendingDeactivate = null;
+    }
   }
 
   autoSaveEvent(): void {

@@ -17,7 +17,9 @@
             id="season-name"
             type="text"
             class="form-input"
-            [class.invalid]="isNameDuplicate || (!editingSeason.name && isDirty)"
+            [class.invalid]="
+              isNameDuplicate || (!editingSeason.name && isDirty)
+            "
             [(ngModel)]="editingSeason.name"
             (ngModelChange)="captureState()"
             placeholder="e.g. 2026 Winter Championship"
@@ -51,3 +53,14 @@
     }
   </div>
 </div>
+
+<!-- Discard Changes Confirmation -->
+<app-confirmation-modal
+  [visible]="showDiscardConfirm"
+  [title]="'UE_CONFIRM_DISCARD_TITLE' | translate"
+  [message]="'UE_CONFIRM_DISCARD_MESSAGE' | translate"
+  [confirmText]="'COMMON_CONFIRM' | translate"
+  [cancelText]="'COMMON_CANCEL' | translate"
+  (confirm)="onConfirmDiscard()"
+  (cancel)="onCancelDiscard()"
+></app-confirmation-modal>
