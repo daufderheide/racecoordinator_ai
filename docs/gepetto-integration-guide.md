@@ -6,48 +6,13 @@ This guide explains how to start, configure, and verify the network-based WebSoc
 
 ---
 
-## 1. Bringing Up the Race Coordinator Server
+## 1. Start the Race Coordinator Server
 
-The Race Coordinator AI repository contains convenience scripts to start both the Java backend (port `7070`) and the Angular web frontend (port `4200`) concurrently.
+Start the Race Coordinator application on your host machine:
+* **Linux/macOS**: `./run_server.sh`
+* **Windows**: `.\run_server.ps1`
 
-### On macOS / Linux
-1. Ensure Maven is installed:
-   ```bash
-   brew install mvn
-   ```
-2. Navigate to the repository root and make the scripts executable:
-   ```bash
-   cd racecoordinator_ai
-   chmod +x run_server.sh run_client.sh
-   ```
-3. Run the application:
-   ```bash
-   ./run_server.sh
-   ```
-   *(Note: On the first launch, dependencies will be downloaded, which may take a few moments. Once started, a browser window will automatically open to http://localhost:4200.)*
-4. Or, start in headless mode (starts ONLY the backend server without launching the frontend or browser):
-   ```bash
-   ./run_server.sh --headless
-   ```
-
-### On Windows
-1. Open PowerShell as Administrator.
-2. Allow script execution if necessary:
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-   ```
-3. Navigate to the repository root:
-   ```powershell
-   cd racecoordinator_ai
-   ```
-4. Run the application:
-   ```powershell
-   .\run_server.ps1
-   ```
-5. Or, start in headless mode:
-   ```powershell
-   .\run_server.ps1 -Headless
-   ```
+Once started, ensure the application is running and accessible (typically via a browser window at http://localhost:4200).
 
 ### Configuring WebSocket Track Interfaces
 Once the server is running, configure your virtual track interfaces in the Race Coordinator web interface:
