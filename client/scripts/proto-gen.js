@@ -75,6 +75,7 @@ const protoFiles = [
   "../server/proto/server/demo.proto",
   "../server/proto/server/full_update.proto",
   "../server/proto/server/system_state.proto",
+  "../server/proto/server/season_standing.proto",
 ];
 
 const jsOutputFile = path.join(protoOutputDir, "message.js");

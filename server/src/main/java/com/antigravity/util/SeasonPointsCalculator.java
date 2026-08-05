@@ -1,13 +1,19 @@
 package com.antigravity.util;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Season;
 import com.antigravity.models.SeasonRaceRecord;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.SeasonScoring;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Heat;
+import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.service.DatabaseService;
+import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -152,7 +158,7 @@ public class SeasonPointsCalculator {
         continue;
       }
       String driverId = rp.getDriver().getEntityId();
-      String driverName = rp.getDriver().getName();
+      String driverName = rp.getDriver().getDisplayName();
       int rank = rp.getRank() > 0 ? rp.getRank() : (i + 1);
 
       int posPoints = 0;
@@ -219,7 +225,87 @@ public class SeasonPointsCalculator {
     return results;
   }
 
+  public static List<DriverSeasonStanding> calculateLiveStandings(
+      Season dbSeason, Race runtimeRace) {
+    Season baseSeason = dbSeason != null ? dbSeason : new Season("", 0);
+    List<SeasonRaceRecord> races = new ArrayList<>(baseSeason.getRaces());
+
+    if (runtimeRace != null
+        && runtimeRace.getDrivers() != null
+        && !runtimeRace.getDrivers().isEmpty()) {
+      EventExecutionManager eventMgr = EventExecutionManager.getInstance();
+      if (eventMgr.isEventActive()) {
+        Map<String, SeasonDriverResult> eventLiveMap = new HashMap<>();
+        Map<String, SeasonDriverResult> accumulated = eventMgr.getEventDriverResultsMap();
+        if (accumulated != null) {
+          eventLiveMap.putAll(accumulated);
+        }
+
+        List<SeasonDriverResult> activeRaceResults = calculateDriverResultsForRace(runtimeRace);
+        for (SeasonDriverResult r : activeRaceResults) {
+          String dId = r.getDriverId();
+          SeasonDriverResult existing = eventLiveMap.get(dId);
+          if (existing != null) {
+            int combinedPosPts = existing.getOverallPoints() + r.getOverallPoints();
+            int combinedHeatPts = existing.getHeatPoints() + r.getHeatPoints();
+            int combinedTotal = combinedPosPts + combinedHeatPts;
+            int bestRank = Math.min(existing.getOverallRank(), r.getOverallRank());
+            eventLiveMap.put(
+                dId,
+                new SeasonDriverResult(
+                    dId,
+                    r.getDriverName(),
+                    bestRank,
+                    combinedPosPts,
+                    combinedHeatPts,
+                    combinedTotal));
+          } else {
+            eventLiveMap.put(dId, r);
+          }
+        }
+
+        List<SeasonDriverResult> liveEventResults = new ArrayList<>(eventLiveMap.values());
+        String eventName =
+            eventMgr.getActiveEvent() != null ? eventMgr.getActiveEvent().getName() : "Event";
+        SeasonRaceRecord liveRecord =
+            new SeasonRaceRecord(
+                "live_event", eventName, System.currentTimeMillis(), liveEventResults);
+        races.add(liveRecord);
+      } else {
+        List<SeasonDriverResult> liveResults = calculateDriverResultsForRace(runtimeRace);
+        if (liveResults != null && !liveResults.isEmpty()) {
+          String raceName =
+              runtimeRace.getRaceModel() != null ? runtimeRace.getRaceModel().getName() : "Race";
+          SeasonRaceRecord liveRecord =
+              new SeasonRaceRecord("live_race", raceName, System.currentTimeMillis(), liveResults);
+          races.add(liveRecord);
+        }
+      }
+    }
+
+    Season transientSeason =
+        new Season(
+            baseSeason.getName(),
+            baseSeason.getDrops(),
+            races,
+            baseSeason.getEntityId(),
+            baseSeason.getId());
+
+    return calculateStandings(transientSeason);
+  }
+
   public static List<DriverSeasonStanding> calculateStandings(Season season) {
+    DatabaseContext dbCtx = null;
+    try {
+      dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
+    } catch (Exception ignored) {
+    }
+    MongoDatabase db = dbCtx != null ? dbCtx.getDatabase() : null;
+    return calculateStandings(season, db);
+  }
+
+  public static List<DriverSeasonStanding> calculateStandings(
+      Season season, MongoDatabase database) {
     if (season == null || season.getRaces() == null) {
       return new ArrayList<>();
     }
@@ -243,6 +329,15 @@ public class SeasonPointsCalculator {
         driverRaceMap
             .computeIfAbsent(driverId, k -> new ArrayList<>())
             .add(new java.util.AbstractMap.SimpleEntry<>(raceRecord, result));
+      }
+    }
+
+    if (database != null) {
+      for (String dId : driverRaceMap.keySet()) {
+        Driver d = DatabaseService.getInstance().getDriver(database, dId);
+        if (d != null && d.getDisplayName() != null && !d.getDisplayName().trim().isEmpty()) {
+          driverNames.put(dId, d.getDisplayName());
+        }
       }
     }
 

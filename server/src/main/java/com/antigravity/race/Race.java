@@ -912,6 +912,9 @@ public class Race implements ProtocolListener {
     if (groupStandings != null) {
       dataBuilder.setGroupStandingsUpdate(groupStandings);
     }
+    if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
+      dataBuilder.setRace(RaceConverter.toProto(this));
+    }
     broadcast(dataBuilder.build());
   }
 

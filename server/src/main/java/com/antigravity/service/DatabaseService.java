@@ -600,6 +600,19 @@ public class DatabaseService {
     }
   }
 
+  public Season getSeason(MongoDatabase database, String seasonId) {
+    if (seasonId == null || seasonId.trim().isEmpty() || database == null) {
+      return null;
+    }
+    try {
+      MongoCollection<Season> collection = database.getCollection("seasons", Season.class);
+      return collection.find(com.mongodb.client.model.Filters.eq("entity_id", seasonId)).first();
+    } catch (Exception e) {
+      logger.error("Failed to get season by entity_id: " + seasonId, e);
+      return null;
+    }
+  }
+
   public void commitRaceToSeason(
       MongoDatabase database,
       String seasonId,

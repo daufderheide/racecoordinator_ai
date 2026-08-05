@@ -8,6 +8,7 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -183,6 +184,11 @@ public class RaceConverter {
   }
 
   public static com.antigravity.proto.Race toProto( // fqn-collision
+      com.antigravity.race.Race race) { // fqn-collision
+    return toProto(race, new HashSet<>());
+  }
+
+  public static com.antigravity.proto.Race toProto( // fqn-collision
       com.antigravity.race.Race race, Set<String> sentObjectIds) { // fqn-collision
     com.antigravity.proto.Race.Builder builder = // fqn-collision
         com.antigravity.proto.Race.newBuilder() // fqn-collision
@@ -209,6 +215,45 @@ public class RaceConverter {
       }
       builder.setCurrentEventRaceIndex(eventMgr.getCurrentRaceIndex());
       builder.setAutoAdvanceRemainingSeconds(eventMgr.getAutoAdvanceRemainingSeconds());
+    }
+
+    if (race.getSeasonEntityId() != null && !race.getSeasonEntityId().isEmpty()) {
+      String seasonId = race.getSeasonEntityId();
+      builder.setIsSeason(true);
+      builder.setSeasonId(seasonId);
+      com.antigravity.context.DatabaseContext dbCtx = race.getDatabaseContext(); // fqn-collision
+      if (dbCtx == null) {
+        dbCtx =
+            com.antigravity.race.ClientSubscriptionManager.getInstance()
+                .getDatabaseContext(); // fqn-collision
+      }
+      if (dbCtx != null && dbCtx.getDatabase() != null) {
+        com.antigravity.models.Season season = // fqn-collision
+            com.antigravity.service.DatabaseService.getInstance() // fqn-collision
+                .getSeason(dbCtx.getDatabase(), seasonId);
+        if (season != null) {
+          builder.setSeasonName(season.getName());
+          java.util.List<
+                  com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding> // fqn-collision
+              standings =
+                  com.antigravity.util.SeasonPointsCalculator.calculateLiveStandings(
+                      season, race); // fqn-collision
+          if (standings != null) {
+            for (com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding
+                standing : // fqn-collision
+                standings) {
+              builder.addSeasonStandings(
+                  com.antigravity.proto.SeasonStanding.newBuilder() // fqn-collision
+                      .setDriverId(standing.getDriverId())
+                      .setDriverName(standing.getDriverName())
+                      .setNetPoints(standing.getNetPoints())
+                      .setGrossPoints(standing.getGrossPoints())
+                      .setRacesRun(standing.getRacesRun())
+                      .build());
+            }
+          }
+        }
+      }
     }
 
     return builder.build();

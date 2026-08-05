@@ -116,6 +116,10 @@ public class EventExecutionManager {
     initializeAndStartRace(race0.getRaceId(), this.currentQualifiedParticipantIds);
   }
 
+  public Map<String, SeasonDriverResult> getEventDriverResultsMap() {
+    return new HashMap<>(eventDriverResultsMap);
+  }
+
   public synchronized void onRaceOver(Race completedRace) {
     if (!isEventActive()) {
       return;

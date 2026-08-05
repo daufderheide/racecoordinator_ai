@@ -19,8 +19,18 @@ export class RacedaySeasonLeaderboardComponent {
   sortedStandings = computed(() => {
     const list = [...(this.seasonStandings() || [])];
     return list.sort((a, b) => {
-      const aPts = a.net_points !== undefined ? a.net_points : a.score || 0;
-      const bPts = b.net_points !== undefined ? b.net_points : b.score || 0;
+      const aPts =
+        a.net_points !== undefined
+          ? a.net_points
+          : a.netPoints !== undefined
+            ? a.netPoints
+            : a.score || 0;
+      const bPts =
+        b.net_points !== undefined
+          ? b.net_points
+          : b.netPoints !== undefined
+            ? b.netPoints
+            : b.score || 0;
       return bPts - aPts;
     });
   });

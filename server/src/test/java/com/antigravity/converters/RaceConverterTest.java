@@ -220,6 +220,36 @@ public class RaceConverterTest {
     assertNotNull(proto.getRecordData());
   }
 
+  @Test
+  public void testToProto_OverloadedMethod() {
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    com.antigravity.models.Track trackModel =
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .lanes(lanes)
+            .arduinoConfigs(null)
+            .entityId("t1")
+            .id(null)
+            .build();
+
+    List<com.antigravity.race.RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Team("Team", null, new ArrayList<>(), "t1", null)));
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(new com.antigravity.models.Race.Builder().withName("Test Race").build())
+            .track(trackModel)
+            .drivers(drivers)
+            .isDemoMode(true)
+            .build();
+
+    com.antigravity.proto.Race proto = RaceConverter.toProto(race);
+    assertNotNull(proto);
+    assertEquals("Test Race", proto.getRace().getName());
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }

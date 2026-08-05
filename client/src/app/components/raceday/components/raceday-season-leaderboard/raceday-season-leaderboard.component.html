@@ -15,7 +15,7 @@
   <div class="leaderboard-list">
     @if (sortedStandings().length === 0) {
       <div class="leaderboard-empty-message">
-        {{ "SM_NO_SEASONS" | translate }}
+        {{ "SM_NO_RACES_RUN" | translate }}
       </div>
     } @else {
       <div class="leaderboard-scroll-content">
@@ -51,7 +51,9 @@
             >
               <div class="leaderboard-rank">#{{ i + 1 }}</div>
               <div class="leaderboard-name">
-                {{ item.driver_name || item.name || "Driver" }}
+                {{
+                  item.driver_name || item.driverName || item.name || "Driver"
+                }}
               </div>
             </div>
             <div
@@ -67,7 +69,9 @@
               {{
                 (item.net_points !== undefined
                   ? item.net_points
-                  : item.score || 0
+                  : item.netPoints !== undefined
+                    ? item.netPoints
+                    : item.score || 0
                 ) | number: getScoreFormat()
               }}
             </div>

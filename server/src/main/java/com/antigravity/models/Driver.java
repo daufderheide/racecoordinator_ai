@@ -131,6 +131,13 @@ public class Driver extends Model {
     return nickname;
   }
 
+  public String getDisplayName() {
+    if (nickname != null && !nickname.trim().isEmpty()) {
+      return nickname;
+    }
+    return name;
+  }
+
   public String getAvatarUrl() {
     return avatarUrl;
   }

@@ -982,24 +982,27 @@ export class DefaultRacedaySetupComponent implements OnInit {
     const eventId = this.isEventMode
       ? this.selectedEvent?.entity_id || ""
       : undefined;
+    const seasonId = this.selectedSeason?.entity_id || undefined;
     const demoConfig = isDemo
       ? this.demoConfig || this.dataService.getDefaultDemoConfig()
       : undefined;
 
-    const initializeObservable = eventId
-      ? this.dataService.initializeRace(
-          raceId,
-          settings.selectedDriverIds,
-          isDemo,
-          demoConfig,
-          eventId,
-        )
-      : this.dataService.initializeRace(
-          raceId,
-          settings.selectedDriverIds,
-          isDemo,
-          demoConfig,
-        );
+    const initializeObservable =
+      eventId || seasonId
+        ? this.dataService.initializeRace(
+            raceId,
+            settings.selectedDriverIds,
+            isDemo,
+            demoConfig,
+            eventId,
+            seasonId,
+          )
+        : this.dataService.initializeRace(
+            raceId,
+            settings.selectedDriverIds,
+            isDemo,
+            demoConfig,
+          );
 
     initializeObservable.subscribe({
       next: (response) => {
