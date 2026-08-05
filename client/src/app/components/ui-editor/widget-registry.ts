@@ -124,6 +124,30 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       valueTextColor: "",
     }),
   },
+  "season-name": {
+    defaultSettings: () => ({
+      labelFontFamily: "",
+      labelFontSize: 13,
+      labelTextColor: "",
+      valueFontFamily: "",
+      valueFontSize: 18,
+      valueTextColor: "",
+    }),
+  },
+  "season-leaderboard": {
+    defaultSettings: () => ({
+      decimalPlaces: 0,
+      titleFontFamily: "",
+      titleFontSize: 18,
+      titleTextColor: "",
+      overallLeaderFontFamily: "",
+      overallLeaderFontSize: 16,
+      overallLeaderTextColor: "",
+      restFontFamily: "",
+      restFontSize: 16,
+      restTextColor: "",
+    }),
+  },
   "track-name": {
     defaultSettings: () => ({
       labelFontFamily: "",
