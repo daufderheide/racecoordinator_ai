@@ -77,6 +77,16 @@ public class HardwareProtocolFactory {
       }
     }
 
+    if (protocols.isEmpty()) {
+      WebSocketConfig config = new WebSocketConfig("Default WebSocket", 7070);
+      WebSocketProtocol protocol = new WebSocketProtocol(config, numLanes);
+      protocol.setInterfaceIndex(interfaceIndex++);
+      if (listener != null) {
+        protocol.setListener(listener);
+      }
+      protocols.add(protocol);
+    }
+
     return protocols;
   }
 }

@@ -462,9 +462,9 @@ public class ClientSubscriptionManager {
         return false;
       }
 
-      // 1. Localhost Auto-Admin
+      // 1. Localhost or Local LAN Auto-Admin
       String remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
-      if (NetworkUtils.isLocalhost(remoteIp, null)) {
+      if (NetworkUtils.isLocalAddress(remoteIp, null)) {
         return true;
       }
       // 2. Token-based Director
@@ -566,6 +566,8 @@ public class ClientSubscriptionManager {
       return;
     }
 
+    logger.info("Received WebSocket InterfaceEvent from session {}: event={}", ctx.session.getRemoteAddress(), event);
+
     // Broadcast event to all other clients connected to /api/interface-data for overlay updates
     interfaceSubscribers.forEach(
         sub -> {
@@ -579,6 +581,8 @@ public class ClientSubscriptionManager {
         });
 
     if (currentRace != null) {
+      logger.info("Active race found. Processing event: hasLap={}, hasSegment={}, hasCallbutton={}", 
+          event.hasLap(), event.hasSegment(), event.hasCallbutton());
       int eventInterfaceIndex = -1;
       if (event.hasLap()) {
         eventInterfaceIndex = event.getLap().getInterfaceIndex();
@@ -615,6 +619,7 @@ public class ClientSubscriptionManager {
 
       if (event.hasLap()) {
         LapEvent lap = event.getLap();
+        logger.info("Dispatching lap to race: lane={}, lapTime={}", lap.getLane(), lap.getLapTime());
         currentRace.onLap(
             lap.getLane(), lap.getLapTime(), lap.getInterfaceId(), resolvedInterfaceIndex);
       } else if (event.hasSegment()) {
@@ -636,6 +641,8 @@ public class ClientSubscriptionManager {
           activeWebSocketProtocol.updatePitState(event.getPitOut().getLane(), false);
         }
       }
+    } else {
+      logger.warn("Received WebSocket InterfaceEvent, but currentRace is null! The event will be ignored.");
     }
   }
 }

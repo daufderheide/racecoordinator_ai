@@ -867,12 +867,15 @@ public class ClientCommandTaskHandler {
         protocols.add(websocket);
       }
 
-      ProtocolDelegate finalProtocol;
-      if (protocols.size() >= 1) {
-        finalProtocol = new ProtocolDelegate(protocols);
-      } else {
-        throw new IllegalArgumentException("No configurations provided for initialization");
+      if (protocols.isEmpty()) {
+        WebSocketConfig config = new WebSocketConfig("Default WebSocket", 7070);
+        WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
+        websocket.setInterfaceIndex(interfaceIndex++);
+        websocket.setListener(new TestInterfaceListener());
+        protocols.add(websocket);
       }
+
+      ProtocolDelegate finalProtocol = new ProtocolDelegate(protocols);
 
       // ClientSubscriptionManager handles mutual exclusion in setProtocol
       ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);

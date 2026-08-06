@@ -68,6 +68,11 @@ public class WebSocketProtocol extends DefaultProtocol {
   }
 
   @Override
+  protected boolean requiresHeartbeat() {
+    return false;
+  }
+
+  @Override
   public void close() {
     super.close();
     isConnected = false;
