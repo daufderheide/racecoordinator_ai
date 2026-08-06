@@ -1,6 +1,6 @@
 # Gepetto Slot Car Lap Counter & Race Coordinator Integration Guide
 
-Date: 08/04/2026
+Date: 08/06/2026
 
 This guide explains how to start, configure, and verify the network-based WebSocket integration between the **Gepetto Lap Counter** camera tracking application and the **Race Coordinator AI** slot racing management system.
 
