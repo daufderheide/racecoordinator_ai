@@ -236,9 +236,9 @@ public class RaceConverter {
           java.util.List<
                   com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding> // fqn-collision
               standings =
-                  com.antigravity.util.SeasonPointsCalculator
+                  com.antigravity.util.SeasonPointsCalculator // fqn-collision
                       .calculateLiveStandings( // fqn-collision
-                          season, race); // fqn-collision
+                      season, race); // fqn-collision
           if (standings != null) {
             for (com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding // fqn-collision
                 standing : // fqn-collision

@@ -12,6 +12,11 @@ import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Heat;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.states.HeatOver;
+import com.antigravity.race.states.IRaceState;
+import com.antigravity.race.states.Paused;
+import com.antigravity.race.states.RaceOver;
+import com.antigravity.race.states.Racing;
 import com.antigravity.service.DatabaseService;
 import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
@@ -23,6 +28,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class SeasonPointsCalculator {
+
+  private static boolean hasAnyLaps(Heat heat) {
+    if (heat == null || heat.getDrivers() == null) {
+      return false;
+    }
+    for (DriverHeatData dhd : heat.getDrivers()) {
+      if (dhd != null && dhd.getLaps() != null && !dhd.getLaps().isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public static class DriverSeasonStanding {
     private final String driverId;
@@ -141,6 +158,34 @@ public class SeasonPointsCalculator {
     }
   }
 
+  private static boolean isHeatCompleted(
+      Heat heat, int hIdx, int currentHeatIdx, IRaceState raceState) {
+    if (raceState instanceof RaceOver) {
+      return true;
+    }
+    if (currentHeatIdx >= 0) {
+      if (hIdx < currentHeatIdx) {
+        return true;
+      }
+      if (hIdx == currentHeatIdx) {
+        if (raceState instanceof HeatOver) {
+          return true;
+        }
+        if ((raceState instanceof Racing || raceState instanceof Paused) && hasAnyLaps(heat)) {
+          return true;
+        }
+      }
+    } else {
+      if (heat.getStatistics() != null && heat.getStatistics().getEndTime() != null) {
+        return true;
+      }
+      if (heat.isStarted() && hasAnyLaps(heat)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static List<SeasonDriverResult> calculateDriverResultsForRace(
       com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null || runtimeRace.getDrivers() == null) {
@@ -183,12 +228,22 @@ public class SeasonPointsCalculator {
       driverNames.put(driverId, driverName);
     }
 
-    // 2. Calculate heat position points per driver across all heats
+    // 2. Calculate heat position points per driver across completed or active heats
     Map<String, Integer> driverHeatPoints = new HashMap<>();
     List<Heat> heats = runtimeRace.getHeats();
+    Heat currentHeat = runtimeRace.getCurrentHeat();
+    int currentHeatIdx = (heats != null && currentHeat != null) ? heats.indexOf(currentHeat) : -1;
+    IRaceState raceState = runtimeRace.getState();
+
     if (heats != null) {
-      for (Heat heat : heats) {
+      for (int hIdx = 0; hIdx < heats.size(); hIdx++) {
+        Heat heat = heats.get(hIdx);
         if (heat == null || heat.getDrivers() == null) continue;
+
+        if (!isHeatCompleted(heat, hIdx, currentHeatIdx, raceState)) {
+          continue;
+        }
+
         List<DriverHeatData> heatDrivers = new ArrayList<>(heat.getDrivers());
         // Sort drivers in heat by performance (laps desc, then total time asc)
         heatDrivers.sort(
@@ -203,9 +258,11 @@ public class SeasonPointsCalculator {
 
         for (int laneIdx = 0; laneIdx < heatDrivers.size(); laneIdx++) {
           DriverHeatData dhd = heatDrivers.get(laneIdx);
-          Driver drv = dhd != null ? dhd.getActualDriver() : null;
-          if (drv == null && dhd != null && dhd.getDriver() != null) {
+          Driver drv = null;
+          if (dhd != null && dhd.getDriver() != null && dhd.getDriver().getDriver() != null) {
             drv = dhd.getDriver().getDriver();
+          } else if (dhd != null) {
+            drv = dhd.getActualDriver();
           }
           if (drv == null || Driver.isEmpty(drv)) {
             continue;
