@@ -8,6 +8,7 @@ import com.antigravity.proto.RaceState;
 import com.antigravity.protocols.AbstractSerialProtocol;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.interfaces.ISerialConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -273,30 +274,35 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public void setLanePower(boolean on, int lane) {
     super.setLanePower(on, lane);
-    // Trackmate supports per-lane relays via 'n' (0x6E) and a bitmask.
-    // 'n' sets the power state for relays (bit = 1 for power ON, bit = 0 for power
-    // OFF).
-    // The hardware handles NO vs NC relay logic internally based on configuration
-    // ('I0'/'I1').
-    int bitmask = 255;
-    // for (int i = 0; i < getNumLanes(); i++) {
-    // Boolean lanePower = lastLanePower.get(i);
-    // boolean lanePowerOn = lanePower != null && lanePower;
-    // if (lanePowerOn) {
-    // bitmask |= (1 << i);
-    // }
-    // }
-    byte commandPrefix = on ? (byte) 0x6F : (byte) 0x66; // 'n' or 'f'
+    // Trackmate supports per-lane relays via 'n' (0x6E) and ASCII representation of
+    // bitmask.
+    int bitmask = 0;
+    for (int i = 0; i < getNumLanes(); i++) {
+      Boolean lanePower = lastLanePower.get(i);
+      boolean lanePowerOn = lanePower != null && lanePower;
+      if (lanePowerOn) {
+        bitmask |= (1 << i);
+      }
+    }
+    byte commandPrefix = config.normallyClosedRelays ? (byte) 0x6E : (byte) 0x66; // 'n' or 'f'
 
+    String bitmaskStr = Integer.toString(bitmask);
+    byte[] bitmaskBytes = bitmaskStr.getBytes(StandardCharsets.US_ASCII);
     String bitmaskBin = String.format("%8s", Integer.toBinaryString(bitmask)).replace(' ', '0');
     logger.info(
-        "Setting lane power. Requested ON: {}, 0-based LaneIndex: {}, NC: {}, Bitmask: 0x{} (bin: {})",
+        "Setting lane power. Requested ON: {}, 0-based LaneIndex: {}, NC: {}, Bitmask: {} (0x{}, bin: {})",
         on,
         lane,
         config.normallyClosedRelays,
+        bitmaskStr,
         String.format("%02X", bitmask),
         bitmaskBin);
-    byte[] message = new byte[] {commandPrefix, (byte) bitmask, TERMINATOR_LF};
+
+    byte[] message = new byte[1 + bitmaskBytes.length + 1];
+    message[0] = commandPrefix;
+    System.arraycopy(bitmaskBytes, 0, message, 1, bitmaskBytes.length);
+    message[message.length - 1] = TERMINATOR_LF;
+
     writeData(message);
   }
 
