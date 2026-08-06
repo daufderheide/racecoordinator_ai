@@ -51,7 +51,8 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
     String commPort = getCommPort();
     if (commPort == null || commPort.isEmpty()) {
-      logger.info("No COM port specified for SerialProtocol, status will be CONNECTED (virtual mode)");
+      logger.info(
+          "No COM port specified for SerialProtocol, status will be CONNECTED (virtual mode)");
       isVirtual = true;
       if (listener != null) {
         listener.onInterfaceStatus(InterfaceStatus.CONNECTED, getInterfaceIndex());

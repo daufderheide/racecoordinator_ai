@@ -457,18 +457,37 @@ public class ClientSubscriptionManager {
 
   public boolean isDirectorSession(WsContext ctx) {
     try {
-      String intent = ctx.queryParam("intent");
+      String intent = null;
+      try {
+        intent = ctx.queryParam("intent");
+      } catch (Exception e) {
+        // Ignored in unit tests
+      }
       if ("preview".equals(intent)) {
         return false;
       }
 
       // 1. Localhost or Local LAN Auto-Admin
-      String remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
-      if (NetworkUtils.isLocalAddress(remoteIp, null)) {
+      String remoteIp = null;
+      try {
+        if (ctx.session != null
+            && ctx.session.getRemoteAddress() != null
+            && ctx.session.getRemoteAddress().getAddress() != null) {
+          remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
+        }
+      } catch (Exception e) {
+        // Ignored in unit tests
+      }
+      if (remoteIp != null && NetworkUtils.isLocalAddress(remoteIp, null)) {
         return true;
       }
       // 2. Token-based Director
-      String token = ctx.queryParam("token");
+      String token = null;
+      try {
+        token = ctx.queryParam("token");
+      } catch (Exception e) {
+        // Ignored in unit tests
+      }
       if (token != null && AuthService.getInstance().isValidToken(token)) {
         return true;
       }
@@ -566,7 +585,10 @@ public class ClientSubscriptionManager {
       return;
     }
 
-    logger.info("Received WebSocket InterfaceEvent from session {}: event={}", ctx.session.getRemoteAddress(), event);
+    logger.info(
+        "Received WebSocket InterfaceEvent from session {}: event={}",
+        ctx.session.getRemoteAddress(),
+        event);
 
     // Broadcast event to all other clients connected to /api/interface-data for overlay updates
     interfaceSubscribers.forEach(
@@ -581,8 +603,11 @@ public class ClientSubscriptionManager {
         });
 
     if (currentRace != null) {
-      logger.info("Active race found. Processing event: hasLap={}, hasSegment={}, hasCallbutton={}", 
-          event.hasLap(), event.hasSegment(), event.hasCallbutton());
+      logger.info(
+          "Active race found. Processing event: hasLap={}, hasSegment={}, hasCallbutton={}",
+          event.hasLap(),
+          event.hasSegment(),
+          event.hasCallbutton());
       int eventInterfaceIndex = -1;
       if (event.hasLap()) {
         eventInterfaceIndex = event.getLap().getInterfaceIndex();
@@ -619,7 +644,8 @@ public class ClientSubscriptionManager {
 
       if (event.hasLap()) {
         LapEvent lap = event.getLap();
-        logger.info("Dispatching lap to race: lane={}, lapTime={}", lap.getLane(), lap.getLapTime());
+        logger.info(
+            "Dispatching lap to race: lane={}, lapTime={}", lap.getLane(), lap.getLapTime());
         currentRace.onLap(
             lap.getLane(), lap.getLapTime(), lap.getInterfaceId(), resolvedInterfaceIndex);
       } else if (event.hasSegment()) {
@@ -642,7 +668,8 @@ public class ClientSubscriptionManager {
         }
       }
     } else {
-      logger.warn("Received WebSocket InterfaceEvent, but currentRace is null! The event will be ignored.");
+      logger.warn(
+          "Received WebSocket InterfaceEvent, but currentRace is null! The event will be ignored.");
     }
   }
 }
