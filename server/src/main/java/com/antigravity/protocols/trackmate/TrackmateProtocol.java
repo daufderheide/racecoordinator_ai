@@ -278,15 +278,15 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     // OFF).
     // The hardware handles NO vs NC relay logic internally based on configuration
     // ('I0'/'I1').
-    int bitmask = 0;
-    for (int i = 0; i < getNumLanes(); i++) {
-      Boolean lanePower = lastLanePower.get(i);
-      boolean lanePowerOn = lanePower != null && lanePower;
-      if (lanePowerOn) {
-        bitmask |= (1 << i);
-      }
-    }
-    byte commandPrefix = (byte) 0x6E; // 'n'
+    int bitmask = 255;
+    // for (int i = 0; i < getNumLanes(); i++) {
+    // Boolean lanePower = lastLanePower.get(i);
+    // boolean lanePowerOn = lanePower != null && lanePower;
+    // if (lanePowerOn) {
+    // bitmask |= (1 << i);
+    // }
+    // }
+    byte commandPrefix = on ? (byte) 0x6F : (byte) 0x66; // 'n' or 'f'
 
     String bitmaskBin = String.format("%8s", Integer.toBinaryString(bitmask)).replace(' ', '0');
     logger.info(

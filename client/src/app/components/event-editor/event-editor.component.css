@@ -95,6 +95,21 @@
   box-sizing: border-box;
 }
 
+.editor-section input[type="text"]:focus,
+.editor-section input[type="number"]:focus,
+.editor-section textarea:focus {
+  border-color: #38bdf8;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.editor-section.invalid input[type="text"]:focus,
+.editor-section.invalid input[type="number"]:focus,
+.editor-section.invalid textarea:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
 .description-textarea {
   min-height: 180px;
   resize: vertical;
@@ -290,6 +305,12 @@
   color: #fff;
 }
 
+.driver-limit-input:focus {
+  border-color: #38bdf8;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
 .btn-remove {
   padding: 6px 12px;
   background: rgba(239, 68, 68, 0.2);
@@ -381,6 +402,12 @@
   border-radius: 6px;
   color: #fff;
   font-size: 1.1rem;
+}
+
+.modal-body select:focus {
+  border-color: #38bdf8;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
 }
 
 .modal-actions {

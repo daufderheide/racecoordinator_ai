@@ -101,8 +101,22 @@ export class DataService {
     typeof window !== "undefined" ? window.location.hostname : "localhost";
   private serverPort = 7070;
 
+  private get serverProtocol(): string {
+    return typeof window !== "undefined" &&
+      window.location.protocol === "https:"
+      ? "https"
+      : "http";
+  }
+
+  private get wsProtocol(): string {
+    return typeof window !== "undefined" &&
+      window.location.protocol === "https:"
+      ? "wss"
+      : "ws";
+  }
+
   private get baseUrl(): string {
-    return `http://${this.serverIp}:${this.serverPort}`;
+    return `${this.serverProtocol}://${this.serverIp}:${this.serverPort}`;
   }
 
   public get serverUrl(): string {
@@ -132,13 +146,27 @@ export class DataService {
     private ngZone: NgZone,
     private logger: LoggerService,
   ) {
+    if (typeof window !== "undefined" && window.location.hostname) {
+      this.serverIp = window.location.hostname;
+      if (window.location.port && window.location.port !== "4200") {
+        this.serverPort = parseInt(window.location.port, 10);
+      }
+    }
     const settings = this.settingsService.getSettings();
     if (settings.serverIp) {
       this.serverIp = settings.serverIp;
     }
-    if (settings.serverPort) {
+    if (
+      settings.serverPort &&
+      (typeof window === "undefined" ||
+        !window.location.port ||
+        window.location.port === "4200")
+    ) {
       this.serverPort = settings.serverPort;
     }
+    this.logger.info(
+      `DataService initialized with Base Server URL: ${this.baseUrl}`,
+    );
   }
 
   public setServerAddress(ip: string, port: number) {
@@ -1449,7 +1477,7 @@ export class DataService {
     }
 
     const token = localStorage.getItem("director_token");
-    let wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/race-data`;
+    let wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/race-data`;
     const params = [];
     if (token) params.push(`token=${token}`);
     if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
@@ -1484,7 +1512,7 @@ export class DataService {
     };
 
     this.raceDataSocket.onerror = (err) => {
-      this.logger.debug("Race Data WebSocket error", err);
+      this.logger.error("Race Data WebSocket error on " + wsUrl, err);
       // onerror often followed by onclose, so we rely on onclose for retry
     };
   }
@@ -1504,7 +1532,7 @@ export class DataService {
       } catch (e) {}
     }
 
-    const wsUrl = `ws://${this.serverIp}:${this.serverPort}/api/interface-data`;
+    const wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/interface-data`;
     this.logger.debug(`Connecting to Interface WebSocket: ${wsUrl}`);
     this.interfaceDataSocket = new WebSocket(wsUrl);
     this.interfaceDataSocket.binaryType = "arraybuffer";

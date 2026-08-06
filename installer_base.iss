@@ -50,11 +50,11 @@ Source: "release\RaceCoordinator\vcredist_x86.exe"; DestDir: "{tmp}"; Flags: ign
 
 [Icons]
 ; Desktop Icons
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"""; \
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{sys}\wscript.exe"; Parameters: "{code:GetShortcutParameters}"; \
     IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 ; Start Menu Icons
-Name: "{group}\{#MyAppName}"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"""; \
+Name: "{group}\{#MyAppName}"; Filename: "{sys}\wscript.exe"; Parameters: "{code:GetShortcutParameters}"; \
     IconFilename: "{app}\server\web\favicon.ico"; WorkingDir: "{app}"
 
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
@@ -78,10 +78,74 @@ Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; C
 Filename: "{tmp}\vcredist_x86.exe"; Parameters: "/install /quiet /norestart"; Check: NeedsVCRedist86; StatusMsg: "Installing Visual C++ 2013 Redistributable..."; Flags: waituntilterminated skipifdoesntexist
 
 ; Server
-Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"""; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
-Filename: "{sys}\wscript.exe"; Parameters: """{app}\start_win.vbs"" --headless"; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested
+Filename: "{sys}\wscript.exe"; Parameters: "{code:GetShortcutParameters}"; WorkingDir: "{app}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent; Check: not IsRestartAppRequested
+Filename: "{sys}\wscript.exe"; Parameters: "{code:GetShortcutParameters} --headless"; WorkingDir: "{app}"; Flags: nowait; Check: IsRestartAppRequested
 
 [Code]
+var
+  PreservedShortcutParams: String;
+
+function GetShortcutParameters(Param: String): String;
+var
+  ResultCode: Integer;
+  TempFile: String;
+  ParamsFromFile: String;
+  AnsiParamsFromFile: AnsiString;
+  AppVbsPath: String;
+  VbsPos: Integer;
+begin
+  if PreservedShortcutParams <> '' then
+  begin
+    Result := PreservedShortcutParams;
+    Exit;
+  end;
+
+  AppVbsPath := '"""' + ExpandConstant('{app}\start_win.vbs') + '"""';
+  TempFile := ExpandConstant('{tmp}\existing_shortcut_args.txt');
+  ParamsFromFile := '';
+
+  // Use PowerShell to check existing shortcuts for user-customized port arguments
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "' +
+    '$paths = @(''' + ExpandConstant('{autodesktop}\{#MyAppName}.lnk') + ''', ''' + ExpandConstant('{userdesktop}\{#MyAppName}.lnk') + ''', ''' + ExpandConstant('{commondesktop}\{#MyAppName}.lnk') + ''', ''' + ExpandConstant('{userprograms}\{#MyAppName}.lnk') + '''); ' +
+    '$shell = New-Object -ComObject WScript.Shell; ' +
+    'foreach ($p in $paths) { if (Test-Path $p) { $sc = $shell.CreateShortcut($p); if ($sc.Arguments -and ($sc.Arguments -like ''*--port*'' -or $sc.Arguments -like ''*--mongo-port*'')) { Out-File -FilePath ''' + TempFile + ''' -InputObject $sc.Arguments -Encoding ascii; break; } } }' +
+    '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+
+  if FileExists(TempFile) then
+  begin
+    LoadStringFromFile(TempFile, AnsiParamsFromFile);
+    DeleteFile(TempFile);
+    ParamsFromFile := Trim(String(AnsiParamsFromFile));
+  end;
+
+  if (ParamsFromFile <> '') and ((Pos('--port', ParamsFromFile) > 0) or (Pos('--mongo-port', ParamsFromFile) > 0)) then
+  begin
+    VbsPos := Pos('start_win.vbs', ParamsFromFile);
+    if VbsPos > 0 then
+    begin
+      ParamsFromFile := AppVbsPath + Copy(ParamsFromFile, VbsPos + 13, Length(ParamsFromFile));
+    end
+    else if Pos('start_win.vbs', ParamsFromFile) = 0 then
+    begin
+      ParamsFromFile := AppVbsPath + ' ' + ParamsFromFile;
+    end;
+
+    if Pos('--port', ParamsFromFile) = 0 then
+      ParamsFromFile := ParamsFromFile + ' --port 7070';
+    if Pos('--mongo-port', ParamsFromFile) = 0 then
+      ParamsFromFile := ParamsFromFile + ' --mongo-port 8085';
+
+    Log('Preserving existing user shortcut parameters: ' + ParamsFromFile);
+    PreservedShortcutParams := ParamsFromFile;
+  end
+  else
+  begin
+    Log('Using default shortcut parameters: --port 7070 --mongo-port 8085');
+    PreservedShortcutParams := AppVbsPath + ' --port 7070 --mongo-port 8085';
+  end;
+
+  Result := PreservedShortcutParams;
+end;
 function KillProcesses: Boolean;
 var
   ResultCode: Integer;

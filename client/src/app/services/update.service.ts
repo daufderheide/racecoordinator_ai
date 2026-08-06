@@ -29,8 +29,11 @@ export class UpdateService {
     }
   }
 
-  checkForUpdates(): Observable<UpdateCheckResult> {
-    return this.http.get<UpdateCheckResult>(`${this.apiUrl}/check`);
+  checkForUpdates(force: boolean = false): Observable<UpdateCheckResult> {
+    const url = force
+      ? `${this.apiUrl}/check?force=true`
+      : `${this.apiUrl}/check`;
+    return this.http.get<UpdateCheckResult>(url);
   }
 
   installUpdate(downloadUrl: string): Observable<any> {

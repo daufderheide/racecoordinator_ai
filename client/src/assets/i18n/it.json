@@ -634,6 +634,7 @@
   "RDS_LOG_SERVER": "Livello di log del server",
   "RDS_LOST_CONNECTION": "Connessione al server persa",
   "RDS_MENU_ASSETS": "Asset",
+  "RDS_MENU_CHECK_FOR_UPDATES": "Controlla aggiornamenti",
   "RDS_MENU_CONFIG": "Gestisci",
   "RDS_MENU_CUSTOM_UI": "Personalizza UI",
   "RDS_MENU_DATABASES": "Database",

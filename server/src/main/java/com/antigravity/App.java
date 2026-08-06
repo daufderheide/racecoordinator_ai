@@ -85,7 +85,8 @@ import org.slf4j.LoggerFactory;
 public class App {
 
   private static TransitionWalker.ReachedState<RunningMongodProcess> mongodProcess;
-  private static final int MONGO_PORT = 8085; // Default MongoDB port
+  private static int MONGO_PORT = 8085; // Default MongoDB port
+  private static int serverPort = 7070; // Default Javalin Server port
   private static Javalin app;
   private static MongoClient mongoClient;
   private static boolean flapdoodleRetried = false;
@@ -114,6 +115,82 @@ public class App {
 
   public static final String SERVER_VERSION = "0.0.0_dev";
 
+  static int parseServerPort(String[] args) {
+    int port = 7070;
+    String envPort = System.getenv("SERVER_PORT");
+    if (envPort == null || envPort.trim().isEmpty()) {
+      envPort = System.getenv("PORT");
+    }
+    if (envPort != null && !envPort.trim().isEmpty()) {
+      try {
+        port = Integer.parseInt(envPort.trim());
+      } catch (NumberFormatException e) {
+        logger.warn(
+            "Invalid SERVER_PORT / PORT environment variable '{}'. Defaulting to 7070.", envPort);
+      }
+    }
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        if (("--port".equals(args[i]) || "-p".equals(args[i])) && i + 1 < args.length) {
+          try {
+            port = Integer.parseInt(args[i + 1].trim());
+          } catch (NumberFormatException e) {
+            logger.warn("Invalid --port argument '{}'. Defaulting to {}", args[i + 1], port);
+          }
+        } else if (args[i].startsWith("--port=")) {
+          try {
+            port = Integer.parseInt(args[i].substring("--port=".length()).trim());
+          } catch (NumberFormatException e) {
+            logger.warn("Invalid --port argument '{}'. Defaulting to {}", args[i], port);
+          }
+        }
+      }
+    }
+    return port;
+  }
+
+  static int parseMongoPort(String[] args) {
+    int port = 8085;
+    String envPort = System.getenv("MONGO_PORT");
+    if (envPort != null && !envPort.trim().isEmpty()) {
+      try {
+        port = Integer.parseInt(envPort.trim());
+      } catch (NumberFormatException e) {
+        logger.warn("Invalid MONGO_PORT environment variable '{}'. Defaulting to 8085.", envPort);
+      }
+    }
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        if ("--mongo-port".equals(args[i]) && i + 1 < args.length) {
+          try {
+            port = Integer.parseInt(args[i + 1].trim());
+          } catch (NumberFormatException e) {
+            logger.warn("Invalid --mongo-port argument '{}'. Defaulting to {}", args[i + 1], port);
+          }
+        } else if (args[i].startsWith("--mongo-port=")) {
+          try {
+            port = Integer.parseInt(args[i].substring("--mongo-port=".length()).trim());
+          } catch (NumberFormatException e) {
+            logger.warn("Invalid --mongo-port argument '{}'. Defaulting to {}", args[i], port);
+          }
+        }
+      }
+    }
+    return port;
+  }
+
+  static void showPortConflictDialog(String title, String message, boolean headless) {
+    logger.error("PORT CONFLICT ERROR - {}: {}", title, message.replace("\n", " "));
+    if (!java.awt.GraphicsEnvironment.isHeadless()) {
+      try {
+        javax.swing.JOptionPane.showMessageDialog(
+            null, message, title, javax.swing.JOptionPane.ERROR_MESSAGE);
+      } catch (Exception ex) {
+        logger.error("Failed to display GUI port conflict alert dialog: {}", ex.getMessage());
+      }
+    }
+  }
+
   static boolean shouldUseEmbeddedMongo(String[] args) {
     boolean useEmbeddedMongo = true;
 
@@ -136,6 +213,10 @@ public class App {
     triggerLogRollover(); // Roll log to capture this new session
     try {
       logger.info("Race Coordinator AI Server {}", SERVER_VERSION);
+      serverPort = parseServerPort(args);
+      MONGO_PORT = parseMongoPort(args);
+      logger.info("Configured Server Port: {}, MongoDB Port: {}", serverPort, MONGO_PORT);
+
       String projectDir = System.getProperty("user.dir");
       String appDataDir =
           System.getProperty("app.data.dir", Paths.get(projectDir, "app_data").toString());
@@ -173,10 +254,11 @@ public class App {
       }
 
       if (useEmbeddedMongo) {
-        startEmbeddedMongo();
+        startEmbeddedMongo(headless);
       } else {
         logger.info(
-            "Skipping embedded MongoDB start (requested via --no-embedded-mongo). Ensuring external MongoDB is available...");
+            "Skipping embedded MongoDB start (requested via --no-embedded-mongo). Ensuring external MongoDB is available on port {}...",
+            MONGO_PORT);
       }
 
       // Add a shutdown hook to stop the embedded MongoDB server
@@ -296,7 +378,7 @@ public class App {
               if (performDatabaseMigration(appDataDir, timestamp)) {
                 // Restart embedded Mongo
                 logger.info("Restarting MongoDB with a clean data directory after migration...");
-                startEmbeddedMongo();
+                startEmbeddedMongo(headless);
 
                 // Reset loop variables to wait again
                 retried = true;
@@ -443,7 +525,8 @@ public class App {
         DatabaseService.getInstance().backfillRaces(db);
       }
 
-      // Determine client path once - check built Angular app first, then fallback directories
+      // Determine client path once - check built Angular app first, then fallback
+      // directories
       String[] possiblePaths = {"client/dist/client", "../client/dist/client", "web", "server/web"};
       String resolvedClientPath = null;
       for (String path : possiblePaths) {
@@ -456,63 +539,79 @@ public class App {
       final String staticFilePath = resolvedClientPath != null ? resolvedClientPath : "web";
       logger.info("Serving static files from: {}", staticFilePath);
 
-      logger.info("Starting Javalin on port 7070...");
-      app =
-          Javalin.create(
-                  config -> {
-                    config.addStaticFiles(staticFilePath, Location.EXTERNAL);
-                    config.enableCorsForAllOrigins();
-                    config.maxRequestSize = 250_000_000L; // 250MB
+      logger.info("Starting Javalin on port {}...", serverPort);
+      try {
+        app =
+            Javalin.create(
+                    config -> {
+                      config.addStaticFiles(staticFilePath, Location.EXTERNAL);
+                      config.enableCorsForAllOrigins();
+                      config.maxRequestSize = 250_000_000L; // 250MB
 
-                    config.accessManager(
-                        (handler, ctx, permittedRoles) -> {
-                          Role userRole = AuthUtil.getRole(ctx);
-                          if (permittedRoles.isEmpty()) {
-                            handler.handle(ctx);
-                            return;
-                          }
-                          boolean allowed = false;
-                          for (io.javalin.core.security.RouteRole role : permittedRoles) {
-                            if (userRole.isAtLeast((Role) role)) {
-                              allowed = true;
-                              break;
+                      config.accessManager(
+                          (handler, ctx, permittedRoles) -> {
+                            Role userRole = AuthUtil.getRole(ctx);
+                            if (permittedRoles.isEmpty()) {
+                              handler.handle(ctx);
+                              return;
                             }
-                          }
-                          if (allowed) {
-                            handler.handle(ctx);
-                          } else {
-                            if (userRole == Role.VIEWER) {
-                              ctx.status(401).result("Authentication required");
+                            boolean allowed = false;
+                            for (io.javalin.core.security.RouteRole role : permittedRoles) {
+                              if (userRole.isAtLeast((Role) role)) {
+                                allowed = true;
+                                break;
+                              }
+                            }
+                            if (allowed) {
+                              handler.handle(ctx);
                             } else {
-                              ctx.status(403).result("Insufficient permissions");
+                              if (userRole == Role.VIEWER) {
+                                ctx.status(401).result("Authentication required");
+                              } else {
+                                ctx.status(403).result("Insufficient permissions");
+                              }
                             }
-                          }
-                        });
+                          });
 
-                    ObjectMapper mapper = new ObjectMapper();
-                    SimpleModule module = new SimpleModule();
-                    module.addDeserializer(
-                        ObjectId.class,
-                        new JsonDeserializer<ObjectId>() {
-                          @Override
-                          public ObjectId deserialize(JsonParser p, DeserializationContext ctxt)
-                              throws IOException {
-                            String value = p.getValueAsString();
-                            if (value == null || value.isEmpty()) {
-                              return null;
+                      ObjectMapper mapper = new ObjectMapper();
+                      SimpleModule module = new SimpleModule();
+                      module.addDeserializer(
+                          ObjectId.class,
+                          new JsonDeserializer<ObjectId>() {
+                            @Override
+                            public ObjectId deserialize(JsonParser p, DeserializationContext ctxt)
+                                throws IOException {
+                              String value = p.getValueAsString();
+                              if (value == null || value.isEmpty()) {
+                                return null;
+                              }
+                              try {
+                                return new ObjectId(value);
+                              } catch (IllegalArgumentException e) {
+                                return null;
+                              }
                             }
-                            try {
-                              return new ObjectId(value);
-                            } catch (IllegalArgumentException e) {
-                              return null;
-                            }
-                          }
-                        });
-                    mapper.registerModule(module);
-                    config.jsonMapper(new JavalinJackson(mapper));
-                  })
-              .start(7070);
-      logger.info("Javalin started successfully.");
+                          });
+                      mapper.registerModule(module);
+                      config.jsonMapper(new JavalinJackson(mapper));
+                    })
+                .start(serverPort);
+        logger.info("Javalin started successfully on port {}.", serverPort);
+      } catch (Exception e) {
+        logger.error(
+            "Fatal error starting Javalin server on port {}: {}", serverPort, e.getMessage(), e);
+        showPortConflictDialog(
+            "Race Coordinator AI - Web Server Port Conflict",
+            "Failed to start Web Server on port "
+                + serverPort
+                + ".\n"
+                + "Port is already in use or unavailable.\n\n"
+                + "Please terminate the process using port "
+                + serverPort
+                + ", or start with '--port <port>' (or set SERVER_PORT / PORT environment variable).",
+            headless);
+        System.exit(1);
+      }
 
       registerJmdnsDiscovery();
 
@@ -632,6 +731,11 @@ public class App {
       app.get(
           "/api/update/check",
           ctx -> {
+            boolean force = Boolean.parseBoolean(ctx.queryParam("force"));
+            if (force) {
+              configService.setSkippedUpdateVersion("");
+              updateService.clearCache();
+            }
             ctx.json(updateService.checkForUpdates());
           });
 
@@ -704,12 +808,12 @@ public class App {
 
       // Open Browser after successful start
       if (!headless) {
-        openBrowser("http://localhost:7070");
-        setupSystemTray(7070);
+        openBrowser("http://localhost:" + serverPort);
+        setupSystemTray(serverPort);
       } else {
         logger.info("Headless mode: Browser will not be opened automatically.");
-        logger.info("Server is running at http://localhost:7070");
-        setupSystemTray(7070);
+        logger.info("Server is running at http://localhost:{}", serverPort);
+        setupSystemTray(serverPort);
       }
     } catch (Exception e) {
       logger.error("Fatal error during startup", e);
@@ -825,7 +929,7 @@ public class App {
   private static Process manualMongoProcess;
 
   @SuppressWarnings("checkstyle:MethodLength")
-  private static void startEmbeddedMongo() {
+  private static void startEmbeddedMongo(boolean headless) {
     try {
       logger.info("Starting MongoDB...");
 
@@ -838,16 +942,20 @@ public class App {
         Files.createDirectories(Paths.get(dataDir));
       }
 
-      // If port is already in use, try to free it by terminating the process
-      // listening on it
+      // Check if MongoDB port is already in use
       if (isPortInUse(MONGO_PORT)) {
-        logger.warn("MongoDB port {} is already in use. Attempting to free it...", MONGO_PORT);
-        freePort(MONGO_PORT);
-        try {
-          Thread.sleep(1000); // Small delay to let the OS release the socket/lock
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-        }
+        logger.error("MongoDB port {} is already in use.", MONGO_PORT);
+        showPortConflictDialog(
+            "Race Coordinator AI - MongoDB Database Port Conflict",
+            "Failed to start Embedded MongoDB on port "
+                + MONGO_PORT
+                + ".\n"
+                + "Port is already in use by another application.\n\n"
+                + "Please terminate the process using port "
+                + MONGO_PORT
+                + ", or start with '--mongo-port <port>' (or set MONGO_PORT environment variable).",
+            headless);
+        System.exit(1);
       }
 
       // Cleanup stale lock file if it exists (prevents boot failure after crash on
@@ -998,7 +1106,7 @@ public class App {
 
       logger.info("Embedded MongoDB started with storage at {}", dataDir);
     } catch (Exception e) {
-      logger.error("Error starting MongoDB: {}", e.getMessage(), e);
+      logger.error("Error starting MongoDB on port {}: {}", MONGO_PORT, e.getMessage(), e);
       if (!flapdoodleRetried) {
         String msg = e.getMessage();
         if (msg != null
@@ -1015,11 +1123,21 @@ public class App {
           String timestamp = String.valueOf(System.currentTimeMillis());
           if (performDatabaseMigration(appDataDir, timestamp)) {
             // Try starting again
-            startEmbeddedMongo();
+            startEmbeddedMongo(headless);
             return;
           }
         }
       }
+      showPortConflictDialog(
+          "Race Coordinator AI - MongoDB Port Error",
+          "Failed to start MongoDB on port "
+              + MONGO_PORT
+              + ".\n"
+              + "Port is already in use or unavailable.\n\n"
+              + "Please terminate the process using port "
+              + MONGO_PORT
+              + ", or start with '--mongo-port <port>' (or set MONGO_PORT environment variable).",
+          headless);
       System.exit(1);
     }
   }
@@ -1250,65 +1368,6 @@ public class App {
       return false;
     } catch (IOException e) {
       return true;
-    }
-  }
-
-  private static void freePort(int port) {
-    String osName = System.getProperty("os.name").toLowerCase();
-    if (osName.contains("win")) {
-      try {
-        Process p = Runtime.getRuntime().exec("cmd /c netstat -ano -p tcp");
-        try (BufferedReader reader =
-            new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            String[] parts = line.trim().split("\\s+");
-            if (parts.length >= 5 && parts[1].endsWith(":" + port)) {
-              String pid = parts[parts.length - 1];
-              try {
-                int pidInt = Integer.parseInt(pid);
-                if (pidInt > 0) {
-                  logger.info(
-                      "Found process with PID {} using port {}. Killing it...", pidInt, port);
-                  Runtime.getRuntime().exec("taskkill /F /PID " + pidInt).waitFor();
-                }
-              } catch (NumberFormatException nfe) {
-                // Ignore
-              }
-            }
-          }
-        }
-      } catch (Exception e) {
-        logger.error("Failed to free port {} on Windows: {}", port, e.getMessage());
-      }
-    } else {
-      // Unix-like systems (Linux, macOS)
-      try {
-        Process p = Runtime.getRuntime().exec(new String[] {"sh", "-c", "lsof -t -i:" + port});
-        try (BufferedReader reader =
-            new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            String pid = line.trim();
-            if (!pid.isEmpty()) {
-              try {
-                int pidInt = Integer.parseInt(pid);
-                if (pidInt > 0) {
-                  logger.info(
-                      "Found process with PID {} using port {}. Killing it...", pidInt, port);
-                  Runtime.getRuntime()
-                      .exec(new String[] {"kill", "-9", String.valueOf(pidInt)})
-                      .waitFor();
-                }
-              } catch (NumberFormatException nfe) {
-                // Ignore
-              }
-            }
-          }
-        }
-      } catch (Exception e) {
-        logger.error("Failed to free port {} on Unix: {}", port, e.getMessage());
-      }
     }
   }
 

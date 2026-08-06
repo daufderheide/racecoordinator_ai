@@ -9,7 +9,7 @@ fi
 
 npm run proto:gen
 if [ "$1" = "--open" ]; then
-    npm start -- --open
+    exec npx ng serve --host 0.0.0.0 --open
 else
-    npm start
+    exec npx ng serve --host 0.0.0.0
 fi

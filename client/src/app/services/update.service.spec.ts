@@ -48,6 +48,27 @@ describe("UpdateService", () => {
     req.flush(mockResult);
   });
 
+  it("should check for updates with force flag", () => {
+    const mockResult: UpdateCheckResult = {
+      updateAvailable: true,
+      latestVersion: "v0.0.0-alpha.20260710",
+      downloadUrl: "https://example.com/update.exe",
+      releaseNotes: "Fixed bugs",
+      releaseUrl: "https://github.com/release",
+      isWindows: true,
+    };
+
+    service.checkForUpdates(true).subscribe((result) => {
+      expect(result).toEqual(mockResult);
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/check?force=true"),
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush(mockResult);
+  });
+
   it("should trigger update installation", () => {
     const downloadUrl = "https://example.com/update.exe";
 

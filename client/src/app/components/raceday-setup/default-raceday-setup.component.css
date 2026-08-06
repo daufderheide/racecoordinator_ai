@@ -1149,7 +1149,7 @@
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   max-height: 185px;
   margin-top: 10px;
 }
@@ -1163,14 +1163,17 @@
 .event-detail-sub {
   font-size: 0.85rem;
   color: #cbd5e1;
+  margin-bottom: 2px;
+}
+
+.event-races-table-header {
+  width: 100%;
 }
 
 .event-races-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-  max-height: 110px;
+  display: block;
+  margin-top: 0;
+  max-height: 90px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -1191,6 +1194,55 @@
 
 .event-races-summary::-webkit-scrollbar-thumb:hover {
   background: #0284c7;
+}
+
+.race-sequence-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.race-sequence-table th,
+.race-sequence-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.race-sequence-table th {
+  background: rgba(30, 41, 59, 0.9);
+  color: #38bdf8;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.race-sequence-table td {
+  color: #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.col-num {
+  width: 6%;
+}
+
+.col-name {
+  width: 28%;
+}
+
+.col-method {
+  width: 20%;
+}
+
+.col-value {
+  width: 18%;
+}
+
+.col-drivers {
+  width: 28%;
 }
 
 .event-race-item {

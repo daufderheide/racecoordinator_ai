@@ -200,7 +200,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       )
       .subscribe(() => {
         this.refreshServerInfo();
-        this.checkUpdates();
+        this.checkForUpdates();
       });
 
     // Start Splash Screen Logic ONLY when translations are ready
@@ -394,10 +394,39 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     }
   }
 
-  private checkUpdates() {
-    this.updateService.checkForUpdates().subscribe({
+  private activeChildComponentRef: any = null;
+
+  public get isUpdateBannerVisible(): boolean {
+    return !!(
+      this.updateResult?.updateAvailable && !this.updateBannerDismissed
+    );
+  }
+
+  public syncChildComponentState() {
+    if (this.activeChildComponentRef) {
+      try {
+        this.activeChildComponentRef.setInput(
+          "isUpdateBannerVisible",
+          this.isUpdateBannerVisible,
+        );
+      } catch (e) {
+        if (this.activeChildComponentRef.instance) {
+          this.activeChildComponentRef.instance.isUpdateBannerVisible =
+            this.isUpdateBannerVisible;
+        }
+      }
+    }
+  }
+
+  public checkForUpdates(force: boolean = false) {
+    if (force) {
+      this.updateBannerDismissed = false;
+    }
+    this.updateService.checkForUpdates(force).subscribe({
       next: (result) => {
         this.updateResult = result;
+        this.syncChildComponentState();
+        this.cdr.detectChanges();
       },
       error: (err) => {
         if (err.status !== 0) {
@@ -405,6 +434,12 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         }
       },
     });
+  }
+
+  public dismissUpdateBanner() {
+    this.updateBannerDismissed = true;
+    this.syncChildComponentState();
+    this.cdr.detectChanges();
   }
 
   public installUpdate() {
@@ -435,6 +470,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
                 this.isUpdating = false;
                 this.updateProgress = null;
               }
+              this.syncChildComponentState();
               this.cdr.detectChanges();
             },
           });
@@ -448,7 +484,13 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           this.progressSubscription.unsubscribe();
         }
         this.error = "Update installation failed";
-        setTimeout(() => (this.error = null), 5000);
+        setTimeout(() => {
+          this.error = null;
+          this.syncChildComponentState();
+          this.cdr.detectChanges();
+        }, 5000);
+        this.syncChildComponentState();
+        this.cdr.detectChanges();
       },
     });
   }
@@ -462,6 +504,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         if (this.progressSubscription) {
           this.progressSubscription.unsubscribe();
         }
+        this.syncChildComponentState();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -472,9 +515,13 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
   public skipVersion() {
     if (!this.updateResult || !this.updateResult.latestVersion) return;
-    this.updateService.skipUpdate(this.updateResult.latestVersion).subscribe({
+    const version = this.updateResult.latestVersion;
+    this.updateResult = null;
+    this.syncChildComponentState();
+    this.cdr.detectChanges();
+    this.updateService.skipUpdate(version).subscribe({
       next: () => {
-        this.updateResult = null;
+        this.logger.info(`Skipped update version ${version}`);
       },
       error: (err) => {
         this.logger.error("Failed to skip update", err);
@@ -747,6 +794,8 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     const componentRef = this.container.createComponent(
       DefaultRacedaySetupComponent,
     );
+    this.activeChildComponentRef = componentRef;
+    this.syncChildComponentState();
     componentRef.instance.requestServerConfig.subscribe(() => {
       this.openServerConfig();
       this.cdr.detectChanges();
@@ -755,6 +804,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       this.showAboutDialog = true;
       this.cdr.detectChanges();
     });
+    if (componentRef.instance.requestCheckForUpdates) {
+      componentRef.instance.requestCheckForUpdates.subscribe(() => {
+        this.checkForUpdates(true);
+      });
+    }
   }
 
   async loadCustomComponent(subfolder?: string) {
@@ -809,6 +863,8 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         );
       // Create the component directly (no Module required for standalone)
       const componentRef = this.container.createComponent(componentType);
+      this.activeChildComponentRef = componentRef;
+      this.syncChildComponentState();
 
       // Subscribe to server config request
       if (componentRef.instance instanceof DefaultRacedaySetupComponent) {
@@ -820,6 +876,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           this.showAboutDialog = true;
           this.cdr.detectChanges();
         });
+        if (componentRef.instance.requestCheckForUpdates) {
+          componentRef.instance.requestCheckForUpdates.subscribe(() => {
+            this.checkForUpdates(true);
+          });
+        }
       } else {
         // Fallback for dynamic types where instanceof might fail or if structure is different
         // We know it extends CustomUiBaseComponent extends DefaultRacedaySetupComponent
@@ -834,6 +895,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
           instance.requestAbout.subscribe(() => {
             this.showAboutDialog = true;
             this.cdr.detectChanges();
+          });
+        }
+        if (instance.requestCheckForUpdates) {
+          instance.requestCheckForUpdates.subscribe(() => {
+            this.checkForUpdates(true);
           });
         }
       }

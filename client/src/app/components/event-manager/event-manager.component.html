@@ -88,6 +88,8 @@
                   <tr>
                     <th>#</th>
                     <th>Race Name</th>
+                    <th>{{ "RM_LABEL_FINISH_METHOD" | translate }}</th>
+                    <th>{{ "RM_LABEL_FINISH_VALUE" | translate }}</th>
                     <th>{{ "EE_LABEL_MAX_DRIVERS" | translate }}</th>
                   </tr>
                 </thead>
@@ -100,6 +102,8 @@
                     <tr>
                       <td>{{ idx + 1 }}</td>
                       <td>{{ getRaceName(getItemRaceId(item)) }}</td>
+                      <td>{{ getRaceFinishMethod(getItemRaceId(item)) }}</td>
+                      <td>{{ getRaceFinishValue(getItemRaceId(item)) }}</td>
                       <td>
                         @if (getItemMaxDrivers(item) > 0) {
                           {{ getItemMaxDrivers(item) }}

@@ -3,26 +3,58 @@ param(
 )
 $ErrorActionPreference = "Stop"
 
+# Parse dynamic ports
+$ServerPort = 7070
+$MongoPort = 8085
+$ClientPort = 4200
+
+for ($i = 0; $i -lt $args.Count; $i++) {
+    if ($args[$i] -eq "--port" -and ($i + 1) -lt $args.Count) { $ServerPort = [int]$args[$i+1] }
+    elseif ($args[$i] -like "--port=*") { $ServerPort = [int]($args[$i] -replace "--port=", "") }
+    elseif ($args[$i] -eq "--mongo-port" -and ($i + 1) -lt $args.Count) { $MongoPort = [int]$args[$i+1] }
+    elseif ($args[$i] -like "--mongo-port=*") { $MongoPort = [int]($args[$i] -replace "--mongo-port=", "") }
+}
+
+if ($env:SERVER_PORT) { $ServerPort = [int]$env:SERVER_PORT }
+if ($env:MONGO_PORT) { $MongoPort = [int]$env:MONGO_PORT }
+
+function Test-PortInUse($Port) {
+    $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+    return ($null -ne $conn)
+}
+
+function Show-PortErrorDialog($Title, $Message) {
+    Write-Host "PORT CONFLICT ERROR - $Title: $Message" -ForegroundColor Red
+    try {
+        Add-Type -AssemblyName System.Windows.Forms
+        [System.Windows.Forms.MessageBox]::Show($Message, $Title, [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+    } catch {}
+}
+
+if (-not $Headless -and (Test-PortInUse $ClientPort)) {
+    Show-PortErrorDialog "Race Coordinator AI - Client Port Conflict" "Failed to start Angular Client on port $ClientPort.`nPort $ClientPort is already in use by another process.`n`nPlease terminate the process using port $ClientPort and try again."
+    exit 1
+}
+
+if (Test-PortInUse $ServerPort) {
+    Show-PortErrorDialog "Race Coordinator AI - Web Server Port Conflict" "Failed to start Web Server on port $ServerPort.`nPort $ServerPort is already in use by another process.`n`nPlease terminate the process using port $ServerPort or launch with '--port <port'."
+    exit 1
+}
+
+if (Test-PortInUse $MongoPort) {
+    Show-PortErrorDialog "Race Coordinator AI - MongoDB Port Conflict" "Failed to start MongoDB Database on port $MongoPort.`nPort $MongoPort is already in use by another process.`n`nPlease terminate the process using port $MongoPort or launch with '--mongo-port <port'."
+    exit 1
+}
+
 if (-not $Headless) {
     Write-Host "Starting Angular Client..." -ForegroundColor Cyan
     $ClientProcess = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSScriptRoot\run_client.ps1`" -Open" -PassThru
     Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
         if ($ClientProcess -and -not $ClientProcess.HasExited) {
-            Stop-Process -Id $ClientProcess.Id -Force
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ParentProcessId -eq $ClientProcess.Id } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+            Stop-Process -Id $ClientProcess.Id -Force -ErrorAction SilentlyContinue
         }
     } | Out-Null
-}
-
-# Stop any stale server or database processes using our ports before starting
-$PortsToFree = @(7070, 8085)
-foreach ($Port in $PortsToFree) {
-    $StaleProcesses = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique
-    foreach ($ProcId in $StaleProcesses) {
-        if ($ProcId -gt 0) {
-            Write-Host "Found stale process (PID $ProcId) using port $Port. Terminating..." -ForegroundColor Yellow
-            Stop-Process -Id $ProcId -Force -ErrorAction SilentlyContinue
-        }
-    }
 }
 
 # Setup Java Environment

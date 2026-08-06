@@ -252,11 +252,14 @@
 }
 
 .race-sequence-table th {
-  background: rgba(30, 41, 59, 0.7);
+  background: #1e293b;
   color: #38bdf8;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.9rem;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .race-sequence-table td {

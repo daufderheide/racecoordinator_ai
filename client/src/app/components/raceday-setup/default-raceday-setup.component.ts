@@ -13,6 +13,7 @@ import {
   ElementRef,
   HostListener,
   inject,
+  input,
   OnInit,
   output,
   ViewChild,
@@ -839,10 +840,36 @@ export class DefaultRacedaySetupComponent implements OnInit {
         : 0;
   }
 
+  getRace(raceId: string): Race | undefined {
+    if (!raceId) return undefined;
+    return this.races.find((rc) => rc.entity_id === raceId);
+  }
+
   getRaceName(raceId: string): string {
     if (!raceId) return "";
-    const r = this.races.find((rc) => rc.entity_id === raceId);
+    const r = this.getRace(raceId);
     return r ? r.name : raceId;
+  }
+
+  getRaceFinishMethod(raceId: string): string {
+    const race: any = this.getRace(raceId);
+    if (!race) return "";
+    const fm =
+      race.heat_scoring?.finish_method || race.heat_scoring?.finishMethod;
+    return this.formatEnumDisplay(fm);
+  }
+
+  getRaceFinishValue(raceId: string): string {
+    const race: any = this.getRace(raceId);
+    if (!race) return "";
+    const val =
+      race.heat_scoring?.finish_value !== undefined
+        ? race.heat_scoring?.finish_value
+        : race.heat_scoring?.finishValue;
+    if (val === 0 || val === "0") {
+      return this.translationService.translate("GEN_INFINITE");
+    }
+    return val !== undefined && val !== null ? String(val) : "";
   }
 
   getEventDriverLimitWarning(): string | null {
@@ -1519,6 +1546,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.helpLinkService.openHelp("");
   }
 
+  isUpdateBannerVisible = input<boolean>(false);
+
   openAbout() {
     this.closeHelpDropdown();
     // Communicate with parent RacedaySetupComponent
@@ -1530,6 +1559,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   requestAbout = output<void>();
+
+  onCheckForUpdates() {
+    if (this.isUpdateBannerVisible()) return;
+    this.closeFileDropdown();
+    this.closeHelpDropdown();
+    this.requestCheckForUpdates.emit();
+  }
+
+  requestCheckForUpdates = output<void>();
 
   openDatabaseManager() {
     this.closeFileDropdown();

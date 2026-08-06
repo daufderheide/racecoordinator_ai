@@ -781,7 +781,7 @@ export class DriverEditorComponent
 
   getAvatarUrl(url?: string): string {
     if (!url) return "assets/images/default_avatar.svg";
-    if (url.startsWith("/")) return `http://localhost:7070${url}`;
+    if (url.startsWith("/")) return `${this.dataService.serverUrl}${url}`;
     return url;
   }
 

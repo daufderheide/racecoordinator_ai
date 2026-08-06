@@ -225,10 +225,44 @@ export class EventManagerComponent implements OnInit, OnDestroy {
         : 0;
   }
 
+  getRace(raceId: string): Race | undefined {
+    if (!raceId) return undefined;
+    return this.races.find((r) => r.entity_id === raceId);
+  }
+
   getRaceName(raceId: string): string {
     if (!raceId) return "";
-    const race = this.races.find((r) => r.entity_id === raceId);
+    const race = this.getRace(raceId);
     return race ? race.name : raceId;
+  }
+
+  formatEnumDisplay(value: string | undefined): string {
+    if (!value) return "";
+    return value
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  }
+
+  getRaceFinishMethod(raceId: string): string {
+    const race: any = this.getRace(raceId);
+    if (!race) return "";
+    const fm =
+      race.heat_scoring?.finish_method || race.heat_scoring?.finishMethod;
+    return this.formatEnumDisplay(fm);
+  }
+
+  getRaceFinishValue(raceId: string): string {
+    const race: any = this.getRace(raceId);
+    if (!race) return "";
+    const val =
+      race.heat_scoring?.finish_value !== undefined
+        ? race.heat_scoring?.finish_value
+        : race.heat_scoring?.finishValue;
+    if (val === 0 || val === "0") {
+      return this.translationService.translate("GEN_INFINITE");
+    }
+    return val !== undefined && val !== null ? String(val) : "";
   }
 
   getDeleteMessage(): string {

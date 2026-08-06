@@ -616,6 +616,21 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 
+  it("should emit requestCheckForUpdates when onCheckForUpdates is called and banner is not visible", () => {
+    spyOn(component.requestCheckForUpdates, "emit");
+    fixture.componentRef.setInput("isUpdateBannerVisible", false);
+    component.onCheckForUpdates();
+    expect(component.requestCheckForUpdates.emit).toHaveBeenCalled();
+    expect(component.isFileDropdownOpen).toBeFalse();
+  });
+
+  it("should not emit requestCheckForUpdates when onCheckForUpdates is called and banner is visible", () => {
+    spyOn(component.requestCheckForUpdates, "emit");
+    fixture.componentRef.setInput("isUpdateBannerVisible", true);
+    component.onCheckForUpdates();
+    expect(component.requestCheckForUpdates.emit).not.toHaveBeenCalled();
+  });
+
   it("should call openHelp with empty string and close dropdown when openHelpCenter is called", () => {
     component.openHelpCenter();
     expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("");
@@ -1203,6 +1218,28 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.quickStartRaces.length).toBe(2);
       expect(component.quickStartRaces[0].entity_id).toBe("e1");
       expect(component.quickStartRaces[0].name).toBe("Endurance 500");
+    });
+
+    it("should correctly return finish method and finish value for a race in event summary", () => {
+      component.races = [
+        {
+          entity_id: "r1",
+          name: "Sprint 10",
+          heat_scoring: { finish_method: "Lap", finish_value: 10 },
+        },
+        {
+          entity_id: "r2",
+          name: "Timed 60",
+          heat_scoring: { finish_method: "Timed", finish_value: 60 },
+        },
+      ] as any;
+
+      expect(component.getRaceFinishMethod("r1")).toBe("Lap");
+      expect(component.getRaceFinishValue("r1")).toBe("10");
+      expect(component.getRaceFinishMethod("r2")).toBe("Timed");
+      expect(component.getRaceFinishValue("r2")).toBe("60");
+      expect(component.getRaceFinishMethod("invalid")).toBe("");
+      expect(component.getRaceFinishValue("invalid")).toBe("");
     });
   });
 });

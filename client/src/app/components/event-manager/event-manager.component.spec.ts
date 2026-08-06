@@ -48,8 +48,16 @@ describe("EventManagerComponent", () => {
   ];
 
   const mockRaces = [
-    { entity_id: "r1", name: "Qualifying Heat" },
-    { entity_id: "r2", name: "Final Sprint" },
+    {
+      entity_id: "r1",
+      name: "Qualifying Heat",
+      heat_scoring: { finish_method: "Lap", finish_value: 10 },
+    },
+    {
+      entity_id: "r2",
+      name: "Final Sprint",
+      heat_scoring: { finish_method: "Timed", finish_value: 120 },
+    },
   ];
 
   beforeEach(async () => {
@@ -167,5 +175,15 @@ describe("EventManagerComponent", () => {
     );
     fixture.detectChanges();
     expect(component.selectedEvent?.entity_id).toBe("evt_2");
+  });
+
+  it("should correctly return finish method and finish value for a race", () => {
+    fixture.detectChanges();
+    expect(component.getRaceFinishMethod("r1")).toBe("Lap");
+    expect(component.getRaceFinishValue("r1")).toBe("10");
+    expect(component.getRaceFinishMethod("r2")).toBe("Timed");
+    expect(component.getRaceFinishValue("r2")).toBe("120");
+    expect(component.getRaceFinishMethod("invalid")).toBe("");
+    expect(component.getRaceFinishValue("invalid")).toBe("");
   });
 });

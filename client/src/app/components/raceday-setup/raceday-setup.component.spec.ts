@@ -735,5 +735,42 @@ describe("RacedaySetupComponent", () => {
       expect(mockUpdateService.skipUpdate).toHaveBeenCalledWith("v1.2.3");
       expect(component.updateResult).toBeNull();
     });
+
+    it("should reset updateBannerDismissed and call checkForUpdates with force when manual update check is triggered", () => {
+      component.updateBannerDismissed = true;
+      const mockResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.4",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+      mockUpdateService.checkForUpdates.and.returnValue(of(mockResult));
+
+      component.checkForUpdates(true);
+
+      expect(mockUpdateService.checkForUpdates).toHaveBeenCalledWith(true);
+      expect(component.updateBannerDismissed).toBeFalse();
+      expect(component.updateResult).toEqual(mockResult);
+      expect(component.isUpdateBannerVisible).toBeTrue();
+    });
+
+    it("should update isUpdateBannerVisible when banner is dismissed", () => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+      component.updateBannerDismissed = false;
+      expect(component.isUpdateBannerVisible).toBeTrue();
+
+      component.dismissUpdateBanner();
+      expect(component.updateBannerDismissed).toBeTrue();
+      expect(component.isUpdateBannerVisible).toBeFalse();
+    });
   });
 });

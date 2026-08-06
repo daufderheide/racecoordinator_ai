@@ -87,6 +87,14 @@
               >
                 {{ "RDS_MENU_IMPORT_SETTINGS" | translate }}
               </div>
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item"
+                [class.disabled]="isUpdateBannerVisible()"
+                (click)="onCheckForUpdates()"
+              >
+                {{ "RDS_MENU_CHECK_FOR_UPDATES" | translate }}
+              </div>
             </div>
           }
           <input
@@ -735,26 +743,55 @@
               <div class="event-detail-sub">
                 Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
               </div>
+              <div class="event-races-table-header">
+                <table class="race-sequence-table header-table">
+                  <thead>
+                    <tr>
+                      <th class="col-num">#</th>
+                      <th class="col-name">Race Name</th>
+                      <th class="col-method">
+                        {{ "RM_LABEL_FINISH_METHOD" | translate }}
+                      </th>
+                      <th class="col-value">
+                        {{ "RM_LABEL_FINISH_VALUE" | translate }}
+                      </th>
+                      <th class="col-drivers">
+                        {{ "EE_LABEL_MAX_DRIVERS" | translate }}
+                      </th>
+                    </tr>
+                  </thead>
+                </table>
+              </div>
               <div class="event-races-summary">
-                @for (
-                  item of selectedEvent.races;
-                  track item;
-                  let idx = $index
-                ) {
-                  <div class="event-race-item">
-                    <span
-                      >Race {{ idx + 1 }}:
-                      {{ getRaceName(getItemRaceId(item)) }}</span
-                    >
-                    <span class="limit-tag">
-                      @if (getItemMaxDrivers(item) > 0) {
-                        Max {{ getItemMaxDrivers(item) }} drivers
-                      } @else {
-                        Unlimited
-                      }
-                    </span>
-                  </div>
-                }
+                <table class="race-sequence-table body-table">
+                  <tbody>
+                    @for (
+                      item of selectedEvent.races;
+                      track item;
+                      let idx = $index
+                    ) {
+                      <tr>
+                        <td class="col-num">{{ idx + 1 }}</td>
+                        <td class="col-name">
+                          {{ getRaceName(getItemRaceId(item)) }}
+                        </td>
+                        <td class="col-method">
+                          {{ getRaceFinishMethod(getItemRaceId(item)) }}
+                        </td>
+                        <td class="col-value">
+                          {{ getRaceFinishValue(getItemRaceId(item)) }}
+                        </td>
+                        <td class="col-drivers">
+                          @if (getItemMaxDrivers(item) > 0) {
+                            {{ getItemMaxDrivers(item) }}
+                          } @else {
+                            {{ "EE_UNLIMITED" | translate }}
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             </div>
           } @else if (selectedRace) {

@@ -634,6 +634,7 @@
   "RDS_LOG_SERVER": "Server-Protokollebene",
   "RDS_LOST_CONNECTION": "Verbindung zum Server unterbrochen",
   "RDS_MENU_ASSETS": "Assets",
+  "RDS_MENU_CHECK_FOR_UPDATES": "Nach Updates suchen",
   "RDS_MENU_CONFIG": "Verwalten",
   "RDS_MENU_CUSTOM_UI": "UI anpassen",
   "RDS_MENU_DATABASES": "Datenbanken",
