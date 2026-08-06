@@ -15,12 +15,13 @@ Start the Race Coordinator application on your host machine:
 
 Once started, ensure the application is running and accessible (typically via a browser window at http://localhost:4200).
 
-### Configuring WebSocket Track Interfaces
-Once the server is running, configure your virtual track interfaces in the Race Coordinator web interface:
-1. Open the web interface at [http://localhost:4200](http://localhost:4200) (if not already opened).
-2. Go to **Settings** > **Track Configuration**.
+### Configuring Track Interfaces
+Once the server is running, you do not need to perform any manual configuration to enable WebSockets. The server runs the WebSocket data listener automatically under the hood.
+
+If you need to configure or edit your track layout:
+1. Open the web interface at [http://localhost:4200](http://localhost:4200).
+2. Go to **Manage** > **Tracks**.
 3. Select your track or add a new track configuration.
-4. Add a **WebSocket** interface, specifying the assigned lanes and interface indexing (virtual ports). Save the settings.
 
 ---
 
