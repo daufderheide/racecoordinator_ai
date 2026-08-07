@@ -739,9 +739,11 @@
 
           @if (selectedEvent) {
             <div class="event-details-card">
-              <div class="event-detail-title">{{ selectedEvent.name }}</div>
-              <div class="event-detail-sub">
-                Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
+              <div class="event-detail-header">
+                <div class="event-detail-title">{{ selectedEvent.name }}</div>
+                <div class="event-detail-sub">
+                  Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
+                </div>
               </div>
               <div class="event-races-table-header">
                 <table class="race-sequence-table header-table">

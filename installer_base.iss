@@ -93,6 +93,7 @@ var
   AnsiParamsFromFile: AnsiString;
   AppVbsPath: String;
   VbsPos: Integer;
+  TrailingArgs: String;
 begin
   if PreservedShortcutParams <> '' then
   begin
@@ -100,7 +101,7 @@ begin
     Exit;
   end;
 
-  AppVbsPath := '"""' + ExpandConstant('{app}\start_win.vbs') + '"""';
+  AppVbsPath := '"' + ExpandConstant('{app}\start_win.vbs') + '"';
   TempFile := ExpandConstant('{tmp}\existing_shortcut_args.txt');
   ParamsFromFile := '';
 
@@ -122,13 +123,17 @@ begin
   begin
     VbsPos := Pos('start_win.vbs', ParamsFromFile);
     if VbsPos > 0 then
-    begin
-      ParamsFromFile := AppVbsPath + Copy(ParamsFromFile, VbsPos + 13, Length(ParamsFromFile));
-    end
-    else if Pos('start_win.vbs', ParamsFromFile) = 0 then
-    begin
-      ParamsFromFile := AppVbsPath + ' ' + ParamsFromFile;
-    end;
+      TrailingArgs := Copy(ParamsFromFile, VbsPos + 13, Length(ParamsFromFile))
+    else
+      TrailingArgs := ParamsFromFile;
+
+    // Strip out all existing double quotes from TrailingArgs to prevent malformed quoting
+    StringChangeEx(TrailingArgs, '"', '', True);
+    TrailingArgs := Trim(TrailingArgs);
+
+    ParamsFromFile := AppVbsPath;
+    if TrailingArgs <> '' then
+      ParamsFromFile := ParamsFromFile + ' ' + TrailingArgs;
 
     if Pos('--port', ParamsFromFile) = 0 then
       ParamsFromFile := ParamsFromFile + ' --port 7070';
