@@ -40,6 +40,12 @@ The Gepetto Lap Counter is available as a prebuilt application on multiple platf
 3. (Optional) Provide the **Race Coordinator Password** if access control tokens are configured on your server. *(Note: If both Gepetto and the Race Coordinator server are running on the same physical machine, no password is required, as the connection will be automatically elevated to a Director role.)*
 4. Save the settings.
 5. The application will leverage JmDNS / Network Service Discovery (NSD) to locate the running `RaceCoordinatorServer` on the local network (`_racecoordinator._tcp.local.`) on port `7070` and automatically establish a WebSocket session.
+6. Go to **Track Setup in the Gepetto app.
+7.  Click on **Pratice**
+8. Click on **Camera** in the Gepetto app. 
+9. CLick on **Snap**
+10. Click on **Start**
+
 
 ---
 
