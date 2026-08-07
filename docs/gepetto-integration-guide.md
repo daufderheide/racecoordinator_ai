@@ -8,18 +8,13 @@ This guide explains how to start, configure, and verify the network-based WebSoc
 
 ## 1. Start the Race Coordinator Server
 
-Start the Race Coordinator application on your host machine:
-* Go to the directory where race coordinator is installed.
-* **Linux/macOS**: `./run_server.sh`
-* **Windows (from PowerShell)**: `.\run_server.ps1`
-
-Once started, ensure the application is running and accessible (typically via a browser window at http://localhost:4200).
+Start the Race Coordinator application on your host machine.
 
 ### Configuring Track Interfaces
 Once the server is running, you do not need to perform any manual configuration to enable WebSockets. The server runs the WebSocket data listener automatically under the hood.
 
 If you need to configure or edit your track layout:
-1. Open the web interface at [http://localhost:4200](http://localhost:4200).
+1. Open the web interface.
 2. Go to **Manage** > **Tracks**.
 3. Select your track or add a new track configuration.
 
@@ -41,12 +36,10 @@ The Gepetto Lap Counter is available as a prebuilt application on multiple platf
 4. Save the settings.
 5. The application will leverage JmDNS / Network Service Discovery (NSD) to locate the running `RaceCoordinatorServer` on the local network (`_racecoordinator._tcp.local.`) on port `7070` and automatically establish a WebSocket session.
 6. Go to **Track Setup in the Gepetto app.
-7.  Click on **Pratice**
+7.  Click on **Practice**
 8. Click on **Camera** in the Gepetto app. 
-9. CLick on **Snap**
+9. Click on **Snap**
 10. Click on **Start**
-
-
 ---
 
 ## 3. Testing & Verifying the Integration
