@@ -51,8 +51,9 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
 
     String commPort = getCommPort();
     if (commPort == null || commPort.isEmpty()) {
-      boolean isUnitTest = System.getProperty("de.flapdoodle.embed.mongo.artifacts") != null
-          || System.getProperty("java.io.tmpdir").contains("target_tmp");
+      boolean isUnitTest =
+          System.getProperty("de.flapdoodle.embed.mongo.artifacts") != null
+              || System.getProperty("java.io.tmpdir").contains("target_tmp");
       if (isUnitTest) {
         return false;
       }

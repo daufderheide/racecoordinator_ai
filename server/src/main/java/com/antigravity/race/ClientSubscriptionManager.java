@@ -479,11 +479,13 @@ public class ClientSubscriptionManager {
         // Ignored in unit tests
       }
       if (remoteIp != null) {
-        boolean isUnitTest = System.getProperty("de.flapdoodle.embed.mongo.artifacts") != null
-            || System.getProperty("java.io.tmpdir").contains("target_tmp");
-        boolean isLocal = isUnitTest
-            ? NetworkUtils.isLocalhost(remoteIp, null)
-            : NetworkUtils.isLocalAddress(remoteIp, null);
+        boolean isUnitTest =
+            System.getProperty("de.flapdoodle.embed.mongo.artifacts") != null
+                || System.getProperty("java.io.tmpdir").contains("target_tmp");
+        boolean isLocal =
+            isUnitTest
+                ? NetworkUtils.isLocalhost(remoteIp, null)
+                : NetworkUtils.isLocalAddress(remoteIp, null);
         if (isLocal) {
           return true;
         }
