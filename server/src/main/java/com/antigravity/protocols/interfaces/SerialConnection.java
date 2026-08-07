@@ -86,10 +86,10 @@ public class SerialConnection implements ISerialConnection {
   }
 
   public void writeData(byte[] data) throws IOException {
+    logger.debug("Sending: {}", bytesToHex(data));
     if (outputStream == null) {
       throw new IOException("Port not open");
     }
-    logger.debug("Sent: {}", bytesToHex(data));
     outputStream.write(data);
     outputStream.flush();
   }

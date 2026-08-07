@@ -2531,10 +2531,18 @@ export class DefaultRacedayComponent
             this.logger.debug("Race start command sent successfully");
           } else {
             this.logger.error("Failed to send race start command");
+            this.showInterfaceError(
+              "ACK_MODAL_TITLE_DISCONNECTED",
+              "ACK_MODAL_MSG_DISCONNECTED",
+            );
           }
         },
         (error) => {
           this.logger.error("Error starting race:", error);
+          this.showInterfaceError(
+            "ACK_MODAL_TITLE_DISCONNECTED",
+            "ACK_MODAL_MSG_DISCONNECTED",
+          );
         },
       );
     } else if (action === "PAUSE" || action === "ABORT_TIMERS") {

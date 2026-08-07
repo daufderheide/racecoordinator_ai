@@ -4,6 +4,8 @@ import com.antigravity.auth.AuthService;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.InterfaceStatus;
+import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.LapEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
@@ -238,6 +240,29 @@ public class ClientSubscriptionManager {
         "New Interface WebSocket session added. Total sessions: {}, Interface Subscribers: {}",
         sessions.size(),
         interfaceSubscribers.size());
+
+    if (currentRace != null && currentRace.getHardwareManager() != null) {
+      ProtocolDelegate delegate = currentRace.getHardwareManager().getProtocols();
+      if (delegate != null && delegate.getProtocols() != null) {
+        for (IProtocol p : delegate.getProtocols()) {
+          InterfaceStatus status =
+              p.isHealthy() ? InterfaceStatus.CONNECTED : InterfaceStatus.DISCONNECTED;
+          InterfaceEvent event =
+              InterfaceEvent.newBuilder()
+                  .setStatus(
+                      InterfaceStatusEvent.newBuilder()
+                          .setStatus(status)
+                          .setInterfaceIndex(p.getInterfaceIndex())
+                          .build())
+                  .build();
+          try {
+            ctx.send(ByteBuffer.wrap(event.toByteArray()));
+          } catch (Exception e) {
+            logger.warn("Failed to send initial interface status: {}", e.getMessage());
+          }
+        }
+      }
+    }
   }
 
   public synchronized void removeInterfaceSession(WsContext ctx) {

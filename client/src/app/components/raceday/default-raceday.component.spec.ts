@@ -1302,6 +1302,17 @@ describe("DefaultRacedayComponent", () => {
       expect(mockDataService.startRace).not.toHaveBeenCalled();
     });
 
+    it("should show interface error modal when startRace fails", () => {
+      spyOn<any>(component, "showInterfaceError");
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.startRace.and.returnValue(of(false));
+      component.onMenuSelect("START_RESUME");
+      expect((component as any).showInterfaceError).toHaveBeenCalledWith(
+        "ACK_MODAL_TITLE_DISCONNECTED",
+        "ACK_MODAL_MSG_DISCONNECTED",
+      );
+    });
+
     it("should hide the teammate select pulldown for viewer role", () => {
       mockSettings.racedayColumns = ["driver.name"];
       (component as any).loadColumns();

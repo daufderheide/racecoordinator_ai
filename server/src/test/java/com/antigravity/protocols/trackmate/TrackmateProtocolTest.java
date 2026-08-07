@@ -17,6 +17,7 @@ import com.fazecast.jSerialComm.SerialPortDataListener;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
@@ -385,5 +386,17 @@ public class TrackmateProtocolTest {
     serialConnection.injectData(new byte[] {0x0A});
     assertEquals(4, listener.digitalPinEventCount); // both pins emit an event when turning off
     assertEquals(1, listener.lastDigitalPinEvent.getState()); // inactive state is 1
+  }
+
+  @Test
+  public void testNullEntriesInLapPinBehaviorsDoesNotThrowNpe() {
+    TrackmateConfig nullConfig = new TrackmateConfig();
+    nullConfig.lapPinBehaviors = Arrays.asList(null, PinBehavior.BEHAVIOR_LAP_BASE_VALUE, null);
+
+    TestableTrackmateProtocol nullProtocol =
+        new TestableTrackmateProtocol(nullConfig, 2, scheduler, serialConnection);
+    nullProtocol.open();
+    serialConnection.injectData(new byte[] {0x41});
+    serialConnection.injectData(new byte[] {0x0A});
   }
 }

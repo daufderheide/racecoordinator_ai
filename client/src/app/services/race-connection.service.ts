@@ -578,10 +578,21 @@ export class RaceConnectionService implements OnDestroy {
           this.emitAlert("ACK_MODAL_TITLE_NO_DATA", "ACK_MODAL_MSG_NO_DATA");
         }
       } else if (status === InterfaceStatus.DISCONNECTED) {
-        this.scheduleDisconnectedError(
-          "ACK_MODAL_TITLE_DISCONNECTED",
-          "ACK_MODAL_MSG_DISCONNECTED",
-        );
+        if (!this.hasInitiallyConnected) {
+          if (this.noStatusWatchdog) {
+            clearTimeout(this.noStatusWatchdog);
+            this.noStatusWatchdog = null;
+          }
+          this.emitAlert(
+            "ACK_MODAL_TITLE_DISCONNECTED",
+            "ACK_MODAL_MSG_DISCONNECTED",
+          );
+        } else {
+          this.scheduleDisconnectedError(
+            "ACK_MODAL_TITLE_DISCONNECTED",
+            "ACK_MODAL_MSG_DISCONNECTED",
+          );
+        }
       } else if (status === InterfaceStatus.CONNECTED) {
         this.clearDisconnectedError();
         if (this.hasInitiallyConnected) {

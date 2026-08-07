@@ -358,16 +358,16 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private void sendPinMode(byte opcode, ArduinoConfig.PinMode mode) {
     int digitalCount = 0;
     if (config.digitalIds != null) {
-      for (int id : config.digitalIds) {
-        if (id < 0) continue;
+      for (Integer id : config.digitalIds) {
+        if (id == null || id < 0) continue;
         if (ArduinoConfig.getPinMode(id) == mode) digitalCount++;
       }
     }
 
     int analogCount = 0;
     if (config.analogIds != null) {
-      for (int id : config.analogIds) {
-        if (id < 0) continue;
+      for (Integer id : config.analogIds) {
+        if (id == null || id < 0) continue;
         if (ArduinoConfig.getPinMode(id) == mode) analogCount++;
       }
     }
@@ -387,7 +387,9 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     if (config.digitalIds != null) {
       for (int i = 0; i < config.digitalIds.size(); i++) {
-        int id = config.digitalIds.get(i);
+        Integer idObj = config.digitalIds.get(i);
+        if (idObj == null || idObj < 0) continue;
+        int id = idObj;
         if (ArduinoConfig.getPinMode(id) == mode) {
           message[idx++] = DIGITAL;
           message[idx++] = (byte) i;
@@ -397,7 +399,9 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     if (config.analogIds != null) {
       for (int i = 0; i < config.analogIds.size(); i++) {
-        int id = config.analogIds.get(i);
+        Integer idObj = config.analogIds.get(i);
+        if (idObj == null || idObj < 0) continue;
+        int id = idObj;
         if (ArduinoConfig.getPinMode(id) == mode) {
           message[idx++] = ANALOG;
           message[idx++] = (byte) i;
@@ -698,8 +702,9 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     if (ids == null) return;
 
     for (int i = 0; i < ids.size(); i++) {
-      int code = ids.get(i);
-      if (code == -1) continue;
+      Integer codeObj = ids.get(i);
+      if (codeObj == null || codeObj == -1) continue;
+      int code = codeObj;
 
       InputBehavior behavior = null;
       int laneIndex = -1;
@@ -788,19 +793,23 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   @Override
   public boolean hasPerLaneRelays() {
-    if (this.config.digitalIds.stream()
-        .anyMatch(
-            id ->
-                id >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()
-                    && id < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + getNumLanes())) {
+    if (this.config.digitalIds != null
+        && this.config.digitalIds.stream()
+            .anyMatch(
+                id ->
+                    id != null
+                        && id >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()
+                        && id < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + getNumLanes())) {
       return true;
     }
 
-    if (this.config.analogIds.stream()
-        .anyMatch(
-            id ->
-                id >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()
-                    && id < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + getNumLanes())) {
+    if (this.config.analogIds != null
+        && this.config.analogIds.stream()
+            .anyMatch(
+                id ->
+                    id != null
+                        && id >= PinBehavior.BEHAVIOR_RELAY_BASE.getNumber()
+                        && id < PinBehavior.BEHAVIOR_RELAY_BASE.getNumber() + getNumLanes())) {
       return true;
     }
 
@@ -809,13 +818,15 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   @Override
   public boolean hasMainRelay() {
-    if (this.config.digitalIds.stream()
-        .anyMatch(id -> id == PinBehavior.BEHAVIOR_RELAY.getNumber())) {
+    if (this.config.digitalIds != null
+        && this.config.digitalIds.stream()
+            .anyMatch(id -> id != null && id == PinBehavior.BEHAVIOR_RELAY.getNumber())) {
       return true;
     }
 
-    if (this.config.analogIds.stream()
-        .anyMatch(id -> id == PinBehavior.BEHAVIOR_RELAY.getNumber())) {
+    if (this.config.analogIds != null
+        && this.config.analogIds.stream()
+            .anyMatch(id -> id != null && id == PinBehavior.BEHAVIOR_RELAY.getNumber())) {
       return true;
     }
 
@@ -847,7 +858,9 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   private void updateAnalogLedPins(boolean isDigital, List<Integer> ids) {
     if (ids == null) return;
     for (int pin = 0; pin < ids.size(); pin++) {
-      int behavior = ids.get(pin);
+      Integer behaviorObj = ids.get(pin);
+      if (behaviorObj == null) continue;
+      int behavior = behaviorObj;
       if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE) {
         setPinState(isDigital, pin, isGreenFlagOn);
       } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE) {

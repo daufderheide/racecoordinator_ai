@@ -162,7 +162,7 @@
                           ? ('RD_MENU_NO_PER_LANE_RELAYS_TOOLTIP' | translate)
                           : ''
                       "
-                      (click)="onLanePowerSelect(i, true)"
+                      (click)="onLanePowerSelect(i + 1, true)"
                     >
                       <span>{{
                         "RD_MENU_LANE_POWER_ON" | translate: { lane: i + 1 }
@@ -179,7 +179,7 @@
                           ? ('RD_MENU_NO_PER_LANE_RELAYS_TOOLTIP' | translate)
                           : ''
                       "
-                      (click)="onLanePowerSelect(i, false)"
+                      (click)="onLanePowerSelect(i + 1, false)"
                     >
                       <span>{{
                         "RD_MENU_LANE_POWER_OFF" | translate: { lane: i + 1 }

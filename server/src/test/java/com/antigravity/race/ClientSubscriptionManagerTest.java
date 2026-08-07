@@ -1,8 +1,11 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,11 +14,13 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
+import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.race.states.IRaceState;
 import io.javalin.websocket.WsContext;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
 import org.junit.Before;
@@ -548,5 +553,32 @@ public class ClientSubscriptionManagerTest {
     // Wait for the original 1-second delay to pass
     Thread.sleep(1200);
     assertFalse("Auto-shutdown should be cancelled due to reconnect", shutdownCalled.get());
+  }
+
+  @Test
+  public void testAddInterfaceSessionSendsInitialInterfaceStatus() throws Exception {
+    Race mockRace = mock(Race.class);
+    RaceHardwareManager mockHwManager = mock(RaceHardwareManager.class);
+    ProtocolDelegate mockDelegate = mock(ProtocolDelegate.class);
+    IProtocol mockIProtocol = mock(IProtocol.class);
+
+    when(mockRace.getHardwareManager()).thenReturn(mockHwManager);
+    when(mockHwManager.getProtocols()).thenReturn(mockDelegate);
+    when(mockDelegate.getProtocols()).thenReturn(Collections.singletonList(mockIProtocol));
+    when(mockIProtocol.isHealthy()).thenReturn(false);
+    when(mockIProtocol.getInterfaceIndex()).thenReturn(0);
+
+    manager.setRace(mockRace);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addInterfaceSession(mockContext);
+
+    verify(mockContext).send(any(ByteBuffer.class));
   }
 }

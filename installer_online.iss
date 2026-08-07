@@ -66,6 +66,7 @@ var
   FindRec: TFindRec;
   SubPath: String;
   ResultCode: Integer;
+  RoboPath: String;
 begin
   // Look for the first subfolder inside BasePath
   if FindFirst(BasePath + '\*', FindRec) then
@@ -78,12 +79,22 @@ begin
           SubPath := BasePath + '\' + FindRec.Name;
           Log('Flattening folder: ' + SubPath + ' into ' + BasePath);
           
-          // Move all files and folders from SubPath to BasePath
-          // Since Inno doesn't have a built-in 'MoveFolderContent', we use PowerShell for reliability
-          Exec('powershell.exe', Format('-NoProfile -ExecutionPolicy Bypass -Command "Move-Item -Path ''%s\*'' -Destination ''%s'' -Force"', [SubPath, BasePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+          RoboPath := ExpandConstant('{sys}\robocopy.exe');
+          if FileExists(RoboPath) then
+          begin
+            Log('Running Robocopy: ' + RoboPath);
+            Exec(RoboPath, Format('"%s" "%s" /E /MOVE', [SubPath, BasePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+          end;
           
-          // Remove the now empty subfolder
-          DelTree(SubPath, True, False, False);
+          // Fallback PowerShell copy + remove if robocopy is unavailable or left the subfolder
+          if DirExists(SubPath) then
+          begin
+            Log('Robocopy fallback to PowerShell Copy-Item for: ' + SubPath);
+            Exec('powershell.exe', Format('-NoProfile -ExecutionPolicy Bypass -Command "Copy-Item -Path ''%s\*'' -Destination ''%s'' -Recurse -Force; Remove-Item -Path ''%s'' -Recurse -Force"', [SubPath, BasePath, SubPath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+          end;
+          
+          if DirExists(SubPath) then
+            DelTree(SubPath, True, False, False);
           break; // Only flatten the first subfolder found
         end;
       until not FindNext(FindRec);

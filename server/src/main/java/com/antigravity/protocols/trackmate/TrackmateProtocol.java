@@ -78,7 +78,8 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     int hwNumLanes = 0;
     if (config.lapPinBehaviors != null) {
       for (int i = 0; i < config.lapPinBehaviors.size(); i++) {
-        if (config.lapPinBehaviors.get(i) != PinBehavior.BEHAVIOR_UNUSED_VALUE) {
+        Integer behavior = config.lapPinBehaviors.get(i);
+        if (behavior != null && behavior != PinBehavior.BEHAVIOR_UNUSED_VALUE) {
           hwNumLanes = i + 1;
         }
       }
@@ -157,8 +158,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
                       .build());
             }
             if (config.lapPinBehaviors != null && i < config.lapPinBehaviors.size()) {
-              int behavior = config.lapPinBehaviors.get(i);
-              triggerPinBehavior(behavior, inactiveState, i);
+              Integer behavior = config.lapPinBehaviors.get(i);
+              if (behavior != null) {
+                triggerPinBehavior(behavior, inactiveState, i);
+              }
             }
           }
         }
@@ -181,8 +184,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
                     .build());
           }
           if (config.lapPinBehaviors != null && pinIndex < config.lapPinBehaviors.size()) {
-            int behavior = config.lapPinBehaviors.get(pinIndex);
-            triggerPinBehavior(behavior, activeState, pinIndex);
+            Integer behavior = config.lapPinBehaviors.get(pinIndex);
+            if (behavior != null) {
+              triggerPinBehavior(behavior, activeState, pinIndex);
+            }
           }
         }
       } else if (data == 0x57) { // 'W' Call button
@@ -274,8 +279,6 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   @Override
   public void setLanePower(boolean on, int lane) {
     super.setLanePower(on, lane);
-    // Trackmate supports per-lane relays via 'n' (0x6E) and ASCII representation of
-    // bitmask.
     int bitmask = 0;
     for (int i = 0; i < getNumLanes(); i++) {
       Boolean lanePower = lastLanePower.get(i);

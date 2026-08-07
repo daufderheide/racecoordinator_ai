@@ -103,6 +103,7 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
       if (listener != null) {
         listener.onInterfaceStatus(InterfaceStatus.DISCONNECTED, getInterfaceIndex());
       }
+      startStatusScheduler();
       return false;
     }
   }

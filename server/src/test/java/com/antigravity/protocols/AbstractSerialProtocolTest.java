@@ -261,6 +261,7 @@ public class AbstractSerialProtocolTest {
         "Status should be DISCONNECTED on connection failure",
         InterfaceStatus.DISCONNECTED,
         listener.lastStatus);
+    assertEquals(3, scheduler.commands.size()); // Verify status scheduler is active even on failure
   }
 
   @Test

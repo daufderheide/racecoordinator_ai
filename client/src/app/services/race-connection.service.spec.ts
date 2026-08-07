@@ -239,7 +239,23 @@ describe("RaceConnectionService", () => {
       flush();
     }));
 
-    it("should set 5s alarm when DISCONNECTED is received", fakeAsync(() => {
+    it("should emit alert immediately when initial status is DISCONNECTED", fakeAsync(() => {
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+      expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should set 5s alarm when DISCONNECTED is received after initial connection", fakeAsync(() => {
       let emittedAlert: any = null;
       const sub = service.interfaceAlert$.subscribe(
         (alert) => (emittedAlert = alert),
@@ -254,11 +270,7 @@ describe("RaceConnectionService", () => {
       interfaceEventsSubject.next({
         status: { status: InterfaceStatus.DISCONNECTED },
       });
-
-      tick(2000);
-      expect(emittedAlert).toBeNull();
-
-      tick(3000);
+      tick(5000);
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
       sub.unsubscribe();

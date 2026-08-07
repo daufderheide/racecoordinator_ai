@@ -286,8 +286,11 @@ public class PhidgetProtocol extends DefaultProtocol {
   }
 
   private void openDigitalInputs() {
+    if (config.digitalInIds == null) return;
     for (int i = 0; i < config.digitalInIds.size(); i++) {
-      int behavior = config.digitalInIds.get(i);
+      Integer behaviorObj = config.digitalInIds.get(i);
+      if (behaviorObj == null) continue;
+      int behavior = behaviorObj;
       if (behavior != PinBehavior.BEHAVIOR_UNUSED_VALUE) {
         try {
           DigitalInput di = new DigitalInput();
@@ -354,8 +357,11 @@ public class PhidgetProtocol extends DefaultProtocol {
   }
 
   private void openDigitalOutputs() {
+    if (config.digitalOutIds == null) return;
     for (int i = 0; i < config.digitalOutIds.size(); i++) {
-      int behavior = config.digitalOutIds.get(i);
+      Integer behaviorObj = config.digitalOutIds.get(i);
+      if (behaviorObj == null) continue;
+      int behavior = behaviorObj;
       if (behavior != PinBehavior.BEHAVIOR_UNUSED_VALUE) {
         try {
           DigitalOutput out = new DigitalOutput();
@@ -427,8 +433,11 @@ public class PhidgetProtocol extends DefaultProtocol {
   }
 
   private void openAnalogInputs() {
+    if (config.analogIds == null) return;
     for (int i = 0; i < config.analogIds.size(); i++) {
-      int behavior = config.analogIds.get(i);
+      Integer behaviorObj = config.analogIds.get(i);
+      if (behaviorObj == null) continue;
+      int behavior = behaviorObj;
       if (behavior != PinBehavior.BEHAVIOR_UNUSED_VALUE) {
         try {
           VoltageRatioInput vi = new VoltageRatioInput();

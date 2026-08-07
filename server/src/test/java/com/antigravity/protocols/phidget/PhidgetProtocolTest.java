@@ -373,4 +373,15 @@ public class PhidgetProtocolTest {
     // Linux is currently not explicitly bundled for zero-install, so it returns empty
     assertTrue(paths.isEmpty());
   }
+
+  @Test
+  public void testNullEntriesInPhidgetConfigDoesNotThrowNpe() {
+    PhidgetConfig nullConfig = new PhidgetConfig();
+    nullConfig.digitalInIds = Arrays.asList(null, PinBehavior.BEHAVIOR_CALL_BUTTON_VALUE, null);
+    nullConfig.digitalOutIds = Arrays.asList(null, PinBehavior.BEHAVIOR_RELAY_VALUE, null);
+    nullConfig.analogIds = Arrays.asList(null, PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE, null);
+
+    PhidgetProtocol nullProtocol = new PhidgetProtocol(nullConfig, 4, null);
+    assertNotNull(nullProtocol);
+  }
 }

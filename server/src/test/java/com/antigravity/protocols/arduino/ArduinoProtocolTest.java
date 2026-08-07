@@ -2277,4 +2277,15 @@ public class ArduinoProtocolTest {
     assertPinState(2, false); // Green is OFF
     // Note: Other pins were already off and cached, so they don't resend LOW messages
   }
+
+  @Test
+  public void testNullEntriesInDigitalAndAnalogIdsDoesNotThrowNpe() {
+    ArduinoConfig nullEntriesConfig = new ArduinoConfig();
+    nullEntriesConfig.digitalIds = Arrays.asList(null, 1, null, -1);
+    nullEntriesConfig.analogIds = Arrays.asList(null, 2, null);
+
+    TestableArduinoProtocol nullProtocol =
+        new TestableArduinoProtocol(nullEntriesConfig, 4, scheduler, serialConnection);
+    assertNotNull(nullProtocol);
+  }
 }
