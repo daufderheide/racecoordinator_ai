@@ -735,21 +735,22 @@
                 />
               </svg>
             </div>
-          </div>
 
-          <!-- Season Selection Row -->
-          <div class="season-selection-row" style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
-            <label style="font-weight: 600; color: #cbd5e1;">{{ "RDS_SEASON_LABEL" | translate }}:</label>
-            <select
-              class="search-input"
-              style="width: 240px; padding: 6px 12px; font-size: 0.95rem; background: rgba(30, 41, 59, 0.8); border: 1px solid #475569; color: white; border-radius: 4px;"
-              [(ngModel)]="selectedSeason"
-            >
-              <option [ngValue]="undefined">{{ "RDS_SEASON_NONE" | translate }}</option>
-              @for (season of seasons; track season.entity_id) {
-                <option [ngValue]="season">{{ season.name }}</option>
-              }
-            </select>
+            <div class="season-selection-wrapper">
+              <select
+                class="season-select-input"
+                [(ngModel)]="selectedSeason"
+                (ngModelChange)="onSeasonChange()"
+                [compareWith]="compareSeasons"
+              >
+                <option [ngValue]="undefined">
+                  {{ "RDS_SEASON_NONE" | translate }}
+                </option>
+                @for (season of seasons; track season.entity_id) {
+                  <option [ngValue]="season">{{ season.name }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           @if (selectedEvent) {

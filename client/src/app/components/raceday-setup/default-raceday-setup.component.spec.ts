@@ -1046,11 +1046,89 @@ describe("DefaultRacedaySetupComponent", () => {
       );
     });
 
-    it("should not render single race or event mode toggle buttons", () => {
-      const modeToggleBar =
-        fixture.nativeElement.querySelector(".mode-toggle-bar");
-      expect(modeToggleBar).toBeFalsy();
+    it("should render season selection in the same row as race selector without a season-label", () => {
+      const selectorRow = fixture.nativeElement.querySelector(
+        ".all-races-selector",
+      );
+      expect(selectorRow).toBeTruthy();
+
+      const children = Array.from(selectorRow.children) as HTMLElement[];
+      expect(children.length).toBe(3);
+      expect(
+        children[0].classList.contains("custom-dropdown-container"),
+      ).toBeTrue();
+      expect(children[1].classList.contains("search-wrapper")).toBeTrue();
+      expect(
+        children[2].classList.contains("season-selection-wrapper"),
+      ).toBeTrue();
+
+      const label = fixture.nativeElement.querySelector(
+        ".season-selection-wrapper .season-label",
+      );
+      expect(label).toBeFalsy();
+
+      const select = fixture.nativeElement.querySelector(
+        ".season-selection-wrapper select.season-select-input",
+      );
+      expect(select).toBeTruthy();
     });
+
+    it("should save selectedSeasonId to settings when season changes", () => {
+      const season = {
+        entity_id: "s100",
+        name: "Summer 2026 Season",
+        drops: 1,
+      } as any;
+      component.seasons = [season];
+      component.selectSeason(season);
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          selectedSeasonId: "s100",
+        }),
+      );
+    });
+
+    it("should save empty string as selectedSeasonId when season is unselected (None)", () => {
+      component.selectSeason(undefined);
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          selectedSeasonId: "",
+        }),
+      );
+    });
+
+    it("should compare seasons correctly with compareSeasons method", () => {
+      const s1 = { entity_id: "s1", name: "Season 1" } as any;
+      const s1Copy = { entity_id: "s1", name: "Season 1 Copy" } as any;
+      const s2 = { entity_id: "s2", name: "Season 2" } as any;
+
+      expect(component.compareSeasons(s1, s1Copy)).toBeTrue();
+      expect(component.compareSeasons(s1, s2)).toBeFalse();
+      expect(component.compareSeasons(undefined, undefined)).toBeTrue();
+      expect(component.compareSeasons(s1, undefined)).toBeFalse();
+    });
+
+    it("should restore last selected season on init if saved in settings", fakeAsync(() => {
+      const season = {
+        entity_id: "s200",
+        name: "Winter 2026 Season",
+        drops: 2,
+      } as any;
+      mockDataService.getSeasons.and.returnValue(of([season]));
+      mockSettingsService.getSettings.and.returnValue({
+        recentRaceIds: [],
+        selectedRaceId: "",
+        selectedSeasonId: "s200",
+        selectedDriverIds: [],
+      } as any);
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.selectedSeason).toBe(season);
+    }));
   });
 
   describe("Unified Race and Event Selection", () => {

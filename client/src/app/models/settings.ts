@@ -85,6 +85,7 @@ export class Settings {
 
   recentRaceIds: string[] = [];
   selectedRaceId: string = "";
+  selectedSeasonId: string = "";
   selectedDriverIds: string[] = [];
   demoConfig?: IDemoConfig;
 

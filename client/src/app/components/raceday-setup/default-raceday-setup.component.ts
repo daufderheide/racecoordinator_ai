@@ -247,6 +247,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
         const localSettings = this.settingsService.getSettings();
         this.updateQuickStartRaces(localSettings.recentRaceIds);
 
+        if (localSettings && localSettings.selectedSeasonId) {
+          const matchedSeason = this.seasons.find(
+            (s) => s.entity_id === localSettings.selectedSeasonId,
+          );
+          if (matchedSeason) {
+            this.selectedSeason = matchedSeason;
+          }
+        }
+
         if (localSettings && localSettings.selectedRaceId) {
           const matchedEvent = this.events.find(
             (e) => e.entity_id === localSettings.selectedRaceId,
@@ -796,6 +805,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.getParticipantUniqueId(p),
     );
     settings.demoConfig = this.demoConfig;
+    settings.selectedSeasonId = this.selectedSeason?.entity_id || "";
 
     this.settingsService.saveSettings(settings);
 
@@ -1434,8 +1444,19 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.router.navigate(["/event-manager"], { queryParams });
   }
 
+  onSeasonChange() {
+    this.saveSettings();
+  }
+
   selectSeason(season?: Season) {
     this.selectedSeason = season;
+    this.saveSettings();
+  }
+
+  compareSeasons(s1?: Season, s2?: Season): boolean {
+    if (!s1 && !s2) return true;
+    if (!s1 || !s2) return false;
+    return s1.entity_id === s2.entity_id;
   }
 
   openSeasonManager() {

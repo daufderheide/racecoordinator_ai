@@ -769,13 +769,45 @@
 }
 
 .all-races-selector .custom-dropdown-container {
-  flex: 1.2;
+  flex: 1;
   position: relative;
   z-index: 100;
 }
 
 .all-races-selector .search-wrapper {
   flex: 0.8;
+}
+
+.all-races-selector .season-selection-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 0.8;
+}
+
+.all-races-selector .season-select-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #fff;
+  outline: none;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.all-races-selector .season-select-input:focus {
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.all-races-selector .season-select-input option {
+  background-color: #0f172a;
+  color: #fff;
 }
 
 .dropdown-trigger {
