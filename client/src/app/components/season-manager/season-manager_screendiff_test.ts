@@ -16,8 +16,8 @@ test.describe("Season Manager Visuals", () => {
       page.goto("/season-manager"),
     );
 
-    await page.locator(".manager-container").waitFor();
-    await expect(page.locator(".sidebar")).toBeVisible();
+    await page.locator(".page-container").waitFor();
+    await expect(page.locator(".sidebar-list")).toBeVisible();
     await expect(page.locator(".detail-panel")).toBeVisible();
 
     await TestSetupHelper.disableAnimations(page);

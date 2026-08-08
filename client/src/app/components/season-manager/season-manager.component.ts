@@ -16,7 +16,11 @@ import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
-import { Season, SeasonStandingDetail, SeasonStandingItem } from "@app/models/season";
+import {
+  Season,
+  SeasonStandingDetail,
+  SeasonStandingItem,
+} from "@app/models/season";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   ConnectionMonitorService,
@@ -48,6 +52,7 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
   isSaving: boolean = false;
   scale: number = 1;
   searchQuery: string = "";
+  isConnectionLost: boolean = false;
   showDeleteConfirmation: boolean = false;
 
   @ViewChildren("seasonRow") seasonRows!: QueryList<ElementRef>;
@@ -84,7 +89,11 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
       (state) => {
         if (state === ConnectionState.DISCONNECTED) {
           this.logger.warn("Connection lost in SeasonManagerComponent");
+          this.isConnectionLost = true;
+        } else {
+          this.isConnectionLost = false;
         }
+        this.cdr.detectChanges();
       },
     );
   }
@@ -101,10 +110,10 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
   }
 
   private updateScale(): void {
-    const baseWidth = 1920;
-    const baseHeight = 1080;
-    const scaleX = window.innerWidth / baseWidth;
-    const scaleY = window.innerHeight / baseHeight;
+    const targetWidth = 1600;
+    const targetHeight = 900;
+    const scaleX = window.innerWidth / targetWidth;
+    const scaleY = window.innerHeight / targetHeight;
     this.scale = Math.min(scaleX, scaleY);
   }
 
@@ -149,7 +158,10 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const driverMap = new Map<string, { driver_name: string; scores: SeasonStandingDetail[] }>();
+    const driverMap = new Map<
+      string,
+      { driver_name: string; scores: SeasonStandingDetail[] }
+    >();
 
     for (const race of season.races) {
       if (!race.driver_results) continue;
@@ -210,7 +222,8 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
 
     result.sort((a, b) => {
       if (b.net_points !== a.net_points) return b.net_points - a.net_points;
-      if (b.gross_points !== a.gross_points) return b.gross_points - a.gross_points;
+      if (b.gross_points !== a.gross_points)
+        return b.gross_points - a.gross_points;
       return b.races_run - a.races_run;
     });
 
