@@ -13,6 +13,7 @@ import com.antigravity.handlers.ClientCommandTaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.service.AssetService;
@@ -72,6 +73,8 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceInfo;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -610,6 +613,8 @@ public class App {
         System.exit(1);
       }
 
+      registerJmdnsDiscovery();
+
       // --- Authentication & Access Control ---
       app.before(
           ctx -> {
@@ -701,6 +706,16 @@ public class App {
             ws.onClose(
                 ctx -> {
                   ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+                });
+            ws.onBinaryMessage(
+                ctx -> {
+                  try {
+                    InterfaceEvent event = InterfaceEvent.parseFrom(ctx.data());
+                    ClientSubscriptionManager.getInstance()
+                        .handleIncomingInterfaceEvent(ctx, event);
+                  } catch (Exception e) {
+                    logger.error("Failed to parse incoming interface event over WebSocket", e);
+                  }
                 });
           });
 
@@ -1407,6 +1422,53 @@ public class App {
     } catch (Exception e) {
       System.err.println("Failed to trigger log rollover: " + e.getMessage());
       e.printStackTrace();
+    }
+  }
+
+  private static void registerJmdnsDiscovery() {
+    try {
+      InetAddress address = null;
+      java.util.Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements() && address == null) {
+        NetworkInterface iface = interfaces.nextElement();
+        if (iface.isLoopback() || !iface.isUp()) continue;
+        java.util.Enumeration<InetAddress> addresses = iface.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          InetAddress addr = addresses.nextElement();
+          if (addr instanceof Inet4Address) {
+            address = addr;
+            break;
+          }
+        }
+      }
+      if (address == null) {
+        address = InetAddress.getLocalHost();
+      }
+
+      JmDNS jmdns = JmDNS.create(address);
+      ServiceInfo serviceInfo =
+          ServiceInfo.create(
+              "_racecoordinator._tcp.local.",
+              "RaceCoordinatorServer",
+              7070,
+              "Race Coordinator AI WebSocket Server");
+      jmdns.registerService(serviceInfo);
+      logger.info("JmDNS service registered: _racecoordinator._tcp.local. on port 7070");
+
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    logger.info("Unregistering JmDNS service...");
+                    jmdns.unregisterAllServices();
+                    try {
+                      jmdns.close();
+                    } catch (IOException e) {
+                      logger.error("Error closing JmDNS: " + e.getMessage());
+                    }
+                  }));
+    } catch (Exception e) {
+      logger.error("Failed to initialize JmDNS: " + e.getMessage(), e);
     }
   }
 }

@@ -34,7 +34,7 @@ public class RaceConverter {
                       com.antigravity.proto.Model.newBuilder() // fqn-collision
                           .setEntityId(race.getObjectId())
                           .build()) // fqn-collision
-              .setName(race.getName())
+              .setName(race.getName() != null ? race.getName() : "")
               .setTrack(TrackConverter.toProto(track, sentObjectIds));
 
       if (race.getHeatScoring() != null) {

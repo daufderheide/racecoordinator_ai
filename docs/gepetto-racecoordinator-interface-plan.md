@@ -1,27 +1,17 @@
-# Proposed Integration: Gepetto Lap Counter & Race Coordinator
+# Integration: Gepetto Lap Counter & Race Coordinator
 
-Date: 08/01/2026
-
-## IMPORTANT: Proposal Scope
-
-> [!IMPORTANT]
-> **Documentation Proposal Only**:
-> This document is submitted as a design blueprint and API proposal for the Race Coordinator codeowners to review and approve. **No code modifications are included in this PR**.
-> 
-> Once the codeowners review, provide feedback, and merge this proposal, we will proceed with the code implementation phase and submit a separate PR containing the complete code changes.
-
----
+Date: 08/06/2026
 
 ## 1. Overview
 
-The goal is to allow the external camera-based **Gepetto Lap Counter** Kotlin Multiplatform (KMP) app to connect over WebSockets to the **Race Coordinator AI** backend and act as a virtual track hardware interface. This allows counting laps, recording sector times, and handling track pause events without needing direct physical connection (like Arduino/Trackmate serial cables) to the host computer.
+The external camera-based **Gepetto Lap Counter** Kotlin Multiplatform (KMP) app connects over WebSockets to the **Race Coordinator AI** backend and acts as a virtual track hardware interface. This allows counting laps, recording sector times, and handling track pause events without needing direct physical connection (like Arduino/Trackmate serial cables) to the host computer.
 
 ---
 
-## 2. Proposed Database & Configuration Changes
+## 2. Database & Configuration Changes
 
 ### A. Protobuf Configuration & Interface Schema (`track_model.proto` & `interface_event.proto`)
-We propose representing the virtual network-based lap counter with a new config message `WebSocketConfig` in `track_model.proto`:
+We represent the virtual network-based lap counter with a new config message `WebSocketConfig` in `track_model.proto`:
 ```protobuf
 syntax = "proto3";
 package com.antigravity;
@@ -39,7 +29,7 @@ message TrackModel {
 }
 ```
 
-To support section-based pit stop entry and exit (refueling), we propose adding `PitInEvent` and `PitOutEvent` to `InterfaceEvent` in `interface_event.proto`:
+To support section-based pit stop entry and exit (refueling), we added `PitInEvent` and `PitOutEvent` to `InterfaceEvent` in `interface_event.proto`:
 ```protobuf
 message InterfaceEvent {
   oneof event {
@@ -70,7 +60,7 @@ When a user defines a slot car track in the settings, they can add a WebSocket i
 
 ---
 
-## 3. Proposed Backend & Routing Changes
+## 3. Backend & Routing Changes
 
 ### A. Virtual Protocol Class (`WebSocketProtocol.java`)
 We will create a virtual protocol `WebSocketProtocol` that **extends `DefaultProtocol`**:
@@ -111,9 +101,9 @@ We will implement `handleIncomingInterfaceEvent(WsContext ctx, InterfaceEvent ev
 
 ---
 
-## 4. Proposed Network Discovery
+## 4. Network Discovery
 
-We propose adding JmDNS (`org.jmdns:jmdns:3.5.8` or similar) to `pom.xml`. On server startup, the server will advertise itself:
+JmDNS (`org.jmdns:jmdns:3.5.8`) is added to `pom.xml`. On server startup, the server will advertise itself:
 * **Service Type**: `_racecoordinator._tcp.local.`
 * **Service Name**: `RaceCoordinatorServer`
 * **Port**: `7070`
@@ -122,9 +112,9 @@ This enables automatic zero-configuration discovery so that Gepetto Lap Counter 
 
 ---
 
-## 5. Proposed Verification & Testing Plan
+## 5. Verification & Testing Plan
 
-To ensure the stability and correctness of the new interface, we propose a comprehensive verification strategy combining automated tests and manual integration checks.
+To ensure the stability and correctness of the new interface, we implement a comprehensive verification strategy combining automated tests and manual integration checks.
 
 ### A. Automated Testing
 
@@ -157,4 +147,25 @@ To ensure the stability and correctness of the new interface, we propose a compr
 * Start a race in the web frontend.
 * Run a mock script (e.g. in Python or Java) that connects to `ws://localhost:7070/api/interface-data?intent=director` and sends simulated timing events (`LapEvent`, `PitInEvent`).
 * Verify that the frontend leaderboard UI updates instantly and displays the expected lap counts, times, and pit status indicators.
+
+---
+
+## 6. Implementation Summary & Status [COMPLETED]
+
+The integration plan has been fully implemented, verified, and hardened against network connection issues and edge cases. The following detailed improvements were deployed to the codebase:
+
+### A. Core Architecture Implemented
+1. **Virtual Interface Model**: Added `WebSocketConfig` and `websocket_configs` list support in BSON/JSON track layouts, enabling full virtual client integrations.
+2. **WebSocket Protocol Handler (`WebSocketProtocol.java`)**: Extended `DefaultProtocol` to manage virtual race timing events.
+3. **App WebSocket Handler (`App.java`)**: Registered JmDNS services (`_racecoordinator._tcp.local.`) on port `7070` for Bonjour auto-discovery and routed binary payloads to `ClientSubscriptionManager`.
+4. **Local LAN Auto-Authorization**: Updated `isDirectorSession()` in `ClientSubscriptionManager` to verify the sender's IP using `NetworkUtils.isLocalAddress()` instead of `isLocalhost()`. This automatically authorizes local network clients (such as mobile devices connected to local Wi-Fi, e.g., `192.168.9.x`) to act as directors and write lap data.
+5. **NPE Safe Fallbacks**: Hardened `isDirectorSession()` against mock WsContext upgrade fields to ensure clean unit test execution.
+
+### B. Connection Watchdog & Lifecycle Hardening
+1. **Heartbeat Watchdog Bypass**: Overrode `requiresHeartbeat()` to return `false` in `WebSocketProtocol` and `AbstractSerialProtocol` (when in virtual mode). This informs the server that software-only connections do not send physical serial heartbeats.
+2. **Virtual Status Scheduler**: Added `isVirtual` mode to `AbstractSerialProtocol`. If no COM port is configured, the scheduler continues to execute and regularly reports `CONNECTED` (skipping heartbeat age checks). This satisfies the client's connection watchdog and prevents false-positive "Interface Disconnected" alerts.
+3. **Health Check Fix (`DefaultProtocol.isHealthy()`)**: Updated the health check method to evaluate to `isConnected()` directly if `requiresHeartbeat()` is false. This allows the race state countdown to start successfully (instead of throwing `"protocol reports unhealthy"`) when virtual track configurations are selected.
+
+### C. Build and Styling Cleanups
+1. **Spotless Styling Compliance**: Formatted all long logging statements in the modified Java files to strictly adhere to the Google Java Format guidelines, ensuring clean `spotless:check` passes on GitHub.
 
