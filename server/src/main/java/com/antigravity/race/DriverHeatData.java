@@ -271,7 +271,22 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   }
 
   public double getBestLapTime() {
+    if (bestLapTime == 0.0 && laps != null && !laps.isEmpty()) {
+      double best = 0.0;
+      for (LapData lap : laps) {
+        if (lap != null && lap.isCountTowardsRecords() && lap.getLapTime() > 0) {
+          if (best == 0.0 || lap.getLapTime() < best) {
+            best = lap.getLapTime();
+          }
+        }
+      }
+      bestLapTime = best;
+    }
     return bestLapTime;
+  }
+
+  public void setBestLapTime(double bestLapTime) {
+    this.bestLapTime = bestLapTime;
   }
 
   public double getReactionTime() {

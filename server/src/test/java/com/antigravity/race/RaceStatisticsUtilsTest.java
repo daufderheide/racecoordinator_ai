@@ -147,6 +147,83 @@ public class RaceStatisticsUtilsTest {
   }
 
   @Test
+  public void testSanitizeWorkbookTemplateWithFourLanes() throws Exception {
+    InputStream rawIs =
+        getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
+    assertNotNull(rawIs);
+    InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(rawIs, 4);
+    assertNotNull(sanitizedIs);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(sanitizedIs)) {
+      org.apache.poi.ss.usermodel.Sheet sheet2 = wb.getSheetAt(1);
+      org.apache.poi.ss.usermodel.Row row3 = sheet2.getRow(3);
+      assertEquals("Lane 1 Laps", row3.getCell(4).getStringCellValue());
+      assertEquals("Lane 2 Laps", row3.getCell(5).getStringCellValue());
+      assertEquals("Lane 3 Laps", row3.getCell(6).getStringCellValue());
+      assertEquals("Lane 4 Laps", row3.getCell(7).getStringCellValue());
+      assertEquals("Best Lap Time", row3.getCell(8).getStringCellValue());
+    }
+  }
+
+  @Test
+  public void testJxlsTemplateProcessingFourLanes() throws Exception {
+    InputStream rawIs =
+        getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
+    assertNotNull(rawIs);
+    InputStream is = RaceStatisticsUtils.sanitizeWorkbookTemplate(rawIs, 4);
+
+    Driver d1 = new Driver("Lotus 98T #12", "d1");
+    RaceParticipant p1 = new RaceParticipant(d1);
+    List<RaceParticipant> drivers = Collections.singletonList(p1);
+
+    DriverHeatData dhd1 = new DriverHeatData(p1, d1);
+    dhd1.getLaps().add(new DriverHeatData.LapData(5.481, "d1", null, false));
+
+    Heat heat1 = new Heat(1, Arrays.asList(dhd1, dhd1, dhd1, dhd1), false);
+    List<Heat> heats = Collections.singletonList(heat1);
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.models.Race modelRace = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(modelRace);
+    when(modelRace.getName()).thenReturn("Test Race");
+
+    Track mockTrack = mock(Track.class);
+    Lane l1 = mock(Lane.class);
+    when(mockTrack.getLanes()).thenReturn(Arrays.asList(l1, l1, l1, l1));
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+
+    List<DriverAnalysisSummary> summaries = new ArrayList<>();
+    List<String> driverSheetNames = new ArrayList<>();
+    RaceStatisticsUtils.prepareExportData(mockRace, drivers, heats, summaries, driverSheetNames);
+
+    org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
+    jxlsContext.putVar("race", mockRace);
+    jxlsContext.putVar("standings", drivers);
+    jxlsContext.putVar("heats", heats);
+    jxlsContext.putVar("heatSheetNames", Collections.singletonList("Heat 1"));
+    jxlsContext.putVar("driverSummaries", summaries);
+    jxlsContext.putVar("driverSheetNames", driverSheetNames);
+
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    org.jxls.util.JxlsHelper.getInstance().processTemplate(is, os, jxlsContext);
+
+    byte[] outBytes = os.toByteArray();
+    assertTrue(outBytes.length > 0);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(outBytes))) {
+      org.apache.poi.ss.usermodel.Sheet standingsSheet = resultWb.getSheetAt(1);
+      org.apache.poi.ss.usermodel.Row headerRow = standingsSheet.getRow(3);
+      assertEquals("Lane 1 Laps", headerRow.getCell(4).getStringCellValue());
+      assertEquals("Lane 2 Laps", headerRow.getCell(5).getStringCellValue());
+      assertEquals("Lane 3 Laps", headerRow.getCell(6).getStringCellValue());
+      assertEquals("Lane 4 Laps", headerRow.getCell(7).getStringCellValue());
+    }
+  }
+
+  @Test
   public void testJxlsTemplateProcessing() throws Exception {
     InputStream rawIs =
         getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");

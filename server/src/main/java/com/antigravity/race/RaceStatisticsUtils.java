@@ -9,9 +9,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Comment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.util.CellAddress;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public final class RaceStatisticsUtils {
@@ -19,6 +23,10 @@ public final class RaceStatisticsUtils {
   private RaceStatisticsUtils() {}
 
   public static InputStream sanitizeWorkbookTemplate(InputStream inputStream) {
+    return sanitizeWorkbookTemplate(inputStream, 2);
+  }
+
+  public static InputStream sanitizeWorkbookTemplate(InputStream inputStream, int numLanes) {
     if (inputStream == null) {
       return null;
     }
@@ -49,10 +57,122 @@ public final class RaceStatisticsUtils {
           }
         }
       }
+
+      adjustOverallStandingsSheet(workbook, numLanes);
+
       workbook.write(os);
       return new ByteArrayInputStream(os.toByteArray());
     } catch (Exception e) {
       return new ByteArrayInputStream(bytes);
+    }
+  }
+
+  private static void adjustOverallStandingsSheet(XSSFWorkbook workbook, int numLanes) {
+    if (numLanes <= 0) {
+      numLanes = 2;
+    }
+    Sheet sheet = workbook.getSheet("Overall Standings");
+    if (sheet == null && workbook.getNumberOfSheets() > 1) {
+      sheet = workbook.getSheetAt(1);
+    }
+    if (sheet == null) {
+      return;
+    }
+
+    Row row3 = sheet.getRow(3);
+    Row row4 = sheet.getRow(4);
+    if (row3 == null || row4 == null) {
+      return;
+    }
+
+    Cell refHeaderCell = row3.getCell(4);
+    Cell refDataCell = row4.getCell(4);
+    CellStyle headerStyle = refHeaderCell != null ? refHeaderCell.getCellStyle() : null;
+    CellStyle dataStyle = refDataCell != null ? refDataCell.getCellStyle() : null;
+
+    for (int l = 0; l < numLanes; l++) {
+      int col = 4 + l;
+      Cell cHeader = row3.getCell(col);
+      if (cHeader == null) {
+        cHeader = row3.createCell(col);
+      }
+      cHeader.setCellValue("Lane " + (l + 1) + " Laps");
+      if (headerStyle != null) {
+        cHeader.setCellStyle(headerStyle);
+      }
+
+      Cell cData = row4.getCell(col);
+      if (cData == null) {
+        cData = row4.createCell(col);
+      }
+      cData.setCellValue("${driver.laneLaps[" + l + "]}");
+      if (dataStyle != null) {
+        cData.setCellStyle(dataStyle);
+      }
+    }
+
+    String[] extraHeaders = {
+      "Best Lap Time", "Average Lap Time", "Median Lap Time", "Gap to Leader", "Gap to Position"
+    };
+    String[] extraValues = {
+      "${driver.bestLapTime}",
+      "${driver.averageLapTime}",
+      "${driver.medianLapTime}",
+      "${driver.gapLeader}",
+      "${driver.gapPosition}"
+    };
+
+    int startExtraCol = 4 + numLanes;
+    for (int i = 0; i < extraHeaders.length; i++) {
+      int col = startExtraCol + i;
+      Cell cHeader = row3.getCell(col);
+      if (cHeader == null) {
+        cHeader = row3.createCell(col);
+      }
+      cHeader.setCellValue(extraHeaders[i]);
+      if (headerStyle != null) {
+        cHeader.setCellStyle(headerStyle);
+      }
+
+      Cell cData = row4.getCell(col);
+      if (cData == null) {
+        cData = row4.createCell(col);
+      }
+      cData.setCellValue(extraValues[i]);
+      if (dataStyle != null) {
+        cData.setCellStyle(dataStyle);
+      }
+    }
+
+    int lastColIdx = startExtraCol + extraHeaders.length - 1;
+
+    int maxCol = Math.max((int) row3.getLastCellNum(), (int) row4.getLastCellNum());
+    for (int col = lastColIdx + 1; col <= maxCol; col++) {
+      Cell c3 = row3.getCell(col);
+      if (c3 != null) {
+        row3.removeCell(c3);
+      }
+      Cell c4 = row4.getCell(col);
+      if (c4 != null) {
+        row4.removeCell(c4);
+      }
+    }
+
+    String lastColLetter = CellReference.convertNumToColString(lastColIdx);
+    String newLastCell = lastColLetter + "5";
+
+    Comment commentA1 = sheet.getCellComment(new CellAddress(0, 0));
+    if (commentA1 != null) {
+      String text = commentA1.getString().getString();
+      String updated = text.replaceAll("lastCell=\"[A-Z]+5\"", "lastCell=\"" + newLastCell + "\"");
+      commentA1.setString(workbook.getCreationHelper().createRichTextString(updated));
+    }
+
+    Comment commentA5 = sheet.getCellComment(new CellAddress(4, 0));
+    if (commentA5 != null) {
+      String text = commentA5.getString().getString();
+      String updated = text.replaceAll("lastCell=\"[A-Z]+5\"", "lastCell=\"" + newLastCell + "\"");
+      commentA5.setString(workbook.getCreationHelper().createRichTextString(updated));
     }
   }
 
@@ -212,20 +332,21 @@ public final class RaceStatisticsUtils {
   }
 
   public static int determineTrackLanes(Race race, List<Heat> runHeats) {
-    int numLanes = 2;
+    int numLanes = 0;
     if (race != null
         && race.getTrack() != null
         && race.getTrack().getLanes() != null
         && !race.getTrack().getLanes().isEmpty()) {
       numLanes = race.getTrack().getLanes().size();
-    } else if (runHeats != null) {
+    }
+    if (runHeats != null) {
       for (Heat h : runHeats) {
         if (h.getDrivers() != null) {
           numLanes = Math.max(numLanes, h.getDrivers().size());
         }
       }
     }
-    return numLanes;
+    return Math.max(numLanes, 2);
   }
 
   public static void prepareExportData(

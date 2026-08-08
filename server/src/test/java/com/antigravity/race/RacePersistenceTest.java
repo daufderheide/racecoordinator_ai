@@ -166,4 +166,91 @@ public class RacePersistenceTest {
     RaceParticipant linkedRp = restoredRace.getHeats().get(0).getDrivers().get(0).getDriver();
     org.junit.Assert.assertSame(masterRp, linkedRp);
   }
+
+  @Test
+  public void testRaceSaveLoadPreservesBestLapTimesAndExports() {
+    Driver d1 = new Driver("Driver 1", "d1");
+    RaceParticipant rp1 = new RaceParticipant(d1);
+    List<RaceParticipant> masterDrivers = new ArrayList<>();
+    masterDrivers.add(rp1);
+
+    DriverHeatData dhd1 = new DriverHeatData(rp1, d1);
+    dhd1.addLap(6.543, false, true);
+    dhd1.addLap(5.432, false, true);
+    dhd1.addLap(7.100, false, true);
+
+    assertEquals(5.432, dhd1.getBestLapTime(), 0.001);
+
+    List<DriverHeatData> heatDrivers = new ArrayList<>();
+    heatDrivers.add(dhd1);
+    List<Heat> heats = new ArrayList<>();
+    heats.add(new Heat(1, heatDrivers, new HeatScoring(), false));
+
+    List<Lane> lanes = new ArrayList<>();
+    lanes.add(new Lane("red", "black", 100, "l1", null));
+    Track track =
+        new Track.Builder().name("Track").lanes(lanes).entityId("track1").id(null).build();
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Save Load Export Test")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(new HeatScoring())
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race1")
+            .build();
+
+    RaceSaveData saveData = new RaceSaveData();
+    saveData.setModel(raceModel);
+    saveData.setTrack(track);
+    saveData.setDrivers(masterDrivers);
+    saveData.setHeats(heats);
+
+    // Simulate MongoDB BSON Save and Load
+    org.bson.codecs.configuration.CodecRegistry pojoCodecRegistry =
+        org.bson.codecs.configuration.CodecRegistries.fromRegistries(
+            com.mongodb.MongoClientSettings.getDefaultCodecRegistry(),
+            org.bson.codecs.configuration.CodecRegistries.fromProviders(
+                org.bson.codecs.pojo.PojoCodecProvider.builder().automatic(true).build()));
+
+    org.bson.codecs.Codec<RaceSaveData> codec = pojoCodecRegistry.get(RaceSaveData.class);
+    org.bson.BsonDocument document = new org.bson.BsonDocument();
+    org.bson.BsonWriter writer = new org.bson.BsonDocumentWriter(document);
+    codec.encode(writer, saveData, org.bson.codecs.EncoderContext.builder().build());
+
+    org.bson.BsonReader reader = new org.bson.BsonDocumentReader(document);
+    RaceSaveData decodedSaveData =
+        codec.decode(reader, org.bson.codecs.DecoderContext.builder().build());
+
+    DriverHeatData decodedDhd = decodedSaveData.getHeats().get(0).getDrivers().get(0);
+    assertEquals(5.432, decodedDhd.getBestLapTime(), 0.001);
+
+    // Reconstruct loaded race
+    com.antigravity.race.Race loadedRace =
+        new com.antigravity.race.Race.Builder()
+            .model(decodedSaveData.getModel())
+            .drivers(decodedSaveData.getDrivers())
+            .track(decodedSaveData.getTrack())
+            .heats(decodedSaveData.getHeats())
+            .isDemoMode(true)
+            .build();
+
+    // Verify OverallStandings recalculation on loaded race preserves best lap time
+    OverallStandings standings =
+        new OverallStandings(
+            loadedRace.getRaceModel().getHeatScoring(),
+            loadedRace.getRaceModel().getOverallScoring(),
+            loadedRace.getRaceModel().getGroupOptions(),
+            loadedRace.getRaceModel().isPractice());
+    standings.recalculate(loadedRace.getDrivers(), loadedRace.getHeats());
+
+    RaceParticipant loadedParticipant = loadedRace.getDrivers().get(0);
+    assertEquals(5.432, loadedParticipant.getBestLapTime(), 0.001);
+
+    // Verify CSV export output contains best lap time
+    String csv = com.antigravity.util.CsvExporter.export(loadedRace);
+    org.junit.Assert.assertTrue(
+        "CSV export should contain non-zero best lap time 5.432", csv.contains("5.432"));
+  }
 }

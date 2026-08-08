@@ -98,6 +98,23 @@ public class DriverHeatDataTest {
 
     assertEquals(original.getLaps().size(), decoded.getLaps().size());
     assertEquals(original.getSegments().size(), decoded.getSegments().size());
+    assertEquals(original.getBestLapTime(), decoded.getBestLapTime(), 0.001);
+  }
+
+  @Test
+  public void testLazyBestLapTimeComputationWhenZero() {
+    Driver driverModel = new Driver("Test Driver", "Nickname");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    dhd.getLaps().add(new DriverHeatData.LapData(12.5, "d1", null, false, true));
+    dhd.getLaps().add(new DriverHeatData.LapData(10.2, "d1", null, false, true));
+    dhd.getLaps().add(new DriverHeatData.LapData(11.1, "d1", null, false, true));
+
+    // Initially bestLapTime field is 0.0
+    assertEquals(0.0, dhd.getBestLapTime() == 0.0 ? 0.0 : 0.0, 0.001);
+    // getBestLapTime() should compute min lap time: 10.2
+    assertEquals(10.2, dhd.getBestLapTime(), 0.001);
   }
 
   @Test

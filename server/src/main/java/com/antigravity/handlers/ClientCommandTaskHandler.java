@@ -1724,7 +1724,8 @@ public class ClientCommandTaskHandler {
         jxlsContext.putVar("driverSummaries", driverSummaries);
         jxlsContext.putVar("driverSheetNames", driverSheetNames);
 
-        InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is);
+        int numLanes = RaceStatisticsUtils.determineTrackLanes(race, runHeats);
+        InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is, numLanes);
         org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
       }
 
