@@ -16,6 +16,7 @@ export interface SeasonRaceRecord {
   race_id: string;
   race_name: string;
   timestamp: number;
+  is_demo?: boolean;
   driver_results: SeasonDriverResult[];
 }
 

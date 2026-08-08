@@ -2,8 +2,15 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { Reader } from "protobufjs/minimal";
-import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
-import { map } from "rxjs/operators";
+import {
+  BehaviorSubject,
+  forkJoin,
+  Observable,
+  of,
+  ReplaySubject,
+  Subject,
+} from "rxjs";
+import { catchError, map } from "rxjs/operators";
 import { Event } from "@app/models/event";
 import { Season } from "@app/models/season";
 import {
@@ -283,6 +290,30 @@ export class DataService {
 
   deleteSeason(id: string): Observable<any> {
     return this.http.delete<any>(`${this.seasonsUrl}/${id}`);
+  }
+
+  getRaceHistory(isDemo?: boolean): Observable<any[]> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races?demo=true`
+      : `${this.baseUrl}/api/history/races`;
+    return this.http.get<any[]>(url).pipe(
+      map((items) =>
+        (items || []).map((item) => ({
+          ...item,
+          is_demo:
+            isDemo !== undefined
+              ? isDemo
+              : Boolean(item.is_demo || item.isDemo || item.demo),
+        })),
+      ),
+    );
+  }
+
+  getAllFinishedRaceHistory(): Observable<any[]> {
+    return forkJoin([
+      this.getRaceHistory(false).pipe(catchError(() => of([]))),
+      this.getRaceHistory(true).pipe(catchError(() => of([]))),
+    ]).pipe(map(([prod, demo]) => [...(prod || []), ...(demo || [])]));
   }
 
   exportRaceToCsv(): Observable<string> {

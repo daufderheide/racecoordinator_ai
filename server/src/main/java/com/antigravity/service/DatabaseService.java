@@ -583,6 +583,7 @@ public class DatabaseService {
           database.getCollection(
               getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
       RaceHistoryRecord record = new RaceHistoryRecord();
+      record.setDemo(isDemo);
       if (runtimeRace.getRaceModel() != null) {
         record.setOriginalEntityId(runtimeRace.getRaceModel().getEntityId());
         record.setModel(runtimeRace.getRaceModel());
@@ -617,6 +618,7 @@ public class DatabaseService {
       MongoDatabase database,
       String seasonId,
       String raceName,
+      boolean isDemo,
       List<SeasonDriverResult> driverResults) {
     if (seasonId == null
         || seasonId.trim().isEmpty()
@@ -635,7 +637,8 @@ public class DatabaseService {
       List<SeasonRaceRecord> races = season.getRaces();
       String nextRaceId = String.valueOf(races.size() + 1);
       SeasonRaceRecord newRecord =
-          new SeasonRaceRecord(nextRaceId, raceName, System.currentTimeMillis(), driverResults);
+          new SeasonRaceRecord(
+              nextRaceId, raceName, System.currentTimeMillis(), isDemo, driverResults);
       races.add(newRecord);
 
       Season updatedSeason =
@@ -643,10 +646,22 @@ public class DatabaseService {
               season.getName(), season.getDrops(), races, season.getEntityId(), season.getId());
       collection.replaceOne(
           com.mongodb.client.model.Filters.eq("entity_id", seasonId), updatedSeason);
-      logger.info("Committed race '{}' results to season '{}'", raceName, season.getName());
+      logger.info(
+          "Committed race '{}' results (isDemo={}) to season '{}'",
+          raceName,
+          isDemo,
+          season.getName());
     } catch (Exception e) {
       logger.error("Failed to commit race to season", e);
     }
+  }
+
+  public void commitRaceToSeason(
+      MongoDatabase database,
+      String seasonId,
+      String raceName,
+      List<SeasonDriverResult> driverResults) {
+    commitRaceToSeason(database, seasonId, raceName, false, driverResults);
   }
 
   public void saveRaceRecords(

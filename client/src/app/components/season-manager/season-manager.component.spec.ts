@@ -31,6 +31,7 @@ describe("SeasonManagerComponent", () => {
   beforeEach(async () => {
     const mockDataService = {
       getSeasons: () => of([]),
+      getAllFinishedRaceHistory: () => of([]),
       deleteSeason: () => of({}),
     };
 

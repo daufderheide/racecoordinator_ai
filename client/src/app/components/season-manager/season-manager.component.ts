@@ -12,7 +12,8 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { Subscription } from "rxjs";
+import { forkJoin, of, Subscription } from "rxjs";
+import { catchError } from "rxjs/operators";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
@@ -56,6 +57,11 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
   showDeleteConfirmation: boolean = false;
 
   @ViewChildren("seasonRow") seasonRows!: QueryList<ElementRef>;
+
+  get hasDemoRaces(): boolean {
+    if (!this.selectedSeason || !this.selectedSeason.races) return false;
+    return this.selectedSeason.races.some((r) => Boolean(r.is_demo));
+  }
 
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -119,9 +125,47 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
 
   loadData(): void {
     this.isLoading = true;
-    this.dataService.getSeasons().subscribe({
-      next: (seasons) => {
-        this.seasons = seasons;
+    forkJoin([
+      this.dataService.getSeasons().pipe(catchError(() => of([]))),
+      this.dataService
+        .getAllFinishedRaceHistory()
+        .pipe(catchError(() => of([]))),
+    ]).subscribe({
+      next: ([seasons, history]) => {
+        this.seasons = seasons || [];
+        const demoHistorySet = new Set<string>();
+
+        if (Array.isArray(history)) {
+          for (const item of history) {
+            const isDemo = Boolean(
+              item.is_demo ||
+              item.isDemo ||
+              item.demo ||
+              item.isDemoMode ||
+              (item.model && (item.model.demoMode || item.model.isDemoMode)),
+            );
+            if (isDemo) {
+              const raceId =
+                item.original_entity_id || item.model?.entity_id || item._id;
+              const timestamp =
+                item.statistics?.startMillis ||
+                item.timestamp ||
+                (item.id?.timestamp ? item.id.timestamp * 1000 : 0);
+              if (raceId) demoHistorySet.add(String(raceId));
+              if (timestamp) demoHistorySet.add(String(timestamp));
+              if (raceId && timestamp)
+                demoHistorySet.add(`${raceId}_${timestamp}`);
+            }
+          }
+        }
+
+        for (const s of this.seasons) {
+          if (!s || !s.races) continue;
+          for (const r of s.races) {
+            r.is_demo = true;
+          }
+        }
+
         this.isLoading = false;
 
         const targetId = this.route.snapshot.queryParams["id"];
@@ -157,6 +201,9 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
       this.standings = [];
       return;
     }
+
+    // Sort races by date run (oldest to most recent)
+    season.races.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
     const driverMap = new Map<
       string,

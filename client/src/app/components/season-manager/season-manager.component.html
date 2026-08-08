@@ -73,6 +73,11 @@
                   selectedSeason.races ? selectedSeason.races.length : 0
                 }}</strong></span
               >
+              @if (hasDemoRaces) {
+                <span class="badge-demo">{{
+                  "SE_DEMO_RACES_INCLUDED" | translate
+                }}</span>
+              }
             </div>
           </div>
           <div class="detail-content">

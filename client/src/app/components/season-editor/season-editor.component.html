@@ -1,58 +1,280 @@
-<div class="editor-container" [style.transform]="'scale(' + scale + ')'">
+<div
+  class="page-container"
+  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+>
   <app-editor-title
     [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
     [undoManager]="undoManager"
+    [isSaving]="isSaving"
   ></app-editor-title>
 
-  <div class="editor-content">
-    @if (isLoading) {
-      <div class="loading-spinner">Loading season...</div>
-    } @else {
-      <div class="editor-card">
-        <div class="form-group">
-          <label class="form-label" for="season-name">
-            {{ "SE_LABEL_NAME" | translate }} <span class="required">*</span>
-          </label>
+  @if (!isLoading) {
+    <div class="content-split">
+      <!-- Left Panel: Form Settings -->
+      <div class="editor-panel-left">
+        <div
+          class="editor-section"
+          [class.invalid]="isNameDuplicate || (!editingSeason.name && isDirty)"
+        >
+          <label class="section-label"
+            >{{ "SE_LABEL_NAME" | translate }}
+            <span class="required">*</span></label
+          >
           <input
             id="season-name"
             type="text"
-            class="form-input"
             [class.invalid]="
               isNameDuplicate || (!editingSeason.name && isDirty)
             "
             [(ngModel)]="editingSeason.name"
-            (ngModelChange)="captureState()"
+            (ngModelChange)="onInputChange()"
             placeholder="e.g. 2026 Winter Championship"
+            autocomplete="off"
           />
           @if (!editingSeason.name && isDirty) {
-            <span class="error-msg">{{ "SE_NAME_REQUIRED" | translate }}</span>
+            <span class="error-text">{{ "SE_NAME_REQUIRED" | translate }}</span>
           }
           @if (isNameDuplicate) {
-            <span class="error-msg">{{ "SE_NAME_EXISTS" | translate }}</span>
+            <span class="error-text">{{ "SE_NAME_EXISTS" | translate }}</span>
           }
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="season-drops">
-            {{ "SE_LABEL_DROPS" | translate }}
-          </label>
+        <div class="editor-section">
+          <label class="section-label">{{
+            "SE_LABEL_DROPS" | translate
+          }}</label>
           <input
             id="season-drops"
             type="number"
-            class="form-input number-input"
             min="0"
             max="50"
+            step="1"
             [(ngModel)]="editingSeason.drops"
-            (ngModelChange)="captureState()"
+            (ngModelChange)="onInputChange()"
           />
           <span class="help-text">
             {{ "SE_DROPS_HELP" | translate }}
           </span>
         </div>
       </div>
-    }
-  </div>
+
+      <!-- Right Panel: Summary & Race Expanders -->
+      <div class="editor-panel-right">
+        <div class="panel-header">
+          <div class="header-title-group">
+            <h3>{{ editingSeason.name || ("SE_TITLE_NEW" | translate) }}</h3>
+            @if (hasDemoRaces) {
+              <span class="demo-badge">{{
+                "SE_DEMO_RACES_INCLUDED" | translate
+              }}</span>
+            }
+            <span class="meta-pill">
+              {{ "SM_RACES_RUN" | translate }}:
+              <strong>{{
+                editingSeason.races ? editingSeason.races.length : 0
+              }}</strong>
+            </span>
+          </div>
+          <button class="btn-add-race" (click)="openAddRaceModal()">
+            + {{ "SE_BTN_ADD_RACE" | translate }}
+          </button>
+        </div>
+
+        <div class="editor-scroll-content">
+          <!-- Standings Section -->
+          <div class="summary-section">
+            <div class="sub-section-header">
+              <h4>{{ "SM_STANDINGS_TITLE" | translate }}</h4>
+            </div>
+            @if (standings.length === 0) {
+              <div class="empty-standings">
+                {{ "SM_NO_RACES_RUN" | translate }}
+              </div>
+            } @else {
+              <table class="standings-table">
+                <thead>
+                  <tr>
+                    <th class="col-rank">{{ "SM_RANK" | translate }}</th>
+                    <th class="col-driver">{{ "SM_DRIVER" | translate }}</th>
+                    <th class="col-pts">{{ "SM_NET_POINTS" | translate }}</th>
+                    <th class="col-pts">{{ "SM_GROSS_POINTS" | translate }}</th>
+                    <th class="col-races">{{ "SM_RACES" | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    item of standings;
+                    track item.driver_id;
+                    let rankIdx = $index
+                  ) {
+                    <tr
+                      [class.podium-1]="rankIdx === 0"
+                      [class.podium-2]="rankIdx === 1"
+                      [class.podium-3]="rankIdx === 2"
+                    >
+                      <td class="col-rank">
+                        @if (rankIdx === 0) {
+                          🥇 1
+                        } @else if (rankIdx === 1) {
+                          🥈 2
+                        } @else if (rankIdx === 2) {
+                          🥉 3
+                        } @else {
+                          {{ rankIdx + 1 }}
+                        }
+                      </td>
+                      <td class="col-driver">
+                        <strong>{{ item.driver_name }}</strong>
+                      </td>
+                      <td class="col-pts net-highlight">
+                        <strong>{{ item.net_points }}</strong>
+                      </td>
+                      <td class="col-pts">{{ item.gross_points }}</td>
+                      <td class="col-races">{{ item.races_run }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+
+          <!-- Race Expanders Section -->
+          <div class="races-expander-section">
+            <div class="sub-section-header">
+              <h4>{{ "SM_BREAKDOWN_TITLE" | translate }}</h4>
+            </div>
+            @if (!editingSeason.races || editingSeason.races.length === 0) {
+              <div class="empty-races">
+                <p>{{ "SM_NO_RACES_RUN" | translate }}</p>
+              </div>
+            } @else {
+              <div class="expander-list">
+                @for (
+                  race of editingSeason.races;
+                  track race.race_id || idx;
+                  let idx = $index
+                ) {
+                  <div class="race-expander-card">
+                    <div
+                      class="expander-title-bar"
+                      (click)="toggleRaceExpanded(race.race_id || '' + idx)"
+                    >
+                      <div class="expander-title-left">
+                        <span
+                          class="expander-icon"
+                          [class.collapsed]="
+                            !isRaceExpanded(race.race_id || '' + idx)
+                          "
+                          >▼</span
+                        >
+                        <span class="race-step">#{{ idx + 1 }}</span>
+                        <span class="race-name">{{ race.race_name }}</span>
+                        @if (race.is_demo) {
+                          <span class="badge-demo">{{
+                            "SE_BADGE_DEMO" | translate
+                          }}</span>
+                        }
+                        @if (race.timestamp) {
+                          <span class="race-date"
+                            >({{ race.timestamp | date: "short" }})</span
+                          >
+                        }
+                      </div>
+                      <button
+                        class="btn-remove-race"
+                        (click)="removeRaceFromSeason(idx, $event)"
+                        title="Remove Race"
+                      >
+                        {{ "SE_REMOVE_RACE" | translate }}
+                      </button>
+                    </div>
+                    @if (isRaceExpanded(race.race_id || "" + idx)) {
+                      <div class="expander-body">
+                        <table class="race-breakdown-table">
+                          <thead>
+                            <tr>
+                              <th>{{ "SM_RANK" | translate }}</th>
+                              <th>{{ "SM_DRIVER" | translate }}</th>
+                              <th>{{ "SM_OVERALL_POS_POINTS" | translate }}</th>
+                              <th>{{ "SM_HEAT_POS_POINTS" | translate }}</th>
+                              <th>Total Pts</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (
+                              res of race.driver_results;
+                              track res.driver_id;
+                              let rIdx = $index
+                            ) {
+                              <tr>
+                                <td>#{{ res.overall_rank || rIdx + 1 }}</td>
+                                <td>
+                                  <strong>{{ res.driver_name }}</strong>
+                                </td>
+                                <td>{{ res.overall_points }}</td>
+                                <td>{{ res.heat_points }}</td>
+                                <td>
+                                  <strong>{{ res.total_points }}</strong>
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>
+
+<!-- Add Finished Race Modal -->
+@if (showAddRaceModal) {
+  <div class="modal-overlay">
+    <div class="modal-card">
+      <h2>{{ "SE_ADD_RACE_TITLE" | translate }}</h2>
+      <div class="modal-body">
+        <label>{{ "SE_SELECT_RACE_PROMPT" | translate }}</label>
+        @if (availableFinishedRaces.length === 0) {
+          <p class="no-available-text">
+            {{ "SE_NO_AVAILABLE_RACES" | translate }}
+          </p>
+        } @else {
+          <div class="modal-race-list">
+            @for (
+              r of availableFinishedRaces;
+              track r.race_id + "_" + r.timestamp
+            ) {
+              <div class="modal-race-item" (click)="addRaceToSeason(r)">
+                <div class="race-item-left">
+                  <span class="race-item-name">{{ r.race_name }}</span>
+                  @if (r.is_demo) {
+                    <span class="demo-badge">{{
+                      "SE_BADGE_DEMO" | translate
+                    }}</span>
+                  }
+                </div>
+                <span class="race-item-date"
+                  >({{ r.timestamp | date: "short" }})</span
+                >
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="closeAddRaceModal()">
+          {{ "CANCEL" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Discard Changes Confirmation -->
 <app-confirmation-modal

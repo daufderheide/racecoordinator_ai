@@ -1,3 +1,4 @@
+import { DatePipe } from "@angular/common";
 import { Component, input, NO_ERRORS_SCHEMA, output } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
@@ -49,12 +50,14 @@ describe("SeasonEditorComponent", () => {
   beforeEach(async () => {
     const mockDataService = {
       getSeasons: () => of([]),
+      getRaceHistory: () => of([]),
+      getAllFinishedRaceHistory: () => of([]),
       createSeason: (s: any) => of({ ...s, entity_id: "s1" }),
       updateSeason: (id: string, s: any) => of({ ...s, entity_id: id }),
     };
 
     await TestBed.configureTestingModule({
-      imports: [SeasonEditorComponent, FormsModule, TranslatePipe],
+      imports: [SeasonEditorComponent, FormsModule, TranslatePipe, DatePipe],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -76,6 +79,7 @@ describe("SeasonEditorComponent", () => {
             MockConfirmationModalComponent,
             TranslatePipe,
             FormsModule,
+            DatePipe,
           ],
           schemas: [NO_ERRORS_SCHEMA],
         },
@@ -140,5 +144,111 @@ describe("SeasonEditorComponent", () => {
 
   it("should generate unique default name for new season", () => {
     expect(component.editingSeason.name).toBe("New Season");
+  });
+
+  it("should recalculate standings when races are added or removed", () => {
+    const mockRace = {
+      race_id: "r1",
+      race_name: "Grand Prix 1",
+      timestamp: Date.now(),
+      driver_results: [
+        {
+          driver_id: "d1",
+          driver_name: "Speedy",
+          overall_rank: 1,
+          overall_points: 10,
+          heat_points: 5,
+          total_points: 15,
+        },
+        {
+          driver_id: "d2",
+          driver_name: "Racer",
+          overall_rank: 2,
+          overall_points: 8,
+          heat_points: 3,
+          total_points: 11,
+        },
+      ],
+    };
+
+    component.editingSeason.races = [mockRace];
+    component.calculateStandings();
+
+    expect(component.standings.length).toBe(2);
+    expect(component.standings[0].driver_name).toBe("Speedy");
+    expect(component.standings[0].net_points).toBe(15);
+
+    // Remove race and recalculate
+    component.removeRaceFromSeason(0);
+    expect(component.editingSeason.races.length).toBe(0);
+    expect(component.standings.length).toBe(0);
+  });
+
+  it("should open add race modal, sort available finished races most recent to oldest, and add selected race", () => {
+    component.existingSeasons = [
+      {
+        name: "Past Season",
+        drops: 0,
+        races: [
+          {
+            race_id: "r101",
+            race_name: "Older Race",
+            timestamp: 1000,
+            driver_results: [],
+          },
+          {
+            race_id: "r102",
+            race_name: "Newer Race",
+            timestamp: 5000,
+            driver_results: [],
+          },
+        ],
+      },
+    ];
+
+    component.openAddRaceModal();
+    expect(component.showAddRaceModal).toBeTrue();
+    expect(component.availableFinishedRaces.length).toBe(2);
+    expect(component.availableFinishedRaces[0].race_name).toBe("Newer Race");
+    expect(component.availableFinishedRaces[1].race_name).toBe("Older Race");
+
+    // Select and add race
+    component.selectedRaceToAddId = "r102_5000";
+    component.addRaceToSeason();
+
+    expect(component.editingSeason.races?.length).toBe(1);
+    expect(component.editingSeason.races?.[0].race_name).toBe("Newer Race");
+    expect(component.showAddRaceModal).toBeFalse();
+  });
+
+  it("should toggle race expander state", () => {
+    expect(component.isRaceExpanded("r1")).toBeFalse();
+    component.toggleRaceExpanded("r1");
+    expect(component.isRaceExpanded("r1")).toBeTrue();
+    component.toggleRaceExpanded("r1");
+    expect(component.isRaceExpanded("r1")).toBeFalse();
+  });
+
+  it("should tag demo races with is_demo: true when loading race history", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([
+        {
+          original_entity_id: "demo_1",
+          timestamp: 9000,
+          demo: true,
+          model: { name: "Demo Grand Prix" },
+          drivers: [],
+        },
+      ]),
+    );
+
+    component.openAddRaceModal();
+
+    expect(component.availableFinishedRaces.length).toBe(1);
+    expect(component.availableFinishedRaces[0].is_demo).toBeTrue();
+    expect(component.availableFinishedRaces[0].race_name).toBe(
+      "Demo Grand Prix",
+    );
   });
 });

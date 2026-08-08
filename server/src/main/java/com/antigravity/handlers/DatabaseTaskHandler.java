@@ -1299,6 +1299,11 @@ public class DatabaseTaskHandler {
       DatabaseService dbService = DatabaseService.getInstance();
       List<RaceHistoryRecord> history =
           dbService.getRaceHistory(databaseContext.getDatabase(), scope);
+      if (scope == RaceScope.DEMO && history != null) {
+        for (RaceHistoryRecord rec : history) {
+          rec.setDemo(true);
+        }
+      }
       ctx.json(history);
     } catch (Exception e) {
       e.printStackTrace();
