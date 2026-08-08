@@ -168,7 +168,25 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
 
         this.isLoading = false;
 
-        const targetId = this.route.snapshot.queryParams["id"];
+        const lastEdited = this.navigationService.getLastEditedId("season");
+        const savedSettingId =
+          this.settingsService.getSettings().selectedSeasonId;
+        let targetId =
+          this.route.snapshot.queryParams["id"] ||
+          this.route.snapshot.queryParams["selectedId"];
+
+        if (lastEdited) {
+          targetId = lastEdited;
+          this.navigationService.clearLastEditedId("season");
+          this.router.navigate([], {
+            queryParams: { id: lastEdited },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        } else if (!targetId && savedSettingId) {
+          targetId = savedSettingId;
+        }
+
         if (targetId) {
           const match = this.seasons.find((s) => s.entity_id === targetId);
           if (match) {
@@ -192,6 +210,11 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
 
   selectSeason(season: Season): void {
     this.selectedSeason = season;
+    if (season && season.entity_id) {
+      const settings = this.settingsService.getSettings();
+      settings.selectedSeasonId = season.entity_id;
+      this.settingsService.saveSettings(settings);
+    }
     this.calculateStandings(season);
     this.cdr.detectChanges();
   }

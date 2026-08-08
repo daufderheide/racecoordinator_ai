@@ -5,7 +5,10 @@
   <app-editor-title
     [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
     [undoManager]="undoManager"
+    [showCopy]="true"
+    [disabledCopy]="!isFormValid || isSaving"
     [isSaving]="isSaving"
+    (copy)="saveAsNew()"
   ></app-editor-title>
 
   @if (!isLoading) {
@@ -22,6 +25,7 @@
           >
           <input
             id="season-name"
+            name="season-name"
             type="text"
             [class.invalid]="
               isNameDuplicate || (!editingSeason.name && isDirty)
@@ -30,6 +34,11 @@
             (ngModelChange)="onInputChange()"
             placeholder="e.g. 2026 Winter Championship"
             autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
           @if (!editingSeason.name && isDirty) {
             <span class="error-text">{{ "SE_NAME_REQUIRED" | translate }}</span>

@@ -657,10 +657,14 @@ export class SeasonEditorComponent
     request.subscribe({
       next: (savedSeason) => {
         this.isSaving = false;
+        const targetId = savedSeason.entity_id || payload.entity_id;
+        if (targetId) {
+          this.navigationService.setLastEditedId("season", targetId);
+        }
         this.undoManager.initialize(this.cloneSeason(this.editingSeason));
         this.isNavigationApproved = true;
         this.router.navigate(["/season-manager"], {
-          queryParams: { id: savedSeason.entity_id || payload.entity_id },
+          queryParams: targetId ? { id: targetId } : {},
         });
       },
       error: (err) => {
@@ -671,9 +675,65 @@ export class SeasonEditorComponent
     });
   }
 
+  saveAsNew(): void {
+    if (!this.isFormValid || this.isSaving) return;
+
+    this.isSaving = true;
+    const uniqueName = this.generateUniqueName(this.editingSeason.name, true);
+    const newCopy: Season = {
+      ...this.cloneSeason(this.editingSeason),
+      entity_id: undefined,
+      name: uniqueName,
+    };
+
+    this.dataService.createSeason(newCopy).subscribe({
+      next: (saved) => {
+        this.isSaving = false;
+        this.editingSeason = this.cloneSeason(saved);
+        if (saved) {
+          const tagSeasonRaces = (s: Season) => {
+            if (!s || !s.races) return;
+            for (const r of s.races) {
+              r.is_demo = true;
+            }
+          };
+          tagSeasonRaces(saved);
+          this.existingSeasons.push(saved);
+        }
+        this.calculateStandings();
+        this.undoManager.resetTracking(this.editingSeason);
+        if (saved?.entity_id) {
+          this.navigationService.setLastEditedId("season", saved.entity_id);
+        }
+        this.isReverting = true;
+        this.router.navigate([], {
+          queryParams: { id: saved?.entity_id },
+          queryParamsHandling: "merge",
+          replaceUrl: true,
+        });
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to duplicate season", err);
+        this.isSaving = false;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   onCancel(): void {
+    if (this.editingSeason && this.editingSeason.entity_id) {
+      this.navigationService.setLastEditedId(
+        "season",
+        this.editingSeason.entity_id,
+      );
+    }
     this.isNavigationApproved = true;
-    this.router.navigate(["/season-manager"]);
+    this.router.navigate(["/season-manager"], {
+      queryParams: this.editingSeason?.entity_id
+        ? { id: this.editingSeason.entity_id }
+        : {},
+    });
   }
 
   onUndo(): void {

@@ -8,6 +8,7 @@ import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
   mockLoggerService,
@@ -56,12 +57,19 @@ describe("SeasonEditorComponent", () => {
       updateSeason: (id: string, s: any) => of({ ...s, entity_id: id }),
     };
 
+    const mockNavigationService = {
+      getLastEditedId: (_type: string) => null,
+      setLastEditedId: (_type: string, _id: string) => {},
+      clearLastEditedId: (_type: string) => {},
+    };
+
     await TestBed.configureTestingModule({
       imports: [SeasonEditorComponent, FormsModule, TranslatePipe, DatePipe],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: LoggerService, useValue: mockLoggerService },
+        { provide: NavigationService, useValue: mockNavigationService },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParams: {} } },
@@ -249,6 +257,96 @@ describe("SeasonEditorComponent", () => {
     expect(component.availableFinishedRaces[0].is_demo).toBeTrue();
     expect(component.availableFinishedRaces[0].race_name).toBe(
       "Demo Grand Prix",
+    );
+  });
+
+  it("should have password manager ignore attributes on season name input field", () => {
+    const inputEl = fixture.nativeElement.querySelector("#season-name");
+    expect(inputEl).toBeTruthy();
+    expect(inputEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(inputEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(inputEl.getAttribute("data-lpignore")).toBe("true");
+    expect(inputEl.getAttribute("data-bwignore")).toBe("true");
+    expect(inputEl.getAttribute("data-form-type")).toBe("other");
+    expect(inputEl.getAttribute("autocomplete")).toBe("off");
+  });
+
+  it("should duplicate season including races run within the season when saveAsNew is called", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "createSeason").and.callFake((s: any) =>
+      of({ ...s, entity_id: "duplicated_season_id" }),
+    );
+
+    component.editingSeason = {
+      entity_id: "orig_1",
+      name: "Championship 2026",
+      drops: 1,
+      races: [
+        {
+          race_id: "r1",
+          race_name: "Race 1",
+          timestamp: 10000,
+          driver_results: [
+            {
+              driver_id: "d1",
+              driver_name: "Speedy",
+              overall_rank: 1,
+              overall_points: 10,
+              heat_points: 5,
+              total_points: 15,
+            },
+          ],
+        },
+      ],
+    };
+
+    component.saveAsNew();
+
+    expect(dataService.createSeason).toHaveBeenCalled();
+    const createdPayload = (
+      dataService.createSeason as jasmine.Spy
+    ).calls.mostRecent().args[0];
+    expect(createdPayload.entity_id).toBeUndefined();
+    expect(createdPayload.name).toBe("Championship 2026_1");
+    expect(createdPayload.drops).toBe(1);
+    expect(createdPayload.races.length).toBe(1);
+    expect(createdPayload.races[0].race_name).toBe("Race 1");
+    expect(createdPayload.races[0].driver_results.length).toBe(1);
+    expect(component.editingSeason.entity_id).toBe("duplicated_season_id");
+    expect(component.standings.length).toBe(1);
+  });
+
+  it("should set last edited season ID in NavigationService when canceling", () => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "setLastEditedId");
+
+    component.editingSeason = {
+      entity_id: "season_123",
+      name: "Winter 2026",
+      drops: 0,
+    };
+    component.onCancel();
+
+    expect(navService.setLastEditedId).toHaveBeenCalledWith(
+      "season",
+      "season_123",
+    );
+  });
+
+  it("should set last edited season ID in NavigationService when saving", () => {
+    const navService = TestBed.inject(NavigationService);
+    spyOn(navService, "setLastEditedId");
+
+    component.editingSeason = {
+      entity_id: "season_456",
+      name: "Spring 2026",
+      drops: 1,
+    };
+    component.onSave();
+
+    expect(navService.setLastEditedId).toHaveBeenCalledWith(
+      "season",
+      "season_456",
     );
   });
 });

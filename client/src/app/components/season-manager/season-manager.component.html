@@ -81,63 +81,70 @@
             </div>
           </div>
           <div class="detail-content">
-            <div class="summary-section">
-              <div class="section-title">
-                <h3>{{ "SM_STANDINGS_TITLE" | translate }}</h3>
+            @if (standings.length === 0) {
+              <div class="empty-standings">
+                {{ "SM_NO_RACES_RUN" | translate }}
               </div>
-              @if (standings.length === 0) {
-                <div class="empty-standings">
-                  {{ "SM_NO_RACES_RUN" | translate }}
-                </div>
-              } @else {
-                <table class="standings-table">
-                  <thead>
-                    <tr>
-                      <th class="col-rank">{{ "SM_RANK" | translate }}</th>
-                      <th class="col-driver">{{ "SM_DRIVER" | translate }}</th>
-                      <th class="col-pts">{{ "SM_NET_POINTS" | translate }}</th>
-                      <th class="col-pts">
-                        {{ "SM_GROSS_POINTS" | translate }}
-                      </th>
-                      <th class="col-races">{{ "SM_RACES" | translate }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (
-                      item of standings;
-                      track item.driver_id;
-                      let rankIdx = $index
-                    ) {
-                      <tr
-                        [class.podium-1]="rankIdx === 0"
-                        [class.podium-2]="rankIdx === 1"
-                        [class.podium-3]="rankIdx === 2"
-                      >
-                        <td class="col-rank">
-                          @if (rankIdx === 0) {
-                            🥇 1
-                          } @else if (rankIdx === 1) {
-                            🥈 2
-                          } @else if (rankIdx === 2) {
-                            🥉 3
-                          } @else {
-                            {{ rankIdx + 1 }}
-                          }
-                        </td>
-                        <td class="col-driver">
-                          <strong>{{ item.driver_name }}</strong>
-                        </td>
-                        <td class="col-pts net-highlight">
-                          <strong>{{ item.net_points }}</strong>
-                        </td>
-                        <td class="col-pts">{{ item.gross_points }}</td>
-                        <td class="col-races">{{ item.races_run }}</td>
+            } @else {
+              <div class="standings-wrapper">
+                <div class="standings-header-container">
+                  <table class="standings-table">
+                    <thead>
+                      <tr>
+                        <th class="col-rank">{{ "SM_RANK" | translate }}</th>
+                        <th class="col-driver">
+                          {{ "SM_DRIVER" | translate }}
+                        </th>
+                        <th class="col-pts">
+                          {{ "SM_NET_POINTS" | translate }}
+                        </th>
+                        <th class="col-pts">
+                          {{ "SM_GROSS_POINTS" | translate }}
+                        </th>
+                        <th class="col-races">{{ "SM_RACES" | translate }}</th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
-              }
-            </div>
+                    </thead>
+                  </table>
+                </div>
+                <div class="standings-body-container">
+                  <table class="standings-table">
+                    <tbody>
+                      @for (
+                        item of standings;
+                        track item.driver_id;
+                        let rankIdx = $index
+                      ) {
+                        <tr
+                          [class.podium-1]="rankIdx === 0"
+                          [class.podium-2]="rankIdx === 1"
+                          [class.podium-3]="rankIdx === 2"
+                        >
+                          <td class="col-rank">
+                            @if (rankIdx === 0) {
+                              🥇 1
+                            } @else if (rankIdx === 1) {
+                              🥈 2
+                            } @else if (rankIdx === 2) {
+                              🥉 3
+                            } @else {
+                              {{ rankIdx + 1 }}
+                            }
+                          </td>
+                          <td class="col-driver">
+                            <strong>{{ item.driver_name }}</strong>
+                          </td>
+                          <td class="col-pts net-highlight">
+                            <strong>{{ item.net_points }}</strong>
+                          </td>
+                          <td class="col-pts">{{ item.gross_points }}</td>
+                          <td class="col-races">{{ item.races_run }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
           </div>
         </div>
       } @else {
