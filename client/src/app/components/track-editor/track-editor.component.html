@@ -344,7 +344,7 @@
               [interfaceIndex]="
                 i + arduinoConfigs.length + phidgetConfigs.length
               "
-              (change)="captureState()"
+              (change)="onTrackmateConfigChange()"
               (remove)="removeTrackmateConfig(i)"
             >
             </app-trakmate-editor>

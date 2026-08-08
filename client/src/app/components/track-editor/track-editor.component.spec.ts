@@ -524,6 +524,20 @@ describe("TrackEditorComponent", () => {
     expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Shifted
   });
 
+  it("should re-initialize interfaces when onTrackmateConfigChange is called", () => {
+    component.addTrackmateConfig();
+    (dataService.initializeInterface as jasmine.Spy).calls.reset();
+
+    component.onTrackmateConfigChange();
+
+    expect(dataService.initializeInterface).toHaveBeenCalledWith(
+      component.arduinoConfigs,
+      component.trackmateConfigs,
+      component.phidgetConfigs,
+      component.lanes.length,
+    );
+  });
+
   describe("Auto-save and Duplicate", () => {
     it("should auto-save on valid name change after debounce", fakeAsync(() => {
       component.trackName = "Valid New Name";

@@ -198,4 +198,76 @@ public class PowerManagerTest {
       verify(protocol).setLanePower(false, i);
     }
   }
+
+  @Test
+  public void testSequence_MainOn_LaneOn_MainOff_LaneOff_MainOn() {
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    // 1. Master power is ON, lane power is ON
+    powerManager.setMainPower(true);
+    for (int i = 0; i < numLanes; i++) {
+      powerManager.setLanePower(true, i);
+    }
+
+    // 2. Main power goes OFF
+    powerManager.setMainPower(false);
+
+    // 3. Lane power goes OFF (lane 0)
+    powerManager.setLanePower(false, 0);
+
+    reset(protocol);
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    // 4. Master power goes ON
+    powerManager.setMainPower(true);
+
+    // Main relay is ON
+    verify(protocol).setMainPower(true);
+
+    // Lane 0 power was NOT turned ON because setLanePower(false, 0) in Step 3 updated
+    // desiredLanePower to false
+    verify(protocol, never()).setLanePower(true, 0);
+
+    // Lanes 1, 2, 3 power WERE turned ON because their desiredLanePower was true
+    verify(protocol).setLanePower(true, 1);
+    verify(protocol).setLanePower(true, 2);
+    verify(protocol).setLanePower(true, 3);
+  }
+
+  @Test
+  public void testSequence_MainOn_LaneOn_LaneOff_MainOff_LaneOn_MainOn() {
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    // 1. Master power is ON, lane power is ON
+    powerManager.setMainPower(true);
+    for (int i = 0; i < numLanes; i++) {
+      powerManager.setLanePower(true, i);
+    }
+
+    // 2. Lane power goes OFF (lane 0)
+    powerManager.setLanePower(false, 0);
+
+    // 3. Main power goes OFF
+    powerManager.setMainPower(false);
+
+    // 4. Lane power goes ON (lane 0) while main power is OFF
+    powerManager.setLanePower(true, 0);
+
+    reset(protocol);
+    when(protocol.hasMainRelay()).thenReturn(true);
+    when(protocol.hasPerLaneRelays()).thenReturn(true);
+
+    // 5. Master power goes ON
+    powerManager.setMainPower(true);
+
+    // Main relay is ON
+    verify(protocol).setMainPower(true);
+
+    // Lane 0 power SHOULD be turned ON because setLanePower(true, 0) in Step 4 updated
+    // desiredLanePower to true
+    verify(protocol).setLanePower(true, 0);
+  }
 }
