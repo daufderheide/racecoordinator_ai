@@ -11,7 +11,12 @@ import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
-import { interpolate, mockTTSContext, playSound } from "@app/utils/audio";
+import {
+  interpolate,
+  mockTTSContext,
+  playSound,
+  resolveAudioUrl,
+} from "@app/utils/audio";
 
 @Component({
   standalone: true,
@@ -56,6 +61,18 @@ export class AudioSelectorComponent {
     const lookupValue = this.assetId() || this.url();
     if (!lookupValue) return null;
 
+    const extractId = (val: string) => {
+      if (!val) return "";
+      const downloadPrefix = "/api/assets/download/";
+      const idx = val.indexOf(downloadPrefix);
+      if (idx !== -1) {
+        return val.substring(idx + downloadPrefix.length);
+      }
+      return val;
+    };
+
+    const targetIdOrUrl = extractId(lookupValue);
+
     const normalize = (u: string) => {
       if (!u) return "";
       // Extract the path after /api/ if it exists, otherwise return as is
@@ -69,8 +86,8 @@ export class AudioSelectorComponent {
     const normalizedLookup = normalize(lookupValue);
 
     return this.assets().find((a) => {
-      if (a.model?.entityId === lookupValue || a.entity_id === lookupValue)
-        return true;
+      const id = a.model?.entityId || a.entity_id || a.id;
+      if (id && (id === lookupValue || id === targetIdOrUrl)) return true;
       if (normalize(a.url) === normalizedLookup) return true;
       return false;
     });
@@ -264,21 +281,7 @@ export class AudioSelectorComponent {
   private playUrl(url: string | undefined): Promise<void> {
     if (!url) return Promise.resolve();
     return new Promise((resolve, reject) => {
-      let playableUrl = url;
-      if (url.startsWith("/")) {
-        playableUrl = `${this.dataService.serverUrl}${url}`;
-      } else {
-        const defaultUrls: Record<string, string> = {
-          default_beep: "/assets/default_beep_Lap_Beep",
-          default_chimes: "/assets/default_chimes_Lap_Chimes",
-          default_driveby: "/assets/default_driveby_Lap_Driveby",
-          default_penalty: "/assets/default_penalty_Penalty",
-          default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
-        };
-        if (defaultUrls[url]) {
-          playableUrl = `${this.dataService.serverUrl}${defaultUrls[url]}`;
-        }
-      }
+      const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
       this.currentAudio = audio;
       audio.onended = () => {

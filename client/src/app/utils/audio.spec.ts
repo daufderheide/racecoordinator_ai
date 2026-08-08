@@ -77,6 +77,16 @@ describe("playSound Utility", () => {
       expect(mockAudioInstance.play).toHaveBeenCalled();
     });
 
+    it("should play asset ID via download endpoint", () => {
+      const assetId = "0892e8cf-8be4-49a5-823e-d13722094268";
+      playSound("preset", assetId, undefined, SERVER_URL);
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        `${SERVER_URL}/api/assets/download/${assetId}`,
+      );
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
     it("should catch play errors", async () => {
       const path = "/error.mp3";
       mockAudioInstance.play.and.returnValue(Promise.reject("Play error"));

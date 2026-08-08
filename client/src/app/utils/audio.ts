@@ -16,6 +16,31 @@ export interface TTSContext {
   driver: TTSDriverData & TTSLapData;
 }
 
+/** Resolves an audio URL or asset ID to a fully qualified URL for playback. */
+export function resolveAudioUrl(
+  url: string | undefined,
+  serverUrl: string,
+): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  if (url.startsWith("/")) {
+    return `${serverUrl}${url}`;
+  }
+  const defaultUrls: Record<string, string> = {
+    default_beep: "/assets/default_beep_Lap_Beep",
+    default_chimes: "/assets/default_chimes_Lap_Chimes",
+    default_driveby: "/assets/default_driveby_Lap_Driveby",
+    default_penalty: "/assets/default_penalty_Penalty",
+    default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
+  };
+  if (defaultUrls[url]) {
+    return `${serverUrl}${defaultUrls[url]}`;
+  }
+  return `${serverUrl}/api/assets/download/${url}`;
+}
+
 /** Plays a sound based on the provided configuration. */
 export function playSound(
   type: "preset" | "tts" | "none" | "audio_set" | undefined,
@@ -27,22 +52,7 @@ export function playSound(
 ): void {
   if (type === "none") return;
   if (type === "preset" && url) {
-    // Ensure absolute URL if it's relative
-    let playableUrl = url;
-    if (url.startsWith("/")) {
-      playableUrl = `${serverUrl}${url}`;
-    } else {
-      const defaultUrls: Record<string, string> = {
-        default_beep: "/assets/default_beep_Lap_Beep",
-        default_chimes: "/assets/default_chimes_Lap_Chimes",
-        default_driveby: "/assets/default_driveby_Lap_Driveby",
-        default_penalty: "/assets/default_penalty_Penalty",
-        default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
-      };
-      if (defaultUrls[url]) {
-        playableUrl = `${serverUrl}${defaultUrls[url]}`;
-      }
-    }
+    const playableUrl = resolveAudioUrl(url, serverUrl);
     if (logger) logger.debug("Playing audio from URL:", playableUrl);
     const audio = new Audio(playableUrl);
     audio.play().catch((err) => {

@@ -82,6 +82,7 @@ export class Settings {
 
   recentRaceIds: string[] = [];
   selectedRaceId: string = "";
+  isEventMode: boolean = false;
   selectedDriverIds: string[] = [];
   demoConfig?: IDemoConfig;
 

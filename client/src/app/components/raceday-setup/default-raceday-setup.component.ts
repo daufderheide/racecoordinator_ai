@@ -238,12 +238,14 @@ export class DefaultRacedaySetupComponent implements OnInit {
         this.updateQuickStartRaces(localSettings.recentRaceIds);
 
         if (localSettings && localSettings.selectedRaceId) {
-          const matchedEvent = this.events.find(
-            (e) => e.entity_id === localSettings.selectedRaceId,
-          );
-          if (matchedEvent) {
-            this.selectedEvent = matchedEvent;
-            this.selectedRace = undefined;
+          if (localSettings.isEventMode) {
+            const matchedEvent = this.events.find(
+              (e) => e.entity_id === localSettings.selectedRaceId,
+            );
+            if (matchedEvent) {
+              this.selectedEvent = matchedEvent;
+              this.selectedRace = undefined;
+            }
           } else {
             const matchedRace = this.races.find(
               (r) => r.entity_id === localSettings.selectedRaceId,
@@ -251,6 +253,24 @@ export class DefaultRacedaySetupComponent implements OnInit {
             if (matchedRace) {
               this.selectedRace = matchedRace;
               this.selectedEvent = undefined;
+            }
+          }
+
+          if (!this.selectedRace && !this.selectedEvent) {
+            const matchedRace = this.races.find(
+              (r) => r.entity_id === localSettings.selectedRaceId,
+            );
+            if (matchedRace) {
+              this.selectedRace = matchedRace;
+              this.selectedEvent = undefined;
+            } else {
+              const matchedEvent = this.events.find(
+                (e) => e.entity_id === localSettings.selectedRaceId,
+              );
+              if (matchedEvent) {
+                this.selectedEvent = matchedEvent;
+                this.selectedRace = undefined;
+              }
             }
           }
         }
@@ -262,19 +282,19 @@ export class DefaultRacedaySetupComponent implements OnInit {
             localSettings.recentRaceIds.length > 0
           ) {
             const defaultId = localSettings.recentRaceIds[0];
-            const matchedEvent = this.events.find(
-              (e) => e.entity_id === defaultId,
+            const matchedRace = this.races.find(
+              (r) => r.entity_id === defaultId,
             );
-            if (matchedEvent) {
-              this.selectedEvent = matchedEvent;
-              this.selectedRace = undefined;
+            if (matchedRace) {
+              this.selectedRace = matchedRace;
+              this.selectedEvent = undefined;
             } else {
-              const matchedRace = this.races.find(
-                (r) => r.entity_id === defaultId,
+              const matchedEvent = this.events.find(
+                (e) => e.entity_id === defaultId,
               );
-              if (matchedRace) {
-                this.selectedRace = matchedRace;
-                this.selectedEvent = undefined;
+              if (matchedEvent) {
+                this.selectedEvent = matchedEvent;
+                this.selectedRace = undefined;
               }
             }
           }
@@ -770,6 +790,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
     if (selectedId) {
       settings.selectedRaceId = selectedId;
+      settings.isEventMode = this.isEventMode;
 
       if (updateRecent) {
         let recentRaceIds = settings.recentRaceIds || [];
@@ -1052,30 +1073,54 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   selectQuickStartItem(item: any) {
     if (!item) return;
-    const foundEvent = this.events.find((e) => e.entity_id === item.entity_id);
-    if (foundEvent) {
-      this.selectEvent(foundEvent);
+    const isEventItem = item.races && Array.isArray(item.races);
+    if (isEventItem) {
+      const foundEvent = this.events.find(
+        (e) => e.entity_id === item.entity_id,
+      );
+      if (foundEvent) {
+        this.selectEvent(foundEvent);
+        return;
+      }
+    }
+    const foundRace = this.races.find((r) => r.entity_id === item.entity_id);
+    if (foundRace) {
+      this.selectRace(foundRace);
     } else {
-      const foundRace = this.races.find((r) => r.entity_id === item.entity_id);
-      if (foundRace) {
-        this.selectRace(foundRace);
+      const foundEvent = this.events.find(
+        (e) => e.entity_id === item.entity_id,
+      );
+      if (foundEvent) {
+        this.selectEvent(foundEvent);
       }
     }
   }
 
   updateQuickStartRaces(recentRaceIds: string[] = []) {
     this.quickStartRaces = [];
+    const localSettings = this.settingsService?.getSettings();
 
-    // 1. Try to populate from recent list (supports both races and events, checking events first)
+    // 1. Try to populate from recent list
     if (recentRaceIds && recentRaceIds.length > 0) {
       for (const id of recentRaceIds) {
-        const event = this.events.find((e) => e.entity_id === id);
-        if (event) {
-          this.quickStartRaces.push(event as any);
+        const isSelected = localSettings && localSettings.selectedRaceId === id;
+        const isEventPreferred = isSelected && localSettings.isEventMode;
+
+        if (isEventPreferred) {
+          const event = this.events.find((e) => e.entity_id === id);
+          if (event) {
+            this.quickStartRaces.push(event as any);
+            continue;
+          }
+        }
+
+        const race = this.races.find((r) => r.entity_id === id);
+        if (race) {
+          this.quickStartRaces.push(race);
         } else {
-          const race = this.races.find((r) => r.entity_id === id);
-          if (race) {
-            this.quickStartRaces.push(race);
+          const event = this.events.find((e) => e.entity_id === id);
+          if (event) {
+            this.quickStartRaces.push(event as any);
           }
         }
       }

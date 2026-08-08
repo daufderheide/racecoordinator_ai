@@ -34,7 +34,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { interpolate, mockTTSContext } from "@app/utils/audio";
+import { interpolate, mockTTSContext, resolveAudioUrl } from "@app/utils/audio";
 
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
@@ -738,12 +738,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   private playUrl(url: string | undefined): Promise<void> {
     if (!url) return Promise.resolve();
     return new Promise((resolve, reject) => {
-      let playableUrl = url;
-      if (url.startsWith("/")) {
-        playableUrl = `${this.dataService.serverUrl}${url}`;
-      } else if (url === "default_penalty") {
-        playableUrl = `${this.dataService.serverUrl}/assets/default_penalty_Penalty`;
-      }
+      const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
       this.currentAudio = audio;
       audio.onended = () => {

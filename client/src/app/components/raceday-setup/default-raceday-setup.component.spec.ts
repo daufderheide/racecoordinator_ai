@@ -1131,33 +1131,84 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(savedSettings.recentRaceIds[0]).toBe("e1");
     }));
 
-    it("should select event on setup page load when selectedRaceId is an event ID", () => {
+    it("should select event on setup page load when selectedRaceId is an event ID and isEventMode is true", () => {
       mockSettingsService.getSettings.and.returnValue({
-        selectedRaceId: "e1",
-        recentRaceIds: ["e1", "r1"],
+        selectedRaceId: "1",
+        isEventMode: true,
+        recentRaceIds: ["1"],
       } as any);
 
       component.events = [
-        { entity_id: "e1", name: "Championship 2026" },
+        {
+          entity_id: "1",
+          name: "Championship 2026",
+          races: [{ raceId: "r1", maxDrivers: 4 }],
+        },
       ] as any;
-      component.races = [{ entity_id: "r1", name: "Grand Prix" }] as any;
+      component.races = [{ entity_id: "1", name: "Grand Prix" }] as any;
 
       const localSettings = mockSettingsService.getSettings();
       if (localSettings && localSettings.selectedRaceId) {
-        const matchedEvent = component.events.find(
-          (e) => e.entity_id === localSettings.selectedRaceId,
-        );
-        if (matchedEvent) {
-          component.selectedEvent = matchedEvent;
-          component.selectedRace = undefined;
+        if (localSettings.isEventMode) {
+          const matchedEvent = component.events.find(
+            (e) => e.entity_id === localSettings.selectedRaceId,
+          );
+          if (matchedEvent) {
+            component.selectedEvent = matchedEvent;
+            component.selectedRace = undefined;
+          }
         }
       }
 
       fixture.detectChanges();
 
       expect(component.selectedEvent).toBeDefined();
-      expect(component.selectedEvent?.entity_id).toBe("e1");
+      expect(component.selectedEvent?.name).toBe("Championship 2026");
       expect(component.selectedRace).toBeUndefined();
+    });
+
+    it("should select single race on setup page load when selectedRaceId collides with an event ID but isEventMode is false", () => {
+      mockSettingsService.getSettings.and.returnValue({
+        selectedRaceId: "1",
+        isEventMode: false,
+        recentRaceIds: ["1"],
+      } as any);
+
+      component.events = [
+        {
+          entity_id: "1",
+          name: "Championship 2026",
+          races: [{ raceId: "r1", maxDrivers: 4 }],
+        },
+      ] as any;
+      component.races = [{ entity_id: "1", name: "Grand Prix" }] as any;
+
+      const localSettings = mockSettingsService.getSettings();
+      if (localSettings && localSettings.selectedRaceId) {
+        if (localSettings.isEventMode) {
+          const matchedEvent = component.events.find(
+            (e) => e.entity_id === localSettings.selectedRaceId,
+          );
+          if (matchedEvent) {
+            component.selectedEvent = matchedEvent;
+            component.selectedRace = undefined;
+          }
+        } else {
+          const matchedRace = component.races.find(
+            (r) => r.entity_id === localSettings.selectedRaceId,
+          );
+          if (matchedRace) {
+            component.selectedRace = matchedRace;
+            component.selectedEvent = undefined;
+          }
+        }
+      }
+
+      fixture.detectChanges();
+
+      expect(component.selectedRace).toBeDefined();
+      expect(component.selectedRace?.name).toBe("Grand Prix");
+      expect(component.selectedEvent).toBeUndefined();
     });
 
     it("should return GEN_INFINITE for finish value of 0", () => {
