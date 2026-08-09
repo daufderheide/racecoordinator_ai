@@ -769,13 +769,51 @@
 }
 
 .all-races-selector .custom-dropdown-container {
-  flex: 1.2;
+  flex: 1;
   position: relative;
   z-index: 100;
 }
 
 .all-races-selector .search-wrapper {
   flex: 0.8;
+}
+
+.all-races-selector .season-selection-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 0.8;
+}
+
+.all-races-selector .season-select-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 100%;
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPScjOTRhM2I4JyBoZWlnaHQ9JzI0JyB2aWV3Qm94PScwIDAgMjQgMjQnIHdpZHRoPScyNCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48cGF0aCBkPSdNNyAxMGw1IDUgNS01eicvPjwvc3ZnPg==") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  padding: 10px 28px 10px 12px;
+  border-radius: 6px;
+  color: #fff !important;
+  outline: none;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.all-races-selector .season-select-input:focus {
+  border-color: #38bdf8;
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+}
+
+.all-races-selector .season-select-input option {
+  background-color: #0f172a;
+  color: #fff;
 }
 
 .dropdown-trigger {

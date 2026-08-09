@@ -172,6 +172,7 @@ Endpoints for running live races, pit stops, and hardware interfaces. Many write
 | `POST` | `/api/set-interface-rgb-led-state` | `DIRECTOR` | `SetInterfaceRgbLedStateRequest` (Protobuf) | `SetInterfaceRgbLedStateResponse` (Protobuf) | Drives RGB addressable LEDs. |
 | `POST` | `/api/close-interface` | `DIRECTOR` | None | Plaintext ("OK") | Closes serial interfaces. |
 | `GET` | `/api/serial-ports` | `VIEWER` | None | JSON array of strings | Lists available serial ports on the host. |
+| `GET` | `/api/ble-devices` | `VIEWER` | None | JSON array of strings | Lists available BLE devices on the host. |
 | `POST` | `/api/track/power/main` | `DIRECTOR` | Query `on=true/false` | Plaintext | Switches main track power relay. |
 | `POST` | `/api/track/power/lane/{lane}` | `DIRECTOR` | Query `on=true/false` | Plaintext | Switches power for a specific lane. |
 

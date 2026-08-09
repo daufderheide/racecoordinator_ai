@@ -20,6 +20,9 @@ import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.RacePredictionRecord;
+import com.antigravity.models.Season;
+import com.antigravity.models.SeasonRaceRecord;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
@@ -580,6 +583,7 @@ public class DatabaseService {
           database.getCollection(
               getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
       RaceHistoryRecord record = new RaceHistoryRecord();
+      record.setDemo(isDemo);
       if (runtimeRace.getRaceModel() != null) {
         record.setOriginalEntityId(runtimeRace.getRaceModel().getEntityId());
         record.setModel(runtimeRace.getRaceModel());
@@ -595,6 +599,69 @@ public class DatabaseService {
     } catch (Exception e) {
       logger.error("Failed to save race to history", e);
     }
+  }
+
+  public Season getSeason(MongoDatabase database, String seasonId) {
+    if (seasonId == null || seasonId.trim().isEmpty() || database == null) {
+      return null;
+    }
+    try {
+      MongoCollection<Season> collection = database.getCollection("seasons", Season.class);
+      return collection.find(com.mongodb.client.model.Filters.eq("entity_id", seasonId)).first();
+    } catch (Exception e) {
+      logger.error("Failed to get season by entity_id: " + seasonId, e);
+      return null;
+    }
+  }
+
+  public void commitRaceToSeason(
+      MongoDatabase database,
+      String seasonId,
+      String raceName,
+      boolean isDemo,
+      List<SeasonDriverResult> driverResults) {
+    if (seasonId == null
+        || seasonId.trim().isEmpty()
+        || driverResults == null
+        || driverResults.isEmpty()) {
+      return;
+    }
+    try {
+      MongoCollection<Season> collection = database.getCollection("seasons", Season.class);
+      Season season =
+          collection.find(com.mongodb.client.model.Filters.eq("entity_id", seasonId)).first();
+      if (season == null) {
+        logger.warn("Season not found for entity_id: {}", seasonId);
+        return;
+      }
+      List<SeasonRaceRecord> races = season.getRaces();
+      String nextRaceId = String.valueOf(races.size() + 1);
+      SeasonRaceRecord newRecord =
+          new SeasonRaceRecord(
+              nextRaceId, raceName, System.currentTimeMillis(), isDemo, driverResults);
+      races.add(newRecord);
+
+      Season updatedSeason =
+          new Season(
+              season.getName(), season.getDrops(), races, season.getEntityId(), season.getId());
+      collection.replaceOne(
+          com.mongodb.client.model.Filters.eq("entity_id", seasonId), updatedSeason);
+      logger.info(
+          "Committed race '{}' results (isDemo={}) to season '{}'",
+          raceName,
+          isDemo,
+          season.getName());
+    } catch (Exception e) {
+      logger.error("Failed to commit race to season", e);
+    }
+  }
+
+  public void commitRaceToSeason(
+      MongoDatabase database,
+      String seasonId,
+      String raceName,
+      List<SeasonDriverResult> driverResults) {
+    commitRaceToSeason(database, seasonId, raceName, false, driverResults);
   }
 
   public void saveRaceRecords(

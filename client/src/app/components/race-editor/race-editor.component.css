@@ -501,6 +501,17 @@
   padding: 5px 0 10px 0;
 }
 
+.config-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  color: #38bdf8;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
+}
+
 .config-section {
   margin-bottom: 10px;
   display: flex;
@@ -564,6 +575,83 @@
 .scoring-column {
   flex: 1;
   min-width: 0;
+}
+
+.season-points-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 4px;
+  padding-right: 4px;
+}
+
+.season-points-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.season-points-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.season-points-list::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  border: 2px solid rgba(15, 23, 42, 0.5);
+}
+
+.season-points-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.5);
+}
+
+.season-point-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.season-pos-label {
+  min-width: 60px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.season-point-input {
+  width: 70px !important;
+  padding: 4px 8px !important;
+  font-size: 0.9rem !important;
+}
+
+.btn-remove-pos {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.btn-remove-pos:hover {
+  color: #f87171;
+}
+
+.btn-add-pos {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: rgba(14, 165, 233, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.4);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-pos:hover {
+  background: rgba(14, 165, 233, 0.35);
 }
 
 /* Action Buttons */

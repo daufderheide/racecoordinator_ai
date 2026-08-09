@@ -3,7 +3,9 @@ package com.antigravity.models;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceStatistics;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import org.bson.codecs.pojo.annotations.BsonCreator;
@@ -11,6 +13,7 @@ import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.types.ObjectId;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RaceHistoryRecord {
 
   @BsonId
@@ -45,6 +48,10 @@ public class RaceHistoryRecord {
   @JsonProperty("statistics")
   private RaceStatistics statistics;
 
+  @BsonProperty("is_demo")
+  @JsonProperty("is_demo")
+  private boolean isDemo;
+
   public RaceHistoryRecord() {}
 
   @BsonCreator
@@ -59,7 +66,9 @@ public class RaceHistoryRecord {
       @BsonProperty("heats") @JsonProperty("heats") List<Heat> heats,
       @BsonProperty("accumulatedRaceTime") @JsonProperty("accumulatedRaceTime")
           float accumulatedRaceTime,
-      @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics) {
+      @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics,
+      @BsonProperty("is_demo") @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"})
+          Boolean isDemo) {
     this.id = id;
     this.originalEntityId = originalEntityId;
     this.model = model;
@@ -68,6 +77,7 @@ public class RaceHistoryRecord {
     this.heats = heats;
     this.accumulatedRaceTime = accumulatedRaceTime;
     this.statistics = statistics;
+    this.isDemo = isDemo != null ? isDemo : false;
   }
 
   public ObjectId getId() {
@@ -132,5 +142,14 @@ public class RaceHistoryRecord {
 
   public void setStatistics(RaceStatistics statistics) {
     this.statistics = statistics;
+  }
+
+  @JsonProperty("is_demo")
+  public boolean isDemo() {
+    return isDemo;
+  }
+
+  public void setDemo(boolean isDemo) {
+    this.isDemo = isDemo;
   }
 }

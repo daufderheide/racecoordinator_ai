@@ -1,0 +1,174 @@
+<app-confirmation-modal
+  [visible]="showDeleteConfirmation"
+  [title]="'SM_CONFIRM_DELETE_TITLE' | translate"
+  [message]="
+    'SM_CONFIRM_DELETE_MSG' | translate: { name: selectedSeason?.name }
+  "
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+>
+</app-confirmation-modal>
+
+<div
+  class="page-container"
+  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+>
+  <app-manager-header
+    [title]="'SM_TITLE'"
+    [showActions]="true"
+    [showEdit]="selectedSeason != null"
+    [showDelete]="selectedSeason != null"
+    [isSaving]="isSaving"
+    (add)="onNew()"
+    (edit)="onEdit()"
+    (delete)="onDelete()"
+  >
+  </app-manager-header>
+
+  @if (!isLoading) {
+    <div class="content-area">
+      <div class="sidebar-list">
+        <div class="search-bar">
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            [placeholder]="'SM_SEARCH_PLACEHOLDER' | translate"
+          />
+        </div>
+        <div class="list-container">
+          @for (season of filteredSeasons; track season; let i = $index) {
+            <div
+              #seasonRow
+              class="list-item"
+              [attr.data-id]="season.entity_id"
+              [class.selected]="season.entity_id === selectedSeason?.entity_id"
+              (click)="selectSeason(season)"
+              [class.odd]="i % 2 !== 0"
+            >
+              <div class="item-name">{{ season.name }}</div>
+              <div class="item-subtitle">
+                {{ season.races ? season.races.length : 0 }}
+                {{ "SM_RACES" | translate }}
+              </div>
+            </div>
+          }
+          @if (filteredSeasons.length === 0) {
+            <div class="no-items">{{ "SM_NO_SEASONS" | translate }}</div>
+          }
+        </div>
+      </div>
+
+      @if (selectedSeason) {
+        <div class="detail-panel">
+          <div class="detail-header">
+            <h2>{{ selectedSeason.name }}</h2>
+            <div class="season-meta">
+              <span class="meta-pill"
+                >{{ "SM_DROPS_COUNT" | translate }}:
+                <strong>{{ selectedSeason.drops }}</strong></span
+              >
+              <span class="meta-pill"
+                >{{ "SM_RACES_RUN" | translate }}:
+                <strong>{{
+                  selectedSeason.races ? selectedSeason.races.length : 0
+                }}</strong></span
+              >
+              @if (hasDemoRaces) {
+                <span class="badge-demo">{{
+                  "SE_DEMO_RACES_INCLUDED" | translate
+                }}</span>
+              }
+            </div>
+          </div>
+          <div class="detail-content">
+            @if (standings.length === 0) {
+              <div class="empty-standings">
+                {{ "SM_NO_RACES_RUN" | translate }}
+              </div>
+            } @else {
+              <div class="standings-wrapper">
+                <div class="standings-header-container">
+                  <table class="standings-table">
+                    <thead>
+                      <tr>
+                        <th class="col-rank">{{ "SM_RANK" | translate }}</th>
+                        <th class="col-driver">
+                          {{ "SM_DRIVER" | translate }}
+                        </th>
+                        <th class="col-pts">
+                          {{ "SM_NET_POINTS" | translate }}
+                        </th>
+                        <th class="col-pts">
+                          {{ "SM_GROSS_POINTS" | translate }}
+                        </th>
+                        <th class="col-races">{{ "SM_RACES" | translate }}</th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+                <div class="standings-body-container">
+                  <table class="standings-table">
+                    <tbody>
+                      @for (
+                        item of standings;
+                        track item.driver_id;
+                        let rankIdx = $index
+                      ) {
+                        <tr
+                          [class.podium-1]="rankIdx === 0"
+                          [class.podium-2]="rankIdx === 1"
+                          [class.podium-3]="rankIdx === 2"
+                        >
+                          <td class="col-rank">
+                            @if (rankIdx === 0) {
+                              🥇 1
+                            } @else if (rankIdx === 1) {
+                              🥈 2
+                            } @else if (rankIdx === 2) {
+                              🥉 3
+                            } @else {
+                              {{ rankIdx + 1 }}
+                            }
+                          </td>
+                          <td class="col-driver">
+                            <strong>{{ item.driver_name }}</strong>
+                          </td>
+                          <td class="col-pts net-highlight">
+                            <strong>{{ item.net_points }}</strong>
+                          </td>
+                          <td class="col-pts">{{ item.gross_points }}</td>
+                          <td class="col-races">{{ item.races_run }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="detail-panel empty-selection">
+          <p>{{ "SM_SELECT_SEASON" | translate }}</p>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Connection Lost Overlay -->
+@if (isConnectionLost) {
+  <div class="connection-lost-overlay">
+    <div class="connection-spinner"></div>
+    <div class="connection-lost-text">
+      {{ "DM_LOST_CONNECTION" | translate }}
+    </div>
+  </div>
+}
+
+<!-- Loading Overlay -->
+@if (isLoading || isSaving) {
+  <div class="loader-overlay">
+    <div class="spinner"></div>
+  </div>
+}

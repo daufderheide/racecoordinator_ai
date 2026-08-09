@@ -1,0 +1,26 @@
+<div class="info-section" #infoPanel>
+  <span
+    class="label-text"
+    #labelText
+    [style.font-family]="widget()?.customSettings?.['labelFontFamily'] || null"
+    [style.font-size.px]="
+      widget()?.scaleMode !== 'auto'
+        ? widget()?.customSettings?.['labelFontSize'] || null
+        : null
+    "
+    [style.color]="widget()?.customSettings?.['labelTextColor'] || null"
+    >{{ "RD_LABEL_SEASON" | translate }}</span
+  >
+  <span
+    class="value-text"
+    #valueText
+    [style.font-family]="widget()?.customSettings?.['valueFontFamily'] || null"
+    [style.font-size.px]="
+      widget()?.scaleMode !== 'auto'
+        ? widget()?.customSettings?.['valueFontSize'] || null
+        : null
+    "
+    [style.color]="widget()?.customSettings?.['valueTextColor'] || null"
+    >{{ seasonName() || "N/A" }}</span
+  >
+</div>

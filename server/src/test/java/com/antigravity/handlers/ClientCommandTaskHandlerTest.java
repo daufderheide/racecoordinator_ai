@@ -36,6 +36,7 @@ import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.SetInterfacePinStateRequest;
 import com.antigravity.proto.SetInterfacePinStateResponse;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.interfaces.BleConnection;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -1458,6 +1459,23 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testGetBleDevices() throws Exception {
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse res = mock(HttpServletResponse.class);
+    Context ctx = spy(new Context(req, res, new HashMap<>()));
+
+    BleConnection.clearDiscoveredBleDevices();
+    BleConnection.registerDiscoveredBleDevice("BART_UNIT_01");
+
+    Method m = handler.getClass().getDeclaredMethod("getBleDevices", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, ctx);
+
+    verify(ctx).json(Arrays.asList("BART_UNIT_01"));
+    BleConnection.clearDiscoveredBleDevices();
+  }
+
+  @Test
   public void testSetInterfacePinState_PhidgetProtocol() throws Exception {
     HttpServletRequest req = mock(HttpServletRequest.class);
     HttpServletResponse res = mock(HttpServletResponse.class);
@@ -1638,5 +1656,25 @@ public class ClientCommandTaskHandlerTest {
     verify(localCtx).status(200);
     verify(activeRace).updateAndBroadcastOverallStandings();
     verify(activeRace).broadcast(any());
+  }
+
+  @Test
+  public void testGetBleDevicesFiltersBartDevicesOnly() throws Exception {
+    BleConnection.clearDiscoveredBleDevices();
+    BleConnection.registerDiscoveredBleDevice("BART_MST");
+    BleConnection.registerDiscoveredBleDevice("BART_LANE1");
+    BleConnection.registerDiscoveredBleDevice("iPhone (239)");
+    BleConnection.registerDiscoveredBleDevice("Govee_H5151");
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse resp = mock(HttpServletResponse.class);
+    Context localCtx = spy(new Context(req, resp, new HashMap<>()));
+
+    Method m = handler.getClass().getDeclaredMethod("getBleDevices", Context.class);
+    m.setAccessible(true);
+    m.invoke(handler, localCtx);
+
+    verify(localCtx).json(any());
+    BleConnection.clearDiscoveredBleDevices();
   }
 }

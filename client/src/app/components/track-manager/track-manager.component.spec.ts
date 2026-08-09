@@ -105,7 +105,7 @@ describe("TrackManagerComponent", () => {
   });
 
   it("should load tracks on init", () => {
-    expect(component.tracks.length).toBe(3);
+    expect(component.tracks.length).toBe(_MOCK_TRACKS.length);
     expect(component.selectedTrack?.name).toBe("Classic Circuit");
   });
 
@@ -307,5 +307,67 @@ describe("TrackManagerComponent", () => {
       "app-phidget-summary",
     );
     expect(phidgetSummary).toBeTruthy();
+  });
+
+  it("should render app-bart-summary when selectedTrack has bart_configs", () => {
+    const mockTrack = new Track({
+      entity_id: "track_bart",
+      name: "BART Track",
+      num_track_sections: 100,
+      lanes: [],
+      has_digital_fuel: false,
+      arduino_configs: [],
+      bart_configs: [
+        {
+          name: "BART 1",
+          deviceName: "BART_0001",
+          deviceAddress: "AA:BB:CC:DD:EE:FF",
+          numLanes: 4,
+          minLapMs: 1000,
+          lapPinPitBehavior: 0,
+          lapPinBehaviors: [0, 1, 2, 3],
+        },
+      ],
+    });
+
+    component.tracks = [mockTrack];
+    component.selectTrack(mockTrack);
+    fixture.detectChanges();
+
+    const bartSummary = fixture.nativeElement.querySelector("app-bart-summary");
+    expect(bartSummary).toBeTruthy();
+  });
+
+  it("should map bart_configs when loadTracks is called", () => {
+    const mockBartTrack = {
+      entity_id: "t_bart_loaded",
+      name: "Loaded BART Track",
+      num_track_sections: 100,
+      lanes: [],
+      has_digital_fuel: false,
+      arduino_configs: [],
+      trackmate_configs: [],
+      phidget_configs: [],
+      bart_configs: [
+        {
+          name: "BART Loaded",
+          deviceName: "BART_9999",
+          deviceAddress: "",
+          numLanes: 2,
+          minLapMs: 1200,
+          lapPinPitBehavior: 0,
+          lapPinBehaviors: [0, 1],
+        },
+      ],
+    };
+
+    dataService.getTracks.and.returnValue(of([mockBartTrack]));
+
+    component.loadTracks();
+
+    expect(component.tracks.length).toBe(1);
+    expect(component.tracks[0].bart_configs).toBeDefined();
+    expect(component.tracks[0].bart_configs.length).toBe(1);
+    expect(component.tracks[0].bart_configs[0].deviceName).toBe("BART_9999");
   });
 });

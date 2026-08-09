@@ -28,6 +28,8 @@ export interface SetupOptions {
   raceManagerHelpShown?: boolean;
   raceEditorHelpShown?: boolean;
   uiEditorHelpShown?: boolean;
+  recentRaceIds?: string[];
+  selectedDriverIds?: string[];
 }
 
 export class TestSetupHelper {
@@ -68,6 +70,7 @@ export class TestSetupHelper {
     await this.setupTrackMocks(page);
     await this.setupTeamMocks(page);
     await this.setupEventMocks(page);
+    await this.setupSeasonMocks(page);
     await this.setupAssetMocks(page);
     await this.setupThemeMocks(page);
 
@@ -131,6 +134,8 @@ export class TestSetupHelper {
       raceManagerHelpShown: options.raceManagerHelpShown ?? true,
       raceEditorHelpShown: options.raceEditorHelpShown ?? true,
       uiEditorHelpShown: options.uiEditorHelpShown ?? true,
+      recentRaceIds: options.recentRaceIds ?? ["r1", "r2"],
+      selectedDriverIds: options.selectedDriverIds ?? ["d1", "d2"],
 
       racedayColumns: ["driver.name", "lapCount"],
 
@@ -506,6 +511,155 @@ export class TestSetupHelper {
     });
   }
 
+  static async setupSeasonMocks(page: Page) {
+    const mockSeasons = [
+      {
+        entity_id: "s_empty",
+        name: "2026 Empty Championship",
+        drops: 0,
+        races: [],
+      },
+      {
+        entity_id: "s_active",
+        name: "2026 Pro GT Championship",
+        drops: 1,
+        races: [
+          {
+            race_id: "r_demo1",
+            race_name: "Grand Prix Practice (Demo)",
+            timestamp: 1700000000000,
+            is_demo: true,
+            driver_results: [
+              {
+                driver_id: "d1",
+                driver_name: "Alice",
+                overall_rank: 1,
+                overall_points: 25,
+                heat_points: 10,
+                total_points: 35,
+              },
+              {
+                driver_id: "d2",
+                driver_name: "Bob",
+                overall_rank: 2,
+                overall_points: 18,
+                heat_points: 8,
+                total_points: 26,
+              },
+              {
+                driver_id: "d3",
+                driver_name: "Charlie",
+                overall_rank: 3,
+                overall_points: 15,
+                heat_points: 6,
+                total_points: 21,
+              },
+            ],
+          },
+          {
+            race_id: "r_official1",
+            race_name: "Daytona 500 Championship",
+            timestamp: 1700003600000,
+            is_demo: false,
+            driver_results: [
+              {
+                driver_id: "d2",
+                driver_name: "Bob",
+                overall_rank: 1,
+                overall_points: 25,
+                heat_points: 12,
+                total_points: 37,
+              },
+              {
+                driver_id: "d1",
+                driver_name: "Alice",
+                overall_rank: 2,
+                overall_points: 18,
+                heat_points: 9,
+                total_points: 27,
+              },
+              {
+                driver_id: "d3",
+                driver_name: "Charlie",
+                overall_rank: 3,
+                overall_points: 15,
+                heat_points: 7,
+                total_points: 22,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const mockFinishedRaceHistory = [
+      {
+        _id: "hist_demo1",
+        original_entity_id: "r_demo1",
+        timestamp: 1700000000000,
+        is_demo: true,
+        isDemo: true,
+        model: { entity_id: "r_demo1", name: "Grand Prix Practice (Demo)" },
+      },
+      {
+        _id: "hist_off1",
+        original_entity_id: "r_official1",
+        timestamp: 1700003600000,
+        is_demo: false,
+        isDemo: false,
+        model: { entity_id: "r_official1", name: "Daytona 500 Championship" },
+      },
+    ];
+
+    await page.route("**/api/seasons", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(mockSeasons),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.route("**/api/seasons/*", async (route) => {
+      const url = route.request().url();
+      const seasonId = url.split("/").pop()?.split("?")[0];
+      const match =
+        mockSeasons.find((s) => s.entity_id === seasonId) || mockSeasons[0];
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(match),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(match),
+        });
+      }
+    });
+
+    await page.route("**/api/race-history/finished", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockFinishedRaceHistory),
+      });
+    });
+
+    await page.route("**/api/race-history", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockFinishedRaceHistory),
+      });
+    });
+  }
+
   static async setupLocalizationMocks(page: Page) {
     // Read en.json from disk to serve as mock
     const fs = require("fs");
@@ -552,29 +706,38 @@ export class TestSetupHelper {
     });
 
     // Mock background images to avoid dev-server flakiness
-    await page.route("**/assets/**/*.png", async (route) => {
+    await page.route("**/*.png", async (route) => {
       const url = route.request().url();
       console.log(`DEBUG: Asset request hit: ${url}`);
 
-      // Match anything under assets/
-      const match = url.match(/\/assets\/(.*\.png)/);
+      // Extract filename
+      const match = url.match(/\/([^\/]+\.png)(\?.*)?$/);
       if (!match) {
         console.warn(`DEBUG: Asset URL did not match regex: ${url}`);
         return route.continue();
       }
 
-      const relativePath = match[1];
+      let filename = match[1];
+
+      // Strip Vite asset hash if present (e.g., splash_screen.a2761eff2852baea.png -> splash_screen.png)
+      const hashMatch = filename.match(/^(.*?)\.[0-9a-f]{8,20}\.png$/i);
+      if (hashMatch) {
+        filename = hashMatch[1] + ".png";
+      }
 
       // Try multiple potential base paths
       const potentialPaths = [
-        path.resolve(process.cwd(), "src/assets"), // Case where CWD is /client
-        path.resolve(process.cwd(), "assets"), // Case where CWD is /client/src
-        path.resolve(process.cwd(), "client/src/assets"), // Case where CWD is project root
+        path.resolve(process.cwd(), "src/assets/images"),
+        path.resolve(process.cwd(), "assets/images"),
+        path.resolve(process.cwd(), "client/src/assets/images"),
+        path.resolve(process.cwd(), "src/assets"),
+        path.resolve(process.cwd(), "assets"),
+        path.resolve(process.cwd(), "client/src/assets"),
       ];
 
       let filePath = "";
       for (const basePath of potentialPaths) {
-        const testPath = path.join(basePath, relativePath);
+        const testPath = path.join(basePath, filename);
         if (fs.existsSync(testPath)) {
           filePath = testPath;
           break;
@@ -681,6 +844,9 @@ export class TestSetupHelper {
     });
 
     await Promise.race([fontsEvaluatePromise, fontsTimeoutPromise]);
+
+    // Wait a brief moment to ensure all synchronous image mocks and CSS have painted
+    await page.waitForTimeout(500);
 
     // 5. Wait for a paint cycle to ensure DOM updates are flushed
     // Race with a setTimeout fallback in case the tab is throttled in the background
@@ -864,14 +1030,6 @@ export class TestSetupHelper {
         <text x="50" y="50" font-family="Arial" font-size="20" text-anchor="middle" fill="white" dominant-baseline="middle">IMG</text>
       </svg>
     `.trim();
-
-    await page.route("**/assets/images/**/*.png", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "image/svg+xml",
-        body: mockImage,
-      });
-    });
 
     await page.route(
       (url) =>

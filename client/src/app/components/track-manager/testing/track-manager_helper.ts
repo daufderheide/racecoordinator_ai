@@ -26,6 +26,7 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
     "updateTrack",
     "initializeInterface",
     "getSerialPorts",
+    "getBleDevices",
     "updateInterfaceConfig",
     "setInterfacePinState",
     "setInterfaceRgbLedState",
@@ -97,6 +98,7 @@ export function createTrackManagerDataServiceMock(overrides: any = {}) {
   mock.closeInterface.and.returnValue(of({ success: true }));
   mock.initializeInterface.and.returnValue(of({ success: true }));
   mock.getSerialPorts.and.returnValue(of(["COM1", "COM2"]));
+  mock.getBleDevices.and.returnValue(of(["BART_0001", "BART_0002"]));
   mock.updateInterfaceConfig.and.returnValue(of({ success: true }));
   mock.setInterfacePinState.and.returnValue(of({ success: true }));
   mock.setInterfaceRgbLedState.and.returnValue(of({ success: true }));

@@ -48,10 +48,11 @@ describe("SettingsService", () => {
     );
   });
 
-  it("should save and retrieve language setting", () => {
+  it("should save and retrieve language and selectedSeasonId settings", () => {
     const settings = Object.assign(new Settings(), {
       recentRaceIds: ["r1"],
       selectedDriverIds: ["d1"],
+      selectedSeasonId: "season_123",
       serverIp: "1.2.3.4",
       serverPort: 8080,
       language: "es",
@@ -62,6 +63,7 @@ describe("SettingsService", () => {
 
     const retrieved = service.getSettings();
     expect(retrieved.language).toBe("es");
+    expect(retrieved.selectedSeasonId).toBe("season_123");
     expect(retrieved.serverIp).toBe("1.2.3.4");
     expect(retrieved.highlightRowOnLap).toBeFalse();
     expect(retrieved.highlightPracticeRowOnLap).toBeFalse();

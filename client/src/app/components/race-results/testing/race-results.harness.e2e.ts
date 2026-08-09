@@ -75,17 +75,17 @@ export class RaceResultsHarnessE2e implements RaceResultsHarnessBase {
 
   // Playwright specific interaction methods
   async clickLegendItem(name: string): Promise<void> {
-    const item = this.legendItems.filter({ hasText: name });
+    const item = this.legendItems.filter({ hasText: name }).first();
     await item.click();
   }
 
   async doubleClickLegendItem(name: string): Promise<void> {
-    const item = this.legendItems.filter({ hasText: name });
+    const item = this.legendItems.filter({ hasText: name }).first();
     await item.dblclick();
   }
 
   async hoverLegendItem(name: string): Promise<void> {
-    const item = this.legendItems.filter({ hasText: name });
+    const item = this.legendItems.filter({ hasText: name }).first();
     await item.hover();
   }
 }

@@ -1,6 +1,7 @@
-import { NO_ERRORS_SCHEMA } from "@angular/core";
+import { Component, input, NO_ERRORS_SCHEMA, output } from "@angular/core";
 import { TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
@@ -17,6 +18,28 @@ import {
 } from "@app/testing/unit-test-mocks";
 
 import { EventEditorComponent } from "./event-editor.component";
+
+@Component({
+  standalone: true,
+  selector: "app-confirmation-modal",
+  template: `
+    @if (visible()) {
+      <button id="btn-confirm-test-evt" (click)="confirm.emit()">
+        Confirm
+      </button>
+      <button id="btn-cancel-test-evt" (click)="cancel.emit()">Cancel</button>
+    }
+  `,
+})
+class MockConfirmationModalComponent {
+  visible = input(false);
+  title = input("");
+  message = input("");
+  confirmText = input("");
+  cancelText = input("");
+  confirm = output<void>();
+  cancel = output<void>();
+}
 
 describe("EventEditorComponent", () => {
   let component: EventEditorComponent;
@@ -81,7 +104,14 @@ describe("EventEditorComponent", () => {
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    })
+      .overrideComponent(EventEditorComponent, {
+        set: {
+          imports: [MockConfirmationModalComponent, TranslatePipe, FormsModule],
+          schemas: [NO_ERRORS_SCHEMA],
+        },
+      })
+      .compileComponents();
 
     fixture = TestBed.createComponent(EventEditorComponent);
     component = fixture.componentInstance;
@@ -185,5 +215,45 @@ describe("EventEditorComponent", () => {
     expect(
       component.editingEvent.races.some((r) => r.raceId === "r2"),
     ).toBeTrue();
+  });
+
+  it("should handle confirmDiscard modal confirm event via template binding", async () => {
+    fixture.detectChanges();
+    const promise = component.confirmDiscard();
+    fixture.detectChanges();
+
+    expect(component.showDiscardConfirm).toBeTrue();
+
+    const confirmBtn = fixture.debugElement.query(
+      By.css("#btn-confirm-test-evt"),
+    );
+    expect(confirmBtn).toBeTruthy();
+    confirmBtn.nativeElement.click();
+    fixture.detectChanges();
+
+    const result = await promise;
+    expect(result).toBeTrue();
+    expect(component.showDiscardConfirm).toBeFalse();
+    expect(component.isNavigationApproved).toBeTrue();
+  });
+
+  it("should handle confirmDiscard modal cancel event via template binding", async () => {
+    fixture.detectChanges();
+    const promise = component.confirmDiscard();
+    fixture.detectChanges();
+
+    expect(component.showDiscardConfirm).toBeTrue();
+
+    const cancelBtn = fixture.debugElement.query(
+      By.css("#btn-cancel-test-evt"),
+    );
+    expect(cancelBtn).toBeTruthy();
+    cancelBtn.nativeElement.click();
+    fixture.detectChanges();
+
+    const result = await promise;
+    expect(result).toBeFalse();
+    expect(component.showDiscardConfirm).toBeFalse();
+    expect(component.isNavigationApproved).toBeFalse();
   });
 });

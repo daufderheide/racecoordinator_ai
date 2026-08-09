@@ -664,6 +664,73 @@ export class DefaultRacedayComponent
     );
   }
 
+  get seasonName(): string {
+    return (
+      (this.race as any)?.season_name ||
+      (this.race as any)?.seasonName ||
+      (this.isUIEditorMode() ? "Mock Editor Season" : "")
+    );
+  }
+
+  get seasonStandings(): any[] {
+    const standings =
+      (this.race as any)?.season_standings ||
+      (this.race as any)?.seasonStandings;
+    if (standings && standings.length > 0) return standings;
+    return this.isUIEditorMode()
+      ? [
+          {
+            driver_id: "d1",
+            driver_name: "Mario",
+            net_points: 150,
+            gross_points: 175,
+            races_run: 5,
+            current_race_points: 25,
+          },
+          {
+            driver_id: "d2",
+            driver_name: "Luigi",
+            net_points: 135,
+            gross_points: 150,
+            races_run: 5,
+            current_race_points: 20,
+          },
+          {
+            driver_id: "d3",
+            driver_name: "Bowser",
+            net_points: 120,
+            gross_points: 140,
+            races_run: 5,
+            current_race_points: 18,
+          },
+          {
+            driver_id: "d4",
+            driver_name: "Peach",
+            net_points: 110,
+            gross_points: 125,
+            races_run: 5,
+            current_race_points: 15,
+          },
+          {
+            driver_id: "d5",
+            driver_name: "Yoshi",
+            net_points: 95,
+            gross_points: 105,
+            races_run: 4,
+            current_race_points: 12,
+          },
+          {
+            driver_id: "d6",
+            driver_name: "Donkey Kong",
+            net_points: 80,
+            gross_points: 90,
+            races_run: 4,
+            current_race_points: 10,
+          },
+        ]
+      : [];
+  }
+
   get currentRacedayLayout(): LayoutConfig | undefined {
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
@@ -4673,6 +4740,7 @@ export class DefaultRacedayComponent
       "menu-bar",
       "race-name",
       "event-name",
+      "season-name",
       "heat-info",
       "track-name",
       "branding",
@@ -4682,6 +4750,8 @@ export class DefaultRacedayComponent
       "records",
       "leaderboard",
       "group-leaderboard",
+      "season-leaderboard",
+      "season-race-leaderboard",
       "lane-view",
       "on-deck",
       "next-heat",
@@ -4733,6 +4803,8 @@ export class DefaultRacedayComponent
     const isLeaderboardOrDeck =
       this.draggedWidgetType === "leaderboard" ||
       this.draggedWidgetType === "group-leaderboard" ||
+      this.draggedWidgetType === "season-leaderboard" ||
+      this.draggedWidgetType === "season-race-leaderboard" ||
       this.draggedWidgetType === "on-deck" ||
       this.draggedWidgetType === "next-heat" ||
       this.draggedWidgetType === "image";
@@ -4740,6 +4812,7 @@ export class DefaultRacedayComponent
     const isHeaderWidget =
       this.draggedWidgetType === "event-name" ||
       this.draggedWidgetType === "race-name" ||
+      this.draggedWidgetType === "season-name" ||
       this.draggedWidgetType === "track-name" ||
       this.draggedWidgetType === "heat-info";
 
@@ -4756,6 +4829,8 @@ export class DefaultRacedayComponent
       ? 18
       : this.draggedWidgetType === "leaderboard" ||
           this.draggedWidgetType === "group-leaderboard" ||
+          this.draggedWidgetType === "season-leaderboard" ||
+          this.draggedWidgetType === "season-race-leaderboard" ||
           this.draggedWidgetType === "image"
         ? 239
         : isActionButton

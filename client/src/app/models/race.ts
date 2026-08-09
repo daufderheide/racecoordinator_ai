@@ -4,6 +4,7 @@ import { GroupOptions } from "./group_options";
 import { HeatScoring } from "./heat_scoring";
 import { Model } from "./model";
 import { OverallScoring } from "./overall_scoring";
+import { SeasonScoring } from "./season";
 import { TeamOptions } from "./team_options";
 import { Track } from "./track";
 
@@ -13,6 +14,7 @@ export class Race implements Model {
   readonly track: Track;
   readonly heat_scoring: HeatScoring;
   readonly overall_scoring: OverallScoring;
+  readonly season_scoring?: SeasonScoring;
   readonly fuel_options: AnalogFuelOptions;
   readonly digital_fuel_options: DigitalFuelOptions;
   readonly team_options: TeamOptions;

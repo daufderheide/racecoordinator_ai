@@ -112,4 +112,56 @@ describe("TwinGraphsComponent", () => {
       expect(component.isDriverVisible("d2")).toBeTrue();
     });
   });
+
+  describe("Stacked Graph Mode", () => {
+    it("should calculate full width scaling and separate top/bottom legend positions when stacked is true", () => {
+      component.stacked = true;
+      component.width = 1400;
+      component.padding = { top: 80, right: 100, bottom: 150, left: 100 };
+      component.maxX = 10;
+
+      const mockDriverLines: DriverLine[] = [
+        {
+          objectId: "d1",
+          driverName: "Driver 1",
+          color: "#FFFFFF",
+          backgroundColor: "#FF0000",
+          points: [{ x: 5, y: 3 }],
+          pathData: "",
+          rankPoints: [{ x: 5, y: 1 }],
+          rankPathData: "",
+        },
+      ];
+
+      component.driverLines = mockDriverLines;
+      component.ngOnChanges({
+        stacked: {
+          currentValue: true,
+          previousValue: false,
+          firstChange: false,
+          isFirstChange: () => false,
+        },
+      } as any);
+
+      // In stacked mode, graph width is width - left - right = 1400 - 100 - 100 = 1200
+      // scaleXLeft(5) = 100 + (5 / 10) * 1200 = 700
+      expect(component["scaleXLeft"](5)).toBe(700);
+      expect(component["scaleXRight"](5)).toBe(700);
+
+      // Verify top and bottom legend coordinates are calculated
+      expect(mockDriverLines[0].topLegendY).toBeDefined();
+      expect(mockDriverLines[0].bottomLegendY).toBeDefined();
+      expect(mockDriverLines[0].topLegendY!).toBeLessThan(
+        mockDriverLines[0].bottomLegendY!,
+      );
+
+      // Verify legend Y start is placed below the X-axis title (topGraphBottom + 55) to prevent overlap
+      expect(component.topLegendYStart).toBeGreaterThan(
+        component.topGraphBottom + 55,
+      );
+      expect(component.bottomLegendYStart).toBeGreaterThan(
+        component.bottomGraphBottom + 55,
+      );
+    });
+  });
 });

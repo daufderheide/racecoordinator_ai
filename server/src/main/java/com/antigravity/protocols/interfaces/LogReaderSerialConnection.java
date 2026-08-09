@@ -79,10 +79,23 @@ public class LogReaderSerialConnection implements ISerialConnection {
     return portName;
   }
 
+  private final List<ConnectionDataListener> dataListeners = new ArrayList<>();
+
+  @Override
+  public void addDataListener(ConnectionDataListener listener) {
+    if (listener != null) {
+      dataListeners.add(listener);
+    }
+  }
+
   /** Called by the generic log reader service to inject bytes into the mock connection. */
   public void injectReceivedData(byte[] data) {
     if (!isOpen) {
       return;
+    }
+
+    for (ConnectionDataListener dataListener : dataListeners) {
+      dataListener.onDataReceived(data);
     }
 
     // Create a mock SerialPortEvent. We only need it to return getReceivedData()

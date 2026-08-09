@@ -53,6 +53,7 @@ const protoFiles = [
   "../server/proto/client/arduino_config.proto",
   "../server/proto/client/trackmate_config.proto",
   "../server/proto/client/phidget_config.proto",
+  "../server/proto/client/bart_config.proto",
   "../server/proto/client/get_phidget_devices.proto",
   "../server/proto/client/lane_model.proto",
   "../server/proto/client/track_model.proto",
@@ -75,6 +76,7 @@ const protoFiles = [
   "../server/proto/server/demo.proto",
   "../server/proto/server/full_update.proto",
   "../server/proto/server/system_state.proto",
+  "../server/proto/server/season_standing.proto",
 ];
 
 const jsOutputFile = path.join(protoOutputDir, "message.js");

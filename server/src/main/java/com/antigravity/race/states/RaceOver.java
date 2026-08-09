@@ -3,6 +3,7 @@ package com.antigravity.race.states;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.RacePredictionRecord.DriverProjection;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarData;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -12,6 +13,7 @@ import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.RacePredictionService;
+import com.antigravity.util.SeasonPointsCalculator;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -84,6 +86,17 @@ public class RaceOver implements IRaceState {
             dbService.saveDriverStatistics(db, race);
             dbService.updateDriverTrackStats(db, race, race.isDemoMode());
             dbService.saveRaceRecords(db, race);
+
+            if (race.getSeasonEntityId() != null
+                && !race.getSeasonEntityId().isEmpty()
+                && !EventExecutionManager.getInstance().isEventActive()) {
+              String raceName =
+                  race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
+              List<SeasonDriverResult> seasonResults =
+                  SeasonPointsCalculator.calculateDriverResultsForRace(race);
+              dbService.commitRaceToSeason(
+                  db, race.getSeasonEntityId(), raceName, race.isDemoMode(), seasonResults);
+            }
 
             List<DriverProjection> actuals = new ArrayList<>();
             if (race.getDrivers() != null) {

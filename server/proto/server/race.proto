@@ -6,6 +6,7 @@ import "server/heat.proto";
 import "server/race_participant.proto";
 import "server/race_state.proto";
 import "server/record_data.proto";
+import "server/season_standing.proto";
 
 option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
@@ -25,4 +26,8 @@ message Race {
   int32 current_event_race_index = 11;
   int32 total_event_races = 12;
   double auto_advance_remaining_seconds = 13;
+  bool is_season = 14;
+  string season_id = 15;
+  string season_name = 16;
+  repeated SeasonStanding season_standings = 17;
 }

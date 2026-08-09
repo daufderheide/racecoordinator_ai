@@ -74,16 +74,14 @@ SQLite is globally recognized as the most portable database engine in existence.
 
 ### Question 3: "Will we be able to migrate existing MongoDB databases to SQLite automatically?"
 
-**Answer: Yes, 100% automatically on first launch.**
+**Answer: No, we are intentionally doing a manual migration to allow the immediate removal of MongoDB.**
 
-#### Automatic Migration Flow:
-1. **Startup Check**: When the RC AI server starts up, it checks if `app_data/databases/default.db` exists.
-2. **Legacy Detection**: If `default.db` does NOT exist, but an existing MongoDB database directory or legacy JSON exports exist in `app_data/data/`:
-   * The server executes a lightweight 1-time `MongoToSqliteMigrator`.
-   * Extracts all documents from legacy collections (`drivers`, `teams`, `tracks`, `races`, `assets`, `race_history`, `saved_races`, `prediction_records`, `counters`).
-   * Populates the SQLite database tables in `default.db`.
-   * Archives legacy MongoDB data to `app_data/legacy_mongo_backup/`.
-3. **User Experience**: Upgrading users will see all existing drivers, tracks, races, and settings instantly available.
+#### Manual JSON Migration Flow (Immediate MongoDB Removal):
+Because we are completely removing MongoDB in this release, seamless auto-migration of raw database files is not possible.
+1. **Before Updating**: Users must open their current RC AI version and use the existing "Export Database" feature to save their data as a `.zip` file (which contains raw JSON documents and assets).
+2. **After Updating**: The new SQLite version will start with a fresh, factory-reset database.
+3. **Restoring Data**: Users click "Import Database" and provide their `.zip` file. The new SQLite import logic reads the JSON lines and inserts them directly into the SQLite tables—requiring zero MongoDB dependencies.
+4. **Cleanup**: On first launch, the new version will automatically delete the legacy `app_data/data/` MongoDB directory to reclaim disk space.
 
 ---
 
@@ -187,7 +185,7 @@ CREATE TABLE IF NOT EXISTS system_info (
 When you are ready to execute this implementation, follow these steps:
 
 ### Step 1: Update Maven Dependencies (`server/pom.xml`)
-* Remove `mongodb-driver-sync` and `de.flapdoodle.embed.mongo`.
+* **Remove** `mongodb-driver-sync` and `de.flapdoodle.embed.mongo` entirely.
 * Add `org.xerial:sqlite-jdbc`.
 
 ### Step 2: Create `SqliteRepository<T>` and `DatabaseContext`
@@ -198,14 +196,22 @@ When you are ready to execute this implementation, follow these steps:
 * Update `DatabaseService.java` and `AssetService.java` to call `SqliteRepository` operations instead of `MongoCollection`.
 
 ### Step 4: Clean Up Server Main (`App.java`)
-* Remove Flapdoodle `Mongod` process lifecycle, `MONGO_PORT`, and zombie process cleanup scripts (`kill_zombie_mongo.sh`).
+* **Remove** Flapdoodle `Mongod` process lifecycle, `MONGO_PORT`, and zombie process cleanup scripts (`kill_zombie_mongo.sh`).
+* **Add** logic on startup to detect and automatically delete the legacy `app_data/data/` MongoDB directory to reclaim disk space.
 
-### Step 5: Implement `MongoToSqliteMigrator`
-* Build the automatic 1-time startup converter to read existing `app_data/data/` Mongo exports/files into SQLite.
+### Step 5: Implement SQLite JSON Importer
+* Update the `DatabaseContext.importDatabase()` logic to read the legacy `.zip` exports (which contain `.json` files).
+* Map the JSON strings directly into the new SQLite `json_data` columns, allowing users to restore their old MongoDB backups without needing a Mongo driver.
 
 ### Step 6: Verify & Test
+
+> [!CAUTION]
+> You must manually verify that the legacy `.zip` import logic correctly parses the old MongoDB JSON exports and successfully populates the new SQLite database before proceeding with the release.
+
 * Run unit tests (`./run_server_tests.sh`).
-* Manually verify database reset, auto-saves, multiple database creation, and backup export/import.
+* Manually verify database reset, auto-saves, multiple database creation.
+* Manually verify that exporting a MongoDB database from an old release can be successfully imported into the new SQLite release.
+* Manually verify that the legacy `app_data/data/` directory is successfully deleted on startup.
 
 ---
 

@@ -30,6 +30,7 @@ import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
+import { Season } from "@app/models/season";
 import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -126,6 +127,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
   showDemoConfigModal: boolean = false;
   demoConfig?: IDemoConfig;
 
+  // Season State
+  seasons: Season[] = [];
+  selectedSeason?: Season;
+
   // Race State Additions
   isRaceRunning: boolean = false;
   showEndRacePrompt: boolean = false;
@@ -186,6 +191,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       teams: this.dataService.getTeams(),
       races: this.dataService.getRaces(),
       events: this.dataService.getEvents(),
+      seasons: this.dataService.getSeasons(),
     }).subscribe({
       next: (result) => {
         const drivers = (result.drivers as any).map(
@@ -234,8 +240,21 @@ export class DefaultRacedaySetupComponent implements OnInit {
           (a.name || "").localeCompare(b.name || ""),
         );
 
+        this.seasons = (result.seasons || []).sort((a: any, b: any) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+
         const localSettings = this.settingsService.getSettings();
         this.updateQuickStartRaces(localSettings.recentRaceIds);
+
+        if (localSettings && localSettings.selectedSeasonId) {
+          const matchedSeason = this.seasons.find(
+            (s) => s.entity_id === localSettings.selectedSeasonId,
+          );
+          if (matchedSeason) {
+            this.selectedSeason = matchedSeason;
+          }
+        }
 
         if (localSettings && localSettings.selectedRaceId) {
           if (localSettings.isEventMode) {
@@ -807,6 +826,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.getParticipantUniqueId(p),
     );
     settings.demoConfig = this.demoConfig;
+    settings.selectedSeasonId = this.selectedSeason?.entity_id || "";
 
     this.settingsService.saveSettings(settings);
 
@@ -993,24 +1013,27 @@ export class DefaultRacedaySetupComponent implements OnInit {
     const eventId = this.isEventMode
       ? this.selectedEvent?.entity_id || ""
       : undefined;
+    const seasonId = this.selectedSeason?.entity_id || undefined;
     const demoConfig = isDemo
       ? this.demoConfig || this.dataService.getDefaultDemoConfig()
       : undefined;
 
-    const initializeObservable = eventId
-      ? this.dataService.initializeRace(
-          raceId,
-          settings.selectedDriverIds,
-          isDemo,
-          demoConfig,
-          eventId,
-        )
-      : this.dataService.initializeRace(
-          raceId,
-          settings.selectedDriverIds,
-          isDemo,
-          demoConfig,
-        );
+    const initializeObservable =
+      eventId || seasonId
+        ? this.dataService.initializeRace(
+            raceId,
+            settings.selectedDriverIds,
+            isDemo,
+            demoConfig,
+            eventId,
+            seasonId,
+          )
+        : this.dataService.initializeRace(
+            raceId,
+            settings.selectedDriverIds,
+            isDemo,
+            demoConfig,
+          );
 
     initializeObservable.subscribe({
       next: (response) => {
@@ -1464,6 +1487,29 @@ export class DefaultRacedaySetupComponent implements OnInit {
       : {};
     this.closeConfigDropdown();
     this.router.navigate(["/event-manager"], { queryParams });
+  }
+
+  onSeasonChange() {
+    this.saveSettings();
+  }
+
+  selectSeason(season?: Season) {
+    this.selectedSeason = season;
+    this.saveSettings();
+  }
+
+  compareSeasons(s1?: Season, s2?: Season): boolean {
+    if (!s1 && !s2) return true;
+    if (!s1 || !s2) return false;
+    return s1.entity_id === s2.entity_id;
+  }
+
+  openSeasonManager() {
+    const queryParams: any = this.selectedSeason
+      ? { id: this.selectedSeason.entity_id }
+      : {};
+    this.closeConfigDropdown();
+    this.router.navigate(["/season-manager"], { queryParams });
   }
 
   toggleConfigDropdown(event: Event) {

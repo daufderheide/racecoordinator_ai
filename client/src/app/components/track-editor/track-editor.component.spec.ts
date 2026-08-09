@@ -289,6 +289,66 @@ describe("TrackEditorComponent", () => {
     expect(component.editingTrack?.has_per_lane_relays).toBeTrue();
   }));
 
+  it("should preserve bart_configs when cloning track for editing", () => {
+    const track = MOCK_TRACK_INSTANCES[0];
+    const mockBartConfig = [
+      {
+        name: "BART 1",
+        deviceName: "BART_0001",
+        numLanes: 4,
+        minLapMs: 1000,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [0, 1],
+      },
+    ];
+    const cloned = (component as any).cloneTrack({
+      ...track,
+      bart_configs: mockBartConfig,
+    });
+    expect(cloned.bart_configs).toEqual(mockBartConfig as any);
+  });
+
+  it("should call initializeInterfaces when onBartConfigChange is called", () => {
+    dataService.initializeInterface.calls.reset();
+    component.onBartConfigChange();
+    expect(dataService.initializeInterface).toHaveBeenCalled();
+  });
+
+  it("should retain bart_configs after a successful track update", fakeAsync(() => {
+    const mockBartConfig = [
+      {
+        name: "BART 1",
+        deviceName: "BART_0001",
+        numLanes: 4,
+        minLapMs: 1000,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [0, 1],
+      },
+    ];
+    dataService.updateTrack.and.returnValue(
+      of({
+        entity_id: "t1",
+        name: "Updated Track",
+        lanes: component.lanes,
+        arduino_configs: component.arduinoConfigs,
+        has_per_lane_relays: true,
+        has_main_relay: false,
+        bart_configs: mockBartConfig,
+      }),
+    );
+
+    component.bartConfigs = mockBartConfig as any;
+    component.trackName = "Updated Track";
+
+    component.updateTrack();
+
+    flush();
+    fixture.detectChanges();
+
+    expect(component.bartConfigs).toEqual(mockBartConfig as any);
+    expect(component.editingTrack?.bart_configs).toEqual(mockBartConfig as any);
+  }));
+
   it("should save as new track", () => {
     component.saveAsNew();
 
@@ -535,6 +595,7 @@ describe("TrackEditorComponent", () => {
       component.trackmateConfigs,
       component.phidgetConfigs,
       component.lanes.length,
+      component.bartConfigs,
     );
   });
 
@@ -680,6 +741,42 @@ describe("TrackEditorComponent", () => {
 
       expect(component.sectionsExpanded.lanes).toBeTrue();
       expect(component.sectionsExpanded.interfaces).toBeTrue();
+    }));
+  });
+
+  describe("Interface List Ordering & Badges", () => {
+    it("should render interfaces in alphabetical order with correct badges", fakeAsync(() => {
+      component.sectionsExpanded.interfaces = true;
+      fixture.detectChanges();
+      tick();
+
+      const interfaceHeaders = fixture.nativeElement.querySelectorAll(
+        ".config-section .section-content .editor-section .section-header",
+      );
+      expect(interfaceHeaders.length).toBe(4);
+
+      const names = Array.from(interfaceHeaders).map((header: any) =>
+        header.querySelector("span")?.textContent?.trim(),
+      );
+      expect(names).toEqual(["Arduino", "BART (BLE)", "Phidget", "Trackmate"]);
+
+      // Check badges
+      const bartBadge = interfaceHeaders[1].querySelector(".interface-badge");
+      expect(bartBadge).toBeTruthy();
+      expect(bartBadge.textContent.trim()).toBe("ALPHA");
+      expect(bartBadge.classList.contains("alpha-badge")).toBeTrue();
+
+      const phidgetBadge =
+        interfaceHeaders[2].querySelector(".interface-badge");
+      expect(phidgetBadge).toBeTruthy();
+      expect(phidgetBadge.textContent.trim()).toBe("ALPHA");
+      expect(phidgetBadge.classList.contains("alpha-badge")).toBeTrue();
+
+      const trakmateBadge =
+        interfaceHeaders[3].querySelector(".interface-badge");
+      expect(trakmateBadge).toBeTruthy();
+      expect(trakmateBadge.textContent.trim()).toBe("BETA");
+      expect(trakmateBadge.classList.contains("beta-badge")).toBeTrue();
     }));
   });
 });

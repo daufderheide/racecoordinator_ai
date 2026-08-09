@@ -11,6 +11,7 @@ export type WidgetType =
   | "menu-bar"
   | "race-name"
   | "event-name"
+  | "season-name"
   | "heat-info"
   | "track-name"
   | "branding"
@@ -20,6 +21,8 @@ export type WidgetType =
   | "records"
   | "leaderboard"
   | "group-leaderboard"
+  | "season-leaderboard"
+  | "season-race-leaderboard"
   | "lane-view"
   | "on-deck"
   | "next-heat"
@@ -83,6 +86,7 @@ export class Settings {
   recentRaceIds: string[] = [];
   selectedRaceId: string = "";
   isEventMode: boolean = false;
+  selectedSeasonId: string = "";
   selectedDriverIds: string[] = [];
   demoConfig?: IDemoConfig;
 

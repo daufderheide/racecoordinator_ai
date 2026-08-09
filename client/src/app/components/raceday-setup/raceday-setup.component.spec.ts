@@ -72,12 +72,14 @@ describe("RacedaySetupComponent", () => {
     });
     mockDataService = jasmine.createSpyObj("DataService", [
       "getDrivers",
+      "getSeasons",
       "setServerAddress",
       "getServerVersion",
       "getServerIp",
       "getRaceFlag",
       "getSystemState",
     ]);
+    mockDataService.getSeasons.and.returnValue(of([]));
     mockDataService.getSystemState.and.returnValue(of({} as any));
     mockSettingsService = jasmine.createSpyObj("SettingsService", [
       "getSettings",

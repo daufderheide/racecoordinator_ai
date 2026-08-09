@@ -1,0 +1,76 @@
+<div class="panel-card season-leaderboard-panel">
+  <div
+    class="leaderboard-title"
+    [style.font-family]="widget()?.customSettings?.['titleFontFamily'] || null"
+    [style.font-size.px]="
+      widget()?.scaleMode === 'auto'
+        ? null
+        : widget()?.customSettings?.['titleFontSize'] || null
+    "
+    [style.color]="widget()?.customSettings?.['titleTextColor'] || null"
+  >
+    {{ "SM_SEASON_RACE_STANDINGS_TITLE" | translate }}
+  </div>
+
+  <div class="leaderboard-list">
+    @if (sortedStandings().length === 0) {
+      <div class="leaderboard-empty-message">
+        {{ "SM_NO_RACES_RUN" | translate }}
+      </div>
+    } @else {
+      <div class="leaderboard-scroll-content">
+        @for (
+          item of sortedStandings();
+          track trackByItem($index, item);
+          let i = $index
+        ) {
+          <div
+            class="leaderboard-item"
+            [style.font-family]="
+              i === 0
+                ? widget()?.customSettings?.['overallLeaderFontFamily'] || null
+                : widget()?.customSettings?.['restFontFamily'] || null
+            "
+            [style.font-size.px]="
+              widget()?.scaleMode === 'auto'
+                ? null
+                : i === 0
+                  ? widget()?.customSettings?.['overallLeaderFontSize'] || null
+                  : widget()?.customSettings?.['restFontSize'] || null
+            "
+          >
+            <div
+              class="leaderboard-left"
+              [class.leader-gold]="i === 0"
+              [class.leader-white]="i > 0"
+              [style.color]="
+                i === 0
+                  ? widget()?.customSettings?.['overallLeaderTextColor'] || null
+                  : widget()?.customSettings?.['restTextColor'] || null
+              "
+            >
+              <div class="leaderboard-rank">#{{ i + 1 }}</div>
+              <div class="leaderboard-name">
+                {{
+                  item.driver_name || item.driverName || item.name || "Driver"
+                }}
+              </div>
+            </div>
+            <div
+              class="leaderboard-score"
+              [class.leader-gold]="i === 0"
+              [class.leader-white]="i > 0"
+              [style.color]="
+                i === 0
+                  ? widget()?.customSettings?.['overallLeaderTextColor'] || null
+                  : widget()?.customSettings?.['restTextColor'] || null
+              "
+            >
+              {{ getRacePoints(item) | number: getScoreFormat() }}
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

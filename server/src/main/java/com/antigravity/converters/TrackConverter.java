@@ -43,6 +43,10 @@ public class TrackConverter {
               track.getWebsocketConfigs().stream()
                   .map(WebSocketConfigConverter::toProto)
                   .collect(Collectors.toList()))
+          .addAllBartConfigs(
+              track.getBartConfigs().stream()
+                  .map(BartConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
   }

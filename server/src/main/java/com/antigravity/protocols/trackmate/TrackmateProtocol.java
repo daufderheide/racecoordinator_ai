@@ -123,7 +123,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     } else if (behavior >= PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE) {
       int lane = behavior - PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE;
-      handlePitOut(lane, state);
+      handlePitOutPulse(lane);
     } else if (behavior >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE
         && behavior < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + 1000) {
       int lane = behavior - PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE;
@@ -262,10 +262,10 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
     byte command;
     if (config.normallyClosedRelays) {
       command =
-          on ? MAIN_POWER_OFF_COMMAND : MAIN_POWER_ON_COMMAND; // 'E' for ON, 'R' for OFF in NC mode
+          on ? MAIN_POWER_ON_COMMAND : MAIN_POWER_OFF_COMMAND; // 'R' for ON, 'E' for OFF in NO mode
     } else {
       command =
-          on ? MAIN_POWER_ON_COMMAND : MAIN_POWER_OFF_COMMAND; // 'R' for ON, 'E' for OFF in NO mode
+          on ? MAIN_POWER_OFF_COMMAND : MAIN_POWER_ON_COMMAND; // 'E' for ON, 'R' for OFF in NC mode
     }
     logger.info(
         "Setting main power. Requested ON: {}, NC: {}, Command: {} (0x{})",
@@ -287,7 +287,7 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
         bitmask |= (1 << i);
       }
     }
-    byte commandPrefix = config.normallyClosedRelays ? (byte) 0x66 : (byte) 0x6E; // 'f' or 'n'
+    byte commandPrefix = config.normallyClosedRelays ? (byte) 0x6E : (byte) 0x66; // 'n' or 'f'
 
     String bitmaskStr = Integer.toString(bitmask);
     byte[] bitmaskBytes = bitmaskStr.getBytes(StandardCharsets.US_ASCII);

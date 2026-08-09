@@ -86,6 +86,23 @@
       (change)="onSettingsChange()"
     ></app-text-info-inspector>
   }
+  @case ("season-name") {
+    <app-text-info-inspector
+      [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      labelTitleKey="UE_INSPECTOR_RECORDS_HEADER"
+      valueTitleKey="UE_INSPECTOR_RECORDS_VALUE"
+      (change)="onSettingsChange()"
+    ></app-text-info-inspector>
+  }
+  @case ("season-leaderboard")
+  @case ("season-race-leaderboard") {
+    <app-leaderboard-inspector
+      [settings]="widget().customSettings"
+      [disableFontSizes]="widget().scaleMode === 'auto'"
+      (change)="onSettingsChange()"
+    ></app-leaderboard-inspector>
+  }
   @case ("track-name") {
     <app-text-info-inspector
       [settings]="widget().customSettings"

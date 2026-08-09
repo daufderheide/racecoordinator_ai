@@ -3,7 +3,7 @@ package com.antigravity.protocols.interfaces;
 import com.fazecast.jSerialComm.SerialPortDataListener;
 import java.io.IOException;
 
-public interface ISerialConnection {
+public interface ISerialConnection extends IConnection {
   void connect(String portName) throws IOException;
 
   void connect(String portName, int baudRate) throws IOException;

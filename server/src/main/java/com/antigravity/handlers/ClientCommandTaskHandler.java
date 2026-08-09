@@ -4,6 +4,7 @@ import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.context.RaceScope;
 import com.antigravity.converters.ArduinoConfigConverter;
+import com.antigravity.converters.BartConfigConverter;
 import com.antigravity.converters.PhidgetConfigConverter;
 import com.antigravity.converters.TrackmateConfigConverter;
 import com.antigravity.converters.WebSocketConfigConverter;
@@ -46,6 +47,9 @@ import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.TestInterfaceListener;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.ArduinoProtocol;
+import com.antigravity.protocols.bart.BartConfig;
+import com.antigravity.protocols.bart.BartProtocol;
+import com.antigravity.protocols.interfaces.BleConnection;
 import com.antigravity.protocols.interfaces.SerialConnection;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
@@ -167,6 +171,7 @@ public class ClientCommandTaskHandler {
         this::changeLane,
         Role.DIRECTOR);
     app.get("/api/serial-ports", this::getSerialPorts, Role.VIEWER);
+    app.get("/api/ble-devices", this::getBleDevices, Role.VIEWER);
     app.get("/api/phidgets", this::getPhidgetDevices, Role.VIEWER);
     app.get("/api/races/current/export-csv", this::exportRaceCsv, Role.VIEWER);
     app.post("/api/races/current/export-xls", this::exportRaceXls, Role.VIEWER);
@@ -259,7 +264,8 @@ public class ClientCommandTaskHandler {
               request.getDriverIdsList(),
               request.getIsDemoMode(),
               request.getDemoConfig(),
-              databaseContext);
+              databaseContext,
+              request.getSeasonId());
       InitializeRaceResponse response =
           InitializeRaceResponse.newBuilder().setSuccess(true).build();
       return TaskResult.success(response.toByteArray());
@@ -423,6 +429,7 @@ public class ClientCommandTaskHandler {
               .databaseContext(databaseContext)
               .isDemoMode(request.getIsDemoMode())
               .demoConfig(request.getDemoConfig())
+              .seasonEntityId(request.getSeasonId())
               .build();
 
       ClientSubscriptionManager.getInstance().setRace(runtimeRace);
@@ -820,52 +827,12 @@ public class ClientCommandTaskHandler {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
 
       List<IProtocol> protocols = new ArrayList<>();
-      List<com.antigravity.proto.ArduinoConfig> configsList = // fqn-collision
-          request.getConfigsList();
       int interfaceIndex = 0;
-      for (int i = 0; i < configsList.size(); i++) {
-        com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i); // fqn-collision
-        ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
-        ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
-        arduino.setInterfaceIndex(interfaceIndex++);
-        arduino.setListener(new TestInterfaceListener());
-        protocols.add(arduino);
-      }
-
-      List<com.antigravity.proto.TrackmateConfig> tmConfigsList = // fqn-collision
-          request.getTrackmateConfigsList();
-      for (int i = 0; i < tmConfigsList.size(); i++) {
-        com.antigravity.proto.TrackmateConfig protoConfig = tmConfigsList.get(i); // fqn-collision
-        TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
-        TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
-        trackmate.setInterfaceIndex(interfaceIndex++);
-        trackmate.setListener(new TestInterfaceListener());
-        protocols.add(trackmate);
-      }
-
-      List<com.antigravity.proto.PhidgetConfig> phidgetConfigsList = // fqn-collision
-          request.getPhidgetConfigsList();
-      for (int i = 0; i < phidgetConfigsList.size(); i++) {
-        com.antigravity.proto.PhidgetConfig protoConfig = // fqn-collision
-            phidgetConfigsList.get(i);
-        PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
-        PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
-        phidget.setInterfaceIndex(interfaceIndex++);
-        phidget.setListener(new TestInterfaceListener());
-        protocols.add(phidget);
-      }
-
-      List<com.antigravity.proto.WebSocketConfig> wsConfigsList = // fqn-collision
-          request.getWebsocketConfigsList();
-      for (int i = 0; i < wsConfigsList.size(); i++) {
-        com.antigravity.proto.WebSocketConfig protoConfig = wsConfigsList.get(i); // fqn-collision
-
-        WebSocketConfig config = WebSocketConfigConverter.fromProto(protoConfig);
-        WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
-        websocket.setInterfaceIndex(interfaceIndex++);
-        websocket.setListener(new TestInterfaceListener());
-        protocols.add(websocket);
-      }
+      interfaceIndex = addArduinoProtocols(request, protocols, interfaceIndex);
+      interfaceIndex = addTrackmateProtocols(request, protocols, interfaceIndex);
+      interfaceIndex = addPhidgetProtocols(request, protocols, interfaceIndex);
+      interfaceIndex = addBartProtocols(request, protocols, interfaceIndex);
+      interfaceIndex = addWebSocketProtocols(request, protocols, interfaceIndex);
 
       if (protocols.isEmpty()) {
         WebSocketConfig config = new WebSocketConfig("Default WebSocket", 7070);
@@ -920,6 +887,81 @@ public class ClientCommandTaskHandler {
         ctx.status(500).result("Internal Server Error: " + e.toString());
       }
     }
+  }
+
+  private int addArduinoProtocols(
+      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
+    List<com.antigravity.proto.ArduinoConfig> configsList = // fqn-collision
+        request.getConfigsList();
+    for (int i = 0; i < configsList.size(); i++) {
+      com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i); // fqn-collision
+      ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
+      ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
+      arduino.setInterfaceIndex(interfaceIndex++);
+      arduino.setListener(new TestInterfaceListener());
+      protocols.add(arduino);
+    }
+    return interfaceIndex;
+  }
+
+  private int addTrackmateProtocols(
+      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
+    List<com.antigravity.proto.TrackmateConfig> tmConfigsList = // fqn-collision
+        request.getTrackmateConfigsList();
+    for (int i = 0; i < tmConfigsList.size(); i++) {
+      com.antigravity.proto.TrackmateConfig protoConfig = tmConfigsList.get(i); // fqn-collision
+      TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
+      TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
+      trackmate.setInterfaceIndex(interfaceIndex++);
+      trackmate.setListener(new TestInterfaceListener());
+      protocols.add(trackmate);
+    }
+    return interfaceIndex;
+  }
+
+  private int addPhidgetProtocols(
+      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
+    List<com.antigravity.proto.PhidgetConfig> phidgetConfigsList = // fqn-collision
+        request.getPhidgetConfigsList();
+    for (int i = 0; i < phidgetConfigsList.size(); i++) {
+      com.antigravity.proto.PhidgetConfig protoConfig = phidgetConfigsList.get(i); // fqn-collision
+      PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
+      PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
+      phidget.setInterfaceIndex(interfaceIndex++);
+      phidget.setListener(new TestInterfaceListener());
+      protocols.add(phidget);
+    }
+    return interfaceIndex;
+  }
+
+  private int addBartProtocols(
+      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
+    List<com.antigravity.proto.BartConfig> bartConfigsList = // fqn-collision
+        request.getBartConfigsList();
+    for (int i = 0; i < bartConfigsList.size(); i++) {
+      com.antigravity.proto.BartConfig protoConfig = bartConfigsList.get(i); // fqn-collision
+      BartConfig config = BartConfigConverter.fromProto(protoConfig);
+      BartProtocol bart = new BartProtocol(config, request.getLaneCount());
+      bart.setInterfaceIndex(interfaceIndex++);
+      bart.setListener(new TestInterfaceListener());
+      protocols.add(bart);
+    }
+    return interfaceIndex;
+  }
+
+  private int addWebSocketProtocols(
+      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
+    List<com.antigravity.proto.WebSocketConfig> wsConfigsList = // fqn-collision
+        request.getWebsocketConfigsList();
+    for (int i = 0; i < wsConfigsList.size(); i++) {
+      com.antigravity.proto.WebSocketConfig protoConfig = wsConfigsList.get(i); // fqn-collision
+      WebSocketConfig config = WebSocketConfigConverter.fromProto(protoConfig);
+      WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
+      websocket.setInterfaceIndex(interfaceIndex++);
+      websocket.setListener(new TestInterfaceListener());
+      protocols.add(websocket);
+    }
+    return interfaceIndex;
   }
 
   private void changeLane(Context ctx) {
@@ -1006,6 +1048,30 @@ public class ClientCommandTaskHandler {
       ctx.json(ports);
     } catch (Exception e) {
       logger.error("Error getting serial ports", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  private void getBleDevices(Context ctx) {
+    try {
+      List<String> devices = BleConnection.getDiscoveredBleDevices();
+      logger.debug(
+          "GET /api/ble-devices - Raw hardware discovered BLE devices (count={}): {}",
+          devices.size(),
+          devices);
+      List<String> bartDevices = new ArrayList<>();
+      for (String dev : devices) {
+        if (dev != null && dev.toUpperCase().startsWith("BART")) {
+          bartDevices.add(dev);
+        }
+      }
+      logger.debug(
+          "GET /api/ble-devices - Filtered BART devices (count={}): {}",
+          bartDevices.size(),
+          bartDevices);
+      ctx.json(bartDevices);
+    } catch (Exception e) {
+      logger.error("Error getting BLE devices", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
   }

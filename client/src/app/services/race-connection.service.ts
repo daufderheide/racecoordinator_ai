@@ -487,6 +487,12 @@ export class RaceConnectionService implements OnDestroy {
         (race as any).auto_advance_remaining_seconds =
           update.autoAdvanceRemainingSeconds;
       }
+      if (update.isSeason || update.seasonId || update.seasonName) {
+        (race as any).is_season = update.isSeason;
+        (race as any).season_id = update.seasonId;
+        (race as any).season_name = update.seasonName;
+        (race as any).season_standings = update.seasonStandings || [];
+      }
       this.raceService.setRace(race);
     }
 
@@ -511,6 +517,25 @@ export class RaceConnectionService implements OnDestroy {
 
     if (update.recordData) {
       this.recordDataSubject.next(update.recordData);
+    }
+
+    const seasonStandings =
+      update.seasonStandings ||
+      (update as any).season_standings ||
+      (update as any).seasonStandingsList;
+    if (seasonStandings && seasonStandings.length > 0) {
+      const currentRace = this.raceService.getRace();
+      if (currentRace) {
+        (currentRace as any).season_standings = seasonStandings;
+        if (update.seasonName || (update as any).season_name) {
+          (currentRace as any).season_name =
+            update.seasonName || (update as any).season_name;
+        }
+        if (update.isSeason || (update as any).is_season) {
+          (currentRace as any).is_season = true;
+        }
+        this.raceService.setRace(currentRace);
+      }
     }
 
     // Gaps updating after race update might be needed, or it's handled by StandingsUpdate

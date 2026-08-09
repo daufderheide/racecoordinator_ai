@@ -122,6 +122,38 @@ export const MOCK_TRACKS = [
       },
     ],
   },
+  {
+    entity_id: "t4",
+    name: "BART Track",
+    lanes: [
+      {
+        entity_id: "l1",
+        length: 12.5,
+        background_color: "#ff0000",
+        foreground_color: "#ffffff",
+      },
+      {
+        entity_id: "l2",
+        length: 12.5,
+        background_color: "#0000ff",
+        foreground_color: "#ffffff",
+      },
+    ],
+    arduino_configs: [],
+    trackmate_configs: [],
+    phidget_configs: [],
+    bart_configs: [
+      {
+        name: "BART 1",
+        deviceName: "BART_0001",
+        deviceAddress: "AA:BB:CC:DD:EE:FF",
+        numLanes: 2,
+        minLapMs: 1500,
+        lapPinPitBehavior: 0,
+        lapPinBehaviors: [1000, 1001],
+      },
+    ],
+  },
 ];
 
 export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
@@ -145,6 +177,7 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
       has_main_relay: t.has_main_relay || false,
       trackmate_configs: t.trackmate_configs,
       phidget_configs: t.phidget_configs,
+      bart_configs: t.bart_configs,
     }),
 );
 

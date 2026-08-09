@@ -4,6 +4,7 @@ import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.LedString;
+import com.antigravity.protocols.bart.BartConfig;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.antigravity.protocols.websocket.WebSocketConfig;
@@ -29,6 +30,7 @@ public class Track extends Model {
   private final List<TrackmateConfig> trackmateConfigs;
   private final List<PhidgetConfig> phidgetConfigs;
   private final List<WebSocketConfig> websocketConfigs;
+  private final List<BartConfig> bartConfigs;
 
   @BsonCreator
   @JsonCreator
@@ -46,6 +48,7 @@ public class Track extends Model {
           List<PhidgetConfig> phidgetConfigs,
       @BsonProperty("websocket_configs") @JsonProperty("websocket_configs")
           List<WebSocketConfig> websocketConfigs,
+      @BsonProperty("bart_configs") @JsonProperty("bart_configs") List<BartConfig> bartConfigs,
       @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
       @BsonId @JsonProperty("_id") ObjectId id) {
     super(id, entityId);
@@ -68,6 +71,8 @@ public class Track extends Model {
         websocketConfigs != null
             ? Collections.unmodifiableList(websocketConfigs)
             : Collections.emptyList();
+    this.bartConfigs =
+        bartConfigs != null ? Collections.unmodifiableList(bartConfigs) : Collections.emptyList();
   }
 
   public static class Builder {
@@ -78,6 +83,7 @@ public class Track extends Model {
     private List<TrackmateConfig> trackmateConfigs = new ArrayList<>();
     private List<PhidgetConfig> phidgetConfigs = new ArrayList<>();
     private List<WebSocketConfig> websocketConfigs = new ArrayList<>();
+    private List<BartConfig> bartConfigs = new ArrayList<>();
     private String entityId;
     private ObjectId id;
 
@@ -116,6 +122,11 @@ public class Track extends Model {
       return this;
     }
 
+    public Builder bartConfigs(List<BartConfig> bartConfigs) {
+      this.bartConfigs = bartConfigs;
+      return this;
+    }
+
     public Builder entityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -135,6 +146,7 @@ public class Track extends Model {
           trackmateConfigs,
           phidgetConfigs,
           websocketConfigs,
+          bartConfigs,
           entityId,
           id);
     }
@@ -292,6 +304,12 @@ public class Track extends Model {
   @BsonProperty("websocket_configs")
   public List<WebSocketConfig> getWebsocketConfigs() {
     return websocketConfigs;
+  }
+
+  @JsonProperty("bart_configs")
+  @BsonProperty("bart_configs")
+  public List<BartConfig> getBartConfigs() {
+    return bartConfigs;
   }
 
   /**

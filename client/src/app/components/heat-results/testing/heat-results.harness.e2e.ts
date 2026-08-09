@@ -34,7 +34,7 @@ export class HeatResultsHarnessE2e implements HeatResultsHarnessBase {
   }
 
   async hoverLegendItem(name: string): Promise<void> {
-    const item = this.legendItems.filter({ hasText: name });
+    const item = this.legendItems.filter({ hasText: name }).first();
     await item.hover();
   }
 }

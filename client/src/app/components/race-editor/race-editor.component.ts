@@ -101,6 +101,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     general: true,
     start_method: true,
     scoring: true,
+    season_points: true,
     heats: true,
     fuel_analog: true,
     fuel_digital: true,
@@ -548,6 +549,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               dropped_heats: 0,
               ranking_method: "LAP_COUNT",
               tiebreaker: "FASTEST_LAP_TIME",
+            };
+          }
+          if (!this.editingRace.season_scoring) {
+            this.editingRace.season_scoring = {
+              position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+              heat_position_points: [3, 2, 1, 0],
             };
           }
           if (!this.editingRace.fuel_options) {
@@ -1870,6 +1877,32 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
     ];
+  }
+
+  addSeasonPositionPoint(): void {
+    if (!this.editingRace) return;
+    if (!this.editingRace.season_scoring) {
+      this.editingRace.season_scoring = {
+        position_points: [],
+        heat_position_points: [],
+      };
+    }
+    if (!this.editingRace.season_scoring.position_points) {
+      this.editingRace.season_scoring.position_points = [];
+    }
+    this.editingRace.season_scoring.position_points.push(0);
+    this.captureState();
+  }
+
+  removeSeasonPositionPoint(index: number): void {
+    if (
+      !this.editingRace ||
+      !this.editingRace.season_scoring ||
+      !this.editingRace.season_scoring.position_points
+    )
+      return;
+    this.editingRace.season_scoring.position_points.splice(index, 1);
+    this.captureState();
   }
 
   startHelp() {

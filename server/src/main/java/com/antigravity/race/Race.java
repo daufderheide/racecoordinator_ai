@@ -71,6 +71,7 @@ public class Race implements ProtocolListener {
   private boolean isDemoMode;
   private DemoConfig demoConfig;
   private DatabaseContext databaseContext;
+  private String seasonEntityId;
 
   private IRaceState state;
   private float accumulatedRaceTime = 0.0f;
@@ -88,6 +89,7 @@ public class Race implements ProtocolListener {
   private Race(Builder builder) {
     this.model = builder.model;
     this.track = builder.track;
+    this.seasonEntityId = builder.seasonEntityId;
     this.drivers = builder.drivers != null ? new ArrayList<>(builder.drivers) : new ArrayList<>();
     this.databaseContext = builder.databaseContext;
     this.customRotations =
@@ -250,6 +252,12 @@ public class Race implements ProtocolListener {
     private RaceStatistics statistics;
     private DemoConfig demoConfig;
     private RecordData existingRecords;
+    private String seasonEntityId;
+
+    public Builder seasonEntityId(String seasonEntityId) {
+      this.seasonEntityId = seasonEntityId;
+      return this;
+    }
 
     public Builder model(com.antigravity.models.Race model) { // fqn-collision
       this.model = model;
@@ -341,6 +349,14 @@ public class Race implements ProtocolListener {
 
   public List<RaceParticipant> getDrivers() {
     return drivers;
+  }
+
+  public String getSeasonEntityId() {
+    return seasonEntityId;
+  }
+
+  public void setSeasonEntityId(String seasonEntityId) {
+    this.seasonEntityId = seasonEntityId;
   }
 
   public Track getTrack() {
@@ -895,6 +911,9 @@ public class Race implements ProtocolListener {
     GroupStandingsUpdate groupStandings = buildGroupStandingsUpdate();
     if (groupStandings != null) {
       dataBuilder.setGroupStandingsUpdate(groupStandings);
+    }
+    if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
+      dataBuilder.setRace(RaceConverter.toProto(this));
     }
     broadcast(dataBuilder.build());
   }

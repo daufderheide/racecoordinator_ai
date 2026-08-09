@@ -120,6 +120,7 @@ public class DefaultProtocolTest {
   private static class TestListener implements ProtocolListener {
     InterfaceStatus lastStatus = InterfaceStatus.DISCONNECTED;
     int lastInterfaceIndex = -1;
+    InterfaceEvent lastInterfaceEvent;
 
     @Override
     public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {}
@@ -140,7 +141,9 @@ public class DefaultProtocolTest {
     public void onCarData(CarData carData) {}
 
     @Override
-    public void onInterfaceEvent(InterfaceEvent event) {}
+    public void onInterfaceEvent(InterfaceEvent event) {
+      lastInterfaceEvent = event;
+    }
   }
 
   @Before
@@ -280,5 +283,21 @@ public class DefaultProtocolTest {
     // Because we consumed the 1.0 second earlier, the hwLapTime only contains the new 0.5 seconds
     assertEquals(0.5, protocol.hwLapTime[0].time(), 0.001);
     assertEquals(0.5, protocol.hwSegmentTime[0].time(), 0.001);
+  }
+
+  @Test
+  public void testStatusSchedulerIncludesDetectedChannels() {
+    protocol.connected = true;
+    protocol.simulateHeartbeat();
+    protocol.detectedChannels = 4;
+    protocol.open();
+
+    scheduler.tick();
+
+    assertEquals(InterfaceStatus.CONNECTED, listener.lastStatus);
+    assertTrue(
+        "InterfaceEvent with status should have been broadcast",
+        listener.lastInterfaceEvent != null && listener.lastInterfaceEvent.hasStatus());
+    assertEquals(4, listener.lastInterfaceEvent.getStatus().getDetectedChannels());
   }
 }

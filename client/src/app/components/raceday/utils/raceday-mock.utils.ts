@@ -24,6 +24,51 @@ export function createMockEditorData(): MockEditorData {
   const time = 3600;
   const race = {
     name: "Mock Editor Race",
+    season_name: "Mock Editor Season",
+    season_standings: [
+      {
+        driver_id: "d1",
+        driver_name: "Mario",
+        net_points: 150,
+        gross_points: 175,
+        races_run: 5,
+      },
+      {
+        driver_id: "d2",
+        driver_name: "Luigi",
+        net_points: 135,
+        gross_points: 150,
+        races_run: 5,
+      },
+      {
+        driver_id: "d3",
+        driver_name: "Bowser",
+        net_points: 120,
+        gross_points: 140,
+        races_run: 5,
+      },
+      {
+        driver_id: "d4",
+        driver_name: "Peach",
+        net_points: 110,
+        gross_points: 125,
+        races_run: 5,
+      },
+      {
+        driver_id: "d5",
+        driver_name: "Yoshi",
+        net_points: 95,
+        gross_points: 105,
+        races_run: 4,
+      },
+      {
+        driver_id: "d6",
+        driver_name: "Donkey Kong",
+        net_points: 80,
+        gross_points: 90,
+        races_run: 4,
+      },
+    ],
     track_id: "mock_track_1",
     heats_run: 1,
     overall_scoring: {

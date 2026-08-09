@@ -29,6 +29,10 @@ export interface DriverLine {
   rankPathData: string;
   legendX?: number;
   legendY?: number;
+  topLegendX?: number;
+  topLegendY?: number;
+  bottomLegendX?: number;
+  bottomLegendY?: number;
 }
 
 @Component({
@@ -49,6 +53,7 @@ export class TwinGraphsComponent implements OnChanges {
   @Input() padding = { top: 80, right: 100, bottom: 150, left: 100 };
   @Input() maxX = 10;
   @Input() maxY = 5;
+  @Input() stacked = false;
 
   @Input() titleKey = "OR_TITLE";
   @Input() titleParams: any = {};
@@ -64,6 +69,75 @@ export class TwinGraphsComponent implements OnChanges {
   hoveredDriverId: string | null = null;
   hiddenDriverIds = new Set<string>();
 
+  get effectiveHeight(): number {
+    if (this.stacked) {
+      const legendRows = Math.ceil(
+        (this.driverLines?.length || 1) / this.itemsPerRow,
+      );
+      const singleGraphHeight = 300;
+      const legendBlockHeight = legendRows * 30;
+      return (
+        this.padding.top +
+        singleGraphHeight +
+        85 +
+        legendBlockHeight +
+        70 +
+        singleGraphHeight +
+        85 +
+        legendBlockHeight +
+        40
+      );
+    }
+    return this.height;
+  }
+
+  get itemsPerRow(): number {
+    const legendItemWidth = 180;
+    const maxLegendWidth = this.width - 40;
+    return Math.max(1, Math.floor(maxLegendWidth / legendItemWidth));
+  }
+
+  get topGraphY(): number {
+    return this.padding.top;
+  }
+
+  get topGraphHeight(): number {
+    return this.stacked
+      ? 300
+      : this.height - this.padding.top - this.padding.bottom;
+  }
+
+  get topGraphBottom(): number {
+    return this.topGraphY + this.topGraphHeight;
+  }
+
+  get topLegendYStart(): number {
+    return this.topGraphBottom + 85;
+  }
+
+  get bottomGraphY(): number {
+    if (!this.stacked) return this.padding.top;
+    const legendRows = Math.ceil(
+      (this.driverLines?.length || 1) / this.itemsPerRow,
+    );
+    const legendBlockHeight = legendRows * 30;
+    return this.topLegendYStart + legendBlockHeight + 70;
+  }
+
+  get bottomGraphHeight(): number {
+    return this.stacked
+      ? 300
+      : this.height - this.padding.top - this.padding.bottom;
+  }
+
+  get bottomGraphBottom(): number {
+    return this.bottomGraphY + this.bottomGraphHeight;
+  }
+
+  get bottomLegendYStart(): number {
+    return this.bottomGraphBottom + 85;
+  }
+
   ngOnChanges(changes: SimpleChanges) {
     if (
       changes["driverLines"] ||
@@ -71,7 +145,8 @@ export class TwinGraphsComponent implements OnChanges {
       changes["height"] ||
       changes["padding"] ||
       changes["maxX"] ||
-      changes["maxY"]
+      changes["maxY"] ||
+      changes["stacked"]
     ) {
       this.calculateLegendPositions();
       this.generatePaths();
@@ -105,11 +180,7 @@ export class TwinGraphsComponent implements OnChanges {
     if (!this.driverLines) return;
     const legendItemWidth = 180;
     const legendItemHeight = 30;
-    const maxLegendWidth = this.width - 40; // 20px padding on each side
-    const itemsPerRow = Math.max(
-      1,
-      Math.floor(maxLegendWidth / legendItemWidth),
-    );
+    const itemsPerRow = this.itemsPerRow;
     const N = this.driverLines.length;
 
     this.driverLines.forEach((line, i) => {
@@ -124,16 +195,32 @@ export class TwinGraphsComponent implements OnChanges {
       line.legendX = rowStartX + col * legendItemWidth;
       line.legendY =
         this.height - this.padding.bottom + 85 + r * legendItemHeight;
+
+      if (this.stacked) {
+        line.topLegendX = rowStartX + col * legendItemWidth;
+        line.topLegendY = this.topLegendYStart + r * legendItemHeight;
+
+        line.bottomLegendX = rowStartX + col * legendItemWidth;
+        line.bottomLegendY = this.bottomLegendYStart + r * legendItemHeight;
+      }
     });
   }
 
   protected scaleXLeft(x: number): number {
+    if (this.stacked) {
+      const graphWidth = this.width - this.padding.left - this.padding.right;
+      return this.padding.left + (x / this.maxX) * graphWidth;
+    }
     const graphWidth =
       (this.width - this.padding.left - this.padding.right - 80) / 2;
     return this.padding.left + (x / this.maxX) * graphWidth;
   }
 
   protected scaleXRight(x: number): number {
+    if (this.stacked) {
+      const graphWidth = this.width - this.padding.left - this.padding.right;
+      return this.padding.left + (x / this.maxX) * graphWidth;
+    }
     const graphWidth =
       (this.width - this.padding.left - this.padding.right - 80) / 2;
     const offset = this.padding.left + graphWidth + 80;
@@ -141,15 +228,15 @@ export class TwinGraphsComponent implements OnChanges {
   }
 
   protected scaleYLeft(rank: number): number {
-    const graphHeight = this.height - this.padding.top - this.padding.bottom;
-    const N = this.driverLines.length || 4;
-    if (N <= 1) return this.padding.top + graphHeight / 2;
-    return this.padding.top + ((rank - 1) / (N - 1)) * graphHeight;
+    const graphHeight = this.topGraphHeight;
+    const N = this.driverLines?.length || 4;
+    if (N <= 1) return this.topGraphY + graphHeight / 2;
+    return this.topGraphY + ((rank - 1) / (N - 1)) * graphHeight;
   }
 
   protected scaleY(y: number): number {
-    const graphHeight = this.height - this.padding.top - this.padding.bottom;
-    return this.height - this.padding.bottom - (y / this.maxY) * graphHeight;
+    const graphHeight = this.bottomGraphHeight;
+    return this.bottomGraphBottom - (y / this.maxY) * graphHeight;
   }
 
   trackByDriverLine(index: number, line: DriverLine): string {

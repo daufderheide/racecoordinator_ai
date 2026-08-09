@@ -591,4 +591,35 @@ test.describe("Race Editor Visuals", () => {
       { timeout: 15000, maxDiffPixelRatio: 0.05 },
     );
   });
+
+  test("should display Season Points section expanded", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await page.waitForTimeout(200);
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    // Collapse other sections to isolate Season Points
+    await ensureSectionState(page, "General", false);
+    await ensureSectionState(page, "Scoring", false);
+    await ensureSectionState(page, "Analog Fuel Configuration", false);
+    await ensureSectionState(page, "Digital Fuel Configuration", false);
+    await ensureSectionState(page, "Team Options", false);
+    await ensureSectionState(page, "Heat Configuration", false);
+    await ensureSectionState(page, "Group Configuration", false);
+
+    // Expand Season Points
+    await ensureSectionState(page, "Season Points", true);
+    await page.waitForTimeout(50);
+
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator("#season-points-section")).toHaveScreenshot(
+      "race-editor-season-points-expanded.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
 });

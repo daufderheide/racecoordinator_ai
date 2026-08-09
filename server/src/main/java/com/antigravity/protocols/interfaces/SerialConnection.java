@@ -122,6 +122,29 @@ public class SerialConnection implements ISerialConnection {
     }
   }
 
+  @Override
+  public void addDataListener(ConnectionDataListener listener) {
+    if (listener != null) {
+      addListener(
+          new SerialPortDataListener() {
+            @Override
+            public int getListeningEvents() {
+              return SerialPort.LISTENING_EVENT_DATA_RECEIVED;
+            }
+
+            @Override
+            public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
+              if (event.getEventType() == SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
+                byte[] data = event.getReceivedData();
+                if (data != null && data.length > 0) {
+                  listener.onDataReceived(data);
+                }
+              }
+            }
+          });
+    }
+  }
+
   public boolean isOpen() {
     return serialPort != null && serialPort.isOpen();
   }

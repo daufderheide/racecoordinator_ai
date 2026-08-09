@@ -82,6 +82,12 @@
           [widget]="widget()"
         ></app-raceday-event-name>
       }
+      @case ("season-name") {
+        <app-raceday-season-name
+          [seasonName]="parentComponent().seasonName"
+          [widget]="widget()"
+        ></app-raceday-season-name>
+      }
       @case ("heat-info") {
         <app-raceday-heat-info
           [heat]="parentComponent().heat"
@@ -144,6 +150,18 @@
           [groupEnabled]="parentComponent().groupEnabled"
           [widget]="widget()"
         ></app-raceday-group-leaderboard>
+      }
+      @case ("season-leaderboard") {
+        <app-raceday-season-leaderboard
+          [seasonStandings]="parentComponent().seasonStandings"
+          [widget]="widget()"
+        ></app-raceday-season-leaderboard>
+      }
+      @case ("season-race-leaderboard") {
+        <app-raceday-season-race-leaderboard
+          [seasonStandings]="parentComponent().seasonStandings"
+          [widget]="widget()"
+        ></app-raceday-season-race-leaderboard>
       }
       @case ("lane-view") {
         <app-raceday-lane-view

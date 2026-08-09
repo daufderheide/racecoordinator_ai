@@ -2,11 +2,20 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable, NgZone } from "@angular/core";
 import { Reader } from "protobufjs/minimal";
-import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
-import { map } from "rxjs/operators";
+import {
+  BehaviorSubject,
+  forkJoin,
+  Observable,
+  of,
+  ReplaySubject,
+  Subject,
+} from "rxjs";
+import { catchError, map } from "rxjs/operators";
 import { Event } from "@app/models/event";
+import { Season } from "@app/models/season";
 import {
   ArduinoConfig,
+  BartConfig,
   PhidgetConfig,
   TrackmateConfig,
 } from "@app/models/track";
@@ -92,6 +101,8 @@ import {
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 
+import { BartConfigConverter } from "./converters/bart_config.converter";
+
 @Injectable({
   providedIn: "root",
 })
@@ -137,6 +148,10 @@ export class DataService {
 
   private get eventsUrl(): string {
     return `${this.baseUrl}/api/events`;
+  }
+
+  private get seasonsUrl(): string {
+    return `${this.baseUrl}/api/seasons`;
   }
   private connectionIntent = "";
 
@@ -260,6 +275,50 @@ export class DataService {
     return this.http.delete<any>(`${this.eventsUrl}/${id}`);
   }
 
+  getSeasons(): Observable<Season[]> {
+    return this.http.get<Season[]>(this.seasonsUrl);
+  }
+
+  getSeason(id: string): Observable<Season> {
+    return this.http.get<Season>(`${this.seasonsUrl}/${id}`);
+  }
+
+  createSeason(season: Season): Observable<Season> {
+    return this.http.post<Season>(this.seasonsUrl, season);
+  }
+
+  updateSeason(id: string, season: Season): Observable<Season> {
+    return this.http.put<Season>(`${this.seasonsUrl}/${id}`, season);
+  }
+
+  deleteSeason(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.seasonsUrl}/${id}`);
+  }
+
+  getRaceHistory(isDemo?: boolean): Observable<any[]> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races?demo=true`
+      : `${this.baseUrl}/api/history/races`;
+    return this.http.get<any[]>(url).pipe(
+      map((items) =>
+        (items || []).map((item) => ({
+          ...item,
+          is_demo:
+            isDemo !== undefined
+              ? isDemo
+              : Boolean(item.is_demo || item.isDemo || item.demo),
+        })),
+      ),
+    );
+  }
+
+  getAllFinishedRaceHistory(): Observable<any[]> {
+    return forkJoin([
+      this.getRaceHistory(false).pipe(catchError(() => of([]))),
+      this.getRaceHistory(true).pipe(catchError(() => of([]))),
+    ]).pipe(map(([prod, demo]) => [...(prod || []), ...(demo || [])]));
+  }
+
   exportRaceToCsv(): Observable<string> {
     return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, {
       responseType: "text",
@@ -355,6 +414,10 @@ export class DataService {
     return this.http.get<string[]>(`${this.baseUrl}/api/serial-ports`);
   }
 
+  getBleDevices(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/api/ble-devices`);
+  }
+
   getPhidgetDevices(): Observable<IPhidgetDeviceInfo[]> {
     return this.http
       .get(`${this.baseUrl}/api/phidgets`, { responseType: "arraybuffer" })
@@ -374,6 +437,7 @@ export class DataService {
     isDemoMode: boolean,
     demoConfig?: IDemoConfig,
     eventId?: string,
+    seasonId?: string,
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
@@ -381,6 +445,7 @@ export class DataService {
       isDemoMode,
       demoConfig,
       eventId,
+      seasonId,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 
@@ -408,6 +473,7 @@ export class DataService {
     trackmateConfigs: TrackmateConfig[],
     phidgetConfigsOrLaneCount: any[] | number = [],
     laneCountParam?: number,
+    bartConfigs: BartConfig[] = [],
   ): Observable<InitializeInterfaceResponse> {
     let phidgetConfigs: any[] = [];
     let laneCount = 0;
@@ -423,6 +489,7 @@ export class DataService {
       configs: this.mapArduinoConfigsToProto(configs),
       trackmateConfigs: this.mapTrackmateConfigsToProto(trackmateConfigs),
       phidgetConfigs: this.mapPhidgetConfigsToProto(phidgetConfigs),
+      bartConfigs: this.mapBartConfigsToProto(bartConfigs),
       laneCount,
     });
     const buffer = InitializeInterfaceRequest.encode(request).finish();
@@ -531,6 +598,10 @@ export class DataService {
         }),
       ) || []
     );
+  }
+
+  private mapBartConfigsToProto(configs: BartConfig[]) {
+    return (configs || []).map((c) => BartConfigConverter.toProto(c));
   }
 
   updateInterfaceConfig(

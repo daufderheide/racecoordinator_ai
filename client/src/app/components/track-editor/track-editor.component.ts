@@ -26,6 +26,7 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
+import { BartEditorComponent } from "@app/components/track-editor/bart-editor/bart-editor.component";
 import { PhidgetEditorComponent } from "@app/components/track-editor/phidget-editor/phidget-editor.component";
 import { TrakmateEditorComponent } from "@app/components/track-editor/trakmate-editor/trakmate-editor.component";
 import { DataService } from "@app/data.service";
@@ -33,6 +34,7 @@ import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
+  BartConfig,
   LedString,
   MAX_ANALOG_PINS,
   MAX_DIGITAL_PINS,
@@ -68,6 +70,7 @@ import { deepCopy } from "@app/utils/clone.utils";
     ArduinoEditorComponent,
     TrakmateEditorComponent,
     PhidgetEditorComponent,
+    BartEditorComponent,
     InputDialogComponent,
     TranslatePipe,
     ConfirmationModalComponent,
@@ -89,6 +92,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   arduinoConfigs: ArduinoConfig[] = [];
   trackmateConfigs: TrackmateConfig[] = [];
   phidgetConfigs: PhidgetConfig[] = [];
+  bartConfigs: BartConfig[] = [];
   helpSteps: GuideStep[] = [];
   driverMissingError = false;
 
@@ -439,6 +443,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                     has_main_relay: factoryTrack.has_main_relay || false,
                     trackmate_configs: factoryTrack.trackmate_configs,
                     phidget_configs: factoryTrack.phidget_configs,
+                    bart_configs: factoryTrack.bart_configs,
                   });
                   this.initializeEditingState();
                 },
@@ -538,6 +543,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.phidgetConfigs = [];
       }
 
+      // Restore BART Config
+      if (
+        this.editingTrack.bart_configs &&
+        this.editingTrack.bart_configs.length > 0
+      ) {
+        this.bartConfigs = JSON.parse(
+          JSON.stringify(this.editingTrack.bart_configs),
+        );
+      } else {
+        this.bartConfigs = [];
+      }
+
       this.trackName = this.editingTrack.name;
       this.numTrackSections = this.editingTrack.num_track_sections;
       this.lanes = [...this.editingTrack.lanes];
@@ -555,6 +572,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.arduinoConfigs = [];
       this.trackmateConfigs = [];
       this.phidgetConfigs = [];
+      this.bartConfigs = [];
     }
 
     this.isLoading = false;
@@ -574,7 +592,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (
       this.arduinoConfigs.length > 0 ||
       this.trackmateConfigs.length > 0 ||
-      this.phidgetConfigs.length > 0
+      this.phidgetConfigs.length > 0 ||
+      this.bartConfigs.length > 0
     ) {
       this.dataService
         .initializeInterface(
@@ -582,6 +601,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           this.trackmateConfigs,
           this.phidgetConfigs,
           this.lanes.length,
+          this.bartConfigs,
         )
         .subscribe({
           next: (response) => {
@@ -624,6 +644,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const phidgetCopy = track.phidget_configs
       ? JSON.parse(JSON.stringify(track.phidget_configs))
       : [];
+    const bartCopy = track.bart_configs
+      ? JSON.parse(JSON.stringify(track.bart_configs))
+      : [];
     return new Track({
       entity_id: track.entity_id,
       name: track.name,
@@ -635,6 +658,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       has_main_relay: track.has_main_relay,
       trackmate_configs: trackmateCopy,
       phidget_configs: phidgetCopy,
+      bart_configs: bartCopy,
     });
   }
 
@@ -653,6 +677,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ? deepCopy(this.trackmateConfigs)
       : [];
     const phConfigs = this.phidgetConfigs ? deepCopy(this.phidgetConfigs) : [];
+    const bConfigs = this.bartConfigs ? deepCopy(this.bartConfigs) : [];
     return new Track({
       entity_id: this.editingTrack.entity_id,
       name: this.trackName,
@@ -672,6 +697,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       has_main_relay: this.editingTrack.has_main_relay,
       trackmate_configs: tmConfigs,
       phidget_configs: phConfigs,
+      bart_configs: bConfigs,
     });
   }
 
@@ -714,6 +740,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         t1.trackmate_configs || [],
         t2.trackmate_configs || [],
       )
+    ) {
+      return false;
+    }
+
+    // Check BART Configs equality
+    if (
+      JSON.stringify(t1.bart_configs || []) !==
+      JSON.stringify(t2.bart_configs || [])
     ) {
       return false;
     }
@@ -1522,6 +1556,51 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.initializeInterfaces();
   }
 
+  trackByTrackmateConfig(index: number, _config: any): number {
+    return index;
+  }
+
+  // --- BART Configuration ---
+
+  addBartConfig() {
+    this.bartConfigs.push({
+      name: `BART ${this.bartConfigs.length + 1}`,
+      deviceName: "",
+      deviceAddress: "",
+      numLanes: this.lanes.length,
+      minLapMs: 1,
+      lapPinPitBehavior: 0,
+      lapPinBehaviors: Array(this.lanes.length)
+        .fill(0)
+        .map((_, i) => PinBehavior.BEHAVIOR_LAP_BASE + i),
+    });
+    this.bartConfigs = [...this.bartConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  removeBartConfig(index: number) {
+    this.bartConfigs.splice(index, 1);
+    this.bartConfigs = [...this.bartConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  onArduinoConfigChange() {
+    this.arduinoConfigs = [...this.arduinoConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
   onTrackmateConfigChange() {
     this.trackmateConfigs = [...this.trackmateConfigs];
     this.captureState();
@@ -1531,7 +1610,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.initializeInterfaces();
   }
 
-  trackByTrackmateConfig(index: number, _config: any): number {
+  onBartConfigChange() {
+    this.bartConfigs = [...this.bartConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+    this.initializeInterfaces();
+  }
+
+  trackByBartConfig(index: number, _config: any): number {
     return index;
   }
 
@@ -1669,6 +1757,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             has_main_relay: result.has_main_relay ?? false,
             trackmate_configs: result.trackmate_configs,
             phidget_configs: result.phidget_configs,
+            bart_configs: result.bart_configs,
           });
 
           // Update allTracks cache to ensure name uniqueness checks stay in sync
@@ -1742,6 +1831,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           } else {
             if (this.phidgetConfigs.length > 0) {
               this.phidgetConfigs = [];
+            }
+          }
+
+          if (
+            this.editingTrack.bart_configs &&
+            this.editingTrack.bart_configs.length > 0
+          ) {
+            const newBartConfigsJson = JSON.stringify(
+              this.editingTrack.bart_configs,
+            );
+            if (newBartConfigsJson !== JSON.stringify(this.bartConfigs)) {
+              this.bartConfigs = JSON.parse(newBartConfigsJson);
+            }
+          } else {
+            if (this.bartConfigs.length > 0) {
+              this.bartConfigs = [];
             }
           }
 

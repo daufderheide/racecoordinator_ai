@@ -957,6 +957,36 @@ describe("DefaultRaceResultsComponent", () => {
     });
   });
 
+  describe("Lane Colors", () => {
+    it("should return lane background and foreground color from track when available", () => {
+      component["race"] = {
+        track: {
+          lanes: [
+            { background_color: "#ff0000", foreground_color: "#ffffff" },
+            { background_color: "#000000", foreground_color: "#00ff00" },
+          ],
+        },
+      } as any;
+
+      expect(component["getLaneBackgroundColor"](0)).toBe("#ff0000");
+      expect(component["getLaneForegroundColor"](0)).toBe("#ffffff");
+
+      expect(component["getLaneBackgroundColor"](1)).toBe("#000000");
+      expect(component["getLaneForegroundColor"](1)).toBe("#00ff00");
+    });
+
+    it("should fallback to neon color for background and #ffffff for foreground when lane is missing", () => {
+      component["race"] = {
+        track: {
+          lanes: [],
+        },
+      } as any;
+
+      expect(component["getLaneBackgroundColor"](0)).toBe("#00ffff");
+      expect(component["getLaneForegroundColor"](0)).toBe("#ffffff");
+    });
+  });
+
   describe("Window Tracking and Cleanup", () => {
     it("should open, track, and close driver results windows on destroy or pagehide", () => {
       const mockWindow = jasmine.createSpyObj("Window", ["close"]);

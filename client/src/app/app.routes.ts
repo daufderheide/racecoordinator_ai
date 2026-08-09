@@ -17,6 +17,8 @@ import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday
 import { ModifyHeatsModalComponent } from "@app/components/raceday/modify-heats-modal/modify-heats-modal.component";
 import { RacedayComponent } from "@app/components/raceday/raceday.component";
 import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-setup.component";
+import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
+import { SeasonManagerComponent } from "@app/components/season-manager/season-manager.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
 import { TeamManagerComponent } from "@app/components/team-manager/team-manager.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
@@ -135,6 +137,22 @@ export const routes: Routes = [
     runGuardsAndResolvers: "always",
     title: "Event Editor",
     data: { animation: "EventEditorPage" },
+  },
+  {
+    path: "season-manager",
+    component: SeasonManagerComponent,
+    canActivate: [AuthGuard],
+    title: "Season Manager",
+    data: { animation: "SeasonManagerPage" },
+  },
+  {
+    path: "season-editor",
+    component: SeasonEditorComponent,
+    canActivate: [AuthGuard],
+    canDeactivate: [DirtyCheckGuard],
+    runGuardsAndResolvers: "always",
+    title: "Season Editor",
+    data: { animation: "SeasonEditorPage" },
   },
   {
     path: "race-manager",

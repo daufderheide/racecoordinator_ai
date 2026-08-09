@@ -383,6 +383,10 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   protected getLaneColor(index: number): string {
+    return this.getLaneBackgroundColor(index);
+  }
+
+  protected getLaneBackgroundColor(index: number): string {
     if (this.race?.track?.lanes && index < this.race.track.lanes.length) {
       return (
         this.race.track.lanes[index].background_color ||
@@ -390,6 +394,14 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       );
     }
     return NEON_COLORS[index % NEON_COLORS.length].color;
+  }
+
+  protected getLaneForegroundColor(index: number): string {
+    if (this.race?.track?.lanes && index < this.race.track.lanes.length) {
+      const fg = this.race.track.lanes[index].foreground_color;
+      if (fg) return fg;
+    }
+    return "#ffffff";
   }
 
   protected getHolderDisplay(entry: IRecordEntry | null | undefined): string {

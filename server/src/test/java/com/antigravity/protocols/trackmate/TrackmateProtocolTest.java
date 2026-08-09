@@ -214,11 +214,11 @@ public class TrackmateProtocolTest {
     protocol.open();
     serialConnection.allWrittenData.clear();
 
-    protocol.setMainPower(true); // Turn ON in NO mode sends 'R' (0x52)
-    assertArrayEquals(new byte[] {0x52, 0x0A}, serialConnection.lastWrittenData);
-
-    protocol.setMainPower(false); // Turn OFF in NO mode sends 'E' (0x45)
+    protocol.setMainPower(true); // Turn ON in NO mode sends 'E' (0x45)
     assertArrayEquals(new byte[] {0x45, 0x0A}, serialConnection.lastWrittenData);
+
+    protocol.setMainPower(false); // Turn OFF in NO mode sends 'R' (0x52)
+    assertArrayEquals(new byte[] {0x52, 0x0A}, serialConnection.lastWrittenData);
   }
 
   @Test
@@ -229,37 +229,16 @@ public class TrackmateProtocolTest {
     protocol.open();
     serialConnection.allWrittenData.clear();
 
-    protocol.setMainPower(true); // Turn ON in NC mode sends 'E' (0x45)
-    assertArrayEquals(new byte[] {0x45, 0x0A}, serialConnection.lastWrittenData);
-
-    protocol.setMainPower(false); // Turn OFF in NC mode sends 'R' (0x52)
+    protocol.setMainPower(true); // Turn ON in NC mode sends 'R' (0x52)
     assertArrayEquals(new byte[] {0x52, 0x0A}, serialConnection.lastWrittenData);
+
+    protocol.setMainPower(false); // Turn OFF in NC mode sends 'E' (0x45)
+    assertArrayEquals(new byte[] {0x45, 0x0A}, serialConnection.lastWrittenData);
   }
 
   @Test
   public void testSetLanePower_NormallyClosedFalse() {
     config.normallyClosedRelays = false;
-    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
-    protocol.setListener(listener);
-    protocol.open();
-    serialConnection.allWrittenData.clear();
-
-    // Lane 0 ON -> bitmask 1 ("1"), prefix 'n' (0x6E)
-    protocol.setLanePower(true, 0);
-    assertArrayEquals(new byte[] {0x6E, 0x31, 0x0A}, serialConnection.lastWrittenData);
-
-    // Lane 1 ON as well -> bitmask 3 ("3")
-    protocol.setLanePower(true, 1);
-    assertArrayEquals(new byte[] {0x6E, 0x33, 0x0A}, serialConnection.lastWrittenData);
-
-    // Lane 0 OFF -> bitmask 2 ("2")
-    protocol.setLanePower(false, 0);
-    assertArrayEquals(new byte[] {0x6E, 0x32, 0x0A}, serialConnection.lastWrittenData);
-  }
-
-  @Test
-  public void testSetLanePower_NormallyClosedTrue() {
-    config.normallyClosedRelays = true;
     protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
     protocol.setListener(listener);
     protocol.open();
@@ -279,6 +258,27 @@ public class TrackmateProtocolTest {
   }
 
   @Test
+  public void testSetLanePower_NormallyClosedTrue() {
+    config.normallyClosedRelays = true;
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+    serialConnection.allWrittenData.clear();
+
+    // Lane 0 ON -> bitmask 1 ("1"), prefix 'n' (0x6E)
+    protocol.setLanePower(true, 0);
+    assertArrayEquals(new byte[] {0x6E, 0x31, 0x0A}, serialConnection.lastWrittenData);
+
+    // Lane 1 ON as well -> bitmask 3 ("3")
+    protocol.setLanePower(true, 1);
+    assertArrayEquals(new byte[] {0x6E, 0x33, 0x0A}, serialConnection.lastWrittenData);
+
+    // Lane 0 OFF -> bitmask 2 ("2")
+    protocol.setLanePower(false, 0);
+    assertArrayEquals(new byte[] {0x6E, 0x32, 0x0A}, serialConnection.lastWrittenData);
+  }
+
+  @Test
   public void testSetLanePower_EightLanes_Bitmask255() {
     config.normallyClosedRelays = true;
     config.numLanes = 8;
@@ -290,8 +290,8 @@ public class TrackmateProtocolTest {
     for (int i = 0; i < 8; i++) {
       protocol.setLanePower(true, i);
     }
-    // Bitmask 255 with NC=true should be sent as 'f', '2', '5', '5', LF
-    assertArrayEquals(new byte[] {0x66, 0x32, 0x35, 0x35, 0x0A}, serialConnection.lastWrittenData);
+    // Bitmask 255 with NC=true should be sent as 'n', '2', '5', '5', LF
+    assertArrayEquals(new byte[] {0x6E, 0x32, 0x35, 0x35, 0x0A}, serialConnection.lastWrittenData);
   }
 
   @Test
@@ -306,8 +306,8 @@ public class TrackmateProtocolTest {
     for (int i = 0; i < 4; i++) {
       protocol.setLanePower(true, i);
     }
-    // Bitmask 15 with NC=false should be sent as 'n', '1', '5', LF
-    assertArrayEquals(new byte[] {0x6E, 0x31, 0x35, 0x0A}, serialConnection.lastWrittenData);
+    // Bitmask 15 with NC=false should be sent as 'f', '1', '5', LF
+    assertArrayEquals(new byte[] {0x66, 0x31, 0x35, 0x0A}, serialConnection.lastWrittenData);
   }
 
   @Test
@@ -398,5 +398,27 @@ public class TrackmateProtocolTest {
     nullProtocol.open();
     serialConnection.injectData(new byte[] {0x41});
     serialConnection.injectData(new byte[] {0x0A});
+  }
+
+  @Test
+  public void testPitInAndPitOutChannelBehaviors() {
+    config.lapPinBehaviors = new ArrayList<>();
+    config.lapPinBehaviors.add(
+        PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + 0); // Pin 0 -> Pit In lane 0
+    config.lapPinBehaviors.add(
+        PinBehavior.BEHAVIOR_PIT_OUT_BASE_VALUE + 0); // Pin 1 -> Pit Out lane 0
+
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.setListener(listener);
+    protocol.open();
+
+    // 1. Inject 'A' (Pin 0) -> Pit In
+    serialConnection.injectData(new byte[] {0x41});
+    org.junit.Assert.assertTrue("Car should enter pits on Pit In trigger", listener.laneInPits[0]);
+
+    // 2. Inject 'B' (Pin 1) -> Pit Out
+    serialConnection.injectData(new byte[] {0x42});
+    org.junit.Assert.assertFalse(
+        "Car should leave pits immediately on Pit Out trigger", listener.laneInPits[0]);
   }
 }
