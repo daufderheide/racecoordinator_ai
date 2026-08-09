@@ -56,4 +56,35 @@ test.describe("Season Editor Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should display add finished race to season modal open with scrolling demo and non-demo races", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/season-editor?id=s_active"),
+    );
+
+    const harness = new SeasonEditorHarnessE2e(page.locator("body"));
+    await page.locator(".page-container").waitFor();
+    await expect(page.locator(".editor-panel-left")).toBeVisible();
+
+    await harness.clickAddRace();
+
+    await expect(page.locator(".modal-overlay")).toBeVisible();
+    await expect(page.locator(".modal-race-list")).toBeVisible();
+    await expect(page.locator(".modal-race-item").first()).toBeVisible();
+
+    await TestSetupHelper.disableAnimations(page);
+    await page.waitForTimeout(200);
+
+    await expect(page).toHaveScreenshot(
+      "season-editor-add-finished-race-modal.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
 });

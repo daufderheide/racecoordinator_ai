@@ -77,6 +77,37 @@ public class DatabaseServiceTest {
     assertEquals("Test Race", record.getModel().getName());
     assertEquals(12.5f, record.getAccumulatedRaceTime(), 0.001f);
     assertEquals(4, record.getDrivers().size());
+    assertNotNull(record.getDriverResults());
+  }
+
+  @Test
+  public void testSaveRaceHistory_CalculatesAndAttachesDriverResults() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Grand Prix")
+            .withEntityId("GP1")
+            .build();
+    Driver driver = new Driver("Dave", "D", "DaveID", new org.bson.types.ObjectId());
+    List<RaceParticipant> drivers = new ArrayList<>();
+    RaceParticipant rp = new RaceParticipant(driver);
+    rp.setRank(1);
+    drivers.add(rp);
+
+    Race runtimeRace =
+        new Race.Builder().model(model).drivers(drivers).track(dbService.getFactoryTrack()).build();
+
+    dbService.saveRaceHistory(mongoDatabase, runtimeRace);
+
+    ArgumentCaptor<RaceHistoryRecord> captor = ArgumentCaptor.forClass(RaceHistoryRecord.class);
+    verify(historyCollection, org.mockito.Mockito.atLeastOnce()).insertOne(captor.capture());
+
+    RaceHistoryRecord record = captor.getValue();
+    assertNotNull(record);
+    assertNotNull(record.getDriverResults());
+    assertTrue(!record.getDriverResults().isEmpty());
+    assertEquals("DaveID", record.getDriverResults().get(0).getDriverId());
+    assertEquals(1, record.getDriverResults().get(0).getOverallRank());
+    assertEquals(25, record.getDriverResults().get(0).getOverallPoints());
   }
 
   @Test
@@ -417,5 +448,38 @@ public class DatabaseServiceTest {
     assertNotNull(result);
     assertEquals(259, result.getTotalLaps());
     assertEquals("d_2", result.getDriverId());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testCommitRaceToSeason_UsesExplicitStartTimestamp() {
+    MongoCollection<com.antigravity.models.Season> seasonsCollection = mock(MongoCollection.class);
+    when(mongoDatabase.getCollection(eq("seasons"), eq(com.antigravity.models.Season.class)))
+        .thenReturn(seasonsCollection);
+
+    FindIterable<com.antigravity.models.Season> seasonIterable = mock(FindIterable.class);
+    when(seasonsCollection.find(any(Bson.class))).thenReturn(seasonIterable);
+
+    com.antigravity.models.Season season =
+        new com.antigravity.models.Season("2026 Season", 0, new ArrayList<>(), "S1", null);
+    when(seasonIterable.first()).thenReturn(season);
+
+    long expectedStartTime = 1700000000000L;
+    List<com.antigravity.models.SeasonRaceRecord.SeasonDriverResult> results = new ArrayList<>();
+    results.add(
+        new com.antigravity.models.SeasonRaceRecord.SeasonDriverResult(
+            "d1", "Driver 1", 1, 10, 0, 10));
+
+    dbService.commitRaceToSeason(
+        mongoDatabase, "S1", "GP Race 1", expectedStartTime, false, results);
+
+    ArgumentCaptor<com.antigravity.models.Season> seasonCaptor =
+        ArgumentCaptor.forClass(com.antigravity.models.Season.class);
+    verify(seasonsCollection).replaceOne(any(Bson.class), seasonCaptor.capture());
+
+    com.antigravity.models.Season updatedSeason = seasonCaptor.getValue();
+    assertNotNull(updatedSeason);
+    assertEquals(1, updatedSeason.getRaces().size());
+    assertEquals(expectedStartTime, updatedSeason.getRaces().get(0).getTimestamp());
   }
 }

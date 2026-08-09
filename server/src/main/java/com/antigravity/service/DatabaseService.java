@@ -33,6 +33,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.race.prediction.PredictionEngine;
+import com.antigravity.util.SeasonPointsCalculator;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -594,6 +595,14 @@ public class DatabaseService {
       record.setAccumulatedRaceTime(runtimeRace.getRaceTime());
       record.setStatistics(runtimeRace.getStatistics());
 
+      try {
+        List<SeasonDriverResult> driverResults =
+            SeasonPointsCalculator.calculateDriverResultsForRace(runtimeRace);
+        record.setDriverResults(driverResults);
+      } catch (Exception ex) {
+        logger.warn("Could not calculate driver results for race history record", ex);
+      }
+
       collection.insertOne(record);
       logger.info("Race successfully saved to {}", collection.getNamespace().getCollectionName());
     } catch (Exception e) {
@@ -618,6 +627,7 @@ public class DatabaseService {
       MongoDatabase database,
       String seasonId,
       String raceName,
+      long timestamp,
       boolean isDemo,
       List<SeasonDriverResult> driverResults) {
     if (seasonId == null
@@ -636,9 +646,9 @@ public class DatabaseService {
       }
       List<SeasonRaceRecord> races = season.getRaces();
       String nextRaceId = String.valueOf(races.size() + 1);
+      long recordTimestamp = timestamp > 0 ? timestamp : System.currentTimeMillis();
       SeasonRaceRecord newRecord =
-          new SeasonRaceRecord(
-              nextRaceId, raceName, System.currentTimeMillis(), isDemo, driverResults);
+          new SeasonRaceRecord(nextRaceId, raceName, recordTimestamp, isDemo, driverResults);
       races.add(newRecord);
 
       Season updatedSeason =
@@ -660,8 +670,17 @@ public class DatabaseService {
       MongoDatabase database,
       String seasonId,
       String raceName,
+      boolean isDemo,
       List<SeasonDriverResult> driverResults) {
-    commitRaceToSeason(database, seasonId, raceName, false, driverResults);
+    commitRaceToSeason(database, seasonId, raceName, 0L, isDemo, driverResults);
+  }
+
+  public void commitRaceToSeason(
+      MongoDatabase database,
+      String seasonId,
+      String raceName,
+      List<SeasonDriverResult> driverResults) {
+    commitRaceToSeason(database, seasonId, raceName, 0L, false, driverResults);
   }
 
   public void saveRaceRecords(

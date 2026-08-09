@@ -52,6 +52,10 @@ public class RaceHistoryRecord {
   @JsonProperty("is_demo")
   private boolean isDemo;
 
+  @BsonProperty("driver_results")
+  @JsonProperty("driver_results")
+  private List<SeasonRaceRecord.SeasonDriverResult> driverResults;
+
   public RaceHistoryRecord() {}
 
   @BsonCreator
@@ -151,5 +155,14 @@ public class RaceHistoryRecord {
 
   public void setDemo(boolean isDemo) {
     this.isDemo = isDemo;
+  }
+
+  @JsonProperty("driver_results")
+  public List<SeasonRaceRecord.SeasonDriverResult> getDriverResults() {
+    return driverResults;
+  }
+
+  public void setDriverResults(List<SeasonRaceRecord.SeasonDriverResult> driverResults) {
+    this.driverResults = driverResults;
   }
 }

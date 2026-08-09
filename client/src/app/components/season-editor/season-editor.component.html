@@ -261,7 +261,9 @@
             ) {
               <div class="modal-race-item" (click)="addRaceToSeason(r)">
                 <div class="race-item-left">
-                  <span class="race-item-name">{{ r.race_name }}</span>
+                  <span class="race-item-name" [title]="r.race_name">{{
+                    r.race_name
+                  }}</span>
                   @if (r.is_demo) {
                     <span class="demo-badge">{{
                       "SE_BADGE_DEMO" | translate

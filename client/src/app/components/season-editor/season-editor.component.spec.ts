@@ -323,6 +323,33 @@ describe("SeasonEditorComponent", () => {
     );
   });
 
+  it("should render modal-race-list with title attribute on race item names when add finished race modal is open", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([
+        {
+          original_entity_id: "r_test_1",
+          timestamp: 10000,
+          model: { name: "Test Grand Prix With Long Title" },
+          drivers: [],
+        },
+      ]),
+    );
+
+    component.openAddRaceModal();
+    fixture.detectChanges();
+
+    const listEl = fixture.nativeElement.querySelector(".modal-race-list");
+    expect(listEl).toBeTruthy();
+
+    const nameEl = fixture.nativeElement.querySelector(".race-item-name");
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.getAttribute("title")).toBe(
+      "Test Grand Prix With Long Title",
+    );
+    expect(nameEl.textContent.trim()).toBe("Test Grand Prix With Long Title");
+  });
+
   it("should have password manager ignore attributes on season name input field", () => {
     const inputEl = fixture.nativeElement.querySelector("#season-name");
     expect(inputEl).toBeTruthy();
@@ -435,5 +462,84 @@ describe("SeasonEditorComponent", () => {
 
     await harness.setName("Spring Series");
     expect(component.editingSeason.name).toBe("Spring Series");
+  });
+
+  it("should extract statistics.startMillis for SeasonRaceRecord timestamp in buildRaceRecordFromHistory", () => {
+    const historyItem = {
+      original_entity_id: "race_999",
+      model: { name: "Sprint Cup" },
+      statistics: {
+        startMillis: 1710000000000,
+        startTime: "2024-03-09T10:00:00Z",
+      },
+      id: { timestamp: 1710000120 }, // 2 minutes later
+    };
+
+    const record = component["buildRaceRecordFromHistory"](historyItem);
+    expect(record.timestamp).toBe(1710000000000);
+  });
+
+  it("should fall back to parsing statistics.startTime ISO string if startMillis is absent", () => {
+    const isoString = "2024-05-15T14:30:00.000Z";
+    const expectedMillis = new Date(isoString).getTime();
+    const historyItem = {
+      original_entity_id: "race_888",
+      model: { name: "Indy Cup" },
+      statistics: {
+        startTime: isoString,
+      },
+      id: { timestamp: 1710000120 },
+    };
+
+    const record = component["buildRaceRecordFromHistory"](historyItem);
+    expect(record.timestamp).toBe(expectedMillis);
+  });
+
+  it("should calculate position points for drivers from season_scoring when driver_results is absent in history item", () => {
+    const historyItem = {
+      original_entity_id: "race_777",
+      model: {
+        name: "Formula 1 Cup",
+        season_scoring: {
+          position_points: [25, 18, 15],
+          heat_position_points: [3, 1],
+        },
+      },
+      drivers: [
+        { driver: { entity_id: "d1", name: "Driver 1" }, rank: 1 },
+        { driver: { entity_id: "d2", name: "Driver 2" }, rank: 2 },
+      ],
+    };
+
+    const record = component["buildRaceRecordFromHistory"](historyItem);
+    expect(record.driver_results.length).toBe(2);
+    expect(record.driver_results[0].overall_points).toBe(25);
+    expect(record.driver_results[0].total_points).toBe(25);
+    expect(record.driver_results[1].overall_points).toBe(18);
+    expect(record.driver_results[1].total_points).toBe(18);
+  });
+
+  it("should preserve pre-calculated driver_results when present on history item", () => {
+    const historyItem = {
+      original_entity_id: "race_666",
+      model: { name: "Pro Cup" },
+      driver_results: [
+        {
+          driver_id: "d10",
+          driver_name: "Pro 10",
+          overall_rank: 1,
+          overall_points: 30,
+          heat_points: 5,
+          total_points: 35,
+        },
+      ],
+    };
+
+    const record = component["buildRaceRecordFromHistory"](historyItem);
+    expect(record.driver_results.length).toBe(1);
+    expect(record.driver_results[0].driver_id).toBe("d10");
+    expect(record.driver_results[0].overall_points).toBe(30);
+    expect(record.driver_results[0].heat_points).toBe(5);
+    expect(record.driver_results[0].total_points).toBe(35);
   });
 });

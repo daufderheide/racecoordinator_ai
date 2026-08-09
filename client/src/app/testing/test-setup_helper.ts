@@ -609,6 +609,85 @@ export class TestSetupHelper {
         isDemo: false,
         model: { entity_id: "r_official1", name: "Daytona 500 Championship" },
       },
+      {
+        _id: "hist_demo2",
+        original_entity_id: "r_demo2",
+        timestamp: 1700007200000,
+        is_demo: true,
+        isDemo: true,
+        model: {
+          entity_id: "r_demo2",
+          name: "Monaco Simulation Sprint (Demo)",
+        },
+      },
+      {
+        _id: "hist_off2",
+        original_entity_id: "r_official2",
+        timestamp: 1700010800000,
+        is_demo: false,
+        isDemo: false,
+        model: {
+          entity_id: "r_official2",
+          name: "Le Mans 24h Endurance Qualifier",
+        },
+      },
+      {
+        _id: "hist_demo3",
+        original_entity_id: "r_demo3",
+        timestamp: 1700014400000,
+        is_demo: true,
+        isDemo: true,
+        model: {
+          entity_id: "r_demo3",
+          name: "Silverstone Test Session (Demo)",
+        },
+      },
+      {
+        _id: "hist_off3",
+        original_entity_id: "r_official3",
+        timestamp: 1700018000000,
+        is_demo: false,
+        isDemo: false,
+        model: {
+          entity_id: "r_official3",
+          name: "Spa-Francorchamps Grand Prix",
+        },
+      },
+      {
+        _id: "hist_demo4",
+        original_entity_id: "r_demo4",
+        timestamp: 1700021600000,
+        is_demo: true,
+        isDemo: true,
+        model: { entity_id: "r_demo4", name: "Nürburgring Time Trial (Demo)" },
+      },
+      {
+        _id: "hist_off4",
+        original_entity_id: "r_official4",
+        timestamp: 1700025200000,
+        is_demo: false,
+        isDemo: false,
+        model: {
+          entity_id: "r_official4",
+          name: "Indy 500 Championship Final",
+        },
+      },
+      {
+        _id: "hist_demo5",
+        original_entity_id: "r_demo5",
+        timestamp: 1700028800000,
+        is_demo: true,
+        isDemo: true,
+        model: { entity_id: "r_demo5", name: "Suzuka Warmup Session (Demo)" },
+      },
+      {
+        _id: "hist_off5",
+        original_entity_id: "r_official5",
+        timestamp: 1700032400000,
+        is_demo: false,
+        isDemo: false,
+        model: { entity_id: "r_official5", name: "Interlagos Season Finale" },
+      },
     ];
 
     await page.route("**/api/seasons", async (route) => {
@@ -641,6 +720,20 @@ export class TestSetupHelper {
           body: JSON.stringify(match),
         });
       }
+    });
+
+    await page.route("**/api/history/races*", async (route) => {
+      const isDemo = route.request().url().includes("demo=true");
+      const filtered = mockFinishedRaceHistory.filter((r) =>
+        isDemo ? r.is_demo : !r.is_demo,
+      );
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(
+          filtered.length > 0 ? filtered : mockFinishedRaceHistory,
+        ),
+      });
     });
 
     await page.route("**/api/race-history/finished", async (route) => {

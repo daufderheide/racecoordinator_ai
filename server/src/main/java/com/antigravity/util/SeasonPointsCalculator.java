@@ -335,17 +335,26 @@ public class SeasonPointsCalculator {
         List<SeasonDriverResult> liveEventResults = new ArrayList<>(eventLiveMap.values());
         String eventName =
             eventMgr.getActiveEvent() != null ? eventMgr.getActiveEvent().getName() : "Event";
+        long liveStart =
+            runtimeRace != null && runtimeRace.getStatistics() != null
+                ? runtimeRace.getStatistics().getStartMillis()
+                : 0L;
+        long recordTimestamp = liveStart > 0 ? liveStart : System.currentTimeMillis();
         SeasonRaceRecord liveRecord =
-            new SeasonRaceRecord(
-                "live_event", eventName, System.currentTimeMillis(), liveEventResults);
+            new SeasonRaceRecord("live_event", eventName, recordTimestamp, liveEventResults);
         races.add(liveRecord);
       } else {
         List<SeasonDriverResult> liveResults = calculateDriverResultsForRace(runtimeRace);
         if (liveResults != null && !liveResults.isEmpty()) {
           String raceName =
               runtimeRace.getRaceModel() != null ? runtimeRace.getRaceModel().getName() : "Race";
+          long liveStart =
+              runtimeRace != null && runtimeRace.getStatistics() != null
+                  ? runtimeRace.getStatistics().getStartMillis()
+                  : 0L;
+          long recordTimestamp = liveStart > 0 ? liveStart : System.currentTimeMillis();
           SeasonRaceRecord liveRecord =
-              new SeasonRaceRecord("live_race", raceName, System.currentTimeMillis(), liveResults);
+              new SeasonRaceRecord("live_race", raceName, recordTimestamp, liveResults);
           races.add(liveRecord);
         }
       }

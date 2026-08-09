@@ -95,7 +95,12 @@ public class RaceOver implements IRaceState {
               List<SeasonDriverResult> seasonResults =
                   SeasonPointsCalculator.calculateDriverResultsForRace(race);
               dbService.commitRaceToSeason(
-                  db, race.getSeasonEntityId(), raceName, race.isDemoMode(), seasonResults);
+                  db,
+                  race.getSeasonEntityId(),
+                  raceName,
+                  raceStart,
+                  race.isDemoMode(),
+                  seasonResults);
             }
 
             List<DriverProjection> actuals = new ArrayList<>();

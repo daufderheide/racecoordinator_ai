@@ -162,7 +162,16 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
         for (const s of this.seasons) {
           if (!s || !s.races) continue;
           for (const r of s.races) {
-            r.is_demo = true;
+            const raceId = r.race_id;
+            const timestamp = r.timestamp;
+            const isDemo = Boolean(
+              r.is_demo ||
+              demoHistorySet.has(String(raceId)) ||
+              demoHistorySet.has(String(timestamp)) ||
+              demoHistorySet.has(`${raceId}_${timestamp}`) ||
+              String(raceId).startsWith("demo_"),
+            );
+            r.is_demo = isDemo;
           }
         }
 

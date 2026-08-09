@@ -215,11 +215,17 @@ public class EventExecutionManager {
         finalEventResults.sort(
             Comparator.comparingInt(SeasonDriverResult::getTotalPoints).reversed());
         if (databaseContext != null && databaseContext.getDatabase() != null) {
+          long raceStart =
+              completedRace != null && completedRace.getStatistics() != null
+                  ? completedRace.getStatistics().getStartMillis()
+                  : 0L;
           DatabaseService.getInstance()
               .commitRaceToSeason(
                   databaseContext.getDatabase(),
                   seasonEntityId,
                   activeEvent.getName(),
+                  raceStart,
+                  completedRace != null ? completedRace.isDemoMode() : false,
                   finalEventResults);
         }
       }
