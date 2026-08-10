@@ -407,8 +407,19 @@ export class SeasonEditorComponent
         if (Array.isArray(history)) {
           for (const item of history) {
             const rec = this.buildRaceRecordFromHistory(item);
+            // Races that are part of an event should not be shown in the list
+            if ((rec as any).is_event_race) {
+              continue;
+            }
             const key = `${rec.race_id}_${rec.timestamp}`;
-            if (!currentKeys.has(key)) {
+            const isAlreadyAdded =
+              currentKeys.has(key) ||
+              (this.editingSeason.races || []).some(
+                (r) =>
+                  r.race_id === rec.race_id &&
+                  (r.timestamp === rec.timestamp || rec.is_event),
+              );
+            if (!isAlreadyAdded) {
               if (availableMap.has(key)) {
                 if (!rec.is_demo) {
                   availableMap.get(key)!.is_demo = false;
@@ -427,10 +438,14 @@ export class SeasonEditorComponent
     });
   }
 
-  private buildRaceRecordFromHistory(item: any): SeasonRaceRecord {
+  private buildRaceRecordFromHistory(
+    item: any,
+  ): SeasonRaceRecord & { is_event_race?: boolean } {
     const raceId =
       item.original_entity_id ||
       item.model?.entity_id ||
+      item.event_id ||
+      item.eventId ||
       item._id ||
       "hist_race";
     const timestamp =
@@ -449,11 +464,35 @@ export class SeasonEditorComponent
       String(raceId).startsWith("demo_"),
     );
 
+    const isEventSummary = Boolean(
+      item.is_event_summary ||
+      item.isEventSummary ||
+      item.is_event ||
+      item.isEvent ||
+      String(raceId).startsWith("event_") ||
+      (item.original_entity_id &&
+        String(item.original_entity_id).startsWith("event_")),
+    );
+
+    const isEventRace = Boolean(
+      (item.is_event_race ||
+        item.isEventRace ||
+        item.event_id ||
+        item.eventId) &&
+      !isEventSummary,
+    );
+
     return {
       race_id: raceId,
-      race_name: item.model?.name || "Completed Race",
+      race_name:
+        item.model?.name ||
+        item.event_name ||
+        item.eventName ||
+        (isEventSummary ? "Completed Event" : "Completed Race"),
       timestamp: timestamp,
       is_demo: isDemo,
+      is_event: isEventSummary,
+      is_event_race: isEventRace,
       driver_results: this.extractDriverResultsFromHistory(item),
     };
   }

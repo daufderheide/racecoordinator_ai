@@ -323,6 +323,123 @@ describe("SeasonEditorComponent", () => {
     );
   });
 
+  it("should filter out races that are part of an event from the available races dialog", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([
+        {
+          original_entity_id: "race_in_event_1",
+          timestamp: 10000,
+          is_event_race: true,
+          event_id: "evt_summer",
+          model: { name: "Heat 1 of Summer Event" },
+          drivers: [],
+        },
+        {
+          original_entity_id: "standalone_race_1",
+          timestamp: 20000,
+          is_event_race: false,
+          model: { name: "Standalone Grand Prix" },
+          drivers: [],
+        },
+      ]),
+    );
+
+    component.openAddRaceModal();
+
+    expect(component.availableFinishedRaces.length).toBe(1);
+    expect(component.availableFinishedRaces[0].race_id).toBe(
+      "standalone_race_1",
+    );
+  });
+
+  it("should include finished events (both demo and non-demo) in the available races dialog if not added yet", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([
+        {
+          original_entity_id: "event_prod_1",
+          timestamp: 30000,
+          is_event_summary: true,
+          is_demo: false,
+          model: { name: "2026 Official Championship Event" },
+          driver_results: [
+            {
+              driver_id: "d1",
+              driver_name: "Dave",
+              overall_rank: 1,
+              overall_points: 25,
+              heat_points: 0,
+              total_points: 25,
+            },
+          ],
+        },
+        {
+          original_entity_id: "event_demo_1",
+          timestamp: 40000,
+          is_event_summary: true,
+          is_demo: true,
+          model: { name: "2026 Demo Cup Event" },
+          driver_results: [
+            {
+              driver_id: "d1",
+              driver_name: "Dave",
+              overall_rank: 1,
+              overall_points: 25,
+              heat_points: 0,
+              total_points: 25,
+            },
+          ],
+        },
+      ]),
+    );
+
+    component.openAddRaceModal();
+
+    expect(component.availableFinishedRaces.length).toBe(2);
+    expect(
+      component.availableFinishedRaces.some(
+        (r) =>
+          r.race_name === "2026 Official Championship Event" &&
+          !r.is_demo &&
+          r.is_event,
+      ),
+    ).toBeTrue();
+    expect(
+      component.availableFinishedRaces.some(
+        (r) => r.race_name === "2026 Demo Cup Event" && r.is_demo && r.is_event,
+      ),
+    ).toBeTrue();
+  });
+
+  it("should exclude finished events if they have already been added to the season", () => {
+    component.editingSeason.races = [
+      {
+        race_id: "event_prod_1",
+        race_name: "2026 Official Championship Event",
+        timestamp: 30000,
+        driver_results: [],
+      },
+    ];
+
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([
+        {
+          original_entity_id: "event_prod_1",
+          timestamp: 30000,
+          is_event_summary: true,
+          model: { name: "2026 Official Championship Event" },
+          driver_results: [],
+        },
+      ]),
+    );
+
+    component.openAddRaceModal();
+
+    expect(component.availableFinishedRaces.length).toBe(0);
+  });
+
   it("should render modal-race-list with title attribute on race item names when add finished race modal is open", () => {
     const dataService = TestBed.inject(DataService);
     spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(

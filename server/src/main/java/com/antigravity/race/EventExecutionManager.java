@@ -4,6 +4,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Event;
 import com.antigravity.models.Event.EventRaceItem;
+import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
 import com.antigravity.proto.DemoConfig;
@@ -208,27 +209,54 @@ public class EventExecutionManager {
         }
       }
 
-      // If this is the last race in the Event, commit to season
+      // If this is the last race in the Event, commit to season (if active) and save event history
+      // record
       if (currentRaceIndex == activeEvent.getRaces().size() - 1) {
-        List<SeasonDriverResult> finalEventResults =
-            new ArrayList<>(eventDriverResultsMap.values());
-        finalEventResults.sort(
-            Comparator.comparingInt(SeasonDriverResult::getTotalPoints).reversed());
-        if (databaseContext != null && databaseContext.getDatabase() != null) {
-          long raceStart =
-              completedRace != null && completedRace.getStatistics() != null
-                  ? completedRace.getStatistics().getStartMillis()
-                  : 0L;
-          DatabaseService.getInstance()
-              .commitRaceToSeason(
-                  databaseContext.getDatabase(),
-                  seasonEntityId,
-                  activeEvent.getName(),
-                  raceStart,
-                  completedRace != null ? completedRace.isDemoMode() : false,
-                  finalEventResults);
-        }
+        saveEventCompletionResults(completedRace);
       }
+    }
+  }
+
+  private void saveEventCompletionResults(Race completedRace) {
+    List<SeasonDriverResult> finalEventResults = new ArrayList<>(eventDriverResultsMap.values());
+    finalEventResults.sort(Comparator.comparingInt(SeasonDriverResult::getTotalPoints).reversed());
+    if (databaseContext != null && databaseContext.getDatabase() != null) {
+      long raceStart =
+          completedRace != null && completedRace.getStatistics() != null
+              ? completedRace.getStatistics().getStartMillis()
+              : System.currentTimeMillis();
+      boolean isDemo = completedRace != null ? completedRace.isDemoMode() : false;
+
+      if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
+        DatabaseService.getInstance()
+            .commitRaceToSeason(
+                databaseContext.getDatabase(),
+                seasonEntityId,
+                activeEvent.getName(),
+                raceStart,
+                isDemo,
+                finalEventResults);
+      }
+
+      RaceHistoryRecord eventRecord = new RaceHistoryRecord();
+      eventRecord.setOriginalEntityId(activeEvent.getEntityId());
+      com.antigravity.models.Race eventModel = // fqn-collision
+          new com.antigravity.models.Race.Builder() // fqn-collision
+              .withName(activeEvent.getName())
+              .withEntityId(activeEvent.getEntityId())
+              .build();
+      eventRecord.setModel(eventModel);
+      eventRecord.setEventId(activeEvent.getEntityId());
+      eventRecord.setEventName(activeEvent.getName());
+      eventRecord.setEventSummary(true);
+      eventRecord.setDemo(isDemo);
+      RaceStatistics stats = new RaceStatistics();
+      stats.setStartMillis(raceStart);
+      eventRecord.setStatistics(stats);
+      eventRecord.setDriverResults(finalEventResults);
+
+      DatabaseService.getInstance()
+          .saveRawRaceHistoryRecord(databaseContext.getDatabase(), eventRecord);
     }
   }
 

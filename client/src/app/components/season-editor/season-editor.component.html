@@ -264,6 +264,11 @@
                   <span class="race-item-name" [title]="r.race_name">{{
                     r.race_name
                   }}</span>
+                  @if (r.is_event) {
+                    <span class="event-badge">{{
+                      "SE_BADGE_EVENT" | translate
+                    }}</span>
+                  }
                   @if (r.is_demo) {
                     <span class="demo-badge">{{
                       "SE_BADGE_DEMO" | translate

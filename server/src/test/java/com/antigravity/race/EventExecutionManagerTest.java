@@ -9,6 +9,7 @@ import com.antigravity.models.Driver;
 import com.antigravity.models.Event;
 import com.antigravity.models.Event.EventRaceItem;
 import com.antigravity.models.Track;
+import com.antigravity.service.DatabaseService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -225,5 +226,47 @@ public class EventExecutionManagerTest {
 
     manager.cancelAutoAdvanceTimer();
     assertEquals(0.0, manager.getAutoAdvanceRemainingSeconds(), 0.001);
+  }
+
+  @Test
+  public void testOnRaceOver_SavesEventSummaryRecordWhenLastRaceCompletes() throws Exception {
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    manager.cancelEvent();
+
+    EventRaceItem item1 = new EventRaceItem("r1", 0);
+    Event event =
+        new Event("Championship Event", "Desc", 0.0, Arrays.asList(item1), "evt_final", null);
+
+    java.lang.reflect.Field activeEventField =
+        EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(manager, event);
+
+    java.lang.reflect.Field currentIndexField =
+        EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+    currentIndexField.set(manager, 0);
+
+    Driver d1 = new Driver("Dave", "D", "driver1", new org.bson.types.ObjectId());
+    RaceParticipant rp1 = new RaceParticipant(d1);
+    rp1.setRank(1);
+
+    Race completedRace =
+        new Race.Builder()
+            .model(
+                new com.antigravity.models.Race.Builder()
+                    .withName("Final Heat")
+                    .withEntityId("r1")
+                    .build())
+            .track(DatabaseService.getInstance().getFactoryTrack())
+            .drivers(Arrays.asList(rp1))
+            .isDemoMode(true)
+            .build();
+
+    manager.onRaceOver(completedRace);
+
+    assertNotNull(manager.getActiveEvent());
+    assertEquals("evt_final", manager.getActiveEvent().getEntityId());
+    manager.cancelEvent();
   }
 }

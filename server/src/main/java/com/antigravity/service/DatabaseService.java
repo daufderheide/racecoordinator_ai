@@ -29,6 +29,7 @@ import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.RecordData;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.DriverHeatData;
+import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
@@ -595,6 +596,15 @@ public class DatabaseService {
       record.setAccumulatedRaceTime(runtimeRace.getRaceTime());
       record.setStatistics(runtimeRace.getStatistics());
 
+      EventExecutionManager eventMgr = EventExecutionManager.getInstance();
+      if (eventMgr.isEventActive()) {
+        record.setEventRace(true);
+        if (eventMgr.getActiveEvent() != null) {
+          record.setEventId(eventMgr.getActiveEvent().getEntityId());
+          record.setEventName(eventMgr.getActiveEvent().getName());
+        }
+      }
+
       try {
         List<SeasonDriverResult> driverResults =
             SeasonPointsCalculator.calculateDriverResultsForRace(runtimeRace);
@@ -607,6 +617,22 @@ public class DatabaseService {
       logger.info("Race successfully saved to {}", collection.getNamespace().getCollectionName());
     } catch (Exception e) {
       logger.error("Failed to save race to history", e);
+    }
+  }
+
+  public void saveRawRaceHistoryRecord(MongoDatabase database, RaceHistoryRecord record) {
+    if (database == null || record == null) return;
+    try {
+      boolean isDemo = record.isDemo();
+      MongoCollection<RaceHistoryRecord> collection =
+          database.getCollection(
+              getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
+      collection.insertOne(record);
+      logger.info(
+          "Raw race history record successfully saved to {}",
+          collection.getNamespace().getCollectionName());
+    } catch (Exception e) {
+      logger.error("Failed to save raw race history record", e);
     }
   }
 

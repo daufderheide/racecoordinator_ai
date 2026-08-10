@@ -10,8 +10,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.models.Driver;
+import com.antigravity.models.Event;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.RaceHistoryRecord;
+import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import com.mongodb.client.FindIterable;
@@ -108,6 +110,60 @@ public class DatabaseServiceTest {
     assertEquals("DaveID", record.getDriverResults().get(0).getDriverId());
     assertEquals(1, record.getDriverResults().get(0).getOverallRank());
     assertEquals(25, record.getDriverResults().get(0).getOverallPoints());
+  }
+
+  @Test
+  public void testRaceHistoryRecord_EventFieldsGettersAndSetters() {
+    RaceHistoryRecord record = new RaceHistoryRecord();
+    record.setEventId("event_123");
+    record.setEventName("Summer Championship");
+    record.setEventRace(true);
+    record.setEventSummary(true);
+
+    assertEquals("event_123", record.getEventId());
+    assertEquals("Summer Championship", record.getEventName());
+    assertTrue(record.isEventRace());
+    assertTrue(record.isEventSummary());
+  }
+
+  @Test
+  public void testSaveRaceHistory_TagsEventRaceWhenEventIsActive() throws Exception {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Event Heat 1")
+            .withEntityId("EH1")
+            .build();
+    Race runtimeRace = new Race.Builder().model(model).track(dbService.getFactoryTrack()).build();
+
+    EventExecutionManager manager = EventExecutionManager.getInstance();
+    manager.cancelEvent();
+
+    Event.EventRaceItem item1 = new Event.EventRaceItem("EH1", 0);
+    Event event =
+        new Event("Summer Event", "Description", 0.0, Arrays.asList(item1), "event_123", null);
+
+    java.lang.reflect.Field activeEventField =
+        EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(manager, event);
+
+    java.lang.reflect.Field currentIndexField =
+        EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+    currentIndexField.set(manager, 0);
+
+    dbService.saveRaceHistory(mongoDatabase, runtimeRace);
+
+    ArgumentCaptor<RaceHistoryRecord> captor = ArgumentCaptor.forClass(RaceHistoryRecord.class);
+    verify(historyCollection, org.mockito.Mockito.atLeastOnce()).insertOne(captor.capture());
+
+    RaceHistoryRecord record = captor.getValue();
+    assertNotNull(record);
+    assertTrue(record.isEventRace());
+    assertEquals("event_123", record.getEventId());
+    assertEquals("Summer Event", record.getEventName());
+
+    manager.cancelEvent();
   }
 
   @Test

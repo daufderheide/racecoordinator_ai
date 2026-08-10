@@ -1095,6 +1095,7 @@
   "SAVE": "Salva",
   "SE_ADD_RACE_TITLE": "Aggiungi gara terminata alla stagione",
   "SE_BADGE_DEMO": "DEMO",
+  "SE_BADGE_EVENT": "EVENTO",
   "SE_BTN_ADD_RACE": "Aggiungi gara terminata",
   "SE_DEMO_RACES_INCLUDED": "GARE DEMO INCLUSE",
   "SE_DROPS_HELP": "Imposta a 0 per contare tutte le gare. Se impostato a 1, il peggior punteggio di ogni pilota viene scartato.",

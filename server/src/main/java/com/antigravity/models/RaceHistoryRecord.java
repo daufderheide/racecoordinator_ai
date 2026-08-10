@@ -56,6 +56,22 @@ public class RaceHistoryRecord {
   @JsonProperty("driver_results")
   private List<SeasonRaceRecord.SeasonDriverResult> driverResults;
 
+  @BsonProperty("event_id")
+  @JsonProperty("event_id")
+  private String eventId;
+
+  @BsonProperty("event_name")
+  @JsonProperty("event_name")
+  private String eventName;
+
+  @BsonProperty("is_event_race")
+  @JsonProperty("is_event_race")
+  private boolean isEventRace;
+
+  @BsonProperty("is_event_summary")
+  @JsonProperty("is_event_summary")
+  private boolean isEventSummary;
+
   public RaceHistoryRecord() {}
 
   @BsonCreator
@@ -164,5 +180,41 @@ public class RaceHistoryRecord {
 
   public void setDriverResults(List<SeasonRaceRecord.SeasonDriverResult> driverResults) {
     this.driverResults = driverResults;
+  }
+
+  @JsonProperty("event_id")
+  public String getEventId() {
+    return eventId;
+  }
+
+  public void setEventId(String eventId) {
+    this.eventId = eventId;
+  }
+
+  @JsonProperty("event_name")
+  public String getEventName() {
+    return eventName;
+  }
+
+  public void setEventName(String eventName) {
+    this.eventName = eventName;
+  }
+
+  @JsonProperty("is_event_race")
+  public boolean isEventRace() {
+    return isEventRace;
+  }
+
+  public void setEventRace(boolean isEventRace) {
+    this.isEventRace = isEventRace;
+  }
+
+  @JsonProperty("is_event_summary")
+  public boolean isEventSummary() {
+    return isEventSummary;
+  }
+
+  public void setEventSummary(boolean isEventSummary) {
+    this.isEventSummary = isEventSummary;
   }
 }

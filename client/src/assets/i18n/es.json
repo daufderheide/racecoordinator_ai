@@ -1095,6 +1095,7 @@
   "SAVE": "Guardar",
   "SE_ADD_RACE_TITLE": "Agregar carrera finalizada a la temporada",
   "SE_BADGE_DEMO": "DEMO",
+  "SE_BADGE_EVENT": "EVENTO",
   "SE_BTN_ADD_RACE": "Agregar carrera finalizada",
   "SE_DEMO_RACES_INCLUDED": "CARRERAS DEMO INCLUIDAS",
   "SE_DROPS_HELP": "Ajustar a 0 para contar todas las carreras. Si se establece en 1, se descarta el peor resultado de cada piloto.",

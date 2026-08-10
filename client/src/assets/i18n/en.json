@@ -450,6 +450,7 @@
   "RDS_SEASON_NONE": "None (No Season)",
   "SE_ADD_RACE_TITLE": "Add Finished Race to Season",
   "SE_BADGE_DEMO": "DEMO",
+  "SE_BADGE_EVENT": "EVENT",
   "SE_BTN_ADD_RACE": "Add Finished Race",
   "SE_DEMO_RACES_INCLUDED": "DEMO RACES INCLUDED",
   "SE_DROPS_HELP": "Set to 0 to count all races. If set to 1, each driver's worst score is dropped once they race more than 1 race.",
