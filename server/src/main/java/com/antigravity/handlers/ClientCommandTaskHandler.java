@@ -1695,43 +1695,9 @@ public class ClientCommandTaskHandler {
         return;
       }
 
-      String base64Template = null;
-      try {
-        Map<String, Object> body = ctx.bodyAsClass(Map.class);
-        if (body != null) {
-          base64Template = (String) body.get("templateBase64");
-        }
-      } catch (Exception ignored) {
-        // Body might be empty
-      }
-
-      InputStream is = null;
-      if (base64Template != null && !base64Template.trim().isEmpty()) {
-        try {
-          String raw = base64Template.trim();
-          if (raw.contains(",")) {
-            raw = raw.substring(raw.indexOf(",") + 1);
-          }
-          byte[] decoded = Base64.getDecoder().decode(raw);
-          if (decoded != null && decoded.length > 0) {
-            is = new ByteArrayInputStream(decoded);
-          }
-        } catch (Exception e) {
-          logger.warn(
-              "Custom base64 template decoding failed; falling back to default template", e);
-        }
-      }
-
+      InputStream is = loadTemplateInputStream(ctx);
       if (is == null) {
-        is = getClass().getResourceAsStream("/race_export_template.xlsx");
-        if (is == null) {
-          is = getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
-        }
-        if (is == null) {
-          logger.error("Default template race_export_template.xlsx not found");
-          ctx.status(500).result("Default template not found");
-          return;
-        }
+        return;
       }
 
       ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -1769,6 +1735,12 @@ public class ClientCommandTaskHandler {
         jxlsContext.putVar(
             "heatSheetNames", RaceStatisticsUtils.makeSheetNamesUnique(heatSheetNames));
 
+        List<Heat> allHeats =
+            race.getHeats() != null && !race.getHeats().isEmpty()
+                ? new ArrayList<>(race.getHeats())
+                : Collections.singletonList(new Heat());
+        jxlsContext.putVar("allHeats", allHeats);
+
         List<DriverAnalysisSummary> driverSummaries = new ArrayList<>();
         List<String> driverSheetNames = new ArrayList<>();
         RaceStatisticsUtils.prepareExportData(
@@ -1778,11 +1750,22 @@ public class ClientCommandTaskHandler {
         jxlsContext.putVar("driverSheetNames", driverSheetNames);
 
         int numLanes = RaceStatisticsUtils.determineTrackLanes(race, runHeats);
-        InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is, numLanes);
+        InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is, numLanes, race);
         org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
       }
 
-      byte[] resultBytes = os.toByteArray();
+      byte[] rawBytes = os.toByteArray();
+      byte[] resultBytes = rawBytes;
+      try (org.apache.poi.xssf.usermodel.XSSFWorkbook outputWb =
+          new org.apache.poi.xssf.usermodel.XSSFWorkbook(new ByteArrayInputStream(rawBytes))) {
+        RaceStatisticsUtils.removeAllCommentsAndVmlDrawings(outputWb);
+        ByteArrayOutputStream cleanOs = new ByteArrayOutputStream();
+        outputWb.write(cleanOs);
+        resultBytes = cleanOs.toByteArray();
+      } catch (Exception e) {
+        logger.warn("Failed to clean up workbook comments/vml drawings; returning raw bytes", e);
+      }
+
       if (resultBytes.length == 0) {
         logger.error("Generated Excel workbook output is 0 bytes");
         ctx.status(500).result("Error: Generated Excel file was empty");
@@ -1796,6 +1779,47 @@ public class ClientCommandTaskHandler {
       logger.error("Error exporting XLS", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
+  }
+
+  private InputStream loadTemplateInputStream(Context ctx) {
+    String base64Template = null;
+    try {
+      Map<String, Object> body = ctx.bodyAsClass(Map.class);
+      if (body != null) {
+        base64Template = (String) body.get("templateBase64");
+      }
+    } catch (Exception ignored) {
+      // Body might be empty
+    }
+
+    InputStream is = null;
+    if (base64Template != null && !base64Template.trim().isEmpty()) {
+      try {
+        String raw = base64Template.trim();
+        if (raw.contains(",")) {
+          raw = raw.substring(raw.indexOf(",") + 1);
+        }
+        byte[] decoded = Base64.getDecoder().decode(raw);
+        if (decoded != null && decoded.length > 0) {
+          is = new ByteArrayInputStream(decoded);
+        }
+      } catch (Exception e) {
+        logger.warn("Custom base64 template decoding failed; falling back to default template", e);
+      }
+    }
+
+    if (is == null) {
+      is = getClass().getResourceAsStream("/race_export_template.xlsx");
+      if (is == null) {
+        is = getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
+      }
+      if (is == null) {
+        logger.error("Default template race_export_template.xlsx not found");
+        ctx.status(500).result("Default template not found");
+        return null;
+      }
+    }
+    return is;
   }
 
   void saveRace(Context ctx) {

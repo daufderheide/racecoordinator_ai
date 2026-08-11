@@ -60,6 +60,25 @@ public class Heat extends ServerToClientObject {
     return drivers;
   }
 
+  public String getDriverNameOnLane(int laneIndex) {
+    if (drivers != null && laneIndex >= 0 && laneIndex < drivers.size()) {
+      DriverHeatData dhd = drivers.get(laneIndex);
+      if (dhd != null) {
+        if (dhd.getActualDriver() != null
+            && dhd.getActualDriver().getName() != null
+            && !dhd.getActualDriver().getName().trim().isEmpty()) {
+          return dhd.getActualDriver().getName();
+        }
+        if (dhd.getDriver() != null
+            && dhd.getDriver().getDriver() != null
+            && dhd.getDriver().getDriver().getName() != null) {
+          return dhd.getDriver().getDriver().getName();
+        }
+      }
+    }
+    return "";
+  }
+
   @JsonIgnore
   public List<String> getStandings() {
     return heatStandings != null ? heatStandings.getStandings() : new ArrayList<>();
