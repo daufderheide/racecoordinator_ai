@@ -351,9 +351,10 @@ public class ArduinoProtocolTest {
     byte[] versionMsg = {0x56, 2, 1, 0, 0, 0x3B};
     serialConnection.injectData(versionMsg);
 
+    protocol.simulateHeartbeat();
     scheduler.tick();
     assertEquals(
-        "Status should be CONNECTED immediately after version verification",
+        "Status should be CONNECTED immediately after version verification and heartbeat",
         InterfaceStatus.CONNECTED,
         listener.lastStatus);
   }
@@ -370,11 +371,9 @@ public class ArduinoProtocolTest {
     newConfig.commPort = "COM2";
     protocol.updateConfig(newConfig);
 
-    // After switching port, lastHeartbeatTimeMs should be 0.
-    // Since serialConnection.isOpen() is true for COM2, it should report NO_DATA
     scheduler.tick();
     assertEquals(
-        "Status should be NO_DATA immediately after port change (until heartbeat)",
+        "Status should be NO_DATA after port change until heartbeat",
         InterfaceStatus.NO_DATA,
         listener.lastStatus);
   }
@@ -945,6 +944,8 @@ public class ArduinoProtocolTest {
 
     // Advance 2.5s and tick the scheduler to simulate the 10Hz loop
     protocol.advanceTime(2500);
+    byte[] heartbeat = {0x54, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3B};
+    serialConnection.injectData(heartbeat);
     scheduler.tick();
 
     assertEquals(

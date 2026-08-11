@@ -2,9 +2,11 @@ package com.antigravity.race;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.Team;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RaceParticipant extends ServerToClientObject implements GapParticipant {
 
   private Driver driver;

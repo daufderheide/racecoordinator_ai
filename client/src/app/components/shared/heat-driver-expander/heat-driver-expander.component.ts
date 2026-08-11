@@ -144,4 +144,82 @@ export class HeatDriverExpanderComponent {
     }
     return driverId;
   }
+
+  get validLaps(): number[] {
+    if (!this.heatData?.heatDriver?.lapsWithDetails) return [];
+    return this.heatData.heatDriver.lapsWithDetails
+      .map((l) => l.time)
+      .filter((t) => t > 0);
+  }
+
+  get standardDeviation(): number | null {
+    const laps = this.validLaps;
+    if (laps.length <= 1) return null;
+    const mean = laps.reduce((a, b) => a + b, 0) / laps.length;
+    const variance =
+      laps.reduce((sum, t) => sum + Math.pow(t - mean, 2), 0) /
+      (laps.length - 1);
+    return Math.sqrt(variance);
+  }
+
+  get consistencyScore(): number | null {
+    const laps = this.validLaps;
+    if (laps.length === 0) return null;
+    const mean = laps.reduce((a, b) => a + b, 0) / laps.length;
+    if (mean <= 0) return null;
+    const std = laps.length <= 1 ? 0 : (this.standardDeviation ?? 0);
+    const cons = Math.max(0, 1 - std / mean);
+    return cons * 100;
+  }
+
+  get averageTop5(): number | null {
+    return this.calculateAverageTopN(5);
+  }
+
+  get averageTop10(): number | null {
+    return this.calculateAverageTopN(10);
+  }
+
+  get averageTop15(): number | null {
+    return this.calculateAverageTopN(15);
+  }
+
+  get top2Consecutive(): number | null {
+    return this.calculateTopKConsecutive(2);
+  }
+
+  get top3Consecutive(): number | null {
+    return this.calculateTopKConsecutive(3);
+  }
+
+  private calculateAverageTopN(n: number): number | null {
+    const laps = this.validLaps;
+    if (laps.length === 0) return null;
+    const sorted = [...laps].sort((a, b) => a - b);
+    const topN = sorted.slice(0, n);
+    return topN.reduce((a, b) => a + b, 0) / topN.length;
+  }
+
+  private calculateTopKConsecutive(k: number): number | null {
+    const lapsWithDetails = this.heatData?.heatDriver?.lapsWithDetails;
+    if (!lapsWithDetails || lapsWithDetails.length < k) return null;
+    const times = lapsWithDetails.map((l) => l.time);
+    let minSum = Infinity;
+    for (let i = 0; i <= times.length - k; i++) {
+      let valid = true;
+      let sum = 0;
+      for (let j = 0; j < k; j++) {
+        const t = times[i + j];
+        if (!t || t <= 0) {
+          valid = false;
+          break;
+        }
+        sum += t;
+      }
+      if (valid && sum < minSum) {
+        minSum = sum;
+      }
+    }
+    return minSum === Infinity ? null : minSum;
+  }
 }

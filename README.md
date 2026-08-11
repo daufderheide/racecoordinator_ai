@@ -27,14 +27,6 @@ The `run_client.ps1` script handles `npm install` automatically if `node_modules
 
 **Note:** If you get a script execution error, run `Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process` in your terminal first.
 
-### Troubleshooting
-If the server fails to start with "Address already in use", you likely have a zombie MongoDB process.
-Run the provided script to fix it (updated to handle permissions better):
-- **Linux/Mac**: `./kill_zombie_mongo.sh`
-- **Windows**: `.\kill_zombie_mongo.ps1`
-
-Or use the Antigravity command:
-- `/kill_zombie_mongo`
 
 If the client or server fail to startup, ensure a previous run is not still running. Simply kill them and try again.
 - **Linux/Mac**: `./kill_client_server.sh`
@@ -340,5 +332,5 @@ This installer will:
 ### System Requirements for Installers
 - **macOS**: 10.15 (Catalina) or newer recommended.
 - **Windows**: Windows XP SP3 or newer. 32-bit and 64-bit supported.
-  - **Windows 7/8/XP Note**: Requires the [Microsoft Visual C++ 2013 Redistributable (x86)](https://www.microsoft.com/en-us/download/details.aspx?id=40784) to be installed for MongoDB 3.2 to run.
+  - **Windows 7/8/XP Note**: Requires the [Microsoft Visual C++ 2013 Redistributable (x86)](https://www.microsoft.com/en-us/download/details.aspx?id=40784) to be installed.
 - **Linux / Raspberry Pi**: Any modern distribution with Java 8 or newer.

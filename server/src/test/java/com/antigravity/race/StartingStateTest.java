@@ -43,15 +43,7 @@ public class StartingStateTest {
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder().withStartTime(1.0).withRestartTime(2.0).build();
 
-    mockDbCtx = mock(DatabaseContext.class);
-    com.mongodb.client.MongoDatabase mockDb = mock(com.mongodb.client.MongoDatabase.class);
-    when(mockDbCtx.getDatabase()).thenReturn(mockDb);
-    com.mongodb.client.MongoCollection mockCollection =
-        mock(com.mongodb.client.MongoCollection.class);
-    com.mongodb.client.FindIterable mockIterable = mock(com.mongodb.client.FindIterable.class);
-    when(mockDb.getCollection(anyString())).thenReturn(mockCollection);
-    when(mockDb.getCollection(anyString(), any())).thenReturn(mockCollection);
-    when(mockCollection.find(any(org.bson.conversions.Bson.class))).thenReturn(mockIterable);
+    mockDbCtx = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
 
     race =
         new Race.Builder()

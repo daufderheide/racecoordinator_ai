@@ -14,7 +14,9 @@ echo "========================================="
 
 # Prompt user using osascript (GUI Prompt)
 # Since this runs in terminal, we can use osascript for a nice dialog
-osascript -e 'display dialog "Do you want to download Java 17 and MongoDB 6.0? This is required to run Race Coordinator on this Mac. This will require an internet connection." buttons {"Yes", "No"} default button "Yes" with title "Race Coordinator Setup"' > /dev/null 2>&1
+# Prompt user using osascript (GUI Prompt)
+# Since this runs in terminal, we can use osascript for a nice dialog
+osascript -e 'display dialog "Do you want to download Java 17? This is required to run Race Coordinator on this Mac. This will require an internet connection." buttons {"Yes", "No"} default button "Yes" with title "Race Coordinator Setup"' > /dev/null 2>&1
 
 if [ $? -ne 0 ]; then
     echo "Setup cancelled by user."
@@ -69,43 +71,6 @@ if [ ! -s "jre/bin/java" ]; then
     fi
 else
     echo "✅ Java 17 is already installed in ./jre"
-fi
-
-# 2. Download MongoDB 6.0
-if [ ! -s "mongodb/bin/mongod" ]; then
-    echo "-----------------------------------------"
-    echo "Downloading MongoDB 6.0..."
-    # MongoDB 6.0 has native ARM64 macOS builds
-    if [ "$ARCH" == "arm64" ]; then
-        URL="https://fastdl.mongodb.org/osx/mongodb-macos-arm64-6.0.21.tgz"
-    else
-        URL="https://fastdl.mongodb.org/osx/mongodb-macos-x86_64-6.0.21.tgz"
-    fi
-    
-    rm -f mongo_temp.tgz
-    curl -L "$URL" -o mongo_temp.tgz || DOWNLOAD_SUCCESS=false
-    
-    if [ "$DOWNLOAD_SUCCESS" = true ] && [ -f mongo_temp.tgz ]; then
-        echo "Extracting MongoDB..."
-        mkdir -p temp_mongo
-        tar -zxf mongo_temp.tgz -C temp_mongo --strip-components 1
-        
-        mkdir -p mongodb/bin
-        if [ -f "temp_mongo/bin/mongod" ]; then
-            mv temp_mongo/bin/mongod mongodb/bin/
-            chmod +x mongodb/bin/mongod
-            echo "✅ MongoDB installed successfully to ./mongodb"
-        else
-            echo "❌ Error: mongod binary not found in downloaded package."
-            DOWNLOAD_SUCCESS=false
-        fi
-        rm -rf temp_mongo mongo_temp.tgz
-    else
-        echo "❌ Error: MongoDB download failed."
-        DOWNLOAD_SUCCESS=false
-    fi
-else
-    echo "✅ MongoDB is already installed in ./mongodb"
 fi
 
 echo "-----------------------------------------"

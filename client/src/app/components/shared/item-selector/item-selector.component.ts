@@ -29,7 +29,10 @@ export class ItemSelectorComponent {
     if (type) {
       if (type === "audio") {
         results = results.filter(
-          (item) => item.type === "sound" || item.type === "audio_set",
+          (item) =>
+            item.type === "sound" ||
+            item.type === "audio" ||
+            item.type === "audio_set",
         );
       } else {
         results = results.filter((item) => item.type === type);

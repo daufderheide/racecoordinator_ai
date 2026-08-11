@@ -4386,6 +4386,20 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showExitConfirmation).toBeTrue();
       expect(component.exitModalTitle).toBe("RD_CONFIRM_EXIT_TITLE");
     });
+
+    it("should show ACK_MODAL_TITLE_CONNECTED alert even if showAckModal was false", () => {
+      fixture.detectChanges();
+      component.showAckModal = false;
+
+      interfaceAlertSubject.next({
+        titleKey: "ACK_MODAL_TITLE_CONNECTED",
+        messageKey: "ACK_MODAL_MSG_CONNECTED",
+      });
+
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("ACK_MODAL_TITLE_CONNECTED");
+      expect(component.ackModalMessage).toBe("ACK_MODAL_MSG_CONNECTED");
+    });
   });
   describe("Z-Order Widget Reordering", () => {
     beforeEach(() => {
@@ -4897,6 +4911,38 @@ describe("DefaultRacedayComponent", () => {
       const firstQrCode = (component as any).laneQrCodeCache.get(0);
       expect(firstQrCode).toContain("data:image/svg+xml");
     });
+
+    it("should generate driver view QR code using specific driver entity_id over team entity_id", () => {
+      const mockDriver = { entity_id: "driver-123", name: "Driver 1" } as any;
+      const mockTeam = { entity_id: "team-456", name: "Team A" } as any;
+      const mockParticipant = { driver: mockDriver, team: mockTeam } as any;
+      const mockHd = {
+        participant: mockParticipant,
+        driver: mockDriver,
+      } as any;
+
+      component["serverUrlBase"] = "http://localhost:8080";
+      component.getDriverViewQrCodeUrl(mockHd);
+
+      expect(
+        (component as any).driverViewQrCodeCache.has("driver-123"),
+      ).toBeTrue();
+      expect(
+        (component as any).driverViewQrCodeCache.has("team-456"),
+      ).toBeFalse();
+    });
+
+    it("should fall back to driver name and encode URL when driver entity_id is empty", () => {
+      const mockDriver = { entity_id: "", name: "Sports mode" } as any;
+      const mockHd = { driver: mockDriver } as any;
+
+      component["serverUrlBase"] = "http://localhost:8080";
+      component.getDriverViewQrCodeUrl(mockHd);
+
+      expect(
+        (component as any).driverViewQrCodeCache.has("Sports mode"),
+      ).toBeTrue();
+    });
   });
 
   describe("Layout Source of Truth", () => {
@@ -5266,6 +5312,35 @@ describe("DefaultRacedayComponent", () => {
       component.ngOnDestroy();
       expect(mockChildWindow.close).toHaveBeenCalled();
       expect((component as any).predictionResultsWindow).toBeNull();
+    });
+  });
+
+  describe("seasonResultsWindow management", () => {
+    let mockChildWindow: any;
+
+    beforeEach(() => {
+      mockChildWindow = { close: jasmine.createSpy("close"), closed: false };
+      spyOn(window, "open").and.returnValue(mockChildWindow);
+    });
+
+    it("should open seasonResultsWindow when SEASON_RESULTS action is called", () => {
+      (component as any).onWindowsMenuSelect("SEASON_RESULTS");
+      expect(window.open).toHaveBeenCalledWith("mock-url", "_blank");
+      expect((component as any).seasonResultsWindow).toBe(mockChildWindow);
+    });
+
+    it("should close seasonResultsWindow on onPageHide", () => {
+      (component as any).onWindowsMenuSelect("SEASON_RESULTS");
+      component.onPageHide({});
+      expect(mockChildWindow.close).toHaveBeenCalled();
+      expect((component as any).seasonResultsWindow).toBeNull();
+    });
+
+    it("should close seasonResultsWindow on ngOnDestroy", () => {
+      (component as any).onWindowsMenuSelect("SEASON_RESULTS");
+      component.ngOnDestroy();
+      expect(mockChildWindow.close).toHaveBeenCalled();
+      expect((component as any).seasonResultsWindow).toBeNull();
     });
   });
 });

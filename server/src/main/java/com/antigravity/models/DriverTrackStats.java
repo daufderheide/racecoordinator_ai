@@ -4,70 +4,53 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 public class DriverTrackStats {
 
-  @BsonId
   @JsonProperty("_id")
-  private ObjectId id;
+  private String id;
 
-  @BsonProperty("driver_id")
   @JsonProperty("driver_id")
   private String driverId;
 
-  @BsonProperty("track_id")
   @JsonProperty("track_id")
   private String trackId;
 
-  @BsonProperty("total_races")
   @JsonProperty("total_races")
   private int totalRaces;
 
-  @BsonProperty("total_heats")
   @JsonProperty("total_heats")
   private int totalHeats;
 
-  @BsonProperty("total_laps")
   @JsonProperty("total_laps")
   private int totalLaps;
 
-  @BsonProperty("lane_stats")
   @JsonProperty("lane_stats")
   private List<LanePaceStats> laneStats = new ArrayList<>();
 
-  @BsonProperty("overall_median_lap_time")
   @JsonProperty("overall_median_lap_time")
   private double overallMedianLapTime;
 
-  @BsonProperty("overall_consistency_score")
   @JsonProperty("overall_consistency_score")
   private double overallConsistencyScore;
 
-  @BsonProperty("last_updated")
   @JsonProperty("last_updated")
   private long lastUpdated;
 
   public DriverTrackStats() {}
 
-  @BsonCreator
   @JsonCreator
   public DriverTrackStats(
-      @BsonId @JsonProperty("_id") ObjectId id,
-      @BsonProperty("driver_id") @JsonProperty("driver_id") String driverId,
-      @BsonProperty("track_id") @JsonProperty("track_id") String trackId,
-      @BsonProperty("total_races") @JsonProperty("total_races") int totalRaces,
-      @BsonProperty("total_heats") @JsonProperty("total_heats") int totalHeats,
-      @BsonProperty("total_laps") @JsonProperty("total_laps") int totalLaps,
-      @BsonProperty("lane_stats") @JsonProperty("lane_stats") List<LanePaceStats> laneStats,
-      @BsonProperty("overall_median_lap_time") @JsonProperty("overall_median_lap_time")
-          double overallMedianLapTime,
-      @BsonProperty("overall_consistency_score") @JsonProperty("overall_consistency_score")
-          double overallConsistencyScore,
-      @BsonProperty("last_updated") @JsonProperty("last_updated") long lastUpdated) {
+      @JsonProperty("_id") String id,
+      @JsonProperty("driver_id") String driverId,
+      @JsonProperty("track_id") String trackId,
+      @JsonProperty("total_races") int totalRaces,
+      @JsonProperty("total_heats") int totalHeats,
+      @JsonProperty("total_laps") int totalLaps,
+      @JsonProperty("lane_stats") List<LanePaceStats> laneStats,
+      @JsonProperty("overall_median_lap_time") double overallMedianLapTime,
+      @JsonProperty("overall_consistency_score") double overallConsistencyScore,
+      @JsonProperty("last_updated") long lastUpdated) {
     this.id = id;
     this.driverId = driverId;
     this.trackId = trackId;
@@ -80,11 +63,11 @@ public class DriverTrackStats {
     this.lastUpdated = lastUpdated;
   }
 
-  public ObjectId getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(ObjectId id) {
+  public void setId(String id) {
     this.id = id;
   }
 
@@ -161,52 +144,42 @@ public class DriverTrackStats {
   }
 
   public static class LanePaceStats {
-    @BsonProperty("lane_index")
     @JsonProperty("lane_index")
     private int laneIndex;
 
-    @BsonProperty("median_lap_time")
     @JsonProperty("median_lap_time")
     private double medianLapTime;
 
-    @BsonProperty("p90_lap_time")
     @JsonProperty("p90_lap_time")
     private double p90LapTime;
 
-    @BsonProperty("best_lap_time")
     @JsonProperty("best_lap_time")
     private double bestLapTime;
 
-    @BsonProperty("std_dev")
     @JsonProperty("std_dev")
     private double stdDev;
 
-    @BsonProperty("consistency_score")
     @JsonProperty("consistency_score")
     private double consistencyScore;
 
-    @BsonProperty("drift_lap_rate")
     @JsonProperty("drift_lap_rate")
     private double driftLapRate;
 
-    @BsonProperty("sample_size_laps")
     @JsonProperty("sample_size_laps")
     private int sampleSizeLaps;
 
     public LanePaceStats() {}
 
-    @BsonCreator
     @JsonCreator
     public LanePaceStats(
-        @BsonProperty("lane_index") @JsonProperty("lane_index") int laneIndex,
-        @BsonProperty("median_lap_time") @JsonProperty("median_lap_time") double medianLapTime,
-        @BsonProperty("p90_lap_time") @JsonProperty("p90_lap_time") double p90LapTime,
-        @BsonProperty("best_lap_time") @JsonProperty("best_lap_time") double bestLapTime,
-        @BsonProperty("std_dev") @JsonProperty("std_dev") double stdDev,
-        @BsonProperty("consistency_score") @JsonProperty("consistency_score")
-            double consistencyScore,
-        @BsonProperty("drift_lap_rate") @JsonProperty("drift_lap_rate") double driftLapRate,
-        @BsonProperty("sample_size_laps") @JsonProperty("sample_size_laps") int sampleSizeLaps) {
+        @JsonProperty("lane_index") int laneIndex,
+        @JsonProperty("median_lap_time") double medianLapTime,
+        @JsonProperty("p90_lap_time") double p90LapTime,
+        @JsonProperty("best_lap_time") double bestLapTime,
+        @JsonProperty("std_dev") double stdDev,
+        @JsonProperty("consistency_score") double consistencyScore,
+        @JsonProperty("drift_lap_rate") double driftLapRate,
+        @JsonProperty("sample_size_laps") int sampleSizeLaps) {
       this.laneIndex = laneIndex;
       this.medianLapTime = medianLapTime;
       this.p90LapTime = p90LapTime;

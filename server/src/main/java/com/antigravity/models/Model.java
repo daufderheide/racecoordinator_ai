@@ -3,30 +3,23 @@ package com.antigravity.models;
 import com.antigravity.race.ServerToClientObject;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Model extends ServerToClientObject {
 
-  private final ObjectId id;
+  @JsonProperty("_id")
+  private final String id;
 
-  @BsonProperty("entity_id")
   @JsonProperty("entity_id")
   private final String entityId;
 
-  @BsonCreator
-  public Model(
-      @BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id,
-      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId) {
+  public Model(@JsonProperty("_id") String id, @JsonProperty("entity_id") String entityId) {
     super(entityId);
-    this.id = id;
-    this.entityId = (entityId != null) ? entityId : getObjectId();
+    this.id = id != null ? id : getObjectId();
+    this.entityId = (entityId != null) ? entityId : this.id;
   }
 
-  public ObjectId getId() {
+  public String getId() {
     return id;
   }
 

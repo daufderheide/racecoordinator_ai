@@ -3,11 +3,12 @@ package com.antigravity.race;
 import com.antigravity.models.Driver;
 import com.antigravity.proto.RaceFlag;
 import com.antigravity.protocols.CarLocation;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DriverHeatData extends ServerToClientObject implements GapParticipant {
 
   private RaceParticipant driver;
@@ -66,22 +67,18 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
       this.segments = segments != null ? new ArrayList<>(segments) : new ArrayList<>();
     }
 
-    @BsonProperty("isDrift")
     public boolean isDrift() {
       return isDrift;
     }
 
-    @BsonProperty("isDrift")
     public void setDrift(boolean drift) {
       isDrift = drift;
     }
 
-    @BsonProperty("countTowardsRecords")
     public boolean isCountTowardsRecords() {
       return countTowardsRecords;
     }
 
-    @BsonProperty("countTowardsRecords")
     public void setCountTowardsRecords(boolean countTowardsRecords) {
       this.countTowardsRecords = countTowardsRecords;
     }
@@ -183,12 +180,10 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
     segments.clear();
   }
 
-  @BsonProperty("carryOverTime")
   public double getCarryOverTime() {
     return carryOverTime;
   }
 
-  @BsonProperty("carryOverTime")
   public void setCarryOverTime(double carryOverTime) {
     this.carryOverTime = carryOverTime;
   }
@@ -488,12 +483,10 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
     return result;
   }
 
-  @BsonProperty("hasDriftTime")
   public boolean isHasDriftTime() {
     return hasDriftTime;
   }
 
-  @BsonProperty("hasDriftTime")
   public void setHasDriftTime(boolean hasDriftTime) {
     this.hasDriftTime = hasDriftTime;
   }

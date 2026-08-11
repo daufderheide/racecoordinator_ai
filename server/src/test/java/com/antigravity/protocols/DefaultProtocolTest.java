@@ -25,6 +25,7 @@ public class DefaultProtocolTest {
     public TestDefaultProtocol(MockScheduler scheduler) {
       super(2);
       this.mockScheduler = scheduler;
+      this.openTimeMs = mockedTime;
     }
 
     @Override
@@ -34,6 +35,7 @@ public class DefaultProtocolTest {
 
     @Override
     public boolean open() {
+      this.openTimeMs = now();
       startStatusScheduler();
       return true;
     }

@@ -11,7 +11,6 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,7 +32,7 @@ public class RaceLaneSwapTest {
             .lanes(lanes)
             .arduinoConfigs(new ArrayList<>())
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     HeatScoring heatScoring =
@@ -57,13 +56,13 @@ public class RaceLaneSwapTest {
             .withHeatScoring(heatScoring)
             .withOverallScoring(overallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     List<RaceParticipant> drivers = new ArrayList<>();
-    Driver d1 = new Driver("Driver 1", "D1", "driver1", new ObjectId());
+    Driver d1 = new Driver("Driver 1", "D1", "driver1", "1");
     p1 = new RaceParticipant(d1, "participant1");
-    Driver d2 = new Driver("Driver 2", "D2", "driver2", new ObjectId());
+    Driver d2 = new Driver("Driver 2", "D2", "driver2", "1");
     p2 = new RaceParticipant(d2, "participant2");
 
     drivers.add(p1);
@@ -105,7 +104,7 @@ public class RaceLaneSwapTest {
             .lanes(lanes)
             .arduinoConfigs(new ArrayList<>())
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     // Rebuild race with RoundRobin
@@ -241,7 +240,7 @@ public class RaceLaneSwapTest {
         shRace.getCurrentHeat().getDrivers().get(1).getActualDriver().getObjectId());
 
     // Change teammate for Lane 0 (which is now p2)
-    Driver newDriver = new Driver("New Driver", "ND", "new_driver", new ObjectId());
+    Driver newDriver = new Driver("New Driver", "ND", "new_driver", "1");
     shRace.getCurrentHeat().getDrivers().get(0).setActualDriver(newDriver);
 
     assertEquals(

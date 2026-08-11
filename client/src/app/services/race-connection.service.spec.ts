@@ -193,11 +193,10 @@ describe("RaceConnectionService", () => {
       });
       expect(emittedAlert).toBeNull();
 
-      // Disconnect
+      // Disconnect - should emit immediately without waiting 5000ms watchdog
       interfaceEventsSubject.next({
         status: { status: InterfaceStatus.DISCONNECTED },
       });
-      tick(5000);
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_DISCONNECTED");
 
       // Reconnect - should show alert now because hasInitiallyConnected is true
@@ -205,6 +204,33 @@ describe("RaceConnectionService", () => {
         status: { status: InterfaceStatus.CONNECTED },
       });
       expect(emittedAlert.titleKey).toBe("ACK_MODAL_TITLE_CONNECTED");
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should emit DISCONNECTED alert immediately without 5-second delay", fakeAsync(() => {
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.CONNECTED },
+      });
+      expect(emittedAlert).toBeNull();
+
+      // Send DISCONNECTED status
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+
+      // Emitted immediately at 0ms delay
+      expect(emittedAlert).toEqual({
+        titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
+        messageKey: "ACK_MODAL_MSG_DISCONNECTED",
+      });
 
       sub.unsubscribe();
       flush();

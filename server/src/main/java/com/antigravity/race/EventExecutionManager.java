@@ -220,7 +220,7 @@ public class EventExecutionManager {
   private void saveEventCompletionResults(Race completedRace) {
     List<SeasonDriverResult> finalEventResults = new ArrayList<>(eventDriverResultsMap.values());
     finalEventResults.sort(Comparator.comparingInt(SeasonDriverResult::getTotalPoints).reversed());
-    if (databaseContext != null && databaseContext.getDatabase() != null) {
+    if (databaseContext != null) {
       long raceStart =
           completedRace != null && completedRace.getStatistics() != null
               ? completedRace.getStatistics().getStartMillis()
@@ -230,7 +230,7 @@ public class EventExecutionManager {
       if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
         DatabaseService.getInstance()
             .commitRaceToSeason(
-                databaseContext.getDatabase(),
+                databaseContext,
                 seasonEntityId,
                 activeEvent.getName(),
                 raceStart,
@@ -255,8 +255,7 @@ public class EventExecutionManager {
       eventRecord.setStatistics(stats);
       eventRecord.setDriverResults(finalEventResults);
 
-      DatabaseService.getInstance()
-          .saveRawRaceHistoryRecord(databaseContext.getDatabase(), eventRecord);
+      DatabaseService.getInstance().saveRawRaceHistoryRecord(databaseContext, eventRecord);
     }
   }
 
@@ -343,7 +342,7 @@ public class EventExecutionManager {
   private void initializeAndStartRace(String raceId, List<String> participantIds) throws Exception {
     DatabaseService dbService = DatabaseService.getInstance();
     com.antigravity.models.Race raceModel = // fqn-collision
-        dbService.getRace(databaseContext.getDatabase(), raceId);
+        dbService.getRace(databaseContext, raceId);
     if (raceModel == null) {
       throw new IllegalStateException("Race model not found for entityId: " + raceId);
     }
@@ -353,8 +352,8 @@ public class EventExecutionManager {
       rawIds.add(pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid);
     }
 
-    List<Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(), rawIds);
-    List<Team> teams = dbService.getTeams(databaseContext.getDatabase(), rawIds);
+    List<Driver> drivers = dbService.getDrivers(databaseContext, rawIds);
+    List<Team> teams = dbService.getTeams(databaseContext, rawIds);
 
     List<RaceParticipant> participants = new ArrayList<>();
     for (String pid : participantIds) {
@@ -378,8 +377,7 @@ public class EventExecutionManager {
             teams.stream().filter(tm -> tm.getEntityId().equals(rawId)).findFirst().orElse(null);
         if (t != null) {
           RaceParticipant rp = new RaceParticipant(t);
-          List<Driver> teamDrivers =
-              dbService.getDrivers(databaseContext.getDatabase(), t.getDriverIds());
+          List<Driver> teamDrivers = dbService.getDrivers(databaseContext, t.getDriverIds());
           rp.setTeamDrivers(teamDrivers);
           participants.add(rp);
         }
@@ -387,7 +385,7 @@ public class EventExecutionManager {
     }
 
     com.antigravity.models.Track raceTrack = // fqn-collision
-        dbService.getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
+        dbService.getTrack(databaseContext, raceModel.getTrackEntityId());
     if (raceTrack == null) {
       throw new IllegalStateException("Track not found for race: " + raceModel.getName());
     }

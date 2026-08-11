@@ -126,6 +126,19 @@ describe("EventManagerComponent", () => {
     expect(component.selectedEvent?.entity_id).toBe("evt_1");
   });
 
+  it("should select the first alphabetically sorted event by default when backend returns unsorted events", () => {
+    mockDataService.getEvents.and.returnValue(
+      of([
+        { entity_id: "evt_99", name: "Zack Cup Event", raceIds: [] },
+        { entity_id: "evt_1", name: "Alpha Championship", raceIds: [] },
+      ] as any),
+    );
+    component.selectedEvent = undefined;
+    component.loadData();
+    expect((component.selectedEvent as any)?.name).toBe("Alpha Championship");
+    expect(component.events[0].name).toBe("Alpha Championship");
+  });
+
   it("should filter events by search query", () => {
     fixture.detectChanges();
     component.searchQuery = "Championship";

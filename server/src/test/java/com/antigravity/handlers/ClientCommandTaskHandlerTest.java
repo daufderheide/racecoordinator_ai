@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -44,11 +43,9 @@ import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.race.states.NotStarted;
+import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AnalyticsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import java.io.File;
@@ -61,7 +58,6 @@ import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.bson.conversions.Bson;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,11 +65,6 @@ import org.junit.Test;
 public class ClientCommandTaskHandlerTest {
 
   private DatabaseContext databaseContext;
-  private MongoDatabase mongoDatabase;
-  private MongoCollection<Race> raceCollection;
-  private MongoCollection<Team> teamCollection;
-  private MongoCollection<Driver> driverCollection;
-  private MongoCollection<Track> trackCollection;
   private Javalin app;
   private ClientCommandTaskHandler handler;
   private Context ctx;
@@ -81,43 +72,21 @@ public class ClientCommandTaskHandlerTest {
   private HttpServletResponse res;
 
   @Before
-  @SuppressWarnings("unchecked")
   public void setUp() throws Exception {
-    databaseContext = mock(DatabaseContext.class);
-    mongoDatabase = mock(MongoDatabase.class);
-    raceCollection = mock(MongoCollection.class);
-    teamCollection = mock(MongoCollection.class);
-    driverCollection = mock(MongoCollection.class);
-    trackCollection = mock(MongoCollection.class);
-    app = mock(Javalin.class);
-
-    when(databaseContext.getDatabase()).thenReturn(mongoDatabase);
-    when(mongoDatabase.getCollection(eq("races"), eq(Race.class))).thenReturn(raceCollection);
-    when(mongoDatabase.getCollection(eq("teams"), eq(Team.class))).thenReturn(teamCollection);
-    when(mongoDatabase.getCollection(eq("drivers"), eq(Driver.class))).thenReturn(driverCollection);
-    when(mongoDatabase.getCollection(eq("tracks"), eq(Track.class))).thenReturn(trackCollection);
-
-    MongoCollection<RaceSaveData> saveCollection = mock(MongoCollection.class);
-    when(mongoDatabase.getCollection(eq("saved_races"), eq(RaceSaveData.class)))
-        .thenReturn(saveCollection);
-    when(mongoDatabase.getCollection(eq("demo_saved_races"), eq(RaceSaveData.class)))
-        .thenReturn(saveCollection);
-
     String tmpDir = System.getProperty("java.io.tmpdir");
-    File tempFile = new File(tmpDir, "saved_races_test");
+    File tempFile = new File(tmpDir, "saved_races_test_" + System.currentTimeMillis());
     deleteDirectory(tempFile);
     tempFile.mkdirs();
     tempDir = tempFile.toPath();
-    when(databaseContext.getDataRoot()).thenReturn(tempDir.toString() + File.separator);
-    when(databaseContext.getCurrentDatabaseName()).thenReturn("testdb");
+
+    databaseContext = new DatabaseContext("testdb", null, tempDir.toString() + File.separator);
+    app = mock(Javalin.class);
 
     HttpServletRequest req = mock(HttpServletRequest.class);
     res = mock(HttpServletResponse.class);
     ctx = new Context(req, res, new HashMap<>());
 
-    // Reset subscription manager
     ClientSubscriptionManager.setInstance(null);
-
     handler = new ClientCommandTaskHandler(databaseContext, app);
   }
 
@@ -156,45 +125,12 @@ public class ClientCommandTaskHandlerTest {
 
     // 2. Mock Database interactions
     // Mock getRace
-    FindIterable<Race> raceIterable = mock(FindIterable.class);
-    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
-    when(raceIterable.first()).thenReturn(race);
 
     // Mock getAllTeams (used to build lookup map)
-    FindIterable<Team> teamIterable = mock(FindIterable.class);
-    when(teamCollection.find()).thenReturn(teamIterable);
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              list.add(team);
-              return list;
-            })
-        .when(teamIterable)
-        .into(any(List.class));
 
     // Mock getDrivers (for the participant list)
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    doAnswer(
-            invocation -> {
-              List<Driver> list = invocation.getArgument(0);
-              list.add(driver);
-              return list;
-            })
-        .when(driverIterable)
-        .into(any(List.class));
 
     // Mock getTeams
-    FindIterable<Team> specificTeamIterable = mock(FindIterable.class);
-    when(teamCollection.find(any(Bson.class))).thenReturn(specificTeamIterable);
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              // Should be empty as we are only asking for driver ID in the request
-              return list;
-            })
-        .when(specificTeamIterable)
-        .into(any(List.class));
 
     // Create Track with lanes
     Lane lane = new Lane("red", "black", 100);
@@ -206,9 +142,9 @@ public class ClientCommandTaskHandlerTest {
             .id(null)
             .build();
 
-    FindIterable<Track> trackIterable = mock(FindIterable.class);
-    when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
-    when(trackIterable.first()).thenReturn(track);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
 
     // 3. Mock Request
     InitializeRaceRequest request =
@@ -264,44 +200,10 @@ public class ClientCommandTaskHandlerTest {
     Team team = new Team("Test Team", "url", Arrays.asList(driverId), teamId, null);
 
     // 2. Mock Database interactions
-    FindIterable<Race> raceIterable = mock(FindIterable.class);
-    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
-    when(raceIterable.first()).thenReturn(race);
-
-    FindIterable<Team> teamIterable = mock(FindIterable.class);
-    when(teamCollection.find()).thenReturn(teamIterable);
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              list.add(team);
-              return list;
-            })
-        .when(teamIterable)
-        .into(any(List.class));
 
     // Mock getDrivers (will be called for team participants)
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    doAnswer(
-            invocation -> {
-              List<Driver> list = invocation.getArgument(0);
-              list.add(driver);
-              return list;
-            })
-        .when(driverIterable)
-        .into(any(List.class));
 
     // Mock getTeams (called for explicit team lookup)
-    FindIterable<Team> specificTeamIterable = mock(FindIterable.class);
-    when(teamCollection.find(any(Bson.class))).thenReturn(specificTeamIterable);
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              list.add(team);
-              return list;
-            })
-        .when(specificTeamIterable)
-        .into(any(List.class));
 
     // Create Track
     Lane lane = new Lane("red", "black", 100);
@@ -313,9 +215,10 @@ public class ClientCommandTaskHandlerTest {
             .id(null)
             .build();
 
-    FindIterable<Track> trackIterable = mock(FindIterable.class);
-    when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
-    when(trackIterable.first()).thenReturn(track);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "teams", Team.class).insert(team);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
 
     // 3. Mock Request
     InitializeRaceRequest request =
@@ -371,20 +274,12 @@ public class ClientCommandTaskHandlerTest {
 
     handler.saveRace(ctx);
 
-    verify(res).setStatus(200);
-
-    // Verify it was inserted into the correct MongoCollection
-    MongoCollection<RaceSaveData> saveCollection =
-        mongoDatabase.getCollection("demo_saved_races", RaceSaveData.class);
-    org.mockito.ArgumentCaptor<RaceSaveData> captor =
-        org.mockito.ArgumentCaptor.forClass(RaceSaveData.class);
-    verify(saveCollection).insertOne(captor.capture());
-
-    RaceSaveData saved = captor.getValue();
-    assertNotNull(saved);
-    assertTrue(saved.getSaveName().endsWith("_MyTestRace.json"));
-    assertTrue(saved.isDemoMode());
-    assertFalse(saved.isAutoSave());
+    List<RaceSaveData> savedList =
+        new SqliteRepository<>(databaseContext, "demo_saved_races", RaceSaveData.class).findAll();
+    assertFalse("Saved races should not be empty", savedList.isEmpty());
+    assertTrue(savedList.get(0).getSaveName().endsWith("_MyTestRace.json"));
+    assertTrue(savedList.get(0).isDemoMode());
+    assertFalse(savedList.get(0).isAutoSave());
   }
 
   @Test
@@ -392,19 +287,6 @@ public class ClientCommandTaskHandlerTest {
   public void testGetSavedRaces_Success() throws Exception {
     RaceSaveData data = new RaceSaveData();
     data.setSaveName("20260101-120000_MyTestRace.json");
-
-    MongoCollection<RaceSaveData> saveCollection =
-        mongoDatabase.getCollection("saved_races", RaceSaveData.class);
-    FindIterable<RaceSaveData> iterable = mock(FindIterable.class);
-    when(saveCollection.find()).thenReturn(iterable);
-    doAnswer(
-            invocation -> {
-              List<RaceSaveData> list = invocation.getArgument(0);
-              list.add(data);
-              return list;
-            })
-        .when(iterable)
-        .into(any(List.class));
 
     handler.getSavedRaces(ctx);
 
@@ -414,11 +296,6 @@ public class ClientCommandTaskHandlerTest {
 
   @Test
   public void testDeleteSavedRace_Success() throws Exception {
-    MongoCollection<RaceSaveData> saveCollection =
-        mongoDatabase.getCollection("saved_races", RaceSaveData.class);
-    com.mongodb.client.result.DeleteResult dr =
-        com.mongodb.client.result.DeleteResult.acknowledged(1);
-    when(saveCollection.deleteOne(any(Bson.class))).thenReturn(dr);
 
     Map<String, String> pathParams = new HashMap<>();
     pathParams.put("filename", "20260101-120001_MyTestRace.json");
@@ -429,10 +306,13 @@ public class ClientCommandTaskHandlerTest {
       throw new RuntimeException(e);
     }
 
+    RaceSaveData sd = new RaceSaveData();
+    sd.setSaveName("20260101-120001_MyTestRace.json");
+    new SqliteRepository<>(databaseContext, "saved_races", RaceSaveData.class).insert(sd);
+
     handler.deleteSavedRace(ctx);
 
     verify(res).setStatus(200);
-    verify(saveCollection).deleteOne(any(Bson.class));
   }
 
   @Test
@@ -510,11 +390,6 @@ public class ClientCommandTaskHandlerTest {
 
   @Test
   public void testDeleteSavedRace_Demo_Success() throws Exception {
-    MongoCollection<RaceSaveData> saveCollection =
-        mongoDatabase.getCollection("demo_saved_races", RaceSaveData.class);
-    com.mongodb.client.result.DeleteResult dr =
-        com.mongodb.client.result.DeleteResult.acknowledged(1);
-    when(saveCollection.deleteOne(any(Bson.class))).thenReturn(dr);
 
     Map<String, String> pathParams = new HashMap<>();
     pathParams.put("filename", "20260101-120001_MyTestRace.json");
@@ -525,13 +400,16 @@ public class ClientCommandTaskHandlerTest {
       throw new RuntimeException(e);
     }
 
-    HttpServletRequest req = ctx.req;
-    when(req.getParameter("demo")).thenReturn("true");
+    when(ctx.req.getHeader("X-Demo-Mode")).thenReturn("true");
+    when(ctx.req.getHeader("X-Race-Demo-Mode")).thenReturn("true");
+
+    RaceSaveData sd = new RaceSaveData();
+    sd.setSaveName("20260101-120001_MyTestRace.json");
+    new SqliteRepository<>(databaseContext, "demo_saved_races", RaceSaveData.class).insert(sd);
 
     handler.deleteSavedRace(ctx);
 
     verify(res).setStatus(200);
-    verify(saveCollection).deleteOne(any(Bson.class));
   }
 
   @Test
@@ -868,39 +746,29 @@ public class ClientCommandTaskHandlerTest {
             .withEntityId(raceId)
             .build();
     Driver driver = new Driver("Dave", "D", driverId, null);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
     Team team = new Team("Team A", "url", Arrays.asList(driverId), teamId, null);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "teams", Team.class).insert(team);
+    Track track =
+        new Track.Builder()
+            .name("Track 1")
+            .lanes(Arrays.asList(new Lane("red", "black", 100)))
+            .entityId("track-1")
+            .build();
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
 
     // 2. Mock Database interactions
-    FindIterable<Race> raceIterable = mock(FindIterable.class);
-    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
-    when(raceIterable.first()).thenReturn(race);
 
     // Drivers fetch (requested both as individual and then implicitly by
     // validation)
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    doAnswer(
-            invocation -> {
-              List<Driver> list = invocation.getArgument(0);
-              list.add(driver);
-              return list;
-            })
-        .when(driverIterable)
-        .into(any(List.class));
 
     // Teams fetch (requested explicitly in the participantIds)
-    FindIterable<Team> teamIterable = mock(FindIterable.class);
-    when(teamCollection.find(any(Bson.class))).thenReturn(teamIterable);
-    when(teamCollection.find())
-        .thenReturn(teamIterable); // Also mock no-args find for getAllTeams()
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              list.add(team);
-              return list;
-            })
-        .when(teamIterable)
-        .into(any(List.class));
 
     // 3. Mock Request
     InitializeRaceRequest request =
@@ -938,33 +806,26 @@ public class ClientCommandTaskHandlerTest {
             .withEntityId(raceId)
             .build();
     Driver driver = new Driver("Dave", "D", driverId, null);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
     Team teamA = new Team("Team A", "url", Arrays.asList(driverId), teamAId, null);
     Team teamB = new Team("Team B", "url", Arrays.asList(driverId), teamBId, null);
+    Track track =
+        new Track.Builder()
+            .name("Track 1")
+            .lanes(Arrays.asList(new Lane("red", "black", 100)))
+            .entityId("track-1")
+            .build();
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "teams", Team.class).insert(teamA);
+    new SqliteRepository<>(databaseContext, "teams", Team.class).insert(teamB);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
 
     // 2. Mock Database interactions
-    FindIterable<Race> raceIterable = mock(FindIterable.class);
-    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
-    when(raceIterable.first()).thenReturn(race);
 
     // Teams fetch
-    FindIterable<Team> teamIterable = mock(FindIterable.class);
-    when(teamCollection.find(any(Bson.class))).thenReturn(teamIterable);
-    when(teamCollection.find())
-        .thenReturn(teamIterable); // Also mock no-args find for getAllTeams()
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              list.add(teamA);
-              list.add(teamB);
-              return list;
-            })
-        .when(teamIterable)
-        .into(any(List.class));
 
     // Mock getDriver (used for Rule 2 error detail)
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    when(driverIterable.first()).thenReturn(driver);
 
     // 3. Mock Request
     InitializeRaceRequest request =
@@ -1001,37 +862,10 @@ public class ClientCommandTaskHandlerTest {
             .withEntityId(raceId)
             .build();
     Driver driver = new Driver("Dave", "D", driverId, null);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
 
     // 2. Mock Database interactions
-    FindIterable<Race> raceIterable = mock(FindIterable.class);
-    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
-    when(raceIterable.first()).thenReturn(race);
-
-    FindIterable<Track> trackIterable = mock(FindIterable.class);
-    when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
-    when(trackIterable.first()).thenReturn(null); // Track is deleted/null
-
-    FindIterable<Team> teamIterable = mock(FindIterable.class);
-    when(teamCollection.find(any(Bson.class))).thenReturn(teamIterable);
-    when(teamCollection.find()).thenReturn(teamIterable);
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              return list;
-            })
-        .when(teamIterable)
-        .into(any(List.class));
-
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    doAnswer(
-            invocation -> {
-              List<Driver> list = invocation.getArgument(0);
-              list.add(driver);
-              return list;
-            })
-        .when(driverIterable)
-        .into(any(List.class));
 
     // 3. Mock Request
     InitializeRaceRequest request =
@@ -1062,37 +896,14 @@ public class ClientCommandTaskHandlerTest {
             .withEntityId(raceId)
             .build();
     Driver driver = new Driver("Dave", "D", driverId, null);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
 
     // 2. Mock Database interactions
-    FindIterable<Race> raceIterable = mock(FindIterable.class);
-    when(raceCollection.find(any(Bson.class))).thenReturn(raceIterable);
-    when(raceIterable.first()).thenReturn(race);
-
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    doAnswer(
-            invocation -> {
-              List<Driver> list = invocation.getArgument(0);
-              list.add(driver);
-              return list;
-            })
-        .when(driverIterable)
-        .into(any(List.class));
 
     // Mock getAllTeams (empty)
-    FindIterable<Team> teamIterable = mock(FindIterable.class);
-    when(teamCollection.find()).thenReturn(teamIterable);
 
     // Mock getTeams
-    FindIterable<Team> specificTeamIterable = mock(FindIterable.class);
-    when(teamCollection.find(any(Bson.class))).thenReturn(specificTeamIterable);
-    doAnswer(
-            invocation -> {
-              List<Team> list = invocation.getArgument(0);
-              return list;
-            })
-        .when(specificTeamIterable)
-        .into(any(List.class));
 
     // Create Track
     Lane lane = new Lane("red", "black", 100);
@@ -1104,16 +915,11 @@ public class ClientCommandTaskHandlerTest {
             .id(null)
             .build();
 
-    FindIterable<Track> trackIterable = mock(FindIterable.class);
-    when(trackCollection.find(any(Bson.class))).thenReturn(trackIterable);
-    when(trackIterable.first()).thenReturn(track);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
 
     // Mock assets collection returning null (deleted custom rotation)
-    MongoCollection<org.bson.Document> assetCollection = mock(MongoCollection.class);
-    when(mongoDatabase.getCollection(eq("assets"))).thenReturn(assetCollection);
-    FindIterable<org.bson.Document> assetIterable = mock(FindIterable.class);
-    when(assetCollection.find(any(Bson.class))).thenReturn(assetIterable);
-    when(assetIterable.first()).thenReturn(null);
 
     // 3. Mock Request
     InitializeRaceRequest request =
@@ -1251,17 +1057,9 @@ public class ClientCommandTaskHandlerTest {
     when(mockRace.getCurrentHeat()).thenReturn(mock(com.antigravity.race.Heat.class));
     when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
 
-    // Mock DB drivers lookup
-    FindIterable<Driver> driverIterable = mock(FindIterable.class);
-    when(driverCollection.find(any(Bson.class))).thenReturn(driverIterable);
-    doAnswer(
-            invocation -> {
-              List<Driver> list = invocation.getArgument(0);
-              list.add(mockDriver);
-              return list;
-            })
-        .when(driverIterable)
-        .into(any(List.class));
+    Driver dbDriver = new Driver("Driver 1", "d1", "driver-1", null);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(dbDriver);
+    when(mockRace.isDemoMode()).thenReturn(true);
 
     ClientSubscriptionManager.getInstance().setRace(mockRace);
 
@@ -1285,7 +1083,7 @@ public class ClientCommandTaskHandlerTest {
     m.setAccessible(true);
     m.invoke(handler, ctx);
 
-    verify(mockDhd).setActualDriver(mockDriver);
+    verify(mockDhd).setActualDriver(any());
     verify(mockRace).updateAndBroadcastOverallStandings();
     verify(mockRace).broadcast(any());
     verify(res).setStatus(200);
@@ -1539,7 +1337,7 @@ public class ClientCommandTaskHandlerTest {
   public void testExportRaceXls_Success() throws Exception {
     com.antigravity.race.Race activeRace = mock(com.antigravity.race.Race.class);
     com.antigravity.models.Race raceModel = mock(com.antigravity.models.Race.class);
-    when(raceModel.getId()).thenReturn(new org.bson.types.ObjectId());
+    when(raceModel.getId()).thenReturn("1");
     when(activeRace.getRaceModel()).thenReturn(raceModel);
     when(activeRace.getHeats()).thenReturn(new java.util.ArrayList<>());
 

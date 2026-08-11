@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.List;
-import org.bson.Document;
 
 public class AssetTaskHandler {
 
@@ -49,7 +48,7 @@ public class AssetTaskHandler {
       currentDbName = "Race Coordinator AI DB";
     }
     return new AssetService(
-        databaseContext.getDatabase(), databaseContext.getDataRoot() + currentDbName + "/assets");
+        databaseContext, databaseContext.getDataRoot() + currentDbName + "/assets");
   }
 
   void setStatus(Context ctx, int status) {
@@ -94,20 +93,10 @@ public class AssetTaskHandler {
       return;
     }
 
-    // Lookup internal filename from document
-    Document doc =
-        databaseContext
-            .getDatabase()
-            .getCollection("assets")
-            .find(com.mongodb.client.model.Filters.eq("_id", id))
-            .first();
-    // Support image sets by using their stored URL (thumbnail)
-    String filename = doc.getString("filename");
-    if (filename == null && "image_set".equals(doc.getString("type"))) {
-      String url = doc.getString("url");
-      if (url != null && url.startsWith("/assets/")) {
-        filename = url.substring("/assets/".length());
-      }
+    String url = asset.getUrl();
+    String filename = null;
+    if (url != null && url.startsWith("/assets/")) {
+      filename = url.substring("/assets/".length());
     }
 
     if (filename == null) {

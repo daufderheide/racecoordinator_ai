@@ -17,7 +17,6 @@ import com.antigravity.race.states.Common;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,22 +64,22 @@ public class FuelResetTest {
             .withMinLapTime(0.0)
             .withFuelOptions(fuelOptions)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     participants = new ArrayList<>();
 
     // Individual Driver
-    Driver d1 = new Driver("Driver 1", "D1", "d1", new ObjectId());
+    Driver d1 = new Driver("Driver 1", "D1", "d1", "1");
     participants.add(new RaceParticipant(d1, "p1"));
 
     // Team
     List<String> teamDriverIds = new ArrayList<>();
     teamDriverIds.add("d2");
-    Team team = new Team("The Team", "avatar_url", teamDriverIds, "team1", new ObjectId());
+    Team team = new Team("The Team", "avatar_url", teamDriverIds, "team1", "1");
     RaceParticipant teamParticipant = new RaceParticipant(team);
     List<Driver> teamDrivers = new ArrayList<>();
-    teamDrivers.add(new Driver("Driver 2", "D2", "d2", new ObjectId()));
+    teamDrivers.add(new Driver("Driver 2", "D2", "d2", "1"));
     teamParticipant.setTeamDrivers(teamDrivers);
     participants.add(teamParticipant);
 
@@ -93,7 +92,7 @@ public class FuelResetTest {
             .lanes(lanes)
             .arduinoConfigs(Collections.singletonList(mock(ArduinoConfig.class)))
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =

@@ -41,7 +41,7 @@ class BleBridge: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
             scanStarted = true
             switch mode {
             case .scan(let timeout):
-                centralManager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+                centralManager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
                 DispatchQueue.main.asyncAfter(deadline: .now() + timeout) {
                     self.centralManager.stopScan()
                     let list = Array(self.discoveredNames)
@@ -56,8 +56,26 @@ class BleBridge: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {
                 }
 
             case .connect(let target):
+                fputs("STATUS: Checking system connected BLE peripherals for '\(target)'...\n", stderr)
+                let serviceUUIDs = [
+                    CBUUID(string: "1800"), CBUUID(string: "1801"), CBUUID(string: "180A"),
+                    CBUUID(string: "180F"), CBUUID(string: "FFE0"), CBUUID(string: "FFF0"),
+                    CBUUID(string: "A500"), CBUUID(string: "6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
+                ]
+                let connectedList = centralManager.retrieveConnectedPeripherals(withServices: serviceUUIDs)
+                for peripheral in connectedList {
+                    let identifierStr = peripheral.identifier.uuidString
+                    let pName = peripheral.name ?? ""
+                    if pName.equalsIgnoreCase(target) || identifierStr.equalsIgnoreCase(target) || pName.localizedCaseInsensitiveContains(target) {
+                        fputs("STATUS: Found target BLE peripheral '\(pName)' (\(identifierStr)) in connected system peripherals. Connecting...\n", stderr)
+                        targetPeripheral = peripheral
+                        peripheral.delegate = self
+                        centralManager.connect(peripheral, options: nil)
+                        return
+                    }
+                }
                 fputs("STATUS: Scanning for BLE peripheral matching '\(target)'...\n", stderr)
-                centralManager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
+                centralManager.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
             }
 
         case .unknown, .resetting:

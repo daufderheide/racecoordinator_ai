@@ -15,7 +15,7 @@ Following this checklist ensures that the new hardware interface:
 A hardware interface spans the full stack:
 - **Protobuf Schemas (`proto/track.proto`)**: Interface message definition and inclusion in `TrackModel`, `InitializeInterfaceRequest`, and `UpdateInterfaceConfigRequest`.
 - **Server Protocol & Factory (`server/.../protocols`)**: Java config class, `IProtocol` implementation, and registration in `HardwareProtocolFactory`.
-- **Server DB & Models (`server/.../models`, `converters`)**: Jackson/Mongo annotations in `Track.java`, DB handlers, and `TrackConverter.java`.
+- **Server DB & Models (`server/.../models`, `converters`)**: Jackson/SQLite annotations in `Track.java`, DB handlers, and `TrackConverter.java`.
 - **Client Models & Converters (`client/src/app/models`, `converters`)**: TypeScript interface in `track.ts`, converter class (`[Interface]ConfigConverter`), and mapping in `TrackConverter.ts`.
 - **Client UI Editor (`client/src/app/components/track-editor`)**: Editor component (`[interface]-editor`), rendering in `track-editor.component.html`, state handling & pin remapping in `track-editor.component.ts`.
 - **Client Track Manager Summary (`client/src/app/components/track-manager`)**: Summary component (`[interface]-summary`), displaying connection details (board/device type, port/serial number, hub port, configured pin count) and active pin behavior badges on the Track Manager screen.

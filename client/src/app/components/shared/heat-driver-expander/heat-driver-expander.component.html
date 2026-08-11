@@ -324,6 +324,94 @@
           </div>
         }
       </div>
+
+      <!-- Analysis Section -->
+      <div class="analysis-section">
+        <h3 class="subsection-title">
+          {{ "DR_SECTION_ANALYSIS" | translate }}
+        </h3>
+
+        <div class="analysis-table-wrapper">
+          <div class="results-table">
+            <div class="results-table-header analysis-grid">
+              <div class="header-cell">
+                {{ "DR_HEADER_STD_DEV" | translate }}
+              </div>
+              <div class="header-cell">
+                {{ "DR_HEADER_CONSISTENCY" | translate }}
+              </div>
+              <div class="header-cell">
+                {{ "DR_HEADER_AVG_TOP_5" | translate }}
+              </div>
+              <div class="header-cell">
+                {{ "DR_HEADER_AVG_TOP_10" | translate }}
+              </div>
+              <div class="header-cell">
+                {{ "DR_HEADER_AVG_TOP_15" | translate }}
+              </div>
+              <div class="header-cell">
+                {{ "DR_HEADER_TOP_2_CONSECUTIVE" | translate }}
+              </div>
+              <div class="header-cell">
+                {{ "DR_HEADER_TOP_3_CONSECUTIVE" | translate }}
+              </div>
+            </div>
+            <div class="results-table-body">
+              <div class="driver-row static-row analysis-row analysis-grid">
+                <div class="body-cell">
+                  {{
+                    standardDeviation !== null
+                      ? (standardDeviation | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell text-highlight">
+                  {{
+                    consistencyScore !== null
+                      ? (consistencyScore | number: "1.1-1") + "%"
+                      : "--.-%"
+                  }}
+                </div>
+                <div class="body-cell">
+                  {{
+                    averageTop5 !== null
+                      ? (averageTop5 | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell">
+                  {{
+                    averageTop10 !== null
+                      ? (averageTop10 | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell">
+                  {{
+                    averageTop15 !== null
+                      ? (averageTop15 | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell">
+                  {{
+                    top2Consecutive !== null
+                      ? (top2Consecutive | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+                <div class="body-cell">
+                  {{
+                    top3Consecutive !== null
+                      ? (top3Consecutive | number: "1.3-3")
+                      : "--.---"
+                  }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   }
 </div>

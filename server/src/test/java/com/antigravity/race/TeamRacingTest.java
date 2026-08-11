@@ -17,7 +17,6 @@ import com.antigravity.race.states.Racing;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,7 +51,7 @@ public class TeamRacingTest {
             .withHeatScoring(heatScoring)
             .withOverallScoring(overallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     participants = new ArrayList<>();
@@ -63,17 +62,17 @@ public class TeamRacingTest {
     teamDriverIds.add("d2");
     // CRITICAL: Test with potential nulls if that's what's happening,
     // but first let's try a "normal" team setup which is reported to crash.
-    Team team = new Team("The Team", "avatar_url", teamDriverIds, "team1", new ObjectId());
+    Team team = new Team("The Team", "avatar_url", teamDriverIds, "team1", "1");
 
     RaceParticipant teamParticipant = new RaceParticipant(team);
     // Mimic ClientCommandTaskHandler behavior: populate team drivers
     List<Driver> teamDrivers = new ArrayList<>();
-    teamDrivers.add(new Driver("Driver 1", "D1", "d1", new ObjectId()));
-    teamDrivers.add(new Driver("Driver 2", "D2", "d2", new ObjectId()));
+    teamDrivers.add(new Driver("Driver 1", "D1", "d1", "1"));
+    teamDrivers.add(new Driver("Driver 2", "D2", "d2", "1"));
     teamParticipant.setTeamDrivers(teamDrivers);
 
     participants.add(teamParticipant);
-    participants.add(new RaceParticipant(new Driver("Driver 3", "D3", "d3", new ObjectId()), "p3"));
+    participants.add(new RaceParticipant(new Driver("Driver 3", "D3", "d3", "1"), "p3"));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
@@ -84,7 +83,7 @@ public class TeamRacingTest {
             .lanes(lanes)
             .arduinoConfigs(Collections.singletonList(new ArduinoConfig()))
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =
@@ -132,14 +131,14 @@ public class TeamRacingTest {
     racing.onLap(0, 1.0, 1, false);
 
     // 1. Set Actual Driver to Driver 1
-    Driver driver1 = new Driver("Driver 1", "D1", "d1", new ObjectId());
+    Driver driver1 = new Driver("Driver 1", "D1", "d1", "1");
     teamHeatData.setActualDriver(driver1);
 
     // Simulate lap 1
     racing.onLap(0, 5.0, 1, false);
 
     // 2. Set Actual Driver to Driver 2
-    Driver driver2 = new Driver("Driver 2", "D2", "d2", new ObjectId());
+    Driver driver2 = new Driver("Driver 2", "D2", "d2", "1");
     teamHeatData.setActualDriver(driver2);
 
     // Simulate lap 2

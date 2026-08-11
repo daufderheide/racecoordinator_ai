@@ -162,7 +162,7 @@ public class PredictionEngine {
         }
       }
     }
-    logger.debug("No data found for any driver. Returning false.");
+    logger.trace("No data found for any driver. Returning false.");
     return false;
   }
 

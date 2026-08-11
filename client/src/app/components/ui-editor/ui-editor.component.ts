@@ -802,10 +802,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             a.type === "image" ||
             a.type === "image_set" ||
             a.type === "sound" ||
+            a.type === "audio" ||
             a.type === "audio_set",
         );
         this.soundAssets = this.assets.filter(
-          (a) => a.type === "sound" || a.type === "audio_set",
+          (a) =>
+            a.type === "sound" || a.type === "audio" || a.type === "audio_set",
         );
 
         // Dynamic columns for image sets

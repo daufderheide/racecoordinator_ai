@@ -68,6 +68,9 @@ public abstract class DefaultProtocol implements IProtocol {
   protected ScheduledFuture<?> statusFuture;
   protected ScheduledFuture<?> refuelFuture;
   protected volatile long lastHeartbeatTimeMs = 0;
+  protected volatile long openTimeMs = 0;
+  protected volatile long lastReconnectAttemptTimeMs = 0;
+  private static final long RECONNECT_INTERVAL_MS = 5000;
 
   public DefaultProtocol(int numLanes) {
     this.numLanes = numLanes;
@@ -117,12 +120,10 @@ public abstract class DefaultProtocol implements IProtocol {
   }
 
   protected void startStatusScheduler() {
-    if (statusFuture != null && !statusFuture.isCancelled()) {
-      return;
-    }
-    if (statusScheduler == null) {
-      statusScheduler = createScheduler();
-    }
+    stopStatusScheduler();
+
+    openTimeMs = now();
+    statusScheduler = createScheduler();
     statusFuture =
         statusScheduler.scheduleAtFixedRate(this::checkAndPublishStatus, 0, 1, TimeUnit.SECONDS);
 
@@ -202,12 +203,13 @@ public abstract class DefaultProtocol implements IProtocol {
     }
   }
 
-  private void checkAndPublishStatus() {
+  protected void checkAndPublishStatus() {
     try {
       if (listener != null) {
         InterfaceStatus status;
         if (!isConnected()) {
           status = InterfaceStatus.DISCONNECTED;
+          tryAutoReconnect();
         } else if (!requiresHeartbeat()) {
           status = InterfaceStatus.CONNECTED;
         } else if (lastHeartbeatTimeMs == 0) {
@@ -221,6 +223,7 @@ public abstract class DefaultProtocol implements IProtocol {
           } else {
             status = InterfaceStatus.DISCONNECTED;
             logger.warn("status dropping to DISCONNECTED due to heartbeat age: {}ms", age);
+            tryAutoReconnect();
           }
         }
         InterfaceStatusEvent statusEvent =
@@ -234,6 +237,37 @@ public abstract class DefaultProtocol implements IProtocol {
       }
     } catch (Exception e) {
       logger.error("Error in status scheduler", e);
+    }
+  }
+
+  protected void tryAutoReconnect() {
+    long currentTime = now();
+    if (isConnected()) {
+      if (!requiresHeartbeat()
+          || lastHeartbeatTimeMs == 0
+          || (currentTime - lastHeartbeatTimeMs <= 2000)) {
+        return;
+      }
+    }
+
+    if (currentTime - lastReconnectAttemptTimeMs >= RECONNECT_INTERVAL_MS) {
+      lastReconnectAttemptTimeMs = currentTime;
+      try {
+        if (isConnected()) {
+          logger.warn(
+              "Interface index {} heartbeat stale (>2000ms). Closing stale connection before reconnect.",
+              getInterfaceIndex());
+          close();
+        }
+        logger.info(
+            "Attempting automatic reconnection for interface index {}...", getInterfaceIndex());
+        open();
+      } catch (Exception e) {
+        logger.debug(
+            "Auto-reconnect attempt failed for interface index {}: {}",
+            getInterfaceIndex(),
+            e.getMessage());
+      }
     }
   }
 

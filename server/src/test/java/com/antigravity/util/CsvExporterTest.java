@@ -14,7 +14,6 @@ import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.Racing;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -25,7 +24,7 @@ public class CsvExporterTest {
 
   @Before
   public void setUp() {
-    driver = new Driver("Test Driver", "TD", "d1", new ObjectId());
+    driver = new Driver("Test Driver", "TD", "d1", "1");
 
     HeatScoring heatScoring =
         new HeatScoring(
@@ -63,7 +62,7 @@ public class CsvExporterTest {
             .lanes(lanes)
             .arduinoConfigs(new ArrayList<>())
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =

@@ -135,6 +135,21 @@ describe("SeasonManagerComponent", () => {
     expect(component.selectedSeason?.entity_id).toBe("s2");
   });
 
+  it("should select the first alphabetically sorted season by default when backend returns unsorted seasons", () => {
+    const seasons = [
+      { entity_id: "s99", name: "Zack League", drops: 0 },
+      { entity_id: "s1", name: "Alpha Championship", drops: 0 },
+    ];
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getSeasons").and.returnValue(of(seasons));
+
+    component.selectedSeason = undefined;
+    component.loadData();
+
+    expect((component.selectedSeason as any)?.name).toBe("Alpha Championship");
+    expect(component.seasons[0].name).toBe("Alpha Championship");
+  });
+
   it("should interact via SeasonManagerHarness", async () => {
     component.isLoading = false;
     component.seasons = [

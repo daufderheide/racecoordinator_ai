@@ -332,7 +332,11 @@
                   "
                 />
               }
-              @if (asset.type === "sound" || asset.type === "audio_set") {
+              @if (
+                asset.type === "sound" ||
+                asset.type === "audio" ||
+                asset.type === "audio_set"
+              ) {
                 <img
                   src="assets/images/default_audio_icon.png"
                   class="preview-icon"
@@ -389,7 +393,11 @@
                     {{ asset.name }}
                   </div>
                   <div class="asset-actions">
-                    @if (asset.type === "sound" || asset.type === "audio_set") {
+                    @if (
+                      asset.type === "sound" ||
+                      asset.type === "audio" ||
+                      asset.type === "audio_set"
+                    ) {
                       @if (currentlyPlayingAsset?.id !== asset.id) {
                         <img
                           src="assets/images/am_icon_play.png"

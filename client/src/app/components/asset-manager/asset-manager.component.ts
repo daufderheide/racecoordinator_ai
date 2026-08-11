@@ -43,7 +43,13 @@ import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.com
 export interface AssetView {
   id: string;
   name: string;
-  type: "image" | "sound" | "image_set" | "audio_set" | "custom_rotation";
+  type:
+    | "image"
+    | "sound"
+    | "audio"
+    | "image_set"
+    | "audio_set"
+    | "custom_rotation";
   size: string;
   url: string;
   editMode?: boolean;
@@ -266,6 +272,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
               type = "audio_set";
             } else if (a.images && a.images.length > 0) {
               type = "image_set";
+            } else if (type === "audio") {
+              type = "sound";
             } else if (!type) {
               type = "image";
             }
@@ -316,7 +324,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   get filteredAssets(): AssetView[] {
     return this.assets.filter((asset) => {
       const typeMatch =
-        this.filterType === "all" || asset.type === this.filterType;
+        this.filterType === "all" ||
+        asset.type === this.filterType ||
+        (this.filterType === "sound" &&
+          (asset.type === "sound" || asset.type === "audio"));
       const nameMatch =
         !this.filterName ||
         asset.name.toLowerCase().includes(this.filterName.toLowerCase());
@@ -333,7 +344,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   get allAudio(): AssetView[] {
     return this.assets.filter(
-      (a) => a.type === "sound" || a.type === "audio_set",
+      (a) => a.type === "sound" || a.type === "audio" || a.type === "audio_set",
     );
   }
 
@@ -385,7 +396,9 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   private getBytesByType(type: AssetView["type"]): number {
     return this.assets
-      .filter((a) => a.type === type)
+      .filter(
+        (a) => a.type === type || (type === "sound" && a.type === "audio"),
+      )
       .reduce((sum, a) => sum + this.parseSize(a.size), 0);
   }
 
@@ -445,7 +458,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   get soundCount(): number {
-    return this.assets.filter((a) => a.type === "sound").length;
+    return this.assets.filter((a) => a.type === "sound" || a.type === "audio")
+      .length;
   }
 
   get imageSetCount(): number {
@@ -701,7 +715,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       this.stopAsset();
     }
 
-    if (asset.type === "sound") {
+    if (asset.type === "sound" || asset.type === "audio") {
       this.currentlyPlayingAsset = asset;
       this.cdr.detectChanges();
       this.playUrl(asset.url)

@@ -9,8 +9,8 @@ public enum RaceScope {
   DEMO;
 
   /**
-   * Returns the MongoDB collection name formatted for this scope. Demo collections are prefixed
-   * with "demo_", while production collections use the base name.
+   * Returns the table name formatted for this scope. Demo tables are prefixed with "demo_", while
+   * production tables use the base name.
    */
   public String getCollectionName(String baseName) {
     if (baseName == null) {

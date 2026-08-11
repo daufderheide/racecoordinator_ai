@@ -25,7 +25,6 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.UnknownFieldSet;
-import com.mongodb.client.MongoDatabase;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -497,12 +496,9 @@ public class CsvExporter {
     return Math.round(prob * 100) + "%";
   }
 
-  private MongoDatabase getActiveDatabase() {
+  private DatabaseContext getActiveDatabaseContext() {
     try {
-      DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
-      if (dbCtx != null) {
-        return dbCtx.getDatabase();
-      }
+      return ClientSubscriptionManager.getInstance().getDatabaseContext();
     } catch (Exception e) {
       // Ignore
     }
@@ -516,11 +512,11 @@ public class CsvExporter {
     String raceId = race.getRaceModel() != null ? race.getRaceModel().getEntityId() : null;
     boolean isDemo = race.isDemoMode();
 
-    MongoDatabase database = getActiveDatabase();
+    DatabaseContext context = getActiveDatabaseContext();
 
-    if (database != null && raceId != null && !raceId.isEmpty()) {
+    if (context != null && raceId != null && !raceId.isEmpty()) {
       RacePredictionRecord record =
-          DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
+          DatabaseService.getInstance().getRacePredictionRecord(context, raceId, isDemo);
       if (record != null && record.getPreRace() != null) {
         return record.getPreRace();
       }
@@ -535,7 +531,7 @@ public class CsvExporter {
         RacePredictionRecord record =
             RacePredictionService.getInstance()
                 .generateAndSavePreRacePrediction(
-                    database,
+                    context,
                     raceId != null ? raceId : "temp",
                     race.getRaceModel(),
                     race.getDrivers(),
@@ -559,10 +555,9 @@ public class CsvExporter {
     boolean isDemo = race.isDemoMode();
 
     try {
-      MongoDatabase database = getActiveDatabase();
-      if (database != null && raceId != null && !raceId.isEmpty()) {
-        return DatabaseService.getInstance()
-            .getPredictionEvaluationRecord(database, raceId, isDemo);
+      DatabaseContext context = getActiveDatabaseContext();
+      if (context != null && raceId != null && !raceId.isEmpty()) {
+        return DatabaseService.getInstance().getPredictionEvaluationRecord(context, raceId, isDemo);
       }
     } catch (Exception e) {
       // Ignore

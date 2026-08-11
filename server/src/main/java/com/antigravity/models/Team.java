@@ -1,13 +1,10 @@
 package com.antigravity.models;
 
 import com.antigravity.proto.TeamModel;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 public class Team extends Model {
 
@@ -15,13 +12,13 @@ public class Team extends Model {
   private final String avatarUrl;
   private final List<String> driverIds;
 
-  @BsonCreator
+  @JsonCreator
   public Team(
-      @BsonProperty("name") @JsonProperty("name") String name,
-      @BsonProperty("avatarUrl") @JsonProperty("avatarUrl") String avatarUrl,
-      @BsonProperty("driverIds") @JsonProperty("driverIds") List<String> driverIds,
-      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
-      @BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id) {
+      @JsonProperty("name") String name,
+      @JsonProperty("avatarUrl") String avatarUrl,
+      @JsonProperty("driverIds") List<String> driverIds,
+      @JsonProperty("entity_id") String entityId,
+      @JsonProperty("_id") String id) {
     super(id, entityId);
     this.name = name;
     this.avatarUrl = avatarUrl;

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,7 +37,7 @@ public class RaceSerializationTest {
     // 1 real driver
     drivers.add(
         new com.antigravity.race.RaceParticipant(
-            new Driver("Real Driver", "Real Nick", "real1", new ObjectId())));
+            new Driver("Real Driver", "Real Nick", "real1", "1")));
 
     // 2 lanes
     List<Lane> lanes = new ArrayList<>();

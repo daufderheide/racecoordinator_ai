@@ -131,7 +131,6 @@ $ForkCount = "1"
 $ReuseForks = "true"
 
 $env:npm_config_cache = Join-Path $ServerTmp "npm_cache"
-$env:EMBEDDED_MONGO_ARTIFACTS = Join-Path $ServerTmp ".embedmongo"
 
 # Ensure all temp directories are on the same drive to avoid cross-drive file move issues
 $env:TEMP = $ServerTmp
@@ -146,13 +145,9 @@ $MvnArgs = @("test") + $args + @(
     "-DforkCount=$ForkCount"
     "-DreuseForks=$ReuseForks"
     "-Djava.io.tmpdir=$ServerTmp"
-    "-Dde.flapdoodle.embed.mongo.artifacts=$ServerTmp\.embedmongo"
     "-Dmaven.repo.local=$ServerDir\.m2\repository"
     "-DargLine=-Dnet.bytebuddy.experimental=true"
 )
-if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") {
-    $MvnArgs += '-Dde.flapdoodle.os.override="Windows|X86_64||"'
-}
 
 # Find mvn.cmd
 $MvnCmd = Get-Command mvn.cmd -ErrorAction SilentlyContinue

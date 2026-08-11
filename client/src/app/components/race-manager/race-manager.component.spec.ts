@@ -164,6 +164,19 @@ describe("RaceManagerComponent", () => {
     expect(component.filteredRaces.length).toBe(3);
   });
 
+  it("should select the first alphabetically sorted race by default when backend returns unsorted races", () => {
+    dataService.getRaces.and.returnValue(
+      of([
+        { entity_id: "r99", name: "Zack Cup" },
+        { entity_id: "r1", name: "Alpha Cup" },
+      ] as any),
+    );
+    component.selectedRace = undefined;
+    component.loadData();
+    expect(component.selectedRace?.name).toBe("Alpha Cup");
+    expect(component.races[0].name).toBe("Alpha Cup");
+  });
+
   it("should select a race and load heats if driverCount > 0", () => {
     const mockRace = component.races.find((r) => r.entity_id === "r2")!;
     component.driverCount = 4;

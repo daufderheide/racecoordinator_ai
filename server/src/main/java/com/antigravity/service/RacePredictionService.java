@@ -1,5 +1,6 @@
 package com.antigravity.service;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.DriverTrackStats;
 import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
@@ -8,14 +9,12 @@ import com.antigravity.models.RacePredictionRecord.PredictionSnapshot;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
-import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.bson.types.ObjectId;
 
 public class RacePredictionService {
 
@@ -35,18 +34,18 @@ public class RacePredictionService {
   }
 
   public RacePredictionRecord generateAndSavePreRacePrediction(
-      MongoDatabase database,
+      DatabaseContext context,
       String raceId,
       Race raceModel,
       List<RaceParticipant> participants,
       List<Heat> heats,
       boolean isDemo) {
     return generateAndSavePreRacePrediction(
-        database, raceId, raceModel, participants, heats, isDemo, false);
+        context, raceId, raceModel, participants, heats, isDemo, false);
   }
 
   public RacePredictionRecord generateAndSavePreRacePrediction(
-      MongoDatabase database,
+      DatabaseContext context,
       String raceId,
       Race raceModel,
       List<RaceParticipant> participants,
@@ -60,9 +59,9 @@ public class RacePredictionService {
 
     String trackId = raceModel != null ? raceModel.getTrackEntityId() : "";
 
-    if (!force && database != null) {
+    if (!force && context != null) {
       RacePredictionRecord existing =
-          DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
+          DatabaseService.getInstance().getRacePredictionRecord(context, raceId, isDemo);
       if (existing != null && existing.getPreRace() != null) {
         List<RacePredictionRecord.DriverProjection> standings =
             existing.getPreRace().getProjectedStandings();
@@ -96,14 +95,14 @@ public class RacePredictionService {
     }
     Map<String, DriverTrackStats> statsMap = new HashMap<>();
 
-    if (database != null && trackId != null && !trackId.isEmpty()) {
+    if (context != null && trackId != null && !trackId.isEmpty()) {
       for (RaceParticipant rp : participants) {
         if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
           String driverId = PredictionEngine.getParticipantId(rp);
           if (driverId != null && !driverId.isEmpty()) {
             DriverTrackStats dts =
                 DatabaseService.getInstance()
-                    .getDriverTrackStats(database, driverId, trackId, isDemo);
+                    .getDriverTrackStats(context, driverId, trackId, isDemo);
             if (dts != null) {
               statsMap.put(driverId, dts);
             }
@@ -116,12 +115,11 @@ public class RacePredictionService {
         engine.generatePreRacePrediction(raceModel, participants, heats, statsMap);
 
     RacePredictionRecord record = null;
-    if (database != null) {
-      record = DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
+    if (context != null) {
+      record = DatabaseService.getInstance().getRacePredictionRecord(context, raceId, isDemo);
     }
     if (record == null) {
       record = new RacePredictionRecord();
-      record.setId(new ObjectId());
       record.setRaceId(raceId);
     }
     record.setTimestamp(System.currentTimeMillis());
@@ -130,15 +128,15 @@ public class RacePredictionService {
       record.setRealtimeSnapshots(new ArrayList<>());
     }
 
-    if (database != null) {
-      DatabaseService.getInstance().saveRacePredictionRecord(database, record, isDemo);
+    if (context != null) {
+      DatabaseService.getInstance().saveRacePredictionRecord(context, record, isDemo);
     }
 
     return record;
   }
 
   public PredictionSnapshot updateRealtimePrediction(
-      MongoDatabase database,
+      DatabaseContext context,
       String raceId,
       Race raceModel,
       List<RaceParticipant> participants,
@@ -150,14 +148,14 @@ public class RacePredictionService {
     String trackId = raceModel != null ? raceModel.getTrackEntityId() : "";
     Map<String, DriverTrackStats> statsMap = new HashMap<>();
 
-    if (database != null && trackId != null && !trackId.isEmpty()) {
+    if (context != null && trackId != null && !trackId.isEmpty()) {
       for (RaceParticipant rp : participants) {
         if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
           String driverId = PredictionEngine.getParticipantId(rp);
           if (driverId != null && !driverId.isEmpty()) {
             DriverTrackStats dts =
                 DatabaseService.getInstance()
-                    .getDriverTrackStats(database, driverId, trackId, isDemo);
+                    .getDriverTrackStats(context, driverId, trackId, isDemo);
             if (dts != null) {
               statsMap.put(driverId, dts);
             }
@@ -170,9 +168,9 @@ public class RacePredictionService {
         engine.generateRealtimePrediction(
             raceModel, participants, heats, statsMap, currentHeatIndex, driverHeatStates);
 
-    if (database != null && raceId != null) {
+    if (context != null && raceId != null) {
       RacePredictionRecord record =
-          DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
+          DatabaseService.getInstance().getRacePredictionRecord(context, raceId, isDemo);
       if (record == null) {
         record = new RacePredictionRecord();
         record.setRaceId(raceId);
@@ -185,30 +183,29 @@ public class RacePredictionService {
       }
       record.getRealtimeSnapshots().add(snapshot);
 
-      // Keep only last N to prevent unbounded growth?
-      if (record.getRealtimeSnapshots().size() > 50) { // e.g. keep last 50
+      if (record.getRealtimeSnapshots().size() > 50) {
         record.getRealtimeSnapshots().remove(0);
       }
 
-      DatabaseService.getInstance().saveRacePredictionRecord(database, record, isDemo);
-      DatabaseService.getInstance().deletePredictionEvaluationRecord(database, raceId, isDemo);
+      DatabaseService.getInstance().saveRacePredictionRecord(context, record, isDemo);
+      DatabaseService.getInstance().deletePredictionEvaluationRecord(context, raceId, isDemo);
     }
 
     return snapshot;
   }
 
   public PredictionEvaluationRecord evaluateAndSavePostRacePrediction(
-      MongoDatabase database,
+      DatabaseContext context,
       String raceId,
       List<RacePredictionRecord.DriverProjection> actualStandings,
       boolean isDemo) {
 
-    if (database == null || raceId == null || actualStandings == null) {
+    if (context == null || raceId == null || actualStandings == null) {
       return null;
     }
 
     RacePredictionRecord record =
-        DatabaseService.getInstance().getRacePredictionRecord(database, raceId, isDemo);
+        DatabaseService.getInstance().getRacePredictionRecord(context, raceId, isDemo);
     if (record == null || record.getPreRace() == null) {
       return null;
     }
@@ -216,7 +213,7 @@ public class RacePredictionService {
     PredictionEvaluationRecord evalRecord =
         engine.evaluatePredictionAccuracy(raceId, record.getPreRace(), actualStandings);
 
-    DatabaseService.getInstance().savePredictionEvaluationRecord(database, evalRecord, isDemo);
+    DatabaseService.getInstance().savePredictionEvaluationRecord(context, evalRecord, isDemo);
 
     return evalRecord;
   }

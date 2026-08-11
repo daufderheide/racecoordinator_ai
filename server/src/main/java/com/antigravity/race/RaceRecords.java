@@ -692,9 +692,7 @@ public class RaceRecords {
           new ArrayList<>(overallLaneHighestScoreHolderNicknames));
       stats.setLaneHighestScoreTeamNames(new ArrayList<>(overallLaneHighestScoreHolderTeamNames));
       stats.setLaneHighestScoreDates(new ArrayList<>(overallLaneHighestScoreDates));
-      new Thread(
-              () -> dbService.updateGlobalStatistics(race.getDatabaseContext().getDatabase(), race))
-          .start();
+      new Thread(() -> dbService.updateGlobalStatistics(race.getDatabaseContext(), race)).start();
     } catch (Exception e) {
       logger.error("Failed to save global statistics", e);
     }

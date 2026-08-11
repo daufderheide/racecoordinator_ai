@@ -6,10 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Season extends Model {
@@ -19,13 +15,12 @@ public class Season extends Model {
   private final List<SeasonRaceRecord> races;
 
   @JsonCreator
-  @BsonCreator
   public Season(
-      @BsonProperty("name") @JsonProperty("name") String name,
-      @BsonProperty("drops") @JsonProperty("drops") Integer drops,
-      @BsonProperty("races") @JsonProperty("races") List<SeasonRaceRecord> races,
-      @BsonProperty("entity_id") @JsonProperty("entity_id") @JsonAlias("entity_id") String entityId,
-      @BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id) {
+      @JsonProperty("name") String name,
+      @JsonProperty("drops") Integer drops,
+      @JsonProperty("races") List<SeasonRaceRecord> races,
+      @JsonProperty("entity_id") @JsonAlias("entity_id") String entityId,
+      @JsonProperty("_id") String id) {
     super(id, entityId);
     this.name = name != null ? name : "";
     this.drops = drops != null ? Math.max(0, drops) : 0;

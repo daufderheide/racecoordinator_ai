@@ -6,47 +6,38 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SeasonRaceRecord {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class SeasonDriverResult {
-    @BsonProperty("driver_id")
     @JsonProperty("driver_id")
     private final String driverId;
 
-    @BsonProperty("driver_name")
     @JsonProperty("driver_name")
     private final String driverName;
 
-    @BsonProperty("overall_rank")
     @JsonProperty("overall_rank")
     private final int overallRank;
 
-    @BsonProperty("overall_points")
     @JsonProperty("overall_points")
     private final int overallPoints;
 
-    @BsonProperty("heat_points")
     @JsonProperty("heat_points")
     private final int heatPoints;
 
-    @BsonProperty("total_points")
     @JsonProperty("total_points")
     private final int totalPoints;
 
-    @BsonCreator
     @JsonCreator
     public SeasonDriverResult(
-        @BsonProperty("driver_id") @JsonProperty("driver_id") String driverId,
-        @BsonProperty("driver_name") @JsonProperty("driver_name") String driverName,
-        @BsonProperty("overall_rank") @JsonProperty("overall_rank") Integer overallRank,
-        @BsonProperty("overall_points") @JsonProperty("overall_points") Integer overallPoints,
-        @BsonProperty("heat_points") @JsonProperty("heat_points") Integer heatPoints,
-        @BsonProperty("total_points") @JsonProperty("total_points") Integer totalPoints) {
+        @JsonProperty("driver_id") String driverId,
+        @JsonProperty("driver_name") String driverName,
+        @JsonProperty("overall_rank") Integer overallRank,
+        @JsonProperty("overall_points") Integer overallPoints,
+        @JsonProperty("heat_points") Integer heatPoints,
+        @JsonProperty("total_points") Integer totalPoints) {
       this.driverId = driverId != null ? driverId : "";
       this.driverName = driverName != null ? driverName : "";
       this.overallRank = overallRank != null ? overallRank : 0;
@@ -80,36 +71,28 @@ public class SeasonRaceRecord {
     }
   }
 
-  @BsonProperty("race_id")
   @JsonProperty("race_id")
   private final String raceId;
 
-  @BsonProperty("race_name")
   @JsonProperty("race_name")
   private final String raceName;
 
-  @BsonProperty("timestamp")
   @JsonProperty("timestamp")
   private final long timestamp;
 
-  @BsonProperty("is_demo")
   @JsonProperty("is_demo")
   private final boolean isDemo;
 
-  @BsonProperty("driver_results")
   @JsonProperty("driver_results")
   private final List<SeasonDriverResult> driverResults;
 
-  @BsonCreator
   @JsonCreator
   public SeasonRaceRecord(
-      @BsonProperty("race_id") @JsonProperty("race_id") String raceId,
-      @BsonProperty("race_name") @JsonProperty("race_name") String raceName,
-      @BsonProperty("timestamp") @JsonProperty("timestamp") Long timestamp,
-      @BsonProperty("is_demo") @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"})
-          Boolean isDemo,
-      @BsonProperty("driver_results") @JsonProperty("driver_results")
-          List<SeasonDriverResult> driverResults) {
+      @JsonProperty("race_id") String raceId,
+      @JsonProperty("race_name") String raceName,
+      @JsonProperty("timestamp") Long timestamp,
+      @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"}) Boolean isDemo,
+      @JsonProperty("driver_results") List<SeasonDriverResult> driverResults) {
     this.raceId = raceId != null ? raceId : "";
     this.raceName = raceName != null ? raceName : "";
     this.timestamp = timestamp != null ? timestamp : System.currentTimeMillis();

@@ -665,3 +665,31 @@
   font-size: 32px;
 }
 
+/* Analysis Section */
+.analysis-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(130px, 1fr));
+}
+
+.analysis-row {
+  background: rgba(13, 20, 33, 0.7);
+  border-color: rgba(0, 229, 255, 0.15);
+}
+
+.analysis-row:hover {
+  background: rgba(18, 27, 46, 0.85);
+  border-color: rgba(0, 229, 255, 0.4);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
+}
+
+

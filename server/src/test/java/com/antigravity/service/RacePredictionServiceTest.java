@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
 import com.antigravity.models.RacePredictionRecord;
@@ -11,7 +12,6 @@ import com.antigravity.models.RacePredictionRecord.PredictionSnapshot;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
-import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +21,7 @@ import org.junit.Test;
 public class RacePredictionServiceTest {
 
   private RacePredictionService service;
-  private MongoDatabase mockDb;
+  private DatabaseContext mockDb;
   private Race mockRace;
   private List<RaceParticipant> participants;
   private List<Heat> heats;
@@ -29,7 +29,7 @@ public class RacePredictionServiceTest {
   @Before
   public void setUp() {
     service = RacePredictionService.getInstance();
-    mockDb = mock(MongoDatabase.class);
+    mockDb = mock(DatabaseContext.class);
     mockRace = mock(Race.class);
     when(mockRace.getTrackEntityId()).thenReturn("track_1");
 

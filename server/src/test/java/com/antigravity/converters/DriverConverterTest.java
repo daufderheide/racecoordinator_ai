@@ -8,7 +8,6 @@ import com.antigravity.models.Driver;
 import com.antigravity.proto.DriverModel;
 import com.antigravity.proto.Model;
 import java.util.HashSet;
-import org.bson.types.ObjectId;
 import org.junit.Test;
 
 public class DriverConverterTest {
@@ -104,7 +103,7 @@ public class DriverConverterTest {
             null,
             null,
             "d2",
-            new ObjectId());
+            "1");
 
     DriverModel proto = DriverConverter.toProto(original, new HashSet<>());
     Driver reconstructed = DriverConverter.fromProto(proto);

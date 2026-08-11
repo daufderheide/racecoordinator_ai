@@ -2,6 +2,7 @@ import {
   ChangeDetectorRef,
   Compiler,
   Component,
+  ComponentRef,
   effect,
   Inject,
   Injector,
@@ -54,6 +55,7 @@ export class CustomDriverStationBaseComponent extends DefaultDriverStationCompon
 export class DriverStationComponent implements OnInit {
   @ViewChild("container", { read: ViewContainerRef, static: true })
   container!: ViewContainerRef;
+  private componentRef: ComponentRef<any> | null = null;
   private childComponent: any;
 
   inputLaneIndex = input<number>();
@@ -70,11 +72,21 @@ export class DriverStationComponent implements OnInit {
     private logger: LoggerService,
   ) {
     effect(() => {
-      this.inputLaneIndex(); // read to track dependency
-      if (this.childComponent) {
-        this.childComponent.inputLaneIndex = this.inputLaneIndex;
-      }
+      const val = this.inputLaneIndex();
+      this.updateChildInput(val);
     });
+  }
+
+  private updateChildInput(val?: number) {
+    const laneVal = val !== undefined ? val : this.inputLaneIndex();
+    if (this.componentRef && laneVal !== undefined) {
+      if (typeof this.componentRef.setInput === "function") {
+        this.componentRef.setInput("inputLaneIndex", laneVal);
+      }
+    }
+    if (this.childComponent) {
+      this.childComponent.inputLaneIndex = this.inputLaneIndex;
+    }
   }
 
   async ngOnInit() {
@@ -110,20 +122,18 @@ export class DriverStationComponent implements OnInit {
       // Defer the loading state update to avoid ExpressionChangedAfterItHasBeenCheckedError
       setTimeout(() => {
         this.isLoading = false;
-        if (this.childComponent) {
-          // ensure the input gets passed down correctly if loaded synchronously
-          this.childComponent.inputLaneIndex = this.inputLaneIndex;
-        }
+        this.updateChildInput();
         this.cdr.detectChanges();
       });
     }
   }
 
   loadDefaultComponent() {
-    const componentRef = this.container.createComponent(
+    this.componentRef = this.container.createComponent(
       DefaultDriverStationComponent,
     );
-    this.childComponent = componentRef.instance;
+    this.childComponent = this.componentRef.instance;
+    this.updateChildInput();
   }
 
   async loadCustomComponent(subfolder?: string) {
@@ -177,8 +187,9 @@ export class DriverStationComponent implements OnInit {
           tsCode,
         );
 
-      const componentRef = this.container.createComponent(componentType);
-      this.childComponent = componentRef.instance;
+      this.componentRef = this.container.createComponent(componentType);
+      this.childComponent = this.componentRef.instance;
+      this.updateChildInput();
     } catch (e) {
       // If we can't find the specific files, just throw so we fallback
       throw e;

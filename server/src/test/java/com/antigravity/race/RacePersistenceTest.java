@@ -15,12 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
 
-// Mocking the DB context/service might be complex, so we'll test object serialization if possible,
-// or test the logic flow without DB if we suspect logic.
-// But issue is likely persistence.
-// We can use a real Mongo connection or just test the PojoCodecImpl if accessible,
-// strictly speaking we don't have easy access to the configured CodecRegistry here without spinning
-// up the app.
 // Instead, let's verify HeatBuilder logic first.
 
 public class RacePersistenceTest {
@@ -118,7 +112,7 @@ public class RacePersistenceTest {
   }
 
   @Test
-  public void testRaceRestorationLinksDriverInstances() {
+  public void testRaceRestorationLinksDriverInstances() throws Exception {
     Driver d1 =
         new Driver(
             "D1", "Driver One", null, null, null, null, null, null, null, null, null, "d1", null);
@@ -168,7 +162,7 @@ public class RacePersistenceTest {
   }
 
   @Test
-  public void testRaceSaveLoadPreservesBestLapTimesAndExports() {
+  public void testRaceSaveLoadPreservesBestLapTimesAndExports() throws Exception {
     Driver d1 = new Driver("Driver 1", "d1");
     RaceParticipant rp1 = new RaceParticipant(d1);
     List<RaceParticipant> masterDrivers = new ArrayList<>();
@@ -207,21 +201,13 @@ public class RacePersistenceTest {
     saveData.setDrivers(masterDrivers);
     saveData.setHeats(heats);
 
-    // Simulate MongoDB BSON Save and Load
-    org.bson.codecs.configuration.CodecRegistry pojoCodecRegistry =
-        org.bson.codecs.configuration.CodecRegistries.fromRegistries(
-            com.mongodb.MongoClientSettings.getDefaultCodecRegistry(),
-            org.bson.codecs.configuration.CodecRegistries.fromProviders(
-                org.bson.codecs.pojo.PojoCodecProvider.builder().automatic(true).build()));
-
-    org.bson.codecs.Codec<RaceSaveData> codec = pojoCodecRegistry.get(RaceSaveData.class);
-    org.bson.BsonDocument document = new org.bson.BsonDocument();
-    org.bson.BsonWriter writer = new org.bson.BsonDocumentWriter(document);
-    codec.encode(writer, saveData, org.bson.codecs.EncoderContext.builder().build());
-
-    org.bson.BsonReader reader = new org.bson.BsonDocumentReader(document);
-    RaceSaveData decodedSaveData =
-        codec.decode(reader, org.bson.codecs.DecoderContext.builder().build());
+    // Simulate SQLite JSON Save and Load via Jackson
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    mapper.configure(
+        com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    String json = mapper.writeValueAsString(saveData);
+    RaceSaveData decodedSaveData = mapper.readValue(json, RaceSaveData.class);
 
     DriverHeatData decodedDhd = decodedSaveData.getHeats().get(0).getDrivers().get(0);
     assertEquals(5.432, decodedDhd.getBestLapTime(), 0.001);

@@ -1,0 +1,183 @@
+<div class="dashboard-wrapper">
+  <div
+    class="scalable-content"
+    [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+  >
+    <!-- Header Bar -->
+    <div class="header-bar">
+      <div class="title-glow-container">
+        <h1 class="page-title">{{ "RD_WIN_SEASON_RESULTS" | translate }}</h1>
+        <div class="cyberpunk-line"></div>
+      </div>
+      <div class="race-name-container">
+        <span class="label-text">SEASON</span>
+        <span class="value-text">{{
+          season?.name || ("SR_NO_ACTIVE_SEASON" | translate)
+        }}</span>
+      </div>
+    </div>
+
+    <!-- Main Results Glass Panel Overlay (Immutable Season Editor RHS) -->
+    <div class="results-container">
+      <div class="editor-panel-right">
+        <!-- Season Summary Header -->
+        <div class="panel-header">
+          <div class="header-title-group">
+            <h3>{{ season?.name || ("SR_NO_ACTIVE_SEASON" | translate) }}</h3>
+            @if (hasDemoRaces) {
+              <span class="demo-badge">{{
+                "SE_DEMO_RACES_INCLUDED" | translate
+              }}</span>
+            }
+            <span class="meta-pill">
+              {{ "SM_RACES_RUN" | translate }}:
+              <strong>{{ season?.races?.length || 0 }}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="editor-scroll-content">
+          <!-- Standings Section -->
+          <div class="summary-section">
+            <div class="sub-section-header">
+              <h4>{{ "SM_STANDINGS_TITLE" | translate }}</h4>
+            </div>
+            @if (standings.length === 0) {
+              <div class="empty-standings">
+                {{ "SM_NO_RACES_RUN" | translate }}
+              </div>
+            } @else {
+              <table class="standings-table">
+                <thead>
+                  <tr>
+                    <th class="col-rank">{{ "SM_RANK" | translate }}</th>
+                    <th class="col-driver">{{ "SM_DRIVER" | translate }}</th>
+                    <th class="col-pts">{{ "SM_NET_POINTS" | translate }}</th>
+                    <th class="col-pts">{{ "SM_GROSS_POINTS" | translate }}</th>
+                    <th class="col-races">{{ "SM_RACES" | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    item of standings;
+                    track item.driver_id;
+                    let rankIdx = $index
+                  ) {
+                    <tr
+                      [class.podium-1]="rankIdx === 0"
+                      [class.podium-2]="rankIdx === 1"
+                      [class.podium-3]="rankIdx === 2"
+                    >
+                      <td class="col-rank">
+                        @if (rankIdx === 0) {
+                          🥇 1
+                        } @else if (rankIdx === 1) {
+                          🥈 2
+                        } @else if (rankIdx === 2) {
+                          🥉 3
+                        } @else {
+                          {{ rankIdx + 1 }}
+                        }
+                      </td>
+                      <td class="col-driver">
+                        <strong>{{ item.driver_name }}</strong>
+                      </td>
+                      <td class="col-pts net-highlight">
+                        <strong>{{ item.net_points }}</strong>
+                      </td>
+                      <td class="col-pts">{{ item.gross_points }}</td>
+                      <td class="col-races">{{ item.races_run }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+
+          <!-- Race Breakdown Section -->
+          <div class="races-expander-section">
+            <div class="sub-section-header">
+              <h4>{{ "SM_BREAKDOWN_TITLE" | translate }}</h4>
+            </div>
+            @if (!season || !season.races || season.races.length === 0) {
+              <div class="empty-races">
+                <p>{{ "SM_NO_RACES_RUN" | translate }}</p>
+              </div>
+            } @else {
+              <div class="expander-list">
+                @for (
+                  race of season.races;
+                  track race.race_id || idx;
+                  let idx = $index
+                ) {
+                  <div class="race-expander-card">
+                    <div
+                      class="expander-title-bar"
+                      (click)="toggleRaceExpanded(race.race_id || '' + idx)"
+                    >
+                      <div class="expander-title-left">
+                        <span
+                          class="expander-icon"
+                          [class.collapsed]="
+                            !isRaceExpanded(race.race_id || '' + idx)
+                          "
+                          >▼</span
+                        >
+                        <span class="race-step">#{{ idx + 1 }}</span>
+                        <span class="race-name">{{ race.race_name }}</span>
+                        @if (race.is_demo) {
+                          <span class="badge-demo">{{
+                            "SE_BADGE_DEMO" | translate
+                          }}</span>
+                        }
+                        @if (race.timestamp) {
+                          <span class="race-date"
+                            >({{ race.timestamp | date: "short" }})</span
+                          >
+                        }
+                      </div>
+                    </div>
+                    @if (isRaceExpanded(race.race_id || "" + idx)) {
+                      <div class="expander-body">
+                        <table class="race-breakdown-table">
+                          <thead>
+                            <tr>
+                              <th>{{ "SM_RANK" | translate }}</th>
+                              <th>{{ "SM_DRIVER" | translate }}</th>
+                              <th>{{ "SM_OVERALL_POS_POINTS" | translate }}</th>
+                              <th>{{ "SM_HEAT_POS_POINTS" | translate }}</th>
+                              <th>Total Pts</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (
+                              res of race.driver_results;
+                              track res.driver_id;
+                              let rIdx = $index
+                            ) {
+                              <tr>
+                                <td>#{{ res.overall_rank || rIdx + 1 }}</td>
+                                <td>
+                                  <strong>{{ res.driver_name }}</strong>
+                                </td>
+                                <td>{{ res.overall_points }}</td>
+                                <td>{{ res.heat_points }}</td>
+                                <td>
+                                  <strong>{{ res.total_points }}</strong>
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

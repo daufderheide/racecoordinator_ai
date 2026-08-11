@@ -1,5 +1,6 @@
 package com.antigravity.race;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.Driver;
@@ -19,7 +20,6 @@ import com.antigravity.race.prediction.PredictionEngine.DriverHeatState;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.RacePredictionService;
-import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1046,10 +1046,7 @@ public class HeatExecutionManager {
         return;
       }
 
-      MongoDatabase db =
-          this.race.getDatabaseContext() != null
-              ? this.race.getDatabaseContext().getDatabase()
-              : null;
+      DatabaseContext dbCtx = this.race.getDatabaseContext();
 
       Map<String, DriverHeatState> actualDriverStates = buildDriverHeatStates(this.race);
       List<Heat> heats = this.race.getHeats();
@@ -1060,7 +1057,7 @@ public class HeatExecutionManager {
 
       RacePredictionService.getInstance()
           .updateRealtimePrediction(
-              db,
+              dbCtx,
               raceId,
               this.race.getRaceModel(),
               this.race.getDrivers(),

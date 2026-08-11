@@ -45,6 +45,17 @@ public class BleConnection implements IBleConnection {
   private static final java.util.Map<String, Long> discoveredCache =
       new java.util.concurrent.ConcurrentHashMap<>();
 
+  private static final java.util.Set<String> activeConnectedDevices =
+      java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
+
+  private static volatile long lastScanTimeMs = 0;
+  private static final long SCAN_CACHE_TTL_MS = 10000;
+
+  private static final java.util.concurrent.atomic.AtomicInteger connectingCount =
+      new java.util.concurrent.atomic.AtomicInteger(0);
+
+  private static final Object SCAN_LOCK = new Object();
+
   public static List<String> getDiscoveredBleDevices() {
     if (mockMode) {
       logger.info(
@@ -52,34 +63,64 @@ public class BleConnection implements IBleConnection {
           mockDiscoveredDevices);
       return new ArrayList<>(mockDiscoveredDevices);
     }
-    logger.debug("GET /api/ble-devices - Executing native BLE discovery scan...");
-    List<String> devices = runNativeBleScan();
     long now = System.currentTimeMillis();
-    for (String dev : devices) {
+
+    for (String dev : activeConnectedDevices) {
       if (dev != null && !dev.trim().isEmpty()) {
         discoveredCache.put(dev, now);
       }
     }
+    for (String dev : mockDiscoveredDevices) {
+      if (dev != null && !dev.trim().isEmpty()) {
+        discoveredCache.put(dev, now);
+      }
+    }
+
+    if (connectingCount.get() > 0 || !activeConnectedDevices.isEmpty()) {
+      logger.debug(
+          "GET /api/ble-devices - BLE connection active or in progress; returning cached devices.");
+      return new ArrayList<>(discoveredCache.keySet());
+    }
+
+    if (now - lastScanTimeMs >= SCAN_CACHE_TTL_MS) {
+      synchronized (SCAN_LOCK) {
+        if (connectingCount.get() > 0 || !activeConnectedDevices.isEmpty()) {
+          return new ArrayList<>(discoveredCache.keySet());
+        }
+        if (now - lastScanTimeMs >= SCAN_CACHE_TTL_MS) {
+          logger.debug("GET /api/ble-devices - Executing native BLE discovery scan...");
+          List<String> devices = runNativeBleScan();
+          for (String dev : devices) {
+            if (dev != null && !dev.trim().isEmpty()) {
+              discoveredCache.put(dev, now);
+            }
+          }
+          lastScanTimeMs = now;
+        }
+      }
+    }
+
     // Retain entries for 30 seconds
     discoveredCache.entrySet().removeIf(entry -> (now - entry.getValue()) > 30000);
 
     List<String> aggregated = new ArrayList<>(discoveredCache.keySet());
     logger.debug(
-        "GET /api/ble-devices - Native BLE discovery scan returned {} devices (aggregated active count={}): {}",
-        devices.size(),
-        aggregated.size(),
-        aggregated);
+        "GET /api/ble-devices - Active BLE devices count={}: {}", aggregated.size(), aggregated);
     return aggregated;
   }
 
   public static void registerDiscoveredBleDevice(String name) {
     if (name != null && !name.trim().isEmpty() && !mockDiscoveredDevices.contains(name)) {
       mockDiscoveredDevices.add(name);
+      discoveredCache.put(name, System.currentTimeMillis());
     }
   }
 
   public static void clearDiscoveredBleDevices() {
     mockDiscoveredDevices.clear();
+    discoveredCache.clear();
+    activeConnectedDevices.clear();
+    lastScanTimeMs = 0;
   }
 
   public BleConnection() {}
@@ -109,19 +150,56 @@ public class BleConnection implements IBleConnection {
 
   @Override
   public synchronized void connect(String target) throws IOException {
-    this.deviceName = target;
-    this.deviceAddress = target;
+    connectingCount.incrementAndGet();
+    try {
+      this.deviceName = target;
+      this.deviceAddress = target;
 
-    if (mockMode) {
-      this.open = true;
-      logger.info("BLE Connection (MOCK) established to target: {}", target);
-      return;
+      if (mockMode) {
+        this.open = true;
+        if (target != null && !target.isEmpty()) {
+          activeConnectedDevices.add(target);
+        }
+        logger.info("BLE Connection (MOCK) established to target: {}", target);
+        return;
+      }
+
+      logger.info(
+          "Initiating native BLE connection to peripheral ({}) on OS: {}",
+          target,
+          System.getProperty("os.name"));
+      synchronized (SCAN_LOCK) {
+        if (!startNativeBridgeProcess(target)) {
+          return;
+        }
+      }
+
+      this.bridgeWriter =
+          new BufferedWriter(
+              new OutputStreamWriter(bridgeProcess.getOutputStream(), StandardCharsets.UTF_8));
+
+      CountDownLatch connectLatch = new CountDownLatch(1);
+      final boolean[] connectSuccess = new boolean[1];
+
+      startRxThread(target, connectLatch, connectSuccess);
+
+      try {
+        if (!connectLatch.await(5, TimeUnit.SECONDS) || !connectSuccess[0]) {
+          disconnect();
+          throw new IOException(
+              "Failed to connect to native BLE peripheral within 5 seconds: " + target);
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        disconnect();
+        throw new IOException("Interrupted waiting for BLE connection to: " + target, e);
+      }
+    } finally {
+      connectingCount.decrementAndGet();
     }
+  }
 
-    logger.info(
-        "Initiating native BLE connection to peripheral ({}) on OS: {}",
-        target,
-        System.getProperty("os.name"));
+  private boolean startNativeBridgeProcess(String target) throws IOException {
     try {
       if (isMac()) {
         this.bridgeProcess = BleConnectionMac.startBridgeProcess(target);
@@ -131,21 +209,20 @@ public class BleConnection implements IBleConnection {
         this.bridgeProcess = BleConnectionLinux.startBridgeProcess(target);
       } else {
         this.open = true;
+        if (target != null && !target.isEmpty()) {
+          activeConnectedDevices.add(target);
+        }
         logger.warn(
             "Unsupported OS for native BLE, falling back to mock BLE for target: {}", target);
-        return;
+        return false;
       }
+      return true;
     } catch (Exception e) {
       throw new IOException("Failed to start native BLE process for target " + target, e);
     }
+  }
 
-    this.bridgeWriter =
-        new BufferedWriter(
-            new OutputStreamWriter(bridgeProcess.getOutputStream(), StandardCharsets.UTF_8));
-
-    CountDownLatch connectLatch = new CountDownLatch(1);
-    final boolean[] connectSuccess = new boolean[1];
-
+  private void startRxThread(String target, CountDownLatch connectLatch, boolean[] connectSuccess) {
     Thread rxThread =
         new Thread(
             () -> {
@@ -158,11 +235,17 @@ public class BleConnection implements IBleConnection {
                   line = line.trim();
                   if ("CONNECTED".equals(line)) {
                     this.open = true;
+                    if (target != null && !target.isEmpty()) {
+                      activeConnectedDevices.add(target);
+                    }
                     connectSuccess[0] = true;
                     connectLatch.countDown();
                     logger.info("Native CoreBluetooth connected to BART peripheral: {}", target);
                   } else if ("DISCONNECTED".equals(line)) {
                     this.open = false;
+                    if (target != null) {
+                      activeConnectedDevices.remove(target);
+                    }
                     connectLatch.countDown();
                     logger.info(
                         "Native CoreBluetooth disconnected from BART peripheral: {}", target);
@@ -179,6 +262,9 @@ public class BleConnection implements IBleConnection {
                 logger.debug("BLE bridge RX thread ended: {}", e.getMessage());
               } finally {
                 this.open = false;
+                if (target != null) {
+                  activeConnectedDevices.remove(target);
+                }
                 connectLatch.countDown();
               }
             },
@@ -186,23 +272,15 @@ public class BleConnection implements IBleConnection {
 
     rxThread.setDaemon(true);
     rxThread.start();
-
-    try {
-      if (!connectLatch.await(10, TimeUnit.SECONDS) || !connectSuccess[0]) {
-        disconnect();
-        throw new IOException(
-            "Failed to connect to native BLE peripheral within 10 seconds: " + target);
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      disconnect();
-      throw new IOException("Interrupted waiting for BLE connection to: " + target, e);
-    }
   }
 
   @Override
   public synchronized void disconnect() {
     this.open = false;
+    String target = deviceAddress != null ? deviceAddress : deviceName;
+    if (target != null) {
+      activeConnectedDevices.remove(target);
+    }
     if (bridgeWriter != null) {
       try {
         bridgeWriter.write("DISCONNECT\n");
@@ -221,8 +299,17 @@ public class BleConnection implements IBleConnection {
     }
     this.bridgeProcess = null;
     this.bridgeWriter = null;
-    logger.info(
-        "BLE Connection disconnected from: {}", deviceAddress != null ? deviceAddress : deviceName);
+    logger.info("BLE Connection disconnected from: {}", target);
+  }
+
+  private final java.io.ByteArrayOutputStream sentBuffer = new java.io.ByteArrayOutputStream();
+
+  public synchronized byte[] getSentBytes() {
+    return sentBuffer.toByteArray();
+  }
+
+  public synchronized void clearSentBytes() {
+    sentBuffer.reset();
   }
 
   @Override
@@ -231,6 +318,9 @@ public class BleConnection implements IBleConnection {
       throw new IOException("BLE connection not open");
     }
     logger.info("BLE Outbound -> {}", bytesToHex(data));
+    if (data != null) {
+      sentBuffer.write(data, 0, data.length);
+    }
     if (mockMode || bridgeWriter == null) {
       return;
     }

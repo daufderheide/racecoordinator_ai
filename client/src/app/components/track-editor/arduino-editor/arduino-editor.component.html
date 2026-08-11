@@ -72,9 +72,11 @@
                             type="button"
                             [id]="'arduino-status-badge-' + index()"
                             class="status-badge"
-                            [class.connected]="interfaceStatus == 0"
+                            [class.connected]="
+                              interfaceStatus === 2 || interfaceStatus === 0
+                            "
                             [title]="
-                              interfaceStatus == 0
+                              interfaceStatus === 2 || interfaceStatus === 0
                                 ? 'Connected'
                                 : 'Disconnected'
                             "

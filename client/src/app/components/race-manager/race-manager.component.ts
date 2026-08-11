@@ -171,7 +171,9 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.dataService.getRaces().subscribe({
       next: (races) => {
-        this.races = races;
+        this.races = (races || []).sort((a, b) =>
+          naturalSortCompare(a.name || "", b.name || ""),
+        );
 
         const lastEdited = this.navigationService.getLastEditedId("race");
         let selectedId = this.route.snapshot.queryParamMap.get("id");
@@ -193,10 +195,10 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
           if (found) {
             this.selectRace(found);
           } else if (this.races.length > 0 && !this.selectedRace) {
-            this.selectRace(this.races[0]);
+            this.selectRace(this.filteredRaces[0] || this.races[0]);
           }
         } else if (this.races.length > 0 && !this.selectedRace) {
-          this.selectRace(this.races[0]);
+          this.selectRace(this.filteredRaces[0] || this.races[0]);
         }
         this.isLoading = false;
         this.cdr.detectChanges();

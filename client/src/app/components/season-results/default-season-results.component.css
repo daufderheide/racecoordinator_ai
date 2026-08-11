@@ -1,0 +1,395 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #06090e;
+  font-family: 'Tahoma', sans-serif;
+  color: #e0e6ed;
+}
+
+.dashboard-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: radial-gradient(circle at center, rgba(13, 21, 30, 0.4) 0%, rgba(6, 9, 14, 0.8) 100%), url('/assets/images/race_results_bg.png') no-repeat center center;
+  background-size: cover;
+}
+
+.scalable-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1920px;
+  min-width: 1920px;
+  height: 1080px;
+  min-height: 1080px;
+  transform-origin: center center;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 40px;
+}
+
+/* Header Bar Styling */
+.header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 25px;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.title-glow-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-title {
+  font-size: 48px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin: 0;
+  padding: 0;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.6), 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+.cyberpunk-line {
+  height: 4px;
+  width: 320px;
+  background: linear-gradient(90deg, #00e5ff 0%, #d500f9 100%);
+  margin-top: 8px;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+}
+
+.race-name-container {
+  display: flex;
+  align-items: center;
+  background: rgba(10, 16, 26, 0.6);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  padding: 10px 24px;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+}
+
+.label-text {
+  font-size: 16px;
+  color: #00e5ff;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-right: 12px;
+}
+
+.value-text {
+  font-size: 24px;
+  color: #ffffff;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* Glass Panel Overlay */
+.results-container {
+  background: rgba(8, 14, 24, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 229, 255, 0.05);
+  border-radius: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 24px;
+}
+
+.editor-panel-right {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-title-group h3 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 1px;
+}
+
+.demo-badge {
+  background: rgba(255, 145, 0, 0.2);
+  border: 1px solid #ff9100;
+  color: #ff9100;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.meta-pill {
+  background: rgba(0, 229, 255, 0.1);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: #00e5ff;
+  font-size: 14px;
+  padding: 4px 12px;
+  border-radius: 16px;
+}
+
+.editor-scroll-content {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Custom Scrollbars */
+.editor-scroll-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.editor-scroll-content::-webkit-scrollbar-track {
+  background: rgba(10, 16, 26, 0.4);
+  border-radius: 4px;
+}
+
+.editor-scroll-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.3);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+}
+
+.editor-scroll-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+.sub-section-header h4 {
+  margin: 0 0 14px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #00e5ff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+.empty-standings, .empty-races {
+  background: rgba(13, 22, 38, 0.4);
+  border: 1px dashed rgba(0, 229, 255, 0.2);
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  color: #90a4ae;
+  font-size: 18px;
+}
+
+/* Standings Table Styling */
+.standings-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.standings-table th {
+  background: rgba(10, 16, 26, 0.8);
+  color: #00e5ff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 2px solid rgba(0, 229, 255, 0.25);
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.standings-table td {
+  padding: 14px 16px;
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+.standings-table tbody tr {
+  background: rgba(13, 22, 38, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.standings-table tbody tr:hover {
+  background: rgba(0, 229, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.col-rank {
+  width: 80px;
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.col-driver {
+  font-size: 20px;
+}
+
+.col-pts {
+  width: 140px;
+}
+
+.col-races {
+  width: 100px;
+}
+
+.net-highlight {
+  color: #00e5ff;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+.podium-1 {
+  background: rgba(255, 215, 0, 0.12) !important;
+  border-left: 4px solid #ffd700 !important;
+}
+
+.podium-2 {
+  background: rgba(192, 192, 192, 0.08) !important;
+  border-left: 4px solid #c0c0c0 !important;
+}
+
+.podium-3 {
+  background: rgba(205, 127, 50, 0.08) !important;
+  border-left: 4px solid #cd7f32 !important;
+}
+
+/* Expander Cards Styling */
+.expander-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.race-expander-card {
+  background: rgba(10, 16, 26, 0.6);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.race-expander-card:hover {
+  border-color: rgba(0, 229, 255, 0.5);
+}
+
+.expander-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+  background: rgba(13, 22, 38, 0.7);
+  user-select: none;
+}
+
+.expander-title-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.expander-icon {
+  color: #00e5ff;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.race-step {
+  font-weight: 800;
+  color: #00e5ff;
+  font-size: 18px;
+}
+
+.race-name {
+  font-weight: 700;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.badge-demo {
+  background: rgba(255, 145, 0, 0.2);
+  color: #ff9100;
+  border: 1px solid #ff9100;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.race-date {
+  color: #90a4ae;
+  font-size: 14px;
+}
+
+.expander-body {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(0, 229, 255, 0.15);
+  background: rgba(6, 10, 16, 0.4);
+}
+
+.race-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.race-breakdown-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #00e5ff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+}
+
+.race-breakdown-table td {
+  padding: 10px 12px;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}

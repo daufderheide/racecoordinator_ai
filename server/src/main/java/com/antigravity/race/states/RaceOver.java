@@ -73,68 +73,56 @@ public class RaceOver implements IRaceState {
       DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
       if (dbCtx != null) {
         DatabaseService dbService = DatabaseService.getInstance();
-        com.mongodb.client.MongoDatabase db = dbCtx.getDatabase();
-        if (db != null) {
-          // The RaceOver state may be entered from a ScheduledExecutorService thread that
-          // has its interrupt flag set when the timer fires. MongoDB's connection pool uses
-          // lockInterruptibly() which throws MongoInterruptedException if interrupted.
-          // Clear the flag before DB operations so saves succeed, and restore it after.
-          boolean wasInterrupted = Thread.interrupted();
-          try {
-            dbService.saveRaceHistory(db, race);
-            dbService.updateGlobalStatistics(db, race);
-            dbService.saveDriverStatistics(db, race);
-            dbService.updateDriverTrackStats(db, race, race.isDemoMode());
-            dbService.saveRaceRecords(db, race);
+        boolean wasInterrupted = Thread.interrupted();
+        try {
+          dbService.saveRaceHistory(dbCtx, race);
+          dbService.updateGlobalStatistics(dbCtx, race);
+          dbService.saveDriverStatistics(dbCtx, race);
+          dbService.updateDriverTrackStats(dbCtx, race, race.isDemoMode());
+          dbService.saveRaceRecords(dbCtx, race);
 
-            if (race.getSeasonEntityId() != null
-                && !race.getSeasonEntityId().isEmpty()
-                && !EventExecutionManager.getInstance().isEventActive()) {
-              String raceName =
-                  race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
-              List<SeasonDriverResult> seasonResults =
-                  SeasonPointsCalculator.calculateDriverResultsForRace(race);
-              dbService.commitRaceToSeason(
-                  db,
-                  race.getSeasonEntityId(),
-                  raceName,
-                  raceStart,
-                  race.isDemoMode(),
-                  seasonResults);
-            }
+          if (race.getSeasonEntityId() != null
+              && !race.getSeasonEntityId().isEmpty()
+              && !EventExecutionManager.getInstance().isEventActive()) {
+            String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
+            List<SeasonDriverResult> seasonResults =
+                SeasonPointsCalculator.calculateDriverResultsForRace(race);
+            dbService.commitRaceToSeason(
+                dbCtx,
+                race.getSeasonEntityId(),
+                raceName,
+                raceStart,
+                race.isDemoMode(),
+                seasonResults);
+          }
 
-            List<DriverProjection> actuals = new ArrayList<>();
-            if (race.getDrivers() != null) {
-              List<RaceParticipant> sorted = new ArrayList<>(race.getDrivers());
-              sorted.sort(Comparator.comparingInt(RaceParticipant::getRank));
-              for (int i = 0; i < sorted.size(); i++) {
-                RaceParticipant rp = sorted.get(i);
-                DriverProjection dp = new DriverProjection();
-                dp.setDriverId(
-                    PredictionEngine.getParticipantId(rp) != null
-                        ? PredictionEngine.getParticipantId(rp)
-                        : (rp.getDriver() != null
-                            ? rp.getDriver().getEntityId()
-                            : rp.getObjectId()));
-                dp.setDriverName(rp.getDriver() != null ? rp.getDriver().getName() : "");
-                dp.setProjectedRank(rp.getRank() > 0 ? rp.getRank() : i + 1);
-                dp.setProjectedLaps(rp.getTotalLaps());
-                actuals.add(dp);
-              }
-            }
-            RacePredictionService.getInstance()
-                .evaluateAndSavePostRacePrediction(
-                    db,
-                    race.getRaceModel() != null ? race.getRaceModel().getEntityId() : "current",
-                    actuals,
-                    race.isDemoMode());
-          } finally {
-            if (wasInterrupted) {
-              Thread.currentThread().interrupt(); // restore the interrupted status
+          List<DriverProjection> actuals = new ArrayList<>();
+          if (race.getDrivers() != null) {
+            List<RaceParticipant> sorted = new ArrayList<>(race.getDrivers());
+            sorted.sort(Comparator.comparingInt(RaceParticipant::getRank));
+            for (int i = 0; i < sorted.size(); i++) {
+              RaceParticipant rp = sorted.get(i);
+              DriverProjection dp = new DriverProjection();
+              dp.setDriverId(
+                  PredictionEngine.getParticipantId(rp) != null
+                      ? PredictionEngine.getParticipantId(rp)
+                      : (rp.getDriver() != null ? rp.getDriver().getEntityId() : rp.getObjectId()));
+              dp.setDriverName(rp.getDriver() != null ? rp.getDriver().getName() : "");
+              dp.setProjectedRank(rp.getRank() > 0 ? rp.getRank() : i + 1);
+              dp.setProjectedLaps(rp.getTotalLaps());
+              actuals.add(dp);
             }
           }
-        } else {
-          logger.warn("Database is null; skipping race history and statistics persistence.");
+          RacePredictionService.getInstance()
+              .evaluateAndSavePostRacePrediction(
+                  dbCtx,
+                  race.getRaceModel() != null ? race.getRaceModel().getEntityId() : "current",
+                  actuals,
+                  race.isDemoMode());
+        } finally {
+          if (wasInterrupted) {
+            Thread.currentThread().interrupt();
+          }
         }
       } else {
         logger.info("DatabaseContext is null; skipping race history and statistics persistence.");

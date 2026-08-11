@@ -14,7 +14,6 @@ import com.antigravity.race.states.Racing;
 import com.antigravity.util.CsvExporter;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,13 +26,13 @@ public class RaceTeamExportTest {
 
   @Before
   public void setUp() {
-    teammateA = new Driver("Teammate A", "TA", "d1", new ObjectId());
-    teammateB = new Driver("Teammate B", "TB", "d2", new ObjectId());
+    teammateA = new Driver("Teammate A", "TA", "d1", "1");
+    teammateB = new Driver("Teammate B", "TB", "d2", "1");
 
     List<String> driverIds = new ArrayList<>();
     driverIds.add("d1");
     driverIds.add("d2");
-    team = new Team("The Team", "team_avatar", driverIds, "t1", new ObjectId());
+    team = new Team("The Team", "team_avatar", driverIds, "t1", "1");
 
     HeatScoring heatScoring =
         new HeatScoring(
@@ -76,7 +75,7 @@ public class RaceTeamExportTest {
             .lanes(lanes)
             .arduinoConfigs(new ArrayList<>())
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =

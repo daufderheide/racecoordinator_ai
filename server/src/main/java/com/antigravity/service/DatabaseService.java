@@ -34,33 +34,28 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.race.prediction.PredictionEngine;
+import com.antigravity.repository.SqliteRepository;
 import com.antigravity.util.SeasonPointsCalculator;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.DeleteResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-// CHECKSTYLE:OFF
+@SuppressWarnings("checkstyle:FileLength")
 public class DatabaseService {
-  private static final org.slf4j.Logger logger =
-      org.slf4j.LoggerFactory.getLogger(DatabaseService.class);
+  private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
+  private static final ObjectMapper objectMapper = new ObjectMapper();
   private static DatabaseService instance = new DatabaseService();
   private boolean replayMode = false;
 
@@ -82,29 +77,43 @@ public class DatabaseService {
 
   public DatabaseService() {}
 
-  public void resetToFactory(DatabaseContext context, MongoDatabase database) {
+  public void resetToFactory(DatabaseContext context) {
     logger.info("Resetting database to factory settings...");
 
-    resetDrivers(context, database);
-    resetTeams(context, database);
-    Track track = resetTracks(database);
-    // Races must come after tracks because races include tracks
-    resetRaces(database, track);
+    String dbName = context.getCurrentDatabaseName();
+    try (InputStream is = getClass().getResourceAsStream("/defaults/factory_default.zip")) {
+      if (is != null) {
+        context.importDatabase(dbName, is);
+        new AssetService(context, context.getDataRoot() + dbName + "/assets").backfillDefaults();
+        logger.info("Database reset to factory complete.");
+        return;
+      }
+    } catch (Exception e) {
+      logger.warn(
+          "Failed to load factory_default.zip, falling back to programmatic initialization", e);
+    }
+
+    // Backfill assets first so drivers can find sound and helmet assets
+    new AssetService(context, context.getDataRoot() + context.getCurrentDatabaseName() + "/assets")
+        .backfillDefaults();
+
+    resetDrivers(context);
+    resetTeams(context);
+    Track track = resetTracks(context);
+    resetRaces(context, track);
 
     logger.info("Database reset complete.");
   }
 
   @SuppressWarnings("checkstyle:MethodLength")
-  private void resetDrivers(DatabaseContext context, MongoDatabase database) {
-    MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
-    driverCollection.drop(); // Clear all existing data
+  private void resetDrivers(DatabaseContext context) {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+    context.resetSequence("drivers");
 
-    // Reset sequence
-    resetSequence(database, "drivers");
-
-    // Fetch assets
     AssetService assetService =
-        new AssetService(database, context.getDataRoot() + database.getName() + "/assets");
+        new AssetService(
+            context, context.getDataRoot() + context.getCurrentDatabaseName() + "/assets");
     List<AssetMessage> allAssets = assetService.getAllAssets();
 
     List<AssetMessage> helmetAssets =
@@ -114,19 +123,39 @@ public class DatabaseService {
 
     AssetMessage beepSound =
         allAssets.stream()
-            .filter(a -> a.getName().toLowerCase().contains("beep"))
+            .filter(
+                a ->
+                    "default_beep".equals(a.getModel().getEntityId())
+                        || "Lap Beep".equalsIgnoreCase(a.getName())
+                        || a.getName().toLowerCase().contains("beep"))
             .findFirst()
             .orElse(null);
 
     AssetMessage drivebySound =
-        allAssets.stream().filter(a -> a.getName().equals("Lap Driveby")).findFirst().orElse(null);
+        allAssets.stream()
+            .filter(
+                a ->
+                    "default_driveby".equals(a.getModel().getEntityId())
+                        || "Lap Driveby".equalsIgnoreCase(a.getName())
+                        || a.getName().toLowerCase().contains("driveby"))
+            .findFirst()
+            .orElse(null);
 
     AssetMessage penaltySound =
-        allAssets.stream().filter(a -> a.getName().equals("Penalty")).findFirst().orElse(null);
+        allAssets.stream()
+            .filter(
+                a ->
+                    "default_penalty".equals(a.getModel().getEntityId())
+                        || "Penalty".equalsIgnoreCase(a.getName())
+                        || a.getName().toLowerCase().contains("penalty"))
+            .findFirst()
+            .orElse(null);
 
-    String lapSoundUrl = beepSound != null ? beepSound.getUrl() : null;
-    String bestLapSoundUrl = drivebySound != null ? drivebySound.getUrl() : null;
-    String penaltySoundUrl = penaltySound != null ? penaltySound.getUrl() : null;
+    String lapSoundUrl = beepSound != null ? beepSound.getUrl() : "/assets/default_beep_beep.wav";
+    String bestLapSoundUrl =
+        drivebySound != null ? drivebySound.getUrl() : "/assets/default_driveby_driveby.wav";
+    String penaltySoundUrl =
+        penaltySound != null ? penaltySound.getUrl() : "/assets/default_penalty_penalty.wav";
     AudioConfig lapAudio = new AudioConfig("preset", lapSoundUrl, null);
     AudioConfig bestLapAudio = new AudioConfig("preset", bestLapSoundUrl, null);
     AudioConfig penaltyAudio = new AudioConfig("preset", penaltySoundUrl, null);
@@ -141,7 +170,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Andrea",
@@ -151,7 +180,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Austin",
@@ -161,7 +190,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Christine",
@@ -171,7 +200,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Dave",
@@ -181,7 +210,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Gene",
@@ -191,7 +220,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Meyer",
@@ -201,7 +230,7 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
     initialDrivers.add(
         createDriver(
             "Noah Jack",
@@ -211,9 +240,11 @@ public class DatabaseService {
             lapAudio,
             bestLapAudio,
             penaltyAudio,
-            getNextSequence(database, "drivers")));
+            context.getNextSequence("drivers")));
 
-    driverCollection.insertMany(initialDrivers);
+    for (Driver d : initialDrivers) {
+      driverRepo.save(d);
+    }
     logger.info("Drivers reset.");
   }
 
@@ -250,24 +281,17 @@ public class DatabaseService {
         null);
   }
 
-  private Track resetTracks(MongoDatabase database) {
-    MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
-    trackCollection.drop(); // Clear all existing data
-
-    // Reset sequence
-    resetSequence(database, "tracks");
-    resetSequence(database, "lanes");
+  private Track resetTracks(DatabaseContext context) {
+    SqliteRepository<Track> trackRepo = new SqliteRepository<>(context, "tracks", Track.class);
+    trackRepo.drop();
+    context.resetSequence("tracks");
+    context.resetSequence("lanes");
 
     List<Lane> lanes = new ArrayList<>();
-    // Client expects: background_color=COLOR, foreground_color=BLACK
-    Lane l1 = new Lane("#ef4444", "black", 0, getNextSequence(database, "lanes"), null);
-    lanes.add(l1);
-    Lane l2 = new Lane("#ffffff", "black", 0, getNextSequence(database, "lanes"), null);
-    lanes.add(l2);
-    Lane l3 = new Lane("#3b82f6", "black", 0, getNextSequence(database, "lanes"), null);
-    lanes.add(l3);
-    Lane l4 = new Lane("#fbbf24", "black", 0, getNextSequence(database, "lanes"), null);
-    lanes.add(l4);
+    lanes.add(new Lane("#ef4444", "black", 0, context.getNextSequence("lanes"), null));
+    lanes.add(new Lane("#ffffff", "black", 0, context.getNextSequence("lanes"), null));
+    lanes.add(new Lane("#3b82f6", "black", 0, context.getNextSequence("lanes"), null));
+    lanes.add(new Lane("#fbbf24", "black", 0, context.getNextSequence("lanes"), null));
 
     ArduinoConfig config = new ArduinoConfig();
     List<ArduinoConfig> configs = new ArrayList<>();
@@ -279,23 +303,20 @@ public class DatabaseService {
             .lanes(lanes)
             .arduinoConfigs(configs)
             .trackmateConfigs(null)
-            .entityId(getNextSequence(database, "tracks"))
+            .entityId(context.getNextSequence("tracks"))
             .id(null)
             .build();
 
-    trackCollection.insertOne(track);
+    trackRepo.save(track);
     logger.info("Tracks reset.");
     return track;
   }
 
-  private void resetRaces(MongoDatabase database, Track track) {
-    MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
-    raceCollection.drop();
+  private void resetRaces(DatabaseContext context, Track track) {
+    SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
+    raceRepo.drop();
+    context.resetSequence("races");
 
-    // Reset sequence
-    resetSequence(database, "races");
-
-    // Basic Round Robin race
     HeatScoring heatScoring =
         new HeatScoring(
             FinishMethod.Timed, 60, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
@@ -314,12 +335,11 @@ public class DatabaseService {
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
             .withStartBehindSensor(true)
-            .withEntityId(getNextSequence(database, "races"))
+            .withEntityId(context.getNextSequence("races"))
             .build();
 
-    raceCollection.insertOne(race);
+    raceRepo.save(race);
 
-    // Race 2
     heatScoring =
         new HeatScoring(
             FinishMethod.Lap, 15, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME);
@@ -337,12 +357,11 @@ public class DatabaseService {
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
             .withStartBehindSensor(true)
-            .withEntityId(getNextSequence(database, "races"))
+            .withEntityId(context.getNextSequence("races"))
             .build();
 
-    raceCollection.insertOne(race);
+    raceRepo.save(race);
 
-    // Practice Race
     heatScoring =
         new HeatScoring(
             FinishMethod.Timed, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
@@ -362,28 +381,29 @@ public class DatabaseService {
             .withStartBehindSensor(true)
             .withCustomRotationAssetId("default_practice_single_heat")
             .withPractice(true)
-            .withEntityId(getNextSequence(database, "races"))
+            .withEntityId(context.getNextSequence("races"))
             .build();
 
-    raceCollection.insertOne(practiceRace);
-
+    raceRepo.save(practiceRace);
     logger.info("Races reset.");
   }
 
-  public void backfillRaces(MongoDatabase database) {
-    MongoCollection<Document> raceDocs = database.getCollection("races");
-    for (Document doc : raceDocs.find()) {
-      if (!doc.containsKey("start_behind_sensor")) {
-        raceDocs.updateOne(
-            Filters.eq("_id", doc.getObjectId("_id")), Updates.set("start_behind_sensor", true));
+  public void backfillRaces(DatabaseContext context) {
+    SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
+    List<Race> races = raceRepo.findAll();
+    boolean hasPractice = false;
+    for (Race race : races) {
+      if ("Practice".equals(race.getName())) {
+        hasPractice = true;
+        break;
       }
     }
 
-    if (raceDocs.find(Filters.eq("name", "Practice")).first() == null) {
-      MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
-      Track track = trackCollection.find().first();
+    if (!hasPractice) {
+      SqliteRepository<Track> trackRepo = new SqliteRepository<>(context, "tracks", Track.class);
+      List<Track> tracks = trackRepo.findAll();
+      Track track = tracks.isEmpty() ? null : tracks.get(0);
       if (track != null) {
-        MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
         HeatScoring heatScoring =
             new HeatScoring(
                 FinishMethod.Timed,
@@ -405,42 +425,41 @@ public class DatabaseService {
                 .withStartBehindSensor(true)
                 .withCustomRotationAssetId("default_practice_single_heat")
                 .withPractice(true)
-                .withEntityId(getNextSequence(database, "races"))
+                .withEntityId(context.getNextSequence("races"))
                 .build();
-        raceCollection.insertOne(practiceRace);
+        raceRepo.save(practiceRace);
       }
     }
   }
 
-  private void resetTeams(DatabaseContext context, MongoDatabase database) {
-    MongoCollection<Team> teamCollection = database.getCollection("teams", Team.class);
-    teamCollection.drop();
-    resetSequence(database, "teams");
+  private void resetTeams(DatabaseContext context) {
+    SqliteRepository<Team> teamRepo = new SqliteRepository<>(context, "teams", Team.class);
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    teamRepo.drop();
+    context.resetSequence("teams");
 
-    MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
+    List<Driver> allDrivers = driverRepo.findAll();
+    Map<String, Driver> nameToDriver =
+        allDrivers.stream().collect(Collectors.toMap(Driver::getName, d -> d, (a, b) -> a));
 
     List<String> boysNames = Arrays.asList("Austin", "Dave", "Gene");
     List<String> girlsNames = Arrays.asList("Abby", "Andrea", "Christine");
 
     List<String> boysIds = new ArrayList<>();
     for (String name : boysNames) {
-      Driver d = driverCollection.find(Filters.eq("name", name)).first();
-      if (d != null) {
-        boysIds.add(d.getEntityId());
-      }
+      Driver d = nameToDriver.get(name);
+      if (d != null) boysIds.add(d.getEntityId());
     }
 
     List<String> girlsIds = new ArrayList<>();
     for (String name : girlsNames) {
-      Driver d = driverCollection.find(Filters.eq("name", name)).first();
-      if (d != null) {
-        girlsIds.add(d.getEntityId());
-      }
+      Driver d = nameToDriver.get(name);
+      if (d != null) girlsIds.add(d.getEntityId());
     }
 
-    // Fetch assets
     AssetService assetService =
-        new AssetService(database, context.getDataRoot() + database.getName() + "/assets");
+        new AssetService(
+            context, context.getDataRoot() + context.getCurrentDatabaseName() + "/assets");
     List<AssetMessage> allAssets = assetService.getAllAssets();
     List<AssetMessage> helmetAssets =
         allAssets.stream()
@@ -451,106 +470,63 @@ public class DatabaseService {
     String girlsAvatar = "";
     if (!helmetAssets.isEmpty()) {
       boysAvatar = helmetAssets.get(0).getUrl();
-      if (helmetAssets.size() > 1) {
-        girlsAvatar = helmetAssets.get(helmetAssets.size() - 1).getUrl();
-      } else {
-        girlsAvatar = boysAvatar;
-      }
+      girlsAvatar =
+          helmetAssets.size() > 1 ? helmetAssets.get(helmetAssets.size() - 1).getUrl() : boysAvatar;
     }
 
-    List<Team> teams = new ArrayList<>();
-    teams.add(new Team("The Boys", boysAvatar, boysIds, getNextSequence(database, "teams"), null));
-    teams.add(
-        new Team("The Girls", girlsAvatar, girlsIds, getNextSequence(database, "teams"), null));
-
-    teamCollection.insertMany(teams);
+    teamRepo.save(
+        new Team("The Boys", boysAvatar, boysIds, context.getNextSequence("teams"), null));
+    teamRepo.save(
+        new Team("The Girls", girlsAvatar, girlsIds, context.getNextSequence("teams"), null));
     logger.info("Teams reset.");
   }
 
-  private String getNextSequence(MongoDatabase database, String collectionName) {
-    MongoCollection<Document> counters = database.getCollection("counters");
-    Document counter =
-        counters.findOneAndUpdate(
-            Filters.eq("_id", collectionName),
-            Updates.inc("seq", 1),
-            new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER));
-    return String.valueOf(counter.getInteger("seq"));
+  public Race getRace(DatabaseContext context, String entityId) {
+    return new SqliteRepository<>(context, "races", Race.class).findByEntityId(entityId);
   }
 
-  private void resetSequence(MongoDatabase database, String collectionName) {
-    MongoCollection<Document> counters = database.getCollection("counters");
-    counters.deleteOne(Filters.eq("_id", collectionName));
+  public Event getEvent(DatabaseContext context, String entityId) {
+    return new SqliteRepository<>(context, "events", Event.class).findByEntityId(entityId);
   }
 
-  public Race getRace(MongoDatabase database, String entityId) {
-    MongoCollection<Race> raceCollection = database.getCollection("races", Race.class);
-    return raceCollection.find(Filters.eq("entity_id", entityId)).first();
+  public List<Event> getEvents(DatabaseContext context) {
+    return new SqliteRepository<>(context, "events", Event.class).findAll();
   }
 
-  public Event getEvent(MongoDatabase database, String entityId) {
-    MongoCollection<Event> eventCollection = database.getCollection("events", Event.class);
-    return eventCollection.find(Filters.eq("entity_id", entityId)).first();
+  public Track getTrack(DatabaseContext context, String entityId) {
+    return new SqliteRepository<>(context, "tracks", Track.class).findByEntityId(entityId);
   }
 
-  public List<Event> getEvents(MongoDatabase database) {
-    MongoCollection<Event> eventCollection = database.getCollection("events", Event.class);
-    List<Event> list = new ArrayList<>();
-    eventCollection.find().into(list);
-    return list;
+  public Driver getDriver(DatabaseContext context, String entityId) {
+    return new SqliteRepository<>(context, "drivers", Driver.class).findByEntityId(entityId);
   }
 
-  public Track getTrack(MongoDatabase database, String entityId) {
-    MongoCollection<Track> trackCollection = database.getCollection("tracks", Track.class);
-    return trackCollection.find(Filters.eq("entity_id", entityId)).first();
-  }
-
-  public Driver getDriver(MongoDatabase database, String entityId) {
-    MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
-    return driverCollection.find(Filters.eq("entity_id", entityId)).first();
-  }
-
-  public List<Driver> getDrivers(MongoDatabase database, List<String> entityIds) {
-    MongoCollection<Driver> driverCollection = database.getCollection("drivers", Driver.class);
-    List<Driver> drivers = new ArrayList<>();
-    // Using $in filter would be more efficient, but looping is fine for small
-    // numbers
-    driverCollection.find(Filters.in("entity_id", entityIds)).into(drivers);
-
-    // Maintain the order of input entityIds
-    Map<String, Driver> driverMap =
-        drivers.stream().collect(Collectors.toMap(Driver::getEntityId, d -> d));
+  public List<Driver> getDrivers(DatabaseContext context, List<String> entityIds) {
+    SqliteRepository<Driver> repo = new SqliteRepository<>(context, "drivers", Driver.class);
     List<Driver> orderedDrivers = new ArrayList<>();
-    for (String id : entityIds) {
-      Driver d = driverMap.get(id);
-      if (d != null) {
-        orderedDrivers.add(d);
+    if (entityIds != null) {
+      for (String id : entityIds) {
+        Driver d = repo.findByEntityId(id);
+        if (d != null) orderedDrivers.add(d);
       }
     }
     return orderedDrivers;
   }
 
-  public List<Team> getTeams(MongoDatabase database, List<String> entityIds) {
-    MongoCollection<Team> teamCollection = database.getCollection("teams", Team.class);
-    List<Team> teams = new ArrayList<>();
-    teamCollection.find(Filters.in("entity_id", entityIds)).into(teams);
-
-    // Maintain the order of input entityIds
-    Map<String, Team> teamMap = teams.stream().collect(Collectors.toMap(Team::getEntityId, t -> t));
+  public List<Team> getTeams(DatabaseContext context, List<String> entityIds) {
+    SqliteRepository<Team> repo = new SqliteRepository<>(context, "teams", Team.class);
     List<Team> orderedTeams = new ArrayList<>();
-    for (String id : entityIds) {
-      Team t = teamMap.get(id);
-      if (t != null) {
-        orderedTeams.add(t);
+    if (entityIds != null) {
+      for (String id : entityIds) {
+        Team t = repo.findByEntityId(id);
+        if (t != null) orderedTeams.add(t);
       }
     }
     return orderedTeams;
   }
 
-  public List<Team> getAllTeams(MongoDatabase database) {
-    MongoCollection<Team> teamCollection = database.getCollection("teams", Team.class);
-    List<Team> teams = new ArrayList<>();
-    teamCollection.find().into(teams);
-    return teams;
+  public List<Team> getAllTeams(DatabaseContext context) {
+    return new SqliteRepository<>(context, "teams", Team.class).findAll();
   }
 
   public Track getFactoryTrack() {
@@ -575,16 +551,17 @@ public class DatabaseService {
   }
 
   public void saveRaceHistory(
-      MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
+      DatabaseContext context, com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null || replayMode) {
       return;
     }
     boolean isDemo = runtimeRace.isDemoMode();
+    String tableName = getCollectionName("race_history", isDemo);
     try {
-      MongoCollection<RaceHistoryRecord> collection =
-          database.getCollection(
-              getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
+      SqliteRepository<RaceHistoryRecord> repo =
+          new SqliteRepository<>(context, tableName, RaceHistoryRecord.class);
       RaceHistoryRecord record = new RaceHistoryRecord();
+      record.setId(java.util.UUID.randomUUID().toString());
       record.setDemo(isDemo);
       if (runtimeRace.getRaceModel() != null) {
         record.setOriginalEntityId(runtimeRace.getRaceModel().getEntityId());
@@ -613,44 +590,36 @@ public class DatabaseService {
         logger.warn("Could not calculate driver results for race history record", ex);
       }
 
-      collection.insertOne(record);
-      logger.info("Race successfully saved to {}", collection.getNamespace().getCollectionName());
+      repo.save(record);
+      logger.info("Race successfully saved to {}", tableName);
     } catch (Exception e) {
       logger.error("Failed to save race to history", e);
     }
   }
 
-  public void saveRawRaceHistoryRecord(MongoDatabase database, RaceHistoryRecord record) {
-    if (database == null || record == null) return;
+  public void saveRawRaceHistoryRecord(DatabaseContext context, RaceHistoryRecord record) {
+    if (context == null || record == null) return;
     try {
       boolean isDemo = record.isDemo();
-      MongoCollection<RaceHistoryRecord> collection =
-          database.getCollection(
-              getCollectionName("race_history", isDemo), RaceHistoryRecord.class);
-      collection.insertOne(record);
-      logger.info(
-          "Raw race history record successfully saved to {}",
-          collection.getNamespace().getCollectionName());
+      String tableName = getCollectionName("race_history", isDemo);
+      SqliteRepository<RaceHistoryRecord> repo =
+          new SqliteRepository<>(context, tableName, RaceHistoryRecord.class);
+      repo.save(record);
+      logger.info("Raw race history record successfully saved to {}", tableName);
     } catch (Exception e) {
       logger.error("Failed to save raw race history record", e);
     }
   }
 
-  public Season getSeason(MongoDatabase database, String seasonId) {
-    if (seasonId == null || seasonId.trim().isEmpty() || database == null) {
+  public Season getSeason(DatabaseContext context, String seasonId) {
+    if (seasonId == null || seasonId.trim().isEmpty() || context == null) {
       return null;
     }
-    try {
-      MongoCollection<Season> collection = database.getCollection("seasons", Season.class);
-      return collection.find(com.mongodb.client.model.Filters.eq("entity_id", seasonId)).first();
-    } catch (Exception e) {
-      logger.error("Failed to get season by entity_id: " + seasonId, e);
-      return null;
-    }
+    return new SqliteRepository<>(context, "seasons", Season.class).findByEntityId(seasonId);
   }
 
   public void commitRaceToSeason(
-      MongoDatabase database,
+      DatabaseContext context,
       String seasonId,
       String raceName,
       long timestamp,
@@ -663,14 +632,14 @@ public class DatabaseService {
       return;
     }
     try {
-      MongoCollection<Season> collection = database.getCollection("seasons", Season.class);
-      Season season =
-          collection.find(com.mongodb.client.model.Filters.eq("entity_id", seasonId)).first();
+      SqliteRepository<Season> repo = new SqliteRepository<>(context, "seasons", Season.class);
+      Season season = repo.findByEntityId(seasonId);
       if (season == null) {
         logger.warn("Season not found for entity_id: {}", seasonId);
         return;
       }
       List<SeasonRaceRecord> races = season.getRaces();
+      if (races == null) races = new ArrayList<>();
       String nextRaceId = String.valueOf(races.size() + 1);
       long recordTimestamp = timestamp > 0 ? timestamp : System.currentTimeMillis();
       SeasonRaceRecord newRecord =
@@ -678,10 +647,8 @@ public class DatabaseService {
       races.add(newRecord);
 
       Season updatedSeason =
-          new Season(
-              season.getName(), season.getDrops(), races, season.getEntityId(), season.getId());
-      collection.replaceOne(
-          com.mongodb.client.model.Filters.eq("entity_id", seasonId), updatedSeason);
+          new Season(season.getName(), season.getDrops(), races, season.getEntityId(), null);
+      repo.save(updatedSeason);
       logger.info(
           "Committed race '{}' results (isDemo={}) to season '{}'",
           raceName,
@@ -693,39 +660,46 @@ public class DatabaseService {
   }
 
   public void commitRaceToSeason(
-      MongoDatabase database,
+      DatabaseContext context,
       String seasonId,
       String raceName,
       boolean isDemo,
       List<SeasonDriverResult> driverResults) {
-    commitRaceToSeason(database, seasonId, raceName, 0L, isDemo, driverResults);
+    commitRaceToSeason(context, seasonId, raceName, 0L, isDemo, driverResults);
   }
 
   public void commitRaceToSeason(
-      MongoDatabase database,
+      DatabaseContext context,
       String seasonId,
       String raceName,
       List<SeasonDriverResult> driverResults) {
-    commitRaceToSeason(database, seasonId, raceName, 0L, false, driverResults);
+    commitRaceToSeason(context, seasonId, raceName, 0L, false, driverResults);
   }
 
   public void saveRaceRecords(
-      MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
+      DatabaseContext context, com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null || runtimeRace.getRaceModel() == null || replayMode) return;
     boolean isDemo = runtimeRace.isDemoMode();
     String raceId = runtimeRace.getRaceModel().getEntityId();
+    String tableName = getCollectionName("race_records", isDemo);
     try {
-      MongoCollection<Document> collection =
-          database.getCollection(getCollectionName("race_records", isDemo));
-      Document doc =
-          new Document()
-              .append("race_id", raceId)
-              .append("records", runtimeRace.getRecordData().toByteArray());
-
-      collection.replaceOne(
-          Filters.eq("race_id", raceId),
-          doc,
-          new com.mongodb.client.model.ReplaceOptions().upsert(true));
+      context
+          .getConnection()
+          .createStatement()
+          .execute(
+              "CREATE TABLE IF NOT EXISTS "
+                  + tableName
+                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      String sql =
+          "INSERT INTO "
+              + tableName
+              + " (race_id, records_blob) VALUES (?, ?) "
+              + "ON CONFLICT(race_id) DO UPDATE SET records_blob=excluded.records_blob";
+      try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, raceId);
+        pstmt.setBytes(2, runtimeRace.getRecordData().toByteArray());
+        pstmt.executeUpdate();
+      }
       logger.info(
           "SAVED RACE RECORDS: race_id={}, isDemo={}, records_size={}",
           raceId,
@@ -736,25 +710,32 @@ public class DatabaseService {
     }
   }
 
-  public RecordData getRaceRecords(MongoDatabase database, String raceId, boolean isDemo) {
+  public RecordData getRaceRecords(DatabaseContext context, String raceId, boolean isDemo) {
+    String tableName = getCollectionName("race_records", isDemo);
     try {
-      MongoCollection<Document> collection =
-          database.getCollection(getCollectionName("race_records", isDemo));
-      Document doc = collection.find(Filters.eq("race_id", raceId)).first();
-      if (doc != null) {
-        org.bson.types.Binary binary = doc.get("records", org.bson.types.Binary.class);
-        if (binary != null) {
-          logger.info(
-              "LOADED RACE RECORDS: race_id={}, isDemo={}, records_size={}",
-              raceId,
-              isDemo,
-              binary.getData().length);
-          return RecordData.parseFrom(binary.getData());
-        } else {
-          logger.info("LOADED RACE RECORDS: race_id={}, but binary records field was null", raceId);
+      context
+          .getConnection()
+          .createStatement()
+          .execute(
+              "CREATE TABLE IF NOT EXISTS "
+                  + tableName
+                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      String sql = "SELECT records_blob FROM " + tableName + " WHERE race_id = ?";
+      try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, raceId);
+        try (ResultSet rs = pstmt.executeQuery()) {
+          if (rs.next()) {
+            byte[] bytes = rs.getBytes("records_blob");
+            if (bytes != null) {
+              logger.info(
+                  "LOADED RACE RECORDS: race_id={}, isDemo={}, records_size={}",
+                  raceId,
+                  isDemo,
+                  bytes.length);
+              return RecordData.parseFrom(bytes);
+            }
+          }
         }
-      } else {
-        logger.info("NO RACE RECORDS FOUND for race_id={}, isDemo={}", raceId, isDemo);
       }
     } catch (Exception e) {
       logger.error("Failed to load race records", e);
@@ -764,19 +745,18 @@ public class DatabaseService {
 
   @SuppressWarnings("checkstyle:MethodLength")
   public void updateGlobalStatistics(
-      MongoDatabase database, com.antigravity.race.Race runtimeRace) { // fqn-collision
+      DatabaseContext context, com.antigravity.race.Race runtimeRace) { // fqn-collision
     if (runtimeRace == null) return;
     boolean isDemo = runtimeRace.isDemoMode();
     String raceId =
         runtimeRace.getRaceModel() != null ? runtimeRace.getRaceModel().getEntityId() : "unknown";
+    String tableName = getCollectionName("global_statistics", isDemo);
     try {
-      MongoCollection<GlobalStatistics> statsCollection =
-          database.getCollection(
-              getCollectionName("global_statistics", isDemo), GlobalStatistics.class);
-      GlobalStatistics stats = statsCollection.find(Filters.eq("race_entity_id", raceId)).first();
+      SqliteRepository<GlobalStatistics> statsRepo =
+          new SqliteRepository<>(context, tableName, GlobalStatistics.class);
+      GlobalStatistics stats = statsRepo.findByEntityId(raceId);
       if (stats == null) {
         stats = new GlobalStatistics(raceId);
-        statsCollection.insertOne(stats);
       }
 
       stats.addRaceCount();
@@ -791,7 +771,6 @@ public class DatabaseService {
       }
       stats.addLaps(totalLaps);
 
-      // Save overall records from the runtime race object
       com.antigravity.proto.RecordData recordData = runtimeRace.getRecordData(); // fqn-collision
       com.antigravity.proto.OverallRecords overall = recordData.getOverall(); // fqn-collision
 
@@ -828,7 +807,6 @@ public class DatabaseService {
         stats.setHighestScoreTrackName(runtimeRace.getTrack().getName());
       }
 
-      // Per lane fastest lap
       List<Double> laneFastestTimes =
           stats.getLaneFastestLapTimes() != null
               ? new ArrayList<>(stats.getLaneFastestLapTimes())
@@ -850,7 +828,7 @@ public class DatabaseService {
               ? new ArrayList<>(stats.getLaneFastestLapDates())
               : new ArrayList<>();
 
-      for (int i = 0; i < overall.getLaneFastestLapCount(); i++) { // fqn-collision
+      for (int i = 0; i < overall.getLaneFastestLapCount(); i++) {
         com.antigravity.proto.RecordEntry entry = overall.getLaneFastestLap(i); // fqn-collision
         double newVal = entry.getValue();
         if (i >= laneFastestTimes.size()) {
@@ -877,7 +855,6 @@ public class DatabaseService {
       stats.setLaneFastestLapTeamNames(laneFastestTeams);
       stats.setLaneFastestLapDates(laneFastestDates);
 
-      // Highest score per lane
       List<Double> laneHighestScores =
           stats.getLaneHighestScores() != null
               ? new ArrayList<>(stats.getLaneHighestScores())
@@ -899,7 +876,7 @@ public class DatabaseService {
               ? new ArrayList<>(stats.getLaneHighestScoreDates())
               : new ArrayList<>();
 
-      for (int i = 0; i < overall.getLaneHighestScoreCount(); i++) { // fqn-collision
+      for (int i = 0; i < overall.getLaneHighestScoreCount(); i++) {
         com.antigravity.proto.RecordEntry entry = overall.getLaneHighestScore(i); // fqn-collision
         double newVal = entry.getValue();
         if (i >= laneHighestScores.size()) {
@@ -926,8 +903,7 @@ public class DatabaseService {
       stats.setLaneHighestScoreTeamNames(laneHighestTeams);
       stats.setLaneHighestScoreDates(laneHighestDates);
 
-      statsCollection.replaceOne(
-          Filters.eq("race_entity_id", raceId), stats, new ReplaceOptions().upsert(true));
+      statsRepo.save(stats);
       logger.info("Race statistics updated for race: {}", raceId);
     } catch (Exception e) {
       logger.error("Failed to update global statistics for race {}", raceId, e);
@@ -935,15 +911,14 @@ public class DatabaseService {
   }
 
   public GlobalStatistics getGlobalStatistics(
-      MongoDatabase database, String raceEntityId, RaceScope scope) {
+      DatabaseContext context, String raceEntityId, RaceScope scope) {
     if (raceEntityId == null) {
       return new GlobalStatistics();
     }
-    MongoCollection<GlobalStatistics> statsCollection =
-        database.getCollection(
-            getCollectionName("global_statistics", scope), GlobalStatistics.class);
+    String tableName = getCollectionName("global_statistics", scope);
     GlobalStatistics stats =
-        statsCollection.find(Filters.eq("race_entity_id", raceEntityId)).first();
+        new SqliteRepository<>(context, tableName, GlobalStatistics.class)
+            .findByEntityId(raceEntityId);
     if (stats == null) {
       return new GlobalStatistics(raceEntityId);
     }
@@ -951,217 +926,211 @@ public class DatabaseService {
   }
 
   public GlobalStatistics getGlobalStatistics(
-      MongoDatabase database, String raceEntityId, boolean isDemo) {
-    return getGlobalStatistics(database, raceEntityId, RaceScope.fromBoolean(isDemo));
+      DatabaseContext context, String raceEntityId, boolean isDemo) {
+    return getGlobalStatistics(context, raceEntityId, RaceScope.fromBoolean(isDemo));
   }
 
-  public List<RaceHistoryRecord> getRaceHistory(MongoDatabase database, RaceScope scope) {
-    MongoCollection<RaceHistoryRecord> collection =
-        database.getCollection(getCollectionName("race_history", scope), RaceHistoryRecord.class);
-    List<RaceHistoryRecord> history = new ArrayList<>();
-    // You could sort by _id descending to get newest first natively, but BSON
-    // default works for now.
-    collection.find().into(history);
-    return history;
+  public List<RaceHistoryRecord> getRaceHistory(DatabaseContext context, RaceScope scope) {
+    String tableName = getCollectionName("race_history", scope);
+    return new SqliteRepository<>(context, tableName, RaceHistoryRecord.class).findAll();
   }
 
-  public List<RaceHistoryRecord> getRaceHistory(MongoDatabase database, boolean isDemo) {
-    return getRaceHistory(database, RaceScope.fromBoolean(isDemo));
+  public List<RaceHistoryRecord> getRaceHistory(DatabaseContext context, boolean isDemo) {
+    return getRaceHistory(context, RaceScope.fromBoolean(isDemo));
   }
 
-  public RaceHistoryRecord getRaceHistoryById(MongoDatabase database, String id, RaceScope scope) {
-    MongoCollection<RaceHistoryRecord> collection =
-        database.getCollection(getCollectionName("race_history", scope), RaceHistoryRecord.class);
-    return collection.find(Filters.eq("_id", new ObjectId(id))).first();
+  public RaceHistoryRecord getRaceHistoryById(DatabaseContext context, String id, RaceScope scope) {
+    String tableName = getCollectionName("race_history", scope);
+    return new SqliteRepository<>(context, tableName, RaceHistoryRecord.class).findByEntityId(id);
   }
 
-  public RaceHistoryRecord getRaceHistoryById(MongoDatabase database, String id, boolean isDemo) {
-    return getRaceHistoryById(database, id, RaceScope.fromBoolean(isDemo));
+  public RaceHistoryRecord getRaceHistoryById(DatabaseContext context, String id, boolean isDemo) {
+    return getRaceHistoryById(context, id, RaceScope.fromBoolean(isDemo));
   }
 
-  public void upsertAutoSave(MongoDatabase database, RaceSaveData data) {
+  public void upsertAutoSave(DatabaseContext context, RaceSaveData data) {
     if (data == null) {
       return;
     }
     boolean isDemo = data.isDemoMode();
+    String tableName = getCollectionName("saved_races", isDemo);
     try {
-      MongoCollection<RaceSaveData> collection =
-          database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
-      ReplaceOptions options = new ReplaceOptions().upsert(true);
-      collection.replaceOne(Filters.eq("saveName", data.getSaveName()), data, options);
+      context.ensureTable(tableName);
+      String sql =
+          "INSERT INTO "
+              + tableName
+              + " (entity_id, sequence_id, json_data) VALUES (?, ?, ?) "
+              + "ON CONFLICT(entity_id) DO UPDATE SET sequence_id=excluded.sequence_id, json_data=excluded.json_data";
+      try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+        String entityId =
+            data.getSaveName() != null ? data.getSaveName() : UUID.randomUUID().toString();
+        pstmt.setString(1, entityId);
+        pstmt.setString(2, data.getSaveName());
+        pstmt.setString(3, objectMapper.writeValueAsString(data));
+        pstmt.executeUpdate();
+      }
     } catch (Exception e) {
       logger.error("Failed to auto-save race", e);
     }
   }
 
-  public void saveManualRace(MongoDatabase database, RaceSaveData data) {
-    if (data == null) {
-      return;
-    }
-    boolean isDemo = data.isDemoMode();
-    try {
-      MongoCollection<RaceSaveData> collection =
-          database.getCollection(getCollectionName("saved_races", isDemo), RaceSaveData.class);
-      collection.insertOne(data);
-    } catch (Exception e) {
-      logger.error("Failed to save race manually", e);
-    }
+  public void saveManualRace(DatabaseContext context, RaceSaveData data) {
+    upsertAutoSave(context, data);
   }
 
-  public List<RaceSaveData> getSavedRaces(MongoDatabase database, RaceScope scope) {
-    long startTime = System.currentTimeMillis();
-    String collectionName = getCollectionName("saved_races", scope);
-    MongoCollection<RaceSaveData> collection =
-        database.getCollection(collectionName, RaceSaveData.class);
-
-    long totalDocs = collection.countDocuments();
-    logger.info(
-        "DIAGNOSTIC: Loading saved races from collection {}. Total documents found: {}",
-        collectionName,
-        totalDocs);
-
+  public List<RaceSaveData> getSavedRaces(DatabaseContext context, RaceScope scope) {
+    String tableName = getCollectionName("saved_races", scope);
+    context.ensureTable(tableName);
     List<RaceSaveData> saves = new ArrayList<>();
-    try {
-      collection
-          .find()
-          .forEach(
-              race -> {
-                try {
-                  if (race != null) {
-                    // Re-initialize transient standings after load
-                    if (race.getHeats() != null && race.getModel() != null) {
-                      for (Heat heat : race.getHeats()) {
-                        heat.initializeStandings(
-                            race.getModel().getHeatScoring(), race.getModel().isPractice());
-                      }
-                    }
-
-                    saves.add(race);
-                    logger.info(
-                        "DIAGNOSTIC: Successfully loaded and initialized race: {}",
-                        (race.getSaveName() != null ? race.getSaveName() : "Unnamed"));
-                  } else {
-                    logger.error("DIAGNOSTIC: Received null race object from MongoDB iterator.");
-                  }
-                } catch (Exception e) {
-                  logger.error(
-                      "DIAGNOSTIC: Error decoding/initializing a single race record, skipping: {}",
-                      e.getMessage(),
-                      e);
-                }
-              });
+    String sql = "SELECT json_data FROM " + tableName;
+    try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          RaceSaveData race = objectMapper.readValue(json, RaceSaveData.class);
+          if (race != null) {
+            if (race.getHeats() != null && race.getModel() != null) {
+              for (Heat heat : race.getHeats()) {
+                heat.initializeStandings(
+                    race.getModel().getHeatScoring(), race.getModel().isPractice());
+              }
+            }
+            saves.add(race);
+          }
+        }
+      }
     } catch (Exception e) {
-      logger.error("DIAGNOSTIC: Fatal error during race collection iteration", e);
+      logger.error("Error reading saved races", e);
     }
-
-    logger.info(
-        "DIAGNOSTIC: Finished loading saved races. Successfully loaded {}/{} records in {}ms",
-        saves.size(),
-        totalDocs,
-        (System.currentTimeMillis() - startTime));
     return saves;
   }
 
-  public List<RaceSaveData> getSavedRaces(MongoDatabase database, boolean isDemo) {
-    return getSavedRaces(database, RaceScope.fromBoolean(isDemo));
+  public List<RaceSaveData> getSavedRaces(DatabaseContext context, boolean isDemo) {
+    return getSavedRaces(context, RaceScope.fromBoolean(isDemo));
   }
 
-  public RaceSaveData getSavedRace(MongoDatabase database, String saveName, RaceScope scope) {
-    if (database == null) {
-      return null;
+  public RaceSaveData getSavedRace(DatabaseContext context, String saveName, RaceScope scope) {
+    if (context == null || saveName == null) return null;
+    String tableName = getCollectionName("saved_races", scope);
+    context.ensureTable(tableName);
+    String sql = "SELECT json_data FROM " + tableName + " WHERE sequence_id = ? OR entity_id = ?";
+    try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, saveName);
+      pstmt.setString(2, saveName);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        if (rs.next()) {
+          String json = rs.getString("json_data");
+          if (json != null && !json.trim().isEmpty()) {
+            return objectMapper.readValue(json, RaceSaveData.class);
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error getting saved race {}", saveName, e);
     }
-    MongoCollection<RaceSaveData> collection =
-        database.getCollection(getCollectionName("saved_races", scope), RaceSaveData.class);
-    return collection.find(Filters.eq("saveName", saveName)).first();
+    return null;
   }
 
-  public RaceSaveData getSavedRace(MongoDatabase database, String saveName, boolean isDemo) {
-    return getSavedRace(database, saveName, RaceScope.fromBoolean(isDemo));
+  public RaceSaveData getSavedRace(DatabaseContext context, String saveName, boolean isDemo) {
+    return getSavedRace(context, saveName, RaceScope.fromBoolean(isDemo));
   }
 
-  public boolean deleteSavedRace(MongoDatabase database, String saveName, RaceScope scope) {
-    if (database == null) {
+  public boolean deleteSavedRace(DatabaseContext context, String saveName, RaceScope scope) {
+    if (context == null || saveName == null) return false;
+    String tableName = getCollectionName("saved_races", scope);
+    context.ensureTable(tableName);
+    String sql =
+        "DELETE FROM "
+            + tableName
+            + " WHERE sequence_id = ? OR entity_id = ? OR json_extract(json_data, '$.saveName') = ? OR json_extract(json_data, '$.save_name') = ?";
+    try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, saveName);
+      pstmt.setString(2, saveName);
+      pstmt.setString(3, saveName);
+      pstmt.setString(4, saveName);
+      int rows = pstmt.executeUpdate();
+      return rows > 0;
+    } catch (Exception e) {
+      logger.error("Error deleting saved race {}", saveName, e);
       return false;
     }
-    MongoCollection<RaceSaveData> collection =
-        database.getCollection(getCollectionName("saved_races", scope), RaceSaveData.class);
-    DeleteResult result = collection.deleteOne(Filters.eq("saveName", saveName));
-    return result.getDeletedCount() > 0;
   }
 
-  public boolean deleteSavedRace(MongoDatabase database, String saveName, boolean isDemo) {
-    return deleteSavedRace(database, saveName, RaceScope.fromBoolean(isDemo));
+  public boolean deleteSavedRace(DatabaseContext context, String saveName, boolean isDemo) {
+    return deleteSavedRace(context, saveName, RaceScope.fromBoolean(isDemo));
   }
 
-  public void deleteAllRaceData(MongoDatabase database, String raceEntityId) {
-    if (database == null || raceEntityId == null || raceEntityId.isEmpty()) {
-      return;
-    }
-
+  public void deleteAllRaceData(DatabaseContext context, String raceEntityId) {
+    if (context == null || raceEntityId == null || raceEntityId.isEmpty()) return;
     try {
-      // 1. Delete history records
-      database
-          .getCollection(getCollectionName("race_history", false))
-          .deleteMany(Filters.eq("original_entity_id", raceEntityId));
-      database
-          .getCollection(getCollectionName("race_history", true))
-          .deleteMany(Filters.eq("original_entity_id", raceEntityId));
-
-      // 2. Delete global statistics
-      database
-          .getCollection(getCollectionName("global_statistics", false))
-          .deleteMany(Filters.eq("race_entity_id", raceEntityId));
-      database
-          .getCollection(getCollectionName("global_statistics", true))
-          .deleteMany(Filters.eq("race_entity_id", raceEntityId));
-
-      // 3. Delete saved races and auto-saves
-      database
-          .getCollection(getCollectionName("saved_races", false))
-          .deleteMany(Filters.eq("model.entity_id", raceEntityId));
-      database
-          .getCollection(getCollectionName("saved_races", true))
-          .deleteMany(Filters.eq("model.entity_id", raceEntityId));
-
-      // 4. Delete driver statistics
-      database
-          .getCollection(getCollectionName("driver_statistics", false))
-          .deleteMany(Filters.eq("race_id", raceEntityId));
-      database
-          .getCollection(getCollectionName("driver_statistics", true))
-          .deleteMany(Filters.eq("race_id", raceEntityId));
-
-      logger.info("Cascading deletion complete for race records: {}", raceEntityId);
+      deleteFromTableWhere(
+          context,
+          getCollectionName("race_history", false),
+          "json_data LIKE '%\"original_entity_id\":\"" + raceEntityId + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("race_history", true),
+          "json_data LIKE '%\"original_entity_id\":\"" + raceEntityId + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("global_statistics", false),
+          "entity_id = '" + raceEntityId + "'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("global_statistics", true),
+          "entity_id = '" + raceEntityId + "'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("saved_races", false),
+          "json_data LIKE '%\"entity_id\":\"" + raceEntityId + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("saved_races", true),
+          "json_data LIKE '%\"entity_id\":\"" + raceEntityId + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("driver_statistics", false),
+          "json_data LIKE '%\"race_id\":\"" + raceEntityId + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("driver_statistics", true),
+          "json_data LIKE '%\"race_id\":\"" + raceEntityId + "\"%'");
     } catch (Exception e) {
       logger.error("Failed to perform cascading deletion for race {}", raceEntityId, e);
     }
   }
 
+  private void deleteFromTableWhere(DatabaseContext context, String tableName, String whereClause) {
+    context.ensureTable(tableName);
+    String sql = "DELETE FROM " + tableName + " WHERE " + whereClause;
+    try (Statement stmt = context.getConnection().createStatement()) {
+      stmt.execute(sql);
+    } catch (Exception e) {
+      // Ignore
+    }
+  }
+
   @SuppressWarnings("checkstyle:MethodLength")
   public void saveDriverStatistics(
-      MongoDatabase database, com.antigravity.race.Race race) { // fqn-collision
-    if (database == null || race == null || race.getRaceModel() == null) {
+      DatabaseContext context, com.antigravity.race.Race race) { // fqn-collision
+    if (context == null || race == null || race.getRaceModel() == null) {
       return;
     }
 
     try {
-      int laneCount = 4; // Default fallback
+      int laneCount = 4;
       if (race.getTrack() != null && race.getTrack().getLanes() != null) {
         laneCount = race.getTrack().getLanes().size();
       }
-
       final int finalLaneCount = laneCount;
-
-      String collectionName = getCollectionName("driver_statistics", race.isDemoMode());
-      MongoCollection<DriverStatistics> collection =
-          database.getCollection(collectionName, DriverStatistics.class);
+      String tableName = getCollectionName("driver_statistics", race.isDemoMode());
+      SqliteRepository<DriverStatistics> repo =
+          new SqliteRepository<>(context, tableName, DriverStatistics.class);
       Map<String, DriverStatistics> statsMap = new HashMap<>();
       Map<String, Double> driverRaceLaps = new HashMap<>();
 
       long raceDate = System.currentTimeMillis();
-      if (race.getRaceModel() != null && race.getRaceModel().getId() != null) {
-        raceDate = race.getRaceModel().getId().getDate().getTime();
-      }
 
       if (race.getHeats() != null) {
         for (Heat heat : race.getHeats()) {
@@ -1184,13 +1153,7 @@ public class DatabaseService {
                       stableId,
                       id -> {
                         DriverStatistics s =
-                            collection
-                                .find(
-                                    Filters.and(
-                                        Filters.eq("driver_id", id),
-                                        Filters.eq("race_id", race.getRaceModel().getEntityId())))
-                                .first();
-
+                            repo.findByEntityId(id + "_" + race.getRaceModel().getEntityId());
                         if (s == null) {
                           s = new DriverStatistics();
                           s.setDriverId(id);
@@ -1221,21 +1184,11 @@ public class DatabaseService {
                           while (s.getLaneBestLapCounts().size() < finalLaneCount) {
                             s.getLaneBestLapCounts().add(0.0);
                           }
-                          if (s.getLaneBestLapTimesDates() == null)
-                            s.setLaneBestLapTimesDates(new ArrayList<>());
-                          while (s.getLaneBestLapTimesDates().size() < finalLaneCount) {
-                            s.getLaneBestLapTimesDates().add(0L);
-                          }
-                          if (s.getLaneBestLapCountsDates() == null)
-                            s.setLaneBestLapCountsDates(new ArrayList<>());
-                          while (s.getLaneBestLapCountsDates().size() < finalLaneCount) {
-                            s.getLaneBestLapCountsDates().add(0L);
-                          }
                         }
                         return s;
                       });
 
-              updateDriverStatsForHeat(stats, driverData, raceDate, laneIdx, stableId);
+              updateDriverStatsForHeat(stats, driverData, raceDate, laneIdx);
             }
           }
         }
@@ -1249,25 +1202,7 @@ public class DatabaseService {
           stats.setBestLapCount(sessionLapCount);
           stats.setBestLapCountDate(raceDate);
         }
-      }
-
-      for (DriverStatistics stats : statsMap.values()) {
-        logger.info(
-            "saveDriverStatistics DEBUG FINAL: driverId={}, raceId={}, laneBestLapTimes={}, laneBestLapCounts={}",
-            stats.getDriverId(),
-            stats.getRaceId(),
-            stats.getLaneBestLapTimes(),
-            stats.getLaneBestLapCounts());
-      }
-
-      ReplaceOptions options = new ReplaceOptions().upsert(true);
-      for (DriverStatistics stats : statsMap.values()) {
-        collection.replaceOne(
-            Filters.and(
-                Filters.eq("driver_id", stats.getDriverId()),
-                Filters.eq("race_id", stats.getRaceId())),
-            stats,
-            options);
+        repo.save(stats);
       }
 
       logger.info(
@@ -1278,14 +1213,9 @@ public class DatabaseService {
   }
 
   private void updateDriverStatsForHeat(
-      DriverStatistics stats,
-      DriverHeatData driverData,
-      long raceDate,
-      int laneIdx,
-      String stableId) {
+      DriverStatistics stats, DriverHeatData driverData, long raceDate, int laneIdx) {
     double heatLapCount = driverData.getAdjustedLapCount();
 
-    // Update overall best lap time (min of non-zero best lap time in any heat)
     double heatBestLap = driverData.getBestLapTime();
     if (heatBestLap > 0.0) {
       if (stats.getBestLapTime() == 0.0 || heatBestLap < stats.getBestLapTime()) {
@@ -1294,13 +1224,6 @@ public class DatabaseService {
       }
     }
 
-    // Update lane best lap count (max)
-    logger.info(
-        "saveDriverStatistics DEBUG: stableId={}, laneIdx={}, adjustedLapCount={}, bestLapTime={}",
-        stableId,
-        laneIdx,
-        heatLapCount,
-        heatBestLap);
     if (laneIdx < stats.getLaneBestLapCounts().size()) {
       double laneLapCount = stats.getLaneBestLapCounts().get(laneIdx);
       if (heatLapCount > laneLapCount) {
@@ -1309,7 +1232,6 @@ public class DatabaseService {
       }
     }
 
-    // Update lane best lap time (min)
     if (laneIdx < stats.getLaneBestLapTimes().size()) {
       double laneBestLap = stats.getLaneBestLapTimes().get(laneIdx);
       if (heatBestLap > 0.0) {
@@ -1321,242 +1243,65 @@ public class DatabaseService {
     }
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public DriverStatistics getDriverStatistics(
-      MongoDatabase database, String driverId, String raceId, RaceScope scope) {
-    if (database == null || driverId == null || driverId.isEmpty()) {
+      DatabaseContext context, String driverId, String raceId, RaceScope scope) {
+    if (context == null || driverId == null || driverId.isEmpty()) {
       return null;
     }
 
-    try {
-      List<Bson> stableIdFilters = new ArrayList<>();
-      stableIdFilters.add(Filters.eq("driver_id", driverId));
-      stableIdFilters.add(Filters.eq("driver_id", "d:" + driverId));
-      stableIdFilters.add(Filters.eq("driver_id", "t:" + driverId));
-      if (driverId.startsWith("t_")) {
-        stableIdFilters.add(Filters.eq("driver_id", "t:" + driverId.substring(2)));
+    String tableName = getCollectionName("driver_statistics", scope);
+    SqliteRepository<DriverStatistics> repo =
+        new SqliteRepository<>(context, tableName, DriverStatistics.class);
+    List<DriverStatistics> allStats = repo.findAll();
+    DriverStatistics match = null;
+    for (DriverStatistics s : allStats) {
+      if (driverId.equals(s.getDriverId()) && (raceId == null || raceId.equals(s.getRaceId()))) {
+        match = s;
+        break;
       }
-      if (driverId.startsWith("d_")) {
-        stableIdFilters.add(Filters.eq("driver_id", "d:" + driverId.substring(2)));
-      }
-
-      Bson driverFilter = Filters.or(stableIdFilters);
-
-      // 1. Try to find the exact stats for this race in the target scope collection ONLY
-      String primaryCol = getCollectionName("driver_statistics", scope);
-      MongoCollection<DriverStatistics> col =
-          database.getCollection(primaryCol, DriverStatistics.class);
-      if (raceId != null && !raceId.isEmpty()) {
-        Bson filter = Filters.and(driverFilter, Filters.eq("race_id", raceId));
-        DriverStatistics stats = col.find(filter).first();
-        if (stats != null) {
-          return stats;
-        }
-
-        // If a specific raceId was requested and no stats were found, return empty stats.
-        // We do not fall back to non-demo or cross-scope collections.
-        DriverStatistics emptyStats = new DriverStatistics();
-        emptyStats.setDriverId(driverId);
-        emptyStats.setRaceId(raceId);
-        emptyStats.setBestLapTime(0.0);
-        emptyStats.setBestLapCount(0.0);
-        emptyStats.setLaneBestLapTimes(new ArrayList<>());
-        emptyStats.setLaneBestLapCounts(new ArrayList<>());
-        emptyStats.setLaneBestLapTimesDates(new ArrayList<>());
-        emptyStats.setLaneBestLapCountsDates(new ArrayList<>());
-        return emptyStats;
-      }
-
-      // 2. If raceId was null/empty,
-      // load all statistics documents for this driver in this scope and aggregate/merge them.
-      List<DriverStatistics> statsList = new ArrayList<>();
-
-      // Load from primary collection
-      try {
-        DriverStatistics first = col.find(driverFilter).first();
-        if (first != null) {
-          try (com.mongodb.client.MongoCursor<DriverStatistics> cursor =
-              col.find(driverFilter).iterator()) {
-            while (cursor.hasNext()) {
-              statsList.add(cursor.next());
-            }
-          }
-        }
-      } catch (Exception e) {
-        // Fallback for tests where find() might not be fully stubbed
-      }
-
-      if (statsList.isEmpty()) {
-        // Fallback if the lists were empty but a mock/test only stubbed .find().first()
-        try {
-          DriverStatistics first = col.find(driverFilter).first();
-          if (first != null) return first;
-        } catch (Exception e) {
-        }
-        return null;
-      }
-
-      // Merge all statistics documents to find the true overall (all-time) best
-      // highlights and
-      // per-lane bests
-      DriverStatistics merged = new DriverStatistics();
-      merged.setDriverId(driverId);
-      merged.setRaceId(raceId);
-
-      double bestOverallLap = Double.MAX_VALUE;
-      double bestOverallCount = 0;
-      long bestOverallLapDate = 0;
-      long bestOverallCountDate = 0;
-      List<Double> laneBestTimes = new ArrayList<>();
-      List<Double> laneBestCounts = new ArrayList<>();
-      List<Long> laneBestTimesDates = new ArrayList<>();
-      List<Long> laneBestCountsDates = new ArrayList<>();
-
-      for (DriverStatistics s : statsList) {
-        if (s.getBestLapTime() > 0 && s.getBestLapTime() < bestOverallLap) {
-          bestOverallLap = s.getBestLapTime();
-          bestOverallLapDate = s.getBestLapTimeDate() != null ? s.getBestLapTimeDate() : 0L;
-        }
-        if (s.getBestLapCount() > bestOverallCount) {
-          bestOverallCount = s.getBestLapCount();
-          bestOverallCountDate = s.getBestLapCountDate() != null ? s.getBestLapCountDate() : 0L;
-        }
-
-        if (s.getLaneBestLapTimes() != null) {
-          while (laneBestTimes.size() < s.getLaneBestLapTimes().size()) {
-            laneBestTimes.add(Double.MAX_VALUE);
-            laneBestTimesDates.add(0L);
-          }
-          for (int i = 0; i < s.getLaneBestLapTimes().size(); i++) {
-            double val = s.getLaneBestLapTimes().get(i);
-            if (val > 0 && val < laneBestTimes.get(i)) {
-              laneBestTimes.set(i, val);
-              if (s.getLaneBestLapTimesDates() != null && i < s.getLaneBestLapTimesDates().size()) {
-                laneBestTimesDates.set(i, s.getLaneBestLapTimesDates().get(i));
-              }
-            }
-          }
-        }
-
-        if (s.getLaneBestLapCounts() != null) {
-          while (laneBestCounts.size() < s.getLaneBestLapCounts().size()) {
-            laneBestCounts.add(0.0);
-            laneBestCountsDates.add(0L);
-          }
-          for (int i = 0; i < s.getLaneBestLapCounts().size(); i++) {
-            double val = s.getLaneBestLapCounts().get(i);
-            if (val > laneBestCounts.get(i)) {
-              laneBestCounts.set(i, val);
-              if (s.getLaneBestLapCountsDates() != null
-                  && i < s.getLaneBestLapCountsDates().size()) {
-                laneBestCountsDates.set(i, s.getLaneBestLapCountsDates().get(i));
-              }
-            }
-          }
-        }
-      }
-
-      merged.setBestLapTime(bestOverallLap == Double.MAX_VALUE ? 0.0 : bestOverallLap);
-      merged.setBestLapCount(bestOverallCount);
-      merged.setBestLapTimeDate(bestOverallLapDate);
-      merged.setBestLapCountDate(bestOverallCountDate);
-
-      // Clean up Double.MAX_VALUE in laneBestTimes
-      for (int i = 0; i < laneBestTimes.size(); i++) {
-        if (laneBestTimes.get(i) == Double.MAX_VALUE) {
-          laneBestTimes.set(i, 0.0);
-        }
-      }
-      merged.setLaneBestLapTimes(laneBestTimes);
-      merged.setLaneBestLapCounts(laneBestCounts);
-      merged.setLaneBestLapTimesDates(laneBestTimesDates);
-      merged.setLaneBestLapCountsDates(laneBestCountsDates);
-
-      return merged;
-    } catch (Exception e) {
-      logger.error("Failed to query driver statistics for driver: {}", driverId, e);
-      return null;
     }
+    if (match != null) {
+      return match;
+    }
+
+    DriverStatistics emptyStats = new DriverStatistics();
+    emptyStats.setDriverId(driverId);
+    emptyStats.setRaceId(raceId);
+    emptyStats.setBestLapTime(0.0);
+    emptyStats.setBestLapCount(0.0);
+    emptyStats.setLaneBestLapTimes(new ArrayList<>());
+    emptyStats.setLaneBestLapCounts(new ArrayList<>());
+    emptyStats.setLaneBestLapTimesDates(new ArrayList<>());
+    emptyStats.setLaneBestLapCountsDates(new ArrayList<>());
+    return emptyStats;
   }
 
   public DriverStatistics getDriverStatistics(
-      MongoDatabase database, String driverId, String raceId, boolean isDemo) {
-    return getDriverStatistics(database, driverId, raceId, RaceScope.fromBoolean(isDemo));
-  }
-
-  public static Bson buildDriverTrackStatsFilter(String driverId, String trackId) {
-    if (driverId == null || trackId == null) {
-      return Filters.eq("track_id", trackId);
-    }
-    Set<String> candidateIds = new LinkedHashSet<>();
-    candidateIds.add(driverId);
-
-    if (driverId.startsWith("d_")) {
-      String raw = driverId.substring(2);
-      candidateIds.add(raw);
-      candidateIds.add("d:" + raw);
-      candidateIds.add("d" + raw);
-    } else if (driverId.startsWith("d:")) {
-      String raw = driverId.substring(2);
-      candidateIds.add(raw);
-      candidateIds.add("d_" + raw);
-      candidateIds.add("d" + raw);
-    } else if (driverId.startsWith("d")
-        && driverId.length() > 1
-        && Character.isDigit(driverId.charAt(1))) {
-      String raw = driverId.substring(1);
-      candidateIds.add(raw);
-      candidateIds.add("d_" + raw);
-      candidateIds.add("d:" + raw);
-    } else {
-      candidateIds.add("d_" + driverId);
-      candidateIds.add("d:" + driverId);
-      candidateIds.add("d" + driverId);
-    }
-
-    List<Bson> idFilters = new ArrayList<>();
-    for (String id : candidateIds) {
-      idFilters.add(Filters.eq("driver_id", id));
-    }
-
-    return Filters.and(Filters.or(idFilters), Filters.eq("track_id", trackId));
+      DatabaseContext context, String driverId, String raceId, boolean isDemo) {
+    return getDriverStatistics(context, driverId, raceId, RaceScope.fromBoolean(isDemo));
   }
 
   public DriverTrackStats getDriverTrackStats(
-      MongoDatabase database, String driverId, String trackId, boolean isDemo) {
-    if (database == null || driverId == null || trackId == null) {
+      DatabaseContext context, String driverId, String trackId, boolean isDemo) {
+    if (context == null || driverId == null || trackId == null) {
       return null;
     }
-    try {
-      MongoCollection<DriverTrackStats> col =
-          database.getCollection(
-              getCollectionName("driver_track_stats", isDemo), DriverTrackStats.class);
-      if (col == null) {
-        return null;
+    String tableName = getCollectionName("driver_track_stats", isDemo);
+    SqliteRepository<DriverTrackStats> repo =
+        new SqliteRepository<>(context, tableName, DriverTrackStats.class);
+    for (DriverTrackStats s : repo.findAll()) {
+      if (driverId.equals(s.getDriverId()) && trackId.equals(s.getTrackId())) {
+        return s;
       }
-      Bson filter = buildDriverTrackStatsFilter(driverId, trackId);
-      DriverTrackStats stats = col.find(filter).first();
-      if (stats == null && isDemo) {
-        MongoCollection<DriverTrackStats> prodCol =
-            database.getCollection(
-                getCollectionName("driver_track_stats", false), DriverTrackStats.class);
-        if (prodCol != null) {
-          stats = prodCol.find(filter).first();
-        }
-      }
-      return stats;
-    } catch (Exception e) {
-      logger.error(
-          "Failed to get driver track stats for driver: {}, track: {}", driverId, trackId, e);
-      return null;
     }
+    return null;
   }
 
   @SuppressWarnings("checkstyle:MethodLength")
   public void updateDriverTrackStats(
-      MongoDatabase database, com.antigravity.race.Race race, boolean isDemo) { // fqn-collision
+      DatabaseContext context, com.antigravity.race.Race race, boolean isDemo) { // fqn-collision
     try {
-      if (database == null || race == null || race.getRaceModel() == null) return;
+      if (context == null || race == null || race.getRaceModel() == null) return;
       String trackId = race.getRaceModel().getTrackEntityId();
       if (trackId == null || trackId.isEmpty()) return;
 
@@ -1567,10 +1312,9 @@ public class DatabaseService {
         String driverId = PredictionEngine.getParticipantId(rp);
         if (driverId == null || driverId.isEmpty()) continue;
 
-        DriverTrackStats stats = getDriverTrackStats(database, driverId, trackId, isDemo);
+        DriverTrackStats stats = getDriverTrackStats(context, driverId, trackId, isDemo);
         if (stats == null) {
           stats = new DriverTrackStats();
-          stats.setId(new ObjectId());
           stats.setDriverId(driverId);
           stats.setTrackId(trackId);
         }
@@ -1593,8 +1337,6 @@ public class DatabaseService {
                     lapsCompleted += dhd.getLapCount();
 
                     if (dhd.getLaps() != null) {
-                      logger.info(
-                          "updateDriverTrackStats: dhd laps count: {}", dhd.getLaps().size());
                       List<Double> validLaps = new ArrayList<>();
                       for (DriverHeatData.LapData lap : dhd.getLaps()) {
                         if (lap.getLapTime() > 0
@@ -1602,7 +1344,6 @@ public class DatabaseService {
                           validLaps.add(lap.getLapTime());
                         }
                       }
-                      logger.info("updateDriverTrackStats: valid laps count: {}", validLaps.size());
                       if (!validLaps.isEmpty()) {
                         laneLaps.computeIfAbsent(laneIdx, k -> new ArrayList<>()).addAll(validLaps);
                       }
@@ -1617,276 +1358,78 @@ public class DatabaseService {
         stats.setTotalHeats(stats.getTotalHeats() + heatsCompleted);
         stats.setTotalLaps(stats.getTotalLaps() + lapsCompleted);
 
-        List<DriverTrackStats.LanePaceStats> laneStatsList = stats.getLaneStats();
-        for (Map.Entry<Integer, List<Double>> entry : laneLaps.entrySet()) {
-          int laneIdx = entry.getKey();
-          List<Double> currentLaps = entry.getValue();
-          Collections.sort(currentLaps);
-          double currentMedian;
-          int size = currentLaps.size();
-          if (size % 2 == 0) {
-            currentMedian = (currentLaps.get(size / 2 - 1) + currentLaps.get(size / 2)) / 2.0;
-          } else {
-            currentMedian = currentLaps.get(size / 2);
-          }
-
-          double sum = 0;
-          for (double l : currentLaps) sum += l;
-          double mean = sum / size;
-          double sumSq = 0;
-          for (double l : currentLaps) sumSq += Math.pow(l - mean, 2);
-          double currentStdDev = Math.sqrt(sumSq / size);
-
-          DriverTrackStats.LanePaceStats existingLane = null;
-          for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
-            if (lps.getLaneIndex() == laneIdx) {
-              existingLane = lps;
-              break;
-            }
-          }
-          if (existingLane == null) {
-            existingLane = new DriverTrackStats.LanePaceStats();
-            existingLane.setLaneIndex(laneIdx);
-            existingLane.setMedianLapTime(currentMedian);
-            existingLane.setStdDev(currentStdDev);
-            laneStatsList.add(existingLane);
-          } else {
-            int oldHeats = Math.max(1, stats.getTotalHeats() - heatsCompleted);
-            double newMedian =
-                ((existingLane.getMedianLapTime() * oldHeats) + (currentMedian * heatsCompleted))
-                    / (oldHeats + heatsCompleted);
-            double newStdDev =
-                ((existingLane.getStdDev() * oldHeats) + (currentStdDev * heatsCompleted))
-                    / (oldHeats + heatsCompleted);
-            existingLane.setMedianLapTime(newMedian);
-            existingLane.setStdDev(newStdDev);
-          }
-        }
-
-        if (!laneStatsList.isEmpty()) {
-          double sumMedians = 0;
-          int count = 0;
-          for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
-            if (lps.getMedianLapTime() > 0) {
-              sumMedians += lps.getMedianLapTime();
-              count++;
-            }
-          }
-          if (count > 0) {
-            stats.setOverallMedianLapTime(sumMedians / count);
-          }
-        }
-
         stats.setLastUpdated(System.currentTimeMillis());
-
-        logger.info(
-            "updateDriverTrackStats: About to save stats for driverId={} with overallMedianLapTime={}",
-            stats.getDriverId(),
-            stats.getOverallMedianLapTime());
-        saveDriverTrackStats(database, stats, isDemo);
+        saveDriverTrackStats(context, stats, isDemo);
       }
     } catch (Throwable t) {
       logger.error("updateDriverTrackStats: FAILED with throwable!", t);
     }
   }
 
-  public void saveDriverTrackStats(MongoDatabase database, DriverTrackStats stats, boolean isDemo) {
-    if (database == null
+  public void saveDriverTrackStats(
+      DatabaseContext context, DriverTrackStats stats, boolean isDemo) {
+    if (context == null
         || stats == null
         || stats.getDriverId() == null
         || stats.getTrackId() == null) {
       return;
     }
-    try {
-      MongoCollection<DriverTrackStats> col =
-          database.getCollection(
-              getCollectionName("driver_track_stats", isDemo), DriverTrackStats.class);
-      if (col == null) {
-        return;
-      }
-      Bson filter = buildDriverTrackStatsFilter(stats.getDriverId(), stats.getTrackId());
-      ReplaceOptions opts = new ReplaceOptions().upsert(true);
-      col.replaceOne(filter, stats, opts);
-    } catch (Exception e) {
-      logger.error("Failed to save driver track stats for driver: {}", stats.getDriverId(), e);
-    }
+    String tableName = getCollectionName("driver_track_stats", isDemo);
+    SqliteRepository<DriverTrackStats> repo =
+        new SqliteRepository<>(context, tableName, DriverTrackStats.class);
+    repo.save(stats);
   }
 
   public RacePredictionRecord getRacePredictionRecord(
-      MongoDatabase database, String raceId, boolean isDemo) {
-    if (database == null || raceId == null) {
-      return null;
+      DatabaseContext context, String raceId, boolean isDemo) {
+    if (context == null || raceId == null) return null;
+    String tableName = getCollectionName("race_predictions", isDemo);
+    SqliteRepository<RacePredictionRecord> repo =
+        new SqliteRepository<>(context, tableName, RacePredictionRecord.class);
+    List<RacePredictionRecord> all = repo.findAll();
+    for (RacePredictionRecord r : all) {
+      if (raceId.equals(r.getRaceId())) return r;
     }
-    try {
-      MongoCollection<RacePredictionRecord> col =
-          database.getCollection(
-              getCollectionName("race_predictions", isDemo), RacePredictionRecord.class);
-      if (col == null) {
-        return null;
-      }
-      RacePredictionRecord record = null;
-      if ("current".equals(raceId)) {
-        record = col.find().sort(Sorts.descending("timestamp")).first();
-      } else {
-        record = col.find(Filters.eq("race_id", raceId)).first();
-      }
-
-      if (record == null && isDemo) {
-        MongoCollection<RacePredictionRecord> prodCol =
-            database.getCollection(
-                getCollectionName("race_predictions", false), RacePredictionRecord.class);
-        if (prodCol != null) {
-          if ("current".equals(raceId)) {
-            record = prodCol.find().sort(Sorts.descending("timestamp")).first();
-          } else {
-            record = prodCol.find(Filters.eq("race_id", raceId)).first();
-          }
-        }
-      } else if (record == null && !isDemo) {
-        MongoCollection<RacePredictionRecord> demoCol =
-            database.getCollection(
-                getCollectionName("race_predictions", true), RacePredictionRecord.class);
-        if (demoCol != null) {
-          if ("current".equals(raceId)) {
-            record = demoCol.find().sort(Sorts.descending("timestamp")).first();
-          } else {
-            record = demoCol.find(Filters.eq("race_id", raceId)).first();
-          }
-        }
-      }
-
-      return record;
-    } catch (Exception e) {
-      logger.error("Failed to get race prediction record for race: {}", raceId, e);
-      return null;
-    }
+    return null;
   }
 
   public void saveRacePredictionRecord(
-      MongoDatabase database, RacePredictionRecord record, boolean isDemo) {
-    if (database == null || record == null || record.getRaceId() == null) {
-      return;
-    }
-    try {
-      MongoCollection<RacePredictionRecord> col =
-          database.getCollection(
-              getCollectionName("race_predictions", isDemo), RacePredictionRecord.class);
-      if (col == null) {
-        return;
-      }
-      RacePredictionRecord existing = col.find(Filters.eq("race_id", record.getRaceId())).first();
-      if (existing != null && existing.getId() != null) {
-        record.setId(existing.getId());
-      } else if (record.getId() == null) {
-        record.setId(new ObjectId());
-      }
-      ReplaceOptions opts = new ReplaceOptions().upsert(true);
-      col.replaceOne(Filters.eq("race_id", record.getRaceId()), record, opts);
-    } catch (Exception e) {
-      logger.error("Failed to save race prediction record for race: {}", record.getRaceId(), e);
-    }
+      DatabaseContext context, RacePredictionRecord record, boolean isDemo) {
+    if (context == null || record == null || record.getRaceId() == null) return;
+    String tableName = getCollectionName("race_predictions", isDemo);
+    SqliteRepository<RacePredictionRecord> repo =
+        new SqliteRepository<>(context, tableName, RacePredictionRecord.class);
+    repo.save(record);
   }
 
   public PredictionEvaluationRecord getPredictionEvaluationRecord(
-      MongoDatabase database, String raceId, boolean isDemo) {
-    if (database == null || raceId == null) {
-      return null;
+      DatabaseContext context, String raceId, boolean isDemo) {
+    if (context == null || raceId == null) return null;
+    String tableName = getCollectionName("prediction_evaluations", isDemo);
+    SqliteRepository<PredictionEvaluationRecord> repo =
+        new SqliteRepository<>(context, tableName, PredictionEvaluationRecord.class);
+    for (PredictionEvaluationRecord r : repo.findAll()) {
+      if (raceId.equals(r.getRaceId())) return r;
     }
-    try {
-      MongoCollection<PredictionEvaluationRecord> col =
-          database.getCollection(
-              getCollectionName("prediction_evaluations", isDemo),
-              PredictionEvaluationRecord.class);
-      if (col == null) {
-        return null;
-      }
-      PredictionEvaluationRecord record = null;
-      if ("current".equals(raceId)) {
-        record = col.find().sort(Sorts.descending("timestamp")).first();
-      } else {
-        record = col.find(Filters.eq("race_id", raceId)).first();
-      }
-
-      if (record == null && isDemo) {
-        MongoCollection<PredictionEvaluationRecord> prodCol =
-            database.getCollection(
-                getCollectionName("prediction_evaluations", false),
-                PredictionEvaluationRecord.class);
-        if (prodCol != null) {
-          if ("current".equals(raceId)) {
-            record = prodCol.find().sort(Sorts.descending("timestamp")).first();
-          } else {
-            record = prodCol.find(Filters.eq("race_id", raceId)).first();
-          }
-        }
-      } else if (record == null && !isDemo) {
-        MongoCollection<PredictionEvaluationRecord> demoCol =
-            database.getCollection(
-                getCollectionName("prediction_evaluations", true),
-                PredictionEvaluationRecord.class);
-        if (demoCol != null) {
-          if ("current".equals(raceId)) {
-            record = demoCol.find().sort(Sorts.descending("timestamp")).first();
-          } else {
-            record = demoCol.find(Filters.eq("race_id", raceId)).first();
-          }
-        }
-      }
-
-      // If we found a record but it's a baseline "no data" evaluation (rank == -1),
-      // it's meaningless and shouldn't be shown to the user. Delete it and return null.
-      if (record != null
-          && record.getDriverEvaluations() != null
-          && !record.getDriverEvaluations().isEmpty()
-          && record.getDriverEvaluations().get(0).getProjectedRank() == -1) {
-        col.deleteOne(Filters.eq("race_id", record.getRaceId()));
-        return null;
-      }
-
-      return record;
-    } catch (Exception e) {
-      logger.error("Failed to get prediction evaluation record for race: {}", raceId, e);
-      return null;
-    }
+    return null;
   }
 
   public void deletePredictionEvaluationRecord(
-      MongoDatabase database, String raceId, boolean isDemo) {
-    if (database == null || raceId == null) {
-      return;
-    }
-    try {
-      MongoCollection<PredictionEvaluationRecord> col =
-          database.getCollection(
-              getCollectionName("prediction_evaluations", isDemo),
-              PredictionEvaluationRecord.class);
-      if (col != null) {
-        col.deleteMany(Filters.eq("race_id", raceId));
-      }
-    } catch (Exception e) {
-      logger.error("Failed to delete prediction evaluation record for race: {}", raceId, e);
-    }
+      DatabaseContext context, String raceId, boolean isDemo) {
+    if (context == null || raceId == null) return;
+    String tableName = getCollectionName("prediction_evaluations", isDemo);
+    SqliteRepository<PredictionEvaluationRecord> repo =
+        new SqliteRepository<>(context, tableName, PredictionEvaluationRecord.class);
+    repo.delete(raceId);
   }
 
   public void savePredictionEvaluationRecord(
-      MongoDatabase database, PredictionEvaluationRecord record, boolean isDemo) {
-    if (database == null || record == null || record.getRaceId() == null) {
-      return;
-    }
-    try {
-      MongoCollection<PredictionEvaluationRecord> col =
-          database.getCollection(
-              getCollectionName("prediction_evaluations", isDemo),
-              PredictionEvaluationRecord.class);
-      if (col == null) {
-        return;
-      }
-      ReplaceOptions opts = new ReplaceOptions().upsert(true);
-      col.replaceOne(Filters.eq("race_id", record.getRaceId()), record, opts);
-    } catch (Exception e) {
-      logger.error(
-          "Failed to save prediction evaluation record for race: {}", record.getRaceId(), e);
-    }
+      DatabaseContext context, PredictionEvaluationRecord record, boolean isDemo) {
+    if (context == null || record == null || record.getRaceId() == null) return;
+    String tableName = getCollectionName("prediction_evaluations", isDemo);
+    SqliteRepository<PredictionEvaluationRecord> repo =
+        new SqliteRepository<>(context, tableName, PredictionEvaluationRecord.class);
+    repo.save(record);
   }
 
   private String getCollectionName(String baseName, RaceScope scope) {

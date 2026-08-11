@@ -85,6 +85,8 @@ export class RacedayActionButtonComponent {
         return "RD_WIN_HEAT_RESULTS";
       case "action-open-race-results":
         return "RD_WIN_RACE_RESULTS";
+      case "action-open-season-results":
+        return "RD_WIN_SEASON_RESULTS";
       case "action-open-prediction-results":
         return "PREDICTIONS & ODDS";
       default:
@@ -140,6 +142,9 @@ export class RacedayActionButtonComponent {
       case "action-open-race-results":
         actionString = "RACE_RESULTS";
         break;
+      case "action-open-season-results":
+        actionString = "SEASON_RESULTS";
+        break;
       case "action-open-prediction-results":
         actionString = "PREDICTION_RESULTS";
         break;
@@ -155,6 +160,7 @@ export class RacedayActionButtonComponent {
       } else if (
         actionString === "HEAT_RESULTS" ||
         actionString === "RACE_RESULTS" ||
+        actionString === "SEASON_RESULTS" ||
         actionString === "PREDICTION_RESULTS"
       ) {
         this.parent().onWindowsMenuSelect(actionString);

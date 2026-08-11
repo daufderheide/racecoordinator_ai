@@ -162,11 +162,28 @@ export class DriverViewComponent implements OnInit, OnDestroy {
   private checkDriverStatus() {
     this.isRacingInCurrentHeat = false;
     if (this.currentHeat && this.driverId) {
+      const targetId = decodeURIComponent(this.driverId);
       const driverDataIndex = this.currentHeat.heatDrivers.findIndex((hd) => {
-        const entityId = hd.actualDriver?.entity_id || hd.driver?.entity_id;
-        const teamId = hd.participant?.team?.entity_id;
+        const actualEntityId = hd.actualDriver?.entity_id;
+        const actualName = hd.actualDriver?.name;
+        const driverEntityId = hd.driver?.entity_id;
+        const driverName = hd.driver?.name;
+        const driverNickname = hd.driver?.nickname;
+        const teamEntityId = hd.participant?.team?.entity_id;
+        const teamName = hd.participant?.team?.name;
+        const participantId = hd.participant?.objectId;
+        const hdObjectId = hd.objectId;
+
         return (
-          entityId === this.driverId || (teamId && teamId === this.driverId)
+          (actualEntityId && actualEntityId === targetId) ||
+          (actualName && actualName === targetId) ||
+          (driverEntityId && driverEntityId === targetId) ||
+          (driverName && driverName === targetId) ||
+          (driverNickname && driverNickname === targetId) ||
+          (teamEntityId && teamEntityId === targetId) ||
+          (teamName && teamName === targetId) ||
+          (participantId && participantId === targetId) ||
+          (hdObjectId && hdObjectId === targetId)
         );
       });
 

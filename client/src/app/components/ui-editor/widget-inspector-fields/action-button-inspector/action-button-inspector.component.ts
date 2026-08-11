@@ -56,6 +56,8 @@ export class ActionButtonInspectorComponent {
         return "RD_WIN_HEAT_RESULTS";
       case "action-open-race-results":
         return "RD_WIN_RACE_RESULTS";
+      case "action-open-season-results":
+        return "RD_WIN_SEASON_RESULTS";
       case "action-open-prediction-results":
         return "RD_WIN_PREDICTION_RESULTS";
       default:

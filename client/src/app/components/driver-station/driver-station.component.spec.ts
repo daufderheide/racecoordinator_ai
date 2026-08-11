@@ -107,4 +107,23 @@ describe("DriverStationComponent Wrapper", () => {
     ).toHaveBeenCalled();
     expect(mockContainer.createComponent).toHaveBeenCalled();
   }));
+
+  it("should invoke setInput('inputLaneIndex', val) on componentRef when inputLaneIndex is updated", fakeAsync(() => {
+    mockFileSystemService.hasCustomFiles.and.returnValue(
+      Promise.resolve(false),
+    );
+    const mockComponentRef = {
+      instance: {},
+      setInput: jasmine.createSpy("setInput"),
+    };
+    mockContainer.createComponent.and.returnValue(mockComponentRef as any);
+
+    fixture.componentRef.setInput("inputLaneIndex", 2);
+    fixture.detectChanges();
+
+    component.ngOnInit();
+    tick();
+
+    expect(mockComponentRef.setInput).toHaveBeenCalledWith("inputLaneIndex", 2);
+  }));
 });

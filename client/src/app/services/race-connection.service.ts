@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from "@angular/core";
+import { Injectable, NgZone, OnDestroy } from "@angular/core";
 import { BehaviorSubject, Subject, Subscription } from "rxjs";
 import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
@@ -91,6 +91,7 @@ export class RaceConnectionService implements OnDestroy {
   private disconnectedTimeout: any;
   private lastInterfaceStatus: InterfaceStatus | number = -1;
   private hasInitiallyConnected = false;
+  private isErrorAlertActive = false;
 
   // State
   private isRaceEnded = false;
@@ -114,6 +115,7 @@ export class RaceConnectionService implements OnDestroy {
     private dataService: DataService,
     private raceService: RaceService,
     private logger: LoggerService,
+    private ngZone: NgZone,
   ) {}
 
   connect() {
@@ -594,37 +596,28 @@ export class RaceConnectionService implements OnDestroy {
       this.isInterfaceConnected = status === InterfaceStatus.CONNECTED;
 
       if (status === InterfaceStatus.NO_DATA) {
-        if (!this.hasInitiallyConnected) {
-          this.scheduleDisconnectedError(
-            "ACK_MODAL_TITLE_NO_DATA",
-            "ACK_MODAL_MSG_NO_DATA",
-          );
-        } else {
-          this.emitAlert("ACK_MODAL_TITLE_NO_DATA", "ACK_MODAL_MSG_NO_DATA");
-        }
+        this.scheduleDisconnectedError(
+          "ACK_MODAL_TITLE_NO_DATA",
+          "ACK_MODAL_MSG_NO_DATA",
+        );
       } else if (status === InterfaceStatus.DISCONNECTED) {
-        if (!this.hasInitiallyConnected) {
-          if (this.noStatusWatchdog) {
-            clearTimeout(this.noStatusWatchdog);
-            this.noStatusWatchdog = null;
-          }
-          this.emitAlert(
-            "ACK_MODAL_TITLE_DISCONNECTED",
-            "ACK_MODAL_MSG_DISCONNECTED",
-          );
-        } else {
-          this.scheduleDisconnectedError(
-            "ACK_MODAL_TITLE_DISCONNECTED",
-            "ACK_MODAL_MSG_DISCONNECTED",
-          );
+        if (this.noStatusWatchdog) {
+          clearTimeout(this.noStatusWatchdog);
+          this.noStatusWatchdog = null;
         }
+        this.clearDisconnectedError();
+        this.emitAlert(
+          "ACK_MODAL_TITLE_DISCONNECTED",
+          "ACK_MODAL_MSG_DISCONNECTED",
+        );
       } else if (status === InterfaceStatus.CONNECTED) {
         this.clearDisconnectedError();
-        if (this.hasInitiallyConnected) {
+        if (this.hasInitiallyConnected && this.isErrorAlertActive) {
           this.emitAlert(
             "ACK_MODAL_TITLE_CONNECTED",
             "ACK_MODAL_MSG_CONNECTED",
           );
+          this.isErrorAlertActive = false;
         }
         this.hasInitiallyConnected = true;
       }
@@ -642,19 +635,27 @@ export class RaceConnectionService implements OnDestroy {
       ? this.WATCHDOG_TIMEOUT
       : this.INITIAL_WATCHDOG_TIMEOUT;
     this.noStatusWatchdog = setTimeout(() => {
-      this.lastInterfaceStatus = -1;
-      if (!this.hasInitiallyConnected) {
-        this.emitAlert(
-          "ACK_MODAL_TITLE_DISCONNECTED",
-          "ACK_MODAL_MSG_DISCONNECTED",
-        );
-      } else {
-        this.emitAlert("ACK_MODAL_TITLE_NO_STATUS", "ACK_MODAL_MSG_NO_STATUS");
-      }
+      this.ngZone.run(() => {
+        this.lastInterfaceStatus = -1;
+        if (!this.hasInitiallyConnected) {
+          this.emitAlert(
+            "ACK_MODAL_TITLE_DISCONNECTED",
+            "ACK_MODAL_MSG_DISCONNECTED",
+          );
+        } else {
+          this.emitAlert(
+            "ACK_MODAL_TITLE_NO_STATUS",
+            "ACK_MODAL_MSG_NO_STATUS",
+          );
+        }
+      });
     }, timeout);
   }
 
   private emitAlert(titleKey: string, messageKey: string) {
+    if (titleKey !== "ACK_MODAL_TITLE_CONNECTED") {
+      this.isErrorAlertActive = true;
+    }
     this.interfaceAlertSubject.next({ titleKey, messageKey });
   }
 
@@ -672,7 +673,9 @@ export class RaceConnectionService implements OnDestroy {
       ? this.WATCHDOG_TIMEOUT
       : this.INITIAL_WATCHDOG_TIMEOUT;
     this.disconnectedTimeout = setTimeout(() => {
-      this.emitAlert(titleKey, messageKey);
+      this.ngZone.run(() => {
+        this.emitAlert(titleKey, messageKey);
+      });
     }, timeout);
   }
 

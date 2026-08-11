@@ -51,8 +51,11 @@ describe("DatabaseManagerComponent", () => {
       of({
         name: "newDB",
         driverCount: 0,
+        teamCount: 0,
         trackCount: 0,
         raceCount: 0,
+        eventCount: 0,
+        seasonCount: 0,
         assetCount: 0,
         sizeBytes: 0,
       }),
@@ -64,8 +67,11 @@ describe("DatabaseManagerComponent", () => {
       of({
         name: MOCK_DATABASES[0].name,
         driverCount: 0,
+        teamCount: 0,
         trackCount: 0,
         raceCount: 0,
+        eventCount: 0,
+        seasonCount: 0,
         assetCount: 0,
         sizeBytes: 0,
       }),
@@ -75,8 +81,11 @@ describe("DatabaseManagerComponent", () => {
       of({
         name: "importedDB",
         driverCount: 1,
+        teamCount: 1,
         trackCount: 1,
         raceCount: 1,
+        eventCount: 1,
+        seasonCount: 1,
         assetCount: 1,
         sizeBytes: 100,
       }),
@@ -449,5 +458,54 @@ describe("DatabaseManagerComponent", () => {
     );
     expect(component.showAckModal).toBeTrue();
     expect(component.ackModalMessage).toBe("DBM_SUCCESS_IMPORT");
+  });
+
+  it("should render eventCount and seasonCount in the stats grid", () => {
+    component.selectedDatabase = {
+      name: "test-db",
+      driverCount: 5,
+      teamCount: 2,
+      trackCount: 1,
+      raceCount: 4,
+      eventCount: 3,
+      seasonCount: 2,
+      assetCount: 10,
+      sizeBytes: 1000,
+      raceRecordCount: 0,
+      raceRecordSizeBytes: 0,
+      savedRaceCount: 0,
+      savedRaceSizeBytes: 0,
+    };
+    fixture.detectChanges();
+
+    const statLabels =
+      fixture.nativeElement.querySelectorAll(".stat-item .label");
+    const statValues =
+      fixture.nativeElement.querySelectorAll(".stat-item .value");
+
+    const labelsText = Array.from(statLabels).map((el: any) =>
+      el.textContent.trim(),
+    );
+    const valuesText = Array.from(statValues).map((el: any) =>
+      el.textContent.trim(),
+    );
+
+    expect(labelsText).toContain("DBM_STAT_EVENTS");
+    expect(labelsText).toContain("DBM_STAT_SEASONS");
+
+    const eventsIndex = labelsText.indexOf("DBM_STAT_EVENTS");
+    const seasonsIndex = labelsText.indexOf("DBM_STAT_SEASONS");
+
+    expect(valuesText[eventsIndex]).toBe("3");
+    expect(valuesText[seasonsIndex]).toBe("2");
+  });
+
+  it("should apply size-stat-item class to DBM_STAT_RACE_RECORDS element", () => {
+    component.selectedDatabase = MOCK_DATABASES[0];
+    fixture.detectChanges();
+
+    const sizeStatItem = fixture.nativeElement.querySelector(".size-stat-item");
+    expect(sizeStatItem).not.toBeNull();
+    expect(sizeStatItem.textContent).toContain("DBM_STAT_RACE_RECORDS");
   });
 });

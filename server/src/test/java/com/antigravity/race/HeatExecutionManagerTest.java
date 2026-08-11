@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,12 +61,12 @@ public class HeatExecutionManagerTest {
             .withHeatScoring(heatScoring)
             .withOverallScoring(overallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     participants = new ArrayList<>();
-    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
-    participants.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", new ObjectId()), "p2"));
+    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
+    participants.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "1"), "p2"));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
@@ -78,7 +77,7 @@ public class HeatExecutionManagerTest {
             .lanes(lanes)
             .arduinoConfigs(Collections.singletonList(mock(ArduinoConfig.class)))
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =
@@ -397,7 +396,7 @@ public class HeatExecutionManagerTest {
             .withTeamOptions(teamOptions)
             .build();
 
-    Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
+    Team mockTeam = new Team("Team A", null, null, "t1", "1");
     RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
     participants.clear();
     participants.add(teamParticipant);
@@ -413,7 +412,7 @@ public class HeatExecutionManagerTest {
     executionManager.initialize(track.getLanes().size());
 
     DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
-    driverData.setActualDriver(new Driver("1A", "1A", "sd1", new ObjectId()));
+    driverData.setActualDriver(new Driver("1A", "1A", "sd1", "1"));
 
     // Warmup lap handling (ignoreTeamLimits = true, checkFinish = false)
     executionManager.onLap(0, 1.0, 1, true, false, false); // Reaction
@@ -523,8 +522,7 @@ public class HeatExecutionManagerTest {
   public void testOnLapAndOnSegmentRejectedOnEmptyLane() {
     // Re-create the race with one real driver and one EMPTY_DRIVER explicitly
     List<RaceParticipant> mixedParticipants = new ArrayList<>();
-    mixedParticipants.add(
-        new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
+    mixedParticipants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
     mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
 
     race =
@@ -575,8 +573,7 @@ public class HeatExecutionManagerTest {
             .build();
 
     List<RaceParticipant> mixedParticipants = new ArrayList<>();
-    mixedParticipants.add(
-        new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
+    mixedParticipants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
     mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
 
     race =
@@ -608,7 +605,7 @@ public class HeatExecutionManagerTest {
   @Test
   public void testRealDriverNamedEmpty() {
     // Create a real driver whose name happens to be "Empty" but has a valid entity ID
-    Driver realDriverNamedEmpty = new Driver("Empty", "Speedy", "real_id_123", new ObjectId());
+    Driver realDriverNamedEmpty = new Driver("Empty", "Speedy", "real_id_123", "1");
     List<RaceParticipant> mixedParticipants = new ArrayList<>();
     mixedParticipants.add(new RaceParticipant(realDriverNamedEmpty, "rp1"));
     mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
@@ -720,8 +717,7 @@ public class HeatExecutionManagerTest {
             HeatScoring.AllowFinish.Allow);
 
     List<RaceParticipant> mixedParticipants = new ArrayList<>();
-    mixedParticipants.add(
-        new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
+    mixedParticipants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
     mixedParticipants.add(new RaceParticipant(Driver.EMPTY_DRIVER));
 
     race =
@@ -882,7 +878,7 @@ public class HeatExecutionManagerTest {
             .withStartBehindSensor(false)
             .build();
 
-    Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
+    Team mockTeam = new Team("Team A", null, null, "t1", "1");
     RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
     participants.clear();
     participants.add(teamParticipant);
@@ -898,7 +894,7 @@ public class HeatExecutionManagerTest {
     executionManager.initialize(track.getLanes().size());
 
     DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
-    driverData.setActualDriver(new Driver("1A", "1A", "sd1", new ObjectId()));
+    driverData.setActualDriver(new Driver("1A", "1A", "sd1", "1"));
     driverData.getDriver().setFuelLevel(100.0);
 
     // First crossing (accepted, counts as lap 1)
@@ -1010,7 +1006,7 @@ public class HeatExecutionManagerTest {
             .withStartBehindSensor(false)
             .build();
 
-    Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
+    Team mockTeam = new Team("Team A", null, null, "t1", "1");
     RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
     participants.clear();
     participants.add(teamParticipant);
@@ -1026,7 +1022,7 @@ public class HeatExecutionManagerTest {
     executionManager.initialize(track.getLanes().size());
 
     DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
-    driverData.setActualDriver(new Driver("1A", "1A", "sd1", new ObjectId()));
+    driverData.setActualDriver(new Driver("1A", "1A", "sd1", "1"));
 
     // First crossing (accepted, counts as lap 1)
     boolean counted = executionManager.onLap(0, 5.0, 1, false, true, false);
@@ -1130,7 +1126,7 @@ public class HeatExecutionManagerTest {
             .withStartBehindSensor(false)
             .build();
 
-    Team mockTeam = new Team("Team A", null, null, "t1", new ObjectId());
+    Team mockTeam = new Team("Team A", null, null, "t1", "1");
     RaceParticipant teamParticipant = new RaceParticipant(mockTeam);
     participants.clear();
     participants.add(teamParticipant);
@@ -1146,7 +1142,7 @@ public class HeatExecutionManagerTest {
     executionManager.initialize(track.getLanes().size());
 
     DriverHeatData driverData = race.getCurrentHeat().getDrivers().get(0);
-    driverData.setActualDriver(new Driver("1A", "1A", "sd1", new ObjectId()));
+    driverData.setActualDriver(new Driver("1A", "1A", "sd1", "1"));
 
     // First crossing (accepted, counts as lap 1 - team limit is now reached)
     counted = executionManager.onLap(0, 5.0, 1, false, true, false);

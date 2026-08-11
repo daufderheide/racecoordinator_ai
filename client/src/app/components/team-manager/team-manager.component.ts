@@ -153,15 +153,17 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         this.drivers = result.drivers;
         this.driversMap = new Map(this.drivers.map((d) => [d.entity_id, d]));
 
-        this.teams = teams.map(
-          (t: any) =>
-            new Team(
-              t.entity_id || t.entityId || "",
-              t.name || "",
-              t.avatarUrl || undefined,
-              t.driverIds || [],
-            ),
-        );
+        this.teams = teams
+          .map(
+            (t: any) =>
+              new Team(
+                t.entity_id || t.entityId || "",
+                t.name || "",
+                t.avatarUrl || undefined,
+                t.driverIds || [],
+              ),
+          )
+          .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
 
         const lastEdited = this.navigationService.getLastEditedId("team");
         let selectedId = this.route.snapshot.queryParamMap.get("id");
@@ -181,10 +183,10 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
           if (found) {
             this.selectTeam(found);
           } else if (this.teams.length > 0 && !this.selectedTeam) {
-            this.selectTeam(this.teams[0]);
+            this.selectTeam(this.filteredTeams[0] || this.teams[0]);
           }
         } else if (this.teams.length > 0 && !this.selectedTeam) {
-          this.selectTeam(this.teams[0]);
+          this.selectTeam(this.filteredTeams[0] || this.teams[0]);
         }
 
         if (this.selectedTeam) {

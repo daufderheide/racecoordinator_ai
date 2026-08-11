@@ -18,7 +18,6 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.service.DatabaseService;
-import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -377,12 +376,11 @@ public class SeasonPointsCalculator {
       dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
     } catch (Exception ignored) {
     }
-    MongoDatabase db = dbCtx != null ? dbCtx.getDatabase() : null;
-    return calculateStandings(season, db);
+    return calculateStandings(season, dbCtx);
   }
 
   public static List<DriverSeasonStanding> calculateStandings(
-      Season season, MongoDatabase database) {
+      Season season, DatabaseContext databaseContext) {
     if (season == null || season.getRaces() == null) {
       return new ArrayList<>();
     }
@@ -409,9 +407,9 @@ public class SeasonPointsCalculator {
       }
     }
 
-    if (database != null) {
+    if (databaseContext != null) {
       for (String dId : driverRaceMap.keySet()) {
-        Driver d = DatabaseService.getInstance().getDriver(database, dId);
+        Driver d = DatabaseService.getInstance().getDriver(databaseContext, dId);
         if (d != null && d.getDisplayName() != null && !d.getDisplayName().trim().isEmpty()) {
           driverNames.put(dId, d.getDisplayName());
         }

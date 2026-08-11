@@ -72,7 +72,7 @@ public class DriverHeatDataTest {
   }
 
   @Test
-  public void testMongoSerializationDeserialization() {
+  public void testSerializationDeserialization() throws Exception {
     Driver driverModel = new Driver("Test Driver", "Nickname");
     RaceParticipant driver = new RaceParticipant(driverModel);
     DriverHeatData original = new DriverHeatData(driver);
@@ -82,19 +82,10 @@ public class DriverHeatDataTest {
     original.addSegment(3.0);
     original.addLap(12.0, true, true);
 
-    org.bson.codecs.configuration.CodecRegistry pojoCodecRegistry =
-        org.bson.codecs.configuration.CodecRegistries.fromRegistries(
-            com.mongodb.MongoClientSettings.getDefaultCodecRegistry(),
-            org.bson.codecs.configuration.CodecRegistries.fromProviders(
-                org.bson.codecs.pojo.PojoCodecProvider.builder().automatic(true).build()));
-
-    org.bson.codecs.Codec<DriverHeatData> codec = pojoCodecRegistry.get(DriverHeatData.class);
-    org.bson.BsonDocument document = new org.bson.BsonDocument();
-    org.bson.BsonWriter writer = new org.bson.BsonDocumentWriter(document);
-    codec.encode(writer, original, org.bson.codecs.EncoderContext.builder().build());
-
-    org.bson.BsonReader reader = new org.bson.BsonDocumentReader(document);
-    DriverHeatData decoded = codec.decode(reader, org.bson.codecs.DecoderContext.builder().build());
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String json = mapper.writeValueAsString(original);
+    DriverHeatData decoded = mapper.readValue(json, DriverHeatData.class);
 
     assertEquals(original.getLaps().size(), decoded.getLaps().size());
     assertEquals(original.getSegments().size(), decoded.getSegments().size());

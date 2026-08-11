@@ -117,6 +117,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   public void onDataReceived(byte[] data) {
     if (data != null && data.length > 0) {
       logger.info("BART Raw RX {} bytes: {}", data.length, bytesToHex(data));
+      lastHeartbeatTimeMs = now();
       rxBuffer.write(data);
       processData();
     }
@@ -174,7 +175,7 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
       case TYPE_STATUS_SNAPSHOT:
         return 9; // A5 20 01 race_state minlap uptime_d10 lanes reserved CRC
       case TYPE_ACK:
-        return 4; // A5 7F op CRC
+        return 5; // A5 7F op status CRC
       default:
         return -1;
     }
@@ -406,7 +407,15 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   }
 
   @Override
+  protected void checkAndPublishStatus() {
+    if (isConnected()) {
+      sendReadStatus();
+    }
+    super.checkAndPublishStatus();
+  }
+
+  @Override
   public boolean requiresHeartbeat() {
-    return false;
+    return true;
   }
 }

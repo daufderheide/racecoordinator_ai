@@ -123,6 +123,15 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   }
 
   @Override
+  protected void stopStatusScheduler() {
+    if (ledFlashFuture != null) {
+      ledFlashFuture.cancel(true);
+      ledFlashFuture = null;
+    }
+    super.stopStatusScheduler();
+  }
+
+  @Override
   public void close() {
     if (ledFlashFuture != null) {
       ledFlashFuture.cancel(true);

@@ -82,7 +82,7 @@ Entities (Drivers, Tracks, Teams, Races) and Database Management.
 
 | Method | Path | Request Body | Response Body | Description |
 |:---|:---|:---|:---|:---|
-| `GET` | `/api/databases` | None | Array of Database Stats JSON | Lists all available MongoDB databases. |
+| `GET` | `/api/databases` | None | Array of Database Stats JSON | Lists all available SQLite databases. |
 | `POST` | `/api/databases/switch` | `{ "name": "..." }` | Database Stats JSON | Switches the active database. |
 | `POST` | `/api/databases/create` | `{ "name": "..." }` | Database Stats JSON | Creates and initializes a database. |
 | `POST` | `/api/databases/copy` | `{ "name": "...", "source": "..." }` | Database Stats JSON | Copies one database to a new name. |

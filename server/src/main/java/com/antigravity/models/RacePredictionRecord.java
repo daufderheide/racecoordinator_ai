@@ -6,44 +6,33 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 public class RacePredictionRecord {
 
-  @BsonId
   @JsonProperty("_id")
-  private ObjectId id;
+  private String id;
 
-  @BsonProperty("race_id")
   @JsonProperty("race_id")
   private String raceId;
 
-  @BsonProperty("timestamp")
   @JsonProperty("timestamp")
   private long timestamp;
 
-  @BsonProperty("pre_race")
   @JsonProperty("pre_race")
   private PredictionSnapshot preRace;
 
-  @BsonProperty("realtime_snapshots")
   @JsonProperty("realtime_snapshots")
   private List<PredictionSnapshot> realtimeSnapshots = new ArrayList<>();
 
   public RacePredictionRecord() {}
 
-  @BsonCreator
   @JsonCreator
   public RacePredictionRecord(
-      @BsonId @JsonProperty("_id") ObjectId id,
-      @BsonProperty("race_id") @JsonProperty("race_id") String raceId,
-      @BsonProperty("timestamp") @JsonProperty("timestamp") long timestamp,
-      @BsonProperty("pre_race") @JsonProperty("pre_race") PredictionSnapshot preRace,
-      @BsonProperty("realtime_snapshots") @JsonProperty("realtime_snapshots")
-          List<PredictionSnapshot> realtimeSnapshots) {
+      @JsonProperty("_id") String id,
+      @JsonProperty("race_id") String raceId,
+      @JsonProperty("timestamp") long timestamp,
+      @JsonProperty("pre_race") PredictionSnapshot preRace,
+      @JsonProperty("realtime_snapshots") List<PredictionSnapshot> realtimeSnapshots) {
     this.id = id;
     this.raceId = raceId;
     this.timestamp = timestamp;
@@ -51,11 +40,11 @@ public class RacePredictionRecord {
     this.realtimeSnapshots = realtimeSnapshots != null ? realtimeSnapshots : new ArrayList<>();
   }
 
-  public ObjectId getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(ObjectId id) {
+  public void setId(String id) {
     this.id = id;
   }
 
@@ -92,45 +81,34 @@ public class RacePredictionRecord {
   }
 
   public static class PredictionSnapshot {
-    @BsonProperty("heat_index")
     @JsonProperty("heat_index")
     private int heatIndex;
 
-    @BsonProperty("completed_laps")
     @JsonProperty("completed_laps")
     private int completedLaps;
 
-    @BsonProperty("win_probabilities")
     @JsonProperty("win_probabilities")
     private Map<String, Double> winProbabilities = new HashMap<>();
 
-    @BsonProperty("podium_probabilities")
     @JsonProperty("podium_probabilities")
     private Map<String, Double> podiumProbabilities = new HashMap<>();
 
-    @BsonProperty("projected_standings")
     @JsonProperty("projected_standings")
     private List<DriverProjection> projectedStandings = new ArrayList<>();
 
-    @BsonProperty("heat_forecasts")
     @JsonProperty("heat_forecasts")
     private List<HeatForecast> heatForecasts = new ArrayList<>();
 
     public PredictionSnapshot() {}
 
-    @BsonCreator
     @JsonCreator
     public PredictionSnapshot(
-        @BsonProperty("heat_index") @JsonProperty("heat_index") int heatIndex,
-        @BsonProperty("completed_laps") @JsonProperty("completed_laps") int completedLaps,
-        @BsonProperty("win_probabilities") @JsonProperty("win_probabilities")
-            Map<String, Double> winProbabilities,
-        @BsonProperty("podium_probabilities") @JsonProperty("podium_probabilities")
-            Map<String, Double> podiumProbabilities,
-        @BsonProperty("projected_standings") @JsonProperty("projected_standings")
-            List<DriverProjection> projectedStandings,
-        @BsonProperty("heat_forecasts") @JsonProperty("heat_forecasts")
-            List<HeatForecast> heatForecasts) {
+        @JsonProperty("heat_index") int heatIndex,
+        @JsonProperty("completed_laps") int completedLaps,
+        @JsonProperty("win_probabilities") Map<String, Double> winProbabilities,
+        @JsonProperty("podium_probabilities") Map<String, Double> podiumProbabilities,
+        @JsonProperty("projected_standings") List<DriverProjection> projectedStandings,
+        @JsonProperty("heat_forecasts") List<HeatForecast> heatForecasts) {
       this.heatIndex = heatIndex;
       this.completedLaps = completedLaps;
       this.winProbabilities = winProbabilities != null ? winProbabilities : new HashMap<>();
@@ -191,92 +169,70 @@ public class RacePredictionRecord {
   }
 
   public static class DriverProjection {
-    @BsonProperty("driver_id")
     @JsonProperty("driver_id")
     private String driverId;
 
-    @BsonProperty("driver_name")
     @JsonProperty("driver_name")
     private String driverName;
 
-    @BsonProperty("projected_rank")
     @JsonProperty("projected_rank")
     private int projectedRank;
 
-    @BsonProperty("projected_laps")
     @JsonProperty("projected_laps")
     private double projectedLaps;
 
-    @BsonProperty("projected_time_seconds")
     @JsonProperty("projected_time_seconds")
     private double projectedTimeSeconds;
 
-    @BsonProperty("win_probability")
     @JsonProperty("win_probability")
     private double winProbability;
 
-    @BsonProperty("podium_probability")
     @JsonProperty("podium_probability")
     private double podiumProbability;
 
-    @BsonProperty("prior_median_lap_time")
     @JsonProperty("prior_median_lap_time")
     private double priorMedianLapTime = -1.0;
 
-    @BsonProperty("prior_std_dev")
     @JsonProperty("prior_std_dev")
     private double priorStdDev = -1.0;
 
-    @BsonProperty("historical_laps")
     @JsonProperty("historical_laps")
     private int historicalLaps = 0;
 
-    @BsonProperty("per_lane_medians")
     @JsonProperty("per_lane_medians")
     private Map<String, Double> perLaneMedians = new HashMap<>();
 
-    @BsonProperty("empirical_laps")
     @JsonProperty("empirical_laps")
     private int empiricalLaps = 0;
 
-    @BsonProperty("empirical_median_lap_time")
     @JsonProperty("empirical_median_lap_time")
     private double empiricalMedianLapTime = -1.0;
 
-    @BsonProperty("simulated_wins")
     @JsonProperty("simulated_wins")
     private int simulatedWins = 0;
 
-    @BsonProperty("total_simulations")
     @JsonProperty("total_simulations")
     private int totalSimulations = 0;
 
     public DriverProjection() {}
 
-    @BsonCreator
     @JsonCreator
     public DriverProjection(
-        @BsonProperty("driver_id") @JsonProperty("driver_id") String driverId,
-        @BsonProperty("driver_name") @JsonProperty("driver_name") String driverName,
-        @BsonProperty("projected_rank") @JsonProperty("projected_rank") int projectedRank,
-        @BsonProperty("projected_laps") @JsonProperty("projected_laps") double projectedLaps,
-        @BsonProperty("projected_time_seconds") @JsonProperty("projected_time_seconds")
-            double projectedTimeSeconds,
-        @BsonProperty("win_probability") @JsonProperty("win_probability") double winProbability,
-        @BsonProperty("podium_probability") @JsonProperty("podium_probability")
-            double podiumProbability,
-        @BsonProperty("prior_median_lap_time") @JsonProperty("prior_median_lap_time")
-            Double priorMedianLapTime,
-        @BsonProperty("prior_std_dev") @JsonProperty("prior_std_dev") Double priorStdDev,
-        @BsonProperty("historical_laps") @JsonProperty("historical_laps") Integer historicalLaps,
-        @BsonProperty("per_lane_medians") @JsonProperty("per_lane_medians")
-            Map<String, Double> perLaneMedians,
-        @BsonProperty("empirical_laps") @JsonProperty("empirical_laps") Integer empiricalLaps,
-        @BsonProperty("empirical_median_lap_time") @JsonProperty("empirical_median_lap_time")
-            Double empiricalMedianLapTime,
-        @BsonProperty("simulated_wins") @JsonProperty("simulated_wins") Integer simulatedWins,
-        @BsonProperty("total_simulations") @JsonProperty("total_simulations")
-            Integer totalSimulations) {
+        @JsonProperty("driver_id") String driverId,
+        @JsonProperty("driver_name") String driverName,
+        @JsonProperty("projected_rank") int projectedRank,
+        @JsonProperty("projected_laps") double projectedLaps,
+        @JsonProperty("projected_time_seconds") double projectedTimeSeconds,
+        @JsonProperty("win_probability") double winProbability,
+        @JsonProperty("podium_probability") double podiumProbability,
+        @JsonProperty("prior_median_lap_time") Double priorMedianLapTime,
+        @JsonProperty("prior_std_dev") Double priorStdDev,
+        @JsonProperty("historical_laps") Integer historicalLaps,
+        @JsonProperty("per_lane_medians") Map<String, Double> perLaneMedians,
+        @JsonProperty("empirical_laps") Integer empiricalLaps,
+        @JsonProperty("empirical_median_lap_time") Double empiricalMedianLapTime,
+        @JsonProperty("simulated_wins") Integer simulatedWins,
+        @JsonProperty("total_simulations") Integer totalSimulations) {
       this.driverId = driverId;
       this.driverName = driverName;
       this.projectedRank = projectedRank;
@@ -442,28 +398,22 @@ public class RacePredictionRecord {
   }
 
   public static class HeatForecast {
-    @BsonProperty("heat_number")
     @JsonProperty("heat_number")
     private int heatNumber;
 
-    @BsonProperty("predicted_winner_id")
     @JsonProperty("predicted_winner_id")
     private String predictedWinnerId;
 
-    @BsonProperty("driver_projected_laps")
     @JsonProperty("driver_projected_laps")
     private Map<String, Double> driverProjectedLaps = new HashMap<>();
 
     public HeatForecast() {}
 
-    @BsonCreator
     @JsonCreator
     public HeatForecast(
-        @BsonProperty("heat_number") @JsonProperty("heat_number") int heatNumber,
-        @BsonProperty("predicted_winner_id") @JsonProperty("predicted_winner_id")
-            String predictedWinnerId,
-        @BsonProperty("driver_projected_laps") @JsonProperty("driver_projected_laps")
-            Map<String, Double> driverProjectedLaps) {
+        @JsonProperty("heat_number") int heatNumber,
+        @JsonProperty("predicted_winner_id") String predictedWinnerId,
+        @JsonProperty("driver_projected_laps") Map<String, Double> driverProjectedLaps) {
       this.heatNumber = heatNumber;
       this.predictedWinnerId = predictedWinnerId;
       this.driverProjectedLaps =

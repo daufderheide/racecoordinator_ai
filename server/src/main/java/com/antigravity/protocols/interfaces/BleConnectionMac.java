@@ -25,7 +25,9 @@ public class BleConnectionMac {
       ProcessBuilder pb;
       File scriptFile = new File(scriptPath);
       File compiledBinary = new File(scriptFile.getParentFile(), "ble_bridge");
-      if (compiledBinary.exists() && compiledBinary.canExecute()) {
+      if (compiledBinary.exists()
+          && compiledBinary.canExecute()
+          && compiledBinary.lastModified() >= scriptFile.lastModified()) {
         pb = new ProcessBuilder(compiledBinary.getAbsolutePath(), "scan", "2.5");
       } else {
         pb = new ProcessBuilder("swift", scriptPath, "scan", "2.5");
@@ -66,7 +68,9 @@ public class BleConnectionMac {
     File scriptFile = new File(scriptPath);
     File compiledBinary = new File(scriptFile.getParentFile(), "ble_bridge");
     ProcessBuilder pb;
-    if (compiledBinary.exists() && compiledBinary.canExecute()) {
+    if (compiledBinary.exists()
+        && compiledBinary.canExecute()
+        && compiledBinary.lastModified() >= scriptFile.lastModified()) {
       pb = new ProcessBuilder(compiledBinary.getAbsolutePath(), "connect", target);
     } else {
       pb = new ProcessBuilder("swift", scriptPath, "connect", target);

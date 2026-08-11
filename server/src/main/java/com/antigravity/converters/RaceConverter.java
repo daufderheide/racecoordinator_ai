@@ -227,10 +227,10 @@ public class RaceConverter {
             com.antigravity.race.ClientSubscriptionManager.getInstance() // fqn-collision
                 .getDatabaseContext(); // fqn-collision
       }
-      if (dbCtx != null && dbCtx.getDatabase() != null) {
+      if (dbCtx != null) {
         com.antigravity.models.Season season = // fqn-collision
             com.antigravity.service.DatabaseService.getInstance() // fqn-collision
-                .getSeason(dbCtx.getDatabase(), seasonId);
+                .getSeason(dbCtx, seasonId);
         if (season != null) {
           builder.setSeasonName(season.getName());
           java.util.List<

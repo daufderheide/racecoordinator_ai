@@ -16,7 +16,6 @@ import com.antigravity.race.states.HeatOver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,12 +50,12 @@ public class TestStartAtCurrent {
             .withHeatScoring(heatScoring)
             .withOverallScoring(overallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     participants = new ArrayList<>();
-    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
-    participants.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", new ObjectId()), "p2"));
+    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
+    participants.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "1"), "p2"));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
@@ -67,7 +66,7 @@ public class TestStartAtCurrent {
             .lanes(lanes)
             .arduinoConfigs(Collections.singletonList(mock(ArduinoConfig.class)))
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =

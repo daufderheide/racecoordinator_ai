@@ -5,22 +5,32 @@ $ErrorActionPreference = "Stop"
 
 # Parse dynamic ports
 $ServerPort = 7070
-$MongoPort = 8085
 $ClientPort = 4200
 
 for ($i = 0; $i -lt $args.Count; $i++) {
     if ($args[$i] -eq "--port" -and ($i + 1) -lt $args.Count) { $ServerPort = [int]$args[$i+1] }
     elseif ($args[$i] -like "--port=*") { $ServerPort = [int]($args[$i] -replace "--port=", "") }
-    elseif ($args[$i] -eq "--mongo-port" -and ($i + 1) -lt $args.Count) { $MongoPort = [int]$args[$i+1] }
-    elseif ($args[$i] -like "--mongo-port=*") { $MongoPort = [int]($args[$i] -replace "--mongo-port=", "") }
 }
 
 if ($env:SERVER_PORT) { $ServerPort = [int]$env:SERVER_PORT }
-if ($env:MONGO_PORT) { $MongoPort = [int]$env:MONGO_PORT }
 
 function Test-PortInUse($Port) {
     $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
     return ($null -ne $conn)
+}
+
+function Stop-PortProcesses($Port) {
+    if (Test-PortInUse $Port) {
+        $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+        foreach ($conn in $connections) {
+            $pidToKill = $conn.OwningProcess
+            if ($pidToKill -gt 0) {
+                try {
+                    Stop-Process -Id $pidToKill -Force -ErrorAction SilentlyContinue
+                } catch {}
+            }
+        }
+    }
 }
 
 function Show-PortErrorDialog($Title, $Message) {
@@ -41,11 +51,6 @@ if (Test-PortInUse $ServerPort) {
     exit 1
 }
 
-if (Test-PortInUse $MongoPort) {
-    Show-PortErrorDialog "Race Coordinator AI - MongoDB Port Conflict" "Failed to start MongoDB Database on port $MongoPort.`nPort $MongoPort is already in use by another process.`n`nPlease terminate the process using port $MongoPort or launch with '--mongo-port <port'."
-    exit 1
-}
-
 if (-not $Headless) {
     Write-Host "Starting Angular Client..." -ForegroundColor Cyan
     $ClientProcess = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSScriptRoot\run_client.ps1`" -Open" -PassThru
@@ -54,6 +59,8 @@ if (-not $Headless) {
             Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.ParentProcessId -eq $ClientProcess.Id } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
             Stop-Process -Id $ClientProcess.Id -Force -ErrorAction SilentlyContinue
         }
+        Stop-PortProcesses $ClientPort
+        Stop-PortProcesses $ServerPort
     } | Out-Null
 }
 

@@ -13,7 +13,6 @@ import com.antigravity.models.Track;
 import com.antigravity.proto.CurrentRecords;
 import com.antigravity.proto.RecordData;
 import com.antigravity.service.DatabaseService;
-import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.Before;
@@ -23,7 +22,6 @@ public class RaceRecordsTest {
 
   private DatabaseService dbService;
   private DatabaseContext dbContext;
-  private MongoDatabase mongoDatabase;
 
   @Before
   public void setUp() {
@@ -31,8 +29,6 @@ public class RaceRecordsTest {
     DatabaseService.setInstance(dbService);
 
     dbContext = mock(DatabaseContext.class);
-    mongoDatabase = mock(MongoDatabase.class);
-    when(dbContext.getDatabase()).thenReturn(mongoDatabase);
   }
 
   @org.junit.After
@@ -72,7 +68,7 @@ public class RaceRecordsTest {
             .setOverall(overallRecords)
             .build();
 
-    when(dbService.getRaceRecords(any(MongoDatabase.class), anyString(), anyBoolean()))
+    when(dbService.getRaceRecords(any(DatabaseContext.class), anyString(), anyBoolean()))
         .thenReturn(mockedRecords);
 
     // 2. Build the race

@@ -18,7 +18,9 @@
         <span>{{ time | number: "1.0-0" }}</span>
       }
       @if (finishMethod === "Lap") {
-        <span>{{ finishValue - (driverData?.lapCount || 0) }}</span>
+        <span>{{
+          isEmptyDriver ? "--" : finishValue - (driverData?.lapCount || 0)
+        }}</span>
       }
     </div>
   </div>
@@ -32,9 +34,11 @@
         }}</span>
         <div class="nickname-container">
           <span class="value nickname-value">{{
-            driverData?.driver?.nickname
+            isEmptyDriver
+              ? ("RD_EMPTY_LANE" | translate)
+              : driverData?.driver?.nickname || driverData?.driver?.name
           }}</span>
-          @if (driverData?.participant?.team) {
+          @if (!isEmptyDriver && driverData?.participant?.team) {
             <span class="team-name">{{
               driverData?.participant?.team?.name
             }}</span>
@@ -52,7 +56,7 @@
           "RD_COL_RANK_HEAT" | translate
         }}</span>
         <span class="value shrink-value">{{
-          standingsPosition ? standingsPosition : "--"
+          !isEmptyDriver && standingsPosition ? standingsPosition : "--"
         }}</span>
       </div>
       <div class="rank-col">
@@ -60,7 +64,7 @@
           "RD_COL_RANK_OVERALL" | translate
         }}</span>
         <span class="value shrink-value">{{
-          overallPosition ? overallPosition : "--"
+          !isEmptyDriver && overallPosition ? overallPosition : "--"
         }}</span>
       </div>
     </div>
@@ -85,7 +89,7 @@
           "RD_COL_LAP_TIME" | translate
         }}</span>
         <span class="value shrink-value">{{
-          driverData?.lastLapTime
+          !isEmptyDriver && driverData?.lastLapTime
             ? (driverData?.lastLapTime | number: "1.3-3")
             : "--.---"
         }}</span>
@@ -96,7 +100,7 @@
         "RD_COL_GAP_LEADER" | translate
       }}</span>
       <span class="value shrink-value">{{
-        driverData?.gapLeader
+        !isEmptyDriver && driverData?.gapLeader
           ? (driverData?.gapLeader | number: "1.3-3")
           : "--.---"
       }}</span>
@@ -106,7 +110,7 @@
         "RD_COL_BEST_LAP" | translate
       }}</span>
       <span class="value shrink-value">{{
-        driverData?.bestLapTime
+        !isEmptyDriver && driverData?.bestLapTime
           ? (driverData?.bestLapTime | number: "1.3-3")
           : "--.---"
       }}</span>
@@ -130,7 +134,9 @@
         ></div>
       </div>
       <div class="thermometer-label">
-        <span>{{ fuelPercentage | number: "1.0-0" }}%</span>
+        <span>{{
+          isEmptyDriver ? "--%" : (fuelPercentage | number: "1.0-0") + "%"
+        }}</span>
       </div>
     </div>
   }

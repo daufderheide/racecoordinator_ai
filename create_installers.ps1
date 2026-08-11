@@ -69,28 +69,6 @@ if (-not (Test-Path $Java17Zip) -or (Get-Item $Java17Zip).Length -eq 0) {
     }
 }
 
-# MongoDB 3.2 (32-bit for Legacy Windows)
-$Mongo32Zip = "build_cache\mongodb32.zip"
-if (-not (Test-Path $Mongo32Zip) -or (Get-Item $Mongo32Zip).Length -eq 0) {
-    Write-Host "Downloading MongoDB 3.2 (32-bit)..."
-    try {
-        Invoke-WebRequest -Uri "https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip" -OutFile $Mongo32Zip
-    } catch {
-        Write-Warning "MongoDB 3.2 download failed: $_"
-    }
-}
-
-# MongoDB 6.0 (64-bit for Modern Windows)
-$Mongo60Zip = "build_cache\mongodb60.zip"
-if (-not (Test-Path $Mongo60Zip) -or (Get-Item $Mongo60Zip).Length -eq 0) {
-    Write-Host "Downloading MongoDB 6.0 (64-bit)..."
-    try {
-        Invoke-WebRequest -Uri "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip" -OutFile $Mongo60Zip
-    } catch {
-        Write-Warning "MongoDB 6.0 download failed: $_"
-    }
-}
-
 # VC++ Redist 2015-2022 (x64 for Modern Windows)
 $VCRedist64 = "build_cache\vc_redist.x64.exe"
 if (-not (Test-Path $VCRedist64) -or (Get-Item $VCRedist64).Length -eq 0) {
@@ -121,8 +99,6 @@ $ReleaseDirs = @(
     "release\RaceCoordinator\web",
     "release\RaceCoordinator\jre8",
     "release\RaceCoordinator\jre17",
-    "release\RaceCoordinator\mongodb32",
-    "release\RaceCoordinator\mongodb60",
     "release\RaceCoordinator_Offline\web"
 )
 
@@ -156,7 +132,6 @@ function Extract-To-Release {
         Expand-Archive -Path $ZipPath -DestinationPath $TempDir -Force
         $Extracted = Get-ChildItem -Path $TempDir | Where-Object { $_.PSIsContainer } | Select-Object -First 1
         if ($Extracted) {
-            # Ensure destination is clear before moving to avoid nesting
             if (Test-Path "release\RaceCoordinator\$DestSubDir") {
                 Remove-Item "release\RaceCoordinator\$DestSubDir" -Recurse -Force
             }
@@ -168,8 +143,6 @@ function Extract-To-Release {
 
 Extract-To-Release "java8.zip" "jre8" "bundled_jre8.zip"
 Extract-To-Release "java17.zip" "jre17" "bundled_jre17.zip"
-Extract-To-Release "mongodb32.zip" "mongodb32" $null
-Extract-To-Release "mongodb60.zip" "mongodb60" $null
 
 if (Test-Path "build_cache\vc_redist.x64.exe") {
     Copy-Item "build_cache\vc_redist.x64.exe" "release\RaceCoordinator\vc_redist.x64.exe"
@@ -234,8 +207,8 @@ if type -p java > /dev/null; then
     echo "Starting Race Coordinator..."
     java -jar RaceCoordinator.jar "$@"
 else
-    echo "Java is not installed. Please install Java 8 (openjdk-8-jre)."
-    echo "On Raspberry Pi: sudo apt-get install openjdk-8-jre"
+    echo "Java is not installed. Please install Java 17 (openjdk-17-jre)."
+    echo "On Raspberry Pi: sudo apt-get install openjdk-17-jre"
 fi
 '@
     $LinuxScript | Out-File -FilePath "$Dest\start_linux_rpi.sh" -Encoding ascii
@@ -437,8 +410,7 @@ If Java is not found, run setup_windows.bat.
 (Offline version includes pre-bundled Java for no-internet installations).
 
 Troubleshooting:
-- If MongoDB fails to start (RPi), install manually: sudo apt-get install mongodb-server
-- Ensure ports 7070 (Web) and 27017 (MongoDB) are free.
+- Ensure port 7070 (Web) is free.
 '@
     $Readme | Out-File -FilePath "$Dest\README.txt" -Encoding ascii
     

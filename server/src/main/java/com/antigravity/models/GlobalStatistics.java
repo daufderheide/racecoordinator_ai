@@ -3,117 +3,87 @@ package com.antigravity.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 public class GlobalStatistics {
 
-  @BsonId
   @JsonProperty("_id")
-  private ObjectId id;
+  private String id;
 
-  @BsonProperty("race_entity_id")
   @JsonProperty("race_entity_id")
   private String raceEntityId;
 
-  @BsonProperty("total_races")
   @JsonProperty("total_races")
   private int totalRaces;
 
-  @BsonProperty("total_laps")
   @JsonProperty("total_laps")
   private double totalLaps;
 
-  @BsonProperty("total_race_time_ms")
   @JsonProperty("total_race_time_ms")
   private long totalRaceTimeMs;
 
-  @BsonProperty("fastest_lap_time")
   @JsonProperty("fastest_lap_time")
   private double fastestLapTime;
 
-  @BsonProperty("fastest_lap_driver_name")
   @JsonProperty("fastest_lap_driver_name")
   private String fastestLapDriverName;
 
-  @BsonProperty("fastest_lap_track_name")
   @JsonProperty("fastest_lap_track_name")
   private String fastestLapTrackName;
 
-  @BsonProperty("fastest_lap_driver_nickname")
   @JsonProperty("fastest_lap_driver_nickname")
   private String fastestLapDriverNickname;
 
-  @BsonProperty("fastest_lap_date")
   @JsonProperty("fastest_lap_date")
   private long fastestLapDate;
 
-  @BsonProperty("fastest_lap_team_name")
   @JsonProperty("fastest_lap_team_name")
   private String fastestLapTeamName;
 
-  @BsonProperty("highest_score")
   @JsonProperty("highest_score")
   private double highestScore;
 
-  @BsonProperty("highest_score_holder_name")
   @JsonProperty("highest_score_holder_name")
   private String highestScoreHolderName;
 
-  @BsonProperty("highest_score_track_name")
   @JsonProperty("highest_score_track_name")
   private String highestScoreTrackName;
 
-  @BsonProperty("highest_score_holder_nickname")
   @JsonProperty("highest_score_holder_nickname")
   private String highestScoreHolderNickname;
 
-  @BsonProperty("highest_score_date")
   @JsonProperty("highest_score_date")
   private long highestScoreDate;
 
-  @BsonProperty("highest_score_team_name")
   @JsonProperty("highest_score_team_name")
   private String highestScoreTeamName;
 
-  @BsonProperty("lane_fastest_lap_times")
   @JsonProperty("lane_fastest_lap_times")
   private List<Double> laneFastestLapTimes;
 
-  @BsonProperty("lane_fastest_lap_driver_names")
   @JsonProperty("lane_fastest_lap_driver_names")
   private List<String> laneFastestLapDriverNames;
 
-  @BsonProperty("lane_fastest_lap_driver_nicknames")
   @JsonProperty("lane_fastest_lap_driver_nicknames")
   private List<String> laneFastestLapDriverNicknames;
 
-  @BsonProperty("lane_fastest_lap_dates")
   @JsonProperty("lane_fastest_lap_dates")
   private List<Long> laneFastestLapDates;
 
-  @BsonProperty("lane_fastest_lap_team_names")
   @JsonProperty("lane_fastest_lap_team_names")
   private List<String> laneFastestLapTeamNames;
 
-  @BsonProperty("lane_highest_scores")
   @JsonProperty("lane_highest_scores")
   private List<Double> laneHighestScores;
 
-  @BsonProperty("lane_highest_score_holder_names")
   @JsonProperty("lane_highest_score_holder_names")
   private List<String> laneHighestScoreHolderNames;
 
-  @BsonProperty("lane_highest_score_holder_nicknames")
   @JsonProperty("lane_highest_score_holder_nicknames")
   private List<String> laneHighestScoreHolderNicknames;
 
-  @BsonProperty("lane_highest_score_dates")
   @JsonProperty("lane_highest_score_dates")
   private List<Long> laneHighestScoreDates;
 
-  @BsonProperty("lane_highest_score_team_names")
   @JsonProperty("lane_highest_score_team_names")
   private List<String> laneHighestScoreTeamNames;
 
@@ -142,54 +112,34 @@ public class GlobalStatistics {
   }
 
   public GlobalStatistics(
-      @BsonId @JsonProperty("_id") ObjectId id,
-      @BsonProperty("race_entity_id") @JsonProperty("race_entity_id") String raceEntityId,
-      @BsonProperty("total_races") @JsonProperty("total_races") int totalRaces,
-      @BsonProperty("total_laps") @JsonProperty("total_laps") double totalLaps,
-      @BsonProperty("total_race_time_ms") @JsonProperty("total_race_time_ms") long totalRaceTimeMs,
-      @BsonProperty("fastest_lap_time") @JsonProperty("fastest_lap_time") double fastestLapTime,
-      @BsonProperty("fastest_lap_driver_name") @JsonProperty("fastest_lap_driver_name")
-          String fastestLapDriverName,
-      @BsonProperty("fastest_lap_driver_nickname") @JsonProperty("fastest_lap_driver_nickname")
-          String fastestLapDriverNickname,
-      @BsonProperty("fastest_lap_track_name") @JsonProperty("fastest_lap_track_name")
-          String fastestLapTrackName,
-      @BsonProperty("fastest_lap_date") @JsonProperty("fastest_lap_date") long fastestLapDate,
-      @BsonProperty("highest_score") @JsonProperty("highest_score") double highestScore,
-      @BsonProperty("highest_score_holder_name") @JsonProperty("highest_score_holder_name")
-          String highestScoreHolderName,
-      @BsonProperty("highest_score_holder_nickname") @JsonProperty("highest_score_holder_nickname")
-          String highestScoreHolderNickname,
-      @BsonProperty("highest_score_track_name") @JsonProperty("highest_score_track_name")
-          String highestScoreTrackName,
-      @BsonProperty("highest_score_date") @JsonProperty("highest_score_date") long highestScoreDate,
-      @BsonProperty("lane_fastest_lap_times") @JsonProperty("lane_fastest_lap_times")
-          List<Double> laneFastestLapTimes,
-      @BsonProperty("lane_fastest_lap_driver_names") @JsonProperty("lane_fastest_lap_driver_names")
-          List<String> laneFastestLapDriverNames,
-      @BsonProperty("lane_fastest_lap_driver_nicknames")
-          @JsonProperty("lane_fastest_lap_driver_nicknames")
-          List<String> laneFastestLapDriverNicknames,
-      @BsonProperty("lane_fastest_lap_dates") @JsonProperty("lane_fastest_lap_dates")
-          List<Long> laneFastestLapDates,
-      @BsonProperty("lane_highest_scores") @JsonProperty("lane_highest_scores")
-          List<Double> laneHighestScores,
-      @BsonProperty("lane_highest_score_holder_names")
-          @JsonProperty("lane_highest_score_holder_names")
-          List<String> laneHighestScoreHolderNames,
-      @BsonProperty("lane_highest_score_holder_nicknames")
-          @JsonProperty("lane_highest_score_holder_nicknames")
+      @JsonProperty("_id") String id,
+      @JsonProperty("race_entity_id") String raceEntityId,
+      @JsonProperty("total_races") int totalRaces,
+      @JsonProperty("total_laps") double totalLaps,
+      @JsonProperty("total_race_time_ms") long totalRaceTimeMs,
+      @JsonProperty("fastest_lap_time") double fastestLapTime,
+      @JsonProperty("fastest_lap_driver_name") String fastestLapDriverName,
+      @JsonProperty("fastest_lap_driver_nickname") String fastestLapDriverNickname,
+      @JsonProperty("fastest_lap_track_name") String fastestLapTrackName,
+      @JsonProperty("fastest_lap_date") long fastestLapDate,
+      @JsonProperty("highest_score") double highestScore,
+      @JsonProperty("highest_score_holder_name") String highestScoreHolderName,
+      @JsonProperty("highest_score_holder_nickname") String highestScoreHolderNickname,
+      @JsonProperty("highest_score_track_name") String highestScoreTrackName,
+      @JsonProperty("highest_score_date") long highestScoreDate,
+      @JsonProperty("lane_fastest_lap_times") List<Double> laneFastestLapTimes,
+      @JsonProperty("lane_fastest_lap_driver_names") List<String> laneFastestLapDriverNames,
+      @JsonProperty("lane_fastest_lap_driver_nicknames") List<String> laneFastestLapDriverNicknames,
+      @JsonProperty("lane_fastest_lap_dates") List<Long> laneFastestLapDates,
+      @JsonProperty("lane_highest_scores") List<Double> laneHighestScores,
+      @JsonProperty("lane_highest_score_holder_names") List<String> laneHighestScoreHolderNames,
+      @JsonProperty("lane_highest_score_holder_nicknames")
           List<String> laneHighestScoreHolderNicknames,
-      @BsonProperty("lane_highest_score_dates") @JsonProperty("lane_highest_score_dates")
-          List<Long> laneHighestScoreDates,
-      @BsonProperty("fastest_lap_team_name") @JsonProperty("fastest_lap_team_name")
-          String fastestLapTeamName,
-      @BsonProperty("highest_score_team_name") @JsonProperty("highest_score_team_name")
-          String highestScoreTeamName,
-      @BsonProperty("lane_fastest_lap_team_names") @JsonProperty("lane_fastest_lap_team_names")
-          List<String> laneFastestLapTeamNames,
-      @BsonProperty("lane_highest_score_team_names") @JsonProperty("lane_highest_score_team_names")
-          List<String> laneHighestScoreTeamNames) {
+      @JsonProperty("lane_highest_score_dates") List<Long> laneHighestScoreDates,
+      @JsonProperty("fastest_lap_team_name") String fastestLapTeamName,
+      @JsonProperty("highest_score_team_name") String highestScoreTeamName,
+      @JsonProperty("lane_fastest_lap_team_names") List<String> laneFastestLapTeamNames,
+      @JsonProperty("lane_highest_score_team_names") List<String> laneHighestScoreTeamNames) {
     this.id = id;
     this.raceEntityId = raceEntityId;
     this.totalRaces = totalRaces;
@@ -230,11 +180,11 @@ public class GlobalStatistics {
         laneHighestScoreTeamNames != null ? laneHighestScoreTeamNames : new ArrayList<>();
   }
 
-  public ObjectId getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(ObjectId id) {
+  public void setId(String id) {
     this.id = id;
   }
 

@@ -73,22 +73,14 @@ import com.antigravity.service.DatabaseService;
 import com.antigravity.util.CsvExporter;
 import com.antigravity.util.NetworkUtils;
 import com.antigravity.util.RequestContextUtils;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -101,7 +93,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -248,7 +239,7 @@ public class ClientCommandTaskHandler {
 
     if (request.getEventId() != null && !request.getEventId().isEmpty()) {
       com.antigravity.models.Event event = // fqn-collision
-          dbService.getEvent(databaseContext.getDatabase(), request.getEventId());
+          dbService.getEvent(databaseContext, request.getEventId());
       if (event == null) {
         return TaskResult.error(404, "Event not found: " + request.getEventId());
       }
@@ -273,7 +264,7 @@ public class ClientCommandTaskHandler {
 
     com.antigravity.race.EventExecutionManager.getInstance().cancelEvent(); // fqn-collision
 
-    Race raceModel = dbService.getRace(databaseContext.getDatabase(), request.getRaceId());
+    Race raceModel = dbService.getRace(databaseContext, request.getRaceId());
 
     if (raceModel == null) {
       return TaskResult.error(404, "Race not found");
@@ -292,12 +283,12 @@ public class ClientCommandTaskHandler {
             .map(id -> id.startsWith("d_") || id.startsWith("t_") ? id.substring(2) : id)
             .collect(Collectors.toList());
 
-    List<Driver> drivers = dbService.getDrivers(databaseContext.getDatabase(), rawIds);
-    List<Team> teams = dbService.getTeams(databaseContext.getDatabase(), rawIds);
+    List<Driver> drivers = dbService.getDrivers(databaseContext, rawIds);
+    List<Team> teams = dbService.getTeams(databaseContext, rawIds);
 
     // Map IDs back to objects maintaining order
     List<RaceParticipant> participants = new ArrayList<>();
-    List<Team> allTeams = dbService.getAllTeams(databaseContext.getDatabase());
+    List<Team> allTeams = dbService.getAllTeams(databaseContext);
 
     // --- Validation Logic ---
     Map<String, List<String>> driverToTeamNames = new HashMap<>();
@@ -343,7 +334,7 @@ public class ClientCommandTaskHandler {
         Driver d =
             drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
         if (d == null) {
-          d = dbService.getDriver(databaseContext.getDatabase(), dId);
+          d = dbService.getDriver(databaseContext, dId);
         }
         String dName = d != null ? d.getName() : dId;
         InitializeRaceResponse response =
@@ -395,8 +386,7 @@ public class ClientCommandTaskHandler {
         if (team != null) {
           RaceParticipant rp = new RaceParticipant(team);
           // Populate team drivers
-          List<Driver> teamDrivers =
-              dbService.getDrivers(databaseContext.getDatabase(), team.getDriverIds());
+          List<Driver> teamDrivers = dbService.getDrivers(databaseContext, team.getDriverIds());
 
           logger.debug("Hydrating team {} with IDs: {}", team.getName(), team.getDriverIds());
           logger.debug("Found {} drivers in DB.", teamDrivers.size());
@@ -407,8 +397,7 @@ public class ClientCommandTaskHandler {
       }
     }
     Track raceTrack =
-        DatabaseService.getInstance()
-            .getTrack(databaseContext.getDatabase(), raceModel.getTrackEntityId());
+        DatabaseService.getInstance().getTrack(databaseContext, raceModel.getTrackEntityId());
 
     if (raceTrack == null) {
       InitializeRaceResponse response =
@@ -1318,8 +1307,7 @@ public class ClientCommandTaskHandler {
         DriverHeatData dhd = drivers.get(lane);
         DatabaseService dbService = DatabaseService.getInstance();
         List<Driver> driversList =
-            dbService.getDrivers(
-                databaseContext.getDatabase(), Collections.singletonList(driverId));
+            dbService.getDrivers(databaseContext, Collections.singletonList(driverId));
         Driver driver = driversList.isEmpty() ? null : driversList.get(0);
         if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
           driver = Driver.EMPTY_DRIVER;
@@ -1425,8 +1413,7 @@ public class ClientCommandTaskHandler {
         DriverHeatData dhd = drivers.get(lane);
         DatabaseService dbService = DatabaseService.getInstance();
         List<Driver> driversList =
-            dbService.getDrivers(
-                databaseContext.getDatabase(), Collections.singletonList(driverId));
+            dbService.getDrivers(databaseContext, Collections.singletonList(driverId));
         Driver driver = driversList.isEmpty() ? null : driversList.get(0);
         if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
           driver = Driver.EMPTY_DRIVER;
@@ -1855,7 +1842,7 @@ public class ClientCommandTaskHandler {
       saveData.setSaveName(saveName);
 
       DatabaseService dbService = DatabaseService.getInstance();
-      dbService.saveManualRace(databaseContext.getDatabase(), saveData);
+      dbService.saveManualRace(databaseContext, saveData);
 
       ctx.status(200).result("Race saved successfully: " + saveName);
     } catch (Exception e) {
@@ -1868,7 +1855,7 @@ public class ClientCommandTaskHandler {
     try {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext.getDatabase(), scope);
+      List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext, scope);
       List<String> files =
           saves.stream().map(RaceSaveData::getSaveName).collect(Collectors.toList());
       ObjectMapper mapper = getObjectMapper();
@@ -1884,7 +1871,7 @@ public class ClientCommandTaskHandler {
     try {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext.getDatabase(), saveName, scope);
+      boolean deleted = dbService.deleteSavedRace(databaseContext, saveName, scope);
       if (deleted) {
         ctx.status(200).result("Save deleted: " + saveName);
       } else {
@@ -1908,8 +1895,7 @@ public class ClientCommandTaskHandler {
       }
 
       DatabaseService dbService = DatabaseService.getInstance();
-      RaceSaveData saveData =
-          dbService.getSavedRace(databaseContext.getDatabase(), saveName, scope);
+      RaceSaveData saveData = dbService.getSavedRace(databaseContext, saveName, scope);
 
       if (saveData == null) {
         ctx.status(404).result("Save file not found");
@@ -1920,7 +1906,7 @@ public class ClientCommandTaskHandler {
       Track savedTrack = saveData.getTrack();
       Track dbTrack =
           DatabaseService.getInstance()
-              .getTrack(databaseContext.getDatabase(), saveData.getModel().getTrackEntityId());
+              .getTrack(databaseContext, saveData.getModel().getTrackEntityId());
 
       Track trackToUse = savedTrack;
       if (dbTrack != null && dbTrack.getLanes().size() == savedTrack.getLanes().size()) {
@@ -2039,35 +2025,6 @@ public class ClientCommandTaskHandler {
     ObjectMapper mapper = new ObjectMapper();
     mapper.enable(SerializationFeature.INDENT_OUTPUT);
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-    SimpleModule module = new SimpleModule();
-    module.addSerializer(
-        ObjectId.class,
-        new JsonSerializer<ObjectId>() {
-          @Override
-          public void serialize(ObjectId value, JsonGenerator gen, SerializerProvider serializers)
-              throws IOException {
-            gen.writeString(value.toHexString());
-          }
-        });
-    module.addDeserializer(
-        ObjectId.class,
-        new JsonDeserializer<ObjectId>() {
-          @Override
-          public ObjectId deserialize(JsonParser p, DeserializationContext ctxt)
-              throws IOException {
-            String value = p.getValueAsString();
-            if (value == null || value.isEmpty()) {
-              return null;
-            }
-            try {
-              return new ObjectId(value);
-            } catch (IllegalArgumentException e) {
-              return null;
-            }
-          }
-        });
-    mapper.registerModule(module);
     return mapper;
   }
 

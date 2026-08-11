@@ -30,6 +30,7 @@ import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.component";
 import { BartSummaryComponent } from "./bart-summary/bart-summary.component";
@@ -173,22 +174,24 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.dataService.getTracks().subscribe({
       next: (data) => {
-        this.tracks = data.map(
-          (t) =>
-            new Track({
-              entity_id: t.entity_id,
-              name: t.name,
-              num_track_sections: t.num_track_sections ?? 100,
-              lanes: t.lanes || [],
-              has_digital_fuel: t.has_digital_fuel ?? false,
-              arduino_configs: t.arduino_configs,
-              has_per_lane_relays: t.has_per_lane_relays ?? false,
-              has_main_relay: t.has_main_relay ?? false,
-              trackmate_configs: t.trackmate_configs,
-              phidget_configs: t.phidget_configs,
-              bart_configs: t.bart_configs,
-            }),
-        );
+        this.tracks = data
+          .map(
+            (t) =>
+              new Track({
+                entity_id: t.entity_id,
+                name: t.name,
+                num_track_sections: t.num_track_sections ?? 100,
+                lanes: t.lanes || [],
+                has_digital_fuel: t.has_digital_fuel ?? false,
+                arduino_configs: t.arduino_configs,
+                has_per_lane_relays: t.has_per_lane_relays ?? false,
+                has_main_relay: t.has_main_relay ?? false,
+                trackmate_configs: t.trackmate_configs,
+                phidget_configs: t.phidget_configs,
+                bart_configs: t.bart_configs,
+              }),
+          )
+          .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
         if (this.tracks.length > 0) {
           const lastEdited = this.navigationService.getLastEditedId("track");
           let queryId =

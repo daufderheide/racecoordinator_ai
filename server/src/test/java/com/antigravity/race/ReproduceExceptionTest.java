@@ -14,7 +14,6 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,8 +30,8 @@ public class ReproduceExceptionTest {
     drivers = new ArrayList<>();
 
     // 2 drivers
-    drivers.add(new RaceParticipant(new Driver("D1", "d1", "id1", new ObjectId())));
-    drivers.add(new RaceParticipant(new Driver("D2", "d2", "id2", new ObjectId())));
+    drivers.add(new RaceParticipant(new Driver("D1", "d1", "id1", "1")));
+    drivers.add(new RaceParticipant(new Driver("D2", "d2", "id2", "1")));
 
     // 4 lanes
     List<Lane> lanes = new ArrayList<>();

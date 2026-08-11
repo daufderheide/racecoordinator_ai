@@ -39,9 +39,9 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
+import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.google.protobuf.GeneratedMessageV3;
-import com.mongodb.client.model.Filters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,7 +49,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -181,7 +180,7 @@ public class Race implements ProtocolListener {
       RecordData existingRecords =
           DatabaseService.getInstance()
               .getRaceRecords( // fqn-collision
-                  this.databaseContext.getDatabase(), this.model.getEntityId(), isDemoMode);
+                  this.databaseContext, this.model.getEntityId(), isDemoMode);
       if (existingRecords != null) {
         // Only load Overall records — Current session always starts fresh.
         // Loading stale current records from a previous session causes the UI to show
@@ -196,7 +195,7 @@ public class Race implements ProtocolListener {
   private void linkDriverReferences() {
     // Link the DriverHeatData's driver references to the master driver list in
     // this.drivers.
-    // This is crucial because MongoDB deserialization creates separate instances,
+    // This is crucial because JSON/SQLite deserialization creates separate instances,
     // causing overall
     // standings updates to not propagate to the heat's driver objects.
     java.util.Map<String, RaceParticipant> masterDrivers = new java.util.HashMap<>();
@@ -514,30 +513,22 @@ public class Race implements ProtocolListener {
 
   private List<CustomRotation> resolveCustomRotations(String assetId) {
     if (assetId == null || assetId.isEmpty() || databaseContext == null) return null;
-    Document doc =
-        databaseContext
-            .getDatabase()
-            .getCollection("assets")
-            .find(Filters.eq("_id", assetId))
-            .first();
-    if (doc == null) return null;
+    AssetService assetService =
+        new AssetService(
+            databaseContext,
+            databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
+    com.antigravity.proto.AssetMessage asset = assetService.getAssetById(assetId); // fqn-collision
+    if (asset == null || asset.getCustomRotationsCount() == 0) return null;
     List<CustomRotation> result = new ArrayList<>();
-    List<Document> rotationList = (List<Document>) doc.get("custom_rotations");
-    if (rotationList != null) {
-      for (Document rotDoc : rotationList) {
-        int numDrivers = rotDoc.getInteger("num_drivers");
-        List<CustomHeat> heats = new ArrayList<>();
-        List<Document> heatList = (List<Document>) rotDoc.get("heats");
-        if (heatList != null) {
-          for (Document heatDoc : heatList) {
-            Integer group = heatDoc.getInteger("group");
-            heats.add(
-                new CustomHeat(
-                    (List<Integer>) heatDoc.get("driver_indices"), group != null ? group : 0));
-          }
-        }
-        result.add(new CustomRotation(numDrivers, heats));
+    for (com.antigravity.proto.CustomRotation protoRot : // fqn-collision
+        asset.getCustomRotationsList()) { // fqn-collision
+      List<CustomHeat> heats = new ArrayList<>();
+      for (com.antigravity.proto.CustomHeat protoHeat : protoRot.getHeatsList()) { // fqn-collision
+        heats.add(
+            new CustomHeat(
+                new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
       }
+      result.add(new CustomRotation(protoRot.getNumDrivers(), heats));
     }
     return result;
   }
@@ -1026,6 +1017,10 @@ public class Race implements ProtocolListener {
                 .setStatus(
                     InterfaceStatusEvent.newBuilder().setStatus(s).setInterfaceIndex(idx).build())
                 .build());
+
+    if (s == InterfaceStatus.DISCONNECTED) {
+      stopRaceOperationsOnHardwareDisconnect();
+    }
   }
 
   @Override
@@ -1036,6 +1031,27 @@ public class Race implements ProtocolListener {
   @Override
   public void onInterfaceEvent(InterfaceEvent e) {
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(e);
+    if (e.hasStatus() && e.getStatus().getStatus() == InterfaceStatus.DISCONNECTED) {
+      stopRaceOperationsOnHardwareDisconnect();
+    }
+  }
+
+  public synchronized void stopRaceOperationsOnHardwareDisconnect() {
+    logger.warn("Track interface disconnected. Stopping all race operations until manual action.");
+
+    EventExecutionManager.getInstance().cancelAutoAdvanceTimer();
+
+    if (state instanceof Racing || state instanceof Starting) {
+      pauseRace();
+    } else if (state instanceof NotStarted) {
+      state.pause(this);
+    } else if (state instanceof HeatOver) {
+      state.pause(this);
+    } else if (state instanceof Paused) {
+      clearAutoTimers();
+    } else if (state instanceof RaceOver) {
+      clearAutoTimers();
+    }
   }
 
   public boolean isLastHeat() {
@@ -1167,8 +1183,7 @@ public class Race implements ProtocolListener {
         if (databaseContext != null && model != null && model.getEntityId() != null) {
           RecordData existingRecords =
               DatabaseService.getInstance()
-                  .getRaceRecords(
-                      this.databaseContext.getDatabase(), this.model.getEntityId(), isDemoMode);
+                  .getRaceRecords(this.databaseContext, this.model.getEntityId(), isDemoMode);
           if (existingRecords != null) {
             dump.setRecordDataBase64(
                 java.util.Base64.getEncoder().encodeToString(existingRecords.toByteArray()));

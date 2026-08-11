@@ -2,7 +2,6 @@
 
 HEADLESS=false
 SERVER_PORT=7070
-MONGO_PORT=8085
 CLIENT_PORT=4200
 
 for ((i=1; i<=$#; i++)); do
@@ -14,17 +13,11 @@ for ((i=1; i<=$#; i++)); do
     SERVER_PORT="${!next_idx}"
   elif [[ "$arg" == --port=* ]]; then
     SERVER_PORT="${arg#*=}"
-  elif [ "$arg" = "--mongo-port" ]; then
-    next_idx=$((i+1))
-    MONGO_PORT="${!next_idx}"
-  elif [[ "$arg" == --mongo-port=* ]]; then
-    MONGO_PORT="${arg#*=}"
   fi
 done
 
 if [ -n "$PORT" ]; then SERVER_PORT="$PORT"; fi
 if [ -n "$SERVER_PORT_ENV" ]; then SERVER_PORT="$SERVER_PORT_ENV"; fi
-if [ -n "$MONGO_PORT_ENV" ]; then MONGO_PORT="$MONGO_PORT_ENV"; fi
 
 is_port_in_use() {
   local port=$1
@@ -64,11 +57,6 @@ if is_port_in_use "$SERVER_PORT"; then
   exit 1
 fi
 
-if is_port_in_use "$MONGO_PORT"; then
-  show_gui_error "Race Coordinator AI - MongoDB Port Conflict" "Failed to start MongoDB Database on port $MONGO_PORT.\nPort $MONGO_PORT is already in use by another process.\n\nPlease terminate the process using port $MONGO_PORT or start with '--mongo-port <port'."
-  exit 1
-fi
-
 cleanup() {
   trap - EXIT INT TERM
   if [ ! -z "$CLIENT_PID" ]; then
@@ -77,13 +65,18 @@ cleanup() {
     sleep 0.2
     kill -9 $CLIENT_PID 2>/dev/null || true
   fi
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -ti :"$CLIENT_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+    lsof -ti :"$SERVER_PORT" 2>/dev/null | xargs kill -9 2>/dev/null || true
+  fi
 }
+
+trap cleanup EXIT INT TERM
 
 if [ "$HEADLESS" = false ]; then
   echo "Starting Angular Client..."
   "$(dirname "$0")/run_client.sh" --open &
   CLIENT_PID=$!
-  trap cleanup EXIT INT TERM
 fi
 
 cd "$(dirname "$0")/server"

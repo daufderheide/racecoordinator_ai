@@ -224,5 +224,88 @@ describe("RacedayMenuBarComponent", () => {
         label: " - Jesse",
       });
     });
+
+    it("should fall back to driver name when entity_id is empty", () => {
+      fixture.componentRef.setInput("participants", [
+        {
+          driver: {
+            name: "Bank Farter",
+            entity_id: "",
+            isEmpty: () => false,
+          },
+        },
+        {
+          driver: {
+            name: "Sports mode",
+            entity_id: "",
+            isEmpty: () => false,
+          },
+        },
+      ]);
+      const options = component.driverViewMenuOptions;
+
+      expect(options.length).toBe(2);
+      expect(options[0]).toEqual({
+        id: "Bank Farter",
+        value: "Bank Farter",
+        label: "Bank Farter",
+      });
+      expect(options[1]).toEqual({
+        id: "Sports mode",
+        value: "Sports mode",
+        label: "Sports mode",
+      });
+    });
+  });
+
+  describe("Season Results Menu Item", () => {
+    it("should compute isSeasonRace as true when race has season_id", () => {
+      fixture.componentRef.setInput("race", { season_id: "season_100" });
+      expect(component.isSeasonRace()).toBeTrue();
+    });
+
+    it("should compute isSeasonRace as false when race has no season_id", () => {
+      fixture.componentRef.setInput("race", { entity_id: "race_1" });
+      expect(component.isSeasonRace()).toBeFalse();
+    });
+
+    it("should disable Season Results item when isSeasonRace is false", () => {
+      fixture.componentRef.setInput("race", null);
+      component.isWindowsMenuOpen = true;
+      fixture.detectChanges();
+
+      const items = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      );
+      const seasonItem = items.find((el: any) =>
+        el.innerText.includes("RD_WIN_SEASON_RESULTS"),
+      ) as HTMLElement;
+
+      expect(seasonItem).toBeDefined();
+      expect(seasonItem.classList.contains("disabled")).toBeTrue();
+    });
+
+    it("should emit windowsMenuSelect output with SEASON_RESULTS when clicked and isSeasonRace is true", () => {
+      fixture.componentRef.setInput("race", { season_id: "s1" });
+      spyOn(component.windowsMenuSelect, "emit");
+
+      component.isWindowsMenuOpen = true;
+      fixture.detectChanges();
+
+      const items = Array.from(
+        fixture.nativeElement.querySelectorAll(".menu-item"),
+      );
+      const seasonItem = items.find((el: any) =>
+        el.innerText.includes("RD_WIN_SEASON_RESULTS"),
+      ) as HTMLElement;
+
+      expect(seasonItem).toBeDefined();
+      expect(seasonItem.classList.contains("disabled")).toBeFalse();
+
+      seasonItem.click();
+      expect(component.windowsMenuSelect.emit).toHaveBeenCalledWith(
+        "SEASON_RESULTS",
+      );
+    });
   });
 });

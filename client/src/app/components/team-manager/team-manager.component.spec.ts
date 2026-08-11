@@ -169,6 +169,18 @@ describe("TeamManagerComponent", () => {
       expect(await harness.getSelectedTeamName()).toBe("Team Alpha");
     });
 
+    it("should select the first alphabetically sorted team by default when backend returns unsorted teams", async () => {
+      dataService.getTeams.and.returnValue(
+        of([
+          { entity_id: "t99", name: "Zeta Team" },
+          { entity_id: "t1", name: "Alpha Team" },
+        ] as any),
+      );
+      await setupFixture();
+      expect(component.selectedTeam?.name).toBe("Alpha Team");
+      expect(component.teams[0].name).toBe("Alpha Team");
+    });
+
     describe("With Query Params", () => {
       beforeEach(() => {
         mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t2");

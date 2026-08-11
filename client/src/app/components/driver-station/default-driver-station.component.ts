@@ -11,6 +11,7 @@ import {
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { DataService } from "@app/data.service";
 import { FinishMethod } from "@app/models/heat_scoring";
@@ -104,9 +105,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       const val = this.inputLaneIndex();
       if (val !== undefined) {
         this.laneIndex = val;
-        if (this.heat) {
-          this.loadRaceData();
-        }
+        this.loadRaceData();
       }
     });
   }
@@ -299,6 +298,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.raceConnectionService.disconnect(true);
   }
 
+  get isEmptyDriver(): boolean {
+    return RacedayFormatUtils.isEmptyDriver(this.driverData);
+  }
+
   private loadRaceData() {
     this.race = this.raceService.getRace();
     if (this.race) {
@@ -306,6 +309,12 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       this.heat = this.raceService.getCurrentHeat();
       if (this.heat) {
         this.driverData = this.heat.heatDrivers[this.laneIndex];
+
+        if (this.isEmptyDriver) {
+          this.standingsPosition = 0;
+          this.overallPosition = 0;
+          return;
+        }
 
         // Update standings position from heat standings if available
         if (this.driverData && this.heat.standings) {
@@ -327,18 +336,27 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   }
 
   private calculateOverallPosition(): void {
+    if (this.isEmptyDriver) {
+      this.overallPosition = 0;
+      this.cdr.detectChanges();
+      return;
+    }
     const participants = this.raceService.getParticipants();
     if (participants && this.driverData) {
       const teamEntityId = this.driverData.participant?.team?.entity_id;
       const driverEntityId =
         this.driverData.actualDriver?.entity_id ||
-        this.driverData.participant.driver?.entity_id;
+        this.driverData.participant?.driver?.entity_id;
 
       const index = participants.findIndex((p: any) => {
         if (teamEntityId && p.team?.entity_id === teamEntityId) {
           return true;
         }
-        return p.driver?.entity_id === driverEntityId;
+        return (
+          driverEntityId &&
+          p.driver?.entity_id &&
+          p.driver?.entity_id === driverEntityId
+        );
       });
 
       if (index >= 0) {
@@ -367,7 +385,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   }
 
   get progressPercentage(): number {
-    if (!this.finishValue) return 0;
+    if (!this.finishValue || this.isEmptyDriver) return 0;
 
     if (this.finishMethod === FinishMethod.Timed) {
       // Show elapsed time - starts empty and fills up
@@ -380,6 +398,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   }
 
   get fuelPercentage(): number {
+    if (this.isEmptyDriver) return 0;
     return this.driverData?.participant?.fuelLevel || 0;
   }
 
@@ -406,7 +425,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   }
 
   get hasLapData(): boolean {
-    if (!this.driverData) return false;
+    if (!this.driverData || this.isEmptyDriver) return false;
     const hd = this.driverData;
     const hasReactionTime = hd.reactionTime > 0;
     const hasRealLap = hd.lapTimes && hd.lapTimes.length > 0;

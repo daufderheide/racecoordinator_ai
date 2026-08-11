@@ -145,7 +145,10 @@ describe("DefaultDriverStationComponent", () => {
     component["race"] = {
       heat_scoring: { finishMethod: FinishMethod.Lap, finishValue: 10 },
     } as any;
-    component["driverData"] = { lapCount: 4 } as any;
+    component["driverData"] = {
+      lapCount: 4,
+      driver: { name: "Driver 1" },
+    } as any;
 
     expect(component.progressPercentage).toBe(40);
   });
@@ -154,9 +157,26 @@ describe("DefaultDriverStationComponent", () => {
     component["race"] = {
       heat_scoring: { finishMethod: FinishMethod.Timed, finishValue: 200 },
     } as any;
+    component["driverData"] = { driver: { name: "Driver 1" } } as any;
     component["time"] = 100;
 
     expect(component.progressPercentage).toBe(50);
+  });
+
+  it("should return 0 progress and fuel, and false for hasLapData when driver is empty", () => {
+    const emptyDriverData = {
+      driver: { entity_id: "EMPTY_LANE", isEmpty: () => true },
+      lapCount: 5,
+    } as any;
+    component["driverData"] = emptyDriverData;
+    component["race"] = {
+      heat_scoring: { finishMethod: FinishMethod.Lap, finishValue: 10 },
+    } as any;
+
+    expect(component.isEmptyDriver).toBeTrue();
+    expect(component.progressPercentage).toBe(0);
+    expect(component.fuelPercentage).toBe(0);
+    expect(component.hasLapData).toBeFalse();
   });
 
   it("should display team name and use team rankings when driver is in a team", () => {
@@ -277,12 +297,20 @@ describe("DefaultDriverStationComponent", () => {
     });
 
     it("should return true if reactionTime > 0", () => {
-      component["driverData"] = { reactionTime: 0.123, lapTimes: [] } as any;
+      component["driverData"] = {
+        reactionTime: 0.123,
+        lapTimes: [],
+        driver: { name: "Driver 1" },
+      } as any;
       expect(component.hasLapData).toBeTrue();
     });
 
     it("should return true if lapTimes has entries", () => {
-      component["driverData"] = { reactionTime: 0, lapTimes: [1.23] } as any;
+      component["driverData"] = {
+        reactionTime: 0,
+        lapTimes: [1.23],
+        driver: { name: "Driver 1" },
+      } as any;
       expect(component.hasLapData).toBeTrue();
     });
 

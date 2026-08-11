@@ -19,7 +19,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,7 +41,7 @@ public class RaceLifecycleTest {
             .lanes(lanes)
             .arduinoConfigs(mockConfig)
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     HeatScoring mockHeatScoring = mock(HeatScoring.class);
@@ -65,13 +64,12 @@ public class RaceLifecycleTest {
             .withHeatScoring(mockHeatScoring)
             .withOverallScoring(mockOverallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     List<RaceParticipant> drivers = new ArrayList<>();
     drivers.add(
-        new RaceParticipant(
-            new Driver("Test Driver", "D1", "driver1", new ObjectId()), "participant1"));
+        new RaceParticipant(new Driver("Test Driver", "D1", "driver1", "1"), "participant1"));
 
     // Initialize the race. Note: this will call createProtocols() internally.
     race =

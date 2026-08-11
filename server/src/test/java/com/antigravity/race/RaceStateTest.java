@@ -36,7 +36,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.eclipse.jetty.websocket.api.RemoteEndpoint;
 import org.eclipse.jetty.websocket.api.Session;
 import org.junit.After;
@@ -71,7 +70,7 @@ public class RaceStateTest {
             .lanes(lanes)
             .arduinoConfigs(mockConfig)
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     HeatScoring mockHeatScoring = mock(HeatScoring.class);
@@ -94,11 +93,11 @@ public class RaceStateTest {
             .withHeatScoring(mockHeatScoring)
             .withOverallScoring(mockOverallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     List<RaceParticipant> drivers = new ArrayList<>();
-    Driver realDriver = new Driver("Test Driver", "D1", "driver1", new ObjectId());
+    Driver realDriver = new Driver("Test Driver", "D1", "driver1", "1");
     RaceParticipant participant = new RaceParticipant(realDriver, "participant1");
     drivers.add(participant);
 

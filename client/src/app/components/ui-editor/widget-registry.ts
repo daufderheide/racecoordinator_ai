@@ -298,6 +298,15 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       shortcut: "",
     }),
   },
+  "action-open-season-results": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
   "action-open-prediction-results": {
     defaultSettings: () => ({
       fontFamily: "",

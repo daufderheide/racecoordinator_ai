@@ -1,5 +1,5 @@
 ; Race Coordinator AI Online Installer Script
-; Downloads dependencies (Java 17/Mongo 6 for Win10+, Java 8/Mongo 3.2 for Legacy) during installation
+; Downloads Java 17 for Win10+ or Java 8 for Legacy OS during installation
 
 #include "installer_base.iss"
 
@@ -9,8 +9,6 @@ OutputBaseFilename=RaceCoordinatorAI_Online_Setup
 [Code]
 var
   DownloadPage: TDownloadWizardPage;
-
-
 
 procedure ExtractZip(const ZipFile, DestDir, StatusMsg: String);
 var
@@ -68,7 +66,6 @@ var
   ResultCode: Integer;
   RoboPath: String;
 begin
-  // Look for the first subfolder inside BasePath
   if FindFirst(BasePath + '\*', FindRec) then
   begin
     try
@@ -86,7 +83,6 @@ begin
             Exec(RoboPath, Format('"%s" "%s" /E /MOVE', [SubPath, BasePath]), '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
           end;
           
-          // Fallback PowerShell copy + remove if robocopy is unavailable or left the subfolder
           if DirExists(SubPath) then
           begin
             Log('Robocopy fallback to PowerShell Copy-Item for: ' + SubPath);
@@ -95,7 +91,7 @@ begin
           
           if DirExists(SubPath) then
             DelTree(SubPath, True, False, False);
-          break; // Only flatten the first subfolder found
+          break;
         end;
       until not FindNext(FindRec);
     finally
@@ -103,8 +99,6 @@ begin
     end;
   end;
 end;
-
-// FlattenJreDirectory is replaced by the more generic FlattenDirectory
 
 function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
 begin
@@ -120,33 +114,21 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 var
-  JavaZip, MongoZip: String;
-  MongoSource, MongoDest: String;
-  NeedsJava, NeedsMongo, IsModernOS: Boolean;
+  JavaZip: String;
+  NeedsJava, IsModernOS: Boolean;
 begin
   if CurStep = ssInstall then
   begin
-    // Evaluate if dependencies are needed
     IsModernOS := IsWindows10OrNewer();
     NeedsJava := not IsJavaInstalled(IsModernOS);
-    NeedsMongo := not IsMongoInstalled(IsModernOS);
     
-    if NeedsJava or NeedsMongo then begin
+    if NeedsJava then begin
       DownloadPage.Clear;
       
-      if NeedsJava then begin
-        if IsModernOS then
-          DownloadPage.Add('https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.19%2B10/OpenJDK17U-jre_x64_windows_hotspot_17.0.19_10.zip', 'java_setup.zip', '')
-        else
-          DownloadPage.Add('https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u472-b08/OpenJDK8U-jre_x86-32_windows_hotspot_8u472b08.zip', 'java_setup.zip', '');
-      end;
-      
-      if NeedsMongo then begin
-        if IsModernOS then
-          DownloadPage.Add('https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip', 'mongodb_setup.zip', '')
-        else
-          DownloadPage.Add('https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip', 'mongodb_setup.zip', '');
-      end;
+      if IsModernOS then
+        DownloadPage.Add('https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.19%2B10/OpenJDK17U-jre_x64_windows_hotspot_17.0.19_10.zip', 'java_setup.zip', '')
+      else
+        DownloadPage.Add('https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u472-b08/OpenJDK8U-jre_x86-32_windows_hotspot_8u472b08.zip', 'java_setup.zip', '');
       
       DownloadPage.Show;
       try
@@ -160,7 +142,7 @@ begin
             if Pos('12007', GetExceptionMessage) > 0 then
             begin
               MsgBox('Network Error: The installer could not resolve the download server addresses (DNS Error 12007).' + #13#10#13#10 +
-                     'This "Online" installer requires an active internet connection to download Java and MongoDB.' + #13#10#13#10 +
+                     'This "Online" installer requires an active internet connection to download Java.' + #13#10#13#10 +
                      'Please check your internet connection or try again later.', mbCriticalError, MB_OK);
             end
             else
@@ -174,24 +156,11 @@ begin
         DownloadPage.Hide;
       end;
     end;
-
-    MongoSource := ExpandConstant('{app}\mongodb\bin\mongod.exe');
-    MongoDest := ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools\mongod_legacy.exe');
-    
-    if FileExists(MongoSource) then
-    begin
-      if not DirExists(ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools')) then
-        ForceDirectories(ExpandConstant('{commonappdata}\{#MyAppName}\migration_tools'));
-        
-      Log('Backing up legacy MongoDB executable for potential migration...');
-      FileCopy(MongoSource, MongoDest, False);
-    end;
   end;
 
   if CurStep = ssPostInstall then
   begin
     JavaZip := ExpandConstant('{tmp}\java_setup.zip');
-    MongoZip := ExpandConstant('{tmp}\mongodb_setup.zip');
 
     if FileExists(JavaZip) then
     begin
@@ -200,15 +169,6 @@ begin
       FlattenDirectory(ExpandConstant('{app}\jre'));
       DeleteFile(JavaZip);
       SaveStringToFile(ExpandConstant('{app}\jre\.rcai_version'), GetRequiredJavaVersion(IsWindows10OrNewer()), False);
-    end;
-
-    if FileExists(MongoZip) then
-    begin
-      DelTree(ExpandConstant('{app}\mongodb'), True, False, False);
-      ExtractZip(MongoZip, ExpandConstant('{app}\mongodb'), 'Extracting MongoDB...');
-      FlattenDirectory(ExpandConstant('{app}\mongodb'));
-      DeleteFile(MongoZip);
-      SaveStringToFile(ExpandConstant('{app}\mongodb\.rcai_version'), GetRequiredMongoVersion(IsWindows10OrNewer()), False);
     end;
   end;
 end;

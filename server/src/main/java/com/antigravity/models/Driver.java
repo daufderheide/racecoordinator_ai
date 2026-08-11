@@ -1,10 +1,6 @@
 package com.antigravity.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 public class Driver extends Model {
   public static final String EMPTY_DRIVER_ID = "EMPTY_LANE";
@@ -17,25 +13,24 @@ public class Driver extends Model {
   private final AudioConfig bestLapAudio;
   private final AudioConfig penaltyAudio;
 
-  @BsonCreator
   public Driver(
-      @BsonProperty("name") @JsonProperty("name") String name,
-      @BsonProperty("nickname") @JsonProperty("nickname") String nickname,
-      @BsonProperty("avatarUrl") @JsonProperty("avatarUrl") String avatarUrl,
-      @BsonProperty("lapAudio") @JsonProperty("lapAudio") AudioConfig lapAudio,
-      @BsonProperty("bestLapAudio") @JsonProperty("bestLapAudio") AudioConfig bestLapAudio,
-      @BsonProperty("penaltyAudio") @JsonProperty("penaltyAudio") AudioConfig penaltyAudio,
-      @BsonProperty("lapSoundUrl") @JsonProperty("lapSoundUrl") String lapSoundUrl,
-      @BsonProperty("bestLapSoundUrl") @JsonProperty("bestLapSoundUrl") String bestLapSoundUrl,
-      @BsonProperty("penaltySoundUrl") @JsonProperty("penaltySoundUrl") String penaltySoundUrl,
-      @BsonProperty("lapSoundType") @JsonProperty("lapSoundType") String lapSoundType,
-      @BsonProperty("bestLapSoundType") @JsonProperty("bestLapSoundType") String bestLapSoundType,
-      @BsonProperty("penaltySoundType") @JsonProperty("penaltySoundType") String penaltySoundType,
-      @BsonProperty("lapSoundText") @JsonProperty("lapSoundText") String lapSoundText,
-      @BsonProperty("bestLapSoundText") @JsonProperty("bestLapSoundText") String bestLapSoundText,
-      @BsonProperty("penaltySoundText") @JsonProperty("penaltySoundText") String penaltySoundText,
-      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
-      @BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id) {
+      @JsonProperty("name") String name,
+      @JsonProperty("nickname") String nickname,
+      @JsonProperty("avatarUrl") String avatarUrl,
+      @JsonProperty("lapAudio") AudioConfig lapAudio,
+      @JsonProperty("bestLapAudio") AudioConfig bestLapAudio,
+      @JsonProperty("penaltyAudio") AudioConfig penaltyAudio,
+      @JsonProperty("lapSoundUrl") String lapSoundUrl,
+      @JsonProperty("bestLapSoundUrl") String bestLapSoundUrl,
+      @JsonProperty("penaltySoundUrl") String penaltySoundUrl,
+      @JsonProperty("lapSoundType") String lapSoundType,
+      @JsonProperty("bestLapSoundType") String bestLapSoundType,
+      @JsonProperty("penaltySoundType") String penaltySoundType,
+      @JsonProperty("lapSoundText") String lapSoundText,
+      @JsonProperty("bestLapSoundText") String bestLapSoundText,
+      @JsonProperty("penaltySoundText") String penaltySoundText,
+      @JsonProperty("entity_id") String entityId,
+      @JsonProperty("_id") String id) {
     super(id, entityId);
     this.name = name;
     this.nickname = nickname;
@@ -84,7 +79,7 @@ public class Driver extends Model {
       String lapSoundText,
       String bestLapSoundText,
       String entityId,
-      ObjectId id) {
+      String id) {
     this(
         name,
         nickname,
@@ -105,7 +100,7 @@ public class Driver extends Model {
         id);
   }
 
-  public Driver(String name, String nickname, String entityId, ObjectId id) {
+  public Driver(String name, String nickname, String entityId, String id) {
     this(
         name, nickname, null, null, null, null, null, null, null, null, null, null, null, null,
         null, entityId, id);

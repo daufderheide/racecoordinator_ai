@@ -5,7 +5,7 @@ import { Model } from "./model";
  * A theme groups visual and audio asset assignments into logical "slots."
  * Each slot maps a purpose (e.g., "flag.green", "lamp.red_on") to an asset entity ID.
  *
- * Themes are stored server-side (MongoDB) and selected per-client via Settings.
+ * Themes are stored server-side (SQLite) and selected per-client via Settings.
  */
 export interface Theme extends Model {
   entity_id: string;

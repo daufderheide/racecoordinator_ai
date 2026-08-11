@@ -179,6 +179,12 @@ describe("RacedayActionButtonComponent", () => {
         action: "RACE_RESULTS",
         method: "onWindowsMenuSelect",
       },
+      {
+        widgetType: "action-open-season-results",
+        label: "RD_WIN_SEASON_RESULTS",
+        action: "SEASON_RESULTS",
+        method: "onWindowsMenuSelect",
+      },
     ];
 
     actionTests.forEach((testCase) => {

@@ -8,7 +8,6 @@ import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.prediction.PredictionEngine.DriverHeatState;
 import com.antigravity.service.RacePredictionService;
-import com.mongodb.client.MongoDatabase;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -53,8 +52,7 @@ public class HeatOver implements IRaceState {
 
     try {
       DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
-      if (dbCtx != null && dbCtx.getDatabase() != null && race != null) {
-        MongoDatabase db = dbCtx.getDatabase();
+      if (dbCtx != null && race != null) {
         String raceId = race.getRaceModel() != null ? race.getRaceModel().getEntityId() : "current";
         int heatIdx =
             race.getHeats() != null && race.getCurrentHeat() != null
@@ -64,7 +62,7 @@ public class HeatOver implements IRaceState {
             com.antigravity.race.HeatExecutionManager.buildDriverHeatStates(race); // fqn-collision
         RacePredictionService.getInstance()
             .updateRealtimePrediction(
-                db,
+                dbCtx,
                 raceId == null || raceId.isEmpty() ? "current" : raceId,
                 race.getRaceModel(),
                 race.getDrivers(),

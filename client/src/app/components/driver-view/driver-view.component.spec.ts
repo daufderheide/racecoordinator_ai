@@ -143,4 +143,23 @@ describe("DriverViewComponent", () => {
 
     expect((component as any).isRacingInCurrentHeat).toBeFalse();
   });
+
+  it("should match driver by driver name or encoded driver name when entity_id is empty", () => {
+    const mockRace = { track: {} };
+    const mockHeat = {
+      heatDrivers: [
+        { driver: { entity_id: "", name: "Bank Farter" } },
+        { driver: { entity_id: "", name: "Sports mode" } },
+      ],
+    };
+    mockRaceService.getRace.and.returnValue(mockRace as any);
+    mockRaceService.getHeats.and.returnValue([]);
+    mockRaceService.getCurrentHeat.and.returnValue(mockHeat as any);
+
+    (component as any).driverId = "Sports%20mode";
+    (component as any).loadData();
+
+    expect((component as any).isRacingInCurrentHeat).toBeTrue();
+    expect((component as any).laneIndex).toBe(1);
+  });
 });

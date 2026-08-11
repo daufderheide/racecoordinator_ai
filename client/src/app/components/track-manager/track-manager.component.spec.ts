@@ -106,11 +106,25 @@ describe("TrackManagerComponent", () => {
 
   it("should load tracks on init", () => {
     expect(component.tracks.length).toBe(_MOCK_TRACKS.length);
-    expect(component.selectedTrack?.name).toBe("Classic Circuit");
+    expect(component.selectedTrack?.name).toBe("BART Track");
+  });
+
+  it("should select the first alphabetically sorted track by default when backend returns unsorted tracks", () => {
+    dataService.getTracks.and.returnValue(
+      of([
+        { entity_id: "t99", name: "Zack Raceway", lanes: [] },
+        { entity_id: "t1", name: "Alpha Speedway", lanes: [] },
+      ] as any),
+    );
+    component.selectedTrack = undefined;
+    component.loadTracks();
+    expect((component.selectedTrack as any)?.name).toBe("Alpha Speedway");
+    expect(component.tracks[0].name).toBe("Alpha Speedway");
   });
 
   it("should select a track", () => {
-    component.selectTrack(component.tracks[1]);
+    const speedway = component.tracks.find((t) => t.name === "Speedway")!;
+    component.selectTrack(speedway);
     expect(component.selectedTrack?.name).toBe("Speedway");
   });
 
@@ -148,7 +162,7 @@ describe("TrackManagerComponent", () => {
     component.editTrack();
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
       queryParams: {
-        id: "t1",
+        id: "t4",
         from: null,
         returnUrl: null,
       },
@@ -166,7 +180,7 @@ describe("TrackManagerComponent", () => {
     component.editTrack();
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
       queryParams: {
-        id: "t1",
+        id: "t4",
         from: "modify-heats",
         returnUrl: "/default-raceday",
       },
@@ -244,7 +258,7 @@ describe("TrackManagerComponent", () => {
     component.onConfirmDelete();
 
     expect(component.showDeleteConfirm).toBeFalse();
-    expect(dataService.deleteTrack).toHaveBeenCalledWith("t1");
+    expect(dataService.deleteTrack).toHaveBeenCalledWith("t4");
     expect(component.loadTracks).toHaveBeenCalled();
   });
 

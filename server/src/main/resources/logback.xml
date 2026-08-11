@@ -17,8 +17,6 @@
         </encoder>
     </appender>
 
-    <logger name="org.mongodb.driver" level="WARN" />
-
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />

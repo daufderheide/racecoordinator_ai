@@ -10,7 +10,7 @@ public class Heat extends ServerToClientObject {
   private int heatNumber;
   private List<DriverHeatData> drivers;
   private RaceHeatStatistics statistics = new RaceHeatStatistics();
-  @org.bson.codecs.pojo.annotations.BsonIgnore private HeatStandings heatStandings;
+  @com.fasterxml.jackson.annotation.JsonIgnore private HeatStandings heatStandings;
   private boolean started = false;
   private int group = 0;
 
@@ -61,13 +61,11 @@ public class Heat extends ServerToClientObject {
   }
 
   @JsonIgnore
-  @org.bson.codecs.pojo.annotations.BsonIgnore
   public List<String> getStandings() {
     return heatStandings != null ? heatStandings.getStandings() : new ArrayList<>();
   }
 
   @JsonIgnore
-  @org.bson.codecs.pojo.annotations.BsonIgnore
   public HeatStandings getHeatStandings() {
     return heatStandings;
   }

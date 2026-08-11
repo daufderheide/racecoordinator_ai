@@ -28,16 +28,4 @@ public class AppTest {
     assertEquals(9091, App.parseServerPort(new String[] {"-p", "9091"}));
     assertEquals(9092, App.parseServerPort(new String[] {"--port=9092"}));
   }
-
-  @Test
-  public void testParseMongoPortDefault() {
-    int port = App.parseMongoPort(new String[0]);
-    assertEquals(8085, port);
-  }
-
-  @Test
-  public void testParseMongoPortArgs() {
-    assertEquals(8888, App.parseMongoPort(new String[] {"--mongo-port", "8888"}));
-    assertEquals(8889, App.parseMongoPort(new String[] {"--mongo-port=8889"}));
-  }
 }

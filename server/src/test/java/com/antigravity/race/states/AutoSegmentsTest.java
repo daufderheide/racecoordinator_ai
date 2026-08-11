@@ -18,7 +18,6 @@ import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +71,7 @@ public class AutoSegmentsTest {
   }
 
   private DriverHeatData createDriverData(String id, String name) {
-    Driver d = new Driver(name, name, id, new ObjectId());
+    Driver d = new Driver(name, name, id, "1");
     RaceParticipant p = new RaceParticipant(d, id);
     return new DriverHeatData(p);
   }

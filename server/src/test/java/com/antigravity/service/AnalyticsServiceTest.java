@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,7 +81,7 @@ public class AnalyticsServiceTest {
     Track mockTrack = mock(Track.class);
 
     when(mockRace.getTrack()).thenReturn(mockTrack);
-    when(mockTrack.getId()).thenReturn(new ObjectId());
+    when(mockTrack.getId()).thenReturn("1");
 
     // Return empty lists to avoid NPE during size() checks
     when(mockTrack.getLanes()).thenReturn(new ArrayList<>());

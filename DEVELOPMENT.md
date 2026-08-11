@@ -155,7 +155,7 @@ The server manages the application logic, databases, and connection ports. The c
    ```
    *(This script: [run_server.ps1](run_server.ps1))*
 5. On first run it will automatically configure Java (if already installed), download and install Maven (if not found), install server dependencies, build the server, and start it on port 7070.
-6. The client will also be started automatically. Wait for the terminal to print `MongoDB is ready.` and `Server started.`
+6. The client will also be started automatically. Wait for the terminal to print `Server started.`
 7. Once running, access the user interface in your browser at:
    - [http://localhost:4200](http://localhost:4200)
 

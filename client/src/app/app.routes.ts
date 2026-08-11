@@ -19,6 +19,7 @@ import { RacedayComponent } from "@app/components/raceday/raceday.component";
 import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-setup.component";
 import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
 import { SeasonManagerComponent } from "@app/components/season-manager/season-manager.component";
+import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
 import { TeamManagerComponent } from "@app/components/team-manager/team-manager.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
@@ -212,6 +213,12 @@ export const routes: Routes = [
     component: RaceResultsComponent,
     title: "Race Results",
     data: { animation: "RaceResultsPage" },
+  },
+  {
+    path: "season-results",
+    component: SeasonResultsComponent,
+    title: "Season Results",
+    data: { animation: "SeasonResultsPage" },
   },
   {
     path: "prediction-results",

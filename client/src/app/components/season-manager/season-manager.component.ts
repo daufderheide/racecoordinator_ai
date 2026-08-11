@@ -132,7 +132,9 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
         .pipe(catchError(() => of([]))),
     ]).subscribe({
       next: ([seasons, history]) => {
-        this.seasons = seasons || [];
+        this.seasons = (seasons || []).sort((a, b) =>
+          naturalSortCompare(a.name || "", b.name || ""),
+        );
         const demoHistorySet = new Set<string>();
 
         if (Array.isArray(history)) {
@@ -201,10 +203,10 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
           if (match) {
             this.selectSeason(match);
           } else if (this.seasons.length > 0) {
-            this.selectSeason(this.seasons[0]);
+            this.selectSeason(this.filteredSeasons[0] || this.seasons[0]);
           }
         } else if (this.seasons.length > 0 && !this.selectedSeason) {
-          this.selectSeason(this.seasons[0]);
+          this.selectSeason(this.filteredSeasons[0] || this.seasons[0]);
         }
 
         this.cdr.detectChanges();

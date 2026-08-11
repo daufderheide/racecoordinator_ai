@@ -78,8 +78,14 @@ public class SerialConnection implements ISerialConnection {
   }
 
   public void disconnect() {
-    if (serialPort != null && serialPort.isOpen()) {
-      serialPort.closePort();
+    if (serialPort != null) {
+      try {
+        serialPort.removeDataListener();
+      } catch (Exception ignored) {
+      }
+      if (serialPort.isOpen()) {
+        serialPort.closePort();
+      }
     }
     serialPort = null;
     outputStream = null;
@@ -100,6 +106,10 @@ public class SerialConnection implements ISerialConnection {
 
   public void addListener(SerialPortDataListener listener) {
     if (serialPort != null) {
+      try {
+        serialPort.removeDataListener();
+      } catch (Exception ignored) {
+      }
       serialPort.addDataListener(
           new SerialPortDataListener() {
             @Override
@@ -109,6 +119,9 @@ public class SerialConnection implements ISerialConnection {
 
             @Override
             public void serialEvent(com.fazecast.jSerialComm.SerialPortEvent event) {
+              if (!isOpen()) {
+                return;
+              }
               if (event.getEventType()
                   == com.fazecast.jSerialComm.SerialPort.LISTENING_EVENT_DATA_RECEIVED) {
                 byte[] data = event.getReceivedData();

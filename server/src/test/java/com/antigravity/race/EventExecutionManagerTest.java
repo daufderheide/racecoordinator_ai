@@ -247,7 +247,7 @@ public class EventExecutionManagerTest {
     currentIndexField.setAccessible(true);
     currentIndexField.set(manager, 0);
 
-    Driver d1 = new Driver("Dave", "D", "driver1", new org.bson.types.ObjectId());
+    Driver d1 = new Driver("Dave", "D", "driver1", "driver1_id");
     RaceParticipant rp1 = new RaceParticipant(d1);
     rp1.setRank(1);
 

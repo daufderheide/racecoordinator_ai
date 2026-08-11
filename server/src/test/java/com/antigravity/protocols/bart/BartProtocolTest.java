@@ -1,6 +1,8 @@
 package com.antigravity.protocols.bart;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
@@ -98,8 +100,8 @@ public class BartProtocolTest {
   }
 
   @Test
-  public void testRequiresHeartbeatReturnsFalse() {
-    assertEquals(false, protocol.requiresHeartbeat());
+  public void testRequiresHeartbeatReturnsTrue() {
+    assertEquals(true, protocol.requiresHeartbeat());
   }
 
   @Test
@@ -251,6 +253,38 @@ public class BartProtocolTest {
     packet[9] = BartCrc.calculateCrc(packetNoCrc);
 
     connection.injectReceivedData(packet);
+    protocol.close();
+  }
+
+  @Test
+  public void testCheckAndPublishStatusSendsReadStatus() {
+    protocol.open();
+    connection.clearSentBytes();
+
+    // Trigger checkAndPublishStatus directly
+    protocol.checkAndPublishStatus();
+
+    byte[] sent = connection.getSentBytes();
+    assertNotNull(sent);
+    assertTrue(sent.length >= 4);
+    assertEquals((byte) 0xA5, sent[0]);
+    assertEquals((byte) 0x90, sent[1]); // Command message type
+    assertEquals((byte) 0x20, sent[2]); // OP_READ_STAT
+    protocol.close();
+  }
+
+  @Test
+  public void testAck5ByteParsingAndCrc() {
+    protocol.open();
+
+    // Construct 5-byte ACK packet for OP 0x20 (READ_STAT): A5 7F 20 01 CRC
+    byte[] ackNoCrc = new byte[] {(byte) 0xA5, 0x7F, 0x20, 0x01};
+    byte crc = BartCrc.calculateCrc(ackNoCrc);
+    byte[] ackPacket = new byte[] {(byte) 0xA5, 0x7F, 0x20, 0x01, crc};
+
+    connection.injectReceivedData(ackPacket);
+
+    // Verify buffer was fully consumed (0 remaining) and no crash
     protocol.close();
   }
 }

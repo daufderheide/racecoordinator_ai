@@ -12,7 +12,6 @@ import com.antigravity.models.Track;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.DatabaseService;
-import com.mongodb.client.MongoDatabase;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -68,7 +67,6 @@ public class DemoModePersistenceTest {
     DatabaseService.setInstance(mockService);
 
     DatabaseContext mockContext = mock(DatabaseContext.class);
-    doReturn(mock(MongoDatabase.class)).when(mockContext).getDatabase();
 
     ClientSubscriptionManager.getInstance().setDatabaseContext(mockContext);
 

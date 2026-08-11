@@ -149,6 +149,26 @@ describe("AssetManagerComponent", () => {
     ).toBeTrue();
   });
 
+  it("should filter and play assets with type 'audio'", () => {
+    component.assets = [
+      {
+        id: "a1",
+        name: "Yellow Flag",
+        type: "audio",
+        size: "10 KB",
+        url: "/assets/test.wav",
+      },
+    ];
+
+    component.setFilterType("sound");
+    expect(component.filteredAssets.length).toBe(1);
+    expect(component.soundCount).toBe(1);
+
+    spyOn<any>(component, "playUrl").and.returnValue(Promise.resolve());
+    component.playAsset(component.assets[0]);
+    expect(component.currentlyPlayingAsset).toBe(component.assets[0]);
+  });
+
   it("should exclude image_sets when filtering by image", () => {
     component.assets = deepCopy(MOCK_ASSETS);
 

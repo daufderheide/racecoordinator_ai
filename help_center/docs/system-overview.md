@@ -26,27 +26,23 @@ Race Coordinator AI consists of a central software application running on a PC, 
 
 ### Windows 8 and older
 - Java 8
-- MongoDB 3.2
 
 ### Windows 10 and higher
 - Java 17
-- MongoDB 6.0
 
-### MacOs and Linux
+### macOS and Linux
 - Java 17
-- MongoDB 6.0
 
 ### Mobile Devices and Tablets
 - Web browser capable of displaying the RC AI web pages (virtually any modern mobile device will work).
 
 ### Raspberry Pi
 - Java 17
-- MongoDB 6.0
 
 !!! Raspberry Pi is currently not supported, but it can be and is planned to be in the future.
 
 !!! NOTE:
-    Mobile devices currentl do not support running the RC AI server/database.  They can, however, be used to display the RC AI web pages and allow remote control of the race.
+    Mobile devices currently do not support running the RC AI server/database. They can, however, be used to display the RC AI web pages and allow remote control of the race.
     
 !!! NOTE:
-    Support for Windows 8 and older is continginent on Java 8 and MongoDB 3.2 being able to support RC AI.  If a feature of Java 17 or MongoDB 6.0 is needed, support for Windows 8 and older will be immediately dropped.
+    Support for Windows 8 and older is contingent on Java 8 being able to support RC AI. If a feature of Java 17 is needed, support for Windows 8 and older will be immediately dropped.

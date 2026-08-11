@@ -38,8 +38,6 @@ rm -rf release 2>/dev/null || true
 mkdir -p release/RaceCoordinator/web
 mkdir -p release/RaceCoordinator/jre8
 mkdir -p release/RaceCoordinator/jre17
-mkdir -p release/RaceCoordinator/mongodb32
-mkdir -p release/RaceCoordinator/mongodb60
 mkdir -p release/RaceCoordinator_Offline/web
 
 # Copy Modern Artifacts
@@ -75,18 +73,6 @@ fi
 if [ ! -s build_cache/java17.zip ]; then
     echo "Downloading Java 17..."
     curl -L "https://api.adoptium.net/v3/binary/latest/17/ga/windows/x64/jdk/hotspot/normal/eclipse?project=jdk" -o build_cache/java17.zip || echo "Warning: Java 17 download failed"
-fi
-
-# MongoDB 3.2 (32-bit for Legacy Windows)
-if [ ! -s build_cache/mongodb32.zip ]; then
-    echo "Downloading MongoDB 3.2 (32-bit)..."
-    curl -L "https://fastdl.mongodb.org/win32/mongodb-win32-i386-3.2.22.zip" -o build_cache/mongodb32.zip || echo "Warning: MongoDB 3.2 download failed"
-fi
-
-# MongoDB 6.0 (64-bit for Modern Windows)
-if [ ! -s build_cache/mongodb60.zip ]; then
-    echo "Downloading MongoDB 6.0 (64-bit)..."
-    curl -L "https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-6.0.21.zip" -o build_cache/mongodb60.zip || echo "Warning: MongoDB 6.0 download failed"
 fi
 
 # VC++ Redist 2015-2022 (x64)
@@ -129,30 +115,6 @@ if [ -r build_cache/java17.zip ]; then
     fi
     echo "Copying JRE 17 to release..."
     cp -a build_cache/jre17_extracted/* release/RaceCoordinator/jre17/
-fi
-
-if [ -r build_cache/mongodb32.zip ]; then
-    if [ ! -d build_cache/mongodb32_extracted ]; then
-        echo "Extracting MongoDB 3.2 to cache..."
-        unzip -q build_cache/mongodb32.zip -d build_cache/temp_mongo32
-        mkdir -p build_cache/mongodb32_extracted
-        mv build_cache/temp_mongo32/*/* build_cache/mongodb32_extracted/
-        rm -rf build_cache/temp_mongo32
-    fi
-    echo "Copying MongoDB 3.2 to release..."
-    cp -a build_cache/mongodb32_extracted/* release/RaceCoordinator/mongodb32/
-fi
-
-if [ -r build_cache/mongodb60.zip ]; then
-    if [ ! -d build_cache/mongodb60_extracted ]; then
-        echo "Extracting MongoDB 6.0 to cache..."
-        unzip -q build_cache/mongodb60.zip -d build_cache/temp_mongo60
-        mkdir -p build_cache/mongodb60_extracted
-        mv build_cache/temp_mongo60/*/* build_cache/mongodb60_extracted/
-        rm -rf build_cache/temp_mongo60
-    fi
-    echo "Copying MongoDB 6.0 to release..."
-    cp -a build_cache/mongodb60_extracted/* release/RaceCoordinator/mongodb60/
 fi
 
 if [ -f build_cache/vc_redist.x64.exe ]; then
@@ -219,8 +181,8 @@ if type -p java > /dev/null; then
     echo "Starting Race Coordinator..."
     java -jar RaceCoordinator.jar "$@"
 else
-    echo "Java is not installed. Please install Java 8 (openjdk-8-jre)."
-    echo "On Raspberry Pi: sudo apt-get install openjdk-8-jre"
+    echo "Java is not installed. Please install Java 17 (openjdk-17-jre)."
+    echo "On Raspberry Pi: sudo apt-get install openjdk-17-jre"
 fi
 EOF
     chmod +x "$DEST_DIR/start_linux_rpi.sh"
@@ -432,8 +394,7 @@ If Java is not found, run setup_windows.bat.
 (Offline version includes pre-bundled Java for no-internet installations).
 
 Troubleshooting:
-- If MongoDB fails to start (RPi), install manually: sudo apt-get install mongodb-server
-- Ensure ports 7070 (Web) and 27017 (MongoDB) are free.
+- Ensure port 7070 (Web) is free.
 EOF
 }
 

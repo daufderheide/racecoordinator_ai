@@ -1568,7 +1568,9 @@ export class DataService {
     };
 
     this.raceDataSocket.onmessage = (event) => {
-      this.handleRaceDataMessage(event);
+      this.ngZone.run(() => {
+        this.handleRaceDataMessage(event);
+      });
     };
 
     this.raceDataSocket.onclose = () => {
@@ -1613,42 +1615,44 @@ export class DataService {
     };
 
     this.interfaceDataSocket.onmessage = (event) => {
-      try {
-        const data = event.data;
-        let uint8Array: Uint8Array;
+      this.ngZone.run(() => {
+        try {
+          const data = event.data;
+          let uint8Array: Uint8Array;
 
-        if (data instanceof ArrayBuffer) {
-          uint8Array = new Uint8Array(data);
-        } else if (typeof data === "string") {
-          // Some environments/proxies might return Base64 strings
-          try {
-            const trimmed = data.trim().replace(/^"|"$/g, ""); // Remove quotes if they exist
-            const binaryString = atob(trimmed);
-            uint8Array = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              uint8Array[i] = binaryString.charCodeAt(i);
+          if (data instanceof ArrayBuffer) {
+            uint8Array = new Uint8Array(data);
+          } else if (typeof data === "string") {
+            // Some environments/proxies might return Base64 strings
+            try {
+              const trimmed = data.trim().replace(/^"|"$/g, ""); // Remove quotes if they exist
+              const binaryString = atob(trimmed);
+              uint8Array = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                uint8Array[i] = binaryString.charCodeAt(i);
+              }
+            } catch (e) {
+              this.logger.error(
+                "Failed to decode Base64 WebSocket message. Data was:",
+                data,
+                e,
+              );
+              return;
             }
-          } catch (e) {
-            this.logger.error(
-              "Failed to decode Base64 WebSocket message. Data was:",
-              data,
-              e,
+          } else {
+            this.logger.warn(
+              "Received unknown data type from Interface WebSocket",
+              typeof data,
             );
             return;
           }
-        } else {
-          this.logger.warn(
-            "Received unknown data type from Interface WebSocket",
-            typeof data,
-          );
-          return;
-        }
 
-        const msg = InterfaceEvent.decode(Reader.create(uint8Array));
-        this.interfaceEventSubject.next(msg);
-      } catch (e) {
-        this.logger.error("Error decoding Interface WebSocket message", e);
-      }
+          const msg = InterfaceEvent.decode(Reader.create(uint8Array));
+          this.interfaceEventSubject.next(msg);
+        } catch (e) {
+          this.logger.error("Error decoding Interface WebSocket message", e);
+        }
+      });
     };
 
     this.interfaceDataSocket.onclose = () => {

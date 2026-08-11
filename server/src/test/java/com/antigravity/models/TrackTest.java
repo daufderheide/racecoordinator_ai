@@ -131,7 +131,7 @@ public class TrackTest {
             .lanes(lanes)
             .arduinoConfigs(Collections.singletonList(config))
             .entityId("t1")
-            .id(new org.bson.types.ObjectId())
+            .id("1")
             .build();
 
     // 2. EXECUTE

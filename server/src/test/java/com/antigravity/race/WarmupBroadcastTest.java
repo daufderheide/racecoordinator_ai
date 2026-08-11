@@ -14,7 +14,6 @@ import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.NotStarted;
 import java.util.ArrayList;
 import java.util.Collections;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,12 +37,12 @@ public class WarmupBroadcastTest {
             .withAutoAdvanceTime(1.0)
             .withAutoAdvanceWarmupTime(0.5)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     Track mockTrack = mock(Track.class);
     when(mockTrack.getEntityId()).thenReturn("mockTrackId");
-    when(mockTrack.getObjectId()).thenReturn(new org.bson.types.ObjectId().toString());
+    when(mockTrack.getObjectId()).thenReturn("1".toString());
     when(mockTrack.getName()).thenReturn("Test Track");
     Lane mockLane = new Lane("red", "black", 100);
     when(mockTrack.getLanes()).thenReturn(Collections.singletonList(mockLane));

@@ -37,8 +37,10 @@ test.describe("Track Manager UI Refinements", () => {
       page.goto("/track-manager"),
     );
 
-    // Select the 5th track (which has the extremely long name)
-    const longNameTrack = page.locator(".list-item").nth(4);
+    // Select the track with the extremely long name
+    const longNameTrack = page
+      .locator(".list-item")
+      .filter({ hasText: "Extremely Long Track Name" });
     await longNameTrack.click();
 
     // Verify the summary title exists

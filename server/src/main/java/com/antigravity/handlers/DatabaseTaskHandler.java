@@ -21,41 +21,30 @@ import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Season;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
+import com.antigravity.proto.AssetMessage;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.prediction.PredictionEngine;
-import com.antigravity.repository.MongoRepository;
+import com.antigravity.repository.SqliteRepository;
+import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.RacePredictionService;
 import com.antigravity.util.CsvExporter;
 import com.antigravity.util.RequestContextUtils;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.UpdateResult;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.bson.Document;
-import org.bson.types.ObjectId;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,12 +53,12 @@ public class DatabaseTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DatabaseTaskHandler.class);
   private final DatabaseContext databaseContext;
-  private final MongoRepository<Driver> driverRepository;
-  private final MongoRepository<Team> teamRepository;
-  private final MongoRepository<Track> trackRepository;
-  private final MongoRepository<Race> raceRepository;
-  private final MongoRepository<Event> eventRepository;
-  private final MongoRepository<Season> seasonRepository;
+  private final SqliteRepository<Driver> driverRepository;
+  private final SqliteRepository<Team> teamRepository;
+  private final SqliteRepository<Track> trackRepository;
+  private final SqliteRepository<Race> raceRepository;
+  private final SqliteRepository<Event> eventRepository;
+  private final SqliteRepository<Season> seasonRepository;
 
   public static class RaceResponse {
     @com.fasterxml.jackson.annotation.JsonUnwrapped public Race race;
@@ -85,12 +74,12 @@ public class DatabaseTaskHandler {
 
   public DatabaseTaskHandler(DatabaseContext databaseContext, Javalin app) {
     this.databaseContext = databaseContext;
-    this.driverRepository = new MongoRepository<>(databaseContext, "drivers", Driver.class);
-    this.teamRepository = new MongoRepository<>(databaseContext, "teams", Team.class);
-    this.trackRepository = new MongoRepository<>(databaseContext, "tracks", Track.class);
-    this.raceRepository = new MongoRepository<>(databaseContext, "races", Race.class);
-    this.eventRepository = new MongoRepository<>(databaseContext, "events", Event.class);
-    this.seasonRepository = new MongoRepository<>(databaseContext, "seasons", Season.class);
+    this.driverRepository = new SqliteRepository<>(databaseContext, "drivers", Driver.class);
+    this.teamRepository = new SqliteRepository<>(databaseContext, "teams", Team.class);
+    this.trackRepository = new SqliteRepository<>(databaseContext, "tracks", Track.class);
+    this.raceRepository = new SqliteRepository<>(databaseContext, "races", Race.class);
+    this.eventRepository = new SqliteRepository<>(databaseContext, "events", Event.class);
+    this.seasonRepository = new SqliteRepository<>(databaseContext, "seasons", Season.class);
 
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);
     app.post("/api/drivers", this::createDriver, Role.DIRECTOR);
@@ -339,13 +328,17 @@ public class DatabaseTaskHandler {
     try {
       Driver driver = bodyAsClassWithId(ctx.body(), Driver.class);
 
-      Driver existing =
-          driverRepository.findOne(
-              Filters.or(
-                  Filters.eq("name", driver.getName()),
-                  Filters.eq("nickname", driver.getNickname())));
+      final String driverName = driver.getName();
+      final String driverNick = driver.getNickname();
+      List<Driver> allDrivers = driverRepository.findAll();
+      boolean existing =
+          allDrivers.stream()
+              .anyMatch(
+                  d ->
+                      (driverName != null && driverName.equalsIgnoreCase(d.getName()))
+                          || (driverNick != null && driverNick.equalsIgnoreCase(d.getNickname())));
 
-      if (existing != null) {
+      if (existing) {
         ctx.status(409).result("Driver name or nickname already exists");
         return;
       }
@@ -387,15 +380,18 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       Driver driver = bodyAsClassWithId(ctx.body(), Driver.class);
 
-      Driver existing =
-          driverRepository.findOne(
-              Filters.and(
-                  Filters.ne("entity_id", id),
-                  Filters.or(
-                      Filters.eq("name", driver.getName()),
-                      Filters.eq("nickname", driver.getNickname()))));
+      List<Driver> allDrivers = driverRepository.findAll();
+      boolean existing =
+          allDrivers.stream()
+              .anyMatch(
+                  d ->
+                      !id.equals(d.getEntityId())
+                          && ((driver.getName() != null
+                                  && driver.getName().equalsIgnoreCase(d.getName()))
+                              || (driver.getNickname() != null
+                                  && driver.getNickname().equalsIgnoreCase(d.getNickname()))));
 
-      if (existing != null) {
+      if (existing) {
         ctx.status(409).result("Driver name or nickname already exists");
         return;
       }
@@ -422,7 +418,10 @@ public class DatabaseTaskHandler {
   public void deleteDriver(String id) {
     driverRepository.delete(id);
 
-    List<Team> teamsToUpdate = teamRepository.find(Filters.in("driverIds", id));
+    List<Team> teamsToUpdate =
+        teamRepository.findAll().stream()
+            .filter(t -> t.getDriverIds() != null && t.getDriverIds().contains(id))
+            .collect(Collectors.toList());
 
     for (Team team : teamsToUpdate) {
       List<String> driverIds = team.getDriverIds();
@@ -457,9 +456,16 @@ public class DatabaseTaskHandler {
 
   public Team createTeam(Team team) {
     // Uniqueness check
-    Team existing = teamRepository.findOne(Filters.eq("name", team.getName()));
+    final String teamName = team.getName();
+    boolean existing =
+        teamRepository.findAll().stream()
+            .anyMatch(
+                t ->
+                    t.getName() != null
+                        && teamName != null
+                        && t.getName().trim().equalsIgnoreCase(teamName.trim()));
 
-    if (existing != null) {
+    if (existing) {
       throw new IllegalArgumentException("Team name already exists");
     }
 
@@ -488,23 +494,22 @@ public class DatabaseTaskHandler {
   }
 
   public Team updateTeam(String id, Team team) {
-    Team existing =
-        teamRepository.findOne(
-            Filters.and(Filters.ne("entity_id", id), Filters.eq("name", team.getName())));
+    final String updateTeamName = team.getName();
+    boolean existing =
+        teamRepository.findAll().stream()
+            .anyMatch(
+                t ->
+                    !id.equals(t.getEntityId())
+                        && t.getName() != null
+                        && updateTeamName != null
+                        && t.getName().trim().equalsIgnoreCase(updateTeamName.trim()));
 
-    if (existing != null) {
+    if (existing) {
       throw new IllegalArgumentException("Team name or nickname already exists");
     }
 
-    // Preservation of IDs is handled by maintaining original entity_id
-    // However, we construct a new object to ensure it has the correct ID
-    team = new Team(team.getName(), team.getAvatarUrl(), team.getDriverIds(), id, team.getId());
-
-    UpdateResult result = teamRepository.replace(id, team);
-    if (result.getMatchedCount() == 0) {
-      // throw new IllegalArgumentException("Team not found"); // Optional depending
-      // on requirement
-    }
+    team = new Team(team.getName(), team.getAvatarUrl(), team.getDriverIds(), id, null);
+    teamRepository.replace(id, team);
     return team;
   }
 
@@ -527,9 +532,16 @@ public class DatabaseTaskHandler {
     try {
       Track track = bodyAsClassWithId(ctx.body(), Track.class);
 
-      Track existing = trackRepository.findOne(Filters.eq("name", track.getName()));
+      final String trackName = track.getName();
+      boolean existing =
+          trackRepository.findAll().stream()
+              .anyMatch(
+                  t ->
+                      t.getName() != null
+                          && trackName != null
+                          && t.getName().trim().equalsIgnoreCase(trackName.trim()));
 
-      if (existing != null) {
+      if (existing) {
         ctx.status(409).result("Track name already exists");
         return;
       }
@@ -564,11 +576,17 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       Track track = bodyAsClassWithId(ctx.body(), Track.class);
 
-      Track existing =
-          trackRepository.findOne(
-              Filters.and(Filters.ne("entity_id", id), Filters.eq("name", track.getName())));
+      final String updateTrackName = track.getName();
+      boolean existing =
+          trackRepository.findAll().stream()
+              .anyMatch(
+                  t ->
+                      !id.equals(t.getEntityId())
+                          && t.getName() != null
+                          && updateTrackName != null
+                          && t.getName().trim().equalsIgnoreCase(updateTrackName.trim()));
 
-      if (existing != null) {
+      if (existing) {
         ctx.status(409).result("Track name already exists");
         return;
       }
@@ -583,7 +601,7 @@ public class DatabaseTaskHandler {
               .phidgetConfigs(track.getPhidgetConfigs())
               .bartConfigs(track.getBartConfigs())
               .entityId(id)
-              .id(track.getId())
+              .id((String) null)
               .build();
 
       logger.debug("updateTrack for {}", id);
@@ -631,8 +649,15 @@ public class DatabaseTaskHandler {
 
   public Race createRace(Race race) {
     // Uniqueness check
-    Race existing = raceRepository.findOne(Filters.eq("name", race.getName()));
-    if (existing != null) {
+    final String raceName = race.getName();
+    boolean existing =
+        raceRepository.findAll().stream()
+            .anyMatch(
+                r ->
+                    r.getName() != null
+                        && raceName != null
+                        && r.getName().trim().equalsIgnoreCase(raceName.trim()));
+    if (existing) {
       throw new IllegalArgumentException("Race name already exists");
     }
 
@@ -705,19 +730,22 @@ public class DatabaseTaskHandler {
   }
 
   public Race updateRace(String id, Race race) {
-    Race existing =
-        raceRepository.findOne(
-            Filters.and(Filters.ne("entity_id", id), Filters.eq("name", race.getName())));
+    final String updateRaceName = race.getName();
+    boolean existing =
+        raceRepository.findAll().stream()
+            .anyMatch(
+                r ->
+                    !id.equals(r.getEntityId())
+                        && r.getName() != null
+                        && updateRaceName != null
+                        && r.getName().trim().equalsIgnoreCase(updateRaceName.trim()));
 
-    if (existing != null) {
+    if (existing) {
       throw new IllegalArgumentException("Race name already exists");
     }
 
-    race = new Race.Builder().from(race).withEntityId(id).withId(race.getId()).build();
-    UpdateResult result = raceRepository.replace(id, race);
-    if (result.getMatchedCount() == 0) {
-      throw new IllegalArgumentException("Race not found");
-    }
+    race = new Race.Builder().from(race).withEntityId(id).withId(null).build();
+    raceRepository.replace(id, race);
     return race;
   }
 
@@ -738,7 +766,7 @@ public class DatabaseTaskHandler {
 
   public void deleteRace(String id) {
     // Perform cascading deletion of associated data (history, stats, saves)
-    DatabaseService.getInstance().deleteAllRaceData(databaseContext.getDatabase(), id);
+    DatabaseService.getInstance().deleteAllRaceData(databaseContext, id);
 
     raceRepository.delete(id);
   }
@@ -775,8 +803,13 @@ public class DatabaseTaskHandler {
         ctx.status(400).result("Event name cannot be empty");
         return;
       }
-      Event existing = eventRepository.findOne(Filters.eq("name", event.getName()));
-      if (existing != null) {
+      boolean existing =
+          eventRepository.findAll().stream()
+              .anyMatch(
+                  e ->
+                      e.getName() != null
+                          && e.getName().trim().equalsIgnoreCase(event.getName().trim()));
+      if (existing) {
         ctx.status(400).result("Event name already exists");
         return;
       }
@@ -805,10 +838,15 @@ public class DatabaseTaskHandler {
         ctx.status(400).result("Event name cannot be empty");
         return;
       }
-      Event existing =
-          eventRepository.findOne(
-              Filters.and(Filters.eq("name", event.getName()), Filters.ne("entity_id", id)));
-      if (existing != null) {
+      List<Event> allEvents = eventRepository.findAll();
+      boolean nameExists =
+          allEvents.stream()
+              .anyMatch(
+                  e ->
+                      e.getName() != null
+                          && e.getName().trim().equalsIgnoreCase(event.getName().trim())
+                          && !id.equals(e.getEntityId()));
+      if (nameExists) {
         ctx.status(400).result("Event name already exists");
         return;
       }
@@ -819,12 +857,8 @@ public class DatabaseTaskHandler {
               event.getAutoAdvanceTime(),
               event.getRaces(),
               id,
-              event.getId());
-      UpdateResult result = eventRepository.replace(id, updated);
-      if (result.getMatchedCount() == 0) {
-        ctx.status(404).result("Event not found");
-        return;
-      }
+              null);
+      eventRepository.replace(id, updated);
       ctx.json(updated);
     } catch (Exception e) {
       logger.error("Error updating event", e);
@@ -875,8 +909,14 @@ public class DatabaseTaskHandler {
         ctx.status(400).result("Season name cannot be empty");
         return;
       }
-      Season existing = seasonRepository.findOne(Filters.eq("name", season.getName()));
-      if (existing != null) {
+      List<Season> allSeasons = seasonRepository.findAll();
+      boolean nameExists =
+          allSeasons.stream()
+              .anyMatch(
+                  s ->
+                      s.getName() != null
+                          && s.getName().trim().equalsIgnoreCase(season.getName().trim()));
+      if (nameExists) {
         ctx.status(400).result("Season name already exists");
         return;
       }
@@ -899,20 +939,21 @@ public class DatabaseTaskHandler {
         ctx.status(400).result("Season name cannot be empty");
         return;
       }
-      Season existing =
-          seasonRepository.findOne(
-              Filters.and(Filters.eq("name", season.getName()), Filters.ne("entity_id", id)));
-      if (existing != null) {
+      List<Season> allSeasons = seasonRepository.findAll();
+      boolean nameExists =
+          allSeasons.stream()
+              .anyMatch(
+                  s ->
+                      s.getName() != null
+                          && s.getName().trim().equalsIgnoreCase(season.getName().trim())
+                          && !id.equals(s.getEntityId()));
+      if (nameExists) {
         ctx.status(400).result("Season name already exists");
         return;
       }
       Season updated =
           new Season(season.getName(), season.getDrops(), season.getRaces(), id, season.getId());
-      UpdateResult result = seasonRepository.replace(id, updated);
-      if (result.getMatchedCount() == 0) {
-        ctx.status(404).result("Season not found");
-        return;
-      }
+      seasonRepository.replace(id, updated);
       ctx.json(updated);
     } catch (Exception e) {
       logger.error("Error updating season", e);
@@ -932,13 +973,7 @@ public class DatabaseTaskHandler {
   }
 
   private String getNextSequence(String collectionName) {
-    MongoCollection<Document> counters = databaseContext.getDatabase().getCollection("counters");
-    Document counter =
-        counters.findOneAndUpdate(
-            Filters.eq("_id", collectionName),
-            Updates.inc("seq", 1),
-            new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER));
-    return String.valueOf(counter.getInteger("seq"));
+    return databaseContext.getNextSequence(collectionName);
   }
 
   public void getDrivers(Context ctx) {
@@ -958,7 +993,7 @@ public class DatabaseTaskHandler {
 
     List<RaceResponse> response = new ArrayList<>();
     for (Race race : races) {
-      Track track = trackRepository.findOne(Filters.eq("entity_id", race.getTrackEntityId()));
+      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
       response.add(new RaceResponse(race, track));
     }
     ctx.json(response);
@@ -1273,25 +1308,6 @@ public class DatabaseTaskHandler {
       body = body.replaceFirst("\\{", "{\"@id\":1,");
     }
     ObjectMapper mapper = new ObjectMapper();
-    SimpleModule module = new SimpleModule();
-    module.addDeserializer(
-        ObjectId.class,
-        new JsonDeserializer<ObjectId>() {
-          @Override
-          public ObjectId deserialize(JsonParser p, DeserializationContext ctxt)
-              throws IOException {
-            String value = p.getValueAsString();
-            if (value == null || value.isEmpty()) {
-              return null;
-            }
-            try {
-              return new ObjectId(value);
-            } catch (IllegalArgumentException e) {
-              return null;
-            }
-          }
-        });
-    mapper.registerModule(module);
     return mapper.readValue(body, clazz);
   }
 
@@ -1299,8 +1315,7 @@ public class DatabaseTaskHandler {
     try {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceHistoryRecord> history =
-          dbService.getRaceHistory(databaseContext.getDatabase(), scope);
+      List<RaceHistoryRecord> history = dbService.getRaceHistory(databaseContext, scope);
       if (scope == RaceScope.DEMO && history != null) {
         for (RaceHistoryRecord rec : history) {
           rec.setDemo(true);
@@ -1318,8 +1333,7 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
-      RaceHistoryRecord history =
-          dbService.getRaceHistoryById(databaseContext.getDatabase(), id, scope);
+      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
       if (history == null) {
         ctx.status(404).result("Race history not found");
         return;
@@ -1336,8 +1350,7 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
-      RaceHistoryRecord history =
-          dbService.getRaceHistoryById(databaseContext.getDatabase(), id, scope);
+      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
       if (history == null) {
         ctx.status(404).result("Race history not found");
         return;
@@ -1377,8 +1390,7 @@ public class DatabaseTaskHandler {
         raceId = "global";
       }
       DatabaseService dbService = DatabaseService.getInstance();
-      GlobalStatistics stats =
-          dbService.getGlobalStatistics(databaseContext.getDatabase(), raceId, scope);
+      GlobalStatistics stats = dbService.getGlobalStatistics(databaseContext, raceId, scope);
       ctx.json(stats);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1465,18 +1477,26 @@ public class DatabaseTaskHandler {
     if (assetId == null || assetId.isEmpty()) {
       return null;
     }
-    Document doc =
-        databaseContext
-            .getDatabase()
-            .getCollection("assets")
-            .find(Filters.eq("_id", assetId))
-            .first();
-    if (doc == null) {
+    AssetService assetService =
+        new AssetService(
+            databaseContext,
+            databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
+    AssetMessage asset = assetService.getAssetById(assetId);
+    if (asset == null || asset.getCustomRotationsCount() == 0) {
       return null;
     }
-
-    List<Document> rotationList = (List<Document>) doc.get("custom_rotations");
-    return parseCustomRotationsFromDocs(rotationList);
+    List<CustomRotation> list = new ArrayList<>();
+    for (com.antigravity.proto.CustomRotation protoRot : // fqn-collision
+        asset.getCustomRotationsList()) { // fqn-collision
+      List<CustomHeat> heats = new ArrayList<>();
+      for (com.antigravity.proto.CustomHeat protoHeat : protoRot.getHeatsList()) { // fqn-collision
+        heats.add(
+            new CustomHeat(
+                new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
+      }
+      list.add(new CustomRotation(protoRot.getNumDrivers(), heats));
+    }
+    return list;
   }
 
   private List<CustomRotation> parseCustomRotations(List<Map<String, Object>> customRotationsRaw) {
@@ -1509,28 +1529,6 @@ public class DatabaseTaskHandler {
     return customRotations;
   }
 
-  private List<CustomRotation> parseCustomRotationsFromDocs(List<Document> rotationList) {
-    if (rotationList == null) {
-      return null;
-    }
-    List<CustomRotation> result = new ArrayList<>();
-    for (Document rotDoc : rotationList) {
-      int numDrivers = rotDoc.getInteger("num_drivers");
-      List<CustomHeat> heats = new ArrayList<>();
-      List<Document> heatList = (List<Document>) rotDoc.get("heats");
-      if (heatList != null) {
-        for (Document heatDoc : heatList) {
-          Integer group = heatDoc.getInteger("group");
-          heats.add(
-              new CustomHeat(
-                  (List<Integer>) heatDoc.get("driver_indices"), group != null ? group : 0));
-        }
-      }
-      result.add(new CustomRotation(numDrivers, heats));
-    }
-    return result;
-  }
-
   private void getDriverStatistics(Context ctx) {
     try {
       String driverId = ctx.pathParam("driverId");
@@ -1552,7 +1550,7 @@ public class DatabaseTaskHandler {
 
       DatabaseService dbService = DatabaseService.getInstance();
       DriverStatistics stats =
-          dbService.getDriverStatistics(databaseContext.getDatabase(), driverId, raceId, scope);
+          dbService.getDriverStatistics(databaseContext, driverId, raceId, scope);
 
       if (stats == null) {
         ctx.status(404).result("Driver statistics not found");
@@ -1566,7 +1564,7 @@ public class DatabaseTaskHandler {
   }
 
   private boolean isStalePredictionRecord(
-      MongoDatabase database,
+      DatabaseContext database,
       RacePredictionRecord record,
       com.antigravity.race.Race activeRace, // fqn-collision
       boolean isDemo) {
@@ -1632,14 +1630,14 @@ public class DatabaseTaskHandler {
         return true;
       }
       if (dp.getTotalSimulations() <= 0) {
-        logger.debug(
+        logger.trace(
             "PREDICTION: Stale because DriverProjection is missing diagnostic metadata for driver: {}",
             dp.getDriverId());
         return true;
       }
       if ("EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())
           || "Empty Lane".equalsIgnoreCase(dp.getDriverName())) {
-        logger.debug("PREDICTION: Stale because empty lane driver found");
+        logger.trace("PREDICTION: Stale because empty lane driver found");
         return true;
       }
       if (dp.getProjectedRank() != -1) {
@@ -1663,11 +1661,11 @@ public class DatabaseTaskHandler {
   }
 
   private boolean isDriverTrackStatsUpdated(
-      MongoDatabase database,
+      DatabaseContext context,
       RacePredictionRecord record,
       com.antigravity.race.Race activeRace, // fqn-collision
       boolean isDemo) {
-    if (activeRace == null || activeRace.getRaceModel() == null || database == null) {
+    if (activeRace == null || activeRace.getRaceModel() == null || context == null) {
       return false;
     }
     String trackId = activeRace.getRaceModel().getTrackEntityId();
@@ -1680,8 +1678,7 @@ public class DatabaseTaskHandler {
         String driverId = PredictionEngine.getParticipantId(rp);
         if (driverId != null && !driverId.isEmpty()) {
           com.antigravity.models.DriverTrackStats dts = // fqn-collision
-              DatabaseService.getInstance()
-                  .getDriverTrackStats(database, driverId, trackId, isDemo);
+              DatabaseService.getInstance().getDriverTrackStats(context, driverId, trackId, isDemo);
           if (dts != null && dts.getLastUpdated() > recordTimestamp) {
             logger.info(
                 "PREDICTION: Stale in NotStarted state because driver {} track stats updated at {} > record timestamp {}",
@@ -1704,15 +1701,13 @@ public class DatabaseTaskHandler {
           "true".equals(ctx.queryParam("force")) || "true".equals(ctx.queryParam("recalculate"));
       DatabaseService dbService = DatabaseService.getInstance();
       DatabaseContext reqCtx = (DatabaseContext) ctx.attribute(DatabaseContext.class.getName());
-      MongoDatabase database =
-          reqCtx != null
-              ? reqCtx.getDatabase()
-              : (databaseContext != null ? databaseContext.getDatabase() : null);
+      DatabaseContext dbContext = reqCtx != null ? reqCtx : databaseContext;
 
       com.antigravity.race.Race activeRace = // fqn-collision
           ClientSubscriptionManager.getInstance().getRace();
 
-      // Auto-detect demo mode from the active running race if not explicitly in DEMO scope
+      // Auto-detect demo mode from the active running race if not explicitly in DEMO
+      // scope
       if (activeRace != null && activeRace.getRaceModel() != null) {
         String activeId = activeRace.getRaceModel().getEntityId();
         if ("current".equals(raceId) || (activeId != null && activeId.equals(raceId))) {
@@ -1726,11 +1721,11 @@ public class DatabaseTaskHandler {
       }
 
       RacePredictionRecord record = null;
-      if (!forceRecalc && database != null && targetRaceId != null && !targetRaceId.isEmpty()) {
-        record = dbService.getRacePredictionRecord(database, targetRaceId, scope.isDemo());
+      if (!forceRecalc && dbContext != null && targetRaceId != null && !targetRaceId.isEmpty()) {
+        record = dbService.getRacePredictionRecord(dbContext, targetRaceId, scope.isDemo());
       }
 
-      boolean isStale = isStalePredictionRecord(database, record, activeRace, scope.isDemo());
+      boolean isStale = isStalePredictionRecord(dbContext, record, activeRace, scope.isDemo());
 
       if ((record == null || isStale || forceRecalc)
           && activeRace != null
@@ -1740,7 +1735,7 @@ public class DatabaseTaskHandler {
           record =
               RacePredictionService.getInstance()
                   .generateAndSavePreRacePrediction(
-                      database,
+                      dbContext,
                       activeRaceId,
                       activeRace.getRaceModel(),
                       activeRace.getDrivers(),
@@ -1759,7 +1754,7 @@ public class DatabaseTaskHandler {
 
           RacePredictionService.getInstance()
               .updateRealtimePrediction(
-                  database,
+                  dbContext,
                   activeRaceId,
                   activeRace.getRaceModel(),
                   activeRace.getDrivers(),
@@ -1768,7 +1763,7 @@ public class DatabaseTaskHandler {
                   actualLaps,
                   scope.isDemo());
 
-          record = dbService.getRacePredictionRecord(database, activeRaceId, scope.isDemo());
+          record = dbService.getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
         }
       }
 
@@ -1819,8 +1814,7 @@ public class DatabaseTaskHandler {
       }
 
       PredictionEvaluationRecord eval =
-          dbService.getPredictionEvaluationRecord(
-              databaseContext.getDatabase(), targetRaceId, scope.isDemo());
+          dbService.getPredictionEvaluationRecord(databaseContext, targetRaceId, scope.isDemo());
       if (eval == null) {
         ctx.status(404).result("Prediction evaluation record not found");
         return;

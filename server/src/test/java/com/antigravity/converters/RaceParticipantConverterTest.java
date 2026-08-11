@@ -9,14 +9,13 @@ import com.antigravity.proto.RaceParticipant;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import org.bson.types.ObjectId;
 import org.junit.Test;
 
 public class RaceParticipantConverterTest {
 
   @Test
   public void testToProto_Individual() {
-    Driver driver = new Driver("Alice", "The Rocket", "d1", new ObjectId());
+    Driver driver = new Driver("Alice", "The Rocket", "d1", "1");
     com.antigravity.race.RaceParticipant participant =
         new com.antigravity.race.RaceParticipant(driver, "p1");
     Set<String> sentObjectIds = new HashSet<>();
@@ -33,8 +32,7 @@ public class RaceParticipantConverterTest {
 
   @Test
   public void testToProto_Team() {
-    Team team =
-        new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", new ObjectId());
+    Team team = new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", "1");
     com.antigravity.race.RaceParticipant participant =
         new com.antigravity.race.RaceParticipant(team);
     Set<String> sentObjectIds = new HashSet<>();

@@ -579,7 +579,9 @@ export class DriverEditorComponent
 
     const allAssets = assets || [];
     this.avatarAssets = allAssets.filter((a) => a.type === "image");
-    this.soundAssets = allAssets.filter((a) => a.type === "sound");
+    this.soundAssets = allAssets.filter(
+      (a) => a.type === "sound" || a.type === "audio",
+    );
 
     const idParam = this.route.snapshot.queryParamMap.get("id");
 

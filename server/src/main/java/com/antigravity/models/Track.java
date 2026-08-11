@@ -15,10 +15,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Track extends Model {
@@ -32,25 +28,18 @@ public class Track extends Model {
   private final List<WebSocketConfig> websocketConfigs;
   private final List<BartConfig> bartConfigs;
 
-  @BsonCreator
   @JsonCreator
-  // Public for MongoDB POJO Codec. Use Track.Builder for instantiation.
   public Track(
-      @BsonProperty("name") @JsonProperty("name") String name,
-      @BsonProperty("num_track_sections") @JsonProperty("num_track_sections")
-          Integer numTrackSections,
-      @BsonProperty("lanes") @JsonProperty("lanes") List<Lane> lanes,
-      @BsonProperty("arduino_configs") @JsonProperty("arduino_configs")
-          List<ArduinoConfig> arduinoConfigs,
-      @BsonProperty("trackmate_configs") @JsonProperty("trackmate_configs")
-          List<TrackmateConfig> trackmateConfigs,
-      @BsonProperty("phidget_configs") @JsonProperty("phidget_configs")
-          List<PhidgetConfig> phidgetConfigs,
-      @BsonProperty("websocket_configs") @JsonProperty("websocket_configs")
-          List<WebSocketConfig> websocketConfigs,
-      @BsonProperty("bart_configs") @JsonProperty("bart_configs") List<BartConfig> bartConfigs,
-      @BsonProperty("entity_id") @JsonProperty("entity_id") String entityId,
-      @BsonId @JsonProperty("_id") ObjectId id) {
+      @JsonProperty("name") String name,
+      @JsonProperty("num_track_sections") Integer numTrackSections,
+      @JsonProperty("lanes") List<Lane> lanes,
+      @JsonProperty("arduino_configs") List<ArduinoConfig> arduinoConfigs,
+      @JsonProperty("trackmate_configs") List<TrackmateConfig> trackmateConfigs,
+      @JsonProperty("phidget_configs") List<PhidgetConfig> phidgetConfigs,
+      @JsonProperty("websocket_configs") List<WebSocketConfig> websocketConfigs,
+      @JsonProperty("bart_configs") List<BartConfig> bartConfigs,
+      @JsonProperty("entity_id") String entityId,
+      @JsonProperty("_id") String id) {
     super(id, entityId);
     this.name = name;
     this.numTrackSections = numTrackSections != null ? numTrackSections : 100;
@@ -85,7 +74,7 @@ public class Track extends Model {
     private List<WebSocketConfig> websocketConfigs = new ArrayList<>();
     private List<BartConfig> bartConfigs = new ArrayList<>();
     private String entityId;
-    private ObjectId id;
+    private String id;
 
     public Builder name(String name) {
       this.name = name;
@@ -132,7 +121,7 @@ public class Track extends Model {
       return this;
     }
 
-    public Builder id(ObjectId id) {
+    public Builder id(String id) {
       this.id = id;
       return this;
     }
@@ -157,7 +146,6 @@ public class Track extends Model {
   }
 
   @JsonProperty("num_track_sections")
-  @BsonProperty("num_track_sections")
   public int getNumTrackSections() {
     return numTrackSections;
   }
@@ -283,31 +271,26 @@ public class Track extends Model {
   }
 
   @JsonProperty("arduino_configs")
-  @BsonProperty("arduino_configs")
   public List<ArduinoConfig> getArduinoConfigs() {
     return arduinoConfigs;
   }
 
   @JsonProperty("trackmate_configs")
-  @BsonProperty("trackmate_configs")
   public List<TrackmateConfig> getTrackmateConfigs() {
     return trackmateConfigs;
   }
 
   @JsonProperty("phidget_configs")
-  @BsonProperty("phidget_configs")
   public List<PhidgetConfig> getPhidgetConfigs() {
     return phidgetConfigs;
   }
 
   @JsonProperty("websocket_configs")
-  @BsonProperty("websocket_configs")
   public List<WebSocketConfig> getWebsocketConfigs() {
     return websocketConfigs;
   }
 
   @JsonProperty("bart_configs")
-  @BsonProperty("bart_configs")
   public List<BartConfig> getBartConfigs() {
     return bartConfigs;
   }

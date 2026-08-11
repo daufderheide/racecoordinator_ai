@@ -25,7 +25,6 @@ import com.antigravity.service.ServerConfigService;
 import com.antigravity.util.CsvExporter;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -71,7 +70,7 @@ public class RaceStatisticsTest {
             .build();
 
     participants = new ArrayList<>();
-    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
+    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
 
     List<Lane> lanes = new ArrayList<>();
     lanes.add(new Lane("red", "black", 100));
@@ -81,7 +80,7 @@ public class RaceStatisticsTest {
             .lanes(lanes)
             .arduinoConfigs(new ArrayList<>())
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =

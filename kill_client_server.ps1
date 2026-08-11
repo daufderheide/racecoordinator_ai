@@ -1,7 +1,7 @@
 Write-Host "Killing client and server processes..." -ForegroundColor Cyan
 
-# Ports: 4200 (Client), 7070 (Server), 8085 (Embedded Mongo), 27017 (Mongo)
-$Ports = @(4200, 7070, 8085, 27017)
+# Ports: 4200 (Client), 7070 (Server)
+$Ports = @(4200, 7070)
 $KilledProcesses = @()
 
 foreach ($Port in $Ports) {
@@ -21,7 +21,7 @@ foreach ($Port in $Ports) {
 }
 
 # Also kill by name as fallback
-Get-Process -Name java, node, mongod -ErrorAction SilentlyContinue | ForEach-Object {
+Get-Process -Name java, node -ErrorAction SilentlyContinue | ForEach-Object {
     if ($_.Id -gt 0 -and $KilledProcesses -notcontains $_.Id) {
         try {
             Write-Host "Killing $($_.ProcessName) process $($_.Id)..." -ForegroundColor Yellow

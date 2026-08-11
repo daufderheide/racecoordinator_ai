@@ -14,7 +14,6 @@ import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Track;
 import com.antigravity.service.DatabaseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.client.MongoDatabase;
 import io.javalin.Javalin;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class DatabaseTaskHandlerTest {
     Method method =
         DatabaseTaskHandler.class.getDeclaredMethod(
             "isStalePredictionRecord",
-            MongoDatabase.class,
+            DatabaseContext.class,
             RacePredictionRecord.class,
             com.antigravity.race.Race.class,
             boolean.class);
@@ -94,7 +93,7 @@ public class DatabaseTaskHandlerTest {
     Method method =
         DatabaseTaskHandler.class.getDeclaredMethod(
             "isStalePredictionRecord",
-            MongoDatabase.class,
+            DatabaseContext.class,
             RacePredictionRecord.class,
             com.antigravity.race.Race.class,
             boolean.class);
@@ -138,7 +137,7 @@ public class DatabaseTaskHandlerTest {
     Method method =
         DatabaseTaskHandler.class.getDeclaredMethod(
             "isStalePredictionRecord",
-            MongoDatabase.class,
+            DatabaseContext.class,
             RacePredictionRecord.class,
             com.antigravity.race.Race.class,
             boolean.class);
@@ -222,14 +221,13 @@ public class DatabaseTaskHandlerTest {
   @Test
   public void testIsStalePredictionRecord_RaceOverNotStale() throws Exception {
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
-    MongoDatabase mockMongoDb = mock(MongoDatabase.class);
     Javalin mockJavalin = mock(Javalin.class);
     DatabaseTaskHandler handler = new DatabaseTaskHandler(mockDbCtx, mockJavalin);
 
     Method method =
         DatabaseTaskHandler.class.getDeclaredMethod(
             "isStalePredictionRecord",
-            MongoDatabase.class,
+            DatabaseContext.class,
             RacePredictionRecord.class,
             com.antigravity.race.Race.class,
             boolean.class);
@@ -252,7 +250,7 @@ public class DatabaseTaskHandlerTest {
     when(activeRace.getRaceModel()).thenReturn(raceModel);
     when(activeRace.getState()).thenReturn(new com.antigravity.race.states.RaceOver());
 
-    boolean isStale = (Boolean) method.invoke(handler, mockMongoDb, record, activeRace, true);
+    boolean isStale = (Boolean) method.invoke(handler, null, record, activeRace, true);
     assertFalse(
         "Pre-race prediction record must remain static when race is in RaceOver state", isStale);
   }
@@ -260,14 +258,13 @@ public class DatabaseTaskHandlerTest {
   @Test
   public void testIsStalePredictionRecord_NotStartedStaleWhenStatsUpdated() throws Exception {
     DatabaseContext mockDbCtx = mock(DatabaseContext.class);
-    MongoDatabase mockMongoDb = mock(MongoDatabase.class);
     Javalin mockJavalin = mock(Javalin.class);
     DatabaseTaskHandler handler = new DatabaseTaskHandler(mockDbCtx, mockJavalin);
 
     Method method =
         DatabaseTaskHandler.class.getDeclaredMethod(
             "isStalePredictionRecord",
-            MongoDatabase.class,
+            DatabaseContext.class,
             RacePredictionRecord.class,
             com.antigravity.race.Race.class,
             boolean.class);
@@ -307,7 +304,8 @@ public class DatabaseTaskHandlerTest {
     DatabaseService.setInstance(mockService);
 
     try {
-      boolean isStale = (Boolean) method.invoke(handler, mockMongoDb, record, activeRace, true);
+      DatabaseContext mockCtx = mock(DatabaseContext.class);
+      boolean isStale = (Boolean) method.invoke(handler, mockCtx, record, activeRace, true);
       assertTrue(
           "Pre-race prediction record must be stale in NotStarted state when driver track stats updated",
           isStale);

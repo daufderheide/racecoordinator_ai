@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,7 +49,7 @@ public class RaceModifyHeatsTest {
             .lanes(lanes)
             .arduinoConfigs(mockConfig)
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     HeatScoring mockHeatScoring = mock(HeatScoring.class);
@@ -73,13 +72,13 @@ public class RaceModifyHeatsTest {
             .withHeatScoring(mockHeatScoring)
             .withOverallScoring(mockOverallScoring)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     participants = new ArrayList<>();
-    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", new ObjectId()), "p1"));
-    participants.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", new ObjectId()), "p2"));
-    participants.add(new RaceParticipant(new Driver("Driver 3", "D3", "d3", new ObjectId()), "p3"));
+    participants.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
+    participants.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "1"), "p2"));
+    participants.add(new RaceParticipant(new Driver("Driver 3", "D3", "d3", "1"), "p3"));
 
     List<DriverHeatData> heat1Drivers = new ArrayList<>();
     heat1Drivers.add(new DriverHeatData(participants.get(0)));
@@ -239,8 +238,7 @@ public class RaceModifyHeatsTest {
   @Test
   public void testModifyHeats_AddNewParticipant() {
     // Add a new participant p4
-    RaceParticipant p4 =
-        new RaceParticipant(new Driver("Driver 4", "D4", "d4", new ObjectId()), "p4");
+    RaceParticipant p4 = new RaceParticipant(new Driver("Driver 4", "D4", "d4", "1"), "p4");
     List<RaceParticipant> newParticipants = new ArrayList<>(participants);
     newParticipants.add(p4);
 
@@ -413,7 +411,7 @@ public class RaceModifyHeatsTest {
   @Test
   public void testModifyHeats_OverlappingDriverInTeam_Fails() {
     // Create a team containing Driver 1 (p1)
-    Team team1 = new Team("Team 1", "url", Collections.singletonList("d1"), "t1", new ObjectId());
+    Team team1 = new Team("Team 1", "url", Collections.singletonList("d1"), "t1", "1");
     RaceParticipant teamParticipant = new RaceParticipant(team1);
     teamParticipant.setObjectId("pt1");
 
@@ -433,11 +431,11 @@ public class RaceModifyHeatsTest {
   @Test
   public void testModifyHeats_OverlappingTeams_Fails() {
     // Create two teams sharing Driver 1
-    Team team1 = new Team("Team 1", "url", Collections.singletonList("d1"), "t1", new ObjectId());
+    Team team1 = new Team("Team 1", "url", Collections.singletonList("d1"), "t1", "1");
     RaceParticipant pt1 = new RaceParticipant(team1);
     pt1.setObjectId("pt1");
 
-    Team team2 = new Team("Team 2", "url", Collections.singletonList("d1"), "t2", new ObjectId());
+    Team team2 = new Team("Team 2", "url", Collections.singletonList("d1"), "t2", "1");
     RaceParticipant pt2 = new RaceParticipant(team2);
     pt2.setObjectId("pt2");
 

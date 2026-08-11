@@ -122,7 +122,9 @@ export class EventManagerComponent implements OnInit, OnDestroy {
       races: this.dataService.getRaces(),
     }).subscribe({
       next: (result) => {
-        this.events = result.events || [];
+        this.events = (result.events || []).sort((a, b) =>
+          naturalSortCompare(a.name || "", b.name || ""),
+        );
         this.races = result.races || [];
 
         const lastEdited = this.navigationService.getLastEditedId("event");
@@ -145,10 +147,10 @@ export class EventManagerComponent implements OnInit, OnDestroy {
           if (found) {
             this.selectedEvent = found;
           } else if (this.events.length > 0) {
-            this.selectedEvent = this.events[0];
+            this.selectedEvent = this.filteredEvents[0] || this.events[0];
           }
         } else if (this.events.length > 0 && !this.selectedEvent) {
-          this.selectedEvent = this.events[0];
+          this.selectedEvent = this.filteredEvents[0] || this.events[0];
         }
 
         this.isLoading = false;

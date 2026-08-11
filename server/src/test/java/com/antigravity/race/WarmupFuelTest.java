@@ -15,7 +15,6 @@ import com.antigravity.protocols.arduino.ArduinoConfig;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,11 +64,11 @@ public class WarmupFuelTest {
             .withAutoStartTime(60.0)
             .withAutoStartWarmupTime(10.0)
             .withEntityId("race1")
-            .withId(new ObjectId())
+            .withId("1")
             .build();
 
     participants = new ArrayList<>();
-    Driver d1 = new Driver("Driver 1", "D1", "d1", new ObjectId());
+    Driver d1 = new Driver("Driver 1", "D1", "d1", "1");
     participants.add(new RaceParticipant(d1, "p1"));
 
     List<Lane> lanes = new ArrayList<>();
@@ -80,7 +79,7 @@ public class WarmupFuelTest {
             .lanes(lanes)
             .arduinoConfigs(Collections.singletonList(mock(ArduinoConfig.class)))
             .entityId("track1")
-            .id(new ObjectId())
+            .id("1")
             .build();
 
     race =

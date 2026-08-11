@@ -1370,18 +1370,13 @@ export class DefaultRacedayComponent
         this.isInterfaceConnected =
           this.raceConnectionService.isInterfaceConnected;
         this.cdr.markForCheck();
+        this.cdr.detectChanges();
       }),
     );
 
     this.subscriptions.push(
       this.raceConnectionService.interfaceAlert$.subscribe((alert) => {
-        if (alert.titleKey === "ACK_MODAL_TITLE_CONNECTED") {
-          if (this.showAckModal) {
-            this.showInterfaceError(alert.titleKey, alert.messageKey);
-          }
-        } else {
-          this.showInterfaceError(alert.titleKey, alert.messageKey);
-        }
+        this.showInterfaceError(alert.titleKey, alert.messageKey);
       }),
     );
 
@@ -1466,6 +1461,7 @@ export class DefaultRacedayComponent
   private leaderBoardWindow: Window | null = null;
   private heatResultsWindow: Window | null = null;
   private raceResultsWindow: Window | null = null;
+  private seasonResultsWindow: Window | null = null;
   private predictionResultsWindow: Window | null = null;
   private driverStationTabs: Window[] = [];
 
@@ -1533,6 +1529,10 @@ export class DefaultRacedayComponent
       this.raceResultsWindow.close();
       this.raceResultsWindow = null;
     }
+    if (this.seasonResultsWindow) {
+      this.seasonResultsWindow.close();
+      this.seasonResultsWindow = null;
+    }
     if (this.predictionResultsWindow) {
       this.predictionResultsWindow.close();
       this.predictionResultsWindow = null;
@@ -1550,10 +1550,13 @@ export class DefaultRacedayComponent
     this.ackModalMessage = messageKey;
     this.showAckModal = true;
     this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   onAcknowledgeModal() {
     this.showAckModal = false;
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
     if (this.raceHasEnded) {
       this.forceExit = true;
       this.router.navigate(["/raceday-setup"]);
@@ -2219,17 +2222,25 @@ export class DefaultRacedayComponent
 
   getDriverViewQrCodeUrl(hd: DriverHeatData): string {
     const entityId =
-      hd.participant?.team?.entity_id ||
       hd.actualDriver?.entity_id ||
-      hd.driver?.entity_id;
+      hd.driver?.entity_id ||
+      hd.actualDriver?.name ||
+      hd.driver?.name ||
+      hd.participant?.team?.entity_id ||
+      hd.participant?.team?.name ||
+      hd.participant?.objectId ||
+      hd.objectId;
     if (!entityId) return "";
 
     let dataUrl = this.driverViewQrCodeCache.get(entityId);
     if (!dataUrl) {
       this.driverViewQrCodeCache.set(entityId, "generating");
-      QRCode.toDataURL(`${this.serverUrlBase}/driver-view/${entityId}`, {
-        margin: 1,
-      })
+      QRCode.toDataURL(
+        `${this.serverUrlBase}/driver-view/${encodeURIComponent(entityId)}`,
+        {
+          margin: 1,
+        },
+      )
         .then((url) => {
           this.driverViewQrCodeCache.set(entityId, url);
           if (!this.isDestroyed) {
@@ -2693,6 +2704,14 @@ export class DefaultRacedayComponent
         this.router.createUrlTree(["/race-results"]),
       );
       this.raceResultsWindow = window.open(url, "_blank");
+    } else if (action === "SEASON_RESULTS") {
+      const seasonId =
+        (this.race as any)?.season_id || (this.race as any)?.seasonId || "";
+      const queryParams = seasonId ? { id: seasonId } : {};
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(["/season-results"], { queryParams }),
+      );
+      this.seasonResultsWindow = window.open(url, "_blank");
     } else if (action === "PREDICTION_RESULTS") {
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/prediction-results"]),
@@ -2723,6 +2742,10 @@ export class DefaultRacedayComponent
     if (this.raceResultsWindow) {
       this.raceResultsWindow.close();
       this.raceResultsWindow = null;
+    }
+    if (this.seasonResultsWindow) {
+      this.seasonResultsWindow.close();
+      this.seasonResultsWindow = null;
     }
     if (this.predictionResultsWindow) {
       this.predictionResultsWindow.close();

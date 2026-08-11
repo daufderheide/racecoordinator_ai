@@ -4,21 +4,15 @@ import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 public class RaceSaveData {
 
-  @BsonId
   @JsonProperty("_id")
-  private ObjectId id;
+  private String id;
 
-  @BsonProperty("saveName")
   @JsonProperty("saveName")
   private String saveName;
 
-  @BsonProperty("isAutoSave")
   @JsonProperty("isAutoSave")
   private boolean isAutoSave;
 
@@ -38,7 +32,7 @@ public class RaceSaveData {
   public RaceSaveData() {}
 
   public RaceSaveData(
-      ObjectId id,
+      String id,
       String saveName,
       boolean isAutoSave,
       Race model,
@@ -70,11 +64,11 @@ public class RaceSaveData {
     this.statistics = statistics;
   }
 
-  public ObjectId getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(ObjectId id) {
+  public void setId(String id) {
     this.id = id;
   }
 

@@ -117,7 +117,7 @@ public class MockScheduler implements ScheduledExecutorService {
 
   public void tick() {
     if (!shutdown) {
-      for (Runnable command : commands) {
+      for (Runnable command : new ArrayList<>(commands)) {
         command.run();
       }
     }

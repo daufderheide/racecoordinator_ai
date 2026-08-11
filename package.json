@@ -31,8 +31,5 @@
     "server/**/*.java": [
       "bash -c 'cd server && mvn com.diffplug.spotless:spotless-maven-plugin:apply'"
     ]
-  },
-  "dependencies": {
-    "mongodb": "^7.5.0"
   }
 }

@@ -158,6 +158,22 @@ describe("DriverManagerComponent", () => {
       expect(component.editingDriver?.name).toBe("Alice");
     });
 
+    it("should select the first alphabetically sorted driver by default when backend returns unsorted drivers", fakeAsync(() => {
+      dataService.getDrivers.and.returnValue(
+        of([
+          { entity_id: "d99", name: "Zack" },
+          { entity_id: "d1", name: "Alice" },
+          { entity_id: "d2", name: "Bob" },
+        ] as any),
+      );
+      component.loadData();
+      tick();
+      fixture.detectChanges();
+
+      expect(component.selectedDriver?.name).toBe("Alice");
+      expect(component.drivers[0].name).toBe("Alice");
+    }));
+
     it("should select driver from query param", fakeAsync(() => {
       // Mock different query param for this test case specifically
       mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(

@@ -3,7 +3,6 @@ package com.antigravity.protocols;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
-import com.antigravity.proto.InterfaceStatusEvent;
 import com.antigravity.proto.LapEvent;
 import com.antigravity.proto.SegmentEvent;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -68,15 +67,7 @@ public class TestInterfaceListener implements ProtocolListener {
 
   @Override
   public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
-    InterfaceEvent event =
-        InterfaceEvent.newBuilder()
-            .setStatus(
-                InterfaceStatusEvent.newBuilder()
-                    .setStatus(status)
-                    .setInterfaceIndex(interfaceIndex)
-                    .build())
-            .build();
-    ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(event);
+    // Handled via onInterfaceEvent
   }
 
   @Override

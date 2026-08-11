@@ -8,87 +8,65 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RaceHistoryRecord {
 
-  @BsonId
   @JsonProperty("_id")
-  private ObjectId id;
+  private String id;
 
-  @BsonProperty("original_entity_id")
   @JsonProperty("original_entity_id")
   private String originalEntityId;
 
-  @BsonProperty("model")
   @JsonProperty("model")
   private Race model;
 
-  @BsonProperty("track")
   @JsonProperty("track")
   private Track track;
 
-  @BsonProperty("drivers")
   @JsonProperty("drivers")
   private List<RaceParticipant> drivers;
 
-  @BsonProperty("heats")
   @JsonProperty("heats")
   private List<Heat> heats;
 
-  @BsonProperty("accumulatedRaceTime")
   @JsonProperty("accumulatedRaceTime")
   private float accumulatedRaceTime;
 
-  @BsonProperty("statistics")
   @JsonProperty("statistics")
   private RaceStatistics statistics;
 
-  @BsonProperty("is_demo")
   @JsonProperty("is_demo")
   private boolean isDemo;
 
-  @BsonProperty("driver_results")
   @JsonProperty("driver_results")
   private List<SeasonRaceRecord.SeasonDriverResult> driverResults;
 
-  @BsonProperty("event_id")
   @JsonProperty("event_id")
   private String eventId;
 
-  @BsonProperty("event_name")
   @JsonProperty("event_name")
   private String eventName;
 
-  @BsonProperty("is_event_race")
   @JsonProperty("is_event_race")
   private boolean isEventRace;
 
-  @BsonProperty("is_event_summary")
   @JsonProperty("is_event_summary")
   private boolean isEventSummary;
 
   public RaceHistoryRecord() {}
 
-  @BsonCreator
   @JsonCreator
   public RaceHistoryRecord(
-      @BsonId @JsonProperty("_id") ObjectId id,
-      @BsonProperty("original_entity_id") @JsonProperty("original_entity_id")
-          String originalEntityId,
-      @BsonProperty("model") @JsonProperty("model") Race model,
-      @BsonProperty("track") @JsonProperty("track") Track track,
-      @BsonProperty("drivers") @JsonProperty("drivers") List<RaceParticipant> drivers,
-      @BsonProperty("heats") @JsonProperty("heats") List<Heat> heats,
-      @BsonProperty("accumulatedRaceTime") @JsonProperty("accumulatedRaceTime")
-          float accumulatedRaceTime,
-      @BsonProperty("statistics") @JsonProperty("statistics") RaceStatistics statistics,
-      @BsonProperty("is_demo") @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"})
-          Boolean isDemo) {
+      @JsonProperty("_id") String id,
+      @JsonProperty("original_entity_id") String originalEntityId,
+      @JsonProperty("model") Race model,
+      @JsonProperty("track") Track track,
+      @JsonProperty("drivers") List<RaceParticipant> drivers,
+      @JsonProperty("heats") List<Heat> heats,
+      @JsonProperty("accumulatedRaceTime") float accumulatedRaceTime,
+      @JsonProperty("statistics") RaceStatistics statistics,
+      @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"}) Boolean isDemo) {
     this.id = id;
     this.originalEntityId = originalEntityId;
     this.model = model;
@@ -100,16 +78,18 @@ public class RaceHistoryRecord {
     this.isDemo = isDemo != null ? isDemo : false;
   }
 
-  public ObjectId getId() {
+  public String getId() {
     return id;
   }
 
-  public void setId(ObjectId id) {
+  public void setId(String id) {
     this.id = id;
   }
 
   public String getOriginalEntityId() {
-    return originalEntityId;
+    return originalEntityId != null
+        ? originalEntityId
+        : (model != null ? model.getEntityId() : null);
   }
 
   public void setOriginalEntityId(String originalEntityId) {

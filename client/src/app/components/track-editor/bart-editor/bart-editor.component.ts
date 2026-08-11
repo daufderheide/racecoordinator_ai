@@ -87,7 +87,7 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
     this.rebuildBehaviors();
 
     this.subscriptions.add(
-      timer(0, 3000)
+      timer(0, 10000)
         .pipe(
           switchMap(() =>
             this.dataService.getBleDevices().pipe(

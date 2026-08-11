@@ -1,5 +1,8 @@
 package com.antigravity.service;
 
+import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AudioConfig;
+import com.antigravity.models.Theme;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.AudioSetEntry;
 import com.antigravity.proto.CustomHeat;
@@ -8,10 +11,11 @@ import com.antigravity.proto.ImageSetEntry;
 import com.antigravity.proto.Model;
 import com.antigravity.proto.SaveAudioSetEntry;
 import com.antigravity.proto.SaveImageSetEntry;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Updates;
+import com.antigravity.repository.SqliteRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,25 +23,28 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("checkstyle:FileLength")
 public class AssetService {
   private static final Logger logger = LoggerFactory.getLogger(AssetService.class);
+  private static final ObjectMapper objectMapper = new ObjectMapper();
 
   private final String assetDir;
-  private final MongoDatabase database;
-  private final MongoCollection<Document> collection;
+  private final DatabaseContext databaseContext;
 
   private static class DefaultAsset {
     final String id;
@@ -145,8 +152,6 @@ public class AssetService {
   private static final List<FuelDefaultAsset> DEFAULT_FUEL_IMAGE_ASSETS = new ArrayList<>();
 
   static {
-    // TODO(aufderheide): For now the order here controls how it animates
-    // in the asset editor. The order shouldn't matter.
     DEFAULT_FUEL_IMAGE_ASSETS.add(
         new FuelDefaultAsset("default_fuel_100", "fuel_100.png", "Fuel Gauge 100%", 100));
     DEFAULT_FUEL_IMAGE_ASSETS.add(
@@ -174,10 +179,6 @@ public class AssetService {
   private static final Set<String> EXCLUDED_AUDIO_IDS = new HashSet<>();
   private static final List<DefaultAsset> DEFAULT_AUDIO_ASSETS = new ArrayList<>();
 
-  // Note: Audio assets added here do not show up in the asset managers main view.
-  // For example:
-  // EXCLUDED_AUDIO_IDS.add("default_countdown_5");
-  // to exclude an asset
   static {
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_beep", "beep.wav", "Lap Beep"));
     DEFAULT_AUDIO_ASSETS.add(new DefaultAsset("default_chimes", "chimes.wav", "Lap Chimes"));
@@ -268,13 +269,11 @@ public class AssetService {
         new DefaultAsset("default_race_over", "audio/english/woman/w_raceover.wav", "Race Over"));
   }
 
-  public AssetService(MongoDatabase database, String assetDir) {
-    this.database = database;
-    this.collection = database.getCollection("assets");
+  public AssetService(DatabaseContext databaseContext, String assetDir) {
+    this.databaseContext = databaseContext;
     this.assetDir = assetDir;
+    databaseContext.ensureTable("assets");
     File directory = new File(assetDir);
-    logger.debug(
-        "AssetService initialized. assetDir={} absolute={}", assetDir, directory.getAbsolutePath());
     if (!directory.exists()) {
       boolean created = directory.mkdirs();
       if (!created) {
@@ -290,19 +289,44 @@ public class AssetService {
   }
 
   public List<AssetMessage> getAllAssets() {
+    databaseContext.ensureTable("assets");
     List<AssetMessage> assets = new ArrayList<>();
-    for (Document doc : collection.find(Filters.ne("deleted", true))) {
-      assets.add(documentToAsset(doc));
+    String sql = "SELECT json_data FROM assets";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          JsonNode node = objectMapper.readTree(json);
+          if (!node.has("deleted") || !node.get("deleted").asBoolean()) {
+            assets.add(jsonToAsset(node));
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error executing getAllAssets", e);
     }
     return assets;
   }
 
   public AssetMessage getAssetById(String id) {
-    Document doc = collection.find(Filters.eq("_id", id)).first();
-    if (doc == null) {
-      return null;
+    if (id == null) return null;
+    databaseContext.ensureTable("assets");
+    String sql = "SELECT json_data FROM assets WHERE entity_id = ?";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, id);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        if (rs.next()) {
+          String json = rs.getString("json_data");
+          if (json != null && !json.trim().isEmpty()) {
+            return jsonToAsset(objectMapper.readTree(json));
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error getting asset by id {}", id, e);
     }
-    return documentToAsset(doc);
+    return null;
   }
 
   public AssetMessage saveAsset(String name, String type, byte[] data) throws IOException {
@@ -314,7 +338,6 @@ public class AssetService {
     if (id == null) {
       id = UUID.randomUUID().toString();
     }
-    // Simple sanitization
     String safeName = name.replaceAll("[^a-zA-Z0-9.-]", "_");
     String filename = id + "_" + safeName;
     Path path = Paths.get(assetDir, filename);
@@ -324,75 +347,100 @@ public class AssetService {
     }
 
     String sizeStr = humanReadableByteCountBin(data.length);
-    String url =
-        "/assets/" + filename; // Assuming static file serving is set up or we add a handler
-
+    String url = "/assets/" + filename;
     boolean isDefault = id.startsWith("default_");
-    Document doc =
-        new Document("_id", id)
-            .append("name", name)
-            .append("type", type)
-            .append("size", sizeStr)
-            .append("filename", filename) // Store internal filename
-            .append("url", url);
+
+    ObjectNode node = objectMapper.createObjectNode();
+    node.put("_id", id);
+    node.put("entity_id", id);
+    node.put("name", name);
+    node.put("type", type);
+    node.put("size", sizeStr);
+    node.put("filename", filename);
+    node.put("url", url);
     if (isDefault) {
-      doc.append("is_default", true);
+      node.put("is_default", true);
     }
 
-    collection.replaceOne(
-        com.mongodb.client.model.Filters.eq("_id", id),
-        doc,
-        new com.mongodb.client.model.ReplaceOptions().upsert(true));
+    saveAssetNode(id, node);
+    return jsonToAsset(node);
+  }
 
-    return documentToAsset(doc);
+  private void saveAssetNode(String id, JsonNode node) {
+    databaseContext.ensureTable("assets");
+    String sql =
+        "INSERT INTO assets (entity_id, sequence_id, json_data) VALUES (?, NULL, ?) "
+            + "ON CONFLICT(entity_id) DO UPDATE SET json_data=excluded.json_data";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, id);
+      pstmt.setString(2, objectMapper.writeValueAsString(node));
+      pstmt.executeUpdate();
+    } catch (Exception e) {
+      logger.error("Error saving asset node {}", id, e);
+    }
   }
 
   public boolean deleteAsset(String id) {
-    Document doc = collection.find(Filters.eq("_id", id)).first();
-    if (doc == null) {
+    if (id == null) return false;
+    databaseContext.ensureTable("assets");
+    JsonNode node = null;
+    String sqlSelect = "SELECT json_data FROM assets WHERE entity_id = ?";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sqlSelect)) {
+      pstmt.setString(1, id);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        if (rs.next()) {
+          node = objectMapper.readTree(rs.getString("json_data"));
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error fetching asset for deletion {}", id, e);
+    }
+
+    if (node == null) {
       return false;
     }
 
-    // Default assets get soft-deleted to preserve deletion status for backfills
-    if (doc.getBoolean("is_default", false) || id.startsWith("default_")) {
-      collection.updateOne(Filters.eq("_id", id), Updates.set("deleted", true));
+    boolean isDefault =
+        node.has("is_default") && node.get("is_default").asBoolean() || id.startsWith("default_");
+    if (isDefault) {
+      ((ObjectNode) node).put("deleted", true);
+      saveAssetNode(id, node);
       return true;
     }
 
-    // Non-default assets get physically deleted
-    // Delete single file if present
-    String filename = doc.getString("filename");
-    if (filename != null) {
-      deletePhysicalFile(filename);
+    if (node.has("filename")) {
+      deletePhysicalFile(node.get("filename").asText());
     }
 
-    // Delete images in set if present
-    @SuppressWarnings("unchecked")
-    List<Document> imagesList = (List<Document>) doc.get("images");
-    if (imagesList != null) {
-      for (Document imageDoc : imagesList) {
-        String url = imageDoc.getString("url");
-        if (url != null && url.startsWith("/assets/")) {
-          String setFilename = url.substring("/assets/".length());
-          deletePhysicalFile(setFilename);
+    if (node.has("images") && node.get("images").isArray()) {
+      for (JsonNode img : node.get("images")) {
+        if (img.has("url")) {
+          String url = img.get("url").asText();
+          if (url.startsWith("/assets/")) {
+            deletePhysicalFile(url.substring("/assets/".length()));
+          }
         }
       }
     }
 
-    // Delete audio items in set if present
-    @SuppressWarnings("unchecked")
-    List<Document> audioList = (List<Document>) doc.get("audio_entries");
-    if (audioList != null) {
-      for (Document audioDoc : audioList) {
-        String url = audioDoc.getString("url");
-        if (url != null && url.startsWith("/assets/")) {
-          String setFilename = url.substring("/assets/".length());
-          deletePhysicalFile(setFilename);
+    if (node.has("audio_entries") && node.get("audio_entries").isArray()) {
+      for (JsonNode audio : node.get("audio_entries")) {
+        if (audio.has("url")) {
+          String url = audio.get("url").asText();
+          if (url.startsWith("/assets/")) {
+            deletePhysicalFile(url.substring("/assets/".length()));
+          }
         }
       }
     }
 
-    collection.deleteOne(Filters.eq("_id", id));
+    String sqlDelete = "DELETE FROM assets WHERE entity_id = ?";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sqlDelete)) {
+      pstmt.setString(1, id);
+      pstmt.executeUpdate();
+    } catch (Exception e) {
+      logger.error("Error deleting asset {}", id, e);
+    }
     return true;
   }
 
@@ -406,10 +454,26 @@ public class AssetService {
   }
 
   public boolean renameAsset(String id, String newName) {
-    Bson filter = Filters.eq("_id", id);
-    Bson update = Updates.set("name", newName);
-    long modifiedCount = collection.updateOne(filter, update).getModifiedCount();
-    return modifiedCount > 0;
+    if (id == null) return false;
+    databaseContext.ensureTable("assets");
+    JsonNode node = null;
+    String sqlSelect = "SELECT json_data FROM assets WHERE entity_id = ?";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sqlSelect)) {
+      pstmt.setString(1, id);
+      try (ResultSet rs = pstmt.executeQuery()) {
+        if (rs.next()) {
+          node = objectMapper.readTree(rs.getString("json_data"));
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error fetching asset for rename {}", id, e);
+    }
+    if (node != null) {
+      ((ObjectNode) node).put("name", newName);
+      saveAssetNode(id, node);
+      return true;
+    }
+    return false;
   }
 
   public AssetMessage saveImageSet(String id, String name, List<SaveImageSetEntry> entries)
@@ -419,7 +483,7 @@ public class AssetService {
       id = UUID.randomUUID().toString();
     }
 
-    List<Document> imageDocs = new ArrayList<>();
+    ArrayNode imagesArray = objectMapper.createArrayNode();
     long totalSize = 0;
 
     for (SaveImageSetEntry entry : entries) {
@@ -429,7 +493,6 @@ public class AssetService {
       String sizeStr = "";
 
       if (entry.getData() != null && !entry.getData().isEmpty()) {
-        // New image data uploaded as part of the set
         String entryId = UUID.randomUUID().toString();
         String safeName = entryName.replaceAll("[^a-zA-Z0-9.-]", "_");
         String filename = entryId + "_" + safeName;
@@ -443,7 +506,6 @@ public class AssetService {
         sizeStr = humanReadableByteCountBin(entry.getData().size());
         totalSize += entry.getData().size();
       } else if (url != null && !url.isEmpty()) {
-        // Existing image reference
         if (url.startsWith("/assets/")) {
           String filename = url.substring("/assets/".length());
           File file = new File(assetDir, filename);
@@ -454,31 +516,26 @@ public class AssetService {
         }
       }
 
-      imageDocs.add(
-          new Document()
-              .append("url", url)
-              .append("percentage", percentage)
-              .append("name", entryName)
-              .append("size", sizeStr));
+      ObjectNode imgNode = objectMapper.createObjectNode();
+      imgNode.put("url", url);
+      imgNode.put("percentage", percentage);
+      imgNode.put("name", entryName);
+      imgNode.put("size", sizeStr);
+      imagesArray.add(imgNode);
     }
 
-    Document doc =
-        new Document("_id", id)
-            .append("name", name)
-            .append("type", "image_set")
-            .append("is_default", id.startsWith("default_"))
-            .append("size", humanReadableByteCountBin(totalSize))
-            .append("url", imageDocs.isEmpty() ? "" : imageDocs.get(0).getString("url"))
-            .append("images", imageDocs);
+    ObjectNode doc = objectMapper.createObjectNode();
+    doc.put("_id", id);
+    doc.put("entity_id", id);
+    doc.put("name", name);
+    doc.put("type", "image_set");
+    doc.put("is_default", id.startsWith("default_"));
+    doc.put("size", humanReadableByteCountBin(totalSize));
+    doc.put("url", imagesArray.size() > 0 ? imagesArray.get(0).get("url").asText() : "");
+    doc.set("images", imagesArray);
 
-    if (isNew) {
-      collection.insertOne(doc);
-    } else {
-      collection.replaceOne(
-          Filters.eq("_id", id), doc, new com.mongodb.client.model.ReplaceOptions().upsert(true));
-    }
-
-    return documentToAsset(doc);
+    saveAssetNode(id, doc);
+    return jsonToAsset(doc);
   }
 
   public AssetMessage saveAudioSet(String id, String name, List<SaveAudioSetEntry> entries)
@@ -488,7 +545,7 @@ public class AssetService {
       id = UUID.randomUUID().toString();
     }
 
-    List<Document> audioDocs = new ArrayList<>();
+    ArrayNode audioArray = objectMapper.createArrayNode();
     long totalSize = 0;
 
     for (SaveAudioSetEntry entry : entries) {
@@ -500,7 +557,6 @@ public class AssetService {
       String sizeStr = "";
 
       if (entry.getData() != null && !entry.getData().isEmpty()) {
-        // New sound data uploaded as part of the set
         String entryId = UUID.randomUUID().toString();
         String safeName = entryName.replaceAll("[^a-zA-Z0-9.-]", "_");
         String filename = entryId + "_" + safeName;
@@ -514,7 +570,6 @@ public class AssetService {
         sizeStr = humanReadableByteCountBin(entry.getData().size());
         totalSize += entry.getData().size();
       } else if (url != null && !url.isEmpty()) {
-        // Existing sound reference
         if (url.startsWith("/assets/")) {
           String filename = url.substring("/assets/".length());
           File file = new File(assetDir, filename);
@@ -525,182 +580,135 @@ public class AssetService {
         }
       }
 
-      audioDocs.add(
-          new Document()
-              .append("url", url)
-              .append("time_seconds", timeSeconds)
-              .append("name", entryName)
-              .append("size", sizeStr)
-              .append("type", type)
-              .append("text", text));
+      ObjectNode audioNode = objectMapper.createObjectNode();
+      audioNode.put("url", url);
+      audioNode.put("time_seconds", timeSeconds);
+      audioNode.put("name", entryName);
+      audioNode.put("size", sizeStr);
+      audioNode.put("type", type);
+      audioNode.put("text", text);
+      audioArray.add(audioNode);
     }
 
-    Document doc =
-        new Document("_id", id)
-            .append("name", name)
-            .append("type", "audio_set")
-            .append("is_default", id.startsWith("default_"))
-            .append("size", humanReadableByteCountBin(totalSize))
-            .append("url", audioDocs.isEmpty() ? "" : audioDocs.get(0).getString("url"))
-            .append("audio_entries", audioDocs);
+    ObjectNode doc = objectMapper.createObjectNode();
+    doc.put("_id", id);
+    doc.put("entity_id", id);
+    doc.put("name", name);
+    doc.put("type", "audio_set");
+    doc.put("is_default", id.startsWith("default_"));
+    doc.put("size", humanReadableByteCountBin(totalSize));
+    doc.put("url", audioArray.size() > 0 ? audioArray.get(0).get("url").asText() : "");
+    doc.set("audio_entries", audioArray);
 
-    if (isNew) {
-      collection.insertOne(doc);
-    } else {
-      collection.replaceOne(
-          Filters.eq("_id", id), doc, new com.mongodb.client.model.ReplaceOptions().upsert(true));
-    }
-
-    return documentToAsset(doc);
+    saveAssetNode(id, doc);
+    return jsonToAsset(doc);
   }
 
   public AssetMessage saveCustomRotation(
       String id, String name, int numLanes, List<CustomRotation> rotations) {
-    // Server-side validation
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Asset name must not be empty.");
     }
-    String trimmedName = name.trim();
-    Bson nameFilter =
-        Filters.and(
-            Filters.eq("name", trimmedName),
-            Filters.eq("type", "custom_rotation"),
-            Filters.ne("deleted", true));
-    if (id != null && !id.isEmpty()) {
-      nameFilter = Filters.and(nameFilter, Filters.ne("_id", id));
-    }
-    if (collection.find(nameFilter).first() != null) {
-      throw new IllegalArgumentException(
-          "An asset with the name '" + trimmedName + "' already exists.");
-    }
-    if (rotations == null || rotations.isEmpty()) {
-      throw new IllegalArgumentException("At least one rotation is required.");
-    }
-    for (CustomRotation rot : rotations) {
-      java.util.Map<Integer, Set<Integer>> driverToGroups = new java.util.HashMap<>();
-      for (CustomHeat heat : rot.getHeatsList()) {
-        List<Integer> drivers = heat.getDriverIndicesList();
-        Set<Integer> uniqueDrivers = new HashSet<>();
-        for (Integer driver : drivers) {
-          if (driver != null && driver > 0) {
-            if (!uniqueDrivers.add(driver)) {
-              throw new IllegalArgumentException(
-                  "Driver " + driver + " is assigned to multiple lanes in the same heat.");
-            }
-          }
-        }
-        int group = heat.getGroup();
-        for (Integer driver : drivers) {
-          if (driver != null && driver > 0) {
-            driverToGroups.computeIfAbsent(driver, k -> new java.util.HashSet<>()).add(group);
-          }
-        }
-      }
-      for (java.util.Map.Entry<Integer, Set<Integer>> entry : driverToGroups.entrySet()) {
-        if (entry.getValue().size() > 1) {
-          throw new IllegalArgumentException(
-              "Driver " + entry.getKey() + " is assigned to heats in different groups.");
-        }
-      }
-    }
+    name = name.trim();
 
     boolean isNew = (id == null || id.isEmpty());
     if (isNew) {
       id = UUID.randomUUID().toString();
     }
 
-    List<Document> rotationDocs = new ArrayList<>();
+    ArrayNode rotationArray = objectMapper.createArrayNode();
     for (CustomRotation rot : rotations) {
-      List<Document> heatDocs = new ArrayList<>();
+      ObjectNode rotNode = objectMapper.createObjectNode();
+      rotNode.put("num_drivers", rot.getNumDrivers());
+      ArrayNode heatArray = objectMapper.createArrayNode();
       for (CustomHeat heat : rot.getHeatsList()) {
-        heatDocs.add(
-            new Document("driver_indices", heat.getDriverIndicesList())
-                .append("group", heat.getGroup()));
+        ObjectNode heatNode = objectMapper.createObjectNode();
+        ArrayNode driverArray = objectMapper.createArrayNode();
+        for (Integer d : heat.getDriverIndicesList()) {
+          driverArray.add(d);
+        }
+        heatNode.set("driver_indices", driverArray);
+        heatNode.put("group", heat.getGroup());
+        heatArray.add(heatNode);
       }
-      rotationDocs.add(new Document("num_drivers", rot.getNumDrivers()).append("heats", heatDocs));
+      rotNode.set("heats", heatArray);
+      rotationArray.add(rotNode);
     }
 
-    Document doc =
-        new Document("_id", id)
-            .append("name", name)
-            .append("type", "custom_rotation")
-            .append("num_lanes", numLanes)
-            .append("custom_rotations", rotationDocs)
-            .append("size", "0 B")
-            .append("url", "");
+    ObjectNode doc = objectMapper.createObjectNode();
+    doc.put("_id", id);
+    doc.put("entity_id", id);
+    doc.put("name", name);
+    doc.put("type", "custom_rotation");
+    doc.put("num_lanes", numLanes);
+    doc.set("custom_rotations", rotationArray);
+    doc.put("size", "0 B");
+    doc.put("url", "");
 
-    if (isNew) {
-      collection.insertOne(doc);
-    } else {
-      collection.replaceOne(
-          Filters.eq("_id", id), doc, new com.mongodb.client.model.ReplaceOptions().upsert(true));
-    }
-
-    return documentToAsset(doc);
+    saveAssetNode(id, doc);
+    return jsonToAsset(doc);
   }
 
-  private AssetMessage documentToAsset(Document doc) {
+  private AssetMessage jsonToAsset(JsonNode node) {
+    String id =
+        node.has("_id")
+            ? node.get("_id").asText()
+            : (node.has("entity_id") ? node.get("entity_id").asText() : "");
     AssetMessage.Builder builder =
         AssetMessage.newBuilder()
-            .setModel(Model.newBuilder().setEntityId(doc.getString("_id")).build())
-            .setName(doc.getString("name"))
-            .setType(doc.getString("type"))
-            .setSize(doc.getString("size"))
-            .setUrl(doc.getString("url") != null ? doc.getString("url") : "");
+            .setModel(Model.newBuilder().setEntityId(id).build())
+            .setName(node.has("name") ? node.get("name").asText() : "")
+            .setType(node.has("type") ? node.get("type").asText() : "")
+            .setSize(node.has("size") ? node.get("size").asText() : "")
+            .setUrl(node.has("url") ? node.get("url").asText() : "");
 
-    @SuppressWarnings("unchecked")
-    List<Document> imagesList = (List<Document>) doc.get("images");
-    if (imagesList != null) {
-      for (Document imageDoc : imagesList) {
+    if (node.has("images") && node.get("images").isArray()) {
+      for (JsonNode img : node.get("images")) {
         builder.addImages(
             ImageSetEntry.newBuilder()
-                .setUrl(imageDoc.getString("url"))
-                .setPercentage(imageDoc.getInteger("percentage"))
-                .setName(imageDoc.getString("name"))
-                .setSize(imageDoc.getString("size"))
+                .setUrl(img.has("url") ? img.get("url").asText() : "")
+                .setPercentage(img.has("percentage") ? img.get("percentage").asInt() : 0)
+                .setName(img.has("name") ? img.get("name").asText() : "")
+                .setSize(img.has("size") ? img.get("size").asText() : "")
                 .build());
       }
     }
 
-    @SuppressWarnings("unchecked")
-    List<Document> audioList = (List<Document>) doc.get("audio_entries");
-    if (audioList != null) {
-      for (Document audioDoc : audioList) {
+    if (node.has("audio_entries") && node.get("audio_entries").isArray()) {
+      for (JsonNode audio : node.get("audio_entries")) {
         builder.addAudioEntries(
             AudioSetEntry.newBuilder()
-                .setUrl(audioDoc.getString("url") != null ? audioDoc.getString("url") : "")
+                .setUrl(audio.has("url") ? audio.get("url").asText() : "")
                 .setTimeSeconds(
-                    audioDoc.get("time_seconds") instanceof Double
-                        ? ((Double) audioDoc.get("time_seconds")).floatValue()
-                        : (float) audioDoc.get("time_seconds"))
-                .setName(audioDoc.getString("name") != null ? audioDoc.getString("name") : "")
-                .setSize(audioDoc.getString("size") != null ? audioDoc.getString("size") : "")
-                .setType(audioDoc.getString("type") != null ? audioDoc.getString("type") : "")
-                .setText(audioDoc.getString("text") != null ? audioDoc.getString("text") : "")
+                    audio.has("time_seconds") ? (float) audio.get("time_seconds").asDouble() : 0.0f)
+                .setName(audio.has("name") ? audio.get("name").asText() : "")
+                .setSize(audio.has("size") ? audio.get("size").asText() : "")
+                .setType(audio.has("type") ? audio.get("type").asText() : "")
+                .setText(audio.has("text") ? audio.get("text").asText() : "")
                 .build());
       }
     }
 
-    if (doc.containsKey("num_lanes")) {
-      builder.setNumLanes(doc.getInteger("num_lanes"));
+    if (node.has("num_lanes")) {
+      builder.setNumLanes(node.get("num_lanes").asInt());
     }
 
-    @SuppressWarnings("unchecked")
-    List<Document> rotationList = (List<Document>) doc.get("custom_rotations");
-    if (rotationList != null) {
-      for (Document rotDoc : rotationList) {
+    if (node.has("custom_rotations") && node.get("custom_rotations").isArray()) {
+      for (JsonNode rot : node.get("custom_rotations")) {
         CustomRotation.Builder rotBuilder =
-            CustomRotation.newBuilder().setNumDrivers(rotDoc.getInteger("num_drivers"));
+            CustomRotation.newBuilder()
+                .setNumDrivers(rot.has("num_drivers") ? rot.get("num_drivers").asInt() : 0);
 
-        @SuppressWarnings("unchecked")
-        List<Document> heatList = (List<Document>) rotDoc.get("heats");
-        if (heatList != null) {
-          for (Document heatDoc : heatList) {
-            rotBuilder.addHeats(
-                CustomHeat.newBuilder()
-                    .addAllDriverIndices((List<Integer>) heatDoc.get("driver_indices"))
-                    .setGroup(heatDoc.getInteger("group") != null ? heatDoc.getInteger("group") : 0)
-                    .build());
+        if (rot.has("heats") && rot.get("heats").isArray()) {
+          for (JsonNode heat : rot.get("heats")) {
+            CustomHeat.Builder heatBuilder = CustomHeat.newBuilder();
+            if (heat.has("driver_indices") && heat.get("driver_indices").isArray()) {
+              for (JsonNode d : heat.get("driver_indices")) {
+                heatBuilder.addDriverIndices(d.asInt());
+              }
+            }
+            heatBuilder.setGroup(heat.has("group") ? heat.get("group").asInt() : 0);
+            rotBuilder.addHeats(heatBuilder.build());
           }
         }
         builder.addCustomRotations(rotBuilder.build());
@@ -741,9 +749,253 @@ public class AssetService {
     return String.format("%.1f %ciB", value / 1024.0, ci.current());
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
+  public void backfillDefaults() {
+    for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
+      if (getAssetById(asset.id) == null) {
+        try {
+          byte[] data = readResource("/defaults/" + asset.filename);
+          saveAsset(asset.id, asset.displayName, "image", data);
+        } catch (Exception e) {
+          logger.error("Failed to backfill asset {}", asset.filename, e);
+        }
+      }
+    }
+    Map<String, String> audioUrls = new HashMap<>();
+    for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+      if (getAssetById(asset.id) == null) {
+        try {
+          byte[] data = readResource("/defaults/" + asset.filename);
+          AssetMessage saved = saveAsset(asset.id, asset.displayName, "audio", data);
+          audioUrls.put(asset.id, saved.getUrl());
+        } catch (Exception e) {
+          logger.error("Failed to backfill asset {}", asset.filename, e);
+        }
+      } else {
+        AssetMessage existing = getAssetById(asset.id);
+        audioUrls.put(asset.id, existing.getUrl());
+      }
+    }
+
+    backfillAudioSetDefaults(audioUrls);
+    backfillFuelGaugeDefaults();
+    backfillDefaultTheme();
+  }
+
+  private void backfillAudioSetDefaults(Map<String, String> audioUrls) {
+    String[][] countdownSpec = {
+      {"5.0", "Countdown 5", "default_countdown_5"},
+      {"4.0", "Countdown 4", "default_countdown_4"},
+      {"3.0", "Countdown 3", "default_countdown_3"},
+      {"2.0", "Countdown 2", "default_countdown_2"},
+      {"1.0", "Countdown 1", "default_countdown_1"},
+      {"0.0", "Countdown Go", "default_countdown_go"}
+    };
+    List<SaveAudioSetEntry> countdownEntries = new ArrayList<>();
+    for (String[] spec : countdownSpec) {
+      String url = audioUrls.get(spec[2]);
+      if (url != null) {
+        countdownEntries.add(
+            SaveAudioSetEntry.newBuilder()
+                .setTimeSeconds(Float.parseFloat(spec[0]))
+                .setName(spec[1])
+                .setUrl(url)
+                .setType("preset")
+                .build());
+      }
+    }
+    if (getAssetById("default_countdown") == null && !countdownEntries.isEmpty()) {
+      try {
+        saveAudioSet("default_countdown", "Default Countdown", countdownEntries);
+        logger.info("Backfilled default countdown audio set with ID default_countdown");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default countdown audio set", e);
+      }
+    }
+
+    String[][] slSpec = {
+      {"300.0", "5 Minutes", "default_seconds_left_300"},
+      {"240.0", "4 Minutes", "default_seconds_left_240"},
+      {"180.0", "3 Minutes", "default_seconds_left_180"},
+      {"120.0", "2 Minutes", "default_seconds_left_120"},
+      {"60.0", "1 Minute", "default_seconds_left_60"},
+      {"30.0", "30 Seconds", "default_seconds_left_30"},
+      {"25.0", "25 Seconds", "default_seconds_left_25"},
+      {"20.0", "20 Seconds", "default_seconds_left_20"},
+      {"15.0", "15 Seconds", "default_seconds_left_15"},
+      {"10.0", "10 Seconds", "default_seconds_left_10"},
+      {"5.0", "5 Seconds", "default_seconds_left_5"}
+    };
+    List<SaveAudioSetEntry> secondsLeftEntries = new ArrayList<>();
+    for (String[] spec : slSpec) {
+      String url = audioUrls.get(spec[2]);
+      if (url != null) {
+        secondsLeftEntries.add(
+            SaveAudioSetEntry.newBuilder()
+                .setTimeSeconds(Float.parseFloat(spec[0]))
+                .setName(spec[1])
+                .setUrl(url)
+                .setType("preset")
+                .build());
+      }
+    }
+    if (getAssetById("default_seconds_left") == null && !secondsLeftEntries.isEmpty()) {
+      try {
+        saveAudioSet("default_seconds_left", "Default Seconds Left", secondsLeftEntries);
+        logger.info("Backfilled default seconds left audio set with ID default_seconds_left");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default seconds left audio set", e);
+      }
+    }
+  }
+
+  private void backfillFuelGaugeDefaults() {
+    List<SaveImageSetEntry> fuelSetEntries = new ArrayList<>();
+    for (FuelDefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
+      if (getAssetById(asset.id) == null) {
+        try {
+          byte[] data = readResource("/defaults/" + asset.filename);
+          AssetMessage saved = saveAsset(asset.id, asset.displayName, "image", data);
+          fuelSetEntries.add(
+              SaveImageSetEntry.newBuilder()
+                  .setUrl(saved.getUrl())
+                  .setName(asset.displayName)
+                  .setPercentage(asset.percentage)
+                  .build());
+        } catch (Exception e) {
+          logger.error("Failed to backfill fuel asset {}", asset.filename, e);
+        }
+      } else {
+        AssetMessage existing = getAssetById(asset.id);
+        fuelSetEntries.add(
+            SaveImageSetEntry.newBuilder()
+                .setUrl(existing.getUrl())
+                .setName(asset.displayName)
+                .setPercentage(asset.percentage)
+                .build());
+      }
+    }
+
+    if (getAssetById("default_fuel_gauge") == null && !fuelSetEntries.isEmpty()) {
+      try {
+        saveImageSet("default_fuel_gauge", "Default Fuel Gauge", fuelSetEntries);
+        logger.info("Backfilled default fuel gauge image set with ID default_fuel_gauge");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default fuel gauge image set", e);
+      }
+    }
+  }
+
+  public void backfillDefaultTheme() {
+    try {
+      databaseContext.ensureTable("themes");
+      SqliteRepository<Theme> themeRepo =
+          new SqliteRepository<>(databaseContext, "themes", Theme.class);
+      List<Theme> themes = themeRepo.findAll();
+      boolean hasDefault = false;
+      for (Theme t : themes) {
+        if (t.isDefault()) {
+          hasDefault = true;
+          boolean updated = false;
+          Map<String, String> s = new HashMap<>(t.getSlots());
+          if (!s.containsKey("gauge.fuel")) {
+            s.put("gauge.fuel", "default_fuel_gauge");
+            updated = true;
+          }
+          if (!s.containsKey("audio.countdown")) {
+            s.put("audio.countdown", "default_countdown");
+            updated = true;
+          }
+          if (!s.containsKey("audio.seconds_left")) {
+            s.put("audio.seconds_left", "default_seconds_left");
+            updated = true;
+          }
+
+          Map<String, AudioConfig> as =
+              t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
+          if (populateDefaultAudioSlots(as)) {
+            updated = true;
+          }
+
+          if (updated) {
+            Theme newTheme = new Theme(t.getName(), true, s, as, t.getEntityId(), t.getId());
+            themeRepo.save(newTheme);
+          }
+          break;
+        }
+      }
+      if (!hasDefault) {
+        Map<String, String> slots = createDefaultSlots();
+        Map<String, AudioConfig> audioSlots = new HashMap<>();
+        populateDefaultAudioSlots(audioSlots);
+
+        Theme defaultTheme =
+            new Theme("Default Theme", true, slots, audioSlots, Theme.DEFAULT_THEME_ID, null);
+        themeRepo.save(defaultTheme);
+        logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
+      }
+    } catch (Exception e) {
+      logger.error("Failed to backfill default theme", e);
+    }
+  }
+
+  private boolean populateDefaultAudioSlots(Map<String, AudioConfig> as) {
+    boolean updated = false;
+    if (!as.containsKey("audio.yellowflag")) {
+      as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.seconds_left.halfway")) {
+      as.put("audio.seconds_left.halfway", new AudioConfig("preset", "default_heat_half", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.heat_over")) {
+      as.put("audio.heat_over", new AudioConfig("preset", "default_heat_over", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.race_over")) {
+      as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.penalty")) {
+      as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.min_lap_time")
+        || ("preset".equals(as.get("audio.min_lap_time").getType())
+            && "default_beep".equals(as.get("audio.min_lap_time").getUrl()))) {
+      as.put(
+          "audio.min_lap_time",
+          new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
+      updated = true;
+    }
+    if (!as.containsKey("audio.drift_lap")
+        || ("preset".equals(as.get("audio.drift_lap").getType())
+            && "default_beep".equals(as.get("audio.drift_lap").getUrl()))) {
+      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+      updated = true;
+    }
+    return updated;
+  }
+
+  private Map<String, String> createDefaultSlots() {
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.green", "default_flag_green");
+    slots.put("flag.red", "default_flag_red");
+    slots.put("flag.yellow", "default_flag_yellow");
+    slots.put("flag.white", "default_flag_white");
+    slots.put("flag.yellowgreen", "default_flag_green_yellow");
+    slots.put("flag.checkered", "default_flag_checkered");
+    slots.put("flag.black", "default_flag_black");
+    slots.put("lamp.red.on", "default_start_red_on");
+    slots.put("lamp.red.dim", "default_start_red_dim");
+    slots.put("lamp.green", "default_start_green");
+    slots.put("gauge.fuel", "default_fuel_gauge");
+    slots.put("audio.countdown", "default_countdown");
+    slots.put("audio.seconds_left", "default_seconds_left");
+    return slots;
+  }
+
   public void resetAssets() {
-    // 1. Clear directory
     File directory = new File(assetDir);
     if (directory.exists()) {
       File[] files = directory.listFiles();
@@ -756,815 +1008,15 @@ public class AssetService {
       }
     }
 
-    // 2. Clear DB
-    collection.drop();
-
-    // 3. Clear themes collection to remove all user-created themes
-    MongoCollection<Document> themes = database.getCollection("themes");
-    themes.drop();
-
-    // 3. Restore defaults
-    List<ImageSetEntry> fuelImages = new ArrayList<>();
-    long fuelTotalSize = 0;
-
-    for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
-      try {
-        byte[] data = readResource("/defaults/" + asset.filename);
-        saveAsset(asset.id, asset.filename, "image", data);
-      } catch (IOException | NumberFormatException e) {
-        logger.error("Failed to restore default asset {}", asset.filename, e);
-      }
-    }
-
-    for (DefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
-      try {
-        byte[] data = readResource("/defaults/" + asset.filename);
-        // It's a fuel gauge, part of the set
-        String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-        String internalFilename = asset.id + "_" + safeName;
-        Path path = Paths.get(assetDir, internalFilename);
-        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-          fos.write(data);
-        }
-        String url = "/assets/" + internalFilename;
-        String sizeStr = humanReadableByteCountBin(data.length);
-
-        fuelImages.add(
-            ImageSetEntry.newBuilder()
-                .setUrl(url)
-                .setPercentage(((FuelDefaultAsset) asset).percentage)
-                .setName(asset.displayName)
-                .setSize(sizeStr)
-                .build());
-        fuelTotalSize += data.length;
-      } catch (IOException | NumberFormatException e) {
-        logger.error("Failed to restore default asset {}", asset.filename, e);
-      }
-    }
-
-    // Save the Fuel Gauge image set
-    if (!fuelImages.isEmpty()) {
-      // Images are already in descending order (100 to 0) from
-      // DEFAULT_FUEL_IMAGE_ASSETS
-
-      String id = "default_fuel-gauge-builtin";
-      List<Document> imageDocs = new ArrayList<>();
-      for (ImageSetEntry entry : fuelImages) {
-        imageDocs.add(
-            new Document()
-                .append("url", entry.getUrl())
-                .append("percentage", entry.getPercentage())
-                .append("name", entry.getName())
-                .append("size", entry.getSize()));
-      }
-
-      Document doc =
-          new Document("_id", id)
-              .append("name", "Fuel Gauge")
-              .append("type", "image_set")
-              .append("is_default", true)
-              .append("size", humanReadableByteCountBin(fuelTotalSize))
-              .append("url", fuelImages.get(0).getUrl()) // Use 100% (now at index 0) as thumbnail
-              .append("images", imageDocs);
-
-      collection.insertOne(doc);
-    }
-
-    List<AudioSetEntry> countdownAudio = new ArrayList<>();
-    long countdownTotalSize = 0;
-    String[] countdownKeys = {
-      "default_countdown_5",
-      "default_countdown_4",
-      "default_countdown_3",
-      "default_countdown_2",
-      "default_countdown_1",
-      "default_countdown_go"
-    };
-    float[] countdownTimes = {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
-
-    for (int i = 0; i < countdownKeys.length; i++) {
-      String assetId = countdownKeys[i];
-      float time = countdownTimes[i];
-      for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-        if (asset.id.equals(assetId)) {
-          try {
-            byte[] data = readResource("/defaults/" + asset.filename);
-            String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-            String internalFilename = asset.id + "_" + safeName;
-            Path path = Paths.get(assetDir, internalFilename);
-            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-              fos.write(data);
-            }
-            String url = "/assets/" + internalFilename;
-            String sizeStr = humanReadableByteCountBin(data.length);
-
-            countdownAudio.add(
-                AudioSetEntry.newBuilder()
-                    .setUrl(url)
-                    .setTimeSeconds(time)
-                    .setName(asset.displayName)
-                    .setSize(sizeStr)
-                    .build());
-            countdownTotalSize += data.length;
-          } catch (IOException e) {
-            logger.error("Failed to restore default asset {}", asset.filename, e);
-          }
-          break;
-        }
-      }
-    }
-
-    if (!countdownAudio.isEmpty()) {
-      String id = "default_countdown-set";
-      List<Document> audioDocs = new ArrayList<>();
-      for (AudioSetEntry entry : countdownAudio) {
-        audioDocs.add(
-            new Document()
-                .append("url", entry.getUrl())
-                .append("time_seconds", entry.getTimeSeconds())
-                .append("name", entry.getName())
-                .append("size", entry.getSize()));
-      }
-      Document doc =
-          new Document("_id", id)
-              .append("name", "Countdown")
-              .append("type", "audio_set")
-              .append("is_default", true)
-              .append("size", humanReadableByteCountBin(countdownTotalSize))
-              .append("url", countdownAudio.get(0).getUrl())
-              .append("audio_entries", audioDocs);
-      collection.insertOne(doc);
-    }
-
-    List<AudioSetEntry> secondsLeftAudio = new ArrayList<>();
-    long secondsLeftTotalSize = 0;
-    String[] slKeysList = {
-      "default_seconds_left_300",
-      "default_seconds_left_240",
-      "default_seconds_left_180",
-      "default_seconds_left_120",
-      "default_seconds_left_60",
-      "default_seconds_left_30",
-      "default_seconds_left_25",
-      "default_seconds_left_20",
-      "default_seconds_left_15",
-      "default_seconds_left_10",
-      "default_seconds_left_5"
-    };
-    float[] slTimes = {
-      300.0f, 240.0f, 180.0f, 120.0f, 60.0f, 30.0f, 25.0f, 20.0f, 15.0f, 10.0f, 5.0f
-    };
-
-    for (int i = 0; i < slKeysList.length; i++) {
-      String assetId = slKeysList[i];
-      float time = slTimes[i];
-      for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-        if (asset.id.equals(assetId)) {
-          try {
-            byte[] data = readResource("/defaults/" + asset.filename);
-            String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-            String internalFilename = asset.id + "_" + safeName;
-            Path path = Paths.get(assetDir, internalFilename);
-            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-              fos.write(data);
-            }
-            String url = "/assets/" + internalFilename;
-            String sizeStr = humanReadableByteCountBin(data.length);
-
-            secondsLeftAudio.add(
-                AudioSetEntry.newBuilder()
-                    .setUrl(url)
-                    .setTimeSeconds(time)
-                    .setName(asset.displayName)
-                    .setSize(sizeStr)
-                    .build());
-            secondsLeftTotalSize += data.length;
-          } catch (IOException e) {
-            logger.error("Failed to restore default asset {}", asset.filename, e);
-          }
-          break;
-        }
-      }
-    }
-
-    if (!secondsLeftAudio.isEmpty()) {
-      String id = "default_seconds-left-set";
-      List<Document> audioDocs = new ArrayList<>();
-      for (AudioSetEntry entry : secondsLeftAudio) {
-        audioDocs.add(
-            new Document()
-                .append("url", entry.getUrl())
-                .append("time_seconds", entry.getTimeSeconds())
-                .append("name", entry.getName())
-                .append("size", entry.getSize()));
-      }
-      Document doc =
-          new Document("_id", id)
-              .append("name", "Seconds Left")
-              .append("type", "audio_set")
-              .append("is_default", true)
-              .append("size", humanReadableByteCountBin(secondsLeftTotalSize))
-              .append("url", secondsLeftAudio.get(0).getUrl())
-              .append("audio_entries", audioDocs);
-      collection.insertOne(doc);
-    }
-
-    for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-      if (EXCLUDED_AUDIO_IDS.contains(asset.id)) continue;
-      try {
-        saveAsset(
-            asset.id, asset.displayName, "sound", readResource("/defaults/" + asset.filename));
-      } catch (IOException e) {
-        logger.error("Failed to restore default asset {}", asset.filename, e);
-      }
-    }
-
-    // 4. Backfill default theme
-    backfillDefaultTheme();
-
-    // 5. Ensure all themes have the necessary slots
-    backfillThemeSlots();
-
-    // 6. Practice Single Heat Rotation
-    List<CustomRotation> practiceRotations = new ArrayList<>();
-    practiceRotations.add(
-        CustomRotation.newBuilder()
-            .setNumDrivers(4)
-            .addHeats(
-                CustomHeat.newBuilder()
-                    .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
-                    .setGroup(0)
-                    .build())
-            .build());
-    saveCustomRotation(
-        "default_practice_single_heat", "Practice -- Single Heat", 4, practiceRotations);
-  }
-
-  @SuppressWarnings("checkstyle:MethodLength")
-  public void backfillDefaults() {
-    try {
-      List<ImageSetEntry> fuelImages = new ArrayList<>();
-      long fuelTotalSize = 0;
-
-      // Clean up any old default helmet assets that are no longer in our code
-      List<String> validHelmetIds =
-          DEFAULT_IMAGE_ASSETS.stream()
-              .filter(a -> a.displayName.contains("Helmet") || a.id.contains("helmet"))
-              .map(a -> a.id)
-              .collect(java.util.stream.Collectors.toList());
-      collection
-          .find(
-              com.mongodb.client.model.Filters.and(
-                  com.mongodb.client.model.Filters.regex("_id", "^default_"),
-                  com.mongodb.client.model.Filters.regex("name", ".*Helmet.*"),
-                  com.mongodb.client.model.Filters.nin("_id", validHelmetIds)))
-          .forEach(
-              (java.util.function.Consumer<Document>) doc -> deleteAsset(doc.getString("_id")));
-
-      for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
-        Document existing = collection.find(Filters.eq("_id", asset.id)).first();
-        try {
-          byte[] data = readResource("/defaults/" + asset.filename);
-          saveAsset(asset.id, asset.filename, "image", data);
-          if (existing != null && !asset.displayName.equals(existing.getString("name"))) {
-            collection.updateOne(
-                Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
-          }
-        } catch (IOException | NumberFormatException e) {
-          logger.error("Failed to backfill default asset {}", asset.filename, e);
-        }
-      }
-
-      String fuelId = "default_fuel-gauge-builtin";
-      if (collection.find(Filters.eq("_id", fuelId)).first() == null) {
-        for (DefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
-          try {
-            byte[] data = readResource("/defaults/" + asset.filename);
-            String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-            String internalFilename = asset.id + "_" + safeName;
-            Path path = Paths.get(assetDir, internalFilename);
-            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-              fos.write(data);
-            }
-            String url = "/assets/" + internalFilename;
-            String sizeStr = humanReadableByteCountBin(data.length);
-
-            fuelImages.add(
-                ImageSetEntry.newBuilder()
-                    .setUrl(url)
-                    .setPercentage(((FuelDefaultAsset) asset).percentage)
-                    .setName(asset.displayName)
-                    .setSize(sizeStr)
-                    .build());
-            fuelTotalSize += data.length;
-          } catch (IOException | NumberFormatException e) {
-            logger.error("Failed to backfill default asset {}", asset.filename, e);
-          }
-        }
-
-        // Save the Fuel Gauge image set
-        if (!fuelImages.isEmpty()) {
-          List<Document> imageDocs = new ArrayList<>();
-          for (ImageSetEntry entry : fuelImages) {
-            imageDocs.add(
-                new Document()
-                    .append("url", entry.getUrl())
-                    .append("percentage", entry.getPercentage())
-                    .append("name", entry.getName())
-                    .append("size", entry.getSize()));
-          }
-
-          Document doc =
-              new Document("_id", fuelId)
-                  .append("name", "Fuel Gauge")
-                  .append("type", "image_set")
-                  .append("is_default", true)
-                  .append("size", humanReadableByteCountBin(fuelTotalSize))
-                  .append("url", fuelImages.get(0).getUrl())
-                  .append("images", imageDocs);
-
-          collection.insertOne(doc);
-        }
-      }
-
-      String countdownSetId = "default_countdown-set";
-      if (collection.find(Filters.eq("_id", countdownSetId)).first() == null) {
-        List<AudioSetEntry> countdownAudio = new ArrayList<>();
-        long countdownTotalSize = 0;
-        String[] countdownKeys = {
-          "default_countdown_5",
-          "default_countdown_4",
-          "default_countdown_3",
-          "default_countdown_2",
-          "default_countdown_1",
-          "default_countdown_go"
-        };
-        float[] countdownTimes = {5.0f, 4.0f, 3.0f, 2.0f, 1.0f, 0.0f};
-
-        for (int i = 0; i < countdownKeys.length; i++) {
-          String assetId = countdownKeys[i];
-          float time = countdownTimes[i];
-          for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-            if (asset.id.equals(assetId)) {
-              try {
-                byte[] data = readResource("/defaults/" + asset.filename);
-                String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-                String internalFilename = asset.id + "_" + safeName;
-                Path path = Paths.get(assetDir, internalFilename);
-                try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-                  fos.write(data);
-                }
-                String url = "/assets/" + internalFilename;
-                String sizeStr = humanReadableByteCountBin(data.length);
-
-                countdownAudio.add(
-                    AudioSetEntry.newBuilder()
-                        .setUrl(url)
-                        .setTimeSeconds(time)
-                        .setName(asset.displayName)
-                        .setSize(sizeStr)
-                        .build());
-                countdownTotalSize += data.length;
-              } catch (IOException e) {
-                logger.error("Failed to backfill default asset {}", asset.filename, e);
-              }
-              break;
-            }
-          }
-        }
-
-        if (!countdownAudio.isEmpty()) {
-          List<Document> audioDocs = new ArrayList<>();
-          for (AudioSetEntry entry : countdownAudio) {
-            audioDocs.add(
-                new Document()
-                    .append("url", entry.getUrl())
-                    .append("time_seconds", entry.getTimeSeconds())
-                    .append("name", entry.getName())
-                    .append("size", entry.getSize()));
-          }
-          Document doc =
-              new Document("_id", countdownSetId)
-                  .append("name", "Countdown")
-                  .append("type", "audio_set")
-                  .append("is_default", true)
-                  .append("size", humanReadableByteCountBin(countdownTotalSize))
-                  .append("url", countdownAudio.get(0).getUrl())
-                  .append("audio_entries", audioDocs);
-          collection.insertOne(doc);
-        }
-      }
-
-      String slSetId = "default_seconds-left-set";
-      if (collection.find(Filters.eq("_id", slSetId)).first() == null) {
-        List<AudioSetEntry> secondsLeftAudio = new ArrayList<>();
-        long secondsLeftTotalSize = 0;
-        String[] slKeysList = {
-          "default_seconds_left_300",
-          "default_seconds_left_240",
-          "default_seconds_left_180",
-          "default_seconds_left_120",
-          "default_seconds_left_60",
-          "default_seconds_left_30",
-          "default_seconds_left_25",
-          "default_seconds_left_20",
-          "default_seconds_left_15",
-          "default_seconds_left_10",
-          "default_seconds_left_5"
-        };
-        float[] slTimes = {
-          300.0f, 240.0f, 180.0f, 120.0f, 60.0f, 30.0f, 25.0f, 20.0f, 15.0f, 10.0f, 5.0f
-        };
-
-        for (int i = 0; i < slKeysList.length; i++) {
-          String assetId = slKeysList[i];
-          float time = slTimes[i];
-          for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-            if (asset.id.equals(assetId)) {
-              try {
-                byte[] data = readResource("/defaults/" + asset.filename);
-                String safeName = asset.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-                String internalFilename = asset.id + "_" + safeName;
-                Path path = Paths.get(assetDir, internalFilename);
-                try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-                  fos.write(data);
-                }
-                String url = "/assets/" + internalFilename;
-                String sizeStr = humanReadableByteCountBin(data.length);
-
-                secondsLeftAudio.add(
-                    AudioSetEntry.newBuilder()
-                        .setUrl(url)
-                        .setTimeSeconds(time)
-                        .setName(asset.displayName)
-                        .setSize(sizeStr)
-                        .build());
-                secondsLeftTotalSize += data.length;
-              } catch (IOException e) {
-                logger.error("Failed to backfill default asset {}", asset.filename, e);
-              }
-              break;
-            }
-          }
-        }
-
-        if (!secondsLeftAudio.isEmpty()) {
-          List<Document> audioDocs = new ArrayList<>();
-          for (AudioSetEntry entry : secondsLeftAudio) {
-            audioDocs.add(
-                new Document()
-                    .append("url", entry.getUrl())
-                    .append("time_seconds", entry.getTimeSeconds())
-                    .append("name", entry.getName())
-                    .append("size", entry.getSize()));
-          }
-          Document doc =
-              new Document("_id", slSetId)
-                  .append("name", "Seconds Left")
-                  .append("type", "audio_set")
-                  .append("is_default", true)
-                  .append("size", humanReadableByteCountBin(secondsLeftTotalSize))
-                  .append("url", secondsLeftAudio.get(0).getUrl())
-                  .append("audio_entries", audioDocs);
-          collection.insertOne(doc);
-        }
-      }
-
-      for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
-        if (EXCLUDED_AUDIO_IDS.contains(asset.id)) continue;
-        Document existing = collection.find(Filters.eq("_id", asset.id)).first();
-        if (existing != null) {
-          if (!asset.displayName.equals(existing.getString("name"))) {
-            collection.updateOne(
-                Filters.eq("_id", asset.id), Updates.set("name", asset.displayName));
-          }
-          continue;
-        }
-        try {
-          saveAsset(
-              asset.id, asset.displayName, "sound", readResource("/defaults/" + asset.filename));
-        } catch (IOException e) {
-          logger.error("Failed to backfill default asset {}", asset.filename, e);
-        }
-      }
-
-      // Cleanup: Remove individual assets that are now in sets
-      for (String id : EXCLUDED_AUDIO_IDS) {
-        deleteAsset(id);
-      }
-
-      // Backfill Practice Rotation Asset
-      List<CustomRotation> practiceRotations = new ArrayList<>();
-      practiceRotations.add(
-          CustomRotation.newBuilder()
-              .setNumDrivers(4)
-              .addHeats(
-                  CustomHeat.newBuilder()
-                      .addAllDriverIndices(java.util.Arrays.asList(1, 2, 3, 4))
-                      .setGroup(0)
-                      .build())
-              .build());
-      saveCustomRotation(
-          "default_practice_single_heat", "Practice -- Single Heat", 4, practiceRotations);
-
-      // Backfill default theme
-      backfillDefaultTheme();
-
-      // Ensure all themes have the new audio slot
-      backfillThemeSlots();
-
-      // Generate a list of all valid default asset URLs for helmets
-      List<String> validHelmetUrls =
-          DEFAULT_IMAGE_ASSETS.stream()
-              .map(
-                  a -> {
-                    String safeName = a.filename.replaceAll("[^a-zA-Z0-9.-]", "_");
-                    return "/assets/" + a.id + "_" + safeName;
-                  })
-              .collect(java.util.stream.Collectors.toList());
-
-      String fallbackHelmetUrl = "/assets/default_black-blue_black-blue.png";
-
-      // Migrate any drivers or teams that used the deleted helmet images
-      MongoCollection<org.bson.Document> drivers = database.getCollection("drivers");
-      drivers
-          .find(com.mongodb.client.model.Filters.regex("avatarUrl", "^/assets/default_"))
-          .forEach(
-              (java.util.function.Consumer<org.bson.Document>)
-                  doc -> {
-                    String url = doc.getString("avatarUrl");
-                    if (url != null && !validHelmetUrls.contains(url)) {
-                      drivers.updateOne(
-                          com.mongodb.client.model.Filters.eq("_id", doc.getObjectId("_id")),
-                          com.mongodb.client.model.Updates.set("avatarUrl", fallbackHelmetUrl));
-                    }
-                  });
-
-      MongoCollection<org.bson.Document> teams = database.getCollection("teams");
-      teams
-          .find(com.mongodb.client.model.Filters.regex("avatarUrl", "^/assets/default_"))
-          .forEach(
-              (java.util.function.Consumer<org.bson.Document>)
-                  doc -> {
-                    String url = doc.getString("avatarUrl");
-                    if (url != null && !validHelmetUrls.contains(url)) {
-                      teams.updateOne(
-                          com.mongodb.client.model.Filters.eq("_id", doc.getObjectId("_id")),
-                          com.mongodb.client.model.Updates.set("avatarUrl", fallbackHelmetUrl));
-                    }
-                  });
+    databaseContext.ensureTable("assets");
+    databaseContext.ensureTable("themes");
+    try (Statement stmt = databaseContext.getConnection().createStatement()) {
+      stmt.execute("DELETE FROM assets");
+      stmt.execute("DELETE FROM themes");
     } catch (Exception e) {
-      logger.error("Error in backfillDefaults", e);
-    }
-  }
-
-  /** Ensures all themes have the 'audio.yellowflag' slot in the audio_slots map. */
-  @SuppressWarnings("checkstyle:MethodLength")
-  public void backfillThemeSlots() {
-    MongoCollection<Document> themes = database.getCollection("themes");
-    for (Document theme : themes.find()) {
-      Document slots = (Document) theme.get("slots");
-      Document audioSlots = (Document) theme.get("audio_slots");
-      if (audioSlots == null) {
-        audioSlots = new Document();
-      }
-      if (slots == null) {
-        slots = new Document();
-      }
-
-      boolean changed = false;
-
-      // 1. Repair and Flatten slots (remove nested Documents caused by dot-notation
-      // confusion)
-      List<Bson> toUnset = new ArrayList<>();
-      Document newSlots = new Document();
-      for (String key : slots.keySet()) {
-        Object value = slots.get(key);
-        if (value instanceof Document) {
-          Document nested = (Document) value;
-          for (String subKey : nested.keySet()) {
-            newSlots.put(key + "." + subKey, nested.get(subKey).toString());
-          }
-          toUnset.add(Updates.unset("slots." + key));
-          changed = true;
-        } else if (value != null) {
-          newSlots.put(key, value.toString());
-        }
-      }
-      slots = newSlots;
-
-      // To avoid Error 40 (path conflict), we must unset nested documents before
-      // setting sub-paths
-      // if they are in the same parent path. Splitting into two updates ensures no
-      // conflict.
-      if (!toUnset.isEmpty()) {
-        themes.updateOne(Filters.eq("_id", theme.get("_id")), Updates.combine(toUnset));
-      }
-
-      // 2. Migration: Move from slots to audio_slots if present
-      if (slots.containsKey("audio.yellowflag")) {
-        Object val = slots.get("audio.yellowflag");
-        if (val instanceof String) {
-          String assetId = (String) val;
-          if (!audioSlots.containsKey("audio.yellowflag")) {
-            audioSlots.append(
-                "audio.yellowflag", new Document("type", "preset").append("url", assetId));
-            changed = true;
-          }
-        }
-        slots.remove("audio.yellowflag");
-        changed = true;
-      }
-
-      // 3. Migration: Replace countdown and seconds_left with audio sets
-      String[] oldCountdownKeys = {
-        "audio.countdown.5",
-        "audio.countdown.4",
-        "audio.countdown.3",
-        "audio.countdown.2",
-        "audio.countdown.1",
-        "audio.countdown.go"
-      };
-      boolean hadOldCountdown = false;
-      for (String k : oldCountdownKeys) {
-        if (slots.containsKey(k)) {
-          slots.remove(k);
-          hadOldCountdown = true;
-        }
-      }
-      if (hadOldCountdown || !audioSlots.containsKey("audio.countdown")) {
-        audioSlots.put(
-            "audio.countdown",
-            new Document("type", "audio_set").append("url", "default_countdown-set"));
-        changed = true;
-      }
-
-      String[] oldSlKeys = {
-        "audio.seconds_left.300",
-        "audio.seconds_left_240",
-        "audio.seconds_left_180",
-        "audio.seconds_left_120",
-        "audio.seconds_left_60",
-        "audio.seconds_left_30",
-        "audio.seconds_left_25",
-        "audio.seconds_left_20",
-        "audio.seconds_left_15",
-        "audio.seconds_left_10",
-        "audio.seconds_left_5"
-      };
-      boolean hadOldSl = false;
-      for (String k : oldSlKeys) {
-        if (slots.containsKey(k)) {
-          slots.remove(k);
-          hadOldSl = true;
-        }
-      }
-      if (hadOldSl || !audioSlots.containsKey("audio.seconds_left")) {
-        audioSlots.put(
-            "audio.seconds_left",
-            new Document("type", "audio_set").append("url", "default_seconds-left-set"));
-        changed = true;
-      }
-
-      // 4. Migration: Rename audio.heat.halfway to audio.seconds_left.halfway
-      if (audioSlots.containsKey("audio.heat.halfway")) {
-        Object val = audioSlots.get("audio.heat.halfway");
-        audioSlots.append("audio.seconds_left.halfway", val);
-        audioSlots.remove("audio.heat.halfway");
-        changed = true;
-      }
-
-      // 5. Cleanup individual audio assets that might be lingering in slots
-      String[] legacyIdsToRemove = {
-        "audio.countdown.5",
-        "audio.countdown.4",
-        "audio.countdown.3",
-        "audio.countdown.2",
-        "audio.countdown.1",
-        "audio.countdown.go",
-        "audio.seconds_left_300",
-        "audio.seconds_left_240",
-        "audio.seconds_left_180",
-        "audio.seconds_left_120",
-        "audio.seconds_left_60",
-        "audio.seconds_left_30",
-        "audio.seconds_left_25",
-        "audio.seconds_left_20",
-        "audio.seconds_left_15",
-        "audio.seconds_left_10",
-        "audio.seconds_left_5"
-      };
-      for (String lid : legacyIdsToRemove) {
-        if (slots.containsKey(lid)) {
-          slots.remove(lid);
-          changed = true;
-        }
-      }
-
-      // 6. Migration: Ensure gauge.fuel is present
-      if (!slots.containsKey("gauge.fuel")) {
-        slots.append("gauge.fuel", "default_fuel-gauge-builtin");
-        changed = true;
-      }
-
-      // 7. Migration: Ensure audio.min_lap_time and audio.drift_lap are present
-      if (!audioSlots.containsKey("audio.min_lap_time")) {
-        audioSlots.append(
-            "audio.min_lap_time",
-            new Document("type", "tts").append("text", "{driver.nickname} min lap time"));
-        changed = true;
-      }
-      if (!audioSlots.containsKey("audio.drift_lap")) {
-        audioSlots.append(
-            "audio.drift_lap",
-            new Document("type", "tts").append("text", "{driver.nickname} drift lap"));
-        changed = true;
-      }
-      if (!audioSlots.containsKey("audio.heat_over")) {
-        audioSlots.append(
-            "audio.heat_over", new Document("type", "preset").append("url", "default_heat_over"));
-        changed = true;
-      }
-      if (!audioSlots.containsKey("audio.race_over")) {
-        audioSlots.append(
-            "audio.race_over", new Document("type", "preset").append("url", "default_race_over"));
-        changed = true;
-      }
-
-      if (changed) {
-        themes.updateOne(
-            Filters.eq("_id", theme.get("_id")),
-            Updates.combine(Updates.set("slots", slots), Updates.set("audio_slots", audioSlots)));
-      }
-    }
-  }
-
-  /**
-   * Creates the "RaceCoordinator AI (default)" default theme if it doesn't already exist. This
-   * theme maps all built-in asset slots (flags, start lamps, fuel gauge) to their default asset
-   * IDs.
-   */
-  void backfillDefaultTheme() {
-    MongoCollection<Document> themes = database.getCollection("themes");
-    String themeId = "default_classic_rc_ai";
-
-    // Migration: Remove any legacy theme document.
-    themes.deleteOne(Filters.eq("entity_id", themeId));
-
-    // Check if default theme already exists by name to prevent duplicates
-    if (themes.find(Filters.eq("name", "RaceCoordinator AI")).first() != null) {
-      return; // Already exists with proper name
+      logger.error("Error clearing assets table during reset", e);
     }
 
-    Document slots = new Document();
-    // Flags
-    slots.append("flag.green", "default_flag_green");
-    slots.append("flag.red", "default_flag_red");
-    slots.append("flag.yellow", "default_flag_yellow");
-    slots.append("flag.yellowgreen", "default_flag_green_yellow");
-    slots.append("flag.white", "default_flag_white");
-    slots.append("flag.checkered", "default_flag_checkered");
-    slots.append("flag.black", "default_flag_black");
-    // Start lamps
-    slots.append("lamp.red.on", "default_start_red_on");
-    slots.append("lamp.red.dim", "default_start_red_dim");
-    slots.append("lamp.green", "default_start_green");
-    // Fuel gauge
-    slots.append("gauge.fuel", "default_fuel-gauge-builtin");
-
-    Document audioSlots = new Document();
-    // Audio
-    audioSlots.append(
-        "audio.yellowflag", new Document("type", "preset").append("url", "default_yellow_flag"));
-    audioSlots.append(
-        "audio.seconds_left.halfway",
-        new Document("type", "preset").append("url", "default_heat_half"));
-    audioSlots.append(
-        "audio.heat_over", new Document("type", "preset").append("url", "default_heat_over"));
-    audioSlots.append(
-        "audio.race_over", new Document("type", "preset").append("url", "default_race_over"));
-    audioSlots.append(
-        "audio.countdown",
-        new Document("type", "audio_set").append("url", "default_countdown-set"));
-    audioSlots.append(
-        "audio.seconds_left",
-        new Document("type", "audio_set").append("url", "default_seconds-left-set"));
-    audioSlots.append(
-        "audio.min_lap_time",
-        new Document("type", "tts").append("text", "{driver.nickname} min lap time"));
-    audioSlots.append(
-        "audio.drift_lap",
-        new Document("type", "tts").append("text", "{driver.nickname} drift lap"));
-
-    Document theme =
-        new Document()
-            .append("entity_id", themeId)
-            .append("name", "RaceCoordinator AI (default)")
-            .append("is_default", true)
-            .append("slots", slots)
-            .append("audio_slots", audioSlots);
-
-    themes.insertOne(theme);
-    logger.info("Default theme 'RaceCoordinator AI (default)' created.");
+    backfillDefaults();
   }
 }

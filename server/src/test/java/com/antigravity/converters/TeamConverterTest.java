@@ -10,7 +10,6 @@ import com.antigravity.proto.TeamModel;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import org.bson.types.ObjectId;
 import org.junit.Test;
 
 public class TeamConverterTest {
@@ -22,8 +21,7 @@ public class TeamConverterTest {
 
   @Test
   public void testToProto_FirstTime() {
-    Team team =
-        new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", new ObjectId());
+    Team team = new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", "1");
     Set<String> sentObjectIds = new HashSet<>();
 
     TeamModel proto = TeamConverter.toProto(team, sentObjectIds);
@@ -41,8 +39,7 @@ public class TeamConverterTest {
 
   @Test
   public void testToProto_SubsequentTime() {
-    Team team =
-        new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", new ObjectId());
+    Team team = new Team("Team Alpha", "avatar_url", Arrays.asList("d1", "d2"), "t1", "1");
     Set<String> sentObjectIds = new HashSet<>();
     sentObjectIds.add("Team_" + team.getObjectId());
 

@@ -62,16 +62,12 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 
 [UninstallDelete]
 Type: files; Name: "{app}\install_java.log"
-Type: files; Name: "{app}\install_mongo.log"
 Type: filesandordirs; Name: "{app}\jre"
-Type: filesandordirs; Name: "{app}\mongodb"
 
 [Dirs]
 ; Writable data directory in ProgramData
 Name: "{commonappdata}\{#MyAppName}"; Permissions: users-full
-Name: "{commonappdata}\{#MyAppName}\mongodb_data"; Permissions: users-full
 Name: "{commonappdata}\{#MyAppName}\server_temp"; Permissions: users-full
-Name: "{app}\mongodb"; Permissions: users-full
 
 [Run]
 ; Install VC++ Redistributable before launching
@@ -110,7 +106,7 @@ begin
   Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "' +
     '$paths = @(''' + ExpandConstant('{autodesktop}\{#MyAppName}.lnk') + ''', ''' + ExpandConstant('{userdesktop}\{#MyAppName}.lnk') + ''', ''' + ExpandConstant('{commondesktop}\{#MyAppName}.lnk') + ''', ''' + ExpandConstant('{userprograms}\{#MyAppName}.lnk') + '''); ' +
     '$shell = New-Object -ComObject WScript.Shell; ' +
-    'foreach ($p in $paths) { if (Test-Path $p) { $sc = $shell.CreateShortcut($p); if ($sc.Arguments -and ($sc.Arguments -like ''*--port*'' -or $sc.Arguments -like ''*--mongo-port*'')) { Out-File -FilePath ''' + TempFile + ''' -InputObject $sc.Arguments -Encoding ascii; break; } } }' +
+    'foreach ($p in $paths) { if (Test-Path $p) { $sc = $shell.CreateShortcut($p); if ($sc.Arguments -and ($sc.Arguments -like ''*--port*'')) { Out-File -FilePath ''' + TempFile + ''' -InputObject $sc.Arguments -Encoding ascii; break; } } }' +
     '"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   if FileExists(TempFile) then
@@ -120,7 +116,7 @@ begin
     ParamsFromFile := Trim(String(AnsiParamsFromFile));
   end;
 
-  if (ParamsFromFile <> '') and ((Pos('--port', ParamsFromFile) > 0) or (Pos('--mongo-port', ParamsFromFile) > 0)) then
+  if (ParamsFromFile <> '') and (Pos('--port', ParamsFromFile) > 0) then
   begin
     VbsPos := Pos('start_win.vbs', ParamsFromFile);
     if VbsPos > 0 then
@@ -138,16 +134,14 @@ begin
 
     if Pos('--port', ParamsFromFile) = 0 then
       ParamsFromFile := ParamsFromFile + ' --port 7070';
-    if Pos('--mongo-port', ParamsFromFile) = 0 then
-      ParamsFromFile := ParamsFromFile + ' --mongo-port 8085';
 
     Log('Preserving existing user shortcut parameters: ' + ParamsFromFile);
     PreservedShortcutParams := ParamsFromFile;
   end
   else
   begin
-    Log('Using default shortcut parameters: --port 7070 --mongo-port 8085');
-    PreservedShortcutParams := AppVbsPath + ' --port 7070 --mongo-port 8085';
+    Log('Using default shortcut parameters: --port 7070');
+    PreservedShortcutParams := AppVbsPath + ' --port 7070';
   end;
 
   Result := PreservedShortcutParams;
@@ -157,16 +151,14 @@ var
   ResultCode: Integer;
 begin
   Result := True;
-  // Kill java and mongod processes that might be using our ports or files.
-  // We use PowerShell to specifically target processes using our known ports (7070, 8085, 27017)
-  // as well as a fallback by name for our specific JAR.
+  // Kill java processes that might be using our ports or files.
   Log('Attempting to kill existing Race Coordinator processes...');
   
   // 1. Kill by port (most reliable for clearing locks)
-  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-NetTCPConnection -LocalPort 7070, 8085, 27017 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-NetTCPConnection -LocalPort 7070 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   
   // 2. Kill by name/command line (fallback)
-  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-Process -Name java, mongod -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like ''*RaceCoordinator*'' -or $_.Name -eq ''mongod'' } | Stop-Process -Force -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Exec('powershell.exe', '-NoProfile -ExecutionPolicy Bypass -Command "Get-Process -Name java -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like ''*RaceCoordinator*'' } | Stop-Process -Force -ErrorAction SilentlyContinue"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 
 function IsWindows10OrNewer: Boolean;
@@ -240,11 +232,6 @@ begin
   if IsModernOS then Result := '17' else Result := '8';
 end;
 
-function GetRequiredMongoVersion(IsModernOS: Boolean): String;
-begin
-  if IsModernOS then Result := '6.0.21' else Result := '3.2.22';
-end;
-
 function IsJavaInstalled(IsModernOS: Boolean): Boolean;
 var
   VersionFile: String;
@@ -256,7 +243,6 @@ begin
     LoadStringFromFile(VersionFile, InstalledVersion);
     if Trim(String(InstalledVersion)) = GetRequiredJavaVersion(IsModernOS) then
     begin
-      // Ensure the installation is not corrupt (must have bin\java.exe and bin\management.dll)
       if FileExists(ExpandConstant('{app}\jre\bin\java.exe')) and FileExists(ExpandConstant('{app}\jre\bin\management.dll')) then
       begin
         Result := True;
@@ -281,53 +267,13 @@ begin
   end;
 end;
 
-function IsMongoInstalled(IsModernOS: Boolean): Boolean;
-var
-  VersionFile: String;
-  InstalledVersion: AnsiString;
-begin
-  VersionFile := ExpandConstant('{app}\mongodb\.rcai_version');
-  if FileExists(VersionFile) then
-  begin
-    LoadStringFromFile(VersionFile, InstalledVersion);
-    if Trim(String(InstalledVersion)) = GetRequiredMongoVersion(IsModernOS) then
-    begin
-      Result := True;
-      Exit;
-    end;
-  end;
-
-  if IsModernOS then
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\6.0');
-    if (not Result) and IsWin64 then
-      Result := RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\6.0');
-  end
-  else
-  begin
-    Result := RegKeyExists(HKLM, 'SOFTWARE\MongoDB\Server\3.2');
-    if (not Result) and IsWin64 then
-      Result := RegKeyExists(HKLM64, 'SOFTWARE\MongoDB\Server\3.2');
-  end;
-end;
-
 function NeedsModernJava: Boolean;
 begin
   Result := IsWindows10OrNewer() and not IsJavaInstalled(True);
 end;
 
-function NeedsModernMongo: Boolean;
-begin
-  Result := IsWindows10OrNewer() and not IsMongoInstalled(True);
-end;
-
 function NeedsLegacyJava: Boolean;
 begin
   Result := (not IsWindows10OrNewer()) and not IsJavaInstalled(False);
-end;
-
-function NeedsLegacyMongo: Boolean;
-begin
-  Result := (not IsWindows10OrNewer()) and not IsMongoInstalled(False);
 end;
 

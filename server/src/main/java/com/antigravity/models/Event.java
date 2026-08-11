@@ -6,32 +6,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
-import org.bson.codecs.pojo.annotations.BsonCreator;
-import org.bson.codecs.pojo.annotations.BsonId;
-import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.bson.types.ObjectId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Event extends Model {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class EventRaceItem {
-    @BsonProperty("race_id")
     @JsonProperty("race_id")
     @JsonAlias("raceId")
     private final String raceId;
 
-    @BsonProperty("max_drivers")
     @JsonProperty("max_drivers")
     @JsonAlias("maxDrivers")
     private final int maxDrivers;
 
     @JsonCreator
-    @BsonCreator
     public EventRaceItem(
-        @BsonProperty("race_id") @JsonProperty("race_id") @JsonAlias("raceId") String raceId,
-        @BsonProperty("max_drivers") @JsonProperty("max_drivers") @JsonAlias("maxDrivers")
-            Integer maxDrivers) {
+        @JsonProperty("race_id") @JsonAlias("raceId") String raceId,
+        @JsonProperty("max_drivers") @JsonAlias("maxDrivers") Integer maxDrivers) {
       this.raceId = raceId;
       this.maxDrivers = maxDrivers != null ? maxDrivers : 0;
     }
@@ -53,7 +45,6 @@ public class Event extends Model {
   private final String name;
   private final String description;
 
-  @BsonProperty("auto_advance_time")
   @JsonProperty("auto_advance_time")
   @JsonAlias("auto_advance_time")
   private final double autoAdvanceTime;
@@ -61,17 +52,13 @@ public class Event extends Model {
   private final List<EventRaceItem> races;
 
   @JsonCreator
-  @BsonCreator
   public Event(
-      @BsonProperty("name") @JsonProperty("name") String name,
-      @BsonProperty("description") @JsonProperty("description") String description,
-      @BsonProperty("auto_advance_time")
-          @JsonProperty("auto_advance_time")
-          @JsonAlias("auto_advance_time")
-          Double autoAdvanceTime,
-      @BsonProperty("races") @JsonProperty("races") List<EventRaceItem> races,
-      @BsonProperty("entity_id") @JsonProperty("entity_id") @JsonAlias("entity_id") String entityId,
-      @BsonId @BsonProperty("_id") @JsonProperty("_id") ObjectId id) {
+      @JsonProperty("name") String name,
+      @JsonProperty("description") String description,
+      @JsonProperty("auto_advance_time") @JsonAlias("auto_advance_time") Double autoAdvanceTime,
+      @JsonProperty("races") List<EventRaceItem> races,
+      @JsonProperty("entity_id") @JsonAlias("entity_id") String entityId,
+      @JsonProperty("_id") String id) {
     super(id, entityId);
     this.name = name;
     this.description = description != null ? description : "";

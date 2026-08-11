@@ -1,7 +1,6 @@
 package com.antigravity.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public abstract class FuelOptions {
 
@@ -17,39 +16,30 @@ public abstract class FuelOptions {
     POWER_STUTTER
   }
 
-  @BsonProperty("enabled")
   @JsonProperty("enabled")
   protected final boolean enabled;
 
-  @BsonProperty("reset_fuel_at_heat_start")
   @JsonProperty("reset_fuel_at_heat_start")
   protected final boolean resetFuelAtHeatStart;
 
-  @BsonProperty("out_of_fuel_action")
   @JsonProperty("out_of_fuel_action")
   protected final OutOfFuelAction outOfFuelAction;
 
-  @BsonProperty("capacity")
   @JsonProperty("capacity")
   protected final double capacity;
 
-  @BsonProperty("usage_type")
   @JsonProperty("usage_type")
   protected final FuelUsageType usageType;
 
-  @BsonProperty("usage_rate")
   @JsonProperty("usage_rate")
   protected final double usageRate;
 
-  @BsonProperty("start_level")
   @JsonProperty("start_level")
   protected final double startLevel;
 
-  @BsonProperty("refuel_rate")
   @JsonProperty("refuel_rate")
   protected final double refuelRate;
 
-  @BsonProperty("pit_stop_delay")
   @JsonProperty("pit_stop_delay")
   protected final double pitStopDelay;
 

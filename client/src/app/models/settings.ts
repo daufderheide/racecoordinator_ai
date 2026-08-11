@@ -41,6 +41,7 @@ export type WidgetType =
   | "action-export-xls"
   | "action-open-heat-results"
   | "action-open-race-results"
+  | "action-open-season-results"
   | "action-open-prediction-results";
 
 export interface AbsoluteWidgetNode {
