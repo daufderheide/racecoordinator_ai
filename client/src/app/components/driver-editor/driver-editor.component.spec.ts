@@ -267,6 +267,25 @@ describe("DriverEditorComponent", () => {
     expect(component.isDirtyState()).toBeFalse();
   });
 
+  it("should populate soundAssets with both preset ('audio') and uploaded ('sound') assets", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("d1");
+    dataService.listAssets.and.returnValue(
+      of([
+        { name: "Preset Lap Beep", type: "audio", entity_id: "default_beep" },
+        { name: "Custom Engine Sound", type: "sound", entity_id: "sound_1" },
+        { name: "Avatar Image", type: "image", entity_id: "img_1" },
+      ]),
+    );
+
+    component.loadData();
+
+    expect(component.soundAssets.length).toBe(2);
+    expect(component.soundAssets.map((a) => a.name)).toEqual([
+      "Preset Lap Beep",
+      "Custom Engine Sound",
+    ]);
+  });
+
   it("should save new driver", () => {
     const newDriver = { entity_id: "new_id", name: "New Driver" };
     const initial = new Driver("new", "New Driver", "");

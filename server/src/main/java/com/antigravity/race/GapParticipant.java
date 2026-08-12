@@ -36,4 +36,9 @@ public interface GapParticipant {
 
   /** Sets the number of laps down to the position immediately ahead. */
   void setLapsDownPosition(int lapsDown);
+
+  /** Returns true if this participant is considered empty (e.g., an empty lane). */
+  default boolean isEmptyParticipant() {
+    return false;
+  }
 }

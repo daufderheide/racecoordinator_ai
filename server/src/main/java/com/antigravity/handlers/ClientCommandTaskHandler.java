@@ -2,229 +2,125 @@ package com.antigravity.handlers;
 
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
-import com.antigravity.context.RaceScope;
-import com.antigravity.converters.ArduinoConfigConverter;
-import com.antigravity.converters.BartConfigConverter;
-import com.antigravity.converters.PhidgetConfigConverter;
-import com.antigravity.converters.TrackmateConfigConverter;
-import com.antigravity.converters.WebSocketConfigConverter;
-import com.antigravity.models.AnalyticsToggleRequest;
-import com.antigravity.models.Driver;
-import com.antigravity.models.Race;
-import com.antigravity.models.ReplayCommandDump;
-import com.antigravity.models.Team;
-import com.antigravity.models.TeamOptions;
-import com.antigravity.models.Track;
-import com.antigravity.proto.DeferHeatResponse;
-import com.antigravity.proto.EndRaceRequest;
-import com.antigravity.proto.EndRaceResponse;
-import com.antigravity.proto.GetPhidgetDevicesResponse;
-import com.antigravity.proto.InitializeInterfaceRequest;
-import com.antigravity.proto.InitializeInterfaceResponse;
 import com.antigravity.proto.InitializeRaceRequest;
-import com.antigravity.proto.InitializeRaceResponse;
-import com.antigravity.proto.ModifyHeatsRequest;
-import com.antigravity.proto.ModifyHeatsResponse;
-import com.antigravity.proto.NextHeatResponse;
-import com.antigravity.proto.PauseRaceResponse;
-import com.antigravity.proto.PhidgetDeviceInfo;
-import com.antigravity.proto.RaceData;
-import com.antigravity.proto.RegenerateHeatsRequest;
-import com.antigravity.proto.RegenerateHeatsResponse;
-import com.antigravity.proto.RestartHeatResponse;
-import com.antigravity.proto.SetInterfacePinStateRequest;
-import com.antigravity.proto.SetInterfacePinStateResponse;
-import com.antigravity.proto.SetInterfaceRgbLedStateRequest;
-import com.antigravity.proto.SetInterfaceRgbLedStateResponse;
-import com.antigravity.proto.SkipHeatResponse;
-import com.antigravity.proto.SkipRaceResponse;
-import com.antigravity.proto.StartRaceResponse;
-import com.antigravity.proto.UpdateInterfaceConfigRequest;
-import com.antigravity.proto.UpdateInterfaceConfigResponse;
-import com.antigravity.protocols.CarLocation;
-import com.antigravity.protocols.IProtocol;
-import com.antigravity.protocols.ProtocolDelegate;
-import com.antigravity.protocols.TestInterfaceListener;
-import com.antigravity.protocols.arduino.ArduinoConfig;
-import com.antigravity.protocols.arduino.ArduinoProtocol;
-import com.antigravity.protocols.bart.BartConfig;
-import com.antigravity.protocols.bart.BartProtocol;
-import com.antigravity.protocols.interfaces.BleConnection;
-import com.antigravity.protocols.interfaces.SerialConnection;
-import com.antigravity.protocols.phidget.PhidgetConfig;
-import com.antigravity.protocols.phidget.PhidgetProtocol;
-import com.antigravity.protocols.trackmate.TrackmateConfig;
-import com.antigravity.protocols.trackmate.TrackmateProtocol;
-import com.antigravity.protocols.websocket.WebSocketConfig;
-import com.antigravity.protocols.websocket.WebSocketProtocol;
-import com.antigravity.race.ClientSubscriptionManager;
-import com.antigravity.race.DriverAnalysisSummary;
-import com.antigravity.race.DriverHeatData;
-import com.antigravity.race.Heat;
-import com.antigravity.race.OverallStandings;
-import com.antigravity.race.RaceParticipant;
-import com.antigravity.race.RaceSaveData;
-import com.antigravity.race.RaceStatisticsUtils;
-import com.antigravity.race.states.NotStarted;
-import com.antigravity.race.states.RaceOver;
-import com.antigravity.race.states.Racing;
-import com.antigravity.service.AnalyticsService;
-import com.antigravity.service.DatabaseService;
-import com.antigravity.util.CsvExporter;
-import com.antigravity.util.NetworkUtils;
-import com.antigravity.util.RequestContextUtils;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("checkstyle:FileLength")
-public class ClientCommandTaskHandler {
+public class ClientCommandTaskHandler implements AnalyticsHelper {
 
-  private static final Logger logger = LoggerFactory.getLogger(ClientCommandTaskHandler.class);
-  private final DatabaseContext databaseContext;
-
-  private java.util.Map<String, Object> mapOf(Object... kv) {
-    java.util.Map<String, Object> map = new java.util.HashMap<>();
-    for (int i = 0; i < kv.length; i += 2) {
-      map.put((String) kv[i], kv[i + 1]);
-    }
-    return map;
-  }
-
-  private void logReplayCommand(String command, Object params) {
-    if (logger.isTraceEnabled()) {
-      try {
-        ReplayCommandDump dump = new ReplayCommandDump(command, params);
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        logger.trace("ReplayCommandDump: {}", mapper.writeValueAsString(dump));
-      } catch (Exception e) {
-        logger.error("Failed to serialize replay command dump for " + command, e);
-      }
-    }
-  }
+  private final RaceControlHandler raceControlHandler;
+  private final InterfaceHardwareHandler interfaceHardwareHandler;
+  private final DriverLaneHeatHandler driverLaneHeatHandler;
+  private final RaceExportSaveHandler raceExportSaveHandler;
+  private final AnalyticsHandler analyticsHandler;
 
   public ClientCommandTaskHandler(DatabaseContext databaseContext, Javalin app) {
-    this.databaseContext = databaseContext;
-    app.post("/api/initialize-race", this::initializeRace, Role.DIRECTOR);
-    app.post("/api/start-race", this::startRace, Role.DIRECTOR);
-    app.post("/api/pause-race", this::pauseRace, Role.DIRECTOR);
-    app.post("/api/end-race", this::endRace, Role.DIRECTOR);
-    app.post("/api/next-heat", this::nextHeat, Role.DIRECTOR);
-    app.post("/api/restart-heat", this::restartHeat, Role.DIRECTOR);
-    app.post("/api/skip-heat", this::skipHeat, Role.DIRECTOR);
-    app.post("/api/skip-race", this::skipRace, Role.DIRECTOR);
-    app.post("/api/defer-heat", this::deferHeat, Role.DIRECTOR);
-    app.post("/api/abort-timers", this::abortTimers, Role.DIRECTOR);
-    app.post("/api/update-interface-config", this::updateInterfaceConfig, Role.DIRECTOR);
-    app.post("/api/initialize-interface", this::initializeInterface, Role.DIRECTOR);
-    app.post("/api/set-interface-pin-state", this::setInterfacePinState, Role.DIRECTOR);
-    app.post("/api/set-interface-rgb-led-state", this::setInterfaceRgbLedState, Role.DIRECTOR);
-    app.post("/api/close-interface", this::closeInterface, Role.DIRECTOR);
+    this.raceControlHandler = new RaceControlHandler(databaseContext);
+    this.interfaceHardwareHandler = new InterfaceHardwareHandler();
+    this.driverLaneHeatHandler = new DriverLaneHeatHandler(databaseContext);
+    this.raceExportSaveHandler = new RaceExportSaveHandler(databaseContext);
+    this.analyticsHandler = new AnalyticsHandler();
+
+    // Race Control Endpoints
+    app.post("/api/initialize-race", raceControlHandler::initializeRace, Role.DIRECTOR);
+    app.post("/api/start-race", raceControlHandler::startRace, Role.DIRECTOR);
+    app.post("/api/pause-race", raceControlHandler::pauseRace, Role.DIRECTOR);
+    app.post("/api/end-race", raceControlHandler::endRace, Role.DIRECTOR);
+    app.post("/api/next-heat", raceControlHandler::nextHeat, Role.DIRECTOR);
+    app.post("/api/restart-heat", raceControlHandler::restartHeat, Role.DIRECTOR);
+    app.post("/api/skip-heat", raceControlHandler::skipHeat, Role.DIRECTOR);
+    app.post("/api/skip-race", raceControlHandler::skipRace, Role.DIRECTOR);
+    app.post("/api/defer-heat", raceControlHandler::deferHeat, Role.DIRECTOR);
+    app.post("/api/abort-timers", raceControlHandler::abortTimers, Role.DIRECTOR);
+    app.post("/api/modify-heats", raceControlHandler::modifyHeats, Role.DIRECTOR);
+    app.post("/api/regenerate-heats", raceControlHandler::regenerateHeats, Role.DIRECTOR);
+    app.post("/api/finalize-modify-heats", raceControlHandler::finalizeModifyHeats, Role.DIRECTOR);
+
+    // Interface Hardware & Power Endpoints
+    app.post(
+        "/api/update-interface-config",
+        interfaceHardwareHandler::updateInterfaceConfig,
+        Role.DIRECTOR);
+    app.post(
+        "/api/initialize-interface", interfaceHardwareHandler::initializeInterface, Role.DIRECTOR);
+    app.post(
+        "/api/set-interface-pin-state",
+        interfaceHardwareHandler::setInterfacePinState,
+        Role.DIRECTOR);
+    app.post(
+        "/api/set-interface-rgb-led-state",
+        interfaceHardwareHandler::setInterfaceRgbLedState,
+        Role.DIRECTOR);
+    app.post("/api/close-interface", interfaceHardwareHandler::closeInterface, Role.DIRECTOR);
+    app.post("/api/track/power/main", interfaceHardwareHandler::setMainPower, Role.DIRECTOR);
+    app.post("/api/track/power/lane/{lane}", interfaceHardwareHandler::setLanePower, Role.DIRECTOR);
+    app.get("/api/serial-ports", interfaceHardwareHandler::getSerialPorts, Role.VIEWER);
+    app.get("/api/ble-devices", interfaceHardwareHandler::getBleDevices, Role.VIEWER);
+    app.get("/api/phidgets", interfaceHardwareHandler::getPhidgetDevices, Role.VIEWER);
+
+    // Driver, Lane & Heat Endpoints
     app.post(
         "/api/races/current-heat/drivers/{lane}/actual-driver",
-        this::changeActualDriver,
+        driverLaneHeatHandler::changeActualDriver,
         Role.DIRECTOR);
     app.post(
-        "/api/races/current-heat/drivers/{lane}/reset", this::resetLaneHeatData, Role.DIRECTOR);
+        "/api/races/current-heat/drivers/{lane}/reset",
+        driverLaneHeatHandler::resetLaneHeatData,
+        Role.DIRECTOR);
     app.post(
         "/api/races/heats/{heatNumber}/drivers/{lane}/actual-driver",
-        this::changeHeatActualDriver,
+        driverLaneHeatHandler::changeHeatActualDriver,
         Role.DIRECTOR);
     app.post(
-        "/api/races/current-heat/drivers/{lane}/user-laps", this::updateUserLaps, Role.DIRECTOR);
+        "/api/races/current-heat/drivers/{lane}/user-laps",
+        driverLaneHeatHandler::updateUserLaps,
+        Role.DIRECTOR);
     app.post(
         "/api/races/heats/{heatNumber}/drivers/{lane}/user-laps",
-        this::updateHeatUserLaps,
+        driverLaneHeatHandler::updateHeatUserLaps,
         Role.DIRECTOR);
-    app.post("/api/races/heats/user-laps/batch", this::updateBatchUserLaps, Role.DIRECTOR);
+    app.post(
+        "/api/races/heats/user-laps/batch",
+        driverLaneHeatHandler::updateBatchUserLaps,
+        Role.DIRECTOR);
     app.post(
         "/api/races/current-heat/drivers/{fromLane}/change-lane/{toLane}",
-        this::changeLane,
+        driverLaneHeatHandler::changeLane,
         Role.DIRECTOR);
-    app.get("/api/serial-ports", this::getSerialPorts, Role.VIEWER);
-    app.get("/api/ble-devices", this::getBleDevices, Role.VIEWER);
-    app.get("/api/phidgets", this::getPhidgetDevices, Role.VIEWER);
-    app.get("/api/races/current/export-csv", this::exportRaceCsv, Role.VIEWER);
-    app.post("/api/races/current/export-xls", this::exportRaceXls, Role.VIEWER);
-    app.post("/api/save-race", this::saveRace, Role.DIRECTOR);
-    app.get("/api/saved-races", this::getSavedRaces, Role.VIEWER);
-    app.delete("/api/saved-races/{filename}", this::deleteSavedRace, Role.DIRECTOR);
-    app.post("/api/delete-saved-race/{filename}", this::deleteSavedRace, Role.DIRECTOR);
-    app.post("/api/load-race", this::loadRace, Role.DIRECTOR);
+
+    // Export & Save/Load Endpoints
+    app.get("/api/races/current/export-csv", raceExportSaveHandler::exportRaceCsv, Role.VIEWER);
+    app.post("/api/races/current/export-xls", raceExportSaveHandler::exportRaceXls, Role.VIEWER);
+    app.post("/api/save-race", raceExportSaveHandler::saveRace, Role.DIRECTOR);
+    app.get("/api/saved-races", raceExportSaveHandler::getSavedRaces, Role.VIEWER);
+    app.delete(
+        "/api/saved-races/{filename}", raceExportSaveHandler::deleteSavedRace, Role.DIRECTOR);
+    app.post(
+        "/api/delete-saved-race/{filename}", raceExportSaveHandler::deleteSavedRace, Role.DIRECTOR);
+    app.post("/api/load-race", raceExportSaveHandler::loadRace, Role.DIRECTOR);
+
+    // Analytics Endpoints
     app.post("/api/analytics/toggle", this::toggleAnalytics, Role.ADMIN);
     app.get("/api/analytics/config", this::getAnalyticsConfig, Role.VIEWER);
-    app.post("/api/modify-heats", this::modifyHeats, Role.DIRECTOR);
-    app.post("/api/regenerate-heats", this::regenerateHeats, Role.DIRECTOR);
-    app.post("/api/finalize-modify-heats", this::finalizeModifyHeats, Role.DIRECTOR);
-    app.post("/api/track/power/main", this::setMainPower, Role.DIRECTOR);
-    app.post("/api/track/power/lane/{lane}", this::setLanePower, Role.DIRECTOR);
   }
 
-  private void initializeRace(Context ctx) {
-    try {
-      InitializeRaceRequest request = InitializeRaceRequest.parseFrom(ctx.bodyAsBytes());
-      logger.info(
-          "InitializeRaceRequest received: race_id={}, driver_ids={}",
-          request.getRaceId(),
-          request.getDriverIdsList());
+  // --- Forwarding Methods for Test and Backwards Compatibility ---
 
-      TaskResult result = handleInitializeRace(request);
+  public static class TaskResult {
+    public int status = 200;
+    public String contentType;
+    public Object result;
 
-      if (result.status != 200) {
-        ctx.status(result.status);
-      }
-      if (result.contentType != null) {
-        ctx.contentType(result.contentType);
-      }
-      if (result.result instanceof byte[]) {
-        ctx.result((byte[]) result.result);
-      } else if (result.result instanceof String) {
-        ctx.result((String) result.result);
-      }
-
-    } catch (InvalidProtocolBufferException e) {
-      logger.error("Error parsing InitializeRaceRequest", e);
-      ctx.status(400).result("Invalid Protobuf message: " + e.getMessage());
-    } catch (Exception e) {
-      logger.error("Error initializing race", e);
-      ctx.status(500).result("Internal Server Error: " + e.toString());
-    }
-  }
-
-  static class TaskResult {
-
-    int status = 200;
-    String contentType;
-    Object result;
-
-    static TaskResult success(byte[] data) {
+    public static TaskResult success(byte[] data) {
       TaskResult r = new TaskResult();
       r.contentType = "application/octet-stream";
       r.result = data;
       return r;
     }
 
-    static TaskResult error(int status, String message) {
+    public static TaskResult error(int status, String message) {
       TaskResult r = new TaskResult();
       r.status = status;
       r.result = message;
@@ -232,1920 +128,142 @@ public class ClientCommandTaskHandler {
     }
   }
 
-  // Visible for testing
-  @SuppressWarnings("checkstyle:MethodLength")
-  TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
-    DatabaseService dbService = DatabaseService.getInstance();
-
-    if (request.getEventId() != null && !request.getEventId().isEmpty()) {
-      com.antigravity.models.Event event = // fqn-collision
-          dbService.getEvent(databaseContext, request.getEventId());
-      if (event == null) {
-        return TaskResult.error(404, "Event not found: " + request.getEventId());
-      }
-      if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
-          && ClientSubscriptionManager.getInstance().getRace() != null
-          && ClientSubscriptionManager.getInstance().getRace().isActive()) {
-        return TaskResult.error(
-            409, "Cannot start new race while client is watching an active race");
-      }
-      com.antigravity.race.EventExecutionManager.getInstance() // fqn-collision
-          .startEvent(
-              event,
-              request.getDriverIdsList(),
-              request.getIsDemoMode(),
-              request.getDemoConfig(),
-              databaseContext,
-              request.getSeasonId());
-      InitializeRaceResponse response =
-          InitializeRaceResponse.newBuilder().setSuccess(true).build();
-      return TaskResult.success(response.toByteArray());
-    }
-
-    com.antigravity.race.EventExecutionManager.getInstance().cancelEvent(); // fqn-collision
-
-    Race raceModel = dbService.getRace(databaseContext, request.getRaceId());
-
-    if (raceModel == null) {
-      return TaskResult.error(404, "Race not found");
-    }
-
-    if (ClientSubscriptionManager.getInstance().hasDirectorSubscribers()
-        && ClientSubscriptionManager.getInstance().getRace() != null
-        && ClientSubscriptionManager.getInstance().getRace().isActive()) {
-      return TaskResult.error(409, "Cannot start new race while client is watching an active race");
-    }
-
-    // Create the runtime race instance
-    List<String> participantIds = request.getDriverIdsList();
-    List<String> rawIds =
-        participantIds.stream()
-            .map(id -> id.startsWith("d_") || id.startsWith("t_") ? id.substring(2) : id)
-            .collect(Collectors.toList());
-
-    List<Driver> drivers = dbService.getDrivers(databaseContext, rawIds);
-    List<Team> teams = dbService.getTeams(databaseContext, rawIds);
-
-    // Map IDs back to objects maintaining order
-    List<RaceParticipant> participants = new ArrayList<>();
-    List<Team> allTeams = dbService.getAllTeams(databaseContext);
-
-    // --- Validation Logic ---
-    Map<String, List<String>> driverToTeamNames = new HashMap<>();
-    Set<String> individualDriverIds = new HashSet<>();
-
-    for (String pid : participantIds) {
-      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
-      if (pid.startsWith("d_")) {
-        individualDriverIds.add(rawId);
-      } else if (pid.startsWith("t_")) {
-        Team team =
-            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (team != null) {
-          for (String dId : team.getDriverIds()) {
-            driverToTeamNames.computeIfAbsent(dId, k -> new ArrayList<>()).add(team.getName());
-          }
-        }
-      }
-    }
-
-    // Rule 1: Individual vs Team
-    for (String dId : individualDriverIds) {
-      if (driverToTeamNames.containsKey(dId)) {
-        Driver d =
-            drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
-        String dName = d != null ? d.getName() : dId;
-        InitializeRaceResponse response =
-            InitializeRaceResponse.newBuilder()
-                .setSuccess(false)
-                .setErrorCode("DUPE_INDIVIDUAL_TEAM")
-                .setDriverName(dName)
-                .addAllTeamNames(driverToTeamNames.get(dId))
-                .build();
-        return TaskResult.success(response.toByteArray());
-      }
-    }
-
-    // Rule 2: Multiple Teams
-    for (Map.Entry<String, List<String>> entry : driverToTeamNames.entrySet()) {
-      if (entry.getValue().size() > 1) {
-        String dId = entry.getKey();
-        // Driver might not be in the explicit 'drivers' list if they were only in teams
-        Driver d =
-            drivers.stream().filter(drv -> drv.getEntityId().equals(dId)).findFirst().orElse(null);
-        if (d == null) {
-          d = dbService.getDriver(databaseContext, dId);
-        }
-        String dName = d != null ? d.getName() : dId;
-        InitializeRaceResponse response =
-            InitializeRaceResponse.newBuilder()
-                .setSuccess(false)
-                .setErrorCode("DUPE_MULTIPLE_TEAMS")
-                .setDriverName(dName)
-                .addAllTeamNames(entry.getValue())
-                .build();
-        return TaskResult.success(response.toByteArray());
-      }
-    }
-    // --- End Validation ---
-
-    for (String pid : participantIds) {
-      String rawId = pid.startsWith("d_") || pid.startsWith("t_") ? pid.substring(2) : pid;
-      boolean isExplicitDriver = pid.startsWith("d_");
-      boolean isExplicitTeam = pid.startsWith("t_");
-
-      // Try finding in drivers
-      if (!isExplicitTeam) {
-        Driver driver =
-            drivers.stream().filter(d -> d.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (driver != null) {
-          // Find if driver belongs to a team (always check, even if explicitly asked for
-          // driver)
-          Team driverTeam = null;
-          if (!isExplicitDriver) {
-            driverTeam =
-                allTeams.stream()
-                    .filter(t -> t.getDriverIds().contains(rawId))
-                    .findFirst()
-                    .orElse(null);
-          }
-
-          if (driverTeam != null) {
-            participants.add(new RaceParticipant(driver, driverTeam));
-          } else {
-            participants.add(new RaceParticipant(driver));
-          }
-          continue;
-        }
-      }
-
-      // Try finding in teams
-      if (!isExplicitDriver) {
-        Team team =
-            teams.stream().filter(t -> t.getEntityId().equals(rawId)).findFirst().orElse(null);
-        if (team != null) {
-          RaceParticipant rp = new RaceParticipant(team);
-          // Populate team drivers
-          List<Driver> teamDrivers = dbService.getDrivers(databaseContext, team.getDriverIds());
-
-          logger.debug("Hydrating team {} with IDs: {}", team.getName(), team.getDriverIds());
-          logger.debug("Found {} drivers in DB.", teamDrivers.size());
-
-          rp.setTeamDrivers(teamDrivers);
-          participants.add(rp);
-        }
-      }
-    }
-    Track raceTrack =
-        DatabaseService.getInstance().getTrack(databaseContext, raceModel.getTrackEntityId());
-
-    if (raceTrack == null) {
-      InitializeRaceResponse response =
-          InitializeRaceResponse.newBuilder()
-              .setSuccess(false)
-              .setErrorCode("TRACK_DELETED")
-              .build();
-      return TaskResult.success(response.toByteArray());
-    }
-
-    com.antigravity.race.Race runtimeRace = null; // fqn-collision
-    try {
-      runtimeRace =
-          new com.antigravity.race.Race.Builder() // fqn-collision
-              .model(raceModel)
-              .drivers(participants)
-              .track(raceTrack)
-              .databaseContext(databaseContext)
-              .isDemoMode(request.getIsDemoMode())
-              .demoConfig(request.getDemoConfig())
-              .seasonEntityId(request.getSeasonId())
-              .build();
-
-      ClientSubscriptionManager.getInstance().setRace(runtimeRace);
-      runtimeRace.init();
-
-      logger.info("Initialized race: {}", runtimeRace.getRaceModel().getName());
-      AnalyticsService.getInstance().trackRaceStart(runtimeRace);
-
-      RaceData raceDataSnapshot = runtimeRace.createSnapshot();
-      runtimeRace.broadcast(raceDataSnapshot);
-    } catch (IllegalArgumentException e) {
-      logger.error("Validation failed during race initialization", e);
-      if (runtimeRace != null) {
-        runtimeRace.stop();
-      }
-      String errorCode = "UNKNOWN_ERROR";
-      if (e.getMessage() != null && e.getMessage().contains("No custom rotations defined")) {
-        errorCode = "NO_CUSTOM_ROTATIONS";
-      } else if (e.getMessage() != null) {
-        errorCode = e.getMessage();
-      }
-      InitializeRaceResponse response =
-          InitializeRaceResponse.newBuilder().setSuccess(false).setErrorCode(errorCode).build();
-      return TaskResult.success(response.toByteArray());
-    } catch (Exception e) {
-      logger.error("Failed to set or initialize race", e);
-      if (runtimeRace != null) {
-        runtimeRace.stop();
-      }
-      String errorCode = "INITIALIZATION_FAILED";
-      if (e.getMessage() != null) {
-        errorCode = e.getMessage();
-      }
-      InitializeRaceResponse response =
-          InitializeRaceResponse.newBuilder().setSuccess(false).setErrorCode(errorCode).build();
-      return TaskResult.success(response.toByteArray());
-    }
-
-    InitializeRaceResponse response = InitializeRaceResponse.newBuilder().setSuccess(true).build();
-    return TaskResult.success(response.toByteArray());
-  }
-
-  private void startRace(Context ctx) {
-    logger.info("ClientCommand received: start-race");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      try {
-        boolean success = race.startRace();
-
-        StartRaceResponse response =
-            StartRaceResponse.newBuilder()
-                .setSuccess(success)
-                .setMessage(
-                    success ? "Race started successfully" : "Track interface not connected.")
-                .build();
-        if (success) {
-          logReplayCommand("startRace", null);
-        }
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (IllegalStateException e) {
-        StartRaceResponse response =
-            StartRaceResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-
-    } catch (Exception e) {
-      logger.error("Error processing startRace", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void pauseRace(Context ctx) {
-    logger.info("ClientCommand received: pause-race");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      try {
-        race.pauseRace();
-
-        PauseRaceResponse response =
-            PauseRaceResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Race paused successfully")
-                .build();
-        logReplayCommand("pauseRace", null);
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (IllegalStateException e) {
-        PauseRaceResponse response =
-            PauseRaceResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error processing pauseRace", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
+  public TaskResult handleInitializeRace(InitializeRaceRequest request) throws Exception {
+    return raceControlHandler.handleInitializeRace(request);
   }
 
   void endRace(Context ctx) {
-    logger.info("ClientCommand received: end-race");
-    try {
-      EndRaceRequest.parseFrom(ctx.bodyAsBytes()); // Validate payload
-      logger.info("End race requested via HTTP API.");
-      ClientSubscriptionManager.getInstance().forceStopRace();
-
-      EndRaceResponse response =
-          EndRaceResponse.newBuilder()
-              .setSuccess(true)
-              .setMessage("Race ended successfully")
-              .build();
-      logReplayCommand("endRace", null);
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
-    } catch (Exception e) {
-      logger.error("Error processing endRace", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
+    raceControlHandler.endRace(ctx);
   }
 
   void abortTimers(Context ctx) {
-    logger.info("ClientCommand received: abort-timers");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      race.clearAutoTimers();
-      // If we're in Starting or HeatOver, a pause is the appropriate state transition
-      // for an "abort" action.
-      if (race.getState() != null
-          && !(race.getState() instanceof com.antigravity.race.states.RaceOver)) { // fqn-collision
-        race.pauseRace();
-      } else {
-        race.broadcast(race.createSnapshot());
-      }
-
-      ctx.status(200);
-      PauseRaceResponse response =
-          PauseRaceResponse.newBuilder()
-              .setSuccess(true)
-              .setMessage("Timers aborted successfully")
-              .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
-    } catch (Exception e) {
-      logger.error("Error processing abortTimers", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void nextHeat(Context ctx) {
-    logger.info("ClientCommand received: next-heat");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      try {
-        race.clearAutoTimers();
-        race.moveToNextHeat();
-        ClientSubscriptionManager.getInstance().autoSave(race);
-
-        NextHeatResponse response =
-            NextHeatResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Moved to next heat successfully")
-                .build();
-        logReplayCommand("nextHeat", null);
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (Exception e) {
-        NextHeatResponse response =
-            NextHeatResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error processing nextHeat", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void restartHeat(Context ctx) {
-    logger.info("ClientCommand received: restart-heat");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      try {
-        race.restartHeat();
-        ClientSubscriptionManager.getInstance().autoSave(race);
-
-        RestartHeatResponse response =
-            RestartHeatResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Heat restarted successfully")
-                .build();
-        logReplayCommand("restartHeat", null);
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (IllegalStateException e) {
-        RestartHeatResponse response =
-            RestartHeatResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error processing restartHeat", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void skipHeat(Context ctx) {
-    logger.info("ClientCommand received: skip-heat");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      try {
-        race.skipHeat();
-        ClientSubscriptionManager.getInstance().autoSave(race);
-
-        SkipHeatResponse response =
-            SkipHeatResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Heat skipped successfully")
-                .build();
-        logReplayCommand("skipHeat", null);
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (IllegalStateException e) {
-        SkipHeatResponse response =
-            SkipHeatResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error processing skipHeat", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void skipRace(Context ctx) {
-    logger.info("ClientCommand received: skip-race");
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      if (race.getState() instanceof com.antigravity.race.states.RaceOver) { // fqn-collision
-        SkipRaceResponse response =
-            SkipRaceResponse.newBuilder()
-                .setSuccess(false)
-                .setMessage("Race is already over")
-                .build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-        return;
-      }
-
-      try {
-        race.skipRace();
-        ClientSubscriptionManager.getInstance().autoSave(race);
-
-        SkipRaceResponse response =
-            SkipRaceResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Race skipped successfully")
-                .build();
-        logReplayCommand("skipRace", null);
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (IllegalStateException e) {
-        SkipRaceResponse response =
-            SkipRaceResponse.newBuilder().setSuccess(false).setMessage(e.getMessage()).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error processing skipRace", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void deferHeat(Context ctx) {
-    logger.info("ClientCommand received: defer-heat");
-    logReplayCommand("deferHeat", null);
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      try {
-        race.deferHeat();
-        ClientSubscriptionManager.getInstance().autoSave(race);
-
-        DeferHeatResponse response = DeferHeatResponse.newBuilder().setSuccess(true).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } catch (IllegalStateException e) {
-        DeferHeatResponse response = DeferHeatResponse.newBuilder().setSuccess(false).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error processing deferHeat", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void updateInterfaceConfig(Context ctx) {
-    try {
-      UpdateInterfaceConfigRequest request =
-          UpdateInterfaceConfigRequest.parseFrom(ctx.bodyAsBytes());
-      ArduinoConfig config = null;
-      if (request.hasConfig()) {
-        config = ArduinoConfigConverter.fromProto(request.getConfig());
-      }
-      PhidgetConfig phidgetConfig = null;
-      if (request.hasPhidgetConfig()) {
-        phidgetConfig = PhidgetConfigConverter.fromProto(request.getPhidgetConfig());
-      }
-      WebSocketConfig websocketConfig = null;
-      if (request.hasWebsocketConfig()) {
-        websocketConfig = WebSocketConfigConverter.fromProto(request.getWebsocketConfig());
-      }
-      int interfaceIndex = request.getInterfaceIndex();
-
-      ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
-      IProtocol target = null;
-
-      if (current != null) {
-        List<IProtocol> protocols = current.getProtocols();
-        if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
-          IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol
-              || p instanceof PhidgetProtocol
-              || p instanceof WebSocketProtocol) {
-            target = p;
-          }
-        }
-      }
-
-      if (target != null) {
-        if (target instanceof ArduinoProtocol && config != null) {
-          ((ArduinoProtocol) target).updateConfig(config);
-        } else if (target instanceof PhidgetProtocol && phidgetConfig != null) {
-          ((PhidgetProtocol) target).updateConfig(phidgetConfig);
-        } else if (target instanceof WebSocketProtocol && websocketConfig != null) {
-          ((WebSocketProtocol) target).updateConfig(websocketConfig);
-        }
-
-        UpdateInterfaceConfigResponse response =
-            UpdateInterfaceConfigResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Configuration updated")
-                .build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } else {
-        String errMsg = "Target interface index " + interfaceIndex + " is invalid. ";
-        if (current == null) {
-          errMsg += "Current protocol delegate is null. ";
-        } else {
-          errMsg += "Protocol list size is " + current.getProtocols().size() + ". ";
-        }
-        UpdateInterfaceConfigResponse response =
-            UpdateInterfaceConfigResponse.newBuilder().setSuccess(false).setMessage(errMsg).build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error updating interface config", e);
-      ctx.status(500).result("Internal Server Error: " + e.toString());
-    }
-  }
-
-  private void initializeInterface(Context ctx) {
-    try {
-      InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
-
-      List<IProtocol> protocols = new ArrayList<>();
-      int interfaceIndex = 0;
-      interfaceIndex = addArduinoProtocols(request, protocols, interfaceIndex);
-      interfaceIndex = addTrackmateProtocols(request, protocols, interfaceIndex);
-      interfaceIndex = addPhidgetProtocols(request, protocols, interfaceIndex);
-      interfaceIndex = addBartProtocols(request, protocols, interfaceIndex);
-      interfaceIndex = addWebSocketProtocols(request, protocols, interfaceIndex);
-
-      if (protocols.isEmpty()) {
-        WebSocketConfig config = new WebSocketConfig("Default WebSocket", 7070);
-        WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
-        websocket.setInterfaceIndex(interfaceIndex++);
-        websocket.setListener(new TestInterfaceListener());
-        protocols.add(websocket);
-      }
-
-      ProtocolDelegate finalProtocol = new ProtocolDelegate(protocols);
-
-      // ClientSubscriptionManager handles mutual exclusion in setProtocol
-      ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
-
-      boolean success = finalProtocol.open();
-      if (success) {
-        logger.info(
-            "Interface initialized successfully. Setting initial relay power state to OFF for {} lanes.",
-            request.getLaneCount());
-        finalProtocol.setMainPower(false);
-        for (int i = 0; i < request.getLaneCount(); i++) {
-          finalProtocol.setLanePower(false, i);
-        }
-      }
-
-      InitializeInterfaceResponse response =
-          InitializeInterfaceResponse.newBuilder()
-              .setSuccess(success)
-              .setMessage(
-                  success
-                      ? "Interfaces initialized successfully"
-                      : "Failed to open one or more interfaces")
-              .build();
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
-    } catch (Throwable e) {
-      if (e instanceof ExceptionInInitializerError
-          || e instanceof NoClassDefFoundError
-          || e instanceof UnsatisfiedLinkError
-          || e instanceof LinkageError
-          || (e.getCause() != null
-              && (e.getCause() instanceof UnsatisfiedLinkError
-                  || e.getCause() instanceof LinkageError))) {
-        // TODO(dave): Phidget specific code should not be here.
-        logger.error("Phidget driver not installed. The Phidget22 driver must be installed.");
-        ctx.status(500).result("MISSING_PHIDGET_DRIVER");
-      } else if (e instanceof IllegalStateException) {
-        ctx.status(409).result(e.getMessage());
-      } else if (e instanceof InvalidProtocolBufferException) {
-        ctx.status(400).result("Invalid message: " + e.getMessage());
-      } else {
-        logger.error("Error initializing interface", e);
-        ctx.status(500).result("Internal Server Error: " + e.toString());
-      }
-    }
-  }
-
-  private int addArduinoProtocols(
-      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
-    List<com.antigravity.proto.ArduinoConfig> configsList = // fqn-collision
-        request.getConfigsList();
-    for (int i = 0; i < configsList.size(); i++) {
-      com.antigravity.proto.ArduinoConfig protoConfig = configsList.get(i); // fqn-collision
-      ArduinoConfig config = ArduinoConfigConverter.fromProto(protoConfig);
-      ArduinoProtocol arduino = new ArduinoProtocol(config, request.getLaneCount(), null);
-      arduino.setInterfaceIndex(interfaceIndex++);
-      arduino.setListener(new TestInterfaceListener());
-      protocols.add(arduino);
-    }
-    return interfaceIndex;
-  }
-
-  private int addTrackmateProtocols(
-      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
-    List<com.antigravity.proto.TrackmateConfig> tmConfigsList = // fqn-collision
-        request.getTrackmateConfigsList();
-    for (int i = 0; i < tmConfigsList.size(); i++) {
-      com.antigravity.proto.TrackmateConfig protoConfig = tmConfigsList.get(i); // fqn-collision
-      TrackmateConfig config = TrackmateConfigConverter.fromProto(protoConfig);
-      TrackmateProtocol trackmate = new TrackmateProtocol(config, request.getLaneCount());
-      trackmate.setInterfaceIndex(interfaceIndex++);
-      trackmate.setListener(new TestInterfaceListener());
-      protocols.add(trackmate);
-    }
-    return interfaceIndex;
-  }
-
-  private int addPhidgetProtocols(
-      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
-    List<com.antigravity.proto.PhidgetConfig> phidgetConfigsList = // fqn-collision
-        request.getPhidgetConfigsList();
-    for (int i = 0; i < phidgetConfigsList.size(); i++) {
-      com.antigravity.proto.PhidgetConfig protoConfig = phidgetConfigsList.get(i); // fqn-collision
-      PhidgetConfig config = PhidgetConfigConverter.fromProto(protoConfig);
-      PhidgetProtocol phidget = new PhidgetProtocol(config, request.getLaneCount(), null);
-      phidget.setInterfaceIndex(interfaceIndex++);
-      phidget.setListener(new TestInterfaceListener());
-      protocols.add(phidget);
-    }
-    return interfaceIndex;
-  }
-
-  private int addBartProtocols(
-      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
-    List<com.antigravity.proto.BartConfig> bartConfigsList = // fqn-collision
-        request.getBartConfigsList();
-    for (int i = 0; i < bartConfigsList.size(); i++) {
-      com.antigravity.proto.BartConfig protoConfig = bartConfigsList.get(i); // fqn-collision
-      BartConfig config = BartConfigConverter.fromProto(protoConfig);
-      BartProtocol bart = new BartProtocol(config, request.getLaneCount());
-      bart.setInterfaceIndex(interfaceIndex++);
-      bart.setListener(new TestInterfaceListener());
-      protocols.add(bart);
-    }
-    return interfaceIndex;
-  }
-
-  private int addWebSocketProtocols(
-      InitializeInterfaceRequest request, List<IProtocol> protocols, int interfaceIndex) {
-    List<com.antigravity.proto.WebSocketConfig> wsConfigsList = // fqn-collision
-        request.getWebsocketConfigsList();
-    for (int i = 0; i < wsConfigsList.size(); i++) {
-      com.antigravity.proto.WebSocketConfig protoConfig = wsConfigsList.get(i); // fqn-collision
-      WebSocketConfig config = WebSocketConfigConverter.fromProto(protoConfig);
-      WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
-      websocket.setInterfaceIndex(interfaceIndex++);
-      websocket.setListener(new TestInterfaceListener());
-      protocols.add(websocket);
-    }
-    return interfaceIndex;
-  }
-
-  private void changeLane(Context ctx) {
-    try {
-      int fromLane = Integer.parseInt(ctx.pathParam("fromLane"));
-      int toLane = Integer.parseInt(ctx.pathParam("toLane"));
-      logger.info("ClientCommand received: change-lane from {} to {}", fromLane, toLane);
-      logReplayCommand("changeLane", mapOf("fromLane", fromLane, "toLane", toLane));
-
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      race.changeLane(fromLane, toLane);
-      ctx.status(200).result("Lane changed");
-    } catch (Exception e) {
-      logger.error("Error changing lane", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void setMainPower(Context ctx) {
-    try {
-      boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
-      logger.info("ClientCommand received: set-main-power {}", on);
-      logReplayCommand("setMainPower", mapOf("on", on));
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race != null) {
-        race.setMainPower(on);
-        ctx.status(200).result("Main power set to " + on);
-      } else {
-        ProtocolDelegate protocol = ClientSubscriptionManager.getInstance().getProtocol();
-        if (protocol != null) {
-          protocol.setMainPower(on);
-          ctx.status(200).result("Main power set to " + on);
-        } else {
-          ctx.status(404).result("No active race or interface found");
-        }
-      }
-    } catch (Exception e) {
-      logger.error("Error setting main power", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void setLanePower(Context ctx) {
-    try {
-      int lane = Integer.parseInt(ctx.pathParam("lane"));
-      boolean on = Boolean.parseBoolean(ctx.queryParam("on"));
-      int laneIndex = lane - 1;
-      logger.info(
-          "ClientCommand received: set-lane-power lane param: {}, 0-based laneIndex: {}, on: {}",
-          lane,
-          laneIndex,
-          on);
-      logReplayCommand("setLanePower", mapOf("lane", lane, "on", on));
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race != null) {
-        race.setLanePower(on, laneIndex);
-        ctx.status(200).result("Lane " + lane + " power set to " + on);
-      } else {
-        ProtocolDelegate protocol = ClientSubscriptionManager.getInstance().getProtocol();
-        if (protocol != null) {
-          protocol.setLanePower(on, laneIndex);
-          ctx.status(200).result("Lane " + lane + " power set to " + on);
-        } else {
-          ctx.status(404).result("No active race or interface found");
-        }
-      }
-    } catch (Exception e) {
-      logger.error("Error setting lane power", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void getSerialPorts(Context ctx) {
-    try {
-      List<String> ports = SerialConnection.getAvailableSerialPorts();
-      ctx.json(ports);
-    } catch (Exception e) {
-      logger.error("Error getting serial ports", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void getBleDevices(Context ctx) {
-    try {
-      List<String> devices = BleConnection.getDiscoveredBleDevices();
-      logger.debug(
-          "GET /api/ble-devices - Raw hardware discovered BLE devices (count={}): {}",
-          devices.size(),
-          devices);
-      List<String> bartDevices = new ArrayList<>();
-      for (String dev : devices) {
-        if (dev != null && dev.toUpperCase().startsWith("BART")) {
-          bartDevices.add(dev);
-        }
-      }
-      logger.debug(
-          "GET /api/ble-devices - Filtered BART devices (count={}): {}",
-          bartDevices.size(),
-          bartDevices);
-      ctx.json(bartDevices);
-    } catch (Exception e) {
-      logger.error("Error getting BLE devices", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void getPhidgetDevices(Context ctx) {
-    try {
-      GetPhidgetDevicesResponse.Builder responseBuilder = GetPhidgetDevicesResponse.newBuilder();
-
-      java.util.Map<Integer, PhidgetDeviceInfo> deviceMap =
-          new java.util.concurrent.ConcurrentHashMap<>();
-      com.phidget22.Manager manager = new com.phidget22.Manager();
-
-      manager.addAttachListener(
-          e -> {
-            try {
-              com.phidget22.Phidget p = e.getChannel();
-              int digitalInputs = 0;
-              int digitalOutputs = 0;
-              int analogInputs = 0;
-              try {
-                digitalInputs = p.getDeviceChannelCount(com.phidget22.ChannelClass.DIGITAL_INPUT);
-              } catch (Throwable ignored) {
-              }
-              try {
-                digitalOutputs = p.getDeviceChannelCount(com.phidget22.ChannelClass.DIGITAL_OUTPUT);
-              } catch (Throwable ignored) {
-              }
-              try {
-                analogInputs =
-                    p.getDeviceChannelCount(com.phidget22.ChannelClass.VOLTAGE_RATIO_INPUT);
-                if (analogInputs == 0) {
-                  analogInputs = p.getDeviceChannelCount(com.phidget22.ChannelClass.VOLTAGE_INPUT);
-                }
-              } catch (Throwable ignored) {
-              }
-
-              PhidgetDeviceInfo info =
-                  PhidgetDeviceInfo.newBuilder()
-                      .setSerialNumber(p.getDeviceSerialNumber())
-                      .setName(p.getDeviceName())
-                      .setIsHubPort(p.getIsHubPortDevice())
-                      .setHubPort(p.getHubPort())
-                      .setDigitalInputCount(digitalInputs)
-                      .setDigitalOutputCount(digitalOutputs)
-                      .setAnalogInputCount(analogInputs)
-                      .build();
-              deviceMap.put(p.getDeviceSerialNumber(), info);
-            } catch (com.phidget22.PhidgetException ex) {
-              logger.error("Error getting phidget info", ex);
-            }
-          });
-
-      manager.open();
-      Thread.sleep(500);
-      manager.close();
-
-      responseBuilder.addAllDevices(deviceMap.values());
-      ctx.contentType("application/octet-stream").result(responseBuilder.build().toByteArray());
-    } catch (Throwable e) {
-      if (e instanceof ExceptionInInitializerError
-          || e instanceof NoClassDefFoundError
-          || e instanceof UnsatisfiedLinkError
-          || e instanceof LinkageError
-          || (e.getCause() != null
-              && (e.getCause() instanceof UnsatisfiedLinkError
-                  || e.getCause() instanceof LinkageError))) {
-        logger.error("Phidget driver not installed. The Phidget22 driver must be installed.");
-        ctx.status(500).result("MISSING_PHIDGET_DRIVER");
-      } else {
-        logger.error("Error getting Phidget devices", e);
-        ctx.status(500).result("Internal Server Error: " + e.getMessage());
-      }
-    }
-  }
-
-  private void setInterfacePinState(Context ctx) {
-    try {
-      SetInterfacePinStateRequest request =
-          SetInterfacePinStateRequest.parseFrom(ctx.bodyAsBytes());
-      int interfaceIndex = request.getInterfaceIndex();
-
-      ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
-      IProtocol target = null;
-
-      if (current != null) {
-        List<IProtocol> protocols = current.getProtocols();
-        if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
-          IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol) {
-            target = p;
-            ((ArduinoProtocol) p)
-                .setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
-          } else if (p instanceof PhidgetProtocol) {
-            target = p;
-            ((PhidgetProtocol) p)
-                .setPinState(request.getIsDigital(), request.getPin(), request.getIsHigh());
-          }
-        }
-      }
-
-      if (target != null) {
-        SetInterfacePinStateResponse response =
-            SetInterfacePinStateResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Pin state command sent")
-                .build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } else {
-        SetInterfacePinStateResponse response =
-            SetInterfacePinStateResponse.newBuilder()
-                .setSuccess(false)
-                .setMessage(
-                    "Target interface index "
-                        + interfaceIndex
-                        + " is invalid or not an ArduinoProtocol")
-                .build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error setting interface pin state", e);
-      ctx.status(500).result("Internal Server Error: " + e.toString());
-    }
-  }
-
-  private void setInterfaceRgbLedState(Context ctx) {
-    try {
-      SetInterfaceRgbLedStateRequest request =
-          SetInterfaceRgbLedStateRequest.parseFrom(ctx.bodyAsBytes());
-      int interfaceIndex = request.getInterfaceIndex();
-
-      ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
-      ArduinoProtocol target = null;
-
-      if (current != null) {
-        List<IProtocol> protocols = current.getProtocols();
-        if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
-          IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol) {
-            target = (ArduinoProtocol) p;
-          }
-        }
-      }
-
-      if (target != null) {
-        target.setStringRgbLedValues(request.getPin(), request.getLedsList());
-
-        SetInterfaceRgbLedStateResponse response =
-            SetInterfaceRgbLedStateResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("RGB LED state command sent")
-                .build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      } else {
-        SetInterfaceRgbLedStateResponse response =
-            SetInterfaceRgbLedStateResponse.newBuilder()
-                .setSuccess(false)
-                .setMessage(
-                    "Target interface index "
-                        + interfaceIndex
-                        + " is invalid or not an ArduinoProtocol")
-                .build();
-        ctx.contentType("application/octet-stream").result(response.toByteArray());
-      }
-    } catch (Exception e) {
-      logger.error("Error setting interface RGB LED state", e);
-      ctx.status(500).result("Internal Server Error: " + e.toString());
-    }
-  }
-
-  private void closeInterface(Context ctx) {
-    try {
-      logger.info("Explicit close-interface requested");
-      ClientSubscriptionManager.getInstance().setProtocol(null);
-      ctx.status(200).result("OK");
-    } catch (Exception e) {
-      logger.error("Error closing interface", e);
-      ctx.status(500).result("Error closing interface: " + e.getMessage());
-    }
-  }
-
-  private void resetLaneHeatData(Context ctx) {
-    try {
-      String laneParam = ctx.pathParam("lane");
-      int lane = "all".equalsIgnoreCase(laneParam) ? -1 : Integer.parseInt(laneParam);
-      logger.info("ClientCommand received: reset-lane-heat-data lane {}", lane);
-      logReplayCommand("resetLaneHeatData", mapOf("lane", lane));
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      Heat currentHeat = race.getCurrentHeat();
-      if (currentHeat == null) {
-        ctx.status(404).result("No active heat found");
-        return;
-      }
-
-      List<DriverHeatData> drivers = currentHeat.getDrivers();
-      if (lane == -1) {
-        for (DriverHeatData dhd : drivers) {
-          dhd.reset();
-        }
-      } else if (lane >= 0 && lane < drivers.size()) {
-        if (!race.getRaceModel().isPractice()) {
-          ctx.status(403).result("Resetting a specific lane is only allowed in practice races");
-          return;
-        }
-        drivers.get(lane).reset();
-      } else {
-        ctx.status(400).result("Invalid lane index: " + lane);
-        return;
-      }
-
-      race.updateAndBroadcastOverallStandings();
-      race.broadcast(race.createSnapshot());
-      ctx.status(200);
-    } catch (Exception e) {
-      logger.error("Error resetting heat data", e);
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void changeActualDriver(Context ctx) {
-    try {
-      int lane = Integer.parseInt(ctx.pathParam("lane"));
-      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
-      String driverId = body.get("driverId");
-      logger.info(
-          "ClientCommand received: change-actual-driver lane {} driverId {}", lane, driverId);
-      logReplayCommand("changeActualDriver", mapOf("lane", lane, "driverId", driverId));
-
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
-      if (lane >= 0 && lane < drivers.size()) {
-        DriverHeatData dhd = drivers.get(lane);
-        DatabaseService dbService = DatabaseService.getInstance();
-        List<Driver> driversList =
-            dbService.getDrivers(databaseContext, Collections.singletonList(driverId));
-        Driver driver = driversList.isEmpty() ? null : driversList.get(0);
-        if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
-          driver = Driver.EMPTY_DRIVER;
-        }
-
-        if (driver != null) {
-          TeamOptions options = race.getRaceModel().getTeamOptions();
-          if (options != null
-              && options.isRequirePitStopChangeDriver()
-              && race.getState() instanceof Racing) {
-            CarLocation loc = dhd.getCurrentLocation();
-            boolean inPit =
-                loc == CarLocation.PitRow
-                    || (loc != null
-                        && loc.getValue() >= CarLocation.PitBayBase.getValue()
-                        && loc.getValue()
-                            < CarLocation.PitBayBase.getValue()
-                                + race.getTrack().getLanes().size());
-            if (!inPit) {
-              ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
-              return;
-            }
-          }
-
-          if (race.getRaceModel().isPractice() && driver != null) {
-            for (DriverHeatData otherDhd : drivers) {
-              if (otherDhd != dhd && !Driver.EMPTY_DRIVER_ID.equals(driverId)) {
-                boolean matchesActual =
-                    otherDhd.getActualDriver() != null
-                        && otherDhd.getActualDriver().getEntityId() != null
-                        && otherDhd.getActualDriver().getEntityId().equals(driverId);
-
-                boolean matchesScheduled =
-                    otherDhd.getDriver() != null
-                        && otherDhd.getDriver().getDriver() != null
-                        && otherDhd.getDriver().getDriver().getEntityId() != null
-                        && otherDhd.getDriver().getDriver().getEntityId().equals(driverId);
-
-                if (matchesActual || matchesScheduled) {
-                  otherDhd.setActualDriver(Driver.EMPTY_DRIVER);
-                  otherDhd.setDriver(new RaceParticipant(Driver.EMPTY_DRIVER));
-                  otherDhd.reset();
-                }
-              }
-            }
-            dhd.reset();
-            dhd.setDriver(new RaceParticipant(driver));
-          }
-
-          dhd.setActualDriver(driver);
-          race.updateAndBroadcastOverallStandings();
-          race.broadcast(race.createSnapshot());
-          ctx.status(200);
-        } else {
-          ctx.status(404).result("RD_ERR_DRIVER_NOT_FOUND");
-        }
-      } else {
-        ctx.status(400).result("Invalid lane index: " + lane);
-      }
-    } catch (Exception e) {
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void changeHeatActualDriver(Context ctx) {
-    try {
-      int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
-      int lane = Integer.parseInt(ctx.pathParam("lane"));
-      Map<String, String> body = ctx.bodyAsClass(HashMap.class);
-      String driverId = body.get("driverId");
-      logger.info(
-          "ClientCommand received: change-heat-actual-driver heat {} lane {} driverId {}",
-          heatNumber,
-          lane,
-          driverId);
-      logReplayCommand(
-          "changeHeatActualDriver",
-          mapOf("heatNumber", heatNumber, "lane", lane, "driverId", driverId));
-
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      Heat targetHeat = null;
-      for (Heat h : race.getHeats()) {
-        if (h.getHeatNumber() == heatNumber) {
-          targetHeat = h;
-          break;
-        }
-      }
-
-      if (targetHeat == null) {
-        ctx.status(404).result("Heat not found: " + heatNumber);
-        return;
-      }
-
-      List<DriverHeatData> drivers = targetHeat.getDrivers();
-      if (lane >= 0 && lane < drivers.size()) {
-        DriverHeatData dhd = drivers.get(lane);
-        DatabaseService dbService = DatabaseService.getInstance();
-        List<Driver> driversList =
-            dbService.getDrivers(databaseContext, Collections.singletonList(driverId));
-        Driver driver = driversList.isEmpty() ? null : driversList.get(0);
-        if (Driver.EMPTY_DRIVER_ID.equals(driverId)) {
-          driver = Driver.EMPTY_DRIVER;
-        }
-
-        if (driver != null) {
-          if (heatNumber == race.getCurrentHeat().getHeatNumber()) {
-            TeamOptions options = race.getRaceModel().getTeamOptions();
-            if (options != null
-                && options.isRequirePitStopChangeDriver()
-                && race.getState() instanceof Racing) {
-              CarLocation loc = dhd.getCurrentLocation();
-              boolean inPit =
-                  loc == CarLocation.PitRow
-                      || (loc != null
-                          && loc.getValue() >= CarLocation.PitBayBase.getValue()
-                          && loc.getValue()
-                              < CarLocation.PitBayBase.getValue()
-                                  + race.getTrack().getLanes().size());
-              if (!inPit) {
-                ctx.status(403).result("RD_ERR_DRIVER_CHANGE_NOT_IN_PIT");
-                return;
-              }
-            }
-          }
-
-          if (race.getRaceModel().isPractice() && driver != null) {
-            for (DriverHeatData otherDhd : drivers) {
-              if (otherDhd != dhd
-                  && otherDhd.getActualDriver() != null
-                  && otherDhd.getActualDriver().getEntityId() != null
-                  && otherDhd.getActualDriver().getEntityId().equals(driverId)
-                  && !Driver.EMPTY_DRIVER_ID.equals(driverId)) {
-                otherDhd.setActualDriver(Driver.EMPTY_DRIVER);
-                otherDhd.reset();
-              }
-            }
-            dhd.reset();
-          }
-
-          dhd.setActualDriver(driver);
-          race.updateAndBroadcastOverallStandings();
-          race.broadcast(race.createSnapshot());
-          ctx.status(200);
-        } else {
-          ctx.status(404).result("RD_ERR_DRIVER_NOT_FOUND");
-        }
-      } else {
-        ctx.status(400).result("Invalid lane index: " + lane);
-      }
-    } catch (Exception e) {
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  void updateUserLaps(Context ctx) {
-    logger.info("ClientCommand received: update-user-laps");
-    try {
-      updateUserLaps(ctx, getPathParamMap(ctx), getBody(ctx));
-    } catch (Exception e) {
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  void updateUserLaps(Context ctx, Map<String, String> pathParams, Map<String, Object> body) {
-    try {
-      int lane = Integer.parseInt(pathParams.get("lane"));
-      logReplayCommand("updateUserLaps", mapOf("lane", lane, "body", body));
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      Heat currentHeat = race.getCurrentHeat();
-      if (currentHeat == null) {
-        ctx.status(404).result("No current heat found");
-        return;
-      }
-
-      if (!currentHeat.isStarted()) {
-        ctx.status(400).result("Cannot add lap sections to a heat that has not run yet");
-        return;
-      }
-
-      List<DriverHeatData> drivers = currentHeat.getDrivers();
-      if (lane >= 0 && lane < drivers.size()) {
-        DriverHeatData dhd = drivers.get(lane);
-        if (body.containsKey("userLaps")) {
-          double value = ((Number) body.get("userLaps")).doubleValue();
-          dhd.setUserLaps(value);
-
-          // Recalculate standings because laps changed
-          currentHeat.initializeStandings(
-              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
-          race.updateAndBroadcastOverallStandings();
-          race.updateScoreRecords();
-          race.broadcast(race.createSnapshot());
-
-          ctx.status(200)
-              .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
-        } else {
-          ctx.status(400).result("Missing userLaps in body");
-        }
-      } else {
-        ctx.status(400).result("Invalid lane index: " + lane);
-      }
-    } catch (Exception e) {
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void updateHeatUserLaps(Context ctx) {
-    try {
-      int heatNumber = Integer.parseInt(ctx.pathParam("heatNumber"));
-      int lane = Integer.parseInt(ctx.pathParam("lane"));
-      Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
-      logger.info(
-          "ClientCommand received: update-heat-user-laps heat {} lane {}", heatNumber, lane);
-      logReplayCommand(
-          "updateHeatUserLaps", mapOf("heatNumber", heatNumber, "lane", lane, "body", body));
-
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      Heat targetHeat = null;
-      for (Heat h : race.getHeats()) {
-        if (h.getHeatNumber() == heatNumber) {
-          targetHeat = h;
-          break;
-        }
-      }
-
-      if (targetHeat == null) {
-        ctx.status(404).result("Heat not found: " + heatNumber);
-        return;
-      }
-
-      if (!targetHeat.isStarted()) {
-        ctx.status(400).result("Cannot add lap sections to a heat that has not run yet");
-        return;
-      }
-
-      List<DriverHeatData> drivers = targetHeat.getDrivers();
-      if (lane >= 0 && lane < drivers.size()) {
-        DriverHeatData dhd = drivers.get(lane);
-        if (body.containsKey("userLaps")) {
-          double value = ((Number) body.get("userLaps")).doubleValue();
-          dhd.setUserLaps(value);
-
-          // Recalculate standings because laps changed
-          targetHeat.initializeStandings(
-              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
-          race.updateAndBroadcastOverallStandings();
-          race.updateScoreRecords();
-          race.broadcast(race.createSnapshot());
-
-          ctx.status(200)
-              .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
-        } else {
-          ctx.status(400).result("Missing userLaps in body");
-        }
-      } else {
-        ctx.status(400).result("Invalid lane index: " + lane);
-      }
-    } catch (Exception e) {
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void updateBatchUserLaps(Context ctx) {
-    logger.info("ClientCommand received: update-batch-user-laps");
-    try {
-      List<Map<String, Object>> updates = ctx.bodyAsClass(List.class);
-      logReplayCommand("updateBatchUserLaps", mapOf("updates", updates));
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      Set<Heat> heatsToRecalculate = new java.util.HashSet<>();
-
-      for (Map<String, Object> update : updates) {
-        int heatNumber = ((Number) update.get("heatNumber")).intValue();
-        int lane = ((Number) update.get("laneIndex")).intValue();
-        double userLaps = ((Number) update.get("userLaps")).doubleValue();
-
-        Heat targetHeat = null;
-        for (Heat h : race.getHeats()) {
-          if (h.getHeatNumber() == heatNumber) {
-            targetHeat = h;
-            break;
-          }
-        }
-
-        if (targetHeat == null) {
-          ctx.status(404).result("Heat not found: " + heatNumber);
-          return;
-        }
-
-        if (!targetHeat.isStarted()) {
-          ctx.status(400)
-              .result("Cannot add lap sections to a heat that has not run yet: " + heatNumber);
-          return;
-        }
-
-        List<DriverHeatData> drivers = targetHeat.getDrivers();
-        if (lane >= 0 && lane < drivers.size()) {
-          DriverHeatData dhd = drivers.get(lane);
-          dhd.setUserLaps(userLaps);
-          heatsToRecalculate.add(targetHeat);
-        } else {
-          ctx.status(400).result("Invalid lane index: " + lane + " for heat " + heatNumber);
-          return;
-        }
-      }
-
-      // Recalculate standings for each modified heat
-      for (Heat heat : heatsToRecalculate) {
-        heat.initializeStandings(
-            race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
-      }
-      race.updateAndBroadcastOverallStandings();
-      race.updateScoreRecords();
-      race.broadcast(race.createSnapshot());
-
-      ctx.status(200).result("OK");
-    } catch (Exception e) {
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
-  }
-
-  private void exportRaceCsv(Context ctx) {
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      String csv;
-      synchronized (race) {
-        OverallStandings standings =
-            new OverallStandings(
-                race.getRaceModel().getHeatScoring(),
-                race.getRaceModel().getOverallScoring(),
-                race.getRaceModel().getGroupOptions(),
-                race.getRaceModel().isPractice());
-        standings.recalculate(race.getDrivers(), race.getHeats());
-        csv = CsvExporter.export(race);
-      }
-
-      ctx.contentType("text/csv")
-          .header("Content-Disposition", "attachment; filename=\"race_export.csv\"")
-          .result(csv);
-    } catch (Exception e) {
-      logger.error("Error exporting CSV", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  void exportRaceXls(Context ctx) {
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      InputStream is = loadTemplateInputStream(ctx);
-      if (is == null) {
-        return;
-      }
-
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-      synchronized (race) {
-        List<RaceParticipant> driversCopy = new ArrayList<>(race.getDrivers());
-        OverallStandings standings =
-            new OverallStandings(
-                race.getRaceModel().getHeatScoring(),
-                race.getRaceModel().getOverallScoring(),
-                race.getRaceModel().getGroupOptions(),
-                race.getRaceModel().isPractice());
-        standings.recalculate(driversCopy, race.getHeats());
-
-        org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
-        jxlsContext.putVar("race", race);
-        jxlsContext.putVar("standings", driversCopy);
-
-        List<Heat> runHeats = new ArrayList<>();
-        List<String> heatSheetNames = new ArrayList<>();
-        for (Heat h : race.getHeats()) {
-          if (h.isStarted()
-              || race.getCurrentHeat() != null
-                  && h.getHeatNumber() <= race.getCurrentHeat().getHeatNumber()) {
-            runHeats.add(h);
-            heatSheetNames.add("Heat " + h.getHeatNumber());
-          }
-        }
-        if (runHeats.isEmpty()) {
-          // Just in case, to prevent Jxls multisheet failing with empty list
-          runHeats.add(new Heat());
-          heatSheetNames.add("Heat 1");
-        }
-        jxlsContext.putVar("heats", runHeats);
-        jxlsContext.putVar(
-            "heatSheetNames", RaceStatisticsUtils.makeSheetNamesUnique(heatSheetNames));
-
-        List<Heat> allHeats =
-            race.getHeats() != null && !race.getHeats().isEmpty()
-                ? new ArrayList<>(race.getHeats())
-                : Collections.singletonList(new Heat());
-        jxlsContext.putVar("allHeats", allHeats);
-
-        List<DriverAnalysisSummary> driverSummaries = new ArrayList<>();
-        List<String> driverSheetNames = new ArrayList<>();
-        RaceStatisticsUtils.prepareExportData(
-            race, driversCopy, runHeats, driverSummaries, driverSheetNames);
-
-        jxlsContext.putVar("driverSummaries", driverSummaries);
-        jxlsContext.putVar("driverSheetNames", driverSheetNames);
-
-        int numLanes = RaceStatisticsUtils.determineTrackLanes(race, runHeats);
-        InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is, numLanes, race);
-        org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
-      }
-
-      byte[] rawBytes = os.toByteArray();
-      byte[] resultBytes = rawBytes;
-      try (org.apache.poi.xssf.usermodel.XSSFWorkbook outputWb =
-          new org.apache.poi.xssf.usermodel.XSSFWorkbook(new ByteArrayInputStream(rawBytes))) {
-        RaceStatisticsUtils.removeAllCommentsAndVmlDrawings(outputWb);
-        ByteArrayOutputStream cleanOs = new ByteArrayOutputStream();
-        outputWb.write(cleanOs);
-        resultBytes = cleanOs.toByteArray();
-      } catch (Exception e) {
-        logger.warn("Failed to clean up workbook comments/vml drawings; returning raw bytes", e);
-      }
-
-      if (resultBytes.length == 0) {
-        logger.error("Generated Excel workbook output is 0 bytes");
-        ctx.status(500).result("Error: Generated Excel file was empty");
-        return;
-      }
-
-      ctx.contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-          .header("Content-Disposition", "attachment; filename=\"race_export.xlsx\"")
-          .result(resultBytes);
-    } catch (Exception e) {
-      logger.error("Error exporting XLS", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private InputStream loadTemplateInputStream(Context ctx) {
-    String base64Template = null;
-    try {
-      Map<String, Object> body = ctx.bodyAsClass(Map.class);
-      if (body != null) {
-        base64Template = (String) body.get("templateBase64");
-      }
-    } catch (Exception ignored) {
-      // Body might be empty
-    }
-
-    InputStream is = null;
-    if (base64Template != null && !base64Template.trim().isEmpty()) {
-      try {
-        String raw = base64Template.trim();
-        if (raw.contains(",")) {
-          raw = raw.substring(raw.indexOf(",") + 1);
-        }
-        byte[] decoded = Base64.getDecoder().decode(raw);
-        if (decoded != null && decoded.length > 0) {
-          is = new ByteArrayInputStream(decoded);
-        }
-      } catch (Exception e) {
-        logger.warn("Custom base64 template decoding failed; falling back to default template", e);
-      }
-    }
-
-    if (is == null) {
-      is = getClass().getResourceAsStream("/race_export_template.xlsx");
-      if (is == null) {
-        is = getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
-      }
-      if (is == null) {
-        logger.error("Default template race_export_template.xlsx not found");
-        ctx.status(500).result("Default template not found");
-        return null;
-      }
-    }
-    return is;
+    raceControlHandler.abortTimers(ctx);
   }
 
   void saveRace(Context ctx) {
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      if (race.getState() instanceof Racing) {
-        ctx.status(400).result("Cannot save race while in racing state");
-        return;
-      }
-
-      RaceSaveData saveData = new RaceSaveData();
-      saveData.setModel(race.getRaceModel());
-      saveData.setTrack(race.getTrack());
-      saveData.setDrivers(race.getDrivers());
-      saveData.setHeats(race.getHeats());
-      saveData.setStateClassName(race.getState().getClass().getName());
-      saveData.setAccumulatedRaceTime(race.getRaceTime());
-      saveData.setHasRacedInCurrentHeat(race.hasRacedInCurrentHeat());
-      saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
-
-      // We need to know if it's demo mode.
-      // Protocols list isn't exposed directly with its type, but createProtocols
-      // takes isDemoMode.
-      // We can check if protocols has Demo protocol or check the parameter passed on
-      // init.
-      // Currently, it's not saved on the Race object.
-      // Let's assume for now, or check if any protocol is Demo.
-      saveData.setDemoMode(race.isDemoMode());
-      saveData.setStatistics(race.getStatistics());
-      saveData.setAutoSave(false);
-
-      LocalDateTime now = LocalDateTime.now();
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
-      String timestamp = now.format(formatter);
-      String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
-      raceName = raceName.replaceAll("[^a-zA-Z0-9_-]", "_");
-      String saveName = timestamp + "_" + raceName + ".json";
-      saveData.setSaveName(saveName);
-
-      DatabaseService dbService = DatabaseService.getInstance();
-      dbService.saveManualRace(databaseContext, saveData);
-
-      ctx.status(200).result("Race saved successfully: " + saveName);
-    } catch (Exception e) {
-      logger.error("Error saving race", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
+    raceExportSaveHandler.saveRace(ctx);
   }
 
   void getSavedRaces(Context ctx) {
-    try {
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext, scope);
-      List<String> files =
-          saves.stream().map(RaceSaveData::getSaveName).collect(Collectors.toList());
-      ObjectMapper mapper = getObjectMapper();
-      ctx.contentType("application/json").result(mapper.writeValueAsString(files));
-    } catch (Exception e) {
-      logger.error("Error getting saved races", e);
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
+    raceExportSaveHandler.getSavedRaces(ctx);
   }
 
   void deleteSavedRace(Context ctx) {
-    String saveName = ctx.pathParam("filename");
-    try {
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      DatabaseService dbService = DatabaseService.getInstance();
-      boolean deleted = dbService.deleteSavedRace(databaseContext, saveName, scope);
-      if (deleted) {
-        ctx.status(200).result("Save deleted: " + saveName);
-      } else {
-        ctx.status(404).result("Save not found or failed to delete: " + saveName);
-      }
-    } catch (Exception e) {
-      logger.error("Error deleting saved race: {}", saveName, e);
-      ctx.status(500).result("Error: " + e.getMessage());
-    }
+    raceExportSaveHandler.deleteSavedRace(ctx);
   }
 
-  @SuppressWarnings("unchecked")
-  private void loadRace(Context ctx) {
-    try {
-      Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
-      String saveName = (String) body.get("filename");
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      if (saveName == null) {
-        ctx.status(400).result("Filename is required");
-        return;
-      }
+  void exportRaceXls(Context ctx) {
+    raceExportSaveHandler.exportRaceXls(ctx);
+  }
 
-      DatabaseService dbService = DatabaseService.getInstance();
-      RaceSaveData saveData = dbService.getSavedRace(databaseContext, saveName, scope);
+  void updateUserLaps(Context ctx) {
+    driverLaneHeatHandler.updateUserLaps(ctx);
+  }
 
-      if (saveData == null) {
-        ctx.status(404).result("Save file not found");
-        return;
-      }
+  void updateUserLaps(Context ctx, Map<String, String> pathParams, Map<String, Object> body) {
+    driverLaneHeatHandler.updateUserLaps(ctx, pathParams, body);
+  }
 
-      // Compare Track
-      Track savedTrack = saveData.getTrack();
-      Track dbTrack =
-          DatabaseService.getInstance()
-              .getTrack(databaseContext, saveData.getModel().getTrackEntityId());
+  private void updateHeatUserLaps(Context ctx) {
+    driverLaneHeatHandler.updateHeatUserLaps(ctx);
+  }
 
-      Track trackToUse = savedTrack;
-      if (dbTrack != null && dbTrack.getLanes().size() == savedTrack.getLanes().size()) {
-        trackToUse = dbTrack;
-      }
+  private void updateBatchUserLaps(Context ctx) {
+    driverLaneHeatHandler.updateBatchUserLaps(ctx);
+  }
 
-      // Re-initialize Standings
-      if (saveData.getHeats() != null) {
-        for (Heat heat : saveData.getHeats()) {
-          heat.initializeStandings(
-              saveData.getModel().getHeatScoring(), saveData.getModel().isPractice());
-        }
-      }
+  private void resetLaneHeatData(Context ctx) {
+    driverLaneHeatHandler.resetLaneHeatData(ctx);
+  }
 
-      // Recreate Race
-      com.antigravity.race.Race race = // fqn-collision
-          new com.antigravity.race.Race.Builder() // fqn-collision
-              .model(saveData.getModel())
-              .drivers(saveData.getDrivers())
-              .track(trackToUse)
-              .heats(saveData.getHeats())
-              .currentHeatIndex(saveData.getCurrentHeatIndex())
-              .accumulatedRaceTime(saveData.getAccumulatedRaceTime())
-              .hasRacedInCurrentHeat(saveData.isHasRacedInCurrentHeat())
-              .autoStartFired(saveData.isAutoStartFired())
-              .autoAdvanceFired(saveData.isAutoAdvanceFired())
-              .stateClassName(saveData.getStateClassName())
-              .isDemoMode(saveData.isDemoMode())
-              .statistics(saveData.getStatistics())
-              .databaseContext(databaseContext)
-              .build();
+  private void changeHeatActualDriver(Context ctx) {
+    driverLaneHeatHandler.changeHeatActualDriver(ctx);
+  }
 
-      ClientSubscriptionManager.getInstance().setRace(race);
-      race.init(); // Open protocols
-      AnalyticsService.getInstance().trackRaceStart(race);
+  private void getPhidgetDevices(Context ctx) {
+    interfaceHardwareHandler.getPhidgetDevices(ctx);
+  }
 
-      // Broadcast full race state to all current subscribers so they render the
-      // loaded race in the
-      // UI.
-      ClientSubscriptionManager.getInstance().broadcast(race.createSnapshot());
+  private void getBleDevices(Context ctx) {
+    interfaceHardwareHandler.getBleDevices(ctx);
+  }
 
-      ctx.status(200).result("Race loaded successfully");
-    } catch (Exception e) {
-      logger.error("Error loading race", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
+  private void setInterfacePinState(Context ctx) {
+    interfaceHardwareHandler.setInterfacePinState(ctx);
   }
 
   void getAnalyticsConfig(Context ctx) {
-    Map<String, String> config = new HashMap<>();
-    config.put("clientId", AnalyticsService.getInstance().getClientId());
-    config.put("measurementId", AnalyticsService.getInstance().getMeasurementId());
-    setJson(ctx, config);
+    analyticsHandler.getAnalyticsConfig(ctx, this);
   }
 
   void toggleAnalytics(Context ctx) {
-    String remoteAddr = getRemoteAddr(ctx);
-    String remoteHost = getRemoteHost(ctx);
-
-    boolean isLocalhost = NetworkUtils.isLocalhost(remoteAddr, remoteHost);
-
-    if (!isLocalhost) {
-      setStatus(ctx, 403);
-      setResult(
-          ctx,
-          "Analytics settings can only be changed from a local connection. Detected: "
-              + remoteAddr);
-      return;
-    }
-
-    try {
-      ObjectMapper mapper = getObjectMapper();
-      AnalyticsToggleRequest request =
-          mapper.readValue(getBodyBytes(ctx), AnalyticsToggleRequest.class);
-      if (request == null) {
-        setStatus(ctx, 400);
-        setResult(ctx, "Invalid request body. Expected JSON with 'enabled' field.");
-        return;
-      }
-
-      boolean enabled = request.isEnabled();
-      AnalyticsService.getInstance().setUserEnabled(enabled);
-      setStatus(ctx, 200);
-      setResult(ctx, "Analytics status updated to " + enabled);
-    } catch (Exception e) {
-      setStatus(ctx, 500);
-      setResult(ctx, "Internal Error: " + e.getMessage());
-    }
+    analyticsHandler.toggleAnalytics(ctx, this);
   }
 
-  String getRemoteAddr(Context ctx) {
-    return ctx.req.getRemoteAddr();
+  @Override
+  public String getRemoteAddr(Context ctx) {
+    return analyticsHandler.getRemoteAddr(ctx);
   }
 
-  String getRemoteHost(Context ctx) {
-    return ctx.req.getRemoteHost();
+  @Override
+  public String getRemoteHost(Context ctx) {
+    return analyticsHandler.getRemoteHost(ctx);
   }
 
-  void setStatus(Context ctx, int status) {
-    ctx.status(status);
+  @Override
+  public void setStatus(Context ctx, int status) {
+    analyticsHandler.setStatus(ctx, status);
   }
 
-  void setResult(Context ctx, String result) {
-    ctx.result(result);
+  @Override
+  public void setResult(Context ctx, String result) {
+    analyticsHandler.setResult(ctx, result);
   }
 
-  void setJson(Context ctx, Object obj) {
-    ctx.json(obj);
+  @Override
+  public void setJson(Context ctx, Object obj) {
+    analyticsHandler.setJson(ctx, obj);
   }
 
-  byte[] getBodyBytes(Context ctx) {
-    return ctx.bodyAsBytes();
+  @Override
+  public byte[] getBodyBytes(Context ctx) {
+    return analyticsHandler.getBodyBytes(ctx);
   }
 
-  ObjectMapper getObjectMapper() {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.enable(SerializationFeature.INDENT_OUTPUT);
-    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    return mapper;
+  @Override
+  public ObjectMapper getObjectMapper() {
+    return analyticsHandler.getObjectMapper();
   }
 
-  Map<String, String> getPathParamMap(Context ctx) {
-    return ctx.pathParamMap();
+  @Override
+  public Map<String, String> getPathParamMap(Context ctx) {
+    return analyticsHandler.getPathParamMap(ctx);
   }
 
-  Map<String, Object> getBody(Context ctx) {
-    return ctx.bodyAsClass(HashMap.class);
+  @Override
+  public Map<String, Object> getBody(Context ctx) {
+    return analyticsHandler.getBody(ctx);
   }
 
-  private void modifyHeats(Context ctx) {
-    try {
-      ModifyHeatsRequest request = ModifyHeatsRequest.parseFrom(ctx.bodyAsBytes());
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      ModifyHeatsResponse response = race.modifyHeats(request);
-      logReplayCommand(
-          "modifyHeats",
-          mapOf(
-              "requestBase64",
-              java.util.Base64.getEncoder().encodeToString(request.toByteArray())));
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
-    } catch (Exception e) {
-      logger.error("Error modifying heats", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void regenerateHeats(Context ctx) {
-    try {
-      RegenerateHeatsRequest request = RegenerateHeatsRequest.parseFrom(ctx.bodyAsBytes());
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      RegenerateHeatsResponse response = race.regenerateHeats(request);
-      logReplayCommand(
-          "regenerateHeats",
-          mapOf(
-              "requestBase64",
-              java.util.Base64.getEncoder().encodeToString(request.toByteArray())));
-      ctx.contentType("application/octet-stream").result(response.toByteArray());
-    } catch (Exception e) {
-      logger.error("Error regenerating heats", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
-    }
-  }
-
-  private void finalizeModifyHeats(Context ctx) {
-    try {
-      com.antigravity.race.Race race = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-      if (race == null) {
-        ctx.status(404).result("No active race found");
-        return;
-      }
-
-      boolean allStarted = !race.getHeats().isEmpty();
-      Heat firstUnstarted = null;
-      for (Heat h : race.getHeats()) {
-        if (!h.isStarted()) {
-          allStarted = false;
-          if (firstUnstarted == null) {
-            firstUnstarted = h;
-          }
-        }
-      }
-
-      if (allStarted && !(race.getState() instanceof RaceOver)) {
-        race.changeState(new RaceOver());
-      } else if (race.getCurrentHeat() != null
-          && race.getCurrentHeat().isStarted()
-          && race.getState() instanceof NotStarted) {
-        // Safety net: current heat is already completed but state allows re-starting
-        // it.
-        // Advance to the first unstarted heat, or transition to RaceOver if none.
-        if (firstUnstarted != null) {
-          race.setCurrentHeat(firstUnstarted);
-          race.broadcast(race.createSnapshot());
-        } else {
-          race.changeState(new RaceOver());
-        }
-      }
-      logReplayCommand("finalizeModifyHeats", null);
-      ctx.status(200).result("OK");
-    } catch (Exception e) {
-      logger.error("Error finalizing modify heats", e);
-      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+  public static class ExportLapData extends RaceExportSaveHandler.ExportLapData {
+    public ExportLapData(
+        String driverName,
+        String actualDriverName,
+        int heatNumber,
+        int laneNumber,
+        double absoluteHeatLapTime,
+        double absoluteLapTime,
+        double lapTime,
+        java.util.List<Double> segments) {
+      super(
+          driverName,
+          actualDriverName,
+          heatNumber,
+          laneNumber,
+          absoluteHeatLapTime,
+          absoluteLapTime,
+          lapTime,
+          segments);
     }
   }
 }

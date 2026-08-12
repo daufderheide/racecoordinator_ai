@@ -2,53 +2,22 @@ package com.antigravity.handlers;
 
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
-import com.antigravity.context.RaceScope;
-import com.antigravity.models.CustomHeat;
-import com.antigravity.models.CustomRotation;
 import com.antigravity.models.Driver;
-import com.antigravity.models.DriverStatistics;
 import com.antigravity.models.Event;
-import com.antigravity.models.GlobalStatistics;
-import com.antigravity.models.GroupOptions;
-import com.antigravity.models.HeatRotationType;
-import com.antigravity.models.HeatScoring;
-import com.antigravity.models.Lane;
-import com.antigravity.models.OverallScoring;
-import com.antigravity.models.PredictionEvaluationRecord;
 import com.antigravity.models.Race;
-import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Season;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
-import com.antigravity.proto.AssetMessage;
-import com.antigravity.race.ClientSubscriptionManager;
-import com.antigravity.race.DriverHeatData;
-import com.antigravity.race.Heat;
-import com.antigravity.race.HeatExecutionManager;
-import com.antigravity.race.RaceParticipant;
-import com.antigravity.race.prediction.PredictionEngine;
 import com.antigravity.repository.SqliteRepository;
-import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
-import com.antigravity.service.RacePredictionService;
-import com.antigravity.util.CsvExporter;
-import com.antigravity.util.RequestContextUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import io.javalin.http.UploadedFile;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("checkstyle:FileLength")
 public class DatabaseTaskHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(DatabaseTaskHandler.class);
@@ -56,9 +25,11 @@ public class DatabaseTaskHandler {
   private final SqliteRepository<Driver> driverRepository;
   private final SqliteRepository<Team> teamRepository;
   private final SqliteRepository<Track> trackRepository;
-  private final SqliteRepository<Race> raceRepository;
   private final SqliteRepository<Event> eventRepository;
   private final SqliteRepository<Season> seasonRepository;
+
+  private final HistoryPredictionTaskHandler historyPredictionTaskHandler;
+  private final RaceHeatTaskHandler raceHeatTaskHandler;
 
   public static class RaceResponse {
     @com.fasterxml.jackson.annotation.JsonUnwrapped public Race race;
@@ -77,256 +48,57 @@ public class DatabaseTaskHandler {
     this.driverRepository = new SqliteRepository<>(databaseContext, "drivers", Driver.class);
     this.teamRepository = new SqliteRepository<>(databaseContext, "teams", Team.class);
     this.trackRepository = new SqliteRepository<>(databaseContext, "tracks", Track.class);
-    this.raceRepository = new SqliteRepository<>(databaseContext, "races", Race.class);
     this.eventRepository = new SqliteRepository<>(databaseContext, "events", Event.class);
     this.seasonRepository = new SqliteRepository<>(databaseContext, "seasons", Season.class);
 
+    // Initialize modular sub-handlers
+    new DatabaseManagementTaskHandler(databaseContext, app);
+    this.historyPredictionTaskHandler = new HistoryPredictionTaskHandler(databaseContext, app);
+    this.raceHeatTaskHandler = new RaceHeatTaskHandler(databaseContext, app);
+
+    // Driver Endpoints
     app.get("/api/drivers", this::getDrivers, Role.VIEWER);
     app.post("/api/drivers", this::createDriver, Role.DIRECTOR);
     app.put("/api/drivers/{id}", this::updateDriver, Role.DIRECTOR);
     app.delete("/api/drivers/{id}", this::deleteDriver, Role.DIRECTOR);
+
+    // Track Endpoints
     app.get("/api/tracks", this::getTracks, Role.VIEWER);
-    app.get("/api/races", this::getRaces, Role.VIEWER);
+    app.get("/api/tracks/factory-settings", this::getFactoryTrack, Role.VIEWER);
+    app.post("/api/tracks", this::createTrack, Role.DIRECTOR);
+    app.put("/api/tracks/{id}", this::updateTrack, Role.DIRECTOR);
+    app.delete("/api/tracks/{id}", this::deleteTrack, Role.DIRECTOR);
+
+    // Team Endpoints
     app.get("/api/teams", this::getTeams, Role.VIEWER);
     app.post("/api/teams", this::createTeam, Role.DIRECTOR);
     app.put("/api/teams/{id}", this::updateTeam, Role.DIRECTOR);
     app.delete("/api/teams/{id}", this::deleteTeam, Role.DIRECTOR);
 
+    // Event Endpoints
     app.get("/api/events", this::getEvents, Role.VIEWER);
     app.get("/api/events/{id}", this::getEventById, Role.VIEWER);
     app.post("/api/events", this::handleCreateEvent, Role.DIRECTOR);
     app.put("/api/events/{id}", this::handleUpdateEvent, Role.DIRECTOR);
     app.delete("/api/events/{id}", this::handleDeleteEvent, Role.DIRECTOR);
 
+    // Season Endpoints
     app.get("/api/seasons", this::getSeasons, Role.VIEWER);
     app.get("/api/seasons/{id}", this::getSeasonById, Role.VIEWER);
     app.post("/api/seasons", this::handleCreateSeason, Role.DIRECTOR);
     app.put("/api/seasons/{id}", this::handleUpdateSeason, Role.DIRECTOR);
     app.delete("/api/seasons/{id}", this::handleDeleteSeason, Role.DIRECTOR);
-
-    app.get("/api/tracks/factory-settings", this::getFactoryTrack, Role.VIEWER);
-
-    app.post("/api/tracks", this::createTrack, Role.DIRECTOR);
-    app.put("/api/tracks/{id}", this::updateTrack, Role.DIRECTOR);
-    app.delete("/api/tracks/{id}", this::deleteTrack, Role.DIRECTOR);
-
-    app.post("/api/races", this::handleCreateRace, Role.DIRECTOR);
-    app.put("/api/races/{id}", this::handleUpdateRace, Role.DIRECTOR);
-    app.delete("/api/races/{id}", this::handleDeleteRace, Role.DIRECTOR);
-    app.post("/api/races/{id}/generate-heats", this::generateHeats, Role.DIRECTOR);
-    app.post("/api/heats/preview", this::previewHeats, Role.DIRECTOR);
-
-    // Database Management Endpoints
-    app.get("/api/databases", this::listDatabases, Role.ADMIN);
-    app.post("/api/databases/switch", this::switchDatabase, Role.ADMIN);
-    app.post("/api/databases/create", this::createDatabase, Role.ADMIN);
-    app.post("/api/databases/copy", this::copyDatabase, Role.ADMIN);
-    app.post("/api/databases/reset", this::resetDatabase, Role.ADMIN);
-    app.post("/api/databases/delete", this::deleteDatabase, Role.ADMIN);
-    app.get("/api/databases/current", this::getCurrentDatabase, Role.ADMIN);
-    app.get("/api/databases/{name}/export", this::exportDatabase, Role.ADMIN);
-    app.post("/api/databases/import", this::importDatabase, Role.ADMIN);
-
-    // History Data Endpoints
-    app.get("/api/history/races", this::getRaceHistoryList, Role.VIEWER);
-    app.get("/api/history/races/{id}", this::getRaceHistoryById, Role.VIEWER);
-    app.get("/api/history/races/{id}/export", this::exportRaceHistoryCsv, Role.VIEWER);
-    app.get("/api/history/stats", this::getGlobalStatistics, Role.VIEWER);
-    app.get("/api/history/drivers/{driverId}/stats", this::getDriverStatistics, Role.VIEWER);
-    app.get("/api/predictions/races/{id}", this::getRacePredictionRecord, Role.VIEWER);
-    app.get("/api/predictions/evaluations/{id}", this::getPredictionEvaluationRecord, Role.VIEWER);
   }
 
-  // Removed collection getters
+  // --- Driver Handlers ---
 
-  // --- Database Management Handlers ---
-
-  private void listDatabases(Context ctx) {
-    try {
-      List<String> dbNames = databaseContext.listDatabases();
-      List<DatabaseContext.DatabaseStats> statsList = new ArrayList<>();
-      for (String dbName : dbNames) {
-        // Filter out minimal system DBs if needed, or just show all
-        if ("admin".equals(dbName) || "local".equals(dbName) || "config".equals(dbName)) {
-          continue;
-        }
-        statsList.add(databaseContext.getDatabaseStats(dbName));
-      }
-      ctx.json(statsList);
-    } catch (Exception e) {
-      logger.error("Error listing databases", e);
-      ctx.status(500).result("Error listing databases: " + e.getMessage());
-    }
+  public void getDrivers(Context ctx) {
+    ctx.json(driverRepository.findAll());
   }
-
-  private void switchDatabase(Context ctx) {
-    try {
-      Map<String, String> body = ctx.bodyAsClass(Map.class);
-      String name = body.get("name");
-      if (name == null || name.isEmpty()) {
-        ctx.status(400).result("Database name is required");
-        return;
-      }
-      databaseContext.switchDatabase(name);
-      ctx.json(databaseContext.getDatabaseStats(name));
-    } catch (Exception e) {
-      logger.error("Error switching database", e);
-      ctx.status(500).result("Error switching database: " + e.getMessage());
-    }
-  }
-
-  private void createDatabase(Context ctx) {
-    try {
-      Map<String, String> body = ctx.bodyAsClass(Map.class);
-      String name = body.get("name");
-      if (name == null || name.isEmpty()) {
-        ctx.status(400).result("Database name is required");
-        return;
-      }
-
-      // Check if database already exists
-      List<String> existingDbs = databaseContext.listDatabases();
-      if (existingDbs.contains(name)) {
-        ctx.status(409).result("Database already exists");
-        return;
-      }
-
-      // Explicitly create the database to ensure it exists in lists
-      databaseContext.createDatabase(name);
-      databaseContext.switchDatabase(name);
-
-      // Allow the user to start with a fresh factory-default database
-      databaseContext.resetDatabaseToFactory(name);
-
-      ctx.json(databaseContext.getDatabaseStats(name));
-    } catch (Exception e) {
-      logger.error("Error creating database", e);
-      ctx.status(500).result("Error creating database: " + e.getMessage());
-    }
-  }
-
-  private void copyDatabase(Context ctx) {
-    try {
-      Map<String, String> body = ctx.bodyAsClass(Map.class);
-      String newName = body.get("name");
-      String sourceName = body.get("source");
-
-      if (newName == null || newName.isEmpty()) {
-        ctx.status(400).result("New database name is required");
-        return;
-      }
-
-      // Check if target database already exists
-      List<String> existingDbs = databaseContext.listDatabases();
-      if (existingDbs.contains(newName)) {
-        ctx.status(409).result("Database already exists");
-        return;
-      }
-
-      if (sourceName == null || sourceName.isEmpty()) {
-        sourceName = databaseContext.getCurrentDatabaseName();
-      } else if (!existingDbs.contains(sourceName)) {
-        ctx.status(404).result("Source database not found");
-        return;
-      }
-
-      databaseContext.copyDatabase(sourceName, newName);
-
-      ctx.json(databaseContext.getDatabaseStats(newName));
-    } catch (Exception e) {
-      logger.error("Error copying database", e);
-      ctx.status(500).result("Error copying database: " + e.getMessage());
-    }
-  }
-
-  private void resetDatabase(Context ctx) {
-    try {
-      Map<String, String> body = ctx.bodyAsClass(Map.class);
-      String requestedName = body != null ? body.get("name") : null;
-      String name = requestedName;
-
-      if (name == null || name.isEmpty()) {
-        name = databaseContext.getCurrentDatabaseName();
-      }
-
-      logger.info("Resetting database: {} (Requested: {})", name, requestedName);
-      databaseContext.resetDatabaseToFactory(name);
-      ctx.json(databaseContext.getDatabaseStats(name));
-    } catch (Exception e) {
-      logger.error("Error resetting database", e);
-      ctx.status(500).result("Error resetting database: " + e.getMessage());
-    }
-  }
-
-  private void deleteDatabase(Context ctx) {
-    try {
-      Map<String, String> body = ctx.bodyAsClass(Map.class);
-      String name = body.get("name");
-      if (name == null || name.isEmpty()) {
-        ctx.status(400).result("Database name is required");
-        return;
-      }
-
-      String current = databaseContext.getCurrentDatabaseName();
-      if (name.equals(current)) {
-        ctx.status(400).result("Cannot delete the active database");
-        return;
-      }
-
-      databaseContext.deleteDatabase(name);
-      ctx.status(204);
-    } catch (Exception e) {
-      logger.error("Error deleting database", e);
-      ctx.status(500).result("Error deleting database: " + e.getMessage());
-    }
-  }
-
-  private void getCurrentDatabase(Context ctx) {
-    String current = databaseContext.getCurrentDatabaseName();
-    ctx.json(databaseContext.getDatabaseStats(current));
-  }
-
-  private void exportDatabase(Context ctx) {
-    String name = ctx.pathParam("name");
-    ctx.header("Content-Disposition", "attachment; filename=\"" + name + ".zip\"");
-    ctx.contentType("application/zip");
-    try {
-      databaseContext.exportDatabase(name, ctx.res.getOutputStream());
-    } catch (Exception e) {
-      logger.error("Error exporting database", e);
-      ctx.status(500).result("Error exporting database: " + e.getMessage());
-    }
-  }
-
-  private void importDatabase(Context ctx) {
-    try {
-      String name = ctx.formParam("name");
-      UploadedFile file = ctx.uploadedFile("file");
-
-      if (name == null || name.isEmpty() || file == null) {
-        ctx.status(400).result("Name and file are required");
-        return;
-      }
-
-      // Check if database already exists
-      if (databaseContext.listDatabases().contains(name)) {
-        ctx.status(409).result("Database already exists");
-        return;
-      }
-
-      databaseContext.importDatabase(name, file.getContent());
-      ctx.json(databaseContext.getDatabaseStats(name));
-    } catch (Exception e) {
-      logger.error("Error importing database", e);
-      ctx.status(500).result("Error importing database: " + e.getMessage());
-    }
-  }
-
-  // --- Existing Handlers Refactored ---
 
   private void createDriver(Context ctx) {
     try {
-      Driver driver = bodyAsClassWithId(ctx.body(), Driver.class);
+      Driver driver = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Driver.class);
 
       final String driverName = driver.getName();
       final String driverNick = driver.getNickname();
@@ -378,7 +150,7 @@ public class DatabaseTaskHandler {
   private void updateDriver(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      Driver driver = bodyAsClassWithId(ctx.body(), Driver.class);
+      Driver driver = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Driver.class);
 
       List<Driver> allDrivers = driverRepository.findAll();
       boolean existing =
@@ -437,13 +209,15 @@ public class DatabaseTaskHandler {
     }
   }
 
+  // --- Team Handlers ---
+
   private void getTeams(Context ctx) {
     ctx.json(teamRepository.findAll());
   }
 
   private void createTeam(Context ctx) {
     try {
-      Team team = bodyAsClassWithId(ctx.body(), Team.class);
+      Team team = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Team.class);
       team = createTeam(team);
       ctx.status(201).json(team);
     } catch (IllegalArgumentException e) {
@@ -455,7 +229,6 @@ public class DatabaseTaskHandler {
   }
 
   public Team createTeam(Team team) {
-    // Uniqueness check
     final String teamName = team.getName();
     boolean existing =
         teamRepository.findAll().stream()
@@ -482,7 +255,7 @@ public class DatabaseTaskHandler {
   private void updateTeam(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      Team team = bodyAsClassWithId(ctx.body(), Team.class);
+      Team team = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Team.class);
       updateTeam(id, team);
       ctx.json(team);
     } catch (IllegalArgumentException e) {
@@ -528,9 +301,19 @@ public class DatabaseTaskHandler {
     teamRepository.delete(id);
   }
 
+  // --- Track Handlers ---
+
+  public void getTracks(Context ctx) {
+    ctx.json(trackRepository.findAll());
+  }
+
+  private void getFactoryTrack(Context ctx) {
+    ctx.json(DatabaseService.getInstance().getFactoryTrack());
+  }
+
   private void createTrack(Context ctx) {
     try {
-      Track track = bodyAsClassWithId(ctx.body(), Track.class);
+      Track track = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Track.class);
 
       final String trackName = track.getName();
       boolean existing =
@@ -574,7 +357,7 @@ public class DatabaseTaskHandler {
   private void updateTrack(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      Track track = bodyAsClassWithId(ctx.body(), Track.class);
+      Track track = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Track.class);
 
       final String updateTrackName = track.getName();
       boolean existing =
@@ -604,18 +387,10 @@ public class DatabaseTaskHandler {
               .id((String) null)
               .build();
 
-      logger.debug("updateTrack for {}", id);
-      if (track.getArduinoConfigs() != null && !track.getArduinoConfigs().isEmpty()) {
-        logger.debug(
-            "Saving config with Digitals: {}", track.getArduinoConfigs().get(0).digitalIds);
-      } else {
-        logger.debug("Saving configs is NULL or empty");
-      }
-
       trackRepository.replace(id, track);
       ctx.json(track);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Error updating track", e);
       ctx.status(500).result("Error updating track: " + e.getMessage());
     }
   }
@@ -631,145 +406,7 @@ public class DatabaseTaskHandler {
     }
   }
 
-  public void handleCreateRace(Context ctx) {
-    try {
-      Race race = bodyAsClassWithId(ctx.body(), Race.class);
-      try {
-        validateRace(race);
-        Race created = createRace(race);
-        ctx.status(201).json(created);
-      } catch (IllegalArgumentException e) {
-        ctx.status(400).result(e.getMessage());
-      }
-    } catch (Exception e) {
-      logger.error("Error creating race", e);
-      ctx.status(500).result("Error creating race: " + e.getMessage());
-    }
-  }
-
-  public Race createRace(Race race) {
-    // Uniqueness check
-    final String raceName = race.getName();
-    boolean existing =
-        raceRepository.findAll().stream()
-            .anyMatch(
-                r ->
-                    r.getName() != null
-                        && raceName != null
-                        && r.getName().trim().equalsIgnoreCase(raceName.trim()));
-    if (existing) {
-      throw new IllegalArgumentException("Race name already exists");
-    }
-
-    if (race.getEntityId() == null
-        || race.getEntityId().isEmpty()
-        || "new".equals(race.getEntityId())) {
-      String nextId = raceRepository.getNextSequence();
-      race =
-          new Race.Builder()
-              .withName(race.getName())
-              .withTrackEntityId(race.getTrackEntityId())
-              .withHeatRotationType(race.getHeatRotationType())
-              .withHeatScoring(race.getHeatScoring())
-              .withOverallScoring(race.getOverallScoring())
-              .withMinLapTime(race.getMinLapTime())
-              .withFuelOptions(race.getFuelOptions())
-              .withDigitalFuelOptions(race.getDigitalFuelOptions())
-              .withTeamOptions(race.getTeamOptions())
-              .withAutoAdvanceTime(race.getAutoAdvanceTime())
-              .withAutoStartTime(race.getAutoStartTime())
-              .withAutoAdvanceWarmupTime(race.getAutoAdvanceWarmupTime())
-              .withAutoStartWarmupTime(race.getAutoStartWarmupTime())
-              .withDriftTime(race.getDriftTime())
-              .withStartTime(race.getStartTime())
-              .withRestartTime(race.getRestartTime())
-              .withStartRandomizer(race.getStartRandomizer())
-              .withRestartRandomizer(race.getRestartRandomizer())
-              .withSoloLaneIndex(race.getSoloLaneIndex())
-              .withCustomRotationSequence(race.getCustomRotationSequence())
-              .withCustomRotationAssetId(race.getCustomRotationAssetId())
-              .withCustomRotations(race.getCustomRotations())
-              .withHeatTimesThrough(race.getHeatTimesThrough())
-              .withReverseHeats(race.isReverseHeats())
-              .withHotStart(race.isHotStart())
-              .withStartAtCurrent(race.isStartAtCurrent())
-              .withRestartOnFalseStart(race.isRestartOnFalseStart())
-              .withStartBehindSensor(race.isStartBehindSensor())
-              .withFalseStartLapPenalty(race.getFalseStartLapPenalty())
-              .withFalseStartTimePenalty(race.getFalseStartTimePenalty())
-              .withGroupOptions(race.getGroupOptions())
-              .withPractice(race.isPractice())
-              .withAdjustDriftLaps(race.isAdjustDriftLaps())
-              .withEntityId(nextId)
-              .build();
-    }
-    raceRepository.insert(race);
-    return race;
-  }
-
-  public void handleUpdateRace(Context ctx) {
-    try {
-      String id = ctx.pathParam("id");
-      String body = ctx.body();
-      Race race = bodyAsClassWithId(body, Race.class);
-      try {
-        validateRace(race);
-        Race updated = updateRace(id, race);
-        ctx.json(updated);
-      } catch (IllegalArgumentException e) {
-        if ("Race not found".equals(e.getMessage())) {
-          ctx.status(404).result(e.getMessage());
-        } else {
-          ctx.status(400).result(e.getMessage());
-        }
-      }
-    } catch (Exception e) {
-      logger.error("Error updating race", e);
-      ctx.status(500).result("Error updating race: " + e.getMessage());
-    }
-  }
-
-  public Race updateRace(String id, Race race) {
-    final String updateRaceName = race.getName();
-    boolean existing =
-        raceRepository.findAll().stream()
-            .anyMatch(
-                r ->
-                    !id.equals(r.getEntityId())
-                        && r.getName() != null
-                        && updateRaceName != null
-                        && r.getName().trim().equalsIgnoreCase(updateRaceName.trim()));
-
-    if (existing) {
-      throw new IllegalArgumentException("Race name already exists");
-    }
-
-    race = new Race.Builder().from(race).withEntityId(id).withId(null).build();
-    raceRepository.replace(id, race);
-    return race;
-  }
-
-  public void handleDeleteRace(Context ctx) {
-    try {
-      String id = ctx.pathParam("id");
-      try {
-        deleteRace(id);
-        ctx.status(204);
-      } catch (IllegalArgumentException e) {
-        ctx.status(404).result(e.getMessage());
-      }
-    } catch (Exception e) {
-      logger.error("Error deleting race", e);
-      ctx.status(500).result("Error deleting race: " + e.getMessage());
-    }
-  }
-
-  public void deleteRace(String id) {
-    // Perform cascading deletion of associated data (history, stats, saves)
-    DatabaseService.getInstance().deleteAllRaceData(databaseContext, id);
-
-    raceRepository.delete(id);
-  }
+  // --- Event Handlers ---
 
   public void getEvents(Context ctx) {
     try {
@@ -798,7 +435,7 @@ public class DatabaseTaskHandler {
 
   public void handleCreateEvent(Context ctx) {
     try {
-      Event event = bodyAsClassWithId(ctx.body(), Event.class);
+      Event event = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Event.class);
       if (event.getName() == null || event.getName().trim().isEmpty()) {
         ctx.status(400).result("Event name cannot be empty");
         return;
@@ -833,7 +470,7 @@ public class DatabaseTaskHandler {
   public void handleUpdateEvent(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      Event event = bodyAsClassWithId(ctx.body(), Event.class);
+      Event event = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Event.class);
       if (event.getName() == null || event.getName().trim().isEmpty()) {
         ctx.status(400).result("Event name cannot be empty");
         return;
@@ -877,6 +514,8 @@ public class DatabaseTaskHandler {
     }
   }
 
+  // --- Season Handlers ---
+
   public void getSeasons(Context ctx) {
     try {
       List<Season> seasons = seasonRepository.findAll();
@@ -904,7 +543,7 @@ public class DatabaseTaskHandler {
 
   public void handleCreateSeason(Context ctx) {
     try {
-      Season season = bodyAsClassWithId(ctx.body(), Season.class);
+      Season season = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Season.class);
       if (season.getName() == null || season.getName().trim().isEmpty()) {
         ctx.status(400).result("Season name cannot be empty");
         return;
@@ -934,7 +573,7 @@ public class DatabaseTaskHandler {
   public void handleUpdateSeason(Context ctx) {
     try {
       String id = ctx.pathParam("id");
-      Season season = bodyAsClassWithId(ctx.body(), Season.class);
+      Season season = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Season.class);
       if (season.getName() == null || season.getName().trim().isEmpty()) {
         ctx.status(400).result("Season name cannot be empty");
         return;
@@ -976,853 +615,58 @@ public class DatabaseTaskHandler {
     return databaseContext.getNextSequence(collectionName);
   }
 
-  public void getDrivers(Context ctx) {
-    ctx.json(driverRepository.findAll());
+  // --- Delegate Methods for Backward Compatibility & Testing ---
+
+  public void handleCreateRace(Context ctx) {
+    raceHeatTaskHandler.handleCreateRace(ctx);
   }
 
-  public void getTracks(Context ctx) {
-    ctx.json(trackRepository.findAll());
+  public Race createRace(Race race) {
+    return raceHeatTaskHandler.createRace(race);
   }
 
-  private void getFactoryTrack(Context ctx) {
-    ctx.json(DatabaseService.getInstance().getFactoryTrack());
+  public void handleUpdateRace(Context ctx) {
+    raceHeatTaskHandler.handleUpdateRace(ctx);
+  }
+
+  public Race updateRace(String id, Race race) {
+    return raceHeatTaskHandler.updateRace(id, race);
+  }
+
+  public void handleDeleteRace(Context ctx) {
+    raceHeatTaskHandler.handleDeleteRace(ctx);
+  }
+
+  public void deleteRace(String id) {
+    raceHeatTaskHandler.deleteRace(id);
   }
 
   public void getRaces(Context ctx) {
-    List<Race> races = raceRepository.findAll();
-
-    List<RaceResponse> response = new ArrayList<>();
-    for (Race race : races) {
-      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      response.add(new RaceResponse(race, track));
-    }
-    ctx.json(response);
+    raceHeatTaskHandler.getRaces(ctx);
   }
 
   public void generateHeats(Context ctx) {
-    String raceId = ctx.pathParam("id");
-    Map<String, Number> body = ctx.bodyAsClass(Map.class);
-    Number driverCountNum = body.get("driverCount");
-    int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
-
-    if (driverCount <= 0) {
-      ctx.status(400).result("driverCount must be greater than 0");
-      return;
-    }
-
-    // Find the race
-    Race race = raceRepository.findByEntityId(raceId);
-    if (race == null) {
-      ctx.status(404).result("Race not found");
-      return;
-    }
-
-    // Find the track to get lane count
-    Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-    if (track == null) {
-      ctx.status(404).result("Track not found for race");
-      return;
-    }
-
-    // Create mock RaceParticipant list
-    List<RaceParticipant> mockDrivers = new ArrayList<>();
-    for (int i = 0; i < driverCount; i++) {
-      Driver mockDriver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
-      mockDrivers.add(new RaceParticipant(mockDriver));
-    }
-
-    // Create a temporary Race object for heat building
-    com.antigravity.race.Race tempRace = // fqn-collision
-        new com.antigravity.race.Race.Builder() // fqn-collision
-            .model(race)
-            .drivers(mockDrivers)
-            .track(track)
-            .databaseContext(databaseContext)
-            .isDemoMode(true) // Use demo mode to avoid protocol initialization
-            .build();
-
-    // Get the generated heats
-    List<Heat> heats = tempRace.getHeats();
-
-    // Convert heats to JSON response
-    List<Map<String, Object>> heatList = new ArrayList<>();
-    for (Heat heat : heats) {
-      Map<String, Object> heatMap = new HashMap<>();
-      heatMap.put("heatNumber", heat.getHeatNumber());
-      heatMap.put("group", heat.getGroup());
-
-      List<Map<String, Object>> lanes = new ArrayList<>();
-      List<DriverHeatData> drivers = heat.getDrivers();
-      for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
-        DriverHeatData driverData = drivers.get(laneIdx);
-        Map<String, Object> laneMap = new HashMap<>();
-        laneMap.put("laneNumber", laneIdx + 1);
-        laneMap.put("driverNumber", driverData.getDriver().getSeed());
-
-        // Add lane colors from track
-        if (laneIdx < track.getLanes().size()) {
-          Lane lane = track.getLanes().get(laneIdx);
-          laneMap.put("backgroundColor", lane.getBackground_color());
-          laneMap.put("foregroundColor", lane.getForeground_color());
-        }
-
-        lanes.add(laneMap);
-      }
-      heatMap.put("lanes", lanes);
-      heatList.add(heatMap);
-    }
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("heats", heatList);
-    ctx.json(response);
-
-    // Clean up the temporary race object
-    tempRace.stop();
+    raceHeatTaskHandler.generateHeats(ctx);
   }
 
-  @SuppressWarnings("checkstyle:MethodLength")
   public void previewHeats(Context ctx) {
-    Map<String, Object> body = ctx.bodyAsClass(Map.class);
-    Number driverCountNum = (Number) body.get("driverCount");
-    int driverCount = driverCountNum != null ? driverCountNum.intValue() : 0;
-    String trackId = (String) body.get("trackId");
-    String rotationType = (String) body.get("rotationType");
-    logger.debug("previewHeats: body={}", body);
-    Number soloLaneIndexNum = (Number) body.get("soloLaneIndex");
-    int soloLaneIndex = soloLaneIndexNum != null ? soloLaneIndexNum.intValue() : 0;
-    List<Integer> customRotationSequence = (List<Integer>) body.get("customRotationSequence");
-    if (customRotationSequence == null) {
-      customRotationSequence = (List<Integer>) body.get("custom_rotation_sequence");
-    }
-
-    String customRotationAssetId = (String) body.get("custom_rotation_asset_id");
-    if (customRotationAssetId == null) {
-      customRotationAssetId = (String) body.get("customRotationAssetId");
-    }
-
-    List<CustomRotation> customRotations = null;
-    if (customRotationAssetId != null && !customRotationAssetId.isEmpty()) {
-      customRotations = resolveCustomRotations(customRotationAssetId);
-    } else {
-      // Fallback to manual list if provided
-      List<Map<String, Object>> customRotationsRaw =
-          (List<Map<String, Object>>) body.get("custom_rotations");
-      if (customRotationsRaw == null) {
-        customRotationsRaw = (List<Map<String, Object>>) body.get("customRotations");
-      }
-      if (customRotationsRaw != null) {
-        customRotations = parseCustomRotations(customRotationsRaw);
-      }
-    }
-
-    Number heatTimesThroughNum = (Number) body.get("heatTimesThrough");
-    if (heatTimesThroughNum == null) {
-      heatTimesThroughNum = (Number) body.get("heat_times_through");
-    }
-    int heatTimesThrough = heatTimesThroughNum != null ? heatTimesThroughNum.intValue() : 1;
-
-    Boolean reverseHeats = (Boolean) body.get("reverseHeats");
-    if (reverseHeats == null) {
-      reverseHeats = (Boolean) body.get("reverse_heats");
-    }
-    boolean reverseHeatsBool = reverseHeats != null ? reverseHeats : false;
-
-    if (driverCount <= 0) {
-      ctx.status(400).result("driverCount must be greater than 0");
-      return;
-    }
-
-    if (trackId == null || trackId.isEmpty()) {
-      ctx.status(400).result("trackId is required");
-      return;
-    }
-
-    if (rotationType == null || rotationType.isEmpty()) {
-      ctx.status(400).result("rotationType is required");
-      return;
-    }
-
-    // Find the track to get lane count
-    Track track = trackRepository.findByEntityId(trackId);
-    if (track == null) {
-      ctx.status(404).result("Track not found");
-      return;
-    }
-
-    // Convert rotation type string to enum
-    HeatRotationType rotationTypeEnum;
-    try {
-      rotationTypeEnum = HeatRotationType.valueOf(rotationType);
-      if (rotationTypeEnum == HeatRotationType.CustomRoundRobin) {
-        if (customRotationSequence == null || customRotationSequence.isEmpty()) {
-          ctx.status(400).result("Custom rotation sequence is required");
-          return;
-        }
-        int numLanes = track.getLanes().size();
-        Set<Integer> uniqueLanes = new HashSet<>();
-        for (Integer lane : customRotationSequence) {
-          if (lane == null || lane < 0) {
-            ctx.status(400).result("Lane numbers must be greater than or equal to 0 and not null");
-            return;
-          }
-          if (lane > numLanes) {
-            ctx.status(400)
-                .result("Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
-            return;
-          }
-          if (lane > 0 && !uniqueLanes.add(lane)) {
-            ctx.status(400)
-                .result("Lane number " + lane + " appears more than once in rotation sequence");
-            return;
-          }
-        }
-      }
-    } catch (IllegalArgumentException e) {
-      ctx.status(400).result("Invalid rotation type: " + rotationType);
-      return;
-    }
-
-    // Create a default HeatScoring and OverallScoring for heat generation preview
-    HeatScoring defaultHeatScoring =
-        new HeatScoring(
-            HeatScoring.FinishMethod.Lap,
-            10, // default 10 laps
-            HeatScoring.HeatRanking.LAP_COUNT,
-            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
-    OverallScoring defaultOverallScoring = new OverallScoring();
-
-    Map<String, Object> groupOptionsMap = (Map<String, Object>) body.get("groupOptions");
-    if (groupOptionsMap == null) {
-      groupOptionsMap = (Map<String, Object>) body.get("group_options");
-    }
-    GroupOptions groupOptions = null;
-    if (groupOptionsMap != null) {
-      Boolean enabled = (Boolean) groupOptionsMap.get("enabled");
-      Number maxGroupsNum = (Number) groupOptionsMap.get("max_groups");
-      if (maxGroupsNum == null) {
-        maxGroupsNum = (Number) groupOptionsMap.get("maxGroups");
-      }
-      Integer maxGroups = maxGroupsNum != null ? maxGroupsNum.intValue() : null;
-      Boolean balance = (Boolean) groupOptionsMap.get("balance");
-      Boolean allowEmpty = (Boolean) groupOptionsMap.get("allow_empty_lanes");
-      if (allowEmpty == null) {
-        allowEmpty = (Boolean) groupOptionsMap.get("allowEmptyLanes");
-      }
-      Boolean forceMultiple = (Boolean) groupOptionsMap.get("force_multiple_of_max");
-      if (forceMultiple == null) {
-        forceMultiple = (Boolean) groupOptionsMap.get("forceMultipleOfMax");
-      }
-      Boolean rotateHeats = (Boolean) groupOptionsMap.get("rotate_group_heats");
-      if (rotateHeats == null) {
-        rotateHeats = (Boolean) groupOptionsMap.get("rotateGroupHeats");
-      }
-      Number minAdvancingNum = (Number) groupOptionsMap.get("min_advancing");
-      if (minAdvancingNum == null) {
-        minAdvancingNum = (Number) groupOptionsMap.get("minAdvancing");
-      }
-      Integer minAdvancing = minAdvancingNum != null ? minAdvancingNum.intValue() : 0;
-
-      groupOptions =
-          new GroupOptions(
-              enabled, maxGroups, balance, allowEmpty, forceMultiple, rotateHeats, minAdvancing);
-    }
-
-    // Create a temporary race configuration
-    Race tempRaceConfig =
-        new Race.Builder()
-            .withName("Preview")
-            .withTrackEntityId(trackId)
-            .withHeatRotationType(rotationTypeEnum)
-            .withHeatScoring(defaultHeatScoring)
-            .withOverallScoring(defaultOverallScoring)
-            .withAutoAdvanceTime(0.0)
-            .withAutoStartTime(0.0)
-            .withAutoAdvanceWarmupTime(0.0)
-            .withAutoStartWarmupTime(0.0)
-            .withSoloLaneIndex(soloLaneIndex)
-            .withCustomRotationSequence(customRotationSequence)
-            .withCustomRotationAssetId(customRotationAssetId)
-            .withHeatTimesThrough(heatTimesThrough)
-            .withReverseHeats(reverseHeatsBool)
-            .withGroupOptions(groupOptions)
-            .build();
-
-    // Create mock RaceParticipant list
-    List<RaceParticipant> mockDrivers = new ArrayList<>();
-    for (int i = 0; i < driverCount; i++) {
-      Driver mockDriver = new Driver("Driver " + (i + 1), "Driver " + (i + 1));
-      mockDrivers.add(new RaceParticipant(mockDriver));
-    }
-
-    // Create a temporary Race object for heat building
-    com.antigravity.race.Race tempRace = // fqn-collision
-        new com.antigravity.race.Race.Builder() // fqn-collision
-            .model(tempRaceConfig)
-            .customRotations(customRotations)
-            .drivers(mockDrivers)
-            .track(track)
-            .isDemoMode(true) // Use demo mode to avoid protocol initialization
-            .build();
-
-    // Get the generated heats
-    List<Heat> heats = tempRace.getHeats();
-
-    // Convert heats to JSON response
-    List<Map<String, Object>> heatList = new ArrayList<>();
-    for (Heat heat : heats) {
-      Map<String, Object> heatMap = new HashMap<>();
-      heatMap.put("heatNumber", heat.getHeatNumber());
-      heatMap.put("group", heat.getGroup());
-
-      List<Map<String, Object>> lanes = new ArrayList<>();
-      List<DriverHeatData> drivers = heat.getDrivers();
-      for (int laneIdx = 0; laneIdx < drivers.size(); laneIdx++) {
-        DriverHeatData driverData = drivers.get(laneIdx);
-        Map<String, Object> laneMap = new HashMap<>();
-        laneMap.put("laneNumber", laneIdx + 1);
-        laneMap.put("driverNumber", driverData.getDriver().getSeed());
-
-        // Add lane colors from track
-        if (laneIdx < track.getLanes().size()) {
-          Lane lane = track.getLanes().get(laneIdx);
-          laneMap.put("backgroundColor", lane.getBackground_color());
-          laneMap.put("foregroundColor", lane.getForeground_color());
-        }
-
-        lanes.add(laneMap);
-      }
-      heatMap.put("lanes", lanes);
-      heatList.add(heatMap);
-    }
-
-    Map<String, Object> response = new HashMap<>();
-    response.put("heats", heatList);
-    ctx.json(response);
-
-    // Clean up the temporary race object
-    tempRace.stop();
+    raceHeatTaskHandler.previewHeats(ctx);
   }
 
-  private <T> T bodyAsClassWithId(String body, Class<T> clazz) throws Exception {
-    if (body != null && !body.contains("\"@id\"")) {
-      body = body.replaceFirst("\\{", "{\"@id\":1,");
-    }
-    ObjectMapper mapper = new ObjectMapper();
-    return mapper.readValue(body, clazz);
-  }
-
-  private void getRaceHistoryList(Context ctx) {
-    try {
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      DatabaseService dbService = DatabaseService.getInstance();
-      List<RaceHistoryRecord> history = dbService.getRaceHistory(databaseContext, scope);
-      if (scope == RaceScope.DEMO && history != null) {
-        for (RaceHistoryRecord rec : history) {
-          rec.setDemo(true);
-        }
-      }
-      ctx.json(history);
-    } catch (Exception e) {
-      e.printStackTrace();
-      ctx.status(500).result("Error fetching race history list: " + e.getMessage());
-    }
-  }
-
-  private void getRaceHistoryById(Context ctx) {
-    try {
-      String id = ctx.pathParam("id");
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      DatabaseService dbService = DatabaseService.getInstance();
-      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
-      if (history == null) {
-        ctx.status(404).result("Race history not found");
-        return;
-      }
-      ctx.json(history);
-    } catch (Exception e) {
-      e.printStackTrace();
-      ctx.status(500).result("Error fetching race history: " + e.getMessage());
-    }
-  }
-
-  private void exportRaceHistoryCsv(Context ctx) {
-    try {
-      String id = ctx.pathParam("id");
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      DatabaseService dbService = DatabaseService.getInstance();
-      RaceHistoryRecord history = dbService.getRaceHistoryById(databaseContext, id, scope);
-      if (history == null) {
-        ctx.status(404).result("Race history not found");
-        return;
-      }
-
-      com.antigravity.race.Race tempRace = // fqn-collision
-          new com.antigravity.race.Race.Builder() // fqn-collision
-              .model(history.getModel())
-              .track(history.getTrack())
-              .drivers(history.getDrivers())
-              .heats(history.getHeats())
-              .accumulatedRaceTime(history.getAccumulatedRaceTime())
-              .statistics(history.getStatistics())
-              .build();
-
-      String csvContent = CsvExporter.export(tempRace);
-
-      String raceName =
-          history.getModel() != null ? history.getModel().getName() : "Historical_Race";
-      String filename =
-          raceName.replaceAll("[^a-zA-Z0-9.-]", "_") + "_" + System.currentTimeMillis() + ".csv";
-      ctx.header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-      ctx.contentType("text/csv");
-      ctx.result(csvContent);
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      ctx.status(500).result("Error exporting race history: " + e.getMessage());
-    }
-  }
-
-  private void getGlobalStatistics(Context ctx) {
-    try {
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      String raceId = ctx.queryParam("raceId");
-      if (raceId == null || raceId.isEmpty()) {
-        raceId = "global";
-      }
-      DatabaseService dbService = DatabaseService.getInstance();
-      GlobalStatistics stats = dbService.getGlobalStatistics(databaseContext, raceId, scope);
-      ctx.json(stats);
-    } catch (Exception e) {
-      e.printStackTrace();
-      ctx.status(500).result("Error fetching global statistics: " + e.getMessage());
-    }
-  }
-
-  private void validateRace(Race race) {
-    if (race.getHeatRotationType() == HeatRotationType.CustomRoundRobin) {
-      List<Integer> seq = race.getCustomRotationSequence();
-      if (seq == null || seq.isEmpty()) {
-        throw new IllegalArgumentException("Custom rotation sequence is required");
-      }
-      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      int numLanes = track != null ? track.getLanes().size() : Integer.MAX_VALUE;
-
-      Set<Integer> uniqueLanes = new HashSet<>();
-      for (Integer lane : seq) {
-        if (lane == null || lane < 0) {
-          throw new IllegalArgumentException(
-              "Lane numbers must be greater than or equal to 0 and not null");
-        }
-        if (lane > numLanes) {
-          throw new IllegalArgumentException(
-              "Lane number " + lane + " exceeds track lane count (" + numLanes + ")");
-        }
-        if (lane > 0 && !uniqueLanes.add(lane)) {
-          throw new IllegalArgumentException(
-              "Lane number " + lane + " appears more than once in rotation sequence");
-        }
-      }
-    } else if (race.getHeatRotationType() == HeatRotationType.Custom) {
-      String assetId = race.getCustomRotationAssetId();
-      if (assetId == null || assetId.isEmpty()) {
-        throw new IllegalArgumentException("Custom rotation asset is required");
-      }
-      List<CustomRotation> rotations = resolveCustomRotations(assetId);
-      if (rotations == null || rotations.isEmpty()) {
-        throw new IllegalArgumentException("Custom rotation asset not found or empty");
-      }
-      Track track = trackRepository.findByEntityId(race.getTrackEntityId());
-      int numLanes = track != null ? track.getLanes().size() : 0;
-
-      Set<Integer> driverCounts = new HashSet<>();
-      for (CustomRotation rot : rotations) {
-        if (rot.getNumDrivers() <= 0) {
-          throw new IllegalArgumentException("Driver count must be greater than 0");
-        }
-        if (!driverCounts.add(rot.getNumDrivers())) {
-          throw new IllegalArgumentException(
-              "Duplicate driver count in custom rotations: " + rot.getNumDrivers());
-        }
-        if (rot.getHeats() == null || rot.getHeats().isEmpty()) {
-          throw new IllegalArgumentException(
-              "At least one heat is required for custom rotation with "
-                  + rot.getNumDrivers()
-                  + " drivers");
-        }
-        for (CustomHeat heat : rot.getHeats()) {
-          if (heat.getDriverIndices().size() != numLanes) {
-            throw new IllegalArgumentException(
-                "Heat must specify "
-                    + numLanes
-                    + " driver indices for a "
-                    + numLanes
-                    + " lane track");
-          }
-          for (Integer dIdx : heat.getDriverIndices()) {
-            if (dIdx < 0 || dIdx > rot.getNumDrivers()) {
-              throw new IllegalArgumentException(
-                  "Invalid driver index "
-                      + dIdx
-                      + " for custom rotation with "
-                      + rot.getNumDrivers()
-                      + " drivers");
-            }
-          }
-        }
-      }
-    }
-  }
-
-  private List<CustomRotation> resolveCustomRotations(String assetId) {
-    if (assetId == null || assetId.isEmpty()) {
-      return null;
-    }
-    AssetService assetService =
-        new AssetService(
-            databaseContext,
-            databaseContext.getDataRoot() + databaseContext.getCurrentDatabaseName() + "/assets");
-    AssetMessage asset = assetService.getAssetById(assetId);
-    if (asset == null || asset.getCustomRotationsCount() == 0) {
-      return null;
-    }
-    List<CustomRotation> list = new ArrayList<>();
-    for (com.antigravity.proto.CustomRotation protoRot : // fqn-collision
-        asset.getCustomRotationsList()) { // fqn-collision
-      List<CustomHeat> heats = new ArrayList<>();
-      for (com.antigravity.proto.CustomHeat protoHeat : protoRot.getHeatsList()) { // fqn-collision
-        heats.add(
-            new CustomHeat(
-                new ArrayList<>(protoHeat.getDriverIndicesList()), protoHeat.getGroup()));
-      }
-      list.add(new CustomRotation(protoRot.getNumDrivers(), heats));
-    }
-    return list;
-  }
-
-  private List<CustomRotation> parseCustomRotations(List<Map<String, Object>> customRotationsRaw) {
-    if (customRotationsRaw == null) {
-      return null;
-    }
-    List<CustomRotation> customRotations = new ArrayList<>();
-    for (Map<String, Object> rotMap : customRotationsRaw) {
-      Object numDriversObj = rotMap.get("numDrivers");
-      if (numDriversObj == null) {
-        numDriversObj = rotMap.get("num_drivers");
-      }
-      int numDrivers = ((Number) numDriversObj).intValue();
-      List<Map<String, Object>> heatsRaw = (List<Map<String, Object>>) rotMap.get("heats");
-      List<CustomHeat> heats = new ArrayList<>();
-      if (heatsRaw != null) {
-        for (Map<String, Object> heatMap : heatsRaw) {
-          Object driverIndicesObj = heatMap.get("driverIndices");
-          if (driverIndicesObj == null) {
-            driverIndicesObj = heatMap.get("driver_indices");
-          }
-          List<Integer> driverIndices = (List<Integer>) driverIndicesObj;
-          Object groupObj = heatMap.get("group");
-          int group = groupObj != null ? ((Number) groupObj).intValue() : 0;
-          heats.add(new CustomHeat(driverIndices, group));
-        }
-      }
-      customRotations.add(new CustomRotation(numDrivers, heats));
-    }
-    return customRotations;
-  }
-
-  private void getDriverStatistics(Context ctx) {
-    try {
-      String driverId = ctx.pathParam("driverId");
-      String raceId = ctx.queryParam("raceId");
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-
-      // Auto-detect demo mode from active running race if scope is PRODUCTION
-      if (!scope.isDemo()) {
-        com.antigravity.race.Race activeRace = // fqn-collision
-            ClientSubscriptionManager.getInstance().getRace();
-        if (activeRace != null && activeRace.getRaceModel() != null) {
-          if (raceId == null
-              || raceId.isEmpty()
-              || activeRace.getRaceModel().getEntityId().equals(raceId)) {
-            scope = RaceScope.fromBoolean(activeRace.isDemoMode());
-          }
-        }
-      }
-
-      DatabaseService dbService = DatabaseService.getInstance();
-      DriverStatistics stats =
-          dbService.getDriverStatistics(databaseContext, driverId, raceId, scope);
-
-      if (stats == null) {
-        ctx.status(404).result("Driver statistics not found");
-        return;
-      }
-      ctx.json(stats);
-    } catch (Exception e) {
-      logger.error("Error fetching driver statistics", e);
-      ctx.status(500).result("Error fetching driver statistics: " + e.getMessage());
-    }
-  }
-
-  private boolean isStalePredictionRecord(
+  public boolean isStalePredictionRecord(
       DatabaseContext database,
       RacePredictionRecord record,
       com.antigravity.race.Race activeRace, // fqn-collision
       boolean isDemo) {
-    if (record == null || record.getPreRace() == null) {
-      logger.debug("PREDICTION: Stale because record or preRace is null");
-      return true;
-    }
-    if (activeRace != null && activeRace.getState() != null) {
-      Object state = activeRace.getState();
-      if (state instanceof com.antigravity.race.states.Starting // fqn-collision
-          || state instanceof com.antigravity.race.states.Racing // fqn-collision
-          || state instanceof com.antigravity.race.states.HeatOver // fqn-collision
-          || state instanceof com.antigravity.race.states.RaceOver) { // fqn-collision
-        return false;
-      }
-    }
-
-    List<RacePredictionRecord.DriverProjection> standings =
-        record.getPreRace().getProjectedStandings();
-    if (standings == null || standings.isEmpty()) {
-      logger.debug("PREDICTION: Stale because standings is null or empty");
-      return true;
-    }
-
-    if (activeRace != null && activeRace.getDrivers() != null) {
-      Set<String> activeDriverIds = new HashSet<>();
-      for (RaceParticipant rp : activeRace.getDrivers()) {
-        if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
-          String pId = PredictionEngine.getParticipantId(rp);
-          if (pId != null && !pId.isEmpty() && !"EMPTY_LANE".equals(pId)) {
-            activeDriverIds.add(pId);
-          }
-        }
-      }
-
-      Set<String> standingDriverIds = new HashSet<>();
-      for (RacePredictionRecord.DriverProjection dp : standings) {
-        if (dp != null
-            && dp.getDriverId() != null
-            && !"EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())) {
-          standingDriverIds.add(dp.getDriverId());
-        }
-      }
-
-      if (!standingDriverIds.equals(activeDriverIds)) {
-        logger.debug(
-            "PREDICTION: Stale because active race drivers do not match prediction standings (active: {}, prediction: {})",
-            activeDriverIds.size(),
-            standingDriverIds.size());
-        return true;
-      }
-
-      if (isDriverTrackStatsUpdated(database, record, activeRace, isDemo)) {
-        return true;
-      }
-    }
-
-    double totalWinProb = 0.0;
-    Set<Integer> ranks = new HashSet<>();
-    for (RacePredictionRecord.DriverProjection dp : standings) {
-      if (dp == null || dp.getDriverId() == null) {
-        logger.debug("PREDICTION: Stale because driver projection is null");
-        return true;
-      }
-      if (dp.getTotalSimulations() <= 0) {
-        logger.trace(
-            "PREDICTION: Stale because DriverProjection is missing diagnostic metadata for driver: {}",
-            dp.getDriverId());
-        return true;
-      }
-      if ("EMPTY_LANE".equalsIgnoreCase(dp.getDriverId())
-          || "Empty Lane".equalsIgnoreCase(dp.getDriverName())) {
-        logger.trace("PREDICTION: Stale because empty lane driver found");
-        return true;
-      }
-      if (dp.getProjectedRank() != -1) {
-        if (ranks.contains(dp.getProjectedRank())) {
-          logger.debug("PREDICTION: Stale because duplicate rank found: " + dp.getProjectedRank());
-          return true;
-        }
-        ranks.add(dp.getProjectedRank());
-      } else {
-        logger.debug("PREDICTION: Stale because rank is -1 (fallback prediction)");
-        return true;
-      }
-      totalWinProb += dp.getWinProbability();
-    }
-
-    if (standings.size() > 1 && totalWinProb >= 0.0 && totalWinProb < 0.95) {
-      logger.debug("PREDICTION: Stale because totalWinProb < 0.95: " + totalWinProb);
-    }
-
-    return false;
+    return historyPredictionTaskHandler.isStalePredictionRecord(
+        database, record, activeRace, isDemo);
   }
 
-  private boolean isDriverTrackStatsUpdated(
-      DatabaseContext context,
-      RacePredictionRecord record,
-      com.antigravity.race.Race activeRace, // fqn-collision
-      boolean isDemo) {
-    if (activeRace == null || activeRace.getRaceModel() == null || context == null) {
-      return false;
-    }
-    String trackId = activeRace.getRaceModel().getTrackEntityId();
-    if (trackId == null || trackId.isEmpty() || activeRace.getDrivers() == null) {
-      return false;
-    }
-    long recordTimestamp = record.getTimestamp();
-    for (RaceParticipant rp : activeRace.getDrivers()) {
-      if (rp != null && !PredictionEngine.isParticipantEmpty(rp)) {
-        String driverId = PredictionEngine.getParticipantId(rp);
-        if (driverId != null && !driverId.isEmpty()) {
-          com.antigravity.models.DriverTrackStats dts = // fqn-collision
-              DatabaseService.getInstance().getDriverTrackStats(context, driverId, trackId, isDemo);
-          if (dts != null && dts.getLastUpdated() > recordTimestamp) {
-            logger.info(
-                "PREDICTION: Stale in NotStarted state because driver {} track stats updated at {} > record timestamp {}",
-                driverId,
-                dts.getLastUpdated(),
-                recordTimestamp);
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+  public void getPredictionEvaluationRecord(Context ctx) {
+    historyPredictionTaskHandler.getPredictionEvaluationRecord(ctx);
   }
 
-  private void getRacePredictionRecord(Context ctx) {
-    try {
-      String raceId = ctx.pathParam("id");
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      boolean forceRecalc =
-          "true".equals(ctx.queryParam("force")) || "true".equals(ctx.queryParam("recalculate"));
-      DatabaseService dbService = DatabaseService.getInstance();
-      DatabaseContext reqCtx = (DatabaseContext) ctx.attribute(DatabaseContext.class.getName());
-      DatabaseContext dbContext = reqCtx != null ? reqCtx : databaseContext;
-
-      com.antigravity.race.Race activeRace = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-
-      // Auto-detect demo mode from the active running race if not explicitly in DEMO
-      // scope
-      if (activeRace != null && activeRace.getRaceModel() != null) {
-        String activeId = activeRace.getRaceModel().getEntityId();
-        if ("current".equals(raceId) || (activeId != null && activeId.equals(raceId))) {
-          scope = RaceScope.fromBoolean(activeRace.isDemoMode());
-        }
-      }
-
-      String targetRaceId = raceId;
-      if ("current".equals(raceId) && activeRace != null && activeRace.getRaceModel() != null) {
-        targetRaceId = activeRace.getRaceModel().getEntityId();
-      }
-
-      RacePredictionRecord record = null;
-      if (!forceRecalc && dbContext != null && targetRaceId != null && !targetRaceId.isEmpty()) {
-        record = dbService.getRacePredictionRecord(dbContext, targetRaceId, scope.isDemo());
-      }
-
-      boolean isStale = isStalePredictionRecord(dbContext, record, activeRace, scope.isDemo());
-
-      if ((record == null || isStale || forceRecalc)
-          && activeRace != null
-          && activeRace.getRaceModel() != null) {
-        String activeRaceId = activeRace.getRaceModel().getEntityId();
-        if (activeRaceId != null && !activeRaceId.isEmpty()) {
-          record =
-              RacePredictionService.getInstance()
-                  .generateAndSavePreRacePrediction(
-                      dbContext,
-                      activeRaceId,
-                      activeRace.getRaceModel(),
-                      activeRace.getDrivers(),
-                      activeRace.getHeats(),
-                      scope.isDemo(),
-                      true);
-
-          int currentHeatIdx =
-              activeRace.getHeats() != null && activeRace.getCurrentHeat() != null
-                  ? activeRace.getHeats().indexOf(activeRace.getCurrentHeat())
-                  : 0;
-          if (currentHeatIdx < 0) currentHeatIdx = 0;
-
-          Map<String, PredictionEngine.DriverHeatState> actualLaps =
-              HeatExecutionManager.buildDriverHeatStates(activeRace);
-
-          RacePredictionService.getInstance()
-              .updateRealtimePrediction(
-                  dbContext,
-                  activeRaceId,
-                  activeRace.getRaceModel(),
-                  activeRace.getDrivers(),
-                  activeRace.getHeats(),
-                  currentHeatIdx,
-                  actualLaps,
-                  scope.isDemo());
-
-          record = dbService.getRacePredictionRecord(dbContext, activeRaceId, scope.isDemo());
-        }
-      }
-
-      if (record == null) {
-        ctx.status(404).result("Race prediction record not found");
-        return;
-      }
-      ctx.json(record);
-    } catch (Exception e) {
-      logger.error("Error fetching race prediction record", e);
-      ctx.status(500).result("Error fetching race prediction record: " + e.getMessage());
-    }
-  }
-
-  private void getPredictionEvaluationRecord(Context ctx) {
-    try {
-      ctx.header("Cache-Control", "no-cache, no-store, must-revalidate");
-      String raceId = ctx.pathParam("id");
-      RaceScope scope = RequestContextUtils.getRaceScope(ctx);
-      DatabaseService dbService = DatabaseService.getInstance();
-
-      com.antigravity.race.Race activeRace = // fqn-collision
-          ClientSubscriptionManager.getInstance().getRace();
-
-      // Auto-detect demo mode from the active running race
-      if (!scope.isDemo() && activeRace != null && activeRace.getRaceModel() != null) {
-        if ("current".equals(raceId) || activeRace.getRaceModel().getEntityId().equals(raceId)) {
-          scope = RaceScope.fromBoolean(activeRace.isDemoMode());
-        }
-      }
-
-      String targetRaceId = raceId;
-      if ("current".equals(raceId) && activeRace != null && activeRace.getRaceModel() != null) {
-        targetRaceId = activeRace.getRaceModel().getEntityId();
-      }
-
-      if (activeRace != null && activeRace.getRaceModel() != null) {
-        String activeEntityId = activeRace.getRaceModel().getEntityId();
-        if ("current".equals(raceId)
-            || (activeEntityId != null && activeEntityId.equals(targetRaceId))) {
-          if (!(activeRace.getState()
-              instanceof com.antigravity.race.states.RaceOver)) { // fqn-collision
-            ctx.status(404)
-                .result("Prediction evaluation unavailable while race is pre-race or in-race");
-            return;
-          }
-        }
-      }
-
-      PredictionEvaluationRecord eval =
-          dbService.getPredictionEvaluationRecord(databaseContext, targetRaceId, scope.isDemo());
-      if (eval == null) {
-        ctx.status(404).result("Prediction evaluation record not found");
-        return;
-      }
-      ctx.json(eval);
-    } catch (Exception e) {
-      logger.error("Error fetching prediction evaluation record", e);
-      ctx.status(500).result("Error fetching prediction evaluation record: " + e.getMessage());
-    }
+  public void getRacePredictionRecord(Context ctx) {
+    historyPredictionTaskHandler.getRacePredictionRecord(ctx);
   }
 }

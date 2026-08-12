@@ -440,6 +440,33 @@ describe("SeasonEditorComponent", () => {
     expect(component.availableFinishedRaces.length).toBe(0);
   });
 
+  it("should exclude finished races if they are already added to the season, even when race_id differs but timestamp matches", () => {
+    component.editingSeason.races = [
+      {
+        race_id: "1",
+        race_name: "Sunday Sprint",
+        timestamp: 1700000000000,
+        driver_results: [],
+      },
+    ];
+
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([
+        {
+          original_entity_id: "race_hist_abc",
+          timestamp: 1700000000000,
+          model: { name: "Sunday Sprint" },
+          driver_results: [],
+        },
+      ]),
+    );
+
+    component.openAddRaceModal();
+
+    expect(component.availableFinishedRaces.length).toBe(0);
+  });
+
   it("should render modal-race-list with title attribute on race item names when add finished race modal is open", () => {
     const dataService = TestBed.inject(DataService);
     spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(

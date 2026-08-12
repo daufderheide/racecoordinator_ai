@@ -30,15 +30,16 @@ public final class RaceStatisticsUtils {
   private RaceStatisticsUtils() {}
 
   public static InputStream sanitizeWorkbookTemplate(InputStream inputStream) {
-    return sanitizeWorkbookTemplate(inputStream, 2, null);
-  }
-
-  public static InputStream sanitizeWorkbookTemplate(InputStream inputStream, int numLanes) {
-    return sanitizeWorkbookTemplate(inputStream, numLanes, null);
+    return sanitizeWorkbookTemplate(inputStream, java.util.Arrays.asList(0, 1), null);
   }
 
   public static InputStream sanitizeWorkbookTemplate(
-      InputStream inputStream, int numLanes, Race race) {
+      InputStream inputStream, List<Integer> activeLanes) {
+    return sanitizeWorkbookTemplate(inputStream, activeLanes, null);
+  }
+
+  public static InputStream sanitizeWorkbookTemplate(
+      InputStream inputStream, List<Integer> activeLanes, Race race) {
     if (inputStream == null) {
       return null;
     }
@@ -70,8 +71,24 @@ public final class RaceStatisticsUtils {
         }
       }
 
-      adjustOverallStandingsSheet(workbook, numLanes);
-      adjustHeatListSheet(workbook, numLanes, race);
+      boolean hasSeason =
+          race != null
+              && race.getSeasonEntityId() != null
+              && !race.getSeasonEntityId().trim().isEmpty();
+
+      adjustOverallStandingsSheet(workbook, activeLanes, hasSeason);
+      adjustHeatListSheet(workbook, activeLanes, race, hasSeason);
+      adjustRaceInformationSheet(workbook, race);
+
+      if (!hasSeason) {
+        int seasonSheetIndex = workbook.getSheetIndex("Season Standings");
+        if (seasonSheetIndex != -1) {
+          workbook.removeSheetAt(seasonSheetIndex);
+        } else if (workbook.getNumberOfSheets() > 0
+            && "Season Standings".equalsIgnoreCase(workbook.getSheetName(0))) {
+          workbook.removeSheetAt(0);
+        }
+      }
 
       workbook.write(os);
       return new ByteArrayInputStream(os.toByteArray());
@@ -80,13 +97,81 @@ public final class RaceStatisticsUtils {
     }
   }
 
-  private static void adjustOverallStandingsSheet(XSSFWorkbook workbook, int numLanes) {
-    if (numLanes <= 0) {
-      numLanes = 2;
+  private static void adjustRaceInformationSheet(XSSFWorkbook workbook, Race race) {
+    if (race == null || race.getRaceModel() == null) {
+      return;
+    }
+
+    Sheet sheet = workbook.getSheet("Race Information");
+    if (sheet == null && workbook.getNumberOfSheets() > 0) {
+      for (Sheet s : workbook) {
+        if ("Race Information".equalsIgnoreCase(s.getSheetName())) {
+          sheet = s;
+          break;
+        }
+      }
+    }
+    if (sheet == null) {
+      return;
+    }
+
+    boolean analogFuelEnabled =
+        race.getRaceModel().getFuelOptions() != null
+            && race.getRaceModel().getFuelOptions().isEnabled();
+    boolean digitalFuelEnabled =
+        race.getRaceModel().getDigitalFuelOptions() != null
+            && race.getRaceModel().getDigitalFuelOptions().isEnabled();
+    boolean groupEnabled =
+        race.getRaceModel().getGroupOptions() != null
+            && race.getRaceModel().getGroupOptions().isEnabled();
+
+    int lastRow = sheet.getLastRowNum();
+    for (int r = lastRow; r >= 15; r--) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      Cell cell0 = row.getCell(0);
+      if (cell0 == null || cell0.getCellType() != CellType.STRING) {
+        continue;
+      }
+      String fieldName = cell0.getStringCellValue().trim();
+
+      boolean removeRow = false;
+      if (fieldName.startsWith("fuel_options.") && !fieldName.equals("fuel_options.enabled")) {
+        if (!analogFuelEnabled) {
+          removeRow = true;
+        }
+      } else if (fieldName.startsWith("digital_fuel_options.")
+          && !fieldName.equals("digital_fuel_options.enabled")) {
+        if (!digitalFuelEnabled) {
+          removeRow = true;
+        }
+      } else if (fieldName.startsWith("group_options.")
+          && !fieldName.equals("group_options.enabled")) {
+        if (!groupEnabled) {
+          removeRow = true;
+        }
+      }
+
+      if (removeRow) {
+        sheet.removeRow(row);
+        if (r < sheet.getLastRowNum()) {
+          sheet.shiftRows(r + 1, sheet.getLastRowNum(), -1);
+        }
+      }
+    }
+  }
+
+  private static void adjustOverallStandingsSheet(
+      XSSFWorkbook workbook, List<Integer> activeLanes, boolean hasSeason) {
+    if (activeLanes == null || activeLanes.isEmpty()) {
+      activeLanes = java.util.Arrays.asList(0, 1);
     }
     Sheet sheet = workbook.getSheet("Overall Standings");
-    if (sheet == null && workbook.getNumberOfSheets() > 1) {
-      sheet = workbook.getSheetAt(1);
+    int expectedIndex = hasSeason ? 3 : 2;
+    if (sheet == null && workbook.getNumberOfSheets() > expectedIndex) {
+      sheet = workbook.getSheetAt(expectedIndex);
     }
     if (sheet == null) {
       return;
@@ -103,8 +188,9 @@ public final class RaceStatisticsUtils {
     CellStyle headerStyle = refHeaderCell != null ? refHeaderCell.getCellStyle() : null;
     CellStyle dataStyle = refDataCell != null ? refDataCell.getCellStyle() : null;
 
-    for (int l = 0; l < numLanes; l++) {
-      int col = 4 + l;
+    for (int i = 0; i < activeLanes.size(); i++) {
+      int l = activeLanes.get(i);
+      int col = 4 + i;
       Cell cHeader = row3.getCell(col);
       if (cHeader == null) {
         cHeader = row3.createCell(col);
@@ -135,7 +221,7 @@ public final class RaceStatisticsUtils {
       "${driver.gapPosition}"
     };
 
-    int startExtraCol = 4 + numLanes;
+    int startExtraCol = 4 + activeLanes.size();
     for (int i = 0; i < extraHeaders.length; i++) {
       int col = startExtraCol + i;
       Cell cHeader = row3.getCell(col);
@@ -189,15 +275,17 @@ public final class RaceStatisticsUtils {
     }
   }
 
-  private static void adjustHeatListSheet(XSSFWorkbook workbook, int numLanes, Race race) {
-    if (numLanes <= 0) {
-      numLanes = 2;
+  private static void adjustHeatListSheet(
+      XSSFWorkbook workbook, List<Integer> activeLanes, Race race, boolean hasSeason) {
+    if (activeLanes == null || activeLanes.isEmpty()) {
+      activeLanes = java.util.Arrays.asList(0, 1);
     }
     Sheet sheet = workbook.getSheet("Heat List");
-    if (sheet == null && workbook.getNumberOfSheets() > 2) {
-      Sheet s2 = workbook.getSheetAt(2);
-      if ("Heat List".equalsIgnoreCase(s2.getSheetName())) {
-        sheet = s2;
+    int expectedIndex = hasSeason ? 2 : 1;
+    if (sheet == null && workbook.getNumberOfSheets() > expectedIndex) {
+      Sheet s = workbook.getSheetAt(expectedIndex);
+      if ("Heat List".equalsIgnoreCase(s.getSheetName())) {
+        sheet = s;
       }
     }
     if (sheet == null) {
@@ -220,8 +308,9 @@ public final class RaceStatisticsUtils {
       trackLanes = race.getTrack().getLanes();
     }
 
-    for (int l = 0; l < numLanes; l++) {
-      int col = 1 + l;
+    for (int i = 0; i < activeLanes.size(); i++) {
+      int l = activeLanes.get(i);
+      int col = 1 + i;
       Cell cHeader = row3.getCell(col);
       if (cHeader == null) {
         cHeader = row3.createCell(col);
@@ -244,12 +333,10 @@ public final class RaceStatisticsUtils {
         }
       }
 
+      if (defaultHeaderStyle != null) cHeader.setCellStyle(defaultHeaderStyle);
       if (bgColorStr != null || fgColorStr != null) {
-        CellStyle headerLaneStyle =
-            createColoredCellStyle(workbook, defaultHeaderStyle, bgColorStr, fgColorStr, true);
         CellStyle dataLaneStyle =
             createColoredCellStyle(workbook, defaultDataStyle, bgColorStr, fgColorStr, false);
-        cHeader.setCellStyle(headerLaneStyle);
         cData.setCellStyle(dataLaneStyle);
       } else {
         if (defaultHeaderStyle != null) cHeader.setCellStyle(defaultHeaderStyle);
@@ -257,7 +344,7 @@ public final class RaceStatisticsUtils {
       }
     }
 
-    int lastLaneColIdx = 1 + numLanes - 1;
+    int lastLaneColIdx = 1 + activeLanes.size() - 1;
     int maxCol = Math.max((int) row3.getLastCellNum(), (int) row4.getLastCellNum());
     for (int col = lastLaneColIdx + 1; col <= maxCol; col++) {
       Cell c3 = row3.getCell(col);
@@ -614,22 +701,32 @@ public final class RaceStatisticsUtils {
     return minSum == Double.MAX_VALUE ? 0.0 : minSum;
   }
 
-  public static int determineTrackLanes(Race race, List<Heat> runHeats) {
-    int numLanes = 0;
-    if (race != null
-        && race.getTrack() != null
-        && race.getTrack().getLanes() != null
-        && !race.getTrack().getLanes().isEmpty()) {
-      numLanes = race.getTrack().getLanes().size();
-    }
+  public static List<Integer> determineActiveLanes(Race race, List<Heat> runHeats) {
+    java.util.Set<Integer> active = new java.util.HashSet<>();
     if (runHeats != null) {
       for (Heat h : runHeats) {
         if (h.getDrivers() != null) {
-          numLanes = Math.max(numLanes, h.getDrivers().size());
+          for (int i = 0; i < h.getDrivers().size(); i++) {
+            DriverHeatData dhd = h.getDrivers().get(i);
+            if (dhd != null && !dhd.isEmptyParticipant()) {
+              active.add(i);
+            }
+          }
         }
       }
     }
-    return Math.max(numLanes, 2);
+    if (active.isEmpty()) {
+      int defaultLanes = 2;
+      if (race != null && race.getTrack() != null && race.getTrack().getLanes() != null) {
+        defaultLanes = race.getTrack().getLanes().size();
+      }
+      for (int i = 0; i < defaultLanes; i++) {
+        active.add(i);
+      }
+    }
+    List<Integer> sorted = new ArrayList<>(active);
+    Collections.sort(sorted);
+    return sorted;
   }
 
   public static void prepareExportData(
@@ -650,11 +747,11 @@ public final class RaceStatisticsUtils {
       }
     }
 
-    int numLanes = determineTrackLanes(race, runHeats);
+    List<Integer> activeLanes = determineActiveLanes(race, runHeats);
 
     for (RaceParticipant p : drivers) {
       List<Double> laneLaps = new ArrayList<>();
-      for (int l = 0; l < numLanes; l++) {
+      for (int l : activeLanes) {
         double totalLapsOnLane = 0.0;
         for (Heat h : runHeats) {
           if (h.getDrivers() != null && l < h.getDrivers().size()) {
@@ -677,7 +774,7 @@ public final class RaceStatisticsUtils {
 
       DriverAnalysisSummary summary = new DriverAnalysisSummary(driverName, driverId);
 
-      for (int l = 0; l < numLanes; l++) {
+      for (int l : activeLanes) {
         int laneNum = l + 1;
         String laneName = "Lane " + laneNum;
         double laneTotalLaps = 0.0;
@@ -719,5 +816,156 @@ public final class RaceStatisticsUtils {
     List<String> uniqueSheetNames = makeSheetNamesUnique(outDriverSheetNames);
     outDriverSheetNames.clear();
     outDriverSheetNames.addAll(uniqueSheetNames);
+  }
+
+  private static boolean isHeaderRow(Row row) {
+    if (row == null) return true;
+    for (Cell c : row) {
+      if (c == null) continue;
+      if (c.getCellType() == CellType.STRING) {
+        String val = c.getStringCellValue().trim();
+        if ("Driver".equalsIgnoreCase(val)
+            || "Driver / Team".equalsIgnoreCase(val)
+            || "Rank".equalsIgnoreCase(val)
+            || "Metric".equalsIgnoreCase(val)
+            || "Heat".equalsIgnoreCase(val)
+            || "Field".equalsIgnoreCase(val)
+            || "Actual Driver".equalsIgnoreCase(val)
+            || "Lap Time".equalsIgnoreCase(val)
+            || "Total Laps".equalsIgnoreCase(val)
+            || "Total Time".equalsIgnoreCase(val)) {
+          return true;
+        }
+      }
+      CellStyle style = c.getCellStyle();
+      if (style != null
+          && style.getFillPattern() != org.apache.poi.ss.usermodel.FillPatternType.NO_FILL) {
+        org.apache.poi.ss.usermodel.Color color = style.getFillForegroundColorColor();
+        if (color instanceof org.apache.poi.xssf.usermodel.XSSFColor) {
+          String argb = ((org.apache.poi.xssf.usermodel.XSSFColor) color).getARGBHex();
+          if (argb != null && argb.toUpperCase().endsWith("D0D0D0")) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public static void applyPostJxlsLaneColors(
+      org.apache.poi.xssf.usermodel.XSSFWorkbook workbook, Race race) {
+    if (race == null || race.getTrack() == null || race.getTrack().getLanes() == null) {
+      return;
+    }
+    List<Lane> lanes = race.getTrack().getLanes();
+    java.util.Map<String, CellStyle> styleCache = new java.util.HashMap<>();
+
+    for (Sheet sheet : workbook) {
+      java.util.Map<Integer, Integer> columnToLaneIndex = new java.util.HashMap<>();
+
+      for (int i = 0; i <= 20; i++) {
+        Row row = sheet.getRow(i);
+        if (row == null) continue;
+        for (Cell cell : row) {
+          if (cell.getCellType() == CellType.STRING) {
+            String text = cell.getStringCellValue().trim();
+            if (text.isEmpty()) continue;
+
+            java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile(
+                        "^Lane\\s+(\\d+)(?:\\s+Laps)?$", java.util.regex.Pattern.CASE_INSENSITIVE)
+                    .matcher(text);
+            if (m.matches()) {
+              int laneNum = Integer.parseInt(m.group(1));
+              int laneIdx = laneNum - 1;
+              if (laneIdx >= 0 && laneIdx < lanes.size()) {
+                columnToLaneIndex.put(cell.getColumnIndex(), laneIdx);
+              }
+            } else if ("Lane".equalsIgnoreCase(text)) {
+              columnToLaneIndex.put(cell.getColumnIndex(), -2);
+            }
+          }
+        }
+      }
+
+      if (!columnToLaneIndex.isEmpty()) {
+        for (Row row : sheet) {
+          if (isHeaderRow(row)) continue;
+
+          for (java.util.Map.Entry<Integer, Integer> entry : columnToLaneIndex.entrySet()) {
+            int colIdx = entry.getKey();
+            int laneIdx = entry.getValue();
+
+            if (laneIdx == -2) {
+              Cell laneCell = row.getCell(colIdx);
+              if (laneCell == null) continue;
+              int dynamicLaneIdx = -1;
+              if (laneCell.getCellType() == CellType.NUMERIC) {
+                dynamicLaneIdx = ((int) laneCell.getNumericCellValue()) - 1;
+              } else if (laneCell.getCellType() == CellType.STRING) {
+                try {
+                  dynamicLaneIdx = Integer.parseInt(laneCell.getStringCellValue().trim()) - 1;
+                } catch (NumberFormatException e) {
+                }
+              }
+              if (dynamicLaneIdx >= 0 && dynamicLaneIdx < lanes.size()) {
+                Lane lane = lanes.get(dynamicLaneIdx);
+                for (Cell c : row) {
+                  if (c != null) {
+                    colorCell(workbook, c, lane, false, styleCache);
+                  }
+                }
+              }
+            } else {
+              Cell cell = row.getCell(colIdx);
+              if (cell != null) {
+                colorCell(workbook, cell, lanes.get(laneIdx), false, styleCache);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static void colorCell(
+      org.apache.poi.xssf.usermodel.XSSFWorkbook workbook,
+      Cell cell,
+      Lane lane,
+      boolean isHeader,
+      java.util.Map<String, CellStyle> styleCache) {
+    if (lane == null || cell == null) return;
+    String bgColorStr = lane.getBackground_color();
+    String fgColorStr = lane.getForeground_color();
+    if ((bgColorStr == null || bgColorStr.isEmpty())
+        && (fgColorStr == null || fgColorStr.isEmpty())) {
+      return;
+    }
+    CellStyle baseStyle = cell.getCellStyle();
+    if (baseStyle != null) {
+      if (baseStyle.getFillPattern() != org.apache.poi.ss.usermodel.FillPatternType.NO_FILL) {
+        org.apache.poi.ss.usermodel.Color color = baseStyle.getFillForegroundColorColor();
+        if (color instanceof org.apache.poi.xssf.usermodel.XSSFColor) {
+          String argb = ((org.apache.poi.xssf.usermodel.XSSFColor) color).getARGBHex();
+          // Default gray header color in template is D0D0D0 (usually 00D0D0D0 or FFD0D0D0)
+          if (argb == null || !argb.toUpperCase().endsWith("D0D0D0")) {
+            return; // User has overridden the template cell color, skip dynamic lane color
+          }
+        } else if (color != null) {
+          // If it has a color but not XSSFColor, assume it's overridden
+          return;
+        }
+      }
+    }
+
+    short baseIndex = baseStyle != null ? baseStyle.getIndex() : -1;
+    String key = baseIndex + "_" + bgColorStr + "_" + fgColorStr + "_" + isHeader;
+
+    CellStyle style = styleCache.get(key);
+    if (style == null) {
+      style = createColoredCellStyle(workbook, baseStyle, bgColorStr, fgColorStr, isHeader);
+      styleCache.put(key, style);
+    }
+    cell.setCellStyle(style);
   }
 }

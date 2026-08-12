@@ -901,12 +901,12 @@ public class AssetService {
             s.put("gauge.fuel", "default_fuel_gauge");
             updated = true;
           }
-          if (!s.containsKey("audio.countdown")) {
-            s.put("audio.countdown", "default_countdown");
+          if (s.containsKey("audio.countdown")) {
+            s.remove("audio.countdown");
             updated = true;
           }
-          if (!s.containsKey("audio.seconds_left")) {
-            s.put("audio.seconds_left", "default_seconds_left");
+          if (s.containsKey("audio.seconds_left")) {
+            s.remove("audio.seconds_left");
             updated = true;
           }
 
@@ -940,6 +940,14 @@ public class AssetService {
 
   private boolean populateDefaultAudioSlots(Map<String, AudioConfig> as) {
     boolean updated = false;
+    if (!as.containsKey("audio.countdown")) {
+      as.put("audio.countdown", new AudioConfig("audio_set", "default_countdown", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.seconds_left")) {
+      as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+      updated = true;
+    }
     if (!as.containsKey("audio.yellowflag")) {
       as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
       updated = true;
@@ -990,8 +998,6 @@ public class AssetService {
     slots.put("lamp.red.dim", "default_start_red_dim");
     slots.put("lamp.green", "default_start_green");
     slots.put("gauge.fuel", "default_fuel_gauge");
-    slots.put("audio.countdown", "default_countdown");
-    slots.put("audio.seconds_left", "default_seconds_left");
     return slots;
   }
 

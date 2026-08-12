@@ -383,20 +383,55 @@ export class SeasonEditorComponent
 
   openAddRaceModal(): void {
     this.selectedRaceToAddId = "";
-    const currentKeys = new Set(
-      (this.editingSeason.races || []).map(
-        (r) => `${r.race_id}_${r.timestamp || 0}`,
-      ),
-    );
-
     const availableMap = new Map<string, SeasonRaceRecord>();
+    const existingRaces = this.editingSeason?.races || [];
+
+    const isAlreadyInSeason = (candidate: SeasonRaceRecord): boolean => {
+      if (!existingRaces || existingRaces.length === 0) return false;
+      const candTs = Number(candidate.timestamp) || 0;
+      const candId = String(candidate.race_id || "");
+      const candName = (candidate.race_name || "").trim().toLowerCase();
+
+      return existingRaces.some((r) => {
+        const rTs = Number(r.timestamp) || 0;
+        const rId = String(r.race_id || "");
+        const rName = (r.race_name || "").trim().toLowerCase();
+
+        if (rId && candId && rId === candId) {
+          return true;
+        }
+        if (rTs > 0 && candTs > 0 && rTs === candTs) {
+          return true;
+        }
+        if (
+          (rTs === 0 || candTs === 0) &&
+          rName &&
+          candName &&
+          rName === candName
+        ) {
+          return true;
+        }
+        return false;
+      });
+    };
+
+    const getRaceKey = (r: SeasonRaceRecord): string => {
+      const ts = Number(r.timestamp) || 0;
+      if (ts > 0) {
+        return `ts_${ts}`;
+      }
+      return `id_${r.race_id || ""}`;
+    };
+
     for (const season of this.existingSeasons) {
       if (!season.races) continue;
       for (const raceRec of season.races) {
-        if (raceRec && raceRec.race_id) {
-          const key = `${raceRec.race_id}_${raceRec.timestamp || 0}`;
-          if (!currentKeys.has(key)) {
-            availableMap.set(key, { ...raceRec });
+        if (raceRec && (raceRec.race_id || raceRec.timestamp)) {
+          if (!isAlreadyInSeason(raceRec)) {
+            const key = getRaceKey(raceRec);
+            if (!availableMap.has(key)) {
+              availableMap.set(key, { ...raceRec });
+            }
           }
         }
       }
@@ -411,15 +446,8 @@ export class SeasonEditorComponent
             if ((rec as any).is_event_race) {
               continue;
             }
-            const key = `${rec.race_id}_${rec.timestamp}`;
-            const isAlreadyAdded =
-              currentKeys.has(key) ||
-              (this.editingSeason.races || []).some(
-                (r) =>
-                  r.race_id === rec.race_id &&
-                  (r.timestamp === rec.timestamp || rec.is_event),
-              );
-            if (!isAlreadyAdded) {
+            if (!isAlreadyInSeason(rec)) {
+              const key = getRaceKey(rec);
               if (availableMap.has(key)) {
                 if (!rec.is_demo) {
                   availableMap.get(key)!.is_demo = false;

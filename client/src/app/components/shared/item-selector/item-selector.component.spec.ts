@@ -97,6 +97,7 @@ describe("ItemSelectorComponent", () => {
       { name: "Image 1", type: "image" },
       { name: "Set 1", type: "image_set" },
       { name: "Sound 1", type: "sound" },
+      { name: "Audio 1", type: "audio" },
     ]);
     fixture.componentRef.setInput("itemType", "image");
     expect(component.filteredItems().length).toBe(1);
@@ -105,6 +106,13 @@ describe("ItemSelectorComponent", () => {
     fixture.componentRef.setInput("itemType", "image_set");
     expect(component.filteredItems().length).toBe(1);
     expect(component.filteredItems()[0].name).toBe("Set 1");
+
+    fixture.componentRef.setInput("itemType", "sound");
+    expect(component.filteredItems().length).toBe(2);
+    expect(component.filteredItems().map((i) => i.name)).toEqual([
+      "Sound 1",
+      "Audio 1",
+    ]);
   });
 
   it("should emit select event when item is clicked", () => {

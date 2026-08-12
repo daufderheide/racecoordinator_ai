@@ -2470,4 +2470,33 @@ describe("UIEditorComponent", () => {
       expect(widget.textScaleFactor).toBe(1.15);
     });
   });
+
+  describe("getAudioConfigForSlot", () => {
+    it("should return existing audio_slots config if present with type", () => {
+      const theme: any = {
+        audio_slots: {
+          "audio.countdown": { type: "audio_set", url: "my_set" },
+        },
+      };
+      const config = component.getAudioConfigForSlot("audio.countdown", theme);
+      expect(config).toEqual({ type: "audio_set", url: "my_set" });
+    });
+
+    it("should fall back to type audio_set for audio.countdown and audio.seconds_left", () => {
+      const theme: any = {
+        slots: {
+          "audio.countdown": "legacy_countdown",
+        },
+        audio_slots: {},
+      };
+      const config = component.getAudioConfigForSlot("audio.countdown", theme);
+      expect(config).toEqual({ type: "audio_set", url: "legacy_countdown" });
+    });
+
+    it("should default missing audio.countdown to default_countdown audio_set", () => {
+      const theme: any = { audio_slots: {}, slots: {} };
+      const config = component.getAudioConfigForSlot("audio.countdown", theme);
+      expect(config).toEqual({ type: "audio_set", url: "default_countdown" });
+    });
+  });
 });

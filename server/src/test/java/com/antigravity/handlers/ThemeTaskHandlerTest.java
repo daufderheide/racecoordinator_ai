@@ -94,9 +94,13 @@ public class ThemeTaskHandlerTest {
     org.junit.Assert.assertEquals(
         "default_yellow_flag", defaultTheme.getAudioSlots().get("audio.yellowflag").getUrl());
     org.junit.Assert.assertEquals(
-        "default_countdown", defaultTheme.getSlots().get("audio.countdown"));
+        "audio_set", defaultTheme.getAudioSlots().get("audio.countdown").getType());
     org.junit.Assert.assertEquals(
-        "default_seconds_left", defaultTheme.getSlots().get("audio.seconds_left"));
+        "default_countdown", defaultTheme.getAudioSlots().get("audio.countdown").getUrl());
+    org.junit.Assert.assertEquals(
+        "audio_set", defaultTheme.getAudioSlots().get("audio.seconds_left").getType());
+    org.junit.Assert.assertEquals(
+        "default_seconds_left", defaultTheme.getAudioSlots().get("audio.seconds_left").getUrl());
   }
 
   @Test

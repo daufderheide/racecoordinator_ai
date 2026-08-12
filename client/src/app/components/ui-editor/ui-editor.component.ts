@@ -1484,14 +1484,21 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   getAudioConfigForSlot(slot: string, theme: Theme): AudioConfig {
     if (!theme.audio_slots) theme.audio_slots = {};
     const config = theme.audio_slots[slot];
-    if (config) return config;
+    if (config && config.type) return config;
 
-    // Fallback: If it's in the old slots map, convert it on the fly (though backfill should handle this)
+    // Fallback: If it's in the old slots map or missing, convert/default on the fly
     const legacyAssetId = theme.slots?.[slot];
-    let fallbackConfig: AudioConfig = { type: "preset" };
-    if (legacyAssetId) {
-      fallbackConfig = { type: "preset", url: legacyAssetId };
-    }
+    const isSet = slot === "audio.countdown" || slot === "audio.seconds_left";
+    const defaultAssetId = isSet
+      ? slot === "audio.countdown"
+        ? "default_countdown"
+        : "default_seconds_left"
+      : undefined;
+
+    const fallbackConfig: AudioConfig = {
+      type: isSet ? "audio_set" : "preset",
+      url: legacyAssetId || defaultAssetId,
+    };
 
     theme.audio_slots[slot] = fallbackConfig;
     return fallbackConfig;

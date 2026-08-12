@@ -29,6 +29,16 @@ public class GapCalculator {
       GapParticipant current = sortedParticipants.get(i);
       GapParticipant ahead = sortedParticipants.get(i - 1);
 
+      if (current.isEmptyParticipant()) {
+        current.setGapLeader(0.0);
+        current.setGapPosition(0.0);
+        current.setGapLeaderF1(0.0);
+        current.setGapPositionF1(0.0);
+        current.setLapsDownLeader(0);
+        current.setLapsDownPosition(0);
+        continue;
+      }
+
       current.setGapLeader(calculateGap(leader, current, finishMethod));
       current.setGapPosition(calculateGap(ahead, current, finishMethod));
 

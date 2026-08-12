@@ -86,6 +86,24 @@ public class RaceParticipant extends ServerToClientObject implements GapParticip
     super();
   }
 
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  @Override
+  public boolean isEmptyParticipant() {
+    if (driver != null) {
+      if (driver.isEmpty()) return true;
+      if ("EMPTY_LANE".equalsIgnoreCase(driver.getEntityId())) return true;
+      if ("Empty Lane".equalsIgnoreCase(driver.getName())) return true;
+      if ("Empty".equalsIgnoreCase(driver.getName())) return true;
+    }
+    if (team != null) {
+      if ("EMPTY_LANE".equalsIgnoreCase(team.getEntityId())) return true;
+      if ("Empty Lane".equalsIgnoreCase(team.getName())) return true;
+      if ("Empty".equalsIgnoreCase(team.getName())) return true;
+    }
+    if (driver == null && team == null) return true;
+    return false;
+  }
+
   public Driver getDriver() {
     return driver;
   }

@@ -302,10 +302,14 @@ public class PhidgetProtocolTest {
     ProtocolListener mockListener = mock(ProtocolListener.class);
     unassignedProtocol.setListener(mockListener);
 
-    assertTrue(unassignedProtocol.open());
-    assertFalse(unassignedProtocol.isConnected());
-    assertFalse(unassignedProtocol.isHealthy());
-    verify(mockListener, atLeastOnce()).onInterfaceStatus(InterfaceStatus.DISCONNECTED, 0);
+    try {
+      assertTrue(unassignedProtocol.open());
+      assertFalse(unassignedProtocol.isConnected());
+      assertFalse(unassignedProtocol.isHealthy());
+      verify(mockListener, atLeastOnce()).onInterfaceStatus(InterfaceStatus.DISCONNECTED, 0);
+    } finally {
+      unassignedProtocol.close();
+    }
   }
 
   @Test

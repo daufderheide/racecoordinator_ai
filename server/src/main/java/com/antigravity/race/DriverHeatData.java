@@ -354,6 +354,7 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   }
 
   public double getGapLeader() {
+    if (isEmptyParticipant()) return 0.0;
     return gapLeader;
   }
 
@@ -362,6 +363,7 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   }
 
   public double getGapPosition() {
+    if (isEmptyParticipant()) return 0.0;
     return gapPosition;
   }
 
@@ -370,6 +372,7 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   }
 
   public double getGapLeaderF1() {
+    if (isEmptyParticipant()) return 0.0;
     return gapLeaderF1;
   }
 
@@ -379,6 +382,7 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   }
 
   public double getGapPositionF1() {
+    if (isEmptyParticipant()) return 0.0;
     return gapPositionF1;
   }
 
@@ -489,5 +493,11 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
 
   public void setHasDriftTime(boolean hasDriftTime) {
     this.hasDriftTime = hasDriftTime;
+  }
+
+  @Override
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  public boolean isEmptyParticipant() {
+    return actualDriver == null || actualDriver.isEmpty();
   }
 }

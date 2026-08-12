@@ -198,4 +198,37 @@ describe("ThemeService", () => {
 
     expect(ThemeService.prototype.initialize).toHaveBeenCalled();
   });
+
+  describe("resolveAudioConfig", () => {
+    it("should resolve configured audio_slots entry", async () => {
+      mockThemes[0].audio_slots = {
+        "audio.countdown": { type: "audio_set", url: "custom_countdown" },
+      };
+      await service.initialize();
+      const config = service.resolveAudioConfig("audio.countdown");
+      expect(config).toEqual({ type: "audio_set", url: "custom_countdown" });
+    });
+
+    it("should resolve legacy slots entry for audio.countdown with type audio_set", async () => {
+      mockThemes[0].audio_slots = {};
+      mockThemes[0].slots = { "audio.countdown": "legacy_countdown" };
+      await service.initialize();
+      const config = service.resolveAudioConfig("audio.countdown");
+      expect(config).toEqual({ type: "audio_set", url: "legacy_countdown" });
+    });
+
+    it("should provide default fallback for audio.countdown and audio.seconds_left when missing", async () => {
+      mockThemes[0].audio_slots = {};
+      mockThemes[0].slots = {};
+      await service.initialize();
+      expect(service.resolveAudioConfig("audio.countdown")).toEqual({
+        type: "audio_set",
+        url: "default_countdown",
+      });
+      expect(service.resolveAudioConfig("audio.seconds_left")).toEqual({
+        type: "audio_set",
+        url: "default_seconds_left",
+      });
+    });
+  });
 });

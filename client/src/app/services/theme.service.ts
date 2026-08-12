@@ -134,7 +134,21 @@ export class ThemeService {
    */
   resolveAudioConfig(slotKey: string): AudioConfig | null {
     if (!this.activeTheme) return null;
-    return this.activeTheme.audio_slots?.[slotKey] || null;
+    let config = this.activeTheme.audio_slots?.[slotKey] || null;
+    if (!config && this.activeTheme.slots?.[slotKey]) {
+      const assetId = this.activeTheme.slots[slotKey];
+      const isSet =
+        slotKey === "audio.countdown" || slotKey === "audio.seconds_left";
+      config = { type: isSet ? "audio_set" : "preset", url: assetId };
+    }
+    if (!config) {
+      if (slotKey === "audio.countdown") {
+        config = { type: "audio_set", url: "default_countdown" };
+      } else if (slotKey === "audio.seconds_left") {
+        config = { type: "audio_set", url: "default_seconds_left" };
+      }
+    }
+    return config;
   }
 
   // --- Per-Race Theme Support ---
