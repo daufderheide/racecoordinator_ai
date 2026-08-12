@@ -5,6 +5,7 @@ import { BehaviorSubject, of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Season } from "@app/models/season";
 import { LoggerService } from "@app/services/logger.service";
+import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -67,7 +68,15 @@ describe("DefaultSeasonResultsComponent", () => {
   };
 
   const mockSettingsService = {
-    getSettings: () => ({ selectedSeasonId: "season_1" }),
+    getSettings: () => ({
+      selectedSeasonId: "season_1",
+      exportPdfBackgrounds: true,
+    }),
+    saveSettings: jasmine.createSpy("saveSettings"),
+  };
+
+  const mockPrintService = {
+    print: jasmine.createSpy("print"),
   };
 
   const mockTranslationService = {
@@ -91,6 +100,7 @@ describe("DefaultSeasonResultsComponent", () => {
         { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: PrintService, useValue: mockPrintService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -194,5 +204,34 @@ describe("DefaultSeasonResultsComponent", () => {
       ],
     };
     expect(component.hasDemoRaces).toBeFalse();
+  });
+
+  it("should open PDF export dialog on exportPdf()", () => {
+    component.exportPdf();
+    expect(component.showPdfExportDialog).toBeTrue();
+    expect(component.defaultIncludeBackground).toBeTrue();
+  });
+
+  it("should handle PDF export confirmation and invoke PrintService", () => {
+    component.season = { name: "2026 Championship", drops: 0, races: [] };
+    component.onPdfExportConfirm({
+      includeBackground: false,
+      saveAsDefault: true,
+    });
+
+    expect(component.showPdfExportDialog).toBeFalse();
+    expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+    expect(mockPrintService.print).toHaveBeenCalledWith(
+      "2026 Championship-SeasonResults",
+      true,
+      undefined,
+      false,
+    );
+  });
+
+  it("should handle PDF export cancellation", () => {
+    component.showPdfExportDialog = true;
+    component.onPdfExportCancel();
+    expect(component.showPdfExportDialog).toBeFalse();
   });
 });

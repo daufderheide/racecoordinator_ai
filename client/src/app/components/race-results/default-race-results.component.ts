@@ -81,6 +81,12 @@ const NEON_COLORS = [
   { color: "#c6ff00", bg: "#233000" }, // Lime Green
 ];
 
+import {
+  PdfExportDialogComponent,
+  PdfExportOptions,
+} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { SettingsService } from "@app/services/settings.service";
+
 @Component({
   standalone: true,
   selector: "app-default-race-results",
@@ -94,14 +100,19 @@ const NEON_COLORS = [
     AvatarUrlPipe,
     RouterModule,
     AcknowledgementModalComponent,
+    PdfExportDialogComponent,
   ],
 })
 export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private settingsService = inject(SettingsService);
   protected viewerRaceEndedHandler!: ViewerRaceEndedHandler;
   protected HeatRanking = HeatRanking;
+
+  showPdfExportDialog = false;
+  defaultIncludeBackground = true;
 
   protected getGridColumns(): string {
     const baseColumns =
@@ -354,12 +365,29 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
   }
 
   exportPdf() {
+    this.defaultIncludeBackground =
+      this.settingsService.getSettings().exportPdfBackgrounds ?? true;
+    this.showPdfExportDialog = true;
+  }
+
+  onPdfExportConfirm(options: PdfExportOptions) {
+    this.showPdfExportDialog = false;
+    if (options.saveAsDefault) {
+      const settings = this.settingsService.getSettings();
+      settings.exportPdfBackgrounds = options.includeBackground;
+      this.settingsService.saveSettings(settings);
+    }
     const raceName = this.race?.name || "Race";
     this.printService.print(
       `${raceName}-RaceResults`,
       true,
       this.raceStartTime,
+      options.includeBackground,
     );
+  }
+
+  onPdfExportCancel() {
+    this.showPdfExportDialog = false;
   }
 
   @HostListener("window:resize")

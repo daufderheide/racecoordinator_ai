@@ -88,4 +88,29 @@ test.describe("Season Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should render season results without background in print layout", async ({
+    page,
+  }) => {
+    const mockSeason = SeasonResultsHelper.createMockSeason();
+    await SeasonResultsHelper.injectMockSeasonsData(page, [mockSeason]);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/season-results?id=" + mockSeason.entity_id),
+    );
+
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(() => {
+      document.body.classList.add("print-full-scroll");
+      document.body.classList.add("print-no-background");
+    });
+    await page.waitForTimeout(200);
+
+    await expect(page).toHaveScreenshot("season-results-no-background.png", {
+      maxDiffPixelRatio: 0.05,
+      fullPage: true,
+    });
+  });
 });

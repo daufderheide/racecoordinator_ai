@@ -103,4 +103,29 @@ test.describe("Driver Results Visuals", () => {
       },
     );
   });
+
+  test("should render driver results in print layout without background graphics", async ({
+    page,
+  }) => {
+    const mockData = DriverResultsHelper.createMockIndividualDriverData();
+    await DriverResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-results/d1"),
+    );
+
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(() => {
+      document.body.classList.add("print-full-scroll");
+      document.body.classList.add("print-no-background");
+    });
+    await page.waitForTimeout(200);
+
+    await expect(page).toHaveScreenshot("driver-results-no-background.png", {
+      maxDiffPixelRatio: 0.05,
+      fullPage: true,
+    });
+  });
 });

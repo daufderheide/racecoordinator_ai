@@ -395,3 +395,11 @@
     </div>
   </div>
 </div>
+
+<app-pdf-export-dialog
+  [visible]="showPdfExportDialog"
+  [defaultIncludeBackground]="defaultIncludeBackground"
+  (confirm)="onPdfExportConfirm($event)"
+  (cancel)="onPdfExportCancel()"
+>
+</app-pdf-export-dialog>

@@ -105,3 +105,24 @@
   }
 }
 
+@media print {
+  :host-context(body.print-no-background) .timer-panel {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .timer-text {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .status-label,
+  :host-context(body.print-no-background) .warmup-label {
+    color: #0284c7 !important;
+    text-shadow: none !important;
+  }
+}
+
+

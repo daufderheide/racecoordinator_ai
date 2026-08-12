@@ -14,6 +14,13 @@
         <span class="value-text">{{
           season?.name || ("SR_NO_ACTIVE_SEASON" | translate)
         }}</span>
+        <button
+          class="export-pdf-btn no-print"
+          (click)="exportPdf()"
+          title="Export PDF"
+        >
+          <span class="material-icons">picture_as_pdf</span>
+        </button>
       </div>
     </div>
 
@@ -137,40 +144,43 @@
                         }
                       </div>
                     </div>
-                    @if (isRaceExpanded(race.race_id || "" + idx)) {
-                      <div class="expander-body">
-                        <table class="race-breakdown-table">
-                          <thead>
+                    <div
+                      class="expander-body"
+                      [class.expander-collapsed]="
+                        !isRaceExpanded(race.race_id || '' + idx)
+                      "
+                    >
+                      <table class="race-breakdown-table">
+                        <thead>
+                          <tr>
+                            <th>{{ "SM_RANK" | translate }}</th>
+                            <th>{{ "SM_DRIVER" | translate }}</th>
+                            <th>{{ "SM_OVERALL_POS_POINTS" | translate }}</th>
+                            <th>{{ "SM_HEAT_POS_POINTS" | translate }}</th>
+                            <th>Total Pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (
+                            res of race.driver_results;
+                            track res.driver_id;
+                            let rIdx = $index
+                          ) {
                             <tr>
-                              <th>{{ "SM_RANK" | translate }}</th>
-                              <th>{{ "SM_DRIVER" | translate }}</th>
-                              <th>{{ "SM_OVERALL_POS_POINTS" | translate }}</th>
-                              <th>{{ "SM_HEAT_POS_POINTS" | translate }}</th>
-                              <th>Total Pts</th>
+                              <td>#{{ res.overall_rank || rIdx + 1 }}</td>
+                              <td>
+                                <strong>{{ res.driver_name }}</strong>
+                              </td>
+                              <td>{{ res.overall_points }}</td>
+                              <td>{{ res.heat_points }}</td>
+                              <td>
+                                <strong>{{ res.total_points }}</strong>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            @for (
-                              res of race.driver_results;
-                              track res.driver_id;
-                              let rIdx = $index
-                            ) {
-                              <tr>
-                                <td>#{{ res.overall_rank || rIdx + 1 }}</td>
-                                <td>
-                                  <strong>{{ res.driver_name }}</strong>
-                                </td>
-                                <td>{{ res.overall_points }}</td>
-                                <td>{{ res.heat_points }}</td>
-                                <td>
-                                  <strong>{{ res.total_points }}</strong>
-                                </td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
-                      </div>
-                    }
+                          }
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 }
               </div>
@@ -181,3 +191,10 @@
     </div>
   </div>
 </div>
+
+<app-pdf-export-dialog
+  [visible]="showPdfExportDialog"
+  [defaultIncludeBackground]="defaultIncludeBackground"
+  (confirm)="onPdfExportConfirm($event)"
+  (cancel)="onPdfExportCancel()"
+></app-pdf-export-dialog>

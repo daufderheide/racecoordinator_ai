@@ -692,4 +692,41 @@
   box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
 }
 
+@media print {
+  :host-context(body.print-no-background) .heat-card,
+  :host-context(body.print-no-background) .heat-card-header,
+  :host-context(body.print-no-background) .heat-card-content,
+  :host-context(body.print-no-background) .heat-stats-table-wrapper,
+  :host-context(body.print-no-background) .heat-row,
+  :host-context(body.print-no-background) .lap-item-card,
+  :host-context(body.print-no-background) .lap-chart-box,
+  :host-context(body.print-no-background) .analysis-row,
+  :host-context(body.print-no-background) .driver-info-block,
+  :host-context(body.print-no-background) .results-table-header {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  :host-context(body.print-no-background) .heat-badge,
+  :host-context(body.print-no-background) .header-cell,
+  :host-context(body.print-no-background) .body-cell,
+  :host-context(body.print-no-background) .lap-time,
+  :host-context(body.print-no-background) .lap-number {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .subsection-title {
+    color: #0284c7 !important;
+    text-shadow: none !important;
+    border-left-color: #0284c7 !important;
+  }
+}
+
 

@@ -66,4 +66,33 @@ test.describe("Heat Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should render heat results in print layout without background graphics", async ({
+    page,
+  }) => {
+    const mockData = HeatResultsHelper.createMockHeatData();
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/heat-results"),
+    );
+
+    await expect(
+      page.locator("app-heat-driver-expander").first(),
+    ).toBeVisible();
+
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(() => {
+      document.body.classList.add("print-full-scroll");
+      document.body.classList.add("print-no-background");
+    });
+    await page.waitForTimeout(200);
+
+    await expect(page).toHaveScreenshot("heat-results-no-background.png", {
+      maxDiffPixelRatio: 0.05,
+      fullPage: true,
+    });
+  });
 });

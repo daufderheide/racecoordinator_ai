@@ -399,16 +399,29 @@ app-default-raceday {
     border-color: #ef4444;
   }}
 @media print {
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   .dashboard-wrapper {
-    height: auto !important;
+    width: 100% !important;
+    height: 1080px !important;
     overflow: visible !important;
   }
 
-  .scalable-content {
-    background: white !important;
-    color: black !important;
-  }
-  * {
-    color: black !important;
+  :host-context(body.print-no-background) :host,
+  :host-context(body.print-no-background) app-default-raceday,
+  :host-context(body.print-no-background) .dashboard-wrapper,
+  :host-context(body.print-no-background) .scalable-content,
+  :host-context(body.print-no-background) .raceday-absolute-layout-root-wrapper {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
   }
 }
+
+

@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
 } from "@angular/core";
@@ -46,6 +47,12 @@ interface StandingsRow {
   avatarUrl: string;
 }
 
+import {
+  PdfExportDialogComponent,
+  PdfExportOptions,
+} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { SettingsService } from "@app/services/settings.service";
+
 @Component({
   standalone: true,
   selector: "app-default-driver-results",
@@ -58,6 +65,7 @@ interface StandingsRow {
     TranslatePipe,
     AvatarUrlPipe,
     RouterModule,
+    PdfExportDialogComponent,
   ],
 })
 export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
@@ -84,6 +92,10 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
   public driverPredictionEvaluation?: DriverEvaluation;
   private loadedDriverId: string = "";
   private loadedRaceId: string = "";
+
+  private settingsService = inject(SettingsService);
+  protected showPdfExportDialog = false;
+  protected defaultIncludeBackground = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -494,10 +506,31 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
   }
 
   protected exportPdf() {
+    this.defaultIncludeBackground =
+      this.settingsService.getSettings().exportPdfBackgrounds ?? true;
+    this.showPdfExportDialog = true;
+  }
+
+  protected onPdfExportConfirm(options: PdfExportOptions) {
+    this.showPdfExportDialog = false;
+    if (options.saveAsDefault) {
+      const settings = this.settingsService.getSettings();
+      settings.exportPdfBackgrounds = options.includeBackground;
+      this.settingsService.saveSettings(settings);
+    }
     const driverName = this.driver
       ? this.driver.nickname || this.driver.name
       : "Driver Results";
-    this.printService.print(`${driverName} - Driver Results`, true);
+    this.printService.print(
+      `${driverName} - Driver Results`,
+      true,
+      undefined,
+      options.includeBackground,
+    );
+  }
+
+  protected onPdfExportCancel() {
+    this.showPdfExportDialog = false;
   }
 
   protected getLanes(): any[] {

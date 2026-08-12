@@ -34,14 +34,19 @@ export class PrintService {
    * @param pageName Optional name to use in the exported file title (<pageName> -- yyyy-mm-dd)
    * @param fullScroll If true, adds a class to the body to unroll scrollable regions before printing.
    * @param timestamp Optional fixed date to use for the filename. Defaults to the current time.
+   * @param includeBackground If false, adds print-no-background class to save ink. Defaults to true.
    */
   public print(
     pageName?: string,
     fullScroll: boolean = false,
     timestamp?: Date,
+    includeBackground: boolean = true,
   ): void {
     if (fullScroll) {
       document.body.classList.add("print-full-scroll");
+    }
+    if (!includeBackground) {
+      document.body.classList.add("print-no-background");
     }
 
     let originalTitle = "";
@@ -56,6 +61,9 @@ export class PrintService {
 
       if (fullScroll) {
         document.body.classList.remove("print-full-scroll");
+      }
+      if (!includeBackground) {
+        document.body.classList.remove("print-no-background");
       }
 
       if (pageName) {

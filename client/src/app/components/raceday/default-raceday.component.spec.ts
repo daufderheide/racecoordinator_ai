@@ -2743,15 +2743,21 @@ describe("DefaultRacedayComponent", () => {
       );
     }));
 
-    it("should trigger PDF export when EXPORT_PDF is selected", () => {
+    it("should trigger PDF export modal when EXPORT_PDF is selected", () => {
       const printService = TestBed.inject(
         PrintService,
       ) as jasmine.SpyObj<PrintService>;
       component.onFileMenuSelect("EXPORT_PDF");
+      expect(component.showPdfExportDialog).toBeTrue();
+      component.onPdfExportConfirm({
+        includeBackground: false,
+        saveAsDefault: false,
+      });
       expect(printService.print).toHaveBeenCalledWith(
         "Grand Prix-RaceDay",
         false,
         jasmine.any(Date),
+        false,
       );
     });
 
@@ -5341,6 +5347,31 @@ describe("DefaultRacedayComponent", () => {
       component.ngOnDestroy();
       expect(mockChildWindow.close).toHaveBeenCalled();
       expect((component as any).seasonResultsWindow).toBeNull();
+    });
+  });
+
+  describe("PDF Export handling", () => {
+    it("should open PDF export dialog on exportToPdf()", () => {
+      component.exportToPdf();
+      expect(component.showPdfExportDialog).toBeTrue();
+    });
+
+    it("should invoke print service on onPdfExportConfirm", () => {
+      const printService = TestBed.inject(
+        PrintService,
+      ) as jasmine.SpyObj<PrintService>;
+      component.onPdfExportConfirm({
+        includeBackground: false,
+        saveAsDefault: false,
+      });
+      expect(component.showPdfExportDialog).toBeFalse();
+      expect(printService.print).toHaveBeenCalled();
+    });
+
+    it("should close dialog on onPdfExportCancel", () => {
+      component.showPdfExportDialog = true;
+      component.onPdfExportCancel();
+      expect(component.showPdfExportDialog).toBeFalse();
     });
   });
 });

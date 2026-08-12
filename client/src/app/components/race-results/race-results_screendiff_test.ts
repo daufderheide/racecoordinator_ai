@@ -185,4 +185,29 @@ test.describe("Race Results Visuals", () => {
       fullPage: true,
     });
   });
+
+  test("should render race results in print layout without background graphics", async ({
+    page,
+  }) => {
+    const mockData = RaceResultsHelper.createMockRaceData();
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    await page.emulateMedia({ media: "print" });
+    await page.evaluate(() => {
+      document.body.classList.add("print-full-scroll");
+      document.body.classList.add("print-no-background");
+    });
+    await page.waitForTimeout(200);
+
+    await expect(page).toHaveScreenshot("race-results-no-background.png", {
+      maxDiffPixelRatio: 0.05,
+      fullPage: true,
+    });
+  });
 });

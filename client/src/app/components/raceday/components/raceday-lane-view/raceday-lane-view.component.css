@@ -623,3 +623,22 @@
 .table-header-row.cdk-drop-list-dragging .header-cell:not(.cdk-drag-placeholder) {
   transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
+
+@media print {
+  :host-context(body.print-no-background) .panel-card,
+  :host-context(body.print-no-background) .lane-view-container,
+  :host-context(body.print-no-background) .table-body,
+  :host-context(body.print-no-background) .table-row,
+  :host-context(body.print-no-background) .table-header-row,
+  :host-context(body.print-no-background) .header-cell,
+  :host-context(body.print-no-background) .data-cell,
+  :host-context(body.print-no-background) .driver-cell,
+  :host-context(body.print-no-background) .table-cell-custom {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+}

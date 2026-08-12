@@ -271,3 +271,10 @@
     (cancel)="showAddLapSectionsDialog = false"
   ></app-add-lap-sections-dialog>
 }
+
+<app-pdf-export-dialog
+  [visible]="showPdfExportDialog"
+  [defaultIncludeBackground]="defaultIncludeBackground"
+  (confirm)="onPdfExportConfirm($event)"
+  (cancel)="onPdfExportCancel()"
+></app-pdf-export-dialog>

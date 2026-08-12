@@ -9,6 +9,10 @@ import {
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { Subscription } from "rxjs";
+import {
+  PdfExportDialogComponent,
+  PdfExportOptions,
+} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { DataService } from "@app/data.service";
 import {
   Season,
@@ -17,6 +21,7 @@ import {
 } from "@app/models/season";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
+import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
@@ -27,7 +32,7 @@ import { TranslationService } from "@app/services/translation.service";
   selector: "app-default-season-results",
   templateUrl: "./default-season-results.component.html",
   styleUrls: ["./default-season-results.component.css"],
-  imports: [CommonModule, TranslatePipe, DatePipe],
+  imports: [CommonModule, TranslatePipe, DatePipe, PdfExportDialogComponent],
 })
 export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
   season: Season | null = null;
@@ -36,6 +41,9 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
 
   isLoading = true;
   scale = 1;
+
+  showPdfExportDialog = false;
+  defaultIncludeBackground = true;
 
   private subscriptions: Subscription = new Subscription();
   private targetSeasonId: string | null = null;
@@ -48,6 +56,7 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
     @Inject(SettingsService) private settingsService: SettingsService,
     @Inject(TranslationService)
     private translationService: TranslationService,
+    @Inject(PrintService) private printService: PrintService,
     @Inject(ChangeDetectorRef) private cdr: ChangeDetectorRef,
     @Inject(ActivatedRoute) private route: ActivatedRoute,
     @Inject(LoggerService) private logger: LoggerService,
@@ -258,5 +267,34 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
 
   isRaceExpanded(raceId: string): boolean {
     return this.expandedRaceIds.has(raceId);
+  }
+
+  exportPdf(): void {
+    this.defaultIncludeBackground =
+      this.settingsService.getSettings()?.exportPdfBackgrounds ?? true;
+    this.showPdfExportDialog = true;
+    this.cdr.detectChanges();
+  }
+
+  onPdfExportConfirm(options: PdfExportOptions): void {
+    this.showPdfExportDialog = false;
+    if (options.saveAsDefault) {
+      const settings = this.settingsService.getSettings();
+      settings.exportPdfBackgrounds = options.includeBackground;
+      this.settingsService.saveSettings(settings);
+    }
+    const seasonName = this.season?.name || "Season";
+    this.printService.print(
+      `${seasonName}-SeasonResults`,
+      true,
+      undefined,
+      options.includeBackground,
+    );
+    this.cdr.detectChanges();
+  }
+
+  onPdfExportCancel(): void {
+    this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
   }
 }

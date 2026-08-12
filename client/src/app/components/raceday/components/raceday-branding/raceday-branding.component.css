@@ -57,3 +57,29 @@
   opacity: 1;
   color: #0ff;
 }
+
+@media print {
+  :host-context(body.print-no-background) .branding-panel {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border-left: 3px solid #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .logo-text {
+    background: none !important;
+    -webkit-text-fill-color: #0f172a !important;
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .logo-highlight {
+    -webkit-text-fill-color: #0284c7 !important;
+    color: #0284c7 !important;
+  }
+
+  :host-context(body.print-no-background) .branding-tagline {
+    color: #64748b !important;
+  }
+}

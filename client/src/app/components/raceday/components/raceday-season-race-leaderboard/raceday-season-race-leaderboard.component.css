@@ -100,3 +100,31 @@ app-raceday-season-race-leaderboard {
   font-style: italic;
   padding: 8px;
 }
+
+@media print {
+  :host-context(body.print-no-background) .season-leaderboard-panel {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .leaderboard-title {
+    color: #0284c7 !important;
+  }
+
+  :host-context(body.print-no-background) .leaderboard-item {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  :host-context(body.print-no-background) .leader-gold,
+  :host-context(body.print-no-background) .leader-white,
+  :host-context(body.print-no-background) .leaderboard-name,
+  :host-context(body.print-no-background) .leaderboard-rank,
+  :host-context(body.print-no-background) .leaderboard-score {
+    color: #0f172a !important;
+  }
+}
+

@@ -70,6 +70,10 @@ export interface LapDisplayInfo {
   lapTime: string;
   segments: string[];
 }
+import {
+  PdfExportDialogComponent,
+  PdfExportOptions,
+} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { HelpService } from "@app/services/help.service";
 import { RaceService } from "@app/services/race.service";
@@ -110,11 +114,15 @@ import { createMockEditorData } from "./utils/raceday-mock.utils";
     DragDropModule,
     TranslatePipe,
     AddLapSectionsDialogComponent,
+    PdfExportDialogComponent,
   ],
 })
 export class DefaultRacedayComponent
   implements OnInit, OnDestroy, OnChanges, CanComponentDeactivate
 {
+  showPdfExportDialog = false;
+  defaultIncludeBackground = true;
+
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   protected heat?: Heat;
@@ -3084,9 +3092,33 @@ export class DefaultRacedayComponent
   }
 
   exportToPdf() {
+    this.defaultIncludeBackground =
+      this.settingsService.getSettings()?.exportPdfBackgrounds ?? true;
+    this.showPdfExportDialog = true;
+    this.cdr.detectChanges();
+  }
+
+  onPdfExportConfirm(options: PdfExportOptions): void {
+    this.showPdfExportDialog = false;
+    if (options.saveAsDefault) {
+      const settings = this.settingsService.getSettings();
+      settings.exportPdfBackgrounds = options.includeBackground;
+      this.settingsService.saveSettings(settings);
+    }
     const timestamp = this.getExportTimestamp();
     const raceName = this.race?.name || "Race";
-    this.printService.print(`${raceName}-RaceDay`, false, timestamp);
+    this.printService.print(
+      `${raceName}-RaceDay`,
+      false,
+      timestamp,
+      options.includeBackground,
+    );
+    this.cdr.detectChanges();
+  }
+
+  onPdfExportCancel(): void {
+    this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
   }
 
   async exportToCsv() {

@@ -425,7 +425,54 @@
     overflow: visible !important;
     align-items: flex-start !important;
     justify-content: flex-start !important;
+  }
+
+  body:not(.print-no-background) .dashboard-wrapper {
     background: #06090e !important;
+  }
+
+  :host-context(body.print-no-background) :host,
+  :host-context(body.print-no-background) .dashboard-wrapper,
+  :host-context(body.print-no-background) .scrollable-container,
+  :host-context(body.print-no-background) .driver-header-card,
+  :host-context(body.print-no-background) .results-summary-card,
+  :host-context(body.print-no-background) .records-dashboard,
+  :host-context(body.print-no-background) .stat-box,
+  :host-context(body.print-no-background) .lane-record-item,
+  :host-context(body.print-no-background) .results-container,
+  :host-context(body.print-no-background) .results-table-wrapper,
+  :host-context(body.print-no-background) .results-table-header,
+  :host-context(body.print-no-background) .driver-row,
+  :host-context(body.print-no-background) .section-container,
+  :host-context(body.print-no-background) .lap-chart-box,
+  :host-context(body.print-no-background) .lap-item-card,
+  :host-context(body.print-no-background) .card {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  :host-context(body.print-no-background) .driver-name,
+  :host-context(body.print-no-background) .page-title,
+  :host-context(body.print-no-background) .stat-value,
+  :host-context(body.print-no-background) .header-cell,
+  :host-context(body.print-no-background) .body-cell,
+  :host-context(body.print-no-background) .value-text,
+  :host-context(body.print-no-background) .record-title,
+  :host-context(body.print-no-background) .section-title {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .stat-label,
+  :host-context(body.print-no-background) .label-text {
+    color: #0284c7 !important;
+    text-shadow: none !important;
   }
 
   .scrollable-container {

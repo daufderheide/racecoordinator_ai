@@ -15,6 +15,10 @@ import {
   HeatStandingsRow,
 } from "@app/components/shared/heat-driver-expander/heat-driver-expander.component";
 import {
+  PdfExportDialogComponent,
+  PdfExportOptions,
+} from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import {
   DriverLine,
   TwinGraphsComponent,
 } from "@app/components/shared/twin-graphs/twin-graphs.component";
@@ -27,6 +31,7 @@ import { AuthService } from "@app/services/auth.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
@@ -40,13 +45,18 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
     AcknowledgementModalComponent,
     HeatDriverExpanderComponent,
     TwinGraphsComponent,
+    PdfExportDialogComponent,
   ],
 })
 export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private settingsService = inject(SettingsService);
   protected viewerRaceEndedHandler!: ViewerRaceEndedHandler;
+
+  showPdfExportDialog = false;
+  defaultIncludeBackground = true;
 
   get showAckModal(): boolean {
     return this.viewerRaceEndedHandler?.showAckModal ?? false;
@@ -219,8 +229,29 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
   }
 
   exportPdf() {
+    this.defaultIncludeBackground =
+      this.settingsService.getSettings().exportPdfBackgrounds ?? true;
+    this.showPdfExportDialog = true;
+  }
+
+  onPdfExportConfirm(options: PdfExportOptions) {
+    this.showPdfExportDialog = false;
+    if (options.saveAsDefault) {
+      const settings = this.settingsService.getSettings();
+      settings.exportPdfBackgrounds = options.includeBackground;
+      this.settingsService.saveSettings(settings);
+    }
     const raceName = this.race?.name || "Race";
-    this.printService.print(`${raceName}-HeatResults`, true);
+    this.printService.print(
+      `${raceName}-HeatResults`,
+      true,
+      undefined,
+      options.includeBackground,
+    );
+  }
+
+  onPdfExportCancel() {
+    this.showPdfExportDialog = false;
   }
 
   // TODO(aufderheide): This shouldn't be done on the client, the server should be sending us the standings already sorted.

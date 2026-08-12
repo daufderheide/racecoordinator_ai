@@ -46,6 +46,154 @@ body {
   body.print-full-scroll app-help-overlay {
     display: none !important;
   }
+
+  body.print-no-background,
+  body.print-no-background * {
+    -webkit-print-color-adjust: economy !important;
+    print-color-adjust: economy !important;
+    color-adjust: economy !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body.print-no-background,
+  body.print-no-background app-root,
+  body.print-no-background .app-route-container,
+  body.print-no-background .dashboard-wrapper,
+  body.print-no-background .scalable-content,
+  body.print-no-background .scrollable-container,
+  body.print-no-background .results-container,
+  body.print-no-background .results-table-wrapper,
+  body.print-no-background .results-table-header,
+  body.print-no-background .results-table-body,
+  body.print-no-background .heat-table-header,
+  body.print-no-background .heat-table-body,
+  body.print-no-background .analysis-grid,
+  body.print-no-background .analysis-table-wrapper,
+  body.print-no-background .driver-row,
+  body.print-no-background .table-row,
+  body.print-no-background .heat-row,
+  body.print-no-background .analysis-row,
+  body.print-no-background .driver-header-card,
+  body.print-no-background .results-summary-card,
+  body.print-no-background .records-dashboard,
+  body.print-no-background .stat-box,
+  body.print-no-background .lane-record-item,
+  body.print-no-background .heat-card,
+  body.print-no-background .heat-card-header,
+  body.print-no-background .heat-card-content,
+  body.print-no-background .heat-details-section,
+  body.print-no-background .heat-stats-table-wrapper,
+  body.print-no-background .heats-section-container,
+  body.print-no-background .card,
+  body.print-no-background .section-container,
+  body.print-no-background .lap-chart-section,
+  body.print-no-background .lap-chart-box,
+  body.print-no-background .lap-chart-grid,
+  body.print-no-background .laps-list,
+  body.print-no-background .lap-item-card,
+  body.print-no-background .graphs-container,
+  body.print-no-background .race-name-container,
+  body.print-no-background .driver-info-block,
+  body.print-no-background .header-bar,
+  body.print-no-background .standings-table,
+  body.print-no-background .standings-table th,
+  body.print-no-background .standings-table td,
+  body.print-no-background .standings-table tbody tr,
+  body.print-no-background .race-expander-card,
+  body.print-no-background .expander-title-bar,
+  body.print-no-background .expander-body,
+  body.print-no-background .race-breakdown-table,
+  body.print-no-background .race-breakdown-table th,
+  body.print-no-background .race-breakdown-table td,
+  body.print-no-background .meta-pill,
+  body.print-no-background .editor-panel-right,
+  body.print-no-background .editor-scroll-content,
+  body.print-no-background .summary-section,
+  body.print-no-background .races-expander-section,
+  body.print-no-background app-default-raceday,
+  body.print-no-background .raceday-absolute-layout-root-wrapper,
+  body.print-no-background .raceday-layout-container,
+  body.print-no-background .unified-grid-container,
+  body.print-no-background .absolute-widget-card,
+  body.print-no-background .widget-card,
+  body.print-no-background .widget-container,
+  body.print-no-background .branding-panel,
+  body.print-no-background .flag-panel,
+  body.print-no-background .timer-panel,
+  body.print-no-background .record-panel,
+  body.print-no-background .record-group,
+  body.print-no-background .leaderboard-panel,
+  body.print-no-background .leaderboard-item,
+  body.print-no-background .season-leaderboard-panel,
+  body.print-no-background .season-race-leaderboard-container,
+  body.print-no-background .panel-card,
+  body.print-no-background .info-section,
+  body.print-no-background .next-heat-panel,
+  body.print-no-background .on-deck-panel,
+  body.print-no-background .image-panel,
+  body.print-no-background .widget-wrapper,
+  body.print-no-background app-raceday-branding,
+  body.print-no-background app-raceday-flag,
+  body.print-no-background app-raceday-timer,
+  body.print-no-background app-raceday-records,
+  body.print-no-background app-raceday-leaderboard,
+  body.print-no-background app-raceday-season-leaderboard,
+  body.print-no-background app-raceday-season-race-leaderboard,
+  body.print-no-background app-raceday-lane-view,
+  body.print-no-background app-raceday-next-heat,
+  body.print-no-background app-raceday-on-deck,
+  body.print-no-background app-raceday-race-name,
+  body.print-no-background app-raceday-track-name,
+  body.print-no-background app-raceday-season-name,
+  body.print-no-background app-raceday-event-name,
+  body.print-no-background app-raceday-heat-info,
+  body.print-no-background app-raceday-image {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-size: auto !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-color: #cbd5e1 !important;
+  }
+
+
+
+  body.print-no-background svg rect:not(.lap-bar-segment):not(.legend-rect) {
+    fill: transparent !important;
+  }
+
+  body.print-no-background *,
+  body.print-no-background span,
+  body.print-no-background div,
+  body.print-no-background td,
+  body.print-no-background th,
+  body.print-no-background h1,
+  body.print-no-background h2,
+  body.print-no-background h3,
+  body.print-no-background h4,
+  body.print-no-background p,
+  body.print-no-background .driver-name,
+  body.print-no-background .stat-value,
+  body.print-no-background .header-cell,
+  body.print-no-background .body-cell,
+  body.print-no-background .value-text,
+  body.print-no-background .record-title,
+  body.print-no-background .heat-badge {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  body.print-no-background .label-text,
+  body.print-no-background .section-title,
+  body.print-no-background .subsection-title,
+  body.print-no-background .stat-label,
+  body.print-no-background .page-title {
+    color: #0284c7 !important;
+    text-shadow: none !important;
+  }
 }
 
 @font-face {
@@ -53,4 +201,31 @@ body {
   font-style: normal;
   font-weight: 400;
   src: url('/assets/fonts/materialicons.woff2') format('woff2');
+}
+
+/* Global Sleek PDF Export Icon Button */
+.export-pdf-btn {
+  background: transparent;
+  border: none;
+  color: #00e5ff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 16px;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.export-pdf-btn:hover {
+  color: #ffffff;
+  background: rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+  transform: scale(1.08);
+}
+
+.export-pdf-btn .material-icons {
+  font-size: 24px;
 }

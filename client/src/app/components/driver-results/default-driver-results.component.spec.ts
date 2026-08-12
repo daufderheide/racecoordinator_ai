@@ -320,8 +320,17 @@ describe("DefaultDriverResultsComponent", () => {
       fixture.detectChanges();
 
       component["exportPdf"]();
+      expect(component["showPdfExportDialog"]).toBeTrue();
+
+      component["onPdfExportConfirm"]({
+        includeBackground: true,
+        saveAsDefault: false,
+      });
+
       expect(mockPrintService.print).toHaveBeenCalledWith(
         "Ally - Driver Results",
+        true,
+        undefined,
         true,
       );
     });
@@ -331,8 +340,17 @@ describe("DefaultDriverResultsComponent", () => {
       fixture.detectChanges();
 
       component["exportPdf"]();
+      expect(component["showPdfExportDialog"]).toBeTrue();
+
+      component["onPdfExportConfirm"]({
+        includeBackground: true,
+        saveAsDefault: false,
+      });
+
       expect(mockPrintService.print).toHaveBeenCalledWith(
         "Driver Results - Driver Results",
+        true,
+        undefined,
         true,
       );
     });

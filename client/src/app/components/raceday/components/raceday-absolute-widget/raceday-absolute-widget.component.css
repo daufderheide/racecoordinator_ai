@@ -445,3 +445,18 @@
   color: inherit !important;
   opacity: 0.8 !important;
 }
+
+@media print {
+  :host-context(body.print-no-background) .absolute-widget-card,
+  :host-context(body.print-no-background) .widget-card,
+  :host-context(body.print-no-background) .widget-container {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

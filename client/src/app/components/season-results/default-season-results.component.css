@@ -393,3 +393,128 @@
   font-size: 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
+
+.expander-body.expander-collapsed {
+  display: none;
+}
+
+@media print {
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  :host {
+    background: transparent !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .dashboard-wrapper {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+
+  body:not(.print-no-background) .dashboard-wrapper {
+    background: #06090e !important;
+  }
+
+  .scalable-content {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    width: 1920px !important;
+    min-width: 1920px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 40px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  .results-container,
+  .editor-panel-right,
+  .editor-scroll-content {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Expanders open by default in print */
+  .expander-body,
+  .expander-body.expander-collapsed {
+    display: block !important;
+  }
+
+  .expander-icon {
+    display: none !important;
+  }
+
+  .race-expander-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 16px !important;
+  }
+
+  .summary-section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 30px !important;
+  }
+
+  /* No-background ink-saving print overrides */
+  :host-context(body.print-no-background) :host,
+  :host-context(body.print-no-background) .dashboard-wrapper,
+  :host-context(body.print-no-background) .scalable-content,
+  :host-context(body.print-no-background) .results-container,
+  :host-context(body.print-no-background) .race-name-container,
+  :host-context(body.print-no-background) .standings-table th,
+  :host-context(body.print-no-background) .standings-table td,
+  :host-context(body.print-no-background) .standings-table tbody tr,
+  :host-context(body.print-no-background) .race-expander-card,
+  :host-context(body.print-no-background) .expander-title-bar,
+  :host-context(body.print-no-background) .expander-body,
+  :host-context(body.print-no-background) .race-breakdown-table th,
+  :host-context(body.print-no-background) .race-breakdown-table td,
+  :host-context(body.print-no-background) .meta-pill {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  :host-context(body.print-no-background) .page-title,
+  :host-context(body.print-no-background) .value-text,
+  :host-context(body.print-no-background) .race-name,
+  :host-context(body.print-no-background) .standings-table td,
+  :host-context(body.print-no-background) .race-breakdown-table td,
+  :host-context(body.print-no-background) .header-title-group h3 {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .label-text,
+  :host-context(body.print-no-background) .sub-section-header h4,
+  :host-context(body.print-no-background) .standings-table th,
+  :host-context(body.print-no-background) .race-breakdown-table th,
+  :host-context(body.print-no-background) .race-step {
+    color: #0284c7 !important;
+    text-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .race-date {
+    color: #64748b !important;
+  }
+}

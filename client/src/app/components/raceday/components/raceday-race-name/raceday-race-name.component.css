@@ -30,3 +30,18 @@ app-raceday-race-name {
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
+
+@media print {
+  :host-context(body.print-no-background) .info-section {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  :host-context(body.print-no-background) .label-text,
+  :host-context(body.print-no-background) .value-text {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+}
+

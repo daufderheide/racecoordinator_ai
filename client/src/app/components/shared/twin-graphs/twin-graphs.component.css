@@ -158,3 +158,37 @@
   filter: grayscale(0.5);
   pointer-events: none;
 }
+
+@media print {
+  :host-context(body.print-no-background) .graphs-container {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  :host-context(body.print-no-background) .graphs-section-title {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+  :host-context(body.print-no-background) .grid-line {
+    stroke: #e2e8f0 !important;
+  }
+  :host-context(body.print-no-background) .axis-line {
+    stroke: #64748b !important;
+  }
+  :host-context(body.print-no-background) .tick-text,
+  :host-context(body.print-no-background) .tick-text-rank,
+  :host-context(body.print-no-background) .axis-title,
+  :host-context(body.print-no-background) .legend-text {
+    fill: #0f172a !important;
+    text-shadow: none !important;
+  }
+  :host-context(body.print-no-background) .graph-header-text {
+    fill: #0284c7 !important;
+    text-shadow: none !important;
+  }
+}

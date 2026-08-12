@@ -98,6 +98,7 @@ export class Settings {
   pageTransition: string = "slide";
   clientLogLevel: string = "INFO";
   serverLogLevel: string = "INFO";
+  exportPdfBackgrounds: boolean = true;
 
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;

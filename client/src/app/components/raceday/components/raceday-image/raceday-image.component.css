@@ -18,3 +18,13 @@
   object-fit: cover;
   transition: transform 0.3s ease;
 }
+
+@media print {
+  :host-context(body.print-no-background) .image-panel {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+}
+

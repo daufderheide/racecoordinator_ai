@@ -163,10 +163,19 @@ describe("DefaultHeatResultsComponent", () => {
     expect(component["driverLines"].length).toBe(2);
   });
 
-  it("should trigger PDF export with Heat Results and fullScroll enabled when exportPdf is called", () => {
+  it("should trigger PDF export with Heat Results and fullScroll enabled when exportPdf is confirmed", () => {
     component.exportPdf();
+    expect(component.showPdfExportDialog).toBeTrue();
+
+    component.onPdfExportConfirm({
+      includeBackground: true,
+      saveAsDefault: false,
+    });
+
     expect(mockPrintService.print).toHaveBeenCalledWith(
       "Race 1-HeatResults",
+      true,
+      undefined,
       true,
     );
   });

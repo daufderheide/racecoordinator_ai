@@ -701,7 +701,7 @@ describe("DefaultRaceResultsComponent", () => {
   });
 
   describe("PDF Export", () => {
-    it("should call printService.print with Race Results, fullScroll, and raceStartTime", () => {
+    it("should open dialog and call printService.print on confirm with Race Results, fullScroll, raceStartTime, and includeBackground", () => {
       const d1 = createDriver("d1", "Alice", "Ally");
       const p1 = createParticipant("d1", d1, 1, 5, 25.0, 4.5, 5.0, 5.0, 100, 1);
 
@@ -709,11 +709,18 @@ describe("DefaultRaceResultsComponent", () => {
       component["race"] = { name: "Test Race" } as any;
 
       component["exportPdf"]();
+      expect(component.showPdfExportDialog).toBeTrue();
+
+      component["onPdfExportConfirm"]({
+        includeBackground: true,
+        saveAsDefault: false,
+      });
 
       expect(mockPrintService.print).toHaveBeenCalledWith(
         "Test Race-RaceResults",
         true,
         jasmine.any(Date),
+        true,
       );
     });
 

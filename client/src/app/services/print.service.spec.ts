@@ -38,6 +38,17 @@ describe("PrintService", () => {
     expect(classList.contains("print-full-scroll")).toBeFalse();
   }));
 
+  it("should add and remove print-no-background class if includeBackground is false", fakeAsync(() => {
+    const classList = document.body.classList;
+    expect(classList.contains("print-no-background")).toBeFalse();
+
+    service.print(undefined, false, undefined, false);
+    expect(classList.contains("print-no-background")).toBeTrue();
+
+    tick(100);
+    expect(classList.contains("print-no-background")).toBeFalse();
+  }));
+
   it("should change and restore document.title when pageName is provided", fakeAsync(() => {
     const originalTitle = document.title;
     const testPageName = "TestPage";
