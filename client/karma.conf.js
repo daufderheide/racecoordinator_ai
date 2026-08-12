@@ -42,7 +42,7 @@ module.exports = function (config) {
   var isAgent = !!process.env.ANTIGRAVITY_AGENT;
 
   var chromeFlags = [
-    isCI ? "--headless=new" : "--headless",
+    "--headless",
     "--no-sandbox",
     "--disable-gpu",
     "--disable-dev-shm-usage",
@@ -67,6 +67,8 @@ module.exports = function (config) {
     // GitHub Actions specific fixes
     chromeFlags.push(
       "--disable-setuid-sandbox",
+      "--disable-gpu-sandbox",
+      "--disable-namespace-sandbox",
       "--disable-extensions",
       "--disable-features=Translate,PasswordImport,AutofillServerCommunication,OptimizationHints,VizDisplayCompositor",
     );
