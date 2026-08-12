@@ -52,6 +52,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("checkstyle:FileLength")
 public class Race implements ProtocolListener {
   private static final Logger logger = LoggerFactory.getLogger(Race.class);
 

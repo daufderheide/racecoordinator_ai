@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -119,72 +120,76 @@ public abstract class DefaultProtocol implements IProtocol {
     return Executors.newSingleThreadScheduledExecutor();
   }
 
-  protected void startStatusScheduler() {
+  protected synchronized void startStatusScheduler() {
     stopStatusScheduler();
 
     openTimeMs = now();
     statusScheduler = createScheduler();
-    statusFuture =
-        statusScheduler.scheduleAtFixedRate(this::checkAndPublishStatus, 0, 1, TimeUnit.SECONDS);
+    try {
+      statusFuture =
+          statusScheduler.scheduleAtFixedRate(this::checkAndPublishStatus, 0, 1, TimeUnit.SECONDS);
 
-    analogLedFuture =
-        statusScheduler.scheduleAtFixedRate(
-            () -> {
-              try {
-                if (listener != null) {
-                  analogLedAlternatingToggle = !analogLedAlternatingToggle;
-                  if (currentRaceFlag == RaceFlag.WHITE
-                      || currentRaceFlag == RaceFlag.CHECKERED
-                      || currentRaceFlag == RaceFlag.GREEN_YELLOW) {
-                    evaluateAnalogLeds();
-                    onAnalogLedsChanged();
-                  }
-                }
-              } catch (Exception e) {
-                logger.error("Error in analog led scheduler", e);
-              }
-            },
-            0,
-            ANALOG_LED_BLINK_INTERVAL_MS,
-            TimeUnit.MILLISECONDS);
-
-    refuelFuture =
-        statusScheduler.scheduleAtFixedRate(
-            () -> {
-              try {
-                if (listener != null) {
-                  long currentTime = now();
-                  for (int laneIndex = 0; laneIndex < numLanes; laneIndex++) {
-                    if (laneInPits[laneIndex]) {
-                      double deltaTimeSeconds = 0.0;
-                      if (lastRefuelTimeMs[laneIndex] > 0) {
-                        deltaTimeSeconds = (currentTime - lastRefuelTimeMs[laneIndex]) / 1000.0;
-                      }
-                      lastRefuelTimeMs[laneIndex] = currentTime;
-
-                      listener.onCarData(
-                          new CarData(
-                              laneIndex,
-                              deltaTimeSeconds,
-                              0.0,
-                              0.0,
-                              true,
-                              CarLocation.PitRow,
-                              CarLocation.PitRow,
-                              -1));
+      analogLedFuture =
+          statusScheduler.scheduleAtFixedRate(
+              () -> {
+                try {
+                  if (listener != null) {
+                    analogLedAlternatingToggle = !analogLedAlternatingToggle;
+                    if (currentRaceFlag == RaceFlag.WHITE
+                        || currentRaceFlag == RaceFlag.CHECKERED
+                        || currentRaceFlag == RaceFlag.GREEN_YELLOW) {
+                      evaluateAnalogLeds();
+                      onAnalogLedsChanged();
                     }
                   }
+                } catch (Exception e) {
+                  logger.error("Error in analog led scheduler", e);
                 }
-              } catch (Exception e) {
-                logger.error("Error in refuel scheduler", e);
-              }
-            },
-            0,
-            100,
-            TimeUnit.MILLISECONDS);
+              },
+              0,
+              ANALOG_LED_BLINK_INTERVAL_MS,
+              TimeUnit.MILLISECONDS);
+
+      refuelFuture =
+          statusScheduler.scheduleAtFixedRate(
+              () -> {
+                try {
+                  if (listener != null) {
+                    long currentTime = now();
+                    for (int laneIndex = 0; laneIndex < numLanes; laneIndex++) {
+                      if (laneInPits[laneIndex]) {
+                        double deltaTimeSeconds = 0.0;
+                        if (lastRefuelTimeMs[laneIndex] > 0) {
+                          deltaTimeSeconds = (currentTime - lastRefuelTimeMs[laneIndex]) / 1000.0;
+                        }
+                        lastRefuelTimeMs[laneIndex] = currentTime;
+
+                        listener.onCarData(
+                            new CarData(
+                                laneIndex,
+                                deltaTimeSeconds,
+                                0.0,
+                                0.0,
+                                true,
+                                CarLocation.PitRow,
+                                CarLocation.PitRow,
+                                -1));
+                      }
+                    }
+                  }
+                } catch (Exception e) {
+                  logger.error("Error in refuel scheduler", e);
+                }
+              },
+              0,
+              100,
+              TimeUnit.MILLISECONDS);
+    } catch (RejectedExecutionException e) {
+      logger.warn("Status scheduler task rejected during startup: {}", e.getMessage());
+    }
   }
 
-  protected void stopStatusScheduler() {
+  protected synchronized void stopStatusScheduler() {
     if (statusFuture != null) {
       statusFuture.cancel(true);
       statusFuture = null;

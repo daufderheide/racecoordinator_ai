@@ -3,8 +3,5 @@
     "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 <suppressions>
-    <suppress checks="FileLength" files="Race.java"/>
-    <suppress checks="FileLength" files="AssetService.java"/>
-    <suppress checks="FileLength" files="ArduinoProtocol.java"/>
-    <suppress checks="FileLength" files="ClientCommandTaskHandler.java"/>
+    <suppress checks=".*" files=".*[/\\]generated-sources[/\\].*"/>
 </suppressions>
