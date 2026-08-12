@@ -41,14 +41,13 @@ module.exports = function (config) {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   });
 
-  var isCI = !!process.env.GITHUB_ACTIONS;
-  var isAgent = !!process.env.ANTIGRAVITY_AGENT;
-
   var chromeFlags = [
     "--headless",
     "--no-sandbox",
+    "--disable-setuid-sandbox",
     "--disable-gpu",
     "--disable-dev-shm-usage",
+    "--disable-software-rasterizer",
     "--user-data-dir=" + chromeUserData,
     "--disable-crash-reporter",
     "--disable-breakpad",
@@ -58,31 +57,14 @@ module.exports = function (config) {
     "--disable-signin",
     "--disable-sync",
     "--remote-debugging-port=9222",
-    "--disable-software-rasterizer",
     "--disk-cache-dir=" + path.join(tmpDir, "cache"),
     "--remote-allow-origins=*",
     "--use-mock-keychain",
     "--no-pings",
-    "--disable-features=IsolateOrigins,site-per-process,Dial",
+    "--disable-extensions",
+    "--disable-features=Translate,PasswordImport,AutofillServerCommunication,Dial",
   ];
 
-  if (isCI) {
-    // GitHub Actions specific fixes
-    chromeFlags.push(
-      "--disable-setuid-sandbox",
-      "--disable-gpu-sandbox",
-      "--disable-namespace-sandbox",
-      "--disable-extensions",
-      "--disable-features=Translate,PasswordImport,AutofillServerCommunication,OptimizationHints,VizDisplayCompositor",
-    );
-  } else {
-    // Local/Agent flags
-    chromeFlags.push(
-      "--disable-setuid-sandbox",
-      "--disable-gpu-sandbox",
-      "--disable-namespace-sandbox",
-    );
-  }
 
   config.set({
     basePath: "",
