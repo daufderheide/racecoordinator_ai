@@ -46,11 +46,6 @@ jobs:
           cache-dependency-path: client/package-lock.json
       - name: Install dependencies
         run: cd client && npm install --legacy-peer-deps
-      - name: Setup Chrome
-        id: setup-chrome
-        uses: browser-actions/setup-chrome@v2
-        with:
-          chrome-version: stable
       - name: Install Protoc
         run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - name: Generate Protobufs
@@ -58,7 +53,7 @@ jobs:
       - name: Run client tests
         run: cd client && npm run test --watch=false
         env:
-          CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+          DBUS_SESSION_BUS_ADDRESS: /dev/null
 
   test-visual:
     runs-on: ubuntu-latest

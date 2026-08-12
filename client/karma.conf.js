@@ -29,6 +29,9 @@ module.exports = function (config) {
     process.env.TMPDIR = path.join(tmpDir, "t");
   }
 
+  // Clear DBUS address to avoid crashes when dbus is unavailable or has invalid address config
+  delete process.env.DBUS_SESSION_BUS_ADDRESS;
+
   [
     process.env.XDG_CONFIG_HOME,
     process.env.XDG_CACHE_HOME,
