@@ -1283,18 +1283,14 @@ public class DatabaseService {
 
   public DriverTrackStats getDriverTrackStats(
       DatabaseContext context, String driverId, String trackId, boolean isDemo) {
-    if (context == null || driverId == null || trackId == null) {
-      return null;
-    }
+    if (context == null || driverId == null || trackId == null) return null;
+
     String tableName = getCollectionName("driver_track_stats", isDemo);
     SqliteRepository<DriverTrackStats> repo =
         new SqliteRepository<>(context, tableName, DriverTrackStats.class);
-    for (DriverTrackStats s : repo.findAll()) {
-      if (driverId.equals(s.getDriverId()) && trackId.equals(s.getTrackId())) {
-        return s;
-      }
-    }
-    return null;
+
+    String id = driverId + "_" + trackId;
+    return repo.findByEntityId(id);
   }
 
   @SuppressWarnings("checkstyle:MethodLength")
@@ -1315,6 +1311,7 @@ public class DatabaseService {
         DriverTrackStats stats = getDriverTrackStats(context, driverId, trackId, isDemo);
         if (stats == null) {
           stats = new DriverTrackStats();
+          stats.setId(driverId + "_" + trackId);
           stats.setDriverId(driverId);
           stats.setTrackId(trackId);
         }
@@ -1352,6 +1349,79 @@ public class DatabaseService {
                 }
               }
             }
+          }
+        }
+
+        List<Double> allValidLaps = new ArrayList<>();
+        List<DriverTrackStats.LanePaceStats> laneStatsList = stats.getLaneStats();
+        if (laneStatsList == null) {
+          laneStatsList = new ArrayList<>();
+          stats.setLaneStats(laneStatsList);
+        }
+
+        for (Map.Entry<Integer, List<Double>> entry : laneLaps.entrySet()) {
+          int laneIdx = entry.getKey();
+          List<Double> laps = entry.getValue();
+          allValidLaps.addAll(laps);
+
+          if (!laps.isEmpty()) {
+            java.util.Collections.sort(laps);
+            double median;
+            int mid = laps.size() / 2;
+            if (laps.size() % 2 == 0) {
+              median = (laps.get(mid - 1) + laps.get(mid)) / 2.0;
+            } else {
+              median = laps.get(mid);
+            }
+
+            DriverTrackStats.LanePaceStats existing = null;
+            for (DriverTrackStats.LanePaceStats lps : laneStatsList) {
+              if (lps.getLaneIndex() == laneIdx) {
+                existing = lps;
+                break;
+              }
+            }
+
+            if (existing == null) {
+              existing = new DriverTrackStats.LanePaceStats();
+              existing.setLaneIndex(laneIdx);
+              laneStatsList.add(existing);
+            }
+
+            if (existing.getMedianLapTime() > 0 && existing.getSampleSizeLaps() > 0) {
+              double totalWeight = existing.getSampleSizeLaps() + laps.size();
+              existing.setMedianLapTime(
+                  ((existing.getMedianLapTime() * existing.getSampleSizeLaps())
+                          + (median * laps.size()))
+                      / totalWeight);
+              existing.setSampleSizeLaps((int) totalWeight);
+            } else {
+              existing.setMedianLapTime(median);
+              existing.setSampleSizeLaps(laps.size());
+            }
+          }
+        }
+
+        if (!allValidLaps.isEmpty()) {
+          java.util.Collections.sort(allValidLaps);
+          double sessionMedian;
+          int mid = allValidLaps.size() / 2;
+          if (allValidLaps.size() % 2 == 0) {
+            sessionMedian = (allValidLaps.get(mid - 1) + allValidLaps.get(mid)) / 2.0;
+          } else {
+            sessionMedian = allValidLaps.get(mid);
+          }
+
+          if (stats.getOverallMedianLapTime() > 0 && stats.getTotalLaps() > 0) {
+            double totalWeight = stats.getTotalLaps() + allValidLaps.size();
+            if (totalWeight > 0) {
+              stats.setOverallMedianLapTime(
+                  ((stats.getOverallMedianLapTime() * stats.getTotalLaps())
+                          + (sessionMedian * allValidLaps.size()))
+                      / totalWeight);
+            }
+          } else {
+            stats.setOverallMedianLapTime(sessionMedian);
           }
         }
 

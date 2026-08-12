@@ -1060,7 +1060,7 @@ public class HeatExecutionManager {
               dbCtx,
               raceId,
               this.race.getRaceModel(),
-              this.race.getDrivers(),
+              new ArrayList<>(this.race.getDrivers()),
               this.race.getHeats(),
               heatIdx,
               actualDriverStates,

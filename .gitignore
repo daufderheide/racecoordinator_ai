@@ -139,3 +139,4 @@ server/checkstyle_report_final.txt
 # IntelliJ IDEA
 .idea/
 
+server/racecoordinator.db

@@ -195,4 +195,40 @@ public class DatabaseServiceTest {
           "Driver penaltyAudio url should not be null", driver.getPenaltyAudio().getUrl());
     }
   }
+
+  @Test
+  public void testGetDriverTrackStatsBypassesCorruptedDuplicates() {
+    DatabaseContext context = databaseContext;
+    context.ensureTable("demo_driver_track_stats");
+
+    // Create a "corrupted" old duplicate record with a null internal ID.
+    // When saved, SqliteRepository will generate a random UUID as its entity_id.
+    com.antigravity.models.DriverTrackStats corruptedStats =
+        new com.antigravity.models.DriverTrackStats();
+    corruptedStats.setId(null);
+    corruptedStats.setDriverId("driver1");
+    corruptedStats.setTrackId("track1");
+    corruptedStats.setTotalLaps(0);
+
+    SqliteRepository<com.antigravity.models.DriverTrackStats> repo =
+        new SqliteRepository<>(
+            context, "demo_driver_track_stats", com.antigravity.models.DriverTrackStats.class);
+    repo.save(corruptedStats);
+
+    // Create the "correct" new record that uses driverId_trackId as its ID.
+    com.antigravity.models.DriverTrackStats correctStats =
+        new com.antigravity.models.DriverTrackStats();
+    correctStats.setId("driver1_track1");
+    correctStats.setDriverId("driver1");
+    correctStats.setTrackId("track1");
+    correctStats.setTotalLaps(42);
+    repo.save(correctStats);
+
+    // Now call DatabaseService to fetch it.
+    com.antigravity.models.DriverTrackStats retrieved =
+        dbService.getDriverTrackStats(context, "driver1", "track1", true);
+    assertNotNull(retrieved);
+    assertEquals("driver1_track1", retrieved.getId());
+    assertEquals(42, retrieved.getTotalLaps());
+  }
 }
