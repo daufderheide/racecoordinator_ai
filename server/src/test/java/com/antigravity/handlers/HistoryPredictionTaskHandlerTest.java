@@ -77,7 +77,10 @@ public class HistoryPredictionTaskHandlerTest {
 
     com.antigravity.race.Race mockActiveRace = mock(com.antigravity.race.Race.class);
     com.antigravity.models.Race mockRaceModel =
-        new com.antigravity.models.Race.Builder().withEntityId("race_123").build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withEntityId("race_123")
+            .build();
     when(mockActiveRace.getRaceModel()).thenReturn(mockRaceModel);
     when(mockActiveRace.getState()).thenReturn(new com.antigravity.race.states.Racing());
 

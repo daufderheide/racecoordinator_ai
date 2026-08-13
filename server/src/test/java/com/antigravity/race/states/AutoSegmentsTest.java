@@ -43,6 +43,7 @@ public class AutoSegmentsTest {
 
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     FinishMethod.Timed,

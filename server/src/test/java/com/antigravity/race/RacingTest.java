@@ -523,6 +523,7 @@ public class RacingTest {
     // Create a real race model
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withEntityId("race1")
             .withHeatScoring(new HeatScoring())
             .build();
@@ -565,6 +566,7 @@ public class RacingTest {
     Racing racing = new Racing();
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withEntityId("race1")
             .withHeatScoring(new HeatScoring())
             .build();
@@ -625,6 +627,7 @@ public class RacingTest {
 
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withEntityId("race1")
             .withHeatScoring(new HeatScoring())
             .withFuelOptions(fuelOptions)

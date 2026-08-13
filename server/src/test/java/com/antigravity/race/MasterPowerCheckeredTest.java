@@ -26,6 +26,7 @@ public class MasterPowerCheckeredTest {
 
     Race model =
         new Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     HeatScoring.FinishMethod.Lap,
@@ -80,6 +81,7 @@ public class MasterPowerCheckeredTest {
     // Create a new race with AllowFinish.None
     com.antigravity.models.Race model =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     HeatScoring.FinishMethod.Lap,
@@ -126,6 +128,7 @@ public class MasterPowerCheckeredTest {
     // 1. Setup a race with 2 lanes and AllowFinish = Allow
     com.antigravity.models.Race model =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     HeatScoring.FinishMethod.Lap,

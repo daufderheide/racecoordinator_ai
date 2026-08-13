@@ -32,7 +32,8 @@ public class HeatProgressTest {
 
   @Test
   public void testStartingStateSetsZeroProgress() {
-    raceModel = new Race.Builder().withStartTime(1.0).withRestartTime(1.0).build();
+    raceModel =
+        new Race.Builder().withName("Test Race").withStartTime(1.0).withRestartTime(1.0).build();
     when(mockRace.getRaceModel()).thenReturn(raceModel);
 
     Starting starting = new Starting();
@@ -56,7 +57,7 @@ public class HeatProgressTest {
   @Test
   public void testTimedRaceProgress() throws InterruptedException {
     HeatScoring timedScoring = new HeatScoring(FinishMethod.Timed, 60L, null, null, null);
-    raceModel = new Race.Builder().withHeatScoring(timedScoring).build();
+    raceModel = new Race.Builder().withName("Test Race").withHeatScoring(timedScoring).build();
     when(mockRace.getRaceModel()).thenReturn(raceModel);
 
     // Use a custom Answer to handle changing race time without resetting the mock
@@ -86,7 +87,7 @@ public class HeatProgressTest {
   @Test
   public void testLapBasedRaceProgress() throws InterruptedException {
     HeatScoring lapScoring = new HeatScoring(FinishMethod.Lap, 10L, null, null, null);
-    raceModel = new Race.Builder().withHeatScoring(lapScoring).build();
+    raceModel = new Race.Builder().withName("Test Race").withHeatScoring(lapScoring).build();
     when(mockRace.getRaceModel()).thenReturn(raceModel);
 
     DriverHeatData d1 = mock(DriverHeatData.class);

@@ -747,9 +747,9 @@ public class App {
   }
 
   /**
-   * Registers the server via JmDNS (multicast DNS / Zeroconf) on the local network.
-   * This allows clients (such as the camera client) to automatically discover the
-   * host IP and port of the running server without manual configuration.
+   * Registers the server via JmDNS (multicast DNS / Zeroconf) on the local network. This allows
+   * clients (such as the camera client) to automatically discover the host IP and port of the
+   * running server without manual configuration.
    */
   private static void registerJmdnsDiscovery() {
     try {

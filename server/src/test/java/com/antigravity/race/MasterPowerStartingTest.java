@@ -27,6 +27,7 @@ public class MasterPowerStartingTest {
 
     Race model =
         new Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     HeatScoring.FinishMethod.Lap,

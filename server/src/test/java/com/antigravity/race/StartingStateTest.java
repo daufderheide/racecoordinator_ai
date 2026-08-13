@@ -41,7 +41,11 @@ public class StartingStateTest {
     when(mockParticipant.getObjectId()).thenReturn("p1");
 
     com.antigravity.models.Race raceModel =
-        new com.antigravity.models.Race.Builder().withStartTime(1.0).withRestartTime(2.0).build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withStartTime(1.0)
+            .withRestartTime(2.0)
+            .build();
 
     mockDbCtx = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
 
@@ -105,6 +109,7 @@ public class StartingStateTest {
   public void testStartingWaitRandomDelay() throws InterruptedException {
     com.antigravity.models.Race raceModelWithDelay =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withStartTime(1.0)
             .withStartRandomizer(1.0)
             .build();
@@ -140,7 +145,7 @@ public class StartingStateTest {
   @Test
   public void testHotStart() throws InterruptedException {
     com.antigravity.models.Race hotStartModel =
-        new com.antigravity.models.Race.Builder().withHotStart(true).build();
+        new com.antigravity.models.Race.Builder().withName("Test Race").withHotStart(true).build();
 
     race =
         new Race.Builder()
@@ -165,7 +170,11 @@ public class StartingStateTest {
   @Test
   public void testHotStartDoesNotBypassCountdown() throws InterruptedException {
     com.antigravity.models.Race hotStartModel =
-        new com.antigravity.models.Race.Builder().withHotStart(true).withStartTime(1.0).build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withHotStart(true)
+            .withStartTime(1.0)
+            .build();
 
     race =
         new Race.Builder()
@@ -211,6 +220,7 @@ public class StartingStateTest {
   public void testStartingFalseStartWithRestartOnFalseStart() {
     com.antigravity.models.Race falseStartModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withRestartOnFalseStart(true)
             .withFalseStartLapPenalty(1.0)
             .withFalseStartTimePenalty(3.0)
@@ -248,6 +258,7 @@ public class StartingStateTest {
   public void testStartingFalseStartWithoutRestartOnFalseStart() {
     com.antigravity.models.Race falseStartModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withRestartOnFalseStart(false)
             .withFalseStartLapPenalty(0.5)
             .withFalseStartTimePenalty(2.0)
@@ -299,7 +310,11 @@ public class StartingStateTest {
     Starting testStarting = new Starting();
     Race mockRace = mock(Race.class);
     when(mockRace.getRaceModel())
-        .thenReturn(new com.antigravity.models.Race.Builder().withStartTime(0.1).build());
+        .thenReturn(
+            new com.antigravity.models.Race.Builder()
+                .withName("Test Race")
+                .withStartTime(0.1)
+                .build());
     when(mockRace.hasRacedInCurrentHeat()).thenReturn(false);
 
     AtomicBoolean wasInterrupted = new AtomicBoolean(false);
@@ -324,7 +339,7 @@ public class StartingStateTest {
   @Test
   public void testStartingWithZeroStartTimeTransitionsImmediately() throws InterruptedException {
     com.antigravity.models.Race zeroStartTimeModel =
-        new com.antigravity.models.Race.Builder().withStartTime(0.0).build();
+        new com.antigravity.models.Race.Builder().withName("Test Race").withStartTime(0.0).build();
 
     race =
         new Race.Builder()
@@ -355,7 +370,10 @@ public class StartingStateTest {
   @Test
   public void testStartingWithZeroRestartTimeTransitionsImmediately() throws InterruptedException {
     com.antigravity.models.Race zeroRestartTimeModel =
-        new com.antigravity.models.Race.Builder().withRestartTime(0.0).build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withRestartTime(0.0)
+            .build();
 
     race =
         new Race.Builder()
