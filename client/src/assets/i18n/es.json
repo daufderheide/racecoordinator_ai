@@ -1058,6 +1058,8 @@
   "RE_ROTATION_ROUND_ROBIN": "Todos contra todos",
   "RE_ROTATION_SINGLE_HEAT": "Carrera individual",
   "RE_ROTATION_SINGLE_HEAT_SOLO": "Carrera individual (Solo)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES": "Carrera individual (Solo todos los carriles)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE": "Carrera individual (Solo todos los carriles acumulados)",
   "RE_SELECT_CUSTOM_ROTATION": "Seleccionar rotación personalizada",
   "RE_START_AT_CURRENT": "Comenzar en el Actual",
   "RE_START_BEHIND_SENSOR": "Empezar Detrás del Sensor",

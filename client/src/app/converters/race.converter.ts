@@ -161,6 +161,10 @@ export class RaceConverter {
               "EuropeanRoundRobin",
               "SingleHeat",
               "SingleHeatSolo",
+              "CustomRoundRobin",
+              "Custom",
+              "SingleHeatSoloAllLanes",
+              "SingleHeatSoloAllLanesAccumulate",
             ];
             return typeof proto.heatRotationType === "number"
               ? rotationMap[proto.heatRotationType] || "RoundRobin"

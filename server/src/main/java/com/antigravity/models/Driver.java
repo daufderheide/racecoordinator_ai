@@ -66,6 +66,7 @@ public class Driver extends Model {
     }
   }
 
+  // TODO(aufderheide): This constructor mess needs a builder pattern refactor.
   public Driver(
       String name,
       String nickname,

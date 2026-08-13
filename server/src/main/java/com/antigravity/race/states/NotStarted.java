@@ -354,6 +354,9 @@ public class NotStarted implements IRaceState {
   public boolean canChangeLane(Race race) {
     if (race == null || race.getRaceModel() == null) return false;
     HeatRotationType type = race.getRaceModel().getHeatRotationType();
-    return type == HeatRotationType.SingleHeat || type == HeatRotationType.SingleHeatSolo;
+    return type == HeatRotationType.SingleHeat
+        || type == HeatRotationType.SingleHeatSolo
+        || type == HeatRotationType.SingleHeatSoloAllLanes
+        || type == HeatRotationType.SingleHeatSoloAllLanesAccumulate;
   }
 }

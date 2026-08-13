@@ -17,6 +17,7 @@ import { ImageSelectorComponent } from "@app/components/shared/image-selector/im
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { Driver } from "@app/models/driver";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -580,7 +581,7 @@ export class DriverEditorComponent
     const allAssets = assets || [];
     this.avatarAssets = allAssets.filter((a) => a.type === "image");
     this.soundAssets = allAssets.filter(
-      (a) => a.type === "sound" || a.type === "audio",
+      (a) => normalizeAssetType(a.type) === AssetType.AUDIO,
     );
 
     const idParam = this.route.snapshot.queryParamMap.get("id");

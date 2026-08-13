@@ -888,7 +888,10 @@ public class Race implements ProtocolListener {
   }
 
   public void updateAndBroadcastOverallStandings() {
-    overallStandings.recalculate(this.drivers, this.heats);
+    overallStandings.recalculate(
+        this.drivers,
+        this.heats,
+        this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null);
     recordsManager.recalculateScoreRecords();
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
     for (RaceParticipant driver : this.drivers) {

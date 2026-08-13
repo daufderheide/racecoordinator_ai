@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AssetType;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.AudioSetEntry;
 import com.antigravity.proto.CustomHeat;
@@ -121,7 +122,7 @@ public class AssetService {
     node.put("_id", id);
     node.put("entity_id", id);
     node.put("name", name);
-    node.put("type", type);
+    node.put("type", AssetType.normalize(type));
     node.put("size", sizeStr);
     node.put("filename", filename);
     node.put("url", url);
@@ -425,7 +426,7 @@ public class AssetService {
         AssetMessage.newBuilder()
             .setModel(Model.newBuilder().setEntityId(id).build())
             .setName(node.has("name") ? node.get("name").asText() : "")
-            .setType(node.has("type") ? node.get("type").asText() : "")
+            .setType(node.has("type") ? AssetType.normalize(node.get("type").asText()) : "")
             .setSize(node.has("size") ? node.get("size").asText() : "")
             .setUrl(node.has("url") ? node.get("url").asText() : "");
 

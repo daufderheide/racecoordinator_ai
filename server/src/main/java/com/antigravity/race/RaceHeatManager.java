@@ -96,7 +96,7 @@ public class RaceHeatManager {
     String groupError = validateGroups(request);
     if (groupError != null) return groupError;
 
-    return validateHeatDrivers(request);
+    return validateHeatDrivers();
   }
 
   String validateGroups(ModifyHeatsRequest request) {
@@ -215,29 +215,8 @@ public class RaceHeatManager {
     return null;
   }
 
-  private String validateHeatDrivers(ModifyHeatsRequest request) {
-    for (com.antigravity.proto.Heat protoHeat : request.getHeatsList()) { // fqn-collision
-      Set<String> driverObjectIds = new HashSet<>();
-      for (com.antigravity.proto.DriverHeatData protoDhd : // fqn-collision
-          protoHeat.getHeatDriversList()) {
-        String driverObjectId = protoDhd.getDriver().getObjectId();
-        if (driverObjectId != null && !driverObjectId.isEmpty()) {
-          if (!driverObjectIds.add(driverObjectId)) {
-            RaceParticipant p = findParticipantByObjectId(driverObjectId);
-            if (p == null) {
-              p = findParticipantInProtoRequest(request, driverObjectId);
-            }
-            String name =
-                (p != null && p.getDriver() != null) ? p.getDriver().getName() : "Unknown";
-            return "Driver "
-                + name
-                + " is assigned to multiple lanes in Heat "
-                + protoHeat.getHeatNumber()
-                + ".";
-          }
-        }
-      }
-    }
+  private String validateHeatDrivers() {
+    // Multi-lane driver assignments within the same heat are supported.
     return null;
   }
 

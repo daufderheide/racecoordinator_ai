@@ -8,7 +8,7 @@ import {
   signal,
 } from "@angular/core";
 import { DataService } from "@app/data.service";
-import {} from "@app/proto/message";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 
 @Component({
   standalone: true,
@@ -55,7 +55,7 @@ import {} from "@app/proto/message";
 })
 export class AssetPreviewComponent implements OnDestroy {
   assetId = input<string>();
-  type = input<"image" | "image_set" | "sound" | "audio">("image");
+  type = input<"image" | "image_set" | "audio" | "audio_set" | string>("image");
   imageUrl = input<string>();
   name = input<string>("");
   images = input<any[]>();
@@ -102,11 +102,11 @@ export class AssetPreviewComponent implements OnDestroy {
 
   public isSoundType(): boolean {
     const t = this.normalizedType();
-    return t === "sound" || t === "audio";
+    return t === AssetType.AUDIO || t === AssetType.AUDIO_SET;
   }
 
   normalizedType = computed(() => {
-    return (this.type() || "").toLowerCase();
+    return normalizeAssetType(this.type());
   });
 
   private startAnimation() {

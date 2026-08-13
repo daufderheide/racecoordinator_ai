@@ -107,7 +107,7 @@ describe("ItemSelectorComponent", () => {
     expect(component.filteredItems().length).toBe(1);
     expect(component.filteredItems()[0].name).toBe("Set 1");
 
-    fixture.componentRef.setInput("itemType", "sound");
+    fixture.componentRef.setInput("itemType", "audio");
     expect(component.filteredItems().length).toBe(2);
     expect(component.filteredItems().map((i) => i.name)).toEqual([
       "Sound 1",

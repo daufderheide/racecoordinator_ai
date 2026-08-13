@@ -1057,6 +1057,8 @@
   "RE_ROTATION_ROUND_ROBIN": "Jeder-gegen-jeden",
   "RE_ROTATION_SINGLE_HEAT": "Einzelner Lauf",
   "RE_ROTATION_SINGLE_HEAT_SOLO": "Einzelner Lauf (Solo)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES": "Einzelner Lauf (Solo alle Spuren)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE": "Einzelner Lauf (Solo alle Spuren akkumuliert)",
   "RE_SELECT_CUSTOM_ROTATION": "Wählen Sie eine benutzerdefinierte Rotation",
   "RE_START_AT_CURRENT": "Am aktuellen Punkt starten",
   "RE_START_BEHIND_SENSOR": "Hinter Sensor starten",

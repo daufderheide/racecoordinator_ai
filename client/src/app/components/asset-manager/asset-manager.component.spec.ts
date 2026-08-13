@@ -132,10 +132,10 @@ describe("AssetManagerComponent", () => {
     expect(component.filteredAssets.length).toBe(4);
     expect(component.filteredAssets[0].type).toBe("image");
 
-    component.setFilterType("sound");
-    expect(component.filterType).toBe("sound");
+    component.setFilterType("audio");
+    expect(component.filterType).toBe("audio");
     expect(component.filteredAssets.length).toBe(1);
-    expect(component.filteredAssets[0].type).toBe("sound");
+    expect(component.filteredAssets[0].type).toBe("audio");
 
     component.setFilterType("image_set");
     expect(component.filterType).toBe("image_set");
@@ -642,7 +642,7 @@ describe("AssetManagerComponent", () => {
       expect(mockDataService.uploadAsset.calls.argsFor(0)[0]).toBe("test.png");
       expect(mockDataService.uploadAsset.calls.argsFor(0)[1]).toBe("image");
       expect(mockDataService.uploadAsset.calls.argsFor(1)[0]).toBe("test.mp3");
-      expect(mockDataService.uploadAsset.calls.argsFor(1)[1]).toBe("sound");
+      expect(mockDataService.uploadAsset.calls.argsFor(1)[1]).toBe("audio");
       expect(mockDataService.listAssets).toHaveBeenCalled();
       expect(component.isUploading).toBeFalse();
     }));

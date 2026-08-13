@@ -182,6 +182,30 @@ public class RaceConverterTest {
   }
 
   @Test
+  public void testToProto_HeatRotationType_SingleHeatSoloAllLanesAccumulate() {
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatRotationType(HeatRotationType.SingleHeatSoloAllLanesAccumulate)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(
+        com.antigravity.proto.HeatRotationType.SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE,
+        proto.getHeatRotationType());
+  }
+
+  @Test
   public void testToProto_RaceSnapshot_PopulatesRecordDataAndHeats() {
     // Setup
     List<com.antigravity.models.Lane> lanes = new ArrayList<>();

@@ -1101,6 +1101,8 @@
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Single Heat",
   "RE_ROTATION_SINGLE_HEAT_SOLO": "Single Heat (Solo)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES": "Single Heat (Solo All Lanes)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE": "Single Heat (Solo All Lanes Accumulate)",
   "RE_SELECT_CUSTOM_ROTATION": "Select Custom Rotation Asset",
   "RE_START_AT_CURRENT": "Start at Current",
   "RE_START_BEHIND_SENSOR": "Start Behind Sensor",

@@ -60,6 +60,7 @@ export class AssetManagerHarnessE2e implements AssetManagerHarnessBase {
       | "image"
       | "image_set"
       | "sound"
+      | "audio"
       | "audio_set"
       | "custom_rotation",
   ): Promise<void> {
@@ -68,6 +69,7 @@ export class AssetManagerHarnessE2e implements AssetManagerHarnessBase {
       image: 1,
       image_set: 2,
       sound: 3,
+      audio: 3,
       audio_set: 4,
       custom_rotation: 5,
     };

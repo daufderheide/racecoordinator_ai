@@ -317,6 +317,38 @@ public class HeatBuilder {
     return heatList;
   }
 
+  private static List<Heat> getSingleHeatSoloAllLanesHeats(
+      List<RaceParticipant> drivers, int numLanes, HeatScoring scoring, boolean practice) {
+    List<Heat> heatList = new ArrayList<>();
+    if (drivers.isEmpty()) {
+      return heatList;
+    }
+
+    for (int h = 0; h < drivers.size(); h++) {
+      List<DriverHeatData> heatDrivers = new ArrayList<>();
+      RaceParticipant participant = drivers.get(h);
+
+      for (int l = 0; l < numLanes; l++) {
+        DriverHeatData data = new DriverHeatData(participant);
+        data.setLane(l);
+
+        if (participant.isTeamParticipant()
+            && participant.getTeam() != null
+            && participant.getTeamDrivers() != null
+            && !participant.getTeamDrivers().isEmpty()) {
+          int dIdx = (h + l) % participant.getTeamDrivers().size();
+          Driver assignedDriver = participant.getTeamDrivers().get(dIdx);
+          data.setActualDriver(assignedDriver);
+        }
+
+        heatDrivers.add(data);
+      }
+
+      heatList.add(new Heat(h + 1, heatDrivers, scoring, practice));
+    }
+    return heatList;
+  }
+
   private static List<Heat> getCustomHeats(
       List<RaceParticipant> drivers,
       int numLanes,
@@ -372,6 +404,7 @@ public class HeatBuilder {
     for (int h = 0; h < selectedRotation.getHeats().size(); h++) {
       CustomHeat customHeat = selectedRotation.getHeats().get(h);
       List<DriverHeatData> heatDrivers = new ArrayList<>();
+      java.util.Map<String, Integer> teamLaneOccurrences = new java.util.HashMap<>();
 
       for (int l = 0; l < numLanes; l++) {
         int driverIdx = 0;
@@ -382,20 +415,24 @@ public class HeatBuilder {
         if (driverIdx > 0 && driverIdx <= drivers.size()) {
           RaceParticipant participant = drivers.get(driverIdx - 1);
           DriverHeatData data = new DriverHeatData(participant);
+          data.setLane(l);
 
           if (participant.isTeamParticipant()
               && participant.getTeam() != null
               && participant.getTeamDrivers() != null
               && !participant.getTeamDrivers().isEmpty()) {
-            // Rotate drivers based on heat number
-            int teamDriverIdx = h % participant.getTeamDrivers().size();
+            int occurrence = teamLaneOccurrences.getOrDefault(participant.getStableId(), 0);
+            teamLaneOccurrences.put(participant.getStableId(), occurrence + 1);
+            int teamDriverIdx = (h + occurrence) % participant.getTeamDrivers().size();
             Driver assignedDriver = participant.getTeamDrivers().get(teamDriverIdx);
             data.setActualDriver(assignedDriver);
           }
 
           heatDrivers.add(data);
         } else {
-          heatDrivers.add(new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER)));
+          DriverHeatData emptyDhd = new DriverHeatData(new RaceParticipant(Driver.EMPTY_DRIVER));
+          emptyDhd.setLane(l);
+          heatDrivers.add(emptyDhd);
         }
       }
       heatList.add(new Heat(h + 1, heatDrivers, customHeat.getGroup(), scoring, practice));
@@ -458,6 +495,15 @@ public class HeatBuilder {
                 numLanes,
                 race.getRaceModel().getHeatScoring(),
                 race.getRaceModel().getSoloLaneIndex(),
+                race.getRaceModel().isPractice());
+        break;
+      case SingleHeatSoloAllLanes:
+      case SingleHeatSoloAllLanesAccumulate:
+        heatList =
+            getSingleHeatSoloAllLanesHeats(
+                drivers,
+                numLanes,
+                race.getRaceModel().getHeatScoring(),
                 race.getRaceModel().isPractice());
         break;
       case CustomRoundRobin:

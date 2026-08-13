@@ -263,8 +263,8 @@
             </div>
             <div
               class="tab filter-sounds"
-              [class.active]="filterType === 'sound'"
-              (click)="setFilterType('sound')"
+              [class.active]="filterType === 'sound' || filterType === 'audio'"
+              (click)="setFilterType('audio')"
             >
               {{ "AM_FILTER_SOUNDS" | translate }}
             </div>

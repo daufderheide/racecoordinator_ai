@@ -540,4 +540,81 @@ public class OverallStandingsTest {
     assertEquals(3, g1_p1.getRank());
     assertEquals(4, g2_p2.getRank());
   }
+
+  @Test
+  public void testMultiLaneAccumulateScoring() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap,
+            10,
+            HeatRanking.LAP_COUNT,
+            HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+
+    List<DriverHeatData> dhdList = new ArrayList<>();
+    DriverHeatData dhdLane1 = new DriverHeatData(p1);
+    for (int i = 0; i < 5; i++) dhdLane1.addLap(10.0, false, true); // 5 laps
+
+    DriverHeatData dhdLane2 = new DriverHeatData(p1);
+    for (int i = 0; i < 10; i++) dhdLane2.addLap(10.0, false, true); // 10 laps
+
+    dhdList.add(dhdLane1);
+    dhdList.add(dhdLane2);
+
+    Heat heat = new Heat(1, dhdList, heatScoring, false);
+    List<Heat> heats = new ArrayList<>();
+    heats.add(heat);
+
+    os.recalculate(
+        drivers, heats, com.antigravity.models.HeatRotationType.SingleHeatSoloAllLanesAccumulate);
+
+    // SingleHeatSoloAllLanesAccumulate: 5 laps + 10 laps = 15 total laps
+    assertEquals(15.0, p1.getTotalLaps(), 0.001);
+  }
+
+  @Test
+  public void testMultiLaneBestLaneScoring() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap,
+            10,
+            HeatRanking.LAP_COUNT,
+            HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    OverallScoring overallScoring =
+        new OverallScoring(0, OverallRanking.LAP_COUNT, OverallRankingTiebreaker.FASTEST_LAP_TIME);
+    OverallStandings os =
+        new OverallStandings(heatScoring, overallScoring, new GroupOptions(), false);
+
+    RaceParticipant p1 = createDriver("D1", "id1");
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(p1);
+
+    List<DriverHeatData> dhdList = new ArrayList<>();
+    DriverHeatData dhdLane1 = new DriverHeatData(p1);
+    for (int i = 0; i < 5; i++) dhdLane1.addLap(10.0, false, true); // 5 laps
+
+    DriverHeatData dhdLane2 = new DriverHeatData(p1);
+    for (int i = 0; i < 10; i++) dhdLane2.addLap(10.0, false, true); // 10 laps
+
+    dhdList.add(dhdLane1);
+    dhdList.add(dhdLane2);
+
+    Heat heat = new Heat(1, dhdList, heatScoring, false);
+    List<Heat> heats = new ArrayList<>();
+    heats.add(heat);
+
+    os.recalculate(drivers, heats, com.antigravity.models.HeatRotationType.SingleHeatSoloAllLanes);
+
+    // SingleHeatSoloAllLanes: max(5, 10) = 10 laps
+    assertEquals(10.0, p1.getTotalLaps(), 0.001);
+  }
 }

@@ -7,5 +7,7 @@ public enum HeatRotationType {
   SingleHeat,
   SingleHeatSolo,
   CustomRoundRobin,
-  Custom
+  Custom,
+  SingleHeatSoloAllLanes,
+  SingleHeatSoloAllLanesAccumulate
 }

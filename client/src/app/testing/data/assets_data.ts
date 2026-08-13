@@ -11,7 +11,7 @@ export const MOCK_ASSETS: any[] = [
   {
     id: "a2",
     name: "EngineRev",
-    type: "sound",
+    type: "audio",
     size: "45 KB",
     url: "assets/sounds/engine_rev.mp3",
     editMode: false,

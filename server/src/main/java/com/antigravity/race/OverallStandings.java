@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import com.antigravity.models.GroupOptions;
+import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import java.util.ArrayList;
@@ -33,6 +34,11 @@ public class OverallStandings {
   }
 
   public void recalculate(List<RaceParticipant> drivers, List<Heat> heats) {
+    recalculate(drivers, heats, null);
+  }
+
+  public void recalculate(
+      List<RaceParticipant> drivers, List<Heat> heats, HeatRotationType rotationType) {
     Map<String, List<DriverHeatData>> driverHeats = new HashMap<>();
 
     // 1. Strings heats to drivers
@@ -48,8 +54,9 @@ public class OverallStandings {
 
     // 2. Aggregate stats for each driver
     for (RaceParticipant driver : drivers) {
-      List<DriverHeatData> myHeats =
+      List<DriverHeatData> rawHeats =
           driverHeats.getOrDefault(driver.getStableId(), new ArrayList<>());
+      List<DriverHeatData> myHeats = consolidateDriverHeats(rawHeats, heats, rotationType);
       List<DriverHeatData> scoringHeats = getScoringHeats(myHeats);
 
       double totalLaps = 0.0;
@@ -341,5 +348,69 @@ public class OverallStandings {
       default:
         return (a, b) -> 0;
     }
+  }
+
+  private List<DriverHeatData> consolidateDriverHeats(
+      List<DriverHeatData> rawHeats, List<Heat> heats, HeatRotationType rotationType) {
+    if (rawHeats == null || rawHeats.isEmpty()) {
+      return new ArrayList<>();
+    }
+
+    Map<Integer, List<DriverHeatData>> heatsByNumber = new HashMap<>();
+    for (DriverHeatData dhd : rawHeats) {
+      int heatNum = 0;
+      for (Heat h : heats) {
+        if (h.getDrivers().contains(dhd)) {
+          heatNum = h.getHeatNumber();
+          break;
+        }
+      }
+      heatsByNumber.computeIfAbsent(heatNum, k -> new ArrayList<>()).add(dhd);
+    }
+
+    List<DriverHeatData> consolidated = new ArrayList<>();
+    for (Map.Entry<Integer, List<DriverHeatData>> entry : heatsByNumber.entrySet()) {
+      List<DriverHeatData> dhdList = entry.getValue();
+      if (dhdList.size() == 1) {
+        consolidated.add(dhdList.get(0));
+      } else {
+        RaceParticipant participant = dhdList.get(0).getDriver();
+        boolean accumulate =
+            (participant != null && participant.isTeamParticipant())
+                || rotationType == HeatRotationType.SingleHeatSoloAllLanesAccumulate;
+
+        if (accumulate) {
+          DriverHeatData combined =
+              new DriverHeatData(dhdList.get(0).getDriver(), dhdList.get(0).getActualDriver());
+          List<DriverHeatData.LapData> combinedLaps = new ArrayList<>();
+          double combinedBest = Double.MAX_VALUE;
+          for (DriverHeatData dhd : dhdList) {
+            combinedLaps.addAll(dhd.getLaps());
+            if (dhd.getBestLapTime() > 0 && dhd.getBestLapTime() < combinedBest) {
+              combinedBest = dhd.getBestLapTime();
+            }
+          }
+          combined.setLaps(combinedLaps);
+          if (combinedBest != Double.MAX_VALUE) {
+            combined.setBestLapTime(combinedBest);
+          }
+          consolidated.add(combined);
+        } else {
+          DriverHeatData best = dhdList.get(0);
+          for (int i = 1; i < dhdList.size(); i++) {
+            DriverHeatData candidate = dhdList.get(i);
+            if (candidate.getAdjustedLapCount() > best.getAdjustedLapCount()) {
+              best = candidate;
+            } else if (candidate.getAdjustedLapCount() == best.getAdjustedLapCount()) {
+              if (candidate.getTotalTime() < best.getTotalTime() && candidate.getTotalTime() > 0) {
+                best = candidate;
+              }
+            }
+          }
+          consolidated.add(best);
+        }
+      }
+    }
+    return consolidated;
   }
 }

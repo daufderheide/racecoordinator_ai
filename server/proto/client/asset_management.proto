@@ -14,7 +14,7 @@ message ListAssetsRequest {
 
 message UploadAssetRequest {
   string name = 1;
-  string type = 2; // "image" or "sound"
+  string type = 2; // "image" or "audio"
   bytes data = 3;
 }
 

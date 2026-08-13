@@ -33,9 +33,9 @@
                   >
                   </app-asset-preview>
                   @if (
-                    itemType() === "sound" ||
                     itemType() === "audio" ||
-                    itemType() === "audio_set"
+                    itemType() === "audio_set" ||
+                    itemType() === "sound"
                   ) {
                     <button
                       class="play-preview"

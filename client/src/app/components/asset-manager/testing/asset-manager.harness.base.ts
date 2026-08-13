@@ -24,6 +24,7 @@ export abstract class AssetManagerHarnessBase {
       | "image"
       | "image_set"
       | "sound"
+      | "audio"
       | "audio_set"
       | "custom_rotation",
   ): Promise<void>;

@@ -88,6 +88,8 @@ enum HeatRotationType {
   SINGLE_HEAT_SOLO = 4;
   CUSTOM_ROUND_ROBIN = 5;
   CUSTOM = 6;
+  SINGLE_HEAT_SOLO_ALL_LANES = 7;
+  SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE = 8;
 }
 
 message RaceModel {

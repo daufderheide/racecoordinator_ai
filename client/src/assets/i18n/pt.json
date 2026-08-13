@@ -1057,6 +1057,8 @@
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Bateria Única",
   "RE_ROTATION_SINGLE_HEAT_SOLO": "Bateria Única (Solo)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES": "Bateria única (Solo todas as pistas)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE": "Bateria única (Solo todas as pistas acumuladas)",
   "RE_SELECT_CUSTOM_ROTATION": "Selecionar rotação personalizada",
   "RE_START_AT_CURRENT": "Iniciar na Posição Atual",
   "RE_START_BEHIND_SENSOR": "Iniciar Atrás do Sensor",

@@ -1058,6 +1058,8 @@
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Manche Unique",
   "RE_ROTATION_SINGLE_HEAT_SOLO": "Course Unique (Solo)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES": "Manche unique (Solo toutes les voies)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE": "Manche unique (Solo toutes les voies cumulées)",
   "RE_SELECT_CUSTOM_ROTATION": "Sélectionner un asset de rotation personnalisé",
   "RE_START_AT_CURRENT": "Démarrer au Point Actuel",
   "RE_START_BEHIND_SENSOR": "Démarrer Derrière le Capteur",

@@ -19,6 +19,7 @@ import { AudioSelectorComponent } from "@app/components/shared/audio-selector/au
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { Driver } from "@app/models/driver";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -170,7 +171,7 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (result: any) => {
         this.soundAssets = (result.assets || []).filter(
-          (a: any) => a.type === "sound" || a.type === "audio",
+          (a: any) => normalizeAssetType(a.type) === AssetType.AUDIO,
         );
 
         this.drivers = ((result.drivers || []) as any[])

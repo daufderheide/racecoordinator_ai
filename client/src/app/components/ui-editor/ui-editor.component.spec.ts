@@ -537,7 +537,7 @@ describe("UIEditorComponent", () => {
     mockDataService.listAssets.and.returnValue(
       of([
         { type: "image", url: "img1.png" },
-        { type: "sound", name: "Beep", model: { entityId: "sound1" } },
+        { type: "audio", name: "Beep", model: { entityId: "sound1" } },
         { type: "audio", name: "Yellow Flag", model: { entityId: "sound2" } },
         { type: "audio_set", name: "Announcer", model: { entityId: "set1" } },
       ]),
@@ -547,7 +547,7 @@ describe("UIEditorComponent", () => {
 
     expect(component.assets.length).toBe(4);
     expect(component.soundAssets.length).toBe(3);
-    expect(component.soundAssets[0].type).toBe("sound");
+    expect(component.soundAssets[0].type).toBe("audio");
     expect(component.soundAssets[1].type).toBe("audio");
     expect(component.soundAssets[2].type).toBe("audio_set");
   });

@@ -1141,7 +1141,7 @@ export class TestSetupHelper {
           {
             model: { entityId: "2" },
             name: "Test Sound 1",
-            type: "sound",
+            type: "audio",
             size: "50 KB",
             url: "/api/assets/download?filename=snd1.mp3",
             filename: "snd1.mp3",

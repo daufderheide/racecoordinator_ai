@@ -2,6 +2,7 @@ import { Component, computed, input, output, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { AssetPreviewComponent } from "@app/components/shared/asset-preview/asset-preview.component";
+import { normalizeAssetType } from "@app/models/asset";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
 @Component({
@@ -17,7 +18,7 @@ export class ItemSelectorComponent {
   items = input<any[]>([]);
   searchTerm = signal("");
 
-  itemType = input<"image" | "sound" | "image_set" | "audio" | "audio_set">(
+  itemType = input<"image" | "image_set" | "audio" | "audio_set" | string>(
     "image",
   );
 
@@ -27,13 +28,10 @@ export class ItemSelectorComponent {
 
     // Filter by type if itemType is specified
     if (type) {
-      if (type === "sound" || type === "audio") {
-        results = results.filter(
-          (item) => item.type === "sound" || item.type === "audio",
-        );
-      } else {
-        results = results.filter((item) => item.type === type);
-      }
+      const targetType = normalizeAssetType(type);
+      results = results.filter(
+        (item) => normalizeAssetType(item.type) === targetType,
+      );
     }
 
     const term = this.searchTerm();

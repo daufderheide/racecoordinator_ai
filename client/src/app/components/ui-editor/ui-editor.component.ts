@@ -24,6 +24,7 @@ import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.compone
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { AudioConfig } from "@app/models/driver";
 import { LayoutConfig, Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
@@ -801,13 +802,13 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           (a: any) =>
             a.type === "image" ||
             a.type === "image_set" ||
-            a.type === "sound" ||
-            a.type === "audio" ||
+            normalizeAssetType(a.type) === AssetType.AUDIO ||
             a.type === "audio_set",
         );
         this.soundAssets = this.assets.filter(
           (a) =>
-            a.type === "sound" || a.type === "audio" || a.type === "audio_set",
+            normalizeAssetType(a.type) === AssetType.AUDIO ||
+            a.type === "audio_set",
         );
 
         // Dynamic columns for image sets

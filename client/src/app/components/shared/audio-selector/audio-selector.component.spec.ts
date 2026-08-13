@@ -168,7 +168,7 @@ describe("AudioSelectorComponent", () => {
 
   it("should filter assets based on mode", () => {
     const allAssets = [
-      { type: "sound", name: "Single" },
+      { type: "audio", name: "Single" },
       { type: "audio_set", name: "Set" },
     ];
     fixture.componentRef.setInput("assets", allAssets);
@@ -176,7 +176,7 @@ describe("AudioSelectorComponent", () => {
     fixture.componentRef.setInput("mode", "single");
     fixture.detectChanges();
     expect(component.filteredAssets().length).toBe(1);
-    expect(component.filteredAssets()[0].type).toBe("sound");
+    expect(component.filteredAssets()[0].type).toBe("audio");
 
     fixture.componentRef.setInput("mode", "set");
     fixture.detectChanges();

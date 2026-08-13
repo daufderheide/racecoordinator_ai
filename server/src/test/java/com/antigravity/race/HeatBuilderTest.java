@@ -326,6 +326,87 @@ public class HeatBuilderTest {
   }
 
   @Test
+  public void testSingleHeatSoloAllLanes() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.SingleHeatSoloAllLanes);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= 2; i++) {
+      participants.add(
+          new RaceParticipant(
+              new Driver(
+                  "D" + i,
+                  "d" + i,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  String.valueOf(i),
+                  null)));
+    }
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    // 2 participants -> 2 heats
+    assertEquals(2, heats.size());
+
+    // Each heat should assign the participant to all 4 lanes
+    for (int hIdx = 0; hIdx < 2; hIdx++) {
+      Heat h = heats.get(hIdx);
+      assertEquals(4, countDrivers(h));
+      for (int l = 0; l < 4; l++) {
+        assertEquals(
+            String.valueOf(hIdx + 1), h.getDrivers().get(l).getActualDriver().getEntityId());
+      }
+    }
+  }
+
+  @Test
+  public void testSingleHeatSoloAllLanesAccumulate() {
+    when(raceModel.getHeatRotationType())
+        .thenReturn(HeatRotationType.SingleHeatSoloAllLanesAccumulate);
+
+    List<RaceParticipant> participants = new ArrayList<>();
+    for (int i = 1; i <= 2; i++) {
+      participants.add(
+          new RaceParticipant(
+              new Driver(
+                  "D" + i,
+                  "d" + i,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                  String.valueOf(i),
+                  null)));
+    }
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, participants, new ArrayList<>());
+
+    // 2 participants -> 2 heats
+    assertEquals(2, heats.size());
+
+    // Each heat should assign the participant to all 4 lanes
+    for (int hIdx = 0; hIdx < 2; hIdx++) {
+      Heat h = heats.get(hIdx);
+      assertEquals(4, countDrivers(h));
+      for (int l = 0; l < 4; l++) {
+        assertEquals(
+            String.valueOf(hIdx + 1), h.getDrivers().get(l).getActualDriver().getEntityId());
+      }
+    }
+  }
+
+  @Test
   public void testSingleHeatSoloWithCustomLane() {
     when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.SingleHeatSolo);
     when(raceModel.getSoloLaneIndex()).thenReturn(2); // Lane 3

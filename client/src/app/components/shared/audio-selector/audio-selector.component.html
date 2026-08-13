@@ -100,7 +100,7 @@
     [visible]="showItemSelector"
     [title]="'AS_TITLE_SELECT_SOUND' | translate"
     [items]="assets()"
-    [itemType]="mode() === 'set' ? 'audio_set' : 'sound'"
+    [itemType]="mode() === 'set' ? 'audio_set' : 'audio'"
     (select)="onAssetSelected($event)"
     (play)="onPlayPreview($event)"
     (close)="closeItemSelector()"

@@ -16,6 +16,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   IAssetMessage,
@@ -87,6 +88,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     | "all"
     | "image"
     | "sound"
+    | "audio"
     | "image_set"
     | "audio_set"
     | "custom_rotation" = "all";
@@ -272,10 +274,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
               type = "audio_set";
             } else if (a.images && a.images.length > 0) {
               type = "image_set";
-            } else if (type === "audio") {
-              type = "sound";
-            } else if (!type) {
-              type = "image";
+            } else {
+              type = normalizeAssetType(type);
             }
 
             return {
@@ -323,11 +323,13 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   get filteredAssets(): AssetView[] {
     return this.assets.filter((asset) => {
+      const normalizedFilter = normalizeAssetType(this.filterType);
+      const normalizedAsset = normalizeAssetType(asset.type);
+
       const typeMatch =
         this.filterType === "all" ||
         asset.type === this.filterType ||
-        (this.filterType === "sound" &&
-          (asset.type === "sound" || asset.type === "audio"));
+        normalizedAsset === normalizedFilter;
       const nameMatch =
         !this.filterName ||
         asset.name.toLowerCase().includes(this.filterName.toLowerCase());
@@ -344,7 +346,9 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   get allAudio(): AssetView[] {
     return this.assets.filter(
-      (a) => a.type === "sound" || a.type === "audio" || a.type === "audio_set",
+      (a) =>
+        normalizeAssetType(a.type) === AssetType.AUDIO ||
+        a.type === "audio_set",
     );
   }
 
@@ -394,11 +398,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     );
   }
 
-  private getBytesByType(type: AssetView["type"]): number {
+  private getBytesByType(type: string): number {
+    const targetType = normalizeAssetType(type);
     return this.assets
-      .filter(
-        (a) => a.type === type || (type === "sound" && a.type === "audio"),
-      )
+      .filter((a) => normalizeAssetType(a.type) === targetType)
       .reduce((sum, a) => sum + this.parseSize(a.size), 0);
   }
 
@@ -479,6 +482,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       | "all"
       | "image"
       | "sound"
+      | "audio"
       | "image_set"
       | "audio_set"
       | "custom_rotation",
@@ -640,7 +644,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       reader.onload = (e: any) => {
         const arrayBuffer = e.target.result;
         const bytes = new Uint8Array(arrayBuffer);
-        const type = file.type.startsWith("image/") ? "image" : "sound";
+        const type = file.type.startsWith("image/") ? "image" : "audio";
         resolve({ name: file.name, type, data: bytes });
       };
       reader.onerror = (e) => reject(e);
@@ -715,7 +719,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       this.stopAsset();
     }
 
-    if (asset.type === "sound" || asset.type === "audio") {
+    if (normalizeAssetType(asset.type) === AssetType.AUDIO) {
       this.currentlyPlayingAsset = asset;
       this.cdr.detectChanges();
       this.playUrl(asset.url)

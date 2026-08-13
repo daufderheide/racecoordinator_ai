@@ -377,12 +377,12 @@ public class RaceModifyHeatsTest {
   }
 
   @Test
-  public void testModifyHeats_DuplicateDriverInHeat_Fails() {
+  public void testModifyHeats_DuplicateDriverInHeat_Succeeds() {
     // Assign p1 to both lanes in Heat 1
     Heat heat1 = testRace.getHeats().get(0);
     List<DriverHeatData> drivers = new ArrayList<>();
     drivers.add(new DriverHeatData(participants.get(0))); // p1
-    drivers.add(new DriverHeatData(participants.get(0))); // p1 (duplicate!)
+    drivers.add(new DriverHeatData(participants.get(0))); // p1 (multi-lane assignment!)
 
     Heat modifiedHeat1 = new Heat(1, drivers, raceModel.getHeatScoring(), false);
     modifiedHeat1.setObjectId(heat1.getObjectId());
@@ -391,8 +391,8 @@ public class RaceModifyHeatsTest {
         createRequest(participants, Arrays.asList(modifiedHeat1, testRace.getHeats().get(1)));
     ModifyHeatsResponse response = testRace.modifyHeats(request);
 
-    assertFalse("Should fail if same driver is in multiple lanes", response.getSuccess());
-    assertTrue(response.getErrorMessage().contains("is assigned to multiple lanes in Heat 1"));
+    assertTrue(
+        "Should succeed when same driver is assigned to multiple lanes", response.getSuccess());
   }
 
   @Test

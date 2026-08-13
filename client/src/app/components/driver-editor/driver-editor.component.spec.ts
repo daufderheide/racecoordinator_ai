@@ -272,7 +272,7 @@ describe("DriverEditorComponent", () => {
     dataService.listAssets.and.returnValue(
       of([
         { name: "Preset Lap Beep", type: "audio", entity_id: "default_beep" },
-        { name: "Custom Engine Sound", type: "sound", entity_id: "sound_1" },
+        { name: "Custom Engine Sound", type: "audio", entity_id: "sound_1" },
         { name: "Avatar Image", type: "image", entity_id: "img_1" },
       ]),
     );

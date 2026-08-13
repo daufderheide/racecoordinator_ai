@@ -1057,6 +1057,8 @@
   "RE_ROTATION_ROUND_ROBIN": "Round Robin",
   "RE_ROTATION_SINGLE_HEAT": "Enkele Heat",
   "RE_ROTATION_SINGLE_HEAT_SOLO": "Enkele Heat (Solo)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES": "Enkele heat (Solo alle banen)",
+  "RE_ROTATION_SINGLE_HEAT_SOLO_ALL_LANES_ACCUMULATE": "Enkele heat (Solo alle banen gecumuleerd)",
   "RE_SELECT_CUSTOM_ROTATION": "Selecteer aangepaste rotatie",
   "RE_START_AT_CURRENT": "Starten op Huidige Positie",
   "RE_START_BEHIND_SENSOR": "Starten Achter de Sensor",
