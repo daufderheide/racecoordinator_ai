@@ -180,6 +180,22 @@ describe("DefaultHeatResultsComponent", () => {
     );
   });
 
+  it("should pass groupNames to heat-driver-expander component when enabled", () => {
+    (component as any).race = {
+      name: "Group Race",
+      group_options: {
+        enabled: true,
+        names: ["Novice Class", "Pro Class"],
+      },
+    };
+    fixture.detectChanges();
+
+    const expanderEl = fixture.nativeElement.querySelector(
+      "app-heat-driver-expander",
+    );
+    expect(expanderEl).toBeTruthy();
+  });
+
   it("should open driver results window, track it, and close it on destroy or pagehide", () => {
     const mockWindow = jasmine.createSpyObj("Window", ["close"]);
     mockWindow.closed = false;

@@ -161,6 +161,10 @@
                       [heats]="generatedHeats"
                       [columns]="4"
                       [showHeader]="false"
+                      [showGroups]="
+                        selectedRace?.group_options?.enabled ?? false
+                      "
+                      [groupNames]="selectedRace?.group_options?.names ?? []"
                     ></app-heat-list>
                   </div>
                 </div>

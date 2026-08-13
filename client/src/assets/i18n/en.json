@@ -1040,6 +1040,7 @@
   "RE_GROUPS_LABEL": "Group",
   "RE_GROUPS_MAX": "Max Groups",
   "RE_GROUPS_MIN_ADVANCING": "Min Advancing",
+  "RE_GROUPS_NAMES": "Group Names",
   "RE_GROUPS_ROTATE_HEATS": "Interleave Group Heats",
   "RE_HEADER_RACE_CONFIG": "RACE CONFIGURATION",
   "RE_HEATS_HEADER": "Heat Configuration",

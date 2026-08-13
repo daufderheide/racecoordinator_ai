@@ -17,6 +17,7 @@ message GroupOptions {
   bool force_multiple_of_max = 5;
   bool rotate_group_heats = 6;
   int32 min_advancing = 7;
+  repeated string names = 8;
 }
 
 message HeatScoring {

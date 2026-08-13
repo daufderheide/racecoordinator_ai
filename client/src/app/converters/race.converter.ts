@@ -244,6 +244,7 @@ export class RaceConverter {
                 p.groupOptions?.minAdvancing ||
                   p.group_options?.min_advancing ||
                   0,
+                p.groupOptions?.names || p.group_options?.names || [],
               )
             : new GroupOptions(),
           p.practice || false,

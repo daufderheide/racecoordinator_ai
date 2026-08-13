@@ -95,6 +95,19 @@ describe("RacedayLeaderboardComponent", () => {
     expect(subtitleEl.textContent.trim()).toBe("DR_LABEL_GROUP 3");
   });
 
+  it("should show custom group name in subtitle when groupNames input is provided", async () => {
+    fixture.componentRef.setInput("isGroup", true);
+    fixture.componentRef.setInput("groupEnabled", true);
+    fixture.componentRef.setInput("groupNumber", 1);
+    fixture.componentRef.setInput("groupNames", ["Group A", "Gold Group"]);
+    fixture.detectChanges();
+
+    const subtitleEl = fixture.nativeElement.querySelector(
+      ".leaderboard-subtitle",
+    );
+    expect(subtitleEl.textContent.trim()).toBe("Gold Group");
+  });
+
   it("should apply custom font sizes from widget settings when in fixed mode", async () => {
     fixture.componentRef.setInput("leaderboardEntries", [
       { entityId: "e1", rank: 1, name: "Alice", score: 12 },

@@ -877,6 +877,26 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.loadHeats();
   }
 
+  get groupIndices(): number[] {
+    const max = Math.max(1, this.editingRace?.group_options?.max_groups || 1);
+    return Array.from({ length: max }, (_, i) => i);
+  }
+
+  getGroupNameInput(index: number): string {
+    return this.editingRace?.group_options?.names?.[index] || "";
+  }
+
+  setGroupNameInput(index: number, value: string): void {
+    if (!this.editingRace.group_options) {
+      return;
+    }
+    if (!this.editingRace.group_options.names) {
+      this.editingRace.group_options.names = [];
+    }
+    this.editingRace.group_options.names[index] = value;
+    this.captureState();
+  }
+
   captureState() {
     this.validateWarmupTimes();
     this.validateHeatConfigurations();

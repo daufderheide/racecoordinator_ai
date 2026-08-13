@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import {
   AfterViewInit,
   Component,
+  computed,
   effect,
   ElementRef,
   input,
@@ -27,6 +28,18 @@ export class RacedayHeatInfoComponent implements AfterViewInit, OnDestroy {
   race = input<Race | undefined>(undefined);
   totalHeats = input<number>(0);
   widget = input<AbsoluteWidgetNode | null>(null);
+
+  customGroupName = computed(() => {
+    const r = this.race();
+    const h = this.heat();
+    if (!r || !h || !r.group_options?.enabled) return "";
+    const names = r.group_options.names;
+    const groupIdx = h.group;
+    if (names && names[groupIdx] && names[groupIdx].trim() !== "") {
+      return names[groupIdx].trim();
+    }
+    return "";
+  });
 
   private infoPanel = viewChild<ElementRef<HTMLElement>>("infoPanel");
   private labelText = viewChild<ElementRef<HTMLElement>>("labelText");

@@ -17,6 +17,16 @@ export class RacedayLeaderboardComponent {
   isGroup = input<boolean>(false);
   groupNumber = input<number>(0);
   groupEnabled = input<boolean>(false);
+  groupNames = input<string[]>([]);
+
+  customGroupName = computed(() => {
+    const names = this.groupNames();
+    const num = this.groupNumber();
+    if (names && names[num] && names[num].trim() !== "") {
+      return names[num].trim();
+    }
+    return "";
+  });
 
   isGroupBoard = computed(() => {
     return this.isGroup() || this.widget()?.widgetType === "group-leaderboard";

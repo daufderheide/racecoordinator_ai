@@ -149,6 +149,7 @@
           [leaderboardEntries]="parentComponent().groupLeaderboardEntries"
           [groupNumber]="parentComponent().currentGroup"
           [groupEnabled]="parentComponent().groupEnabled"
+          [groupNames]="parentComponent().race?.group_options?.names || []"
           [widget]="widget()"
         ></app-raceday-group-leaderboard>
       }

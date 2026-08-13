@@ -13,7 +13,12 @@
               "RM_LABEL_HEAT_NUMBER" | translate: { number: heat.heatNumber }
             }}
             @if (showGroups()) {
-              - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
+              -
+              @if (getCustomGroupName(heat.group)) {
+                {{ getCustomGroupName(heat.group) }}
+              } @else {
+                {{ "RE_GROUPS_LABEL" | translate }}: {{ heat.group + 1 }}
+              }
             }
           </div>
           <div

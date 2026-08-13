@@ -394,6 +394,22 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
 
   protected validateGroupSequence = validateGroupSequence;
 
+  protected getCustomGroupName(groupIdx: number): string {
+    const r = this.race();
+    if (!r || !r.group_options?.enabled) return "";
+    const names = r.group_options.names;
+    if (
+      groupIdx !== undefined &&
+      groupIdx !== null &&
+      names &&
+      names[groupIdx] &&
+      names[groupIdx].trim() !== ""
+    ) {
+      return names[groupIdx].trim();
+    }
+    return "";
+  }
+
   private updateDriverPool() {
     this.driverPool = this.localParticipants.filter((p) => {
       // 1. Must be a real participant (not a placeholder empty lane)

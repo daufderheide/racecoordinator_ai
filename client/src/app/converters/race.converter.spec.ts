@@ -185,4 +185,23 @@ describe("RaceConverter", () => {
     expect(result.start_time).toBe(0);
     expect(result.restart_time).toBe(0);
   });
+
+  it("should map group options and group names from proto", () => {
+    const mockProto: IRaceModel = {
+      model: { entityId: "r13" },
+      name: "Group Race",
+      track: { model: { entityId: "t1" }, name: "Track", lanes: [] },
+      groupOptions: {
+        enabled: true,
+        maxGroups: 2,
+        names: ["Novice Group", "Pro Group"],
+      },
+    };
+
+    const result = RaceConverter.fromProto(mockProto);
+    expect(result.group_options).toBeDefined();
+    expect(result.group_options.enabled).toBeTrue();
+    expect(result.group_options.max_groups).toBe(2);
+    expect(result.group_options.names).toEqual(["Novice Group", "Pro Group"]);
+  });
 });

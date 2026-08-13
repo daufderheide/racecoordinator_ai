@@ -44,6 +44,20 @@ export class HeatDriverExpanderComponent {
   @Input() allHeats: Heat[] = [];
   @Input() customStatsTitle?: string;
   @Input() isGroupRace = false;
+  @Input() groupNames: string[] = [];
+
+  get customGroupName(): string {
+    const groupIdx = this.heatData?.heat?.group;
+    if (
+      groupIdx !== undefined &&
+      this.groupNames &&
+      this.groupNames[groupIdx] &&
+      this.groupNames[groupIdx].trim() !== ""
+    ) {
+      return this.groupNames[groupIdx].trim();
+    }
+    return "";
+  }
 
   @Output() toggle = new EventEmitter<void>();
 

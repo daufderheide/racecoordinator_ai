@@ -32,7 +32,11 @@
       }}<!--
    -->
       @if (race() && race()!.group_options && race()!.group_options.enabled) {
-        - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat()!.group + 1 }}
+        @if (customGroupName()) {
+          - {{ customGroupName() }}
+        } @else {
+          - {{ "RE_GROUPS_LABEL" | translate }}: {{ heat()!.group + 1 }}
+        }
       }
     </span>
   </div>

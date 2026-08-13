@@ -147,6 +147,7 @@
             [heats]="generatedHeats"
             [showHeader]="false"
             [showGroups]="editingRace.group_options.enabled"
+            [groupNames]="editingRace.group_options.names || []"
             [canDragLanes]="
               editingRace?.heat_rotation_type === 'SingleHeatSolo' ||
               editingRace?.heat_rotation_type === 'SingleHeat'
@@ -941,6 +942,43 @@
                         max="10"
                         [disabled]="!editingRace.group_options.enabled"
                       />
+                    </div>
+                  </div>
+                  <div class="config-row group-names-row">
+                    <div class="config-section full-width">
+                      <label
+                        [class.disabled]="!editingRace.group_options.enabled"
+                      >
+                        {{ "RE_GROUPS_NAMES" | translate }}
+                      </label>
+                      <div class="group-names-grid">
+                        @for (groupIndex of groupIndices; track groupIndex) {
+                          <div class="group-name-input-container">
+                            <span
+                              class="group-name-label"
+                              [class.disabled]="
+                                !editingRace.group_options.enabled
+                              "
+                            >
+                              {{ "RE_GROUPS_LABEL" | translate }}
+                              {{ groupIndex + 1 }}:
+                            </span>
+                            <input
+                              type="text"
+                              [ngModel]="getGroupNameInput(groupIndex)"
+                              (ngModelChange)="
+                                setGroupNameInput(groupIndex, $event)
+                              "
+                              [placeholder]="
+                                ('RE_GROUPS_LABEL' | translate) +
+                                ' ' +
+                                (groupIndex + 1)
+                              "
+                              [disabled]="!editingRace.group_options.enabled"
+                            />
+                          </div>
+                        }
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -136,4 +136,16 @@ describe("HeatDriverExpanderComponent Analysis Section", () => {
     const analysisCells = compiled.querySelectorAll(".analysis-row .body-cell");
     expect(analysisCells.length).toBe(7);
   });
+
+  it("should render custom group name on group badge when isGroupRace is true", () => {
+    component.heatData = createMockHeatData([5.0]);
+    component.heatData.heat.group = 1;
+    component.isGroupRace = true;
+    component.groupNames = ["Alpha", "Beta Group"];
+    fixture.detectChanges();
+
+    const groupBadge = fixture.nativeElement.querySelector(".group-badge");
+    expect(groupBadge).not.toBeNull();
+    expect(groupBadge.textContent.trim()).toBe("Beta Group");
+  });
 });

@@ -170,5 +170,17 @@ describe("HeatListComponent", () => {
       tick();
       expect(component.laneSelected.emit).not.toHaveBeenCalled();
     }));
+
+    it("should display custom group name when showGroups is true and groupNames input is set", async () => {
+      fixture.componentRef.setInput("showGroups", true);
+      fixture.componentRef.setInput("groupNames", ["Group A", "Super Group"]);
+      fixture.componentRef.setInput("heats", [
+        { heatNumber: 1, group: 1, lanes: [] },
+      ]);
+      fixture.detectChanges();
+
+      const labelText = await harness.getHeatNumberLabel(0);
+      expect(labelText).toContain("Super Group");
+    });
   });
 });

@@ -76,4 +76,16 @@ describe("RacedayHeatInfoComponent", () => {
       "3 of 6 - RE_GROUPS_LABEL: 3",
     );
   });
+
+  it("should display custom group name when group names are specified", async () => {
+    fixture.componentRef.setInput("heat", { heatNumber: 3, group: 1 } as Heat);
+    fixture.componentRef.setInput("totalHeats", 6);
+    fixture.componentRef.setInput("race", {
+      group_options: { enabled: true, names: ["Novice Group", "Pro Group"] },
+    } as Race);
+
+    fixture.detectChanges();
+
+    expect((await harness.getHeatStatus()).trim()).toBe("3 of 6 - Pro Group");
+  });
 });

@@ -37,6 +37,7 @@
                 [allHeats]="[dh.heat]"
                 [customStatsTitle]="dh.driverName"
                 [isGroupRace]="race?.group_options?.enabled ?? false"
+                [groupNames]="race?.group_options?.names ?? []"
                 (toggle)="toggleHeat(dh.heatDriver.objectId)"
               ></app-heat-driver-expander>
             }

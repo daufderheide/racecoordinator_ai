@@ -802,6 +802,18 @@ describe("ModifyHeatsModalComponent", () => {
       }
     });
 
+    it("should return custom group name if present in race group_options", () => {
+      if (component.race()) {
+        (component.race() as any).group_options = {
+          enabled: true,
+          names: ["Novice Group", "Expert Group"],
+        };
+      }
+      expect(component["getCustomGroupName"](0)).toBe("Novice Group");
+      expect(component["getCustomGroupName"](1)).toBe("Expert Group");
+      expect(component["getCustomGroupName"](2)).toBe("");
+    });
+
     it("should allow valid sequential group change", () => {
       component["onGroupChange"](heat2, 2);
       expect(heat2.group).toBe(1);

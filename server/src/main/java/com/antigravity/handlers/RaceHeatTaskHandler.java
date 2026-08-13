@@ -408,10 +408,24 @@ public class RaceHeatTaskHandler {
         minAdvancingNum = (Number) groupOptionsMap.get("minAdvancing");
       }
       Integer minAdvancing = minAdvancingNum != null ? minAdvancingNum.intValue() : 0;
+      @SuppressWarnings("unchecked")
+      List<String> names = (List<String>) groupOptionsMap.get("names");
+      if (names == null) {
+        @SuppressWarnings("unchecked")
+        List<String> namesFallback = (List<String>) groupOptionsMap.get("group_names");
+        names = namesFallback;
+      }
 
       groupOptions =
           new GroupOptions(
-              enabled, maxGroups, balance, allowEmpty, forceMultiple, rotateHeats, minAdvancing);
+              enabled,
+              maxGroups,
+              balance,
+              allowEmpty,
+              forceMultiple,
+              rotateHeats,
+              minAdvancing,
+              names);
     }
 
     Race tempRaceConfig =

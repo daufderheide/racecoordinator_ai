@@ -13,7 +13,13 @@
       <!-- Group Indicator -->
       @if (isGroupRace) {
         <span class="group-badge">
-          {{ "DR_LABEL_GROUP" | translate: { group: heatData.heat.group + 1 } }}
+          @if (customGroupName) {
+            {{ customGroupName }}
+          } @else {
+            {{
+              "DR_LABEL_GROUP" | translate: { group: heatData.heat.group + 1 }
+            }}
+          }
         </span>
       }
     </div>

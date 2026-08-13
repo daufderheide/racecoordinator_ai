@@ -168,15 +168,18 @@ public class RaceConverter {
 
       if (race.getGroupOptions() != null) {
         com.antigravity.models.GroupOptions groups = race.getGroupOptions(); // fqn-collision
-        builder.setGroupOptions(
+        com.antigravity.proto.GroupOptions.Builder groupBuilder = // fqn-collision
             com.antigravity.proto.GroupOptions.newBuilder() // fqn-collision
                 .setEnabled(groups.isEnabled())
                 .setMaxGroups(groups.getMaxGroups())
                 .setBalance(groups.isBalance())
                 .setAllowEmptyLanes(groups.isAllowEmptyLanes())
                 .setForceMultipleOfMax(groups.isForceMultipleOfMax())
-                .setRotateGroupHeats(groups.isRotateGroupHeats())
-                .build());
+                .setRotateGroupHeats(groups.isRotateGroupHeats());
+        if (groups.getNames() != null) {
+          groupBuilder.addAllNames(groups.getNames());
+        }
+        builder.setGroupOptions(groupBuilder.build());
       }
 
       return builder.build();

@@ -28,7 +28,22 @@ export class HeatListComponent {
   columns = input(2);
   canDragLanes = input(false);
   showGroups = input(false);
+  groupNames = input<string[]>([]);
   laneSelected = output<number>();
+
+  getCustomGroupName(groupIdx: number): string {
+    const names = this.groupNames();
+    if (
+      groupIdx !== undefined &&
+      groupIdx !== null &&
+      names &&
+      names[groupIdx] &&
+      names[groupIdx].trim() !== ""
+    ) {
+      return names[groupIdx].trim();
+    }
+    return "";
+  }
 
   constructor(private logger: LoggerService) {
     effect(() => {

@@ -653,6 +653,21 @@ describe("RaceEditorComponent", () => {
       expect(component.isDirtyState()).toBeTrue();
     });
 
+    it("should update group names list when setGroupNameInput is called", () => {
+      component.editingRace.group_options!.max_groups = 2;
+      expect(component.groupIndices).toEqual([0, 1]);
+
+      component.setGroupNameInput(0, "A Class");
+      component.setGroupNameInput(1, "B Class");
+
+      expect(component.getGroupNameInput(0)).toBe("A Class");
+      expect(component.getGroupNameInput(1)).toBe("B Class");
+      expect(component.editingRace.group_options!.names).toEqual([
+        "A Class",
+        "B Class",
+      ]);
+    });
+
     it("should include min_advancing in previewHeats payload", fakeAsync(() => {
       component.editingRace.group_options = {
         enabled: true,

@@ -28,7 +28,11 @@
       "
       [style.color]="widget()?.customSettings?.['subtitleTextColor'] || null"
     >
-      {{ "DR_LABEL_GROUP" | translate: { group: groupNumber() + 1 } }}
+      @if (customGroupName()) {
+        {{ customGroupName() }}
+      } @else {
+        {{ "DR_LABEL_GROUP" | translate: { group: groupNumber() + 1 } }}
+      }
     </div>
   }
 

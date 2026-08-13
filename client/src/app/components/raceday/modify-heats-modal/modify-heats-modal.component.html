@@ -349,7 +349,12 @@
                     race().group_options &&
                     race().group_options.enabled
                   ) {
-                    - {{ "RE_GROUPS_LABEL" | translate }}:
+                    -
+                    @if (getCustomGroupName(heat.group)) {
+                      {{ getCustomGroupName(heat.group) }}:
+                    } @else {
+                      {{ "RE_GROUPS_LABEL" | translate }}:
+                    }
                     <input
                       type="number"
                       class="group-input"

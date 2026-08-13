@@ -997,6 +997,7 @@
   "RE_GROUPS_LABEL": "Groupe",
   "RE_GROUPS_MAX": "Nombre Max de Groupes",
   "RE_GROUPS_MIN_ADVANCING": "Min. Avancement",
+  "RE_GROUPS_NAMES": "Noms des groupes",
   "RE_GROUPS_ROTATE_HEATS": "Entrelacer les Heats de Groupe",
   "RE_HEADER_RACE_CONFIG": "CONFIGURATION DE LA COURSE",
   "RE_HEATS_HEADER": "Configuration des manches",

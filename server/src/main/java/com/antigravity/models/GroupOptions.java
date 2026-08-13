@@ -2,6 +2,9 @@ package com.antigravity.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class GroupOptions {
 
@@ -26,6 +29,9 @@ public class GroupOptions {
   @JsonProperty("min_advancing")
   private final int minAdvancing;
 
+  @JsonProperty("names")
+  private final List<String> names;
+
   public GroupOptions() {
     this.enabled = false;
     this.maxGroups = 1;
@@ -34,6 +40,26 @@ public class GroupOptions {
     this.forceMultipleOfMax = false;
     this.rotateGroupHeats = true;
     this.minAdvancing = 0;
+    this.names = Collections.emptyList();
+  }
+
+  public GroupOptions(
+      Boolean enabled,
+      Integer maxGroups,
+      Boolean balance,
+      Boolean allowEmptyLanes,
+      Boolean forceMultipleOfMax,
+      Boolean rotateGroupHeats,
+      Integer minAdvancing) {
+    this(
+        enabled,
+        maxGroups,
+        balance,
+        allowEmptyLanes,
+        forceMultipleOfMax,
+        rotateGroupHeats,
+        minAdvancing,
+        null);
   }
 
   @JsonCreator
@@ -44,7 +70,8 @@ public class GroupOptions {
       @JsonProperty("allow_empty_lanes") Boolean allowEmptyLanes,
       @JsonProperty("force_multiple_of_max") Boolean forceMultipleOfMax,
       @JsonProperty("rotate_group_heats") Boolean rotateGroupHeats,
-      @JsonProperty("min_advancing") Integer minAdvancing) {
+      @JsonProperty("min_advancing") Integer minAdvancing,
+      @JsonProperty("names") List<String> names) {
     this.enabled = enabled != null ? enabled : false;
     this.maxGroups = maxGroups != null ? maxGroups : 1;
     this.balance = balance != null ? balance : false;
@@ -52,6 +79,7 @@ public class GroupOptions {
     this.forceMultipleOfMax = forceMultipleOfMax != null ? forceMultipleOfMax : false;
     this.rotateGroupHeats = rotateGroupHeats != null ? rotateGroupHeats : true;
     this.minAdvancing = minAdvancing != null ? minAdvancing : 0;
+    this.names = names != null ? new ArrayList<>(names) : Collections.emptyList();
   }
 
   public boolean isEnabled() {
@@ -80,5 +108,9 @@ public class GroupOptions {
 
   public int getMinAdvancing() {
     return minAdvancing;
+  }
+
+  public List<String> getNames() {
+    return names;
   }
 }

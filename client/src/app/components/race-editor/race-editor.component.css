@@ -838,6 +838,28 @@
   margin-top: 10px;
 }
 
+.full-width {
+  width: 100%;
+}
+
+.group-names-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.group-name-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-name-label {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
 .checkbox-section {
   flex-direction: row;
   align-items: center;
