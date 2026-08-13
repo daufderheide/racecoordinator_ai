@@ -1027,6 +1027,18 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     return config != null ? config.debounceUs : 0;
   }
 
+  /**
+   * Overrides AbstractSerialProtocol's open method.
+   * If no COM port is configured (i.e. commPort is null or empty), we assume a virtual/mock mode.
+   * This is necessary because the default track configuration includes an Arduino interface but
+   * with a blank COM port. Without this virtual fallback, the protocol initialization would fail,
+   * setting the status to DISCONNECTED and reporting the interface as unhealthy, which triggers
+   * the "interface is lost" overlay on the browser client and blocks manual testing of the
+   * camera client integration.
+   *
+   * By keeping this virtual/mock fallback logic fully encapsulated here inside the ArduinoProtocol
+   * subclass, we leave the base AbstractSerialProtocol clean and free of testing/virtual mocks.
+   */
   @Override
   public synchronized boolean open() {
     if (config.commPort == null || config.commPort.isEmpty()) {
@@ -1040,6 +1052,10 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     return super.open();
   }
 
+  /**
+   * Overridden to report the virtual interface as connected when running in virtual mode
+   * (no COM port specified), preventing health check failures.
+   */
   @Override
   protected boolean isConnected() {
     if (config.commPort == null || config.commPort.isEmpty()) {
@@ -1048,6 +1064,10 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     return super.isConnected();
   }
 
+  /**
+   * Overridden to skip the 2-second heartbeat check when running in virtual mode
+   * (no COM port specified), since no physical device exists to send serial heartbeats.
+   */
   @Override
   protected boolean requiresHeartbeat() {
     if (config.commPort == null || config.commPort.isEmpty()) {
