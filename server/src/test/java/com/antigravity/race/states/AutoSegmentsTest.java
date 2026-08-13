@@ -130,6 +130,7 @@ public class AutoSegmentsTest {
     // Change scoring to Lap based
     com.antigravity.models.Race raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     FinishMethod.Lap,
