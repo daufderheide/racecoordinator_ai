@@ -180,7 +180,7 @@ public class Race extends Model {
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
-    this.name = name;
+    this.name = name != null ? name : "Unnamed Race";
     this.trackEntityId = trackEntityId;
     this.heatRotationType = heatRotationType;
     this.heatScoring =
@@ -223,7 +223,7 @@ public class Race extends Model {
 
   public static class Builder {
 
-    private String name;
+    private String name = "Unnamed Race";
     private String trackEntityId;
     private HeatRotationType heatRotationType = HeatRotationType.RoundRobin;
     private HeatScoring heatScoring = new HeatScoring();

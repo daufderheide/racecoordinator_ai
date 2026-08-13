@@ -16,7 +16,7 @@
     "prepare": "husky",
     "lint": "npm run lint:client && npm run lint:server",
     "lint:client": "cd client && npx eslint --fix \"src/**/*.{ts,html}\"",
-    "lint:server": "cd server && mvn com.diffplug.spotless:spotless-maven-plugin:check org.apache.maven.plugins:maven-checkstyle-plugin:check org.apache.maven.plugins:maven-pmd-plugin:check",
+    "lint:server": "cd server && mvn spotless:check checkstyle:check pmd:check",
     "test": "npm run test:client && npm run test:visual && npm run test:server",
     "test:client": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_unit_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_unit_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
     "test:visual": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_screendiff_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_screendiff_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
@@ -29,7 +29,7 @@
       "prettier --write"
     ],
     "server/**/*.java": [
-      "bash -c 'cd server && mvn com.diffplug.spotless:spotless-maven-plugin:apply'"
+      "bash -c 'cd server && mvn spotless:apply'"
     ]
   }
 }

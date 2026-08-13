@@ -490,58 +490,31 @@ public class ClientSubscriptionManager {
 
   public boolean isDirectorSession(WsContext ctx) {
     try {
-      String intent = null;
-      try {
-        intent = ctx.queryParam("intent");
-      } catch (Exception e) {
-        // Ignored in unit tests
-      }
+      String intent = ctx.queryParam("intent");
       if ("preview".equals(intent)) {
         return false;
       }
 
       // 1. Localhost or Local LAN Auto-Admin
-      String remoteIp = null;
-      try {
-        if (ctx.session != null
-            && ctx.session.getRemoteAddress() != null
-            && ctx.session.getRemoteAddress().getAddress() != null) {
-          remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
-        }
-      } catch (Exception e) {
-        // Ignored in unit tests
-      }
-      if (remoteIp != null) {
-        boolean isUnitTest = false;
-        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
-          if (element.getClassName().startsWith("org.junit.")
-              || element.getClassName().startsWith("org.apache.maven.surefire.")) {
-            isUnitTest = true;
-            break;
-          }
-        }
-        boolean isLocal =
-            isUnitTest
-                ? NetworkUtils.isLocalhost(remoteIp, null)
-                : NetworkUtils.isLocalAddress(remoteIp, null);
-        if (isLocal) {
+      if (ctx.session != null
+          && ctx.session.getRemoteAddress() != null
+          && ctx.session.getRemoteAddress().getAddress() != null) {
+        String remoteIp = ctx.session.getRemoteAddress().getAddress().getHostAddress();
+        if (NetworkUtils.isLocalAddress(remoteIp, null)) {
           return true;
         }
       }
+
       // 2. Token-based Director
-      String token = null;
-      try {
-        token = ctx.queryParam("token");
-      } catch (Exception e) {
-        // Ignored in unit tests
-      }
+      String token = ctx.queryParam("token");
       if (token != null && AuthService.getInstance().isValidToken(token)) {
         return true;
       }
+      return false;
     } catch (Exception e) {
-      logger.error("Error identifying role for WebSocket session", e);
+      logger.error("Error checking director session", e);
+      return false;
     }
-    return false;
   }
 
   public boolean hasDirectorSubscribers() {
@@ -644,7 +617,7 @@ public class ClientSubscriptionManager {
             try {
               sub.send(ByteBuffer.wrap(event.toByteArray()));
             } catch (Exception e) {
-              // ignore or log
+              logger.warn("Failed to broadcast InterfaceEvent to subscriber: {}", e.getMessage());
             }
           }
         });

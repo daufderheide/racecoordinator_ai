@@ -1026,4 +1026,33 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
   protected double getHardwareDebounceUs() {
     return config != null ? config.debounceUs : 0;
   }
+
+  @Override
+  public synchronized boolean open() {
+    if (config.commPort == null || config.commPort.isEmpty()) {
+      logger.info("No COM port specified for ArduinoProtocol, running in virtual mode");
+      if (listener != null) {
+        listener.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.CONNECTED, getInterfaceIndex()); // fqn-collision
+      }
+      startStatusScheduler();
+      return true;
+    }
+    return super.open();
+  }
+
+  @Override
+  protected boolean isConnected() {
+    if (config.commPort == null || config.commPort.isEmpty()) {
+      return true;
+    }
+    return super.isConnected();
+  }
+
+  @Override
+  protected boolean requiresHeartbeat() {
+    if (config.commPort == null || config.commPort.isEmpty()) {
+      return false;
+    }
+    return super.requiresHeartbeat();
+  }
 }

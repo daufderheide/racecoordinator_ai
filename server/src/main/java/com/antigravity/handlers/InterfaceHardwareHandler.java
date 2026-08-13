@@ -175,11 +175,7 @@ public class InterfaceHardwareHandler {
       }
 
       if (protocols.isEmpty()) {
-        WebSocketConfig config = new WebSocketConfig("Default WebSocket", 7070);
-        WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
-        websocket.setInterfaceIndex(interfaceIndex++);
-        websocket.setListener(new TestInterfaceListener());
-        protocols.add(websocket);
+        throw new IllegalArgumentException("No configurations provided for initialization");
       }
 
       ProtocolDelegate finalProtocol = new ProtocolDelegate(protocols);

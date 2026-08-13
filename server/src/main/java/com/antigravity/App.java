@@ -326,6 +326,8 @@ public class App {
         System.exit(1);
       }
 
+      // Register JmDNS multicast DNS service discovery so that remote Gepetto camera clients
+      // on the local network can automatically discover and connect to this server.
       registerJmdnsDiscovery();
 
       // --- Authentication & Access Control ---
@@ -744,6 +746,11 @@ public class App {
     }
   }
 
+  /**
+   * Registers the server via JmDNS (multicast DNS / Zeroconf) on the local network.
+   * This allows clients (such as the Gepetto camera) to automatically discover the
+   * host IP and port of the running server without manual configuration.
+   */
   private static void registerJmdnsDiscovery() {
     try {
       InetAddress address = null;
