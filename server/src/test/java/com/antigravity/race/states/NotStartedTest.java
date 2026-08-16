@@ -22,6 +22,7 @@ public class NotStartedTest {
     race = mock(Race.class);
     raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withAutoStartTime(10.0)
             .withAutoStartWarmupTime(3.0)
             .withHeatScoring(new HeatScoring())

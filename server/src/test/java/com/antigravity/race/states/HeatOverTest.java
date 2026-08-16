@@ -22,6 +22,7 @@ public class HeatOverTest {
     race = mock(Race.class);
     raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withAutoAdvanceWarmupTime(3.0)
             .withHeatScoring(new HeatScoring())
             .build();

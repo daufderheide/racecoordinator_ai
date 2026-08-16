@@ -17,6 +17,8 @@ public class NetworkUtils {
    * @return true if the address is considered local
    */
   public static boolean isLocalAddress(String remoteAddr, String remoteHost) {
+    remoteAddr = normalizeAddress(remoteAddr);
+    remoteHost = normalizeAddress(remoteHost);
     return isLocalhost(remoteAddr, remoteHost) || isLocalNetwork(remoteAddr);
   }
 
@@ -29,6 +31,8 @@ public class NetworkUtils {
    * @return true if the address is localhost (same machine)
    */
   public static boolean isLocalhost(String remoteAddr, String remoteHost) {
+    remoteAddr = normalizeAddress(remoteAddr);
+    remoteHost = normalizeAddress(remoteHost);
     try {
       // Check for all common localhost IP and hostname variations
       if ("127.0.0.1".equals(remoteAddr)
@@ -64,6 +68,7 @@ public class NetworkUtils {
    * @return true if the address is on the same LAN but not localhost
    */
   public static boolean isLocalNetwork(String remoteAddr) {
+    remoteAddr = normalizeAddress(remoteAddr);
     try {
       // First check it's not localhost
       if (isLocalhost(remoteAddr, null)) {
@@ -103,5 +108,12 @@ public class NetworkUtils {
    */
   public static boolean isLocalAddress(String remoteAddr) {
     return isLocalAddress(remoteAddr, null);
+  }
+
+  private static String normalizeAddress(String addr) {
+    if (addr != null && addr.startsWith("::ffff:")) {
+      return addr.substring(7);
+    }
+    return addr;
   }
 }

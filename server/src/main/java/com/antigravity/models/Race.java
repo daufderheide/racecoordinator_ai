@@ -180,6 +180,9 @@ public class Race extends Model {
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
+    if (name == null || name.trim().isEmpty()) {
+      throw new IllegalArgumentException("Race name is required and cannot be null or empty");
+    }
     this.name = name;
     this.trackEntityId = trackEntityId;
     this.heatRotationType = heatRotationType;

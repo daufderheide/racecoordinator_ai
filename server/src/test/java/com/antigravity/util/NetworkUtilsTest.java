@@ -128,4 +128,18 @@ public class NetworkUtilsTest {
     assertFalse(NetworkUtils.isLocalNetwork("1.1.1.1"));
     assertFalse(NetworkUtils.isLocalNetwork("203.0.113.1"));
   }
+
+  @Test
+  public void testIsLocalAddress_LAN_IPv6_Mapped() {
+    assertTrue(NetworkUtils.isLocalAddress("::ffff:192.168.1.100", null));
+    assertTrue(NetworkUtils.isLocalAddress("::ffff:10.0.0.50", null));
+    assertTrue(NetworkUtils.isLocalAddress("::ffff:172.16.0.1", null));
+  }
+
+  @Test
+  public void testIsLocalNetwork_LAN_IPv6_Mapped() {
+    assertTrue(NetworkUtils.isLocalNetwork("::ffff:192.168.1.100"));
+    assertTrue(NetworkUtils.isLocalNetwork("::ffff:10.0.0.50"));
+    assertTrue(NetworkUtils.isLocalNetwork("::ffff:172.16.0.1"));
+  }
 }

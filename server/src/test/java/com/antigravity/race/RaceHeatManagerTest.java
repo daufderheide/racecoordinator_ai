@@ -826,7 +826,10 @@ public class RaceHeatManagerTest {
 
     HeatScoring timedScoring = new HeatScoring(FinishMethod.Timed, 60L, null, null, null);
     com.antigravity.models.Race m =
-        new com.antigravity.models.Race.Builder().withHeatScoring(timedScoring).build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withHeatScoring(timedScoring)
+            .build();
     when(mockRace.getRaceModel()).thenReturn(m);
 
     final float[] raceTime = {60.0f};
@@ -861,7 +864,10 @@ public class RaceHeatManagerTest {
 
     HeatScoring lapScoring = new HeatScoring(FinishMethod.Lap, 10L, null, null, null);
     com.antigravity.models.Race m =
-        new com.antigravity.models.Race.Builder().withHeatScoring(lapScoring).build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withHeatScoring(lapScoring)
+            .build();
     when(mockRace.getRaceModel()).thenReturn(m);
 
     DriverHeatData d1 = mock(DriverHeatData.class);

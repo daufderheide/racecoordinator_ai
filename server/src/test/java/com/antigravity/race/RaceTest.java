@@ -409,6 +409,7 @@ public class RaceTest {
     public void testStartingWaitRandomDelay() throws InterruptedException {
       Race raceModelWithDelay =
           new Race.Builder()
+              .withName("Test Race")
               .from(race.getRaceModel())
               .withStartTime(1.0)
               .withStartRandomizer(1.0)
@@ -439,7 +440,7 @@ public class RaceTest {
 
     @Test
     public void testHotStart() throws InterruptedException {
-      Race hotStartModel = new Race.Builder().withHotStart(true).build();
+      Race hotStartModel = new Race.Builder().withName("Test Race").withHotStart(true).build();
 
       com.antigravity.race.Race hotRace =
           new com.antigravity.race.Race.Builder()
@@ -462,7 +463,8 @@ public class RaceTest {
 
     @Test
     public void testHotStartDoesNotBypassCountdown() throws InterruptedException {
-      Race hotStartModel = new Race.Builder().withHotStart(true).withStartTime(1.0).build();
+      Race hotStartModel =
+          new Race.Builder().withName("Test Race").withHotStart(true).withStartTime(1.0).build();
 
       com.antigravity.race.Race hotRace =
           new com.antigravity.race.Race.Builder()
@@ -497,6 +499,7 @@ public class RaceTest {
     public void testStartingFalseStartWithRestartOnFalseStart() {
       Race falseStartModel =
           new Race.Builder()
+              .withName("Test Race")
               .from(race.getRaceModel())
               .withRestartOnFalseStart(true)
               .withFalseStartLapPenalty(1.0)
@@ -529,6 +532,7 @@ public class RaceTest {
     public void testStartingFalseStartWithoutRestartOnFalseStart() {
       Race falseStartModel =
           new Race.Builder()
+              .withName("Test Race")
               .from(race.getRaceModel())
               .withRestartOnFalseStart(false)
               .withFalseStartLapPenalty(0.5)
@@ -572,7 +576,8 @@ public class RaceTest {
     public void testExitDoesNotInterruptTickerThread() throws InterruptedException {
       Starting testStarting = new Starting();
       com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
-      when(mockRace.getRaceModel()).thenReturn(new Race.Builder().withStartTime(0.1).build());
+      when(mockRace.getRaceModel())
+          .thenReturn(new Race.Builder().withName("Test Race").withStartTime(0.1).build());
       when(mockRace.hasRacedInCurrentHeat()).thenReturn(false);
 
       AtomicBoolean wasInterrupted = new AtomicBoolean(false);
@@ -597,7 +602,11 @@ public class RaceTest {
     @Test
     public void testStartingWithZeroStartTimeTransitionsImmediately() throws InterruptedException {
       Race zeroStartTimeModel =
-          new Race.Builder().from(race.getRaceModel()).withStartTime(0.0).build();
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withName("Test Race")
+              .withStartTime(0.0)
+              .build();
 
       com.antigravity.race.Race zeroRace =
           new com.antigravity.race.Race.Builder()
@@ -626,7 +635,11 @@ public class RaceTest {
     public void testStartingWithZeroRestartTimeTransitionsImmediately()
         throws InterruptedException {
       Race zeroRestartTimeModel =
-          new Race.Builder().from(race.getRaceModel()).withRestartTime(0.0).build();
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withName("Test Race")
+              .withRestartTime(0.0)
+              .build();
 
       com.antigravity.race.Race zeroRace =
           new com.antigravity.race.Race.Builder()
@@ -1001,7 +1014,8 @@ public class RaceTest {
       Field modelField = com.antigravity.race.Race.class.getDeclaredField("model");
       modelField.setAccessible(true);
       Race oldModel = (Race) modelField.get(race);
-      Race newModel = new Race.Builder().from(oldModel).withDriftTime(driftTime).build();
+      Race newModel =
+          new Race.Builder().from(oldModel).withName("Test Race").withDriftTime(driftTime).build();
       modelField.set(race, newModel);
     }
 
@@ -1009,7 +1023,12 @@ public class RaceTest {
       Field modelField = com.antigravity.race.Race.class.getDeclaredField("model");
       modelField.setAccessible(true);
       Race oldModel = (Race) modelField.get(race);
-      Race newModel = new Race.Builder().from(oldModel).withAutoStartTime(autoStartTime).build();
+      Race newModel =
+          new Race.Builder()
+              .from(oldModel)
+              .withName("Test Race")
+              .withAutoStartTime(autoStartTime)
+              .build();
       modelField.set(race, newModel);
     }
 
@@ -1139,6 +1158,7 @@ public class RaceTest {
       Race oldModel = (Race) modelField.get(race);
       Race newModel =
           new Race.Builder()
+              .withName("Test Race")
               .from(oldModel)
               .withGroupOptions(
                   new com.antigravity.models.GroupOptions(true, 2, false, true, false, true, 0))
@@ -1518,7 +1538,7 @@ public class RaceTest {
       Racing racing = new Racing();
       com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
       when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
-      when(mockRace.getRaceModel()).thenReturn(new Race.Builder().build());
+      when(mockRace.getRaceModel()).thenReturn(new Race.Builder().withName("Test Race").build());
       when(mockRace.getState()).thenReturn(racing);
       when(mockRace.getTrack()).thenReturn(mock(Track.class));
 
@@ -1679,7 +1699,11 @@ public class RaceTest {
     public void testFalseStartTimePenaltyProcessing() throws InterruptedException {
       Racing racing = new Racing();
       Race raceModel =
-          new Race.Builder().withEntityId("race1").withHeatScoring(new HeatScoring()).build();
+          new Race.Builder()
+              .withName("Test Race")
+              .withEntityId("race1")
+              .withHeatScoring(new HeatScoring())
+              .build();
 
       com.antigravity.race.Race realRace =
           new com.antigravity.race.Race.Builder()
@@ -1709,7 +1733,11 @@ public class RaceTest {
     public void testLaneFlagDuringPenalty() throws InterruptedException {
       Racing racing = new Racing();
       Race raceModel =
-          new Race.Builder().withEntityId("race1").withHeatScoring(new HeatScoring()).build();
+          new Race.Builder()
+              .withName("Test Race")
+              .withEntityId("race1")
+              .withHeatScoring(new HeatScoring())
+              .build();
 
       com.antigravity.race.Race realRace =
           new com.antigravity.race.Race.Builder()
@@ -1756,6 +1784,7 @@ public class RaceTest {
 
       Race raceModel =
           new Race.Builder()
+              .withName("Test Race")
               .withEntityId("race1")
               .withHeatScoring(new HeatScoring())
               .withFuelOptions(fuelOptions)
@@ -2090,7 +2119,11 @@ public class RaceTest {
     @Test
     public void testMasterPowerDuringStartingStateWithHotStart() {
       Race modelWithHotStart =
-          new Race.Builder().from(race.getRaceModel()).withHotStart(true).build();
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withName("Test Race")
+              .withHotStart(true)
+              .build();
 
       com.antigravity.race.Race hotRace =
           new com.antigravity.race.Race.Builder()
@@ -2108,7 +2141,11 @@ public class RaceTest {
     @Test
     public void testMasterPowerDuringStartingStateWithHotStartAfterRestart() {
       Race modelWithHotStart =
-          new Race.Builder().from(race.getRaceModel()).withHotStart(true).build();
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withName("Test Race")
+              .withHotStart(true)
+              .build();
 
       com.antigravity.race.Race hotRace =
           new com.antigravity.race.Race.Builder()
@@ -2128,6 +2165,7 @@ public class RaceTest {
     public void testMasterPowerDuringCheckeredFlag_AllowFinish() {
       Race model =
           new Race.Builder()
+              .withName("Test Race")
               .withHeatScoring(
                   new HeatScoring(
                       HeatScoring.FinishMethod.Lap,
@@ -2160,6 +2198,7 @@ public class RaceTest {
     public void testMasterPowerDuringCheckeredFlag_NoAllowFinish() {
       Race model =
           new Race.Builder()
+              .withName("Test Race")
               .withHeatScoring(
                   new HeatScoring(
                       HeatScoring.FinishMethod.Lap,
@@ -2189,6 +2228,7 @@ public class RaceTest {
     public void testMasterPowerDuringCheckeredFlag_Resume() {
       Race model =
           new Race.Builder()
+              .withName("Test Race")
               .withHeatScoring(
                   new HeatScoring(
                       HeatScoring.FinishMethod.Lap,
@@ -3127,6 +3167,7 @@ public class RaceTest {
           new com.antigravity.race.Race.Builder()
               .model(
                   new Race.Builder()
+                      .withName("Test Race")
                       .withHeatScoring(new HeatScoring())
                       .withOverallScoring(new OverallScoring())
                       .build())
@@ -3158,6 +3199,7 @@ public class RaceTest {
               .build();
       Race model =
           new Race.Builder()
+              .withName("Test Race")
               .withHeatScoring(new HeatScoring())
               .withOverallScoring(new OverallScoring())
               .build();
@@ -3193,6 +3235,7 @@ public class RaceTest {
               .build();
       Race model =
           new Race.Builder()
+              .withName("Test Race")
               .withHeatScoring(new HeatScoring())
               .withOverallScoring(new OverallScoring())
               .build();

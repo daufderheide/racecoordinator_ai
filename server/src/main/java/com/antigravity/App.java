@@ -10,6 +10,7 @@ import com.antigravity.handlers.ClientCommandTaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.service.AssetService;
@@ -31,6 +32,7 @@ import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -40,6 +42,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 import java.util.List;
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -322,6 +326,11 @@ public class App {
         System.exit(1);
       }
 
+      // Register JmDNS multicast DNS service discovery so that remote camera clients
+      // on the local network can automatically discover and connect to this server.
+      registerJmdnsDiscovery(serverPort);
+
+      // --- Authentication & Access Control ---
       app.before(
           ctx -> {
             String path = ctx.path();
@@ -405,6 +414,16 @@ public class App {
             ws.onClose(
                 ctx -> {
                   ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+                });
+            ws.onBinaryMessage(
+                ctx -> {
+                  try {
+                    InterfaceEvent event = InterfaceEvent.parseFrom(ctx.data());
+                    ClientSubscriptionManager.getInstance()
+                        .handleIncomingInterfaceEvent(ctx, event);
+                  } catch (Exception e) {
+                    logger.error("Failed to parse incoming interface event over WebSocket", e);
+                  }
                 });
           });
 
@@ -724,6 +743,93 @@ public class App {
     } catch (Exception e) {
       System.err.println("Failed to trigger log rollover: " + e.getMessage());
       e.printStackTrace();
+    }
+  }
+
+  /**
+   * Registers the server via JmDNS (multicast DNS / Zeroconf) on the local network. This allows
+   * clients (such as the camera client) to automatically discover the host IP and port of the
+   * running server without manual configuration.
+   */
+  private static void registerJmdnsDiscovery(int port) {
+    try {
+      InetAddress address = null;
+      java.util.Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      // First pass: look for a physical-looking interface (en, eth, wl)
+      while (interfaces.hasMoreElements() && address == null) {
+        NetworkInterface iface = interfaces.nextElement();
+        if (iface.isLoopback() || !iface.isUp()) continue;
+        String name = iface.getName().toLowerCase();
+        boolean isPhysicalType =
+            name.startsWith("en") || name.startsWith("eth") || name.startsWith("wl");
+        if (!isPhysicalType) continue;
+
+        java.util.Enumeration<InetAddress> addresses = iface.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          InetAddress addr = addresses.nextElement();
+          if (addr instanceof Inet4Address) {
+            address = addr;
+            break;
+          }
+        }
+      }
+
+      // Second pass fallback: take any non-loopback, non-virtual IPv4 interface
+      if (address == null) {
+        interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements() && address == null) {
+          NetworkInterface iface = interfaces.nextElement();
+          if (iface.isLoopback() || !iface.isUp()) continue;
+          String name = iface.getName().toLowerCase();
+          if (name.startsWith("bridge")
+              || name.startsWith("utun")
+              || name.startsWith("vmenet")
+              || name.startsWith("docker")
+              || name.startsWith("vbox")
+              || name.startsWith("gif")
+              || name.startsWith("stf")) {
+            continue;
+          }
+
+          java.util.Enumeration<InetAddress> addresses = iface.getInetAddresses();
+          while (addresses.hasMoreElements()) {
+            InetAddress addr = addresses.nextElement();
+            if (addr instanceof Inet4Address) {
+              address = addr;
+              break;
+            }
+          }
+        }
+      }
+
+      if (address == null) {
+        address = InetAddress.getLocalHost();
+      }
+
+      JmDNS jmdns = JmDNS.create(address);
+      ServiceInfo serviceInfo =
+          ServiceInfo.create(
+              "_racecoordinator._tcp.local.",
+              "RaceCoordinatorServer",
+              port,
+              "Race Coordinator AI WebSocket Server");
+      jmdns.registerService(serviceInfo);
+      logger.info("JmDNS service registered: _racecoordinator._tcp.local. on port " + port);
+
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    logger.info("Unregistering JmDNS service...");
+                    jmdns.unregisterAllServices();
+                    try {
+                      jmdns.close();
+                    } catch (IOException e) {
+                      logger.error("Error closing JmDNS: " + e.getMessage());
+                    }
+                  }));
+    } catch (Exception e) {
+      logger.error("Failed to initialize JmDNS: " + e.getMessage(), e);
     }
   }
 }

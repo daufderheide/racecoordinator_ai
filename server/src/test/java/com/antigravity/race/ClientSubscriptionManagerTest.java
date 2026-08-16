@@ -306,7 +306,7 @@ public class ClientSubscriptionManagerTest {
     WsContext mockContext = mock(WsContext.class);
     org.eclipse.jetty.websocket.api.Session mockSession =
         mock(org.eclipse.jetty.websocket.api.Session.class);
-    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("192.168.1.100", 12345);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("8.8.8.8", 12345);
     when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
 
     // Inject session into WsContext using reflection
@@ -328,7 +328,7 @@ public class ClientSubscriptionManagerTest {
     WsContext mockContext = mock(WsContext.class);
     org.eclipse.jetty.websocket.api.Session mockSession =
         mock(org.eclipse.jetty.websocket.api.Session.class);
-    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("192.168.1.100", 12345);
+    java.net.InetSocketAddress mockAddress = new java.net.InetSocketAddress("8.8.8.8", 12345);
     when(mockSession.getRemoteAddress()).thenReturn(mockAddress);
 
     // Inject session into WsContext using reflection

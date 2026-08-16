@@ -181,7 +181,10 @@ public class DatabaseTaskHandlerTest {
 
     com.antigravity.race.Race mockActiveRace = mock(com.antigravity.race.Race.class);
     com.antigravity.models.Race mockRaceModel =
-        new com.antigravity.models.Race.Builder().withEntityId("race_123").build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withEntityId("race_123")
+            .build();
     when(mockActiveRace.getRaceModel()).thenReturn(mockRaceModel);
     when(mockActiveRace.getState()).thenReturn(new com.antigravity.race.states.Racing());
 
@@ -245,7 +248,10 @@ public class DatabaseTaskHandlerTest {
     record.setPreRace(preRace);
 
     com.antigravity.models.Race raceModel =
-        new com.antigravity.models.Race.Builder().withTrackEntityId("track_1").build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track_1")
+            .build();
     com.antigravity.race.Race activeRace = mock(com.antigravity.race.Race.class);
     when(activeRace.getRaceModel()).thenReturn(raceModel);
     when(activeRace.getState()).thenReturn(new com.antigravity.race.states.RaceOver());
@@ -282,7 +288,10 @@ public class DatabaseTaskHandlerTest {
     record.setPreRace(preRace);
 
     com.antigravity.models.Race raceModel =
-        new com.antigravity.models.Race.Builder().withTrackEntityId("track_1").build();
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track_1")
+            .build();
     com.antigravity.race.Race activeRace = mock(com.antigravity.race.Race.class);
     when(activeRace.getRaceModel()).thenReturn(raceModel);
     when(activeRace.getState()).thenReturn(new com.antigravity.race.states.NotStarted());

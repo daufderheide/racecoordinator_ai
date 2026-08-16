@@ -22,6 +22,7 @@ public class StartingTest {
     race = mock(Race.class);
     raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withStartTime(5.0)
             .withRestartTime(3.0)
             .withHeatScoring(new HeatScoring())

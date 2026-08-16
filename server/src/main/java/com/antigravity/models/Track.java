@@ -7,6 +7,7 @@ import com.antigravity.protocols.arduino.LedString;
 import com.antigravity.protocols.bart.BartConfig;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
+import com.antigravity.protocols.websocket.WebSocketConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +25,7 @@ public class Track extends Model {
   private final List<ArduinoConfig> arduinoConfigs;
   private final List<TrackmateConfig> trackmateConfigs;
   private final List<PhidgetConfig> phidgetConfigs;
+  private final List<WebSocketConfig> websocketConfigs;
   private final List<BartConfig> bartConfigs;
 
   @JsonCreator
@@ -34,6 +36,7 @@ public class Track extends Model {
       @JsonProperty("arduino_configs") List<ArduinoConfig> arduinoConfigs,
       @JsonProperty("trackmate_configs") List<TrackmateConfig> trackmateConfigs,
       @JsonProperty("phidget_configs") List<PhidgetConfig> phidgetConfigs,
+      @JsonProperty("websocket_configs") List<WebSocketConfig> websocketConfigs,
       @JsonProperty("bart_configs") List<BartConfig> bartConfigs,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
@@ -53,6 +56,10 @@ public class Track extends Model {
         phidgetConfigs != null
             ? Collections.unmodifiableList(phidgetConfigs)
             : Collections.emptyList();
+    this.websocketConfigs =
+        websocketConfigs != null
+            ? Collections.unmodifiableList(websocketConfigs)
+            : Collections.emptyList();
     this.bartConfigs =
         bartConfigs != null ? Collections.unmodifiableList(bartConfigs) : Collections.emptyList();
   }
@@ -64,6 +71,7 @@ public class Track extends Model {
     private List<ArduinoConfig> arduinoConfigs = new ArrayList<>();
     private List<TrackmateConfig> trackmateConfigs = new ArrayList<>();
     private List<PhidgetConfig> phidgetConfigs = new ArrayList<>();
+    private List<WebSocketConfig> websocketConfigs = new ArrayList<>();
     private List<BartConfig> bartConfigs = new ArrayList<>();
     private String entityId;
     private String id;
@@ -98,6 +106,11 @@ public class Track extends Model {
       return this;
     }
 
+    public Builder websocketConfigs(List<WebSocketConfig> websocketConfigs) {
+      this.websocketConfigs = websocketConfigs;
+      return this;
+    }
+
     public Builder bartConfigs(List<BartConfig> bartConfigs) {
       this.bartConfigs = bartConfigs;
       return this;
@@ -121,6 +134,7 @@ public class Track extends Model {
           arduinoConfigs,
           trackmateConfigs,
           phidgetConfigs,
+          websocketConfigs,
           bartConfigs,
           entityId,
           id);
@@ -271,6 +285,11 @@ public class Track extends Model {
     return phidgetConfigs;
   }
 
+  @JsonProperty("websocket_configs")
+  public List<WebSocketConfig> getWebsocketConfigs() {
+    return websocketConfigs;
+  }
+
   @JsonProperty("bart_configs")
   public List<BartConfig> getBartConfigs() {
     return bartConfigs;
@@ -360,6 +379,7 @@ public class Track extends Model {
         .arduinoConfigs(syncedConfigs)
         .trackmateConfigs(this.trackmateConfigs)
         .phidgetConfigs(this.phidgetConfigs)
+        .websocketConfigs(this.websocketConfigs)
         .entityId(this.getEntityId())
         .id(this.getId())
         .build();

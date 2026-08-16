@@ -10,6 +10,8 @@ import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.antigravity.protocols.trackmate.TrackmateProtocol;
+import com.antigravity.protocols.websocket.WebSocketConfig;
+import com.antigravity.protocols.websocket.WebSocketProtocol;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +67,19 @@ public class HardwareProtocolFactory {
       }
     }
 
-    // 4. BART Configs
+    // 4. WebSocket Configs
+    if (track.getWebsocketConfigs() != null) {
+      for (WebSocketConfig config : track.getWebsocketConfigs()) {
+        WebSocketProtocol protocol = new WebSocketProtocol(config, numLanes);
+        protocol.setInterfaceIndex(interfaceIndex++);
+        if (listener != null) {
+          protocol.setListener(listener);
+        }
+        protocols.add(protocol);
+      }
+    }
+
+    // 5. BART Configs
     if (track.getBartConfigs() != null) {
       for (BartConfig config : track.getBartConfigs()) {
         BartProtocol protocol = new BartProtocol(config, numLanes);
@@ -77,6 +91,15 @@ public class HardwareProtocolFactory {
       }
     }
 
+    if (protocols.isEmpty()) {
+      WebSocketConfig config = new WebSocketConfig("Default WebSocket", 7070);
+      WebSocketProtocol protocol = new WebSocketProtocol(config, numLanes);
+      protocol.setInterfaceIndex(interfaceIndex++);
+      if (listener != null) {
+        protocol.setListener(listener);
+      }
+      protocols.add(protocol);
+    }
     return protocols;
   }
 }

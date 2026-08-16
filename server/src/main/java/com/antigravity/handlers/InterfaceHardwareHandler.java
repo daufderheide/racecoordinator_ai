@@ -4,6 +4,7 @@ import com.antigravity.converters.ArduinoConfigConverter;
 import com.antigravity.converters.BartConfigConverter;
 import com.antigravity.converters.PhidgetConfigConverter;
 import com.antigravity.converters.TrackmateConfigConverter;
+import com.antigravity.converters.WebSocketConfigConverter;
 import com.antigravity.proto.GetPhidgetDevicesResponse;
 import com.antigravity.proto.InitializeInterfaceRequest;
 import com.antigravity.proto.InitializeInterfaceResponse;
@@ -27,6 +28,8 @@ import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.phidget.PhidgetProtocol;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.antigravity.protocols.trackmate.TrackmateProtocol;
+import com.antigravity.protocols.websocket.WebSocketConfig;
+import com.antigravity.protocols.websocket.WebSocketProtocol;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.javalin.http.Context;
@@ -55,6 +58,10 @@ public class InterfaceHardwareHandler {
       if (request.hasPhidgetConfig()) {
         phidgetConfig = PhidgetConfigConverter.fromProto(request.getPhidgetConfig());
       }
+      WebSocketConfig websocketConfig = null;
+      if (request.hasWebsocketConfig()) {
+        websocketConfig = WebSocketConfigConverter.fromProto(request.getWebsocketConfig());
+      }
       int interfaceIndex = request.getInterfaceIndex();
 
       ProtocolDelegate current = ClientSubscriptionManager.getInstance().getProtocol();
@@ -64,7 +71,9 @@ public class InterfaceHardwareHandler {
         List<IProtocol> protocols = current.getProtocols();
         if (interfaceIndex >= 0 && interfaceIndex < protocols.size()) {
           IProtocol p = protocols.get(interfaceIndex);
-          if (p instanceof ArduinoProtocol || p instanceof PhidgetProtocol) {
+          if (p instanceof ArduinoProtocol
+              || p instanceof PhidgetProtocol
+              || p instanceof WebSocketProtocol) {
             target = p;
           }
         }
@@ -75,6 +84,8 @@ public class InterfaceHardwareHandler {
           ((ArduinoProtocol) target).updateConfig(config);
         } else if (target instanceof PhidgetProtocol && phidgetConfig != null) {
           ((PhidgetProtocol) target).updateConfig(phidgetConfig);
+        } else if (target instanceof WebSocketProtocol && websocketConfig != null) {
+          ((WebSocketProtocol) target).updateConfig(websocketConfig);
         }
 
         UpdateInterfaceConfigResponse response =
@@ -100,6 +111,7 @@ public class InterfaceHardwareHandler {
     }
   }
 
+  @SuppressWarnings("checkstyle:MethodLength")
   public void initializeInterface(Context ctx) {
     try {
       InitializeInterfaceRequest request = InitializeInterfaceRequest.parseFrom(ctx.bodyAsBytes());
@@ -151,12 +163,22 @@ public class InterfaceHardwareHandler {
         protocols.add(bart);
       }
 
-      ProtocolDelegate finalProtocol;
-      if (protocols.size() >= 1) {
-        finalProtocol = new ProtocolDelegate(protocols);
-      } else {
+      List<com.antigravity.proto.WebSocketConfig> wsConfigsList = // fqn-collision
+          request.getWebsocketConfigsList();
+      for (int i = 0; i < wsConfigsList.size(); i++) {
+        com.antigravity.proto.WebSocketConfig protoConfig = wsConfigsList.get(i); // fqn-collision
+        WebSocketConfig config = WebSocketConfigConverter.fromProto(protoConfig);
+        WebSocketProtocol websocket = new WebSocketProtocol(config, request.getLaneCount());
+        websocket.setInterfaceIndex(interfaceIndex++);
+        websocket.setListener(new TestInterfaceListener());
+        protocols.add(websocket);
+      }
+
+      if (protocols.isEmpty()) {
         throw new IllegalArgumentException("No configurations provided for initialization");
       }
+
+      ProtocolDelegate finalProtocol = new ProtocolDelegate(protocols);
 
       ClientSubscriptionManager.getInstance().setProtocol(finalProtocol);
 

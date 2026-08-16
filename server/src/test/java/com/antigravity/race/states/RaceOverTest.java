@@ -21,6 +21,7 @@ public class RaceOverTest {
     race = mock(Race.class);
     raceModel =
         new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
             .withHeatScoring(
                 new HeatScoring(
                     HeatScoring.FinishMethod.Timed,
