@@ -185,29 +185,7 @@ public class EventExecutionManager {
 
     // Accumulate points if running as part of a season
     if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
-      List<SeasonDriverResult> raceResults =
-          SeasonPointsCalculator.calculateDriverResultsForRace(completedRace);
-      for (SeasonDriverResult r : raceResults) {
-        String dId = r.getDriverId();
-        SeasonDriverResult existing = eventDriverResultsMap.get(dId);
-        if (existing != null) {
-          int combinedPosPts = existing.getOverallPoints() + r.getOverallPoints();
-          int combinedHeatPts = existing.getHeatPoints() + r.getHeatPoints();
-          int combinedTotal = combinedPosPts + combinedHeatPts;
-          int bestRank = Math.min(existing.getOverallRank(), r.getOverallRank());
-          eventDriverResultsMap.put(
-              dId,
-              new SeasonDriverResult(
-                  dId,
-                  r.getDriverName(),
-                  bestRank,
-                  combinedPosPts,
-                  combinedHeatPts,
-                  combinedTotal));
-        } else {
-          eventDriverResultsMap.put(dId, r);
-        }
-      }
+      accumulateSeasonRaceResults(completedRace);
 
       // If this is the last race in the Event, commit to season (if active) and save event history
       // record
@@ -217,9 +195,56 @@ public class EventExecutionManager {
     }
   }
 
+  private void accumulateSeasonRaceResults(Race completedRace) {
+    List<SeasonDriverResult> raceResults =
+        SeasonPointsCalculator.calculateDriverResultsForRace(completedRace);
+    for (SeasonDriverResult r : raceResults) {
+      String dId = r.getDriverId();
+      SeasonDriverResult existing = eventDriverResultsMap.get(dId);
+      if (existing != null) {
+        double combinedPosPts = existing.getOverallPoints() + r.getOverallPoints();
+        double combinedOverallBonus = existing.getOverallBonusPoints() + r.getOverallBonusPoints();
+        double combinedHeatPts = existing.getHeatPoints() + r.getHeatPoints();
+        double combinedHeatBonus = existing.getHeatBonusPoints() + r.getHeatBonusPoints();
+        double combinedTotal =
+            combinedPosPts + combinedOverallBonus + combinedHeatPts + combinedHeatBonus;
+        int bestRank = Math.min(existing.getOverallRank(), r.getOverallRank());
+
+        Map<String, Double> mergedOverallBreakdown =
+            new HashMap<>(existing.getOverallBonusBreakdown());
+        r.getOverallBonusBreakdown()
+            .forEach(
+                (k, v) ->
+                    mergedOverallBreakdown.put(k, mergedOverallBreakdown.getOrDefault(k, 0.0) + v));
+
+        Map<String, Double> mergedHeatBreakdown = new HashMap<>(existing.getHeatBonusBreakdown());
+        r.getHeatBonusBreakdown()
+            .forEach(
+                (k, v) -> mergedHeatBreakdown.put(k, mergedHeatBreakdown.getOrDefault(k, 0.0) + v));
+
+        eventDriverResultsMap.put(
+            dId,
+            new SeasonDriverResult(
+                dId,
+                r.getDriverName(),
+                bestRank,
+                combinedPosPts,
+                combinedOverallBonus,
+                mergedOverallBreakdown,
+                combinedHeatPts,
+                combinedHeatBonus,
+                mergedHeatBreakdown,
+                combinedTotal));
+      } else {
+        eventDriverResultsMap.put(dId, r);
+      }
+    }
+  }
+
   private void saveEventCompletionResults(Race completedRace) {
     List<SeasonDriverResult> finalEventResults = new ArrayList<>(eventDriverResultsMap.values());
-    finalEventResults.sort(Comparator.comparingInt(SeasonDriverResult::getTotalPoints).reversed());
+    finalEventResults.sort(
+        Comparator.comparingDouble(SeasonDriverResult::getTotalPoints).reversed());
     if (databaseContext != null) {
       long raceStart =
           completedRace != null && completedRace.getStatistics() != null

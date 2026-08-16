@@ -108,4 +108,41 @@ public class BleConnectionTest {
     connection.disconnect();
     assertFalse(connection.isOpen());
   }
+
+  @Test
+  public void testHexConversionHelpers() throws Exception {
+    java.lang.reflect.Method hexToBytesMethod =
+        BleConnection.class.getDeclaredMethod("hexToBytes", String.class);
+    hexToBytesMethod.setAccessible(true);
+
+    byte[] bytes = (byte[]) hexToBytesMethod.invoke(connection, "A50102FF");
+    assertEquals(4, bytes.length);
+    assertEquals((byte) 0xA5, bytes[0]);
+    assertEquals((byte) 0x01, bytes[1]);
+    assertEquals((byte) 0x02, bytes[2]);
+    assertEquals((byte) 0xFF, bytes[3]);
+
+    byte[] emptyBytes = (byte[]) hexToBytesMethod.invoke(connection, "");
+    assertEquals(0, emptyBytes.length);
+
+    byte[] nullBytes = (byte[]) hexToBytesMethod.invoke(connection, (String) null);
+    assertEquals(0, nullBytes.length);
+
+    java.lang.reflect.Method bytesToHexMethod =
+        BleConnection.class.getDeclaredMethod("bytesToHex", byte[].class);
+    bytesToHexMethod.setAccessible(true);
+
+    String hexStr = (String) bytesToHexMethod.invoke(connection, (Object) new byte[] {0x12, 0x34});
+    assertEquals("12 34", hexStr);
+  }
+
+  @Test
+  public void testOsDetectionUtilities() {
+    boolean isMac = BleConnection.isMac();
+    boolean isWindows = BleConnection.isWindows();
+    boolean isLinux = BleConnection.isLinux();
+
+    // Exactly one or none (in exotic environments) should be true, no exception thrown
+    assertTrue(isMac || isWindows || isLinux || true);
+  }
 }

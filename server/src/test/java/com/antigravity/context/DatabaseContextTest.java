@@ -164,4 +164,77 @@ public class DatabaseContextTest {
         "Min lap time for {{driver.nickname}}",
         defaultTheme.getAudioSlots().get("audio.min_lap_time").getText());
   }
+
+  @Test
+  public void testCreateDatabaseInitializesAssetsAndSystemInfo() {
+    databaseContext.createDatabase("custom_created_db");
+    assertEquals("custom_created_db", databaseContext.getCurrentDatabaseName());
+
+    File assetDir =
+        new File(databaseContext.getDataRoot() + "custom_created_db" + File.separator + "assets");
+    assertTrue(assetDir.exists());
+    assertTrue(assetDir.isDirectory());
+
+    java.util.List<String> dbs = databaseContext.listDatabases();
+    assertTrue(dbs.contains("custom_created_db"));
+  }
+
+  @Test
+  public void testListDatabasesEdgeCases() {
+    java.util.List<String> nullResult = DatabaseContext.listDatabases(null);
+    assertNotNull(nullResult);
+    assertTrue(nullResult.isEmpty());
+
+    java.util.List<String> nonExistent =
+        DatabaseContext.listDatabases("/path/that/does/not/exist/12345");
+    assertNotNull(nonExistent);
+    assertTrue(nonExistent.isEmpty());
+  }
+
+  @Test
+  public void testCopyDatabase() {
+    databaseContext.ensureTable("drivers");
+    SqliteRepository<com.antigravity.models.Driver> driverRepo =
+        new SqliteRepository<>(databaseContext, "drivers", com.antigravity.models.Driver.class);
+    driverRepo.save(new com.antigravity.models.Driver("Copied Driver", "CD", "cd1", "cd1"));
+
+    databaseContext.copyDatabase("test_db", "copied_db");
+
+    java.util.List<String> dbs = databaseContext.listDatabases();
+    assertTrue(dbs.contains("copied_db"));
+
+    databaseContext.switchDatabase("copied_db");
+    SqliteRepository<com.antigravity.models.Driver> copiedRepo =
+        new SqliteRepository<>(databaseContext, "drivers", com.antigravity.models.Driver.class);
+    java.util.List<com.antigravity.models.Driver> copiedDrivers = copiedRepo.findAll();
+    assertEquals(1, copiedDrivers.size());
+    assertEquals("Copied Driver", copiedDrivers.get(0).getName());
+  }
+
+  @Test
+  public void testDeleteDatabase() {
+    databaseContext.createDatabase("to_be_deleted_db");
+    assertTrue(databaseContext.listDatabases().contains("to_be_deleted_db"));
+
+    databaseContext.deleteDatabase("to_be_deleted_db");
+    org.junit.Assert.assertFalse(databaseContext.listDatabases().contains("to_be_deleted_db"));
+  }
+
+  @Test
+  public void testResetSequence() {
+    databaseContext.ensureTable("drivers");
+    databaseContext.getNextSequence("drivers"); // 1
+    databaseContext.getNextSequence("drivers"); // 2
+    assertEquals("3", databaseContext.getNextSequence("drivers"));
+
+    databaseContext.resetSequence("drivers");
+    assertEquals("1", databaseContext.getNextSequence("drivers"));
+  }
+
+  @Test
+  public void testEnsureTableNullOrEmpty() {
+    databaseContext.ensureTable(null);
+    databaseContext.ensureTable("");
+    databaseContext.ensureTable("   ");
+  }
 }

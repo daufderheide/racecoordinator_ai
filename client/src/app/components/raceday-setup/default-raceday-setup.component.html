@@ -945,11 +945,15 @@
             <div
               class="saved-race-item"
               [class.selected]="selectedSavedRace?.filename === file.filename"
+              [class.corrupt]="file.corrupt"
               (click)="selectSavedRace(file)"
             >
               <span class="race-file-name">{{ file.filename }}</span>
               @if (file.isDemo) {
                 <span class="demo-indicator-badge">Demo</span>
+              }
+              @if (file.corrupt) {
+                <span class="corrupt-indicator-badge">Corrupt</span>
               }
               <button
                 class="delete-saved-btn"

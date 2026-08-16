@@ -422,7 +422,9 @@ describe("DefaultRacedaySetupComponent", () => {
   it("should prompt to load autosave and load it if confirmed", fakeAsync(() => {
     component.selectedRace = component.races.find((r) => r.entity_id === "r1");
     component.selectedParticipants = [component.unselectedParticipants[0]];
-    mockDataService.getSavedRaces.and.returnValue(of(["autosave_r1.json"]));
+    mockDataService.getSavedRaces.and.returnValue(
+      of([{ filename: "autosave_r1.json", corrupt: false }]),
+    );
     mockDataService.loadRace.and.returnValue(of(Race.fromObject({})));
 
     component.startRace(false);
@@ -444,7 +446,9 @@ describe("DefaultRacedaySetupComponent", () => {
     component.selectedRace = component.races.find((r) => r.entity_id === "r1");
     component.selectedParticipants = [component.unselectedParticipants[0]];
 
-    mockDataService.getSavedRaces.and.returnValue(of(["autosave_r1.json"]));
+    mockDataService.getSavedRaces.and.returnValue(
+      of([{ filename: "autosave_r1.json", corrupt: false }]),
+    );
     mockDataService.deleteSavedRace.and.returnValue(of("OK"));
     const response = InitializeRaceResponse.fromObject({
       success: true,
@@ -662,9 +666,15 @@ describe("DefaultRacedaySetupComponent", () => {
   it("should load saved races, filter out autosaves, and open modal", () => {
     mockDataService.getSavedRaces.and.callFake((isDemo?: boolean) => {
       if (isDemo) {
-        return of(["demo_race_1.json", "autosave_demo.json"]);
+        return of([
+          { filename: "demo1.json", corrupt: false },
+          { filename: "autosave_demo.json", corrupt: false },
+        ]);
       }
-      return of(["user_race_1.json", "autosave_user.json"]);
+      return of([
+        { filename: "normal1.json", corrupt: false },
+        { filename: "autosave_normal.json", corrupt: false },
+      ]);
     });
 
     component.loadSavedRaces();
@@ -673,8 +683,8 @@ describe("DefaultRacedaySetupComponent", () => {
     // 1 normal and 1 demo races combined (autosaves are filtered out)
     expect(component.savedRaces.length).toBe(2);
     expect(component.savedRaces).toEqual([
-      { filename: "user_race_1.json", isDemo: false },
-      { filename: "demo_race_1.json", isDemo: true },
+      { filename: "normal1.json", isDemo: false, corrupt: false },
+      { filename: "demo1.json", isDemo: true, corrupt: false },
     ]);
   });
 

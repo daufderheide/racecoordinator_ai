@@ -1,6 +1,17 @@
 export interface SeasonScoring {
   position_points?: number[];
   heat_position_points?: number[];
+  heat_carry_over_pct?: number;
+  heat_bonus_fastest_lap?: number;
+  heat_bonus_led_lap?: number;
+  heat_bonus_most_laps_led?: number;
+  heat_one_bonus_per_driver?: boolean;
+  overall_carry_over_pct?: number;
+  overall_bonus_fastest_lap?: number;
+  overall_bonus_fastest_lap_per_lane?: number;
+  overall_bonus_led_lap?: number;
+  overall_bonus_most_laps_led?: number;
+  overall_one_bonus_per_driver?: boolean;
 }
 
 export interface SeasonDriverResult {
@@ -8,7 +19,11 @@ export interface SeasonDriverResult {
   driver_name: string;
   overall_rank: number;
   overall_points: number;
+  overall_bonus_points?: number;
+  overall_bonus_breakdown?: Record<string, number>;
   heat_points: number;
+  heat_bonus_points?: number;
+  heat_bonus_breakdown?: Record<string, number>;
   total_points: number;
 }
 
@@ -34,7 +49,11 @@ export interface SeasonStandingDetail {
   race_name: string;
   overall_rank: number;
   overall_points: number;
+  overall_bonus_points?: number;
+  overall_bonus_breakdown?: Record<string, number>;
   heat_points: number;
+  heat_bonus_points?: number;
+  heat_bonus_breakdown?: Record<string, number>;
   total_points: number;
   is_dropped: boolean;
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import {
   ChildrenOutletContexts,
   NavigationEnd,
@@ -68,11 +68,13 @@ export class AppComponent implements OnInit {
     private fileSystemService: FileSystemService,
     private cdr: ChangeDetectorRef,
     private authService: AuthService,
+    private ngZone: NgZone,
   ) {}
 
   ngOnInit() {
     if ((window as any).isPlaywright) {
       (window as any).angularRouter = this.router;
+      (window as any).ngZone = this.ngZone;
     }
     this.logger.info("AppComponent: Initializing application...");
 

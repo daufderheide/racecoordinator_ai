@@ -294,4 +294,33 @@ public class AbstractSerialProtocolTest {
     scheduler.tick();
     assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
   }
+
+  @Test
+  public void testNoAutoReconnectWhenNoPort() {
+    protocol.setPort(null);
+    protocol.open();
+    assertEquals(0, serialConnection.connectionCount);
+
+    // Advance time past reconnect interval (5000ms)
+    protocol.advanceTime(6000);
+    scheduler.tick();
+
+    // Connection attempts should remain 0 because no port is configured
+    assertEquals(0, serialConnection.connectionCount);
+    assertEquals(InterfaceStatus.DISCONNECTED, listener.lastStatus);
+  }
+
+  @Test
+  public void testAutoReconnectWhenPortConfigured() {
+    protocol.setPort("FAIL");
+    protocol.open();
+    assertEquals(1, serialConnection.connectionCount);
+
+    // Advance time past reconnect interval (5000ms)
+    protocol.advanceTime(6000);
+    scheduler.tick();
+
+    // Connection count should increment because auto-reconnect was attempted
+    assertTrue(serialConnection.connectionCount >= 2);
+  }
 }

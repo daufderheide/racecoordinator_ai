@@ -3,7 +3,7 @@ import { Model } from "./model";
 
 /**
  * A theme groups visual and audio asset assignments into logical "slots."
- * Each slot maps a purpose (e.g., "flag.green", "lamp.red_on") to an asset entity ID.
+ * Each slot maps a purpose (e.g., "flag.racing", "lamp.red.on") to an asset entity ID.
  *
  * Themes are stored server-side (SQLite) and selected per-client via Settings.
  */
@@ -17,14 +17,19 @@ export interface Theme extends Model {
 
 /** All known theme slot keys for Phase 1 (images). */
 export const THEME_SLOT_KEYS = {
-  // Flags
-  FLAG_GREEN: "flag.green",
-  FLAG_RED: "flag.red",
-  FLAG_YELLOW: "flag.yellow",
-  FLAG_WHITE: "flag.white",
-  FLAG_YELLOWGREEN: "flag.yellowgreen",
-  FLAG_CHECKERED: "flag.checkered",
-  FLAG_BLACK: "flag.black",
+  // Flags (Behavioral)
+  FLAG_RACING: "flag.racing",
+  FLAG_HEAT_PAUSED: "flag.heat_paused",
+  FLAG_HEAT_OVER: "flag.heat_over",
+  FLAG_RACE_OVER: "flag.race_over",
+  FLAG_NOT_STARTED: "flag.not_started",
+  FLAG_STARTING: "flag.starting",
+  FLAG_RESTARTING: "flag.restarting",
+  FLAG_ONE_LAP_TO_GO: "flag.one_lap_to_go",
+  FLAG_HEAT_FINISHING: "flag.heat_finishing",
+  FLAG_WARMUP: "flag.warmup",
+  FLAG_DRIVER_FINISHED: "flag.driver_finished",
+  FLAG_PENALTY: "flag.penalty",
 
   // Start lamps
   LAMP_RED_ON: "lamp.red.on",

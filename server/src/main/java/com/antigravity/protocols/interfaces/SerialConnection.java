@@ -41,7 +41,8 @@ public class SerialConnection implements ISerialConnection {
 
     SerialPort[] ports = SerialPort.getCommPorts();
     for (SerialPort port : ports) {
-      if (port.getSystemPortName().equals(portName)) {
+      if (port.getSystemPortName().equalsIgnoreCase(portName)
+          || port.getSystemPortPath().equalsIgnoreCase(portName)) {
         serialPort = port;
         this.portName = portName;
         break;

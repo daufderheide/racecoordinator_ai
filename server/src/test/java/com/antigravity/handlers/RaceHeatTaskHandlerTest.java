@@ -39,8 +39,20 @@ public class RaceHeatTaskHandlerTest {
     verify(mockJavalin).post(eq("/api/races"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin).put(eq("/api/races/{id}"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin).delete(eq("/api/races/{id}"), any(), eq(Role.DIRECTOR));
+    verify(mockJavalin).post(eq("/api/races/{id}/reset-records"), any(), eq(Role.ADMIN));
     verify(mockJavalin).post(eq("/api/races/{id}/generate-heats"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin).post(eq("/api/heats/preview"), any(), eq(Role.DIRECTOR));
+  }
+
+  @Test
+  public void testHandleResetRace_RaceNotFound_Returns404() {
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("nonexistent");
+    when(mockCtx.status(404)).thenReturn(mockCtx);
+
+    handler.handleResetRace(mockCtx);
+
+    verify(mockCtx).status(404);
   }
 
   @Test(expected = IllegalArgumentException.class)

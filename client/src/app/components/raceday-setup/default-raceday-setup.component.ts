@@ -48,6 +48,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
 interface ISavedRace {
   filename: string;
   isDemo: boolean;
+  corrupt?: boolean;
 }
 
 type Participant = Driver | Team;
@@ -848,10 +849,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.dataService.getSavedRaces().subscribe({
         next: (races) => {
           const autoSaveFile = races.find(
-            (f) => f === `autosave_${raceId}.json`,
+            (f) => f.filename === `autosave_${raceId}.json`,
           );
           if (autoSaveFile) {
-            this.autoSaveFileToLoad = autoSaveFile;
+            this.autoSaveFileToLoad = autoSaveFile.filename;
             this.pendingIsDemo = isDemo;
             this.showAutoSavePrompt = true;
             this.cdr.detectChanges();
@@ -1772,22 +1773,24 @@ export class DefaultRacedaySetupComponent implements OnInit {
         const normalList = result.normal
           .filter(
             (f) =>
-              !f.startsWith("autosave_") &&
-              !f.toLowerCase().includes("autosave"),
+              !f.filename.startsWith("autosave_") &&
+              !f.filename.toLowerCase().includes("autosave"),
           )
           .map((f) => ({
-            filename: f,
+            filename: f.filename,
             isDemo: false,
+            corrupt: f.corrupt,
           }));
         const demoList = result.demo
           .filter(
             (f) =>
-              !f.startsWith("autosave_") &&
-              !f.toLowerCase().includes("autosave"),
+              !f.filename.startsWith("autosave_") &&
+              !f.filename.toLowerCase().includes("autosave"),
           )
           .map((f) => ({
-            filename: f,
+            filename: f.filename,
             isDemo: true,
+            corrupt: f.corrupt,
           }));
         this.savedRaces = [...normalList, ...demoList];
         this.showLoadRaceModal = true;
@@ -1799,6 +1802,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   selectSavedRace(file: ISavedRace) {
+    if (file.corrupt) {
+      return;
+    }
     this.selectedSavedRace = file;
   }
 

@@ -56,13 +56,13 @@ test.describe("Raceday Image Widget Visuals", () => {
 
     const _harness = new RacedayImageHarnessE2e(widget);
 
-    await page.waitForTimeout(200);
-
-    // Take screenshot of the widget wrapper
     const widgetWrapper = page
       .locator(".widget-wrapper")
       .filter({ hasText: "image" })
       .first();
+    await TestSetupHelper.waitForImagesLoaded(widgetWrapper);
+
+    // Take screenshot of the widget wrapper
     await expect(widgetWrapper).toHaveScreenshot("raceday-image-widget.png", {
       animations: "disabled",
     });

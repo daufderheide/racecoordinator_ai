@@ -8,7 +8,12 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.models.Track;
+import com.antigravity.proto.SeasonStanding;
+import com.antigravity.util.SeasonPointsCalculator;
+import com.antigravity.util.SeasonPointsCalculator.DriverRaceScoreDetail;
+import com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -230,31 +235,43 @@ public class RaceConverter {
             com.antigravity.race.ClientSubscriptionManager.getInstance() // fqn-collision
                 .getDatabaseContext(); // fqn-collision
       }
-      if (dbCtx != null) {
+      if (dbCtx != null
+          && com.antigravity.service.DatabaseService.getInstance() != null) { // fqn-collision
         com.antigravity.models.Season season = // fqn-collision
             com.antigravity.service.DatabaseService.getInstance() // fqn-collision
                 .getSeason(dbCtx, seasonId);
         if (season != null) {
           builder.setSeasonName(season.getName());
-          java.util.List<
-                  com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding> // fqn-collision
-              standings =
-                  com.antigravity.util.SeasonPointsCalculator // fqn-collision
-                      .calculateLiveStandings( // fqn-collision
-                      season, race); // fqn-collision
+          List<DriverSeasonStanding> standings =
+              SeasonPointsCalculator.calculateLiveStandings(season, race);
           if (standings != null) {
-            for (com.antigravity.util.SeasonPointsCalculator.DriverSeasonStanding // fqn-collision
-                standing : // fqn-collision
-                standings) {
-              builder.addSeasonStandings(
-                  com.antigravity.proto.SeasonStanding.newBuilder() // fqn-collision
+            for (DriverSeasonStanding standing : standings) {
+              DriverRaceScoreDetail currentDetail = standing.getCurrentRaceScoreDetail();
+              SeasonStanding.Builder sBuilder =
+                  SeasonStanding.newBuilder()
                       .setDriverId(standing.getDriverId())
                       .setDriverName(standing.getDriverName())
                       .setNetPoints(standing.getNetPoints())
                       .setGrossPoints(standing.getGrossPoints())
                       .setRacesRun(standing.getRacesRun())
-                      .setCurrentRacePoints(standing.getCurrentRacePoints())
-                      .build());
+                      .setCurrentRacePoints(standing.getCurrentRacePoints());
+              if (currentDetail != null) {
+                sBuilder
+                    .setCurrentRaceOverallPoints(currentDetail.getOverallPoints())
+                    .setCurrentRaceOverallBonusPoints(currentDetail.getOverallBonusPoints())
+                    .setCurrentRaceHeatPoints(currentDetail.getHeatPoints())
+                    .setCurrentRaceHeatBonusPoints(currentDetail.getHeatBonusPoints())
+                    .setCurrentRaceOverallRank(currentDetail.getOverallRank());
+                if (currentDetail.getOverallBonusBreakdown() != null) {
+                  sBuilder.putAllCurrentRaceOverallBonusBreakdown(
+                      currentDetail.getOverallBonusBreakdown());
+                }
+                if (currentDetail.getHeatBonusBreakdown() != null) {
+                  sBuilder.putAllCurrentRaceHeatBonusBreakdown(
+                      currentDetail.getHeatBonusBreakdown());
+                }
+              }
+              builder.addSeasonStandings(sBuilder.build());
             }
           }
         }

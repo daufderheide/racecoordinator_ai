@@ -11,4 +11,11 @@ message SeasonStanding {
   double gross_points = 4;
   int32 races_run = 5;
   double current_race_points = 6;
+  double current_race_overall_points = 7;
+  double current_race_overall_bonus_points = 8;
+  double current_race_heat_points = 9;
+  double current_race_heat_bonus_points = 10;
+  int32 current_race_overall_rank = 11;
+  map<string, double> current_race_overall_bonus_breakdown = 12;
+  map<string, double> current_race_heat_bonus_breakdown = 13;
 }

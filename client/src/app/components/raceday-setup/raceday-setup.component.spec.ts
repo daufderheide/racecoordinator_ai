@@ -136,6 +136,7 @@ describe("RacedaySetupComponent", () => {
       "checkForUpdates",
       "installUpdate",
       "skipUpdate",
+      "cancelUpdate",
     ]);
     mockUpdateService.checkForUpdates.and.returnValue(
       of({
@@ -773,6 +774,91 @@ describe("RacedaySetupComponent", () => {
       component.dismissUpdateBanner();
       expect(component.updateBannerDismissed).toBeTrue();
       expect(component.isUpdateBannerVisible).toBeFalse();
+    });
+
+    it("should cancel update when cancelUpdate is called", () => {
+      mockUpdateService.cancelUpdate.and.returnValue(of(true));
+      component.isUpdating = true;
+      component.updateProgress = { progress: 50, status: "DOWNLOADING" };
+
+      component.cancelUpdate();
+
+      expect(mockUpdateService.cancelUpdate).toHaveBeenCalled();
+      expect(component.isUpdating).toBeFalse();
+      expect(component.updateProgress).toBeNull();
+    });
+  });
+
+  describe("Server Configuration, Connection and Quote Lifecycle", () => {
+    it("should toggle server configuration modal and load director password for admin", () => {
+      Object.defineProperty(mockAuthService, "currentRole", {
+        get: () => Role.ADMIN,
+        configurable: true,
+      });
+      mockAuthService.getDirectorPassword.and.returnValue(of("secret123"));
+
+      component.toggleServerConfig();
+      expect(component.showServerConfig).toBeTrue();
+      expect(mockAuthService.getDirectorPassword).toHaveBeenCalled();
+      expect(component.directorPassword).toBe("secret123");
+
+      component.toggleServerConfig();
+      expect(component.showServerConfig).toBeFalse();
+    });
+
+    it("should save server configuration and update director password for admin", fakeAsync(() => {
+      Object.defineProperty(mockAuthService, "currentRole", {
+        get: () => Role.ADMIN,
+        configurable: true,
+      });
+      mockAuthService.changeDirectorPassword.and.returnValue(of(true));
+      mockSettingsService.getSettings.and.returnValue({} as any);
+
+      component.tempServerIp = "192.168.1.100";
+      component.tempServerPort = 9000;
+      component.directorPassword = "newPassword";
+
+      component.saveServerConfig();
+
+      expect(mockSettingsService.saveSettings).toHaveBeenCalled();
+      expect(mockDataService.setServerAddress).toHaveBeenCalledWith(
+        "192.168.1.100",
+        9000,
+      );
+      expect(mockAuthService.changeDirectorPassword).toHaveBeenCalledWith(
+        "newPassword",
+      );
+      expect(component.showServerConfig).toBeFalse();
+    }));
+
+    it("should handle connection loss and restored states", () => {
+      component.isConnectionLost = false;
+
+      component.handleConnectionLoss();
+      expect(component.isConnectionLost).toBeTrue();
+
+      component.handleConnectionRestored();
+      expect(component.isConnectionLost).toBeFalse();
+      expect(mockDataService.getServerVersion).toHaveBeenCalled();
+      expect(mockDataService.getServerIp).toHaveBeenCalled();
+    });
+
+    it("should rotate quotes on quote click", fakeAsync(() => {
+      component.showSplash = true;
+      component.onQuoteClick();
+      tick(500);
+
+      expect(component.quoteVisible).toBeTrue();
+      expect(component.currentQuoteKey).toMatch(/^RDS_QUOTE_/);
+      component.stopQuoteRotation();
+    }));
+
+    it("should select custom folder on configureCustomView", async () => {
+      mockFileSystemService.selectCustomFolder.and.returnValue(
+        Promise.resolve(false),
+      );
+      await component.configureCustomView();
+      expect(mockFileSystemService.selectCustomFolder).toHaveBeenCalled();
     });
   });
 });

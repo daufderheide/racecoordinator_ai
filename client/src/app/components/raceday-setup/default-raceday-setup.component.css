@@ -1145,6 +1145,31 @@
   box-shadow: 0 0 8px rgba(124, 58, 237, 0.4);
 }
 
+.corrupt-indicator-badge {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+  margin-right: 12px;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.saved-race-item.corrupt {
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-left: 3px solid #ef4444;
+}
+.saved-race-item.corrupt:hover {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: #ef4444;
+  transform: none;
+}
+
 .mode-toggle-bar {
   display: flex;
   gap: 10px;

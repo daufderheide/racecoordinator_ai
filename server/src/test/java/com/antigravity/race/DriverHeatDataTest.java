@@ -127,4 +127,21 @@ public class DriverHeatDataTest {
     // Total laps should be 2
     assertEquals(2, dhd.getLaps().size());
   }
+
+  @Test
+  public void testStandingsParticipantMethods() {
+    Driver driverModel = new Driver("Test Driver", "Nickname", "d-123", "d-123");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    driver.setSeed(4);
+    DriverHeatData dhd = new DriverHeatData(driver);
+    dhd.setActualDriver(driverModel);
+
+    assertEquals("d-123", dhd.getParticipantId());
+    assertEquals(4, dhd.getSeed());
+    org.junit.Assert.assertFalse(dhd.isEmptyParticipant());
+
+    DriverHeatData emptyDhd = new DriverHeatData();
+    emptyDhd.setActualDriver(Driver.EMPTY_DRIVER);
+    org.junit.Assert.assertTrue(emptyDhd.isEmptyParticipant());
+  }
 }

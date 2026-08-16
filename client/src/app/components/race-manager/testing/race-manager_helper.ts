@@ -68,6 +68,7 @@ export function createRaceManagerDataServiceMock(): any {
     "getRaceFlag",
     "getHeats",
     "getRecordData",
+    "resetRaceRecords",
   ]);
   mock.updateRaceSubscription.and.stub();
   mock.connectToInterfaceDataSocket.and.stub();
@@ -90,6 +91,7 @@ export function createRaceManagerDataServiceMock(): any {
   mock.createRace.and.returnValue(of({ entity_id: "r-new" }));
   mock.updateRace.and.returnValue(of({ entity_id: "r1" }));
   mock.deleteRace.and.returnValue(of({}));
+  mock.resetRaceRecords.and.returnValue(of(undefined));
   mock.generateHeats.and.returnValue(of({ heats: [] }));
   mock.previewHeats.and.returnValue(of({ heats: [] }));
   mock.listAssets.and.returnValue(of([]));

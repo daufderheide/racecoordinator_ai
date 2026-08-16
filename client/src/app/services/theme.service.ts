@@ -13,7 +13,7 @@ import { SettingsService } from "@app/services/settings.service";
  * Resolution priority:
  *   1. Race-specific theme override (Settings.raceThemeOverrides[raceId])
  *   2. Global active theme (Settings.activeThemeId)
- *   3. Individual Settings override (e.g., Settings.flagGreen)
+ *   3. Individual Settings override (e.g., Settings.flagRacing)
  *   4. Built-in default asset (name-based lookup)
  *   5. Hardcoded fallback
  *
@@ -158,6 +158,12 @@ export class ThemeService {
    * Checks for a race-specific theme override and activates it.
    */
   activateForRace(raceId: string): void {
+    if (this.themes.length === 0) {
+      this.initialize()
+        .then(() => this.activateForRace(raceId))
+        .catch(() => {});
+      return;
+    }
     const settings = this.settingsService.getSettings();
     const overrideThemeId = settings.raceThemeOverrides?.[raceId];
 
@@ -227,13 +233,18 @@ export class ThemeService {
       return asset?.url || undefined;
     };
 
-    settings.flagGreen = resolveUrl("flag.green");
-    settings.flagRed = resolveUrl("flag.red");
-    settings.flagYellow = resolveUrl("flag.yellow");
-    settings.flagWhite = resolveUrl("flag.white");
-    settings.flagBlack = resolveUrl("flag.black");
-    settings.flagYellowGreen = resolveUrl("flag.yellowgreen");
-    settings.flagCheckered = resolveUrl("flag.checkered");
+    settings.flagRacing = resolveUrl("flag.racing");
+    settings.flagHeatPaused = resolveUrl("flag.heat_paused");
+    settings.flagHeatOver = resolveUrl("flag.heat_over");
+    settings.flagRaceOver = resolveUrl("flag.race_over");
+    settings.flagNotStarted = resolveUrl("flag.not_started");
+    settings.flagStarting = resolveUrl("flag.starting");
+    settings.flagRestarting = resolveUrl("flag.restarting");
+    settings.flagOneLapToGo = resolveUrl("flag.one_lap_to_go");
+    settings.flagHeatFinishing = resolveUrl("flag.heat_finishing");
+    settings.flagWarmup = resolveUrl("flag.warmup");
+    settings.flagDriverFinished = resolveUrl("flag.driver_finished");
+    settings.flagPenalty = resolveUrl("flag.penalty");
     settings.lampRedOn = resolveUrl("lamp.red.on");
     settings.lampRedDim = resolveUrl("lamp.red.dim");
     settings.lampGreen = resolveUrl("lamp.green");

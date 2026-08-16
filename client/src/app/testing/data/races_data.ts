@@ -85,6 +85,21 @@ export const MOCK_RACES = [
       rotate_group_heats: false,
       min_advancing: 0,
     },
+    season_scoring: {
+      position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+      heat_position_points: [3, 2, 1, 0],
+      overall_carry_over_pct: 1,
+      overall_bonus_fastest_lap: 2,
+      overall_bonus_fastest_lap_per_lane: 3,
+      overall_bonus_led_lap: 4,
+      overall_bonus_most_laps_led: 5,
+      overall_one_bonus_per_driver: false,
+      heat_carry_over_pct: 6,
+      heat_bonus_fastest_lap: 7,
+      heat_bonus_led_lap: 8,
+      heat_bonus_most_laps_led: 9,
+      heat_one_bonus_per_driver: false,
+    },
   },
   {
     entity_id: "r2",
@@ -254,5 +269,8 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
       force_multiple_of_max: false,
       rotate_group_heats: false,
     },
+    r.practice || false,
+    r.adjust_drift_laps || false,
+    r.season_scoring,
   );
 });

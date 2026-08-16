@@ -71,4 +71,18 @@ if [ "$(uname -m)" = "arm64" ] && [ "$(uname -s)" = "Darwin" ]; then
 else
   BUILD_CACHE=0
 fi
-TMPDIR="$TMPDIR" HOME="${REAL_HOME:-$HOME}" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=$BUILD_CACHE ./node_modules/.bin/ng test --watch=false --browsers=ChromeHeadlessWithCustomConfig "$@"
+TMPDIR="$TMPDIR" HOME="${REAL_HOME:-$HOME}" CHROME_BIN="$CHROME_BIN" NG_PERSISTENT_BUILD_CACHE=$BUILD_CACHE ./node_modules/.bin/ng test --watch=false --code-coverage --browsers=ChromeHeadlessWithCustomConfig "$@"
+TEST_EXIT_CODE=$?
+
+# Sync coverage output back to project client directory
+if [ -d "$ISOLATED_DIR/coverage" ]; then
+  mkdir -p "$CLIENT_DIR/coverage"
+  if command -v rsync &>/dev/null; then
+    rsync -a --delete "$ISOLATED_DIR/coverage/" "$CLIENT_DIR/coverage/"
+  else
+    rm -rf "$CLIENT_DIR/coverage"
+    cp -Rf "$ISOLATED_DIR/coverage" "$CLIENT_DIR/"
+  fi
+fi
+
+exit $TEST_EXIT_CODE

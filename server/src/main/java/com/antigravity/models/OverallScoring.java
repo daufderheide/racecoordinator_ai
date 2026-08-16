@@ -55,4 +55,40 @@ public class OverallScoring {
   public OverallRankingTiebreaker getTiebreaker() {
     return tiebreaker;
   }
+
+  public RankingMethod toRankingMethod() {
+    if (rankingMethod == null) {
+      return RankingMethod.LAP_COUNT;
+    }
+    switch (rankingMethod) {
+      case LAP_COUNT:
+        return RankingMethod.LAP_COUNT;
+      case FASTEST_LAP:
+        return RankingMethod.FASTEST_LAP;
+      case TOTAL_TIME:
+        return RankingMethod.TOTAL_TIME;
+      case AVERAGE_LAP:
+        return RankingMethod.AVERAGE_LAP;
+      default:
+        return RankingMethod.LAP_COUNT;
+    }
+  }
+
+  public TiebreakerMethod toTiebreakerMethod() {
+    if (tiebreaker == null) {
+      return TiebreakerMethod.AVERAGE_LAP_TIME;
+    }
+    switch (tiebreaker) {
+      case FASTEST_LAP_TIME:
+        return TiebreakerMethod.FASTEST_LAP_TIME;
+      case MEDIAN_LAP_TIME:
+        return TiebreakerMethod.MEDIAN_LAP_TIME;
+      case AVERAGE_LAP_TIME:
+        return TiebreakerMethod.AVERAGE_LAP_TIME;
+      case TOTAL_TIME:
+        return TiebreakerMethod.TOTAL_TIME;
+      default:
+        return TiebreakerMethod.AVERAGE_LAP_TIME;
+    }
+  }
 }

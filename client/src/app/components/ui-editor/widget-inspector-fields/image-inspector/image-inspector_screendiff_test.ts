@@ -69,6 +69,7 @@ test.describe("Image Inspector Visuals", () => {
 
     // Blur any active element and move mouse to remove hover states
     await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.waitForImagesLoaded(inspectorPanel);
     await page.mouse.move(0, 0);
     await page.waitForTimeout(500);
 

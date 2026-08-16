@@ -561,6 +561,7 @@ export class RaceConnectionService implements OnDestroy {
             driverData.gapPositionF1 = u.gapPositionF1 || 0;
             driverData.lapsDownLeader = u.lapsDownLeader || 0;
             driverData.lapsDownPosition = u.lapsDownPosition || 0;
+            driverData.lapsLed = u.lapsLed ?? u.laps_led ?? 0;
           }
         }
       });

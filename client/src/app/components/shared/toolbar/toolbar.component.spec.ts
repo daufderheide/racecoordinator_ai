@@ -341,4 +341,36 @@ describe("ToolbarComponent", () => {
       expect(laneCheckBtn.classList.contains("unequal")).toBeFalse();
     });
   });
+
+  describe("Reset Button State and Tooltip", () => {
+    it("should render reset button with default title when enabled", () => {
+      fixture.componentRef.setInput("showReset", true);
+      fixture.componentRef.setInput("disabledReset", false);
+      fixture.componentRef.setInput("resetTitleKey", "RM_BTN_RESET_RECORDS");
+      fixture.detectChanges();
+
+      const resetBtn = fixture.nativeElement.querySelector("#reset-btn");
+      expect(resetBtn).toBeTruthy();
+      expect(resetBtn.disabled).toBeFalse();
+      expect(resetBtn.getAttribute("title")).toBe("RM_BTN_RESET_RECORDS");
+    });
+
+    it("should render reset button with disabled tooltip when disabled and tooltip key provided", () => {
+      fixture.componentRef.setInput("showReset", true);
+      fixture.componentRef.setInput("disabledReset", true);
+      fixture.componentRef.setInput("resetTitleKey", "RM_BTN_RESET_RECORDS");
+      fixture.componentRef.setInput(
+        "resetDisabledTooltipKey",
+        "RM_RESET_ADMIN_ONLY_TOOLTIP",
+      );
+      fixture.detectChanges();
+
+      const resetBtn = fixture.nativeElement.querySelector("#reset-btn");
+      expect(resetBtn).toBeTruthy();
+      expect(resetBtn.disabled).toBeTrue();
+      expect(resetBtn.getAttribute("title")).toBe(
+        "RM_RESET_ADMIN_ONLY_TOOLTIP",
+      );
+    });
+  });
 });

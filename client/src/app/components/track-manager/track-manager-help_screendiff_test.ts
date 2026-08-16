@@ -27,6 +27,9 @@ test.describe("Track Manager Guided Help Visuals", () => {
       page.goto("/track-manager?help=true&selectedId=t1"),
     );
 
+    // Wait for step 1 to stabilize first before attempting to advance
+    await waitForPopoverStable(harness);
+
     // Step 1 is the initial state after navigation, so we click Next (targetStep - 1) times
     for (let i = 1; i < targetStep; i++) {
       await harness.clickNext();

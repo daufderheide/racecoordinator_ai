@@ -28,8 +28,34 @@ if ($args -contains "--sync-only") {
     Write-Host "Syncing snapshots from last run's actual results..." -ForegroundColor Cyan
     $env:CLIENT_DIR = $ClientDir
     $env:ISOLATED_DIR = $IsolatedDir
-    node (Join-Path $ProjectRoot "scripts" "sync_snapshots.js")
+    node (Join-Path $ProjectRoot "scripts\sync_snapshots.js")
     exit 0
+}
+
+# Check if --changed or --changed=* was passed
+$ChangedFlag = $null
+$RemainingArgs = @()
+
+foreach ($arg in $args) {
+    if ($arg -eq "--changed" -or $arg -like "--changed=*") {
+        $ChangedFlag = $arg
+    } else {
+        $RemainingArgs += $arg
+    }
+}
+
+if ($ChangedFlag) {
+    Write-Host "Resolving screendiff tests for changed files..." -ForegroundColor Cyan
+    $FindScript = Join-Path $ProjectRoot "scripts\find_changed_screendiff_tests.js"
+    $ChangedTests = (node $FindScript $ChangedFlag).Trim()
+    if (-not $ChangedTests) {
+        Write-Host "No changed components or screendiff tests detected from git changes." -ForegroundColor Yellow
+        exit 0
+    }
+    Write-Host "Found changed screendiff tests: $ChangedTests" -ForegroundColor Green
+    $PlaywrightArgs = "$ChangedTests " + ($RemainingArgs -join " ")
+} else {
+    $PlaywrightArgs = $args -join " "
 }
 
 Write-Host "--- Running Client Visual Tests ---" -ForegroundColor Cyan
@@ -87,22 +113,25 @@ Write-Host "Running tests in Docker container..." -ForegroundColor Green
 # Create test-home directory to avoid permission issues
 New-Item -ItemType Directory -Path (Join-Path $IsolatedDir "test-home") -Force | Out-Null
 
+$WorkerCount = if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '100%' }
+$DockerCmd = "node -e `"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --legacy-peer-deps --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}`" && npx playwright test $PlaywrightArgs"
+
 $DockerArgs = @(
     "run", "--rm",
     "--ipc=host",
     "-v", "$IsolatedDir`:/work",
     "-w", "/work",
     "-e", "HOME=/work/test-home",
-    "-e", "PWTEST_WORKERS=$(if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '50%' })",
+    "-e", "PWTEST_WORKERS=$WorkerCount",
     "mcr.microsoft.com/playwright:v1.61.1-jammy",
-    "/bin/bash", "-c", "npm install --no-package-lock --legacy-peer-deps --ignore-scripts && npx playwright test $args"
+    "/bin/bash", "-c", $DockerCmd
 )
 
 & docker @DockerArgs
 $TestExitCode = $LASTEXITCODE
 
 # If updating snapshots, copy them back to the original source directory
-if ($args -contains "--update-snapshots") {
+if ($args -contains "--update-snapshots" -or $PlaywrightArgs -like "*--update-snapshots*") {
     Write-Host "Syncing updated snapshots back to source..." -ForegroundColor Cyan
     $FullIsolatedDir = (Get-Item $IsolatedDir).FullName
     $SnapshotDirs = Get-ChildItem -Path (Join-Path $FullIsolatedDir "src") -Filter "*-snapshots" -Recurse -Directory

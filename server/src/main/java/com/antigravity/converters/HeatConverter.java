@@ -97,6 +97,7 @@ public class HeatConverter {
         .setInitialFuelLevel(data.getInitialFuelLevel())
         .setFalseStarts(data.getFalseStarts())
         .setFlag(data.getFlag() != null ? data.getFlag() : RaceFlag.UNKNOWN_FLAG)
+        .setLapsLed(data.getLapsLed())
         .build();
   }
 }

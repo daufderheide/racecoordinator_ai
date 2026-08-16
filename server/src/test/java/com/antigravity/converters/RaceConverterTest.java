@@ -274,6 +274,171 @@ public class RaceConverterTest {
     assertEquals("Test Race", proto.getRace().getName());
   }
 
+  @Test
+  public void testToProto_SeasonStandingBreakdownFields() {
+    com.antigravity.models.SeasonScoring scoring =
+        new com.antigravity.models.SeasonScoring(
+            java.util.Arrays.asList(25.0),
+            java.util.Arrays.asList(5.0),
+            0.0,
+            2.0, // heat fastest lap
+            0.0,
+            0.0,
+            false,
+            0.0,
+            10.0, // overall fastest lap
+            0.0,
+            0.0,
+            0.0,
+            false);
+
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Season Race")
+            .withSeasonScoring(scoring)
+            .build();
+
+    com.antigravity.models.Driver d1 = new com.antigravity.models.Driver("D1", "D1", "d1", null);
+    com.antigravity.race.RaceParticipant rp1 = new com.antigravity.race.RaceParticipant(d1);
+    rp1.setRank(1);
+
+    com.antigravity.models.Track trackModel =
+        new com.antigravity.models.Track.Builder()
+            .name("Track")
+            .lanes(new ArrayList<>())
+            .entityId("t1")
+            .build();
+
+    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData(rp1);
+    dhd1.addLap(4.5, false, true);
+    com.antigravity.race.Heat heat1 =
+        new com.antigravity.race.Heat(1, java.util.Arrays.asList(dhd1), false);
+
+    // Create db context with Season
+    com.antigravity.context.DatabaseContext dbCtx =
+        org.mockito.Mockito.mock(com.antigravity.context.DatabaseContext.class);
+    com.antigravity.models.Season season =
+        new com.antigravity.models.Season("2026 Season", 0, new ArrayList<>(), "s1", null);
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .track(trackModel)
+            .drivers(java.util.Arrays.asList(rp1))
+            .heats(java.util.Arrays.asList(heat1))
+            .seasonEntityId("s1")
+            .databaseContext(dbCtx)
+            .isDemoMode(true)
+            .stateClassName("com.antigravity.race.states.RaceOver")
+            .build();
+
+    com.antigravity.service.DatabaseService dbService =
+        org.mockito.Mockito.mock(com.antigravity.service.DatabaseService.class);
+    org.mockito.Mockito.when(dbService.getSeason(dbCtx, "s1")).thenReturn(season);
+
+    com.antigravity.service.DatabaseService origService =
+        com.antigravity.service.DatabaseService.getInstance();
+    // Swap DatabaseService instance temporarily or test toProto
+    com.antigravity.service.DatabaseService.setInstance(dbService);
+    try {
+      com.antigravity.proto.Race proto = RaceConverter.toProto(race);
+      assertNotNull(proto);
+      assertEquals(1, proto.getSeasonStandingsCount());
+      com.antigravity.proto.SeasonStanding standingProto = proto.getSeasonStandings(0);
+      assertEquals("d1", standingProto.getDriverId());
+      assertEquals(25.0, standingProto.getCurrentRaceOverallPoints(), 0.001);
+      assertEquals(10.0, standingProto.getCurrentRaceOverallBonusPoints(), 0.001);
+      assertEquals(5.0, standingProto.getCurrentRaceHeatPoints(), 0.001);
+      assertEquals(2.0, standingProto.getCurrentRaceHeatBonusPoints(), 0.001);
+      assertEquals(1, standingProto.getCurrentRaceOverallRank());
+      assertEquals(42.0, standingProto.getCurrentRacePoints(), 0.001);
+      assertEquals(
+          10.0,
+          standingProto.getCurrentRaceOverallBonusBreakdownMap().getOrDefault("fastest_lap", 0.0),
+          0.001);
+      assertEquals(
+          2.0,
+          standingProto
+              .getCurrentRaceHeatBonusBreakdownMap()
+              .getOrDefault("fastest_lap_heat_1", 0.0),
+          0.001);
+    } finally {
+      com.antigravity.service.DatabaseService.setInstance(
+          origService != null ? origService : new com.antigravity.service.DatabaseService());
+    }
+  }
+
+  @Test
+  public void testSerializeRaceWithEmptyLanes() {
+    com.antigravity.models.Race raceModel =
+        org.mockito.Mockito.mock(com.antigravity.models.Race.class);
+    Track track = org.mockito.Mockito.mock(Track.class);
+    List<com.antigravity.race.RaceParticipant> drivers = new ArrayList<>();
+
+    // 1 real driver
+    drivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Real Driver", "Real Nick", "real1", "1")));
+
+    // 2 lanes
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("Red", "red", 1));
+    lanes.add(new com.antigravity.models.Lane("Blue", "blue", 2));
+    org.mockito.Mockito.when(track.getLanes()).thenReturn(lanes);
+    org.mockito.Mockito.when(track.getArduinoConfigs()).thenReturn(new ArrayList<>());
+    org.mockito.Mockito.when(track.getEntityId()).thenReturn("track1");
+    org.mockito.Mockito.when(track.getObjectId()).thenReturn("track1");
+    org.mockito.Mockito.when(track.getName()).thenReturn("Track 1");
+
+    org.mockito.Mockito.when(raceModel.getHeatRotationType())
+        .thenReturn(HeatRotationType.RoundRobin);
+    org.mockito.Mockito.when(raceModel.getHeatScoring()).thenReturn(new HeatScoring());
+    org.mockito.Mockito.when(raceModel.getOverallScoring())
+        .thenReturn(new com.antigravity.models.OverallScoring());
+    org.mockito.Mockito.when(raceModel.getTrackEntityId()).thenReturn("track1");
+    org.mockito.Mockito.when(raceModel.getEntityId()).thenReturn("race1");
+    org.mockito.Mockito.when(raceModel.getObjectId()).thenReturn("race1");
+    org.mockito.Mockito.when(raceModel.getName()).thenReturn("Race 1");
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(drivers)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    Set<String> sentObjectIds = new HashSet<>();
+    com.antigravity.proto.Race proto = RaceConverter.toProto(race, sentObjectIds);
+
+    assertNotNull(proto);
+    assertEquals(2, proto.getDriversCount());
+
+    com.antigravity.proto.RaceParticipant emptyParticipant = null;
+    com.antigravity.proto.RaceParticipant realParticipant = null;
+
+    for (com.antigravity.proto.RaceParticipant p : proto.getDriversList()) {
+      if ("Real Driver".equals(p.getDriver().getName())) {
+        realParticipant = p;
+      } else if ("Empty".equals(p.getDriver().getName())) {
+        emptyParticipant = p;
+      }
+    }
+
+    assertNotNull(realParticipant);
+    assertNotNull(emptyParticipant);
+
+    assertEquals("Empty", emptyParticipant.getDriver().getName());
+    assertEquals("Empty", emptyParticipant.getDriver().getNickname());
+    assertEquals(
+        com.antigravity.models.Driver.EMPTY_DRIVER_ID,
+        emptyParticipant.getDriver().getModel().getEntityId());
+
+    org.junit.Assert.assertTrue(proto.getHeatsCount() > 0);
+    com.antigravity.proto.Heat heat0 = proto.getHeats(0);
+    assertEquals(2, heat0.getHeatDriversCount());
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }

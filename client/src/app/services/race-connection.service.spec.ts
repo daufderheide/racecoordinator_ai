@@ -473,4 +473,55 @@ describe("RaceConnectionService", () => {
       expect(heatMock.heatDrivers[1].rank).toBe(1);
     }));
   });
+
+  describe("Reaction Times, Segments and Stream Events", () => {
+    it("should process reaction times and emit via reactionTimes$", fakeAsync(() => {
+      service.connect();
+
+      const reactionTimeSubject = new Subject<any>();
+      mockDataService.getReactionTimes.and.returnValue(
+        reactionTimeSubject.asObservable(),
+      );
+
+      let emittedReaction: any;
+      service.reactionTimes$.subscribe((rt) => (emittedReaction = rt));
+
+      (service as any).reactionTimeSubject.next({
+        objectId: "d1",
+        reactionTime: 0.125,
+      });
+      tick();
+
+      expect(emittedReaction).toEqual({
+        objectId: "d1",
+        reactionTime: 0.125,
+      });
+    }));
+
+    it("should process record data updates and emit on recordData$", fakeAsync(() => {
+      let recordEmitted: any;
+      service.recordData$.subscribe((rec) => (recordEmitted = rec));
+
+      const mockRecord: any = {
+        trackRecords: [],
+        overallRecords: [],
+      };
+
+      (service as any).recordDataSubject.next(mockRecord);
+      tick();
+
+      expect(recordEmitted).toBe(mockRecord);
+    }));
+
+    it("should handle force disconnect immediately", fakeAsync(() => {
+      service.connect();
+      expect((service as any).isConnected).toBeTrue();
+
+      service.disconnect(true);
+      tick();
+
+      expect((service as any).isConnected).toBeFalse();
+      expect((service as any).connectionCount).toBe(0);
+    }));
+  });
 });

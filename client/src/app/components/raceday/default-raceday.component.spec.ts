@@ -19,6 +19,7 @@ import { DataService } from "@app/data.service";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { OverallRanking } from "@app/models/overall_scoring";
 import { ColumnVisibility, Settings } from "@app/models/settings";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
@@ -860,6 +861,21 @@ describe("DefaultRacedayComponent", () => {
   });
 
   describe("onMenuSelect", () => {
+    it("should emit requestAbout when ABOUT selected", () => {
+      spyOn(component.requestAbout, "emit");
+      component.onMenuSelect("ABOUT");
+      expect(component.requestAbout.emit).toHaveBeenCalled();
+    });
+
+    it("should call helpLinkService.openHelp when HELP_CENTER selected", () => {
+      const helpLinkService = TestBed.inject(HelpLinkService);
+      spyOn(helpLinkService, "openHelp");
+      component.onMenuSelect("HELP_CENTER");
+      expect(helpLinkService.openHelp).toHaveBeenCalledWith(
+        "raceday-operation",
+      );
+    });
+
     it("should call abortTimers and clear local values when ABORT_TIMERS selected", () => {
       mockDataService.abortTimers.and.returnValue(of(true));
       component["autoStartRemaining"] = 5.0;
@@ -2857,11 +2873,11 @@ describe("DefaultRacedayComponent", () => {
 
       // Setup default setttings for flag lookups
       const settings = (component as any).settingsService.getSettings();
-      settings.flagRed = "red.png";
-      settings.flagGreen = "green.png";
-      settings.flagYellow = "yellow.png";
-      settings.flagWhite = "white.png";
-      settings.flagCheckered = "checkered.png";
+      settings.flagHeatOver = "red.png";
+      settings.flagRacing = "green.png";
+      settings.flagHeatPaused = "yellow.png";
+      settings.flagOneLapToGo = "white.png";
+      settings.flagHeatFinishing = "checkered.png";
 
       // Mock assets for resolution
       (component as any).assets = [
@@ -3301,10 +3317,10 @@ describe("DefaultRacedayComponent", () => {
 
     it("should use theme for flag images", () => {
       mockThemeService.resolveAssetId.and.callFake((slot: string) => {
-        if (slot === "flag.green") return "theme-green-flag";
+        if (slot === "flag.racing") return "theme-green-flag";
         return null;
       });
-      mockRaceFlagService.getFlagType.and.returnValue("green");
+      mockRaceFlagService.getFlagType.and.returnValue("flag.racing");
       mockRaceFlagService.getFlagUrl.and.returnValue(
         "http://localhost/theme/green.png",
       );

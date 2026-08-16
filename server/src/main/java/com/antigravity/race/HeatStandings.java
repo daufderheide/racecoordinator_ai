@@ -3,11 +3,15 @@ package com.antigravity.race;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
+import com.antigravity.models.RankingMethod;
+import com.antigravity.models.TiebreakerMethod;
 import com.antigravity.proto.HeatPositionUpdate;
 import com.antigravity.proto.StandingsUpdate;
+import com.antigravity.util.GhostRaceSimulator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +79,7 @@ public class HeatStandings {
                 .setGapPositionF1(dhd.getGapPositionF1())
                 .setLapsDownLeader(dhd.getLapsDownLeader())
                 .setLapsDownPosition(dhd.getLapsDownPosition())
+                .setLapsLed(dhd.getLapsLed())
                 .build());
       }
     }
@@ -95,6 +100,7 @@ public class HeatStandings {
       sortedDrivers = driverHeatData.stream().sorted(getComparator()).collect(Collectors.toList());
       calculateGaps(sortedDrivers);
     }
+    calculateLapsLed();
 
     List<String> standings =
         sortedDrivers.stream().map(DriverHeatData::getObjectId).collect(Collectors.toList());
@@ -126,46 +132,27 @@ public class HeatStandings {
   }
 
   private Comparator<DriverHeatData> getComparator() {
-    Comparator<DriverHeatData> comparator;
-
-    switch (sortType) {
-      case LAP_COUNT:
-        comparator =
-            Comparator.comparingDouble(DriverHeatData::getAdjustedLapCount)
-                .reversed()
-                .thenComparing(Comparator.comparingDouble(DriverHeatData::getTotalTime));
-        break;
-      case FASTEST_LAP:
-        comparator =
-            Comparator.comparingDouble(
-                d -> d.getBestLapTime() == 0 ? Double.MAX_VALUE : d.getBestLapTime());
-        break;
-      case TOTAL_TIME:
-        comparator = Comparator.comparingDouble(DriverHeatData::getTotalTime);
-        break;
-      default:
-        comparator = (d1, d2) -> 0;
-    }
-
-    return Comparator.<DriverHeatData, Boolean>comparing(
-            d -> d.getActualDriver() == null || d.getActualDriver().isEmpty())
-        .thenComparing(comparator)
-        .thenComparing(getTieBreakerComparator());
+    return new StandingsComparator(
+        scoring != null ? scoring.toRankingMethod() : RankingMethod.LAP_COUNT,
+        scoring != null ? scoring.toTiebreakerMethod() : TiebreakerMethod.AVERAGE_LAP_TIME);
   }
 
-  private Comparator<DriverHeatData> getTieBreakerComparator() {
-    switch (tieBreaker) {
-      case FASTEST_LAP_TIME:
-        return Comparator.comparingDouble(
-            d -> d.getBestLapTime() == 0 ? Double.MAX_VALUE : d.getBestLapTime());
-      case MEDIAN_LAP_TIME:
-        return Comparator.comparingDouble(
-            d -> d.getMedianLapTime() == 0 ? Double.MAX_VALUE : d.getMedianLapTime());
-      case AVERAGE_LAP_TIME:
-        return Comparator.comparingDouble(
-            d -> d.getAverageLapTime() == 0 ? Double.MAX_VALUE : d.getAverageLapTime());
-      default:
-        return (d1, d2) -> 0;
+  private void calculateLapsLed() {
+    if (practice) {
+      for (DriverHeatData d : driverHeatData) {
+        d.setLapsLed(0);
+      }
+      return;
+    }
+    RankingMethod hRank = scoring != null ? scoring.toRankingMethod() : RankingMethod.LAP_COUNT;
+    TiebreakerMethod hTie =
+        scoring != null ? scoring.toTiebreakerMethod() : TiebreakerMethod.AVERAGE_LAP_TIME;
+    Map<String, Integer> ledMap = GhostRaceSimulator.calculateLapsLed(driverHeatData, hRank, hTie);
+    for (DriverHeatData d : driverHeatData) {
+      String dId = d.getParticipantId();
+      int lapsLed =
+          (dId != null && !dId.isEmpty() && ledMap.containsKey(dId)) ? ledMap.get(dId) : 0;
+      d.setLapsLed(lapsLed);
     }
   }
 }

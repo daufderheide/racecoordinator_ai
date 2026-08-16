@@ -11,8 +11,8 @@ test.describe("Leaderboard Inspector Visuals", () => {
     await TestSetupHelper.setupThemeMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
-      flagGreen: "/api/assets/download?filename=img1.png",
-      flagRed: "/api/assets/download?filename=img1.png",
+      flagRacing: "/api/assets/download?filename=img1.png",
+      flagHeatOver: "/api/assets/download?filename=img1.png",
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,
@@ -84,8 +84,8 @@ test.describe("Leaderboard Inspector Visuals", () => {
   }) => {
     // Override standard layout mock settings to contain a group-leaderboard widget instead of leaderboard
     await TestSetupHelper.setupSettings(page, {
-      flagGreen: "/api/assets/download?filename=img1.png",
-      flagRed: "/api/assets/download?filename=img1.png",
+      flagRacing: "/api/assets/download?filename=img1.png",
+      flagHeatOver: "/api/assets/download?filename=img1.png",
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,

@@ -388,4 +388,22 @@ public class PhidgetProtocolTest {
     PhidgetProtocol nullProtocol = new PhidgetProtocol(nullConfig, 4, null);
     assertNotNull(nullProtocol);
   }
+
+  @Test
+  public void testRaceFlagAndRaceStateUpdates() {
+    protocol.setRaceState(RaceState.RACING, RaceFlag.GREEN, 0.0);
+    protocol.setRaceState(RaceState.STARTING, RaceFlag.YELLOW, 3.0);
+    protocol.setRaceState(RaceState.NOT_STARTED, RaceFlag.RED, 0.0);
+    protocol.setRaceState(RaceState.UNKNOWN_STATE, RaceFlag.UNKNOWN_FLAG, 0.0);
+  }
+
+  @Test
+  public void testPowerControlsWhenClosed() {
+    protocol.setMainPower(true);
+    protocol.setMainPower(false);
+    for (int lane = 0; lane < 4; lane++) {
+      protocol.setLanePower(true, lane);
+      protocol.setLanePower(false, lane);
+    }
+  }
 }

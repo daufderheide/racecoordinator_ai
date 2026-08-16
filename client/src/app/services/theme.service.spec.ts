@@ -26,7 +26,7 @@ describe("ThemeService", () => {
       entity_id: "theme-1",
       name: "Theme 1",
       is_default: false,
-      slots: { "flag.green": "asset-1" },
+      slots: { "flag.racing": "asset-1" },
       audio_slots: {},
     },
   ];
@@ -96,7 +96,7 @@ describe("ThemeService", () => {
   it("should resolve asset ID correctly", async () => {
     await service.initialize();
     service.setActiveTheme("theme-1");
-    expect(service.resolveAssetId("flag.green")).toBe("asset-1");
+    expect(service.resolveAssetId("flag.racing")).toBe("asset-1");
     expect(service.resolveAssetId("non-existent")).toBeNull();
   });
 
@@ -229,6 +229,45 @@ describe("ThemeService", () => {
         type: "audio_set",
         url: "default_seconds_left",
       });
+    });
+  });
+
+  describe("Theme Settings and Overrides", () => {
+    it("should set and get per-race theme overrides", async () => {
+      await service.initialize();
+      service.setRaceThemeOverride("race-100", "theme-1");
+      expect(service.getRaceThemeOverride("race-100")).toBe("theme-1");
+      expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
+
+      service.setRaceThemeOverride("race-100", null);
+      expect(service.getRaceThemeOverride("race-100")).toBeNull();
+    });
+
+    it("should clear active theme when setActiveTheme(null) is called", async () => {
+      await service.initialize();
+      expect(service.isThemeActive()).toBeTrue();
+
+      service.setActiveTheme(null);
+      expect(service.isThemeActive()).toBeFalse();
+      expect(service.getActiveTheme()).toBeNull();
+      expect(service.resolveAssetId("flag.racing")).toBeNull();
+      expect(service.resolveAudioConfig("audio.countdown")).toBeNull();
+    });
+
+    it("should detach active theme slots into settings", async () => {
+      await service.initialize();
+      service.setActiveTheme("theme-1");
+
+      const assets = [
+        {
+          model: { entityId: "asset-1" },
+          url: "http://example.com/racing.png",
+        },
+      ];
+
+      service.detachToSettings(assets);
+      expect(service.isThemeActive()).toBeFalse();
+      expect(settingsServiceSpy.saveSettings).toHaveBeenCalled();
     });
   });
 });

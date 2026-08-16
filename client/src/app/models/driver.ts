@@ -63,8 +63,28 @@ export class Driver implements Model {
           driver.id ||
           driver.model?.entity_id ||
           driver.model?.entityId;
-    if (id === EMPTY_DRIVER_ID) return true;
+    if (
+      id &&
+      (id === EMPTY_DRIVER_ID ||
+        id.toUpperCase() === "EMPTY_LANE" ||
+        id.startsWith("EMPTY_") ||
+        id.startsWith("empty_") ||
+        id === "empty")
+    ) {
+      return true;
+    }
     if (id) return false;
-    return !driver.name && !driver.nickname && !driver.model?.name;
+    const name = (driver.name || driver.model?.name || "").trim().toLowerCase();
+    const nickname = (driver.nickname || "").trim().toLowerCase();
+    if (name === "" && nickname === "") return true;
+    if (
+      name === "empty" ||
+      name === "empty lane" ||
+      name === "rd_empty_lane" ||
+      name === "(empty)"
+    ) {
+      return true;
+    }
+    return false;
   }
 }

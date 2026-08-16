@@ -7,7 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class RaceParticipant extends ServerToClientObject implements GapParticipant {
+public class RaceParticipant extends ServerToClientObject
+    implements GapParticipant, StandingsParticipant {
 
   private Driver driver;
   private Team team;
@@ -322,5 +323,103 @@ public class RaceParticipant extends ServerToClientObject implements GapParticip
 
   public void setLaneLaps(List<Double> laneLaps) {
     this.laneLaps = laneLaps != null ? laneLaps : new ArrayList<>();
+  }
+
+  private double positionPoints;
+  private double overallBonusPoints;
+  private double heatPositionPoints;
+  private double heatBonusPoints;
+  private double bonusPoints;
+  private double totalPoints;
+  private java.util.Map<String, Double> overallBonusBreakdown = new java.util.HashMap<>();
+  private java.util.Map<String, Double> heatBonusBreakdown = new java.util.HashMap<>();
+
+  private static double round2(double val) {
+    return Math.round(val * 100.0) / 100.0;
+  }
+
+  public double getPositionPoints() {
+    return round2(positionPoints);
+  }
+
+  public void setPositionPoints(double positionPoints) {
+    this.positionPoints = positionPoints;
+  }
+
+  public double getOverallBonusPoints() {
+    return round2(overallBonusPoints);
+  }
+
+  public void setOverallBonusPoints(double overallBonusPoints) {
+    this.overallBonusPoints = overallBonusPoints;
+  }
+
+  public double getHeatPositionPoints() {
+    return round2(heatPositionPoints);
+  }
+
+  public void setHeatPositionPoints(double heatPositionPoints) {
+    this.heatPositionPoints = heatPositionPoints;
+  }
+
+  public double getHeatBonusPoints() {
+    return round2(heatBonusPoints);
+  }
+
+  public void setHeatBonusPoints(double heatBonusPoints) {
+    this.heatBonusPoints = heatBonusPoints;
+  }
+
+  public double getBonusPoints() {
+    return round2(bonusPoints);
+  }
+
+  public double getTotalBonusPoints() {
+    return round2(bonusPoints);
+  }
+
+  public void setBonusPoints(double bonusPoints) {
+    this.bonusPoints = bonusPoints;
+  }
+
+  public double getTotalPoints() {
+    return round2(totalPoints);
+  }
+
+  public void setTotalPoints(double totalPoints) {
+    this.totalPoints = totalPoints;
+  }
+
+  public java.util.Map<String, Double> getOverallBonusBreakdown() {
+    return overallBonusBreakdown;
+  }
+
+  public void setOverallBonusBreakdown(java.util.Map<String, Double> overallBonusBreakdown) {
+    this.overallBonusBreakdown =
+        overallBonusBreakdown != null ? overallBonusBreakdown : new java.util.HashMap<>();
+  }
+
+  public java.util.Map<String, Double> getHeatBonusBreakdown() {
+    return heatBonusBreakdown;
+  }
+
+  public void setHeatBonusBreakdown(java.util.Map<String, Double> heatBonusBreakdown) {
+    this.heatBonusBreakdown =
+        heatBonusBreakdown != null ? heatBonusBreakdown : new java.util.HashMap<>();
+  }
+
+  @Override
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  public String getParticipantId() {
+    if (driver != null && driver.getEntityId() != null && !driver.getEntityId().isEmpty()) {
+      return driver.getEntityId();
+    }
+    if (team != null && team.getEntityId() != null && !team.getEntityId().isEmpty()) {
+      return team.getEntityId();
+    }
+    if (getObjectId() != null) {
+      return getObjectId();
+    }
+    return "";
   }
 }

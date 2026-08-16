@@ -165,7 +165,7 @@ public class DatabaseServiceTest {
 
     long expectedStartTime = 1700000000000L;
     List<SeasonDriverResult> results = new ArrayList<>();
-    results.add(new SeasonDriverResult("d1", "Driver 1", 1, 10, 0, 10));
+    results.add(new SeasonDriverResult("d1", "Driver 1", 1, 10.0, 0.0, 10.0));
 
     dbService.commitRaceToSeason(
         databaseContext, "S1", "GP Race 1", expectedStartTime, false, results);
@@ -230,5 +230,250 @@ public class DatabaseServiceTest {
     assertNotNull(retrieved);
     assertEquals("driver1_track1", retrieved.getId());
     assertEquals(42, retrieved.getTotalLaps());
+  }
+
+  @Test
+  public void testResetRaceData_PurgesAllAssociatedTables() {
+    DatabaseContext context = databaseContext;
+    String raceId1 = "RACE_TARGET_1";
+    String raceId2 = "RACE_OTHER_2";
+
+    // 1. Race History
+    com.antigravity.models.Race model1 =
+        new com.antigravity.models.Race.Builder()
+            .withName("Target Race")
+            .withEntityId(raceId1)
+            .build();
+    com.antigravity.models.Race model2 =
+        new com.antigravity.models.Race.Builder()
+            .withName("Other Race")
+            .withEntityId(raceId2)
+            .build();
+
+    Race r1 = new Race.Builder().model(model1).track(dbService.getFactoryTrack()).build();
+    Race r2 = new Race.Builder().model(model2).track(dbService.getFactoryTrack()).build();
+
+    dbService.saveRaceHistory(context, r1);
+    dbService.saveRaceHistory(context, r2);
+
+    // 2. Race Records
+    dbService.saveRaceRecords(context, r1);
+    dbService.saveRaceRecords(context, r2);
+
+    // 3. Global Statistics
+    dbService.updateGlobalStatistics(context, r1);
+    dbService.updateGlobalStatistics(context, r2);
+
+    // 4. Saved Races
+    com.antigravity.race.RaceSaveData save1 = new com.antigravity.race.RaceSaveData();
+    save1.setId("save_1");
+    save1.setSaveName("save_1");
+    save1.setModel(model1);
+    dbService.saveManualRace(context, save1);
+
+    com.antigravity.race.RaceSaveData save2 = new com.antigravity.race.RaceSaveData();
+    save2.setId("save_2");
+    save2.setSaveName("save_2");
+    save2.setModel(model2);
+    dbService.saveManualRace(context, save2);
+
+    // 5. Driver Statistics
+    com.antigravity.models.DriverStatistics dStats1 = new com.antigravity.models.DriverStatistics();
+    dStats1.setDriverId("d1");
+    dStats1.setRaceId(raceId1);
+    dStats1.setBestLapTime(5.123);
+    new SqliteRepository<>(
+            context, "driver_statistics", com.antigravity.models.DriverStatistics.class)
+        .save(dStats1);
+
+    com.antigravity.models.DriverStatistics dStats2 = new com.antigravity.models.DriverStatistics();
+    dStats2.setDriverId("d1");
+    dStats2.setRaceId(raceId2);
+    dStats2.setBestLapTime(6.456);
+    new SqliteRepository<>(
+            context, "driver_statistics", com.antigravity.models.DriverStatistics.class)
+        .save(dStats2);
+
+    // 6. Predictions & Evaluations
+    com.antigravity.models.RacePredictionRecord pred1 =
+        new com.antigravity.models.RacePredictionRecord();
+    pred1.setRaceId(raceId1);
+    pred1.setId(raceId1);
+    dbService.saveRacePredictionRecord(context, pred1, false);
+
+    com.antigravity.models.PredictionEvaluationRecord eval1 =
+        new com.antigravity.models.PredictionEvaluationRecord();
+    eval1.setRaceId(raceId1);
+    eval1.setId(raceId1);
+    dbService.savePredictionEvaluationRecord(context, eval1, false);
+
+    // Verify presence before reset
+    assertNotNull(dbService.getRaceRecords(context, raceId1, false));
+    assertEquals(2, dbService.getRaceHistory(context, false).size());
+    assertEquals(2, dbService.getSavedRaces(context, false).size());
+
+    // Execute resetRaceData for race 1
+    dbService.resetRaceData(context, raceId1);
+
+    // Verify race 1 data is wiped
+    assertEquals(
+        0.0,
+        dbService.getGlobalStatistics(context, raceId1, RaceScope.PRODUCTION).getTotalLaps(),
+        0.001);
+    assertEquals(
+        0, dbService.getGlobalStatistics(context, raceId1, RaceScope.PRODUCTION).getTotalRaces());
+    assertTrue(
+        dbService.getRaceRecords(context, raceId1, false) == null
+            || dbService
+                    .getRaceRecords(context, raceId1, false)
+                    .getOverall()
+                    .getFastestLap()
+                    .getValue()
+                == 0.0);
+
+    List<RaceHistoryRecord> remainingHistory = dbService.getRaceHistory(context, false);
+    assertEquals(1, remainingHistory.size());
+    assertEquals(raceId2, remainingHistory.get(0).getOriginalEntityId());
+
+    List<com.antigravity.race.RaceSaveData> remainingSaves =
+        dbService.getSavedRaces(context, false);
+    assertEquals(1, remainingSaves.size());
+    assertEquals("save_2", remainingSaves.get(0).getSaveName());
+
+    com.antigravity.models.DriverStatistics remainingDStats1 =
+        dbService.getDriverStatistics(context, "d1", raceId1, RaceScope.PRODUCTION);
+    assertEquals(0.0, remainingDStats1.getBestLapTime(), 0.001);
+
+    com.antigravity.models.DriverStatistics remainingDStats2 =
+        dbService.getDriverStatistics(context, "d1", raceId2, RaceScope.PRODUCTION);
+    assertEquals(6.456, remainingDStats2.getBestLapTime(), 0.001);
+
+    assertTrue(dbService.getRacePredictionRecord(context, raceId1, false) == null);
+    assertTrue(dbService.getPredictionEvaluationRecord(context, raceId1, false) == null);
+  }
+
+  @Test
+  public void testGetSavedRaces_IgnoresUnknownProperties() throws Exception {
+    databaseContext.ensureTable("saved_races");
+    String rawJsonWithUnknownProperty =
+        "{\"_id\":\"test-123\",\"saveName\":\"test_race.json\",\"unknownPropertyWhichShouldBeIgnored\":\"bloat\"}";
+    String sql = "INSERT INTO saved_races (entity_id, sequence_id, json_data) VALUES (?, ?, ?)";
+    try (java.sql.PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, "test-123");
+      pstmt.setString(2, "test_race.json");
+      pstmt.setString(3, rawJsonWithUnknownProperty);
+      pstmt.executeUpdate();
+    }
+    List<com.antigravity.race.RaceSaveData> saves =
+        dbService.getSavedRaces(databaseContext, RaceScope.PRODUCTION);
+    assertNotNull(saves);
+    assertEquals(1, saves.size());
+    assertEquals("test_race.json", saves.get(0).getSaveName());
+    assertEquals("test-123", saves.get(0).getId());
+    assertFalse(saves.get(0).isCorrupt());
+  }
+
+  @Test
+  public void testGetSavedRaces_CorruptJson() throws Exception {
+    databaseContext.ensureTable("saved_races");
+    String rawJsonCorrupt = "{ \"malformed\": true, \"_id\": [ { "; // Invalid JSON
+    String sql = "INSERT INTO saved_races (entity_id, sequence_id, json_data) VALUES (?, ?, ?)";
+    try (java.sql.PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, "test-corrupt-123");
+      pstmt.setString(2, "corrupted_race.json");
+      pstmt.setString(3, rawJsonCorrupt);
+      pstmt.executeUpdate();
+    }
+    List<com.antigravity.race.RaceSaveData> saves =
+        dbService.getSavedRaces(databaseContext, RaceScope.PRODUCTION);
+    assertNotNull(saves);
+    assertEquals(1, saves.size());
+    assertEquals("corrupted_race.json", saves.get(0).getSaveName());
+    assertTrue(saves.get(0).isCorrupt());
+  }
+
+  @Test
+  public void testUpdateGlobalStatisticsInDemoMode() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race Demo")
+            .withEntityId("DEMO1")
+            .build();
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(new RaceParticipant(new Driver("Dave", "DB")));
+
+    com.antigravity.race.Race runtimeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(drivers)
+            .track(dbService.getFactoryTrack())
+            .isDemoMode(true)
+            .build();
+
+    dbService.updateGlobalStatistics(databaseContext, runtimeRace);
+    assertNotNull(databaseContext);
+  }
+
+  @Test
+  public void testUpsertAutoSaveInDemoMode() {
+    com.antigravity.race.RaceSaveData data = new com.antigravity.race.RaceSaveData();
+    data.setDemoMode(true);
+    data.setSaveName("autosave_DEMO1.json");
+
+    dbService.upsertAutoSave(databaseContext, data);
+    assertNotNull(databaseContext);
+  }
+
+  @Test
+  public void testSaveDriverStatistics() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Test Race")
+            .withEntityId("RACE123")
+            .build();
+
+    List<com.antigravity.models.Lane> lanes =
+        Arrays.asList(
+            new com.antigravity.models.Lane("#ff0000", "#ffffff", 100),
+            new com.antigravity.models.Lane("#00ff00", "#000000", 100));
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder().name("2-Lane Track").lanes(lanes).build();
+
+    Driver d1 = new Driver("Driver 1", "d1", "d1", null);
+    RaceParticipant p1 = new RaceParticipant(d1);
+    List<RaceParticipant> participants = Arrays.asList(p1);
+
+    com.antigravity.race.DriverHeatData hd1_p1 = new com.antigravity.race.DriverHeatData(p1);
+    hd1_p1.addLap(5.5, false, true);
+    hd1_p1.addLap(6.0, false, true);
+
+    com.antigravity.race.Heat heat1 =
+        new com.antigravity.race.Heat(
+            1, Arrays.asList(hd1_p1), new com.antigravity.models.HeatScoring(), false);
+    heat1.setStarted(true);
+
+    Race runtimeRace =
+        new Race.Builder()
+            .model(model)
+            .drivers(participants)
+            .heats(Arrays.asList(heat1))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    dbService.saveDriverStatistics(databaseContext, runtimeRace);
+
+    com.antigravity.models.DriverStatistics stats =
+        dbService.getDriverStatistics(databaseContext, "d1", "RACE123", RaceScope.PRODUCTION);
+    assertNotNull(stats);
+  }
+
+  @Test
+  public void testGetDriverStatisticsStrictScopeIsolation() throws Exception {
+    String rootDir = tempFolder.newFolder("db_root_isolation").getAbsolutePath() + File.separator;
+    DatabaseContext dc = new DatabaseContext("iso_db", null, rootDir);
+    com.antigravity.models.DriverStatistics stats =
+        dbService.getDriverStatistics(dc, "d1", "RACE123", RaceScope.DEMO);
+    assertEquals(0.0, stats.getBestLapTime(), 0.001);
   }
 }

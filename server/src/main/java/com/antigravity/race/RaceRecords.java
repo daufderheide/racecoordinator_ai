@@ -86,6 +86,26 @@ public class RaceRecords {
     this.heatFastestLapHolderTeamName = "";
   }
 
+  public void resetAllRecords() {
+    boolean isTimeBased = race.isTimeBasedRanking();
+    this.overallFastestLap = Double.MAX_VALUE;
+    this.overallFastestLapHolder = "";
+    this.overallFastestLapHolderNickname = "";
+    this.overallFastestLapHolderTeamName = "";
+    this.overallFastestLapDate = 0;
+
+    this.overallHighestScore = isTimeBased ? Double.MAX_VALUE : 0;
+    this.overallHighestScoreHolder = "";
+    this.overallHighestScoreHolderNickname = "";
+    this.overallHighestScoreHolderTeamName = "";
+    this.overallHighestScoreDate = 0;
+
+    resetHeatRecords();
+    resetRaceSessionRecords(isTimeBased);
+    resetRaceFastestLapRecords();
+    initializeLaneRecords();
+  }
+
   public void initializeLaneRecords() {
     // TODO(aufderheide): Figure out how lanes could be empty here and fix it.
     // Defaulting to 4 isn't a solution.
@@ -670,6 +690,7 @@ public class RaceRecords {
     if (race.getDatabaseContext() == null) return;
     try {
       DatabaseService dbService = DatabaseService.getInstance();
+      if (dbService == null) return;
       GlobalStatistics stats = new GlobalStatistics();
       stats.setFastestLapTime(overallFastestLap);
       stats.setFastestLapDriverName(overallFastestLapHolder);

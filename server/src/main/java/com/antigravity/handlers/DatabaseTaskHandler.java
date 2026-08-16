@@ -641,6 +641,14 @@ public class DatabaseTaskHandler {
     raceHeatTaskHandler.deleteRace(id);
   }
 
+  public void handleResetRace(Context ctx) {
+    raceHeatTaskHandler.handleResetRace(ctx);
+  }
+
+  public void resetRace(String id) {
+    raceHeatTaskHandler.resetRace(id);
+  }
+
   public void getRaces(Context ctx) {
     raceHeatTaskHandler.getRaces(ctx);
   }

@@ -396,34 +396,33 @@ public class AssetDefaultsInitializer {
       List<Theme> themes = themeRepo.findAll();
       boolean hasDefault = false;
       for (Theme t : themes) {
+        boolean updated = false;
+        Map<String, String> s = new HashMap<>(t.getSlots());
+        if (migrateThemeSlots(s, t.isDefault())) {
+          updated = true;
+        }
+        if (s.containsKey("audio.countdown")) {
+          s.remove("audio.countdown");
+          updated = true;
+        }
+        if (s.containsKey("audio.seconds_left")) {
+          s.remove("audio.seconds_left");
+          updated = true;
+        }
+
+        Map<String, AudioConfig> as =
+            t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
+        if (populateDefaultAudioSlots(as)) {
+          updated = true;
+        }
+
         if (t.isDefault()) {
           hasDefault = true;
-          boolean updated = false;
-          Map<String, String> s = new HashMap<>(t.getSlots());
-          if (!s.containsKey("gauge.fuel")) {
-            s.put("gauge.fuel", "default_fuel_gauge");
-            updated = true;
-          }
-          if (s.containsKey("audio.countdown")) {
-            s.remove("audio.countdown");
-            updated = true;
-          }
-          if (s.containsKey("audio.seconds_left")) {
-            s.remove("audio.seconds_left");
-            updated = true;
-          }
+        }
 
-          Map<String, AudioConfig> as =
-              t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
-          if (populateDefaultAudioSlots(as)) {
-            updated = true;
-          }
-
-          if (updated) {
-            Theme newTheme = new Theme(t.getName(), true, s, as, t.getEntityId(), t.getId());
-            themeRepo.save(newTheme);
-          }
-          break;
+        if (updated) {
+          Theme newTheme = new Theme(t.getName(), t.isDefault(), s, as, t.getEntityId(), t.getId());
+          themeRepo.save(newTheme);
         }
       }
       if (!hasDefault) {
@@ -439,6 +438,70 @@ public class AssetDefaultsInitializer {
     } catch (Exception e) {
       logger.error("Failed to backfill default theme", e);
     }
+  }
+
+  private boolean migrateThemeSlots(Map<String, String> s, boolean isDefault) {
+    boolean updated = false;
+
+    // Migrate old flag slots to behavioral slots if old exist
+    String green = s.remove("flag.green");
+    String yellow = s.remove("flag.yellow");
+    String red = s.remove("flag.red");
+    String white = s.remove("flag.white");
+    String yellowgreen = s.remove("flag.yellowgreen");
+    String checkered = s.remove("flag.checkered");
+    String black = s.remove("flag.black");
+
+    if (green != null) {
+      if (!s.containsKey("flag.racing")) s.put("flag.racing", green);
+      updated = true;
+    }
+    if (yellow != null) {
+      if (!s.containsKey("flag.heat_paused")) s.put("flag.heat_paused", yellow);
+      if (!s.containsKey("flag.restarting")) s.put("flag.restarting", yellow);
+      updated = true;
+    }
+    if (red != null) {
+      if (!s.containsKey("flag.not_started")) s.put("flag.not_started", red);
+      if (!s.containsKey("flag.starting")) s.put("flag.starting", red);
+      if (!s.containsKey("flag.heat_over")) s.put("flag.heat_over", red);
+      if (!s.containsKey("flag.driver_finished")) s.put("flag.driver_finished", red);
+      updated = true;
+    }
+    if (white != null) {
+      if (!s.containsKey("flag.one_lap_to_go")) s.put("flag.one_lap_to_go", white);
+      updated = true;
+    }
+    if (yellowgreen != null) {
+      if (!s.containsKey("flag.warmup")) s.put("flag.warmup", yellowgreen);
+      updated = true;
+    }
+    if (checkered != null) {
+      if (!s.containsKey("flag.heat_finishing")) s.put("flag.heat_finishing", checkered);
+      if (!s.containsKey("flag.race_over")) s.put("flag.race_over", checkered);
+      updated = true;
+    }
+    if (black != null) {
+      if (!s.containsKey("flag.penalty")) s.put("flag.penalty", black);
+      updated = true;
+    }
+
+    if (!s.containsKey("gauge.fuel")) {
+      s.put("gauge.fuel", "default_fuel_gauge");
+      updated = true;
+    }
+
+    if (isDefault) {
+      Map<String, String> defaults = createDefaultSlots();
+      for (Map.Entry<String, String> entry : defaults.entrySet()) {
+        if (!s.containsKey(entry.getKey())) {
+          s.put(entry.getKey(), entry.getValue());
+          updated = true;
+        }
+      }
+    }
+
+    return updated;
   }
 
   private boolean populateDefaultAudioSlots(Map<String, AudioConfig> as) {
@@ -490,13 +553,18 @@ public class AssetDefaultsInitializer {
 
   private Map<String, String> createDefaultSlots() {
     Map<String, String> slots = new HashMap<>();
-    slots.put("flag.green", "default_flag_green");
-    slots.put("flag.red", "default_flag_red");
-    slots.put("flag.yellow", "default_flag_yellow");
-    slots.put("flag.white", "default_flag_white");
-    slots.put("flag.yellowgreen", "default_flag_green_yellow");
-    slots.put("flag.checkered", "default_flag_checkered");
-    slots.put("flag.black", "default_flag_black");
+    slots.put("flag.racing", "default_flag_green");
+    slots.put("flag.heat_paused", "default_flag_yellow");
+    slots.put("flag.heat_over", "default_flag_red");
+    slots.put("flag.race_over", "default_flag_checkered");
+    slots.put("flag.not_started", "default_flag_red");
+    slots.put("flag.starting", "default_flag_red");
+    slots.put("flag.restarting", "default_flag_yellow");
+    slots.put("flag.one_lap_to_go", "default_flag_white");
+    slots.put("flag.heat_finishing", "default_flag_checkered");
+    slots.put("flag.warmup", "default_flag_green_yellow");
+    slots.put("flag.driver_finished", "default_flag_red");
+    slots.put("flag.penalty", "default_flag_black");
     slots.put("lamp.red.on", "default_start_red_on");
     slots.put("lamp.red.dim", "default_start_red_dim");
     slots.put("lamp.green", "default_start_green");

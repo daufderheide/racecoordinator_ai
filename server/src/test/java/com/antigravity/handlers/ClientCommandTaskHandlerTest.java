@@ -1475,4 +1475,19 @@ public class ClientCommandTaskHandlerTest {
     verify(localCtx).json(any());
     BleConnection.clearDiscoveredBleDevices();
   }
+
+  @Test
+  public void testExportLapDataSubclass() {
+    ClientCommandTaskHandler.ExportLapData data =
+        new ClientCommandTaskHandler.ExportLapData(
+            "Driver A", "Actual A", 1, 2, 10.0, 100.0, 5.0, java.util.Arrays.asList(1.5, 2.0));
+    assertEquals("Driver A", data.getDriverName());
+    assertEquals("Actual A", data.getActualDriverName());
+    assertEquals(1, data.getHeatNumber());
+    assertEquals(2, data.getLaneNumber());
+    assertEquals(10.0, data.getAbsoluteHeatLapTime(), 0.001);
+    assertEquals(100.0, data.getAbsoluteLapTime(), 0.001);
+    assertEquals(5.0, data.getLapTime(), 0.001);
+    assertEquals(2, data.getSegments().size());
+  }
 }

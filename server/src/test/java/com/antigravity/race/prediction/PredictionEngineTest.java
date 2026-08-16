@@ -672,4 +672,36 @@ public class PredictionEngineTest {
     assertTrue(
         "Projected laps should be valid when allRaceLapTimes exists", dp.getProjectedLaps() > 0);
   }
+
+  @Test
+  public void testDriverHeatStateEqualsAndHashCode() {
+    PredictionEngine.DriverHeatState s1 = new PredictionEngine.DriverHeatState();
+    s1.totalLapsCompleted = 5.0;
+    s1.totalElapsedSec = 25.0;
+    s1.currentHeatLapsCompleted = 2.0;
+    s1.currentHeatElapsedSec = 10.0;
+    s1.currentHeatPendingLapTime = 3.5;
+    s1.currentHeatLapTimes.add(5.0);
+    s1.allRaceLapTimes.add(5.0);
+
+    PredictionEngine.DriverHeatState s2 = new PredictionEngine.DriverHeatState();
+    s2.totalLapsCompleted = 5.0;
+    s2.totalElapsedSec = 25.0;
+    s2.currentHeatLapsCompleted = 2.0;
+    s2.currentHeatElapsedSec = 10.0;
+    s2.currentHeatPendingLapTime = 3.5;
+    s2.currentHeatLapTimes.add(5.0);
+    s2.allRaceLapTimes.add(5.0);
+
+    assertTrue(s1.equals(s1));
+    assertTrue(s1.equals(s2));
+    assertEquals(s1.hashCode(), s2.hashCode());
+
+    assertFalse(s1.equals(null));
+    assertFalse(s1.equals("NotAState"));
+
+    PredictionEngine.DriverHeatState s3 = new PredictionEngine.DriverHeatState();
+    s3.totalLapsCompleted = 6.0;
+    assertFalse(s1.equals(s3));
+  }
 }

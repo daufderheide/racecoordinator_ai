@@ -12,6 +12,7 @@ import {
 } from "@angular/core";
 import { ActivatedRoute, Router, RouterStateSnapshot } from "@angular/router";
 import { Observable } from "rxjs";
+import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
 import { AuthService } from "@app/services/auth.service";
@@ -76,7 +77,7 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
   selector: "app-raceday",
   templateUrl: "./raceday.component.html",
   styleUrls: ["./raceday.component.css"],
-  imports: [],
+  imports: [AboutDialogComponent],
 })
 export class RacedayComponent
   implements OnInit, OnDestroy, CanComponentDeactivate
@@ -88,6 +89,13 @@ export class RacedayComponent
   isLoading = true;
   error: string | null = null;
 
+  showAboutDialog = false;
+  serverVersion = "";
+  serverIp = "";
+  serverPort = 7070;
+  clientVersion: string =
+    (window as any).CLIENT_VERSION_OVERRIDE || "0.0.0_dev";
+
   constructor(
     private fileSystem: FileSystemService,
     private compiler: Compiler,
@@ -95,11 +103,13 @@ export class RacedayComponent
     private cdr: ChangeDetectorRef,
     private dynamicComponentService: DynamicComponentService,
     private logger: LoggerService,
+    private dataService: DataService,
   ) {}
 
   async ngOnInit() {
     this.isLoading = true;
     this.container.clear();
+    this.refreshServerInfo();
 
     try {
       if (
@@ -136,11 +146,43 @@ export class RacedayComponent
     }
   }
 
+  private refreshServerInfo() {
+    this.dataService.getServerVersion().subscribe({
+      next: (version) => {
+        this.serverVersion = version;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        if (err.status !== 0) {
+          this.logger.warn("Failed to fetch server version", err);
+        }
+      },
+    });
+
+    this.dataService.getServerIp().subscribe({
+      next: (ip) => {
+        this.serverIp = ip;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        if (err.status !== 0) {
+          this.logger.warn("Failed to fetch server IP", err);
+        }
+      },
+    });
+  }
+
   loadDefaultComponent() {
     const componentRef = this.container.createComponent(
       DefaultRacedayComponent,
     );
     this.childComponent = componentRef.instance;
+    if (this.childComponent && this.childComponent.requestAbout) {
+      this.childComponent.requestAbout.subscribe(() => {
+        this.showAboutDialog = true;
+        this.cdr.detectChanges();
+      });
+    }
   }
 
   async loadCustomComponent(subfolder?: string) {
@@ -196,6 +238,12 @@ export class RacedayComponent
 
       const componentRef = this.container.createComponent(componentType);
       this.childComponent = componentRef.instance;
+      if (this.childComponent && this.childComponent.requestAbout) {
+        this.childComponent.requestAbout.subscribe(() => {
+          this.showAboutDialog = true;
+          this.cdr.detectChanges();
+        });
+      }
     } catch (e) {
       // If we can't find the specific raceday files, just throw so we fallback
       throw e;

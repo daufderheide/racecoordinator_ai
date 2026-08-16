@@ -22,6 +22,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.util.SeasonPointsCalculator;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,7 +35,8 @@ import org.slf4j.LoggerFactory;
 
 public class DatabaseService {
   private static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper =
+      new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   private static DatabaseService instance = new DatabaseService();
   private boolean replayMode = false;
 
@@ -51,6 +53,9 @@ public class DatabaseService {
   }
 
   public static DatabaseService getInstance() {
+    if (instance == null) {
+      instance = new DatabaseService();
+    }
     return instance;
   }
 
@@ -380,21 +385,30 @@ public class DatabaseService {
     String tableName = getCollectionName("saved_races", scope);
     context.ensureTable(tableName);
     List<RaceSaveData> saves = new ArrayList<>();
-    String sql = "SELECT json_data FROM " + tableName;
+    String sql = "SELECT sequence_id, json_data FROM " + tableName;
     try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql);
         ResultSet rs = pstmt.executeQuery()) {
       while (rs.next()) {
+        String sequenceId = rs.getString("sequence_id");
         String json = rs.getString("json_data");
         if (json != null && !json.trim().isEmpty()) {
-          RaceSaveData race = objectMapper.readValue(json, RaceSaveData.class);
-          if (race != null) {
-            if (race.getHeats() != null && race.getModel() != null) {
-              for (Heat heat : race.getHeats()) {
-                heat.initializeStandings(
-                    race.getModel().getHeatScoring(), race.getModel().isPractice());
+          try {
+            RaceSaveData race = objectMapper.readValue(json, RaceSaveData.class);
+            if (race != null) {
+              if (race.getHeats() != null && race.getModel() != null) {
+                for (Heat heat : race.getHeats()) {
+                  heat.initializeStandings(
+                      race.getModel().getHeatScoring(), race.getModel().isPractice());
+                }
               }
+              saves.add(race);
             }
-            saves.add(race);
+          } catch (Exception e) {
+            logger.warn("Failed to parse a saved race record, marking it corrupt.", e);
+            RaceSaveData corruptRace = new RaceSaveData();
+            corruptRace.setSaveName(sequenceId);
+            corruptRace.setCorrupt(true);
+            saves.add(corruptRace);
           }
         }
       }
@@ -459,25 +473,47 @@ public class DatabaseService {
     return deleteSavedRace(context, saveName, RaceScope.fromBoolean(isDemo));
   }
 
+  public void resetRaceData(DatabaseContext context, String raceEntityId) {
+    deleteAllRaceData(context, raceEntityId);
+  }
+
   public void deleteAllRaceData(DatabaseContext context, String raceEntityId) {
     if (context == null || raceEntityId == null || raceEntityId.isEmpty()) return;
     try {
       deleteFromTableWhere(
           context,
           getCollectionName("race_history", false),
-          "json_data LIKE '%\"original_entity_id\":\"" + raceEntityId + "\"%'");
+          "json_data LIKE '%\"original_entity_id\":\""
+              + raceEntityId
+              + "\"%' OR json_data LIKE '%\"entity_id\":\""
+              + raceEntityId
+              + "\"%'");
       deleteFromTableWhere(
           context,
           getCollectionName("race_history", true),
-          "json_data LIKE '%\"original_entity_id\":\"" + raceEntityId + "\"%'");
+          "json_data LIKE '%\"original_entity_id\":\""
+              + raceEntityId
+              + "\"%' OR json_data LIKE '%\"entity_id\":\""
+              + raceEntityId
+              + "\"%'");
+      deleteFromRaceRecords(context, getCollectionName("race_records", false), raceEntityId);
+      deleteFromRaceRecords(context, getCollectionName("race_records", true), raceEntityId);
       deleteFromTableWhere(
           context,
           getCollectionName("global_statistics", false),
-          "entity_id = '" + raceEntityId + "'");
+          "entity_id = '"
+              + raceEntityId
+              + "' OR json_data LIKE '%\"race_entity_id\":\""
+              + raceEntityId
+              + "\"%'");
       deleteFromTableWhere(
           context,
           getCollectionName("global_statistics", true),
-          "entity_id = '" + raceEntityId + "'");
+          "entity_id = '"
+              + raceEntityId
+              + "' OR json_data LIKE '%\"race_entity_id\":\""
+              + raceEntityId
+              + "\"%'");
       deleteFromTableWhere(
           context,
           getCollectionName("saved_races", false),
@@ -494,8 +530,59 @@ public class DatabaseService {
           context,
           getCollectionName("driver_statistics", true),
           "json_data LIKE '%\"race_id\":\"" + raceEntityId + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("race_predictions", false),
+          "entity_id = '"
+              + raceEntityId
+              + "' OR json_data LIKE '%\"raceId\":\""
+              + raceEntityId
+              + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("race_predictions", true),
+          "entity_id = '"
+              + raceEntityId
+              + "' OR json_data LIKE '%\"raceId\":\""
+              + raceEntityId
+              + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("prediction_evaluations", false),
+          "entity_id = '"
+              + raceEntityId
+              + "' OR json_data LIKE '%\"raceId\":\""
+              + raceEntityId
+              + "\"%'");
+      deleteFromTableWhere(
+          context,
+          getCollectionName("prediction_evaluations", true),
+          "entity_id = '"
+              + raceEntityId
+              + "' OR json_data LIKE '%\"raceId\":\""
+              + raceEntityId
+              + "\"%'");
     } catch (Exception e) {
       logger.error("Failed to perform cascading deletion for race {}", raceEntityId, e);
+    }
+  }
+
+  private void deleteFromRaceRecords(DatabaseContext context, String tableName, String raceId) {
+    try {
+      context
+          .getConnection()
+          .createStatement()
+          .execute(
+              "CREATE TABLE IF NOT EXISTS "
+                  + tableName
+                  + " (race_id TEXT PRIMARY KEY, records_blob BLOB)");
+      String sql = "DELETE FROM " + tableName + " WHERE race_id = ?";
+      try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+        pstmt.setString(1, raceId);
+        pstmt.executeUpdate();
+      }
+    } catch (Exception e) {
+      // Ignore
     }
   }
 

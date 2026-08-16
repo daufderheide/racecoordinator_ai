@@ -13,8 +13,6 @@ test.describe("UI Editor Visuals", () => {
     await TestSetupHelper.setupThemeMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
-      flagGreen: "/api/assets/download?filename=img1.png",
-      flagRed: "/api/assets/download?filename=img1.png",
       uiEditorHelpShown: true,
     });
 
@@ -53,33 +51,38 @@ test.describe("UI Editor Visuals", () => {
     );
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
-    const editor = page.locator(".ue-container");
-    const harness = new UIEditorHarnessE2e(editor);
-
     // Expand the custom theme section (2nd theme)
-    await page
-      .locator(".theme-sub-section")
-      .nth(1)
+    const customThemeSection = page.locator(".theme-sub-section").nth(1);
+    await customThemeSection
       .locator(".section-header")
       .first()
       .click({ force: true });
 
-    // "Flag Images" sub-section is expanded by default (sectionsExpanded.flags = true)
+    // Wait for flags grid to be visible
+    const flagGrid = customThemeSection.locator(".flags-grid");
+    await flagGrid.waitFor({ state: "visible" });
 
-    await harness.clickImageSelector(0); // Green Flag of Custom Theme (1st flag of currently expanded theme)
+    // Click 1st flag preview of custom theme
+    await customThemeSection
+      .locator("app-image-selector .image-preview")
+      .first()
+      .click({ force: true });
 
     // Wait for image selector modal to be visible
-    await page
-      .locator("app-image-selector app-item-selector .modal-backdrop")
-      .first()
-      .waitFor({ state: "visible" });
-    // Title checked visually
+    const itemSelector = page.locator("app-item-selector");
+    const modalContent = itemSelector.locator(".modal-content");
+    await modalContent.waitFor({ state: "visible" });
+    await TestSetupHelper.waitForImagesLoaded(modalContent);
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(300);
 
-    const itemSelector = page
-      .locator("app-item-selector .modal-content")
-      .last();
-    await expect(itemSelector).toHaveScreenshot(
+    await expect(modalContent).toHaveScreenshot(
       "ui-editor-image-selector-modal.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
     );
   });
 
@@ -89,47 +92,56 @@ test.describe("UI Editor Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/raceday-setup"),
+      page.goto("/ui-editor"),
     );
-    await page.evaluate(async () => {
-      await (window as any).angularRouter.navigateByUrl("/ui-editor");
-    });
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
     // Expand Custom Theme
-    await page
-      .locator(".theme-sub-section")
-      .nth(1)
+    const customThemeSection = page.locator(".theme-sub-section").nth(1);
+    await customThemeSection
       .locator(".section-header")
       .first()
       .click({ force: true });
 
     // Set duplicate name (Default Theme)
-    const themeInput = page.locator(".theme-name-input").first();
+    const themeInput = customThemeSection.locator(".theme-name-input").first();
     await themeInput.fill("Default Theme");
     await themeInput.blur();
 
     // Wait for invalid class to be applied
-    const container = page.locator(".theme-title-container.invalid").first();
-    await container.waitFor({ state: "visible" });
-    await page.waitForTimeout(2000); // Allow layout and font antialiasing to settle
-
-    const sectionHeader = page
-      .locator(".theme-sub-section .section-header")
-      .filter({ has: page.locator(".theme-title-container.invalid") })
+    const container = customThemeSection
+      .locator(".theme-title-container.invalid")
       .first();
+    await container.waitFor({ state: "visible" });
+
+    // Clear hover/focus and scroll into view
+    await page.mouse.move(0, 0);
+    const sectionHeader = customThemeSection.locator(".section-header").first();
+    await sectionHeader.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+
     await expect(sectionHeader).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
       {
         maxDiffPixelRatio: 0.15,
         maxDiffPixels: 10000,
-        timeout: 15000,
         animations: "disabled",
       },
     );
 
-    // Try to navigate back
-    await page.evaluate(() => window.history.back());
+    // Try to navigate away to trigger pending changes guard inside Angular zone
+    await page.waitForTimeout(300);
+    await page.evaluate(() => {
+      const ngZone = (window as any).ngZone;
+      const router = (window as any).angularRouter;
+      if (ngZone && router) {
+        ngZone.run(() => {
+          void router.navigateByUrl("/raceday-setup");
+        });
+      } else if (router) {
+        void router.navigateByUrl("/raceday-setup");
+      }
+    });
 
     // Wait for confirmation modal backdrop and content to be visible
     const modal = page.locator(
@@ -137,6 +149,8 @@ test.describe("UI Editor Visuals", () => {
     );
     const modalContent = modal.locator(".modal-content");
     await modalContent.waitFor({ state: "visible" });
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
     await expect(modalContent).toHaveScreenshot(
       "ui-editor-discard-confirm.png",
@@ -166,13 +180,17 @@ test.describe("UI Editor Visuals", () => {
     // Wait for column toolbox to be visible inside the section
     const columnToolbox = page.locator(".layout-customizer-toolbox").last();
     await columnToolbox.waitFor({ state: "visible" });
+    await TestSetupHelper.waitForImagesLoaded(practiceSection);
+    const configSectionPractice = page.locator(".config-section").nth(1);
+    await configSectionPractice.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(500);
 
-    await expect(page.locator(".config-section").nth(1)).toHaveScreenshot(
+    await expect(configSectionPractice).toHaveScreenshot(
       "ui-editor-practice-layout-section.png",
       {
         maxDiffPixelRatio: 0.05,
         maxDiffPixels: 10000,
-        timeout: 15000,
         animations: "disabled",
       },
     );
@@ -201,20 +219,103 @@ test.describe("UI Editor Visuals", () => {
       {
         maxDiffPixelRatio: 0.05,
         maxDiffPixels: 10000,
-        timeout: 15000,
         animations: "disabled",
       },
     );
-    await resolutionSelect.selectOption("1920x1080");
+    await page.waitForTimeout(300);
+    await resolutionSelect.evaluate((el: HTMLSelectElement) => {
+      el.value = "1920x1080";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
     await page.waitForTimeout(2000); // Wait for scaling animation
 
-    await expect(
-      page.locator(".raceday-preview-scaler").first(),
-    ).toHaveScreenshot("ui-editor-layout-preview-scaled.png", {
-      maxDiffPixelRatio: 0.1,
-      maxDiffPixels: 40000,
-      timeout: 15000,
-      animations: "disabled",
-    });
+    const previewScaler = page.locator(".raceday-preview-scaler").first();
+    await previewScaler.scrollIntoViewIfNeeded();
+    await expect(previewScaler).toHaveScreenshot(
+      "ui-editor-layout-preview-scaled.png",
+      {
+        maxDiffPixelRatio: 0.1,
+        maxDiffPixels: 40000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display expanded custom theme with all 12 behavioral flags", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Expand Custom Theme (2nd theme sub-section)
+    const customThemeSection = page.locator(".theme-sub-section").nth(1);
+    await customThemeSection
+      .locator(".section-header")
+      .first()
+      .click({ force: true });
+
+    // Wait for the flag images grid to be rendered
+    const flagGrid = customThemeSection.locator(".flags-grid");
+    await flagGrid.waitFor({ state: "visible" });
+    await flagGrid
+      .locator("app-image-selector")
+      .nth(11)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(customThemeSection);
+    await customThemeSection.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(300);
+
+    await expect(customThemeSection).toHaveScreenshot(
+      "ui-editor-theme-custom-expanded.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display expanded default theme in read-only mode", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Expand Default Theme (1st theme sub-section)
+    const defaultThemeSection = page.locator(".theme-sub-section").first();
+    await defaultThemeSection
+      .locator(".section-header")
+      .first()
+      .click({ force: true });
+
+    // Wait for the flag images grid to be rendered
+    const flagGrid = defaultThemeSection.locator(".flags-grid");
+    await flagGrid.waitFor({ state: "visible" });
+    await flagGrid
+      .locator("app-image-selector")
+      .nth(11)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(defaultThemeSection);
+    await defaultThemeSection.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    await page.waitForTimeout(300);
+
+    await expect(defaultThemeSection).toHaveScreenshot(
+      "ui-editor-theme-default-expanded.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 10000,
+        animations: "disabled",
+      },
+    );
   });
 });

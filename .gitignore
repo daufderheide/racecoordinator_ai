@@ -4,7 +4,11 @@
 /dist/
 /out-tsc/
 /tmp/
-/coverage/
+coverage/
+client/coverage/
+.stryker-tmp/
+.stryker-incremental.json
+pit-reports/
 /e2e/test-output/
 /.angular/
 .angular/

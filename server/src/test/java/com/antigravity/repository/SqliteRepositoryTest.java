@@ -121,4 +121,154 @@ public class SqliteRepositoryTest {
     assertEquals("1", seq1);
     assertEquals("2", seq2);
   }
+
+  @Test
+  public void testDropClearsTable() {
+    Driver d1 = new Driver("Driver One", "D1", "d1", "d1");
+    driverRepository.insert(d1);
+    assertEquals(1, driverRepository.findAll().size());
+
+    driverRepository.drop();
+    assertEquals(0, driverRepository.findAll().size());
+  }
+
+  @Test
+  public void testSaveNullEntityIsNoOp() {
+    driverRepository.save(null);
+    driverRepository.insert(null);
+    assertEquals(0, driverRepository.findAll().size());
+  }
+
+  @Test
+  public void testFindByEntityIdNullOrEmptyReturnsNull() {
+    assertNull(driverRepository.findByEntityId(null));
+    assertNull(driverRepository.findByEntityId(""));
+    assertNull(driverRepository.findByEntityId("   "));
+  }
+
+  @Test
+  public void testDeleteNullOrEmptyIsNoOp() {
+    Driver d1 = new Driver("Driver One", "D1", "d1", "d1");
+    driverRepository.insert(d1);
+
+    driverRepository.delete(null);
+    driverRepository.delete("");
+    driverRepository.delete("   ");
+    assertEquals(1, driverRepository.findAll().size());
+  }
+
+  public static class RacePojo {
+    private String raceId;
+    private String title;
+
+    public RacePojo() {}
+
+    public RacePojo(String raceId, String title) {
+      this.raceId = raceId;
+      this.title = title;
+    }
+
+    public String getRaceId() {
+      return raceId;
+    }
+
+    public void setRaceId(String raceId) {
+      this.raceId = raceId;
+    }
+
+    public String getTitle() {
+      return title;
+    }
+
+    public void setTitle(String title) {
+      this.title = title;
+    }
+  }
+
+  public static class IdPojo {
+    private String id;
+    private String val;
+
+    public IdPojo() {}
+
+    public IdPojo(String id, String val) {
+      this.id = id;
+      this.val = val;
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    public void setId(String id) {
+      this.id = id;
+    }
+
+    public String getVal() {
+      return val;
+    }
+
+    public void setVal(String val) {
+      this.val = val;
+    }
+  }
+
+  public static class FallbackPojo {
+    private String description;
+
+    public FallbackPojo() {}
+
+    public FallbackPojo(String description) {
+      this.description = description;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+  }
+
+  @Test
+  public void testExtractEntityIdFromDifferentObjectTypes() {
+    SqliteRepository<RacePojo> raceRepo =
+        new SqliteRepository<>(databaseContext, "custom_races", RacePojo.class);
+    RacePojo race = new RacePojo("r_999", "Grand Prix");
+    raceRepo.save(race);
+    RacePojo foundRace = raceRepo.findByEntityId("r_999");
+    assertNotNull(foundRace);
+    assertEquals("Grand Prix", foundRace.getTitle());
+
+    SqliteRepository<IdPojo> idRepo =
+        new SqliteRepository<>(databaseContext, "custom_ids", IdPojo.class);
+    IdPojo idPojo = new IdPojo("id_888", "Custom Value");
+    idRepo.save(idPojo);
+    IdPojo foundId = idRepo.findByEntityId("id_888");
+    assertNotNull(foundId);
+    assertEquals("Custom Value", foundId.getVal());
+
+    SqliteRepository<FallbackPojo> fallbackRepo =
+        new SqliteRepository<>(databaseContext, "custom_fallbacks", FallbackPojo.class);
+    FallbackPojo fallback = new FallbackPojo("Random Object");
+    fallbackRepo.save(fallback);
+    List<FallbackPojo> allFallbacks = fallbackRepo.findAll();
+    assertEquals(1, allFallbacks.size());
+    assertEquals("Random Object", allFallbacks.get(0).getDescription());
+  }
+
+  @Test
+  public void testOperationsWithClosedConnectionHandleGracefully() throws Exception {
+    Driver d1 = new Driver("Driver One", "D1", "d1", "d1");
+    driverRepository.insert(d1);
+
+    databaseContext.getConnection().close();
+
+    List<Driver> result = driverRepository.findAll();
+    assertNotNull(result);
+    assertNull(driverRepository.findByEntityId("d1"));
+    driverRepository.delete("d1");
+    driverRepository.drop();
+  }
 }

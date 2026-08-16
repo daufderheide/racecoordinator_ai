@@ -1,0 +1,31 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/api/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "karma",
+  "karma": {
+    "configFile": "karma.conf.js"
+  },
+  "mutate": [
+    "src/app/utils/**/*.ts",
+    "src/app/services/**/*.ts",
+    "src/app/converters/**/*.ts",
+    "!src/app/**/*.spec.ts",
+    "!src/app/**/testing/**",
+    "!src/app/proto/**"
+  ],
+  "checkers": ["typescript"],
+  "tsconfigFile": "tsconfig.spec.json",
+  "reporters": ["progress", "clear-text", "html"],
+  "htmlReporter": {
+    "fileName": "coverage/mutation/index.html"
+  },
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 50
+  },
+  "concurrency": 2,
+  "timeoutMS": 10000,
+  "incremental": true,
+  "incrementalFile": ".stryker-incremental.json"
+}

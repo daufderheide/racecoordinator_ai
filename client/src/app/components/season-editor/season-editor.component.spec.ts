@@ -673,8 +673,10 @@ describe("SeasonEditorComponent", () => {
           driver_name: "Pro 10",
           overall_rank: 1,
           overall_points: 30,
+          overall_bonus_points: 4,
           heat_points: 5,
-          total_points: 35,
+          heat_bonus_points: 2,
+          total_points: 41,
         },
       ],
     };
@@ -683,7 +685,49 @@ describe("SeasonEditorComponent", () => {
     expect(record.driver_results.length).toBe(1);
     expect(record.driver_results[0].driver_id).toBe("d10");
     expect(record.driver_results[0].overall_points).toBe(30);
+    expect(record.driver_results[0].overall_bonus_points).toBe(4);
     expect(record.driver_results[0].heat_points).toBe(5);
-    expect(record.driver_results[0].total_points).toBe(35);
+    expect(record.driver_results[0].heat_bonus_points).toBe(2);
+    expect(record.driver_results[0].total_points).toBe(41);
+  });
+
+  it("should calculate heat position points map correctly based on heat laps and times", () => {
+    const heatPointsList = [5, 3, 1];
+    const heats = [
+      {
+        drivers: [
+          { driverId: "d1", laps: [1, 2, 3], totalTime: 15.0 }, // 3 laps, 15.0s -> 1st (5 pts)
+          { driverId: "d2", laps: [1, 2, 3], totalTime: 16.5 }, // 3 laps, 16.5s -> 2nd (3 pts)
+          { driverId: "d3", laps: [1, 2], totalTime: 12.0 }, // 2 laps -> 3rd (1 pt)
+        ],
+      },
+      {
+        drivers: [
+          { driver: { entity_id: "d2" }, laps: [1, 2, 3, 4], totalTime: 20.0 }, // 4 laps -> 1st (5 pts)
+          { driver: { entity_id: "d1" }, laps: [1, 2], totalTime: 10.0 }, // 2 laps -> 2nd (3 pts)
+        ],
+      },
+    ];
+
+    const heatPointsMap = component["calculateDriverHeatPointsMap"](
+      heats,
+      heatPointsList,
+    );
+    // d1: 5 (heat 1) + 3 (heat 2) = 8
+    expect(heatPointsMap.get("d1")).toBe(8);
+    // d2: 3 (heat 1) + 5 (heat 2) = 8
+    expect(heatPointsMap.get("d2")).toBe(8);
+    // d3: 1 (heat 1) = 1
+    expect(heatPointsMap.get("d3")).toBe(1);
+  });
+
+  it("should return empty map for invalid heats or empty heat points list in calculateDriverHeatPointsMap", () => {
+    expect(component["calculateDriverHeatPointsMap"]([], [5, 3]).size).toBe(0);
+    expect(
+      component["calculateDriverHeatPointsMap"](null as any, [5, 3]).size,
+    ).toBe(0);
+    expect(
+      component["calculateDriverHeatPointsMap"]([{ drivers: [] }], []).size,
+    ).toBe(0);
   });
 });

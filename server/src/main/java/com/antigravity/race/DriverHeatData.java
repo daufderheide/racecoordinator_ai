@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DriverHeatData extends ServerToClientObject implements GapParticipant {
+public class DriverHeatData extends ServerToClientObject
+    implements GapParticipant, StandingsParticipant {
 
   private RaceParticipant driver;
   private Driver actualDriver;
@@ -107,6 +108,15 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   private double carryOverTime = 0.0;
   private boolean hasDriftTime = false;
   private int lane = 0;
+  private int lapsLed = 0;
+
+  public int getLapsLed() {
+    return lapsLed;
+  }
+
+  public void setLapsLed(int lapsLed) {
+    this.lapsLed = lapsLed;
+  }
 
   public int getLane() {
     return lane;
@@ -499,5 +509,31 @@ public class DriverHeatData extends ServerToClientObject implements GapParticipa
   @com.fasterxml.jackson.annotation.JsonIgnore
   public boolean isEmptyParticipant() {
     return actualDriver == null || actualDriver.isEmpty();
+  }
+
+  @Override
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  public String getParticipantId() {
+    if (actualDriver != null
+        && actualDriver.getEntityId() != null
+        && !actualDriver.getEntityId().isEmpty()) {
+      return actualDriver.getEntityId();
+    }
+    if (driver != null
+        && driver.getDriver() != null
+        && driver.getDriver().getEntityId() != null
+        && !driver.getDriver().getEntityId().isEmpty()) {
+      return driver.getDriver().getEntityId();
+    }
+    if (getObjectId() != null) {
+      return getObjectId();
+    }
+    return "";
+  }
+
+  @Override
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  public int getSeed() {
+    return driver != null ? driver.getSeed() : 0;
   }
 }

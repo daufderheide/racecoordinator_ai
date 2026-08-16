@@ -48,6 +48,8 @@ describe("RacedayAbsoluteWidgetComponent", () => {
       },
       layout: {
         widgets: [],
+        baseWidth: 1920,
+        baseHeight: 1080,
       },
     };
 
@@ -74,6 +76,12 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should correctly compute isSelected", () => {
+    expect(component.isSelected).toBeFalse();
+    fixture.componentRef.setInput("selectedWidgetId", "test-widget");
+    expect(component.isSelected).toBeTrue();
+  });
+
   it("should use harness to check customization state and labels", async () => {
     expect(await harness.isCustomizing()).toBeTrue();
     expect(await harness.getWidgetTypeLabel()).toBe("timer");
@@ -87,6 +95,117 @@ describe("RacedayAbsoluteWidgetComponent", () => {
   it("should delegate bringToFront to parent bringToFront", () => {
     component.bringToFront();
     expect(mockParent.bringToFront).toHaveBeenCalledWith("test-widget");
+  });
+
+  it("should handle resize start, move, and pointerup with edge snapping and minimum bounds", () => {
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 100,
+      clientY: 100,
+    });
+    spyOn(fakeStartEvent, "preventDefault");
+    spyOn(fakeStartEvent, "stopPropagation");
+
+    // Test resize with 'se' handle
+    component.onResizeStart(fakeStartEvent, "se");
+    expect(fakeStartEvent.preventDefault).toHaveBeenCalled();
+
+    // Trigger document pointermove
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 150,
+      clientY: 130,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(mockParent.snapToEdges).toHaveBeenCalled();
+
+    // Trigger document pointerup
+    const fakeUpEvent = new PointerEvent("pointerup");
+    document.dispatchEvent(fakeUpEvent);
+    expect(mockParent.layoutChanged.emit).toHaveBeenCalled();
+  });
+
+  it("should handle resize with 'nw' handle and enforce min 50px dimensions", () => {
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 100,
+      clientY: 100,
+    });
+
+    component.onResizeStart(fakeStartEvent, "nw");
+
+    // Move so much that it would shrink below 50px
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 300,
+      clientY: 300,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().width).toBe(50);
+    expect(component.widget().height).toBe(50);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
+  it("should ignore resize start if isCustomizing is false", () => {
+    fixture.componentRef.setInput("isCustomizing", false);
+    const fakeStartEvent = new PointerEvent("pointerdown");
+    spyOn(fakeStartEvent, "preventDefault");
+
+    component.onResizeStart(fakeStartEvent, "se");
+    expect(fakeStartEvent.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it("should handle dragging widget with snapping and pointermove/pointerup", () => {
+    const target = document.createElement("div");
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 50,
+      clientY: 50,
+    });
+    Object.defineProperty(fakeStartEvent, "target", { value: target });
+    spyOn(fakeStartEvent, "preventDefault");
+
+    component.onDragStart(fakeStartEvent);
+    expect(fakeStartEvent.preventDefault).toHaveBeenCalled();
+    expect(mockParent.bringToFront).toHaveBeenCalledWith("test-widget");
+
+    // Move
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 70,
+      clientY: 80,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(mockParent.snapToEdges).toHaveBeenCalled();
+
+    // Up
+    document.dispatchEvent(new PointerEvent("pointerup"));
+    expect(mockParent.layoutChanged.emit).toHaveBeenCalled();
+  });
+
+  it("should not start dragging if clicking resize handle or button", () => {
+    const resizeHandle = document.createElement("div");
+    resizeHandle.className = "resize-handle";
+    const fakeResizeEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(fakeResizeEvent, "target", { value: resizeHandle });
+    spyOn(fakeResizeEvent, "preventDefault");
+
+    component.onDragStart(fakeResizeEvent);
+    expect(fakeResizeEvent.preventDefault).not.toHaveBeenCalled();
+
+    const btn = document.createElement("button");
+    const fakeBtnEvent = new PointerEvent("pointerdown");
+    Object.defineProperty(fakeBtnEvent, "target", { value: btn });
+    spyOn(fakeBtnEvent, "preventDefault");
+
+    component.onDragStart(fakeBtnEvent);
+    expect(fakeBtnEvent.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it("should handle removeWidget directly", () => {
+    const fakeEvent = new Event("click");
+    spyOn(fakeEvent, "stopPropagation");
+    component.removeWidget(fakeEvent);
+    expect(fakeEvent.stopPropagation).toHaveBeenCalled();
+    expect(mockParent.removeWidget).toHaveBeenCalledWith("test-widget");
   });
 
   it("should apply scale-auto class when scaleMode is 'auto'", () => {
@@ -146,7 +265,6 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
     expect(wrapper.classList.contains("edit-mode")).toBeTrue();
 
-    // Create a mock select/button/a element inside the widget content to verify CSS rules
     const select = document.createElement("select");
     const button = document.createElement("button");
     const anchor = document.createElement("a");
@@ -163,7 +281,6 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(buttonStyle.pointerEvents).toBe("none");
     expect(anchorStyle.pointerEvents).toBe("none");
 
-    // Elements with specific column editing classes should have pointer-events: auto
     const deleteColBtn = document.createElement("button");
     deleteColBtn.className = "delete-col-btn";
     const colVisibilitySelect = document.createElement("select");

@@ -301,10 +301,9 @@ test.describe("Unified Widgets Visuals", () => {
     };
 
     await TestSetupHelper.mockRaceData(page, raceData);
-    await page.waitForTimeout(500); // Allow widgets to render
-
     const wrapper = page.locator(".dashboard-wrapper");
     await expect(wrapper).toBeVisible();
+    await TestSetupHelper.waitForImagesLoaded(wrapper);
 
     await expect(page).toHaveScreenshot("unified-widgets-layout.png");
   });

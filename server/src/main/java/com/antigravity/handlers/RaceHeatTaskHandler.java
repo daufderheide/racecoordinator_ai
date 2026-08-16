@@ -13,6 +13,7 @@ import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
@@ -46,6 +47,7 @@ public class RaceHeatTaskHandler {
     app.post("/api/races", this::handleCreateRace, Role.DIRECTOR);
     app.put("/api/races/{id}", this::handleUpdateRace, Role.DIRECTOR);
     app.delete("/api/races/{id}", this::handleDeleteRace, Role.DIRECTOR);
+    app.post("/api/races/{id}/reset-records", this::handleResetRace, Role.ADMIN);
     app.post("/api/races/{id}/generate-heats", this::generateHeats, Role.DIRECTOR);
     app.post("/api/heats/preview", this::previewHeats, Role.DIRECTOR);
   }
@@ -196,6 +198,33 @@ public class RaceHeatTaskHandler {
   public void deleteRace(String id) {
     DatabaseService.getInstance().deleteAllRaceData(databaseContext, id);
     raceRepository.delete(id);
+  }
+
+  public void handleResetRace(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      Race race = raceRepository.findByEntityId(id);
+      if (race == null) {
+        ctx.status(404).result("Race not found");
+        return;
+      }
+      resetRace(id);
+      ctx.status(204);
+    } catch (Exception e) {
+      logger.error("Error resetting race", e);
+      ctx.status(500).result("Error resetting race: " + e.getMessage());
+    }
+  }
+
+  public void resetRace(String id) {
+    DatabaseService.getInstance().resetRaceData(databaseContext, id);
+    com.antigravity.race.Race activeRace = // fqn-collision
+        ClientSubscriptionManager.getInstance().getRace();
+    if (activeRace != null
+        && activeRace.getRaceModel() != null
+        && id.equals(activeRace.getRaceModel().getEntityId())) {
+      activeRace.resetRecords();
+    }
   }
 
   public void generateHeats(Context ctx) {

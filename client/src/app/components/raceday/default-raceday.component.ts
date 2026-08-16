@@ -8,6 +8,7 @@ import {
   ElementRef,
   HostBinding,
   HostListener,
+  inject,
   input,
   OnChanges,
   OnDestroy,
@@ -58,6 +59,7 @@ import { LapType, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
 import {
@@ -653,6 +655,7 @@ export class DefaultRacedayComponent
   }
   layoutChanged = output<LayoutConfig>();
   columnsChanged = output<void>();
+  requestAbout = output<void>();
   isLayoutCustomizing = false;
 
   @HostBinding("style.overflow")
@@ -2286,6 +2289,7 @@ export class DefaultRacedayComponent
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
       getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
+      isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -2320,6 +2324,7 @@ export class DefaultRacedayComponent
       laneViewWidgetSettings: laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
+      isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
@@ -2601,7 +2606,25 @@ export class DefaultRacedayComponent
     this.isMenuOpen = false;
   }
 
+  private helpLinkService = inject(HelpLinkService);
+
+  openAbout() {
+    this.requestAbout.emit();
+  }
+
+  openHelpCenter() {
+    this.helpLinkService.openHelp("raceday-operation");
+  }
+
   private executeMenuAction(action: string) {
+    if (action === "HELP_CENTER") {
+      this.openHelpCenter();
+      return;
+    }
+    if (action === "ABOUT") {
+      this.openAbout();
+      return;
+    }
     if (action === "LOGIN") {
       this.showLoginModal = true;
       return;
@@ -3814,6 +3837,7 @@ export class DefaultRacedayComponent
     const nameKeys = ["driver.name", "driver.nickname"];
     const fixedWidths: { [key: string]: number } = {
       lapCount: 216,
+      lapsLed: 216,
       reactionTime: 330,
       lastLapTime: 330,
       lastLaps: 1650,
@@ -4045,6 +4069,7 @@ export class DefaultRacedayComponent
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
       getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
+      isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,

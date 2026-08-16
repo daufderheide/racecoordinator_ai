@@ -1,5 +1,10 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { of } from "rxjs";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { TranslationService } from "@app/services/translation.service";
@@ -21,6 +26,7 @@ describe("AboutDialogComponent", () => {
     translationServiceSpy.translate.and.callFake(
       (key: string, params?: any) => {
         if (params && params.version) return `${key}: ${params.version}`;
+        if (params && params.speed) return `${key}: ${params.speed}x`;
         return key;
       },
     );
@@ -46,7 +52,7 @@ describe("AboutDialogComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should display versions when visible", async () => {
+  it("should display versions when visible on the Info tab", async () => {
     fixture.componentRef.setInput("visible", true);
     fixture.componentRef.setInput("clientVersion", "TEST-CLIENT-VERSION");
     fixture.componentRef.setInput("serverVersion", "TEST-SERVER-VERSION");
@@ -57,6 +63,52 @@ describe("AboutDialogComponent", () => {
     expect(versionInfo).toContain("TEST-CLIENT-VERSION");
     expect(versionInfo).toContain("TEST-SERVER-VERSION");
   });
+
+  it("should switch tabs to Charity & Mission", async () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    await harness.clickTab(1);
+    fixture.detectChanges();
+
+    expect(component.activeTab()).toBe("charity");
+    expect(await harness.isCharityTabVisible()).toBeTrue();
+  });
+
+  it("should switch tabs to Credits", async () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    await harness.clickTab(2);
+    fixture.detectChanges();
+
+    expect(component.activeTab()).toBe("credits");
+    expect(await harness.isCreditsTabVisible()).toBeTrue();
+  });
+
+  it("should toggle play/pause, speed, and rewind for credits", fakeAsync(() => {
+    component.selectTab("credits");
+    tick(20);
+    expect(component.isCreditsPlaying()).toBeTrue();
+
+    component.togglePlayPause();
+    expect(component.isCreditsPlaying()).toBeFalse();
+
+    expect(component.creditSpeed()).toBe(2);
+    component.toggleSpeed();
+    expect(component.creditSpeed()).toBe(4);
+    component.toggleSpeed();
+    expect(component.creditSpeed()).toBe(1);
+    component.toggleSpeed();
+    expect(component.creditSpeed()).toBe(2);
+
+    expect(component.isRewinding()).toBeFalse();
+    component.toggleRewind();
+    expect(component.isRewinding()).toBeTrue();
+    expect(component.isCreditsPlaying()).toBeTrue();
+    component.toggleRewind();
+    expect(component.isRewinding()).toBeFalse();
+  }));
 
   it("should not be visible when visible is false", async () => {
     fixture.componentRef.setInput("visible", false);

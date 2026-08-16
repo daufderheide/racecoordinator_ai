@@ -28,6 +28,13 @@ export class SeasonResultsHarness
     SeasonResultsHarnessBase.selectors.raceBreakdownTable,
   );
 
+  protected getDriverExpandableRowsEl = this.locatorForAll(
+    SeasonResultsHarnessBase.selectors.driverExpandableRows,
+  );
+  protected getDriverBonusDetailsRowsEl = this.locatorForAll(
+    SeasonResultsHarnessBase.selectors.driverBonusDetailsRows,
+  );
+
   async hasStandingsTable(): Promise<boolean> {
     return (await this.getStandingsTableEl()) !== null;
   }
@@ -56,5 +63,29 @@ export class SeasonResultsHarness
   async isRaceExpanded(index: number): Promise<boolean> {
     const tables = await this.getBreakdownTablesEl();
     return index >= 0 && index < tables.length;
+  }
+
+  async toggleDriverExpander(
+    _raceIndex: number,
+    driverIndex: number,
+  ): Promise<void> {
+    const rows = await this.getDriverExpandableRowsEl();
+    if (rows[driverIndex]) {
+      await rows[driverIndex].click();
+    }
+  }
+
+  async isDriverExpanded(
+    _raceIndex: number,
+    driverIndex: number,
+  ): Promise<boolean> {
+    const rows = await this.getDriverBonusDetailsRowsEl();
+    if (driverIndex >= 0 && driverIndex < rows.length) {
+      const isCollapsed = await rows[driverIndex].hasClass(
+        "driver-bonus-collapsed",
+      );
+      return !isCollapsed;
+    }
+    return false;
   }
 }

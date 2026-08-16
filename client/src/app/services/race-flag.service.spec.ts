@@ -1,8 +1,9 @@
 import { TestBed } from "@angular/core/testing";
 import { BehaviorSubject, of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
-import { RaceFlag } from "@app/proto/antigravity";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
+import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
 import { RaceFlagService } from "./race-flag.service";
 import { SettingsService } from "./settings.service";
@@ -11,17 +12,26 @@ import { ThemeService } from "./theme.service";
 describe("RaceFlagService", () => {
   let service: RaceFlagService;
   let raceFlagSubject: BehaviorSubject<RaceFlag>;
+  let raceStateSubject: BehaviorSubject<RaceState>;
+  let currentHeatSubject: BehaviorSubject<any>;
 
   beforeEach(() => {
     raceFlagSubject = new BehaviorSubject<RaceFlag>(RaceFlag.RED);
+    raceStateSubject = new BehaviorSubject<RaceState>(RaceState.NOT_STARTED);
+    currentHeatSubject = new BehaviorSubject<any>(null);
 
     const raceConnectionSpy = jasmine.createSpyObj(
       "RaceConnectionService",
       [],
       {
         raceFlag$: raceFlagSubject.asObservable(),
+        raceState$: raceStateSubject.asObservable(),
       },
     );
+
+    const raceServiceSpy = jasmine.createSpyObj("RaceService", [], {
+      currentHeat$: currentHeatSubject.asObservable(),
+    });
 
     const themeServiceSpy = jasmine.createSpyObj("ThemeService", [
       "resolveAssetId",
@@ -39,6 +49,7 @@ describe("RaceFlagService", () => {
       providers: [
         RaceFlagService,
         { provide: RaceConnectionService, useValue: raceConnectionSpy },
+        { provide: RaceService, useValue: raceServiceSpy },
         { provide: ThemeService, useValue: themeServiceSpy },
         { provide: SettingsService, useValue: settingsServiceSpy },
         { provide: DataService, useValue: dataServiceSpy },
@@ -51,39 +62,64 @@ describe("RaceFlagService", () => {
     expect(service).toBeTruthy();
   });
 
-  it("should return RED flag type and color initially", () => {
-    expect(service.getFlagType()).toBe("red");
+  it("should return flag.not_started and red color initially", () => {
+    expect(service.getFlagType()).toBe("flag.not_started");
     expect(service.getFlagColor()).toBe("red");
   });
 
-  it("should update flag type and color when RaceConnectionService emits", () => {
+  it("should update behavioral flag type and color when RaceConnectionService emits", () => {
+    raceStateSubject.next(RaceState.RACING);
     raceFlagSubject.next(RaceFlag.GREEN);
-    expect(service.getFlagType()).toBe("green");
+    expect(service.getFlagType()).toBe("flag.racing");
     expect(service.getFlagColor()).toBe("green");
 
+    raceStateSubject.next(RaceState.PAUSED);
     raceFlagSubject.next(RaceFlag.YELLOW);
-    expect(service.getFlagType()).toBe("yellow");
+    expect(service.getFlagType()).toBe("flag.heat_paused");
     expect(service.getFlagColor()).toBe("yellow");
 
+    raceStateSubject.next(RaceState.RACING);
     raceFlagSubject.next(RaceFlag.WHITE);
-    expect(service.getFlagType()).toBe("white");
+    expect(service.getFlagType()).toBe("flag.one_lap_to_go");
     expect(service.getFlagColor()).toBe("white");
 
+    raceStateSubject.next(RaceState.RACING);
     raceFlagSubject.next(RaceFlag.CHECKERED);
-    expect(service.getFlagType()).toBe("checkered");
+    expect(service.getFlagType()).toBe("flag.heat_finishing");
+    expect(service.getFlagColor()).toBe("checkered");
+
+    raceStateSubject.next(RaceState.RACE_OVER);
+    raceFlagSubject.next(RaceFlag.CHECKERED);
+    expect(service.getFlagType()).toBe("flag.race_over");
     expect(service.getFlagColor()).toBe("checkered");
 
     raceFlagSubject.next(RaceFlag.GREEN_YELLOW);
-    expect(service.getFlagType()).toBe("green_yellow");
+    expect(service.getFlagType()).toBe("flag.warmup");
     expect(service.getFlagColor()).toBe("green");
+
+    raceFlagSubject.next(RaceFlag.BLACK);
+    expect(service.getFlagType()).toBe("flag.penalty");
+    expect(service.getFlagColor()).toBe("black");
+  });
+
+  it("should distinguish initial start from restart countdown", () => {
+    raceStateSubject.next(RaceState.STARTING);
+    raceFlagSubject.next(RaceFlag.RED);
+    currentHeatSubject.next({ started: false, heatDrivers: [] });
+    expect(service.getFlagType()).toBe("flag.starting");
+
+    currentHeatSubject.next({ started: true, heatDrivers: [] });
+    expect(service.getFlagType()).toBe("flag.restarting");
   });
 
   it("should return translatable flag names", () => {
+    raceStateSubject.next(RaceState.NOT_STARTED);
     raceFlagSubject.next(RaceFlag.RED);
-    expect(service.getFlagNameKey()).toBe("RACE_FLAG_RED");
+    expect(service.getFlagNameKey()).toBe("UE_LABEL_FLAG_NOT_STARTED");
 
+    raceStateSubject.next(RaceState.RACING);
     raceFlagSubject.next(RaceFlag.GREEN);
-    expect(service.getFlagNameKey()).toBe("RACE_FLAG_GREEN");
+    expect(service.getFlagNameKey()).toBe("UE_LABEL_FLAG_RACING");
   });
 
   describe("getFlagUrl", () => {
@@ -106,9 +142,10 @@ describe("RaceFlagService", () => {
         { entity_id: "asset-green-id", url: "/assets/green.png" },
       ];
 
+      raceStateSubject.next(RaceState.RACING);
       const url = service.getFlagUrl(RaceFlag.GREEN);
       expect(url).toBe("http://localhost:7070/assets/green.png");
-      expect(themeService.resolveAssetId).toHaveBeenCalledWith("flag.green");
+      expect(themeService.resolveAssetId).toHaveBeenCalledWith("flag.racing");
     });
 
     it("should use dataService.serverUrl to resolve asset URLs (mobile bug fix)", () => {
@@ -124,12 +161,12 @@ describe("RaceFlagService", () => {
         { entity_id: "asset-green-id", url: "/assets/green.png" },
       ];
 
-      // Even if settings says localhost (which caused the bug), the dataService url should take precedence
       settingsService.getSettings.and.returnValue({
         serverIp: "localhost",
         serverPort: 7070,
       });
 
+      raceStateSubject.next(RaceState.RACING);
       const url = service.getFlagUrl(RaceFlag.GREEN);
       expect(url).toBe("http://192.168.1.100:7070/assets/green.png");
 
@@ -144,9 +181,10 @@ describe("RaceFlagService", () => {
       settingsService.getSettings.and.returnValue({
         serverIp: "localhost",
         serverPort: 7070,
-        flagGreen: "http://custom/green.png",
+        flagRacing: "http://custom/green.png",
       });
 
+      raceStateSubject.next(RaceState.RACING);
       const url = service.getFlagUrl(RaceFlag.GREEN);
       expect(url).toBe("http://custom/green.png");
     });
@@ -158,6 +196,7 @@ describe("RaceFlagService", () => {
         serverPort: 7070,
       });
 
+      raceStateSubject.next(RaceState.RACING);
       const url = service.getFlagUrl(RaceFlag.GREEN);
       expect(url).toBe("");
     });
@@ -183,8 +222,12 @@ describe("RaceFlagService", () => {
         [],
         {
           raceFlag$: of(RaceFlag.RED),
+          raceState$: of(RaceState.RACING),
         },
       );
+      const customRaceServiceSpy = jasmine.createSpyObj("RaceService", [], {
+        currentHeat$: of(null),
+      });
       const customThemeServiceSpy = jasmine.createSpyObj("ThemeService", [
         "resolveAssetId",
       ]);
@@ -198,6 +241,7 @@ describe("RaceFlagService", () => {
 
       const customService = new RaceFlagService(
         customRaceConnectionSpy as any,
+        customRaceServiceSpy as any,
         customThemeServiceSpy as any,
         customSettingsServiceSpy as any,
         customDataServiceSpy as any,

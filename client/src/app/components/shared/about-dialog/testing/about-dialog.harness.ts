@@ -1,14 +1,34 @@
-import { ComponentHarness } from '@angular/cdk/testing';
+import { ComponentHarness } from "@angular/cdk/testing";
 
-import { AboutDialogHarnessBase } from './about-dialog.harness.base';
+import { AboutDialogHarnessBase } from "./about-dialog.harness.base";
 
-export class AboutDialogHarness extends ComponentHarness implements AboutDialogHarnessBase {
+export class AboutDialogHarness
+  extends ComponentHarness
+  implements AboutDialogHarnessBase
+{
   static hostSelector = AboutDialogHarnessBase.hostSelector;
 
-  protected getModalContent = this.locatorForOptional(AboutDialogHarnessBase.selectors.content);
-  protected getTitleElement = this.locatorForOptional(AboutDialogHarnessBase.selectors.title);
-  protected getVersionInfoElement = this.locatorForOptional(AboutDialogHarnessBase.selectors.versionInfo);
-  protected getCloseButton = this.locatorForOptional(AboutDialogHarnessBase.selectors.closeButton);
+  protected getModalContent = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.content,
+  );
+  protected getTitleElement = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.title,
+  );
+  protected getVersionInfoElement = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.versionInfo,
+  );
+  protected getCharityInfoElement = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.charityInfo,
+  );
+  protected getCreditsPanelElement = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.creditsPanel,
+  );
+  protected getTabButtons = this.locatorForAll(
+    AboutDialogHarnessBase.selectors.tabButtons,
+  );
+  protected getCloseButton = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.closeButton,
+  );
 
   async isVisible(): Promise<boolean> {
     return (await this.getModalContent()) !== null;
@@ -16,16 +36,31 @@ export class AboutDialogHarness extends ComponentHarness implements AboutDialogH
 
   async getTitle(): Promise<string> {
     const el = await this.getTitleElement();
-    return el ? await el.text() : '';
+    return el ? await el.text() : "";
   }
 
   async getVersionInfoText(): Promise<string> {
     const el = await this.getVersionInfoElement();
-    return el ? await el.text() : '';
+    return el ? await el.text() : "";
   }
 
   async clickClose(): Promise<void> {
     const btn = await this.getCloseButton();
     if (btn) await btn.click();
+  }
+
+  async clickTab(index: number): Promise<void> {
+    const tabs = await this.getTabButtons();
+    if (tabs[index]) {
+      await tabs[index].click();
+    }
+  }
+
+  async isCharityTabVisible(): Promise<boolean> {
+    return (await this.getCharityInfoElement()) !== null;
+  }
+
+  async isCreditsTabVisible(): Promise<boolean> {
+    return (await this.getCreditsPanelElement()) !== null;
   }
 }

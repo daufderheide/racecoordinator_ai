@@ -1,32 +1,36 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { RaceManagerHarnessBase } from './race-manager.harness.base';
+import { ManagerHeaderHarnessBase } from "../../shared/manager-header/testing/manager-header.harness.base";
+import { ManagerHeaderHarnessE2e } from "../../shared/manager-header/testing/manager-header.harness.e2e";
+import { RaceManagerHarnessBase } from "./race-manager.harness.base";
 
 export class RaceManagerHarnessE2e implements RaceManagerHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return RaceManagerHarnessBase; }
+  private get base() {
+    return RaceManagerHarnessBase;
+  }
 
-  get listContainer() { return this.locator.locator(this.base.selectors.listContainer); }
-  get listItems() { return this.locator.locator(this.base.selectors.listItem); }
-  get selectedItem() { return this.locator.locator(this.base.selectors.selectedItem); }
-  get detailPanel() { return this.locator.locator(this.base.selectors.detailPanel); }
-  get deleteButton() { return this.locator.locator(this.base.selectors.deleteButton); }
-  get createButton() { return this.locator.locator(this.base.selectors.createButton); }
+  get listContainer() {
+    return this.locator.locator(this.base.selectors.listContainer);
+  }
 
-  async isVisible(): Promise<boolean> {
+  get detailPanel() {
+    return this.locator.locator(this.base.selectors.detailPanel);
+  }
+
+  async exists(): Promise<boolean> {
     return await this.locator.isVisible();
   }
 
   async selectItem(index: number): Promise<void> {
-    await this.listItems.nth(index).click();
+    await this.locator.locator(this.base.selectors.listItem).nth(index).click();
   }
 
   async clickDelete(): Promise<void> {
-    await this.deleteButton.click({ force: true });
-  }
-
-  async clickCreate(): Promise<void> {
-    await this.createButton.click();
+    const header = new ManagerHeaderHarnessE2e(
+      this.locator.locator(ManagerHeaderHarnessBase.hostSelector),
+    );
+    await (await header.getToolbar()).clickDelete();
   }
 }

@@ -5,6 +5,25 @@
   (acknowledge)="closeAckModal()"
 >
 </app-acknowledgement-modal>
+<app-confirmation-modal
+  [visible]="showResetConfirmation"
+  [title]="'RM_CONFIRM_RESET_RECORDS_TITLE' | translate"
+  [message]="
+    'RM_CONFIRM_RESET_RECORDS_MSG' | translate: { name: editingRace?.name }
+  "
+  (confirm)="onConfirmReset()"
+  (cancel)="onCancelReset()"
+>
+</app-confirmation-modal>
+<app-acknowledgement-modal
+  [visible]="showResetSuccess"
+  [title]="'RM_SUCCESS_RESET_RECORDS_TITLE' | translate"
+  [message]="
+    'RM_SUCCESS_RESET_RECORDS_MSG' | translate: { name: resetRaceName }
+  "
+  (acknowledge)="onCloseResetSuccess()"
+>
+</app-acknowledgement-modal>
 <div
   class="page-container"
   [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
@@ -179,6 +198,16 @@
                 >▼</span
               >
               <h1>{{ "RE_GENERAL_HEADER" | translate }}</h1>
+              <button
+                id="reset-race-records-btn"
+                class="section-action-btn danger"
+                type="button"
+                (click)="onResetRecords($event)"
+                [disabled]="isSaving || !isAdmin() || !editingRace?.entity_id"
+                [title]="getResetTooltip()"
+              >
+                <span class="material-icons">restart_alt</span>
+              </button>
             </div>
             @if (sectionsExpanded.general) {
               <div class="section-content">
@@ -608,7 +637,13 @@
                     </h2>
                     @if (editingRace.season_scoring) {
                       <div class="config-section">
-                        <div class="season-points-list">
+                        <div
+                          class="season-points-list"
+                          [class.two-columns]="
+                            (editingRace.season_scoring.position_points
+                              ?.length || 0) > 4
+                          "
+                        >
                           @for (
                             pts of editingRace.season_scoring.position_points;
                             track $index;
@@ -657,7 +692,13 @@
                     </h2>
                     @if (editingRace.season_scoring) {
                       <div class="config-section">
-                        <div class="season-points-list">
+                        <div
+                          class="season-points-list"
+                          [class.two-columns]="
+                            (editingRace.season_scoring.heat_position_points
+                              ?.length || 0) > 4
+                          "
+                        >
                           @for (
                             hpts of editingRace.season_scoring
                               .heat_position_points;
@@ -681,6 +722,176 @@
                             </div>
                           }
                         </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Bonuses Layout -->
+                <div class="scoring-layout">
+                  <!-- Overall Bonuses -->
+                  <div class="scoring-column">
+                    <h2 class="config-header">
+                      {{ "SS_OVERALL_BONUSES" | translate }}
+                    </h2>
+                    @if (editingRace.season_scoring) {
+                      <div class="editor-section">
+                        <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.overall_carry_over_pct
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{ "SS_BONUS_FASTEST_LAP" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.overall_bonus_fastest_lap
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{
+                          "SS_BONUS_FASTEST_LAP_LANE" | translate
+                        }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring
+                              .overall_bonus_fastest_lap_per_lane
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{
+                          "SS_BONUS_MOST_LAPS_LED" | translate
+                        }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring
+                              .overall_bonus_most_laps_led
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.overall_bonus_led_lap
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div
+                        class="config-section checkbox-section"
+                        style="margin-top: 8px; margin-bottom: 0"
+                      >
+                        <label class="checkbox-container">
+                          <input
+                            type="checkbox"
+                            id="overall_one_bonus"
+                            [(ngModel)]="
+                              editingRace.season_scoring
+                                .overall_one_bonus_per_driver
+                            "
+                            (ngModelChange)="captureState()"
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "SS_ONE_BONUS_PER_DRIVER" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Heat Bonuses -->
+                  <div class="scoring-column">
+                    <h2 class="config-header">
+                      {{ "SS_HEAT_BONUSES" | translate }}
+                    </h2>
+                    @if (editingRace.season_scoring) {
+                      <div class="editor-section">
+                        <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.heat_carry_over_pct
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{ "SS_BONUS_FASTEST_LAP" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.heat_bonus_fastest_lap
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{
+                          "SS_BONUS_MOST_LAPS_LED" | translate
+                        }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.heat_bonus_most_laps_led
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div class="editor-section">
+                        <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
+                        <input
+                          type="number"
+                          [(ngModel)]="
+                            editingRace.season_scoring.heat_bonus_led_lap
+                          "
+                          (ngModelChange)="captureState()"
+                          min="0"
+                        />
+                      </div>
+                      <div
+                        class="config-section checkbox-section"
+                        style="margin-top: 8px; margin-bottom: 0"
+                      >
+                        <label class="checkbox-container">
+                          <input
+                            type="checkbox"
+                            id="heat_one_bonus"
+                            [(ngModel)]="
+                              editingRace.season_scoring
+                                .heat_one_bonus_per_driver
+                            "
+                            (ngModelChange)="captureState()"
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "SS_ONE_BONUS_PER_DRIVER" | translate
+                          }}</span>
+                        </label>
                       </div>
                     }
                   </div>

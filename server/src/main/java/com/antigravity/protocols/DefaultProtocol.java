@@ -245,7 +245,14 @@ public abstract class DefaultProtocol implements IProtocol {
     }
   }
 
+  protected boolean canReconnect() {
+    return true;
+  }
+
   protected void tryAutoReconnect() {
+    if (!canReconnect()) {
+      return;
+    }
     long currentTime = now();
     if (isConnected()) {
       if (!requiresHeartbeat()

@@ -67,6 +67,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   isWindowsMenuOpen = false;
   isDriversViewOpen = false;
   isOptionsMenuOpen = false;
+  isHelpMenuOpen = false;
   isTrackPowerMenuOpen = false;
 
   get driverViewMenuOptions(): { id: string; value: string; label: string }[] {
@@ -189,17 +190,24 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.closeOthers("options");
   }
 
+  toggleHelpMenu() {
+    this.isHelpMenuOpen = !this.isHelpMenuOpen;
+    this.closeOthers("help");
+  }
+
   onMenuItemHover(menu: string) {
     if (
       this.isFileMenuOpen ||
       this.isMenuOpen ||
       this.isWindowsMenuOpen ||
-      this.isOptionsMenuOpen
+      this.isOptionsMenuOpen ||
+      this.isHelpMenuOpen
     ) {
       this.isFileMenuOpen = menu === "file";
       this.isMenuOpen = menu === "race";
       this.isWindowsMenuOpen = menu === "windows";
       this.isOptionsMenuOpen = menu === "options";
+      this.isHelpMenuOpen = menu === "help";
       if (!this.isWindowsMenuOpen) {
         this.isDriversStationOpen = false;
         this.isDriversViewOpen = false;
@@ -281,6 +289,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
       this.isDriversViewOpen = false;
     }
     if (active !== "options") this.isOptionsMenuOpen = false;
+    if (active !== "help") this.isHelpMenuOpen = false;
   }
 
   private closeAll() {
@@ -290,6 +299,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.isDriversViewOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;
+    this.isHelpMenuOpen = false;
     this.isTrackPowerMenuOpen = false;
   }
 }

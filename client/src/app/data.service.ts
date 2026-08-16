@@ -1781,11 +1781,13 @@ export class DataService {
     );
   }
 
-  getSavedRaces(isDemo: boolean = false): Observable<string[]> {
+  getSavedRaces(
+    isDemo: boolean = false,
+  ): Observable<{ filename: string; corrupt: boolean }[]> {
     const url = isDemo
       ? `${this.baseUrl}/api/saved-races?demo=true`
       : `${this.baseUrl}/api/saved-races`;
-    return this.http.get<string[]>(url);
+    return this.http.get<{ filename: string; corrupt: boolean }[]>(url);
   }
 
   loadRace(filename: string, isDemo: boolean = false): Observable<string> {
@@ -1886,5 +1888,12 @@ export class DataService {
       url += `?${queryString}`;
     }
     return this.http.get<any>(url);
+  }
+
+  resetRaceRecords(raceId: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.baseUrl}/api/races/${raceId}/reset-records`,
+      {},
+    );
   }
 }

@@ -84,6 +84,7 @@ export class Race implements Model {
     group_options: GroupOptions = new GroupOptions(),
     practice: boolean = false,
     adjust_drift_laps: boolean = false,
+    season_scoring?: SeasonScoring,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -119,6 +120,7 @@ export class Race implements Model {
     this.group_options = group_options;
     this.practice = practice;
     this.adjust_drift_laps = adjust_drift_laps;
+    this.season_scoring = season_scoring;
   }
 
   get objectId(): string {

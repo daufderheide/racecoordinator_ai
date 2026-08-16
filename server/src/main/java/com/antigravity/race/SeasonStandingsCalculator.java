@@ -34,7 +34,9 @@ public class SeasonStandingsCalculator {
                 race.getRaceName(),
                 res.getOverallRank(),
                 res.getOverallPoints(),
+                res.getOverallBonusPoints(),
                 res.getHeatPoints(),
+                res.getHeatBonusPoints(),
                 res.getTotalPoints()));
       }
     }
@@ -54,15 +56,15 @@ public class SeasonStandingsCalculator {
         for (int i = 0; i < scores.size(); i++) {
           sortedIndices.add(i);
         }
-        sortedIndices.sort(Comparator.comparingInt(i -> scores.get(i).getTotalPoints()));
+        sortedIndices.sort(Comparator.comparingDouble(i -> scores.get(i).getTotalPoints()));
 
         for (int i = 0; i < drops; i++) {
           scores.get(sortedIndices.get(i)).setDropped(true);
         }
       }
 
-      int net = 0;
-      int gross = 0;
+      double net = 0.0;
+      double gross = 0.0;
       for (SeasonStandingDetail s : scores) {
         gross += s.getTotalPoints();
         if (!s.isDropped()) {
@@ -70,15 +72,22 @@ public class SeasonStandingsCalculator {
         }
       }
 
-      result.add(new SeasonStandingItem(driverId, entry.driverName, net, gross, racesRun, scores));
+      result.add(
+          new SeasonStandingItem(
+              driverId,
+              entry.driverName,
+              Math.round(net * 100.0) / 100.0,
+              Math.round(gross * 100.0) / 100.0,
+              racesRun,
+              scores));
     }
 
     result.sort(
         (a, b) -> {
           if (b.getNetPoints() != a.getNetPoints())
-            return Integer.compare(b.getNetPoints(), a.getNetPoints());
+            return Double.compare(b.getNetPoints(), a.getNetPoints());
           if (b.getGrossPoints() != a.getGrossPoints())
-            return Integer.compare(b.getGrossPoints(), a.getGrossPoints());
+            return Double.compare(b.getGrossPoints(), a.getGrossPoints());
           return Integer.compare(b.getRacesRun(), a.getRacesRun());
         });
 

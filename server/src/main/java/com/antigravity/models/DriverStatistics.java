@@ -71,6 +71,11 @@ public class DriverStatistics {
     return id;
   }
 
+  @com.fasterxml.jackson.annotation.JsonIgnore
+  public String getEntityId() {
+    return (driverId != null && raceId != null) ? (driverId + "_" + raceId) : id;
+  }
+
   public void setId(String id) {
     this.id = id;
   }

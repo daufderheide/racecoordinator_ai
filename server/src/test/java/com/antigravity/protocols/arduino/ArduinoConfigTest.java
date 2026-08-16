@@ -85,4 +85,33 @@ public class ArduinoConfigTest {
     assertTrue(config1.usePitsAsLaps);
     assertFalse(config1.useLapsForSegments);
   }
+
+  @Test
+  public void testLapPinPitBehaviorSerialization() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+
+    ArduinoConfig config = new ArduinoConfig();
+    config.lapPinPitBehavior = ArduinoConfig.LapPinPitBehavior.PIT_IN;
+
+    String json = mapper.writeValueAsString(config);
+
+    assertTrue(
+        "JSON should contain integer value for lapPinPitBehavior",
+        json.contains("\"lapPinPitBehavior\":1"));
+
+    ArduinoConfig deserialized = mapper.readValue(json, ArduinoConfig.class);
+    assertEquals(ArduinoConfig.LapPinPitBehavior.PIT_IN, deserialized.lapPinPitBehavior);
+  }
+
+  @Test
+  public void testLapPinPitBehaviorDeserializationFromInt() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+
+    String json = "{\"lapPinPitBehavior\":2}";
+    ArduinoConfig deserialized = mapper.readValue(json, ArduinoConfig.class);
+
+    assertEquals(ArduinoConfig.LapPinPitBehavior.PIT_OUT, deserialized.lapPinPitBehavior);
+  }
 }

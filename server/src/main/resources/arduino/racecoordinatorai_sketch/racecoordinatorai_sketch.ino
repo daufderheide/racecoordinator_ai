@@ -57,7 +57,11 @@
 // #define WITH_SERIAL_DEBUG
 
 #ifdef WITH_WATCH_DOG
+#if defined(__AVR__)
 #include <avr/wdt.h>
+#elif defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_UNO_Q)
+#include <IWDG.h>
+#endif
 #endif
 
 #ifdef WITH_FAST_LED

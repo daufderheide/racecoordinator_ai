@@ -422,4 +422,37 @@ public class HeatStandingsTest {
     assertEquals(d1.getObjectId(), results.get(0));
     assertEquals(d2.getObjectId(), results.get(1));
   }
+
+  @Test
+  public void testLapsLed() {
+    RaceParticipant p1 = createDriver("p1");
+    RaceParticipant p2 = createDriver("p2");
+
+    DriverHeatData d1 = new DriverHeatData(p1);
+    d1.addLap(10.0, false, true); // Lap 1 at t=10.0 -> Leader (d1 led lap 1)
+    d1.addLap(10.0, false, true); // Lap 2 at t=20.0 -> Leader (d1 led lap 2)
+
+    DriverHeatData d2 = new DriverHeatData(p2);
+    d2.addLap(12.0, false, true); // Lap 1 at t=12.0 (p1 has 1 lap at t=10, so p1 is leading)
+    d2.addLap(
+        6.0, false,
+        true); // Lap 2 at t=18.0 (p1 has 1 lap at t=10, 2 laps at t=20, so at t=18 p2 takes lead
+    // and leads lap 2)
+
+    List<DriverHeatData> data = new ArrayList<>();
+    data.add(d1);
+    data.add(d2);
+
+    HeatStandings standings =
+        new HeatStandings(
+            data,
+            new HeatScoring(
+                FinishMethod.Lap, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.FASTEST_LAP_TIME),
+            false);
+
+    com.antigravity.proto.StandingsUpdate update = standings.updateStandings();
+    assertEquals(2, update.getUpdatesCount());
+    assertEquals(1, d1.getLapsLed());
+    assertEquals(1, d2.getLapsLed());
+  }
 }

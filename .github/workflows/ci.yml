@@ -56,9 +56,15 @@ jobs:
       - name: Generate Protobufs
         run: cd server && chmod +x generate_protos.sh && ./generate_protos.sh
       - name: Run client tests
-        run: cd client && npm run test --watch=false
+        run: cd client && npx ng test --no-watch --no-progress --browsers=ChromeHeadlessWithCustomConfig --code-coverage
         env:
           CHROME_BIN: ${{ steps.setup-chrome.outputs.chrome-path }}
+      - name: Upload client test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-coverage-report
+          path: client/coverage/client/
 
   test-visual:
     runs-on: ubuntu-latest
@@ -129,3 +135,11 @@ jobs:
         run: |
           chmod +x run_server_tests.sh
           ./run_server_tests.sh
+      - name: Upload server test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-coverage-report
+          path: |
+            server/target_tmp/target_test/site/jacoco/
+            server/target/site/jacoco/

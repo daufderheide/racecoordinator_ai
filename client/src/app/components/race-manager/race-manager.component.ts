@@ -17,7 +17,6 @@ import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
-import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -39,7 +38,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
   styleUrls: ["./race-manager.component.css"],
   imports: [
     ConfirmationModalComponent,
-    ManagerHeaderComponent_1,
+    ManagerHeaderComponent,
     HeatListComponent,
     TranslatePipe,
   ],

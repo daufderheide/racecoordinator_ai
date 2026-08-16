@@ -10,3 +10,12 @@
     {{ error }}
   </div>
 }
+
+<app-about-dialog
+  [visible]="showAboutDialog"
+  [clientVersion]="clientVersion"
+  [serverVersion]="serverVersion"
+  [serverIp]="serverIp"
+  [serverPort]="serverPort"
+  (close)="showAboutDialog = false"
+></app-about-dialog>

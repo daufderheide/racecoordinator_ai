@@ -14,6 +14,11 @@ export abstract class SeasonResultsHarnessBase {
     expanderCards: ".race-expander-card",
     expanderTitleBar: ".expander-title-bar",
     raceBreakdownTable: ".race-breakdown-table",
+    driverExpandableRows:
+      ".race-breakdown-table tbody tr.driver-expandable-row",
+    driverBonusDetailsRows:
+      ".race-breakdown-table tbody tr.driver-bonus-details-row",
+    bonusBreakdownCards: ".bonus-breakdown-card",
     emptyStandings: ".empty-standings",
   };
 
@@ -23,4 +28,12 @@ export abstract class SeasonResultsHarnessBase {
   abstract getRaceExpanderCount(): Promise<number>;
   abstract toggleRaceExpander(index: number): Promise<void>;
   abstract isRaceExpanded(index: number): Promise<boolean>;
+  abstract toggleDriverExpander(
+    raceIndex: number,
+    driverIndex: number,
+  ): Promise<void>;
+  abstract isDriverExpanded(
+    raceIndex: number,
+    driverIndex: number,
+  ): Promise<boolean>;
 }

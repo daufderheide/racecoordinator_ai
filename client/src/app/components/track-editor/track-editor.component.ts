@@ -308,14 +308,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
     this.undoManager.destroy();
     this.dataService.disconnectFromInterfaceDataSocket();
-    this.subscriptions.push(
-      this.dataService.closeInterface().subscribe({
-        next: () => this.logger.debug("Interface closed successfully"),
-        error: (err) => this.logger.error("Error closing interface", err),
-      }),
-    );
     this.subscriptions.forEach((s) => s.unsubscribe());
     this.subscriptions = [];
+    this.dataService.closeInterface().subscribe({
+      next: () => this.logger.debug("Interface closed successfully"),
+      error: (err) => this.logger.error("Error closing interface", err),
+    });
     if (this.colorDebounceTimer) {
       clearTimeout(this.colorDebounceTimer);
     }

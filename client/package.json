@@ -9,6 +9,7 @@
     "proto:gen": "node scripts/proto-gen.js",
     "postinstall": "node scripts/proto-gen.js",
     "test": "ng test --watch=false",
+    "test:mutation": "stryker run",
     "test:visual": "PLAYWRIGHT_BROWSERS_PATH=./.playwright-browsers npx playwright test",
     "test:visual:serve": "node scripts/test-visual-serve.js",
     "lint": "ng lint"

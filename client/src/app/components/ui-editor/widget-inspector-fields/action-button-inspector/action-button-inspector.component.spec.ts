@@ -31,18 +31,72 @@ describe("ActionButtonInspectorComponent", () => {
   });
 
   it("should create", () => {
-    fixture.componentRef.setInput("widget", {
-      widgetType: "action-start-resume",
-      customSettings: {},
-    });
     expect(component).toBeTruthy();
   });
 
-  it("should return correct action label for action-open-season-results", () => {
+  it("should default customSettings if missing", () => {
     fixture.componentRef.setInput("widget", {
-      widgetType: "action-open-season-results",
-      customSettings: {},
-    });
-    expect(component.actionLabelKey).toBe("RD_WIN_SEASON_RESULTS");
+      id: "w2",
+      widgetType: "action-pause",
+      x: 0,
+      y: 0,
+    } as any);
+    expect(component.settings).toEqual({});
+  });
+
+  it("should return correct action label keys for all widget types", () => {
+    const expectations: Record<string, string> = {
+      "action-start-resume": "RD_MENU_START_RESUME",
+      "action-pause": "RD_MENU_PAUSE",
+      "action-next-heat": "RD_MENU_NEXT_HEAT",
+      "action-restart-heat": "RD_MENU_RESTART",
+      "action-defer-heat": "RD_MENU_DEFER",
+      "action-skip-heat": "RD_MENU_SKIP_HEAT",
+      "action-skip-race": "RD_MENU_SKIP_RACE",
+      "action-add-lap": "RD_MENU_ADD_LAP",
+      "action-modify-heats": "RD_MENU_MODIFY",
+      "action-export-pdf": "RD_MENU_EXPORT_PDF",
+      "action-export-csv": "RD_MENU_EXPORT_CSV",
+      "action-export-xls": "RD_MENU_EXPORT_XLS",
+      "action-open-heat-results": "RD_WIN_HEAT_RESULTS",
+      "action-open-race-results": "RD_WIN_RACE_RESULTS",
+      "action-open-season-results": "RD_WIN_SEASON_RESULTS",
+      "action-open-prediction-results": "RD_WIN_PREDICTION_RESULTS",
+      "unknown-action": "",
+    };
+
+    for (const [type, expectedKey] of Object.entries(expectations)) {
+      fixture.componentRef.setInput("widget", {
+        widgetType: type,
+        customSettings: {},
+      });
+      expect(component.actionLabelKey).toBe(expectedKey);
+    }
+  });
+
+  it("should emit change on onFieldChange", () => {
+    spyOn(component.change, "emit");
+    component.onFieldChange();
+    expect(component.change.emit).toHaveBeenCalled();
+  });
+
+  it("should update color and emit change on onColorChange", () => {
+    spyOn(component.change, "emit");
+    const fakeEvent = {
+      target: { value: "#ff0000" },
+    } as unknown as Event;
+
+    component.onColorChange("textColor", fakeEvent);
+    expect(component.settings.textColor).toBe("#ff0000");
+    expect(component.change.emit).toHaveBeenCalled();
+  });
+
+  it("should reset color and emit change on resetColor", () => {
+    component.settings.textColor = "#ff0000";
+    spyOn(component.change, "emit");
+
+    component.resetColor("textColor");
+    expect(component.settings.textColor).toBe("");
+    expect(component.change.emit).toHaveBeenCalled();
   });
 });

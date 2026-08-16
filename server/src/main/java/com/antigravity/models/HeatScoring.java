@@ -93,4 +93,36 @@ public class HeatScoring {
   public AllowFinish getAllowFinish() {
     return allowFinish;
   }
+
+  public RankingMethod toRankingMethod() {
+    if (heatRanking == null) {
+      return RankingMethod.LAP_COUNT;
+    }
+    switch (heatRanking) {
+      case LAP_COUNT:
+        return RankingMethod.LAP_COUNT;
+      case FASTEST_LAP:
+        return RankingMethod.FASTEST_LAP;
+      case TOTAL_TIME:
+        return RankingMethod.TOTAL_TIME;
+      default:
+        return RankingMethod.LAP_COUNT;
+    }
+  }
+
+  public TiebreakerMethod toTiebreakerMethod() {
+    if (heatRankingTiebreaker == null) {
+      return TiebreakerMethod.AVERAGE_LAP_TIME;
+    }
+    switch (heatRankingTiebreaker) {
+      case FASTEST_LAP_TIME:
+        return TiebreakerMethod.FASTEST_LAP_TIME;
+      case MEDIAN_LAP_TIME:
+        return TiebreakerMethod.MEDIAN_LAP_TIME;
+      case AVERAGE_LAP_TIME:
+        return TiebreakerMethod.AVERAGE_LAP_TIME;
+      default:
+        return TiebreakerMethod.AVERAGE_LAP_TIME;
+    }
+  }
 }

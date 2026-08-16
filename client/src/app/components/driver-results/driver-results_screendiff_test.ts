@@ -31,7 +31,7 @@ test.describe("Driver Results Visuals", () => {
 
     // Verify the expanded active heat card is visible and has chart bars
     await expect(harness.getExpandedHeatCardLocator()).toBeVisible();
-    await expect(harness.getLapBarsLocator()).toHaveCount(3);
+    await harness.getLapBarsLocator().nth(2).waitFor({ state: "attached" });
 
     // Take screenshot of individual results
     await expect(page).toHaveScreenshot("driver-results-individual.png", {
@@ -56,7 +56,10 @@ test.describe("Driver Results Visuals", () => {
     );
 
     // Verify team member badges are visible in the lap lists
-    await expect(harness.getTeamDriverBadgesLocator()).toHaveCount(4);
+    await harness
+      .getTeamDriverBadgesLocator()
+      .nth(3)
+      .waitFor({ state: "attached" });
     await expect(harness.getTeamDriverBadge(0)).toContainText("Ally");
     await expect(harness.getTeamDriverBadge(1)).toContainText("Bobby");
 

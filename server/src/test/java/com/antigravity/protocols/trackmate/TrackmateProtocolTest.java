@@ -421,4 +421,26 @@ public class TrackmateProtocolTest {
     org.junit.Assert.assertFalse(
         "Car should leave pits immediately on Pit Out trigger", listener.laneInPits[0]);
   }
+
+  @Test
+  public void testRaceFlagStateAndPowerControls() {
+    protocol.open();
+    protocol.setRaceState(
+        com.antigravity.proto.RaceState.RACING, com.antigravity.proto.RaceFlag.GREEN, 0.0);
+    protocol.setRaceState(
+        com.antigravity.proto.RaceState.STARTING, com.antigravity.proto.RaceFlag.YELLOW, 3.0);
+    protocol.setRaceState(
+        com.antigravity.proto.RaceState.NOT_STARTED, com.antigravity.proto.RaceFlag.RED, 0.0);
+
+    protocol.setMainPower(true);
+    protocol.setMainPower(false);
+
+    for (int lane = 0; lane < 2; lane++) {
+      protocol.setLanePower(true, lane);
+      protocol.setLanePower(false, lane);
+    }
+
+    protocol.close();
+    org.junit.Assert.assertFalse(serialConnection.isOpen());
+  }
 }

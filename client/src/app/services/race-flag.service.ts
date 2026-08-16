@@ -1,19 +1,34 @@
 import { Injectable, OnDestroy } from "@angular/core";
 import { Subscription } from "rxjs";
 import { DataService } from "@app/data.service";
-import { RaceFlag } from "@app/proto/antigravity";
+import { THEME_SLOT_KEYS } from "@app/models/theme";
+import { RaceFlag, RaceState } from "@app/proto/antigravity";
 
+import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
 import { SettingsService } from "./settings.service";
 import { ThemeService } from "./theme.service";
 
-export type FlagType =
+export type BehavioralFlagKey =
+  | "flag.racing"
+  | "flag.heat_paused"
+  | "flag.heat_over"
+  | "flag.race_over"
+  | "flag.not_started"
+  | "flag.starting"
+  | "flag.restarting"
+  | "flag.one_lap_to_go"
+  | "flag.heat_finishing"
+  | "flag.warmup"
+  | "flag.driver_finished"
+  | "flag.penalty";
+
+export type FlagColor =
   | "red"
   | "green"
   | "yellow"
   | "white"
   | "checkered"
-  | "green_yellow"
   | "black";
 
 @Injectable({
@@ -21,42 +36,75 @@ export type FlagType =
 })
 export class RaceFlagService implements OnDestroy {
   private currentFlag: RaceFlag = RaceFlag.UNKNOWN_FLAG;
+  private currentState: RaceState = RaceState.UNKNOWN_STATE;
+  private hasRacedInCurrentHeat: boolean = false;
   private assets: any[] = [];
   private subscriptions: Subscription = new Subscription();
   private assetsSubscription?: Subscription;
 
   constructor(
     private raceConnectionService: RaceConnectionService,
+    private raceService: RaceService,
     private themeService: ThemeService,
     private settingsService: SettingsService,
     private dataService: DataService,
   ) {
-    this.subscriptions.add(
-      this.raceConnectionService.raceFlag$.subscribe((flag) => {
-        this.currentFlag = flag;
-      }),
-    );
+    if (this.raceConnectionService?.raceFlag$) {
+      this.subscriptions.add(
+        this.raceConnectionService.raceFlag$.subscribe((flag) => {
+          this.currentFlag = flag;
+        }),
+      );
+    }
 
-    this.subscriptions.add(
-      this.dataService.socketConnected$.subscribe((connected) => {
-        if (connected) {
-          if (this.assetsSubscription) {
-            this.assetsSubscription.unsubscribe();
+    if (this.raceConnectionService?.raceState$) {
+      this.subscriptions.add(
+        this.raceConnectionService.raceState$.subscribe((state) => {
+          this.currentState = state;
+        }),
+      );
+    }
+
+    if (this.raceService?.currentHeat$) {
+      this.subscriptions.add(
+        this.raceService.currentHeat$.subscribe((heat) => {
+          if (heat) {
+            this.hasRacedInCurrentHeat =
+              !!heat.started ||
+              (heat.heatDrivers?.some((hd) => hd.lapCount > 0) ?? false);
+          } else {
+            this.hasRacedInCurrentHeat = false;
           }
-          this.assetsSubscription = this.dataService.listAssets().subscribe({
-            next: (assets: any[]) => {
-              this.assets = assets || [];
-            },
-            error: (err) => {
-              console.error(
-                "RaceFlagService: Failed to fetch assets on reconnect",
-                err,
-              );
-            },
-          });
-        }
-      }),
-    );
+        }),
+      );
+    }
+
+    if (this.dataService?.socketConnected$) {
+      this.subscriptions.add(
+        this.dataService.socketConnected$.subscribe((connected) => {
+          if (connected) {
+            if (this.assetsSubscription) {
+              this.assetsSubscription.unsubscribe();
+            }
+            if (this.dataService.listAssets) {
+              this.assetsSubscription = this.dataService
+                .listAssets()
+                .subscribe({
+                  next: (assets: any[]) => {
+                    this.assets = assets || [];
+                  },
+                  error: (err) => {
+                    console.error(
+                      "RaceFlagService: Failed to fetch assets on reconnect",
+                      err,
+                    );
+                  },
+                });
+            }
+          }
+        }),
+      );
+    }
   }
 
   ngOnDestroy() {
@@ -64,85 +112,136 @@ export class RaceFlagService implements OnDestroy {
   }
 
   /**
-   * Get the current flag type based on the server-provided flag.
+   * Determine the behavioral flag slot key based on race state and flag.
    */
-  getFlagType(): FlagType {
-    return this.getFlagTypeForFlag(this.currentFlag);
-  }
+  getBehavioralFlagKey(flag?: RaceFlag): BehavioralFlagKey {
+    const f =
+      flag !== undefined && flag !== RaceFlag.UNKNOWN_FLAG
+        ? flag
+        : this.currentFlag;
 
-  /**
-   * Get the flag type for a specific flag.
-   */
-  getFlagTypeForFlag(flag: RaceFlag): FlagType {
-    const RF = RaceFlag;
-    switch (flag) {
-      case RF.GREEN:
-        return "green";
-      case RF.YELLOW:
-        return "yellow";
-      case RF.RED:
-        return "red";
-      case RF.WHITE:
-        return "white";
-      case RF.CHECKERED:
-        return "checkered";
-      case RF.GREEN_YELLOW:
-        return "green_yellow";
-      case RF.BLACK:
-        return "black";
+    if (f === RaceFlag.BLACK) return THEME_SLOT_KEYS.FLAG_PENALTY;
+    if (f === RaceFlag.GREEN_YELLOW) return THEME_SLOT_KEYS.FLAG_WARMUP;
+    if (f === RaceFlag.WHITE) return THEME_SLOT_KEYS.FLAG_ONE_LAP_TO_GO;
+
+    if (this.currentState === RaceState.PAUSED) {
+      return THEME_SLOT_KEYS.FLAG_HEAT_PAUSED;
+    }
+
+    if (this.currentState === RaceState.STARTING) {
+      if (f === RaceFlag.YELLOW || this.hasRacedInCurrentHeat) {
+        return THEME_SLOT_KEYS.FLAG_RESTARTING;
+      }
+      return THEME_SLOT_KEYS.FLAG_STARTING;
+    }
+
+    if (this.currentState === RaceState.NOT_STARTED) {
+      return THEME_SLOT_KEYS.FLAG_NOT_STARTED;
+    }
+
+    if (this.currentState === RaceState.HEAT_OVER) {
+      return THEME_SLOT_KEYS.FLAG_HEAT_OVER;
+    }
+
+    if (this.currentState === RaceState.RACE_OVER) {
+      return THEME_SLOT_KEYS.FLAG_RACE_OVER;
+    }
+
+    if (this.currentState === RaceState.RACING) {
+      if (f === RaceFlag.CHECKERED) {
+        return THEME_SLOT_KEYS.FLAG_HEAT_FINISHING;
+      }
+      return THEME_SLOT_KEYS.FLAG_RACING;
+    }
+
+    // Default based on flag if state is unknown
+    switch (f) {
+      case RaceFlag.GREEN:
+        return THEME_SLOT_KEYS.FLAG_RACING;
+      case RaceFlag.YELLOW:
+        return THEME_SLOT_KEYS.FLAG_HEAT_PAUSED;
+      case RaceFlag.RED:
+        return THEME_SLOT_KEYS.FLAG_NOT_STARTED;
+      case RaceFlag.CHECKERED:
+        return THEME_SLOT_KEYS.FLAG_HEAT_FINISHING;
       default:
-        return "red";
+        return THEME_SLOT_KEYS.FLAG_NOT_STARTED;
     }
   }
 
   /**
-   * Get the URL for a flag image based on the flag type.
+   * Get the current behavioral flag slot key.
+   */
+  getFlagType(): BehavioralFlagKey {
+    return this.getBehavioralFlagKey();
+  }
+
+  /**
+   * Get the flag color for driver station indicator (simplified CSS class version).
+   */
+  getFlagTypeForFlag(flag: RaceFlag): FlagColor {
+    return this.getFlagColor(flag);
+  }
+
+  /**
+   * Get the URL for a flag image based on behavioral slot key, flag enum, or current state.
    * Priority: Theme > Settings > Default Asset
    */
-  getFlagUrl(flag: RaceFlag | FlagType): string {
-    const flagType =
-      typeof flag === "string" ? flag : this.getFlagTypeForFlag(flag);
+  getFlagUrl(flagOrSlot?: RaceFlag | string): string {
+    let slotKey: string;
+    if (typeof flagOrSlot === "string" && flagOrSlot.startsWith("flag.")) {
+      slotKey = flagOrSlot;
+    } else if (typeof flagOrSlot === "number") {
+      slotKey = this.getBehavioralFlagKey(flagOrSlot);
+    } else {
+      slotKey = this.getBehavioralFlagKey();
+    }
 
     // 1. Theme slot resolution (highest priority)
-    const themeSlotMap: Record<string, string> = {
-      green: "flag.green",
-      red: "flag.red",
-      yellow: "flag.yellow",
-      white: "flag.white",
-      checkered: "flag.checkered",
-      green_yellow: "flag.yellowgreen",
-      black: "flag.black",
-    };
+    let assetId = this.themeService.resolveAssetId(slotKey);
 
-    const slotKey = themeSlotMap[flagType];
-    if (slotKey) {
-      const assetId = this.themeService.resolveAssetId(slotKey);
-      if (assetId) {
-        const asset = this.assets.find(
-          (a) =>
-            a.model?.entityId === assetId ||
-            a.entity_id === assetId ||
-            a._id === assetId,
-        );
-        if (asset) return this.getFullUrl(asset.url);
+    // 2. Individual Settings override
+    if (!assetId) {
+      const settings = this.settingsService.getSettings();
+      let url: string | undefined;
+      if (slotKey === THEME_SLOT_KEYS.FLAG_RACING) url = settings.flagRacing;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_PAUSED)
+        url = settings.flagHeatPaused;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_OVER)
+        url = settings.flagHeatOver;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_RACE_OVER)
+        url = settings.flagRaceOver;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_NOT_STARTED)
+        url = settings.flagNotStarted;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_STARTING)
+        url = settings.flagStarting;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_RESTARTING)
+        url = settings.flagRestarting;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_ONE_LAP_TO_GO)
+        url = settings.flagOneLapToGo;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_HEAT_FINISHING)
+        url = settings.flagHeatFinishing;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_WARMUP)
+        url = settings.flagWarmup;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_DRIVER_FINISHED)
+        url = settings.flagDriverFinished;
+      else if (slotKey === THEME_SLOT_KEYS.FLAG_PENALTY)
+        url = settings.flagPenalty;
+
+      if (url) return this.getFullUrl(url);
+    } else {
+      const asset = this.assets.find(
+        (a) =>
+          a.model?.entityId === assetId ||
+          a.entity_id === assetId ||
+          a._id === assetId,
+      );
+      if (asset) return this.getFullUrl(asset.url);
+      if (this.dataService?.getAssetUrl) {
+        return this.getFullUrl(this.dataService.getAssetUrl(assetId));
       }
     }
 
-    // 2. Individual Settings override
-    const settings = this.settingsService.getSettings();
-    let url: string | undefined;
-    if (flagType === "green") url = settings.flagGreen;
-    if (flagType === "yellow") url = settings.flagYellow;
-    if (flagType === "red") url = settings.flagRed;
-    if (flagType === "white") url = settings.flagWhite;
-    if (flagType === "checkered") url = settings.flagCheckered;
-    if (flagType === "green_yellow") url = settings.flagYellowGreen;
-
-    if (url) return url;
-
-    // 3. Fallback to empty string
-    // Note: Since there are no default flag assets, we return an empty string
-    // to avoid 404 errors in the debug panel and missing image icons.
     return "";
   }
 
@@ -163,27 +262,36 @@ export class RaceFlagService implements OnDestroy {
   }
 
   /**
-   * Get the flag color for driver station indicator (simplified version)
+   * Get the flag color for driver station indicator (simplified CSS class version)
    */
-  getFlagColor(): "red" | "green" | "yellow" | "white" | "checkered" | "black" {
-    const flagType = this.getFlagType();
-
-    // Map to simplified color set
-    if (flagType === "green_yellow") return "green";
-    return flagType as
-      | "red"
-      | "green"
-      | "yellow"
-      | "white"
-      | "checkered"
-      | "black";
+  getFlagColor(flag?: RaceFlag): FlagColor {
+    const f =
+      flag !== undefined && flag !== RaceFlag.UNKNOWN_FLAG
+        ? flag
+        : this.currentFlag;
+    switch (f) {
+      case RaceFlag.GREEN:
+      case RaceFlag.GREEN_YELLOW:
+        return "green";
+      case RaceFlag.YELLOW:
+        return "yellow";
+      case RaceFlag.WHITE:
+        return "white";
+      case RaceFlag.CHECKERED:
+        return "checkered";
+      case RaceFlag.BLACK:
+        return "black";
+      case RaceFlag.RED:
+      default:
+        return "red";
+    }
   }
 
   /**
    * Get the translation key for the current flag name.
    */
   getFlagNameKey(): string {
-    const flagType = this.getFlagType();
-    return `RACE_FLAG_${flagType.toUpperCase()}`;
+    const key = this.getBehavioralFlagKey();
+    return `UE_LABEL_${key.replace("flag.", "FLAG_").toUpperCase()}`;
   }
 }

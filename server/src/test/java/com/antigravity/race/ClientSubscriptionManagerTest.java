@@ -231,6 +231,20 @@ public class ClientSubscriptionManagerTest {
   }
 
   @Test
+  public void testSetRaceClearsProtocol() {
+    Race mockRace = mock(Race.class);
+    ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
+    manager.setProtocol(mockProtocol);
+
+    manager.setRace(mockRace);
+
+    assertNull(
+        "Protocol should be closed and cleared when a new race is set", manager.getProtocol());
+    assertEquals(mockRace, manager.getRace());
+    verify(mockProtocol).close();
+  }
+
+  @Test
   public void testFastCleanupWhenNoSessions() throws Exception {
     Race mockRace = mock(Race.class);
     com.antigravity.models.Race realModel =
@@ -571,5 +585,72 @@ public class ClientSubscriptionManagerTest {
     com.antigravity.proto.InterfaceEvent event =
         com.antigravity.proto.InterfaceEvent.parseFrom(bytes);
     assertEquals(com.antigravity.proto.InterfaceStatus.CONNECTED, event.getStatus().getStatus());
+  }
+
+  private WsContext createMockWsContext(org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote) {
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    when(mockSession.getRemote()).thenReturn(mockRemote);
+    return new WsContext("id", mockSession) {};
+  }
+
+  @Test
+  public void testSnapshotSentAsBinaryOnSessionAdd() {
+    org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
+        mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
+    WsContext context = createMockWsContext(mockRemote);
+    Race mockRace = mock(Race.class);
+
+    RaceData snapshot =
+        RaceData.newBuilder().setRace(com.antigravity.proto.Race.newBuilder().build()).build();
+    when(mockRace.createSnapshot()).thenReturn(snapshot);
+
+    manager.setRace(mockRace);
+    manager.addSession(context);
+
+    verify(mockRemote).sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+    verify(mockRemote, org.mockito.Mockito.never())
+        .sendStringByFuture(org.mockito.ArgumentMatchers.anyString());
+  }
+
+  @Test
+  public void testBroadcastSentAsBinary() {
+    org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
+        mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
+    WsContext context = createMockWsContext(mockRemote);
+
+    manager.addSession(context);
+    manager.handleRaceSubscription(
+        context,
+        com.antigravity.proto.RaceSubscriptionRequest.newBuilder().setSubscribe(true).build());
+
+    org.mockito.Mockito.reset(mockRemote);
+
+    RaceData update = RaceData.newBuilder().build();
+    manager.broadcast(update);
+
+    verify(mockRemote, org.mockito.Mockito.atLeastOnce())
+        .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+    verify(mockRemote, org.mockito.Mockito.never())
+        .sendStringByFuture(org.mockito.ArgumentMatchers.anyString());
+  }
+
+  @Test
+  public void testBroadcastInterfaceEventSentAsBinary() {
+    org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
+        mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
+    WsContext context = createMockWsContext(mockRemote);
+
+    manager.addInterfaceSession(context);
+    org.mockito.Mockito.reset(mockRemote);
+
+    com.antigravity.proto.InterfaceEvent event =
+        com.antigravity.proto.InterfaceEvent.newBuilder().build();
+    manager.broadcastInterfaceEvent(event);
+
+    verify(mockRemote, org.mockito.Mockito.atLeastOnce())
+        .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+    verify(mockRemote, org.mockito.Mockito.never())
+        .sendStringByFuture(org.mockito.ArgumentMatchers.anyString());
   }
 }

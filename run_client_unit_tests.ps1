@@ -48,7 +48,7 @@ Write-Host "Executing unit tests..." -ForegroundColor Green
 # Explicitly specify project name and working directory for Windows compatibility
 # Only pass $args if it contains actual values to avoid empty argument errors
 if ($args.Count -gt 0) {
-    node_modules\.bin\ng test client --watch=false --browsers=ChromeHeadlessWithCustomConfig @args
+    node_modules\.bin\ng test client --watch=false --code-coverage --browsers=ChromeHeadlessWithCustomConfig @args
 } else {
-    node_modules\.bin\ng test client --watch=false --browsers=ChromeHeadlessWithCustomConfig
+    node_modules\.bin\ng test client --watch=false --code-coverage --browsers=ChromeHeadlessWithCustomConfig
 }

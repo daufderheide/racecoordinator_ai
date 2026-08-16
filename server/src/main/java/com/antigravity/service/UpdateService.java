@@ -42,6 +42,7 @@ public class UpdateService {
     public String releaseNotes;
     public String releaseUrl;
     public boolean isWindows;
+    public boolean isLinux;
     public long downloadSize;
   }
 
@@ -76,6 +77,7 @@ public class UpdateService {
     // Determine OS
     String osName = System.getProperty("os.name").toLowerCase();
     result.isWindows = osName.contains("win");
+    result.isLinux = osName.contains("linux");
 
     try {
       JsonNode releases = fetchReleasesNode();
@@ -118,9 +120,13 @@ public class UpdateService {
                     result.isWindows
                         && assetName.contains("online_setup")
                         && assetName.endsWith(".exe");
-                boolean matchesMac = !result.isWindows && assetName.endsWith(".dmg");
+                boolean matchesMac =
+                    !result.isWindows && !result.isLinux && assetName.endsWith(".dmg");
+                boolean matchesLinux =
+                    result.isLinux
+                        && (assetName.contains("linux") || assetName.endsWith(".tar.gz"));
 
-                if (matchesWindows || matchesMac) {
+                if (matchesWindows || matchesMac || matchesLinux) {
                   result.downloadUrl = asset.get("browser_download_url").asText();
                   if (asset.has("size")) {
                     result.downloadSize = asset.get("size").asLong();
@@ -195,10 +201,11 @@ public class UpdateService {
   public void downloadAndInstallUpdate(String downloadUrl) throws Exception {
     String osName = System.getProperty("os.name").toLowerCase();
     boolean isWindows = osName.contains("win");
+    boolean isLinux = osName.contains("linux");
 
-    if (!isWindows) {
+    if (!isWindows && !isLinux) {
       throw new UnsupportedOperationException(
-          "Automatic installation is only supported on Windows.");
+          "Automatic installation is supported on Windows and Linux.");
     }
 
     cancelDownload = false;
@@ -217,7 +224,9 @@ public class UpdateService {
       Files.createDirectories(tempDir);
     }
 
-    File installerFile = new File(tempDir.toFile(), "RaceCoordinatorSetup_Update.exe");
+    String fileName =
+        isWindows ? "RaceCoordinatorSetup_Update.exe" : "RaceCoordinator_Update.tar.gz";
+    File installerFile = new File(tempDir.toFile(), fileName);
 
     URL url = new URL(downloadUrl);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -260,20 +269,37 @@ public class UpdateService {
 
     downloadProgress = 100;
     downloadStatus = "RDS_UPDATE_STATUS_LAUNCHING";
-    logger.info("Download complete. Launching installer...");
+    logger.info("Download complete. Launching update installer...");
 
-    // Give the client time to poll the "Launching" status before UAC suspends the OS desktop
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
 
-    // Execute installer with silent and custom restart flag
-    ProcessBuilder pb =
-        new ProcessBuilder(
-            "cmd.exe", "/c", "start", installerFile.getAbsolutePath(), "/SILENT", "/RESTARTAPP");
-    pb.start();
+    if (isWindows) {
+      ProcessBuilder pb =
+          new ProcessBuilder(
+              "cmd.exe", "/c", "start", installerFile.getAbsolutePath(), "/SILENT", "/RESTARTAPP");
+      pb.start();
+    } else if (isLinux) {
+      File updateScript = new File("/opt/racecoordinatorai/scripts/update_app.sh");
+      ProcessBuilder pb;
+      if (updateScript.exists()) {
+        pb =
+            new ProcessBuilder(
+                "bash", updateScript.getAbsolutePath(), installerFile.getAbsolutePath());
+      } else {
+        pb =
+            new ProcessBuilder(
+                "bash",
+                "-c",
+                "tar -xzf "
+                    + installerFile.getAbsolutePath()
+                    + " -C /opt/racecoordinatorai && sudo systemctl restart racecoordinatorai");
+      }
+      pb.start();
+    }
   }
 
   static int calculateDownloadProgress(long downloaded, long contentLength) {

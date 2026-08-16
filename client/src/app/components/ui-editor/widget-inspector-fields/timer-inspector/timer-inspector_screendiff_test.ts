@@ -11,8 +11,8 @@ test.describe("Timer Inspector Visuals", () => {
     await TestSetupHelper.setupThemeMocks(page);
 
     await TestSetupHelper.setupSettings(page, {
-      flagGreen: "/api/assets/download?filename=img1.png",
-      flagRed: "/api/assets/download?filename=img1.png",
+      flagRacing: "/api/assets/download?filename=img1.png",
+      flagHeatOver: "/api/assets/download?filename=img1.png",
       columnEditorMinimized: true,
       columnEditorPositionX: 9999,
       columnEditorPositionY: 9999,

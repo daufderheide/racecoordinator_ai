@@ -170,4 +170,112 @@ describe("SeasonManagerComponent", () => {
     const selectedName = await harness.getSelectedSeasonName();
     expect(selectedName).toBe("Summer League");
   });
+
+  describe("Filtering, Standings and CRUD Actions", () => {
+    it("should filter seasons by search query", () => {
+      component.seasons = [
+        { entity_id: "s1", name: "Alpha Championship", drops: 0 },
+        { entity_id: "s2", name: "Beta Cup", drops: 0 },
+      ];
+      component.searchQuery = "beta";
+      expect(component.filteredSeasons.length).toBe(1);
+      expect(component.filteredSeasons[0].name).toBe("Beta Cup");
+    });
+
+    it("should correctly detect hasDemoRaces", () => {
+      expect(component.hasDemoRaces).toBeFalse();
+
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Test",
+        races: [{ race_id: "r1", is_demo: true } as any],
+      } as any;
+      expect(component.hasDemoRaces).toBeTrue();
+    });
+
+    it("should calculate standings with drop logic", () => {
+      const season: any = {
+        entity_id: "s1",
+        name: "Drop Season",
+        drops: 1,
+        races: [
+          {
+            race_id: "r1",
+            race_name: "Race 1",
+            timestamp: 1000,
+            driver_results: [
+              {
+                driver_id: "d1",
+                driver_name: "Speedy",
+                overall_rank: 1,
+                overall_points: 25,
+                heat_points: 5,
+                total_points: 30,
+              },
+            ],
+          },
+          {
+            race_id: "r2",
+            race_name: "Race 2",
+            timestamp: 2000,
+            driver_results: [
+              {
+                driver_id: "d1",
+                driver_name: "Speedy",
+                overall_rank: 2,
+                overall_points: 10,
+                heat_points: 2,
+                total_points: 12,
+              },
+            ],
+          },
+        ],
+      };
+
+      component.calculateStandings(season);
+      expect(component.standings.length).toBe(1);
+      const standing = component.standings[0];
+      expect(standing.gross_points).toBe(42);
+      expect(standing.net_points).toBe(30); // 12 was dropped
+      expect(standing.races_run).toBe(2);
+      expect(
+        standing.race_scores?.find((s) => s.race_id === "r2")?.is_dropped,
+      ).toBeTrue();
+    });
+
+    it("should handle navigation onNew, onEdit, onDelete, onBack", () => {
+      const router = TestBed.inject(Router);
+      component.selectedSeason = { entity_id: "s1", name: "Season 1" } as any;
+
+      component.onNew();
+      expect(router.navigate).toHaveBeenCalledWith(["/season-editor"]);
+
+      component.onEdit();
+      expect(router.navigate).toHaveBeenCalledWith(["/season-editor"], {
+        queryParams: { id: "s1" },
+      });
+
+      component.onDelete();
+      expect(component.showDeleteConfirmation).toBeTrue();
+
+      component.cancelDelete();
+      expect(component.showDeleteConfirmation).toBeFalse();
+
+      component.onBack();
+      expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should confirmDelete and trigger season deletion", () => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "deleteSeason").and.returnValue(of({}));
+      spyOn(component, "loadData");
+
+      component.selectedSeason = { entity_id: "s1", name: "Season 1" } as any;
+      component.confirmDelete();
+
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s1");
+      expect(component.showDeleteConfirmation).toBeFalse();
+      expect(component.loadData).toHaveBeenCalled();
+    });
+  });
 });

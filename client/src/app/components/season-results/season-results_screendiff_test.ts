@@ -65,6 +65,39 @@ test.describe("Season Results Visuals", () => {
     });
   });
 
+  test("should render expanded driver bonus breakdown when driver row is clicked", async ({
+    page,
+  }) => {
+    const mockSeason = SeasonResultsHelper.createMockSeason();
+    await SeasonResultsHelper.injectMockSeasonsData(page, [mockSeason]);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/season-results?id=" + mockSeason.entity_id),
+    );
+
+    const harness = new SeasonResultsHarnessE2e(
+      page.locator("app-season-results"),
+    );
+
+    expect(await harness.hasStandingsTable()).toBe(true);
+
+    // Expand the first race details
+    await harness.toggleRaceExpander(0);
+    await page.waitForTimeout(200);
+    expect(await harness.isRaceExpanded(0)).toBe(true);
+
+    // Expand the first driver details (Alice Sprint who has bonuses)
+    await harness.toggleDriverExpander(0, 0);
+    await page.waitForTimeout(200);
+    expect(await harness.isDriverExpanded(0, 0)).toBe(true);
+
+    await expect(page).toHaveScreenshot("season-results-driver-expanded.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should render empty season results page when no races run", async ({
     page,
   }) => {

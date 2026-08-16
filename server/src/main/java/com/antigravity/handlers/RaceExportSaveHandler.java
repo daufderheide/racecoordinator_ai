@@ -2,6 +2,7 @@ package com.antigravity.handlers;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.context.RaceScope;
+import com.antigravity.handlers.dto.SavedRaceDescriptor;
 import com.antigravity.models.Season;
 import com.antigravity.models.SeasonStandingItem;
 import com.antigravity.models.Track;
@@ -348,8 +349,10 @@ public class RaceExportSaveHandler {
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       DatabaseService dbService = DatabaseService.getInstance();
       List<RaceSaveData> saves = dbService.getSavedRaces(databaseContext, scope);
-      List<String> files =
-          saves.stream().map(RaceSaveData::getSaveName).collect(Collectors.toList());
+      List<SavedRaceDescriptor> files =
+          saves.stream()
+              .map(save -> new SavedRaceDescriptor(save.getSaveName(), save.isCorrupt()))
+              .collect(Collectors.toList());
       ObjectMapper mapper = getObjectMapper();
       ctx.contentType("application/json").result(mapper.writeValueAsString(files));
     } catch (Exception e) {

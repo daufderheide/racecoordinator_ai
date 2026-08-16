@@ -42,6 +42,12 @@ public abstract class AbstractSerialProtocol extends DefaultProtocol {
   }
 
   @Override
+  protected boolean canReconnect() {
+    String commPort = getCommPort();
+    return commPort != null && !commPort.isEmpty();
+  }
+
+  @Override
   public synchronized boolean open() {
     if (serialConnection.isOpen()) {
       logger.info("SerialProtocol already open");

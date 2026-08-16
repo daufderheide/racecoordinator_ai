@@ -9,11 +9,14 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
+import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.Racing;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,6 +75,18 @@ public class CsvExporterTest {
             .track(track)
             .isDemoMode(true)
             .build();
+    race.injectProtocols(org.mockito.Mockito.mock(ProtocolDelegate.class));
+  }
+
+  @After
+  public void tearDown() {
+    if (race != null && race.getState() != null) {
+      try {
+        race.getState().exit(race);
+      } catch (Exception ignored) {
+      }
+    }
+    ClientSubscriptionManager.setInstance(null);
   }
 
   @Test
@@ -88,5 +103,30 @@ public class CsvExporterTest {
     assertTrue("CSV should contain padded lap time 4.500", csv.contains("4.500"));
     assertTrue("CSV should contain padded lap time 10.000", csv.contains("10.000"));
     assertTrue("CSV should contain rounded lap time 5.482", csv.contains("5.482"));
+  }
+
+  @Test
+  public void testModelEvaluationRowAndPredictionRowAccessors() {
+    CsvExporter.ModelEvaluationRow eval = new CsvExporter.ModelEvaluationRow();
+    eval.brierScore = 0.123;
+    eval.rankMae = 1.45;
+    eval.lapProjectionMae = 2.34;
+
+    org.junit.Assert.assertEquals(0.123, eval.getBrierScore(), 0.001);
+    org.junit.Assert.assertEquals(1.45, eval.getRankMae(), 0.001);
+    org.junit.Assert.assertEquals(2.34, eval.getLapProjectionMae(), 0.001);
+
+    CsvExporter.PredictionRow pred = new CsvExporter.PredictionRow();
+    pred.projectedRank = "1";
+    pred.driverName = "Alice";
+    pred.winProbability = "75%";
+    pred.podiumProbability = "95%";
+    pred.projectedLaps = "50.5";
+
+    org.junit.Assert.assertEquals("1", pred.getProjectedRank());
+    org.junit.Assert.assertEquals("Alice", pred.getDriverName());
+    org.junit.Assert.assertEquals("75%", pred.getWinProbability());
+    org.junit.Assert.assertEquals("95%", pred.getPodiumProbability());
+    org.junit.Assert.assertEquals("50.5", pred.getProjectedLaps());
   }
 }

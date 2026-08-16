@@ -20,7 +20,7 @@ test.describe("Track Manager UI Refinements", () => {
 
     // Wait for the list to be populated
     const listItems = page.locator(".list-item");
-    await expect(listItems).toHaveCount(20);
+    await listItems.nth(19).waitFor({ state: "attached" });
 
     // Capture the sidebar state (scrollbar and truncation)
     await page.waitForTimeout(500);

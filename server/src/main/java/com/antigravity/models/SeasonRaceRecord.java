@@ -22,28 +22,89 @@ public class SeasonRaceRecord {
     private final int overallRank;
 
     @JsonProperty("overall_points")
-    private final int overallPoints;
+    private final double overallPoints;
+
+    @JsonProperty("overall_bonus_points")
+    private final double overallBonusPoints;
+
+    @JsonProperty("overall_bonus_breakdown")
+    private final java.util.Map<String, Double> overallBonusBreakdown;
 
     @JsonProperty("heat_points")
-    private final int heatPoints;
+    private final double heatPoints;
+
+    @JsonProperty("heat_bonus_points")
+    private final double heatBonusPoints;
+
+    @JsonProperty("heat_bonus_breakdown")
+    private final java.util.Map<String, Double> heatBonusBreakdown;
 
     @JsonProperty("total_points")
-    private final int totalPoints;
+    private final double totalPoints;
 
     @JsonCreator
     public SeasonDriverResult(
         @JsonProperty("driver_id") String driverId,
         @JsonProperty("driver_name") String driverName,
         @JsonProperty("overall_rank") Integer overallRank,
-        @JsonProperty("overall_points") Integer overallPoints,
-        @JsonProperty("heat_points") Integer heatPoints,
-        @JsonProperty("total_points") Integer totalPoints) {
+        @JsonProperty("overall_points") Double overallPoints,
+        @JsonProperty("overall_bonus_points") Double overallBonusPoints,
+        @JsonProperty("overall_bonus_breakdown")
+            java.util.Map<String, Double> overallBonusBreakdown,
+        @JsonProperty("heat_points") Double heatPoints,
+        @JsonProperty("heat_bonus_points") Double heatBonusPoints,
+        @JsonProperty("heat_bonus_breakdown") java.util.Map<String, Double> heatBonusBreakdown,
+        @JsonProperty("total_points") Double totalPoints) {
       this.driverId = driverId != null ? driverId : "";
       this.driverName = driverName != null ? driverName : "";
       this.overallRank = overallRank != null ? overallRank : 0;
-      this.overallPoints = overallPoints != null ? overallPoints : 0;
-      this.heatPoints = heatPoints != null ? heatPoints : 0;
-      this.totalPoints = totalPoints != null ? totalPoints : (this.overallPoints + this.heatPoints);
+      this.overallPoints = overallPoints != null ? overallPoints : 0.0;
+      this.overallBonusPoints = overallBonusPoints != null ? overallBonusPoints : 0.0;
+      this.overallBonusBreakdown =
+          overallBonusBreakdown != null ? overallBonusBreakdown : new java.util.HashMap<>();
+      this.heatPoints = heatPoints != null ? heatPoints : 0.0;
+      this.heatBonusPoints = heatBonusPoints != null ? heatBonusPoints : 0.0;
+      this.heatBonusBreakdown =
+          heatBonusBreakdown != null ? heatBonusBreakdown : new java.util.HashMap<>();
+      this.totalPoints =
+          totalPoints != null
+              ? totalPoints
+              : (this.overallPoints
+                  + this.overallBonusPoints
+                  + this.heatPoints
+                  + this.heatBonusPoints);
+    }
+
+    public SeasonDriverResult(
+        String driverId,
+        String driverName,
+        Integer overallRank,
+        Double overallPoints,
+        Double overallBonusPoints,
+        Double heatPoints,
+        Double heatBonusPoints,
+        Double totalPoints) {
+      this(
+          driverId,
+          driverName,
+          overallRank,
+          overallPoints,
+          overallBonusPoints,
+          null,
+          heatPoints,
+          heatBonusPoints,
+          null,
+          totalPoints);
+    }
+
+    public SeasonDriverResult(
+        String driverId,
+        String driverName,
+        Integer overallRank,
+        Double overallPoints,
+        Double heatPoints,
+        Double totalPoints) {
+      this(driverId, driverName, overallRank, overallPoints, 0.0, heatPoints, 0.0, totalPoints);
     }
 
     public String getDriverId() {
@@ -58,15 +119,31 @@ public class SeasonRaceRecord {
       return overallRank;
     }
 
-    public int getOverallPoints() {
+    public double getOverallPoints() {
       return overallPoints;
     }
 
-    public int getHeatPoints() {
+    public double getOverallBonusPoints() {
+      return overallBonusPoints;
+    }
+
+    public java.util.Map<String, Double> getOverallBonusBreakdown() {
+      return overallBonusBreakdown;
+    }
+
+    public double getHeatPoints() {
       return heatPoints;
     }
 
-    public int getTotalPoints() {
+    public double getHeatBonusPoints() {
+      return heatBonusPoints;
+    }
+
+    public java.util.Map<String, Double> getHeatBonusBreakdown() {
+      return heatBonusBreakdown;
+    }
+
+    public double getTotalPoints() {
       return totalPoints;
     }
   }

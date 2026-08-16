@@ -108,22 +108,45 @@ Run Playwright-based visual tests to detect UI regressions:
 - **Linux/Mac**: `./run_client_screendiff_tests.sh`
 - **Windows**: `.\run_client_screendiff_tests.ps1`
 
-**Important Note on Docker & Performance:**
-To ensure identical rendering across different operating systems, these visual tests run inside an isolated **Docker container**. 
+**Docker & Performance Optimizations:**
+To ensure identical rendering across different operating systems, visual tests run inside an isolated **Docker container**.
 - Docker Desktop must be installed and running before executing the script.
-- By default, the tests use `2` workers inside the container to prevent overloading the Docker VM. 
-- To speed up test execution, you can scale the number of workers. **We recommend setting `PWTEST_WORKERS="50%"`** to utilize half of your Docker VM's CPU cores. 
-  - **Linux/Mac**: `PWTEST_WORKERS="50%" ./run_client_screendiff_tests.sh`
-  - **Windows**: `$env:PWTEST_WORKERS="50%"; .\run_client_screendiff_tests.ps1`
-- *Warning*: Do not set workers to `100%`. Running at 100% CPU capacity causes thread contention and CPU starvation, leading to layout-thrashing loops and flaky `ResizeObserver` timeouts in complex UI components.
-#### Accepting Changes (Updating Snapshots)
-If you have intentionally modified the UI and need to update the expected screenshots, you have two options:
+- **100% CPU Worker Default**: By default, the tests use **100%** of your Docker VM's allocated CPU cores for fast parallel execution (`PWTEST_WORKERS=100%`).
+- **Overriding Workers**: If you wish to reduce the CPU load or reserve headroom on your machine, you can customize the worker allocation:
+  - **Linux/Mac**: `PWTEST_WORKERS="75%" ./run_client_screendiff_tests.sh` (or `PWTEST_WORKERS="8" ...`)
+  - **Windows**: `$env:PWTEST_WORKERS="75%"; .\run_client_screendiff_tests.ps1`
 
-1. **Re-run and Update**: Run the tests and force an update of the snapshots. This will execute the tests again and overwrite the "expected" images with the new results.
+**Fast Iteration Options:**
+
+1. **Run Only Changed Components (`--changed`)**:
+   Automatically detects modified components/files in your workspace via `git` and runs only the relevant screendiff test suites:
+   - **Linux/Mac**: `./run_client_screendiff_tests.sh --changed`
+   - **Windows**: `.\run_client_screendiff_tests.ps1 --changed`
+   *(Note: Wide-impact changes like `toolbar`, `manager-header`, `editor-title`, global styles, or shared assets will automatically trigger all visual tests).*
+
+2. **Target Specific Components / Files**:
+   Filter test execution to a specific component or test pattern:
+   - **Linux/Mac**: `./run_client_screendiff_tests.sh race-editor`
+   - **Windows**: `.\run_client_screendiff_tests.ps1 race-editor`
+
+3. **Fast Chromium-Only Run**:
+   Skip WebKit to cut test execution time in half during active development:
+   - **Linux/Mac**: `./run_client_screendiff_tests.sh --changed --project=chromium`
+   - **Windows**: `.\run_client_screendiff_tests.ps1 --changed --project=chromium`
+
+#### Accepting Changes (Updating Snapshots)
+If you have intentionally modified the UI and need to update the expected screenshots:
+
+1. **Update Snapshots for Changed Components (Recommended)**:
+   - **Linux/Mac**: `./run_client_screendiff_tests.sh --changed --update-snapshots`
+   - **Windows**: `.\run_client_screendiff_tests.ps1 --changed --update-snapshots`
+
+2. **Full Suite Update**:
    - **Linux/Mac**: `./run_client_screendiff_tests.sh --update-snapshots`
    - **Windows**: `.\run_client_screendiff_tests.ps1 --update-snapshots`
 
-2. **Sync from Last Run**: If you just ran the tests and want to promote the "actual" (failed) images from that run to "expected" without re-running everything, use the sync flag. This is much faster.
+3. **Sync from Last Run (`--sync-only`)**:
+   If you just ran tests and want to promote the "actual" (failed) images from that run to "expected" without re-running everything:
    - **Linux/Mac**: `./run_client_screendiff_tests.sh --sync-only`
    - **Windows**: `.\run_client_screendiff_tests.ps1 --sync-only`
 

@@ -165,6 +165,11 @@ public class UpdateServiceTest {
             + "        \"name\": \"RaceCoordinator_Mac_v1.0.0-alpha.123.dmg\",\n"
             + "        \"size\": 25000000,\n"
             + "        \"browser_download_url\": \"https://github.com/mac-setup.dmg\"\n"
+            + "      },\n"
+            + "      {\n"
+            + "        \"name\": \"RaceCoordinatorAI_Linux_v1.0.0-alpha.123.tar.gz\",\n"
+            + "        \"size\": 30000000,\n"
+            + "        \"browser_download_url\": \"https://github.com/linux-setup.tar.gz\"\n"
             + "      }\n"
             + "    ]\n"
             + "  }\n"
@@ -179,9 +184,43 @@ public class UpdateServiceTest {
     if (result.isWindows) {
       assertEquals("https://github.com/win-setup.exe", result.downloadUrl);
       assertEquals(50000000L, result.downloadSize);
+    } else if (result.isLinux) {
+      assertEquals("https://github.com/linux-setup.tar.gz", result.downloadUrl);
+      assertEquals(30000000L, result.downloadSize);
     } else {
       assertEquals("https://github.com/mac-setup.dmg", result.downloadUrl);
       assertEquals(25000000L, result.downloadSize);
+    }
+  }
+
+  @Test
+  public void testCheckForUpdates_FindsLinuxArm64Asset() throws Exception {
+    UpdateService service = spy(new UpdateService("0.0.0", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0-alpha.123\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": [\n"
+            + "      {\n"
+            + "        \"name\": \"RaceCoordinatorAI-Linux-ARM64.tar.gz\",\n"
+            + "        \"size\": 35000000,\n"
+            + "        \"browser_download_url\": \"https://github.com/linux-arm64.tar.gz\"\n"
+            + "      }\n"
+            + "    ]\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+
+    assertTrue("Update should be available", result.updateAvailable);
+
+    if (result.isLinux) {
+      assertEquals("https://github.com/linux-arm64.tar.gz", result.downloadUrl);
+      assertEquals(35000000L, result.downloadSize);
     }
   }
 

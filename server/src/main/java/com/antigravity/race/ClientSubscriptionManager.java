@@ -121,7 +121,9 @@ public class ClientSubscriptionManager {
     cancelPendingCleanup();
     this.lastDirectorExplicitlyUnsubscribed = false;
     if (race != null && this.currentProtocol != null) {
-      throw new IllegalStateException("Cannot set race while protocol is active");
+      logger.info(
+          "New race being set while standalone protocol is active. Closing standalone protocol.");
+      setProtocol(null);
     }
     if (this.currentRace != null) {
       if (race == null) {
@@ -184,11 +186,13 @@ public class ClientSubscriptionManager {
     logger.info("New WebSocket session added. Total sessions: {}", sessions.size());
 
     if (currentRace != null) {
+      boolean isReplay =
+          DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
       com.antigravity.proto.SystemState sysState = // fqn-collision
           com.antigravity.proto.SystemState.newBuilder() // fqn-collision
               .setResourceLockState("RACE_RUNNING")
               .setOwnerId("SYSTEM")
-              .setIsReplayMode(DatabaseService.getInstance().isReplayMode())
+              .setIsReplayMode(isReplay)
               .build();
       RaceData snapshot = currentRace.createSnapshot().toBuilder().setSystemState(sysState).build();
       if (snapshot.hasRace() && snapshot.getRace().hasCurrentHeat()) {
@@ -200,11 +204,13 @@ public class ClientSubscriptionManager {
       }
       ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
     } else {
+      boolean isReplay =
+          DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
       com.antigravity.proto.SystemState sysState = // fqn-collision
           com.antigravity.proto.SystemState.newBuilder() // fqn-collision
               .setResourceLockState("IDLE")
               .setOwnerId("")
-              .setIsReplayMode(DatabaseService.getInstance().isReplayMode())
+              .setIsReplayMode(isReplay)
               .build();
       RaceData snapshot = RaceData.newBuilder().setSystemState(sysState).build(); // fqn-collision
       ctx.send(ByteBuffer.wrap(snapshot.toByteArray()));
@@ -544,13 +550,15 @@ public class ClientSubscriptionManager {
   }
 
   public void broadcastSystemState(String resourceLockState, String ownerId) {
+    boolean isReplay =
+        DatabaseService.getInstance() != null && DatabaseService.getInstance().isReplayMode();
     SystemState.Builder stateBuilder =
         SystemState.newBuilder()
             .setResourceLockState(resourceLockState)
             .setOwnerId(ownerId)
-            .setIsReplayMode(DatabaseService.getInstance().isReplayMode());
+            .setIsReplayMode(isReplay);
 
-    if (DatabaseService.getInstance().isReplayMode()) {
+    if (isReplay) {
       LogReplayService replayService = LogReplayService.getInstance();
       if (replayService != null) {
         stateBuilder.setLogReplayStatus(replayService.getLogReplayStatus());

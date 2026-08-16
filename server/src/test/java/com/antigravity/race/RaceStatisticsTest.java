@@ -15,6 +15,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
+import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.Paused;
@@ -25,6 +26,7 @@ import com.antigravity.service.ServerConfigService;
 import com.antigravity.util.CsvExporter;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -90,6 +92,18 @@ public class RaceStatisticsTest {
             .track(track)
             .isDemoMode(true)
             .build();
+    race.injectProtocols(mock(ProtocolDelegate.class));
+  }
+
+  @After
+  public void tearDown() {
+    if (race != null && race.getState() != null) {
+      try {
+        race.getState().exit(race);
+      } catch (Exception ignored) {
+      }
+    }
+    ClientSubscriptionManager.setInstance(null);
   }
 
   @Test

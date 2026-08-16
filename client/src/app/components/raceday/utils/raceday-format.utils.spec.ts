@@ -194,4 +194,91 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("--");
     });
   });
+
+  describe("formatValue - lapsLed", () => {
+    it("should format lapsLed properly for valid driver", () => {
+      const mockHd = {
+        lapsLed: 8,
+        actualDriver: { name: "Driver 1" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "lapsLed",
+        8,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("8");
+    });
+
+    it("should read lapsLed from DriverHeatData if value is null", () => {
+      const mockHd = {
+        lapsLed: 5,
+        actualDriver: { name: "Driver 1" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "lapsLed",
+        null,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("5");
+    });
+
+    it("should return 0 for a valid driver with 0 laps led", () => {
+      const mockHd = {
+        lapsLed: 0,
+        actualDriver: { name: "Driver 1" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "lapsLed",
+        0,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("0");
+    });
+
+    it("should return -- for empty driver with EMPTY_LANE id", () => {
+      const mockHd = {
+        lapsLed: 0,
+        actualDriver: { entity_id: "EMPTY_LANE", name: "Empty" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "lapsLed",
+        0,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--");
+    });
+
+    it("should return -- for empty lane without driver or with isEmpty flag", () => {
+      const mockHd1 = {
+        lapsLed: 0,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue("lapsLed", 0, mockHd1, undefined, ctx),
+      ).toBe("--");
+
+      const mockHd2 = {
+        lapsLed: 0,
+        isEmpty: true,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue("lapsLed", 0, mockHd2, undefined, ctx),
+      ).toBe("--");
+
+      const mockHd3 = {
+        lapsLed: 0,
+        participant: { driver: { name: "Empty", entity_id: "EMPTY_LANE" } },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue("lapsLed", 0, mockHd3, undefined, ctx),
+      ).toBe("--");
+    });
+  });
 });

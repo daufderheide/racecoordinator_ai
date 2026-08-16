@@ -15,13 +15,19 @@ public class SeasonRaceRecordTest {
   @Test
   public void testSeasonRaceRecordSerialization() throws Exception {
     SeasonRaceRecord.SeasonDriverResult res =
-        new SeasonRaceRecord.SeasonDriverResult("d1", "Driver 1", 1, 10, 5, 15);
+        new SeasonRaceRecord.SeasonDriverResult("d1", "Driver 1", 1, 10.0, 3.0, 5.0, 2.0, 20.0);
     SeasonRaceRecord record =
         new SeasonRaceRecord(
             "r1", "Grand Prix 1", 1785905421000L, true, Collections.singletonList(res));
 
     String json = mapper.writeValueAsString(record);
     assertTrue("JSON should contain is_demo property", json.contains("\"is_demo\":true"));
+    assertTrue(
+        "JSON should contain overall_bonus_points property",
+        json.contains("\"overall_bonus_points\":3.0"));
+    assertTrue(
+        "JSON should contain heat_bonus_points property",
+        json.contains("\"heat_bonus_points\":2.0"));
 
     SeasonRaceRecord deserialized = mapper.readValue(json, SeasonRaceRecord.class);
     assertNotNull(deserialized);
@@ -29,6 +35,50 @@ public class SeasonRaceRecordTest {
     assertEquals("Grand Prix 1", deserialized.getRaceName());
     assertTrue(deserialized.isDemo());
     assertEquals(1, deserialized.getDriverResults().size());
+    SeasonRaceRecord.SeasonDriverResult resDeserialized = deserialized.getDriverResults().get(0);
+    assertEquals(10.0, resDeserialized.getOverallPoints(), 0.001);
+    assertEquals(3.0, resDeserialized.getOverallBonusPoints(), 0.001);
+    assertEquals(5.0, resDeserialized.getHeatPoints(), 0.001);
+    assertEquals(2.0, resDeserialized.getHeatBonusPoints(), 0.001);
+    assertEquals(20.0, resDeserialized.getTotalPoints(), 0.001);
+    assertNotNull(resDeserialized.getOverallBonusBreakdown());
+    assertNotNull(resDeserialized.getHeatBonusBreakdown());
+  }
+
+  @Test
+  public void testSeasonDriverResultWithBreakdownMapsSerialization() throws Exception {
+    java.util.Map<String, Double> overallBreakdown = new java.util.LinkedHashMap<>();
+    overallBreakdown.put("fastest_lap", 15.0);
+    overallBreakdown.put("most_laps_led", 25.0);
+
+    java.util.Map<String, Double> heatBreakdown = new java.util.LinkedHashMap<>();
+    heatBreakdown.put("fastest_lap", 5.0);
+    heatBreakdown.put("led_lap", 2.0);
+
+    SeasonRaceRecord.SeasonDriverResult res =
+        new SeasonRaceRecord.SeasonDriverResult(
+            "d1", "Driver 1", 1, 25.0, 40.0, overallBreakdown, 10.0, 7.0, heatBreakdown, 82.0);
+
+    SeasonRaceRecord record =
+        new SeasonRaceRecord(
+            "r1", "Championship Race 1", 1785905421000L, false, Collections.singletonList(res));
+
+    String json = mapper.writeValueAsString(record);
+    assertTrue(json.contains("\"overall_bonus_breakdown\":"));
+    assertTrue(json.contains("\"fastest_lap\":15.0"));
+    assertTrue(json.contains("\"most_laps_led\":25.0"));
+    assertTrue(json.contains("\"heat_bonus_breakdown\":"));
+    assertTrue(json.contains("\"fastest_lap\":5.0"));
+    assertTrue(json.contains("\"led_lap\":2.0"));
+
+    SeasonRaceRecord deserialized = mapper.readValue(json, SeasonRaceRecord.class);
+    assertNotNull(deserialized);
+    SeasonRaceRecord.SeasonDriverResult desRes = deserialized.getDriverResults().get(0);
+    assertEquals(15.0, desRes.getOverallBonusBreakdown().get("fastest_lap"), 0.001);
+    assertEquals(25.0, desRes.getOverallBonusBreakdown().get("most_laps_led"), 0.001);
+    assertEquals(5.0, desRes.getHeatBonusBreakdown().get("fastest_lap"), 0.001);
+    assertEquals(2.0, desRes.getHeatBonusBreakdown().get("led_lap"), 0.001);
+    assertEquals(82.0, desRes.getTotalPoints(), 0.001);
   }
 
   @Test

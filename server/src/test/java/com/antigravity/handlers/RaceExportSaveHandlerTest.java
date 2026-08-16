@@ -54,4 +54,32 @@ public class RaceExportSaveHandlerTest {
     handler.exportRaceCsv(ctx);
     verify(res).setStatus(404);
   }
+
+  @Test
+  public void testExportLapDataAccessors() {
+    RaceExportSaveHandler.ExportLapData lapData =
+        new RaceExportSaveHandler.ExportLapData(
+            "Driver A",
+            "Actual Driver A",
+            1,
+            2,
+            12.5,
+            125.0,
+            4.2,
+            java.util.Arrays.asList(1.2, 1.5, 1.5));
+
+    org.junit.Assert.assertEquals("Driver A", lapData.getDriverName());
+    org.junit.Assert.assertEquals("Actual Driver A", lapData.getActualDriverName());
+    org.junit.Assert.assertEquals(1, lapData.getHeatNumber());
+    org.junit.Assert.assertEquals(2, lapData.getLaneNumber());
+    org.junit.Assert.assertEquals(12.5, lapData.getAbsoluteHeatLapTime(), 0.001);
+    org.junit.Assert.assertEquals(125.0, lapData.getAbsoluteLapTime(), 0.001);
+    org.junit.Assert.assertEquals(4.2, lapData.getLapTime(), 0.001);
+    org.junit.Assert.assertEquals(3, lapData.getSegments().size());
+
+    RaceExportSaveHandler.ExportLapData nullSegments =
+        new RaceExportSaveHandler.ExportLapData("Driver B", "Actual B", 2, 1, 5.0, 50.0, 5.0, null);
+    org.junit.Assert.assertNotNull(nullSegments.getSegments());
+    org.junit.Assert.assertTrue(nullSegments.getSegments().isEmpty());
+  }
 }

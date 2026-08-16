@@ -171,8 +171,66 @@ jobs:
           name: mac-dmg
           path: release/RaceCoordinator_Mac.dmg
 
+  build-linux:
+    needs: [check-changes, build-artifacts]
+    if: ${{ needs.check-changes.outputs.should_run == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Determine Version
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            VERSION="0.0.0-alpha.$(date +%Y%m%d)"
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ "${{ github.event.inputs.version }}" != "" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${{ github.ref_type }}" == "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="0.0.0-alpha.${GITHUB_SHA::7}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Set Version in Files
+        run: |
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" client/package.json
+          sed -i "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$VERSION\";/" server/src/main/java/com/antigravity/App.java
+          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/analytics.service.ts
+          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/components/raceday-setup/raceday-setup.component.ts
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Create Analytics Properties
+        run: |
+          mkdir -p server/src/main/resources
+          echo "ga.measurement.id=${{ secrets.GA_MEASUREMENT_ID }}" > server/src/main/resources/analytics.properties
+          echo "ga.api.secret=${{ secrets.GA_API_SECRET }}" >> server/src/main/resources/analytics.properties
+
+      - name: Build Linux ARM64 Release Package
+        run: |
+          chmod +x create_linux_arm64_release.sh
+          ./create_linux_arm64_release.sh
+
+      - name: Upload Linux Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-package
+          path: release/RaceCoordinatorAI-Linux-ARM64.tar.gz
+
   publish-release:
-    needs: [check-changes, build-windows, build-mac, build-artifacts]
+    needs: [check-changes, run-tests, build-windows, build-mac, build-linux, build-artifacts]
     if: ${{ needs.check-changes.outputs.should_run == 'true' && github.event.inputs.skip_release != 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -187,6 +245,26 @@ jobs:
         with:
           name: mac-dmg
           path: final-release/
+
+      - name: Download Linux Package
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-package
+          path: final-release/
+
+      - name: Download Client Coverage Report
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: client-coverage-report
+          path: final-release/coverage/client/
+
+      - name: Download Server Coverage Report
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: server-coverage-report
+          path: final-release/coverage/server/
 
       - name: Determine Tags and Prerelease
         id: vars
@@ -220,6 +298,11 @@ jobs:
           mv final-release/RaceCoordinatorAI_Online_Setup.exe "final-release/RaceCoordinatorAI_Online_Setup_${TAG}.exe" || true
           mv final-release/RaceCoordinatorAI_Offline_Setup.exe "final-release/RaceCoordinatorAI_Offline_Setup_${TAG}.exe" || true
           mv final-release/RaceCoordinator_Mac.dmg "final-release/RaceCoordinator_Mac_${TAG}.dmg" || true
+          mv final-release/RaceCoordinatorAI-Linux-ARM64.tar.gz "final-release/RaceCoordinatorAI-Linux-ARM64_${TAG}.tar.gz" || true
+          if [ -d "final-release/coverage" ]; then
+            node scripts/generate_coverage_portal.js final-release/coverage final-release/coverage/client final-release/coverage/server || true
+            (cd final-release && zip -r "RaceCoordinatorAI_Coverage_Reports_${TAG}.zip" coverage && rm -rf coverage) || true
+          fi
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -227,5 +310,13 @@ jobs:
           tag_name: ${{ env.TAG }}
           name: ${{ env.TAG }}
           prerelease: ${{ env.IS_PRERELEASE == 'true' }}
+          body: |
+            ### 🏎️ Race Coordinator AI Release ${{ env.TAG }}
+
+            #### 📦 Release Assets & Downloads
+            - **Windows**: `RaceCoordinatorAI_Online_Setup_${{ env.TAG }}.exe` / `RaceCoordinatorAI_Offline_Setup_${{ env.TAG }}.exe`
+            - **macOS**: `RaceCoordinator_Mac_${{ env.TAG }}.dmg`
+            - **Linux (ARM64)**: `RaceCoordinatorAI-Linux-ARM64_${{ env.TAG }}.tar.gz`
+            - **Test Coverage**: `RaceCoordinatorAI_Coverage_Reports_${{ env.TAG }}.zip` *(Unzip and open `index.html` to view the unified Client & Server coverage dashboard)*
           files: |
             final-release/*

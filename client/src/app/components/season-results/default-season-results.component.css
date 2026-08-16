@@ -394,6 +394,141 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
+.race-breakdown-table tbody tr.driver-expandable-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.race-breakdown-table tbody tr.driver-expandable-row:hover {
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.race-breakdown-table tbody tr.driver-expandable-row.driver-row-expanded {
+  background: rgba(0, 229, 255, 0.12);
+}
+
+.driver-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.driver-expander-chevron {
+  color: #00e5ff;
+  font-size: 11px;
+  transition: transform 0.2s ease;
+  display: inline-block;
+  transform: rotate(-90deg);
+}
+
+.driver-expander-chevron.expanded {
+  transform: rotate(0deg);
+}
+
+.driver-bonus-details-row {
+  background: rgba(0, 15, 30, 0.6);
+}
+
+.driver-bonus-details-row.driver-bonus-collapsed {
+  display: none;
+}
+
+.driver-bonus-details-row td {
+  padding: 12px 16px 16px 16px !important;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.15) !important;
+}
+
+.bonus-details-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  animation: fadeInDown 0.25s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bonus-breakdown-card {
+  background: rgba(10, 22, 38, 0.7);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.bonus-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.bonus-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #00e5ff;
+}
+
+.bonus-card-total {
+  font-size: 12px;
+  font-weight: 700;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.12);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.bonus-card-body {
+  font-size: 13px;
+}
+
+.bonus-entries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bonus-entry-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bonus-item-label {
+  color: #cfd8dc;
+  font-size: 13px;
+}
+
+.bonus-item-points {
+  color: #00ff88;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.no-bonuses-msg {
+  color: #78909c;
+  font-style: italic;
+  font-size: 12px;
+  padding: 4px 2px;
+}
+
 .expander-body.expander-collapsed {
   display: none;
 }
@@ -454,7 +589,18 @@
     display: block !important;
   }
 
-  .expander-icon {
+  .expander-icon,
+  .driver-expander-chevron {
+    display: none !important;
+  }
+
+  /* Automatically expand drivers who have earned bonus points in print / PDF export */
+  .driver-bonus-details-row.has-bonuses,
+  .driver-bonus-details-row.has-bonuses.driver-bonus-collapsed {
+    display: table-row !important;
+  }
+
+  .driver-bonus-details-row:not(.has-bonuses) {
     display: none !important;
   }
 
@@ -493,6 +639,34 @@
     border-color: #cbd5e1 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+  }
+
+  :host-context(body.print-no-background) .driver-bonus-details-row,
+  :host-context(body.print-no-background) .bonus-breakdown-card,
+  :host-context(body.print-no-background) .bonus-entry-item {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  :host-context(body.print-no-background) .bonus-card-title {
+    color: #0284c7 !important;
+  }
+
+  :host-context(body.print-no-background) .bonus-card-total,
+  :host-context(body.print-no-background) .bonus-item-points {
+    color: #059669 !important;
+    background: #d1fae5 !important;
+    border-color: #a7f3d0 !important;
+  }
+
+  :host-context(body.print-no-background) .bonus-item-label {
+    color: #334155 !important;
+  }
+
+  :host-context(body.print-no-background) .no-bonuses-msg {
+    color: #64748b !important;
   }
 
   :host-context(body.print-no-background) .page-title,

@@ -16,6 +16,8 @@ public class RaceSaveData {
   @JsonProperty("isAutoSave")
   private boolean isAutoSave;
 
+  @com.fasterxml.jackson.annotation.JsonIgnore private boolean corrupt;
+
   private Race model;
   private Track track;
   private List<RaceParticipant> drivers;
@@ -182,5 +184,13 @@ public class RaceSaveData {
 
   public void setAutoAdvanceFired(boolean autoAdvanceFired) {
     this.autoAdvanceFired = autoAdvanceFired;
+  }
+
+  public boolean isCorrupt() {
+    return corrupt;
+  }
+
+  public void setCorrupt(boolean corrupt) {
+    this.corrupt = corrupt;
   }
 }

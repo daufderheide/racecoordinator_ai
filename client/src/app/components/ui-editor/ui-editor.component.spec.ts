@@ -260,22 +260,22 @@ describe("UIEditorComponent", () => {
       serverPort: 8080,
       language: "en",
       racedaySetupWalkthroughSeen: true,
-      flagGreen: "g",
-      flagYellow: "y",
-      flagRed: "r",
-      flagWhite: "w",
-      flagBlack: "b",
-      flagCheckered: "c",
+      flagRacing: "g",
+      flagHeatPaused: "y",
+      flagHeatOver: "r",
+      flagOneLapToGo: "w",
+      flagPenalty: "b",
+      flagHeatFinishing: "c",
     });
     mockSettingsService.getSettings.and.returnValue(
       Object.assign(new Settings(), {
         sortByStandings: true,
-        flagGreen: "g",
-        flagYellow: "y",
-        flagRed: "r",
-        flagWhite: "w",
-        flagBlack: "b",
-        flagCheckered: "c",
+        flagRacing: "g",
+        flagHeatPaused: "y",
+        flagHeatOver: "r",
+        flagOneLapToGo: "w",
+        flagPenalty: "b",
+        flagHeatFinishing: "c",
       }),
     );
     mockSettingsService.saveSettings.and.returnValue(
@@ -627,6 +627,12 @@ describe("UIEditorComponent", () => {
     expect(totalTime?.label).toBe("RD_COL_TOTAL_TIME");
   });
 
+  it("should include lapsLed column in availableColumns", () => {
+    const lapsLed = component.availableColumns.find((c) => c.key === "lapsLed");
+    expect(lapsLed).toBeTruthy();
+    expect(lapsLed?.label).toBe("RD_COL_LAPS_LED");
+  });
+
   describe("expander behavior", () => {
     beforeEach(() => {
       localStorage.clear();
@@ -965,7 +971,7 @@ describe("UIEditorComponent", () => {
     it("should not allow updating default theme slots", async () => {
       const theme = { entity_id: "t1", is_default: true, slots: {} } as Theme;
 
-      await component.onThemeSlotChanged(theme, "flag.green", {
+      await component.onThemeSlotChanged(theme, "flag.racing", {
         entity_id: "a1",
       });
 
@@ -1326,23 +1332,23 @@ describe("UIEditorComponent", () => {
         (t) => t.entity_id === "t2",
       )!;
 
-      component.onThemeSlotChanged(customTheme, "flag.green", {
+      component.onThemeSlotChanged(customTheme, "flag.racing", {
         entity_id: "asset1",
       });
-      expect(customTheme.slots["flag.green"]).toBe("asset1");
+      expect(customTheme.slots["flag.racing"]).toBe("asset1");
       expect(component.undoManager.undoStackCount).toBe(1);
 
       component.undoManager.undo();
       const undoneTheme = component.editingState.themes.find(
         (t) => t.entity_id === "t2",
       )!;
-      expect(undoneTheme.slots["flag.green"]).toBeUndefined();
+      expect(undoneTheme.slots["flag.racing"]).toBeUndefined();
 
       component.undoManager.redo();
       const redoneTheme = component.editingState.themes.find(
         (t) => t.entity_id === "t2",
       )!;
-      expect(redoneTheme.slots["flag.green"]).toBe("asset1");
+      expect(redoneTheme.slots["flag.racing"]).toBe("asset1");
     }));
 
     it("should reset undo stack upon theme deletion", fakeAsync(() => {
@@ -1622,7 +1628,7 @@ describe("UIEditorComponent", () => {
     it("should fall back to ThemeService.resolveAssetId if theme slot is missing and not gauge.fuel", () => {
       const theme = {
         entity_id: "t1",
-        slots: {}, // missing flag.green
+        slots: {}, // missing flag.racing
       } as any;
       mockThemeService.resolveAssetId.and.returnValue("fallback-asset-id");
       const fallbackAsset = {
@@ -1631,10 +1637,10 @@ describe("UIEditorComponent", () => {
       };
       component.assets = [fallbackAsset as any];
 
-      const resolved = component.getAssetForSlot("flag.green", theme);
+      const resolved = component.getAssetForSlot("flag.racing", theme);
       expect(resolved).toEqual(fallbackAsset);
       expect(mockThemeService.resolveAssetId).toHaveBeenCalledWith(
-        "flag.green",
+        "flag.racing",
       );
     });
 
@@ -1654,12 +1660,12 @@ describe("UIEditorComponent", () => {
     function makeSettings(overrides: Partial<Settings> = {}): Settings {
       return Object.assign(new Settings(), {
         sortByStandings: true,
-        flagGreen: "g",
-        flagYellow: "y",
-        flagRed: "r",
-        flagWhite: "w",
-        flagBlack: "b",
-        flagCheckered: "c",
+        flagRacing: "g",
+        flagHeatPaused: "y",
+        flagHeatOver: "r",
+        flagOneLapToGo: "w",
+        flagPenalty: "b",
+        flagHeatFinishing: "c",
         activeThemeId: "theme-a",
         lampRedOn: "lamp-red-on",
         lampRedDim: "lamp-red-dim",

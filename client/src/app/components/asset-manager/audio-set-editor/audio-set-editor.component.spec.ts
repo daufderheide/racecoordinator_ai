@@ -169,4 +169,63 @@ describe("AudioSetEditorComponent", () => {
     expect(window.alert).toHaveBeenCalledWith("Error: Error");
     expect(component.isSaving).toBeFalse();
   });
+
+  describe("Drag and Drop & Internal Asset Handling", () => {
+    it("should handle drag enter, over, and leave events", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      const event = new DragEvent("dragenter");
+      spyOn(event, "preventDefault");
+      component.onDragEnter(event);
+      expect(component.isDragging).toBeTrue();
+
+      component.onDragOver(event);
+      expect(component.isDragging).toBeTrue();
+
+      component.onDragLeave(event);
+      expect(component.isDragging).toBeFalse();
+    });
+
+    it("should handle element drag enter and leave", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      const event = new DragEvent("dragenter");
+      spyOn(event, "preventDefault");
+      spyOn(event, "stopPropagation");
+
+      component.onElementDragEnter(event);
+      expect(component.isDragging).toBeTrue();
+
+      component.onElementDragLeave(event);
+      expect(component.isDragging).toBeFalse();
+    });
+
+    it("should handle internal asset URL drop", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      component.handleInternalDrop("/assets/audio/123_countdown.mp3");
+      expect(component.entries.length).toBe(1);
+      expect(component.entries[0].name).toBe("countdown.mp3");
+      expect(component.entries[0].url).toBe("/assets/audio/123_countdown.mp3");
+    });
+
+    it("should cleanup blob URLs on destroy", () => {
+      spyOn(URL, "revokeObjectURL");
+      (component as any).createdBlobUrls.add("blob:http://localhost/test");
+      component.cleanupBlobUrls();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(
+        "blob:http://localhost/test",
+      );
+      expect((component as any).createdBlobUrls.size).toBe(0);
+    });
+
+    it("should emit close on onCancel", () => {
+      spyOn(component.close, "emit");
+      component.onCancel();
+      expect(component.close.emit).toHaveBeenCalled();
+    });
+  });
 });

@@ -6,6 +6,8 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
+import { of } from "rxjs";
+import { DataService } from "@app/data.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -21,6 +23,7 @@ describe("RacedayComponent", () => {
   let mockDynamicComponentService: jasmine.SpyObj<DynamicComponentService>;
   let mockLoggerService: jasmine.SpyObj<LoggerService>;
   let mockCdr: jasmine.SpyObj<ChangeDetectorRef>;
+  let mockDataService: jasmine.SpyObj<DataService>;
 
   beforeEach(async () => {
     mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
@@ -40,10 +43,15 @@ describe("RacedayComponent", () => {
       "info",
       "warn",
       "error",
-      ,
       "log",
     ]);
     mockCdr = jasmine.createSpyObj("ChangeDetectorRef", ["detectChanges"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "getServerVersion",
+      "getServerIp",
+    ]);
+    mockDataService.getServerVersion.and.returnValue(of("1.0.0"));
+    mockDataService.getServerIp.and.returnValue(of("127.0.0.1"));
 
     await TestBed.configureTestingModule({
       providers: [
@@ -54,6 +62,7 @@ describe("RacedayComponent", () => {
         },
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: ChangeDetectorRef, useValue: mockCdr },
+        { provide: DataService, useValue: mockDataService },
       ],
       imports: [RacedayComponent],
     }).compileComponents();

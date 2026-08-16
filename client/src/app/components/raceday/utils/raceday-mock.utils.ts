@@ -185,6 +185,7 @@ function createMockHeatDrivers(
     (hd as any).speedFph = 80000;
     (hd as any).fuelPercentage = p.fuelLevel;
     (hd as any).fuelCapacity = 100;
+    hd.lapsLed = [12, 5, 0, 0][index] ?? 0;
 
     return hd;
   });

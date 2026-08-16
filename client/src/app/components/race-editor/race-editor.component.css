@@ -484,6 +484,46 @@
   letter-spacing: 1px;
 }
 
+.section-action-btn {
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  margin-left: auto;
+}
+
+.section-action-btn .material-icons {
+  font-size: 1.3rem;
+}
+
+.section-action-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.section-action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.section-action-btn.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.section-action-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.4);
+}
+
 .expander-icon {
   font-size: 0.8rem;
   color: #38bdf8;
@@ -577,14 +617,29 @@
   min-width: 0;
 }
 
+.scoring-column .editor-section {
+  margin-bottom: 12px;
+}
+
 .season-points-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-height: 250px;
   overflow-y: auto;
+  overflow-x: hidden;
   margin-top: 4px;
   padding-right: 4px;
+}
+
+.season-points-list.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+}
+
+.season-points-list.two-columns .btn-add-pos {
+  grid-column: 1 / -1;
 }
 
 .season-points-list::-webkit-scrollbar {
@@ -609,17 +664,20 @@
 .season-point-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .season-pos-label {
-  min-width: 60px;
-  font-size: 0.9rem;
+  min-width: 48px;
+  font-size: 0.85rem;
   color: #cbd5e1;
+  white-space: nowrap;
 }
 
 .season-point-input {
-  width: 70px !important;
+  width: 85px !important;
+  min-width: 0;
   padding: 4px 8px !important;
   font-size: 0.9rem !important;
 }
@@ -628,9 +686,10 @@
   background: transparent;
   border: none;
   color: #ef4444;
-  font-size: 1rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 2px 4px;
+  line-height: 1;
 }
 
 .btn-remove-pos:hover {

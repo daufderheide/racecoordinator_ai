@@ -1,15 +1,21 @@
 export abstract class AboutDialogHarnessBase {
-  static readonly hostSelector = 'app-about-dialog';
+  static readonly hostSelector = "app-about-dialog";
 
   static readonly selectors = {
-    content: '.modal-content',
-    title: '.modal-title',
-    versionInfo: '.version-info',
-    closeButton: '.btn-confirm'
+    content: ".modal-content",
+    title: ".modal-title",
+    versionInfo: ".version-info",
+    charityInfo: ".charity-info",
+    creditsPanel: ".credits-panel",
+    tabButtons: ".tab-btn",
+    closeButton: ".btn-confirm",
   };
 
   abstract isVisible(): Promise<boolean>;
   abstract getTitle(): Promise<string>;
   abstract getVersionInfoText(): Promise<string>;
   abstract clickClose(): Promise<void>;
+  abstract clickTab(index: number): Promise<void>;
+  abstract isCharityTabVisible(): Promise<boolean>;
+  abstract isCreditsTabVisible(): Promise<boolean>;
 }

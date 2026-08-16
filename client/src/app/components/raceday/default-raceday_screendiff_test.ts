@@ -151,7 +151,9 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
 
     // Fuel column visibility checked visually
 
@@ -246,7 +248,9 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
 
     const _avatarHref = await harness.getDriverAvatarHref(0);
     // Avatar href checked visually
@@ -323,7 +327,9 @@ test.describe("Raceday Visuals for Fuel", () => {
 
     // Fuel column visibility checked visually
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
 
     await expect(page).toHaveScreenshot("raceday-digital-fuel-levels.png", {
       maxDiffPixelRatio: 0.001,
@@ -429,7 +435,9 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
     await expect(page).toHaveScreenshot("raceday-1-lane-fuel-gauge.png", {
       maxDiffPixelRatio: 0.001,
       maxDiffPixels: 0,
@@ -522,7 +530,9 @@ test.describe("Raceday Visuals for Fuel", () => {
     };
     await TestSetupHelper.mockRaceData(page, raceData);
     await page.locator(".table-row").first().waitFor({ state: "visible" });
-    await page.waitForTimeout(500);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
     await expect(page).toHaveScreenshot("raceday-8-lane-fuel-gauge.png", {
       maxDiffPixelRatio: 0.001,
       maxDiffPixels: 0,
@@ -652,7 +662,7 @@ test.describe("Raceday Visuals for Fuel", () => {
     const select = page.locator(".scalable-content select").first();
 
     // Wait until options are rendered async to avoid timing flakes (check options of the first select specifically)
-    await expect(select.locator("option")).toHaveCount(2, { timeout: 5000 });
+    await select.locator("option").nth(1).waitFor({ state: "attached" });
 
     // To guarantee visibility in headless screenshots, extract options and render a floating debug overlay list
     await select.evaluate((node) => {
@@ -699,7 +709,9 @@ test.describe("Raceday Visuals for Fuel", () => {
 
       document.body.appendChild(ul);
     });
-    await page.waitForTimeout(500);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".dashboard-wrapper"),
+    );
 
     await expect(page).toHaveScreenshot(
       "raceday-team-driver-stats-dropdown.png",

@@ -10,32 +10,6 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
     await page.setViewportSize({ width: 1920, height: 1080 });
 
-    // Mock specific colors for start lamps to make diffs clear
-    await page.route("**/start_*.png", async (route) => {
-      const url = route.request().url();
-      let color = "silver"; // Dim
-      let label = "DIM";
-      if (url.includes("red_on")) {
-        color = "red";
-        label = "ON";
-      }
-      if (url.includes("green")) {
-        color = "lime";
-        label = "GO";
-      }
-
-      const svg = `<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="40" fill="${color}" stroke="white" stroke-width="5"/>
-        <text x="50" y="55" font-family="Arial" font-size="20" font-weight="bold" fill="black" text-anchor="middle">${label}</text>
-      </svg>`;
-
-      await route.fulfill({
-        status: 200,
-        contentType: "image/svg+xml",
-        body: svg,
-      });
-    });
-
     await page.waitForLoadState("networkidle");
   });
 
@@ -79,10 +53,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 5.0,
     });
 
-    // Wait for the component to process the WebSocket messages and fetch assets if needed
-    await page.waitForTimeout(500);
-
-    await page.locator(".countdown-overlay").waitFor({ state: "visible" });
+    const overlay = page.locator(".countdown-overlay");
+    await overlay.waitFor({ state: "visible" });
+    await overlay
+      .locator("img.start-lamp")
+      .nth(4)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(overlay);
 
     // All 5 lamps should be dim initially (time=5.0)
     await expect(page).toHaveScreenshot("start-sequence-5-dim.png");
@@ -131,10 +108,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 2.5,
     });
 
-    // Wait for the component to process the WebSocket messages and fetch assets if needed
-    await page.waitForTimeout(500);
-
-    await page.locator(".countdown-overlay").waitFor({ state: "visible" });
+    const overlay = page.locator(".countdown-overlay");
+    await overlay.waitFor({ state: "visible" });
+    await overlay
+      .locator("img.start-lamp.on")
+      .nth(2)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(overlay);
     await expect(page).toHaveScreenshot("start-sequence-3-red.png");
   });
 
@@ -179,10 +159,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
     });
     await TestSetupHelper.sendRaceState(page, RaceState.RACING);
 
-    // Wait for the component to process the WebSocket messages and fetch assets if needed
-    await page.waitForTimeout(500);
-
-    await page.locator(".countdown-overlay").waitFor({ state: "visible" });
+    const overlay = page.locator(".countdown-overlay");
+    await overlay.waitFor({ state: "visible" });
+    await overlay
+      .locator("img.start-lamp.go")
+      .nth(4)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(overlay);
     await expect(page).toHaveScreenshot("start-sequence-all-green.png");
   });
 
@@ -239,11 +222,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 2.5,
     });
 
-    // 4. Verify it's STILL ALL GREEN
-    // Wait for the component to process the WebSocket messages and fetch assets if needed
-    await page.waitForTimeout(500);
-
-    await page.locator(".countdown-overlay").waitFor({ state: "visible" });
+    const overlay = page.locator(".countdown-overlay");
+    await overlay.waitFor({ state: "visible" });
+    await overlay
+      .locator("img.start-lamp.go")
+      .nth(4)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(overlay);
     await expect(page).toHaveScreenshot(
       "start-sequence-stay-green-late-msg.png",
     );
@@ -292,8 +277,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 3.0,
     });
 
-    await page.waitForTimeout(500);
-    await page.locator(".countdown-overlay").waitFor({ state: "visible" });
+    const overlay = page.locator(".countdown-overlay");
+    await overlay.waitFor({ state: "visible" });
+    await overlay
+      .locator("img.start-lamp")
+      .nth(2)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(overlay);
 
     // Verify the visual state with exactly 3 lamps
     await expect(page).toHaveScreenshot("start-sequence-3-lamps-total.png");
@@ -349,8 +339,13 @@ test.describe("Raceday Start Sequence Visuals", () => {
       autoStartRemaining: 2.0,
     });
 
-    await page.waitForTimeout(500);
-    await page.locator(".countdown-overlay").waitFor({ state: "visible" });
+    const overlay = page.locator(".countdown-overlay");
+    await overlay.waitFor({ state: "visible" });
+    await overlay
+      .locator("img.start-lamp")
+      .nth(1)
+      .waitFor({ state: "attached" });
+    await TestSetupHelper.waitForImagesLoaded(overlay);
 
     // Verify the visual state with exactly 2 lamps (restart_time = 2.0)
     await expect(page).toHaveScreenshot("start-sequence-restart-2-lamps.png");

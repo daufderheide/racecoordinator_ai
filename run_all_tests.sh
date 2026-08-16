@@ -20,6 +20,8 @@ echo "--- ✅ Global Test Summary ---"
 [ $SERVER_EXIT_CODE -eq 0 ] && echo "Server Tests: PASSED" || echo "Server Tests: FAILED"
 [ $CLIENT_EXIT_CODE -eq 0 ] && echo "Client Tests: PASSED" || echo "Client Tests: FAILED"
 
+node "$(dirname "$0")/scripts/audit_test_coverage.js"
+
 # Exit with non-zero if any suite failed
 if [ $SERVER_EXIT_CODE -ne 0 ] || [ $CLIENT_EXIT_CODE -ne 0 ]; then
     exit 1

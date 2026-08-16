@@ -313,4 +313,25 @@
       </div>
     }
   </div>
+  <div class="menu-wrapper">
+    <button
+      id="help-menu-button"
+      class="menu-button-top"
+      (click)="toggleHelpMenu()"
+      (mouseenter)="onMenuItemHover('help')"
+    >
+      {{ "RD_MENU_HELP" | translate }}
+    </button>
+    @if (isHelpMenuOpen) {
+      <div class="menu-dropdown top-dropdown">
+        <div class="menu-item" (click)="onMenuSelect('HELP_CENTER')">
+          {{ "RD_MENU_HELP_CENTER" | translate }}
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" (click)="onMenuSelect('ABOUT')">
+          {{ "RD_MENU_ABOUT" | translate }}
+        </div>
+      </div>
+    }
+  </div>
 </div>

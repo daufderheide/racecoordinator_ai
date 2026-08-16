@@ -205,8 +205,12 @@
                               <th>{{ "SM_RANK" | translate }}</th>
                               <th>{{ "SM_DRIVER" | translate }}</th>
                               <th>{{ "SM_OVERALL_POS_POINTS" | translate }}</th>
+                              <th>
+                                {{ "SM_OVERALL_BONUS_POINTS" | translate }}
+                              </th>
                               <th>{{ "SM_HEAT_POS_POINTS" | translate }}</th>
-                              <th>Total Pts</th>
+                              <th>{{ "SM_HEAT_BONUS_POINTS" | translate }}</th>
+                              <th>{{ "SM_TOTAL_POINTS" | translate }}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -220,8 +224,10 @@
                                 <td>
                                   <strong>{{ res.driver_name }}</strong>
                                 </td>
-                                <td>{{ res.overall_points }}</td>
-                                <td>{{ res.heat_points }}</td>
+                                <td>{{ res.overall_points ?? 0 }}</td>
+                                <td>{{ res.overall_bonus_points ?? 0 }}</td>
+                                <td>{{ res.heat_points ?? 0 }}</td>
+                                <td>{{ res.heat_bonus_points ?? 0 }}</td>
                                 <td>
                                   <strong>{{ res.total_points }}</strong>
                                 </td>

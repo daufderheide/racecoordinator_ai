@@ -927,6 +927,137 @@ public class HeatBuilderTest {
     assertEquals("td1", heats.get(4).getDrivers().get(0).getActualDriver().getEntityId());
   }
 
+  @Test
+  public void testGetGroups_BasicSplit() {
+    List<RaceParticipant> drivers = createDrivers(8);
+    List<Integer> groups = HeatBuilder.getGroups(drivers, 4, 10, false, true, false);
+    assertEquals(8, groups.size());
+    for (int i = 0; i < 4; i++) assertEquals(0, (int) groups.get(i));
+    for (int i = 4; i < 8; i++) assertEquals(1, (int) groups.get(i));
+  }
+
+  @Test
+  public void testGetGroups_BalanceSeeds() {
+    List<RaceParticipant> drivers = createDrivers(8);
+    List<Integer> groups = HeatBuilder.getGroups(drivers, 4, 10, true, true, false);
+    assertEquals(8, groups.size());
+    assertEquals(0, (int) groups.get(0));
+    assertEquals(1, (int) groups.get(1));
+    assertEquals(0, (int) groups.get(2));
+    assertEquals(1, (int) groups.get(3));
+  }
+
+  @Test
+  public void testGetGroups_MaxGroups() {
+    List<RaceParticipant> drivers = createDrivers(12);
+    List<Integer> groups = HeatBuilder.getGroups(drivers, 4, 2, false, true, false);
+    int g0Count = 0;
+    int g1Count = 0;
+    for (int g : groups) {
+      if (g == 0) g0Count++;
+      if (g == 1) g1Count++;
+    }
+    assertEquals(6, g0Count);
+    assertEquals(6, g1Count);
+  }
+
+  @Test
+  public void testGetGroups_NoEmptyLanes() {
+    List<RaceParticipant> drivers = createDrivers(6);
+    List<Integer> groups = HeatBuilder.getGroups(drivers, 4, 10, false, false, false);
+    for (int g : groups) assertEquals(0, g);
+  }
+
+  @Test
+  public void testGetGroups_ForceMultiple() {
+    List<RaceParticipant> drivers = createDrivers(10);
+    List<Integer> groups = HeatBuilder.getGroups(drivers, 4, 4, false, true, true);
+    int g0Count = 0;
+    int g1Count = 0;
+    for (int g : groups) {
+      if (g == 0) g0Count++;
+      if (g == 1) g1Count++;
+    }
+    assertEquals(5, g0Count);
+    assertEquals(5, g1Count);
+  }
+
+  @Test
+  public void testBuildHeats_WithGroups() {
+    List<RaceParticipant> drivers = createDrivers(8);
+    com.antigravity.models.GroupOptions groupOptions =
+        new com.antigravity.models.GroupOptions(true, 2, false, true, false, false, 0);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+    when(raceModel.getHeatTimesThrough()).thenReturn(1);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+
+    assertEquals(8, heats.size());
+    for (int i = 0; i < 4; i++) assertEquals(0, heats.get(i).getGroup());
+    for (int i = 4; i < 8; i++) assertEquals(1, heats.get(i).getGroup());
+  }
+
+  @Test
+  public void testBuildHeats_RotateGroups() {
+    List<RaceParticipant> drivers = createDrivers(8);
+    com.antigravity.models.GroupOptions groupOptions =
+        new com.antigravity.models.GroupOptions(true, 2, false, true, false, true, 0);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+    when(raceModel.getHeatTimesThrough()).thenReturn(1);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+
+    assertEquals(8, heats.size());
+    assertEquals(0, heats.get(0).getGroup());
+    assertEquals(1, heats.get(1).getGroup());
+    assertEquals(0, heats.get(2).getGroup());
+    assertEquals(1, heats.get(3).getGroup());
+  }
+
+  @Test
+  public void testBuildHeats_WithGroupsAndTimesThrough() {
+    List<RaceParticipant> drivers = createDrivers(8);
+    com.antigravity.models.GroupOptions groupOptions =
+        new com.antigravity.models.GroupOptions(true, 2, false, true, false, false, 0);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+    when(raceModel.getHeatTimesThrough()).thenReturn(2);
+
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, new ArrayList<>());
+
+    assertEquals(16, heats.size());
+    for (int i = 0; i < 4; i++)
+      assertEquals("Heat " + (i + 1) + " should be Group 0", 0, heats.get(i).getGroup());
+    for (int i = 4; i < 8; i++)
+      assertEquals("Heat " + (i + 1) + " should be Group 1", 1, heats.get(i).getGroup());
+    for (int i = 8; i < 12; i++)
+      assertEquals("Heat " + (i + 1) + " should be Group 0", 0, heats.get(i).getGroup());
+    for (int i = 12; i < 16; i++)
+      assertEquals("Heat " + (i + 1) + " should be Group 1", 1, heats.get(i).getGroup());
+  }
+
+  @Test
+  public void testBuildHeats_CustomRotationIgnoresGroupSplitting() {
+    when(raceModel.getHeatRotationType()).thenReturn(HeatRotationType.Custom);
+    com.antigravity.models.GroupOptions groupOptions =
+        new com.antigravity.models.GroupOptions(true, 2, false, true, false, false, 0);
+    when(raceModel.getGroupOptions()).thenReturn(groupOptions);
+    when(raceModel.getHeatTimesThrough()).thenReturn(1);
+
+    CustomRotation rot4 =
+        new CustomRotation(
+            4,
+            Arrays.asList(
+                new CustomHeat(Arrays.asList(1, 2, 3, 4), 5),
+                new CustomHeat(Arrays.asList(4, 3, 2, 1), 6)));
+
+    List<RaceParticipant> drivers = createDrivers(4);
+    List<Heat> heats = HeatBuilder.buildHeats(race, drivers, Arrays.asList(rot4));
+
+    assertEquals(2, heats.size());
+    assertEquals(5, heats.get(0).getGroup());
+    assertEquals(6, heats.get(1).getGroup());
+  }
+
   private List<RaceParticipant> createDrivers(int count) {
     List<RaceParticipant> participants = new ArrayList<>();
     for (int i = 1; i <= count; i++) {

@@ -10,6 +10,12 @@ import static org.mockito.Mockito.when;
 
 import com.antigravity.models.Driver;
 import com.antigravity.models.Lane;
+import com.antigravity.models.Season;
+import com.antigravity.models.SeasonRaceRecord;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
+import com.antigravity.models.SeasonScoring;
+import com.antigravity.models.SeasonStandingDetail;
+import com.antigravity.models.SeasonStandingItem;
 import com.antigravity.models.Track;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -799,5 +805,214 @@ public class RaceStatisticsUtilsTest {
     assertEquals("FF00FF00", ld3Color.getARGBHex());
 
     wb.close();
+  }
+
+  @Test
+  public void testOverallStandingsExportWithBonusPointsAndScoring() throws Exception {
+    InputStream rawIs =
+        getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
+    assertNotNull(rawIs);
+
+    Driver d1 = new Driver("Driver 1", "d1");
+    Driver d2 = new Driver("Driver 2", "d2");
+    RaceParticipant p1 = new RaceParticipant(d1);
+    p1.setRank(1);
+    RaceParticipant p2 = new RaceParticipant(d2);
+    p2.setRank(2);
+    List<RaceParticipant> drivers = Arrays.asList(p1, p2);
+
+    DriverHeatData dhd1 = new DriverHeatData(p1, d1);
+    dhd1.setLane(0);
+    dhd1.getLaps().add(new DriverHeatData.LapData(5.0, "d1", null, false));
+
+    DriverHeatData dhd2 = new DriverHeatData(p2, d2);
+    dhd2.setLane(1);
+    dhd2.getLaps().add(new DriverHeatData.LapData(6.0, "d2", null, false));
+
+    Heat heat1 = new Heat(1, Arrays.asList(dhd1, dhd2), false);
+    List<Heat> heats = Collections.singletonList(heat1);
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    com.antigravity.models.Race modelRace = mock(com.antigravity.models.Race.class);
+    when(mockRace.getRaceModel()).thenReturn(modelRace);
+    when(mockRace.getDrivers()).thenReturn(drivers);
+    when(mockRace.getHeats()).thenReturn(heats);
+    when(modelRace.getName()).thenReturn("Bonus Test Race");
+
+    // Season Scoring with fastest lap bonus 5.0, led lap bonus 2.0
+    SeasonScoring scoring =
+        new SeasonScoring(
+            Arrays.asList(25.0, 18.0),
+            Arrays.asList(3.0, 2.0),
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            false,
+            0.0,
+            5.0,
+            0.0,
+            2.0,
+            0.0,
+            false);
+    when(modelRace.getSeasonScoring()).thenReturn(scoring);
+
+    when(mockRace.getState()).thenReturn(new com.antigravity.race.states.RaceOver());
+    when(mockRace.hasRacedInCurrentHeat()).thenReturn(true);
+
+    Track mockTrack = mock(Track.class);
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+
+    List<DriverAnalysisSummary> summaries = new ArrayList<>();
+    List<String> driverSheetNames = new ArrayList<>();
+    RaceStatisticsUtils.prepareExportData(mockRace, drivers, heats, summaries, driverSheetNames);
+
+    assertEquals(25.0, p1.getPositionPoints(), 0.001);
+    assertEquals(7.0, p1.getOverallBonusPoints(), 0.001); // 5.0 (fastest lap) + 2.0 (led lap)
+    assertEquals(3.0, p1.getHeatPositionPoints(), 0.001);
+    assertEquals(7.0, p1.getBonusPoints(), 0.001);
+    assertEquals(35.0, p1.getTotalPoints(), 0.001);
+
+    InputStream sanitizedIs =
+        RaceStatisticsUtils.sanitizeWorkbookTemplate(rawIs, Arrays.asList(0, 1), mockRace);
+
+    org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
+    jxlsContext.putVar("race", mockRace);
+    jxlsContext.putVar("standings", drivers);
+    jxlsContext.putVar("heats", heats);
+    jxlsContext.putVar("allHeats", heats);
+    jxlsContext.putVar("heatSheetNames", Collections.singletonList("Heat 1"));
+    jxlsContext.putVar("driverSummaries", summaries);
+    jxlsContext.putVar("driverSheetNames", driverSheetNames);
+
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
+
+    byte[] outBytes = os.toByteArray();
+    assertTrue(outBytes.length > 0);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(outBytes))) {
+      org.apache.poi.ss.usermodel.Sheet standingsSheet = resultWb.getSheet("Overall Standings");
+      assertNotNull(standingsSheet);
+      org.apache.poi.ss.usermodel.Row headerRow = standingsSheet.getRow(3);
+
+      assertEquals("Overall Position Points", headerRow.getCell(11).getStringCellValue());
+      assertEquals("Overall Bonus Points", headerRow.getCell(12).getStringCellValue());
+      assertEquals("Heat Position Points", headerRow.getCell(13).getStringCellValue());
+      assertEquals("Heat Bonus Points", headerRow.getCell(14).getStringCellValue());
+      assertEquals("Total Points", headerRow.getCell(15).getStringCellValue());
+
+      org.apache.poi.ss.usermodel.Row row1 = standingsSheet.getRow(4);
+      assertEquals("Driver 1", row1.getCell(1).getStringCellValue());
+      assertEquals(25.0, getCellDouble(row1.getCell(11)), 0.001);
+      assertEquals(7.0, getCellDouble(row1.getCell(12)), 0.001);
+      assertEquals(3.0, getCellDouble(row1.getCell(13)), 0.001);
+      assertEquals(0.0, getCellDouble(row1.getCell(14)), 0.001);
+      assertEquals(35.0, getCellDouble(row1.getCell(15)), 0.001);
+    }
+  }
+
+  private static double getCellDouble(org.apache.poi.ss.usermodel.Cell cell) {
+    if (cell == null) return 0.0;
+    if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+      return cell.getNumericCellValue();
+    }
+    return Double.parseDouble(cell.getStringCellValue());
+  }
+
+  @Test
+  public void testSeasonStandingsExportTwoDecimalPlaces() throws Exception {
+    InputStream rawIs =
+        getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
+    assertNotNull(rawIs);
+
+    SeasonDriverResult res1 =
+        new SeasonDriverResult(
+            "d1",
+            "Driver 1",
+            1,
+            25.333333,
+            2.666666,
+            Collections.singletonMap("fastest_lap", 2.666666),
+            3.14159,
+            1.23456,
+            Collections.singletonMap("heat_fastest", 1.23456),
+            32.376149);
+    SeasonRaceRecord raceRecord =
+        new SeasonRaceRecord("r1", "Race 1", 1000L, Collections.singletonList(res1));
+    Season season = new Season("Championship", 0, Collections.singletonList(raceRecord));
+
+    List<SeasonStandingItem> standings = SeasonStandingsCalculator.calculateStandings(season);
+    assertEquals(1, standings.size());
+    SeasonStandingItem item = standings.get(0);
+    assertEquals(32.38, item.getNetPoints(), 0.001);
+    assertEquals(32.38, item.getGrossPoints(), 0.001);
+    assertEquals(3.9, item.getTotalBonusPoints(), 0.001); // 2.67 + 1.23 = 3.90
+    assertEquals(3.9, item.getBonusPoints(), 0.001);
+
+    com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+    when(mockRace.getSeasonEntityId()).thenReturn("season1");
+    when(mockRace.getRaceModel()).thenReturn(mock(com.antigravity.models.Race.class));
+
+    InputStream sanitizedIs =
+        RaceStatisticsUtils.sanitizeWorkbookTemplate(rawIs, Arrays.asList(0, 1), mockRace);
+
+    org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
+    jxlsContext.putVar("hasSeason", true);
+    jxlsContext.putVar("seasonName", "Championship");
+    jxlsContext.putVar("seasonStandings", standings);
+    jxlsContext.putVar("race", mockRace);
+    jxlsContext.putVar("standings", Collections.emptyList());
+    jxlsContext.putVar("heats", Collections.emptyList());
+    jxlsContext.putVar("allHeats", Collections.emptyList());
+    jxlsContext.putVar("heatSheetNames", Collections.singletonList("Heat 1"));
+    jxlsContext.putVar("driverSummaries", Collections.emptyList());
+    jxlsContext.putVar("driverSheetNames", Collections.emptyList());
+
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+    org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
+
+    byte[] outBytes = os.toByteArray();
+    assertTrue(outBytes.length > 0);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(outBytes))) {
+      org.apache.poi.ss.usermodel.Sheet seasonSheet = resultWb.getSheet("Season Standings");
+      assertNotNull(seasonSheet);
+      org.apache.poi.ss.usermodel.Row row5 = seasonSheet.getRow(4);
+      assertEquals("Net Points", row5.getCell(2).getStringCellValue());
+      assertEquals("Gross Points", row5.getCell(3).getStringCellValue());
+      assertEquals("Races Run", row5.getCell(4).getStringCellValue());
+
+      org.apache.poi.ss.usermodel.Row row6 = seasonSheet.getRow(5);
+      assertEquals(32.38, getCellDouble(row6.getCell(2)), 0.001);
+      assertEquals(32.38, getCellDouble(row6.getCell(3)), 0.001);
+      assertEquals(1, (int) getCellDouble(row6.getCell(4)));
+    }
+  }
+
+  @Test
+  public void testCustomTemplateBonusPointsAbility() {
+    Driver d1 = new Driver("Driver 1", "d1");
+    RaceParticipant p1 = new RaceParticipant(d1);
+    p1.setOverallBonusPoints(3.5);
+    p1.setHeatBonusPoints(1.5);
+    p1.setBonusPoints(5.0);
+
+    assertEquals(5.0, p1.getBonusPoints(), 0.001);
+    assertEquals(5.0, p1.getTotalBonusPoints(), 0.001);
+
+    SeasonStandingDetail detail =
+        new SeasonStandingDetail("r1", "Race 1", 1, 25.0, 3.5, 5.0, 1.5, 35.0);
+    SeasonStandingItem item =
+        new SeasonStandingItem("d1", "Driver 1", 35.0, 35.0, 1, Collections.singletonList(detail));
+
+    assertEquals(3.5, item.getOverallBonusPoints(), 0.001);
+    assertEquals(1.5, item.getHeatBonusPoints(), 0.001);
+    assertEquals(5.0, item.getTotalBonusPoints(), 0.001);
+    assertEquals(5.0, item.getBonusPoints(), 0.001);
   }
 }

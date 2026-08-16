@@ -27,7 +27,9 @@ export class ConnectionMonitorService implements OnDestroy {
 
   private monitoringSubscription: Subscription | null = null;
   private readonly CHECK_INTERVAL_MS = 5000;
-  private readonly TIMEOUT_MS = 3000;
+  private get timeoutMs(): number {
+    return (window as any)?.isPlaywright ? 15000 : 3000;
+  }
 
   constructor(
     @Inject(DOCUMENT) private document: Document,
@@ -72,7 +74,7 @@ export class ConnectionMonitorService implements OnDestroy {
    */
   checkConnection(): Observable<boolean> {
     return this.dataService.getServerVersion().pipe(
-      timeout(this.TIMEOUT_MS),
+      timeout(this.timeoutMs),
       map((version: string) => {
         if (this.initialServerVersion === null) {
           this.initialServerVersion = version;

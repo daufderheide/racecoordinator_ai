@@ -328,7 +328,7 @@ public class App {
 
       // Register JmDNS multicast DNS service discovery so that remote camera clients
       // on the local network can automatically discover and connect to this server.
-      registerJmdnsDiscovery();
+      registerJmdnsDiscovery(serverPort);
 
       // --- Authentication & Access Control ---
       app.before(
@@ -751,13 +751,19 @@ public class App {
    * clients (such as the camera client) to automatically discover the host IP and port of the
    * running server without manual configuration.
    */
-  private static void registerJmdnsDiscovery() {
+  private static void registerJmdnsDiscovery(int port) {
     try {
       InetAddress address = null;
       java.util.Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+      // First pass: look for a physical-looking interface (en, eth, wl)
       while (interfaces.hasMoreElements() && address == null) {
         NetworkInterface iface = interfaces.nextElement();
         if (iface.isLoopback() || !iface.isUp()) continue;
+        String name = iface.getName().toLowerCase();
+        boolean isPhysicalType =
+            name.startsWith("en") || name.startsWith("eth") || name.startsWith("wl");
+        if (!isPhysicalType) continue;
+
         java.util.Enumeration<InetAddress> addresses = iface.getInetAddresses();
         while (addresses.hasMoreElements()) {
           InetAddress addr = addresses.nextElement();
@@ -767,6 +773,35 @@ public class App {
           }
         }
       }
+
+      // Second pass fallback: take any non-loopback, non-virtual IPv4 interface
+      if (address == null) {
+        interfaces = NetworkInterface.getNetworkInterfaces();
+        while (interfaces.hasMoreElements() && address == null) {
+          NetworkInterface iface = interfaces.nextElement();
+          if (iface.isLoopback() || !iface.isUp()) continue;
+          String name = iface.getName().toLowerCase();
+          if (name.startsWith("bridge")
+              || name.startsWith("utun")
+              || name.startsWith("vmenet")
+              || name.startsWith("docker")
+              || name.startsWith("vbox")
+              || name.startsWith("gif")
+              || name.startsWith("stf")) {
+            continue;
+          }
+
+          java.util.Enumeration<InetAddress> addresses = iface.getInetAddresses();
+          while (addresses.hasMoreElements()) {
+            InetAddress addr = addresses.nextElement();
+            if (addr instanceof Inet4Address) {
+              address = addr;
+              break;
+            }
+          }
+        }
+      }
+
       if (address == null) {
         address = InetAddress.getLocalHost();
       }
@@ -776,10 +811,10 @@ public class App {
           ServiceInfo.create(
               "_racecoordinator._tcp.local.",
               "RaceCoordinatorServer",
-              7070,
+              port,
               "Race Coordinator AI WebSocket Server");
       jmdns.registerService(serviceInfo);
-      logger.info("JmDNS service registered: _racecoordinator._tcp.local. on port 7070");
+      logger.info("JmDNS service registered: _racecoordinator._tcp.local. on port " + port);
 
       Runtime.getRuntime()
           .addShutdownHook(

@@ -1,9 +1,10 @@
-import { Page } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 import {
   InitializeInterfaceResponse,
   IRaceTime,
   ListAssetsResponse,
   RaceData,
+  RaceFlag,
   RaceState,
   SaveCustomRotationResponse,
   UpdateInterfaceConfigResponse,
@@ -42,7 +43,8 @@ export class TestSetupHelper {
       if (
         type === "error" ||
         type === "warning" ||
-        text.includes("MockWebSocket")
+        text.includes("MockWebSocket") ||
+        text.includes("RACE_FLAG_DEBUG")
       ) {
         console.log(`BROWSER [${type.toUpperCase()}]: ${text}`);
       }
@@ -820,12 +822,18 @@ export class TestSetupHelper {
 
       // Try multiple potential base paths
       const potentialPaths = [
+        path.resolve(process.cwd(), "client/src/assets/images/defaults"),
+        path.resolve(process.cwd(), "src/assets/images/defaults"),
+        path.resolve(process.cwd(), "assets/images/defaults"),
+        path.resolve(process.cwd(), "client/src/assets/images"),
         path.resolve(process.cwd(), "src/assets/images"),
         path.resolve(process.cwd(), "assets/images"),
-        path.resolve(process.cwd(), "client/src/assets/images"),
+        path.resolve(process.cwd(), "client/src/assets"),
         path.resolve(process.cwd(), "src/assets"),
         path.resolve(process.cwd(), "assets"),
-        path.resolve(process.cwd(), "client/src/assets"),
+        path.resolve(process.cwd(), "server/src/main/resources/defaults"),
+        path.resolve(process.cwd(), "../server/src/main/resources/defaults"),
+        path.resolve(process.cwd(), "src/main/resources/defaults"),
       ];
 
       let filePath = "";
@@ -960,6 +968,23 @@ export class TestSetupHelper {
     // 6. Final safety wait for complex components (like SVGs) to stabilize
     // Increased to 500ms to ensure stability with 18 workers and production rendering
     await page.waitForTimeout(500);
+  }
+
+  static async waitForImagesLoaded(target: Locator | Page) {
+    await (target as any).evaluate((node: HTMLElement | Document) => {
+      const root = node instanceof Document ? node.body : (node as HTMLElement);
+      const images = Array.from(root.querySelectorAll("img"));
+      return Promise.all(
+        images.map((img) => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise<void>((resolve) => {
+            img.addEventListener("load", () => resolve(), { once: true });
+            img.addEventListener("error", () => resolve(), { once: true });
+            setTimeout(resolve, 1000);
+          });
+        }),
+      );
+    });
   }
 
   static async setupTrackMocks(page: Page) {
@@ -1117,153 +1142,317 @@ export class TestSetupHelper {
   }
 
   static async setupAssetMocks(page: Page) {
-    const mockImage = `
-      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" fill="#3f51b5" />
-        <text x="50" y="50" font-family="Arial" font-size="20" text-anchor="middle" fill="white" dominant-baseline="middle">IMG</text>
-      </svg>
-    `.trim();
+    const fs = require("fs");
+    const path = require("path");
+
+    const defaultAssets = [
+      {
+        model: { entityId: "default_flag_green" },
+        name: "Green Flag",
+        type: "image",
+        size: "28 KB",
+        url: "/api/assets/download?filename=flag_green.png",
+        filename: "flag_green.png",
+      },
+      {
+        model: { entityId: "default_flag_red" },
+        name: "Red Flag",
+        type: "image",
+        size: "28 KB",
+        url: "/api/assets/download?filename=flag_red.png",
+        filename: "flag_red.png",
+      },
+      {
+        model: { entityId: "default_flag_yellow" },
+        name: "Yellow Flag",
+        type: "image",
+        size: "30 KB",
+        url: "/api/assets/download?filename=flag_yellow.png",
+        filename: "flag_yellow.png",
+      },
+      {
+        model: { entityId: "default_flag_green_yellow" },
+        name: "Yellow Green Flag",
+        type: "image",
+        size: "24 KB",
+        url: "/api/assets/download?filename=flag_green_yellow.png",
+        filename: "flag_green_yellow.png",
+      },
+      {
+        model: { entityId: "default_flag_black" },
+        name: "Black Flag",
+        type: "image",
+        size: "27 KB",
+        url: "/api/assets/download?filename=flag_black.png",
+        filename: "flag_black.png",
+      },
+      {
+        model: { entityId: "default_flag_white" },
+        name: "White Flag",
+        type: "image",
+        size: "24 KB",
+        url: "/api/assets/download?filename=flag_white.png",
+        filename: "flag_white.png",
+      },
+      {
+        model: { entityId: "default_flag_checkered" },
+        name: "Checkered Flag",
+        type: "image",
+        size: "28 KB",
+        url: "/api/assets/download?filename=flag_checkered.png",
+        filename: "flag_checkered.png",
+      },
+      {
+        model: { entityId: "default_start_red_on" },
+        name: "Start Lamp Red",
+        type: "image",
+        size: "27 KB",
+        url: "assets/images/start_red_on.png",
+        filename: "start_red_on.png",
+      },
+      {
+        model: { entityId: "default_start_red_dim" },
+        name: "Start Lamp Dim",
+        type: "image",
+        size: "26 KB",
+        url: "assets/images/start_red_dim.png",
+        filename: "start_red_dim.png",
+      },
+      {
+        model: { entityId: "default_start_green" },
+        name: "Start Lamp Green",
+        type: "image",
+        size: "28 KB",
+        url: "assets/images/start_green.png",
+        filename: "start_green.png",
+      },
+      {
+        model: { entityId: "fuel-gauge-builtin" },
+        name: "Fuel Gauge",
+        type: "image_set",
+        size: "1.2 MB",
+        url: "/api/assets/download?filename=fuel-gauge.json",
+        filename: "fuel-gauge.json",
+        images: [
+          {
+            percentage: 0,
+            url: "/api/assets/download?filename=fuel_0.png",
+            name: "fuel_0.png",
+          },
+          {
+            percentage: 50,
+            url: "/api/assets/download?filename=fuel_50.png",
+            name: "fuel_50.png",
+          },
+          {
+            percentage: 100,
+            url: "/api/assets/download?filename=fuel_100.png",
+            name: "fuel_100.png",
+          },
+        ],
+      },
+      {
+        model: { entityId: "1" },
+        name: "Test Image 1 with a very long name that should wrap to two lines",
+        type: "image",
+        size: "150 KB",
+        url: "/api/assets/download?filename=img1.png",
+        filename: "img1.png",
+      },
+      {
+        model: { entityId: "2" },
+        name: "Test Sound 1",
+        type: "audio",
+        size: "50 KB",
+        url: "/api/assets/download?filename=snd1.mp3",
+        filename: "snd1.mp3",
+      },
+      {
+        model: { entityId: "set123" },
+        name: "Custom Dash",
+        type: "image_set",
+        size: "1.2 MB",
+        url: "/api/assets/download?filename=dash.json",
+        filename: "dash.json",
+        images: [
+          {
+            percentage: 30,
+            url: "/api/assets/download?filename=img1.png",
+            name: "img1.png",
+          },
+          {
+            percentage: 70,
+            url: "/api/assets/download?filename=img2.png",
+            name: "img2.png",
+          },
+        ],
+      },
+      {
+        model: { entityId: "mock-flag-1" },
+        name: "Checker Flag",
+        type: "image",
+        url: "/api/assets/download?filename=flag_checkered.png",
+        filename: "flag_checkered.png",
+      },
+      {
+        model: { entityId: "mock-flag-2" },
+        name: "Blue Flag",
+        type: "image",
+        url: "/api/assets/download?filename=blue.png",
+        filename: "blue.png",
+      },
+      {
+        model: { entityId: "mock-flag-3" },
+        name: "Yellow Flag",
+        type: "image",
+        url: "/api/assets/download?filename=flag_yellow.png",
+        filename: "flag_yellow.png",
+      },
+      {
+        model: { entityId: "audioset1" },
+        name: "Test Audio Set",
+        type: "audio_set",
+        size: "200 KB",
+        audioEntries: [
+          {
+            name: "Entry 1",
+            timeSeconds: 1,
+            url: "/api/assets/download?filename=snd1.mp3",
+          },
+          {
+            name: "Entry 2",
+            timeSeconds: 2,
+            url: "/api/assets/download?filename=snd2.mp3",
+          },
+        ],
+      },
+      {
+        model: { entityId: "rotation1" },
+        name: "4-Lane Rotation",
+        type: "custom_rotation",
+        size: "10 KB",
+        numLanes: 4,
+        customRotations: [
+          {
+            numDrivers: 4,
+            heats: [
+              { driverIndices: [0, 1, 2, 3] },
+              { driverIndices: [1, 2, 3, 0] },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const idToFilenameMap: Record<string, string> = {
+      default_flag_green: "flag_green.png",
+      default_flag_red: "flag_red.png",
+      default_flag_yellow: "flag_yellow.png",
+      default_flag_green_yellow: "flag_green_yellow.png",
+      default_flag_black: "flag_black.png",
+      default_flag_white: "flag_white.png",
+      default_flag_checkered: "flag_checkered.png",
+      default_start_red_on: "start_red_on.png",
+      default_start_red_dim: "start_red_dim.png",
+      default_start_green: "start_green.png",
+      "fuel-0.png": "fuel_0.png",
+      "fuel-50.png": "fuel_50.png",
+      "fuel-100.png": "fuel_100.png",
+    };
+
+    const findAssetFile = (rawNameOrId: string) => {
+      if (!rawNameOrId) return null;
+      let target = idToFilenameMap[rawNameOrId] || rawNameOrId;
+
+      const matchedAsset = defaultAssets.find(
+        (a) => a.model?.entityId === rawNameOrId || a.filename === rawNameOrId,
+      );
+      if (matchedAsset && matchedAsset.filename) {
+        target =
+          idToFilenameMap[matchedAsset.filename] || matchedAsset.filename;
+      }
+
+      const baseName = path.basename(target);
+      const potentialDirs = [
+        path.resolve(process.cwd(), "client/src/assets/images/defaults"),
+        path.resolve(process.cwd(), "src/assets/images/defaults"),
+        path.resolve(process.cwd(), "assets/images/defaults"),
+        path.resolve(process.cwd(), "client/src/assets/images"),
+        path.resolve(process.cwd(), "src/assets/images"),
+        path.resolve(process.cwd(), "assets/images"),
+        path.resolve(process.cwd(), "server/src/main/resources/defaults"),
+        path.resolve(process.cwd(), "../server/src/main/resources/defaults"),
+        path.resolve(process.cwd(), "src/main/resources/defaults"),
+        path.resolve(process.cwd(), "client/src/assets"),
+        path.resolve(process.cwd(), "src/assets"),
+        path.resolve(process.cwd(), "assets"),
+      ];
+
+      for (const dir of potentialDirs) {
+        const testPath = path.join(dir, baseName);
+        if (fs.existsSync(testPath) && fs.statSync(testPath).isFile()) {
+          return testPath;
+        }
+      }
+      return null;
+    };
+
+    const generateFallbackSvg = (nameOrId: string) => {
+      const lower = (nameOrId || "").toLowerCase();
+      let fill = "#3f51b5";
+      let text = "CUSTOM IMAGE";
+      let textColor = "white";
+
+      if (
+        lower.includes("green_yellow") ||
+        lower.includes("yellow_green") ||
+        lower.includes("green-yellow")
+      ) {
+        fill = "#8bc34a";
+        text = "GREEN/YELLOW";
+      } else if (lower.includes("green")) {
+        fill = "#2e7d32";
+        text = "GREEN";
+      } else if (lower.includes("yellow")) {
+        fill = "#fbc02d";
+        text = "YELLOW";
+        textColor = "#111827";
+      } else if (lower.includes("red")) {
+        fill = "#c62828";
+        text = "RED";
+      } else if (lower.includes("white")) {
+        fill = "#f5f5f5";
+        text = "WHITE";
+        textColor = "#111827";
+      } else if (lower.includes("black")) {
+        fill = "#212121";
+        text = "BLACK";
+      } else if (lower.includes("checkered") || lower.includes("checker")) {
+        return `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="checkers" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect width="10" height="10" fill="#000000" />
+              <rect x="10" width="10" height="10" fill="#ffffff" />
+              <rect y="10" width="10" height="10" fill="#ffffff" />
+              <rect x="10" y="10" width="10" height="10" fill="#000000" />
+            </pattern>
+          </defs>
+          <rect width="100" height="100" fill="url(#checkers)" />
+        </svg>`.trim();
+      }
+
+      return `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="${fill}" />
+        <text x="50" y="50" font-family="Arial" font-size="14" font-weight="bold" text-anchor="middle" fill="${textColor}" dominant-baseline="middle">${text}</text>
+      </svg>`.trim();
+    };
 
     await page.route(
       (url) =>
         url.pathname.endsWith("/api/assets/list") ||
         url.pathname.includes("/api/assets/list"),
       async (route) => {
-        const assets = [
-          {
-            model: { entityId: "1" },
-            name: "Test Image 1 with a very long name that should wrap to two lines",
-            type: "image",
-            size: "150 KB",
-            url: "/api/assets/download?filename=img1.png",
-            filename: "img1.png",
-          },
-          {
-            model: { entityId: "2" },
-            name: "Test Sound 1",
-            type: "audio",
-            size: "50 KB",
-            url: "/api/assets/download?filename=snd1.mp3",
-            filename: "snd1.mp3",
-          },
-          {
-            model: { entityId: "set123" },
-            name: "Custom Dash",
-            type: "image_set",
-            size: "1.2 MB",
-            url: "/api/assets/download?filename=dash.json",
-            filename: "dash.json",
-            images: [
-              {
-                percentage: 30,
-                url: "/api/assets/download?filename=img1.png",
-                name: "img1.png",
-              },
-              {
-                percentage: 70,
-                url: "/api/assets/download?filename=img2.png",
-                name: "img2.png",
-              },
-            ],
-          },
-          {
-            model: { entityId: "fuel-gauge-builtin" },
-            name: "Fuel Gauge",
-            type: "image_set",
-            size: "1.2 MB",
-            url: "/api/assets/download?filename=fuel-gauge.json",
-            filename: "fuel-gauge.json",
-            images: [
-              {
-                percentage: 0,
-                url: "/api/assets/download?filename=fuel-0.png",
-                name: "fuel-0.png",
-              },
-              {
-                percentage: 50,
-                url: "/api/assets/download?filename=fuel-50.png",
-                name: "fuel-50.png",
-              },
-              {
-                percentage: 100,
-                url: "/api/assets/download?filename=fuel-100.png",
-                name: "fuel-100.png",
-              },
-            ],
-          },
-          {
-            model: { entityId: "default_start_red_on" },
-            name: "Start Lamp Red",
-            type: "image",
-            url: "assets/images/start_red_on.png",
-          },
-          {
-            model: { entityId: "default_start_red_dim" },
-            name: "Start Lamp Dim",
-            type: "image",
-            url: "assets/images/start_red_dim.png",
-          },
-          {
-            model: { entityId: "default_start_green" },
-            name: "Start Lamp Green",
-            type: "image",
-            url: "assets/images/start_green.png",
-          },
-          {
-            model: { entityId: "mock-flag-1" },
-            name: "Checker Flag",
-            type: "image",
-            url: "/api/assets/download?filename=checker.png",
-          },
-          {
-            model: { entityId: "mock-flag-2" },
-            name: "Blue Flag",
-            type: "image",
-            url: "/api/assets/download?filename=blue.png",
-          },
-          {
-            model: { entityId: "mock-flag-3" },
-            name: "Yellow Flag",
-            type: "image",
-            url: "/api/assets/download?filename=yellow.png",
-          },
-          {
-            model: { entityId: "audioset1" },
-            name: "Test Audio Set",
-            type: "audio_set",
-            size: "200 KB",
-            audioEntries: [
-              {
-                name: "Entry 1",
-                timeSeconds: 1,
-                url: "/api/assets/download?filename=snd1.mp3",
-              },
-              {
-                name: "Entry 2",
-                timeSeconds: 2,
-                url: "/api/assets/download?filename=snd2.mp3",
-              },
-            ],
-          },
-          {
-            model: { entityId: "rotation1" },
-            name: "4-Lane Rotation",
-            type: "custom_rotation",
-            size: "10 KB",
-            numLanes: 4,
-            customRotations: [
-              {
-                numDrivers: 4,
-                heats: [
-                  { driverIndices: [0, 1, 2, 3] },
-                  { driverIndices: [1, 2, 3, 0] },
-                ],
-              },
-            ],
-          },
-        ];
-
-        const response = ListAssetsResponse.create({ assets });
+        const response = ListAssetsResponse.create({ assets: defaultAssets });
         const buffer = ListAssetsResponse.encode(response).finish();
 
         await route.fulfill({
@@ -1280,10 +1469,47 @@ export class TestSetupHelper {
         url.pathname.includes("/api/assets/download") ||
         url.pathname.endsWith("/api/assets/download"),
       async (route) => {
+        const urlStr = route.request().url();
+        let nameOrId = "";
+        try {
+          const parsed = new URL(urlStr);
+          nameOrId = parsed.searchParams.get("filename") || "";
+          if (!nameOrId) {
+            const match = parsed.pathname.match(
+              /\/api\/assets\/download\/(.+)$/,
+            );
+            if (match) {
+              nameOrId = match[1];
+            }
+          }
+        } catch (e) {
+          // fallback
+        }
+
+        const filePath = findAssetFile(nameOrId);
+        if (filePath) {
+          const isSvg = filePath.endsWith(".svg");
+          const isJpg = filePath.endsWith(".jpg") || filePath.endsWith(".jpeg");
+          const isPng = filePath.endsWith(".png");
+          const contentType = isSvg
+            ? "image/svg+xml"
+            : isJpg
+              ? "image/jpeg"
+              : isPng
+                ? "image/png"
+                : "application/octet-stream";
+          await route.fulfill({
+            status: 200,
+            contentType,
+            body: fs.readFileSync(filePath),
+          });
+          return;
+        }
+
         await route.fulfill({
           status: 200,
           contentType: "image/svg+xml",
-          body: mockImage,
+          body: generateFallbackSvg(nameOrId),
         });
       },
     );
@@ -1677,6 +1903,27 @@ export class TestSetupHelper {
     }, dataArray);
   }
 
+  static async sendRaceFlag(page: Page, raceFlag: RaceFlag) {
+    const raceData = { flag: raceFlag };
+    const buffer = RaceData.encode(raceData).finish();
+    const dataArray = Array.from(buffer);
+    await page.evaluate((bufferArray) => {
+      const buffer = new Uint8Array(bufferArray as number[]).buffer;
+      // @ts-ignore
+      if (window.allMockSockets) {
+        // @ts-ignore
+        const raceSockets = window.allMockSockets.filter((s: any) =>
+          s.url.includes("race-data"),
+        );
+        raceSockets.forEach((s: any) => {
+          const event = new MessageEvent("message", { data: buffer });
+          s.dispatchEvent(event);
+          if (s.onmessage) s.onmessage(event);
+        });
+      }
+    }, dataArray);
+  }
+
   static async sendRaceTime(page: Page, raceTime: IRaceTime) {
     const raceData = { raceTime };
     const buffer = RaceData.encode(raceData).finish();
@@ -1741,16 +1988,22 @@ export class TestSetupHelper {
           name: "Default Theme",
           is_default: true,
           slots: {
-            "flag.green": "1",
-            "flag.red": "1",
-            "flag.yellow": "1",
-            "flag.white": "1",
-            "flag.checkered": "1",
-            "flag.black": "1",
-            "lamp.red.on": "1",
-            "lamp.red.dim": "1",
-            "lamp.green": "1",
-            "gauge.fuel": "1",
+            "flag.racing": "default_flag_green",
+            "flag.heat_paused": "default_flag_yellow",
+            "flag.heat_over": "default_flag_red",
+            "flag.race_over": "default_flag_checkered",
+            "flag.not_started": "default_flag_red",
+            "flag.starting": "default_flag_red",
+            "flag.restarting": "default_flag_yellow",
+            "flag.one_lap_to_go": "default_flag_white",
+            "flag.heat_finishing": "default_flag_checkered",
+            "flag.warmup": "default_flag_green_yellow",
+            "flag.driver_finished": "default_flag_red",
+            "flag.penalty": "default_flag_black",
+            "lamp.red.on": "default_start_red_on",
+            "lamp.red.dim": "default_start_red_dim",
+            "lamp.green": "default_start_green",
+            "gauge.fuel": "fuel-gauge-builtin",
           },
         },
         {
@@ -1758,16 +2011,22 @@ export class TestSetupHelper {
           name: "Custom Theme",
           is_default: false,
           slots: {
-            "flag.green": "1",
-            "flag.red": "1",
-            "flag.yellow": "1",
-            "flag.white": "1",
-            "flag.checkered": "1",
-            "flag.black": "1",
-            "lamp.red.on": "1",
-            "lamp.red.dim": "1",
-            "lamp.green": "1",
-            "gauge.fuel": "1",
+            "flag.racing": "default_flag_green",
+            "flag.heat_paused": "default_flag_yellow",
+            "flag.heat_over": "default_flag_red",
+            "flag.race_over": "default_flag_checkered",
+            "flag.not_started": "default_flag_red",
+            "flag.starting": "default_flag_red",
+            "flag.restarting": "default_flag_yellow",
+            "flag.one_lap_to_go": "default_flag_white",
+            "flag.heat_finishing": "default_flag_checkered",
+            "flag.warmup": "default_flag_green_yellow",
+            "flag.driver_finished": "default_flag_red",
+            "flag.penalty": "default_flag_black",
+            "lamp.red.on": "default_start_red_on",
+            "lamp.red.dim": "default_start_red_dim",
+            "lamp.green": "default_start_green",
+            "gauge.fuel": "fuel-gauge-builtin",
           },
         },
       ];

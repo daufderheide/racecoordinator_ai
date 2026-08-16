@@ -132,5 +132,75 @@ describe("FileSystemService", () => {
       expect(mockHandle.getDirectoryHandle).not.toHaveBeenCalled();
       expect(mockHandle.removeEntry).toHaveBeenCalledWith("log.txt");
     });
+
+    it("should ignore NotFoundError during deleteFile", async () => {
+      mockHandle.removeEntry = jasmine
+        .createSpy("removeEntry")
+        .and.returnValue(Promise.reject({ name: "NotFoundError" }));
+      await service.deleteFile("missing.txt");
+      expect(mockHandle.removeEntry).toHaveBeenCalledWith("missing.txt");
+    });
+  });
+
+  describe("Edge cases and Permissions", () => {
+    it("should return false from hasCustomFiles when handle is undefined", async () => {
+      (service.getCustomDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      const res = await service.hasCustomFiles("test.html");
+      expect(res).toBeFalse();
+    });
+
+    it("should return false from hasCustomFiles when permission is denied", async () => {
+      mockHandle.queryPermission.and.returnValue(Promise.resolve("denied"));
+      mockHandle.requestPermission = jasmine
+        .createSpy("requestPermission")
+        .and.returnValue(Promise.resolve("denied"));
+      const res = await service.hasCustomFiles("test.html");
+      expect(res).toBeFalse();
+    });
+
+    it("should request permission when queryPermission returns prompt", async () => {
+      mockHandle.queryPermission.and.returnValue(Promise.resolve("prompt"));
+      mockHandle.requestPermission = jasmine
+        .createSpy("requestPermission")
+        .and.returnValue(Promise.resolve("granted"));
+      const res = await service.hasCustomFiles("test.html");
+      expect(res).toBeTrue();
+      expect(mockHandle.requestPermission).toHaveBeenCalled();
+    });
+
+    it("should check default supported files list when no filename is given", async () => {
+      const res = await service.hasCustomFiles();
+      expect(res).toBeTrue();
+    });
+
+    it("should throw error in getCustomFile if handle is undefined", async () => {
+      (service.getCustomDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      await expectAsync(
+        service.getCustomFile("test.html"),
+      ).toBeRejectedWithError("No custom directory configured");
+    });
+
+    it("should throw error in getCustomFile if permission denied", async () => {
+      mockHandle.queryPermission.and.returnValue(Promise.resolve("denied"));
+      mockHandle.requestPermission = jasmine
+        .createSpy("requestPermission")
+        .and.returnValue(Promise.resolve("denied"));
+      await expectAsync(
+        service.getCustomFile("test.html"),
+      ).toBeRejectedWithError("Permission denied");
+    });
+
+    it("should do nothing in appendToFile and deleteFile if handle is undefined", async () => {
+      (service.getCustomDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      await service.appendToFile("log.txt", "data");
+      await service.deleteFile("log.txt");
+      expect(mockHandle.getFileHandle).not.toHaveBeenCalled();
+    });
   });
 });

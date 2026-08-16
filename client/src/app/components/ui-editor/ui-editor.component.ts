@@ -149,6 +149,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     { key: "driver.nickname", label: "RD_COL_NICKNAME" },
     { key: "driver.avatarUrl", label: "RD_COL_AVATAR" },
     { key: "lapCount", label: "RD_COL_LAP" },
+    { key: "lapsLed", label: "RD_COL_LAPS_LED" },
     { key: "reactionTime", label: "RD_COL_REACTION_TIME" },
     { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
     { key: "lastLaps", label: "RD_COL_LAST_LAPS" },
@@ -831,6 +832,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           { key: "driver.nickname", label: "RD_COL_NICKNAME" },
           { key: "driver.avatarUrl", label: "RD_COL_AVATAR" },
           { key: "lapCount", label: "RD_COL_LAP" },
+          { key: "lapsLed", label: "RD_COL_LAPS_LED" },
           { key: "reactionTime", label: "RD_COL_REACTION_TIME" },
           { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
           { key: "lastLaps", label: "RD_COL_LAST_LAPS" },
@@ -1024,13 +1026,18 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   private areSettingsEqual(a: Settings, b: Settings): boolean {
     return (
-      a.flagGreen === b.flagGreen &&
-      a.flagYellow === b.flagYellow &&
-      a.flagRed === b.flagRed &&
-      a.flagWhite === b.flagWhite &&
-      a.flagBlack === b.flagBlack &&
-      a.flagYellowGreen === b.flagYellowGreen &&
-      a.flagCheckered === b.flagCheckered &&
+      a.flagRacing === b.flagRacing &&
+      a.flagHeatPaused === b.flagHeatPaused &&
+      a.flagHeatOver === b.flagHeatOver &&
+      a.flagRaceOver === b.flagRaceOver &&
+      a.flagNotStarted === b.flagNotStarted &&
+      a.flagStarting === b.flagStarting &&
+      a.flagRestarting === b.flagRestarting &&
+      a.flagOneLapToGo === b.flagOneLapToGo &&
+      a.flagHeatFinishing === b.flagHeatFinishing &&
+      a.flagWarmup === b.flagWarmup &&
+      a.flagDriverFinished === b.flagDriverFinished &&
+      a.flagPenalty === b.flagPenalty &&
       a.sortByStandings === b.sortByStandings &&
       a.highlightRowOnLap === b.highlightRowOnLap &&
       a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&

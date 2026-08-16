@@ -24,6 +24,8 @@ export class ManagerHeaderComponent {
   showImport = input(false);
   showExport = input(false);
   showReset = input(false);
+  resetTitleKey = input("DBM_BTN_RESET");
+  resetDisabledTooltipKey = input("");
   disabledImport = input(false);
   disabledExport = input(false);
   disabledReset = input(false);

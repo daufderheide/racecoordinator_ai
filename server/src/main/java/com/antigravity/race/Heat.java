@@ -101,6 +101,7 @@ public class Heat extends ServerToClientObject {
     this.heatNumber = heatNumber;
   }
 
+  @JsonIgnore
   public int getActiveDriverCount() {
     int count = 0;
     for (DriverHeatData driverData : drivers) {

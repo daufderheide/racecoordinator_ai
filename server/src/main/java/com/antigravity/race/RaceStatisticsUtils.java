@@ -1,13 +1,17 @@
 package com.antigravity.race;
 
 import com.antigravity.models.Lane;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
+import com.antigravity.util.SeasonPointsCalculator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -211,37 +215,33 @@ public final class RaceStatisticsUtils {
     }
 
     String[] extraHeaders = {
-      "Best Lap Time", "Average Lap Time", "Median Lap Time", "Gap to Leader", "Gap to Position"
+      "Best Lap Time",
+      "Average Lap Time",
+      "Median Lap Time",
+      "Gap to Leader",
+      "Gap to Position",
+      "Overall Position Points",
+      "Overall Bonus Points",
+      "Heat Position Points",
+      "Heat Bonus Points",
+      "Total Points"
     };
     String[] extraValues = {
       "${driver.bestLapTime}",
       "${driver.averageLapTime}",
       "${driver.medianLapTime}",
       "${driver.gapLeader}",
-      "${driver.gapPosition}"
+      "${driver.gapPosition}",
+      "${driver.positionPoints}",
+      "${driver.overallBonusPoints}",
+      "${driver.heatPositionPoints}",
+      "${driver.heatBonusPoints}",
+      "${driver.totalPoints}"
     };
 
     int startExtraCol = 4 + activeLanes.size();
-    for (int i = 0; i < extraHeaders.length; i++) {
-      int col = startExtraCol + i;
-      Cell cHeader = row3.getCell(col);
-      if (cHeader == null) {
-        cHeader = row3.createCell(col);
-      }
-      cHeader.setCellValue(extraHeaders[i]);
-      if (headerStyle != null) {
-        cHeader.setCellStyle(headerStyle);
-      }
-
-      Cell cData = row4.getCell(col);
-      if (cData == null) {
-        cData = row4.createCell(col);
-      }
-      cData.setCellValue(extraValues[i]);
-      if (dataStyle != null) {
-        cData.setCellStyle(dataStyle);
-      }
-    }
+    populateStandingsColumns(
+        row3, row4, headerStyle, dataStyle, startExtraCol, extraHeaders, extraValues);
 
     int lastColIdx = startExtraCol + extraHeaders.length - 1;
 
@@ -272,6 +272,36 @@ public final class RaceStatisticsUtils {
       String text = commentA5.getString().getString();
       String updated = text.replaceAll("lastCell=\"[A-Z]+5\"", "lastCell=\"" + newLastCell + "\"");
       commentA5.setString(workbook.getCreationHelper().createRichTextString(updated));
+    }
+  }
+
+  private static void populateStandingsColumns(
+      Row row3,
+      Row row4,
+      CellStyle headerStyle,
+      CellStyle dataStyle,
+      int startCol,
+      String[] headers,
+      String[] values) {
+    for (int i = 0; i < headers.length; i++) {
+      int col = startCol + i;
+      Cell cHeader = row3.getCell(col);
+      if (cHeader == null) {
+        cHeader = row3.createCell(col);
+      }
+      cHeader.setCellValue(headers[i]);
+      if (headerStyle != null) {
+        cHeader.setCellStyle(headerStyle);
+      }
+
+      Cell cData = row4.getCell(col);
+      if (cData == null) {
+        cData = row4.createCell(col);
+      }
+      cData.setCellValue(values[i]);
+      if (dataStyle != null) {
+        cData.setCellStyle(dataStyle);
+      }
     }
   }
 
@@ -768,6 +798,8 @@ public final class RaceStatisticsUtils {
       p.setLaneLaps(laneLaps);
     }
 
+    populateParticipantPoints(race, drivers);
+
     for (RaceParticipant p : drivers) {
       String driverName = p.getDriver() != null ? p.getDriver().getName() : "Driver";
       String driverId = p.getDriver() != null ? p.getDriver().getEntityId() : p.getObjectId();
@@ -816,6 +848,39 @@ public final class RaceStatisticsUtils {
     List<String> uniqueSheetNames = makeSheetNamesUnique(outDriverSheetNames);
     outDriverSheetNames.clear();
     outDriverSheetNames.addAll(uniqueSheetNames);
+  }
+
+  private static void populateParticipantPoints(Race race, List<RaceParticipant> drivers) {
+    if (race == null || drivers == null) {
+      return;
+    }
+    try {
+      List<SeasonDriverResult> results = SeasonPointsCalculator.calculateDriverResultsForRace(race);
+      Map<String, SeasonDriverResult> resultsMap = new HashMap<>();
+      if (results != null) {
+        for (SeasonDriverResult r : results) {
+          if (r.getDriverId() != null) {
+            resultsMap.put(r.getDriverId(), r);
+          }
+        }
+      }
+
+      for (RaceParticipant p : drivers) {
+        String dId = p.getDriver() != null ? p.getDriver().getEntityId() : p.getParticipantId();
+        SeasonDriverResult r = resultsMap.get(dId);
+        if (r != null) {
+          p.setPositionPoints(r.getOverallPoints());
+          p.setOverallBonusPoints(r.getOverallBonusPoints());
+          p.setHeatPositionPoints(r.getHeatPoints());
+          p.setHeatBonusPoints(r.getHeatBonusPoints());
+          p.setBonusPoints(r.getOverallBonusPoints() + r.getHeatBonusPoints());
+          p.setTotalPoints(r.getTotalPoints());
+          p.setOverallBonusBreakdown(r.getOverallBonusBreakdown());
+          p.setHeatBonusBreakdown(r.getHeatBonusBreakdown());
+        }
+      }
+    } catch (Exception ignored) {
+    }
   }
 
   private static boolean isHeaderRow(Row row) {

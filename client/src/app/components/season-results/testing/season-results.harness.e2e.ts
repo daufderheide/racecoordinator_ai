@@ -56,4 +56,26 @@ export class SeasonResultsHarnessE2e implements SeasonResultsHarnessBase {
       .first();
     return await breakdownTable.isVisible();
   }
+
+  async toggleDriverExpander(
+    raceIndex: number,
+    driverIndex: number,
+  ): Promise<void> {
+    const card = this.expanderCards.nth(raceIndex);
+    const driverRow = card
+      .locator(this.base.selectors.driverExpandableRows)
+      .nth(driverIndex);
+    await driverRow.click();
+  }
+
+  async isDriverExpanded(
+    raceIndex: number,
+    driverIndex: number,
+  ): Promise<boolean> {
+    const card = this.expanderCards.nth(raceIndex);
+    const bonusRow = card
+      .locator(this.base.selectors.driverBonusDetailsRows)
+      .nth(driverIndex);
+    return await bonusRow.isVisible();
+  }
 }

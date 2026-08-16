@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe } from "@angular/common";
+import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -16,6 +16,8 @@ import {
 import { DataService } from "@app/data.service";
 import {
   Season,
+  SeasonDriverResult,
+  SeasonRaceRecord,
   SeasonStandingDetail,
   SeasonStandingItem,
 } from "@app/models/season";
@@ -32,12 +34,19 @@ import { TranslationService } from "@app/services/translation.service";
   selector: "app-default-season-results",
   templateUrl: "./default-season-results.component.html",
   styleUrls: ["./default-season-results.component.css"],
-  imports: [CommonModule, TranslatePipe, DatePipe, PdfExportDialogComponent],
+  imports: [
+    CommonModule,
+    TranslatePipe,
+    DatePipe,
+    DecimalPipe,
+    PdfExportDialogComponent,
+  ],
 })
 export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
   season: Season | null = null;
   standings: SeasonStandingItem[] = [];
   expandedRaceIds: Set<string> = new Set<string>();
+  expandedDriverKeys: Set<string> = new Set<string>();
 
   isLoading = true;
   scale = 1;
@@ -175,22 +184,88 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
     return this.season.races.some((r) => Boolean(r.is_demo));
   }
 
-  calculateStandings(): void {
-    const season = this.season;
-    if (!season || !season.races || season.races.length === 0) {
-      this.standings = [];
+  private appendLiveRaceIfPresent(
+    season: Season,
+    currentRace: any,
+    liveStandings: any[],
+    races: SeasonRaceRecord[],
+  ): void {
+    const isCurrentRaceForSeason =
+      currentRace &&
+      ((currentRace as any).is_season ||
+        (currentRace as any).isSeason ||
+        (currentRace as any).season_id === season.entity_id ||
+        (currentRace as any).seasonId === season.entity_id);
+
+    if (!isCurrentRaceForSeason || liveStandings.length === 0) {
       return;
     }
 
-    // Sort races by date run (oldest to most recent)
-    season.races.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const liveRaceId = currentRace.entity_id || "live_race";
+    const alreadyHasRace = races.some((r) => r.race_id === liveRaceId);
+    if (alreadyHasRace) {
+      return;
+    }
 
+    const liveDriverResults = liveStandings.map((s: any, idx: number) => {
+      const curPts = s.current_race_points ?? s.currentRacePoints ?? 0;
+      const overallPts =
+        s.current_race_overall_points ?? s.currentRaceOverallPoints ?? 0;
+      const overallBonus =
+        s.current_race_overall_bonus_points ??
+        s.currentRaceOverallBonusPoints ??
+        0;
+      const overallBreakdown =
+        s.current_race_overall_bonus_breakdown ??
+        s.currentRaceOverallBonusBreakdown ??
+        s.overall_bonus_breakdown ??
+        s.overallBonusBreakdown ??
+        {};
+      const heatPts =
+        s.current_race_heat_points ?? s.currentRaceHeatPoints ?? 0;
+      const heatBonus =
+        s.current_race_heat_bonus_points ?? s.currentRaceHeatBonusPoints ?? 0;
+      const heatBreakdown =
+        s.current_race_heat_bonus_breakdown ??
+        s.currentRaceHeatBonusBreakdown ??
+        s.heat_bonus_breakdown ??
+        s.heatBonusBreakdown ??
+        {};
+      const rank =
+        s.current_race_overall_rank ?? s.currentRaceOverallRank ?? idx + 1;
+      return {
+        driver_id: s.driver_id || s.driverId,
+        driver_name: s.driver_name || s.driverName,
+        overall_rank: rank,
+        overall_points: overallPts,
+        overall_bonus_points: overallBonus,
+        overall_bonus_breakdown: overallBreakdown,
+        heat_points: heatPts,
+        heat_bonus_points: heatBonus,
+        heat_bonus_breakdown: heatBreakdown,
+        total_points: curPts,
+      };
+    });
+
+    races.push({
+      race_id: liveRaceId,
+      race_name: `${currentRace.name || "Race"} (Live)`,
+      timestamp: Date.now(),
+      is_demo: false,
+      driver_results: liveDriverResults,
+    });
+    season.races = races;
+  }
+
+  private buildDriverScoresMap(
+    races: SeasonRaceRecord[],
+  ): Map<string, { driver_name: string; scores: SeasonStandingDetail[] }> {
     const driverMap = new Map<
       string,
       { driver_name: string; scores: SeasonStandingDetail[] }
     >();
 
-    for (const race of season.races) {
+    for (const race of races) {
       if (!race.driver_results) continue;
       for (const res of race.driver_results) {
         let entry = driverMap.get(res.driver_id);
@@ -202,15 +277,53 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
           race_id: race.race_id,
           race_name: race.race_name,
           overall_rank: res.overall_rank,
-          overall_points: res.overall_points,
-          heat_points: res.heat_points,
+          overall_points: res.overall_points || 0,
+          overall_bonus_points: res.overall_bonus_points || 0,
+          overall_bonus_breakdown: res.overall_bonus_breakdown,
+          heat_points: res.heat_points || 0,
+          heat_bonus_points: res.heat_bonus_points || 0,
+          heat_bonus_breakdown: res.heat_bonus_breakdown,
           total_points: res.total_points,
           is_dropped: false,
         });
       }
     }
+    return driverMap;
+  }
 
+  calculateStandings(): void {
+    const season = this.season;
+    if (!season) {
+      this.standings = [];
+      return;
+    }
+
+    const currentRace = this.raceService.getRace();
+    const liveStandings: any[] =
+      (currentRace as any)?.season_standings ||
+      (currentRace as any)?.seasonStandings ||
+      [];
+
+    const races = [...(season.races || [])];
+    this.appendLiveRaceIfPresent(season, currentRace, liveStandings, races);
+
+    if (races.length === 0) {
+      this.standings = [];
+      return;
+    }
+
+    // Sort races by date run (oldest to most recent)
+    races.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+    const driverMap = this.buildDriverScoresMap(races);
     const result: SeasonStandingItem[] = [];
+
+    const isCurrentRaceForSeason =
+      currentRace &&
+      ((currentRace as any).is_season ||
+        (currentRace as any).isSeason ||
+        (currentRace as any).season_id === season.entity_id ||
+        (currentRace as any).seasonId === season.entity_id);
 
     driverMap.forEach((entry, driverId) => {
       const scores = entry.scores;
@@ -233,6 +346,16 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
         gross += s.total_points;
         if (!s.is_dropped) {
           net += s.total_points;
+        }
+      }
+
+      if (isCurrentRaceForSeason && liveStandings.length > 0) {
+        const serverLive = liveStandings.find(
+          (ls: any) => (ls.driver_id || ls.driverId) === driverId,
+        );
+        if (serverLive) {
+          net = serverLive.net_points ?? serverLive.netPoints ?? net;
+          gross = serverLive.gross_points ?? serverLive.grossPoints ?? gross;
         }
       }
 
@@ -267,6 +390,146 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
 
   isRaceExpanded(raceId: string): boolean {
     return this.expandedRaceIds.has(raceId);
+  }
+
+  getDriverKey(raceId: string, driverId: string): string {
+    return `${raceId}__${driverId}`;
+  }
+
+  toggleDriverExpanded(raceId: string, driverId: string): void {
+    const key = this.getDriverKey(raceId, driverId);
+    if (this.expandedDriverKeys.has(key)) {
+      this.expandedDriverKeys.delete(key);
+    } else {
+      this.expandedDriverKeys.add(key);
+    }
+    this.cdr.detectChanges();
+  }
+
+  isDriverExpanded(raceId: string, driverId: string): boolean {
+    return this.expandedDriverKeys.has(this.getDriverKey(raceId, driverId));
+  }
+
+  hasAnyBonuses(res: SeasonDriverResult): boolean {
+    return (
+      (res.overall_bonus_points || 0) > 0 || (res.heat_bonus_points || 0) > 0
+    );
+  }
+
+  getOverallBonusEntries(res: SeasonDriverResult): {
+    key: string;
+    labelKey: string;
+    params?: { [key: string]: any };
+    points: number;
+  }[] {
+    if (!res.overall_bonus_breakdown) return [];
+    const entries: {
+      key: string;
+      labelKey: string;
+      params?: { [key: string]: any };
+      points: number;
+    }[] = [];
+    const labels: Record<string, string> = {
+      fastest_lap: "SS_BONUS_FASTEST_LAP",
+      fastest_lap_per_lane: "SS_BONUS_FASTEST_LAP_LANE",
+      led_lap: "SS_BONUS_LED_LAP",
+      most_laps_led: "SS_BONUS_MOST_LAPS_LED",
+    };
+    for (const [k, v] of Object.entries(res.overall_bonus_breakdown)) {
+      if (typeof v === "number" && v > 0) {
+        const laneMatch = k.match(/^fastest_lap_lane_(\d+)$/);
+        if (laneMatch) {
+          entries.push({
+            key: k,
+            labelKey: "SS_BONUS_FASTEST_LAP_LANE_NUM",
+            params: { lane: laneMatch[1] },
+            points: v,
+          });
+        } else {
+          entries.push({ key: k, labelKey: labels[k] || k, points: v });
+        }
+      }
+    }
+    entries.sort((a, b) => {
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      const aLane =
+        a.params?.["lane"] !== undefined ? Number(a.params["lane"]) : 0;
+      const bLane =
+        b.params?.["lane"] !== undefined ? Number(b.params["lane"]) : 0;
+      if (aLane !== bLane) {
+        return aLane - bLane;
+      }
+      return a.key.localeCompare(b.key);
+    });
+    return entries;
+  }
+
+  getHeatBonusEntries(res: SeasonDriverResult): {
+    key: string;
+    labelKey: string;
+    params?: { [key: string]: any };
+    points: number;
+  }[] {
+    if (!res.heat_bonus_breakdown) return [];
+    const entries: {
+      key: string;
+      labelKey: string;
+      params?: { [key: string]: any };
+      points: number;
+    }[] = [];
+    const labels: Record<string, string> = {
+      fastest_lap: "SS_BONUS_FASTEST_LAP",
+      led_lap: "SS_BONUS_LED_LAP",
+      most_laps_led: "SS_BONUS_MOST_LAPS_LED",
+    };
+    for (const [k, v] of Object.entries(res.heat_bonus_breakdown)) {
+      if (typeof v === "number" && v > 0) {
+        const fastestLapMatch = k.match(/^fastest_lap_heat_(\d+)$/);
+        const ledLapMatch = k.match(/^led_lap_heat_(\d+)$/);
+        const mostLapsLedMatch = k.match(/^most_laps_led_heat_(\d+)$/);
+
+        if (fastestLapMatch) {
+          entries.push({
+            key: k,
+            labelKey: "SS_BONUS_FASTEST_LAP_HEAT_NUM",
+            params: { heat: fastestLapMatch[1] },
+            points: v,
+          });
+        } else if (ledLapMatch) {
+          entries.push({
+            key: k,
+            labelKey: "SS_BONUS_LED_LAP_HEAT_NUM",
+            params: { heat: ledLapMatch[1] },
+            points: v,
+          });
+        } else if (mostLapsLedMatch) {
+          entries.push({
+            key: k,
+            labelKey: "SS_BONUS_MOST_LAPS_LED_HEAT_NUM",
+            params: { heat: mostLapsLedMatch[1] },
+            points: v,
+          });
+        } else {
+          entries.push({ key: k, labelKey: labels[k] || k, points: v });
+        }
+      }
+    }
+    entries.sort((a, b) => {
+      const aHeat =
+        a.params?.["heat"] !== undefined ? Number(a.params["heat"]) : 0;
+      const bHeat =
+        b.params?.["heat"] !== undefined ? Number(b.params["heat"]) : 0;
+      if (aHeat !== bHeat) {
+        return aHeat - bHeat;
+      }
+      if (b.points !== a.points) {
+        return b.points - a.points;
+      }
+      return a.key.localeCompare(b.key);
+    });
+    return entries;
   }
 
   exportPdf(): void {

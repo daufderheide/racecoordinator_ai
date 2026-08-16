@@ -304,8 +304,10 @@ export class SeasonEditorComponent
           race_id: race.race_id,
           race_name: race.race_name,
           overall_rank: res.overall_rank,
-          overall_points: res.overall_points,
-          heat_points: res.heat_points,
+          overall_points: res.overall_points || 0,
+          overall_bonus_points: res.overall_bonus_points || 0,
+          heat_points: res.heat_points || 0,
+          heat_bonus_points: res.heat_bonus_points || 0,
           total_points: res.total_points,
           is_dropped: false,
         });
@@ -525,6 +527,40 @@ export class SeasonEditorComponent
     };
   }
 
+  private calculateDriverHeatPointsMap(
+    heats: any[],
+    heatPosPointsList: number[],
+  ): Map<string, number> {
+    const driverHeatPointsMap = new Map<string, number>();
+    if (!heats || !Array.isArray(heats) || heatPosPointsList.length === 0) {
+      return driverHeatPointsMap;
+    }
+    heats.forEach((heat: any) => {
+      if (heat && heat.drivers && Array.isArray(heat.drivers)) {
+        const heatDrivers = [...heat.drivers].sort((a: any, b: any) => {
+          const aLaps = a.laps ? a.laps.length : 0;
+          const bLaps = b.laps ? b.laps.length : 0;
+          if (aLaps !== bLaps) return bLaps - aLaps;
+          return (a.totalTime || 0) - (b.totalTime || 0);
+        });
+        heatDrivers.forEach((hd: any, laneIdx: number) => {
+          const dId =
+            hd.driverId ||
+            hd.driver_id ||
+            (hd.driver ? hd.driver.entity_id || hd.driver.entityId : "");
+          if (dId && laneIdx < heatPosPointsList.length) {
+            const pts = Number(heatPosPointsList[laneIdx]) || 0;
+            driverHeatPointsMap.set(
+              dId,
+              (driverHeatPointsMap.get(dId) || 0) + pts,
+            );
+          }
+        });
+      }
+    });
+    return driverHeatPointsMap;
+  }
+
   private extractDriverResultsFromHistory(item: any): any[] {
     const driverResults: any[] = [];
     const existingResults = item.driver_results || item.driverResults;
@@ -543,8 +579,16 @@ export class SeasonEditorComponent
             r.overall_points !== undefined
               ? r.overall_points
               : r.overallPoints || 0,
+          overall_bonus_points:
+            r.overall_bonus_points !== undefined
+              ? r.overall_bonus_points
+              : r.overallBonusPoints || 0,
           heat_points:
             r.heat_points !== undefined ? r.heat_points : r.heatPoints || 0,
+          heat_bonus_points:
+            r.heat_bonus_points !== undefined
+              ? r.heat_bonus_points
+              : r.heatBonusPoints || 0,
           total_points:
             r.total_points !== undefined ? r.total_points : r.totalPoints || 0,
         });
@@ -562,37 +606,10 @@ export class SeasonEditorComponent
         seasonScoring.heatPositionPoints ||
         [];
 
-      // Calculate heat position points per driver across heats
-      const driverHeatPointsMap = new Map<string, number>();
-      if (
-        item.heats &&
-        Array.isArray(item.heats) &&
-        heatPosPointsList.length > 0
-      ) {
-        item.heats.forEach((heat: any) => {
-          if (heat && heat.drivers && Array.isArray(heat.drivers)) {
-            const heatDrivers = [...heat.drivers].sort((a: any, b: any) => {
-              const aLaps = a.laps ? a.laps.length : 0;
-              const bLaps = b.laps ? b.laps.length : 0;
-              if (aLaps !== bLaps) return bLaps - aLaps;
-              return (a.totalTime || 0) - (b.totalTime || 0);
-            });
-            heatDrivers.forEach((hd: any, laneIdx: number) => {
-              const dId =
-                hd.driverId ||
-                hd.driver_id ||
-                (hd.driver ? hd.driver.entity_id || hd.driver.entityId : "");
-              if (dId && laneIdx < heatPosPointsList.length) {
-                const pts = Number(heatPosPointsList[laneIdx]) || 0;
-                driverHeatPointsMap.set(
-                  dId,
-                  (driverHeatPointsMap.get(dId) || 0) + pts,
-                );
-              }
-            });
-          }
-        });
-      }
+      const driverHeatPointsMap = this.calculateDriverHeatPointsMap(
+        item.heats,
+        heatPosPointsList,
+      );
 
       item.drivers.forEach((d: any, idx: number) => {
         const driverName =

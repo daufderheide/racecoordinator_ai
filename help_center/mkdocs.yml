@@ -53,6 +53,7 @@ nav:
     - Introduction: introduction.md
     - System Overview: system-overview.md
     - Installation: installation.md
+    - Arduino UNO Q Setup: arduino-uno-q.md
   - Configuration:
     - Race Day Setup: raceday-setup.md
     - Driver Manager: driver-manager.md

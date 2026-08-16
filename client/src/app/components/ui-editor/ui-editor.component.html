@@ -51,7 +51,7 @@
                 padding: 4px;
               "
             >
-              <span class="material-icons">upload</span>
+              <span class="material-icons">download</span>
             </button>
             <button
               class="icon-btn"
@@ -68,7 +68,7 @@
                 padding: 4px;
               "
             >
-              <span class="material-icons">download</span>
+              <span class="material-icons">upload</span>
             </button>
             <input
               #racedayLayoutFileInput
@@ -351,7 +351,7 @@
                 padding: 4px;
               "
             >
-              <span class="material-icons">upload</span>
+              <span class="material-icons">download</span>
             </button>
             <button
               class="icon-btn"
@@ -368,7 +368,7 @@
                 padding: 4px;
               "
             >
-              <span class="material-icons">download</span>
+              <span class="material-icons">upload</span>
             </button>
             <input
               #practiceRacedayLayoutFileInput
@@ -597,275 +597,6 @@
           </div>
         }
       </div>
-
-      <!-- THEME CONTENT TEMPLATE -->
-      <ng-template #themeContent let-theme="theme">
-        <!-- Nested Flag Image Settings -->
-        <div class="config-section sub-section">
-          <div class="section-header" (click)="toggleSection('flags')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded['flags']"
-              >▼</span
-            >
-            <h1>{{ "UE_HEADER_FLAGS" | translate }}</h1>
-          </div>
-          @if (sectionsExpanded[theme.entity_id]) {
-            <div class="section-content">
-              <ng-container
-                *ngTemplateOutlet="themeContent; context: { theme: theme }"
-              ></ng-container>
-            </div>
-          }
-          @if (sectionsExpanded["flags"]) {
-            <div class="section-content">
-              <div class="panel flags-panel">
-                <div class="panel-content flags-grid">
-                  <app-image-selector
-                    [label]="'UE_LABEL_GREEN_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.green', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.green']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('flag.green', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.green', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_YELLOW_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.yellow', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.yellow']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('flag.yellow', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.yellow', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_YELLOWGREEN_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.yellowgreen', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.yellowgreen']"
-                    [assetType]="'image'"
-                    [images]="
-                      getAssetForSlot('flag.yellowgreen', theme)?.images
-                    "
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.yellowgreen', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_RED_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.red', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.red']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('flag.red', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.red', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_WHITE_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.white', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.white']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('flag.white', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.white', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_BLACK_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.black', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.black']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('flag.black', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.black', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
-                    [imageUrl]="getFlagUrl('flag.checkered', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['flag.checkered']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('flag.checkered', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'flag.checkered', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-        <!-- Nested Countdown Image Settings -->
-        <div class="config-section sub-section">
-          <div class="section-header" (click)="toggleSection('countdown')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded['countdown']"
-              >▼</span
-            >
-            <h1>{{ "UE_HEADER_COUNTDOWN" | translate }}</h1>
-          </div>
-          @if (sectionsExpanded["countdown"]) {
-            <div class="section-content">
-              <div class="panel countdown-panel">
-                <div class="panel-content countdown-grid">
-                  <app-image-selector
-                    [label]="'UE_LABEL_LAMP_RED_OFF' | translate"
-                    [imageUrl]="getLampUrl('lamp.red.dim', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['lamp.red.dim']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('lamp.red.dim', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'lamp.red.dim', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_LAMP_RED_ON' | translate"
-                    [imageUrl]="getLampUrl('lamp.red.on', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['lamp.red.on']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('lamp.red.on', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'lamp.red.on', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                  <app-image-selector
-                    [label]="'UE_LABEL_LAMP_GREEN' | translate"
-                    [imageUrl]="getLampUrl('lamp.green', theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['lamp.green']"
-                    [assetType]="'image'"
-                    [images]="getAssetForSlot('lamp.green', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'lamp.green', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-        <!-- Nested Fuel Gauge Image Settings -->
-        <div class="config-section sub-section">
-          <div class="section-header" (click)="toggleSection('fuelGauge')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded['fuelGauge']"
-              >▼</span
-            >
-            <h1>{{ "UE_HEADER_FUEL_GAUGE" | translate }}</h1>
-          </div>
-          @if (sectionsExpanded["fuelGauge"]) {
-            <div class="section-content">
-              <div class="panel fuel-gauge-panel">
-                <div class="panel-content single-selector">
-                  <app-image-selector
-                    [label]="'UE_HEADER_FUEL_GAUGE' | translate"
-                    [imageUrl]="getFuelGaugeUrl(theme)"
-                    (imageUrlChange)="captureState()"
-                    [assetId]="theme.slots['gauge.fuel']"
-                    [assetType]="'image_set'"
-                    [images]="getAssetForSlot('gauge.fuel', theme)?.images"
-                    (assetSelected)="
-                      onThemeSlotChanged(theme, 'gauge.fuel', $event)
-                    "
-                    [assets]="assets"
-                    [disabled]="theme.is_default"
-                  >
-                  </app-image-selector>
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-        <!-- Nested Audio Settings -->
-        <div class="config-section sub-section">
-          <div class="section-header" (click)="toggleSection('audio')">
-            <span
-              class="expander-icon"
-              [class.collapsed]="!sectionsExpanded['audio']"
-              >▼</span
-            >
-            <h1>{{ "UE_HEADER_AUDIO" | translate }}</h1>
-          </div>
-          @if (sectionsExpanded["audio"]) {
-            <div class="section-content">
-              <div class="panel audio-panel">
-                <div class="panel-content audio-grid">
-                  @for (slot of mainAudioSlots; track slot) {
-                    <app-audio-selector
-                      [label]="slot.label | translate"
-                      [mode]="slot.mode"
-                      [assets]="soundAssets"
-                      [type]="getAudioConfigForSlot(slot.key, theme).type"
-                      (typeChange)="
-                        onAudioConfigChanged(theme, slot.key, 'type', $event)
-                      "
-                      [url]="getAudioUrl(slot.key, theme)"
-                      [assetId]="getAudioConfigForSlot(slot.key, theme).url"
-                      (urlChange)="
-                        onAudioConfigChanged(theme, slot.key, 'url', $event)
-                      "
-                      (assetSelected)="
-                        onAudioAssetSelected(theme, slot.key, $event)
-                      "
-                      [text]="getAudioConfigForSlot(slot.key, theme).text"
-                      (textChange)="
-                        onAudioConfigChanged(theme, slot.key, 'text', $event)
-                      "
-                      [readonly]="theme.is_default"
-                      [context]="previewTTSContext"
-                    >
-                    </app-audio-selector>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      </ng-template>
       <!-- Themes Section -->
       <div class="config-section">
         <div
@@ -984,38 +715,18 @@
                           <div class="panel flags-panel">
                             <div class="panel-content flags-grid">
                               <app-image-selector
-                                [label]="'UE_LABEL_GREEN_FLAG' | translate"
-                                [imageUrl]="getFlagUrl('flag.green', theme)"
+                                [label]="'UE_LABEL_FLAG_RACING' | translate"
+                                [imageUrl]="getFlagUrl('flag.racing', theme)"
                                 (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.green']"
+                                [assetId]="theme.slots['flag.racing']"
                                 [assetType]="'image'"
                                 [images]="
-                                  getAssetForSlot('flag.green', theme)?.images
+                                  getAssetForSlot('flag.racing', theme)?.images
                                 "
                                 (assetSelected)="
                                   onThemeSlotChanged(
                                     theme,
-                                    'flag.green',
-                                    $event
-                                  )
-                                "
-                                [assets]="assets"
-                                [disabled]="theme.is_default"
-                              >
-                              </app-image-selector>
-                              <app-image-selector
-                                [label]="'UE_LABEL_YELLOW_FLAG' | translate"
-                                [imageUrl]="getFlagUrl('flag.yellow', theme)"
-                                (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.yellow']"
-                                [assetType]="'image'"
-                                [images]="
-                                  getAssetForSlot('flag.yellow', theme)?.images
-                                "
-                                (assetSelected)="
-                                  onThemeSlotChanged(
-                                    theme,
-                                    'flag.yellow',
+                                    'flag.racing',
                                     $event
                                   )
                                 "
@@ -1025,22 +736,22 @@
                               </app-image-selector>
                               <app-image-selector
                                 [label]="
-                                  'UE_LABEL_YELLOWGREEN_FLAG' | translate
+                                  'UE_LABEL_FLAG_HEAT_PAUSED' | translate
                                 "
                                 [imageUrl]="
-                                  getFlagUrl('flag.yellowgreen', theme)
+                                  getFlagUrl('flag.heat_paused', theme)
                                 "
                                 (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.yellowgreen']"
+                                [assetId]="theme.slots['flag.heat_paused']"
                                 [assetType]="'image'"
                                 [images]="
-                                  getAssetForSlot('flag.yellowgreen', theme)
+                                  getAssetForSlot('flag.heat_paused', theme)
                                     ?.images
                                 "
                                 (assetSelected)="
                                   onThemeSlotChanged(
                                     theme,
-                                    'flag.yellowgreen',
+                                    'flag.heat_paused',
                                     $event
                                   )
                                 "
@@ -1049,75 +760,224 @@
                               >
                               </app-image-selector>
                               <app-image-selector
-                                [label]="'UE_LABEL_RED_FLAG' | translate"
-                                [imageUrl]="getFlagUrl('flag.red', theme)"
+                                [label]="'UE_LABEL_FLAG_HEAT_OVER' | translate"
+                                [imageUrl]="getFlagUrl('flag.heat_over', theme)"
                                 (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.red']"
+                                [assetId]="theme.slots['flag.heat_over']"
                                 [assetType]="'image'"
                                 [images]="
-                                  getAssetForSlot('flag.red', theme)?.images
-                                "
-                                (assetSelected)="
-                                  onThemeSlotChanged(theme, 'flag.red', $event)
-                                "
-                                [assets]="assets"
-                                [disabled]="theme.is_default"
-                              >
-                              </app-image-selector>
-                              <app-image-selector
-                                [label]="'UE_LABEL_WHITE_FLAG' | translate"
-                                [imageUrl]="getFlagUrl('flag.white', theme)"
-                                (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.white']"
-                                [assetType]="'image'"
-                                [images]="
-                                  getAssetForSlot('flag.white', theme)?.images
-                                "
-                                (assetSelected)="
-                                  onThemeSlotChanged(
-                                    theme,
-                                    'flag.white',
-                                    $event
-                                  )
-                                "
-                                [assets]="assets"
-                                [disabled]="theme.is_default"
-                              >
-                              </app-image-selector>
-                              <app-image-selector
-                                [label]="'UE_LABEL_BLACK_FLAG' | translate"
-                                [imageUrl]="getFlagUrl('flag.black', theme)"
-                                (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.black']"
-                                [assetType]="'image'"
-                                [images]="
-                                  getAssetForSlot('flag.black', theme)?.images
-                                "
-                                (assetSelected)="
-                                  onThemeSlotChanged(
-                                    theme,
-                                    'flag.black',
-                                    $event
-                                  )
-                                "
-                                [assets]="assets"
-                                [disabled]="theme.is_default"
-                              >
-                              </app-image-selector>
-                              <app-image-selector
-                                [label]="'UE_LABEL_CHECKERED_FLAG' | translate"
-                                [imageUrl]="getFlagUrl('flag.checkered', theme)"
-                                (imageUrlChange)="captureState()"
-                                [assetId]="theme.slots['flag.checkered']"
-                                [assetType]="'image'"
-                                [images]="
-                                  getAssetForSlot('flag.checkered', theme)
+                                  getAssetForSlot('flag.heat_over', theme)
                                     ?.images
                                 "
                                 (assetSelected)="
                                   onThemeSlotChanged(
                                     theme,
-                                    'flag.checkered',
+                                    'flag.heat_over',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="'UE_LABEL_FLAG_RACE_OVER' | translate"
+                                [imageUrl]="getFlagUrl('flag.race_over', theme)"
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.race_over']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.race_over', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.race_over',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="
+                                  'UE_LABEL_FLAG_NOT_STARTED' | translate
+                                "
+                                [imageUrl]="
+                                  getFlagUrl('flag.not_started', theme)
+                                "
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.not_started']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.not_started', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.not_started',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="'UE_LABEL_FLAG_STARTING' | translate"
+                                [imageUrl]="getFlagUrl('flag.starting', theme)"
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.starting']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.starting', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.starting',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="'UE_LABEL_FLAG_RESTARTING' | translate"
+                                [imageUrl]="
+                                  getFlagUrl('flag.restarting', theme)
+                                "
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.restarting']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.restarting', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.restarting',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="
+                                  'UE_LABEL_FLAG_ONE_LAP_TO_GO' | translate
+                                "
+                                [imageUrl]="
+                                  getFlagUrl('flag.one_lap_to_go', theme)
+                                "
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.one_lap_to_go']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.one_lap_to_go', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.one_lap_to_go',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="
+                                  'UE_LABEL_FLAG_HEAT_FINISHING' | translate
+                                "
+                                [imageUrl]="
+                                  getFlagUrl('flag.heat_finishing', theme)
+                                "
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.heat_finishing']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.heat_finishing', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.heat_finishing',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="'UE_LABEL_FLAG_WARMUP' | translate"
+                                [imageUrl]="getFlagUrl('flag.warmup', theme)"
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.warmup']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.warmup', theme)?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.warmup',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="
+                                  'UE_LABEL_FLAG_DRIVER_FINISHED' | translate
+                                "
+                                [imageUrl]="
+                                  getFlagUrl('flag.driver_finished', theme)
+                                "
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.driver_finished']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.driver_finished', theme)
+                                    ?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.driver_finished',
+                                    $event
+                                  )
+                                "
+                                [assets]="assets"
+                                [disabled]="theme.is_default"
+                              >
+                              </app-image-selector>
+                              <app-image-selector
+                                [label]="'UE_LABEL_FLAG_PENALTY' | translate"
+                                [imageUrl]="getFlagUrl('flag.penalty', theme)"
+                                (imageUrlChange)="captureState()"
+                                [assetId]="theme.slots['flag.penalty']"
+                                [assetType]="'image'"
+                                [images]="
+                                  getAssetForSlot('flag.penalty', theme)?.images
+                                "
+                                (assetSelected)="
+                                  onThemeSlotChanged(
+                                    theme,
+                                    'flag.penalty',
                                     $event
                                   )
                                 "

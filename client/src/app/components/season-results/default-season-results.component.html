@@ -90,9 +90,11 @@
                         <strong>{{ item.driver_name }}</strong>
                       </td>
                       <td class="col-pts net-highlight">
-                        <strong>{{ item.net_points }}</strong>
+                        <strong>{{ item.net_points | number: "1.0-2" }}</strong>
                       </td>
-                      <td class="col-pts">{{ item.gross_points }}</td>
+                      <td class="col-pts">
+                        {{ item.gross_points | number: "1.0-2" }}
+                      </td>
                       <td class="col-races">{{ item.races_run }}</td>
                     </tr>
                   }
@@ -156,8 +158,10 @@
                             <th>{{ "SM_RANK" | translate }}</th>
                             <th>{{ "SM_DRIVER" | translate }}</th>
                             <th>{{ "SM_OVERALL_POS_POINTS" | translate }}</th>
+                            <th>{{ "SM_OVERALL_BONUS_POINTS" | translate }}</th>
                             <th>{{ "SM_HEAT_POS_POINTS" | translate }}</th>
-                            <th>Total Pts</th>
+                            <th>{{ "SM_HEAT_BONUS_POINTS" | translate }}</th>
+                            <th>{{ "SM_TOTAL_POINTS" | translate }}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -166,15 +170,159 @@
                             track res.driver_id;
                             let rIdx = $index
                           ) {
-                            <tr>
+                            <tr
+                              class="driver-expandable-row"
+                              [class.driver-row-expanded]="
+                                isDriverExpanded(
+                                  race.race_id || '' + idx,
+                                  res.driver_id
+                                )
+                              "
+                              (click)="
+                                toggleDriverExpanded(
+                                  race.race_id || '' + idx,
+                                  res.driver_id
+                                )
+                              "
+                            >
                               <td>#{{ res.overall_rank || rIdx + 1 }}</td>
-                              <td>
+                              <td class="driver-name-cell">
+                                <span
+                                  class="driver-expander-chevron"
+                                  [class.expanded]="
+                                    isDriverExpanded(
+                                      race.race_id || '' + idx,
+                                      res.driver_id
+                                    )
+                                  "
+                                  >▼</span
+                                >
                                 <strong>{{ res.driver_name }}</strong>
                               </td>
-                              <td>{{ res.overall_points }}</td>
-                              <td>{{ res.heat_points }}</td>
                               <td>
-                                <strong>{{ res.total_points }}</strong>
+                                {{ res.overall_points | number: "1.0-2" }}
+                              </td>
+                              <td>
+                                {{
+                                  res.overall_bonus_points ?? 0
+                                    | number: "1.0-2"
+                                }}
+                              </td>
+                              <td>{{ res.heat_points | number: "1.0-2" }}</td>
+                              <td>
+                                {{
+                                  res.heat_bonus_points ?? 0 | number: "1.0-2"
+                                }}
+                              </td>
+                              <td>
+                                <strong>{{
+                                  res.total_points | number: "1.0-2"
+                                }}</strong>
+                              </td>
+                            </tr>
+                            <tr
+                              class="driver-bonus-details-row"
+                              [class.driver-bonus-collapsed]="
+                                !isDriverExpanded(
+                                  race.race_id || '' + idx,
+                                  res.driver_id
+                                )
+                              "
+                              [class.has-bonuses]="hasAnyBonuses(res)"
+                            >
+                              <td colspan="7">
+                                <div class="bonus-details-container">
+                                  <div class="bonus-breakdown-card">
+                                    <div class="bonus-card-header">
+                                      <span class="bonus-card-title">{{
+                                        "SS_OVERALL_BONUSES" | translate
+                                      }}</span>
+                                      <span class="bonus-card-total"
+                                        >{{
+                                          res.overall_bonus_points ?? 0
+                                            | number: "1.0-2"
+                                        }}
+                                        pts</span
+                                      >
+                                    </div>
+                                    <div class="bonus-card-body">
+                                      @if (
+                                        getOverallBonusEntries(res).length === 0
+                                      ) {
+                                        <div class="no-bonuses-msg">
+                                          {{
+                                            "SM_NO_BONUSES_EARNED" | translate
+                                          }}
+                                        </div>
+                                      } @else {
+                                        <div class="bonus-entries-list">
+                                          @for (
+                                            entry of getOverallBonusEntries(
+                                              res
+                                            );
+                                            track entry.key
+                                          ) {
+                                            <div class="bonus-entry-item">
+                                              <span class="bonus-item-label">{{
+                                                entry.labelKey
+                                                  | translate: entry.params
+                                              }}</span>
+                                              <span class="bonus-item-points"
+                                                >+{{
+                                                  entry.points | number: "1.0-2"
+                                                }}</span
+                                              >
+                                            </div>
+                                          }
+                                        </div>
+                                      }
+                                    </div>
+                                  </div>
+                                  <div class="bonus-breakdown-card">
+                                    <div class="bonus-card-header">
+                                      <span class="bonus-card-title">{{
+                                        "SS_HEAT_BONUSES" | translate
+                                      }}</span>
+                                      <span class="bonus-card-total"
+                                        >{{
+                                          res.heat_bonus_points ?? 0
+                                            | number: "1.0-2"
+                                        }}
+                                        pts</span
+                                      >
+                                    </div>
+                                    <div class="bonus-card-body">
+                                      @if (
+                                        getHeatBonusEntries(res).length === 0
+                                      ) {
+                                        <div class="no-bonuses-msg">
+                                          {{
+                                            "SM_NO_BONUSES_EARNED" | translate
+                                          }}
+                                        </div>
+                                      } @else {
+                                        <div class="bonus-entries-list">
+                                          @for (
+                                            entry of getHeatBonusEntries(res);
+                                            track entry.key
+                                          ) {
+                                            <div class="bonus-entry-item">
+                                              <span class="bonus-item-label">{{
+                                                entry.labelKey
+                                                  | translate: entry.params
+                                              }}</span>
+                                              <span class="bonus-item-points"
+                                                >+{{
+                                                  entry.points | number: "1.0-2"
+                                                }}</span
+                                              >
+                                            </div>
+                                          }
+                                        </div>
+                                      }
+                                    </div>
+                                  </div>
+                                </div>
                               </td>
                             </tr>
                           }

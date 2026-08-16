@@ -21,7 +21,7 @@ test.describe("Toolbar Component Visuals", () => {
     const toolbar = page.locator("app-toolbar");
     await expect(toolbar).toBeVisible();
 
-    // Snapshot of the toolbar area
+    await TestSetupHelper.waitForImagesLoaded(toolbar);
     await expect(toolbar).toHaveScreenshot("toolbar-track-manager-style.png");
   });
 
@@ -35,6 +35,7 @@ test.describe("Toolbar Component Visuals", () => {
     const toolbar = page.locator(".header-right app-toolbar");
     await expect(toolbar).toBeVisible();
 
+    await TestSetupHelper.waitForImagesLoaded(toolbar);
     await expect(toolbar).toHaveScreenshot("toolbar-track-editor-style.png");
   });
 
@@ -68,6 +69,7 @@ test.describe("Toolbar Component Visuals", () => {
     );
 
     const toolbar = page.locator(".header-right app-toolbar");
+    await TestSetupHelper.waitForImagesLoaded(toolbar);
     await expect(toolbar).toHaveScreenshot(
       "toolbar-editor-disabled-initial.png",
     );

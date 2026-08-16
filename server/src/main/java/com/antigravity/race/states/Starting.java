@@ -45,7 +45,7 @@ public class Starting implements IRaceState {
         && race.getRaceModel().getEntityId() != null) {
       ClientSubscriptionManager csm = ClientSubscriptionManager.getInstance();
       DatabaseContext dbCtx = csm != null ? csm.getDatabaseContext() : null;
-      if (dbCtx != null) {
+      if (dbCtx != null && DatabaseService.getInstance() != null) {
         DatabaseService.getInstance()
             .deletePredictionEvaluationRecord(
                 dbCtx, race.getRaceModel().getEntityId(), race.isDemoMode());

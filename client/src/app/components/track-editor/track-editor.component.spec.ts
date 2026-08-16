@@ -779,4 +779,13 @@ describe("TrackEditorComponent", () => {
       expect(trakmateBadge.classList.contains("beta-badge")).toBeTrue();
     }));
   });
+
+  describe("Lifecycle & Cleanup", () => {
+    it("should call closeInterface on ngOnDestroy", () => {
+      dataService.closeInterface.calls.reset();
+      component.ngOnDestroy();
+      expect(dataService.closeInterface).toHaveBeenCalled();
+      expect((component as any).subscriptions.length).toBe(0);
+    });
+  });
 });

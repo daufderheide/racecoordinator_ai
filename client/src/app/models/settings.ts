@@ -119,13 +119,18 @@ export class Settings {
   columnEditorPositionX: number = 0;
   columnEditorPositionY: number = 0;
 
-  flagGreen?: string;
-  flagYellow?: string;
-  flagRed?: string;
-  flagWhite?: string;
-  flagBlack?: string;
-  flagYellowGreen?: string;
-  flagCheckered?: string;
+  flagRacing?: string;
+  flagHeatPaused?: string;
+  flagHeatOver?: string;
+  flagRaceOver?: string;
+  flagNotStarted?: string;
+  flagStarting?: string;
+  flagRestarting?: string;
+  flagOneLapToGo?: string;
+  flagHeatFinishing?: string;
+  flagWarmup?: string;
+  flagDriverFinished?: string;
+  flagPenalty?: string;
 
   customExportTemplateBase64?: string;
 

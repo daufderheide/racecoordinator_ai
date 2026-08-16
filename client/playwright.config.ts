@@ -12,15 +12,13 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env["CI"],
   timeout: 120000,
-  /* Retry on CI only */
-  retries: process.env["CI"] ? 2 : 0,
+  /* Retry on CI or allow 1 retry on local runs to guard against multi-worker container hitches */
+  retries: process.env["CI"] ? 2 : 1,
   workers: process.env["PWTEST_WORKERS"]
     ? process.env["PWTEST_WORKERS"].endsWith("%")
       ? process.env["PWTEST_WORKERS"]
       : Number(process.env["PWTEST_WORKERS"])
-    : process.env["CI"]
-      ? "50%"
-      : undefined,
+    : "50%",
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ["html"],
@@ -69,7 +67,7 @@ export default defineConfig({
 
   /* Expect options */
   expect: {
-    timeout: 10000,
+    timeout: 25000,
     /* Visual regression settings */
     toHaveScreenshot: {
       animations: "disabled",

@@ -3,10 +3,13 @@ import { Location } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   HostListener,
+  inject,
   OnDestroy,
   OnInit,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
@@ -18,8 +21,10 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
+import { Role } from "@app/models/role";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AuthService } from "@app/services/auth.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -96,6 +101,60 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showAckModal: boolean = false;
   ackModalTitle: string = "";
   ackModalMessage: string = "";
+
+  private authService = inject(AuthService);
+  currentRole = toSignal(this.authService.currentRole$, {
+    initialValue: this.authService.currentRole,
+  });
+  isAdmin = computed(() => this.currentRole() === Role.ADMIN);
+
+  showResetConfirmation: boolean = false;
+  showResetSuccess: boolean = false;
+  resetRaceName: string = "";
+
+  getResetTooltip(): string {
+    if (!this.isAdmin()) {
+      return this.translationService.translate("RM_RESET_ADMIN_ONLY_TOOLTIP");
+    }
+    return this.translationService.translate("RM_BTN_RESET_RECORDS");
+  }
+
+  onResetRecords(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (!this.isAdmin() || !this.editingRace?.entity_id) {
+      return;
+    }
+    this.showResetConfirmation = true;
+  }
+
+  onConfirmReset() {
+    this.showResetConfirmation = false;
+    if (!this.editingRace?.entity_id) {
+      return;
+    }
+    const raceId = this.editingRace.entity_id;
+    this.resetRaceName = this.editingRace.name || "";
+    this.dataService.resetRaceRecords(raceId).subscribe({
+      next: () => {
+        this.showResetSuccess = true;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to reset race records:", err);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onCancelReset() {
+    this.showResetConfirmation = false;
+  }
+
+  onCloseResetSuccess() {
+    this.showResetSuccess = false;
+  }
 
   sectionsExpanded = {
     general: true,

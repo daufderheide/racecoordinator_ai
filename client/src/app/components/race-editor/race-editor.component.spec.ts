@@ -10,13 +10,15 @@ import {
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
-import { of } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
 import { FuelUsageType } from "@app/models/fuel_options";
 import { Race } from "@app/models/race";
+import { Role } from "@app/models/role";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AuthService } from "@app/services/auth.service";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -49,8 +51,17 @@ describe("RaceEditorComponent", () => {
   let _router: any;
   let activatedRoute: any;
 
+  let roleSubject: BehaviorSubject<Role>;
+  let mockAuthService: any;
+
   beforeEach(() => {
     mockTranslationService.translate.and.callFake((key: string) => key);
+
+    roleSubject = new BehaviorSubject<Role>(Role.ADMIN);
+    mockAuthService = {
+      currentRole: Role.ADMIN,
+      currentRole$: roleSubject.asObservable(),
+    };
 
     const mockActivatedRoute = {
       snapshot: {
@@ -84,6 +95,7 @@ describe("RaceEditorComponent", () => {
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: AuthService, useValue: mockAuthService },
         {
           provide: HelpService,
           useValue: jasmine.createSpyObj("HelpService", ["startGuide"], {
@@ -1626,6 +1638,53 @@ describe("RaceEditorComponent", () => {
       ]);
       expect(component.captureState).toHaveBeenCalled();
     });
+
+    it("should allow editing heat position points and capture state", () => {
+      spyOn(component, "captureState");
+      component.editingRace.season_scoring = {
+        position_points: [10],
+        heat_position_points: [5, 3],
+      };
+      component.editingRace.season_scoring.heat_position_points[0] = 7;
+      component.captureState();
+      expect(component.editingRace.season_scoring.heat_position_points).toEqual(
+        [7, 3],
+      );
+      expect(component.captureState).toHaveBeenCalled();
+    });
+
+    it("should preserve all bonus fields in season_scoring when editing", () => {
+      component.editingRace.season_scoring = {
+        position_points: [25, 18],
+        heat_position_points: [3, 2],
+        heat_carry_over_pct: 50,
+        heat_bonus_fastest_lap: 5,
+        heat_bonus_led_lap: 2,
+        heat_bonus_most_laps_led: 4,
+        heat_one_bonus_per_driver: true,
+        overall_carry_over_pct: 25,
+        overall_bonus_fastest_lap: 10,
+        overall_bonus_fastest_lap_per_lane: 3,
+        overall_bonus_led_lap: 1,
+        overall_bonus_most_laps_led: 6,
+        overall_one_bonus_per_driver: true,
+      };
+
+      const payload = (component as any).buildRacePayload(
+        component.editingRace,
+      );
+      expect(payload.season_scoring.heat_carry_over_pct).toBe(50);
+      expect(payload.season_scoring.heat_bonus_fastest_lap).toBe(5);
+      expect(payload.season_scoring.heat_bonus_led_lap).toBe(2);
+      expect(payload.season_scoring.heat_bonus_most_laps_led).toBe(4);
+      expect(payload.season_scoring.heat_one_bonus_per_driver).toBe(true);
+      expect(payload.season_scoring.overall_carry_over_pct).toBe(25);
+      expect(payload.season_scoring.overall_bonus_fastest_lap).toBe(10);
+      expect(payload.season_scoring.overall_bonus_fastest_lap_per_lane).toBe(3);
+      expect(payload.season_scoring.overall_bonus_led_lap).toBe(1);
+      expect(payload.season_scoring.overall_bonus_most_laps_led).toBe(6);
+      expect(payload.season_scoring.overall_one_bonus_per_driver).toBe(true);
+    });
   });
 
   describe("Guided Help", () => {
@@ -1651,5 +1710,124 @@ describe("RaceEditorComponent", () => {
         component.getHelpSteps(),
       );
     });
+  });
+
+  describe("Reset Race Records", () => {
+    beforeEach(() => {
+      component.editingRace = {
+        name: "Grand Prix",
+        entity_id: "gp_1",
+      };
+      fixture.detectChanges();
+    });
+
+    it("should open confirmation modal when user is admin and reset is triggered", () => {
+      roleSubject.next(Role.ADMIN);
+      fixture.detectChanges();
+
+      component.onResetRecords();
+      expect(component.showResetConfirmation).toBeTrue();
+    });
+
+    it("should stop propagation if event passed to onResetRecords", () => {
+      const mockEvent = jasmine.createSpyObj("Event", ["stopPropagation"]);
+      component.onResetRecords(mockEvent);
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    });
+
+    it("should NOT open confirmation modal when user is not admin", () => {
+      roleSubject.next(Role.VIEWER);
+      fixture.detectChanges();
+
+      component.onResetRecords();
+      expect(component.showResetConfirmation).toBeFalse();
+    });
+
+    it("should NOT open confirmation modal if editingRace has no entity_id", () => {
+      component.editingRace = { name: "New Race" };
+      component.onResetRecords();
+      expect(component.showResetConfirmation).toBeFalse();
+    });
+
+    it("should return correct tooltip based on admin status", () => {
+      roleSubject.next(Role.ADMIN);
+      fixture.detectChanges();
+      expect(component.getResetTooltip()).toBe("RM_BTN_RESET_RECORDS");
+
+      roleSubject.next(Role.VIEWER);
+      fixture.detectChanges();
+      expect(component.getResetTooltip()).toBe("RM_RESET_ADMIN_ONLY_TOOLTIP");
+    });
+
+    it("should call resetRaceRecords and show success modal on confirmation", fakeAsync(() => {
+      roleSubject.next(Role.ADMIN);
+      fixture.detectChanges();
+
+      component.onResetRecords();
+      expect(component.showResetConfirmation).toBeTrue();
+
+      component.onConfirmReset();
+      expect(component.showResetConfirmation).toBeFalse();
+      expect(component.showResetSuccess).toBeTrue();
+      expect(component.resetRaceName).toBe("Grand Prix");
+      expect(dataService.resetRaceRecords).toHaveBeenCalledWith("gp_1");
+    }));
+
+    it("should cancel reset when onCancelReset is called", () => {
+      component.showResetConfirmation = true;
+      component.onCancelReset();
+      expect(component.showResetConfirmation).toBeFalse();
+      expect(dataService.resetRaceRecords).not.toHaveBeenCalled();
+    });
+
+    it("should close success modal when onCloseResetSuccess is called", () => {
+      component.showResetSuccess = true;
+      component.onCloseResetSuccess();
+      expect(component.showResetSuccess).toBeFalse();
+    });
+  });
+
+  describe("Section Toggling, Config Validation, and Discard Flow", () => {
+    it("should toggle sections and save to localStorage", () => {
+      spyOn(localStorage, "setItem");
+      expect(component.sectionsExpanded.general).toBeTrue();
+
+      component.toggleSection("general");
+      expect(component.sectionsExpanded.general).toBeFalse();
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.any(String),
+      );
+    });
+
+    it("should validate config state accurately", () => {
+      component.isLoading = false;
+      component.editingRace = {
+        name: "Test Race",
+        track_entity_id: "t1",
+        heat_rotation_type: "RoundRobin" as any,
+      } as any;
+      expect(component.isConfigValid()).toBeTrue();
+
+      component.editingRace.name = "";
+      expect(component.isConfigValid()).toBeFalse();
+    });
+
+    it("should handle discard confirmation modal resolution", fakeAsync(() => {
+      let resolvedValue: boolean | undefined;
+      component.confirmDiscard().then((val) => (resolvedValue = val));
+      expect(component.showDiscardConfirm).toBeTrue();
+
+      component.onConfirmDiscard();
+      tick();
+      expect(component.showDiscardConfirm).toBeFalse();
+      expect(resolvedValue).toBeTrue();
+
+      // Test cancel discard
+      component.confirmDiscard().then((val) => (resolvedValue = val));
+      component.onCancelDiscard();
+      tick();
+      expect(resolvedValue).toBeFalse();
+    }));
   });
 });

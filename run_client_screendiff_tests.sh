@@ -10,6 +10,31 @@ if [[ "$*" == *"--sync-only"* ]]; then
     exit 0
 fi
 
+# Check if --changed or --changed=* was passed
+CHANGED_FLAG=""
+REMAINING_ARGS=()
+
+for arg in "$@"; do
+    if [[ "$arg" == "--changed" ]] || [[ "$arg" == --changed=* ]]; then
+        CHANGED_FLAG="$arg"
+    else
+        REMAINING_ARGS+=("$arg")
+    fi
+done
+
+if [ -n "$CHANGED_FLAG" ]; then
+    echo "Resolving screendiff tests for changed files..."
+    CHANGED_TESTS=$(node "$(dirname "$0")/scripts/find_changed_screendiff_tests.js" "$CHANGED_FLAG")
+    if [ -z "$CHANGED_TESTS" ]; then
+        echo "No changed components or screendiff tests detected from git changes."
+        exit 0
+    fi
+    echo "Found changed screendiff tests: $CHANGED_TESTS"
+    PLAYWRIGHT_ARGS="$CHANGED_TESTS ${REMAINING_ARGS[*]}"
+else
+    PLAYWRIGHT_ARGS="$*"
+fi
+
 export PW_REPORT_PATH="./playwright-report/pw-result.json"
 
 echo ""
@@ -70,19 +95,21 @@ fi
 echo "Running tests in Docker container..."
 mkdir -p "$ISOLATED_DIR/test-home"
 
-# We must run npm install inside the container so native modules are Linux-compatible
+# Run npm install inside container only if package.json has changed or node_modules is missing
+DOCKER_CMD="node -e \"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}\" && npx playwright test $PLAYWRIGHT_ARGS"
+
 docker run --rm \
   --ipc=host \
   -v "$ISOLATED_DIR:/work" \
   -w /work \
   -e HOME="/work/test-home" \
-  -e PWTEST_WORKERS="${PWTEST_WORKERS:-50%}" \
+  -e PWTEST_WORKERS="${PWTEST_WORKERS:-100%}" \
   mcr.microsoft.com/playwright:v1.61.1-jammy \
-  /bin/bash -c "npm install --no-package-lock --ignore-scripts && npx playwright test $*"
+  /bin/bash -c "$DOCKER_CMD"
 TEST_EXIT_CODE=$?
 
 # If updating snapshots, copy them back to the original source directory
-if [[ "$*" == *"--update-snapshots"* ]]; then
+if [[ "$*" == *"--update-snapshots"* ]] || [[ "$PLAYWRIGHT_ARGS" == *"--update-snapshots"* ]]; then
     echo "Syncing updated snapshots back to source..."
     cd "$ISOLATED_DIR/src" || exit
     find . -type d -name "*-snapshots" | while read -r dir; do
@@ -103,4 +130,3 @@ if [ $TEST_EXIT_CODE -ne 0 ]; then
 fi
 
 exit $TEST_EXIT_CODE
-
