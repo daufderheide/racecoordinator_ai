@@ -7,23 +7,35 @@
 <!-- DOWNLOAD_SECTION_START -->
 ## 📥 Download Race Coordinator AI
 
-Get Race Coordinator AI for Windows, macOS, or Linux / Raspberry Pi:
+> 🚀 **Current Latest Version**: **`v1.0.0-beta.7`** *(Beta Preview — Help us test upcoming features!)*
 
-* 🟢 **[Download Latest Stable Release](https://github.com/daufderheide/racecoordinator_ai/releases/latest)** — Recommended for all general and race-day users.
-* 🟡 **[View All Releases & Beta Previews](https://github.com/daufderheide/racecoordinator_ai/releases)** — Explore the latest beta previews, test builds, and release notes.
+Click your operating system below to **download directly**:
 
-### 💻 Available Packages
+| Operating System | ⬇️ Direct Download Link | Version | Package Type |
+| :--- | :--- | :--- | :--- |
+| **🪟 Windows (10 / 11)** | [**⬇️ Download Windows Setup**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinatorAI_Online_Setup_v1.0.0-beta.7.exe) | `v1.0.0-beta.7` | Online Setup *(Fast, requires internet)* |
+| **🪟 Windows (8, 7, XP / Offline)** | [**⬇️ Download Offline Setup**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinatorAI_Offline_Setup_v1.0.0-beta.7.exe) | `v1.0.0-beta.7` | Full Offline Standalone *(Required for Win 8 & older)* |
+| **🍏 macOS (Intel & Apple Silicon)** | [**⬇️ Download macOS DMG**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinator_Mac_v1.0.0-beta.7.dmg) | `v1.0.0-beta.7` | Disk Image (`.dmg`) |
+| **🐧 Linux / Raspberry Pi (ARM64)** | [**⬇️ Download Linux Package**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinatorAI-Linux-ARM64_v1.0.0-beta.7.tar.gz) | `v1.0.0-beta.7` | Tarball (`.tar.gz`) |
 
-| Operating System | Recommended Package | Description |
-| :--- | :--- | :--- |
-| **🪟 Windows (10 / 11)** | `RaceCoordinatorAI_Online_Setup_*.exe` | **Recommended** — Fast online setup that downloads components automatically during install. |
-| **🪟 Windows (8, 7, XP / Offline)** | `RaceCoordinatorAI_Offline_Setup_*.exe` | **Standalone** — Full offline installer with bundled runtime. *Required for initial Win 8 & older setup.* |
-| **🍏 macOS (Intel & Apple Silicon)** | `RaceCoordinator_Mac_*.dmg` | Disk Image for macOS. Open disk image and drag **Race Coordinator AI** into your `Applications` folder. |
-| **🐧 Linux / Raspberry Pi (ARM64)** | `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` | Compressed archive for ARM64 Linux / Raspberry Pi OS. |
+---
+
+### 🔗 All Release Channels & History
+* 🟡 **[View All Beta Releases & Changelogs](https://github.com/daufderheide/racecoordinator_ai/releases)** — Explore release notes, past test builds, and discussions.
+* 🟢 **[View Official Stable Releases](https://github.com/daufderheide/racecoordinator_ai/releases/latest)** — Access the latest official production build.
+<!-- DOWNLOAD_SECTION_END -->
+
+### 💡 Which file should I download?
+
+When opening the release page, choose the installer that matches your computer:
+
+* **Windows 10 or 11**: Download `RaceCoordinatorAI_Online_Setup_*.exe` *(Recommended — fastest, lightweight installer that downloads components automatically during setup.  This requires an internet connection during installation)*.
+* **Windows 8, 7, or XP (or offline PCs)**: Download `RaceCoordinatorAI_Offline_Setup_*.exe`. Legacy Windows versions require this full offline installer for their initial installation.  After the initial installation, you can use the Online_Setup above if you have an internet connection.
+* **macOS**: Download `RaceCoordinator_Mac_*.dmg`. Open the disk image and drag **Race Coordinator AI** into your Applications folder.
+* **Linux / Raspberry Pi**: Download `RaceCoordinatorAI-Linux-ARM64_*.tar.gz`, unpack the archive, and run `./RaceCoordinatorAI`.
 
 > [!TIP]
-> You do **not** need to download the "Source code" (`.zip` / `.tar.gz`) or "Coverage Reports" files to run Race Coordinator AI.
-<!-- DOWNLOAD_SECTION_END -->
+> You do **not** need to download the "Source code" (`.zip` / `.tar.gz`) or "Coverage Reports" files to use Race Coordinator AI.
 
 ---
 
