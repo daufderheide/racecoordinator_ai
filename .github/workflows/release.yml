@@ -247,6 +247,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.check-changes.outputs.commit_sha }}
+
       - name: Download Windows Installers
         uses: actions/download-artifact@v4
         with:
@@ -351,4 +356,16 @@ jobs:
           body_path: release_body.md
           files: |
             final-release/*
+
+      - name: Update README on Main
+        run: |
+          git checkout main || git checkout -b main origin/main
+          node scripts/update_readme_downloads.js "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: update latest download links to ${{ env.TAG }} [skip ci]"
+            git push origin main
+          fi
 
