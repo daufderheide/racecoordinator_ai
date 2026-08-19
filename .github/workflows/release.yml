@@ -7,6 +7,13 @@ on:
       - "release/**"
     tags:
       - "v*"
+    paths-ignore:
+      - "README.md"
+      - "DEVELOPMENT.md"
+      - "ANALYTICS.md"
+      - "docs/**"
+      - "help_center/**"
+      - ".agent/**"
   schedule:
     - cron: '0 6 * * *' # 2 AM EDT (6 AM UTC)
   workflow_dispatch:
@@ -32,6 +39,8 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       tag: ${{ steps.check.outputs.tag }}
       is_prerelease: ${{ steps.check.outputs.is_prerelease }}
+      release_title: ${{ steps.check.outputs.release_title }}
+      commit_sha: ${{ steps.check.outputs.commit_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,12 +56,14 @@ jobs:
         id: check
         run: |
           node scripts/determine_release_version.js
+          COMMIT_SHA=$(git rev-parse HEAD)
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == "schedule" ]; then
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
             if [ -n "$LATEST_TAG" ]; then
               COMMITS=$(git rev-list --count "$LATEST_TAG..HEAD")
               if [ "$COMMITS" -eq 0 ]; then
-                echo "No new commits since $LATEST_TAG. Skipping daily build."
+                echo "No new commits on develop since $LATEST_TAG. Skipping daily build."
                 echo "should_run=false" >> $GITHUB_OUTPUT
                 exit 0
               fi
@@ -66,6 +77,8 @@ jobs:
     needs: check-changes
     if: ${{ needs.check-changes.outputs.should_run == 'true' }}
     uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.check-changes.outputs.commit_sha }}
 
   build-artifacts:
     needs: [check-changes, run-tests]
@@ -74,7 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+          ref: ${{ needs.check-changes.outputs.commit_sha }}
 
       - name: Set Version in Files
         run: |
@@ -96,6 +109,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Install Protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
 
       - name: Create Analytics Properties
         run: |
@@ -127,7 +143,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+          ref: ${{ needs.check-changes.outputs.commit_sha }}
       
       - name: Set Version in Inno Setup
         run: |
@@ -159,7 +175,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+          ref: ${{ needs.check-changes.outputs.commit_sha }}
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -182,7 +198,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+          ref: ${{ needs.check-changes.outputs.commit_sha }}
 
       - name: Set Version in Files
         run: |
@@ -228,6 +244,8 @@ jobs:
     needs: [check-changes, run-tests, build-windows, build-mac, build-linux, build-artifacts]
     if: ${{ needs.check-changes.outputs.should_run == 'true' && github.event.inputs.skip_release != 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download Windows Installers
         uses: actions/download-artifact@v4
@@ -279,20 +297,58 @@ jobs:
             (cd final-release && zip -r "RaceCoordinatorAI_Coverage_Reports_${TAG}.zip" coverage && rm -rf coverage) || true
           fi
 
+      - name: Generate Release Body
+        run: |
+          TAG="${{ needs.check-changes.outputs.tag }}"
+          TITLE="${{ needs.check-changes.outputs.release_title }}"
+          IS_PRERELEASE="${{ needs.check-changes.outputs.is_prerelease }}"
+
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            if [[ "$TAG" == *"beta"* ]]; then
+              STATUS_BADGE="> 🟡 **Beta Prerelease** — Preview of upcoming features for testing and feedback."
+            else
+              STATUS_BADGE="> 🔵 **Nightly / Alpha Build** — Automated snapshot build from active development."
+            fi
+          else
+            STATUS_BADGE="> 🟢 **Official Stable Release** — Recommended for all general and race-day users."
+          fi
+
+          cat << EOF > release_body.md
+          ## 🏎️ ${TITLE}
+
+          ${STATUS_BADGE}
+
+          ---
+
+          ### 💻 Recommended Downloads
+
+          | Operating System | Installer File | Notes |
+          | :--- | :--- | :--- |
+          | **🪟 Windows (10 / 11)** | \`RaceCoordinatorAI_Online_Setup_${TAG}.exe\` | **Recommended** — Fast online setup that automatically downloads required components. |
+          | **🪟 Windows (8, 7, XP / Offline)** | \`RaceCoordinatorAI_Offline_Setup_${TAG}.exe\` | **Standalone** — Full installer with bundled runtime. *Required for first-time installation on Win 8 and older.* |
+          | **🍏 macOS** | \`RaceCoordinator_Mac_${TAG}.dmg\` | Disk Image for macOS (Intel & Apple Silicon). Drag to \`Applications\`. |
+          | **🐧 Linux / Raspberry Pi** | \`RaceCoordinatorAI-Linux-ARM64_${TAG}.tar.gz\` | Compressed archive for ARM64 Linux / Raspberry Pi OS. |
+
+          > **💡 Tip for Non-Technical Users**: You do **not** need to download the source code zip or test coverage files to run Race Coordinator AI.
+
+          ---
+
+          <details>
+          <summary>🔍 <b>Developer & QA Reports (Click to expand)</b></summary>
+
+          - **Automated Test Coverage**: \`RaceCoordinatorAI_Coverage_Reports_${TAG}.zip\` *(Unzip and open \`index.html\` to view the unified Client & Server coverage dashboard)*
+          </details>
+          EOF
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ env.TAG }}
-          name: ${{ env.TAG }}
-          target_commitish: ${{ github.sha }}
+          name: ${{ needs.check-changes.outputs.release_title }}
+          target_commitish: ${{ needs.check-changes.outputs.commit_sha }}
           prerelease: ${{ env.IS_PRERELEASE == 'true' }}
-          body: |
-            ### 🏎️ Race Coordinator AI Release ${{ env.TAG }}
-
-            #### 📦 Release Assets & Downloads
-            - **Windows**: `RaceCoordinatorAI_Online_Setup_${{ env.TAG }}.exe` / `RaceCoordinatorAI_Offline_Setup_${{ env.TAG }}.exe`
-            - **macOS**: `RaceCoordinator_Mac_${{ env.TAG }}.dmg`
-            - **Linux (ARM64)**: `RaceCoordinatorAI-Linux-ARM64_${{ env.TAG }}.tar.gz`
-            - **Test Coverage**: `RaceCoordinatorAI_Coverage_Reports_${{ env.TAG }}.zip` *(Unzip and open `index.html` to view the unified Client & Server coverage dashboard)*
+          body_path: release_body.md
           files: |
             final-release/*
+
