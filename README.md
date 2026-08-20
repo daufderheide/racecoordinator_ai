@@ -7,7 +7,7 @@
 <!-- DOWNLOAD_SECTION_START -->
 ## 📥 Download Race Coordinator AI
 
-> 🚀 **Current Latest Version**: **`v1.0.0-beta.12`** *(Beta Preview — Help us test upcoming features!)*
+🚀 **Current Latest Version**: **`v1.0.0-beta.12`** *(Beta Preview — Help us test upcoming features!)*
 
 Click your operating system below to **download directly**:
 
