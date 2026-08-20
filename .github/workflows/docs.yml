@@ -1,9 +1,13 @@
 name: Deploy Help Center
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - "release/**"
     paths:
       - 'help_center/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read

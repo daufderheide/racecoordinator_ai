@@ -15,7 +15,7 @@ on:
       - "help_center/**"
       - ".agent/**"
   schedule:
-    - cron: '0 6 * * *' # 2 AM EDT (6 AM UTC)
+    - cron: '15 6 * * *' # 2:15 AM EDT (6:15 AM UTC)
   workflow_dispatch:
     inputs:
       version:
@@ -30,6 +30,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   check-changes:
@@ -59,7 +60,7 @@ jobs:
           COMMIT_SHA=$(git rev-parse HEAD)
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            LATEST_TAG=$(git describe --tags --match "*-alpha*" --abbrev=0 2>/dev/null || echo "")
             if [ -n "$LATEST_TAG" ]; then
               COMMITS=$(git rev-list --count "$LATEST_TAG..HEAD")
               if [ "$COMMITS" -eq 0 ]; then
@@ -111,7 +112,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Install Protoc
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.1"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Analytics Properties
         run: |
@@ -221,7 +225,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Install Protoc
-        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "25.1"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Analytics Properties
         run: |
@@ -246,6 +253,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -357,15 +365,27 @@ jobs:
           files: |
             final-release/*
 
+      - name: Cleanup Release Artifacts
+        run: |
+          rm -rf final-release release_body.md
+
       - name: Update README on Main
         run: |
-          git checkout main || git checkout -b main origin/main
+          git fetch origin main
+          git checkout origin/main -- README.md
           node scripts/update_readme_downloads.js "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          if ! git diff --cached --quiet; then
-            git commit -m "docs: update latest download links to ${{ env.TAG }} [skip ci]"
-            git push origin main
-          fi
+
+      - name: Create Pull Request for README
+        uses: peter-evans/create-pull-request@v6
+        continue-on-error: true
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: |
+            README.md
+          commit-message: "docs: update latest download links to ${{ env.TAG }} [skip ci]"
+          title: "docs: update latest download links to ${{ env.TAG }}"
+          body: "Automated PR to update the README with the latest download links for release ${{ env.TAG }}."
+          branch: "docs/update-readme-${{ env.TAG }}"
+          base: "main"
+
 
