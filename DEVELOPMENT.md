@@ -247,3 +247,19 @@ iscc installer_offline.iss
 Generated installers will be output to `Output/`:
 - `Output/RaceCoordinatorAI_Online_Setup.exe`
 - `Output/RaceCoordinatorAI_Offline_Setup.exe`
+
+---
+
+## Release Pipeline & Branch Synchronization
+
+The repository uses automated GitHub Actions workflows for continuous delivery:
+
+1. **Beta Releases (`release/vX.Y.Z`)**:
+   - Pushing commits to `release/vX.Y.Z` automatically publishes an incremented beta prerelease (`vX.Y.Z-beta.N`).
+   - An automated downstream sync job (`sync-to-develop`) automatically merges `release/vX.Y.Z` into `develop` with `[skip ci]`. If merge conflicts occur, an automated PR is opened for conflict resolution.
+2. **Nightly / Daily Builds (`develop`)**:
+   - Daily scheduled builds run at 2:15 AM EDT from `develop` and publish `vX.Y.Z-alpha.YYYYMMDD`.
+   - The workflow runs a pre-flight synchronization check against any active `release/*` branches. If unmerged fixes exist, they are merged into `develop` before building.
+3. **Official Production Releases (`main`)**:
+   - Production releases are triggered by pushing official version tags (e.g. `v1.0.0`) or manually dispatching a release on `main`.
+

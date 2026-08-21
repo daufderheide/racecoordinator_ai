@@ -59,6 +59,25 @@ jobs:
           COMMIT_SHA=$(git rev-parse HEAD)
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           if [ "${{ github.event_name }}" == "schedule" ]; then
+            git fetch --all --prune
+            SYNC_STATUS=$(node -e "const s = require('./scripts/sync_release_branch').checkSyncStatus(); process.stdout.write(s.status);")
+            ACTIVE_BRANCH=$(node -e "const s = require('./scripts/sync_release_branch').checkSyncStatus(); process.stdout.write(s.activeReleaseBranch || '');")
+            echo "Schedule Sync Status: $SYNC_STATUS (Active: $ACTIVE_BRANCH)"
+
+            if [ "$SYNC_STATUS" == "CONFLICT" ]; then
+              echo "WARNING: Unmerged commits exist on $ACTIVE_BRANCH with merge conflict. Skipping daily build to prevent stale alpha release."
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            if [ "$SYNC_STATUS" == "PENDING_MERGE" ]; then
+              echo "Merging $ACTIVE_BRANCH into develop before daily build..."
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git merge --no-ff "origin/$ACTIVE_BRANCH" -m "chore: merge $ACTIVE_BRANCH into develop before daily build [skip ci]"
+              git push origin develop
+            fi
+
             LATEST_TAG=$(git describe --tags --match "*-alpha*" --abbrev=0 2>/dev/null || echo "")
             if [ -n "$LATEST_TAG" ]; then
               COMMITS=$(git rev-list --count "$LATEST_TAG..HEAD")
@@ -386,5 +405,50 @@ jobs:
           body: "Automated PR to update the README with the latest download links for release ${{ env.TAG }}."
           branch: "docs/update-readme-${{ env.TAG }}"
           base: "main"
+
+  sync-to-develop:
+    needs: [check-changes, publish-release]
+    if: ${{ needs.check-changes.outputs.should_run == 'true' && startsWith(github.ref, 'refs/heads/release/') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: develop
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git User
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync release branch into develop
+        id: sync
+        run: |
+          BRANCH_NAME="${{ github.ref_name }}"
+          echo "Merging origin/$BRANCH_NAME into develop..."
+          if git merge --no-ff "origin/$BRANCH_NAME" -m "chore: merge $BRANCH_NAME into develop [skip ci]"; then
+            git push origin develop
+            echo "sync_status=merged" >> $GITHUB_OUTPUT
+          else
+            echo "Merge conflict detected when syncing $BRANCH_NAME into develop."
+            echo "sync_status=conflict" >> $GITHUB_OUTPUT
+            git merge --abort || true
+          fi
+
+      - name: Create PR for Conflict Resolution
+        if: ${{ steps.sync.outputs.sync_status == 'conflict' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: "sync/${{ github.ref_name }}-to-develop"
+          base: "develop"
+          title: "🚨 Sync Conflict: ${{ github.ref_name }} -> develop"
+          body: |
+            Automated sync from \`${{ github.ref_name }}\` into \`develop\` encountered merge conflicts.
+            Please resolve conflicts and merge into \`develop\` to ensure it includes the latest beta fixes.
 
 

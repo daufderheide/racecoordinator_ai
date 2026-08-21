@@ -36,7 +36,8 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Main is the stable trunk**: `main` contains stable, production-ready code and documentation. Pushes/merges to `main` do NOT trigger release builds, allowing docs, READMEs, and maintenance to land cleanly without accidental releases or `[skip ci]`.
 - **Official releases are tag-driven**: Pushing an official Git tag (`vX.Y.Z`) or manually dispatching a release on `main` publishes an official release (`vX.Y.Z` derived from the tag or `VERSION` file).
 - **Release branches are for beta prereleases**: Pushes to `release/vX.Y.Z` automatically publish an incremented beta prerelease (`vX.Y.Z-beta.N`). Manual release dispatch on `release/*` branches is blocked.
-- **Daily schedule builds**: Automatically publish daily alpha builds from `develop` named `vX.Y.Z-alpha.YYYYMMDD` (where `X.Y.Z` comes from the `VERSION` file).
+- **Automated downstream sync to develop**: Pushes to `release/vX.Y.Z` automatically merge into `develop` on release completion, ensuring `develop` always contains all fixes.
+- **Daily schedule builds**: Automatically publish daily alpha builds from `develop` named `vX.Y.Z-alpha.YYYYMMDD` (where `X.Y.Z` comes from the `VERSION` file). Daily builds pre-check active release branches to guarantee `develop` is synced before publishing.
 - **Manual releases from develop**: Manual workflow dispatch on `develop` without an explicit version override publishes an alpha build named `vX.Y.Z-alpha.<hash>` (using the commit SHA).
 
 ## Meaningful Test Assertions & Mutation Resistance
