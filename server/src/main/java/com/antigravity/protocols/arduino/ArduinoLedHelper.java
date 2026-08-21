@@ -44,14 +44,16 @@ public class ArduinoLedHelper {
   }
 
   public void initializeHardwareState() {
-    sendRgbLedMode();
-    refreshRaceState();
-    refreshThermometers();
-    if (lastHeatStandings != null) {
-      setHeatStandings(lastHeatStandings);
-    }
-    for (Map.Entry<Integer, Boolean> entry : lastRefuelingLanes.entrySet()) {
-      setRefueling(entry.getKey(), entry.getValue());
+    if (protocol.supportsRgbLeds()) {
+      sendRgbLedMode();
+      refreshRaceState();
+      refreshThermometers();
+      if (lastHeatStandings != null) {
+        setHeatStandings(lastHeatStandings);
+      }
+      for (Map.Entry<Integer, Boolean> entry : lastRefuelingLanes.entrySet()) {
+        setRefueling(entry.getKey(), entry.getValue());
+      }
     }
   }
 
@@ -60,7 +62,7 @@ public class ArduinoLedHelper {
   }
 
   public void sendRgbLedMode() {
-    if (!protocol.isOpen()) {
+    if (!protocol.isOpen() || !protocol.supportsRgbLeds()) {
       return;
     }
 
@@ -121,6 +123,9 @@ public class ArduinoLedHelper {
 
   private void sendRgbLedModeMessage(
       int pinId, int ledCount, int brightness, int ledType, int colorOrder) {
+    if (!protocol.supportsRgbLeds()) {
+      return;
+    }
     // { 0x6C, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3B }
     // opcode pin ledCount brightness updateRateLow updateRateHigh ledType
     // colorOrder ;
@@ -150,6 +155,9 @@ public class ArduinoLedHelper {
   }
 
   public void clearLeds() {
+    if (!protocol.supportsRgbLeds()) {
+      return;
+    }
     ArduinoConfig config = protocol.getConfig();
     if (config == null || config.ledStrings == null) {
       return;
@@ -181,7 +189,7 @@ public class ArduinoLedHelper {
   }
 
   public void setStringRgbLedValues(int pinId, List<RgbLedState> rgbLeds) {
-    if (rgbLeds == null || rgbLeds.isEmpty()) {
+    if (rgbLeds == null || rgbLeds.isEmpty() || !protocol.supportsRgbLeds()) {
       return;
     }
 
@@ -239,7 +247,7 @@ public class ArduinoLedHelper {
 
   public void setRefueling(int laneIndex, boolean isRefueling) {
     lastRefuelingLanes.put(laneIndex, isRefueling);
-    if (!protocol.isOpen()) {
+    if (!protocol.isOpen() || !protocol.supportsRgbLeds()) {
       return;
     }
 
@@ -349,13 +357,16 @@ public class ArduinoLedHelper {
       clearLeds();
     }
 
-    if (protocol.isOpen()) {
+    if (protocol.isOpen() && protocol.supportsRgbLeds()) {
       refreshRaceState();
       refreshThermometers();
     }
   }
 
   public void refreshThermometers() {
+    if (!protocol.supportsRgbLeds()) {
+      return;
+    }
     if (lastHeatProgress != null) {
       this.setHeatProgress(lastHeatProgress);
     }
@@ -366,7 +377,7 @@ public class ArduinoLedHelper {
 
   @SuppressWarnings("checkstyle:MethodLength")
   public void refreshRaceState() {
-    if (!protocol.isOpen()) {
+    if (!protocol.isOpen() || !protocol.supportsRgbLeds()) {
       return;
     }
     ArduinoConfig config = protocol.getConfig();
@@ -543,7 +554,10 @@ public class ArduinoLedHelper {
 
   public void setHeatStandings(List<Integer> laneIndices) {
     lastHeatStandings = laneIndices != null ? new ArrayList<>(laneIndices) : null;
-    if (!protocol.isOpen() || laneIndices == null || laneIndices.isEmpty()) {
+    if (!protocol.isOpen()
+        || !protocol.supportsRgbLeds()
+        || laneIndices == null
+        || laneIndices.isEmpty()) {
       return;
     }
 
@@ -638,6 +652,9 @@ public class ArduinoLedHelper {
    */
   public void updateThermometer(
       int behaviorBase, int laneIndex, double percentage, boolean displayAsProgress) {
+    if (!protocol.supportsRgbLeds()) {
+      return;
+    }
     ArduinoConfig config = protocol.getConfig();
     if (config.ledStrings == null) {
       return;
@@ -709,36 +726,19 @@ public class ArduinoLedHelper {
       for (int i = 0; i < ledString.leds.size(); i++) {
         int behavior = ledString.leds.get(i);
         if (behavior == behaviorId) {
-          int r = 0;
-          int g = 0;
-          int b = 0;
-
-          if (thermometerSize >= 3) {
-            if (ledInThermometer <= numGreen) {
-              if (ledInThermometer > (numGreen - onGreen)) g = 255;
-            } else if (ledInThermometer <= (numGreen + numYellow)) {
-              int yellowIdx = ledInThermometer - numGreen;
-              if (yellowIdx > (numYellow - onYellow)) {
-                r = 255;
-                g = 255;
-              }
-            } else {
-              int redIdx = ledInThermometer - numGreen - numYellow;
-              if (redIdx > (numRed - onRed)) {
-                r = 255;
-              }
-            }
-          } else {
-            // N <= 2
-            if (onGreen > 0) {
-              g = 255;
-            } else if (onYellow > 0) {
-              r = 255;
-              g = 255;
-            } else if (onRed > 0) {
-              r = 255;
-            }
-          }
+          int[] rgb =
+              computeThermometerColor(
+                  ledInThermometer,
+                  thermometerSize,
+                  numGreen,
+                  numYellow,
+                  numRed,
+                  onGreen,
+                  onYellow,
+                  onRed);
+          int r = rgb[0];
+          int g = rgb[1];
+          int b = rgb[2];
 
           String key = ledString.pin + "_" + i;
           long currentColor =
@@ -756,6 +756,49 @@ public class ArduinoLedHelper {
         setStringRgbLedValues(ledString.pin, updates);
       }
     }
+  }
+
+  private int[] computeThermometerColor(
+      int ledInThermometer,
+      int thermometerSize,
+      int numGreen,
+      int numYellow,
+      int numRed,
+      int onGreen,
+      int onYellow,
+      int onRed) {
+    int r = 0;
+    int g = 0;
+    int b = 0;
+
+    if (thermometerSize >= 3) {
+      if (ledInThermometer <= numGreen) {
+        if (ledInThermometer > (numGreen - onGreen)) {
+          g = 255;
+        }
+      } else if (ledInThermometer <= (numGreen + numYellow)) {
+        int yellowIdx = ledInThermometer - numGreen;
+        if (yellowIdx > (numYellow - onYellow)) {
+          r = 255;
+          g = 255;
+        }
+      } else {
+        int redIdx = ledInThermometer - numGreen - numYellow;
+        if (redIdx > (numRed - onRed)) {
+          r = 255;
+        }
+      }
+    } else {
+      if (onGreen > 0) {
+        g = 255;
+      } else if (onYellow > 0) {
+        r = 255;
+        g = 255;
+      } else if (onRed > 0) {
+        r = 255;
+      }
+    }
+    return new int[] {r, g, b};
   }
 
   /**

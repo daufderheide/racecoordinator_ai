@@ -181,4 +181,84 @@ public class InterfaceHardwareHandlerTest {
     handler.getPhidgetDevices(mockCtx);
     org.mockito.Mockito.verify(mockCtx).status(org.mockito.ArgumentMatchers.anyInt());
   }
+
+  @Test
+  public void testUpdateInterfaceConfig_WithPhidgetProtocol() {
+    com.antigravity.protocols.phidget.PhidgetConfig config =
+        new com.antigravity.protocols.phidget.PhidgetConfig();
+    config.serialNumber = 12345;
+    com.antigravity.protocols.phidget.PhidgetProtocol phidgetProtocol =
+        new com.antigravity.protocols.phidget.PhidgetProtocol(config, 4, null);
+    phidgetProtocol.setInterfaceIndex(0);
+
+    com.antigravity.protocols.ProtocolDelegate delegate =
+        new com.antigravity.protocols.ProtocolDelegate(Collections.singletonList(phidgetProtocol));
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(delegate);
+
+    com.antigravity.proto.UpdateInterfaceConfigRequest req =
+        com.antigravity.proto.UpdateInterfaceConfigRequest.newBuilder()
+            .setInterfaceIndex(0)
+            .setPhidgetConfig(
+                com.antigravity.proto.PhidgetConfig.newBuilder()
+                    .setName("Updated Phidget")
+                    .setSerialNumber(54321)
+                    .build())
+            .build();
+
+    io.javalin.http.Context mockCtx = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(mockCtx.bodyAsBytes()).thenReturn(req.toByteArray());
+    when(mockCtx.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(mockCtx);
+
+    handler.updateInterfaceConfig(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).result(org.mockito.ArgumentMatchers.any(byte[].class));
+  }
+
+  @Test
+  public void testSetInterfacePinState_WithPhidgetProtocol() {
+    com.antigravity.protocols.phidget.PhidgetConfig config =
+        new com.antigravity.protocols.phidget.PhidgetConfig();
+    config.serialNumber = 12345;
+    com.antigravity.protocols.phidget.PhidgetProtocol phidgetProtocol =
+        new com.antigravity.protocols.phidget.PhidgetProtocol(config, 4, null);
+    phidgetProtocol.setInterfaceIndex(0);
+
+    com.antigravity.protocols.ProtocolDelegate delegate =
+        new com.antigravity.protocols.ProtocolDelegate(Collections.singletonList(phidgetProtocol));
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(delegate);
+
+    com.antigravity.proto.SetInterfacePinStateRequest pinReq =
+        com.antigravity.proto.SetInterfacePinStateRequest.newBuilder()
+            .setInterfaceIndex(0)
+            .setPin(2)
+            .setIsDigital(true)
+            .setIsHigh(true)
+            .build();
+
+    io.javalin.http.Context mockCtx = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(mockCtx.bodyAsBytes()).thenReturn(pinReq.toByteArray());
+    when(mockCtx.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(mockCtx);
+
+    handler.setInterfacePinState(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).result(org.mockito.ArgumentMatchers.any(byte[].class));
+  }
+
+  @Test
+  public void testInitializeInterface_WithPhidgetConfigs() {
+    com.antigravity.proto.InitializeInterfaceRequest req =
+        com.antigravity.proto.InitializeInterfaceRequest.newBuilder()
+            .setLaneCount(4)
+            .addPhidgetConfigs(
+                com.antigravity.proto.PhidgetConfig.newBuilder()
+                    .setName("Phidget 1")
+                    .setSerialNumber(-1)
+                    .build())
+            .build();
+
+    io.javalin.http.Context mockCtx = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(mockCtx.bodyAsBytes()).thenReturn(req.toByteArray());
+    when(mockCtx.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(mockCtx);
+
+    handler.initializeInterface(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).result(org.mockito.ArgumentMatchers.any(byte[].class));
+  }
 }

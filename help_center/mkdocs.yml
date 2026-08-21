@@ -52,6 +52,7 @@ nav:
   - Getting Started:
     - Introduction: introduction.md
     - System Overview: system-overview.md
+    - Downloads & Releases: downloads.md
     - Installation: installation.md
     - Arduino UNO Q Setup: arduino-uno-q.md
   - Configuration:

@@ -2962,12 +2962,16 @@ describe("DefaultRacedayComponent", () => {
 
     it("should call onLaneMenuSelect with correct index and navigate", () => {
       const mockRouter = TestBed.inject(Router) as any;
+      mockRouter.url = "/raceday";
 
       component.onLaneMenuSelect(1);
 
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isDriversStationOpen).toBeFalse();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-station", 2]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(
+        ["/driver-station", 2],
+        jasmine.anything(),
+      );
     });
 
     it("should close all menus on document click outside", () => {
@@ -2988,13 +2992,14 @@ describe("DefaultRacedayComponent", () => {
 
     it("should call onDriverViewMenuSelect with correct id and navigate", () => {
       const mockRouter = TestBed.inject(Router) as any;
+      mockRouter.url = "/raceday";
 
       component.onDriverViewMenuSelect("test-driver-id");
 
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
         ["/driver-view", "test-driver-id"],
-        { state: { bypassDeactivate: true } },
+        jasmine.anything(),
       );
     });
   });

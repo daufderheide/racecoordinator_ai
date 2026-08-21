@@ -814,7 +814,7 @@ export class AboutDialogComponent {
   readonly githubIssuesUrl =
     "https://github.com/daufderheide/racecoordinator_ai/issues";
   readonly donateUrl =
-    "https://www.paypal.com/donate?token=Npz_CkL78_0Q23e1oh0dbWdoY373X9QkmblM6uYJVRZXldgY_GXF7nOn5O1vFpL7LB0gcevj0h-R4QGM&locale.x=US";
+    "https://www.paypal.com/donate?token=L6PFPbwF0z3WOF-qIijTS_MSQjLtTCmiYlq3ObTaqvLhwrKUPo0faql9Qpk9QJ6NolQESAXw0l8YCUKn&locale.x=US";
   donateQrCodeUrl = signal<string>("");
 
   close = output<void>();

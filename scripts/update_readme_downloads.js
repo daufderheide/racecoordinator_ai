@@ -23,26 +23,26 @@ Click your operating system below to **download directly**:
 | **🪟 Windows (10 / 11)** | [**⬇️ Download Windows Setup**](${winOnline}) | \`${tag}\` | Online Setup *(Fast, requires internet)* |
 | **🪟 Windows (8, 7, XP / Offline)** | [**⬇️ Download Offline Setup**](${winOffline}) | \`${tag}\` | Full Offline Standalone *(Required for Win 8 & older)* |
 | **🍏 macOS (Intel & Apple Silicon)** | [**⬇️ Download macOS DMG**](${macDmg}) | \`${tag}\` | Disk Image (\`.dmg\`) |
-| **🐧 Linux / Raspberry Pi (ARM64)** | [**⬇️ Download Linux Package**](${linuxTar}) | \`${tag}\` | Tarball (\`.tar.gz\`) |
+| **🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)** | [**⬇️ Download Linux Package**](${linuxTar}) | \`${tag}\` | Tarball (\`.tar.gz\`) |
 
 ---
 
-### 🔗 All Release Channels & History
-* 🟡 **[View All Beta Releases & Changelogs](https://github.com/daufderheide/racecoordinator_ai/releases)** — Explore release notes, past test builds, and discussions.
-* 🟢 **[View Official Stable Releases](https://github.com/daufderheide/racecoordinator_ai/releases/latest)** — Access the latest official production build.
+### 🌐 Downloads & Documentation
+* 📦 **[Help Center Downloads & Release Portal](https://daufderheide.github.io/racecoordinator_ai/downloads/)** — Explore all releases (Official, Beta, Alpha) and downloads.
+* 📖 **[Installation Guide & System Requirements](https://daufderheide.github.io/racecoordinator_ai/installation/)** — Detailed step-by-step setup guides for each platform.
 <!-- DOWNLOAD_SECTION_END -->`;
 }
 
 function updateReadmeContent(content, tag, isPrerelease) {
   const newSection = generateDownloadSection(tag, isPrerelease);
   const regex = /<!-- DOWNLOAD_SECTION_START -->[\s\S]*?<!-- DOWNLOAD_SECTION_END -->/;
-  
+
   if (regex.test(content)) {
     return content.replace(regex, newSection);
   }
 
   // Fallback: replace existing Download section if markers aren't present yet
-  const fallbackRegex = /## 📥 Download Race Coordinator AI[\s\S]*?(?=## 🚀 Quick Start Guide|$)/;
+  const fallbackRegex = /## 📥 Download Race Coordinator AI[\s\S]*?(?=### 💡 Which file should I download\?|## 🚀 Quick Start Guide|$)/;
   if (fallbackRegex.test(content)) {
     return content.replace(fallbackRegex, `${newSection}\n\n`);
   }

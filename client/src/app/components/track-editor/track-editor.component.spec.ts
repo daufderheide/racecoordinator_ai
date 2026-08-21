@@ -725,23 +725,161 @@ describe("TrackEditorComponent", () => {
       mockSettingsServiceLocal.settings = new Settings();
     });
 
-    it("should trigger help when startHelp is called manually", () => {
+    it("should trigger help when startHelp is called manually including undo/redo toolbar steps", () => {
       component.startHelp();
       expect(helpService.startGuide).toHaveBeenCalled();
+      const calledSteps = (
+        helpService.startGuide as jasmine.Spy
+      ).calls.mostRecent().args[0];
+      const targetIds = calledSteps.map((s: any) => s.targetId).filter(Boolean);
+      expect(targetIds).toContain("undo-btn");
+      expect(targetIds).toContain("redo-btn");
     });
 
-    it("should expand lanes and interfaces sections if collapsed during help", fakeAsync(() => {
+    it("should expand lanes, interfaces, and sub-editors sections if collapsed during help", () => {
       component.sectionsExpanded.lanes = false;
       component.sectionsExpanded.interfaces = false;
       component.lanes = [new Lane("l1", "white", "black", 100)];
 
+      const mockArduino = jasmine.createSpyObj("ArduinoEditorComponent", [
+        "ensureSectionsExpanded",
+        "getHelpSteps",
+      ]);
+      mockArduino.getHelpSteps.and.returnValue([]);
+      const mockBart = jasmine.createSpyObj("BartEditorComponent", [
+        "ensureSectionsExpanded",
+        "getHelpSteps",
+      ]);
+      mockBart.getHelpSteps.and.returnValue([]);
+      const mockPhidget = jasmine.createSpyObj("PhidgetEditorComponent", [
+        "ensureSectionsExpanded",
+        "getHelpSteps",
+      ]);
+      mockPhidget.getHelpSteps.and.returnValue([]);
+      const mockTrackmate = jasmine.createSpyObj("TrakmateEditorComponent", [
+        "ensureSectionsExpanded",
+        "getHelpSteps",
+      ]);
+      mockTrackmate.getHelpSteps.and.returnValue([]);
+
+      component.arduinoConfigs = [
+        {
+          name: "A1",
+          digitalIds: [],
+          analogIds: [],
+          ledStrings: [],
+        } as any,
+      ];
+      component.bartConfigs = [
+        {
+          deviceName: "B1",
+          lapPinBehaviors: [],
+        } as any,
+      ];
+      component.phidgetConfigs = [
+        {
+          name: "P1",
+          digitalInIds: [],
+          digitalOutIds: [],
+          analogIds: [],
+        } as any,
+      ];
+      component.trackmateConfigs = [
+        {
+          name: "T1",
+          lapPinBehaviors: [],
+        } as any,
+      ];
+
+      component.arduinoEditors = { length: 1, first: mockArduino } as any;
+      component.bartEditors = { length: 1, first: mockBart } as any;
+      component.phidgetEditors = { length: 1, first: mockPhidget } as any;
+      component.trakmateEditors = { length: 1, first: mockTrackmate } as any;
+
       component.startHelp();
-      tick();
-      fixture.detectChanges();
 
       expect(component.sectionsExpanded.lanes).toBeTrue();
       expect(component.sectionsExpanded.interfaces).toBeTrue();
-    }));
+      expect(mockArduino.ensureSectionsExpanded).toHaveBeenCalled();
+      expect(mockBart.ensureSectionsExpanded).toHaveBeenCalled();
+      expect(mockPhidget.ensureSectionsExpanded).toHaveBeenCalled();
+      expect(mockTrackmate.ensureSectionsExpanded).toHaveBeenCalled();
+    });
+
+    it("should only include guided help for the first instance of each configured interface type", () => {
+      const mockArduino1 = jasmine.createSpyObj("ArduinoEditorComponent", [
+        "getHelpSteps",
+        "ensureSectionsExpanded",
+      ]);
+      mockArduino1.getHelpSteps.and.returnValue([
+        { selector: "#arduino-editor-0", title: "A1 Help", content: "A1" },
+      ]);
+      const mockArduino2 = jasmine.createSpyObj("ArduinoEditorComponent", [
+        "getHelpSteps",
+        "ensureSectionsExpanded",
+      ]);
+      mockArduino2.getHelpSteps.and.returnValue([
+        { selector: "#arduino-editor-1", title: "A2 Help", content: "A2" },
+      ]);
+
+      const mockBart1 = jasmine.createSpyObj("BartEditorComponent", [
+        "getHelpSteps",
+        "ensureSectionsExpanded",
+      ]);
+      mockBart1.getHelpSteps.and.returnValue([
+        { selector: "#bart-editor-0", title: "B1 Help", content: "B1" },
+      ]);
+
+      const mockPhidget1 = jasmine.createSpyObj("PhidgetEditorComponent", [
+        "getHelpSteps",
+        "ensureSectionsExpanded",
+      ]);
+      mockPhidget1.getHelpSteps.and.returnValue([
+        { selector: "#phidget-editor-0", title: "P1 Help", content: "P1" },
+      ]);
+
+      const mockTrackmate1 = jasmine.createSpyObj("TrakmateEditorComponent", [
+        "getHelpSteps",
+        "ensureSectionsExpanded",
+      ]);
+      mockTrackmate1.getHelpSteps.and.returnValue([
+        { selector: "#trakmate-editor-0", title: "T1 Help", content: "T1" },
+      ]);
+
+      component.arduinoConfigs = [
+        { name: "A1", digitalIds: [], analogIds: [], ledStrings: [] } as any,
+        { name: "A2", digitalIds: [], analogIds: [], ledStrings: [] } as any,
+      ];
+      component.bartConfigs = [
+        { deviceName: "B1", lapPinBehaviors: [] } as any,
+        { deviceName: "B2", lapPinBehaviors: [] } as any,
+      ];
+      component.phidgetConfigs = [
+        {
+          name: "P1",
+          digitalInIds: [],
+          digitalOutIds: [],
+          analogIds: [],
+        } as any,
+      ];
+      component.trackmateConfigs = [
+        { name: "T1", lapPinBehaviors: [] } as any,
+        { name: "T2", lapPinBehaviors: [] } as any,
+      ];
+
+      component.arduinoEditors = { length: 2, first: mockArduino1 } as any;
+      component.bartEditors = { length: 2, first: mockBart1 } as any;
+      component.phidgetEditors = { length: 1, first: mockPhidget1 } as any;
+      component.trakmateEditors = { length: 2, first: mockTrackmate1 } as any;
+
+      const helpSteps = component.getHelpSteps();
+      const titles = helpSteps.map((s) => s.title);
+      expect(titles).toContain("A1 Help");
+      expect(titles).not.toContain("A2 Help");
+      expect(titles).toContain("B1 Help");
+      expect(titles).toContain("P1 Help");
+      expect(titles).toContain("T1 Help");
+    });
   });
 
   describe("Interface List Ordering & Badges", () => {
@@ -774,9 +912,7 @@ describe("TrackEditorComponent", () => {
 
       const trakmateBadge =
         interfaceHeaders[3].querySelector(".interface-badge");
-      expect(trakmateBadge).toBeTruthy();
-      expect(trakmateBadge.textContent.trim()).toBe("BETA");
-      expect(trakmateBadge.classList.contains("beta-badge")).toBeTrue();
+      expect(trakmateBadge).toBeNull();
     }));
   });
 

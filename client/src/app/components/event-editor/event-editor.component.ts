@@ -22,8 +22,10 @@ import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Event, EventRaceItem } from "@app/models/event";
 import { Race } from "@app/models/race";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { TranslationService } from "@app/services/translation.service";
 
 @Component({
   standalone: true,
@@ -68,6 +70,7 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private route = inject(ActivatedRoute);
   private logger = inject(LoggerService);
   private navigationService = inject(NavigationService);
+  private translationService = inject(TranslationService);
 
   constructor() {
     this.undoManager = new UndoManager<Event>(
@@ -453,5 +456,49 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const current = this.getItemMaxDrivers(item);
     const newVal = current === 0 ? 4 : 0;
     this.setMaxDrivers(item, newVal);
+  }
+
+  getHelpSteps(): GuideStep[] {
+    return [
+      {
+        title: this.translationService.translate("EE_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("EE_HELP_WELCOME_CONTENT"),
+        position: "center",
+      },
+      {
+        selector: "#event-name",
+        title: this.translationService.translate("EE_HELP_NAME_TITLE"),
+        content: this.translationService.translate("EE_HELP_NAME_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: "#event-description",
+        title: this.translationService.translate("EE_HELP_DESCRIPTION_TITLE"),
+        content: this.translationService.translate(
+          "EE_HELP_DESCRIPTION_CONTENT",
+        ),
+        position: "right",
+      },
+      {
+        selector: "#event-auto-advance",
+        title: this.translationService.translate("EE_HELP_AUTO_ADVANCE_TITLE"),
+        content: this.translationService.translate(
+          "EE_HELP_AUTO_ADVANCE_CONTENT",
+        ),
+        position: "right",
+      },
+      {
+        selector: "#btn-add-race",
+        title: this.translationService.translate("EE_HELP_ADD_RACE_TITLE"),
+        content: this.translationService.translate("EE_HELP_ADD_RACE_CONTENT"),
+        position: "bottom",
+      },
+      {
+        selector: "#event-race-list",
+        title: this.translationService.translate("EE_HELP_RACE_LIST_TITLE"),
+        content: this.translationService.translate("EE_HELP_RACE_LIST_CONTENT"),
+        position: "left",
+      },
+    ];
   }
 }

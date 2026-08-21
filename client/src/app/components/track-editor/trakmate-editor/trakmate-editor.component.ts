@@ -15,6 +15,7 @@ import { DataService } from "@app/data.service";
 import { TrackmateConfig } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 
 @Component({
@@ -316,5 +317,100 @@ export class TrakmateEditorComponent implements OnInit, OnDestroy, OnChanges {
           this.cdr.detectChanges();
         },
       });
+  }
+
+  ensureSectionsExpanded(): void {
+    this.sectionsExpanded.trakmate = true;
+    this.sectionsExpanded.main = true;
+    this.sectionsExpanded.rw = true;
+    this.cdr.detectChanges();
+  }
+
+  getHelpSteps(): GuideStep[] {
+    const expandMain = () => {
+      this.sectionsExpanded.trakmate = true;
+      this.sectionsExpanded.main = true;
+      this.cdr.detectChanges();
+    };
+    const expandRw = () => {
+      this.sectionsExpanded.trakmate = true;
+      this.sectionsExpanded.rw = true;
+      this.cdr.detectChanges();
+    };
+
+    const steps: GuideStep[] = [
+      {
+        selector: `#trakmate-editor-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_TITLE",
+        content: "TE_HELP_TRAKMATE_CONTENT",
+        position: "right",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#commPort-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_PORT_TITLE",
+        content: "TE_HELP_TRAKMATE_PORT_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#trakmate-status-badge-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_STATUS_TITLE",
+        content: "TE_HELP_TRAKMATE_STATUS_CONTENT",
+        position: "right",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#debounce-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_DEBOUNCE_TITLE",
+        content: "TE_HELP_TRAKMATE_DEBOUNCE_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#lapPinPitBehavior-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_PIT_BEHAVIOR_TITLE",
+        content: "TE_HELP_TRAKMATE_PIT_BEHAVIOR_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#trakmate-nc-sensors-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_NC_TITLE",
+        content: "TE_HELP_TRAKMATE_NC_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#trakmate-per-lane-relays-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_PER_LANE_RELAYS_TITLE",
+        content: "TE_HELP_TRAKMATE_PER_LANE_RELAYS_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#trakmate-channel-0-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_CHANNELS_TITLE",
+        content: "TE_HELP_TRAKMATE_CHANNELS_CONTENT",
+        position: "bottom",
+        onEnter: expandRw,
+      },
+      {
+        selector: `#trakmate-callbutton-status-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_CALL_BUTTON_TITLE",
+        content: "TE_HELP_TRAKMATE_CALL_BUTTON_CONTENT",
+        position: "bottom",
+        onEnter: expandRw,
+      },
+      {
+        selector: `#trakmate-master-relay-${this.interfaceIndex()}`,
+        title: "TE_HELP_TRAKMATE_RELAY_CONTROL_TITLE",
+        content: "TE_HELP_TRAKMATE_RELAY_CONTROL_CONTENT",
+        position: "bottom",
+        onEnter: expandRw,
+      },
+    ];
+
+    return steps;
   }
 }

@@ -3,7 +3,6 @@ name: Release
 on:
   push:
     branches:
-      - main
       - "release/**"
     tags:
       - "v*"
@@ -340,7 +339,7 @@ jobs:
           | **🪟 Windows (10 / 11)** | \`RaceCoordinatorAI_Online_Setup_${TAG}.exe\` | **Recommended** — Fast online setup that automatically downloads required components. |
           | **🪟 Windows (8, 7, XP / Offline)** | \`RaceCoordinatorAI_Offline_Setup_${TAG}.exe\` | **Standalone** — Full installer with bundled runtime. *Required for first-time installation on Win 8 and older.* |
           | **🍏 macOS** | \`RaceCoordinator_Mac_${TAG}.dmg\` | Disk Image for macOS (Intel & Apple Silicon). Drag to \`Applications\`. |
-          | **🐧 Linux / Raspberry Pi** | \`RaceCoordinatorAI-Linux-ARM64_${TAG}.tar.gz\` | Compressed archive for ARM64 Linux / Raspberry Pi OS. |
+          | **🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)** | \`RaceCoordinatorAI-Linux-ARM64_${TAG}.tar.gz\` | Compressed archive for ARM64 Linux / Raspberry Pi OS / Arduino Uno Q. |
 
           > **💡 Tip for Non-Technical Users**: You do **not** need to download the source code zip or test coverage files to run Race Coordinator AI.
 
@@ -382,7 +381,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           add-paths: |
             README.md
-          commit-message: "docs: update latest download links to ${{ env.TAG }} [skip ci]"
+          commit-message: "docs: update latest download links to ${{ env.TAG }}"
           title: "docs: update latest download links to ${{ env.TAG }}"
           body: "Automated PR to update the README with the latest download links for release ${{ env.TAG }}."
           branch: "docs/update-readme-${{ env.TAG }}"

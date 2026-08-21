@@ -202,11 +202,11 @@ describe("DefaultRaceResultsComponent", () => {
 
   it("should disconnect from RaceConnectionService on destroy and pagehide", () => {
     fixture.destroy();
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
 
     mockRaceConnectionService.disconnect.calls.reset();
     component.onPageHide(null);
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
   });
 
   describe("Standings Calculation", () => {

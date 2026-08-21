@@ -759,39 +759,59 @@
 }
 
 @media print {
+  * {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   :host {
+    background: transparent !important;
+    width: auto !important;
     height: auto !important;
     overflow: visible !important;
   }
+
   .dashboard-wrapper {
     height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
     display: block !important;
   }
+
   body:not(.print-no-background) .dashboard-wrapper {
     background: #06090e !important;
   }
-  body.print-no-background :host,
-  body.print-no-background .dashboard-wrapper,
-  body.print-no-background .scalable-content,
-  body.print-no-background .results-container,
-  body.print-no-background .results-table-wrapper,
-  body.print-no-background .race-name-container {
+
+  :host-context(body.print-no-background) :host,
+  :host-context(body.print-no-background) .dashboard-wrapper,
+  :host-context(body.print-no-background) .scalable-content,
+  :host-context(body.print-no-background) .results-container,
+  :host-context(body.print-no-background) .results-table-wrapper,
+  :host-context(body.print-no-background) .race-name-container {
     background: #ffffff !important;
+    background-color: #ffffff !important;
     background-image: none !important;
     color: #000000 !important;
     box-shadow: none !important;
     border-color: #cbd5e1 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
-  body.print-no-background .page-title,
-  body.print-no-background .value-text,
-  body.print-no-background .header-cell {
+
+  :host-context(body.print-no-background) .page-title,
+  :host-context(body.print-no-background) .value-text,
+  :host-context(body.print-no-background) .header-cell {
     color: #0f172a !important;
     text-shadow: none !important;
   }
-  body.print-no-background .label-text {
+
+  :host-context(body.print-no-background) .label-text {
     color: #0284c7 !important;
+    text-shadow: none !important;
   }
+
   .scalable-content {
     position: relative !important;
     top: 0 !important;
@@ -804,21 +824,25 @@
     padding: 20px !important;
     overflow: visible !important;
   }
+
   .results-container {
     height: auto !important;
     overflow: visible !important;
   }
+
   .results-table-wrapper {
     height: auto !important;
     overflow: visible !important;
     padding-bottom: 0 !important;
   }
+
   .driver-row {
     position: relative !important;
     top: auto !important;
     transform: none !important;
     margin-bottom: 8px;
   }
+
   .results-table-body {
     height: auto !important;
   }

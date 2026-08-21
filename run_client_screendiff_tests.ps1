@@ -13,11 +13,14 @@ $IsolatedDir = Join-Path $env:TEMP "racecoordinator-client-visual"
 
 if (-not (Test-Path $IsolatedDir)) {
     New-Item -ItemType Directory -Path $IsolatedDir -Force | Out-Null
-} else {
-    # If the directory exists, clear out 'dist' so we don't serve a stale angular build
+    # If the directory exists, clear out 'dist' and 'test-results' so we don't serve a stale angular build or fail on Docker rmdir
     $StaleDist = Join-Path $IsolatedDir "dist"
     if (Test-Path $StaleDist) {
         Remove-Item -Path $StaleDist -Recurse -Force
+    }
+    $StaleResults = Join-Path $IsolatedDir "test-results"
+    if (Test-Path $StaleResults) {
+        Remove-Item -Path $StaleResults -Recurse -Force
     }
 }
 
@@ -114,7 +117,7 @@ Write-Host "Running tests in Docker container..." -ForegroundColor Green
 New-Item -ItemType Directory -Path (Join-Path $IsolatedDir "test-home") -Force | Out-Null
 
 $WorkerCount = if ($env:PWTEST_WORKERS) { $env:PWTEST_WORKERS } else { '100%' }
-$DockerCmd = "node -e `"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --legacy-peer-deps --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}`" && npx playwright test $PlaywrightArgs"
+$DockerCmd = "node -e `"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --legacy-peer-deps --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}`" && rm -rf /work/test-results && npx playwright test $PlaywrightArgs"
 
 $DockerArgs = @(
     "run", "--rm",
@@ -130,8 +133,8 @@ $DockerArgs = @(
 & docker @DockerArgs
 $TestExitCode = $LASTEXITCODE
 
-# If updating snapshots, copy them back to the original source directory
-if ($args -contains "--update-snapshots" -or $PlaywrightArgs -like "*--update-snapshots*") {
+# If updating snapshots and tests succeeded, copy them back to the original source directory
+if ($TestExitCode -eq 0 -and ($args -contains "--update-snapshots" -or $PlaywrightArgs -like "*--update-snapshots*")) {
     Write-Host "Syncing updated snapshots back to source..." -ForegroundColor Cyan
     $FullIsolatedDir = (Get-Item $IsolatedDir).FullName
     $SnapshotDirs = Get-ChildItem -Path (Join-Path $FullIsolatedDir "src") -Filter "*-snapshots" -Recurse -Directory

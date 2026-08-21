@@ -12,6 +12,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceFlag;
@@ -128,6 +129,38 @@ public class RaceTest {
 
       assertNotNull(race);
     }
+
+    @Test
+    public void testSetTheme_UpdatesTheme() {
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+      Track track = mock(Track.class);
+      List<RaceParticipant> drivers = new ArrayList<>();
+
+      java.util.Map<String, String> slots = new java.util.HashMap<>();
+      slots.put("flag.heat_paused", "default_flag_checkered");
+      Theme theme1 = new Theme("Theme 1", false, slots, null, "theme-1", null);
+
+      List<Heat> heats = new ArrayList<>();
+      heats.add(mock(Heat.class));
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .drivers(drivers)
+              .track(track)
+              .theme(theme1)
+              .databaseContext(dbContext)
+              .heats(heats)
+              .isDemoMode(true)
+              .build();
+
+      assertEquals(theme1, race.getTheme());
+
+      Theme theme2 = new Theme("Theme 2", false, new java.util.HashMap<>(), null, "theme-2", null);
+      race.setTheme(theme2);
+      assertEquals(theme2, race.getTheme());
+    }
   }
 
   // =========================================================================
@@ -174,6 +207,7 @@ public class RaceTest {
           .thenReturn(HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME);
       when(mockHeatScoring.getFinishMethod()).thenReturn(HeatScoring.FinishMethod.Timed);
       when(mockHeatScoring.getFinishValue()).thenReturn(100L);
+      when(mockHeatScoring.getAllowFinish()).thenReturn(HeatScoring.AllowFinish.None);
 
       OverallScoring mockOverallScoring = mock(OverallScoring.class);
       when(mockOverallScoring.getRankingMethod())
@@ -326,6 +360,52 @@ public class RaceTest {
       race.stop();
       verify(mockProtocols).clearLeds();
       verify(mockProtocols).close();
+    }
+
+    @Test
+    public void testStopSetsStoppedAndIgnoresHardwareDisconnect() {
+      assertFalse(race.isStopped());
+      race.changeState(new Racing());
+      assertTrue(race.getState() instanceof Racing);
+
+      race.stop();
+      assertTrue(race.isStopped());
+      verify(mockProtocols).clearLeds();
+      verify(mockProtocols).close();
+
+      // Trigger disconnect that occurs during hardware close
+      race.onInterfaceStatus(com.antigravity.proto.InterfaceStatus.DISCONNECTED, 0);
+      race.stopRaceOperationsOnHardwareDisconnect();
+
+      // Ensure state was not transitioned to Paused or altered
+      assertFalse(race.getState() instanceof Paused);
+
+      // Verify that commands are safely no-op when stopped
+      assertFalse(race.startRace());
+      race.pauseRace();
+      race.restartHeat();
+      race.skipHeat();
+      race.deferHeat();
+      race.onCarData(
+          new CarData(
+              0,
+              1.0,
+              0.5,
+              0.5,
+              false,
+              com.antigravity.protocols.CarLocation.PitRow,
+              com.antigravity.protocols.CarLocation.PitRow,
+              -1));
+      race.onInterfaceEvent(
+          com.antigravity.proto.InterfaceEvent.newBuilder()
+              .setStatus(
+                  com.antigravity.proto.InterfaceStatusEvent.newBuilder()
+                      .setStatus(com.antigravity.proto.InterfaceStatus.DISCONNECTED)
+                      .setInterfaceIndex(0)
+                      .build())
+              .build());
+      race.changeState(new Paused());
+      assertFalse(race.getState() instanceof Paused);
     }
 
     @Test
@@ -555,6 +635,151 @@ public class RaceTest {
       assertEquals(1, dhd.getFalseStarts());
       assertEquals(0.5, dhd.getPenaltyLaps(), 0.001);
       assertEquals(2.0, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+      assertFalse("Lane 0 power should be cut immediately on false start", fsRace.isLanePower(0));
+      fsRace.stop();
+    }
+
+    @Test
+    public void testStartingFalseStartCutsLanePowerImmediatelyInHotStart() {
+      List<Lane> twoLanes = new ArrayList<>();
+      twoLanes.add(new Lane("red", "black", 100));
+      twoLanes.add(new Lane("blue", "black", 100));
+      Track twoLaneTrack =
+          new Track.Builder()
+              .name("Test Track")
+              .lanes(twoLanes)
+              .arduinoConfigs(Collections.singletonList(mock(ArduinoConfig.class)))
+              .entityId("track1")
+              .id("1")
+              .build();
+
+      List<RaceParticipant> twoDrivers = new ArrayList<>();
+      twoDrivers.add(new RaceParticipant(new Driver("Driver 1", "D1", "d1", "1"), "p1"));
+      twoDrivers.add(new RaceParticipant(new Driver("Driver 2", "D2", "d2", "2"), "p2"));
+
+      Race falseStartModel =
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withHotStart(true)
+              .withRestartOnFalseStart(false)
+              .withFalseStartLapPenalty(0.5)
+              .withFalseStartTimePenalty(2.0)
+              .build();
+
+      com.antigravity.race.Race fsRace =
+          new com.antigravity.race.Race.Builder()
+              .model(falseStartModel)
+              .track(twoLaneTrack)
+              .drivers(twoDrivers)
+              .isDemoMode(true)
+              .build();
+      ClientSubscriptionManager.getInstance().setRace(fsRace);
+
+      Starting st = new Starting();
+      fsRace.changeState(st);
+      assertTrue("Hot start should enable main power", fsRace.isMainPower());
+      assertTrue("Lane 0 should initially be ON", fsRace.isLanePower(0));
+      assertTrue("Lane 1 should initially be ON", fsRace.isLanePower(1));
+
+      boolean handled = st.onLap(0, 0.5, 1, false);
+
+      assertTrue("onLap should return true for false start", handled);
+      assertTrue(fsRace.getState() instanceof Starting);
+      assertFalse(
+          "Lane 0 power should be OFF immediately after false start", fsRace.isLanePower(0));
+      assertTrue("Lane 1 power should remain ON", fsRace.isLanePower(1));
+
+      DriverHeatData dhd = fsRace.getCurrentHeat().getDrivers().get(0);
+      assertEquals(1, dhd.getFalseStarts());
+      assertEquals(2.0, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+      fsRace.stop();
+    }
+
+    @Test
+    public void testStartingFalseStartZeroTimePenaltyRestoresAtGreen() {
+      Race falseStartModel =
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withHotStart(true)
+              .withRestartOnFalseStart(false)
+              .withFalseStartLapPenalty(1.0)
+              .withFalseStartTimePenalty(0.0)
+              .build();
+
+      com.antigravity.race.Race fsRace =
+          new com.antigravity.race.Race.Builder()
+              .model(falseStartModel)
+              .track(race.getTrack())
+              .drivers(race.getDrivers())
+              .isDemoMode(true)
+              .build();
+      ClientSubscriptionManager.getInstance().setRace(fsRace);
+
+      Starting st = new Starting();
+      fsRace.changeState(st);
+      assertTrue(fsRace.isLanePower(0));
+
+      // False start on lane 0 during starting
+      st.onLap(0, 0.5, 1, false);
+      assertFalse("Lane 0 power should be cut immediately", fsRace.isLanePower(0));
+
+      // Transition to Racing (Go / Green)
+      Racing racing = new Racing();
+      fsRace.changeState(racing);
+      assertTrue(
+          "Lane 0 power should be restored at Green when time penalty is 0", fsRace.isLanePower(0));
+      fsRace.stop();
+    }
+
+    @Test
+    public void testStartingFalseStartTimePenaltyCountdownStartsAtGreen() {
+      Race falseStartModel =
+          new Race.Builder()
+              .from(race.getRaceModel())
+              .withHotStart(true)
+              .withRestartOnFalseStart(false)
+              .withFalseStartTimePenalty(0.2)
+              .build();
+
+      com.antigravity.race.Race fsRace =
+          new com.antigravity.race.Race.Builder()
+              .model(falseStartModel)
+              .track(race.getTrack())
+              .drivers(race.getDrivers())
+              .isDemoMode(true)
+              .build();
+      ClientSubscriptionManager.getInstance().setRace(fsRace);
+
+      Starting st = new Starting();
+      fsRace.changeState(st);
+      assertTrue(fsRace.isLanePower(0));
+
+      // False start on lane 0
+      st.onLap(0, 0.5, 1, false);
+      assertFalse("Lane 0 power should be cut immediately", fsRace.isLanePower(0));
+
+      DriverHeatData dhd = fsRace.getCurrentHeat().getDrivers().get(0);
+      assertEquals(0.2, dhd.getRemainingFalseStartTimePenalty(), 0.001);
+
+      // Transition to Racing (Go / Green)
+      Racing racing = new Racing();
+      fsRace.changeState(racing);
+      assertFalse(
+          "Lane 0 power should stay OFF at Green while penalty is active", fsRace.isLanePower(0));
+
+      // Wait for penalty to expire
+      long start = System.currentTimeMillis();
+      while ((dhd.getRemainingFalseStartTimePenalty() > 0 || !fsRace.isLanePower(0))
+          && (System.currentTimeMillis() - start) < 5000) {
+        try {
+          Thread.sleep(50);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+
+      assertTrue("Lane 0 power should turn back ON after penalty expires", fsRace.isLanePower(0));
+      fsRace.stop();
     }
 
     @Test

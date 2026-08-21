@@ -2840,7 +2840,7 @@ export class DefaultRacedayComponent
 
   @HostListener("window:pagehide", ["$event"])
   onPageHide(_event: any) {
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
     if (this.leaderBoardWindow) {
       this.leaderBoardWindow.close();
       this.leaderBoardWindow = null;
@@ -3358,15 +3358,20 @@ export class DefaultRacedayComponent
     this.isWindowsMenuOpen = false; // Close menu
     this.isDriversStationOpen = false;
 
-    this.router.navigate(["/driver-station", laneIndex + 1]);
+    const returnUrl = this.router.url.split("?")[0];
+    this.router.navigate(["/driver-station", laneIndex + 1], {
+      queryParams: { returnUrl },
+    });
   }
 
   onDriverViewMenuSelect(driverId: string) {
     this.logger.debug("Driver selected for Driver View:", driverId);
     this.isWindowsMenuOpen = false; // Close menu
 
+    const returnUrl = this.router.url.split("?")[0];
     this.router.navigate(["/driver-view", driverId], {
       state: { bypassDeactivate: true },
+      queryParams: { returnUrl },
     });
   }
 

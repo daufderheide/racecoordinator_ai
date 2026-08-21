@@ -26,6 +26,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { ParticipantValidationService } from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
+import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { MOCK_DRIVERS as _MOCK_DRIVERS } from "@app/testing/data/drivers_data";
 import { MOCK_RACES as _MOCK_RACES } from "@app/testing/data/races_data";
@@ -492,6 +493,45 @@ describe("DefaultRacedaySetupComponent", () => {
       jasmine.any(Array),
       true,
       jasmine.any(Object),
+      undefined,
+      undefined,
+      undefined,
+    );
+  }));
+
+  it("should pass active theme ID and activate theme when race is selected", fakeAsync(() => {
+    const themeService = TestBed.inject(ThemeService);
+    spyOn(themeService, "activateForRace").and.callThrough();
+    spyOn(themeService, "getActiveTheme").and.returnValue({
+      entity_id: "custom-theme-123",
+    } as any);
+
+    const testRace = (component as any).races[0];
+    component.selectRace(testRace);
+    expect(themeService.activateForRace).toHaveBeenCalledWith(
+      testRace.entity_id,
+    );
+
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+
+    const response = InitializeRaceResponse.fromObject({
+      success: true,
+    });
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(of(response));
+
+    component.startRace(false);
+    flush();
+    fixture.detectChanges();
+
+    expect(mockDataService.initializeRace).toHaveBeenCalledWith(
+      testRace.entity_id,
+      jasmine.any(Array),
+      false,
+      undefined,
+      undefined,
+      undefined,
+      "custom-theme-123",
     );
   }));
 
@@ -628,6 +668,7 @@ describe("DefaultRacedaySetupComponent", () => {
     component.onCheckForUpdates();
     expect(component.requestCheckForUpdates.emit).toHaveBeenCalled();
     expect(component.isFileDropdownOpen).toBeFalse();
+    expect(component.isOptionsDropdownOpen).toBeFalse();
   });
 
   it("should not emit requestCheckForUpdates when onCheckForUpdates is called and banner is visible", () => {
@@ -1611,5 +1652,101 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedEvent?.entity_id).toBe("e1");
       expect(component.selectedRace).toBeUndefined();
     }));
+  });
+
+  describe("getHelpSteps", () => {
+    it("should return the complete list of guide steps in correct order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(13);
+
+      expect(steps[0]).toEqual({
+        title: "RDS_HELP_WELCOME_TITLE",
+        content: "RDS_HELP_WELCOME_CONTENT",
+      });
+
+      expect(steps[1]).toEqual({
+        targetId: "racing-drivers-section",
+        title: "RDS_HELP_DRIVER_RACING_TITLE",
+        content: "RDS_HELP_DRIVER_RACING_CONTENT",
+        position: "right",
+      });
+
+      expect(steps[2]).toEqual({
+        selector: "#racing-drivers-section .section-header",
+        title: "RDS_HELP_DRIVER_ACTIONS_TITLE",
+        content: "RDS_HELP_DRIVER_ACTIONS_CONTENT",
+        position: "bottom",
+      });
+
+      expect(steps[3]).toEqual({
+        targetId: "available-drivers-section",
+        title: "RDS_HELP_DRIVER_AVAILABLE_TITLE",
+        content: "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
+        position: "right",
+      });
+
+      expect(steps[4]).toEqual({
+        selector: "#available-drivers-section .header-actions",
+        title: "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
+        content: "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
+        position: "right",
+      });
+
+      expect(steps[5]).toEqual({
+        selector: ".custom-dropdown-container",
+        title: "RDS_HELP_RACE_SELECTION_TITLE",
+        content: "RDS_HELP_RACE_SELECTION_CONTENT",
+        position: "top",
+      });
+
+      expect(steps[6]).toEqual({
+        selector: ".event-details-card",
+        title: "RDS_HELP_SELECTION_SUMMARY_TITLE",
+        content: "RDS_HELP_SELECTION_SUMMARY_CONTENT",
+        position: "top",
+      });
+
+      expect(steps[7]).toEqual({
+        selector: ".search-wrapper",
+        title: "RDS_HELP_SEARCH_TITLE",
+        content: "RDS_HELP_SEARCH_CONTENT",
+        position: "top",
+      });
+
+      expect(steps[8]).toEqual({
+        selector: ".season-selection-wrapper",
+        title: "RDS_HELP_SEASON_TITLE",
+        content: "RDS_HELP_SEASON_CONTENT",
+        position: "top",
+      });
+
+      expect(steps[9]).toEqual({
+        targetId: "race-card-0",
+        title: "RDS_HELP_RECENT_RACE_TITLE",
+        content: "RDS_HELP_RECENT_RACE_MOST_RECENT_CONTENT",
+        position: "bottom",
+      });
+
+      expect(steps[10]).toEqual({
+        targetId: "race-card-1",
+        title: "RDS_HELP_RECENT_RACE_TITLE",
+        content: "RDS_HELP_RECENT_RACE_CONTENT",
+        position: "bottom",
+      });
+
+      expect(steps[11]).toEqual({
+        selector: ".btn-start",
+        title: "RDS_HELP_START_RACE_TITLE",
+        content: "RDS_HELP_START_RACE_CONTENT",
+        position: "top",
+      });
+
+      expect(steps[12]).toEqual({
+        selector: ".btn-demo",
+        title: "RDS_HELP_START_DEMO_TITLE",
+        content: "RDS_HELP_START_DEMO_CONTENT",
+        position: "top",
+      });
+    });
   });
 });

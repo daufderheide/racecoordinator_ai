@@ -26,27 +26,35 @@ describe("PrintService", () => {
   }));
 
   it("should add and remove print-full-scroll class if fullScroll is true", fakeAsync(() => {
-    const classList = document.body.classList;
-    expect(classList.contains("print-full-scroll")).toBeFalse();
+    const bodyClassList = document.body.classList;
+    const htmlClassList = document.documentElement.classList;
+    expect(bodyClassList.contains("print-full-scroll")).toBeFalse();
+    expect(htmlClassList.contains("print-full-scroll")).toBeFalse();
 
     service.print(undefined, true);
     // At this point (before tick), it should have added the class
-    expect(classList.contains("print-full-scroll")).toBeTrue();
+    expect(bodyClassList.contains("print-full-scroll")).toBeTrue();
+    expect(htmlClassList.contains("print-full-scroll")).toBeTrue();
 
     tick(100);
     // After print finishes, the class should be removed
-    expect(classList.contains("print-full-scroll")).toBeFalse();
+    expect(bodyClassList.contains("print-full-scroll")).toBeFalse();
+    expect(htmlClassList.contains("print-full-scroll")).toBeFalse();
   }));
 
   it("should add and remove print-no-background class if includeBackground is false", fakeAsync(() => {
-    const classList = document.body.classList;
-    expect(classList.contains("print-no-background")).toBeFalse();
+    const bodyClassList = document.body.classList;
+    const htmlClassList = document.documentElement.classList;
+    expect(bodyClassList.contains("print-no-background")).toBeFalse();
+    expect(htmlClassList.contains("print-no-background")).toBeFalse();
 
     service.print(undefined, false, undefined, false);
-    expect(classList.contains("print-no-background")).toBeTrue();
+    expect(bodyClassList.contains("print-no-background")).toBeTrue();
+    expect(htmlClassList.contains("print-no-background")).toBeTrue();
 
     tick(100);
-    expect(classList.contains("print-no-background")).toBeFalse();
+    expect(bodyClassList.contains("print-no-background")).toBeFalse();
+    expect(htmlClassList.contains("print-no-background")).toBeFalse();
   }));
 
   it("should change and restore document.title when pageName is provided", fakeAsync(() => {

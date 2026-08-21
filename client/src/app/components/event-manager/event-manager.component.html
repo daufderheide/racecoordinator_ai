@@ -17,6 +17,7 @@
     [showEdit]="selectedEvent != null"
     [showDelete]="selectedEvent != null"
     [isSaving]="isSaving"
+    [helpSteps]="getHelpSteps()"
     (add)="createNewEvent()"
     (edit)="updateEvent()"
     (delete)="deleteEvent()"
@@ -26,14 +27,14 @@
   @if (!isLoading) {
     <div class="content-area">
       <div class="sidebar-list">
-        <div class="search-bar">
+        <div id="event-search-bar" class="search-bar">
           <input
             type="text"
             [(ngModel)]="searchQuery"
             [placeholder]="'EM_SEARCH_PLACEHOLDER' | translate"
           />
         </div>
-        <div class="list-container">
+        <div id="event-list-container" class="list-container">
           @for (event of filteredEvents; track event; let i = $index) {
             <div
               #eventRow
@@ -57,12 +58,12 @@
       @if (selectedEvent) {
         <div class="detail-panel">
           <div class="detail-header">
-            <h2>{{ selectedEvent.name }}</h2>
+            <h2 id="event-detail-name">{{ selectedEvent.name }}</h2>
           </div>
           <div class="detail-content">
             <div class="summary-section">
               <div class="summary-grid">
-                <div class="summary-item">
+                <div id="event-detail-description" class="summary-item">
                   <span class="summary-label"
                     >{{ "EE_LABEL_DESCRIPTION" | translate }}:</span
                   >
@@ -70,7 +71,7 @@
                     selectedEvent.description || "N/A"
                   }}</span>
                 </div>
-                <div class="summary-item">
+                <div id="event-detail-auto-advance" class="summary-item">
                   <span class="summary-label"
                     >{{ "EE_LABEL_AUTO_ADVANCE" | translate }}:</span
                   >
@@ -80,7 +81,7 @@
                 </div>
               </div>
 
-              <div class="section-title">
+              <div id="event-detail-races" class="section-title">
                 <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
               </div>
               <table class="race-sequence-table">

@@ -262,9 +262,8 @@
                 </div>
                 <div class="config-row">
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label id="practice-input" class="checkbox-container">
                       <input
-                        id="practice-input"
                         type="checkbox"
                         [(ngModel)]="editingRace.practice"
                         (ngModelChange)="captureState()"
@@ -278,9 +277,11 @@
                     </label>
                   </div>
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label
+                      id="adjust-drift-laps-input"
+                      class="checkbox-container"
+                    >
                       <input
-                        id="adjust-drift-laps-input"
                         type="checkbox"
                         [(ngModel)]="editingRace.adjust_drift_laps"
                         (ngModelChange)="captureState()"
@@ -315,6 +316,7 @@
                       {{ "RE_START_TIME" | translate }}
                     </label>
                     <input
+                      id="start-time-input"
                       type="number"
                       [(ngModel)]="editingRace.start_time"
                       (ngModelChange)="captureState()"
@@ -330,6 +332,7 @@
                       {{ "RE_RESTART_TIME" | translate }}
                     </label>
                     <input
+                      id="restart-time-input"
                       type="number"
                       [(ngModel)]="editingRace.restart_time"
                       (ngModelChange)="captureState()"
@@ -347,6 +350,7 @@
                       {{ "RE_START_RANDOMIZER" | translate }}
                     </label>
                     <input
+                      id="start-randomizer-input"
                       type="number"
                       [(ngModel)]="editingRace.start_randomizer"
                       (ngModelChange)="captureState()"
@@ -362,6 +366,7 @@
                       {{ "RE_RESTART_RANDOMIZER" | translate }}
                     </label>
                     <input
+                      id="restart-randomizer-input"
                       type="number"
                       [(ngModel)]="editingRace.restart_randomizer"
                       (ngModelChange)="captureState()"
@@ -375,11 +380,16 @@
                 </div>
                 <div class="config-row">
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label
+                      id="start-behind-sensor-input"
+                      class="checkbox-container"
+                    >
                       <input
                         type="checkbox"
                         [(ngModel)]="editingRace.start_behind_sensor"
                         (ngModelChange)="captureState()"
+                        class="start-behind-sensor-input"
+                        data-testid="start-behind-sensor-input"
                       />
                       <span class="checkmark"></span>
                       <span class="checkbox-label">
@@ -388,11 +398,16 @@
                     </label>
                   </div>
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label
+                      id="start-at-current-input"
+                      class="checkbox-container"
+                    >
                       <input
                         type="checkbox"
                         [(ngModel)]="editingRace.start_at_current"
                         (ngModelChange)="captureState()"
+                        class="start-at-current-input"
+                        data-testid="start-at-current-input"
                       />
                       <span class="checkmark"></span>
                       <span class="checkbox-label">
@@ -403,11 +418,13 @@
                 </div>
                 <div class="config-row">
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label id="hot-start-input" class="checkbox-container">
                       <input
                         type="checkbox"
                         [(ngModel)]="editingRace.hot_start"
                         (ngModelChange)="captureState()"
+                        class="hot-start-input"
+                        data-testid="hot-start-input"
                       />
                       <span class="checkmark"></span>
                       <span class="checkbox-label">
@@ -416,11 +433,16 @@
                     </label>
                   </div>
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label
+                      id="restart-on-false-start-input"
+                      class="checkbox-container"
+                    >
                       <input
                         type="checkbox"
                         [(ngModel)]="editingRace.restart_on_false_start"
                         (ngModelChange)="captureState()"
+                        class="restart-on-false-start-input"
+                        data-testid="restart-on-false-start-input"
                       />
                       <span class="checkmark"></span>
                       <span class="checkbox-label">
@@ -435,6 +457,7 @@
                       {{ "RE_FALSE_START_LAP_PENALTY" | translate }}
                     </label>
                     <input
+                      id="false-start-lap-penalty-input"
                       type="number"
                       [(ngModel)]="editingRace.false_start_lap_penalty"
                       (ngModelChange)="captureState()"
@@ -442,6 +465,7 @@
                       step="0.1"
                       placeholder="0.0"
                       class="false-start-lap-penalty-input"
+                      data-testid="false-start-lap-penalty-input"
                     />
                   </div>
                   <div class="editor-section">
@@ -449,6 +473,7 @@
                       {{ "RE_FALSE_START_TIME_PENALTY" | translate }}
                     </label>
                     <input
+                      id="false-start-time-penalty-input"
                       type="number"
                       [(ngModel)]="editingRace.false_start_time_penalty"
                       (ngModelChange)="captureState()"
@@ -456,6 +481,7 @@
                       step="1"
                       placeholder="0"
                       class="false-start-time-penalty-input"
+                      data-testid="false-start-time-penalty-input"
                     />
                   </div>
                 </div>
@@ -470,7 +496,7 @@
                 [class.collapsed]="!sectionsExpanded.scoring"
                 >▼</span
               >
-              <h1>Scoring</h1>
+              <h1>{{ "RE_SCORING_HEADER" | translate }}</h1>
             </div>
             @if (sectionsExpanded.scoring) {
               <div class="section-content">
@@ -483,6 +509,9 @@
                     <div class="config-section">
                       <label>{{ "RE_HEAT_RANKING" | translate }}</label>
                       <select
+                        id="heat-ranking-select"
+                        class="heat-ranking-select"
+                        data-testid="heat-ranking-select"
                         [(ngModel)]="editingRace.heat_scoring.heat_ranking"
                         (ngModelChange)="captureState()"
                       >
@@ -494,6 +523,9 @@
                     <div class="config-section">
                       <label>{{ "RE_HEAT_TIEBREAKER" | translate }}</label>
                       <select
+                        id="heat-tiebreaker-select"
+                        class="heat-tiebreaker-select"
+                        data-testid="heat-tiebreaker-select"
                         [(ngModel)]="
                           editingRace.heat_scoring.heat_ranking_tiebreaker
                         "
@@ -512,6 +544,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FINISH_METHOD" | translate }}</label>
                         <select
+                          id="finish-method-select"
+                          class="finish-method-select"
+                          data-testid="finish-method-select"
                           [(ngModel)]="editingRace.heat_scoring.finish_method"
                           (ngModelChange)="captureState()"
                         >
@@ -523,6 +558,9 @@
                         <div class="config-section">
                           <label>{{ "RE_LAP_COUNT" | translate }}</label>
                           <input
+                            id="finish-value-input"
+                            class="finish-value-input"
+                            data-testid="finish-value-input"
                             type="number"
                             [(ngModel)]="editingRace.heat_scoring.finish_value"
                             (ngModelChange)="captureState()"
@@ -535,6 +573,9 @@
                         <div class="config-section">
                           <label>{{ "RE_TIME_SECONDS" | translate }}</label>
                           <input
+                            id="finish-value-input"
+                            class="finish-value-input"
+                            data-testid="finish-value-input"
                             type="number"
                             [(ngModel)]="editingRace.heat_scoring.finish_value"
                             (ngModelChange)="captureState()"
@@ -547,6 +588,9 @@
                     <div class="config-section">
                       <label>{{ "RE_ALLOW_FINISH" | translate }}</label>
                       <select
+                        id="allow-finish-select"
+                        class="allow-finish-select"
+                        data-testid="allow-finish-select"
                         [(ngModel)]="editingRace.heat_scoring.allow_finish"
                         (ngModelChange)="captureState()"
                       >
@@ -573,6 +617,9 @@
                     <div class="config-section">
                       <label>{{ "RE_OVERALL_RANKING" | translate }}</label>
                       <select
+                        id="overall-ranking-select"
+                        class="overall-ranking-select"
+                        data-testid="overall-ranking-select"
                         [(ngModel)]="editingRace.overall_scoring.ranking_method"
                         (ngModelChange)="captureState()"
                       >
@@ -585,6 +632,9 @@
                     <div class="config-section">
                       <label>{{ "RE_OVERALL_TIEBREAKER" | translate }}</label>
                       <select
+                        id="overall-tiebreaker-select"
+                        class="overall-tiebreaker-select"
+                        data-testid="overall-tiebreaker-select"
                         [(ngModel)]="editingRace.overall_scoring.tiebreaker"
                         (ngModelChange)="captureState()"
                       >
@@ -601,6 +651,9 @@
                     <div class="config-section">
                       <label>{{ "RE_DROPPED_HEATS" | translate }}</label>
                       <input
+                        id="dropped-heats-input"
+                        class="dropped-heats-input"
+                        data-testid="dropped-heats-input"
                         type="number"
                         [(ngModel)]="editingRace.overall_scoring.dropped_heats"
                         (ngModelChange)="captureState()"
@@ -631,7 +684,10 @@
               <div class="section-content">
                 <div class="scoring-layout">
                   <!-- Overall Position Points -->
-                  <div class="scoring-column">
+                  <div
+                    id="season-position-points-section"
+                    class="scoring-column"
+                  >
                     <h2 class="config-header">
                       {{ "SS_POSITION_POINTS" | translate }}
                     </h2>
@@ -674,6 +730,8 @@
                             </div>
                           }
                           <button
+                            id="season-add-pos-btn"
+                            data-testid="season-add-pos-btn"
                             type="button"
                             class="btn-add-pos"
                             (click)="addSeasonPositionPoint()"
@@ -686,7 +744,10 @@
                   </div>
 
                   <!-- Heat Position Points -->
-                  <div class="scoring-column">
+                  <div
+                    id="season-heat-position-points-section"
+                    class="scoring-column"
+                  >
                     <h2 class="config-header">
                       {{ "SS_HEAT_POSITION_POINTS" | translate }}
                     </h2>
@@ -730,7 +791,10 @@
                 <!-- Bonuses Layout -->
                 <div class="scoring-layout">
                   <!-- Overall Bonuses -->
-                  <div class="scoring-column">
+                  <div
+                    id="season-overall-bonuses-section"
+                    class="scoring-column"
+                  >
                     <h2 class="config-header">
                       {{ "SS_OVERALL_BONUSES" | translate }}
                     </h2>
@@ -738,6 +802,9 @@
                       <div class="editor-section">
                         <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
                         <input
+                          id="season-overall-carry-over-input"
+                          class="season-overall-carry-over-input"
+                          data-testid="season-overall-carry-over-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.overall_carry_over_pct
@@ -750,6 +817,9 @@
                       <div class="editor-section">
                         <label>{{ "SS_BONUS_FASTEST_LAP" | translate }}</label>
                         <input
+                          id="season-overall-fastest-lap-input"
+                          class="season-overall-fastest-lap-input"
+                          data-testid="season-overall-fastest-lap-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.overall_bonus_fastest_lap
@@ -763,6 +833,9 @@
                           "SS_BONUS_FASTEST_LAP_LANE" | translate
                         }}</label>
                         <input
+                          id="season-overall-fastest-lap-lane-input"
+                          class="season-overall-fastest-lap-lane-input"
+                          data-testid="season-overall-fastest-lap-lane-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring
@@ -777,6 +850,9 @@
                           "SS_BONUS_MOST_LAPS_LED" | translate
                         }}</label>
                         <input
+                          id="season-overall-most-laps-led-input"
+                          class="season-overall-most-laps-led-input"
+                          data-testid="season-overall-most-laps-led-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring
@@ -789,6 +865,9 @@
                       <div class="editor-section">
                         <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
                         <input
+                          id="season-overall-led-lap-input"
+                          class="season-overall-led-lap-input"
+                          data-testid="season-overall-led-lap-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.overall_bonus_led_lap
@@ -801,7 +880,10 @@
                         class="config-section checkbox-section"
                         style="margin-top: 8px; margin-bottom: 0"
                       >
-                        <label class="checkbox-container">
+                        <label
+                          id="season-overall-one-bonus-input"
+                          class="checkbox-container"
+                        >
                           <input
                             type="checkbox"
                             id="overall_one_bonus"
@@ -810,6 +892,8 @@
                                 .overall_one_bonus_per_driver
                             "
                             (ngModelChange)="captureState()"
+                            class="season-overall-one-bonus-input"
+                            data-testid="season-overall-one-bonus-input"
                           />
                           <span class="checkmark"></span>
                           <span class="checkbox-label">{{
@@ -821,7 +905,7 @@
                   </div>
 
                   <!-- Heat Bonuses -->
-                  <div class="scoring-column">
+                  <div id="season-heat-bonuses-section" class="scoring-column">
                     <h2 class="config-header">
                       {{ "SS_HEAT_BONUSES" | translate }}
                     </h2>
@@ -829,6 +913,9 @@
                       <div class="editor-section">
                         <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
                         <input
+                          id="season-heat-carry-over-input"
+                          class="season-heat-carry-over-input"
+                          data-testid="season-heat-carry-over-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.heat_carry_over_pct
@@ -841,6 +928,9 @@
                       <div class="editor-section">
                         <label>{{ "SS_BONUS_FASTEST_LAP" | translate }}</label>
                         <input
+                          id="season-heat-fastest-lap-input"
+                          class="season-heat-fastest-lap-input"
+                          data-testid="season-heat-fastest-lap-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.heat_bonus_fastest_lap
@@ -854,6 +944,9 @@
                           "SS_BONUS_MOST_LAPS_LED" | translate
                         }}</label>
                         <input
+                          id="season-heat-most-laps-led-input"
+                          class="season-heat-most-laps-led-input"
+                          data-testid="season-heat-most-laps-led-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.heat_bonus_most_laps_led
@@ -865,6 +958,9 @@
                       <div class="editor-section">
                         <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
                         <input
+                          id="season-heat-led-lap-input"
+                          class="season-heat-led-lap-input"
+                          data-testid="season-heat-led-lap-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.season_scoring.heat_bonus_led_lap
@@ -877,7 +973,10 @@
                         class="config-section checkbox-section"
                         style="margin-top: 8px; margin-bottom: 0"
                       >
-                        <label class="checkbox-container">
+                        <label
+                          id="season-heat-one-bonus-input"
+                          class="checkbox-container"
+                        >
                           <input
                             type="checkbox"
                             id="heat_one_bonus"
@@ -886,6 +985,8 @@
                                 .heat_one_bonus_per_driver
                             "
                             (ngModelChange)="captureState()"
+                            class="season-heat-one-bonus-input"
+                            data-testid="season-heat-one-bonus-input"
                           />
                           <span class="checkmark"></span>
                           <span class="checkbox-label">{{
@@ -915,6 +1016,9 @@
                   <div class="config-section">
                     <label>{{ "RE_AUTO_ADVANCE_TIME" | translate }}</label>
                     <input
+                      id="auto-advance-time-input"
+                      class="auto-advance-time-input"
+                      data-testid="auto-advance-time-input"
                       type="number"
                       [(ngModel)]="editingRace.auto_advance_time"
                       (ngModelChange)="captureState()"
@@ -927,6 +1031,9 @@
                       {{ "RE_AUTO_ADVANCE_WARMUP_TIME" | translate }}
                     </label>
                     <input
+                      id="auto-advance-warmup-time-input"
+                      class="auto-advance-warmup-time-input"
+                      data-testid="auto-advance-warmup-time-input"
                       type="number"
                       [(ngModel)]="editingRace.auto_advance_warmup_time"
                       (ngModelChange)="captureState()"
@@ -940,6 +1047,9 @@
                   <div class="config-section">
                     <label>{{ "RE_AUTO_START_TIME" | translate }}</label>
                     <input
+                      id="auto-start-time-input"
+                      class="auto-start-time-input"
+                      data-testid="auto-start-time-input"
                       type="number"
                       [(ngModel)]="editingRace.auto_start_time"
                       (ngModelChange)="captureState()"
@@ -952,6 +1062,9 @@
                       {{ "RE_AUTO_START_WARMUP_TIME" | translate }}
                     </label>
                     <input
+                      id="auto-start-warmup-time-input"
+                      class="auto-start-warmup-time-input"
+                      data-testid="auto-start-warmup-time-input"
                       type="number"
                       [(ngModel)]="editingRace.auto_start_warmup_time"
                       (ngModelChange)="captureState()"
@@ -968,6 +1081,8 @@
                     </label>
                     <input
                       id="heat-times-through-input"
+                      class="heat-times-through-input"
+                      data-testid="heat-times-through-input"
                       type="number"
                       [(ngModel)]="editingRace.heat_times_through"
                       (ngModelChange)="captureState()"
@@ -977,12 +1092,14 @@
                     />
                   </div>
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label id="reverse-heats-input" class="checkbox-container">
                       <input
                         id="reverse-heats-checkbox"
                         type="checkbox"
                         [(ngModel)]="editingRace.reverse_heats"
                         (ngModelChange)="captureState()"
+                        class="reverse-heats-input"
+                        data-testid="reverse-heats-input"
                       />
                       <span class="checkmark"></span>
                       <span class="checkbox-label">
@@ -1008,11 +1125,13 @@
               <div class="section-content">
                 <div class="config-row">
                   <div class="config-section checkbox-section">
-                    <label class="checkbox-container">
+                    <label id="groups-enabled-input" class="checkbox-container">
                       <input
                         type="checkbox"
                         [(ngModel)]="editingRace.group_options.enabled"
                         (ngModelChange)="captureState()"
+                        class="groups-enabled-input"
+                        data-testid="groups-enabled-input"
                       />
                       <span class="checkmark"></span>
                       <span class="checkbox-label">
@@ -1035,6 +1154,9 @@
                         >{{ "RE_GROUPS_MAX" | translate }}</label
                       >
                       <input
+                        id="groups-max-input"
+                        class="groups-max-input"
+                        data-testid="groups-max-input"
                         type="number"
                         [(ngModel)]="editingRace.group_options.max_groups"
                         (ngModelChange)="captureState()"
@@ -1048,6 +1170,7 @@
                     </div>
                     <div class="config-section checkbox-section">
                       <label
+                        id="groups-balance-input"
                         class="checkbox-container"
                         [class.disabled]="
                           !editingRace.group_options.enabled ||
@@ -1058,6 +1181,8 @@
                           type="checkbox"
                           [(ngModel)]="editingRace.group_options.balance"
                           (ngModelChange)="captureState()"
+                          class="groups-balance-input"
+                          data-testid="groups-balance-input"
                           [disabled]="
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
@@ -1073,6 +1198,7 @@
                   <div class="config-row">
                     <div class="config-section checkbox-section">
                       <label
+                        id="groups-allow-empty-input"
                         class="checkbox-container"
                         [class.disabled]="
                           !editingRace.group_options.enabled ||
@@ -1085,6 +1211,8 @@
                             editingRace.group_options.allow_empty_lanes
                           "
                           (ngModelChange)="captureState()"
+                          class="groups-allow-empty-input"
+                          data-testid="groups-allow-empty-input"
                           [disabled]="
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
@@ -1098,6 +1226,7 @@
                     </div>
                     <div class="config-section checkbox-section">
                       <label
+                        id="groups-force-multiple-input"
                         class="checkbox-container"
                         [class.disabled]="
                           !editingRace.group_options.enabled ||
@@ -1110,6 +1239,8 @@
                             editingRace.group_options.force_multiple_of_max
                           "
                           (ngModelChange)="captureState()"
+                          class="groups-force-multiple-input"
+                          data-testid="groups-force-multiple-input"
                           [disabled]="
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
@@ -1125,6 +1256,7 @@
                   <div class="config-row">
                     <div class="config-section checkbox-section">
                       <label
+                        id="groups-rotate-heats-input"
                         class="checkbox-container"
                         [class.disabled]="
                           !editingRace.group_options.enabled ||
@@ -1137,6 +1269,8 @@
                             editingRace.group_options.rotate_group_heats
                           "
                           (ngModelChange)="captureState()"
+                          class="groups-rotate-heats-input"
+                          data-testid="groups-rotate-heats-input"
                           [disabled]="
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
@@ -1154,6 +1288,9 @@
                         >{{ "RE_GROUPS_MIN_ADVANCING" | translate }}</label
                       >
                       <input
+                        id="groups-min-advancing-input"
+                        class="groups-min-advancing-input"
+                        data-testid="groups-min-advancing-input"
                         type="number"
                         [(ngModel)]="editingRace.group_options.min_advancing"
                         (ngModelChange)="captureState()"
@@ -1164,7 +1301,10 @@
                     </div>
                   </div>
                   <div class="config-row group-names-row">
-                    <div class="config-section full-width">
+                    <div
+                      id="groups-names-section"
+                      class="config-section full-width"
+                    >
                       <label
                         [class.disabled]="!editingRace.group_options.enabled"
                       >
@@ -1220,6 +1360,7 @@
                   <div class="config-row fuel-enabled-row">
                     <div class="config-section checkbox-section">
                       <label
+                        id="fuel-enabled-input"
                         class="checkbox-container"
                         [class.disabled]="hasDigitalFuel"
                       >
@@ -1227,6 +1368,8 @@
                           type="checkbox"
                           [(ngModel)]="editingRace.fuel_options.enabled"
                           (ngModelChange)="captureState()"
+                          class="fuel-enabled-input"
+                          data-testid="fuel-enabled-input"
                           [disabled]="hasDigitalFuel"
                         />
                         <span class="checkmark"></span>
@@ -1246,6 +1389,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_USAGE_TYPE" | translate }}</label>
                         <select
+                          id="fuel-usage-type-select"
+                          class="fuel-usage-type-select"
+                          data-testid="fuel-usage-type-select"
                           [(ngModel)]="editingRace.fuel_options.usage_type"
                           (ngModelChange)="captureState()"
                           [disabled]="
@@ -1266,6 +1412,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
                         <input
+                          id="fuel-usage-rate-input"
+                          class="fuel-usage-rate-input"
+                          data-testid="fuel-usage-rate-input"
                           type="number"
                           [(ngModel)]="editingRace.fuel_options.usage_rate"
                           (ngModelChange)="captureState()"
@@ -1281,6 +1430,9 @@
                           "RE_FUEL_REFERENCE_TIME" | translate
                         }}</label>
                         <input
+                          id="fuel-reference-time-input"
+                          class="fuel-reference-time-input"
+                          data-testid="fuel-reference-time-input"
                           type="number"
                           [(ngModel)]="editingRace.fuel_options.reference_time"
                           (ngModelChange)="captureState()"
@@ -1296,6 +1448,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_CAPACITY" | translate }}</label>
                         <input
+                          id="fuel-capacity-input"
+                          class="fuel-capacity-input"
+                          data-testid="fuel-capacity-input"
                           type="number"
                           [(ngModel)]="editingRace.fuel_options.capacity"
                           (ngModelChange)="captureState()"
@@ -1309,6 +1464,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_START_LEVEL" | translate }}</label>
                         <input
+                          id="fuel-start-level-input"
+                          class="fuel-start-level-input"
+                          data-testid="fuel-start-level-input"
                           type="number"
                           [(ngModel)]="editingRace.fuel_options.start_level"
                           (ngModelChange)="captureState()"
@@ -1325,6 +1483,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_REFUEL_RATE" | translate }}</label>
                         <input
+                          id="fuel-refuel-rate-input"
+                          class="fuel-refuel-rate-input"
+                          data-testid="fuel-refuel-rate-input"
                           type="number"
                           [(ngModel)]="editingRace.fuel_options.refuel_rate"
                           (ngModelChange)="captureState()"
@@ -1338,6 +1499,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_PIT_DELAY" | translate }}</label>
                         <input
+                          id="fuel-pit-delay-input"
+                          class="fuel-pit-delay-input"
+                          data-testid="fuel-pit-delay-input"
                           type="number"
                           [(ngModel)]="editingRace.fuel_options.pit_stop_delay"
                           (ngModelChange)="captureState()"
@@ -1352,6 +1516,7 @@
                     <div class="config-row">
                       <div class="config-section checkbox-section">
                         <label
+                          id="fuel-reset-at-start-input"
                           class="checkbox-container"
                           [class.disabled]="
                             hasDigitalFuel || !editingRace.fuel_options.enabled
@@ -1363,6 +1528,8 @@
                               editingRace.fuel_options.reset_fuel_at_heat_start
                             "
                             (ngModelChange)="captureState()"
+                            class="fuel-reset-at-start-input"
+                            data-testid="fuel-reset-at-start-input"
                             [disabled]="
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
@@ -1377,6 +1544,9 @@
                       <div class="config-section">
                         <label>{{ "RE_OUT_OF_FUEL_ACTION" | translate }}</label>
                         <select
+                          id="fuel-out-of-fuel-action-select"
+                          class="fuel-out-of-fuel-action-select"
+                          data-testid="fuel-out-of-fuel-action-select"
                           [(ngModel)]="
                             editingRace.fuel_options.out_of_fuel_action
                           "
@@ -1701,6 +1871,7 @@
                   <div class="config-row fuel-enabled-row">
                     <div class="config-section checkbox-section">
                       <label
+                        id="digital-fuel-enabled-input"
                         class="checkbox-container"
                         [class.disabled]="!hasDigitalFuel"
                       >
@@ -1708,7 +1879,8 @@
                           type="checkbox"
                           [(ngModel)]="editingRace.digital_fuel_options.enabled"
                           (ngModelChange)="captureState()"
-                          id="digital-fuel-enabled-checkbox"
+                          class="digital-fuel-enabled-input"
+                          data-testid="digital-fuel-enabled-input"
                           [disabled]="!hasDigitalFuel"
                         />
                         <span class="checkmark"></span>
@@ -1731,6 +1903,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_USAGE_TYPE" | translate }}</label>
                         <select
+                          id="digital-fuel-usage-type-select"
+                          class="digital-fuel-usage-type-select"
+                          data-testid="digital-fuel-usage-type-select"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.usage_type
                           "
@@ -1754,6 +1929,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
                         <input
+                          id="digital-fuel-usage-rate-input"
+                          class="digital-fuel-usage-rate-input"
+                          data-testid="digital-fuel-usage-rate-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.usage_rate
@@ -1770,6 +1948,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_CAPACITY" | translate }}</label>
                         <input
+                          id="digital-fuel-capacity-input"
+                          class="digital-fuel-capacity-input"
+                          data-testid="digital-fuel-capacity-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.capacity
@@ -1788,6 +1969,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_START_LEVEL" | translate }}</label>
                         <input
+                          id="digital-fuel-start-level-input"
+                          class="digital-fuel-start-level-input"
+                          data-testid="digital-fuel-start-level-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.start_level
@@ -1805,6 +1989,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_REFUEL_RATE" | translate }}</label>
                         <input
+                          id="digital-fuel-refuel-rate-input"
+                          class="digital-fuel-refuel-rate-input"
+                          data-testid="digital-fuel-refuel-rate-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.refuel_rate
@@ -1821,6 +2008,9 @@
                       <div class="config-section">
                         <label>{{ "RE_FUEL_PIT_DELAY" | translate }}</label>
                         <input
+                          id="digital-fuel-pit-delay-input"
+                          class="digital-fuel-pit-delay-input"
+                          data-testid="digital-fuel-pit-delay-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.pit_stop_delay
@@ -1838,6 +2028,7 @@
                     <div class="config-row">
                       <div class="config-section checkbox-section">
                         <label
+                          id="digital-fuel-reset-at-start-input"
                           class="checkbox-container"
                           [class.disabled]="
                             !hasDigitalFuel ||
@@ -1851,6 +2042,8 @@
                                 .reset_fuel_at_heat_start
                             "
                             (ngModelChange)="captureState()"
+                            class="digital-fuel-reset-at-start-input"
+                            data-testid="digital-fuel-reset-at-start-input"
                             [disabled]="
                               !hasDigitalFuel ||
                               !editingRace.digital_fuel_options.enabled
@@ -1865,6 +2058,9 @@
                       <div class="config-section">
                         <label>{{ "RE_OUT_OF_FUEL_ACTION" | translate }}</label>
                         <select
+                          id="digital-fuel-out-of-fuel-action-select"
+                          class="digital-fuel-out-of-fuel-action-select"
+                          data-testid="digital-fuel-out-of-fuel-action-select"
                           [(ngModel)]="
                             editingRace.digital_fuel_options.out_of_fuel_action
                           "
@@ -2143,7 +2339,7 @@
                 [class.collapsed]="!sectionsExpanded.team"
                 >▼</span
               >
-              <h1>Team Options</h1>
+              <h1>{{ "RE_TEAM_OPTIONS_HEADER" | translate }}</h1>
             </div>
             @if (sectionsExpanded.team) {
               <div class="section-content">
@@ -2153,7 +2349,10 @@
                       class="config-section checkbox-section"
                       style="margin-bottom: 15px"
                     >
-                      <label class="checkbox-container">
+                      <label
+                        id="team-pit-stop-change-driver-input"
+                        class="checkbox-container"
+                      >
                         <input
                           type="checkbox"
                           [(ngModel)]="
@@ -2161,17 +2360,24 @@
                               .require_pit_stop_change_driver
                           "
                           (ngModelChange)="captureState()"
+                          class="team-pit-stop-change-driver-input"
+                          data-testid="team-pit-stop-change-driver-input"
                         />
                         <span class="checkmark"></span>
-                        <span class="checkbox-label"
-                          >Require Pit Stop to Change Driver</span
-                        >
+                        <span class="checkbox-label">{{
+                          "RE_TEAM_PIT_STOP_CHANGE_DRIVER" | translate
+                        }}</span>
                       </label>
                     </div>
                     <div class="config-row">
                       <div class="editor-section">
-                        <label>Heat Lap Limit</label>
+                        <label>{{
+                          "RE_TEAM_HEAT_LAP_LIMIT" | translate
+                        }}</label>
                         <input
+                          id="team-heat-lap-limit-input"
+                          class="team-heat-lap-limit-input"
+                          data-testid="team-heat-lap-limit-input"
                           type="number"
                           [(ngModel)]="editingRace.team_options.heat_lap_limit"
                           (ngModelChange)="captureState()"
@@ -2180,8 +2386,13 @@
                         />
                       </div>
                       <div class="editor-section">
-                        <label>Heat Time Limit (seconds)</label>
+                        <label>{{
+                          "RE_TEAM_HEAT_TIME_LIMIT" | translate
+                        }}</label>
                         <input
+                          id="team-heat-time-limit-input"
+                          class="team-heat-time-limit-input"
+                          data-testid="team-heat-time-limit-input"
                           type="number"
                           [(ngModel)]="editingRace.team_options.heat_time_limit"
                           (ngModelChange)="captureState()"
@@ -2192,8 +2403,13 @@
                     </div>
                     <div class="config-row">
                       <div class="editor-section">
-                        <label>Overall Lap Limit</label>
+                        <label>{{
+                          "RE_TEAM_OVERALL_LAP_LIMIT" | translate
+                        }}</label>
                         <input
+                          id="team-overall-lap-limit-input"
+                          class="team-overall-lap-limit-input"
+                          data-testid="team-overall-lap-limit-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.team_options.overall_lap_limit
@@ -2204,8 +2420,13 @@
                         />
                       </div>
                       <div class="editor-section">
-                        <label>Overall Time Limit (seconds)</label>
+                        <label>{{
+                          "RE_TEAM_OVERALL_TIME_LIMIT" | translate
+                        }}</label>
                         <input
+                          id="team-overall-time-limit-input"
+                          class="team-overall-time-limit-input"
+                          data-testid="team-overall-time-limit-input"
                           type="number"
                           [(ngModel)]="
                             editingRace.team_options.overall_time_limit

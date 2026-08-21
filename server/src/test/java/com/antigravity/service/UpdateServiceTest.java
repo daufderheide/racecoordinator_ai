@@ -22,6 +22,9 @@ public class UpdateServiceTest {
   public void setUp() {
     mockConfigService = mock(ServerConfigService.class);
     when(mockConfigService.getSkippedUpdateVersion()).thenReturn(null);
+    when(mockConfigService.getUpdateChannel()).thenReturn("ALPHA");
+    when(mockConfigService.getSnoozedUpdateVersion()).thenReturn(null);
+    when(mockConfigService.getSnoozedUpdateUntil()).thenReturn(0L);
   }
 
   @Test
@@ -358,5 +361,177 @@ public class UpdateServiceTest {
     // 200MB downloaded, no content length (exceeds fallback, still capped at 99%)
     progress = UpdateService.calculateDownloadProgress(200 * 1024 * 1024L, -1);
     assertEquals(99, progress);
+  }
+
+  @Test
+  public void testCheckForUpdates_AlphaChannel_SelectsNewestRelease() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("ALPHA");
+    UpdateService service = spy(new UpdateService("v0.0.0-alpha.20260701", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0\",\n"
+            + "    \"published_at\": \"2026-07-20T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0-beta.1\",\n"
+            + "    \"published_at\": \"2026-07-15T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260710\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue(result.updateAvailable);
+    assertEquals("v1.0.0", result.latestVersion);
+  }
+
+  @Test
+  public void testCheckForUpdates_BetaChannel_FiltersOutAlpha() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("BETA");
+    UpdateService service = spy(new UpdateService("v1.0.0-beta.1", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260720\",\n"
+            + "    \"published_at\": \"2026-07-20T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.0-beta.2\",\n"
+            + "    \"published_at\": \"2026-07-15T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue(result.updateAvailable);
+    assertEquals("v1.0.0-beta.2", result.latestVersion);
+  }
+
+  @Test
+  public void testCheckForUpdates_ProductionChannel_FiltersOutAlphaAndBeta() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("PRODUCTION");
+    UpdateService service = spy(new UpdateService("v1.0.0", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v0.0.0-alpha.20260720\",\n"
+            + "    \"published_at\": \"2026-07-20T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.1.0-beta.1\",\n"
+            + "    \"published_at\": \"2026-07-15T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.1\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue(result.updateAvailable);
+    assertEquals("v1.0.1", result.latestVersion);
+  }
+
+  @Test
+  public void testCheckForUpdates_DisabledChannel_ReturnsFalseUnlessForced() throws Exception {
+    when(mockConfigService.getUpdateChannel()).thenReturn("DISABLED");
+    UpdateService service = spy(new UpdateService("v1.0.0", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.1\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult autoResult = service.checkForUpdates(false);
+    assertFalse(autoResult.updateAvailable);
+
+    service.clearCache();
+    UpdateService.UpdateCheckResult forceResult = service.checkForUpdates(true);
+    assertTrue(forceResult.updateAvailable);
+    assertEquals("v1.0.1", forceResult.latestVersion);
+  }
+
+  @Test
+  public void testCheckForUpdates_SnoozedUpdate_SuppressedUntilExpired() throws Exception {
+    when(mockConfigService.getSnoozedUpdateVersion()).thenReturn("v1.0.1");
+    // Snooze active for next 7 days
+    when(mockConfigService.getSnoozedUpdateUntil())
+        .thenReturn(System.currentTimeMillis() + 7 * 86400000L);
+
+    UpdateService service = spy(new UpdateService("v1.0.0", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.1\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertFalse("Snoozed version should be suppressed", result.updateAvailable);
+
+    // After snooze expires
+    when(mockConfigService.getSnoozedUpdateUntil()).thenReturn(System.currentTimeMillis() - 1000L);
+    service.clearCache();
+    UpdateService.UpdateCheckResult expiredResult = service.checkForUpdates();
+    assertTrue("Expired snooze should allow update", expiredResult.updateAvailable);
+  }
+
+  @Test
+  public void testCheckForUpdates_SnoozedUpdate_NewerVersionBypassesSnooze() throws Exception {
+    when(mockConfigService.getSnoozedUpdateVersion()).thenReturn("v1.0.1");
+    when(mockConfigService.getSnoozedUpdateUntil())
+        .thenReturn(System.currentTimeMillis() + 7 * 86400000L);
+
+    UpdateService service = spy(new UpdateService("v1.0.0", mockConfigService));
+
+    String json =
+        "[\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.2\",\n"
+            + "    \"published_at\": \"2026-07-15T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  },\n"
+            + "  {\n"
+            + "    \"tag_name\": \"v1.0.1\",\n"
+            + "    \"published_at\": \"2026-07-10T14:00:00Z\",\n"
+            + "    \"assets\": []\n"
+            + "  }\n"
+            + "]";
+    JsonNode releases = mapper.readTree(json);
+    doReturn(releases).when(service).fetchReleasesNode();
+
+    UpdateService.UpdateCheckResult result = service.checkForUpdates();
+    assertTrue("Newer version v1.0.2 should bypass snooze of v1.0.1", result.updateAvailable);
+    assertEquals("v1.0.2", result.latestVersion);
   }
 }

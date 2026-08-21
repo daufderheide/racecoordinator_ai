@@ -45,6 +45,22 @@ public class RaceOverTest {
     assertEquals(RaceFlag.RED, raceOver.getFlagType(race));
   }
 
+  @Test
+  public void testGetFlagType_ThemedFlagResolution() {
+    java.util.Map<String, String> slots = new java.util.HashMap<>();
+    slots.put("flag.race_over", "default_flag_yellow");
+    slots.put("flag.heat_over", "default_flag_green");
+    com.antigravity.models.Theme theme =
+        new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    when(race.isLastHeat()).thenReturn(true);
+    assertEquals(RaceFlag.YELLOW, raceOver.getFlagType(race));
+
+    when(race.isLastHeat()).thenReturn(false);
+    assertEquals(RaceFlag.GREEN, raceOver.getFlagType(race));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testPause_ThrowsWhenRaceOver() {
     raceOver.pause(race);

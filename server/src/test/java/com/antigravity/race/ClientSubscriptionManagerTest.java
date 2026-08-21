@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,7 @@ import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -200,11 +202,21 @@ public class ClientSubscriptionManagerTest {
   }
 
   @Test
-  public void testSetShuttingDownClearsEverything() {
+  public void testSetShuttingDownClearsEverything() throws Exception {
     Race mockRace = mock(Race.class);
     ProtocolDelegate mockProtocol = mock(ProtocolDelegate.class);
     manager.setRace(mockRace);
     manager.setProtocol(mockProtocol);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addSession(mockContext);
+    manager.addInterfaceSession(mockContext);
 
     manager.setShuttingDown(true);
 
@@ -212,9 +224,22 @@ public class ClientSubscriptionManagerTest {
     assertNull("Protocol should be cleared on shutdown", manager.getProtocol());
     verify(mockProtocol).close();
     verify(mockRace).stop();
+    verify(mockSession, atLeastOnce()).close();
 
     // Reset for next tests
     manager.setShuttingDown(false);
+  }
+
+  @Test
+  public void testSchedulerDaemonThreads() throws Exception {
+    Field schedulerField = ClientSubscriptionManager.class.getDeclaredField("scheduler");
+    schedulerField.setAccessible(true);
+    ScheduledExecutorService ses = (ScheduledExecutorService) schedulerField.get(manager);
+
+    java.util.concurrent.atomic.AtomicBoolean isDaemon =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    ses.submit(() -> isDaemon.set(Thread.currentThread().isDaemon())).get();
+    assertTrue("ClientSubscriptionManager scheduler thread must be daemon", isDaemon.get());
   }
 
   @Test

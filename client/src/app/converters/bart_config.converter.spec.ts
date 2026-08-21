@@ -18,8 +18,11 @@ describe("BartConfigConverter", () => {
 
     expect(config.name).toBe("BART_TEST");
     expect(config.deviceName).toBe("BART_0001");
+    expect(config.deviceAddress).toBe("AA:BB:CC:DD:EE:FF");
+    expect(config.minLapMs).toBe(1000);
     expect(config.lapPinPitBehavior).toBe(0);
     expect(config.numLanes).toBe(4);
+    expect(config.lapPinBehaviors).toEqual([0, 1, 2, 3]);
   });
 
   it("should convert to proto maintaining lapPinPitBehavior = 0", () => {
@@ -36,7 +39,11 @@ describe("BartConfigConverter", () => {
     const proto = BartConfigConverter.toProto(config);
 
     expect(proto.name).toBe("BART_TEST");
+    expect(proto.deviceName).toBe("BART_0001");
+    expect(proto.deviceAddress).toBe("AA:BB:CC:DD:EE:FF");
+    expect(proto.minLapMs).toBe(1000);
     expect(proto.lapPinPitBehavior).toBe(0);
     expect(proto.numLanes).toBe(4);
+    expect(proto.lapPinBehaviors).toEqual([0, 1, 2, 3]);
   });
 });

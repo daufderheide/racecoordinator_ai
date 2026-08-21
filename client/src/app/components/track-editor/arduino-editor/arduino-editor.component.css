@@ -457,6 +457,17 @@
   font-weight: 600;
 }
 
+.dropdown-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #64748b;
+}
+
+.dropdown-item.disabled:hover {
+  background: transparent;
+  color: #64748b;
+}
+
 .group-header {
   padding: 8px 12px;
   background: rgba(30, 41, 59, 0.5);

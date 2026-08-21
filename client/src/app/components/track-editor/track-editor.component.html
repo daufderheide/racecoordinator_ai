@@ -10,7 +10,7 @@
     [disabledCopy]="!isConfigValid()"
     [copyDisabledTooltipKey]="'TE_TOOLTIP_COPY_DISABLED'"
     [isSaving]="isSaving"
-    [helpSteps]="helpSteps"
+    [helpSteps]="getHelpSteps()"
     [helpRecordName]="'trackEditorHelpShown'"
     (copy)="saveAsNew()"
   >
@@ -282,7 +282,6 @@
                     "
                     >Trackmate</span
                   >
-                  <span class="interface-badge beta-badge">BETA</span>
                   <div class="spacer"></div>
                   <button
                     id="add-trakmate-btn"

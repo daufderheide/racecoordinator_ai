@@ -20,6 +20,9 @@ export class AboutDialogHarness
   protected getCharityInfoElement = this.locatorForOptional(
     AboutDialogHarnessBase.selectors.charityInfo,
   );
+  protected getDonateLinkElement = this.locatorForOptional(
+    AboutDialogHarnessBase.selectors.donateLink,
+  );
   protected getCreditsPanelElement = this.locatorForOptional(
     AboutDialogHarnessBase.selectors.creditsPanel,
   );
@@ -58,6 +61,11 @@ export class AboutDialogHarness
 
   async isCharityTabVisible(): Promise<boolean> {
     return (await this.getCharityInfoElement()) !== null;
+  }
+
+  async getDonateLinkHref(): Promise<string | null> {
+    const el = await this.getDonateLinkElement();
+    return el ? await el.getAttribute("href") : null;
   }
 
   async isCreditsTabVisible(): Promise<boolean> {

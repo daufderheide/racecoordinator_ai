@@ -418,7 +418,7 @@ Prerequisites:
 Installation/Running:
 - Mac: Double-click start_mac.command
 - Windows: Double-click start_win.bat
-- Linux / Raspberry Pi: Run ./start_linux_rpi.sh
+- Linux / Raspberry Pi / Arduino Uno Q: Run ./start_linux_rpi.sh
 
 Windows Installation Note:
 If Java is not found, run setup_windows.bat. 

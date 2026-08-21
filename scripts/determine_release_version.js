@@ -51,25 +51,25 @@ function normalizeVersion(ver) {
 function getReleaseTitle(version, isPrerelease) {
   const isPre = isPrerelease === 'true' || isPrerelease === true;
   if (!isPre) {
-    return `Race Coordinator AI v${version} (Official Release)`;
+    return `v${version} — Official Release`;
   }
   if (version.includes('-beta.')) {
     const parts = version.split('-beta.');
-    return `Race Coordinator AI v${parts[0]} Beta ${parts[1]}`;
+    return `v${parts[0]}-beta.${parts[1]} — Beta Preview`;
   }
   if (version.includes('-alpha.')) {
     const parts = version.split('-alpha.');
-    return `Race Coordinator AI v${parts[0]} Alpha (${parts[1]})`;
+    return `v${parts[0]}-alpha.${parts[1]} — Alpha Build`;
   }
-  return `Race Coordinator AI v${version}`;
+  return `v${version}`;
 }
 
 function determineVersion(eventName, ref, overrideVersion, customTags, customRootVersion, customCommitHash) {
   // 1. Manual release (workflow_dispatch) checks
   if (eventName === 'workflow_dispatch') {
     const cleanRef = (ref || '').replace(/^refs\/heads\//, '');
-    if (cleanRef === 'main' || cleanRef.startsWith('release/')) {
-      throw new Error(`Manual release is not permitted on '${cleanRef}'. Releases on main and release branches must be triggered via git push.`);
+    if (cleanRef.startsWith('release/')) {
+      throw new Error(`Manual release is not permitted on '${cleanRef}'. Releases on release branches must be triggered via git push.`);
     }
 
     // Explicit manual version override (e.g. from workflow_dispatch input)
@@ -81,6 +81,36 @@ function determineVersion(eventName, ref, overrideVersion, customTags, customRoo
         tag: `v${cleanVer}`,
         isPrerelease: isPrerelease ? 'true' : 'false',
         releaseTitle: getReleaseTitle(cleanVer, isPrerelease)
+      };
+    }
+
+    // Manual release on main -> official production release
+    if (cleanRef === 'main') {
+      const rootVer = customRootVersion !== undefined ? customRootVersion : getRootVersion();
+      const rootParts = rootVer.replace(/^v/, '').split('.');
+      const major = rootParts[0] || '0';
+      const minor = rootParts[1] || '0';
+      const configuredPatch = parseInt(rootParts[2] || '0', 10);
+      const prefix = `${major}.${minor}`;
+      const existingTags = customTags !== undefined ? customTags : getExistingTags();
+
+      const officialRegex = new RegExp(`^v?${major}\\.${minor}\\.(\\d+)$`);
+      let maxPatch = -1;
+      for (const tag of existingTags) {
+        const match = tag.match(officialRegex);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxPatch) maxPatch = num;
+        }
+      }
+
+      const nextPatch = maxPatch === -1 ? configuredPatch : Math.max(configuredPatch, maxPatch + 1);
+      const version = `${prefix}.${nextPatch}`;
+      return {
+        version,
+        tag: `v${version}`,
+        isPrerelease: 'false',
+        releaseTitle: getReleaseTitle(version, false)
       };
     }
 

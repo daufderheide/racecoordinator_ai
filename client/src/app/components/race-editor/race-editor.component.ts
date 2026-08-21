@@ -1884,6 +1884,20 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   getHelpSteps(): GuideStep[] {
     return [
+      ...this.getGeneralHelpSteps(),
+      ...this.getStartMethodHelpSteps(),
+      ...this.getScoringHelpSteps(),
+      ...this.getSeasonPointsHelpSteps(),
+      ...this.getHeatsHelpSteps(),
+      ...this.getGroupsHelpSteps(),
+      ...this.getAnalogFuelHelpSteps(),
+      ...this.getDigitalFuelHelpSteps(),
+      ...this.getTeamOptionsHelpSteps(),
+    ];
+  }
+
+  private getGeneralHelpSteps(): GuideStep[] {
+    return [
       {
         title: this.translationService.translate("RE_HELP_WELCOME_TITLE"),
         content: this.translationService.translate("RE_HELP_WELCOME_CONTENT"),
@@ -1894,6 +1908,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         title: this.translationService.translate("RM_LABEL_NAME"),
         content: this.translationService.translate("RE_HELP_NAME_CONTENT"),
         position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#heat-rotation-select",
@@ -1902,12 +1921,22 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           "RE_HELP_HEAT_ROTATION_CONTENT",
         ),
         position: "right",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#heat-list-section",
         title: this.translationService.translate("RE_HELP_HEAT_LIST_TITLE"),
         content: this.translationService.translate("RE_HELP_HEAT_LIST_CONTENT"),
         position: "right",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#driver-count-section",
@@ -1916,12 +1945,22 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           "RE_HELP_DRIVER_COUNT_CONTENT",
         ),
         position: "right",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#track-select",
         title: this.translationService.translate("RM_LABEL_TRACK"),
         content: this.translationService.translate("RE_HELP_TRACK_CONTENT"),
         position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#min-lap-time-input",
@@ -1930,6 +1969,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           "RE_HELP_MIN_LAP_TIME_CONTENT",
         ),
         position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#drift-time-input",
@@ -1938,6 +1982,22 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           "RE_HELP_DRIFT_TIME_CONTENT",
         ),
         position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
+      },
+      {
+        selector: "#practice-input",
+        title: this.translationService.translate("RE_HELP_PRACTICE_TITLE"),
+        content: this.translationService.translate("RE_HELP_PRACTICE_CONTENT"),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
       },
       {
         selector: "#adjust-drift-laps-input",
@@ -1948,12 +2008,1058 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           "RE_HELP_ADJUST_DRIFT_LAPS_CONTENT",
         ),
         position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getStartMethodHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#start-time-input",
+        title: this.translationService.translate("RE_HELP_START_TIME_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_START_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
       },
       {
-        selector: "#practice-input",
-        title: this.translationService.translate("RE_HELP_PRACTICE_TITLE"),
-        content: this.translationService.translate("RE_HELP_PRACTICE_CONTENT"),
+        selector: "#restart-time-input",
+        title: this.translationService.translate("RE_HELP_RESTART_TIME_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_RESTART_TIME_CONTENT",
+        ),
         position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#start-randomizer-input",
+        title: this.translationService.translate(
+          "RE_HELP_START_RANDOMIZER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_START_RANDOMIZER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#restart-randomizer-input",
+        title: this.translationService.translate(
+          "RE_HELP_RESTART_RANDOMIZER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_RESTART_RANDOMIZER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#start-behind-sensor-input",
+        title: this.translationService.translate(
+          "RE_HELP_START_BEHIND_SENSOR_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_START_BEHIND_SENSOR_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#start-at-current-input",
+        title: this.translationService.translate(
+          "RE_HELP_START_AT_CURRENT_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_START_AT_CURRENT_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#hot-start-input",
+        title: this.translationService.translate("RE_HELP_HOT_START_TITLE"),
+        content: this.translationService.translate("RE_HELP_HOT_START_CONTENT"),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#restart-on-false-start-input",
+        title: this.translationService.translate(
+          "RE_HELP_RESTART_ON_FALSE_START_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_RESTART_ON_FALSE_START_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#false-start-lap-penalty-input",
+        title: this.translationService.translate(
+          "RE_HELP_FALSE_START_LAP_PENALTY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FALSE_START_LAP_PENALTY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+      {
+        selector: "#false-start-time-penalty-input",
+        title: this.translationService.translate(
+          "RE_HELP_FALSE_START_TIME_PENALTY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FALSE_START_TIME_PENALTY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.start_method) {
+            this.sectionsExpanded.start_method = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getScoringHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#heat-ranking-select",
+        title: this.translationService.translate("RE_HELP_HEAT_RANKING_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_HEAT_RANKING_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#heat-tiebreaker-select",
+        title: this.translationService.translate(
+          "RE_HELP_HEAT_TIEBREAKER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_HEAT_TIEBREAKER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#finish-method-select",
+        title: this.translationService.translate("RE_HELP_FINISH_METHOD_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_FINISH_METHOD_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#finish-value-input",
+        title: this.translationService.translate("RE_HELP_FINISH_VALUE_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_FINISH_VALUE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#allow-finish-select",
+        title: this.translationService.translate("RE_HELP_ALLOW_FINISH_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_ALLOW_FINISH_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#overall-ranking-select",
+        title: this.translationService.translate(
+          "RE_HELP_OVERALL_RANKING_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_OVERALL_RANKING_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#overall-tiebreaker-select",
+        title: this.translationService.translate(
+          "RE_HELP_OVERALL_TIEBREAKER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_OVERALL_TIEBREAKER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+      {
+        selector: "#dropped-heats-input",
+        title: this.translationService.translate("RE_HELP_DROPPED_HEATS_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_DROPPED_HEATS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.scoring) {
+            this.sectionsExpanded.scoring = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getSeasonPointsHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#season-position-points-section",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_POSITION_POINTS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_POSITION_POINTS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-heat-position-points-section",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_POSITION_POINTS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_POSITION_POINTS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-overall-carry-over-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_CARRY_OVER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_CARRY_OVER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-overall-fastest-lap-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_FASTEST_LAP_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_FASTEST_LAP_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-overall-fastest-lap-lane-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_FASTEST_LAP_LANE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_FASTEST_LAP_LANE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-overall-most-laps-led-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_MOST_LAPS_LED_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_MOST_LAPS_LED_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-overall-led-lap-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_LED_LAP_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_LED_LAP_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-overall-one-bonus-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_ONE_BONUS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_OVERALL_ONE_BONUS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-heat-carry-over-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_CARRY_OVER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_CARRY_OVER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-heat-fastest-lap-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_FASTEST_LAP_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_FASTEST_LAP_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-heat-most-laps-led-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_MOST_LAPS_LED_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_MOST_LAPS_LED_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-heat-led-lap-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_LED_LAP_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_LED_LAP_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+      {
+        selector: "#season-heat-one-bonus-input",
+        title: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_ONE_BONUS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_SEASON_HEAT_ONE_BONUS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.season_points) {
+            this.sectionsExpanded.season_points = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getHeatsHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#auto-advance-time-input",
+        title: this.translationService.translate(
+          "RE_HELP_AUTO_ADVANCE_TIME_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_AUTO_ADVANCE_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.heats) {
+            this.sectionsExpanded.heats = true;
+          }
+        },
+      },
+      {
+        selector: "#auto-advance-warmup-time-input",
+        title: this.translationService.translate(
+          "RE_HELP_AUTO_ADVANCE_WARMUP_TIME_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_AUTO_ADVANCE_WARMUP_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.heats) {
+            this.sectionsExpanded.heats = true;
+          }
+        },
+      },
+      {
+        selector: "#auto-start-time-input",
+        title: this.translationService.translate(
+          "RE_HELP_AUTO_START_TIME_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_AUTO_START_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.heats) {
+            this.sectionsExpanded.heats = true;
+          }
+        },
+      },
+      {
+        selector: "#auto-start-warmup-time-input",
+        title: this.translationService.translate(
+          "RE_HELP_AUTO_START_WARMUP_TIME_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_AUTO_START_WARMUP_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.heats) {
+            this.sectionsExpanded.heats = true;
+          }
+        },
+      },
+      {
+        selector: "#heat-times-through-input",
+        title: this.translationService.translate(
+          "RE_HELP_HEAT_TIMES_THROUGH_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_HEAT_TIMES_THROUGH_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.heats) {
+            this.sectionsExpanded.heats = true;
+          }
+        },
+      },
+      {
+        selector: "#reverse-heats-input",
+        title: this.translationService.translate("RE_HELP_REVERSE_HEATS_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_REVERSE_HEATS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.heats) {
+            this.sectionsExpanded.heats = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getGroupsHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#groups-enabled-input",
+        title: this.translationService.translate(
+          "RE_HELP_GROUPS_ENABLED_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_ENABLED_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-max-input",
+        title: this.translationService.translate("RE_HELP_GROUPS_MAX_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_MAX_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-balance-input",
+        title: this.translationService.translate(
+          "RE_HELP_GROUPS_BALANCE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_BALANCE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-allow-empty-input",
+        title: this.translationService.translate(
+          "RE_HELP_GROUPS_ALLOW_EMPTY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_ALLOW_EMPTY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-force-multiple-input",
+        title: this.translationService.translate(
+          "RE_HELP_GROUPS_FORCE_MULTIPLE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_FORCE_MULTIPLE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-rotate-heats-input",
+        title: this.translationService.translate(
+          "RE_HELP_GROUPS_ROTATE_HEATS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_ROTATE_HEATS_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-min-advancing-input",
+        title: this.translationService.translate(
+          "RE_HELP_GROUPS_MIN_ADVANCING_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_MIN_ADVANCING_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+      {
+        selector: "#groups-names-section",
+        title: this.translationService.translate("RE_HELP_GROUPS_NAMES_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_GROUPS_NAMES_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.groups) {
+            this.sectionsExpanded.groups = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getAnalogFuelHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#fuel-enabled-input",
+        title: this.translationService.translate("RE_HELP_FUEL_ENABLED_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_ENABLED_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-usage-type-select",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_USAGE_TYPE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_USAGE_TYPE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-usage-rate-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_USAGE_RATE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_USAGE_RATE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-reference-time-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_REFERENCE_TIME_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_REFERENCE_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-capacity-input",
+        title: this.translationService.translate("RE_HELP_FUEL_CAPACITY_TITLE"),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_CAPACITY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-start-level-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_START_LEVEL_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_START_LEVEL_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-refuel-rate-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_REFUEL_RATE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_REFUEL_RATE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-pit-delay-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_PIT_DELAY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_PIT_DELAY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-reset-at-start-input",
+        title: this.translationService.translate(
+          "RE_HELP_RESET_FUEL_AT_START_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_RESET_FUEL_AT_START_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-out-of-fuel-action-select",
+        title: this.translationService.translate(
+          "RE_HELP_OUT_OF_FUEL_ACTION_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_OUT_OF_FUEL_ACTION_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getDigitalFuelHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#digital-fuel-enabled-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_ENABLED_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_ENABLED_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-usage-type-select",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_USAGE_TYPE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_USAGE_TYPE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-usage-rate-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_USAGE_RATE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_USAGE_RATE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-capacity-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_CAPACITY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_CAPACITY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-start-level-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_START_LEVEL_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_START_LEVEL_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-refuel-rate-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_REFUEL_RATE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_REFUEL_RATE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-pit-delay-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_PIT_DELAY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_FUEL_PIT_DELAY_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-reset-at-start-input",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_RESET_FUEL_AT_START_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_RESET_FUEL_AT_START_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+      {
+        selector: "#digital-fuel-out-of-fuel-action-select",
+        title: this.translationService.translate(
+          "RE_HELP_DIGITAL_OUT_OF_FUEL_ACTION_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_DIGITAL_OUT_OF_FUEL_ACTION_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_digital) {
+            this.sectionsExpanded.fuel_digital = true;
+          }
+        },
+      },
+    ];
+  }
+
+  private getTeamOptionsHelpSteps(): GuideStep[] {
+    return [
+      {
+        selector: "#team-pit-stop-change-driver-input",
+        title: this.translationService.translate(
+          "RE_HELP_TEAM_PIT_STOP_CHANGE_DRIVER_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_TEAM_PIT_STOP_CHANGE_DRIVER_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.team) {
+            this.sectionsExpanded.team = true;
+          }
+        },
+      },
+      {
+        selector: "#team-heat-lap-limit-input",
+        title: this.translationService.translate(
+          "RE_HELP_TEAM_HEAT_LAP_LIMIT_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_TEAM_HEAT_LAP_LIMIT_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.team) {
+            this.sectionsExpanded.team = true;
+          }
+        },
+      },
+      {
+        selector: "#team-heat-time-limit-input",
+        title: this.translationService.translate(
+          "RE_HELP_TEAM_HEAT_TIME_LIMIT_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_TEAM_HEAT_TIME_LIMIT_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.team) {
+            this.sectionsExpanded.team = true;
+          }
+        },
+      },
+      {
+        selector: "#team-overall-lap-limit-input",
+        title: this.translationService.translate(
+          "RE_HELP_TEAM_OVERALL_LAP_LIMIT_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_TEAM_OVERALL_LAP_LIMIT_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.team) {
+            this.sectionsExpanded.team = true;
+          }
+        },
+      },
+      {
+        selector: "#team-overall-time-limit-input",
+        title: this.translationService.translate(
+          "RE_HELP_TEAM_OVERALL_TIME_LIMIT_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_TEAM_OVERALL_TIME_LIMIT_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.team) {
+            this.sectionsExpanded.team = true;
+          }
+        },
       },
     ];
   }

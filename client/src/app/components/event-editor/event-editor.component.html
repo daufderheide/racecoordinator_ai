@@ -8,6 +8,7 @@
     [showCopy]="true"
     [disabledCopy]="!isConfigValid()"
     [isSaving]="isSaving"
+    [helpSteps]="getHelpSteps()"
     (copy)="saveAsNew()"
   >
   </app-editor-title>
@@ -22,6 +23,7 @@
         >
           <label class="section-label">{{ "EE_LABEL_NAME" | translate }}</label>
           <input
+            id="event-name"
             type="text"
             [(ngModel)]="editingEvent.name"
             (ngModelChange)="onInputChange()"
@@ -39,6 +41,7 @@
             "EE_LABEL_DESCRIPTION" | translate
           }}</label>
           <textarea
+            id="event-description"
             rows="7"
             [(ngModel)]="editingEvent.description"
             (ngModelChange)="onInputChange()"
@@ -51,6 +54,7 @@
             "EE_LABEL_AUTO_ADVANCE" | translate
           }}</label>
           <input
+            id="event-auto-advance"
             type="number"
             min="0"
             step="1"
@@ -64,12 +68,16 @@
       <div class="editor-panel-right">
         <div class="panel-header">
           <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
-          <button class="btn-add-race" (click)="openAddRaceModal()">
+          <button
+            id="btn-add-race"
+            class="btn-add-race"
+            (click)="openAddRaceModal()"
+          >
             + {{ "EE_BTN_ADD_RACE" | translate }}
           </button>
         </div>
 
-        <div class="race-list-container">
+        <div id="event-race-list" class="race-list-container">
           @if (editingEvent.races.length === 0) {
             <div class="empty-races">
               <p>{{ "EE_ERR_RACES_REQUIRED" | translate }}</p>

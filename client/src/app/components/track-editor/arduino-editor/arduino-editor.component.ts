@@ -31,6 +31,8 @@ import { TranslationService } from "@app/services/translation.service";
 interface PinAction {
   label: string;
   value: string;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 interface PinGroup {
@@ -58,6 +60,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   availablePorts: string[] = [];
   interfaceStatus: number = 1; // 0=Connected, 1=Disconnected, 2=NoData
+  supportsRgbLeds: boolean = true;
   pinActivity: { [key: string]: boolean } = {};
   sectionsExpanded = {
     arduino: true,
@@ -112,6 +115,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       // Reset status on index change
       this.index();
       this.interfaceStatus = 1;
+      this.supportsRgbLeds = true;
     });
   }
 
@@ -236,6 +240,11 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           } else if (event.status) {
             if ((event.status.interfaceIndex ?? 0) === this.index()) {
               this.interfaceStatus = event.status.status as number;
+              if (this.interfaceStatus === 0) {
+                this.supportsRgbLeds = event.status.supportsRgbLeds ?? true;
+              } else {
+                this.supportsRgbLeds = true;
+              }
               this.cdr.detectChanges();
             }
           } else if (event.analogData) {
@@ -1608,24 +1617,37 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         : pin >= 0 && pin <= 15 && pin % 2 === 0;
     }
 
-    if (canLed) {
-      return groups;
-    }
-
-    // If the pin currently HAS led_string assigned, we should keep it in the list
-    // so the user can see it and change it.
     const currentAction = this.getPinAction(isDigital, pin);
-    if (currentAction === "led_string") {
-      return groups;
+    let filtered = groups;
+    // If hardware doesn't physically support RGB LED on this pin AND it's not currently assigned, filter it out
+    if (!canLed && currentAction !== "led_string") {
+      filtered = groups
+        .map((g) => ({
+          ...g,
+          actions: g.actions.filter((a) => a.value !== "led_string"),
+        }))
+        .filter((g) => g.actions.length > 0);
     }
 
-    // Filter out led_string from the groups
-    return groups
-      .map((g) => ({
+    if (!this.supportsRgbLeds) {
+      filtered = filtered.map((g) => ({
         ...g,
-        actions: g.actions.filter((a) => a.value !== "led_string"),
-      }))
-      .filter((g) => g.actions.length > 0);
+        actions: g.actions.map((a) => {
+          if (a.value === "led_string") {
+            return {
+              ...a,
+              disabled: true,
+              tooltip: this.translationService.translate(
+                "AE_RGB_LEDS_DISABLED_TOOLTIP",
+              ),
+            };
+          }
+          return a;
+        }),
+      }));
+    }
+
+    return filtered;
   }
 
   private refreshLanes() {
@@ -1640,7 +1662,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     let changed = false;
 
     // Validate/Update LED strings
-    config.ledStrings.forEach((ls) => {
+    (config.ledStrings || []).forEach((ls) => {
       // Truncate color overrides
       if (ls.ledLaneColorOverrides.length > laneCount) {
         ls.ledLaneColorOverrides = ls.ledLaneColorOverrides.slice(0, laneCount);
@@ -1931,6 +1953,13 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   selectPinAction(isDigital: boolean, pin: number, actionValue: string) {
+    const groups = this.getFilteredActions(isDigital, pin);
+    for (const group of groups) {
+      const action = group.actions.find((a) => a.value === actionValue);
+      if (action?.disabled) {
+        return;
+      }
+    }
     this.setPinAction(isDigital, pin, actionValue);
     this.openPinDropdown = null;
   }
@@ -1952,126 +1981,314 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     this.dropdownOpenUp = {};
   }
 
-  /* eslint-disable max-lines-per-function */
-  getHelpSteps(): any[] {
-    const steps: any[] = [
+  ensureSectionsExpanded(): void {
+    this.sectionsExpanded.arduino = true;
+    this.sectionsExpanded.main = true;
+    this.sectionsExpanded.digital = true;
+    this.sectionsExpanded.analog = true;
+    this.sectionsExpanded.voltage = true;
+    this.sectionsExpanded.leds = true;
+    if (this.config()?.ledStrings?.length) {
+      this.ledStringExpanded[0] = true;
+    }
+    this.cdr.detectChanges();
+  }
+
+  private getMainHelpSteps(expandMain: () => void): any[] {
+    return [
       {
-        selector: `#arduino-editor-${this.index()}`,
-        title: "TE_HELP_ARDUINO_TITLE",
-        content: "TE_HELP_ARDUINO_CONTENT",
-        position: "right",
+        selector: `#arduino-board-type-${this.index()}`,
+        title: "TE_HELP_ARDUINO_BOARD_TYPE_TITLE",
+        content: "TE_HELP_ARDUINO_BOARD_TYPE_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
       },
       {
         selector: `#arduino-com-port-${this.index()}`,
         title: "TE_HELP_ARDUINO_COM_PORT_TITLE",
         content: "TE_HELP_ARDUINO_COM_PORT_CONTENT",
         position: "bottom",
+        onEnter: expandMain,
       },
       {
         selector: `#arduino-status-badge-${this.index()}`,
         title: "TE_HELP_ARDUINO_STATUS_TITLE",
         content: "TE_HELP_ARDUINO_STATUS_CONTENT",
         position: "right",
-      },
-      {
-        selector: `#arduino-board-type-${this.index()}`,
-        title: "TE_HELP_ARDUINO_BOARD_TYPE_TITLE",
-        content: "TE_HELP_ARDUINO_BOARD_TYPE_CONTENT",
-        position: "bottom",
+        onEnter: expandMain,
       },
       {
         selector: `#arduino-debounce-${this.index()}`,
         title: "TE_HELP_ARDUINO_DEBOUNCE_TITLE",
         content: "TE_HELP_ARDUINO_DEBOUNCE_CONTENT",
         position: "bottom",
+        onEnter: expandMain,
       },
       {
         selector: `#arduino-pit-behavior-${this.index()}`,
         title: "TE_HELP_ARDUINO_PIT_BEHAVIOR_TITLE",
         content: "TE_HELP_ARDUINO_PIT_BEHAVIOR_CONTENT",
         position: "bottom",
+        onEnter: expandMain,
       },
       {
         selector: `#arduino-nc-sensors-${this.index()}`,
         title: "TE_HELP_ARDUINO_NC_SENSORS_TITLE",
         content: "TE_HELP_ARDUINO_NC_SENSORS_CONTENT",
         position: "bottom",
+        onEnter: expandMain,
       },
       {
         selector: `#arduino-nc-relays-${this.index()}`,
         title: "TE_HELP_ARDUINO_NC_RELAYS_TITLE",
         content: "TE_HELP_ARDUINO_NC_RELAYS_CONTENT",
         position: "bottom",
+        onEnter: expandMain,
       },
+    ];
+  }
+
+  private getPinHelpSteps(
+    expandDigital: () => void,
+    expandAnalog: () => void,
+  ): any[] {
+    const digitalPin = this.availablePins?.includes(4)
+      ? 4
+      : (this.availablePins?.[0] ?? 2);
+    const analogPin = this.availableAnalogPins?.includes(2)
+      ? 2
+      : (this.availableAnalogPins?.[0] ?? 0);
+
+    return [
       {
-        selector: `#arduino-digital-selector-4`,
+        selector: `#arduino-digital-selector-${digitalPin}`,
         title: "TE_HELP_ARDUINO_PIN_SELECTOR_TITLE",
         content: "TE_HELP_ARDUINO_PIN_SELECTOR_CONTENT",
         position: "bottom",
+        onEnter: expandDigital,
       },
       {
-        selector: `#arduino-digital-status-4`,
+        selector: `#arduino-digital-status-${digitalPin}`,
         title: "TE_HELP_ARDUINO_PIN_STATUS_TITLE",
         content: "TE_HELP_ARDUINO_PIN_STATUS_CONTENT",
         position: "bottom",
+        onEnter: expandDigital,
       },
       {
-        selector: `#arduino-analog-selector-2`,
+        selector: `#arduino-analog-selector-${analogPin}`,
         title: "TE_HELP_ARDUINO_ANALOG_SELECTOR_TITLE",
         content: "TE_HELP_ARDUINO_ANALOG_SELECTOR_CONTENT",
         position: "bottom",
+        onEnter: expandAnalog,
       },
       {
-        selector: `#arduino-analog-status-2`,
+        selector: `#arduino-analog-status-${analogPin}`,
         title: "TE_HELP_ARDUINO_ANALOG_STATUS_TITLE",
         content: "TE_HELP_ARDUINO_ANALOG_STATUS_CONTENT",
         position: "bottom",
+        onEnter: expandAnalog,
       },
     ];
+  }
 
+  private getVoltageHelpSteps(expandVoltage: () => void): any[] {
     const voltageLanes = this.getVoltageLanes();
-    if (voltageLanes.length > 0) {
-      // For lane-specific steps, we target the first lane (index 0) in the list
-      steps.push({
+    const steps: any[] = [
+      {
         selector: `#arduino-voltage-section-${this.index()}`,
         title: "TE_HELP_ARDUINO_VOLTAGE_TITLE",
         content: "TE_HELP_ARDUINO_VOLTAGE_CONTENT",
         position: "top",
-      });
+        onEnter: expandVoltage,
+      },
+    ];
+
+    if (voltageLanes.length > 0) {
       const firstLane = voltageLanes[0];
-      steps.push({
-        selector: `#arduino-voltage-max-${this.index()}-${firstLane}`,
-        title: "TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE",
-        content: "TE_HELP_ARDUINO_VOLTAGE_MAX_CONTENT",
-        position: "bottom",
-      });
-      steps.push({
-        selector: `#arduino-voltage-link-${this.index()}-${firstLane}`,
-        title: "TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE",
-        content: "TE_HELP_ARDUINO_VOLTAGE_LINK_CONTENT",
-        position: "bottom",
-      });
-      steps.push({
-        selector: `#arduino-voltage-live-${this.index()}-${firstLane}`,
-        title: "TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE",
-        content: "TE_HELP_ARDUINO_VOLTAGE_LIVE_CONTENT",
-        position: "bottom",
-      });
-      steps.push({
-        selector: `#arduino-voltage-set-max-${this.index()}-${firstLane}`,
-        title: "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE",
-        content: "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_CONTENT",
-        position: "bottom",
-      });
-      steps.push({
-        selector: `#arduino-voltage-reset-${this.index()}`,
-        title: "TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE",
-        content: "TE_HELP_ARDUINO_VOLTAGE_RESET_CONTENT",
-        position: "bottom",
-      });
+      steps.push(
+        {
+          selector: `#arduino-voltage-reset-${this.index()}`,
+          title: "TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE",
+          content: "TE_HELP_ARDUINO_VOLTAGE_RESET_CONTENT",
+          position: "bottom",
+          onEnter: expandVoltage,
+        },
+        {
+          selector: `#arduino-voltage-max-${this.index()}-${firstLane}`,
+          title: "TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE",
+          content: "TE_HELP_ARDUINO_VOLTAGE_MAX_CONTENT",
+          position: "bottom",
+          onEnter: expandVoltage,
+        },
+        {
+          selector: `#arduino-voltage-link-${this.index()}-${firstLane}`,
+          title: "TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE",
+          content: "TE_HELP_ARDUINO_VOLTAGE_LINK_CONTENT",
+          position: "bottom",
+          onEnter: expandVoltage,
+        },
+        {
+          selector: `#arduino-voltage-live-${this.index()}-${firstLane}`,
+          title: "TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE",
+          content: "TE_HELP_ARDUINO_VOLTAGE_LIVE_CONTENT",
+          position: "bottom",
+          onEnter: expandVoltage,
+        },
+        {
+          selector: `#arduino-voltage-set-max-${this.index()}-${firstLane}`,
+          title: "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE",
+          content: "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_CONTENT",
+          position: "bottom",
+          onEnter: expandVoltage,
+        },
+      );
     }
 
     return steps;
+  }
+
+  private getLedStringDetailHelpSteps(
+    expandLeds: () => void,
+    hasLeds: boolean,
+  ): any[] {
+    const steps: any[] = [
+      {
+        selector: `#arduino-led-string-header-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_STRING_TITLE",
+        content: "TE_HELP_ARDUINO_LED_STRING_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-link-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_LINK_TITLE",
+        content: "TE_HELP_ARDUINO_LED_LINK_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-count-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_COUNT_TITLE",
+        content: "TE_HELP_ARDUINO_LED_COUNT_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-brightness-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_BRIGHTNESS_TITLE",
+        content: "TE_HELP_ARDUINO_LED_BRIGHTNESS_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-flash-rate-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_FLASH_RATE_TITLE",
+        content: "TE_HELP_ARDUINO_LED_FLASH_RATE_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-type-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_TYPE_TITLE",
+        content: "TE_HELP_ARDUINO_LED_TYPE_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-color-order-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_COLOR_ORDER_TITLE",
+        content: "TE_HELP_ARDUINO_LED_COLOR_ORDER_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+      {
+        selector: `#arduino-led-lane-overrides-${this.index()}-0`,
+        title: "TE_HELP_ARDUINO_LED_LANE_OVERRIDES_TITLE",
+        content: "TE_HELP_ARDUINO_LED_LANE_OVERRIDES_CONTENT",
+        position: "bottom",
+        onEnter: expandLeds,
+      },
+    ];
+
+    if (hasLeds) {
+      steps.push(
+        {
+          selector: `#arduino-led-status-${this.index()}-0-0`,
+          title: "TE_HELP_ARDUINO_LED_STATUS_TITLE",
+          content: "TE_HELP_ARDUINO_LED_STATUS_CONTENT",
+          position: "bottom",
+          onEnter: expandLeds,
+        },
+        {
+          selector: `#arduino-led-selector-${this.index()}-0-0`,
+          title: "TE_HELP_ARDUINO_LED_SELECTOR_TITLE",
+          content: "TE_HELP_ARDUINO_LED_SELECTOR_CONTENT",
+          position: "bottom",
+          onEnter: expandLeds,
+        },
+      );
+    }
+
+    return steps;
+  }
+
+  private getLedHelpSteps(expandLeds: () => void): any[] {
+    const ledStrings = this.config()?.ledStrings;
+    const steps: any[] = [
+      {
+        selector: `#arduino-led-section-${this.index()}`,
+        title: "TE_HELP_ARDUINO_LED_TITLE",
+        content: "TE_HELP_ARDUINO_LED_CONTENT",
+        position: "top",
+        onEnter: expandLeds,
+      },
+    ];
+
+    if (ledStrings && ledStrings.length > 0) {
+      const firstString = ledStrings[0];
+      const hasLeds = Boolean(firstString?.leds && firstString.leds.length > 0);
+      steps.push(...this.getLedStringDetailHelpSteps(expandLeds, hasLeds));
+    }
+
+    return steps;
+  }
+
+  getHelpSteps(): any[] {
+    const expandMain = () => {
+      this.sectionsExpanded.arduino = true;
+      this.sectionsExpanded.main = true;
+      this.cdr.detectChanges();
+    };
+    const expandDigital = () => {
+      this.sectionsExpanded.arduino = true;
+      this.sectionsExpanded.digital = true;
+      this.cdr.detectChanges();
+    };
+    const expandAnalog = () => {
+      this.sectionsExpanded.arduino = true;
+      this.sectionsExpanded.analog = true;
+      this.cdr.detectChanges();
+    };
+    const expandVoltage = () => {
+      this.sectionsExpanded.arduino = true;
+      this.sectionsExpanded.voltage = true;
+      this.cdr.detectChanges();
+    };
+    const expandLeds = () => {
+      this.sectionsExpanded.arduino = true;
+      this.sectionsExpanded.leds = true;
+      if (this.config()?.ledStrings?.length) {
+        this.ledStringExpanded[0] = true;
+      }
+      this.cdr.detectChanges();
+    };
+
+    return [
+      ...this.getMainHelpSteps(expandMain),
+      ...this.getPinHelpSteps(expandDigital, expandAnalog),
+      ...this.getVoltageHelpSteps(expandVoltage),
+      ...this.getLedHelpSteps(expandLeds),
+    ];
   }
 
   removeInterface(event: Event) {

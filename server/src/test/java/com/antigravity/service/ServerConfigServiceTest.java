@@ -48,5 +48,26 @@ public class ServerConfigServiceTest {
 
     service.setSkippedUpdateVersion("2.0.0");
     assertEquals("2.0.0", service.getSkippedUpdateVersion());
+
+    assertEquals("ALPHA", service.getUpdateChannel());
+    service.setUpdateChannel("PRODUCTION");
+    assertEquals("PRODUCTION", service.getUpdateChannel());
+
+    service.setSnoozedUpdate("2.0.0", 1234567890L);
+    assertEquals("2.0.0", service.getSnoozedUpdateVersion());
+    assertEquals(1234567890L, service.getSnoozedUpdateUntil());
+
+    service.clearSnoozedUpdate();
+    assertEquals(null, service.getSnoozedUpdateVersion());
+    assertEquals(0L, service.getSnoozedUpdateUntil());
+
+    assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("0.0.0_dev"));
+    assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("1.0.0-alpha.20260819"));
+    assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("v0.0.0-alpha.20260815"));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("1.0.0-beta.1"));
+    assertEquals("BETA", ServerConfigService.getDefaultUpdateChannel("v1.0.0-beta.6"));
+    assertEquals("PRODUCTION", ServerConfigService.getDefaultUpdateChannel("1.0.0"));
+    assertEquals("PRODUCTION", ServerConfigService.getDefaultUpdateChannel("v1.0.1"));
+    assertEquals("PRODUCTION", ServerConfigService.getDefaultUpdateChannel(null));
   }
 }

@@ -24,13 +24,14 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("checkstyle:FileLength")
 public class ArduinoProtocol extends AbstractSerialProtocol {
 
   private static final Logger logger = LoggerFactory.getLogger(ArduinoProtocol.class);
 
   private volatile ArduinoConfig config;
   private volatile boolean versionVerified = false;
+  private volatile boolean supportsRgbLeds = false;
+  private volatile String version = "";
   private Map<String, PinConfig> pinLookup;
 
   private ScheduledFuture<?> ledFlashFuture;
@@ -97,7 +98,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     writeData(RESET_COMMAND);
     logger.info("Connected to {}. Sent RESET command.", config.commPort);
 
-    // Immediately refresh the race state to ensure LEDs turn on
+    // Immediately refresh the race state to ensure LEDs turn on if supported
     ledHelper.refreshRaceState();
   }
 
@@ -150,6 +151,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
     super.close();
     versionVerified = false;
+    supportsRgbLeds = false;
     lastSentState = null;
     lastSentValue = null;
   }
@@ -337,9 +339,28 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
 
   private void onVersion(int major, int minor, int patch, int build) {
     if (!versionVerified) {
+      this.version = major + "." + minor + "." + patch + "." + build;
       if (major == 2 && minor == 1 && patch == 0) {
         versionVerified = true;
+        supportsRgbLeds = true;
         logger.info("Version verified - {}.{}.{}.{}", major, minor, patch, build);
+        buildPinLookup();
+        sendPinModeRead();
+        sendPinModeWrite();
+        sendPinModeAnalogRead();
+        sendDebounce();
+        sendTimeReset();
+        initializeHardwareState();
+      } else if (major == 1 && minor == 0 && patch == 0) {
+        versionVerified = true;
+        supportsRgbLeds = false;
+        logger.info(
+            "Version verified (legacy firmware, RGB LEDs disabled) - {}.{}.{}.{}",
+            major,
+            minor,
+            patch,
+            build);
+        buildPinLookup();
         sendPinModeRead();
         sendPinModeWrite();
         sendPinModeAnalogRead();
@@ -347,9 +368,20 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         sendTimeReset();
         initializeHardwareState();
       } else {
-        logger.error("Invalid firmware version: {}.{}.{}. Expected 2.1.0", major, minor, patch);
+        logger.error(
+            "Invalid firmware version: {}.{}.{}. Expected 2.1.0 or 1.0.0", major, minor, patch);
       }
     }
+  }
+
+  @Override
+  public boolean supportsRgbLeds() {
+    return supportsRgbLeds;
+  }
+
+  @Override
+  public String getVersion() {
+    return version;
   }
 
   private void sendPinModeRead() {
@@ -369,6 +401,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     if (config.digitalIds != null) {
       for (Integer id : config.digitalIds) {
         if (id == null || id < 0) continue;
+        if (!supportsRgbLeds && id == PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber()) continue;
         if (ArduinoConfig.getPinMode(id) == mode) digitalCount++;
       }
     }
@@ -377,6 +410,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
     if (config.analogIds != null) {
       for (Integer id : config.analogIds) {
         if (id == null || id < 0) continue;
+        if (!supportsRgbLeds && id == PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber()) continue;
         if (ArduinoConfig.getPinMode(id) == mode) analogCount++;
       }
     }
@@ -399,6 +433,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         Integer idObj = config.digitalIds.get(i);
         if (idObj == null || idObj < 0) continue;
         int id = idObj;
+        if (!supportsRgbLeds && id == PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber()) continue;
         if (ArduinoConfig.getPinMode(id) == mode) {
           message[idx++] = DIGITAL;
           message[idx++] = (byte) i;
@@ -411,6 +446,7 @@ public class ArduinoProtocol extends AbstractSerialProtocol {
         Integer idObj = config.analogIds.get(i);
         if (idObj == null || idObj < 0) continue;
         int id = idObj;
+        if (!supportsRgbLeds && id == PinBehavior.BEHAVIOR_LED_RGB_STRING.getNumber()) continue;
         if (ArduinoConfig.getPinMode(id) == mode) {
           message[idx++] = ANALOG;
           message[idx++] = (byte) i;

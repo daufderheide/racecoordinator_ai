@@ -344,14 +344,14 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     if (this.viewerRaceEndedHandler) {
       this.viewerRaceEndedHandler.stopListening();
     }
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.closeDriverResultsWindows();
   }
 
   @HostListener("window:pagehide", ["$event"])
   onPageHide(_event: any) {
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
     this.closeDriverResultsWindows();
   }
 

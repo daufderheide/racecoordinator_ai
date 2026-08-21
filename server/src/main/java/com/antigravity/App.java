@@ -303,6 +303,13 @@ public class App {
                           });
 
                       config.jsonMapper(new JavalinJackson(new ObjectMapper()));
+                      config.server(
+                          () -> {
+                            org.eclipse.jetty.server.Server server =
+                                new org.eclipse.jetty.server.Server();
+                            server.setStopTimeout(1000);
+                            return server;
+                          });
                     })
                 .start(serverPort);
         logger.info("Javalin started successfully on port {}.", serverPort);
@@ -418,14 +425,70 @@ public class App {
       UpdateService updateService = new UpdateService(SERVER_VERSION, configService);
 
       app.get(
+          "/api/update/config",
+          ctx -> {
+            java.util.Map<String, Object> configMap = new java.util.HashMap<>();
+            configMap.put("channel", configService.getUpdateChannel());
+            configMap.put("skippedVersion", configService.getSkippedUpdateVersion());
+            configMap.put("snoozedVersion", configService.getSnoozedUpdateVersion());
+            configMap.put("snoozedUntil", configService.getSnoozedUpdateUntil());
+            ctx.json(configMap);
+          });
+
+      app.post(
+          "/api/update/channel",
+          ctx -> {
+            try {
+              String body = ctx.body();
+              ObjectMapper mapper = new ObjectMapper();
+              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+              if (json.has("channel")) {
+                String channel = json.get("channel").asText().toUpperCase();
+                configService.setUpdateChannel(channel);
+                updateService.clearCache();
+                ctx.status(200).result("Channel updated");
+              } else {
+                ctx.status(400).result("Missing channel");
+              }
+            } catch (Exception e) {
+              logger.error("Failed to set update channel", e);
+              ctx.status(500).result("Internal error");
+            }
+          },
+          Role.ADMIN);
+
+      app.post(
+          "/api/update/snooze",
+          ctx -> {
+            try {
+              String body = ctx.body();
+              ObjectMapper mapper = new ObjectMapper();
+              com.fasterxml.jackson.databind.JsonNode json = mapper.readTree(body);
+              if (json.has("version")) {
+                String version = json.get("version").asText();
+                long days = json.has("durationDays") ? json.get("durationDays").asLong() : 7L;
+                long untilTimestamp = System.currentTimeMillis() + (days * 24L * 60L * 60L * 1000L);
+                configService.setSnoozedUpdate(version, untilTimestamp);
+                updateService.clearCache();
+                ctx.status(200).result("Update snoozed");
+              } else {
+                ctx.status(400).result("Missing version");
+              }
+            } catch (Exception e) {
+              logger.error("Failed to snooze update", e);
+              ctx.status(500).result("Internal error");
+            }
+          },
+          Role.ADMIN);
+
+      app.get(
           "/api/update/check",
           ctx -> {
             boolean force = Boolean.parseBoolean(ctx.queryParam("force"));
             if (force) {
-              configService.setSkippedUpdateVersion("");
               updateService.clearCache();
             }
-            ctx.json(updateService.checkForUpdates());
+            ctx.json(updateService.checkForUpdates(force));
           });
 
       app.post(
@@ -447,7 +510,8 @@ public class App {
               logger.error("Failed to skip update", e);
               ctx.status(500).result("Internal error");
             }
-          });
+          },
+          Role.ADMIN);
 
       app.post(
           "/api/update/install",
@@ -474,7 +538,8 @@ public class App {
             } catch (Exception e) {
               ctx.status(500).result("Error: " + e.getMessage());
             }
-          });
+          },
+          Role.ADMIN);
 
       app.get(
           "/api/update/progress",
@@ -489,7 +554,8 @@ public class App {
           ctx -> {
             updateService.cancelDownload();
             ctx.status(200).result("Cancelled");
-          });
+          },
+          Role.ADMIN);
 
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));

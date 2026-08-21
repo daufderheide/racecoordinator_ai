@@ -216,6 +216,7 @@
                             </div>
                             <div class="custom-dropdown-container pin-selector">
                               <div
+                                [id]="'arduino-digital-selector-' + pin"
                                 class="dropdown-trigger"
                                 [class.open]="
                                   isPinDropdownOpen('digital-' + pin)
@@ -276,12 +277,19 @@
                                                 getPinAction(true, pin) ===
                                                 action.value
                                               "
+                                              [class.disabled]="action.disabled"
+                                              [title]="
+                                                action.disabled
+                                                  ? action.tooltip || ''
+                                                  : ''
+                                              "
                                               (click)="
-                                                selectPinAction(
-                                                  true,
-                                                  pin,
-                                                  action.value
-                                                )
+                                                !action.disabled &&
+                                                  selectPinAction(
+                                                    true,
+                                                    pin,
+                                                    action.value
+                                                  )
                                               "
                                             >
                                               {{ action.label }}
@@ -300,12 +308,19 @@
                                             getPinAction(true, pin) ===
                                             action.value
                                           "
+                                          [class.disabled]="action.disabled"
+                                          [title]="
+                                            action.disabled
+                                              ? action.tooltip || ''
+                                              : ''
+                                          "
                                           (click)="
-                                            selectPinAction(
-                                              true,
-                                              pin,
-                                              action.value
-                                            )
+                                            !action.disabled &&
+                                              selectPinAction(
+                                                true,
+                                                pin,
+                                                action.value
+                                              )
                                           "
                                         >
                                           {{ action.label }}
@@ -349,6 +364,7 @@
                             </div>
                             <div class="custom-dropdown-container pin-selector">
                               <div
+                                [id]="'arduino-analog-selector-' + pin"
                                 class="dropdown-trigger"
                                 [class.open]="
                                   isPinDropdownOpen('analog-' + pin)
@@ -409,12 +425,19 @@
                                                 getPinAction(false, pin) ===
                                                 action.value
                                               "
+                                              [class.disabled]="action.disabled"
+                                              [title]="
+                                                action.disabled
+                                                  ? action.tooltip || ''
+                                                  : ''
+                                              "
                                               (click)="
-                                                selectPinAction(
-                                                  false,
-                                                  pin,
-                                                  action.value
-                                                )
+                                                !action.disabled &&
+                                                  selectPinAction(
+                                                    false,
+                                                    pin,
+                                                    action.value
+                                                  )
                                               "
                                             >
                                               {{ action.label }}
@@ -433,12 +456,19 @@
                                             getPinAction(false, pin) ===
                                             action.value
                                           "
+                                          [class.disabled]="action.disabled"
+                                          [title]="
+                                            action.disabled
+                                              ? action.tooltip || ''
+                                              : ''
+                                          "
                                           (click)="
-                                            selectPinAction(
-                                              false,
-                                              pin,
-                                              action.value
-                                            )
+                                            !action.disabled &&
+                                              selectPinAction(
+                                                false,
+                                                pin,
+                                                action.value
+                                              )
                                           "
                                         >
                                           {{ action.label }}
@@ -455,24 +485,25 @@
                     </div>
                   }
                 </div>
-                @if (getVoltageLanes().length > 0) {
+                <!-- Voltage Divider Configuration Section -->
+                <div
+                  class="config-section voltage-config-section"
+                  [id]="'arduino-voltage-section-' + index()"
+                >
                   <div
-                    class="config-section voltage-config-section"
-                    [id]="'arduino-voltage-section-' + index()"
+                    class="section-header"
+                    (click)="toggleSection('voltage')"
                   >
-                    <div
-                      class="section-header"
-                      (click)="toggleSection('voltage')"
+                    <span
+                      class="expander-icon"
+                      [class.collapsed]="!sectionsExpanded.voltage"
+                      >▼</span
                     >
-                      <span
-                        class="expander-icon"
-                        [class.collapsed]="!sectionsExpanded.voltage"
-                        >▼</span
-                      >
-                      <h4>{{ "AE_VOLTAGE_CONFIG_HEADER" | translate }}</h4>
-                    </div>
-                    @if (sectionsExpanded.voltage) {
-                      <div class="section-content">
+                    <h4>{{ "AE_VOLTAGE_CONFIG_HEADER" | translate }}</h4>
+                  </div>
+                  @if (sectionsExpanded.voltage) {
+                    <div class="section-content">
+                      @if (getVoltageLanes().length > 0) {
                         <div
                           style="
                             display: flex;
@@ -596,12 +627,15 @@
                             </div>
                           }
                         </div>
-                      </div>
-                    }
-                  </div>
-                }
+                      }
+                    </div>
+                  }
+                </div>
                 <!-- RGB LED Configuration Section -->
-                <div class="config-section led-config-section">
+                <div
+                  class="config-section led-config-section"
+                  [id]="'arduino-led-section-' + index()"
+                >
                   <div class="section-header" (click)="toggleSection('leds')">
                     <span
                       class="expander-icon"
@@ -624,6 +658,9 @@
                           >
                             <div
                               class="led-string-header"
+                              [id]="
+                                'arduino-led-string-header-' + index() + '-' + i
+                              "
                               (click)="toggleLedString(i)"
                             >
                               <span
@@ -640,6 +677,7 @@
                                 {{ "AE_LEDS" | translate }}</span
                               >
                               <span
+                                [id]="'arduino-led-link-' + index() + '-' + i"
                                 class="material-icons clickable-link-icon"
                                 [class.linked]="isLedStringsLinked"
                                 (click)="
@@ -674,6 +712,9 @@
                                       "AE_NUM_LEDS" | translate
                                     }}</label>
                                     <input
+                                      [id]="
+                                        'arduino-led-count-' + index() + '-' + i
+                                      "
                                       type="number"
                                       [ngModel]="ls.leds.length"
                                       min="0"
@@ -691,6 +732,12 @@
                                       ></label
                                     >
                                     <input
+                                      [id]="
+                                        'arduino-led-brightness-' +
+                                        index() +
+                                        '-' +
+                                        i
+                                      "
                                       type="number"
                                       [ngModel]="ls.brightness"
                                       min="0"
@@ -708,6 +755,12 @@
                                       ></label
                                     >
                                     <input
+                                      [id]="
+                                        'arduino-led-flash-rate-' +
+                                        index() +
+                                        '-' +
+                                        i
+                                      "
                                       type="number"
                                       [ngModel]="ls.flagFlashRate"
                                       min="0"
@@ -722,6 +775,9 @@
                                       "AE_LED_TYPE" | translate
                                     }}</label>
                                     <select
+                                      [id]="
+                                        'arduino-led-type-' + index() + '-' + i
+                                      "
                                       [ngModel]="ls.ledType.toString()"
                                       (ngModelChange)="
                                         onLedStringLedTypeChange(i, $event)
@@ -739,6 +795,12 @@
                                       "AE_COLOR_ORDER" | translate
                                     }}</label>
                                     <select
+                                      [id]="
+                                        'arduino-led-color-order-' +
+                                        index() +
+                                        '-' +
+                                        i
+                                      "
                                       [ngModel]="ls.colorOrder.toString()"
                                       (ngModelChange)="
                                         onLedStringColorOrderChange(i, $event)
@@ -752,7 +814,15 @@
                                     </select>
                                   </div>
                                 </div>
-                                <div class="lane-colors-editor">
+                                <div
+                                  class="lane-colors-editor"
+                                  [id]="
+                                    'arduino-led-lane-overrides-' +
+                                    index() +
+                                    '-' +
+                                    i
+                                  "
+                                >
                                   <label>{{
                                     "AE_LANE_COLOR_OVERRIDES" | translate
                                   }}</label>
@@ -795,10 +865,28 @@
                                     track trackByLed(ledIdx, led);
                                     let ledIdx = $index
                                   ) {
-                                    <div class="led-item">
+                                    <div
+                                      class="led-item"
+                                      [id]="
+                                        'arduino-led-item-' +
+                                        index() +
+                                        '-' +
+                                        i +
+                                        '-' +
+                                        ledIdx
+                                      "
+                                    >
                                       <div class="led-header">
                                         <label>LED {{ ledIdx + 1 }}</label>
                                         <span
+                                          [id]="
+                                            'arduino-led-status-' +
+                                            index() +
+                                            '-' +
+                                            i +
+                                            '-' +
+                                            ledIdx
+                                          "
                                           class="status-badge small"
                                           [class.active]="
                                             isRgbLedActive(i, ledIdx)
@@ -822,6 +910,14 @@
                                         class="custom-dropdown-container led-selector"
                                       >
                                         <div
+                                          [id]="
+                                            'arduino-led-selector-' +
+                                            index() +
+                                            '-' +
+                                            i +
+                                            '-' +
+                                            ledIdx
+                                          "
                                           class="dropdown-trigger"
                                           [class.open]="
                                             isPinDropdownOpen(

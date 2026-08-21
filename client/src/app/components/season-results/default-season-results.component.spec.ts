@@ -123,6 +123,21 @@ describe("DefaultSeasonResultsComponent", () => {
     expect(component.standings[0].net_points).toBe(30);
   });
 
+  it("should connect on init and disconnect on destroy", () => {
+    expect(mockRaceConnectionService.connect).toHaveBeenCalled();
+    fixture.destroy();
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
+  });
+
+  it("should disconnect on pagehide", () => {
+    mockRaceConnectionService.connect.calls.reset();
+    mockRaceConnectionService.disconnect.calls.reset();
+
+    component.onPageHide();
+
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
+  });
+
   it("should toggle race expansion", () => {
     fixture.detectChanges();
     expect(component.isRaceExpanded("r1")).toBeFalse();

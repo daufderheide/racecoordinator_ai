@@ -16,6 +16,7 @@ import { DataService } from "@app/data.service";
 import { BartConfig } from "@app/models/bart_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { InterfaceStatus, PinBehavior } from "@app/proto/antigravity";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 
 @Component({
@@ -244,5 +245,77 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
 
   toggleSection(section: keyof typeof this.sectionsExpanded): void {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  }
+
+  ensureSectionsExpanded(): void {
+    this.sectionsExpanded.bart = true;
+    this.sectionsExpanded.main = true;
+    this.sectionsExpanded.rw = true;
+    this.cdr.detectChanges();
+  }
+
+  getHelpSteps(): GuideStep[] {
+    const expandMain = () => {
+      this.sectionsExpanded.bart = true;
+      this.sectionsExpanded.main = true;
+      this.cdr.detectChanges();
+    };
+    const expandRw = () => {
+      this.sectionsExpanded.bart = true;
+      this.sectionsExpanded.rw = true;
+      this.cdr.detectChanges();
+    };
+
+    return [
+      {
+        selector: `#bart-editor-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_TITLE",
+        content: "TE_HELP_BART_CONTENT",
+        position: "right",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#deviceName-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_DEVICE_TITLE",
+        content: "TE_HELP_BART_DEVICE_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#bart-status-badge-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_STATUS_TITLE",
+        content: "TE_HELP_BART_STATUS_CONTENT",
+        position: "right",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#minLapMs-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_MIN_LAP_TITLE",
+        content: "TE_HELP_BART_MIN_LAP_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#lapPinPitBehavior-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_PIT_BEHAVIOR_TITLE",
+        content: "TE_HELP_BART_PIT_BEHAVIOR_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#bart-channel-0-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_CHANNELS_TITLE",
+        content: "TE_HELP_BART_CHANNELS_CONTENT",
+        position: "bottom",
+        onEnter: expandRw,
+      },
+      {
+        selector: `#bart-channel-status-0-${this.interfaceIndex()}`,
+        title: "TE_HELP_BART_CHANNEL_STATUS_TITLE",
+        content: "TE_HELP_BART_CHANNEL_STATUS_CONTENT",
+        position: "bottom",
+        onEnter: expandRw,
+      },
+    ];
   }
 }

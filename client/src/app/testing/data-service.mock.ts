@@ -35,4 +35,6 @@ export class DataServiceMock {
   getCurrentDatabase = jasmine
     .createSpy("getCurrentDatabase")
     .and.returnValue(of({ name: "test_db" }));
+
+  getThemes = jasmine.createSpy("getThemes").and.returnValue(of([]));
 }

@@ -49,6 +49,24 @@ public class NotStartedTest {
   }
 
   @Test
+  public void testGetFlagType_ThemedFlagResolution() {
+    java.util.Map<String, String> slots = new java.util.HashMap<>();
+    slots.put("flag.not_started", "default_flag_yellow");
+    slots.put("flag.warmup", "default_flag_green");
+    com.antigravity.models.Theme theme =
+        new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    // Warmup -> green
+    when(race.getAutoStartRemaining()).thenReturn(8.0);
+    assertEquals(RaceFlag.GREEN, notStarted.getFlagType(race));
+
+    // Not warmup -> yellow
+    when(race.getAutoStartRemaining()).thenReturn(0.0);
+    assertEquals(RaceFlag.YELLOW, notStarted.getFlagType(race));
+  }
+
+  @Test
   public void testEnterAndExit() {
     when(race.isAutoStartFired()).thenReturn(true);
     notStarted.enter(race);

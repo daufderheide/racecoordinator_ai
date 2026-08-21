@@ -10,6 +10,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
+import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
 import { Track } from "@app/models/track";
@@ -22,7 +23,12 @@ import { AuthService } from "@app/services/auth.service";
   templateUrl: "./raceday-menu-bar.component.html",
   styleUrls: ["./raceday-menu-bar.component.css"],
   encapsulation: ViewEncapsulation.None,
-  imports: [CommonModule, LanguageSelectorComponent, TranslatePipe],
+  imports: [
+    CommonModule,
+    LanguageSelectorComponent,
+    UpdateSelectorComponent,
+    TranslatePipe,
+  ],
 })
 export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   track = input<Track | undefined>(undefined);
@@ -57,6 +63,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   driverViewMenuSelect = output<string>();
   optionsMenuSelect = output<string>();
   languageSelected = output<void>();
+  checkForUpdatesRequested = output<void>();
 
   trackPowerMainSelect = output<boolean>();
   trackPowerLaneSelect = output<{ lane: number; on: boolean }>();

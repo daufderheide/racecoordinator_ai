@@ -16,6 +16,15 @@ export interface UpdateProgress {
   status: string;
 }
 
+export type UpdateChannel = "ALPHA" | "BETA" | "PRODUCTION" | "DISABLED";
+
+export interface UpdateConfig {
+  channel: UpdateChannel;
+  skippedVersion?: string;
+  snoozedVersion?: string;
+  snoozedUntil?: number;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -27,6 +36,18 @@ export class UpdateService {
     if (currentOrigin && !currentOrigin.includes("localhost:4200")) {
       this.apiUrl = `${currentOrigin}/api/update`;
     }
+  }
+
+  getUpdateConfig(): Observable<UpdateConfig> {
+    return this.http.get<UpdateConfig>(`${this.apiUrl}/config`);
+  }
+
+  setUpdateChannel(channel: UpdateChannel): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/channel`,
+      { channel },
+      { responseType: "text" },
+    );
   }
 
   checkForUpdates(force: boolean = false): Observable<UpdateCheckResult> {
@@ -60,6 +81,14 @@ export class UpdateService {
     return this.http.post(
       `${this.apiUrl}/skip`,
       { version },
+      { responseType: "text" },
+    );
+  }
+
+  snoozeUpdate(version: string, durationDays: number = 7): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/snooze`,
+      { version, durationDays },
       { responseType: "text" },
     );
   }

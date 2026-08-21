@@ -66,8 +66,12 @@ public class UpdateService {
   }
 
   public UpdateCheckResult checkForUpdates() {
-    // Cache for 24 hours to avoid rate limiting
-    if (cachedResult != null && (System.currentTimeMillis() - lastCheckTime) < 86400000) {
+    return checkForUpdates(false);
+  }
+
+  public UpdateCheckResult checkForUpdates(boolean force) {
+    // Cache for 24 hours to avoid rate limiting unless forced
+    if (!force && cachedResult != null && (System.currentTimeMillis() - lastCheckTime) < 86400000) {
       return cachedResult;
     }
 
@@ -79,40 +83,64 @@ public class UpdateService {
     result.isWindows = osName.contains("win");
     result.isLinux = osName.contains("linux");
 
+    String channel = configService.getUpdateChannel();
+    if (!force && "DISABLED".equalsIgnoreCase(channel)) {
+      cachedResult = result;
+      lastCheckTime = System.currentTimeMillis();
+      return result;
+    }
+
     try {
       JsonNode releases = fetchReleasesNode();
       if (releases != null) {
-
-        // Find the latest alpha release by published date instead of tag string
-        JsonNode latestAlpha =
+        // Filter releases by user's update channel and find the newest by published_at
+        JsonNode latestTarget =
             StreamSupport.stream(releases.spliterator(), false)
+                .filter(node -> node.has("published_at") && !node.get("published_at").isNull())
                 .filter(
                     node ->
-                        node.has("tag_name") && node.get("tag_name").asText().contains("-alpha."))
-                .filter(node -> node.has("published_at") && !node.get("published_at").isNull())
+                        force && "DISABLED".equalsIgnoreCase(channel)
+                            ? isProduction(node)
+                            : matchesChannel(node, channel))
                 .max(Comparator.comparing(node -> node.get("published_at").asText()))
                 .orElse(null);
 
-        if (latestAlpha != null) {
-          String tagVersion = latestAlpha.get("tag_name").asText();
+        if (latestTarget != null) {
+          String tagVersion = latestTarget.get("tag_name").asText();
 
-          boolean isNewerThanCurrent = isVersionNewer(releases, currentVersion, latestAlpha);
+          boolean isNewerThanCurrent = isVersionNewer(releases, currentVersion, latestTarget);
 
           boolean isNewerThanSkipped = true;
-          String skipped = configService.getSkippedUpdateVersion();
-          if (skipped != null && !skipped.isEmpty()) {
-            isNewerThanSkipped = isVersionNewer(releases, skipped, latestAlpha);
+          if (!force) {
+            String skipped = configService.getSkippedUpdateVersion();
+            if (skipped != null && !skipped.isEmpty()) {
+              isNewerThanSkipped = isVersionNewer(releases, skipped, latestTarget);
+            }
           }
 
-          if (isNewerThanCurrent && isNewerThanSkipped) {
+          boolean isNotSnoozed = true;
+          if (!force) {
+            String snoozedVersion = configService.getSnoozedUpdateVersion();
+            long snoozedUntil = configService.getSnoozedUpdateUntil();
+            if (snoozedVersion != null
+                && !snoozedVersion.isEmpty()
+                && System.currentTimeMillis() < snoozedUntil) {
+              boolean isNewerThanSnoozed = isVersionNewer(releases, snoozedVersion, latestTarget);
+              if (!isNewerThanSnoozed) {
+                isNotSnoozed = false;
+              }
+            }
+          }
+
+          if (isNewerThanCurrent && isNewerThanSkipped && isNotSnoozed) {
             result.updateAvailable = true;
             result.latestVersion = tagVersion;
-            result.releaseNotes = latestAlpha.has("body") ? latestAlpha.get("body").asText() : "";
+            result.releaseNotes = latestTarget.has("body") ? latestTarget.get("body").asText() : "";
             result.releaseUrl =
-                latestAlpha.has("html_url") ? latestAlpha.get("html_url").asText() : "";
+                latestTarget.has("html_url") ? latestTarget.get("html_url").asText() : "";
 
             // Find the correct asset
-            JsonNode assets = latestAlpha.get("assets");
+            JsonNode assets = latestTarget.get("assets");
             if (assets != null && assets.isArray()) {
               for (JsonNode asset : assets) {
                 String assetName = asset.get("name").asText().toLowerCase();
@@ -154,9 +182,43 @@ public class UpdateService {
     this.lastCheckTime = 0;
   }
 
-  private boolean isVersionNewer(JsonNode releases, String baseVersion, JsonNode latestAlpha) {
+  static boolean isAlpha(JsonNode node) {
+    if (!node.has("tag_name")) return false;
+    String tag = node.get("tag_name").asText().toLowerCase();
+    return tag.contains("alpha");
+  }
+
+  static boolean isBeta(JsonNode node) {
+    if (!node.has("tag_name")) return false;
+    String tag = node.get("tag_name").asText().toLowerCase();
+    return tag.contains("beta");
+  }
+
+  static boolean isProduction(JsonNode node) {
+    return !isAlpha(node) && !isBeta(node);
+  }
+
+  static boolean matchesChannel(JsonNode node, String channel) {
+    if (channel == null || channel.equalsIgnoreCase("ALPHA")) {
+      return true;
+    } else if (channel.equalsIgnoreCase("BETA")) {
+      return isBeta(node) || isProduction(node);
+    } else if (channel.equalsIgnoreCase("PRODUCTION")) {
+      return isProduction(node);
+    }
+    return false;
+  }
+
+  private boolean isVersionNewer(JsonNode releases, String baseVersion, JsonNode latestTarget) {
     if (baseVersion.equals("0.0.0_dev")) {
       return true;
+    }
+
+    String latestTag = latestTarget.has("tag_name") ? latestTarget.get("tag_name").asText() : "";
+    if (latestTag.equals(baseVersion)
+        || latestTag.equals("v" + baseVersion)
+        || ("v" + latestTag).equals(baseVersion)) {
+      return false;
     }
 
     JsonNode baseRelease =
@@ -173,12 +235,10 @@ public class UpdateService {
         && baseRelease.has("published_at")
         && !baseRelease.get("published_at").isNull()) {
       String basePublishedAt = baseRelease.get("published_at").asText();
-      String latestPublishedAt = latestAlpha.get("published_at").asText();
+      String latestPublishedAt = latestTarget.get("published_at").asText();
       return latestPublishedAt.compareTo(basePublishedAt) > 0;
     } else {
-      // If the base version is not found in the recent releases (e.g. it was deleted),
-      // we assume the latest GitHub release is newer and offer the update.
-      // (Note: "0.0.0_dev" is already handled at the top of this method).
+      // If base release not found in recent releases, assume latest release is newer
       return true;
     }
   }

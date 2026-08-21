@@ -310,6 +310,12 @@
           itemClass="menu-item"
           (languageSelected)="onLanguageSelected()"
         ></app-language-selector>
+        <div class="menu-separator"></div>
+        <app-update-selector
+          wrapperClass="menu-item"
+          itemClass="menu-item"
+          (checkForUpdatesRequested)="checkForUpdatesRequested.emit()"
+        ></app-update-selector>
       </div>
     }
   </div>

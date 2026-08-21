@@ -1,5 +1,5 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
-import { DatePipe } from "@angular/common";
+import { DatePipe, DecimalPipe } from "@angular/common";
 import { Component, input, NO_ERRORS_SCHEMA, output } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
@@ -66,7 +66,13 @@ describe("SeasonEditorComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [SeasonEditorComponent, FormsModule, TranslatePipe, DatePipe],
+      imports: [
+        SeasonEditorComponent,
+        FormsModule,
+        TranslatePipe,
+        DatePipe,
+        DecimalPipe,
+      ],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -90,6 +96,7 @@ describe("SeasonEditorComponent", () => {
             TranslatePipe,
             FormsModule,
             DatePipe,
+            DecimalPipe,
           ],
           schemas: [NO_ERRORS_SCHEMA],
         },
@@ -784,5 +791,169 @@ describe("SeasonEditorComponent", () => {
 
     component.openAddRaceModal();
     expect(component.availableFinishedRaces.length).toBeGreaterThan(0);
+  });
+
+  it("should format decimal points in standings table to at most 2 decimal places", () => {
+    component.editingSeason = {
+      name: "Championship 2026",
+      drops: 0,
+      races: [],
+    };
+    component.standings = [
+      {
+        driver_id: "d1",
+        driver_name: "Max",
+        net_points: 33.333333333333336,
+        gross_points: 50.126,
+        races_run: 3,
+      },
+      {
+        driver_id: "d2",
+        driver_name: "Lewis",
+        net_points: 25,
+        gross_points: 25.5,
+        races_run: 2,
+      },
+    ];
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll(
+      ".standings-table tbody tr",
+    );
+    expect(rows.length).toBe(2);
+
+    const firstRowCols = rows[0].querySelectorAll("td");
+    expect(firstRowCols[2].textContent.trim()).toBe("33.33");
+    expect(firstRowCols[3].textContent.trim()).toBe("50.13");
+
+    const secondRowCols = rows[1].querySelectorAll("td");
+    expect(secondRowCols[2].textContent.trim()).toBe("25");
+    expect(secondRowCols[3].textContent.trim()).toBe("25.5");
+  });
+
+  it("should format decimal points in race breakdown table to at most 2 decimal places", () => {
+    component.editingSeason = {
+      name: "Championship 2026",
+      drops: 0,
+      races: [
+        {
+          race_id: "r1",
+          race_name: "Race 1",
+          timestamp: 1000,
+          driver_results: [
+            {
+              driver_id: "d1",
+              driver_name: "Max",
+              overall_rank: 1,
+              overall_points: 25.3333,
+              overall_bonus_points: 1.555,
+              heat_points: 10.2,
+              heat_bonus_points: 0.777,
+              total_points: 37.8653,
+            },
+          ],
+        },
+      ],
+    };
+    component.expandedRaceIds.add("r1");
+    fixture.detectChanges();
+
+    const breakdownRows = fixture.nativeElement.querySelectorAll(
+      ".race-breakdown-table tbody tr",
+    );
+    expect(breakdownRows.length).toBe(1);
+
+    const cols = breakdownRows[0].querySelectorAll("td");
+    expect(cols[2].textContent.trim()).toBe("25.33");
+    expect(cols[3].textContent.trim()).toBe("1.56");
+    expect(cols[4].textContent.trim()).toBe("10.2");
+    expect(cols[5].textContent.trim()).toBe("0.78");
+    expect(cols[6].textContent.trim()).toBe("37.87");
+  });
+
+  it("should render badges in .season-meta under the season title in the header", () => {
+    component.editingSeason = {
+      name: "Summer Cup 2026",
+      drops: 1,
+      races: [{ race_id: "r1", is_demo: true } as any],
+    };
+    fixture.detectChanges();
+
+    const headerGroup = fixture.nativeElement.querySelector(
+      ".header-title-group",
+    );
+    const title = headerGroup.querySelector("h3");
+    const meta = headerGroup.querySelector(".season-meta");
+    const demoBadge = meta.querySelector(".demo-badge");
+    const metaPill = meta.querySelector(".meta-pill");
+
+    expect(title.textContent.trim()).toBe("Summer Cup 2026");
+    expect(demoBadge).toBeTruthy();
+    expect(metaPill.textContent).toContain("1");
+  });
+
+  describe("Guided Help", () => {
+    it("should return complete guided help steps when there are no demo races", () => {
+      component.editingSeason = {
+        name: "Pro Championship",
+        drops: 1,
+        races: [{ race_id: "r1", is_demo: false } as any],
+      };
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(8);
+
+      // Welcome Step
+      expect(steps[0].title).toBe("SE_HELP_WELCOME_TITLE");
+      expect(steps[0].content).toBe("SE_HELP_WELCOME_CONTENT");
+      expect(steps[0].position).toBe("center");
+      expect(steps[0].selector).toBeUndefined();
+
+      // Form inputs
+      expect(steps[1].selector).toBe("#season-name");
+      expect(steps[1].title).toBe("SE_HELP_NAME_TITLE");
+      expect(steps[1].position).toBe("right");
+
+      expect(steps[2].selector).toBe("#season-drops");
+      expect(steps[2].title).toBe("SE_HELP_DROPS_TITLE");
+      expect(steps[2].position).toBe("right");
+
+      // Header summary & actions
+      expect(steps[3].selector).toBe("#season-editor-races-run");
+      expect(steps[3].title).toBe("SE_HELP_RACES_RUN_TITLE");
+      expect(steps[3].position).toBe("bottom");
+
+      expect(steps[4].selector).toBe("#season-editor-meta");
+      expect(steps[4].title).toBe("SE_HELP_DEMO_BADGE_TITLE");
+      expect(steps[4].content).toBe("SE_HELP_DEMO_BADGE_ABSENT_CONTENT");
+      expect(steps[4].position).toBe("bottom");
+
+      expect(steps[5].selector).toBe("#btn-add-race");
+      expect(steps[5].title).toBe("SE_HELP_ADD_RACE_TITLE");
+      expect(steps[5].position).toBe("bottom");
+
+      // Content sections
+      expect(steps[6].selector).toBe("#season-editor-standings");
+      expect(steps[6].title).toBe("SE_HELP_STANDINGS_TITLE");
+      expect(steps[6].position).toBe("left");
+
+      expect(steps[7].selector).toBe("#season-editor-breakdown");
+      expect(steps[7].title).toBe("SE_HELP_BREAKDOWN_TITLE");
+      expect(steps[7].position).toBe("left");
+    });
+
+    it("should point to demo badge and use present content when season has demo races", () => {
+      component.editingSeason = {
+        name: "Pro Championship",
+        drops: 1,
+        races: [{ race_id: "r1", is_demo: true } as any],
+      };
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(8);
+
+      expect(steps[4].selector).toBe("#season-editor-demo-badge");
+      expect(steps[4].title).toBe("SE_HELP_DEMO_BADGE_TITLE");
+      expect(steps[4].content).toBe("SE_HELP_DEMO_BADGE_PRESENT_CONTENT");
+      expect(steps[4].position).toBe("bottom");
+    });
   });
 });

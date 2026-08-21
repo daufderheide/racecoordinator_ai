@@ -137,7 +137,9 @@ describe("RacedaySetupComponent", () => {
       "installUpdate",
       "skipUpdate",
       "cancelUpdate",
+      "snoozeUpdate",
     ]);
+    mockUpdateService.snoozeUpdate.and.returnValue(of("OK"));
     mockUpdateService.checkForUpdates.and.returnValue(
       of({
         updateAvailable: false,
@@ -774,6 +776,7 @@ describe("RacedaySetupComponent", () => {
       component.dismissUpdateBanner();
       expect(component.updateBannerDismissed).toBeTrue();
       expect(component.isUpdateBannerVisible).toBeFalse();
+      expect(mockUpdateService.snoozeUpdate).toHaveBeenCalledWith("v1.2.3", 7);
     });
 
     it("should cancel update when cancelUpdate is called", () => {

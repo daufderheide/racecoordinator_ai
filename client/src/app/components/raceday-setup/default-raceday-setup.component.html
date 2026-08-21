@@ -87,14 +87,6 @@
               >
                 {{ "RDS_MENU_IMPORT_SETTINGS" | translate }}
               </div>
-              <hr class="setup-menu-dropdown-divider" />
-              <div
-                class="setup-menu-dropdown-item"
-                [class.disabled]="isUpdateBannerVisible()"
-                (click)="onCheckForUpdates()"
-              >
-                {{ "RDS_MENU_CHECK_FOR_UPDATES" | translate }}
-              </div>
             </div>
           }
           <input
@@ -124,6 +116,12 @@
                 itemClass="menu-dropdown-item"
                 (languageSelected)="onLanguageSelected()"
               ></app-language-selector>
+              <hr class="setup-menu-dropdown-divider" />
+              <app-update-selector
+                wrapperClass="menu-dropdown-item"
+                itemClass="menu-dropdown-item"
+                (checkForUpdatesRequested)="onCheckForUpdates()"
+              ></app-update-selector>
               <hr class="setup-menu-dropdown-divider" />
               <div class="setup-menu-dropdown-item" (click)="configureDemo()">
                 {{ "RDS_MENU_DEMO_CONFIG" | translate }}

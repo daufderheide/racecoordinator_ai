@@ -238,4 +238,33 @@ describe("BartEditorComponent", () => {
     expect(minLapInput).toBeTruthy();
     expect(minLapInput.disabled).toBeTrue();
   });
+
+  it("should expand all sections when ensureSectionsExpanded is called", () => {
+    component.sectionsExpanded = {
+      bart: false,
+      main: false,
+      rw: false,
+    };
+    component.ensureSectionsExpanded();
+    expect(component.sectionsExpanded.bart).toBeTrue();
+    expect(component.sectionsExpanded.main).toBeTrue();
+    expect(component.sectionsExpanded.rw).toBeTrue();
+  });
+
+  it("should return guide steps and expand appropriate sections onEnter", () => {
+    const steps = component.getHelpSteps();
+    expect(steps.length).toBe(7);
+    expect(steps[0].selector).toBe("#bart-editor-0");
+    expect(steps[0].title).toBe("TE_HELP_BART_TITLE");
+
+    component.sectionsExpanded.bart = false;
+    component.sectionsExpanded.main = false;
+    steps[0].onEnter!();
+    expect(component.sectionsExpanded.bart).toBeTrue();
+    expect(component.sectionsExpanded.main).toBeTrue();
+
+    component.sectionsExpanded.rw = false;
+    steps[5].onEnter!();
+    expect(component.sectionsExpanded.rw).toBeTrue();
+  });
 });

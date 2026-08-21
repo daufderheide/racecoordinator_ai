@@ -133,19 +133,29 @@
 
 .header-title-group {
   display: flex;
-  align-items: center;
-  gap: 15px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   min-width: 0;
   flex: 1;
+  padding-right: 15px;
 }
 
 .header-title-group h3 {
   font-size: 2.2rem;
   color: #f8fafc;
   margin: 0;
+  width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.season-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .meta-pill {

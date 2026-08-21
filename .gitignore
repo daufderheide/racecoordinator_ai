@@ -49,8 +49,11 @@ server/mongodb/
 # Maven
 server/target
 
-# Install packags
+# Install packages
 release/
+final-release/
+release_body.md
+Output/
 
 # Files too large for git (consider splitting the zip files into multiple parts)
 build_cache/java8.zip

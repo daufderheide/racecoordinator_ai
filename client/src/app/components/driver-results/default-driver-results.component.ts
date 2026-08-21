@@ -255,13 +255,13 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   @HostListener("window:pagehide")
   onPageHide() {
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
   }
 
   protected getScoreFormat(): string {

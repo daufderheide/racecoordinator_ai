@@ -1387,6 +1387,24 @@ describe("ArduinoEditorComponent", () => {
       ).toBeDefined();
     });
 
+    it("should start with board type as the first help in the sequence", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBeGreaterThan(0);
+      expect(steps[0].selector).toBe("#arduino-board-type-0");
+      expect(steps[0].title).toBe("TE_HELP_ARDUINO_BOARD_TYPE_TITLE");
+    });
+
+    it("should generate voltage section help step when no voltage lanes exist", () => {
+      spyOn(component, "getVoltageLanes").and.returnValue([]);
+      const steps = component.getHelpSteps();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE"),
+      ).toBeFalse();
+    });
+
     it("should generate voltage help guide steps when voltage lanes exist", () => {
       spyOn(component, "getVoltageLanes").and.returnValue([0]);
       const steps = component.getHelpSteps();
@@ -1394,8 +1412,199 @@ describe("ArduinoEditorComponent", () => {
         steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_TITLE"),
       ).toBeTrue();
       expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_RESET_TITLE"),
+      ).toBeTrue();
+      expect(
         steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_MAX_TITLE"),
       ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_LINK_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_LIVE_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_SET_MAX_TITLE"),
+      ).toBeTrue();
+
+      component.sectionsExpanded.voltage = false;
+      const voltageStep = steps.find(
+        (s) => s.title === "TE_HELP_ARDUINO_VOLTAGE_TITLE",
+      );
+      voltageStep?.onEnter();
+      expect(component.sectionsExpanded.voltage).toBeTrue();
+    });
+
+    it("should generate RGB LED section help step when no LED strings are configured", () => {
+      component.config.set({
+        ...component.config(),
+        ledStrings: [],
+      } as any);
+      const steps = component.getHelpSteps();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_STRING_TITLE"),
+      ).toBeFalse();
+    });
+
+    it("should generate all RGB LED detail help steps when LED strings are configured", () => {
+      component.config.set({
+        ...component.config(),
+        ledStrings: [
+          {
+            pin: 4,
+            leds: [0, 1],
+            numUsedLeds: 2,
+            addressableLeds: 5,
+            brightness: 128,
+            flagFlashRate: 1.5,
+            ledType: 0,
+            colorOrder: 0,
+            ledLaneColorOverrides: ["#ffffff", "#ffffff"],
+          },
+        ],
+      } as any);
+      const steps = component.getHelpSteps();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_STRING_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_LINK_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_COUNT_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_BRIGHTNESS_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_FLASH_RATE_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_TYPE_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_COLOR_ORDER_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some(
+          (s) => s.title === "TE_HELP_ARDUINO_LED_LANE_OVERRIDES_TITLE",
+        ),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_STATUS_TITLE"),
+      ).toBeTrue();
+      expect(
+        steps.some((s) => s.title === "TE_HELP_ARDUINO_LED_SELECTOR_TITLE"),
+      ).toBeTrue();
+
+      component.sectionsExpanded.leds = false;
+      component.ledStringExpanded[0] = false;
+      const ledStep = steps.find(
+        (s) => s.title === "TE_HELP_ARDUINO_LED_TITLE",
+      );
+      ledStep?.onEnter();
+      expect(component.sectionsExpanded.leds).toBeTrue();
+      expect(component.ledStringExpanded[0]).toBeTrue();
+    });
+
+    it("should expand all sections when ensureSectionsExpanded is called", () => {
+      component.sectionsExpanded = {
+        arduino: false,
+        main: false,
+        digital: false,
+        analog: false,
+        voltage: false,
+        leds: false,
+      };
+      component.ensureSectionsExpanded();
+      expect(component.sectionsExpanded.arduino).toBeTrue();
+      expect(component.sectionsExpanded.main).toBeTrue();
+      expect(component.sectionsExpanded.digital).toBeTrue();
+      expect(component.sectionsExpanded.analog).toBeTrue();
+      expect(component.sectionsExpanded.voltage).toBeTrue();
+      expect(component.sectionsExpanded.leds).toBeTrue();
+    });
+
+    it("should disable RGB LED option with tooltip when legacy sketch without RGB support is connected", () => {
+      // Connect with supportsRgbLeds: false
+      mockDataService.interfaceEvents$.next({
+        status: {
+          interfaceIndex: 0,
+          status: 0, // CONNECTED
+          supportsRgbLeds: false,
+          version: "1.0.0.15",
+        },
+      });
+      fixture.detectChanges();
+
+      expect(component.supportsRgbLeds).toBeFalse();
+
+      // Pin D2 is eligible for LED string on Uno (hardwareType 0)
+      const actions = component.getFilteredActions(true, 2);
+      let ledAction: any = null;
+      for (const g of actions) {
+        const found = g.actions.find((a) => a.value === "led_string");
+        if (found) {
+          ledAction = found;
+          break;
+        }
+      }
+
+      expect(ledAction).toBeDefined();
+      expect(ledAction.disabled).toBeTrue();
+      expect(ledAction.tooltip).toBe("AE_RGB_LEDS_DISABLED_TOOLTIP");
+
+      // Attempting to select disabled action should not change pin behavior
+      component.selectPinAction(true, 2, "led_string");
+      expect(component.getPinAction(true, 2)).not.toBe("led_string");
+    });
+
+    it("should enable RGB LED option when modern sketch is connected or disconnected", () => {
+      // Modern sketch
+      mockDataService.interfaceEvents$.next({
+        status: {
+          interfaceIndex: 0,
+          status: 0, // CONNECTED
+          supportsRgbLeds: true,
+          version: "2.1.0.0",
+        },
+      });
+      fixture.detectChanges();
+
+      expect(component.supportsRgbLeds).toBeTrue();
+
+      const actions = component.getFilteredActions(true, 2);
+      let ledAction: any = null;
+      for (const g of actions) {
+        const found = g.actions.find((a) => a.value === "led_string");
+        if (found) {
+          ledAction = found;
+          break;
+        }
+      }
+
+      expect(ledAction).toBeDefined();
+      expect(ledAction.disabled).toBeFalsy();
+
+      component.selectPinAction(true, 2, "led_string");
+      expect(component.getPinAction(true, 2)).toBe("led_string");
+
+      // Disconnected state
+      mockDataService.interfaceEvents$.next({
+        status: {
+          interfaceIndex: 0,
+          status: 1, // DISCONNECTED
+        },
+      });
+      fixture.detectChanges();
+
+      expect(component.supportsRgbLeds).toBeTrue();
     });
   });
 });

@@ -1,0 +1,35 @@
+<div
+  [class]="wrapperClass() + ' has-submenu'"
+  (click)="toggleDropdown($event)"
+  data-testid="menu-item-automatic-updates"
+>
+  {{ "RDS_MENU_AUTOMATIC_UPDATES" | translate }}
+  <span class="submenu-arrow">▶</span>
+  @if (isUpdateDropdownOpen) {
+    <div class="menu-dropdown submenu" data-testid="submenu-automatic-updates">
+      <div
+        [class]="itemClass()"
+        (click)="onCheckForUpdatesClick($event)"
+        data-testid="item-check-updates"
+      >
+        {{ "RDS_MENU_CHECK_FOR_UPDATES" | translate }}
+      </div>
+      <div class="menu-dropdown-divider"></div>
+      @for (ch of channels; track ch.id) {
+        <div
+          [class]="itemClass()"
+          [class.selected]="currentChannel === ch.id"
+          [class.disabled]="!isChannelSelectionEnabled || !isAdmin"
+          [title]="!isAdmin ? ('RDS_UPDATE_ADMIN_REQUIRED' | translate) : ''"
+          (click)="selectChannel(ch.id, $event)"
+          [attr.data-testid]="'channel-' + ch.id.toLowerCase()"
+        >
+          <span>{{ ch.labelKey | translate }}</span>
+          @if (currentChannel === ch.id) {
+            <span class="selected-indicator">✓</span>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

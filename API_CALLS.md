@@ -211,9 +211,14 @@ Endpoints for running live races, pit stops, and hardware interfaces. Many write
 |:---|:---|:---|:---|:---|:---|
 | `GET` | `/api/version` | `VIEWER` | None | Plaintext | Returns the server's semantic version. |
 | `GET` | `/api/server-ip` | `VIEWER` | None | Plaintext | Returns the server host's primary IPv4 address. |
-| `GET` | `/api/update/check` | `VIEWER` | None | JSON object of update info | Checks remote repository for newer app versions. |
-| `POST` | `/api/update/skip` | `VIEWER` | `{ "version": "X.Y.Z" }` | Plaintext | Suppresses prompt for a specific version. |
-| `POST` | `/api/update/install` | `VIEWER` | `{ "downloadUrl": "..." }` | Plaintext | Downloads and triggers installer asynchronously. |
+| `GET` | `/api/update/config` | `VIEWER` | None | JSON object (`{ channel, skippedVersion, snoozedVersion, snoozedUntil }`) | Retrieves the current update configuration and snooze/skip state. |
+| `POST` | `/api/update/channel` | `ADMIN` | `{ "channel": "ALPHA" \| "BETA" \| "PRODUCTION" \| "DISABLED" }` | Plaintext | Updates the active release channel for automatic updates. |
+| `POST` | `/api/update/snooze` | `ADMIN` | `{ "version": "X.Y.Z", "durationDays": 7 }` | Plaintext | Postpones update notifications for a specific version (default 7 days). |
+| `GET` | `/api/update/check` | `VIEWER` | `force=true/false` (query parameter) | JSON object of update info | Checks remote repository for newer app versions according to configured channel. |
+| `POST` | `/api/update/skip` | `ADMIN` | `{ "version": "X.Y.Z" }` | Plaintext | Suppresses prompt for a specific version permanently until a newer release is published. |
+| `POST` | `/api/update/install` | `ADMIN` | `{ "downloadUrl": "..." }` | Plaintext | Downloads and triggers installer asynchronously. |
+| `GET` | `/api/update/progress` | `VIEWER` | None | JSON object (`{ progress, status }`) | Returns active download / installation progress. |
+| `POST` | `/api/update/cancel` | `ADMIN` | None | Plaintext | Cancels an ongoing update download. |
 
 ---
 

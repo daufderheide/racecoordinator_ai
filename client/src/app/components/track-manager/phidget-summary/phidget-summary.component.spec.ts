@@ -161,7 +161,14 @@ describe("PhidgetSummaryComponent", () => {
       expect(component.hasBehavior("analog_led")).toBeTrue();
     });
 
-    it("should return false if behavior absent", () => {
+    it("should detect voltage inputs", () => {
+      const analogIds = [PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE];
+      const config: Partial<PhidgetConfig> = { analogIds };
+      fixture.componentRef.setInput("config", config as PhidgetConfig);
+      expect(component.hasBehavior("voltage")).toBeTrue();
+    });
+
+    it("should return false for unknown behavior or absent behavior", () => {
       const config: Partial<PhidgetConfig> = {
         digitalInIds: [],
         digitalOutIds: [],
@@ -172,7 +179,22 @@ describe("PhidgetSummaryComponent", () => {
       expect(component.hasBehavior("segment")).toBeFalse();
       expect(component.hasBehavior("call")).toBeFalse();
       expect(component.hasBehavior("relay")).toBeFalse();
+      expect(component.hasBehavior("voltage")).toBeFalse();
       expect(component.hasBehavior("analog_led")).toBeFalse();
+      expect(component.hasBehavior("unknown" as any)).toBeFalse();
+
+      fixture.componentRef.setInput("config", undefined);
+      expect(component.hasBehavior("lap")).toBeFalse();
+    });
+  });
+
+  describe("toggleExpanded", () => {
+    it("should toggle isExpanded state", () => {
+      expect(component.isExpanded).toBeTrue();
+      component.toggleExpanded();
+      expect(component.isExpanded).toBeFalse();
+      component.toggleExpanded();
+      expect(component.isExpanded).toBeTrue();
     });
   });
 });

@@ -19,6 +19,7 @@ import {
   IPhidgetDeviceInfo,
   PinBehavior,
 } from "@app/proto/antigravity";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -94,7 +95,12 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     }
 
     this.updateSelectedDeviceKey();
+    this.loadSavedSections();
+    this.subscribeToPhidgetDevices();
+    this.subscribeToInterfaceEvents();
+  }
 
+  private loadSavedSections(): void {
     const savedSections = localStorage.getItem(
       `rc.phidget-editor.sections.${this.interfaceIndex()}`,
     );
@@ -106,7 +112,9 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         };
       } catch (e) {}
     }
+  }
 
+  private subscribeToPhidgetDevices(): void {
     this.subscriptions.add(
       this.dataService.getPhidgetDevices().subscribe({
         next: (devices) => {
@@ -129,45 +137,93 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         },
       }),
     );
+  }
 
+  private subscribeToInterfaceEvents(): void {
     this.subscriptions.add(
       this.dataService.getInterfaceEvents().subscribe({
-        next: (event) => {
-          if (
-            event.status &&
-            (event.status.interfaceIndex ?? 0) === this.interfaceIndex()
-          ) {
-            const statusCode = event.status.status as number;
-            if (statusCode === InterfaceStatus.CONNECTED) {
-              this.status = "CONNECTED";
-            } else if (statusCode === InterfaceStatus.NO_DATA) {
-              this.status = "NO_DATA";
-            } else {
-              this.status = "DISCONNECTED";
-            }
-            this.cdr.detectChanges();
-          }
-
-          if (
-            event.digitalPin &&
-            (event.digitalPin.interfaceIndex ?? 0) === this.interfaceIndex()
-          ) {
-            const pin = event.digitalPin.pin ?? 0;
-            const isDigital = event.digitalPin.isDigital ?? true;
-            const key = `${isDigital ? "in" : "analog"}-${pin}`;
-            this.pinActivity[key] = true;
-            if (this.pinActivityTimers[key]) {
-              clearTimeout(this.pinActivityTimers[key]);
-            }
-            this.pinActivityTimers[key] = setTimeout(() => {
-              this.pinActivity[key] = false;
-              this.cdr.detectChanges();
-            }, 500);
-            this.cdr.detectChanges();
-          }
-        },
+        next: (event) => this.handleInterfaceEvent(event),
       }),
     );
+  }
+
+  private handleInterfaceEvent(event: any): void {
+    if (
+      event.status &&
+      (event.status.interfaceIndex ?? 0) === this.interfaceIndex()
+    ) {
+      const statusCode = event.status.status as number;
+      if (statusCode === InterfaceStatus.CONNECTED) {
+        this.status = "CONNECTED";
+      } else if (statusCode === InterfaceStatus.NO_DATA) {
+        this.status = "NO_DATA";
+      } else {
+        this.status = "DISCONNECTED";
+      }
+      this.cdr.detectChanges();
+    } else if (
+      event.lap &&
+      (event.lap.interfaceIndex ?? 0) === this.interfaceIndex()
+    ) {
+      const pin = event.lap.interfaceId ?? -1;
+      if (pin >= 0) {
+        this.triggerPinPulse(`in-${pin}`);
+      }
+    } else if (
+      event.segment &&
+      (event.segment.interfaceIndex ?? 0) === this.interfaceIndex()
+    ) {
+      const pin = event.segment.interfaceId ?? -1;
+      if (pin >= 0) {
+        this.triggerPinPulse(`in-${pin}`);
+      }
+    } else if (
+      event.callbutton &&
+      (event.callbutton.interfaceIndex ?? 0) === this.interfaceIndex()
+    ) {
+      const lane = event.callbutton.lane;
+      const c = this.config();
+      if (c?.digitalInIds) {
+        for (let i = 0; i < c.digitalInIds.length; i++) {
+          const behavior = c.digitalInIds[i];
+          if (
+            behavior === PinBehavior.BEHAVIOR_CALL_BUTTON ||
+            behavior === PinBehavior.BEHAVIOR_CALL_BUTTON_BASE + (lane ?? 0)
+          ) {
+            this.triggerPinPulse(`in-${i}`);
+          }
+        }
+      }
+    } else if (
+      event.digitalPin &&
+      (event.digitalPin.interfaceIndex ?? 0) === this.interfaceIndex()
+    ) {
+      const pin = event.digitalPin.pin ?? 0;
+      const isDigital = event.digitalPin.isDigital ?? true;
+      const state = event.digitalPin.state ?? 0;
+      const key = `${isDigital ? "in" : "analog"}-${pin}`;
+      const nc = !!this.config()?.normallyClosedLaneSensors;
+      const isTrip = nc ? state === 0 : state === 1;
+
+      this.pinActivity[key] = isTrip;
+      if (this.pinActivityTimers[key]) {
+        clearTimeout(this.pinActivityTimers[key]);
+        delete this.pinActivityTimers[key];
+      }
+      this.cdr.detectChanges();
+    }
+  }
+
+  triggerPinPulse(key: string) {
+    this.pinActivity[key] = true;
+    if (this.pinActivityTimers[key]) {
+      clearTimeout(this.pinActivityTimers[key]);
+    }
+    this.pinActivityTimers[key] = setTimeout(() => {
+      this.pinActivity[key] = false;
+      this.cdr.detectChanges();
+    }, 500);
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy(): void {
@@ -783,8 +839,8 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
 
   isPinActive(type: "in" | "out" | "analog", pin: number): boolean {
     const key = `${type}-${pin}`;
-    if (this.pinState[key] !== undefined) {
-      return this.pinState[key];
+    if (type === "out") {
+      return !!this.pinState[key];
     }
     return !!this.pinActivity[key];
   }
@@ -824,5 +880,118 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
           },
         });
     }
+  }
+
+  ensureSectionsExpanded(): void {
+    this.sectionsExpanded.phidget = true;
+    this.sectionsExpanded.main = true;
+    this.sectionsExpanded.pins = true;
+    this.sectionsExpanded.digitalIn = true;
+    this.sectionsExpanded.digitalOut = true;
+    this.sectionsExpanded.analogIn = true;
+    this.cdr.detectChanges();
+  }
+
+  getHelpSteps(): GuideStep[] {
+    const expandMain = () => {
+      this.sectionsExpanded.phidget = true;
+      this.sectionsExpanded.main = true;
+      this.cdr.detectChanges();
+    };
+    const expandDigitalIn = () => {
+      this.sectionsExpanded.phidget = true;
+      this.sectionsExpanded.digitalIn = true;
+      this.cdr.detectChanges();
+    };
+    const expandDigitalOut = () => {
+      this.sectionsExpanded.phidget = true;
+      this.sectionsExpanded.digitalOut = true;
+      this.cdr.detectChanges();
+    };
+    const expandAnalogIn = () => {
+      this.sectionsExpanded.phidget = true;
+      this.sectionsExpanded.analogIn = true;
+      this.cdr.detectChanges();
+    };
+
+    const steps: GuideStep[] = [
+      {
+        selector: `#phidget-editor-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_TITLE",
+        content: "TE_HELP_PHIDGET_CONTENT",
+        position: "right",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#device-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_DEVICE_TITLE",
+        content: "TE_HELP_PHIDGET_DEVICE_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#phidget-status-badge-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_STATUS_TITLE",
+        content: "TE_HELP_PHIDGET_STATUS_CONTENT",
+        position: "right",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#phidget-nc-sensors-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_NC_SENSORS_TITLE",
+        content: "TE_HELP_PHIDGET_NC_SENSORS_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+      {
+        selector: `#phidget-nc-relays-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_NC_RELAYS_TITLE",
+        content: "TE_HELP_PHIDGET_NC_RELAYS_CONTENT",
+        position: "bottom",
+        onEnter: expandMain,
+      },
+    ];
+
+    if (this.availableDigitalInputPins.length > 0) {
+      const firstPin = this.availableDigitalInputPins[0];
+      steps.push({
+        selector: `#phidget-in-item-${firstPin}-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_DIGITAL_IN_TITLE",
+        content: "TE_HELP_PHIDGET_DIGITAL_IN_CONTENT",
+        position: "bottom",
+        onEnter: expandDigitalIn,
+      });
+      steps.push({
+        selector: `#phidget-in-status-${firstPin}`,
+        title: "TE_HELP_PHIDGET_IN_STATUS_TITLE",
+        content: "TE_HELP_PHIDGET_IN_STATUS_CONTENT",
+        position: "bottom",
+        onEnter: expandDigitalIn,
+      });
+    }
+
+    if (this.availableDigitalOutputPins.length > 0) {
+      const firstPin = this.availableDigitalOutputPins[0];
+      steps.push({
+        selector: `#phidget-out-item-${firstPin}-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_DIGITAL_OUT_TITLE",
+        content: "TE_HELP_PHIDGET_DIGITAL_OUT_CONTENT",
+        position: "bottom",
+        onEnter: expandDigitalOut,
+      });
+    }
+
+    if (this.availableAnalogInputPins.length > 0) {
+      const firstPin = this.availableAnalogInputPins[0];
+      steps.push({
+        selector: `#phidget-analog-item-${firstPin}-${this.interfaceIndex()}`,
+        title: "TE_HELP_PHIDGET_ANALOG_IN_TITLE",
+        content: "TE_HELP_PHIDGET_ANALOG_IN_CONTENT",
+        position: "bottom",
+        onEnter: expandAnalogIn,
+      });
+    }
+
+    return steps;
   }
 }

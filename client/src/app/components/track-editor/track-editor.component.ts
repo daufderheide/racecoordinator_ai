@@ -107,6 +107,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   @ViewChildren(ArduinoEditorComponent)
   arduinoEditors!: QueryList<ArduinoEditorComponent>;
+  @ViewChildren(BartEditorComponent)
+  bartEditors!: QueryList<BartEditorComponent>;
+  @ViewChildren(PhidgetEditorComponent)
+  phidgetEditors!: QueryList<PhidgetEditorComponent>;
   @ViewChildren(TrakmateEditorComponent)
   trakmateEditors!: QueryList<TrakmateEditorComponent>;
   sectionsExpanded = {
@@ -261,17 +265,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     } else {
       this.loadData();
     }
-
-    this.subscriptions.push(
-      this.helpService.isVisible$.subscribe((visible) => {
-        if (visible) {
-          setTimeout(() => {
-            this.ensureSectionsExpandedForHelp();
-            this.updateHelpSteps();
-          });
-        }
-      }),
-    );
 
     this.subscriptions.push(
       this.helpService.isVisible$.subscribe((visible) => {
@@ -984,8 +977,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  updateHelpSteps() {
-    const steps: GuideStep[] = [
+  private getBaseHelpSteps(): GuideStep[] {
+    return [
       {
         title: this.translationService.translate("TE_HELP_WELCOME_TITLE"),
         content: this.translationService.translate("TE_HELP_WELCOME_CONTENT"),
@@ -1061,17 +1054,52 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "right",
       },
     ];
+  }
 
-    // Add Arduino help steps if there are any configured
-    if (this.arduinoConfigs?.length > 0 && this.arduinoEditors?.length > 0) {
-      // Collect steps from the first Arduino editor
-      const firstArduino = this.arduinoEditors.first;
+  private getInterfaceHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [];
+
+    // Add Arduino help steps if there are any configured (first one only)
+    if (this.arduinoConfigs?.length > 0) {
+      const firstArduino = this.arduinoEditors?.first;
       if (firstArduino) {
         steps.push(...firstArduino.getHelpSteps());
       }
     }
 
-    this.helpSteps = steps;
+    // Add Bart help steps if there are any configured (first one only)
+    if (this.bartConfigs?.length > 0) {
+      const firstBart = this.bartEditors?.first;
+      if (firstBart) {
+        steps.push(...firstBart.getHelpSteps());
+      }
+    }
+
+    // Add Phidget help steps if there are any configured (first one only)
+    if (this.phidgetConfigs?.length > 0) {
+      const firstPhidget = this.phidgetEditors?.first;
+      if (firstPhidget) {
+        steps.push(...firstPhidget.getHelpSteps());
+      }
+    }
+
+    // Add Trackmate help steps if there are any configured (first one only)
+    if (this.trackmateConfigs?.length > 0) {
+      const firstTrackmate = this.trakmateEditors?.first;
+      if (firstTrackmate) {
+        steps.push(...firstTrackmate.getHelpSteps());
+      }
+    }
+
+    return steps;
+  }
+
+  getHelpSteps(): GuideStep[] {
+    return [...this.getBaseHelpSteps(), ...this.getInterfaceHelpSteps()];
+  }
+
+  updateHelpSteps() {
+    this.helpSteps = this.getHelpSteps();
   }
 
   private ensureSectionsExpandedForHelp() {
@@ -1092,6 +1120,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       changed = true;
     }
 
+    if (this.arduinoConfigs?.length > 0 && this.arduinoEditors?.first) {
+      this.arduinoEditors.first.ensureSectionsExpanded();
+    }
+    if (this.bartConfigs?.length > 0 && this.bartEditors?.first) {
+      this.bartEditors.first.ensureSectionsExpanded();
+    }
+    if (this.phidgetConfigs?.length > 0 && this.phidgetEditors?.first) {
+      this.phidgetEditors.first.ensureSectionsExpanded();
+    }
+    if (this.trackmateConfigs?.length > 0 && this.trakmateEditors?.first) {
+      this.trakmateEditors.first.ensureSectionsExpanded();
+    }
+
     if (changed && !this.isDestroyed) {
       this.cdr.detectChanges();
     }
@@ -1099,8 +1140,33 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   startHelp() {
     this.ensureSectionsExpandedForHelp();
-    this.updateHelpSteps();
-    this.helpService.startGuide(this.helpSteps);
+    const toolbarSteps: GuideStep[] = [
+      {
+        targetId: "undo-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_UNDO_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_UNDO_CONTENT"),
+        position: "bottom",
+      },
+      {
+        targetId: "redo-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_REDO_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_REDO_CONTENT"),
+        position: "bottom",
+      },
+      {
+        targetId: "copy-item-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),
+        position: "bottom",
+      },
+      {
+        targetId: "help-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
+        position: "bottom",
+      },
+    ];
+    this.helpService.startGuide([...this.getHelpSteps(), ...toolbarSteps]);
   }
 
   onInputFocus() {

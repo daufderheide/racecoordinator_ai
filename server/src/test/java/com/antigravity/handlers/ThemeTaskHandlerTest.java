@@ -204,4 +204,32 @@ public class ThemeTaskHandlerTest {
     handler.duplicateTheme(ctx);
     verify(handler, org.mockito.Mockito.atLeastOnce()).setStatus(any(), eq(404));
   }
+
+  @Test
+  public void testUpdateTheme_UpdatesActiveRaceTheme() {
+    Theme custom =
+        new Theme("Active Custom", false, new HashMap<>(), new HashMap<>(), "theme_active_1", null);
+    new com.antigravity.repository.SqliteRepository<>(databaseContext, "themes", Theme.class)
+        .save(custom);
+
+    com.antigravity.race.Race mockRace = org.mockito.Mockito.mock(com.antigravity.race.Race.class);
+    org.mockito.Mockito.when(mockRace.getTheme()).thenReturn(custom);
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(mockRace);
+
+    try {
+      java.util.Map<String, String> updatedSlots = new HashMap<>();
+      updatedSlots.put("flag.heat_paused", "default_flag_checkered");
+      Theme updated =
+          new Theme("Active Custom", false, updatedSlots, new HashMap<>(), "theme_active_1", null);
+
+      org.mockito.Mockito.doReturn("theme_active_1").when(handler).getPathParam(any(), eq("id"));
+      org.mockito.Mockito.doReturn(updated).when(handler).getBody(any(), eq(Theme.class));
+
+      handler.updateTheme(ctx);
+
+      verify(mockRace).setTheme(any(Theme.class));
+    } finally {
+      com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(null);
+    }
+  }
 }

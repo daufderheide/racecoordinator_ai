@@ -1,6 +1,6 @@
 # 🏎️ Race Coordinator AI
 
-> **Race Coordinator AI** is a modern, cross-platform slot car race management and timing system. It provides precise lap timing, rich audio and speech race commentary, automated heat rotations, customizable race screens, driver statistics, and hardware timing support across Windows, macOS, and Linux/Raspberry Pi.
+> **Race Coordinator AI** is a modern, cross-platform slot car race management and timing system. It provides precise lap timing, rich audio and speech race commentary, automated heat rotations, customizable race screens, driver statistics, and hardware timing support across Windows, macOS, and Linux (Raspberry Pi & Arduino Uno Q).
 
 ---
 
@@ -32,7 +32,7 @@ When opening the release page, choose the installer that matches your computer:
 * **Windows 10 or 11**: Download `RaceCoordinatorAI_Online_Setup_*.exe` *(Recommended — fastest, lightweight installer that downloads components automatically during setup.  This requires an internet connection during installation)*.
 * **Windows 8, 7, or XP (or offline PCs)**: Download `RaceCoordinatorAI_Offline_Setup_*.exe`. Legacy Windows versions require this full offline installer for their initial installation.  After the initial installation, you can use the Online_Setup above if you have an internet connection.
 * **macOS**: Download `RaceCoordinator_Mac_*.dmg`. Open the disk image and drag **Race Coordinator AI** into your Applications folder.
-* **Linux / Raspberry Pi**: Download `RaceCoordinatorAI-Linux-ARM64_*.tar.gz`, unpack the archive, and run `./RaceCoordinatorAI`.
+* **Linux / Raspberry Pi / Arduino Uno Q**: Download `RaceCoordinatorAI-Linux-ARM64_*.tar.gz`, unpack the archive, and run `./RaceCoordinatorAI`.
 
 > [!TIP]
 > You do **not** need to download the "Source code" (`.zip` / `.tar.gz`) or "Coverage Reports" files to use Race Coordinator AI.
@@ -45,7 +45,7 @@ When opening the release page, choose the installer that matches your computer:
 2. **Launch Race Coordinator AI**:
    - **Windows**: Launch from the desktop shortcut or Start Menu.
    - **macOS**: Open **Race Coordinator AI** from your `Applications` folder.
-   - **Linux / Raspberry Pi**: Launch via `./RaceCoordinatorAI` in the extracted directory.
+   - **Linux / Raspberry Pi / Arduino Uno Q**: Launch via `./RaceCoordinatorAI` in the extracted directory.
 3. **Configure Your Track**: Navigate to **Track Manager** in the navigation menu to configure your track, lanes, and sensor hardware (Arduino Uno / Uno Q, Phidget, Trak-Mate, Webcam tracking, or Keyboard demo mode).
 4. **Set Up a Race**: Go to **Race Day Setup**, choose your race format and heat rotation, select drivers, and start racing!
 
@@ -74,6 +74,7 @@ To help us resolve issues quickly, please include:
 4. **Clear Steps to Reproduce**: Provide step-by-step instructions detailing what you did before the issue occurred.
 5. **Expected vs. Actual Result**: Describe what you expected to happen versus what actually happened.
 6. **Screenshots & Logs**: Attach screenshots or relevant error messages whenever possible.
+7. **One Issue Per Bug or Feature**: Create a separate issue for each distinct bug or feature request so they can be tracked, investigated, and resolved independently.
 
 ---
 

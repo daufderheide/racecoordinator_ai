@@ -165,7 +165,10 @@ public class PhidgetProtocol extends DefaultProtocol {
   // --- Protocol Lifecycle ---
 
   @Override
-  public boolean open() {
+  public synchronized boolean open() {
+    if (opened) {
+      return true;
+    }
     if (config == null || config.serialNumber <= 0) {
       logger.info(
           "No Phidget device selected for interface index {} (serialNumber: {})",
@@ -203,6 +206,8 @@ public class PhidgetProtocol extends DefaultProtocol {
 
       opened = true;
       checkAttachmentStatus();
+      syncPower();
+      syncAnalogLeds();
       startStatusScheduler();
       return true;
     } catch (Throwable e) {
@@ -317,7 +322,7 @@ public class PhidgetProtocol extends DefaultProtocol {
               new AttachListener() {
                 @Override
                 public void onAttach(AttachEvent e) {
-                  logger.info("Phidget DigitalInput channel attached");
+                  logger.info("Phidget DigitalInput channel {} attached", channel);
                   attachedChannelCount.incrementAndGet();
                   checkAttachmentStatus();
                 }
@@ -327,7 +332,7 @@ public class PhidgetProtocol extends DefaultProtocol {
               new DetachListener() {
                 @Override
                 public void onDetach(DetachEvent e) {
-                  logger.info("Phidget DigitalInput channel detached");
+                  logger.info("Phidget DigitalInput channel {} detached", channel);
                   attachedChannelCount.decrementAndGet();
                   checkAttachmentStatus();
                 }
@@ -335,18 +340,21 @@ public class PhidgetProtocol extends DefaultProtocol {
 
           digitalInputs.add(di);
           try {
-            di.open();
+            di.open(500);
           } catch (PhidgetException e) {
-            digitalInputs.remove(di);
-            throw e;
+            if (e.getErrorCode() == ErrorCode.TIMEOUT) {
+              logger.info(
+                  "Phidget Digital Input channel {} opened, waiting for device attachment (serialNumber: {})",
+                  i,
+                  config.serialNumber);
+            } else {
+              digitalInputs.remove(di);
+              throw e;
+            }
           }
           logger.info("Opened Phidget Digital Input channel {}", i);
         } catch (PhidgetException e) {
-          if (e.getErrorCode() == ErrorCode.TIMEOUT) {
-            logger.warn(
-                "Phidget Digital Input channel {} could not be opened (Timed Out). Device might not be attached.",
-                i);
-          } else {
+          if (e.getErrorCode() != ErrorCode.TIMEOUT) {
             logger.warn("Phidget Digital Input channel {} could not be opened", i, e);
           }
         } catch (Throwable e) {
@@ -374,13 +382,17 @@ public class PhidgetProtocol extends DefaultProtocol {
           }
           out.setChannel(i);
 
+          final int channel = i;
+          final int pinBehavior = behavior;
+
           out.addAttachListener(
               new AttachListener() {
                 @Override
                 public void onAttach(AttachEvent e) {
-                  logger.info("Phidget DigitalOutput channel attached");
+                  logger.info("Phidget DigitalOutput channel {} attached", channel);
                   attachedChannelCount.incrementAndGet();
                   checkAttachmentStatus();
+                  applyOutputChannelState(out, pinBehavior, channel);
                 }
               });
 
@@ -388,7 +400,7 @@ public class PhidgetProtocol extends DefaultProtocol {
               new DetachListener() {
                 @Override
                 public void onDetach(DetachEvent e) {
-                  logger.warn("Phidget DigitalOutput channel detached");
+                  logger.warn("Phidget DigitalOutput channel {} detached", channel);
                   attachedChannelCount.decrementAndGet();
                   checkAttachmentStatus();
                 }
@@ -396,14 +408,6 @@ public class PhidgetProtocol extends DefaultProtocol {
 
           digitalOutputs.add(out);
           digitalOutputsByChannel.put(i, out);
-          try {
-            out.open();
-          } catch (PhidgetException e) {
-            digitalOutputs.remove(out);
-            digitalOutputsByChannel.remove(i);
-            throw e;
-          }
-          logger.info("Opened Phidget Digital Output channel {}", i);
 
           if (behavior == PinBehavior.BEHAVIOR_RELAY_VALUE) {
             mainRelayOutput = out;
@@ -417,12 +421,29 @@ public class PhidgetProtocol extends DefaultProtocol {
                   && behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE)) {
             analogLedOutputs.put(behavior, out);
           }
+
+          try {
+            out.open(500);
+          } catch (PhidgetException e) {
+            if (e.getErrorCode() == ErrorCode.TIMEOUT) {
+              logger.info(
+                  "Phidget Digital Output channel {} opened, waiting for device attachment (serialNumber: {})",
+                  i,
+                  config.serialNumber);
+            } else {
+              digitalOutputs.remove(out);
+              digitalOutputsByChannel.remove(i);
+              if (mainRelayOutput == out) {
+                mainRelayOutput = null;
+              }
+              relayOutputs.values().remove(out);
+              analogLedOutputs.values().remove(out);
+              throw e;
+            }
+          }
+          logger.info("Opened Phidget Digital Output channel {}", i);
         } catch (PhidgetException e) {
-          if (e.getErrorCode() == ErrorCode.TIMEOUT) {
-            logger.warn(
-                "Phidget Digital Output channel {} could not be opened (Timed Out). Device might not be attached.",
-                i);
-          } else {
+          if (e.getErrorCode() != ErrorCode.TIMEOUT) {
             logger.warn("Phidget Digital Output channel {} could not be opened", i, e);
           }
         } catch (Throwable e) {
@@ -430,6 +451,68 @@ public class PhidgetProtocol extends DefaultProtocol {
         }
       }
     }
+  }
+
+  private void applyOutputChannelState(DigitalOutput out, int behavior, int channel) {
+    try {
+      if (!out.getAttached()) {
+        return;
+      }
+      if (behavior == PinBehavior.BEHAVIOR_RELAY_VALUE) {
+        boolean power = lastMainPower != null ? lastMainPower : false;
+        boolean state = isNormallyClosedRelays() ? !power : power;
+        out.setState(state);
+      } else if (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE_VALUE
+          && behavior < PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 64) {
+        int lane = behavior - PinBehavior.BEHAVIOR_RELAY_BASE_VALUE;
+        boolean power = lastLanePower.getOrDefault(lane, false);
+        boolean state = isNormallyClosedRelays() ? !power : power;
+        out.setState(state);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE) {
+        out.setState(isGreenFlagOn);
+      } else if (behavior == PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG_VALUE) {
+        out.setState(isYellowFlagOn);
+      } else if (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE
+          && behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE) {
+        int idx = behavior - PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1_VALUE;
+        out.setState(isCountdownOn[idx]);
+      }
+    } catch (PhidgetException e) {
+      logger.error("Error applying output state to Phidget channel {}", channel, e);
+    }
+  }
+
+  public void syncPower() {
+    if (mainRelayOutput != null) {
+      boolean power = lastMainPower != null ? lastMainPower : false;
+      try {
+        if (mainRelayOutput.getAttached()) {
+          boolean state = isNormallyClosedRelays() ? !power : power;
+          mainRelayOutput.setState(state);
+        }
+      } catch (PhidgetException e) {
+        logger.error("Error setting main relay state during syncPower", e);
+      }
+    }
+    for (Map.Entry<Integer, DigitalOutput> entry : relayOutputs.entrySet()) {
+      int lane = entry.getKey();
+      DigitalOutput out = entry.getValue();
+      if (out != null) {
+        boolean power = lastLanePower.getOrDefault(lane, false);
+        try {
+          if (out.getAttached()) {
+            boolean state = isNormallyClosedRelays() ? !power : power;
+            out.setState(state);
+          }
+        } catch (PhidgetException e) {
+          logger.error("Error setting lane relay state for lane {} during syncPower", lane + 1, e);
+        }
+      }
+    }
+  }
+
+  public void syncAnalogLeds() {
+    onAnalogLedsChanged();
   }
 
   private void openAnalogInputs() {
@@ -465,7 +548,7 @@ public class PhidgetProtocol extends DefaultProtocol {
               new AttachListener() {
                 @Override
                 public void onAttach(AttachEvent e) {
-                  logger.info("Phidget VoltageRatioInput channel attached");
+                  logger.info("Phidget VoltageRatioInput channel {} attached", channel);
                   attachedChannelCount.incrementAndGet();
                   checkAttachmentStatus();
                 }
@@ -475,7 +558,7 @@ public class PhidgetProtocol extends DefaultProtocol {
               new DetachListener() {
                 @Override
                 public void onDetach(DetachEvent e) {
-                  logger.warn("Phidget VoltageRatioInput channel detached");
+                  logger.warn("Phidget VoltageRatioInput channel {} detached", channel);
                   attachedChannelCount.decrementAndGet();
                   checkAttachmentStatus();
                 }
@@ -483,18 +566,21 @@ public class PhidgetProtocol extends DefaultProtocol {
 
           analogInputs.add(vi);
           try {
-            vi.open();
+            vi.open(500);
           } catch (PhidgetException e) {
-            analogInputs.remove(vi);
-            throw e;
+            if (e.getErrorCode() == ErrorCode.TIMEOUT) {
+              logger.info(
+                  "Phidget Analog Input channel {} opened, waiting for device attachment (serialNumber: {})",
+                  i,
+                  config.serialNumber);
+            } else {
+              analogInputs.remove(vi);
+              throw e;
+            }
           }
           logger.info("Opened Phidget Analog Input channel {}", i);
         } catch (PhidgetException e) {
-          if (e.getErrorCode() == ErrorCode.TIMEOUT) {
-            logger.warn(
-                "Phidget Analog Input channel {} could not be opened (Timed Out). Device might not be attached.",
-                i);
-          } else {
+          if (e.getErrorCode() != ErrorCode.TIMEOUT) {
             logger.warn("Phidget Analog Input channel {} could not be opened", i, e);
           }
         } catch (Throwable e) {
@@ -505,7 +591,7 @@ public class PhidgetProtocol extends DefaultProtocol {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
     opened = false;
     attached = false;
     stopStatusScheduler();
@@ -561,7 +647,7 @@ public class PhidgetProtocol extends DefaultProtocol {
       int channel, int behavior, boolean state) {
     if (listener == null) return;
 
-    int sensorState = (state == isNormallyClosedLaneSensors()) ? 1 : 0;
+    int sensorState = state ? 0 : 1;
     int wantState = isNormallyClosedLaneSensors() ? 1 : 0;
 
     if (behavior >= PinBehavior.BEHAVIOR_LAP_BASE_VALUE
@@ -638,7 +724,13 @@ public class PhidgetProtocol extends DefaultProtocol {
     DigitalOutput out = digitalOutputsByChannel.get(pin);
     if (out != null) {
       try {
-        out.setState(isHigh);
+        if (out.getAttached()) {
+          out.setState(isHigh);
+        } else {
+          logger.warn(
+              "Cannot set pin state for Phidget digital output channel {}: Channel not attached",
+              pin);
+        }
       } catch (PhidgetException e) {
         logger.error("Error setting Phidget digital output channel {} state", pin, e);
       }
@@ -661,7 +753,9 @@ public class PhidgetProtocol extends DefaultProtocol {
     DigitalOutput out = analogLedOutputs.get(behavior);
     if (out != null) {
       try {
-        out.setState(on);
+        if (out.getAttached()) {
+          out.setState(on);
+        }
       } catch (PhidgetException e) {
         logger.error("Error setting analog LED pin state for behavior {}", behavior, e);
       }
@@ -702,8 +796,10 @@ public class PhidgetProtocol extends DefaultProtocol {
     super.setMainPower(on);
     if (mainRelayOutput != null) {
       try {
-        boolean state = isNormallyClosedRelays() ? !on : on;
-        mainRelayOutput.setState(state);
+        if (mainRelayOutput.getAttached()) {
+          boolean state = isNormallyClosedRelays() ? !on : on;
+          mainRelayOutput.setState(state);
+        }
       } catch (PhidgetException e) {
         logger.error("Error setting main relay state", e);
       }
@@ -716,8 +812,10 @@ public class PhidgetProtocol extends DefaultProtocol {
     DigitalOutput out = relayOutputs.get(lane);
     if (out != null) {
       try {
-        boolean state = isNormallyClosedRelays() ? !on : on;
-        out.setState(state);
+        if (out.getAttached()) {
+          boolean state = isNormallyClosedRelays() ? !on : on;
+          out.setState(state);
+        }
       } catch (PhidgetException e) {
         logger.error("Error setting lane relay state", e);
       }
@@ -727,6 +825,11 @@ public class PhidgetProtocol extends DefaultProtocol {
   @Override
   protected boolean requiresHeartbeat() {
     return false;
+  }
+
+  @Override
+  protected boolean canReconnect() {
+    return !opened;
   }
 
   @Override

@@ -26,12 +26,20 @@ public class RaceOver implements IRaceState {
 
   @Override
   public RaceFlag getFlagType(Race race) {
+    if (race == null) return RaceFlag.RED;
     // Show checkered flag at the end of the last heat when finish is not allowed
     if (race.isLastHeat()
+        && race.getRaceModel() != null
+        && race.getRaceModel().getHeatScoring() != null
         && race.getRaceModel().getHeatScoring().getAllowFinish() == HeatScoring.AllowFinish.None) {
-      return RaceFlag.CHECKERED;
+      return race.getTheme() != null
+          ? race.getTheme()
+              .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
+          : RaceFlag.CHECKERED;
     }
-    return RaceFlag.RED;
+    return race.getTheme() != null
+        ? race.getTheme().resolveFlag("flag.heat_over", RaceFlag.RED, race.getDatabaseContext())
+        : RaceFlag.RED;
   }
 
   @Override

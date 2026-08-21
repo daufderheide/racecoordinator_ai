@@ -57,6 +57,12 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   private get localizationSubMenu() {
     return this.locator.locator('[data-testid="submenu-localization"]');
   }
+  private get automaticUpdatesMenuItem() {
+    return this.locator.locator('[data-testid="menu-item-automatic-updates"]');
+  }
+  private get automaticUpdatesSubMenu() {
+    return this.locator.locator('[data-testid="submenu-automatic-updates"]');
+  }
 
   async clickRemoveAll(): Promise<void> {
     await this.removeAllBtn.click();
@@ -79,10 +85,12 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   }
 
   async getUnselectedDriverCount(): Promise<number> {
+    await this.unselectedDrivers.first().waitFor({ state: "attached" });
     return await this.unselectedDrivers.count();
   }
 
   async getSelectedDriverCount(): Promise<number> {
+    await this.selectedDrivers.first().waitFor({ state: "attached" });
     return await this.selectedDrivers.count();
   }
 
@@ -96,6 +104,7 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   }
 
   async getRaceCardCount(): Promise<number> {
+    await this.raceCards.first().waitFor({ state: "attached" });
     return await this.raceCards.count();
   }
 
@@ -118,6 +127,11 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   async openLocalizationSubMenu(): Promise<void> {
     await this.localizationMenuItem.waitFor({ state: "visible" });
     await this.localizationMenuItem.click();
+  }
+
+  async openAutomaticUpdatesSubMenu(): Promise<void> {
+    await this.automaticUpdatesMenuItem.waitFor({ state: "visible" });
+    await this.automaticUpdatesMenuItem.click();
   }
 
   async openFileMenu(): Promise<void> {

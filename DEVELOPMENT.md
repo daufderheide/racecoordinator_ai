@@ -149,6 +149,15 @@ Visual regression tests use Playwright inside an isolated Docker container to en
   ./run_client_screendiff_tests.sh --sync-only
   ```
 
+#### UI Component Change Commit Check
+Whenever Angular client UI components (`*.component.{ts,html,scss,css}`, `styles.scss`, `index.html`, etc.) are modified, a Git commit check ensures that visual screendiff snapshots (`*-snapshots/*.png`) or visual tests (`*_screendiff_test.ts`) are updated to reflect the visual changes.
+
+- **To update visual baselines**: Run `./run_client_screendiff_tests.sh --changed --update-snapshots` and stage the resulting snapshots with `git add`.
+- **To bypass for strict refactors** (changes with no visual impact):
+  - Use conventional refactor commit message: `git commit -m "refactor(client): simplify dialog methods"`
+  - Or add `[skip-screendiff]` in commit message: `git commit -m "fix(client): handle null timer [skip-screendiff]"`
+  - Or set environment variable: `SKIP_SCREENDIFF_CHECK=1 git commit -m "..."`
+
 ### Server Unit Tests (Java)
 Run JUnit server test suites:
 - **Linux / macOS**: `./run_server_tests.sh`

@@ -19,6 +19,7 @@
     [showEdit]="selectedSeason != null"
     [showDelete]="selectedSeason != null"
     [isSaving]="isSaving"
+    [helpSteps]="getHelpSteps()"
     (add)="onNew()"
     (edit)="onEdit()"
     (delete)="onDelete()"
@@ -28,14 +29,15 @@
   @if (!isLoading) {
     <div class="content-area">
       <div class="sidebar-list">
-        <div class="search-bar">
+        <div id="season-search-bar" class="search-bar">
           <input
+            id="season-search-input"
             type="text"
             [(ngModel)]="searchQuery"
             [placeholder]="'SM_SEARCH_PLACEHOLDER' | translate"
           />
         </div>
-        <div class="list-container">
+        <div id="season-list-container" class="list-container">
           @for (season of filteredSeasons; track season; let i = $index) {
             <div
               #seasonRow
@@ -61,26 +63,26 @@
       @if (selectedSeason) {
         <div class="detail-panel">
           <div class="detail-header">
-            <h2>{{ selectedSeason.name }}</h2>
-            <div class="season-meta">
-              <span class="meta-pill"
+            <h2 id="season-detail-name">{{ selectedSeason.name }}</h2>
+            <div id="season-detail-meta" class="season-meta">
+              <span id="season-detail-drops" class="meta-pill"
                 >{{ "SM_DROPS_COUNT" | translate }}:
                 <strong>{{ selectedSeason.drops }}</strong></span
               >
-              <span class="meta-pill"
+              <span id="season-detail-races" class="meta-pill"
                 >{{ "SM_RACES_RUN" | translate }}:
                 <strong>{{
                   selectedSeason.races ? selectedSeason.races.length : 0
                 }}</strong></span
               >
               @if (hasDemoRaces) {
-                <span class="badge-demo">{{
+                <span id="season-detail-demo-badge" class="badge-demo">{{
                   "SE_DEMO_RACES_INCLUDED" | translate
                 }}</span>
               }
             </div>
           </div>
-          <div class="detail-content">
+          <div id="season-detail-standings" class="detail-content">
             @if (standings.length === 0) {
               <div class="empty-standings">
                 {{ "SM_NO_RACES_RUN" | translate }}
@@ -134,9 +136,13 @@
                             <strong>{{ item.driver_name }}</strong>
                           </td>
                           <td class="col-pts net-highlight">
-                            <strong>{{ item.net_points }}</strong>
+                            <strong>{{
+                              item.net_points | number: "1.0-2"
+                            }}</strong>
                           </td>
-                          <td class="col-pts">{{ item.gross_points }}</td>
+                          <td class="col-pts">
+                            {{ item.gross_points | number: "1.0-2" }}
+                          </td>
                           <td class="col-races">{{ item.races_run }}</td>
                         </tr>
                       }

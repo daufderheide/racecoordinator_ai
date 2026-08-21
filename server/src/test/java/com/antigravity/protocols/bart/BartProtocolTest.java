@@ -287,4 +287,235 @@ public class BartProtocolTest {
     // Verify buffer was fully consumed (0 remaining) and no crash
     protocol.close();
   }
+
+  @Test
+  public void testCrcErrorPacketDropped() {
+    AtomicInteger lapCount = new AtomicInteger(0);
+    protocol.setListener(
+        new ProtocolListener() {
+          @Override
+          public void onLap(int laneIndex, double time, int interfaceId, int interfaceIndex) {
+            lapCount.incrementAndGet();
+          }
+
+          @Override
+          public void onSegment(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onCallbutton(int laneIndex, int interfaceIndex) {}
+
+          @Override
+          public void onCarData(CarData carData) {}
+
+          @Override
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {}
+
+          @Override
+          public void onInterfaceEvent(InterfaceEvent event) {}
+        });
+
+    protocol.open();
+
+    // Corrupted packet (bad CRC)
+    byte[] badPacket =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x00, 0x01, (byte) 0xE2, 0x04, 0x64, 0x00, 0x00};
+    connection.injectReceivedData(badPacket);
+    assertEquals(0, lapCount.get());
+
+    // Subsequent valid packet should succeed
+    byte[] goodNoCrc =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x00, 0x01, (byte) 0xE2, 0x04, 0x64, 0x00};
+    byte goodCrc = BartCrc.calculateCrc(goodNoCrc);
+    byte[] goodPacket = new byte[10];
+    System.arraycopy(goodNoCrc, 0, goodPacket, 0, 9);
+    goodPacket[9] = goodCrc;
+
+    connection.injectReceivedData(goodPacket);
+    assertEquals(1, lapCount.get());
+    protocol.close();
+  }
+
+  @Test
+  public void testSyncByteAlignmentWithLeadingNoise() {
+    AtomicInteger lapCount = new AtomicInteger(0);
+    protocol.setListener(
+        new ProtocolListener() {
+          @Override
+          public void onLap(int laneIndex, double time, int interfaceId, int interfaceIndex) {
+            lapCount.incrementAndGet();
+          }
+
+          @Override
+          public void onSegment(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onCallbutton(int laneIndex, int interfaceIndex) {}
+
+          @Override
+          public void onCarData(CarData carData) {}
+
+          @Override
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {}
+
+          @Override
+          public void onInterfaceEvent(InterfaceEvent event) {}
+        });
+
+    protocol.open();
+
+    // Noise bytes followed by valid lap packet
+    byte[] goodNoCrc =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x00, 0x01, (byte) 0xE2, 0x04, 0x64, 0x00};
+    byte goodCrc = BartCrc.calculateCrc(goodNoCrc);
+
+    byte[] streamWithNoise = new byte[13];
+    streamWithNoise[0] = 0x12;
+    streamWithNoise[1] = (byte) 0xFE;
+    streamWithNoise[2] = 0x34;
+    System.arraycopy(goodNoCrc, 0, streamWithNoise, 3, 9);
+    streamWithNoise[12] = goodCrc;
+
+    connection.injectReceivedData(streamWithNoise);
+    assertEquals(1, lapCount.get());
+    protocol.close();
+  }
+
+  @Test
+  public void testMultiplePacketsInSingleRxChunk() {
+    AtomicInteger lapCount = new AtomicInteger(0);
+    AtomicInteger detectedChannels = new AtomicInteger(0);
+
+    protocol.setListener(
+        new ProtocolListener() {
+          @Override
+          public void onLap(int laneIndex, double time, int interfaceId, int interfaceIndex) {
+            lapCount.incrementAndGet();
+          }
+
+          @Override
+          public void onSegment(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onCallbutton(int laneIndex, int interfaceIndex) {}
+
+          @Override
+          public void onCarData(CarData carData) {}
+
+          @Override
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {}
+
+          @Override
+          public void onInterfaceEvent(InterfaceEvent event) {
+            if (event.hasStatus()) {
+              detectedChannels.set(event.getStatus().getDetectedChannels());
+            }
+          }
+        });
+
+    protocol.open();
+
+    // Status snapshot (9 bytes)
+    byte[] statusNoCrc = new byte[] {(byte) 0xA5, 0x20, 0x01, 0x00, 0x01, 0x00, 0x08, 0x00};
+    byte statusCrc = BartCrc.calculateCrc(statusNoCrc);
+    byte[] statusPacket = new byte[9];
+    System.arraycopy(statusNoCrc, 0, statusPacket, 0, 8);
+    statusPacket[8] = statusCrc;
+
+    // Lap packet (10 bytes)
+    byte[] lapNoCrc =
+        new byte[] {(byte) 0xA5, 0x01, 0x01, 0x00, 0x01, (byte) 0xE2, 0x04, 0x64, 0x00};
+    byte lapCrc = BartCrc.calculateCrc(lapNoCrc);
+    byte[] lapPacket = new byte[10];
+    System.arraycopy(lapNoCrc, 0, lapPacket, 0, 9);
+    lapPacket[9] = lapCrc;
+
+    // Combine both packets into a single 19-byte RX chunk
+    byte[] combined = new byte[19];
+    System.arraycopy(statusPacket, 0, combined, 0, 9);
+    System.arraycopy(lapPacket, 0, combined, 9, 10);
+
+    connection.injectReceivedData(combined);
+
+    assertEquals(8, detectedChannels.get());
+    assertEquals(1, lapCount.get());
+    protocol.close();
+  }
+
+  @Test
+  public void testOpenWithDeviceNameFallbackOnly() {
+    config.deviceAddress = null;
+    config.deviceName = "BART_ONLY_NAME";
+    BartProtocol proto = new BartProtocol(config, 4, connection, statusScheduler);
+
+    boolean opened = proto.open();
+    assertTrue(opened);
+    assertEquals("BART_ONLY_NAME", connection.getDeviceName());
+    proto.close();
+  }
+
+  @Test
+  public void testOpenWithNoDeviceSpecifiedSetsDisconnected() {
+    config.deviceAddress = "";
+    config.deviceName = "";
+    AtomicReference<InterfaceStatus> statusRef = new AtomicReference<>();
+
+    BartProtocol proto = new BartProtocol(config, 4, connection, statusScheduler);
+    proto.setListener(
+        new ProtocolListener() {
+          @Override
+          public void onLap(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onSegment(int laneIndex, double time, int interfaceId, int interfaceIndex) {}
+
+          @Override
+          public void onCallbutton(int laneIndex, int interfaceIndex) {}
+
+          @Override
+          public void onCarData(CarData carData) {}
+
+          @Override
+          public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
+            statusRef.set(status);
+          }
+
+          @Override
+          public void onInterfaceEvent(InterfaceEvent event) {}
+        });
+
+    boolean opened = proto.open();
+    assertTrue(opened);
+    assertEquals(InterfaceStatus.DISCONNECTED, statusRef.get());
+    proto.close();
+  }
+
+  @Test
+  public void testOpenAlreadyOpenReturnsTrue() {
+    protocol.open();
+    assertTrue(protocol.open());
+    protocol.close();
+  }
+
+  @Test
+  public void testDefaultConstructorAndInvariants() {
+    BartProtocol defaultProto = new BartProtocol(config, 4);
+    assertEquals(4, defaultProto.getNumLanes());
+    org.junit.Assert.assertFalse(defaultProto.hasMainRelay());
+    org.junit.Assert.assertFalse(defaultProto.hasPerLaneRelays());
+    org.junit.Assert.assertFalse(defaultProto.hasDigitalFuel());
+    org.junit.Assert.assertFalse(defaultProto.isNormallyClosedLaneSensors());
+    org.junit.Assert.assertFalse(defaultProto.isNormallyClosedRelays());
+    org.junit.Assert.assertFalse(defaultProto.useLapsForSegments());
+    assertEquals(0.0, defaultProto.getHardwareDebounceUs(), 0.001);
+  }
+
+  @Test
+  public void testHasPitInConfigured() {
+    config.lapPinBehaviors = new java.util.ArrayList<>();
+    config.lapPinBehaviors.add(com.antigravity.proto.PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + 1);
+
+    BartProtocol proto = new BartProtocol(config, 4, connection, statusScheduler);
+    org.junit.Assert.assertFalse(proto.hasPitInConfigured(0));
+    org.junit.Assert.assertTrue(proto.hasPitInConfigured(1));
+  }
 }

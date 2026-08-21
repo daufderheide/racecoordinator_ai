@@ -110,9 +110,16 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (typeof this.raceConnectionService?.disconnect === "function") {
-      this.raceConnectionService.disconnect(true);
+      this.raceConnectionService.disconnect();
     }
     this.subscriptions.unsubscribe();
+  }
+
+  @HostListener("window:pagehide")
+  onPageHide(): void {
+    if (typeof this.raceConnectionService?.disconnect === "function") {
+      this.raceConnectionService.disconnect();
+    }
   }
 
   @HostListener("window:resize")

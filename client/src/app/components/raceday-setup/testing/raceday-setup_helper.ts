@@ -27,13 +27,16 @@ export function createRacedaySetupDataServiceMock(overrides: any = {}) {
     "getRaceFlag",
     "getDefaultDemoConfig",
     "getSystemState",
+    "getThemes",
   ]);
 
+  mock.socketConnected$ = new BehaviorSubject(true);
   mock.getDrivers.and.callFake(() => of(deepCopy(MOCK_DRIVERS)));
   mock.getTeams.and.callFake(() => of(deepCopy(MOCK_TEAMS)));
   mock.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
   mock.getEvents.and.returnValue(of([]));
   mock.getSeasons.and.returnValue(of([]));
+  mock.getThemes.and.returnValue(of([]));
   mock.getSavedRaces.and.callFake(() => of(deepCopy(MOCK_AUTOSAVE_RACES)));
   mock.loadRace.and.returnValue(of("OK"));
   mock.deleteSavedRace.and.returnValue(of("OK"));

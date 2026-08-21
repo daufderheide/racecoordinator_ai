@@ -46,6 +46,24 @@ public class HeatOverTest {
     assertEquals(RaceFlag.GREEN_YELLOW, heatOver.getFlagType(race));
   }
 
+  @Test
+  public void testGetFlagType_ThemedFlagResolution() {
+    java.util.Map<String, String> slots = new java.util.HashMap<>();
+    slots.put("flag.heat_over", "default_flag_checkered");
+    slots.put("flag.warmup", "default_flag_yellow");
+    com.antigravity.models.Theme theme =
+        new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    // Warmup -> resolved to yellow
+    when(race.getAutoAdvanceRemaining()).thenReturn(2.0);
+    assertEquals(RaceFlag.YELLOW, heatOver.getFlagType(race));
+
+    // Not warmup -> resolved to checkered
+    when(race.getAutoAdvanceRemaining()).thenReturn(0.0);
+    assertEquals(RaceFlag.CHECKERED, heatOver.getFlagType(race));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testStart_ThrowsWhenHeatOver() {
     heatOver.start(race);

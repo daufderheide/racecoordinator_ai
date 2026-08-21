@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import { CommonModule, NgTemplateOutlet } from "@angular/common";
+import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -59,7 +59,6 @@ import { WIDGET_REGISTRY } from "./widget-registry";
     ImageSelectorComponent,
     AudioSelectorComponent,
     ToolbarComponent,
-    NgTemplateOutlet,
     ConfirmationModalComponent,
     TranslatePipe,
     AcknowledgementModalComponent,

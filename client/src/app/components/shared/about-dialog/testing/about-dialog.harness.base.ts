@@ -6,6 +6,7 @@ export abstract class AboutDialogHarnessBase {
     title: ".modal-title",
     versionInfo: ".version-info",
     charityInfo: ".charity-info",
+    donateLink: ".donate-link",
     creditsPanel: ".credits-panel",
     tabButtons: ".tab-btn",
     closeButton: ".btn-confirm",
@@ -17,5 +18,6 @@ export abstract class AboutDialogHarnessBase {
   abstract clickClose(): Promise<void>;
   abstract clickTab(index: number): Promise<void>;
   abstract isCharityTabVisible(): Promise<boolean>;
+  abstract getDonateLinkHref(): Promise<string | null>;
   abstract isCreditsTabVisible(): Promise<boolean>;
 }

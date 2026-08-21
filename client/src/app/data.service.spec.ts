@@ -16,6 +16,7 @@ import {
   EndRaceResponse,
   GetPhidgetDevicesResponse,
   InitializeInterfaceResponse,
+  InitializeRaceResponse,
   InterfaceEvent,
   ListAssetsResponse,
   ModifyHeatsResponse,
@@ -1427,6 +1428,37 @@ describe("DataService", () => {
       );
       expect(req3.request.method).toBe("GET");
       req3.flush([]);
+    });
+
+    it("should initialize race and encode themeId in protobuf request", (done) => {
+      const mockResp = InitializeRaceResponse.create({ success: true });
+      const respBuffer = InitializeRaceResponse.encode(mockResp).finish();
+
+      service
+        .initializeRace(
+          "race-1",
+          ["d1", "d2"],
+          false,
+          undefined,
+          undefined,
+          undefined,
+          "custom-theme-id-456",
+        )
+        .subscribe((res) => {
+          expect(res.success).toBeTrue();
+          done();
+        });
+
+      const req = httpMock.expectOne((r) =>
+        r.url.endsWith("/api/initialize-race"),
+      );
+      expect(req.request.method).toBe("POST");
+      expect(req.request.headers.get("Content-Type")).toBe(
+        "application/octet-stream",
+      );
+      expect(req.request.body instanceof Blob).toBeTrue();
+
+      req.flush(respBuffer.slice().buffer);
     });
   });
 });

@@ -28,16 +28,22 @@ public class NotStarted implements IRaceState {
   public RaceFlag getFlagType(Race race) {
     if (race == null) return RaceFlag.RED;
 
-    double autoStartTime = race.getRaceModel().getAutoStartTime();
-    double autoStartWarmupTime = race.getRaceModel().getAutoStartWarmupTime();
+    double autoStartTime = race.getRaceModel() != null ? race.getRaceModel().getAutoStartTime() : 0;
+    double autoStartWarmupTime =
+        race.getRaceModel() != null ? race.getRaceModel().getAutoStartWarmupTime() : 0;
     double elapsed = autoStartTime - race.getAutoStartRemaining();
     if (autoStartWarmupTime > 0
         && elapsed <= autoStartWarmupTime
         && race.getAutoStartRemaining() > 0) {
-      return RaceFlag.GREEN_YELLOW;
+      return race.getTheme() != null
+          ? race.getTheme()
+              .resolveFlag("flag.warmup", RaceFlag.GREEN_YELLOW, race.getDatabaseContext())
+          : RaceFlag.GREEN_YELLOW;
     }
 
-    return RaceFlag.RED;
+    return race.getTheme() != null
+        ? race.getTheme().resolveFlag("flag.not_started", RaceFlag.RED, race.getDatabaseContext())
+        : RaceFlag.RED;
   }
 
   private ScheduledExecutorService scheduler;
@@ -308,7 +314,7 @@ public class NotStarted implements IRaceState {
                       // Warmup just ended
                       logger.info("NotStarted: Warmup ended. Resetting heat.");
                       race.resetCurrentHeat();
-                      race.broadcastFlag(RaceFlag.RED);
+                      race.broadcastFlag(getFlagType(race));
                     }
                   }
                 }

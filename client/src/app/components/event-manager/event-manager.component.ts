@@ -23,6 +23,7 @@ import {
   ConnectionMonitorService,
   ConnectionState,
 } from "@app/services/connection-monitor.service";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -274,5 +275,55 @@ export class EventManagerComponent implements OnInit, OnDestroy {
       }) ||
       `Are you sure you want to delete event "${this.selectedEvent?.name}"?`
     );
+  }
+
+  getHelpSteps(): GuideStep[] {
+    return [
+      {
+        title: this.translationService.translate("EM_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("EM_HELP_WELCOME_CONTENT"),
+        position: "center",
+      },
+      {
+        selector: "#event-list-container",
+        title: this.translationService.translate("EM_HELP_LIST_TITLE"),
+        content: this.translationService.translate("EM_HELP_LIST_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: "#event-search-bar",
+        title: this.translationService.translate("EM_HELP_SEARCH_TITLE"),
+        content: this.translationService.translate("EM_HELP_SEARCH_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: "#event-detail-name",
+        title: this.translationService.translate("EM_HELP_NAME_TITLE"),
+        content: this.translationService.translate("EM_HELP_NAME_CONTENT"),
+        position: "bottom",
+      },
+      {
+        selector: "#event-detail-description",
+        title: this.translationService.translate("EM_HELP_DESCRIPTION_TITLE"),
+        content: this.translationService.translate(
+          "EM_HELP_DESCRIPTION_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#event-detail-auto-advance",
+        title: this.translationService.translate("EM_HELP_AUTO_ADVANCE_TITLE"),
+        content: this.translationService.translate(
+          "EM_HELP_AUTO_ADVANCE_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
+        selector: "#event-detail-races",
+        title: this.translationService.translate("EM_HELP_RACES_TITLE"),
+        content: this.translationService.translate("EM_HELP_RACES_CONTENT"),
+        position: "left",
+      },
+    ];
   }
 }

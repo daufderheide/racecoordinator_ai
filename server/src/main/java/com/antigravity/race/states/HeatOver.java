@@ -24,14 +24,20 @@ public class HeatOver implements IRaceState {
   public RaceFlag getFlagType(Race race) {
     if (race == null) return RaceFlag.RED;
 
-    double warmupTime = race.getRaceModel().getAutoAdvanceWarmupTime();
+    double warmupTime =
+        race.getRaceModel() != null ? race.getRaceModel().getAutoAdvanceWarmupTime() : 0;
     double remaining = race.getAutoAdvanceRemaining();
 
     if (warmupTime > 0 && remaining > 0 && remaining <= warmupTime) {
-      return RaceFlag.GREEN_YELLOW;
+      return race.getTheme() != null
+          ? race.getTheme()
+              .resolveFlag("flag.warmup", RaceFlag.GREEN_YELLOW, race.getDatabaseContext())
+          : RaceFlag.GREEN_YELLOW;
     }
 
-    return RaceFlag.RED;
+    return race.getTheme() != null
+        ? race.getTheme().resolveFlag("flag.heat_over", RaceFlag.RED, race.getDatabaseContext())
+        : RaceFlag.RED;
   }
 
   private ScheduledExecutorService scheduler;

@@ -256,4 +256,39 @@ describe("EventEditorComponent", () => {
     expect(component.showDiscardConfirm).toBeFalse();
     expect(component.isNavigationApproved).toBeFalse();
   });
+
+  describe("Guided Help", () => {
+    it("should return complete guided help steps in expected order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(6);
+
+      // Welcome Step
+      expect(steps[0].title).toBe("EE_HELP_WELCOME_TITLE");
+      expect(steps[0].content).toBe("EE_HELP_WELCOME_CONTENT");
+      expect(steps[0].position).toBe("center");
+      expect(steps[0].selector).toBeUndefined();
+
+      // Form inputs
+      expect(steps[1].selector).toBe("#event-name");
+      expect(steps[1].title).toBe("EE_HELP_NAME_TITLE");
+      expect(steps[1].position).toBe("right");
+
+      expect(steps[2].selector).toBe("#event-description");
+      expect(steps[2].title).toBe("EE_HELP_DESCRIPTION_TITLE");
+      expect(steps[2].position).toBe("right");
+
+      expect(steps[3].selector).toBe("#event-auto-advance");
+      expect(steps[3].title).toBe("EE_HELP_AUTO_ADVANCE_TITLE");
+      expect(steps[3].position).toBe("right");
+
+      // Right panel actions & sequence
+      expect(steps[4].selector).toBe("#btn-add-race");
+      expect(steps[4].title).toBe("EE_HELP_ADD_RACE_TITLE");
+      expect(steps[4].position).toBe("bottom");
+
+      expect(steps[5].selector).toBe("#event-race-list");
+      expect(steps[5].title).toBe("EE_HELP_RACE_LIST_TITLE");
+      expect(steps[5].position).toBe("left");
+    });
+  });
 });

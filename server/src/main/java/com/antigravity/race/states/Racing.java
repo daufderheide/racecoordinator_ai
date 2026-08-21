@@ -49,17 +49,24 @@ public class Racing implements IRaceState {
     if (heatDrivers == null) return RaceFlag.GREEN;
 
     // Checkered flag if any driver has finished (and race allows finishing)
-    if (scoring.getAllowFinish() != AllowFinish.None
+    if (scoring.getAllowFinish() != null
+        && scoring.getAllowFinish() != AllowFinish.None
         && scoring.getAllowFinish() != AllowFinish.NoneAutoSegments) {
       // For timed races, show checkered flag immediately when counter reaches 0
       if (scoring.getFinishMethod() == FinishMethod.Timed && race.getRaceTime() <= 0) {
-        return RaceFlag.CHECKERED;
+        return race.getTheme() != null
+            ? race.getTheme()
+                .resolveFlag("flag.heat_finishing", RaceFlag.CHECKERED, race.getDatabaseContext())
+            : RaceFlag.CHECKERED;
       }
       // For lap-based races, show checkered when any driver finishes
       for (int i = 0; i < heatDrivers.size(); i++) {
         DriverHeatData hd = heatDrivers.get(i);
         if (isDriverFinished(race, i, hd)) {
-          return RaceFlag.CHECKERED;
+          return race.getTheme() != null
+              ? race.getTheme()
+                  .resolveFlag("flag.heat_finishing", RaceFlag.CHECKERED, race.getDatabaseContext())
+              : RaceFlag.CHECKERED;
         }
       }
     }
@@ -75,11 +82,16 @@ public class Racing implements IRaceState {
         }
       }
       if (anyDriverOneLapToGo) {
-        return RaceFlag.WHITE;
+        return race.getTheme() != null
+            ? race.getTheme()
+                .resolveFlag("flag.one_lap_to_go", RaceFlag.WHITE, race.getDatabaseContext())
+            : RaceFlag.WHITE;
       }
     }
 
-    return RaceFlag.GREEN;
+    return race.getTheme() != null
+        ? race.getTheme().resolveFlag("flag.racing", RaceFlag.GREEN, race.getDatabaseContext())
+        : RaceFlag.GREEN;
   }
 
   @Override

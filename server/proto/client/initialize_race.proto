@@ -16,6 +16,7 @@ message InitializeRaceRequest {
   DemoConfig demo_config = 4;
   string event_id = 5;
   string season_id = 6;
+  string theme_id = 7;
 }
 
 message InitializeRaceResponse {

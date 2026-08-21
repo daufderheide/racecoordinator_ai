@@ -112,7 +112,12 @@ function resolveTestsForFile(filePath) {
     const fullPath = path.isAbsolute(filePath) ? filePath : path.join(PROJECT_ROOT, filePath);
     const normalized = fullPath.replace(/\\/g, '/');
 
-    // 1. Global styling, index.html, root component, or global assets (images, fonts, i18n)
+    // 0. Ignore translation files (i18n/*.json) - component changes drive their own screendiff tests
+    if (normalized.includes('/client/src/assets/i18n/')) {
+        return [];
+    }
+
+    // 1. Global styling, index.html, root component, or global assets (images, fonts)
     if (
         normalized.endsWith('/client/src/styles.scss') ||
         normalized.endsWith('/client/src/styles.css') ||

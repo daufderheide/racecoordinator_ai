@@ -302,4 +302,64 @@ public class DefaultProtocolTest {
         listener.lastInterfaceEvent != null && listener.lastInterfaceEvent.hasStatus());
     assertEquals(4, listener.lastInterfaceEvent.getStatus().getDetectedChannels());
   }
+
+  @Test
+  public void testDefaultCreateSchedulerDaemonThread() throws Exception {
+    DefaultProtocol realProtocol =
+        new DefaultProtocol(2) {
+          @Override
+          protected boolean isNormallyClosedRelays() {
+            return false;
+          }
+
+          @Override
+          protected com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior
+              getLapPinPitBehavior() {
+            return com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.NONE;
+          }
+
+          @Override
+          protected boolean useLapsForSegments() {
+            return false;
+          }
+
+          @Override
+          protected double getHardwareDebounceUs() {
+            return 0;
+          }
+
+          @Override
+          protected boolean hasPitInConfigured(int laneIndex) {
+            return false;
+          }
+
+          @Override
+          protected boolean isNormallyClosedLaneSensors() {
+            return false;
+          }
+
+          @Override
+          protected boolean isConnected() {
+            return false;
+          }
+
+          @Override
+          public boolean open() {
+            return true;
+          }
+
+          @Override
+          public void close() {}
+        };
+
+    ScheduledExecutorService ses = realProtocol.createScheduler();
+    try {
+      java.util.concurrent.atomic.AtomicBoolean isDaemon =
+          new java.util.concurrent.atomic.AtomicBoolean(false);
+      ses.submit(() -> isDaemon.set(Thread.currentThread().isDaemon())).get();
+      assertTrue("DefaultProtocol scheduler thread must be daemon", isDaemon.get());
+    } finally {
+      ses.shutdownNow();
+    }
+  }
 }

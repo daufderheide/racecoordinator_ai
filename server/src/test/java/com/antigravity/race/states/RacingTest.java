@@ -10,6 +10,7 @@ import com.antigravity.models.HeatScoring.AllowFinish;
 import com.antigravity.models.HeatScoring.FinishMethod;
 import com.antigravity.models.HeatScoring.HeatRanking;
 import com.antigravity.models.HeatScoring.HeatRankingTiebreaker;
+import com.antigravity.proto.RaceFlag;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.HeatExecutionManager;
@@ -164,5 +165,55 @@ public class RacingTest {
 
     assertEquals(0.6, d2.getAutoCalculatedLaps(), 0.001);
     assertEquals(3.6, d2.getAdjustedLapCount(), 0.001);
+  }
+
+  @Test
+  public void testGetFlagType_ThemedFlagResolution() {
+    java.util.Map<String, String> slots = new java.util.HashMap<>();
+    slots.put("flag.racing", "default_flag_yellow");
+    slots.put("flag.one_lap_to_go", "default_flag_black");
+    slots.put("flag.heat_finishing", "default_flag_red");
+    com.antigravity.models.Theme theme =
+        new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    // Active racing -> resolves to yellow
+    assertEquals(RaceFlag.YELLOW, racing.getFlagType(race));
+
+    // Lap based with 1 lap to go
+    com.antigravity.models.Race lapRace =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(
+                new HeatScoring(
+                    FinishMethod.Lap,
+                    5,
+                    HeatRanking.LAP_COUNT,
+                    HeatRankingTiebreaker.FASTEST_LAP_TIME,
+                    AllowFinish.None))
+            .build();
+    when(race.getRaceModel()).thenReturn(lapRace);
+
+    DriverHeatData d1 = drivers.get(0);
+    // 4 laps out of 5 -> 1 lap to go -> black
+    for (int i = 0; i < 4; i++) {
+      d1.addLap(10.0, false, true);
+    }
+    assertEquals(RaceFlag.BLACK, racing.getFlagType(race));
+
+    // Finish allowed and d1 finishes -> heat_finishing -> red
+    com.antigravity.models.Race allowFinishRace =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(
+                new HeatScoring(
+                    FinishMethod.Lap,
+                    5,
+                    HeatRanking.LAP_COUNT,
+                    HeatRankingTiebreaker.FASTEST_LAP_TIME,
+                    AllowFinish.Allow))
+            .build();
+    when(race.getRaceModel()).thenReturn(allowFinishRace);
+
+    d1.addLap(10.0, false, true); // 5 laps
+    assertEquals(RaceFlag.RED, racing.getFlagType(race));
   }
 }

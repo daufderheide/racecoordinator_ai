@@ -44,9 +44,11 @@ export class PrintService {
   ): void {
     if (fullScroll) {
       document.body.classList.add("print-full-scroll");
+      document.documentElement.classList.add("print-full-scroll");
     }
     if (!includeBackground) {
       document.body.classList.add("print-no-background");
+      document.documentElement.classList.add("print-no-background");
     }
 
     let originalTitle = "";
@@ -61,9 +63,11 @@ export class PrintService {
 
       if (fullScroll) {
         document.body.classList.remove("print-full-scroll");
+        document.documentElement.classList.remove("print-full-scroll");
       }
       if (!includeBackground) {
         document.body.classList.remove("print-no-background");
+        document.documentElement.classList.remove("print-no-background");
       }
 
       if (pageName) {

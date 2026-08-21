@@ -12,7 +12,6 @@
         >
         <h1>
           {{ "TME_HEADER" | translate }}
-          <span class="interface-badge beta-badge">BETA</span>
         </h1>
         <div class="spacer"></div>
         <button
@@ -119,6 +118,7 @@
                         <label class="checkbox-label">
                           <input
                             type="checkbox"
+                            [id]="'trakmate-nc-sensors-' + interfaceIndex()"
                             [(ngModel)]="config().normallyClosedLaneSensors"
                             (change)="onConfigChange()"
                           />
@@ -130,6 +130,7 @@
                         <label class="checkbox-label">
                           <input
                             type="checkbox"
+                            [id]="'trakmate-nc-relays-' + interfaceIndex()"
                             [(ngModel)]="config().normallyClosedRelays"
                             (change)="onConfigChange()"
                           />
@@ -141,6 +142,9 @@
                         <label class="checkbox-label">
                           <input
                             type="checkbox"
+                            [id]="
+                              'trakmate-per-lane-relays-' + interfaceIndex()
+                            "
                             [(ngModel)]="config().hasPerLaneRelays"
                             (change)="onConfigChange()"
                           />
@@ -173,10 +177,24 @@
                           behavior of config().lapPinBehaviors;
                           track $index
                         ) {
-                          <div class="pin-item">
+                          <div
+                            class="pin-item"
+                            [id]="
+                              'trakmate-channel-' +
+                              $index +
+                              '-' +
+                              interfaceIndex()
+                            "
+                          >
                             <div class="pin-header">
                               <label>Lane {{ $index + 1 }}</label>
                               <span
+                                [id]="
+                                  'trakmate-channel-status-' +
+                                  $index +
+                                  '-' +
+                                  interfaceIndex()
+                                "
                                 class="status-badge small"
                                 [class.connected]="readBadges[$index]"
                               ></span>
@@ -187,6 +205,12 @@
                               style="padding: 0 10px 10px 10px"
                             >
                               <select
+                                [id]="
+                                  'trakmate-channel-select-' +
+                                  $index +
+                                  '-' +
+                                  interfaceIndex()
+                                "
                                 [(ngModel)]="config().lapPinBehaviors![$index]"
                                 (change)="onConfigChange()"
                               >
@@ -247,6 +271,9 @@
                           </span>
                           <button
                             type="button"
+                            [id]="
+                              'trakmate-callbutton-status-' + interfaceIndex()
+                            "
                             class="status-badge"
                             [class.connected]="callbuttonStatus"
                           >
@@ -270,6 +297,7 @@
                           </span>
                           <button
                             type="button"
+                            [id]="'trakmate-master-relay-' + interfaceIndex()"
                             class="status-badge"
                             [class.connected]="mainRelayStatus"
                             (click)="toggleMasterRelay()"

@@ -25,6 +25,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
+import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { AvatarUrlPipe } from "@app/pipes/avatar-url.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
@@ -126,6 +127,7 @@ export class DynamicComponentService {
         RouterLink,
         LoginDialogComponent,
         LanguageSelectorComponent,
+        UpdateSelectorComponent,
       ],
     })(DynamicComponent);
   }

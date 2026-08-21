@@ -195,6 +195,8 @@ public class Starting implements IRaceState {
       dhd.setRemainingFalseStartTimePenalty(timePenalty);
     }
 
+    race.setLanePower(false, lane);
+
     Lap falseStartMsg =
         Lap.newBuilder()
             .setObjectId(dhd.getObjectId())
@@ -232,9 +234,14 @@ public class Starting implements IRaceState {
   @Override
   public RaceFlag getFlagType(Race race) {
     if (race != null && race.hasRacedInCurrentHeat()) {
-      return RaceFlag.YELLOW;
+      return race.getTheme() != null
+          ? race.getTheme()
+              .resolveFlag("flag.restarting", RaceFlag.YELLOW, race.getDatabaseContext())
+          : RaceFlag.YELLOW;
     }
-    return RaceFlag.RED;
+    return race.getTheme() != null
+        ? race.getTheme().resolveFlag("flag.starting", RaceFlag.RED, race.getDatabaseContext())
+        : RaceFlag.RED;
   }
 
   @Override
@@ -243,7 +250,9 @@ public class Starting implements IRaceState {
         && race.getCurrentHeat() != null
         && lane < race.getCurrentHeat().getDrivers().size()) {
       if (race.getCurrentHeat().getDrivers().get(lane).getRemainingFalseStartTimePenalty() > 0) {
-        return RaceFlag.BLACK;
+        return race.getTheme() != null
+            ? race.getTheme().resolveFlag("flag.penalty", RaceFlag.BLACK, race.getDatabaseContext())
+            : RaceFlag.BLACK;
       }
     }
     return getFlagType(race);

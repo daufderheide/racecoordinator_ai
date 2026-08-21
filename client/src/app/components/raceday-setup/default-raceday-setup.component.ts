@@ -26,6 +26,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
+import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
@@ -42,6 +43,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { ParticipantValidationService } from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
+import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
@@ -70,6 +72,7 @@ type Participant = Driver | Team;
     TranslatePipe,
     EditorTitleComponent,
     LanguageSelectorComponent,
+    UpdateSelectorComponent,
   ],
 })
 export class DefaultRacedaySetupComponent implements OnInit {
@@ -181,6 +184,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     private helpService: HelpService,
     private logger: LoggerService,
     private validationService: ParticipantValidationService,
+    private themeService: ThemeService,
   ) {}
 
   /* eslint-disable max-lines-per-function */
@@ -331,6 +335,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
           ) {
             this.selectedEvent = this.events[0];
           }
+        }
+
+        if (this.selectedRace?.entity_id) {
+          this.themeService.activateForRace(this.selectedRace.entity_id);
         }
 
         // --- Participant Setup ---
@@ -796,6 +804,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
   selectRace(race: Race) {
     this.selectedRace = race;
     this.selectedEvent = undefined;
+    if (race?.entity_id) {
+      this.themeService.activateForRace(race.entity_id);
+    }
     this.saveSettings();
     this.closeDropdown();
     this.cdr.detectChanges();
@@ -1019,6 +1030,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ? this.demoConfig || this.dataService.getDefaultDemoConfig()
       : undefined;
 
+    const themeId =
+      this.themeService.getActiveTheme()?.entity_id ||
+      (raceId ? settings.raceThemeOverrides?.[raceId] : undefined) ||
+      settings.activeThemeId ||
+      undefined;
+
     const initializeObservable =
       eventId || seasonId
         ? this.dataService.initializeRace(
@@ -1028,12 +1045,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
             demoConfig,
             eventId,
             seasonId,
+            themeId,
           )
         : this.dataService.initializeRace(
             raceId,
             settings.selectedDriverIds,
             isDemo,
             demoConfig,
+            undefined,
+            undefined,
+            themeId,
           );
 
     initializeObservable.subscribe({
@@ -1655,6 +1676,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   onCheckForUpdates() {
     if (this.isUpdateBannerVisible()) return;
     this.closeFileDropdown();
+    this.closeOptionsDropdown();
     this.closeHelpDropdown();
     this.requestCheckForUpdates.emit();
   }
@@ -1727,6 +1749,28 @@ export class DefaultRacedaySetupComponent implements OnInit {
         content: this.translationService.translate(
           "RDS_HELP_RACE_SELECTION_CONTENT",
         ),
+        position: "top",
+      },
+      {
+        selector: ".event-details-card",
+        title: this.translationService.translate(
+          "RDS_HELP_SELECTION_SUMMARY_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_SELECTION_SUMMARY_CONTENT",
+        ),
+        position: "top",
+      },
+      {
+        selector: ".search-wrapper",
+        title: this.translationService.translate("RDS_HELP_SEARCH_TITLE"),
+        content: this.translationService.translate("RDS_HELP_SEARCH_CONTENT"),
+        position: "top",
+      },
+      {
+        selector: ".season-selection-wrapper",
+        title: this.translationService.translate("RDS_HELP_SEASON_TITLE"),
+        content: this.translationService.translate("RDS_HELP_SEASON_CONTENT"),
         position: "top",
       },
       {

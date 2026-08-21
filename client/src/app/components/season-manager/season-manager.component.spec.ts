@@ -1,4 +1,5 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
+import { DecimalPipe } from "@angular/common";
 import { Component, NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
@@ -49,7 +50,12 @@ describe("SeasonManagerComponent", () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [SeasonManagerComponent, FormsModule, TranslatePipe],
+      imports: [
+        SeasonManagerComponent,
+        FormsModule,
+        TranslatePipe,
+        DecimalPipe,
+      ],
       providers: [
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -72,7 +78,12 @@ describe("SeasonManagerComponent", () => {
     })
       .overrideComponent(SeasonManagerComponent, {
         set: {
-          imports: [MockManagerHeaderComponent, TranslatePipe, FormsModule],
+          imports: [
+            MockManagerHeaderComponent,
+            TranslatePipe,
+            DecimalPipe,
+            FormsModule,
+          ],
           schemas: [NO_ERRORS_SCHEMA],
         },
       })
@@ -276,6 +287,135 @@ describe("SeasonManagerComponent", () => {
       expect(dataService.deleteSeason).toHaveBeenCalledWith("s1");
       expect(component.showDeleteConfirmation).toBeFalse();
       expect(component.loadData).toHaveBeenCalled();
+    });
+
+    it("should format decimal points in standings table to at most 2 decimal places and keep whole numbers without trailing zeros", () => {
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Formula 1 Season",
+        drops: 0,
+      } as any;
+      component.standings = [
+        {
+          driver_id: "d1",
+          driver_name: "Max",
+          net_points: 33.333333333333336,
+          gross_points: 50.126,
+          races_run: 3,
+        },
+        {
+          driver_id: "d2",
+          driver_name: "Lewis",
+          net_points: 25,
+          gross_points: 25.5,
+          races_run: 2,
+        },
+      ];
+      fixture.detectChanges();
+
+      const rows = fixture.nativeElement.querySelectorAll(
+        ".standings-body-container tbody tr",
+      );
+      expect(rows.length).toBe(2);
+
+      // First driver: 33.333333333333336 -> 33.33, 50.126 -> 50.13
+      const firstRowCols = rows[0].querySelectorAll("td");
+      expect(firstRowCols[2].textContent.trim()).toBe("33.33");
+      expect(firstRowCols[3].textContent.trim()).toBe("50.13");
+
+      // Second driver: 25 -> 25, 25.5 -> 25.5
+      const secondRowCols = rows[1].querySelectorAll("td");
+      expect(secondRowCols[2].textContent.trim()).toBe("25");
+      expect(secondRowCols[3].textContent.trim()).toBe("25.5");
+    });
+
+    it("should render season metadata elements in .season-meta under the header", () => {
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Pro Championship",
+        drops: 2,
+        races: [{ race_id: "r1", is_demo: true } as any],
+      } as any;
+      fixture.detectChanges();
+
+      const detailHeader =
+        fixture.nativeElement.querySelector(".detail-header");
+      const title = detailHeader.querySelector("h2");
+      const meta = detailHeader.querySelector(".season-meta");
+      const pills = meta.querySelectorAll(".meta-pill");
+      const demoBadge = meta.querySelector(".badge-demo");
+
+      expect(title.textContent.trim()).toBe("Pro Championship");
+      expect(pills.length).toBe(2);
+      expect(pills[0].textContent).toContain("2"); // Drops count
+      expect(pills[1].textContent).toContain("1"); // Races run count
+      expect(demoBadge).toBeTruthy();
+    });
+  });
+
+  describe("Guided Help", () => {
+    it("should return complete guided help steps when there are no demo races", () => {
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Pro Season",
+        drops: 1,
+        races: [{ race_id: "r1", is_demo: false } as any],
+      } as any;
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(8);
+
+      // Welcome Step
+      expect(steps[0].title).toBe("SM_HELP_WELCOME_TITLE");
+      expect(steps[0].content).toBe("SM_HELP_WELCOME_CONTENT");
+      expect(steps[0].position).toBe("center");
+      expect(steps[0].selector).toBeUndefined();
+
+      // LHS Steps
+      expect(steps[1].selector).toBe("#season-list-container");
+      expect(steps[1].title).toBe("SM_HELP_LIST_TITLE");
+      expect(steps[1].position).toBe("right");
+
+      expect(steps[2].selector).toBe("#season-search-bar");
+      expect(steps[2].title).toBe("SM_HELP_SEARCH_TITLE");
+      expect(steps[2].position).toBe("right");
+
+      // RHS Steps
+      expect(steps[3].selector).toBe("#season-detail-name");
+      expect(steps[3].title).toBe("SM_HELP_NAME_TITLE");
+      expect(steps[3].position).toBe("bottom");
+
+      expect(steps[4].selector).toBe("#season-detail-drops");
+      expect(steps[4].title).toBe("SM_HELP_DROPS_TITLE");
+      expect(steps[4].position).toBe("bottom");
+
+      expect(steps[5].selector).toBe("#season-detail-races");
+      expect(steps[5].title).toBe("SM_HELP_RACES_RUN_TITLE");
+      expect(steps[5].position).toBe("bottom");
+
+      expect(steps[6].selector).toBe("#season-detail-meta");
+      expect(steps[6].title).toBe("SM_HELP_DEMO_BADGE_TITLE");
+      expect(steps[6].content).toBe("SM_HELP_DEMO_BADGE_ABSENT_CONTENT");
+      expect(steps[6].position).toBe("bottom");
+
+      expect(steps[7].selector).toBe("#season-detail-standings");
+      expect(steps[7].title).toBe("SM_HELP_STANDINGS_TITLE");
+      expect(steps[7].position).toBe("left");
+    });
+
+    it("should point to demo badge and use present content when season has demo races", () => {
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Pro Season",
+        drops: 1,
+        races: [{ race_id: "r1", is_demo: true } as any],
+      } as any;
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(8);
+
+      expect(steps[6].selector).toBe("#season-detail-demo-badge");
+      expect(steps[6].title).toBe("SM_HELP_DEMO_BADGE_TITLE");
+      expect(steps[6].content).toBe("SM_HELP_DEMO_BADGE_PRESENT_CONTENT");
+      expect(steps[6].position).toBe("bottom");
     });
   });
 });

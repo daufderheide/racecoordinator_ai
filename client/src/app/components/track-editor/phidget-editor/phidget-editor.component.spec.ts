@@ -331,4 +331,120 @@ describe("PhidgetEditorComponent", () => {
     };
     expect(component.getDeviceKey(hubDevice)).toBe("88888_true_2");
   });
+
+  it("should expand all sections when ensureSectionsExpanded is called", () => {
+    component.sectionsExpanded = {
+      phidget: false,
+      main: false,
+      pins: false,
+      digitalIn: false,
+      digitalOut: false,
+      analogIn: false,
+    };
+    component.ensureSectionsExpanded();
+    expect(component.sectionsExpanded.phidget).toBeTrue();
+    expect(component.sectionsExpanded.main).toBeTrue();
+    expect(component.sectionsExpanded.pins).toBeTrue();
+    expect(component.sectionsExpanded.digitalIn).toBeTrue();
+    expect(component.sectionsExpanded.digitalOut).toBeTrue();
+    expect(component.sectionsExpanded.analogIn).toBeTrue();
+  });
+
+  it("should return guide steps and expand appropriate sections onEnter", () => {
+    const steps = component.getHelpSteps();
+    expect(steps.length).toBeGreaterThanOrEqual(5);
+    expect(steps[0].selector).toBe("#phidget-editor-0");
+    expect(steps[0].title).toBe("TE_HELP_PHIDGET_TITLE");
+
+    component.sectionsExpanded.phidget = false;
+    component.sectionsExpanded.main = false;
+    steps[0].onEnter!();
+    expect(component.sectionsExpanded.phidget).toBeTrue();
+    expect(component.sectionsExpanded.main).toBeTrue();
+
+    // Check digital in step onEnter if digital in pins exist
+    if (steps.length > 5) {
+      component.sectionsExpanded.digitalIn = false;
+      steps[5].onEnter!();
+      expect(component.sectionsExpanded.digitalIn).toBeTrue();
+    }
+  });
+
+  it("should evaluate real-time trip state for Normally Closed lane sensors", () => {
+    component.config().normallyClosedLaneSensors = true;
+
+    // NC Untripped (closed circuit, state 1)
+    eventsSubject.next({
+      digitalPin: {
+        interfaceIndex: 0,
+        pin: 0,
+        isDigital: true,
+        state: 1,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.isPinActive("in", 0)).toBeFalse();
+
+    // NC Tripped (open circuit, state 0)
+    eventsSubject.next({
+      digitalPin: {
+        interfaceIndex: 0,
+        pin: 0,
+        isDigital: true,
+        state: 0,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.isPinActive("in", 0)).toBeTrue();
+  });
+
+  it("should evaluate real-time trip state for Normally Open lane sensors", () => {
+    component.config().normallyClosedLaneSensors = false;
+
+    // NO Untripped (open circuit, state 0)
+    eventsSubject.next({
+      digitalPin: {
+        interfaceIndex: 0,
+        pin: 0,
+        isDigital: true,
+        state: 0,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.isPinActive("in", 0)).toBeFalse();
+
+    // NO Tripped (closed circuit, state 1)
+    eventsSubject.next({
+      digitalPin: {
+        interfaceIndex: 0,
+        pin: 0,
+        isDigital: true,
+        state: 1,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.isPinActive("in", 0)).toBeTrue();
+  });
+
+  it("should trigger pulse on lap and callbutton events", () => {
+    eventsSubject.next({
+      lap: {
+        interfaceIndex: 0,
+        interfaceId: 1,
+      },
+    });
+    fixture.detectChanges();
+    expect(component.isPinActive("in", 1)).toBeTrue();
+
+    // Trigger callbutton event
+    eventsSubject.next({
+      callbutton: {
+        interfaceIndex: 0,
+        lane: 0,
+      },
+    });
+    fixture.detectChanges();
+    // sampleConfig has PinBehavior.BEHAVIOR_CALL_BUTTON on pin 1
+    expect(component.isPinActive("in", 1)).toBeTrue();
+  });
 });

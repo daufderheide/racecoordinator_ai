@@ -438,6 +438,7 @@ export class DataService {
     demoConfig?: IDemoConfig,
     eventId?: string,
     seasonId?: string,
+    themeId?: string,
   ): Observable<InitializeRaceResponse> {
     const request = InitializeRaceRequest.create({
       raceId,
@@ -446,6 +447,7 @@ export class DataService {
       demoConfig,
       eventId,
       seasonId,
+      themeId,
     });
     const buffer = InitializeRaceRequest.encode(request).finish();
 

@@ -1,4 +1,4 @@
-import { DatePipe } from "@angular/common";
+import { DatePipe, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -23,8 +23,10 @@ import {
   SeasonStandingItem,
 } from "@app/models/season";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { TranslationService } from "@app/services/translation.service";
 
 @Component({
   standalone: true,
@@ -37,6 +39,7 @@ import { NavigationService } from "@app/services/navigation.service";
     FormsModule,
     ConfirmationModalComponent,
     DatePipe,
+    DecimalPipe,
   ],
 })
 export class SeasonEditorComponent
@@ -74,6 +77,7 @@ export class SeasonEditorComponent
   private route = inject(ActivatedRoute);
   private logger = inject(LoggerService);
   private navigationService = inject(NavigationService);
+  private translationService = inject(TranslationService);
 
   constructor() {
     this.undoManager = new UndoManager<Season>(
@@ -926,5 +930,70 @@ export class SeasonEditorComponent
 
   private areSeasonsEqual(a: Season, b: Season): boolean {
     return JSON.stringify(a) === JSON.stringify(b);
+  }
+
+  getHelpSteps(): GuideStep[] {
+    const demoStep: GuideStep = this.hasDemoRaces
+      ? {
+          selector: "#season-editor-demo-badge",
+          title: this.translationService.translate("SE_HELP_DEMO_BADGE_TITLE"),
+          content: this.translationService.translate(
+            "SE_HELP_DEMO_BADGE_PRESENT_CONTENT",
+          ),
+          position: "bottom",
+        }
+      : {
+          selector: "#season-editor-meta",
+          title: this.translationService.translate("SE_HELP_DEMO_BADGE_TITLE"),
+          content: this.translationService.translate(
+            "SE_HELP_DEMO_BADGE_ABSENT_CONTENT",
+          ),
+          position: "bottom",
+        };
+
+    return [
+      {
+        title: this.translationService.translate("SE_HELP_WELCOME_TITLE"),
+        content: this.translationService.translate("SE_HELP_WELCOME_CONTENT"),
+        position: "center",
+      },
+      {
+        selector: "#season-name",
+        title: this.translationService.translate("SE_HELP_NAME_TITLE"),
+        content: this.translationService.translate("SE_HELP_NAME_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: "#season-drops",
+        title: this.translationService.translate("SE_HELP_DROPS_TITLE"),
+        content: this.translationService.translate("SE_HELP_DROPS_CONTENT"),
+        position: "right",
+      },
+      {
+        selector: "#season-editor-races-run",
+        title: this.translationService.translate("SE_HELP_RACES_RUN_TITLE"),
+        content: this.translationService.translate("SE_HELP_RACES_RUN_CONTENT"),
+        position: "bottom",
+      },
+      demoStep,
+      {
+        selector: "#btn-add-race",
+        title: this.translationService.translate("SE_HELP_ADD_RACE_TITLE"),
+        content: this.translationService.translate("SE_HELP_ADD_RACE_CONTENT"),
+        position: "bottom",
+      },
+      {
+        selector: "#season-editor-standings",
+        title: this.translationService.translate("SE_HELP_STANDINGS_TITLE"),
+        content: this.translationService.translate("SE_HELP_STANDINGS_CONTENT"),
+        position: "left",
+      },
+      {
+        selector: "#season-editor-breakdown",
+        title: this.translationService.translate("SE_HELP_BREAKDOWN_TITLE"),
+        content: this.translationService.translate("SE_HELP_BREAKDOWN_CONTENT"),
+        position: "left",
+      },
+    ];
   }
 }

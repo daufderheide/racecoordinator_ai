@@ -33,6 +33,8 @@ message InterfaceStatusEvent {
   InterfaceStatus status = 1;
   int32 interface_index = 2;
   int32 detected_channels = 3;
+  bool supports_rgb_leds = 4;
+  string version = 5;
 }
 
 message LapEvent {

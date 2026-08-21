@@ -199,4 +199,43 @@ describe("EventManagerComponent", () => {
     expect(component.getRaceFinishMethod("invalid")).toBe("");
     expect(component.getRaceFinishValue("invalid")).toBe("");
   });
+
+  describe("Guided Help", () => {
+    it("should return complete guided help steps in expected order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(7);
+
+      // Welcome Step
+      expect(steps[0].title).toBe("EM_HELP_WELCOME_TITLE");
+      expect(steps[0].content).toBe("EM_HELP_WELCOME_CONTENT");
+      expect(steps[0].position).toBe("center");
+      expect(steps[0].selector).toBeUndefined();
+
+      // LHS Steps
+      expect(steps[1].selector).toBe("#event-list-container");
+      expect(steps[1].title).toBe("EM_HELP_LIST_TITLE");
+      expect(steps[1].position).toBe("right");
+
+      expect(steps[2].selector).toBe("#event-search-bar");
+      expect(steps[2].title).toBe("EM_HELP_SEARCH_TITLE");
+      expect(steps[2].position).toBe("right");
+
+      // RHS Steps
+      expect(steps[3].selector).toBe("#event-detail-name");
+      expect(steps[3].title).toBe("EM_HELP_NAME_TITLE");
+      expect(steps[3].position).toBe("bottom");
+
+      expect(steps[4].selector).toBe("#event-detail-description");
+      expect(steps[4].title).toBe("EM_HELP_DESCRIPTION_TITLE");
+      expect(steps[4].position).toBe("bottom");
+
+      expect(steps[5].selector).toBe("#event-detail-auto-advance");
+      expect(steps[5].title).toBe("EM_HELP_AUTO_ADVANCE_TITLE");
+      expect(steps[5].position).toBe("bottom");
+
+      expect(steps[6].selector).toBe("#event-detail-races");
+      expect(steps[6].title).toBe("EM_HELP_RACES_TITLE");
+      expect(steps[6].position).toBe("left");
+    });
+  });
 });

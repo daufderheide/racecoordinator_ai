@@ -28,22 +28,30 @@ public interface IRaceState {
       // Only if fuel is enabled
       if (race.getHeatExecutionManager().isAnalogFuelEnabled()
           || race.getHeatExecutionManager().isDigitalFuelEnabled()) {
-        return RaceFlag.BLACK;
+        return race.getTheme() != null
+            ? race.getTheme().resolveFlag("flag.penalty", RaceFlag.BLACK, race.getDatabaseContext())
+            : RaceFlag.BLACK;
       }
     }
 
     // 2) False start penalty
     if (dhd.getRemainingFalseStartTimePenalty() > 0) {
-      return RaceFlag.BLACK;
+      return race.getTheme() != null
+          ? race.getTheme().resolveFlag("flag.penalty", RaceFlag.BLACK, race.getDatabaseContext())
+          : RaceFlag.BLACK;
     }
 
-    // 3) Finished in Allow Finish mode - show RED instead of CHECKERED for the driver
+    // 3) Finished in Allow Finish mode - show driver_finished instead of CHECKERED for the driver
     if (race.getRaceModel() != null && race.getRaceModel().getHeatScoring() != null) {
       HeatScoring scoring = race.getRaceModel().getHeatScoring();
-      if (scoring.getAllowFinish() != AllowFinish.None
+      if (scoring.getAllowFinish() != null
+          && scoring.getAllowFinish() != AllowFinish.None
           && scoring.getAllowFinish() != AllowFinish.NoneAutoSegments) {
         if (isDriverFinished(race, lane, dhd)) {
-          return RaceFlag.RED;
+          return race.getTheme() != null
+              ? race.getTheme()
+                  .resolveFlag("flag.driver_finished", RaceFlag.RED, race.getDatabaseContext())
+              : RaceFlag.RED;
         }
       }
     }

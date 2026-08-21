@@ -85,13 +85,6 @@
 
   <build>
     <directory>${build.dist.dir}</directory>
-    <extensions>
-      <extension>
-        <groupId>kr.motd.maven</groupId>
-        <artifactId>os-maven-plugin</artifactId>
-        <version>1.7.1</version>
-      </extension>
-    </extensions>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -130,24 +123,6 @@
                  <source>${generated.sources.dir}</source>
               </sources>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.xolstice.maven.plugins</groupId>
-        <artifactId>protobuf-maven-plugin</artifactId>
-        <version>0.6.1</version>
-        <configuration>
-          <protocArtifact>com.google.protobuf:protoc:${protobuf.java.version}:exe:${os.detected.classifier}</protocArtifact>
-          <protoSourceRoot>${project.basedir}/proto</protoSourceRoot>
-          <outputDirectory>${generated.sources.dir}</outputDirectory>
-          <skip>${skipProtobuf}</skip>
-        </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>compile</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>

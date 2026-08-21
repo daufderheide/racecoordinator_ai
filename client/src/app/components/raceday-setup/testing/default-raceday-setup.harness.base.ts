@@ -31,6 +31,8 @@ export abstract class DefaultRacedaySetupHarnessBase {
   abstract clickRaceDropdown(): Promise<void>;
   abstract openOptionsMenu(): Promise<void>;
   abstract clickOptionsMenuOptionByText(text: string): Promise<void>;
+  abstract openLocalizationSubMenu(): Promise<void>;
+  abstract openAutomaticUpdatesSubMenu(): Promise<void>;
   abstract openFileMenu(): Promise<void>;
   abstract openConfigMenu(): Promise<void>;
   abstract openHelpMenu(): Promise<void>;

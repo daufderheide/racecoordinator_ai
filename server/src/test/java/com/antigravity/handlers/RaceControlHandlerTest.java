@@ -14,6 +14,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -319,5 +320,159 @@ public class RaceControlHandlerTest {
     when(ctxRegen.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(ctxRegen);
     handler.regenerateHeats(ctxRegen);
     org.mockito.Mockito.verify(ctxRegen).result(org.mockito.ArgumentMatchers.any(byte[].class));
+  }
+
+  @Test
+  public void testHandleInitializeRace_WithCustomThemeId() throws Exception {
+    String raceId = "race-custom-theme";
+    String driverId = "d-custom";
+    String themeId = "theme-custom-checkered";
+
+    java.util.Map<String, String> slots = new java.util.HashMap<>();
+    slots.put("flag.heat_paused", "default_flag_checkered");
+    Theme customTheme = new Theme("Custom Checkered", false, slots, null, themeId, null);
+    new SqliteRepository<>(databaseContext, "themes", Theme.class).insert(customTheme);
+
+    Race race =
+        new Race.Builder()
+            .withName("Custom Theme Race")
+            .withTrackEntityId("track-1")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Custom Driver", "CD", driverId, null);
+    Lane lane = new Lane("red", "black", 100);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
+
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setThemeId(themeId)
+            .setIsDemoMode(true)
+            .build();
+
+    TaskResult result = handler.handleInitializeRace(request);
+    assertEquals(200, result.status);
+
+    com.antigravity.race.Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+    assertNotNull(activeRace);
+    assertNotNull(activeRace.getTheme());
+    assertEquals(themeId, activeRace.getTheme().getEntityId());
+    assertEquals(
+        com.antigravity.proto.RaceFlag.CHECKERED,
+        activeRace
+            .getTheme()
+            .resolveFlag("flag.heat_paused", com.antigravity.proto.RaceFlag.YELLOW));
+  }
+
+  @Test
+  public void testHandleInitializeRace_WithWhitespaceOrNonExistentThemeId() throws Exception {
+    String raceId = "race-theme-fallback";
+    String driverId = "d-fallback";
+
+    Race race =
+        new Race.Builder()
+            .withName("Fallback Theme Race")
+            .withTrackEntityId("track-1")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Fallback Driver", "FD", driverId, null);
+    Lane lane = new Lane("red", "black", 100);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
+
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+
+    // Whitespace themeId
+    InitializeRaceRequest whitespaceReq =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setThemeId("   ")
+            .setIsDemoMode(true)
+            .build();
+
+    TaskResult result1 = handler.handleInitializeRace(whitespaceReq);
+    assertEquals(200, result1.status);
+    com.antigravity.race.Race race1 = ClientSubscriptionManager.getInstance().getRace();
+    assertNotNull(race1);
+
+    // Non-existent themeId
+    InitializeRaceRequest nonExistentReq =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setThemeId("non-existent-theme-id")
+            .setIsDemoMode(true)
+            .build();
+
+    TaskResult result2 = handler.handleInitializeRace(nonExistentReq);
+    assertEquals(200, result2.status);
+    com.antigravity.race.Race race2 = ClientSubscriptionManager.getInstance().getRace();
+    assertNotNull(race2);
+  }
+
+  @Test
+  public void testHandleInitializeRace_WithThemeLookupException() throws Exception {
+    String raceId = "race-theme-err";
+    String driverId = "d-err";
+
+    Race race =
+        new Race.Builder()
+            .withName("Err Race")
+            .withTrackEntityId("track-1")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Err Driver", "ED", driverId, null);
+    Lane lane = new Lane("red", "black", 100);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
+
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+
+    // Corrupt the themes table structure so themeRepo.findByEntityId throws an exception
+    databaseContext.getConnection().createStatement().execute("DROP TABLE IF EXISTS themes");
+    databaseContext
+        .getConnection()
+        .createStatement()
+        .execute("CREATE TABLE themes (invalid_column INT)");
+
+    InitializeRaceRequest req =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setThemeId("theme-will-fail-lookup")
+            .setIsDemoMode(true)
+            .build();
+
+    // handleInitializeRace catches theme lookup exception, logs warning, and proceeds
+    TaskResult result = handler.handleInitializeRace(req);
+    assertEquals(200, result.status);
+    com.antigravity.race.Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+    assertNotNull(activeRace);
   }
 }

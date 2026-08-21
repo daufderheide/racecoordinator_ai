@@ -5,6 +5,7 @@ import com.antigravity.handlers.ClientCommandTaskHandler.TaskResult;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.DeferHeatResponse;
 import com.antigravity.proto.EndRaceRequest;
@@ -27,6 +28,7 @@ import com.antigravity.race.Heat;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.RaceOver;
+import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AnalyticsService;
 import com.antigravity.service.DatabaseService;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -241,6 +243,17 @@ public class RaceControlHandler {
       return TaskResult.success(response.toByteArray());
     }
 
+    Theme raceTheme = null;
+    if (request.getThemeId() != null && !request.getThemeId().trim().isEmpty()) {
+      try {
+        SqliteRepository<Theme> themeRepo =
+            new SqliteRepository<>(databaseContext, "themes", Theme.class);
+        raceTheme = themeRepo.findByEntityId(request.getThemeId().trim());
+      } catch (Exception e) {
+        logger.warn("Could not load requested theme {}: {}", request.getThemeId(), e.getMessage());
+      }
+    }
+
     com.antigravity.race.Race runtimeRace = null; // fqn-collision
     try {
       runtimeRace =
@@ -248,6 +261,7 @@ public class RaceControlHandler {
               .model(raceModel)
               .drivers(participants)
               .track(raceTrack)
+              .theme(raceTheme)
               .databaseContext(databaseContext)
               .isDemoMode(request.getIsDemoMode())
               .demoConfig(request.getDemoConfig())

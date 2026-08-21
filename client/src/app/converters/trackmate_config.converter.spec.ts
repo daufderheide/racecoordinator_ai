@@ -24,7 +24,11 @@ describe("TrackmateConfigConverter", () => {
     expect(config.normallyClosedRelays).toBeTrue();
     expect(config.normallyClosedLaneSensors).toBeFalse();
     expect(config.useIR).toBeFalse();
+    expect(config.debounce).toBe(2);
     expect(config.numLanes).toBe(4);
+    expect(config.hasPerLaneRelays).toBeTrue();
+    expect(config.lapPinPitBehavior).toBe(1);
+    expect(config.lapPinBehaviors).toEqual([100, 101, 102, 103]);
   });
 
   it("should convert to proto correctly", () => {
@@ -38,13 +42,19 @@ describe("TrackmateConfigConverter", () => {
       numLanes: 6,
       hasPerLaneRelays: false,
       lapPinPitBehavior: 0,
-      lapPinBehaviors: [],
+      lapPinBehaviors: [200, 201],
     };
 
     const proto = TrackmateConfigConverter.toProto(config);
     expect(proto.name).toBe("Trackmate 2");
     expect(proto.commPort).toBe("COM2");
+    expect(proto.normallyClosedRelays).toBeFalse();
     expect(proto.normallyClosedLaneSensors).toBeTrue();
     expect(proto.useIr).toBeTrue();
+    expect(proto.debounce).toBe(1);
+    expect(proto.numLanes).toBe(6);
+    expect(proto.hasPerLaneRelays).toBeFalse();
+    expect(proto.lapPinPitBehavior).toBe(0);
+    expect(proto.lapPinBehaviors).toEqual([200, 201]);
   });
 });

@@ -40,7 +40,13 @@ public class ClientSubscriptionManager {
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<WsContext> interfaceSubscribers =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService scheduler =
+      Executors.newSingleThreadScheduledExecutor(
+          r -> {
+            Thread t = new Thread(r, "ClientSubscriptionManager-Scheduler");
+            t.setDaemon(true);
+            return t;
+          });
   private ScheduledFuture<?> cleanupFuture;
   private long cleanupGracePeriodSeconds = 10;
   private boolean hasEverHadClient = false;
@@ -106,6 +112,23 @@ public class ClientSubscriptionManager {
       logger.info("Server shutting down. Cleaning up race and protocols...");
       setRace(null);
       setProtocol(null);
+      if (autoShutdownFuture != null) {
+        autoShutdownFuture.cancel(true);
+        autoShutdownFuture = null;
+      }
+      if (cleanupFuture != null) {
+        cleanupFuture.cancel(true);
+        cleanupFuture = null;
+      }
+      for (WsContext ctx : sessions) {
+        try {
+          ctx.session.close();
+        } catch (Exception ignored) {
+        }
+      }
+      sessions.clear();
+      raceDataSubscribers.clear();
+      interfaceSubscribers.clear();
     }
   }
 
@@ -257,14 +280,20 @@ public class ClientSubscriptionManager {
           } else {
             status = InterfaceStatus.DISCONNECTED;
           }
+          InterfaceStatusEvent.Builder statusBuilder =
+              InterfaceStatusEvent.newBuilder()
+                  .setStatus(status)
+                  .setInterfaceIndex(p.getInterfaceIndex());
+          if (p instanceof DefaultProtocol) {
+            DefaultProtocol dp = (DefaultProtocol) p;
+            statusBuilder.setSupportsRgbLeds(dp.supportsRgbLeds());
+            String ver = dp.getVersion();
+            if (ver != null) {
+              statusBuilder.setVersion(ver);
+            }
+          }
           InterfaceEvent event =
-              InterfaceEvent.newBuilder()
-                  .setStatus(
-                      InterfaceStatusEvent.newBuilder()
-                          .setStatus(status)
-                          .setInterfaceIndex(p.getInterfaceIndex())
-                          .build())
-                  .build();
+              InterfaceEvent.newBuilder().setStatus(statusBuilder.build()).build();
           try {
             ctx.send(ByteBuffer.wrap(event.toByteArray()));
           } catch (Exception e) {

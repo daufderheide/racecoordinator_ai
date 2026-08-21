@@ -39,6 +39,22 @@ public class StartingTest {
     assertEquals(RaceFlag.YELLOW, starting.getFlagType(race));
   }
 
+  @Test
+  public void testGetFlagType_ThemedFlagResolution() {
+    java.util.Map<String, String> slots = new java.util.HashMap<>();
+    slots.put("flag.starting", "default_flag_yellow");
+    slots.put("flag.restarting", "default_flag_green");
+    com.antigravity.models.Theme theme =
+        new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    when(race.hasRacedInCurrentHeat()).thenReturn(false);
+    assertEquals(RaceFlag.YELLOW, starting.getFlagType(race));
+
+    when(race.hasRacedInCurrentHeat()).thenReturn(true);
+    assertEquals(RaceFlag.GREEN, starting.getFlagType(race));
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testNextHeat_ThrowsWhileStarting() {
     starting.nextHeat(race);

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { InterfaceEvent, InterfaceStatus } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { ArduinoEditorHarnessE2e } from "./testing/arduino-editor.harness.e2e";
@@ -315,6 +316,107 @@ test.describe("Arduino Editor Section Expander States", () => {
     await expect(editor).toHaveScreenshot(
       "arduino-editor-analog-collapsed.png",
       { maxDiffPixelRatio: 0.05 },
+    );
+  });
+});
+
+test.describe("Arduino Editor Pin Behavior Dropdown Visuals", () => {
+  const sendInterfaceStatusEvent = async (page: any, statusObj: any) => {
+    const event = InterfaceEvent.create({ status: statusObj });
+    const data = Array.from(InterfaceEvent.encode(event).finish());
+    await page.evaluate((data: any) => {
+      // @ts-ignore
+      const sockets = (window.allMockSockets || []).filter(
+        (s: any) => s.url && s.url.includes("interface-data"),
+      );
+      sockets.forEach((socket: any) => {
+        const ev = new MessageEvent("message", {
+          data: new Uint8Array(data).buffer,
+        });
+        socket.dispatchEvent(ev);
+        if (socket.onmessage) socket.onmessage(ev);
+      });
+    }, data);
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+  });
+
+  async function openEditor(page: any) {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+    const editor = page.locator("app-arduino-editor");
+    await expect(editor).toBeVisible();
+    await waitForBoardImage(page, editor);
+    return editor;
+  }
+
+  test("should show pin behavior dropdown with RGB LED enabled on modern firmware", async ({
+    page,
+  }) => {
+    const editor = await openEditor(page);
+    await sendInterfaceStatusEvent(page, {
+      interfaceIndex: 0,
+      status: InterfaceStatus.CONNECTED,
+      supportsRgbLeds: true,
+      version: "2.1.0.0",
+    });
+
+    const trigger = editor.locator("#arduino-digital-selector-22");
+    await trigger.click();
+
+    const dropdown = editor.locator(".dropdown-menu").first();
+    await expect(dropdown).toBeVisible();
+
+    const othersHeader = dropdown.locator(".group-header", {
+      hasText: "Others",
+    });
+    await othersHeader.click();
+
+    const ledItem = dropdown.locator(".dropdown-item", {
+      hasText: "LED RGB String",
+    });
+    await expect(ledItem).toBeVisible();
+
+    await expect(dropdown).toHaveScreenshot(
+      "arduino-editor-pin-dropdown-rgb-enabled.png",
+    );
+  });
+
+  test("should show pin behavior dropdown with RGB LED disabled on legacy firmware", async ({
+    page,
+  }) => {
+    const editor = await openEditor(page);
+    await sendInterfaceStatusEvent(page, {
+      interfaceIndex: 0,
+      status: InterfaceStatus.CONNECTED,
+      supportsRgbLeds: false,
+      version: "1.0.0.15",
+    });
+
+    const trigger = editor.locator("#arduino-digital-selector-22");
+    await trigger.click();
+
+    const dropdown = editor.locator(".dropdown-menu").first();
+    await expect(dropdown).toBeVisible();
+
+    const othersHeader = dropdown.locator(".group-header", {
+      hasText: "Others",
+    });
+    await othersHeader.click();
+
+    const ledItem = dropdown.locator(".dropdown-item", {
+      hasText: "LED RGB String",
+    });
+    await expect(ledItem).toBeVisible();
+
+    await expect(dropdown).toHaveScreenshot(
+      "arduino-editor-pin-dropdown-rgb-disabled.png",
     );
   });
 });

@@ -1690,7 +1690,7 @@ describe("RaceEditorComponent", () => {
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(10);
+      expect(steps.length).toBe(79);
       expect(steps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(steps[1].selector).toBe("#race-name-input");
       expect(steps[2].selector).toBe("#heat-rotation-select");
@@ -1699,15 +1699,143 @@ describe("RaceEditorComponent", () => {
       expect(steps[5].selector).toBe("#track-select");
       expect(steps[6].selector).toBe("#min-lap-time-input");
       expect(steps[7].selector).toBe("#drift-time-input");
-      expect(steps[8].selector).toBe("#adjust-drift-laps-input");
-      expect(steps[9].selector).toBe("#practice-input");
+      expect(steps[8].selector).toBe("#practice-input");
+      expect(steps[9].selector).toBe("#adjust-drift-laps-input");
+      expect(steps[10].selector).toBe("#start-time-input");
+      expect(steps[11].selector).toBe("#restart-time-input");
+      expect(steps[12].selector).toBe("#start-randomizer-input");
+      expect(steps[13].selector).toBe("#restart-randomizer-input");
+      expect(steps[14].selector).toBe("#start-behind-sensor-input");
+      expect(steps[15].selector).toBe("#start-at-current-input");
+      expect(steps[16].selector).toBe("#hot-start-input");
+      expect(steps[17].selector).toBe("#restart-on-false-start-input");
+      expect(steps[18].selector).toBe("#false-start-lap-penalty-input");
+      expect(steps[19].selector).toBe("#false-start-time-penalty-input");
+      expect(steps[20].selector).toBe("#heat-ranking-select");
+      expect(steps[21].selector).toBe("#heat-tiebreaker-select");
+      expect(steps[22].selector).toBe("#finish-method-select");
+      expect(steps[23].selector).toBe("#finish-value-input");
+      expect(steps[24].selector).toBe("#allow-finish-select");
+      expect(steps[25].selector).toBe("#overall-ranking-select");
+      expect(steps[26].selector).toBe("#overall-tiebreaker-select");
+      expect(steps[27].selector).toBe("#dropped-heats-input");
+      expect(steps[28].selector).toBe("#season-position-points-section");
+      expect(steps[29].selector).toBe("#season-heat-position-points-section");
+      expect(steps[30].selector).toBe("#season-overall-carry-over-input");
+      expect(steps[31].selector).toBe("#season-overall-fastest-lap-input");
+      expect(steps[32].selector).toBe("#season-overall-fastest-lap-lane-input");
+      expect(steps[33].selector).toBe("#season-overall-most-laps-led-input");
+      expect(steps[34].selector).toBe("#season-overall-led-lap-input");
+      expect(steps[35].selector).toBe("#season-overall-one-bonus-input");
+      expect(steps[36].selector).toBe("#season-heat-carry-over-input");
+      expect(steps[37].selector).toBe("#season-heat-fastest-lap-input");
+      expect(steps[38].selector).toBe("#season-heat-most-laps-led-input");
+      expect(steps[39].selector).toBe("#season-heat-led-lap-input");
+      expect(steps[40].selector).toBe("#season-heat-one-bonus-input");
+      expect(steps[41].selector).toBe("#auto-advance-time-input");
+      expect(steps[42].selector).toBe("#auto-advance-warmup-time-input");
+      expect(steps[43].selector).toBe("#auto-start-time-input");
+      expect(steps[44].selector).toBe("#auto-start-warmup-time-input");
+      expect(steps[45].selector).toBe("#heat-times-through-input");
+      expect(steps[46].selector).toBe("#reverse-heats-input");
+      expect(steps[47].selector).toBe("#groups-enabled-input");
+      expect(steps[48].selector).toBe("#groups-max-input");
+      expect(steps[49].selector).toBe("#groups-balance-input");
+      expect(steps[50].selector).toBe("#groups-allow-empty-input");
+      expect(steps[51].selector).toBe("#groups-force-multiple-input");
+      expect(steps[52].selector).toBe("#groups-rotate-heats-input");
+      expect(steps[53].selector).toBe("#groups-min-advancing-input");
+      expect(steps[54].selector).toBe("#groups-names-section");
+      expect(steps[55].selector).toBe("#fuel-enabled-input");
+      expect(steps[56].selector).toBe("#fuel-usage-type-select");
+      expect(steps[57].selector).toBe("#fuel-usage-rate-input");
+      expect(steps[58].selector).toBe("#fuel-reference-time-input");
+      expect(steps[59].selector).toBe("#fuel-capacity-input");
+      expect(steps[60].selector).toBe("#fuel-start-level-input");
+      expect(steps[61].selector).toBe("#fuel-refuel-rate-input");
+      expect(steps[62].selector).toBe("#fuel-pit-delay-input");
+      expect(steps[63].selector).toBe("#fuel-reset-at-start-input");
+      expect(steps[64].selector).toBe("#fuel-out-of-fuel-action-select");
+      expect(steps[65].selector).toBe("#digital-fuel-enabled-input");
+      expect(steps[66].selector).toBe("#digital-fuel-usage-type-select");
+      expect(steps[67].selector).toBe("#digital-fuel-usage-rate-input");
+      expect(steps[68].selector).toBe("#digital-fuel-capacity-input");
+      expect(steps[69].selector).toBe("#digital-fuel-start-level-input");
+      expect(steps[70].selector).toBe("#digital-fuel-refuel-rate-input");
+      expect(steps[71].selector).toBe("#digital-fuel-pit-delay-input");
+      expect(steps[72].selector).toBe("#digital-fuel-reset-at-start-input");
+      expect(steps[73].selector).toBe(
+        "#digital-fuel-out-of-fuel-action-select",
+      );
+      expect(steps[74].selector).toBe("#team-pit-stop-change-driver-input");
+      expect(steps[75].selector).toBe("#team-heat-lap-limit-input");
+      expect(steps[76].selector).toBe("#team-heat-time-limit-input");
+      expect(steps[77].selector).toBe("#team-overall-lap-limit-input");
+      expect(steps[78].selector).toBe("#team-overall-time-limit-input");
+    });
+
+    it("should expand corresponding sections when executing onEnter hooks", () => {
+      component.sectionsExpanded.general = false;
+      component.sectionsExpanded.start_method = false;
+      component.sectionsExpanded.scoring = false;
+      component.sectionsExpanded.season_points = false;
+      component.sectionsExpanded.heats = false;
+      component.sectionsExpanded.groups = false;
+      component.sectionsExpanded.fuel_analog = false;
+      component.sectionsExpanded.fuel_digital = false;
+      component.sectionsExpanded.team = false;
+
+      const steps = component.getHelpSteps();
+      steps[1].onEnter!();
+      expect(component.sectionsExpanded.general).toBeTrue();
+
+      steps[10].onEnter!();
+      expect(component.sectionsExpanded.start_method).toBeTrue();
+
+      steps[20].onEnter!();
+      expect(component.sectionsExpanded.scoring).toBeTrue();
+
+      steps[28].onEnter!();
+      expect(component.sectionsExpanded.season_points).toBeTrue();
+
+      steps[30].onEnter!();
+      expect(component.sectionsExpanded.season_points).toBeTrue();
+
+      steps[41].onEnter!();
+      expect(component.sectionsExpanded.heats).toBeTrue();
+
+      steps[47].onEnter!();
+      expect(component.sectionsExpanded.groups).toBeTrue();
+
+      steps[55].onEnter!();
+      expect(component.sectionsExpanded.fuel_analog).toBeTrue();
+
+      steps[65].onEnter!();
+      expect(component.sectionsExpanded.fuel_digital).toBeTrue();
+
+      steps[74].onEnter!();
+      expect(component.sectionsExpanded.team).toBeTrue();
     });
 
     it("should trigger help service when startHelp is called", () => {
       const helpService = TestBed.inject(HelpService);
       component.startHelp();
-      expect(helpService.startGuide).toHaveBeenCalledWith(
-        component.getHelpSteps(),
+      expect(helpService.startGuide).toHaveBeenCalled();
+      const calledSteps = (
+        helpService.startGuide as jasmine.Spy
+      ).calls.mostRecent().args[0];
+      expect(calledSteps.length).toBe(79);
+      expect(calledSteps[0].title).toBe("RE_HELP_WELCOME_TITLE");
+      expect(calledSteps[10].selector).toBe("#start-time-input");
+      expect(calledSteps[20].selector).toBe("#heat-ranking-select");
+      expect(calledSteps[28].selector).toBe("#season-position-points-section");
+      expect(calledSteps[30].selector).toBe("#season-overall-carry-over-input");
+      expect(calledSteps[41].selector).toBe("#auto-advance-time-input");
+      expect(calledSteps[47].selector).toBe("#groups-enabled-input");
+      expect(calledSteps[55].selector).toBe("#fuel-enabled-input");
+      expect(calledSteps[65].selector).toBe("#digital-fuel-enabled-input");
+      expect(calledSteps[74].selector).toBe(
+        "#team-pit-stop-change-driver-input",
       );
     });
   });

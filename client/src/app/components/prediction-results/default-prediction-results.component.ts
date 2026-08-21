@@ -71,7 +71,7 @@ export class DefaultPredictionResultsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (typeof this.raceConnectionService?.disconnect === "function") {
-      this.raceConnectionService.disconnect(true);
+      this.raceConnectionService.disconnect();
     }
     this.subscriptions.unsubscribe();
     this.retryTimeouts.forEach((t) => clearTimeout(t));
@@ -81,7 +81,7 @@ export class DefaultPredictionResultsComponent implements OnInit, OnDestroy {
   @HostListener("window:pagehide")
   onPageHide() {
     if (typeof this.raceConnectionService?.disconnect === "function") {
-      this.raceConnectionService.disconnect(true);
+      this.raceConnectionService.disconnect();
     }
   }
 

@@ -207,7 +207,7 @@ describe("DefaultHeatResultsComponent", () => {
 
     // Call pagehide
     component.onPageHide(null);
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
     expect(mockWindow.close).toHaveBeenCalled();
     expect(component["driverResultsWindows"].length).toBe(0);
 
@@ -220,7 +220,7 @@ describe("DefaultHeatResultsComponent", () => {
     expect(component["driverResultsWindows"].length).toBe(1);
 
     component.ngOnDestroy();
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
     expect(mockWindow2.close).toHaveBeenCalled();
     expect(component["driverResultsWindows"].length).toBe(0);
   });

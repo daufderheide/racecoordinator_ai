@@ -385,4 +385,18 @@ public class EventExecutionManagerTest {
     manager.cancelAutoAdvanceTimer();
     assertEquals(0.0, manager.getAutoAdvanceRemainingSeconds(), 0.001);
   }
+
+  @Test
+  public void testSchedulerDaemonThread() throws Exception {
+    java.lang.reflect.Field field = EventExecutionManager.class.getDeclaredField("scheduler");
+    field.setAccessible(true);
+    java.util.concurrent.ScheduledExecutorService ses =
+        (java.util.concurrent.ScheduledExecutorService)
+            field.get(EventExecutionManager.getInstance());
+
+    java.util.concurrent.atomic.AtomicBoolean isDaemon =
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    ses.submit(() -> isDaemon.set(Thread.currentThread().isDaemon())).get();
+    assertTrue("EventExecutionManager scheduler thread must be daemon", isDaemon.get());
+  }
 }

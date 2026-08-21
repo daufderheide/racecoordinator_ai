@@ -145,10 +145,21 @@
                           behavior of visibleLapPinBehaviors;
                           track $index
                         ) {
-                          <div class="pin-item">
+                          <div
+                            class="pin-item"
+                            [id]="
+                              'bart-channel-' + $index + '-' + interfaceIndex()
+                            "
+                          >
                             <div class="pin-header">
                               <label>Channel {{ $index + 1 }}</label>
                               <span
+                                [id]="
+                                  'bart-channel-status-' +
+                                  $index +
+                                  '-' +
+                                  interfaceIndex()
+                                "
                                 class="status-badge small"
                                 [class.connected]="readBadges[$index]"
                               ></span>
@@ -159,6 +170,12 @@
                               style="padding: 0 10px 10px 10px"
                             >
                               <select
+                                [id]="
+                                  'bart-channel-select-' +
+                                  $index +
+                                  '-' +
+                                  interfaceIndex()
+                                "
                                 [(ngModel)]="config().lapPinBehaviors![$index]"
                                 (change)="onConfigChange()"
                               >

@@ -16,6 +16,10 @@ test.describe("UI Editor Visuals", () => {
       uiEditorHelpShown: true,
     });
 
+    await page.addInitScript(() => {
+      localStorage.removeItem("ui_editor_expanders");
+    });
+
     await TestSetupHelper.setupFileSystemMock(page, {});
     await TestSetupHelper.disableAnimations(page);
   });
@@ -86,9 +90,7 @@ test.describe("UI Editor Visuals", () => {
     );
   });
 
-  test("should highlight duplicate theme name and show confirmation on leave", async ({
-    page,
-  }) => {
+  test("should highlight duplicate theme name", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -118,7 +120,6 @@ test.describe("UI Editor Visuals", () => {
     await page.mouse.move(0, 0);
     const sectionHeader = customThemeSection.locator(".section-header").first();
     await sectionHeader.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
 
     await expect(sectionHeader).toHaveScreenshot(
       "ui-editor-duplicate-name-error.png",
@@ -128,9 +129,35 @@ test.describe("UI Editor Visuals", () => {
         animations: "disabled",
       },
     );
+  });
 
-    // Try to navigate away to trigger pending changes guard inside Angular zone
-    await page.waitForTimeout(300);
+  test("should show confirmation modal on leave with pending changes", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    // Expand Custom Theme and set duplicate theme name to make changes invalid and unsavable
+    const customThemeSection = page.locator(".theme-sub-section").nth(1);
+    await customThemeSection
+      .locator(".section-header")
+      .first()
+      .click({ force: true });
+
+    const themeInput = customThemeSection.locator(".theme-name-input").first();
+    await themeInput.fill("Default Theme");
+    await themeInput.blur();
+
+    const invalidContainer = customThemeSection
+      .locator(".theme-title-container.invalid")
+      .first();
+    await invalidContainer.waitFor({ state: "visible" });
+
+    // Trigger router navigation within Angular zone to prompt discard confirmation guard
     await page.evaluate(() => {
       const ngZone = (window as any).ngZone;
       const router = (window as any).angularRouter;
@@ -150,7 +177,6 @@ test.describe("UI Editor Visuals", () => {
     const modalContent = modal.locator(".modal-content");
     await modalContent.waitFor({ state: "visible" });
     await page.mouse.move(0, 0);
-    await page.waitForTimeout(500);
 
     await expect(modalContent).toHaveScreenshot(
       "ui-editor-discard-confirm.png",
@@ -168,10 +194,10 @@ test.describe("UI Editor Visuals", () => {
     );
     await page.locator(".ue-container").waitFor({ state: "visible" });
 
-    // Expand Practice Raceday Layout section
-    await page
-      .locator(".section-header", { hasText: "Raceday Layout (Practice)" })
-      .click({ force: true });
+    // Expand Practice Raceday Layout section via unique header ID
+    const practiceHeader = page.locator("#help-practice-ui");
+    await practiceHeader.waitFor({ state: "visible" });
+    await practiceHeader.click();
 
     // Wait for the practice section content to be visible
     const practiceSection = page.locator(".practice-raceday-layout-section");
@@ -181,11 +207,12 @@ test.describe("UI Editor Visuals", () => {
     const columnToolbox = page.locator(".layout-customizer-toolbox").last();
     await columnToolbox.waitFor({ state: "visible" });
     await TestSetupHelper.waitForImagesLoaded(practiceSection);
-    const configSectionPractice = page.locator(".config-section").nth(1);
-    await configSectionPractice.scrollIntoViewIfNeeded();
-    await page.mouse.move(0, 0);
-    await page.waitForTimeout(500);
 
+    // Scroll header into view to position section stably within scroll container
+    await practiceHeader.scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+
+    const configSectionPractice = page.locator(".config-section").nth(1);
     await expect(configSectionPractice).toHaveScreenshot(
       "ui-editor-practice-layout-section.png",
       {
@@ -210,11 +237,11 @@ test.describe("UI Editor Visuals", () => {
     const section = page.locator(".config-section").first();
     await section.waitFor({ state: "visible" });
 
-    const resolutionSelect = page.locator(".layout-resolution-select").first();
-    await resolutionSelect.scrollIntoViewIfNeeded();
-    await resolutionSelect.waitFor({ state: "visible" });
+    const layoutControls = section.locator(".layout-controls").first();
+    await layoutControls.waitFor({ state: "visible" });
+    await page.mouse.move(0, 0);
 
-    await expect(section.locator(".layout-controls").first()).toHaveScreenshot(
+    await expect(layoutControls).toHaveScreenshot(
       "ui-editor-layout-resolution-dropdown.png",
       {
         maxDiffPixelRatio: 0.05,
@@ -222,14 +249,29 @@ test.describe("UI Editor Visuals", () => {
         animations: "disabled",
       },
     );
-    await page
-      .locator(".layout-resolution-select")
-      .first()
-      .selectOption("1920x1080");
-    await page.waitForTimeout(500);
+  });
+
+  test("should scale preview when selecting resolution in layout controls", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const resolutionSelect = page.locator(".layout-resolution-select").first();
+    await resolutionSelect.scrollIntoViewIfNeeded();
+    await resolutionSelect.waitFor({ state: "visible" });
+
+    await resolutionSelect.selectOption("1920x1080");
 
     const previewScaler = page.locator(".raceday-preview-scaler").first();
     await previewScaler.scrollIntoViewIfNeeded();
+    await previewScaler.waitFor({ state: "visible" });
+    await page.mouse.move(0, 0);
+
     await expect(previewScaler).toHaveScreenshot(
       "ui-editor-layout-preview-scaled.png",
       {

@@ -32,6 +32,7 @@ import { NavigationService } from "@app/services/navigation.service";
 import { ParticipantValidationService } from "@app/services/participant-validation.service";
 import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
+import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
   UpdateCheckResult,
@@ -54,6 +55,7 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
     @Inject(LoggerService) logger: LoggerService,
     @Inject(ParticipantValidationService)
     validationService: ParticipantValidationService,
+    @Inject(ThemeService) themeService: ThemeService,
   ) {
     super(
       dataService,
@@ -66,6 +68,7 @@ class CustomUiBaseComponent extends DefaultRacedaySetupComponent {
       helpService,
       logger,
       validationService,
+      themeService,
     );
   }
 }
@@ -437,9 +440,21 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   public dismissUpdateBanner() {
+    const version = this.updateResult?.latestVersion;
     this.updateBannerDismissed = true;
+    this.updateResult = null;
     this.syncChildComponentState();
     this.cdr.detectChanges();
+    if (version) {
+      this.updateService.snoozeUpdate(version, 7).subscribe({
+        next: () => {
+          this.logger.info(`Snoozed update version ${version} for 7 days`);
+        },
+        error: (err) => {
+          this.logger.warn("Failed to snooze update on server", err);
+        },
+      });
+    }
   }
 
   public installUpdate() {

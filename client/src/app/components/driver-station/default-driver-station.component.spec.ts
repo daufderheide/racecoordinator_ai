@@ -34,6 +34,7 @@ describe("DefaultDriverStationComponent", () => {
   beforeEach(async () => {
     mockRouter = {
       navigate: jasmine.createSpy("navigate"),
+      navigateByUrl: jasmine.createSpy("navigateByUrl"),
     };
     mockDataService = jasmine.createSpyObj("DataService", [
       "updateRaceSubscription",
@@ -86,6 +87,7 @@ describe("DefaultDriverStationComponent", () => {
 
     const mockActivatedRoute = {
       params: of({ lane: "2" }), // Use a realistic lane number
+      snapshot: { queryParamMap: { get: () => null } },
     };
 
     const mockTranslationService = {
@@ -139,6 +141,22 @@ describe("DefaultDriverStationComponent", () => {
   it("should create", () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  it("should connect on init and disconnect on destroy", () => {
+    fixture.detectChanges();
+    expect(mockRaceConnectionService.connect).toHaveBeenCalled();
+    fixture.destroy();
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
+  });
+
+  it("should disconnect on pagehide", () => {
+    mockRaceConnectionService.connect.calls.reset();
+    mockRaceConnectionService.disconnect.calls.reset();
+
+    component.onPageHide();
+
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
   });
 
   it("should calculate progress percentage correctly for lap-based race", () => {
@@ -336,7 +354,7 @@ describe("DefaultDriverStationComponent", () => {
       component.onAcknowledgeModal();
 
       expect(component.showAckModal).toBeFalse();
-      expect(routerSpy.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+      expect(routerSpy.navigateByUrl).toHaveBeenCalledWith("/raceday-setup");
     });
 
     it("should not redirect to /raceday-setup on acknowledge if race has not ended", () => {
@@ -347,7 +365,7 @@ describe("DefaultDriverStationComponent", () => {
       component.onAcknowledgeModal();
 
       expect(component.showAckModal).toBeFalse();
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
+      expect(routerSpy.navigateByUrl).not.toHaveBeenCalled();
     });
   });
 });

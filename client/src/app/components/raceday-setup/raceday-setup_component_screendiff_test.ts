@@ -176,6 +176,27 @@ test.describe("Raceday Setup Functional - en", () => {
     });
   });
 
+  test("Automatic Updates menu", async ({ page }) => {
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.openOptionsMenu();
+    await expect(page.locator(".setup-menu-dropdown")).toBeVisible();
+
+    await harness.openAutomaticUpdatesSubMenu();
+    await expect(
+      page.locator('[data-testid="submenu-automatic-updates"]'),
+    ).toBeVisible();
+
+    await page.waitForTimeout(500);
+
+    await expect(page).toHaveScreenshot(`automatic-updates-menu-en.png`, {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
+  });
+
   test("Event selected", async ({ page }) => {
     const container = page.locator(".setup-container");
     const harness = new DefaultRacedaySetupHarnessE2e(container);

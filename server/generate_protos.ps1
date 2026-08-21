@@ -39,17 +39,31 @@ if (Test-Path $LOCAL_PROTOC) {
     Write-Host "Using local protoc found in server directory."
     $PROTOC_LOCAL = $LOCAL_PROTOC
 } else {
-    # Ensure protoc exists in local maven repository (downloaded by maven plugin)
     if (-not (Test-Path $PROTOC_M2)) {
-        Write-Host "Protoc not found at:"
-        Write-Host "  $PROTOC_M2"
-        Write-Host "Attempting to download via 'mvn protobuf:compile'..."
-        # Run maven to download protoc
-        Set-Location $SERVER_DIR
-        $env:MAVEN_OPTS = '--add-opens java.base/java.lang=ALL-UNNAMED'
-        $ErrorActionPreference = "Continue"
-        mvn protobuf:compile 2>&1 | Out-Null
-        $ErrorActionPreference = "Stop"
+        if (-not (Get-Command protoc -ErrorAction SilentlyContinue)) {
+            Write-Host "Protoc not found. Attempting to download protoc $PROTOC_VERSION..."
+            $PROTOC_RELEASE_TAG = $PROTOC_VERSION -replace '^3\.', ''
+            $ProtocZipUrl = "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_RELEASE_TAG}/protoc-${PROTOC_RELEASE_TAG}-win64.zip"
+            $TempZip = Join-Path $TARGET_DIR "protoc.zip"
+            $TempExtract = Join-Path $TARGET_DIR "protoc_extract"
+            try {
+                Invoke-WebRequest -Uri $ProtocZipUrl -OutFile $TempZip
+                Expand-Archive -Path $TempZip -DestinationPath $TempExtract -Force
+                $ExtractedProtoc = Join-Path $TempExtract "bin\protoc.exe"
+                if (Test-Path $ExtractedProtoc) {
+                    $M2ProtocDir = Split-Path -Parent $PROTOC_M2
+                    if (-not (Test-Path $M2ProtocDir)) {
+                        New-Item -ItemType Directory -Path $M2ProtocDir -Force | Out-Null
+                    }
+                    Copy-Item $ExtractedProtoc $PROTOC_M2 -Force
+                }
+            } catch {
+                Write-Warning "Could not automatically download protoc."
+            } finally {
+                if (Test-Path $TempZip) { Remove-Item -Force $TempZip }
+                if (Test-Path $TempExtract) { Remove-Item -Recurse -Force $TempExtract }
+            }
+        }
     }
 
     if (Test-Path $PROTOC_M2) {

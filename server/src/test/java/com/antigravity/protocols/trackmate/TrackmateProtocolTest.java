@@ -84,11 +84,13 @@ public class TrackmateProtocolTest {
     int callButtonCount = 0;
     int digitalPinEventCount = 0;
     com.antigravity.proto.InterfaceDigitalPinEvent lastDigitalPinEvent;
+    double lastLapTime = 0.0;
 
     @Override
     public void onLap(int lane, double lapTime, int interfaceId, int interfaceIndex) {
       lapCount++;
       lastLapLane = lane;
+      lastLapTime = lapTime;
     }
 
     @Override
@@ -442,5 +444,140 @@ public class TrackmateProtocolTest {
 
     protocol.close();
     org.junit.Assert.assertFalse(serialConnection.isOpen());
+  }
+
+  @Test
+  public void testTimeAccumulationAndCommit() {
+    protocol.open();
+
+    // Inject ASCII digits '1', '2', '5' followed by '\r' (0x0D) -> 125 ms = 0.125 seconds
+    serialConnection.injectData(new byte[] {0x31, 0x32, 0x35, 0x0D});
+
+    // Trigger lap on Lane 0 ('A')
+    serialConnection.injectData(new byte[] {0x41});
+
+    assertEquals(1, listener.lapCount);
+    assertEquals(0, listener.lastLapLane);
+    assertEquals(0.125, listener.lastLapTime, 0.0001);
+
+    // Inject additional 250 ms ('2', '5', '0', '\r') -> cumulative 375 ms
+    serialConnection.injectData(new byte[] {0x32, 0x35, 0x30, 0x0D});
+
+    // Trigger lap on Lane 1 ('B')
+    serialConnection.injectData(new byte[] {0x42});
+
+    assertEquals(2, listener.lapCount);
+    assertEquals(1, listener.lastLapLane);
+    assertEquals(0.375, listener.lastLapTime, 0.0001);
+  }
+
+  @Test
+  public void testTimeDigitOverflowProtection() {
+    protocol.open();
+
+    // Inject 4 digits ('1', '2', '3', '4', '\r') - 4th digit should be dropped with log error
+    serialConnection.injectData(new byte[] {0x31, 0x32, 0x33, 0x34, 0x0D});
+
+    // Trigger lap on Lane 0 ('A') -> should commit 123 ms
+    serialConnection.injectData(new byte[] {0x41});
+
+    assertEquals(1, listener.lapCount);
+    assertEquals(0.123, listener.lastLapTime, 0.0001);
+  }
+
+  @Test
+  public void testHardwareLanesCalculation_AllUnusedDefaultsToEight() {
+    config.lapPinBehaviors = new ArrayList<>();
+    for (int i = 0; i < 8; i++) {
+      config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    }
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // Default to 8 hardware lanes -> A8\n
+    assertArrayEquals(new byte[] {0x41, 0x38, 0x0A}, serialConnection.allWrittenData.get(0));
+  }
+
+  @Test
+  public void testHardwareLanesCalculation_HighestConfiguredPin() {
+    config.lapPinBehaviors = new ArrayList<>();
+    config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 2); // Pin 2 (3rd channel)
+    config.lapPinBehaviors.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+
+    protocol = new TestableTrackmateProtocol(config, 4, scheduler, serialConnection);
+    protocol.open();
+
+    // Highest configured pin is index 2 -> 3 hardware lanes -> A3\n
+    assertArrayEquals(new byte[] {0x41, 0x33, 0x0A}, serialConnection.allWrittenData.get(0));
+  }
+
+  @Test
+  public void testNormallyClosedSensorsInitialization() {
+    config.normallyClosedLaneSensors = true;
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // C1\n for NC sensors
+    assertArrayEquals(new byte[] {0x43, 0x31, 0x0A}, serialConnection.allWrittenData.get(1));
+  }
+
+  @Test
+  public void testDebounceInitialization() {
+    config.debounce = 4;
+    protocol = new TestableTrackmateProtocol(config, 2, scheduler, serialConnection);
+    protocol.open();
+
+    // D4\n for debounce 4
+    assertArrayEquals(new byte[] {0x44, 0x34, 0x0A}, serialConnection.allWrittenData.get(2));
+  }
+
+  @Test
+  public void testUnhandledByteDoesNotCrash() {
+    protocol.open();
+    // Inject unknown / invalid bytes (0xFE, 'Z')
+    serialConnection.injectData(new byte[] {(byte) 0xFE, 0x5A});
+
+    // Should continue processing normal data afterwards
+    serialConnection.injectData(new byte[] {0x41});
+    assertEquals(1, listener.lapCount);
+  }
+
+  @Test
+  public void testHeartbeatAndHealthStatus() {
+    protocol.open();
+    // Before heartbeat received, isHealthy is false
+    org.junit.Assert.assertFalse(protocol.isHealthy());
+
+    // Inject Line Feed '\n' (0x0A) as heartbeat
+    protocol.currentTime = 1000;
+    serialConnection.injectData(new byte[] {0x0A});
+
+    org.junit.Assert.assertTrue(protocol.isHealthy());
+    assertEquals(1000, protocol.getLastHeartbeatTimeMs());
+  }
+
+  @Test
+  public void testStopTimerReturnsPartialTimes() {
+    protocol.open();
+    serialConnection.injectData(new byte[] {0x32, 0x30, 0x30, 0x0D}); // 200 ms
+
+    List<com.antigravity.protocols.PartialTime> partialTimes = protocol.stopTimer();
+    assertEquals(2, partialTimes.size());
+    assertEquals(0, partialTimes.get(0).getLaneIndex());
+    assertEquals(0.200, partialTimes.get(0).getLapTime(), 0.001);
+    assertEquals(1, partialTimes.get(1).getLaneIndex());
+    assertEquals(0.200, partialTimes.get(1).getLapTime(), 0.001);
+  }
+
+  @Test
+  public void testDefaultConstructor() {
+    TrackmateProtocol defaultProto = new TrackmateProtocol(config, 4);
+    assertEquals(4, defaultProto.getNumLanes());
+    org.junit.Assert.assertTrue(defaultProto.hasMainRelay());
+    assertEquals(config.hasPerLaneRelays, defaultProto.hasPerLaneRelays());
+    org.junit.Assert.assertFalse(defaultProto.hasDigitalFuel());
+    assertEquals(0, defaultProto.getInterfaceIndex());
   }
 }

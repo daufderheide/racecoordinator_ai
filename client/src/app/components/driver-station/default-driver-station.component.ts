@@ -83,7 +83,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     const raceHasEnded = this.raceHasEnded;
     this.showAckModal = false;
     if (raceHasEnded) {
-      this.router.navigate(["/raceday-setup"]);
+      const returnUrl =
+        this.route.snapshot.queryParamMap.get("returnUrl") || "/raceday-setup";
+      this.router.navigateByUrl(returnUrl);
     }
   }
 
@@ -289,13 +291,13 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     if (this.viewerRaceEndedHandler) {
       this.viewerRaceEndedHandler.stopListening();
     }
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
     this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   @HostListener("window:pagehide")
   onPageHide() {
-    this.raceConnectionService.disconnect(true);
+    this.raceConnectionService.disconnect();
   }
 
   get isEmptyDriver(): boolean {

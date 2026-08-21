@@ -6,6 +6,7 @@ import { RacedayHeatDriversComponent } from "@app/components/raceday/components/
 import { DataService } from "@app/data.service";
 import { AuthService } from "@app/services/auth.service";
 import { RaceService } from "@app/services/race.service";
+import { RaceConnectionService } from "@app/services/race-connection.service";
 
 import { DriverViewComponent } from "./driver-view.component";
 
@@ -78,9 +79,15 @@ describe("DriverViewComponent", () => {
       currentRole: "ADMIN",
     });
 
+    const mockRaceConnectionService = jasmine.createSpyObj(
+      "RaceConnectionService",
+      ["connect", "disconnect"],
+    );
+
     await TestBed.configureTestingModule({
       imports: [DriverViewComponent],
       providers: [
+        { provide: RaceConnectionService, useValue: mockRaceConnectionService },
         { provide: RaceService, useValue: mockRaceService },
         { provide: DataService, useValue: mockDataService },
         { provide: AuthService, useValue: mockAuthService },
@@ -161,5 +168,23 @@ describe("DriverViewComponent", () => {
 
     expect((component as any).isRacingInCurrentHeat).toBeTrue();
     expect((component as any).laneIndex).toBe(1);
+  });
+
+  it("should connect on init and disconnect on destroy", () => {
+    const mockRaceConnection = TestBed.inject(RaceConnectionService) as any;
+    fixture.detectChanges();
+    expect(mockRaceConnection.connect).toHaveBeenCalled();
+    fixture.destroy();
+    expect(mockRaceConnection.disconnect).toHaveBeenCalledWith();
+  });
+
+  it("should disconnect on pagehide", () => {
+    const mockRaceConnection = TestBed.inject(RaceConnectionService) as any;
+    mockRaceConnection.connect.calls.reset();
+    mockRaceConnection.disconnect.calls.reset();
+
+    component.onPageHide();
+
+    expect(mockRaceConnection.disconnect).toHaveBeenCalledWith();
   });
 });

@@ -23,10 +23,9 @@ public class BartConfigConverterTest {
     config.deviceAddress = "11:22:33:44:55:66";
     config.numLanes = 4;
     config.minLapMs = 1500;
-
-    assertEquals(
-        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.NONE,
-        config.lapPinPitBehavior);
+    config.lapPinPitBehavior =
+        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.PIT_IN;
+    config.lapPinBehaviors = java.util.Arrays.asList(100, 101, 102, 103);
 
     com.antigravity.proto.BartConfig proto = BartConfigConverter.toProto(config);
     assertEquals("Custom BART", proto.getName());
@@ -35,8 +34,10 @@ public class BartConfigConverterTest {
     assertEquals(4, proto.getNumLanes());
     assertEquals(1500, proto.getMinLapMs());
     assertEquals(
-        com.antigravity.proto.LapPinPitBehavior.LAP_PIN_PIT_NONE_VALUE,
+        com.antigravity.proto.LapPinPitBehavior.LAP_PIN_PIT_IN_VALUE,
         proto.getLapPinPitBehaviorValue());
+    assertEquals(4, proto.getLapPinBehaviorsCount());
+    assertEquals(100, proto.getLapPinBehaviors(0));
 
     BartConfig roundTrip = BartConfigConverter.fromProto(proto);
     assertEquals("Custom BART", roundTrip.name);
@@ -45,7 +46,10 @@ public class BartConfigConverterTest {
     assertEquals(4, roundTrip.numLanes);
     assertEquals(1500, roundTrip.minLapMs);
     assertEquals(
-        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.NONE,
+        com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior.PIT_IN,
         roundTrip.lapPinPitBehavior);
+    assertNotNull(roundTrip.lapPinBehaviors);
+    assertEquals(4, roundTrip.lapPinBehaviors.size());
+    assertEquals(Integer.valueOf(100), roundTrip.lapPinBehaviors.get(0));
   }
 }

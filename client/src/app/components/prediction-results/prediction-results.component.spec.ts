@@ -96,17 +96,17 @@ describe("PredictionResultsComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should force disconnect on ngOnDestroy and onPageHide", () => {
+  it("should disconnect on ngOnDestroy and onPageHide", () => {
     const defaultDebugEl = fixture.debugElement.query(
       By.directive(DefaultPredictionResultsComponent),
     );
     const defaultComponent =
       defaultDebugEl.componentInstance as DefaultPredictionResultsComponent;
     defaultComponent.ngOnDestroy();
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
 
     mockRaceConnectionService.disconnect.calls.reset();
     defaultComponent.onPageHide();
-    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith();
   });
 });

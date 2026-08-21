@@ -7,6 +7,7 @@ import com.antigravity.models.Event.EventRaceItem;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.proto.DemoConfig;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.util.SeasonPointsCalculator;
@@ -37,7 +38,13 @@ public class EventExecutionManager {
   private String seasonEntityId;
   private Map<String, SeasonDriverResult> eventDriverResultsMap = new HashMap<>();
 
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledExecutorService scheduler =
+      Executors.newSingleThreadScheduledExecutor(
+          r -> {
+            Thread t = new Thread(r, "EventExecutionManager-Scheduler");
+            t.setDaemon(true);
+            return t;
+          });
   private ScheduledFuture<?> autoAdvanceFuture;
   private double autoAdvanceRemainingSeconds = 0;
 
@@ -415,11 +422,17 @@ public class EventExecutionManager {
       throw new IllegalStateException("Track not found for race: " + raceModel.getName());
     }
 
+    Theme activeTheme =
+        ClientSubscriptionManager.getInstance().getRace() != null
+            ? ClientSubscriptionManager.getInstance().getRace().getTheme()
+            : null;
+
     Race runtimeRace =
         new Race.Builder()
             .model(raceModel)
             .drivers(participants)
             .track(raceTrack)
+            .theme(activeTheme)
             .databaseContext(databaseContext)
             .isDemoMode(isDemoMode)
             .demoConfig(demoConfig)

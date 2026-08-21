@@ -184,6 +184,20 @@ export class DefaultRacedaySetupHarness
     }
   }
 
+  async openLocalizationSubMenu(): Promise<void> {
+    const item = await this.locatorForOptional(
+      '[data-testid="menu-item-localization"]',
+    )();
+    if (item) await item.click();
+  }
+
+  async openAutomaticUpdatesSubMenu(): Promise<void> {
+    const item = await this.locatorForOptional(
+      '[data-testid="menu-item-automatic-updates"]',
+    )();
+    if (item) await item.click();
+  }
+
   async openFileMenu(): Promise<void> {
     const menu = await this.getFileMenu();
     if (menu) await menu.click();

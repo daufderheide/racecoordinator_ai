@@ -64,7 +64,7 @@ describe("AboutDialogComponent", () => {
     expect(versionInfo).toContain("TEST-SERVER-VERSION");
   });
 
-  it("should switch tabs to Charity & Mission", async () => {
+  it("should switch tabs to Charity & Mission and verify donate link", async () => {
     fixture.componentRef.setInput("visible", true);
     fixture.detectChanges();
 
@@ -73,6 +73,11 @@ describe("AboutDialogComponent", () => {
 
     expect(component.activeTab()).toBe("charity");
     expect(await harness.isCharityTabVisible()).toBeTrue();
+
+    const expectedDonateUrl =
+      "https://www.paypal.com/donate?token=L6PFPbwF0z3WOF-qIijTS_MSQjLtTCmiYlq3ObTaqvLhwrKUPo0faql9Qpk9QJ6NolQESAXw0l8YCUKn&locale.x=US";
+    expect(component.donateUrl).toBe(expectedDonateUrl);
+    expect(await harness.getDonateLinkHref()).toBe(expectedDonateUrl);
   });
 
   it("should switch tabs to Credits", async () => {

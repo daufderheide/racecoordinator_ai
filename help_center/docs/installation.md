@@ -13,18 +13,19 @@ Race Coordinator AI is fully cross-platform and runs on modern and legacy operat
 | **🪟 Windows (Modern)** | Windows 10, Windows 11 (64-bit & 32-bit) | **Online Setup** (`RaceCoordinatorAI_Online_Setup_*.exe`) |
 | **🪟 Windows (Legacy)** | Windows 8, Windows 7, Windows XP | **Offline Full Setup** (`RaceCoordinatorAI_Offline_Setup_*.exe`) *(Required for initial install on Win 8 and older)* |
 | **🍏 macOS** | macOS 10.15 (Catalina) through macOS 15+ (Intel & Apple Silicon) | **Disk Image** (`RaceCoordinator_Mac_*.dmg`) |
-| **🐧 Linux / Raspberry Pi** | Raspberry Pi OS (64-bit), Debian, Ubuntu | **ARM64 / Linux Package** (`RaceCoordinatorAI-Linux-ARM64_*.tar.gz`) |
+| **🐧 Linux / Raspberry Pi / Arduino Uno Q** | Raspberry Pi OS (64-bit), Arduino Linux OS, Debian, Ubuntu | **ARM64 / Linux Package** (`RaceCoordinatorAI-Linux-ARM64_*.tar.gz`) |
 
 ---
 
 ## Choosing Your Release Channel
 
-Race Coordinator AI is distributed across two release channels on GitHub:
+Race Coordinator AI is distributed across three channels:
 
 * **🟢 Official Stable Releases** *(Recommended)*: Fully tested, production-ready builds recommended for regular racing, home tracks, and club events.
-  * 👉 [Download Latest Stable Release](https://github.com/daufderheide/racecoordinator_ai/releases/latest)
 * **🟡 Beta Previews**: Prerelease builds that include upcoming features, new hardware drivers, and experimental enhancements for community testing and feedback.
-  * 👉 [View Beta & Prerelease Downloads](https://github.com/daufderheide/racecoordinator_ai/releases)
+* **🔵 Alpha / Nightly Builds**: Automated snapshot builds from active development.
+
+👉 Visit the **[Downloads & Releases Portal](downloads.md)** to download any version or view the complete release archive.
 
 ---
 
@@ -68,7 +69,7 @@ Download `RaceCoordinator_Mac_*.dmg` from the release page.
 
 ---
 
-## 🐧 Linux & Raspberry Pi Installation
+## 🐧 Linux, Raspberry Pi & Arduino Uno Q Installation
 
 ### 1. Download the Linux Package
 Download `RaceCoordinatorAI-Linux-ARM64_*.tar.gz` from the release page.
@@ -119,3 +120,4 @@ If you encounter an issue during installation or have a feature request:
    * Your Operating System and version.
    * Race Coordinator AI version (e.g., `v1.0.0` or `v1.0.0-beta.1`).
    * Steps to reproduce the problem and screenshots/logs where applicable.
+   * Please submit separate issues for each distinct bug or feature request so they can be tracked independently.

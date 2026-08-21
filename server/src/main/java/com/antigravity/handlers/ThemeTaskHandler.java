@@ -4,6 +4,8 @@ import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Theme;
+import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.race.Race;
 import com.antigravity.repository.SqliteRepository;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -354,6 +356,14 @@ public class ThemeTaskHandler {
               null);
 
       themeRepository.save(theme);
+
+      Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+      if (activeRace != null
+          && activeRace.getTheme() != null
+          && id.equals(activeRace.getTheme().getEntityId())) {
+        activeRace.setTheme(theme);
+      }
+
       setJson(ctx, theme);
     } catch (Exception e) {
       e.printStackTrace();
@@ -379,6 +389,21 @@ public class ThemeTaskHandler {
       }
 
       themeRepository.delete(id);
+
+      Race activeRace = ClientSubscriptionManager.getInstance().getRace();
+      if (activeRace != null
+          && activeRace.getTheme() != null
+          && id.equals(activeRace.getTheme().getEntityId())) {
+        Theme defaultTheme = null;
+        for (Theme t : themeRepository.findAll()) {
+          if (t.isDefault()) {
+            defaultTheme = t;
+            break;
+          }
+        }
+        activeRace.setTheme(defaultTheme);
+      }
+
       setStatus(ctx, 204);
     } catch (Exception e) {
       e.printStackTrace();

@@ -236,4 +236,46 @@ describe("TrakmateEditorComponent", () => {
     expect(component.relayStatuses[0]).toBeFalse();
     expect(mockDataService.setLanePower).toHaveBeenCalledWith(1, false);
   });
+
+  it("should expand all sections when ensureSectionsExpanded is called", () => {
+    component.sectionsExpanded = {
+      trakmate: false,
+      main: false,
+      rw: false,
+    };
+    component.ensureSectionsExpanded();
+    expect(component.sectionsExpanded.trakmate).toBeTrue();
+    expect(component.sectionsExpanded.main).toBeTrue();
+    expect(component.sectionsExpanded.rw).toBeTrue();
+  });
+
+  it("should return guide steps and expand appropriate sections onEnter", () => {
+    const steps = component.getHelpSteps();
+    expect(steps.length).toBe(10);
+    expect(steps[0].selector).toBe("#trakmate-editor-0");
+    expect(steps[0].title).toBe("TE_HELP_TRAKMATE_TITLE");
+
+    expect(steps[7].selector).toBe("#trakmate-channel-0-0");
+    expect(steps[7].title).toBe("TE_HELP_TRAKMATE_CHANNELS_TITLE");
+
+    expect(steps[8].selector).toBe("#trakmate-callbutton-status-0");
+    expect(steps[8].title).toBe("TE_HELP_TRAKMATE_CALL_BUTTON_TITLE");
+
+    expect(steps[9].selector).toBe("#trakmate-master-relay-0");
+    expect(steps[9].title).toBe("TE_HELP_TRAKMATE_RELAY_CONTROL_TITLE");
+
+    component.sectionsExpanded.trakmate = false;
+    component.sectionsExpanded.main = false;
+    steps[0].onEnter!();
+    expect(component.sectionsExpanded.trakmate).toBeTrue();
+    expect(component.sectionsExpanded.main).toBeTrue();
+
+    component.sectionsExpanded.rw = false;
+    steps[7].onEnter!();
+    expect(component.sectionsExpanded.rw).toBeTrue();
+
+    component.sectionsExpanded.rw = false;
+    steps[8].onEnter!();
+    expect(component.sectionsExpanded.rw).toBeTrue();
+  });
 });

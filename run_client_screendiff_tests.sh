@@ -57,9 +57,9 @@ else
   cp -Rf src scripts package.json angular.json tsconfig*.json playwright.config.ts "$ISOLATED_DIR/"
 fi
 
-# Force a rebuild by deleting the dist directory to ensure latest changes are picked up
-echo "Clearing stale build output..."
-rm -rf "$ISOLATED_DIR/dist"
+# Force a rebuild and clean stale test results to prevent ENOTEMPTY on Docker mounts
+echo "Clearing stale build output and test results..."
+rm -rf "$ISOLATED_DIR/dist" "$ISOLATED_DIR/test-results"
 
 cd "$ISOLATED_DIR" || exit
 
@@ -96,7 +96,7 @@ echo "Running tests in Docker container..."
 mkdir -p "$ISOLATED_DIR/test-home"
 
 # Run npm install inside container only if package.json has changed or node_modules is missing
-DOCKER_CMD="node -e \"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}\" && npx playwright test $PLAYWRIGHT_ARGS"
+DOCKER_CMD="node -e \"const fs=require('fs'),crypto=require('crypto');const hash=crypto.createHash('md5').update(fs.readFileSync('package.json')).digest('hex');if(!fs.existsSync('node_modules')||!fs.existsSync('.installed-hash')||fs.readFileSync('.installed-hash','utf8').trim()!==hash){console.log('Dependencies changed or missing, installing...');require('child_process').execSync('npm install --no-package-lock --ignore-scripts',{stdio:'inherit'});fs.writeFileSync('.installed-hash',hash);}\" && rm -rf /work/test-results && npx playwright test $PLAYWRIGHT_ARGS"
 
 docker run --rm \
   --ipc=host \
@@ -108,8 +108,8 @@ docker run --rm \
   /bin/bash -c "$DOCKER_CMD"
 TEST_EXIT_CODE=$?
 
-# If updating snapshots, copy them back to the original source directory
-if [[ "$*" == *"--update-snapshots"* ]] || [[ "$PLAYWRIGHT_ARGS" == *"--update-snapshots"* ]]; then
+# If updating snapshots and tests succeeded, copy them back to the original source directory
+if [ $TEST_EXIT_CODE -eq 0 ] && ([[ "$*" == *"--update-snapshots"* ]] || [[ "$PLAYWRIGHT_ARGS" == *"--update-snapshots"* ]]); then
     echo "Syncing updated snapshots back to source..."
     cd "$ISOLATED_DIR/src" || exit
     find . -type d -name "*-snapshots" | while read -r dir; do

@@ -32,16 +32,21 @@ export class ThemeService {
     private settingsService: SettingsService,
     private logger: LoggerService,
   ) {
-    this.dataService.socketConnected$.subscribe((connected) => {
-      if (connected) {
-        this.logger.info(
-          "ThemeService: Socket connected, initializing themes...",
-        );
-        this.initialize().catch((err) => {
-          this.logger.error("ThemeService: Error in auto-initialization", err);
-        });
-      }
-    });
+    if (this.dataService?.socketConnected$) {
+      this.dataService.socketConnected$.subscribe((connected) => {
+        if (connected) {
+          this.logger.info(
+            "ThemeService: Socket connected, initializing themes...",
+          );
+          this.initialize().catch((err) => {
+            this.logger.error(
+              "ThemeService: Error in auto-initialization",
+              err,
+            );
+          });
+        }
+      });
+    }
   }
 
   /**
@@ -158,7 +163,7 @@ export class ThemeService {
    * Checks for a race-specific theme override and activates it.
    */
   activateForRace(raceId: string): void {
-    if (this.themes.length === 0) {
+    if (!this.initialized) {
       this.initialize()
         .then(() => this.activateForRace(raceId))
         .catch(() => {});

@@ -124,4 +124,50 @@ describe("UpdateService", () => {
     expect(req.request.body).toEqual({ version: versionToSkip });
     req.flush("OK");
   });
+
+  it("should get update config", () => {
+    const mockConfig = {
+      channel: "ALPHA" as const,
+      skippedVersion: "v1.0.0",
+      snoozedVersion: "v1.0.1",
+      snoozedUntil: 1234567890,
+    };
+
+    service.getUpdateConfig().subscribe((config) => {
+      expect(config).toEqual(mockConfig);
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/config"),
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush(mockConfig);
+  });
+
+  it("should set update channel", () => {
+    service.setUpdateChannel("BETA").subscribe((result) => {
+      expect(result).toBeTruthy();
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/channel"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual({ channel: "BETA" });
+    req.flush("OK");
+  });
+
+  it("should snooze an update", () => {
+    const version = "v1.0.1";
+    service.snoozeUpdate(version, 7).subscribe((result) => {
+      expect(result).toBeTruthy();
+    });
+
+    const req = httpMock.expectOne((req) =>
+      req.url.endsWith("/api/update/snooze"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual({ version, durationDays: 7 });
+    req.flush("OK");
+  });
 });

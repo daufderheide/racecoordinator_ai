@@ -21,6 +21,9 @@ export class AboutDialogHarnessE2e implements AboutDialogHarnessBase {
   private get charityInfoElement() {
     return this.locator.locator(this.base.selectors.charityInfo);
   }
+  private get donateLinkElement() {
+    return this.locator.locator(this.base.selectors.donateLink);
+  }
   private get creditsPanelElement() {
     return this.locator.locator(this.base.selectors.creditsPanel);
   }
@@ -59,6 +62,13 @@ export class AboutDialogHarnessE2e implements AboutDialogHarnessBase {
 
   async isCharityTabVisible(): Promise<boolean> {
     return await this.charityInfoElement.isVisible();
+  }
+
+  async getDonateLinkHref(): Promise<string | null> {
+    if (await this.donateLinkElement.isVisible()) {
+      return await this.donateLinkElement.getAttribute("href");
+    }
+    return null;
   }
 
   async isCreditsTabVisible(): Promise<boolean> {

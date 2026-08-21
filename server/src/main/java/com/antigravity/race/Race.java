@@ -11,6 +11,7 @@ import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.models.RaceConfigDump;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.CallbuttonEvent;
 import com.antigravity.proto.DemoConfig;
@@ -39,6 +40,7 @@ import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
+import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.AssetService;
 import com.antigravity.service.DatabaseService;
 import com.google.protobuf.GeneratedMessageV3;
@@ -58,6 +60,7 @@ public class Race implements ProtocolListener {
 
   private final com.antigravity.models.Race model; // fqn-collision
   private final Track track;
+  private Theme theme;
   private final List<RaceParticipant> drivers;
   private List<Heat> heats;
   private Heat currentHeat;
@@ -82,13 +85,25 @@ public class Race implements ProtocolListener {
   private double autoAdvanceRemaining = 0;
   private boolean mainPower = false;
   private boolean[] lanePower;
+  private volatile boolean stopped = false;
 
   private HeatExecutionManager executionManager;
   private RaceStatistics statistics;
 
+  public boolean isStopped() {
+    return stopped;
+  }
+
   private Race(Builder builder) {
     this.model = builder.model;
     this.track = builder.track;
+    if (builder.theme != null) {
+      this.theme = builder.theme;
+    } else if (builder.databaseContext != null) {
+      this.theme = loadDefaultTheme(builder.databaseContext);
+    } else {
+      this.theme = null;
+    }
     this.seasonEntityId = builder.seasonEntityId;
     this.drivers = builder.drivers != null ? new ArrayList<>(builder.drivers) : new ArrayList<>();
     this.databaseContext = builder.databaseContext;
@@ -228,6 +243,20 @@ public class Race implements ProtocolListener {
     return new NotStarted();
   }
 
+  private Theme loadDefaultTheme(DatabaseContext dbCtx) {
+    try {
+      SqliteRepository<Theme> repo = new SqliteRepository<>(dbCtx, "themes", Theme.class);
+      for (Theme t : repo.findAll()) {
+        if (t.isDefault()) {
+          return t;
+        }
+      }
+    } catch (Exception e) {
+      logger.warn("Could not load default theme from database: {}", e.getMessage());
+    }
+    return null;
+  }
+
   public void init() {
     if (this.hardwareManager.getProtocols() != null) {
       if (this.hardwareManager.open()) {
@@ -254,6 +283,12 @@ public class Race implements ProtocolListener {
     private DemoConfig demoConfig;
     private RecordData existingRecords;
     private String seasonEntityId;
+    private Theme theme;
+
+    public Builder theme(Theme theme) {
+      this.theme = theme;
+      return this;
+    }
 
     public Builder seasonEntityId(String seasonEntityId) {
       this.seasonEntityId = seasonEntityId;
@@ -346,6 +381,15 @@ public class Race implements ProtocolListener {
     public Race build() {
       return new Race(this);
     }
+  }
+
+  public Theme getTheme() {
+    return theme;
+  }
+
+  public synchronized void setTheme(Theme theme) {
+    this.theme = theme;
+    syncRaceState();
   }
 
   public List<RaceParticipant> getDrivers() {
@@ -572,6 +616,9 @@ public class Race implements ProtocolListener {
   }
 
   public synchronized void changeState(IRaceState newState) {
+    if (this.stopped) {
+      return;
+    }
     if (this.state != null) {
       this.state.exit(this);
     }
@@ -642,6 +689,9 @@ public class Race implements ProtocolListener {
   }
 
   public boolean startRace() {
+    if (this.stopped) {
+      return false;
+    }
     if (hardwareManager.getProtocols() != null && !hardwareManager.getProtocols().isHealthy()) {
       logger.warn("startRace: protocol reports unhealthy not starting.");
       return false;
@@ -651,18 +701,30 @@ public class Race implements ProtocolListener {
   }
 
   public void pauseRace() {
+    if (this.stopped) {
+      return;
+    }
     state.pause(this);
   }
 
   public void restartHeat() {
+    if (this.stopped) {
+      return;
+    }
     state.restartHeat(this);
   }
 
   public void skipHeat() {
+    if (this.stopped) {
+      return;
+    }
     state.skipHeat(this);
   }
 
   public void skipRace() {
+    if (this.stopped) {
+      return;
+    }
     if (state instanceof RaceOver) {
       throw new IllegalStateException("Cannot skip race: Race is already over.");
     }
@@ -670,15 +732,21 @@ public class Race implements ProtocolListener {
   }
 
   public void deferHeat() {
+    if (this.stopped) {
+      return;
+    }
     state.deferHeat(this);
   }
 
-  public void stop() {
+  public synchronized void stop() {
+    this.stopped = true;
+    if (state != null) {
+      state.exit(this);
+    }
     if (hardwareManager.getProtocols() != null) {
       hardwareManager.getProtocols().clearLeds();
       hardwareManager.close();
     }
-    if (state != null) state.exit(this);
   }
 
   public void forceMainPowerSync() {
@@ -1015,6 +1083,9 @@ public class Race implements ProtocolListener {
 
   @Override
   public void onInterfaceStatus(InterfaceStatus s, int idx) {
+    if (this.stopped) {
+      return;
+    }
     ClientSubscriptionManager.getInstance()
         .broadcastInterfaceEvent(
             InterfaceEvent.newBuilder()
@@ -1029,11 +1100,17 @@ public class Race implements ProtocolListener {
 
   @Override
   public void onCarData(CarData cd) {
+    if (this.stopped) {
+      return;
+    }
     state.onCarData(cd);
   }
 
   @Override
   public void onInterfaceEvent(InterfaceEvent e) {
+    if (this.stopped) {
+      return;
+    }
     ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(e);
     if (e.hasStatus() && e.getStatus().getStatus() == InterfaceStatus.DISCONNECTED) {
       stopRaceOperationsOnHardwareDisconnect();
@@ -1041,6 +1118,9 @@ public class Race implements ProtocolListener {
   }
 
   public synchronized void stopRaceOperationsOnHardwareDisconnect() {
+    if (this.stopped) {
+      return;
+    }
     logger.warn("Track interface disconnected. Stopping all race operations until manual action.");
 
     EventExecutionManager.getInstance().cancelAutoAdvanceTimer();

@@ -14,10 +14,12 @@
   },
   "scripts": {
     "prepare": "husky",
-    "lint": "npm run lint:client && npm run lint:server && npm run lint:audit",
+    "lint": "npm run lint:client && npm run lint:server && npm run lint:audit && npm run test:scripts",
     "lint:client": "cd client && npx eslint --fix \"src/**/*.{ts,html}\"",
     "lint:server": "cd server && mvn spotless:check checkstyle:check pmd:check",
     "lint:audit": "node scripts/audit_test_coverage.js --ci",
+    "check:screendiff": "node scripts/check_screendiff_changes.js --staged",
+    "test:scripts": "node --test scripts/*.spec.js",
     "test": "npm run test:client && npm run test:visual && npm run test:server",
     "test:client": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_unit_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_unit_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
     "test:visual": "node -e \"try { process.platform === 'win32' ? require('child_process').execSync('pwsh -File ./run_client_screendiff_tests.ps1', {stdio: 'inherit'}) : require('child_process').execSync('./run_client_screendiff_tests.sh', {stdio: 'inherit'}) } catch (e) { process.exit(1); }\"",
