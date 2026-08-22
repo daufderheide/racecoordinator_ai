@@ -1,4 +1,11 @@
 name: Release
+run-name: >-
+  ${{
+    github.event_name == 'schedule' && '🕒 Daily Alpha Build (develop)' ||
+    (github.event_name == 'workflow_dispatch' && format('🚀 Manual Release: {0} ({1})', inputs.version || 'auto', github.ref_name) ||
+    (startsWith(github.ref, 'refs/tags/v') && format('🏷️ Official Tag Release: {0}', github.ref_name) ||
+    format('📦 Release ({0})', github.ref_name)))
+  }}
 
 on:
   push:
@@ -19,6 +26,10 @@ on:
     inputs:
       version:
         description: 'Release version override (e.g. 1.0.0-beta.1)'
+        required: false
+        default: ''
+      release_notes_override:
+        description: 'Manual release notes override markdown'
         required: false
         default: ''
       skip_release:
@@ -91,6 +102,47 @@ jobs:
           echo "should_run=true" >> $GITHUB_OUTPUT
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
+
+      - name: Generate Workflow Run Summary
+        if: always()
+        run: |
+          VERSION="${{ steps.check.outputs.version }}"
+          TAG="${{ steps.check.outputs.tag }}"
+          TITLE="${{ steps.check.outputs.release_title }}"
+          IS_PRE="${{ steps.check.outputs.is_prerelease }}"
+          SHOULD_RUN="${{ steps.check.outputs.should_run }}"
+          SHA="${{ steps.check.outputs.commit_sha }}"
+          EVENT="${{ github.event_name }}"
+          REF="${{ github.ref_name }}"
+
+          if [ "$EVENT" == "schedule" ]; then
+            EVENT_DESC="🕒 Scheduled Cron (Daily Alpha Build)"
+            BRANCH_DESC="develop (\`$SHA\`)"
+          elif [ "$EVENT" == "workflow_dispatch" ]; then
+            EVENT_DESC="🚀 Manual Workflow Dispatch"
+            BRANCH_DESC="$REF (\`$SHA\`)"
+          elif [[ "$REF" == v* ]]; then
+            EVENT_DESC="🏷️ Git Tag Push"
+            BRANCH_DESC="$REF (\`$SHA\`)"
+          else
+            EVENT_DESC="📦 Git Branch Push"
+            BRANCH_DESC="$REF (\`$SHA\`)"
+          fi
+
+          cat << EOF >> $GITHUB_STEP_SUMMARY
+          ## 🚀 Release Run Summary
+
+          | Property | Value |
+          | :--- | :--- |
+          | **Event Trigger** | $EVENT_DESC |
+          | **Target Branch / Commit** | $BRANCH_DESC |
+          | **Release Title** | **$TITLE** |
+          | **Tag** | \`$TAG\` |
+          | **Version** | \`$VERSION\` |
+          | **Prerelease** | \`$IS_PRE\` |
+          | **Should Build & Publish** | \`$SHOULD_RUN\` |
+
+          EOF
 
   run-tests:
     needs: check-changes
@@ -329,6 +381,8 @@ jobs:
           fi
 
       - name: Generate Release Body
+        env:
+          RELEASE_NOTES_OVERRIDE: ${{ github.event.inputs.release_notes_override }}
         run: |
           TAG="${{ needs.check-changes.outputs.tag }}"
           TITLE="${{ needs.check-changes.outputs.release_title }}"
@@ -342,6 +396,12 @@ jobs:
             fi
           else
             STATUS_BADGE="> 🟢 **Official Stable Release** — Recommended for all general and race-day users."
+          fi
+
+          node scripts/generate_changelog.js "${TAG}" "${IS_PRERELEASE}"
+          CHANGELOG_CONTENT=""
+          if [ -f "changelog_snippet.md" ]; then
+            CHANGELOG_CONTENT=$(cat changelog_snippet.md)
           fi
 
           cat << EOF > release_body.md
@@ -361,6 +421,10 @@ jobs:
           | **🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)** | \`RaceCoordinatorAI-Linux-ARM64_${TAG}.tar.gz\` | Compressed archive for ARM64 Linux / Raspberry Pi OS / Arduino Uno Q. |
 
           > **💡 Tip for Non-Technical Users**: You do **not** need to download the source code zip or test coverage files to run Race Coordinator AI.
+
+          ---
+
+          ${CHANGELOG_CONTENT}
 
           ---
 
@@ -385,24 +449,29 @@ jobs:
 
       - name: Cleanup Release Artifacts
         run: |
-          rm -rf final-release release_body.md
+          rm -rf final-release release_body.md changelog_snippet.md
 
       - name: Update README on Main
+        if: ${{ !contains(needs.check-changes.outputs.tag, 'alpha') }}
         run: |
           git fetch origin main
-          git checkout origin/main -- README.md
+          git checkout origin/main -- README.md CHANGELOG.md help_center/docs/changelog.md || true
           node scripts/update_readme_downloads.js "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
+          node scripts/generate_changelog.js "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
 
-      - name: Create Pull Request for README
+      - name: Create Pull Request for README & Changelog
+        if: ${{ !contains(needs.check-changes.outputs.tag, 'alpha') }}
         uses: peter-evans/create-pull-request@v6
         continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           add-paths: |
             README.md
-          commit-message: "docs: update latest download links to ${{ env.TAG }}"
-          title: "docs: update latest download links to ${{ env.TAG }}"
-          body: "Automated PR to update the README with the latest download links for release ${{ env.TAG }}."
+            CHANGELOG.md
+            help_center/docs/changelog.md
+          commit-message: "docs: update latest download links and changelog for ${{ env.TAG }}"
+          title: "docs: update latest download links and changelog for ${{ env.TAG }}"
+          body: "Automated PR to update the README and changelog with the latest release information for ${{ env.TAG }}."
           branch: "docs/update-readme-${{ env.TAG }}"
           base: "main"
 
