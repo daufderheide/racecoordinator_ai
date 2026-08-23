@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.0.0-beta.28] - 2026-08-23
+
+### 🚀 New Features
+
+- add groups_enabled, has_season, and is_event tracking to race start analytics [skip ci] ([1341461b](https://github.com/daufderheide/racecoordinator_ai/commit/1341461b))
+
+### 🐛 Bug Fixes
+
+- fix relay polarity inversion logic and consolidate Phidget output state logic ([df39f202](https://github.com/daufderheide/racecoordinator_ai/commit/df39f202))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+View full commit comparison on [GitHub](https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.27...v1.0.0-beta.28)
+</details>
+
 All notable changes to Race Coordinator AI are documented in this file.
 
 ## [v1.0.0-beta.27] - 2026-08-22
