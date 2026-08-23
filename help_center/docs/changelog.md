@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.29] - 2026-08-23
+
+### 🚀 New Features
+
+- Added navigation buttons when the browser is fullscreen and doesn't have them on its own feat: Added option to put a non-uniform scale on all pages so they fit to the size of the display https://github.com/daufderheide/racecoordinator_ai/issues/639 ([812301be](https://github.com/daufderheide/racecoordinator_ai/commit/812301be))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+View full commit comparison on [GitHub](https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.28...v1.0.0-beta.29)
+</details>
+
 ## [v1.0.0-beta.28] - 2026-08-23
 
 ### 🚀 New Features
