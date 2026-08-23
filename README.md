@@ -7,16 +7,16 @@
 <!-- DOWNLOAD_SECTION_START -->
 ## 📥 Download Race Coordinator AI
 
-> 🚀 **Current Latest Version**: **`v1.0.0-beta.29`** *(Beta Preview — Help us test upcoming features!)*
+> 🚀 **Current Latest Version**: **`v1.0.0-beta.30`** *(Beta Preview — Help us test upcoming features!)*
 
 Click your operating system below to **download directly**:
 
 | Operating System | ⬇️ Direct Download Link | Version | Package Type |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows (10 / 11)** | [**⬇️ Download Windows Setup**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.29/RaceCoordinatorAI_Online_Setup_v1.0.0-beta.29.exe) | `v1.0.0-beta.29` | Online Setup *(Fast, requires internet)* |
-| **🪟 Windows (8, 7, XP / Offline)** | [**⬇️ Download Offline Setup**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.29/RaceCoordinatorAI_Offline_Setup_v1.0.0-beta.29.exe) | `v1.0.0-beta.29` | Full Offline Standalone *(Required for Win 8 & older)* |
-| **🍏 macOS (Intel & Apple Silicon)** | [**⬇️ Download macOS DMG**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.29/RaceCoordinator_Mac_v1.0.0-beta.29.dmg) | `v1.0.0-beta.29` | Disk Image (`.dmg`) |
-| **🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)** | [**⬇️ Download Linux Package**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.29/RaceCoordinatorAI-Linux-ARM64_v1.0.0-beta.29.tar.gz) | `v1.0.0-beta.29` | Tarball (`.tar.gz`) |
+| **🪟 Windows (10 / 11)** | [**⬇️ Download Windows Setup**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.30/RaceCoordinatorAI_Online_Setup_v1.0.0-beta.30.exe) | `v1.0.0-beta.30` | Online Setup *(Fast, requires internet)* |
+| **🪟 Windows (8, 7, XP / Offline)** | [**⬇️ Download Offline Setup**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.30/RaceCoordinatorAI_Offline_Setup_v1.0.0-beta.30.exe) | `v1.0.0-beta.30` | Full Offline Standalone *(Required for Win 8 & older)* |
+| **🍏 macOS (Intel & Apple Silicon)** | [**⬇️ Download macOS DMG**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.30/RaceCoordinator_Mac_v1.0.0-beta.30.dmg) | `v1.0.0-beta.30` | Disk Image (`.dmg`) |
+| **🐧 Linux / Raspberry Pi / Arduino Uno Q (ARM64)** | [**⬇️ Download Linux Package**](https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.30/RaceCoordinatorAI-Linux-ARM64_v1.0.0-beta.30.tar.gz) | `v1.0.0-beta.30` | Tarball (`.tar.gz`) |
 
 ---
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.30] - 2026-08-23
+
+### 🚀 New Features
+
+- remove BART (BLE) interface configuration and associated tests.  This will be put back once we can properly test it. [skip-screendiff] ([bd525faf](https://github.com/daufderheide/racecoordinator_ai/commit/bd525faf))
+- Added column width configuration to the lane view widget ([3c557836](https://github.com/daufderheide/racecoordinator_ai/commit/3c557836))
+
+### 🐛 Bug Fixes
+
+- update commit history link format to use anchor tags in release notes [skip ci] ([034d5db5](https://github.com/daufderheide/racecoordinator_ai/commit/034d5db5))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.29...v1.0.0-beta.30">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.29] - 2026-08-23
 
 ### 🚀 New Features
