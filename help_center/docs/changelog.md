@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.31] - 2026-08-24
+
+### 🚀 New Features
+
+- Fixed relay support in general.  Specifically getting phidget to work.  Fixed auto-start/warmup time with phidget interfaces if it wasn't broken in general [skip-screendiff] ([c328fed5](https://github.com/daufderheide/racecoordinator_ai/commit/c328fed5))
+- adjust laneNumber column width to 170px for horizontal practice layouts and remove forced padding from lane-view UI. https://github.com/daufderheide/racecoordinator_ai/issues/646 ([0593eda2](https://github.com/daufderheide/racecoordinator_ai/commit/0593eda2))
+
+### 🐛 Bug Fixes
+
+- expand lap time column detection and apply consistent vertical sizing to best lap and record times https://github.com/daufderheide/racecoordinator_ai/issues/647 ([cb434a9c](https://github.com/daufderheide/racecoordinator_ai/commit/cb434a9c))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.30...v1.0.0-beta.31">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.30] - 2026-08-23
 
 ### 🚀 New Features
