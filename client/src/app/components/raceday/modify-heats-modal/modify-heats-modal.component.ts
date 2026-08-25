@@ -138,6 +138,10 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   protected scale = 1;
   protected scaleX = 1;
   protected scaleY = 1;
+
+  isDirtyState(): boolean {
+    return this.undoManager?.hasChanges() ?? false;
+  }
   private isRecovering = false;
   protected hoveredHeatIdx = -1;
   protected isDraggingHeat = false;
