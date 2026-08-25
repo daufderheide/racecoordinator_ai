@@ -109,7 +109,7 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
   }
 
   async clickRaceDropdown(): Promise<void> {
-    await this.dropdownTrigger.click();
+    await this.dropdownTrigger.locator(".dropdown-arrow").click();
   }
 
   async openOptionsMenu(): Promise<void> {
