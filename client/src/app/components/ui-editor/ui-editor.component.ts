@@ -1521,14 +1521,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  onForceFitScreenChange(fit: boolean) {
-    if (this.editingSettings) {
-      this.editingSettings.forceFitScreen = fit;
-      this.captureState();
-      this.updateScale();
-    }
-  }
-
   async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {
     if (theme.is_default) return;
 
@@ -1937,12 +1929,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ? this.editingSettings?.practiceRacedayLayout
       : this.editingSettings?.racedayLayout;
     const baseWidth = layout?.baseWidth || 1920;
-    const baseHeight = layout?.baseHeight || 1080;
 
-    // Use the container dimensions that `.raceday-preview-container` is constrained to
-    const containerWidth = 1080;
-    const containerHeight = 608;
-    return Math.min(containerWidth / baseWidth, containerHeight / baseHeight);
+    // Use dynamic window bounds to maximize workspace area
+    // Accounting for padding, scrollbar (approx 60px total), and inspector panel (220px + 20px gap)
+    const inspectorWidth = (
+      isPractice ? this.selectedPracticeWidget : this.selectedWidget
+    )
+      ? 240
+      : 0;
+    const containerWidth = window.innerWidth - 60 - inspectorWidth;
+
+    // Ensure it doesn't get ridiculously small on tiny screens
+    const safeWidth = Math.max(containerWidth, 800);
+
+    // Scale primarily by width to maximize horizontal real estate.
+    // The sections-wrapper will scroll vertically if it exceeds the height.
+    return safeWidth / baseWidth;
   }
 
   getPreviewContainerWidth(isPractice: boolean): number {
@@ -2346,15 +2348,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         selector: "#help-page-transition",
         title: this.translationService.translate("UE_LABEL_PAGE_TRANSITION"),
         content: this.translationService.translate("UE_HELP_PAGE_TRANSITION"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["config"] = true;
-        },
-      },
-      {
-        selector: "#help-force-fit-screen",
-        title: this.translationService.translate("UE_LABEL_FORCE_FIT_SCREEN"),
-        content: this.translationService.translate("UE_HELP_FORCE_FIT_SCREEN"),
         position: "bottom",
         onEnter: () => {
           this.sectionsExpanded["config"] = true;

@@ -1078,16 +1078,13 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(rigidSpacer).toBeTruthy();
     });
 
-    it("should wrap the race selection title and dropdown in a bottom-section container", () => {
+    it("should wrap the race selector in a bottom-section container", () => {
       const bottomSection = fixture.nativeElement.querySelector(
         ".setup-bottom-section",
       );
       expect(bottomSection).toBeTruthy();
 
-      const title = bottomSection.querySelector(".race-selection-title");
       const selector = bottomSection.querySelector(".all-races-selector");
-
-      expect(title).toBeTruthy();
       expect(selector).toBeTruthy();
     });
 
@@ -1747,6 +1744,97 @@ describe("DefaultRacedaySetupComponent", () => {
         content: "RDS_HELP_START_DEMO_CONTENT",
         position: "top",
       });
+    });
+
+    it("should render season-summary-card with empty-standings message when selectedSeason has no races", () => {
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Formula Season",
+        drops: 1,
+        races: [],
+      };
+      component.calculateSeasonStandings();
+      fixture.detectChanges();
+
+      const seasonCard = fixture.nativeElement.querySelector(
+        ".season-summary-card",
+      );
+      expect(seasonCard).toBeTruthy();
+      expect(seasonCard.textContent).toContain("Formula Season");
+      expect(seasonCard.querySelector(".empty-standings")).toBeTruthy();
+    });
+
+    it("should render season standings table when selectedSeason has races", () => {
+      component.selectedSeason = {
+        entity_id: "s2",
+        name: "GT Championship",
+        drops: 0,
+        races: [
+          {
+            race_id: "r1",
+            race_name: "Race 1",
+            timestamp: 1000,
+            driver_results: [
+              {
+                driver_id: "d1",
+                driver_name: "Lewis Hamilton",
+                overall_rank: 1,
+                overall_points: 25,
+                heat_points: 0,
+                total_points: 25,
+              },
+              {
+                driver_id: "d2",
+                driver_name: "Max Verstappen",
+                overall_rank: 2,
+                overall_points: 18,
+                heat_points: 0,
+                total_points: 18,
+              },
+            ],
+          },
+        ],
+      };
+      component.calculateSeasonStandings();
+      fixture.detectChanges();
+
+      const seasonCard = fixture.nativeElement.querySelector(
+        ".season-summary-card",
+      );
+      expect(seasonCard).toBeTruthy();
+      expect(seasonCard.querySelector(".standings-table")).toBeTruthy();
+      expect(component.seasonStandings.length).toBe(2);
+      expect(component.seasonStandings[0].driver_name).toBe("Lewis Hamilton");
+      expect(component.seasonStandings[0].net_points).toBe(25);
+    });
+
+    it("should recalculate season standings on selectSeason and onSeasonChange", () => {
+      spyOn(component, "calculateSeasonStandings").and.callThrough();
+
+      const testSeason = {
+        entity_id: "s3",
+        name: "Karting Cup",
+        drops: 1,
+        races: [],
+      };
+
+      component.selectSeason(testSeason);
+      expect(component.calculateSeasonStandings).toHaveBeenCalled();
+      expect(component.selectedSeason).toBe(testSeason);
+
+      component.onSeasonChange();
+      expect(component.calculateSeasonStandings).toHaveBeenCalledTimes(2);
+    });
+
+    it("should render empty-season-card with no season selected text when selectedSeason is undefined", () => {
+      component.selectedSeason = undefined;
+      component.seasonStandings = [];
+      fixture.detectChanges();
+
+      const emptyCard =
+        fixture.nativeElement.querySelector(".empty-season-card");
+      expect(emptyCard).toBeTruthy();
+      expect(emptyCard.textContent).toContain("RDS_NO_SEASON_SELECTED");
     });
   });
 });

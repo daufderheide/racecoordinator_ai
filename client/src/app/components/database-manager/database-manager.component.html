@@ -1,9 +1,4 @@
-<div
-  class="page-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
->
+<div class="page-container">
   <app-manager-header
     [title]="'DBM_TITLE'"
     [showActions]="true"
@@ -53,105 +48,111 @@
       </div>
     </div>
 
-    @if (selectedDatabase) {
-      <div class="detail-panel" id="detail-panel">
-        <div class="detail-header">
-          <h2>{{ selectedDatabase.name }}</h2>
-          @if (selectedDatabase.name !== currentDatabaseName) {
-            <button
-              class="activate-btn"
-              (click)="useDatabase()"
-              [title]="'DBM_BTN_USE' | translate"
-            >
-              <span class="material-icons">check_circle_outline</span>
-            </button>
-          } @else {
-            <div
-              class="active-indicator"
-              [title]="'DBM_BADGE_ACTIVE' | translate"
-            >
-              <span class="material-icons">check_circle</span>
-            </div>
-          }
-        </div>
-        <div class="detail-content">
-          <div class="stats-grid">
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_DRIVERS" | translate }}</span>
-              <span class="value">{{ selectedDatabase.driverCount }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_TEAMS" | translate }}</span>
-              <span class="value">{{ selectedDatabase.teamCount }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_TRACKS" | translate }}</span>
-              <span class="value">{{ selectedDatabase.trackCount }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_RACES" | translate }}</span>
-              <span class="value">{{ selectedDatabase.raceCount }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_EVENTS" | translate }}</span>
-              <span class="value">{{ selectedDatabase.eventCount ?? 0 }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_SEASONS" | translate }}</span>
-              <span class="value">{{ selectedDatabase.seasonCount ?? 0 }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_ASSETS" | translate }}</span>
-              <span class="value">{{ selectedDatabase.assetCount }}</span>
-            </div>
-            <div class="stat-item size-stat-item">
-              <span class="label">{{
-                "DBM_STAT_RACE_RECORDS" | translate
-              }}</span>
-              <span class="value"
-                >{{ selectedDatabase.raceRecordCount }} ({{
-                  selectedDatabase.raceRecordSizeBytes / 1024 / 1024
-                    | number: "1.2-2"
-                }}
-                MB)</span
+    <div class="rhs-wrapper">
+      @if (selectedDatabase) {
+        <div class="detail-panel" id="detail-panel">
+          <div class="detail-header">
+            <h2>{{ selectedDatabase.name }}</h2>
+            @if (selectedDatabase.name !== currentDatabaseName) {
+              <button
+                class="activate-btn"
+                (click)="useDatabase()"
+                [title]="'DBM_BTN_USE' | translate"
               >
-            </div>
-            <div class="stat-item">
-              <span class="label">{{
-                "DBM_STAT_SAVED_RACES" | translate
-              }}</span>
-              <span class="value"
-                >{{ selectedDatabase.savedRaceCount }} ({{
-                  selectedDatabase.savedRaceSizeBytes / 1024 / 1024
-                    | number: "1.2-2"
-                }}
-                MB)</span
+                <span class="material-icons">check_circle_outline</span>
+              </button>
+            } @else {
+              <div
+                class="active-indicator"
+                [title]="'DBM_BADGE_ACTIVE' | translate"
               >
-            </div>
-            <div class="stat-item">
-              <span class="label">{{ "DBM_STAT_SIZE" | translate }}</span>
-              <span class="value"
-                >{{
-                  selectedDatabase.sizeBytes / 1024 / 1024 | number: "1.2-2"
-                }}
-                MB</span
-              >
-            </div>
+                <span class="material-icons">check_circle</span>
+              </div>
+            }
           </div>
-          @if (selectedDatabase.name !== currentDatabaseName) {
-            <p class="hint">
-              {{ "DBM_HINT_SWITCH" | translate }}
-            </p>
-          }
+          <div class="detail-content">
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_DRIVERS" | translate }}</span>
+                <span class="value">{{ selectedDatabase.driverCount }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_TEAMS" | translate }}</span>
+                <span class="value">{{ selectedDatabase.teamCount }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_TRACKS" | translate }}</span>
+                <span class="value">{{ selectedDatabase.trackCount }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_RACES" | translate }}</span>
+                <span class="value">{{ selectedDatabase.raceCount }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_EVENTS" | translate }}</span>
+                <span class="value">{{
+                  selectedDatabase.eventCount ?? 0
+                }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_SEASONS" | translate }}</span>
+                <span class="value">{{
+                  selectedDatabase.seasonCount ?? 0
+                }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_ASSETS" | translate }}</span>
+                <span class="value">{{ selectedDatabase.assetCount }}</span>
+              </div>
+              <div class="stat-item size-stat-item">
+                <span class="label">{{
+                  "DBM_STAT_RACE_RECORDS" | translate
+                }}</span>
+                <span class="value"
+                  >{{ selectedDatabase.raceRecordCount }} ({{
+                    selectedDatabase.raceRecordSizeBytes / 1024 / 1024
+                      | number: "1.2-2"
+                  }}
+                  MB)</span
+                >
+              </div>
+              <div class="stat-item">
+                <span class="label">{{
+                  "DBM_STAT_SAVED_RACES" | translate
+                }}</span>
+                <span class="value"
+                  >{{ selectedDatabase.savedRaceCount }} ({{
+                    selectedDatabase.savedRaceSizeBytes / 1024 / 1024
+                      | number: "1.2-2"
+                  }}
+                  MB)</span
+                >
+              </div>
+              <div class="stat-item">
+                <span class="label">{{ "DBM_STAT_SIZE" | translate }}</span>
+                <span class="value"
+                  >{{
+                    selectedDatabase.sizeBytes / 1024 / 1024 | number: "1.2-2"
+                  }}
+                  MB</span
+                >
+              </div>
+            </div>
+            @if (selectedDatabase.name !== currentDatabaseName) {
+              <p class="hint">
+                {{ "DBM_HINT_SWITCH" | translate }}
+              </p>
+            }
+          </div>
         </div>
-      </div>
-    }
+      }
 
-    @if (!selectedDatabase) {
-      <div class="detail-panel empty-state">
-        <p>{{ "DBM_HINT_SELECT" | translate }}</p>
-      </div>
-    }
+      @if (!selectedDatabase) {
+        <div class="detail-panel empty-state">
+          <p>{{ "DBM_HINT_SELECT" | translate }}</p>
+        </div>
+      }
+    </div>
   </div>
 
   @if (loading) {

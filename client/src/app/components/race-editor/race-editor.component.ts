@@ -17,6 +17,10 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -46,6 +50,7 @@ import { deepCopy } from "@app/utils/clone.utils";
   styleUrls: ["./race-editor.component.css"],
   imports: [
     AcknowledgementModalComponent,
+    EditorTabsComponent,
     EditorTitleComponent,
     FormsModule,
     HeatListComponent,
@@ -242,6 +247,93 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         from: this.route.snapshot.queryParamMap.get("from"),
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
+    });
+  }
+
+  get raceTabs(): EditorTab[] {
+    return [
+      {
+        id: "general-section",
+        label: this.translationService.translate("RE_GENERAL_HEADER"),
+      },
+      {
+        id: "start-method-section",
+        label: this.translationService.translate("RE_START_METHOD_HEADER"),
+      },
+      {
+        id: "scoring-section",
+        label: this.translationService.translate("RE_SCORING_HEADER"),
+      },
+      {
+        id: "season-points-section",
+        label: this.translationService.translate("SS_TITLE"),
+      },
+      {
+        id: "heats-section",
+        label: this.translationService.translate("RE_HEATS_HEADER"),
+      },
+      {
+        id: "group-section",
+        label: this.translationService.translate("RE_GROUPS_HEADER"),
+      },
+      {
+        id: "analog-fuel-section",
+        label: this.translationService.translate("RE_ANALOG_FUEL_HEADER"),
+      },
+      {
+        id: "digital-fuel-outer-section",
+        label: this.translationService.translate("RE_DIGITAL_FUEL_HEADER"),
+      },
+      {
+        id: "team-options-section",
+        label: this.translationService.translate("RE_TEAM_OPTIONS_HEADER"),
+      },
+    ];
+  }
+
+  scrollToAndExpandSection(tabId: string) {
+    const sectionMap: Record<string, keyof typeof this.sectionsExpanded> = {
+      "general-section": "general",
+      "start-method-section": "start_method",
+      "scoring-section": "scoring",
+      "season-points-section": "season_points",
+      "heats-section": "heats",
+      "group-section": "groups",
+      "analog-fuel-section": "fuel_analog",
+      "digital-fuel-outer-section": "fuel_digital",
+      "team-options-section": "team",
+    };
+
+    const sectionKey = sectionMap[tabId];
+    if (sectionKey) {
+      this.sectionsExpanded[sectionKey] = true;
+      try {
+        localStorage.setItem(
+          "race_editor_expanders",
+          JSON.stringify(this.sectionsExpanded),
+        );
+      } catch (e) {
+        this.logger.error("Error saving expander state", e);
+      }
+    }
+
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".sections-wrapper");
+      if (element && container) {
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+
+        container.scrollTo({
+          top: topPos - 24,
+          behavior: "smooth",
+        });
+      } else if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   }
 

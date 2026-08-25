@@ -15,6 +15,10 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
@@ -38,6 +42,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
   styleUrls: ["./race-manager.component.css"],
   imports: [
     ConfirmationModalComponent,
+    EditorTabsComponent,
     ManagerHeaderComponent,
     HeatListComponent,
     TranslatePipe,
@@ -489,5 +494,46 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         position: "left",
       },
     ];
+  }
+
+  get detailTabs(): EditorTab[] {
+    if (!this.selectedRace) return [];
+    return [
+      {
+        id: "summary-general",
+        label:
+          this.translationService.translate("RM_HEADER_SUMMARY") || "Summary",
+      },
+      {
+        id: "summary-heats",
+        label:
+          this.translationService.translate("RM_HEADER_HEAT_LIST") || "Heats",
+      },
+    ];
+  }
+
+  scrollToSection(tabId: string) {
+    if (tabId === "summary-general") {
+      this.isSummaryExpanded = true;
+    } else if (tabId === "summary-heats") {
+      this.isHeatListExpanded = true;
+    }
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".detail-content");
+      if (element && container) {
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+        container.scrollTo({
+          top: topPos,
+          behavior: "smooth",
+        });
+      } else if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
   }
 }

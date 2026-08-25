@@ -35,71 +35,128 @@
               @if (sectionsExpanded.main) {
                 <div class="section-content">
                   <div class="config-top-section">
-                    <div class="board-controls">
-                      <div class="control-group">
-                        <label>{{ "AE_BOARD_TYPE" | translate }}</label>
-                        <select
-                          [id]="'arduino-board-type-' + index()"
-                          [ngModel]="config()?.hardwareType?.toString()"
-                          (ngModelChange)="onHardwareTypeChange(+$event)"
-                        >
-                          <option value="0">
-                            {{ "AE_BOARD_UNO" | translate }}
-                          </option>
-                          <option value="1">
-                            {{ "AE_BOARD_MEGA" | translate }}
-                          </option>
-                        </select>
-                      </div>
-                      <div class="control-group">
-                        <label>{{ "AE_COM_PORT" | translate }}</label>
-                        <div class="com-port-row">
+                    <div class="main-settings-group">
+                      <div class="board-controls">
+                        <div class="control-group">
+                          <label>{{ "AE_BOARD_TYPE" | translate }}</label>
                           <select
-                            [id]="'arduino-com-port-' + index()"
-                            [(ngModel)]="config()!.commPort"
-                            (change)="updateArduinoConfig()"
+                            [id]="'arduino-board-type-' + index()"
+                            [ngModel]="config()?.hardwareType?.toString()"
+                            (ngModelChange)="onHardwareTypeChange(+$event)"
                           >
-                            <option value="" disabled>
-                              {{ "AE_SELECT_PORT" | translate }}
+                            <option value="0">
+                              {{ "AE_BOARD_UNO" | translate }}
                             </option>
-                            @for (port of availablePorts; track port) {
-                              <option [value]="port">
-                                {{ port }}
-                              </option>
-                            }
+                            <option value="1">
+                              {{ "AE_BOARD_MEGA" | translate }}
+                            </option>
                           </select>
-                          <button
-                            type="button"
-                            [id]="'arduino-status-badge-' + index()"
-                            class="status-badge"
-                            [class.connected]="
-                              interfaceStatus === 2 || interfaceStatus === 0
-                            "
-                            [title]="
-                              interfaceStatus === 2 || interfaceStatus === 0
-                                ? 'Connected'
-                                : 'Disconnected'
-                            "
+                        </div>
+                        <div class="control-group">
+                          <label>{{ "AE_COM_PORT" | translate }}</label>
+                          <div class="com-port-row">
+                            <select
+                              [id]="'arduino-com-port-' + index()"
+                              [(ngModel)]="config()!.commPort"
+                              (change)="updateArduinoConfig()"
+                            >
+                              <option value="" disabled>
+                                {{ "AE_SELECT_PORT" | translate }}
+                              </option>
+                              @for (port of availablePorts; track port) {
+                                <option [value]="port">
+                                  {{ port }}
+                                </option>
+                              }
+                            </select>
+                            <button
+                              type="button"
+                              [id]="'arduino-status-badge-' + index()"
+                              class="status-badge"
+                              [class.connected]="
+                                interfaceStatus === 2 || interfaceStatus === 0
+                              "
+                              [title]="
+                                interfaceStatus === 2 || interfaceStatus === 0
+                                  ? 'Connected'
+                                  : 'Disconnected'
+                              "
+                            >
+                              <div class="status-dot"></div>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="control-group">
+                          <label
+                            >{{ "AE_DEBOUNCE_TIME" | translate }}
+                            <span class="unit-lowercase">(µs)</span></label
                           >
-                            <div class="status-dot"></div>
-                          </button>
+                          <input
+                            [id]="'arduino-debounce-' + index()"
+                            type="number"
+                            [ngModel]="config()?.debounceUs"
+                            (ngModelChange)="onDebounceChange($event)"
+                            min="0"
+                            step="100"
+                          />
+                        </div>
+                        <div class="control-group">
+                          <label>{{
+                            "AE_LAP_PIN_PIT_BEHAVIOR" | translate
+                          }}</label>
+                          <div class="com-port-row">
+                            <select
+                              [id]="'arduino-pit-behavior-' + index()"
+                              [(ngModel)]="config()!.lapPinPitBehavior"
+                              (change)="updateArduinoConfig()"
+                            >
+                              <option [value]="0">
+                                {{ "AE_LAP_PIN_PIT_NONE" | translate }}
+                              </option>
+                              <option [value]="1">
+                                {{ "AE_LAP_PIN_PIT_IN" | translate }}
+                              </option>
+                              <option [value]="2">
+                                {{ "AE_LAP_PIN_PIT_OUT" | translate }}
+                              </option>
+                              <option [value]="3">
+                                {{ "AE_LAP_PIN_PIT_IN_OUT" | translate }}
+                              </option>
+                            </select>
+                            <div
+                              class="status-badge"
+                              style="visibility: hidden"
+                            ></div>
+                          </div>
                         </div>
                       </div>
-                      <div class="control-group">
-                        <label
-                          >{{ "AE_DEBOUNCE_TIME" | translate }}
-                          <span class="unit-lowercase">(µs)</span></label
-                        >
-                        <input
-                          [id]="'arduino-debounce-' + index()"
-                          type="number"
-                          [ngModel]="config()?.debounceUs"
-                          (ngModelChange)="onDebounceChange($event)"
-                          min="0"
-                          step="100"
-                        />
+
+                      <div class="right-controls">
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              [id]="'arduino-nc-sensors-' + index()"
+                              type="checkbox"
+                              [(ngModel)]="config()!.normallyClosedLaneSensors"
+                              (change)="updateArduinoConfig()"
+                            />
+                            {{ "AE_NORMALLY_CLOSED_SENSORS" | translate }}
+                          </label>
+                        </div>
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              [id]="'arduino-nc-relays-' + index()"
+                              type="checkbox"
+                              [(ngModel)]="config()!.normallyClosedRelays"
+                              (change)="updateArduinoConfig()"
+                            />
+                            {{ "AE_NORMALLY_CLOSED_RELAYS" | translate }}
+                          </label>
+                        </div>
                       </div>
                     </div>
+
                     <div class="board-preview">
                       @if (config()?.hardwareType == 0) {
                         <img
@@ -115,69 +172,6 @@
                           class="board-image"
                         />
                       }
-                    </div>
-                    <div class="right-controls">
-                      <div class="control-group">
-                        <label>{{
-                          "AE_LAP_PIN_PIT_BEHAVIOR" | translate
-                        }}</label>
-                        <select
-                          [id]="'arduino-pit-behavior-' + index()"
-                          [(ngModel)]="config()!.lapPinPitBehavior"
-                          (change)="updateArduinoConfig()"
-                        >
-                          <option [value]="0">
-                            {{ "AE_LAP_PIN_PIT_NONE" | translate }}
-                          </option>
-                          <option [value]="1">
-                            {{ "AE_LAP_PIN_PIT_IN" | translate }}
-                          </option>
-                          <option [value]="2">
-                            {{ "AE_LAP_PIN_PIT_OUT" | translate }}
-                          </option>
-                          <option [value]="3">
-                            {{ "AE_LAP_PIN_PIT_IN_OUT" | translate }}
-                          </option>
-                        </select>
-                      </div>
-                      <div class="control-group">
-                        <label
-                          class="checkbox-label"
-                          style="
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                            cursor: pointer;
-                          "
-                        >
-                          <input
-                            [id]="'arduino-nc-sensors-' + index()"
-                            type="checkbox"
-                            [(ngModel)]="config()!.normallyClosedLaneSensors"
-                            (change)="updateArduinoConfig()"
-                          />
-                          {{ "AE_NORMALLY_CLOSED_SENSORS" | translate }}
-                        </label>
-                      </div>
-                      <div class="control-group">
-                        <label
-                          class="checkbox-label"
-                          style="
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                            cursor: pointer;
-                          "
-                        >
-                          <input
-                            [id]="'arduino-nc-relays-' + index()"
-                            type="checkbox"
-                            [(ngModel)]="config()!.normallyClosedRelays"
-                            (change)="updateArduinoConfig()"
-                          />
-                          {{ "AE_NORMALLY_CLOSED_RELAYS" | translate }}
-                        </label>
-                      </div>
                     </div>
                   </div>
                 </div>

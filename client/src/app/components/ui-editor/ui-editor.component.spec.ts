@@ -2645,13 +2645,5 @@ describe("UIEditorComponent", () => {
       );
       expect((practiceWidget as any).scaleMode).toBe("auto");
     });
-
-    it("should handle forceFitScreen change and recalculate scale", () => {
-      component.editingSettings.forceFitScreen = false;
-      component.onForceFitScreenChange(true);
-      expect(component.editingSettings.forceFitScreen).toBeTrue();
-      expect(component.scaleX).toBeGreaterThan(0);
-      expect(component.scaleY).toBeGreaterThan(0);
-    });
   });
 });

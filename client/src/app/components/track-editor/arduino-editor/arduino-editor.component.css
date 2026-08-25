@@ -4,6 +4,8 @@
   height: 100%;
 }
 
+@import '../shared-interface-config.css';
+
 /* Right Panel Arduino Styles */
 
 .arduino-config-container {
@@ -29,58 +31,6 @@
   color: #ffffff;
   font-weight: 300;
   letter-spacing: 1px;
-}
-
-/* Top Section: Controls + Image Side-by-Side */
-.config-top-section {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.board-controls {
-  width: 190px;
-  min-width: 190px;
-  max-width: 190px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.board-preview {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.board-image {
-  max-width: 100%;
-  height: auto;
-  max-height: 250px;
-  object-fit: contain;
-  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
-  transition: transform 0.3s ease-in-out;
-  position: relative;
-  z-index: 1;
-  transform-origin: center 20%;
-}
-
-.board-image:hover {
-  transform: scale(1.6);
-  z-index: 10;
-}
-
-.right-controls {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 .checkbox-label {
@@ -177,12 +127,7 @@
   cursor: not-allowed;
 }
 
-.com-port-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-}
+
 
 .status-badge {
   display: flex;

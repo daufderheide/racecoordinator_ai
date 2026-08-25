@@ -1,9 +1,4 @@
-<div
-  class="page-container ue-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
->
+<div class="page-container ue-container">
   <app-editor-title
     titleKey="UE_TITLE"
     [undoManager]="undoManager"
@@ -1322,20 +1317,6 @@
                         }
                       </select>
                     </div>
-                  </div>
-                  <div class="force-fit-selector" id="help-force-fit-screen">
-                    <label
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [ngModel]="editingSettings.forceFitScreen || false"
-                        (ngModelChange)="onForceFitScreenChange($event)"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_FORCE_FIT_SCREEN" | translate }}
-                    </label>
                   </div>
                 </div>
               </div>

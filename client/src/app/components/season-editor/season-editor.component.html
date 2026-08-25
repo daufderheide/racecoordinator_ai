@@ -1,9 +1,4 @@
-<div
-  class="page-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
->
+<div class="page-container" [attr.data-is-dirty]="isDirty ? 'true' : 'false'">
   <app-editor-title
     [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
     [undoManager]="undoManager"

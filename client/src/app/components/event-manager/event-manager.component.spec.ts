@@ -5,7 +5,9 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Event } from "@app/models/event";
+import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AuthService } from "@app/services/auth.service";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -26,6 +28,7 @@ describe("EventManagerComponent", () => {
   let mockDataService: any;
   let mockRouter: any;
   let mockNavigationService: any;
+  let mockAuthService: any;
 
   const mockEvents: Event[] = [
     {
@@ -61,6 +64,11 @@ describe("EventManagerComponent", () => {
   ];
 
   beforeEach(async () => {
+    mockAuthService = {
+      currentRole: Role.ADMIN,
+      currentRole$: of(Role.ADMIN),
+    };
+
     mockDataService = jasmine.createSpyObj("DataService", [
       "getEvents",
       "getRaces",
@@ -97,6 +105,7 @@ describe("EventManagerComponent", () => {
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: NavigationService, useValue: mockNavigationService },
         { provide: SettingsService, useValue: mockSettingsService },
+        { provide: AuthService, useValue: mockAuthService },
         { provide: RaceConnectionService, useValue: {} },
         {
           provide: ActivatedRoute,

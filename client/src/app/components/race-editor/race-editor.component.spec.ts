@@ -156,16 +156,11 @@ describe("RaceEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should use transform scale for scaling", () => {
-    fixture.detectChanges(); // Trigger ngOnInit and initial updateScale
-    component.scaleX = 0.5;
-    component.scaleY = 0.5;
-    component.scale = 0.5;
+  it("should render page container without hardcoded transform scaling", () => {
     fixture.detectChanges();
     const container = fixture.nativeElement.querySelector(".page-container");
-    expect(container.style.zoom).toBeFalsy();
-    expect(container.style.transform).toContain("scale(0.5, 0.5)");
-    expect(container.style.transform).toContain("translate(-50%, -50%)");
+    expect(container).toBeTruthy();
+    expect(container.style.transform).toBeFalsy();
   });
 
   it("should load race on init when ID is provided", fakeAsync(() => {
@@ -2254,5 +2249,97 @@ describe("RaceEditorComponent", () => {
       component.editingRace.custom_rotation_asset_id = "asset-rot-1";
       expect(component.isRotationInvalid).toBeFalse();
     });
+  });
+
+  describe("Editor Tabs and Section Navigation", () => {
+    it("should return the 9 configuration tabs with IDs and labels", () => {
+      const tabs = component.raceTabs;
+      expect(tabs.length).toBe(9);
+      expect(tabs.map((t) => t.id)).toEqual([
+        "general-section",
+        "start-method-section",
+        "scoring-section",
+        "season-points-section",
+        "heats-section",
+        "group-section",
+        "analog-fuel-section",
+        "digital-fuel-outer-section",
+        "team-options-section",
+      ]);
+      tabs.forEach((tab) => {
+        expect(tab.label).toBeDefined();
+        expect(tab.label.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("should expand section and scroll container on scrollToAndExpandSection", fakeAsync(() => {
+      spyOn(localStorage, "setItem");
+      component.sectionsExpanded.general = false;
+      component.sectionsExpanded.groups = false;
+
+      const dummyContainer = document.createElement("div");
+      dummyContainer.className = "sections-wrapper";
+      spyOn(dummyContainer, "getBoundingClientRect").and.returnValue({
+        top: 100,
+      } as any);
+      dummyContainer.scrollTop = 50;
+      spyOn(dummyContainer, "scrollTo");
+
+      const dummyElement = document.createElement("div");
+      dummyElement.id = "group-section";
+      spyOn(dummyElement, "getBoundingClientRect").and.returnValue({
+        top: 250,
+      } as any);
+
+      spyOn(document, "getElementById").and.callFake((id: string) => {
+        if (id === "group-section") return dummyElement;
+        return null;
+      });
+      spyOn(document, "querySelector").and.callFake((selector: string) => {
+        if (selector === ".sections-wrapper") return dummyContainer;
+        return null;
+      });
+
+      component.scrollToAndExpandSection("group-section");
+      expect(component.sectionsExpanded.groups).toBeTrue();
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.any(String),
+      );
+
+      tick();
+
+      expect(dummyContainer.scrollTo as jasmine.Spy).toHaveBeenCalledWith({
+        top: 250 - 100 + 0 - 24,
+        behavior: "smooth",
+      });
+    }));
+
+    it("should fallback to scrollIntoView when container is not found", fakeAsync(() => {
+      const dummyElement = document.createElement("div");
+      dummyElement.id = "scoring-section";
+      spyOn(dummyElement, "scrollIntoView");
+
+      spyOn(document, "getElementById").and.returnValue(dummyElement);
+      spyOn(document, "querySelector").and.returnValue(null);
+
+      component.sectionsExpanded.scoring = false;
+      component.scrollToAndExpandSection("scoring-section");
+      expect(component.sectionsExpanded.scoring).toBeTrue();
+
+      tick();
+
+      expect(dummyElement.scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "start",
+      });
+    }));
+
+    it("should safely handle unknown tabId in scrollToAndExpandSection", fakeAsync(() => {
+      spyOn(localStorage, "setItem");
+      component.scrollToAndExpandSection("unknown-tab-id");
+      tick();
+      expect(localStorage.setItem).not.toHaveBeenCalled();
+    }));
   });
 });

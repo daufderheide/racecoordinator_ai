@@ -819,6 +819,7 @@
   "RDS_SEARCH_RACES": "RACES ZOEKEN",
   "RDS_SEASON_LABEL": "Seizoen",
   "RDS_SEASON_NONE": "Geen (Geen Seizoen)",
+  "RDS_NO_SEASON_SELECTED": "Geen seizoen geselecteerd",
   "RDS_SEASON_SELECT": "Seizoen Selectie",
   "RDS_SECTION_ALL_RACES": "Alle Races",
   "RDS_SECTION_AVAILABLE": "Beschikbaar",

@@ -22,6 +22,10 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -68,6 +72,8 @@ import { deepCopy } from "@app/utils/clone.utils";
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
+    EditorTitleComponent,
+    EditorTabsComponent,
     ArduinoEditorComponent,
     TrakmateEditorComponent,
     PhidgetEditorComponent,
@@ -144,6 +150,74 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       "rc.track-editor.sections",
       JSON.stringify(this.sectionsExpanded),
     );
+  }
+
+  get interfaceTabs(): EditorTab[] {
+    const tabs: EditorTab[] = [];
+
+    this.arduinoConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-arduino-${i}`, label: `Arduino ${i + 1}` });
+    });
+
+    this.trackmateConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-trackmate-${i}`, label: `Trakmate ${i + 1}` });
+    });
+
+    this.phidgetConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-phidget-${i}`, label: `Phidget ${i + 1}` });
+    });
+
+    this.bartConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-bart-${i}`, label: `BART ${i + 1}` });
+    });
+
+    return tabs;
+  }
+
+  scrollToAndExpandInterface(tabId: string) {
+    const match = tabId.match(
+      /interface-(arduino|trackmate|phidget|bart)-(\d+)/,
+    );
+    if (!match) return;
+
+    const type = match[1];
+    const index = parseInt(match[2], 10);
+
+    switch (type) {
+      case "arduino":
+        this.arduinoEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "trackmate":
+        this.trakmateEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "phidget":
+        this.phidgetEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "bart":
+        this.bartEditors.get(index)?.ensureSectionsExpanded();
+        break;
+    }
+
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".preview-panel");
+      if (element && container) {
+        // Calculate the relative position to scroll safely without shifting the whole page or outer containers
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+
+        container.scrollTo({
+          top: topPos - 24, // 24px padding-top adjustment
+          behavior: "smooth",
+        });
+      } else if (element) {
+        // Fallback
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
   }
 
   constructor(

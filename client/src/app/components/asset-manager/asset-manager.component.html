@@ -1,8 +1,5 @@
 <div
   class="page-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
   (dragover)="onContainerDragOver($event)"
   (drop)="onContainerDrop($event)"
 >
@@ -229,283 +226,287 @@
     </div>
 
     <!-- RIGHT PANEL: ASSET LIBRARY -->
-    <div class="detail-panel library-panel">
-      <!-- Loading Overlay -->
-      @if (isLoading) {
-        <div class="loading-overlay">
-          <div class="spinner large-spinner"></div>
-          <div class="loading-text">{{ "AM_LOADING" | translate }}</div>
-        </div>
-      }
-
-      <div class="panel-header library-header">
-        <!-- Filter Controls -->
-        <div class="library-controls">
-          <div class="filter-tabs">
-            <div
-              class="tab filter-all"
-              [class.active]="filterType === 'all'"
-              (click)="setFilterType('all')"
-            >
-              {{ "AM_FILTER_ALL" | translate }}
-            </div>
-            <div
-              class="tab filter-images"
-              [class.active]="filterType === 'image'"
-              (click)="setFilterType('image')"
-            >
-              {{ "AM_FILTER_IMAGES" | translate }}
-            </div>
-            <div
-              class="tab filter-image-sets"
-              [class.active]="filterType === 'image_set'"
-              (click)="setFilterType('image_set')"
-            >
-              {{ "AM_FILTER_IMAGE_SETS" | translate }}
-            </div>
-            <div
-              class="tab filter-sounds"
-              [class.active]="filterType === 'sound' || filterType === 'audio'"
-              (click)="setFilterType('audio')"
-            >
-              {{ "AM_FILTER_SOUNDS" | translate }}
-            </div>
-            <div
-              class="tab filter-audio-sets"
-              [class.active]="filterType === 'audio_set'"
-              (click)="setFilterType('audio_set')"
-            >
-              {{ "AM_FILTER_AUDIO_SETS" | translate }}
-            </div>
-            <div
-              class="tab filter-custom-rotations"
-              [class.active]="filterType === 'custom_rotation'"
-              (click)="setFilterType('custom_rotation')"
-            >
-              {{ "AM_FILTER_CUSTOM_ROTATIONS" | translate }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filter Bar (Below Header) -->
-      <div class="filter-bar-container">
-        <input
-          type="text"
-          class="filter-input"
-          [placeholder]="'AM_FILTER_PLACEHOLDER' | translate"
-          [(ngModel)]="filterName"
-          autocomplete="one-time-code"
-          data-dashlane-ignore="true"
-          data-lpignore="true"
-          data-form-type="other"
-          spellcheck="false"
-          autocorrect="off"
-          autocapitalize="off"
-          name="filter-ignore-field"
-        />
-      </div>
-
-      <!-- Asset Grid -->
-      <div class="asset-grid">
-        @for (asset of filteredAssets; track asset) {
-          <div
-            class="asset-card"
-            [class.selected]="asset.selected"
-            [class.playing]="currentlyPlayingAsset?.id === asset.id"
-            [draggable]="asset.type === 'image'"
-            (dragstart)="onAssetDragStart($event, asset)"
-            (click)="toggleSelection(asset, $event)"
-          >
-            <!-- Preview Area -->
-            <div class="asset-preview">
-              @if (asset.type === "image" || asset.type === "image_set") {
-                <img
-                  [src]="
-                    getAssetImageUrl(asset) ||
-                    'assets/images/am_icon_image_placeholder.png'
-                  "
-                  class="preview-img"
-                  alt="preview"
-                  [class.image-set]="asset.type === 'image_set'"
-                  (error)="
-                    $any($event.target).src =
-                      'assets/images/am_icon_image_placeholder.png'
-                  "
-                />
-              }
-              @if (
-                asset.type === "sound" ||
-                asset.type === "audio" ||
-                asset.type === "audio_set"
-              ) {
-                <img
-                  src="assets/images/default_audio_icon.png"
-                  class="preview-icon"
-                  alt="sound"
-                />
-              }
-              @if (asset.type === "custom_rotation") {
-                <div class="rotation-preview">
-                  <i class="fas fa-sync-alt"></i>
-                  <span class="lane-count">{{ asset.numLanes }} Lanes</span>
-                </div>
-              }
-            </div>
-            <!-- Name Area -->
-            <div class="asset-info">
-              <!-- Editing Mode -->
-              @if (asset.editMode) {
-                <div class="edit-mode">
-                  <input
-                    type="text"
-                    class="name-input"
-                    [(ngModel)]="asset.name"
-                    (keyup.enter)="saveName(asset.id, asset.name)"
-                    autoFocus
-                    autocomplete="one-time-code"
-                    data-dashlane-ignore="true"
-                    data-lpignore="true"
-                    data-form-type="other"
-                    spellcheck="false"
-                    autocorrect="off"
-                    autocapitalize="off"
-                    name="rename-ignore-field"
-                  />
-                  <div class="edit-actions">
-                    <button
-                      class="btn-save"
-                      (click)="saveName(asset.id, asset.name)"
-                    >
-                      {{ "AM_BTN_SAVE" | translate }}
-                    </button>
-                    <button
-                      class="btn-cancel"
-                      (click)="cancelEditing(asset.id)"
-                    >
-                      {{ "AM_BTN_CANCEL" | translate }}
-                    </button>
-                  </div>
-                </div>
-              }
-              <!-- View Mode -->
-              @if (!asset.editMode) {
-                <div class="view-mode">
-                  <div class="asset-name" [title]="asset.name">
-                    {{ asset.name }}
-                  </div>
-                  <div class="asset-actions">
-                    @if (
-                      asset.type === "sound" ||
-                      asset.type === "audio" ||
-                      asset.type === "audio_set"
-                    ) {
-                      @if (currentlyPlayingAsset?.id !== asset.id) {
-                        <img
-                          src="assets/images/am_icon_play.png"
-                          class="action-icon play"
-                          (click)="$event.stopPropagation(); playAsset(asset)"
-                          title="Play"
-                        />
-                      } @else {
-                        <span
-                          class="material-icons action-icon stop"
-                          (click)="$event.stopPropagation(); stopAsset()"
-                          title="Stop"
-                          style="
-                            font-size: 20px;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                            width: 20px;
-                            height: 20px;
-                          "
-                          >stop</span
-                        >
-                      }
-                    }
-                    <img
-                      src="assets/images/am_icon_edit.png"
-                      class="action-icon"
-                      [class.disabled]="selectedAssets.length > 1"
-                      (click)="
-                        $event.stopPropagation();
-                        selectedAssets.length <= 1 &&
-                          (asset.type === 'image_set'
-                            ? openEditImageSetEditor(asset)
-                            : asset.type === 'audio_set'
-                              ? openEditAudioSetEditor(asset)
-                              : asset.type === 'custom_rotation'
-                                ? openEditCustomRotationEditor(asset)
-                                : startEditing(asset.id))
-                      "
-                      title="Edit"
-                    />
-                    <img
-                      src="assets/images/am_icon_trash.png"
-                      class="action-icon delete"
-                      (click)="$event.stopPropagation(); onDelete(asset.id)"
-                      title="Delete"
-                    />
-                  </div>
-                </div>
-              }
-            </div>
+    <div class="rhs-wrapper">
+      <div class="detail-panel library-panel">
+        <!-- Loading Overlay -->
+        @if (isLoading) {
+          <div class="loading-overlay">
+            <div class="spinner large-spinner"></div>
+            <div class="loading-text">{{ "AM_LOADING" | translate }}</div>
           </div>
         }
+
+        <div class="panel-header library-header">
+          <!-- Filter Controls -->
+          <div class="library-controls">
+            <div class="filter-tabs">
+              <div
+                class="tab filter-all"
+                [class.active]="filterType === 'all'"
+                (click)="setFilterType('all')"
+              >
+                {{ "AM_FILTER_ALL" | translate }}
+              </div>
+              <div
+                class="tab filter-images"
+                [class.active]="filterType === 'image'"
+                (click)="setFilterType('image')"
+              >
+                {{ "AM_FILTER_IMAGES" | translate }}
+              </div>
+              <div
+                class="tab filter-image-sets"
+                [class.active]="filterType === 'image_set'"
+                (click)="setFilterType('image_set')"
+              >
+                {{ "AM_FILTER_IMAGE_SETS" | translate }}
+              </div>
+              <div
+                class="tab filter-sounds"
+                [class.active]="
+                  filterType === 'sound' || filterType === 'audio'
+                "
+                (click)="setFilterType('audio')"
+              >
+                {{ "AM_FILTER_SOUNDS" | translate }}
+              </div>
+              <div
+                class="tab filter-audio-sets"
+                [class.active]="filterType === 'audio_set'"
+                (click)="setFilterType('audio_set')"
+              >
+                {{ "AM_FILTER_AUDIO_SETS" | translate }}
+              </div>
+              <div
+                class="tab filter-custom-rotations"
+                [class.active]="filterType === 'custom_rotation'"
+                (click)="setFilterType('custom_rotation')"
+              >
+                {{ "AM_FILTER_CUSTOM_ROTATIONS" | translate }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Bar (Below Header) -->
+        <div class="filter-bar-container">
+          <input
+            type="text"
+            class="filter-input"
+            [placeholder]="'AM_FILTER_PLACEHOLDER' | translate"
+            [(ngModel)]="filterName"
+            autocomplete="one-time-code"
+            data-dashlane-ignore="true"
+            data-lpignore="true"
+            data-form-type="other"
+            spellcheck="false"
+            autocorrect="off"
+            autocapitalize="off"
+            name="filter-ignore-field"
+          />
+        </div>
+
+        <!-- Asset Grid -->
+        <div class="asset-grid">
+          @for (asset of filteredAssets; track asset) {
+            <div
+              class="asset-card"
+              [class.selected]="asset.selected"
+              [class.playing]="currentlyPlayingAsset?.id === asset.id"
+              [draggable]="asset.type === 'image'"
+              (dragstart)="onAssetDragStart($event, asset)"
+              (click)="toggleSelection(asset, $event)"
+            >
+              <!-- Preview Area -->
+              <div class="asset-preview">
+                @if (asset.type === "image" || asset.type === "image_set") {
+                  <img
+                    [src]="
+                      getAssetImageUrl(asset) ||
+                      'assets/images/am_icon_image_placeholder.png'
+                    "
+                    class="preview-img"
+                    alt="preview"
+                    [class.image-set]="asset.type === 'image_set'"
+                    (error)="
+                      $any($event.target).src =
+                        'assets/images/am_icon_image_placeholder.png'
+                    "
+                  />
+                }
+                @if (
+                  asset.type === "sound" ||
+                  asset.type === "audio" ||
+                  asset.type === "audio_set"
+                ) {
+                  <img
+                    src="assets/images/default_audio_icon.png"
+                    class="preview-icon"
+                    alt="sound"
+                  />
+                }
+                @if (asset.type === "custom_rotation") {
+                  <div class="rotation-preview">
+                    <i class="fas fa-sync-alt"></i>
+                    <span class="lane-count">{{ asset.numLanes }} Lanes</span>
+                  </div>
+                }
+              </div>
+              <!-- Name Area -->
+              <div class="asset-info">
+                <!-- Editing Mode -->
+                @if (asset.editMode) {
+                  <div class="edit-mode">
+                    <input
+                      type="text"
+                      class="name-input"
+                      [(ngModel)]="asset.name"
+                      (keyup.enter)="saveName(asset.id, asset.name)"
+                      autoFocus
+                      autocomplete="one-time-code"
+                      data-dashlane-ignore="true"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      spellcheck="false"
+                      autocorrect="off"
+                      autocapitalize="off"
+                      name="rename-ignore-field"
+                    />
+                    <div class="edit-actions">
+                      <button
+                        class="btn-save"
+                        (click)="saveName(asset.id, asset.name)"
+                      >
+                        {{ "AM_BTN_SAVE" | translate }}
+                      </button>
+                      <button
+                        class="btn-cancel"
+                        (click)="cancelEditing(asset.id)"
+                      >
+                        {{ "AM_BTN_CANCEL" | translate }}
+                      </button>
+                    </div>
+                  </div>
+                }
+                <!-- View Mode -->
+                @if (!asset.editMode) {
+                  <div class="view-mode">
+                    <div class="asset-name" [title]="asset.name">
+                      {{ asset.name }}
+                    </div>
+                    <div class="asset-actions">
+                      @if (
+                        asset.type === "sound" ||
+                        asset.type === "audio" ||
+                        asset.type === "audio_set"
+                      ) {
+                        @if (currentlyPlayingAsset?.id !== asset.id) {
+                          <img
+                            src="assets/images/am_icon_play.png"
+                            class="action-icon play"
+                            (click)="$event.stopPropagation(); playAsset(asset)"
+                            title="Play"
+                          />
+                        } @else {
+                          <span
+                            class="material-icons action-icon stop"
+                            (click)="$event.stopPropagation(); stopAsset()"
+                            title="Stop"
+                            style="
+                              font-size: 20px;
+                              display: inline-flex;
+                              align-items: center;
+                              justify-content: center;
+                              width: 20px;
+                              height: 20px;
+                            "
+                            >stop</span
+                          >
+                        }
+                      }
+                      <img
+                        src="assets/images/am_icon_edit.png"
+                        class="action-icon"
+                        [class.disabled]="selectedAssets.length > 1"
+                        (click)="
+                          $event.stopPropagation();
+                          selectedAssets.length <= 1 &&
+                            (asset.type === 'image_set'
+                              ? openEditImageSetEditor(asset)
+                              : asset.type === 'audio_set'
+                                ? openEditAudioSetEditor(asset)
+                                : asset.type === 'custom_rotation'
+                                  ? openEditCustomRotationEditor(asset)
+                                  : startEditing(asset.id))
+                        "
+                        title="Edit"
+                      />
+                      <img
+                        src="assets/images/am_icon_trash.png"
+                        class="action-icon delete"
+                        (click)="$event.stopPropagation(); onDelete(asset.id)"
+                        title="Delete"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
       </div>
     </div>
+
+    <!-- Error Toast -->
+    @if (errorMessage) {
+      <div class="error-toast">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{{ errorMessage | translate }}</span>
+      </div>
+    }
   </div>
 
-  <!-- Error Toast -->
-  @if (errorMessage) {
-    <div class="error-toast">
-      <i class="fas fa-exclamation-triangle"></i>
-      <span>{{ errorMessage | translate }}</span>
+  <!-- Connection Lost Overlay -->
+  @if (isConnectionLost) {
+    <div class="connection-lost-overlay">
+      <div class="connection-spinner"></div>
+      <div class="connection-lost-text">
+        {{ "RDS_LOST_CONNECTION" | translate }}
+      </div>
     </div>
   }
+
+  <!-- Image Set Editor -->
+  <app-image-set-editor
+    [visible]="showImageSetEditor"
+    [assetId]="editingAssetId"
+    [initialName]="editingAssetName"
+    [initialEntries]="editingAssetEntries"
+    [allImages]="allImages"
+    (close)="showImageSetEditor = false"
+    (saved)="onImageSetSaved($event)"
+  >
+  </app-image-set-editor>
+
+  <app-audio-set-editor
+    [visible]="showAudioSetEditor"
+    [assetId]="editingAudioAssetId"
+    [initialName]="editingAudioAssetName"
+    [initialEntries]="editingAudioAssetEntries"
+    [allAudio]="allAudio"
+    (close)="showAudioSetEditor = false"
+    (saved)="onAudioSetSaved($event)"
+  >
+  </app-audio-set-editor>
+
+  <app-confirmation-modal
+    [visible]="showDeleteConfirm"
+    title="AM_CONFIRM_DELETE_TITLE"
+    message="AM_CONFIRM_DELETE"
+    confirmText="AM_BTN_DELETE"
+    cancelText="AM_BTN_CANCEL"
+    (confirm)="onConfirmDelete()"
+    (cancel)="onCancelDelete()"
+  >
+  </app-confirmation-modal>
 </div>
-
-<!-- Connection Lost Overlay -->
-@if (isConnectionLost) {
-  <div class="connection-lost-overlay">
-    <div class="connection-spinner"></div>
-    <div class="connection-lost-text">
-      {{ "RDS_LOST_CONNECTION" | translate }}
-    </div>
-  </div>
-}
-
-<!-- Image Set Editor -->
-<app-image-set-editor
-  [visible]="showImageSetEditor"
-  [assetId]="editingAssetId"
-  [initialName]="editingAssetName"
-  [initialEntries]="editingAssetEntries"
-  [allImages]="allImages"
-  (close)="showImageSetEditor = false"
-  (saved)="onImageSetSaved($event)"
->
-</app-image-set-editor>
-
-<app-audio-set-editor
-  [visible]="showAudioSetEditor"
-  [assetId]="editingAudioAssetId"
-  [initialName]="editingAudioAssetName"
-  [initialEntries]="editingAudioAssetEntries"
-  [allAudio]="allAudio"
-  (close)="showAudioSetEditor = false"
-  (saved)="onAudioSetSaved($event)"
->
-</app-audio-set-editor>
-
-<app-confirmation-modal
-  [visible]="showDeleteConfirm"
-  title="AM_CONFIRM_DELETE_TITLE"
-  message="AM_CONFIRM_DELETE"
-  confirmText="AM_BTN_DELETE"
-  cancelText="AM_BTN_CANCEL"
-  (confirm)="onConfirmDelete()"
-  (cancel)="onCancelDelete()"
->
-</app-confirmation-modal>

@@ -17,12 +17,7 @@
   (cancel)="onCancelTrackEditor()"
 >
 </app-confirmation-modal>
-<div
-  class="page-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
->
+<div class="page-container">
   <app-manager-header
     [title]="'TM_TITLE'"
     [showActions]="true"
@@ -55,179 +50,197 @@
       </div>
     </div>
 
-    @if (selectedTrack) {
-      <div class="detail-panel">
-        <div class="detail-header">
-          <h2>{{ selectedTrack.name }}</h2>
-        </div>
-        <div class="detail-content">
-          @if (
-            selectedTrack.arduino_configs &&
-            selectedTrack.arduino_configs.length > 0
-          ) {
-            <div
-              class="arduino-summary-container"
-              style="
-                padding: 0;
-                border: none;
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-              "
-            >
-              @for (
-                config of selectedTrack.arduino_configs;
-                track config;
-                let i = $index
-              ) {
-                <app-arduino-summary
-                  [config]="config"
-                  [index]="
-                    selectedTrack.arduino_configs.length > 1 ? i + 1 : undefined
-                  "
-                >
-                </app-arduino-summary>
-              }
-            </div>
-          }
-          @if (
-            selectedTrack.trackmate_configs &&
-            selectedTrack.trackmate_configs.length > 0
-          ) {
-            <div
-              class="arduino-summary-container"
-              style="
-                padding: 0;
-                border: none;
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-              "
-            >
-              @for (
-                config of selectedTrack.trackmate_configs;
-                track config;
-                let i = $index
-              ) {
-                <app-trakmate-summary
-                  [config]="config"
-                  [index]="
-                    selectedTrack.trackmate_configs.length > 1
-                      ? i + 1
-                      : undefined
-                  "
-                >
-                </app-trakmate-summary>
-              }
-            </div>
-          }
-          @if (
-            selectedTrack.phidget_configs &&
-            selectedTrack.phidget_configs.length > 0
-          ) {
-            <div
-              class="arduino-summary-container"
-              style="
-                padding: 0;
-                border: none;
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-              "
-            >
-              @for (
-                config of selectedTrack.phidget_configs;
-                track config;
-                let i = $index
-              ) {
-                <app-phidget-summary
-                  [config]="config"
-                  [index]="
-                    selectedTrack.phidget_configs.length > 1 ? i + 1 : undefined
-                  "
-                >
-                </app-phidget-summary>
-              }
-            </div>
-          }
-          @if (
-            selectedTrack.bart_configs && selectedTrack.bart_configs.length > 0
-          ) {
-            <div
-              class="arduino-summary-container"
-              style="
-                padding: 0;
-                border: none;
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-              "
-            >
-              @for (
-                config of selectedTrack.bart_configs;
-                track config;
-                let i = $index
-              ) {
-                <app-bart-summary
-                  [config]="config"
-                  [index]="
-                    selectedTrack.bart_configs.length > 1 ? i + 1 : undefined
-                  "
-                >
-                </app-bart-summary>
-              }
-            </div>
-          }
-          <div class="lane-viz-container">
-            <div
-              class="section-header"
-              (click)="toggleLaneSummary()"
-              style="margin-bottom: 15px; cursor: pointer"
-            >
-              <span
-                class="expander-icon"
-                [class.collapsed]="!isLaneSummaryExpanded"
-                >▼</span
+    <div class="rhs-wrapper">
+      @if (selectedTrack && detailTabs.length > 0) {
+        <app-editor-tabs
+          [tabs]="detailTabs"
+          (tabClicked)="scrollToSection($event)"
+        ></app-editor-tabs>
+      }
+
+      @if (selectedTrack) {
+        <div class="detail-panel">
+          <div class="detail-header">
+            <h2>{{ selectedTrack.name }}</h2>
+          </div>
+          <div class="detail-content">
+            @if (
+              selectedTrack.arduino_configs &&
+              selectedTrack.arduino_configs.length > 0
+            ) {
+              <div
+                class="arduino-summary-container"
+                style="
+                  padding: 0;
+                  border: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 15px;
+                "
               >
-              <h1>
-                {{ "TM_LANE_COUNT" | translate }} ({{
-                  selectedTrack.lanes.length
-                }})
-              </h1>
-            </div>
-            @if (isLaneSummaryExpanded) {
-              <div class="section-content">
-                <div class="lanes-grid">
-                  @for (
-                    lane of selectedTrack.lanes;
-                    track lane;
-                    let i = $index
-                  ) {
-                    <div
-                      class="lane-badge"
-                      [style.background-color]="lane.background_color"
-                      [style.color]="lane.foreground_color"
-                    >
-                      {{
-                        "TM_LANE_LENGTH"
-                          | translate: { lane: i + 1, length: lane.length }
-                      }}
-                    </div>
-                  }
-                </div>
+                @for (
+                  config of selectedTrack.arduino_configs;
+                  track config;
+                  let i = $index
+                ) {
+                  <app-arduino-summary
+                    [id]="'summary-arduino-' + i"
+                    [config]="config"
+                    [index]="
+                      selectedTrack.arduino_configs.length > 1
+                        ? i + 1
+                        : undefined
+                    "
+                  >
+                  </app-arduino-summary>
+                }
               </div>
             }
+            @if (
+              selectedTrack.trackmate_configs &&
+              selectedTrack.trackmate_configs.length > 0
+            ) {
+              <div
+                class="arduino-summary-container"
+                style="
+                  padding: 0;
+                  border: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 15px;
+                "
+              >
+                @for (
+                  config of selectedTrack.trackmate_configs;
+                  track config;
+                  let i = $index
+                ) {
+                  <app-trakmate-summary
+                    [id]="'summary-trackmate-' + i"
+                    [config]="config"
+                    [index]="
+                      selectedTrack.trackmate_configs.length > 1
+                        ? i + 1
+                        : undefined
+                    "
+                  >
+                  </app-trakmate-summary>
+                }
+              </div>
+            }
+            @if (
+              selectedTrack.phidget_configs &&
+              selectedTrack.phidget_configs.length > 0
+            ) {
+              <div
+                class="arduino-summary-container"
+                style="
+                  padding: 0;
+                  border: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 15px;
+                "
+              >
+                @for (
+                  config of selectedTrack.phidget_configs;
+                  track config;
+                  let i = $index
+                ) {
+                  <app-phidget-summary
+                    [id]="'summary-phidget-' + i"
+                    [config]="config"
+                    [index]="
+                      selectedTrack.phidget_configs.length > 1
+                        ? i + 1
+                        : undefined
+                    "
+                  >
+                  </app-phidget-summary>
+                }
+              </div>
+            }
+            @if (
+              selectedTrack.bart_configs &&
+              selectedTrack.bart_configs.length > 0
+            ) {
+              <div
+                class="arduino-summary-container"
+                style="
+                  padding: 0;
+                  border: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 15px;
+                "
+              >
+                @for (
+                  config of selectedTrack.bart_configs;
+                  track config;
+                  let i = $index
+                ) {
+                  <app-bart-summary
+                    [id]="'summary-bart-' + i"
+                    [config]="config"
+                    [index]="
+                      selectedTrack.bart_configs.length > 1 ? i + 1 : undefined
+                    "
+                  >
+                  </app-bart-summary>
+                }
+              </div>
+            }
+            <div id="summary-lanes" class="lane-viz-container">
+              <div
+                class="section-header"
+                (click)="toggleLaneSummary()"
+                style="margin-bottom: 15px; cursor: pointer"
+              >
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!isLaneSummaryExpanded"
+                  >▼</span
+                >
+                <h1>
+                  {{ "TM_LANE_COUNT" | translate }} ({{
+                    selectedTrack.lanes.length
+                  }})
+                </h1>
+              </div>
+              @if (isLaneSummaryExpanded) {
+                <div class="section-content">
+                  <div class="lanes-grid">
+                    @for (
+                      lane of selectedTrack.lanes;
+                      track lane;
+                      let i = $index
+                    ) {
+                      <div
+                        class="lane-badge"
+                        [style.background-color]="lane.background_color"
+                        [style.color]="lane.foreground_color"
+                      >
+                        {{
+                          "TM_LANE_LENGTH"
+                            | translate: { lane: i + 1, length: lane.length }
+                        }}
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <!-- Future details can go here -->
           </div>
-          <!-- Future details can go here -->
+          <!-- detail-actions removed -->
         </div>
-        <!-- detail-actions removed -->
-      </div>
-    }
+      }
 
-    @if (!selectedTrack && !isLoading) {
-      <div class="detail-panel empty-state">
-        <p>{{ "TM_NO_TRACK_SELECTED" | translate }}</p>
-      </div>
-    }
+      @if (!selectedTrack && !isLoading) {
+        <div class="detail-panel empty-state">
+          <p>{{ "TM_NO_TRACK_SELECTED" | translate }}</p>
+        </div>
+      }
+    </div>
   </div>
 </div>

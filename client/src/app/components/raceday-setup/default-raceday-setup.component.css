@@ -5,11 +5,16 @@
   left: 0;
   right: 0;
   bottom: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #0b1011;
-  color: #e0f2f1;
-  font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 70%, #020617 100%);
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 50% 30%, #1e293b 0%, #0f172a 70%, #020617 100%);
+  background-size: 30px 30px, 30px 30px, 100% 100%;
+  color: #e2e8f0;
+  font-family: 'Rajdhani', sans-serif;
   overflow: hidden;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -18,19 +23,15 @@
 }
 
 .page-container {
-  width: 1600px;
-  height: 900px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center center;
-  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  top: 0;
+  left: 0;
+  transform: none;
   display: flex;
   flex-direction: column;
-  background-image: url('../../../assets/images/track_manager_bg.png');
-  background-size: 1600px 900px;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: transparent;
   overflow: hidden;
 }
 
@@ -39,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: 24px;
-  padding: 16px 90px 0 90px;
+  padding: 10px 25px 0 25px;
   background: transparent !important;
   border-bottom: none !important;
   backdrop-filter: none !important;
@@ -164,20 +165,23 @@
 .content-split {
   flex: 1;
   display: flex;
-  gap: 40px;
+  gap: 25px;
   overflow: hidden;
-  margin: 0 55px 45px 55px;
+  padding: 0 25px 20px 25px;
+  margin: 0;
+  border-top: 1px solid rgba(56, 189, 248, 0.15);
+  box-shadow: inset 0 10px 20px -10px rgba(0, 0, 0, 0.5);
 }
 
 /* LHS: Drivers Panel */
 .editor-panel {
-  margin-left: 90px;
+  margin-left: 0;
   width: 320px;
-  height: calc(100% - 20px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   background-color: transparent;
-  padding-top: 25px;
+  padding-top: 15px;
   overflow: hidden;
 }
 
@@ -619,41 +623,43 @@
 /* RHS: Race Panel */
 .preview-panel {
   flex: 1;
-  margin-left: 180px;
-  margin-top: 25px;
-  margin-right: 90px;
-  margin-bottom: 45px;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  height: 100%;
+  overflow: hidden;
   background-color: transparent;
-  padding: 0;
+  padding: 15px 10px 0 25px;
+  border-left: 1px solid rgba(56, 189, 248, 0.15);
   position: relative;
 }
 
 .quick-start-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 55px;
-  height: 180px;
-  min-height: 180px;
-  max-height: 180px;
+  gap: 20px;
+  margin-top: 0;
+  height: 160px;
+  min-height: 160px;
+  max-height: 160px;
   flex-shrink: 0;
 }
 
 .rigid-spacer {
-  height: 30px;
-  min-height: 30px;
-  max-height: 30px;
+  height: 35px;
+  min-height: 35px;
+  max-height: 35px;
   flex-shrink: 0;
 }
 
 .setup-bottom-section {
-  position: absolute;
-  top: 265px;
-  left: 0;
+  position: static;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .race-card {
@@ -764,7 +770,8 @@
   flex-direction: row;
   gap: 16px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-top: 5px;
+  margin-bottom: 16px;
   flex-shrink: 0;
 }
 
@@ -907,7 +914,8 @@
   display: flex;
   gap: 20px;
   margin-top: auto;
-  padding: 24px 0 10px 0;
+  padding: 10px 0 10px 0;
+  flex-shrink: 0;
 }
 
 .btn-start {
@@ -1213,10 +1221,33 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 200px;
+  max-height: 180px;
   margin-top: 10px;
   overflow: hidden;
   box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.event-details-card.season-summary-card {
+  flex: 1;
+  min-height: 60px;
+  max-height: none;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.event-details-card.season-summary-card.empty-season-card {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
+  max-height: none;
+}
+
+.season-summary-card .event-races-summary {
+  flex: 1;
+  max-height: none;
+  overflow-y: auto;
 }
 
 .event-detail-header {
@@ -1379,4 +1410,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.empty-standings {
+  padding: 12px;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  font-size: 0.9rem;
 }

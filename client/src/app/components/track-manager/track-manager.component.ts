@@ -15,6 +15,10 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
@@ -44,6 +48,7 @@ import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.co
   styleUrls: ["./track-manager.component.css"],
   imports: [
     ConfirmationModalComponent,
+    EditorTabsComponent,
     ManagerHeaderComponent_1,
     ArduinoSummaryComponent,
     BartSummaryComponent,
@@ -55,6 +60,14 @@ import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.co
 export class TrackManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   @ViewChildren("trackRow") trackRows!: QueryList<ElementRef>;
+  @ViewChildren(ArduinoSummaryComponent)
+  arduinoSummaries!: QueryList<ArduinoSummaryComponent>;
+  @ViewChildren(TrakmateSummaryComponent)
+  trakmateSummaries!: QueryList<TrakmateSummaryComponent>;
+  @ViewChildren(PhidgetSummaryComponent)
+  phidgetSummaries!: QueryList<PhidgetSummaryComponent>;
+  @ViewChildren(BartSummaryComponent)
+  bartSummaries!: QueryList<BartSummaryComponent>;
   tracks: Track[] = [];
   selectedTrack?: Track;
   scale: number = 1;
@@ -447,5 +460,124 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
 
   onCancelDelete() {
     this.showDeleteConfirm = false;
+  }
+
+  get detailTabs(): EditorTab[] {
+    if (!this.selectedTrack) return [];
+    const tabs: EditorTab[] = [];
+
+    if (
+      this.selectedTrack.arduino_configs &&
+      this.selectedTrack.arduino_configs.length > 0
+    ) {
+      this.selectedTrack.arduino_configs.forEach((_, i) => {
+        tabs.push({
+          id: `summary-arduino-${i}`,
+          label:
+            `Arduino ${this.selectedTrack!.arduino_configs.length > 1 ? i + 1 : ""}`.trim(),
+        });
+      });
+    }
+
+    if (
+      this.selectedTrack.trackmate_configs &&
+      this.selectedTrack.trackmate_configs.length > 0
+    ) {
+      this.selectedTrack.trackmate_configs.forEach((_, i) => {
+        tabs.push({
+          id: `summary-trackmate-${i}`,
+          label:
+            `Trakmate ${this.selectedTrack!.trackmate_configs.length > 1 ? i + 1 : ""}`.trim(),
+        });
+      });
+    }
+
+    if (
+      this.selectedTrack.phidget_configs &&
+      this.selectedTrack.phidget_configs.length > 0
+    ) {
+      this.selectedTrack.phidget_configs.forEach((_, i) => {
+        tabs.push({
+          id: `summary-phidget-${i}`,
+          label:
+            `Phidget ${this.selectedTrack!.phidget_configs.length > 1 ? i + 1 : ""}`.trim(),
+        });
+      });
+    }
+
+    if (
+      this.selectedTrack.bart_configs &&
+      this.selectedTrack.bart_configs.length > 0
+    ) {
+      this.selectedTrack.bart_configs.forEach((_, i) => {
+        tabs.push({
+          id: `summary-bart-${i}`,
+          label:
+            `BART ${this.selectedTrack!.bart_configs.length > 1 ? i + 1 : ""}`.trim(),
+        });
+      });
+    }
+
+    if (this.selectedTrack.lanes && this.selectedTrack.lanes.length > 0) {
+      tabs.push({
+        id: "summary-lanes",
+        label: this.translationService.translate("RD_MENU_LANES") || "Lanes",
+      });
+    }
+
+    return tabs;
+  }
+
+  scrollToSection(tabId: string) {
+    if (tabId === "summary-lanes") {
+      this.isLaneSummaryExpanded = true;
+    } else {
+      const match = tabId.match(
+        /summary-(arduino|trackmate|phidget|bart)-(\d+)/,
+      );
+      if (match) {
+        const type = match[1];
+        const index = parseInt(match[2], 10);
+        switch (type) {
+          case "arduino": {
+            const summary = this.arduinoSummaries?.get(index);
+            if (summary) summary.isExpanded = true;
+            break;
+          }
+          case "trackmate": {
+            const summary = this.trakmateSummaries?.get(index);
+            if (summary) summary.isExpanded = true;
+            break;
+          }
+          case "phidget": {
+            const summary = this.phidgetSummaries?.get(index);
+            if (summary) summary.isExpanded = true;
+            break;
+          }
+          case "bart": {
+            const summary = this.bartSummaries?.get(index);
+            if (summary) summary.isExpanded = true;
+            break;
+          }
+        }
+      }
+    }
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".detail-content");
+      if (element && container) {
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+        container.scrollTo({
+          top: topPos,
+          behavior: "smooth",
+        });
+      } else if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
   }
 }

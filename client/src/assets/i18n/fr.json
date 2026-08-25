@@ -819,6 +819,7 @@
   "RDS_SEARCH_RACES": "RECHERCHER COURSES",
   "RDS_SEASON_LABEL": "Saison",
   "RDS_SEASON_NONE": "Aucune (Sans Saison)",
+  "RDS_NO_SEASON_SELECTED": "Aucune saison sélectionnée",
   "RDS_SEASON_SELECT": "Sélection Saison",
   "RDS_SECTION_ALL_RACES": "Toutes Courses",
   "RDS_SECTION_AVAILABLE": "Disponible",

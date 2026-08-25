@@ -1,8 +1,5 @@
 <div
   class="page-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
   [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'"
 >
   <app-editor-title
@@ -298,6 +295,11 @@
 
     <!-- Track Interface Visualization -->
     <div class="rhs-interface-wrapper">
+      <app-editor-tabs
+        [tabs]="interfaceTabs"
+        (tabClicked)="scrollToAndExpandInterface($event)"
+      ></app-editor-tabs>
+
       <div
         class="preview-panel"
         [style.overflow-y]="
@@ -327,7 +329,7 @@
           track trackByArduinoConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
+          <div class="interface-container" [id]="'interface-arduino-' + i">
             <app-arduino-editor
               [config]="config"
               [lanes]="lanes"
@@ -346,7 +348,7 @@
           track trackByTrackmateConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
+          <div class="interface-container" [id]="'interface-trackmate-' + i">
             <app-trakmate-editor
               [config]="config"
               [lanes]="lanes.length"
@@ -363,7 +365,7 @@
           track trackByPhidgetConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
+          <div class="interface-container" [id]="'interface-phidget-' + i">
             <app-phidget-editor
               [config]="config"
               [allPhidgetConfigs]="phidgetConfigs"
@@ -384,7 +386,7 @@
           track trackByBartConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
+          <div class="interface-container" [id]="'interface-bart-' + i">
             <app-bart-editor
               [config]="config"
               [lanes]="lanes.length"

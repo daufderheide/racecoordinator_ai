@@ -39,55 +39,82 @@
               @if (sectionsExpanded.main) {
                 <div class="section-content">
                   <div class="config-top-section">
-                    <div class="board-controls">
-                      <div class="control-group">
-                        <label>{{ "BART_DEVICE_NAME" | translate }}</label>
-                        <div class="com-port-row">
-                          <select
-                            [id]="'deviceName-' + interfaceIndex()"
-                            [ngModel]="config().deviceName"
-                            (ngModelChange)="onDeviceSelect($event)"
-                          >
-                            <option value="" disabled selected hidden>
-                              {{ "BART_SELECT_DEVICE" | translate }}
-                            </option>
-                            @for (device of detectedBleDevices; track device) {
-                              <option [value]="device">
-                                {{ device }}
+                    <div class="main-settings-group">
+                      <div class="board-controls">
+                        <div class="control-group">
+                          <label>{{ "BART_DEVICE_NAME" | translate }}</label>
+                          <div class="com-port-row">
+                            <select
+                              [id]="'deviceName-' + interfaceIndex()"
+                              [ngModel]="config().deviceName"
+                              (ngModelChange)="onDeviceSelect($event)"
+                            >
+                              <option value="" disabled selected hidden>
+                                {{ "BART_SELECT_DEVICE" | translate }}
                               </option>
-                            }
-                            @if (
-                              config().deviceName &&
-                              !detectedBleDevices.includes(config().deviceName)
+                              @for (
+                                device of detectedBleDevices;
+                                track device
+                              ) {
+                                <option [value]="device">
+                                  {{ device }}
+                                </option>
+                              }
+                              @if (
+                                config().deviceName &&
+                                !detectedBleDevices.includes(
+                                  config().deviceName
+                                )
+                              ) {
+                                <option [value]="config().deviceName">
+                                  {{ config().deviceName }}
+                                </option>
+                              }
+                            </select>
+                            <button
+                              type="button"
+                              [id]="'bart-status-badge-' + interfaceIndex()"
+                              class="status-badge"
+                              [class.connected]="status === 'CONNECTED'"
+                              [title]="status"
+                            >
+                              <div class="status-dot"></div>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="control-group">
+                          <label>{{ "BART_MIN_LAP_MS" | translate }}</label>
+                          <input
+                            type="number"
+                            [id]="'minLapMs-' + interfaceIndex()"
+                            [(ngModel)]="config().minLapMs"
+                            (change)="onConfigChange()"
+                            disabled
+                            min="0"
+                            max="30000"
+                          />
+                        </div>
+
+                        <div class="control-group">
+                          <label>{{
+                            "BART_LAP_PIN_PIT_BEHAVIOR" | translate
+                          }}</label>
+                          <select
+                            [id]="'lapPinPitBehavior-' + interfaceIndex()"
+                            [(ngModel)]="config().lapPinPitBehavior"
+                            (change)="onConfigChange()"
+                          >
+                            @for (
+                              option of lapPinPitBehaviors;
+                              track option.value
                             ) {
-                              <option [value]="config().deviceName">
-                                {{ config().deviceName }}
+                              <option [ngValue]="option.value">
+                                {{ option.label | translate }}
                               </option>
                             }
                           </select>
-                          <button
-                            type="button"
-                            [id]="'bart-status-badge-' + interfaceIndex()"
-                            class="status-badge"
-                            [class.connected]="status === 'CONNECTED'"
-                            [title]="status"
-                          >
-                            <div class="status-dot"></div>
-                          </button>
                         </div>
-                      </div>
-
-                      <div class="control-group">
-                        <label>{{ "BART_MIN_LAP_MS" | translate }}</label>
-                        <input
-                          type="number"
-                          [id]="'minLapMs-' + interfaceIndex()"
-                          [(ngModel)]="config().minLapMs"
-                          (change)="onConfigChange()"
-                          disabled
-                          min="0"
-                          max="30000"
-                        />
                       </div>
                     </div>
 
@@ -97,28 +124,6 @@
                         alt="Policar"
                         class="board-image"
                       />
-                    </div>
-
-                    <div class="right-controls">
-                      <div class="control-group">
-                        <label>{{
-                          "BART_LAP_PIN_PIT_BEHAVIOR" | translate
-                        }}</label>
-                        <select
-                          [id]="'lapPinPitBehavior-' + interfaceIndex()"
-                          [(ngModel)]="config().lapPinPitBehavior"
-                          (change)="onConfigChange()"
-                        >
-                          @for (
-                            option of lapPinPitBehaviors;
-                            track option.value
-                          ) {
-                            <option [ngValue]="option.value">
-                              {{ option.label | translate }}
-                            </option>
-                          }
-                        </select>
-                      </div>
                     </div>
                   </div>
                 </div>

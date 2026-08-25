@@ -1,5 +1,10 @@
 import { NO_ERRORS_SCHEMA } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
@@ -438,5 +443,81 @@ describe("TrackManagerComponent", () => {
 
     component.onResize();
     expect(component.scale).toBeGreaterThan(0);
+  });
+
+  describe("detailTabs and scrollToSection", () => {
+    it("should return empty array if no track is selected", () => {
+      component.selectedTrack = undefined;
+      expect(component.detailTabs).toEqual([]);
+    });
+
+    it("should return tabs for all configured interfaces and lanes", () => {
+      component.selectedTrack = {
+        entity_id: "t1",
+        name: "Test Track",
+        lanes: [
+          {
+            id: 1,
+            length: 50,
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+          },
+        ] as any,
+        arduino_configs: [{ id: "a1" }, { id: "a2" }] as any,
+        trackmate_configs: [{ id: "tm1" }] as any,
+        phidget_configs: [{ id: "ph1" }] as any,
+        bart_configs: [{ id: "b1" }] as any,
+      } as any;
+
+      const tabs = component.detailTabs;
+      expect(tabs.length).toBe(6);
+      expect(tabs[0]).toEqual({ id: "summary-arduino-0", label: "Arduino 1" });
+      expect(tabs[1]).toEqual({ id: "summary-arduino-1", label: "Arduino 2" });
+      expect(tabs[2]).toEqual({ id: "summary-trackmate-0", label: "Trakmate" });
+      expect(tabs[3]).toEqual({ id: "summary-phidget-0", label: "Phidget" });
+      expect(tabs[4]).toEqual({ id: "summary-bart-0", label: "BART" });
+      expect(tabs[5].id).toBe("summary-lanes");
+    });
+
+    it("should expand lanes summary on scrollToSection with summary-lanes", fakeAsync(() => {
+      component.isLaneSummaryExpanded = false;
+      component.scrollToSection("summary-lanes");
+      expect(component.isLaneSummaryExpanded).toBeTrue();
+      tick(50);
+    }));
+
+    it("should expand interface summaries on scrollToSection with interface tab IDs", fakeAsync(() => {
+      const mockArduino = { isExpanded: false } as any;
+      const mockTrakmate = { isExpanded: false } as any;
+      const mockPhidget = { isExpanded: false } as any;
+      const mockBart = { isExpanded: false } as any;
+
+      component.arduinoSummaries = {
+        get: (i: number) => (i === 0 ? mockArduino : undefined),
+      } as any;
+      component.trakmateSummaries = {
+        get: (i: number) => (i === 0 ? mockTrakmate : undefined),
+      } as any;
+      component.phidgetSummaries = {
+        get: (i: number) => (i === 0 ? mockPhidget : undefined),
+      } as any;
+      component.bartSummaries = {
+        get: (i: number) => (i === 0 ? mockBart : undefined),
+      } as any;
+
+      component.scrollToSection("summary-arduino-0");
+      expect(mockArduino.isExpanded).toBeTrue();
+
+      component.scrollToSection("summary-trackmate-0");
+      expect(mockTrakmate.isExpanded).toBeTrue();
+
+      component.scrollToSection("summary-phidget-0");
+      expect(mockPhidget.isExpanded).toBeTrue();
+
+      component.scrollToSection("summary-bart-0");
+      expect(mockBart.isExpanded).toBeTrue();
+
+      tick(50);
+    }));
   });
 });

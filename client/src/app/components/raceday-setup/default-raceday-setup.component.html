@@ -1,10 +1,5 @@
 @if (translationsLoaded) {
-  <div
-    class="page-container setup-container"
-    [style.transform]="
-      'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-    "
-  >
+  <div class="page-container setup-container">
     <!-- Modernized Horizontal Menu/Dropdown Toolbar sitting right above the Title Bar -->
     <div class="setup-menu-bar">
       @for (item of menuItems; track item) {
@@ -201,8 +196,8 @@
     <!-- New Premium Editor Title Bar -->
     <app-editor-title
       titleKey="RDS_TITLE"
-      [marginTop]="25"
-      [marginBottom]="25"
+      [marginTop]="5"
+      [marginBottom]="12"
       [showHelp]="true"
       [showUndo]="false"
       [showRedo]="false"
@@ -660,10 +655,6 @@
         <div class="rigid-spacer"></div>
 
         <div class="setup-bottom-section">
-          <div class="race-selection-title">
-            {{ "RDS_SECTION_ALL_RACES" | translate }}
-          </div>
-
           <div class="all-races-selector">
             <div class="custom-dropdown-container">
               <div class="dropdown-trigger" (click)="toggleDropdown($event)">
@@ -871,6 +862,94 @@
                       : ("GEN_NO" | translate)
                   }}</span>
                 </div>
+              </div>
+            </div>
+          }
+
+          @if (selectedSeason) {
+            <div class="event-details-card season-summary-card">
+              <div class="event-detail-header">
+                <div class="event-detail-title">{{ selectedSeason.name }}</div>
+                <div class="event-detail-sub">
+                  {{ "SM_DROPS_COUNT" | translate }}:
+                  <strong>{{ selectedSeason.drops }}</strong> &bull;
+                  {{ "SM_RACES_RUN" | translate }}:
+                  <strong>{{
+                    selectedSeason.races ? selectedSeason.races.length : 0
+                  }}</strong>
+                </div>
+              </div>
+              @if (seasonStandings.length === 0) {
+                <div class="empty-standings">
+                  {{ "SM_NO_RACES_RUN" | translate }}
+                </div>
+              } @else {
+                <div class="event-races-table-header">
+                  <table
+                    class="race-sequence-table standings-table header-table"
+                  >
+                    <thead>
+                      <tr>
+                        <th class="col-num">{{ "SM_RANK" | translate }}</th>
+                        <th class="col-name">{{ "SM_DRIVER" | translate }}</th>
+                        <th class="col-method">
+                          {{ "SM_NET_POINTS" | translate }}
+                        </th>
+                        <th class="col-value">
+                          {{ "SM_GROSS_POINTS" | translate }}
+                        </th>
+                        <th class="col-drivers">
+                          {{ "SM_RACES" | translate }}
+                        </th>
+                      </tr>
+                    </thead>
+                  </table>
+                </div>
+                <div class="event-races-summary">
+                  <table class="race-sequence-table standings-table body-table">
+                    <tbody>
+                      @for (
+                        item of seasonStandings;
+                        track item.driver_id;
+                        let rankIdx = $index
+                      ) {
+                        <tr>
+                          <td class="col-num">
+                            @if (rankIdx === 0) {
+                              🥇 1
+                            } @else if (rankIdx === 1) {
+                              🥈 2
+                            } @else if (rankIdx === 2) {
+                              🥉 3
+                            } @else {
+                              {{ rankIdx + 1 }}
+                            }
+                          </td>
+                          <td class="col-name">
+                            <strong>{{ item.driver_name }}</strong>
+                          </td>
+                          <td class="col-method">
+                            <strong style="color: #38bdf8">{{
+                              item.net_points | number: "1.0-2"
+                            }}</strong>
+                          </td>
+                          <td class="col-value">
+                            {{ item.gross_points | number: "1.0-2" }}
+                          </td>
+                          <td class="col-drivers">{{ item.races_run }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          } @else {
+            <div
+              class="event-details-card season-summary-card empty-season-card"
+            >
+              <div class="empty-standings">
+                {{ "RDS_NO_SEASON_SELECTED" | translate }}
               </div>
             </div>
           }

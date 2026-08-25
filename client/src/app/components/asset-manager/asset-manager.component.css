@@ -1,62 +1,8 @@
-:host {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  background-color: #0f172a;
-  color: #e2e8f0;
-  font-family: 'Rajdhani', sans-serif;
-  overflow: hidden;
-  position: relative;
-}
-
-.page-container {
-  width: 1600px;
-  height: 900px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center center;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  background-image: url('../../../assets/images/track_manager_bg.png');
-  background-size: 1600px 900px;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
-}
-
-/* Content Area */
-.content-area {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  margin: 0 55px 45px 55px;
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* Sidebar Panel (Stats) */
-.sidebar-list {
-  margin-left: 90px;
-  margin-top: 40px;
-  width: 300px;
-  margin-bottom: 20px;
-  height: calc(100% - 40px - 20px);
-  display: flex;
-  flex-direction: column;
-  background-color: transparent;
-  padding: 5px;
-  overflow: hidden;
-  /* Remove scrollbar */
-  gap: 15px;
-}
+@import '../shared/shared-manager-layout.css';
 
 /* Stats Panel Specifics */
 .panel-header {
   font-size: 1.3rem;
-  /* Slightly smaller */
   font-weight: 700;
   color: #38bdf8;
   text-transform: uppercase;
@@ -79,17 +25,14 @@
   background: rgba(15, 23, 42, 0.4);
   border-radius: 8px;
   padding: 15px;
-  /* Reduced */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  /* Reduced */
 }
 
 .db-icon-container {
   width: 60px;
-  /* Smaller icon */
   height: 60px;
   background: rgba(56, 189, 248, 0.1);
   border-radius: 50%;
@@ -116,7 +59,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Reduced */
 }
 
 .breakdown-item {
@@ -145,7 +87,6 @@
 .progress-bar {
   width: 100%;
   height: 5px;
-  /* Thinner */
   background: rgba(255, 255, 255, 0.05);
   border-radius: 3px;
   overflow: hidden;
@@ -193,14 +134,14 @@
   border: 2px dashed rgba(56, 189, 248, 0.3);
   border-radius: 12px;
   padding: 20px 10px;
-  /* Comfortably sized */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-top: 5px;
+  margin-top: 10px;
+  margin-bottom: 15px;
   position: relative;
 }
 
@@ -272,40 +213,27 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
 .btn-new-set {
   box-sizing: border-box;
-  padding: 8px;
+  padding: 10px 12px;
   background: rgba(56, 189, 248, 0.1);
   border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: 6px;
   color: #38bdf8;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  font-family: inherit;
 }
 
 .btn-new-set:hover:not(:disabled) {
   background: rgba(56, 189, 248, 0.2);
   border-color: #38bdf8;
-}
-
-/* Detail Panel (Library) */
-.detail-panel {
-  flex: 1;
-  margin-left: 160px;
-  margin-top: 20px;
-  margin-right: 85px;
-  margin-bottom: 20px;
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
 }
 
 /* Library Panel Specifics */
@@ -372,6 +300,7 @@
   padding: 12px 16px;
   color: #f1f5f9;
   font-size: 1.1rem;
+  font-family: inherit;
   outline: none;
   transition: border-color 0.2s;
 }
@@ -537,6 +466,7 @@
   color: white;
   font-size: 0.9rem;
   width: 100%;
+  font-family: inherit;
 }
 
 .edit-actions {
@@ -553,6 +483,7 @@
   font-weight: 700;
   cursor: pointer;
   border: none;
+  font-family: inherit;
 }
 
 .btn-save {

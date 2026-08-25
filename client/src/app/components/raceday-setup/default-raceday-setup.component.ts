@@ -6,7 +6,7 @@ import {
   moveItemInArray,
   ɵɵCdkScrollable,
 } from "@angular/cdk/drag-drop";
-import { NgClass } from "@angular/common";
+import { DecimalPipe, NgClass } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -31,7 +31,11 @@ import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
-import { Season } from "@app/models/season";
+import {
+  Season,
+  SeasonStandingDetail,
+  SeasonStandingItem,
+} from "@app/models/season";
 import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -66,6 +70,7 @@ type Participant = Driver | Team;
     CdkDrag,
     FormsModule,
     NgClass,
+    DecimalPipe,
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
     DemoConfigModalComponent,
@@ -136,6 +141,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   // Season State
   seasons: Season[] = [];
   selectedSeason?: Season;
+  seasonStandings: SeasonStandingItem[] = [];
 
   // Race State Additions
   isRaceRunning: boolean = false;
@@ -260,6 +266,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           );
           if (matchedSeason) {
             this.selectedSeason = matchedSeason;
+            this.calculateSeasonStandings();
           }
         }
 
@@ -1524,12 +1531,100 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   onSeasonChange() {
+    this.calculateSeasonStandings();
     this.saveSettings();
   }
 
   selectSeason(season?: Season) {
     this.selectedSeason = season;
+    this.calculateSeasonStandings();
     this.saveSettings();
+  }
+
+  calculateSeasonStandings(): void {
+    if (
+      !this.selectedSeason ||
+      !this.selectedSeason.races ||
+      this.selectedSeason.races.length === 0
+    ) {
+      this.seasonStandings = [];
+      return;
+    }
+
+    const season = this.selectedSeason;
+    const racesCopy = [...(season.races || [])].sort(
+      (a, b) => (a.timestamp || 0) - (b.timestamp || 0),
+    );
+
+    const driverMap = new Map<
+      string,
+      { driver_name: string; scores: SeasonStandingDetail[] }
+    >();
+
+    for (const race of racesCopy) {
+      if (!race.driver_results) continue;
+      for (const res of race.driver_results) {
+        let entry = driverMap.get(res.driver_id);
+        if (!entry) {
+          entry = { driver_name: res.driver_name, scores: [] };
+          driverMap.set(res.driver_id, entry);
+        }
+        entry.scores.push({
+          race_id: race.race_id,
+          race_name: race.race_name,
+          overall_rank: res.overall_rank,
+          overall_points: res.overall_points,
+          heat_points: res.heat_points,
+          total_points: res.total_points,
+          is_dropped: false,
+        });
+      }
+    }
+
+    const result: SeasonStandingItem[] = [];
+
+    driverMap.forEach((entry, driverId) => {
+      const scores = entry.scores;
+      const drops = season.drops || 0;
+      const racesRun = scores.length;
+
+      if (racesRun > drops && drops > 0) {
+        const sortedIndices = scores
+          .map((s, idx) => ({ total: s.total_points, idx }))
+          .sort((a, b) => a.total - b.total);
+
+        for (let i = 0; i < drops; i++) {
+          scores[sortedIndices[i].idx].is_dropped = true;
+        }
+      }
+
+      let net = 0;
+      let gross = 0;
+      for (const s of scores) {
+        gross += s.total_points;
+        if (!s.is_dropped) {
+          net += s.total_points;
+        }
+      }
+
+      result.push({
+        driver_id: driverId,
+        driver_name: entry.driver_name,
+        net_points: net,
+        gross_points: gross,
+        races_run: racesRun,
+        race_scores: scores,
+      });
+    });
+
+    result.sort((a, b) => {
+      if (b.net_points !== a.net_points) return b.net_points - a.net_points;
+      if (b.gross_points !== a.gross_points)
+        return b.gross_points - a.gross_points;
+      return b.races_run - a.races_run;
+    });
+
+    this.seasonStandings = result;
   }
 
   compareSeasons(s1?: Season, s2?: Season): boolean {

@@ -819,6 +819,7 @@
   "RDS_SEARCH_RACES": "CERCA GARE",
   "RDS_SEASON_LABEL": "Stagione",
   "RDS_SEASON_NONE": "Nessuna (Senza Stagione)",
+  "RDS_NO_SEASON_SELECTED": "Nessuna stagione selezionata",
   "RDS_SEASON_SELECT": "Selezione Stagione",
   "RDS_SECTION_ALL_RACES": "Tutte le Gare",
   "RDS_SECTION_AVAILABLE": "Disponibile",

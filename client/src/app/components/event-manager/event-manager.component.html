@@ -7,12 +7,7 @@
 >
 </app-confirmation-modal>
 
-<div
-  class="page-container"
-  [style.transform]="
-    'translate(-50%, -50%) scale(' + scaleX + ', ' + scaleY + ')'
-  "
->
+<div class="page-container">
   <app-manager-header
     [title]="'EM_TITLE'"
     [showActions]="true"
@@ -57,75 +52,81 @@
         </div>
       </div>
 
-      @if (selectedEvent) {
-        <div class="detail-panel">
-          <div class="detail-header">
-            <h2 id="event-detail-name">{{ selectedEvent.name }}</h2>
-          </div>
-          <div class="detail-content">
-            <div class="summary-section">
-              <div class="summary-grid">
-                <div id="event-detail-description" class="summary-item">
-                  <span class="summary-label"
-                    >{{ "EE_LABEL_DESCRIPTION" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    selectedEvent.description || "N/A"
-                  }}</span>
+      <div class="rhs-wrapper">
+        @if (selectedEvent) {
+          <div class="detail-panel">
+            <div class="detail-header">
+              <h2 id="event-detail-name">{{ selectedEvent.name }}</h2>
+            </div>
+            <div class="detail-content">
+              <div class="summary-section">
+                <div id="summary-general" class="summary-grid">
+                  <div id="event-detail-description" class="summary-item">
+                    <span class="summary-label"
+                      >{{ "EE_LABEL_DESCRIPTION" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      selectedEvent.description || "N/A"
+                    }}</span>
+                  </div>
+                  <div id="event-detail-auto-advance" class="summary-item">
+                    <span class="summary-label"
+                      >{{ "EE_LABEL_AUTO_ADVANCE" | translate }}:</span
+                    >
+                    <span class="summary-value">
+                      {{ selectedEvent.auto_advance_time || 0 }}s
+                    </span>
+                  </div>
                 </div>
-                <div id="event-detail-auto-advance" class="summary-item">
-                  <span class="summary-label"
-                    >{{ "EE_LABEL_AUTO_ADVANCE" | translate }}:</span
-                  >
-                  <span class="summary-value">
-                    {{ selectedEvent.auto_advance_time || 0 }}s
-                  </span>
-                </div>
-              </div>
 
-              <div id="event-detail-races" class="section-title">
-                <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
+                <div id="summary-races">
+                  <div id="event-detail-races" class="section-title">
+                    <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
+                  </div>
+                  <table class="race-sequence-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Race Name</th>
+                        <th>{{ "RM_LABEL_FINISH_METHOD" | translate }}</th>
+                        <th>{{ "RM_LABEL_FINISH_VALUE" | translate }}</th>
+                        <th>{{ "EE_LABEL_MAX_DRIVERS" | translate }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (
+                        item of selectedEvent.races;
+                        track item;
+                        let idx = $index
+                      ) {
+                        <tr>
+                          <td>{{ idx + 1 }}</td>
+                          <td>{{ getRaceName(getItemRaceId(item)) }}</td>
+                          <td>
+                            {{ getRaceFinishMethod(getItemRaceId(item)) }}
+                          </td>
+                          <td>{{ getRaceFinishValue(getItemRaceId(item)) }}</td>
+                          <td>
+                            @if (getItemMaxDrivers(item) > 0) {
+                              {{ getItemMaxDrivers(item) }}
+                            } @else {
+                              {{ "EE_UNLIMITED" | translate }}
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               </div>
-              <table class="race-sequence-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Race Name</th>
-                    <th>{{ "RM_LABEL_FINISH_METHOD" | translate }}</th>
-                    <th>{{ "RM_LABEL_FINISH_VALUE" | translate }}</th>
-                    <th>{{ "EE_LABEL_MAX_DRIVERS" | translate }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (
-                    item of selectedEvent.races;
-                    track item;
-                    let idx = $index
-                  ) {
-                    <tr>
-                      <td>{{ idx + 1 }}</td>
-                      <td>{{ getRaceName(getItemRaceId(item)) }}</td>
-                      <td>{{ getRaceFinishMethod(getItemRaceId(item)) }}</td>
-                      <td>{{ getRaceFinishValue(getItemRaceId(item)) }}</td>
-                      <td>
-                        @if (getItemMaxDrivers(item) > 0) {
-                          {{ getItemMaxDrivers(item) }}
-                        } @else {
-                          {{ "EE_UNLIMITED" | translate }}
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
             </div>
           </div>
-        </div>
-      } @else {
-        <div class="detail-panel empty-selection">
-          <p>{{ "EM_SELECT_EVENT" | translate }}</p>
-        </div>
-      }
+        } @else {
+          <div class="detail-panel empty-selection">
+            <p>{{ "EM_SELECT_EVENT" | translate }}</p>
+          </div>
+        }
+      </div>
     </div>
   }
 </div>

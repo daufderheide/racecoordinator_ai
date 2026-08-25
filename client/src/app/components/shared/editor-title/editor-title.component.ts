@@ -47,8 +47,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   disabledImport = input(false);
   disabledImportRc1 = input(false);
   disabledExport = input(false);
-  marginTop = input<number>(60);
-  marginBottom = input<number>(40);
+  marginTop = input<number>(0);
+  marginBottom = input<number>(0);
   isSaving = input(false);
   helpSteps = input<GuideStep[]>([]);
   helpTitle = input("");

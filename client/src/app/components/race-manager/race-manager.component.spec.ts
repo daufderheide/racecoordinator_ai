@@ -479,5 +479,34 @@ describe("RaceManagerComponent", () => {
       const steps = component.getHelpSteps();
       expect(steps.length).toBe(3);
     });
+
+    describe("detailTabs and scrollToSection", () => {
+      it("should return empty array if no race is selected", () => {
+        component.selectedRace = undefined;
+        expect(component.detailTabs).toEqual([]);
+      });
+
+      it("should return tabs for Summary and Heats when a race is selected", () => {
+        component.selectedRace = { name: "Test Race" };
+        const tabs = component.detailTabs;
+        expect(tabs.length).toBe(2);
+        expect(tabs[0].id).toBe("summary-general");
+        expect(tabs[1].id).toBe("summary-heats");
+      });
+
+      it("should expand summary section on scrollToSection with summary-general", fakeAsync(() => {
+        component.isSummaryExpanded = false;
+        component.scrollToSection("summary-general");
+        expect(component.isSummaryExpanded).toBeTrue();
+        tick(50);
+      }));
+
+      it("should expand heat list section on scrollToSection with summary-heats", fakeAsync(() => {
+        component.isHeatListExpanded = false;
+        component.scrollToSection("summary-heats");
+        expect(component.isHeatListExpanded).toBeTrue();
+        tick(50);
+      }));
+    });
   });
 });

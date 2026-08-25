@@ -4,6 +4,8 @@
   height: 100%;
 }
 
+@import '../shared-interface-config.css';
+
 .arduino-config-container {
   display: flex;
   flex-direction: column;
@@ -29,30 +31,7 @@
   letter-spacing: 1px;
 }
 
-.config-top-section {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  margin-bottom: 30px;
-}
 
-.board-controls {
-  width: 250px;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.right-controls {
-  width: 250px;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
 
 .control-group {
   display: flex;
@@ -90,12 +69,7 @@
   border-color: #38bdf8;
 }
 
-.com-port-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-}
+
 
 .status-badge {
   display: flex;
