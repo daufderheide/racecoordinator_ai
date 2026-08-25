@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.33] - 2026-08-25
+
+### 🚀 New Features
+
+- **ui**: comprehensive modern UI rework for all config screens ([19fe4508](https://github.com/daufderheide/racecoordinator_ai/commit/19fe4508))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.32...v1.0.0-beta.33">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.32] - 2026-08-25
 
 ### 🚀 New Features
