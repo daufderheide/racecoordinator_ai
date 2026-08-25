@@ -42,4 +42,18 @@ test.describe("Editor Tabs Component Visuals", () => {
     await tabs.waitFor({ state: "visible" });
     await expect(tabs).toHaveScreenshot("editor-tabs-track-editor.png");
   });
+
+  test("should display wrapped editor tabs in race editor", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+
+    const tabs = page.locator("app-editor-tabs");
+    await tabs.waitFor({ state: "visible" });
+    await expect(tabs).toHaveScreenshot("editor-tabs-race-editor.png");
+  });
 });

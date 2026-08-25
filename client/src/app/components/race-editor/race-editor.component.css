@@ -393,12 +393,14 @@
 /* RHS Wrapper & Preview Panel */
 .rhs-wrapper {
   flex: 1;
+  min-width: 0;
   margin: 0;
   position: relative;
   display: flex;
   flex-direction: column;
   border-left: 1px solid rgba(56, 189, 248, 0.3);
   box-shadow: inset 15px 0 15px -15px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
 }
 
 .preview-panel {
