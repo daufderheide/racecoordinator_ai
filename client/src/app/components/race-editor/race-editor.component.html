@@ -302,199 +302,122 @@
                 </div>
               }
             </div>
-            <!-- Start Method Section -->
-            <div id="start-method-section" class="config-section">
-              <div
-                class="section-header"
-                (click)="toggleSection('start_method')"
-              >
+
+            <!-- Heats Section -->
+            <div id="heats-section" class="config-section">
+              <div class="section-header" (click)="toggleSection('heats')">
                 <span
                   class="expander-icon"
-                  [class.collapsed]="!sectionsExpanded.start_method"
+                  [class.collapsed]="!sectionsExpanded.heats"
                   >▼</span
                 >
-                <h1>{{ "RE_START_METHOD_HEADER" | translate }}</h1>
+                <h1>{{ "RE_HEATS_HEADER" | translate }}</h1>
               </div>
-              @if (sectionsExpanded.start_method) {
+              @if (sectionsExpanded.heats) {
                 <div class="section-content">
                   <div class="config-row">
-                    <div class="editor-section">
-                      <label>
-                        {{ "RE_START_TIME" | translate }}
-                      </label>
+                    <div class="config-section">
+                      <label>{{ "RE_AUTO_ADVANCE_TIME" | translate }}</label>
                       <input
-                        id="start-time-input"
+                        id="auto-advance-time-input"
+                        class="auto-advance-time-input"
+                        data-testid="auto-advance-time-input"
                         type="number"
-                        [(ngModel)]="editingRace.start_time"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="0.1"
-                        placeholder="5.0"
-                        class="start-time-input"
-                        data-testid="start-time-input"
-                      />
-                    </div>
-                    <div class="editor-section">
-                      <label>
-                        {{ "RE_RESTART_TIME" | translate }}
-                      </label>
-                      <input
-                        id="restart-time-input"
-                        type="number"
-                        [(ngModel)]="editingRace.restart_time"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="0.1"
-                        placeholder="5.0"
-                        class="restart-time-input"
-                        data-testid="restart-time-input"
-                      />
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="editor-section">
-                      <label>
-                        {{ "RE_START_RANDOMIZER" | translate }}
-                      </label>
-                      <input
-                        id="start-randomizer-input"
-                        type="number"
-                        [(ngModel)]="editingRace.start_randomizer"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="0.1"
-                        placeholder="0.0"
-                        class="start-randomizer-input"
-                        data-testid="start-randomizer-input"
-                      />
-                    </div>
-                    <div class="editor-section">
-                      <label>
-                        {{ "RE_RESTART_RANDOMIZER" | translate }}
-                      </label>
-                      <input
-                        id="restart-randomizer-input"
-                        type="number"
-                        [(ngModel)]="editingRace.restart_randomizer"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="0.1"
-                        placeholder="0.0"
-                        class="restart-randomizer-input"
-                        data-testid="restart-randomizer-input"
-                      />
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="config-section checkbox-section">
-                      <label
-                        id="start-behind-sensor-input"
-                        class="checkbox-container"
-                      >
-                        <input
-                          type="checkbox"
-                          [(ngModel)]="editingRace.start_behind_sensor"
-                          (ngModelChange)="captureState()"
-                          class="start-behind-sensor-input"
-                          data-testid="start-behind-sensor-input"
-                        />
-                        <span class="checkmark"></span>
-                        <span class="checkbox-label">
-                          {{ "RE_START_BEHIND_SENSOR" | translate }}
-                        </span>
-                      </label>
-                    </div>
-                    <div class="config-section checkbox-section">
-                      <label
-                        id="start-at-current-input"
-                        class="checkbox-container"
-                      >
-                        <input
-                          type="checkbox"
-                          [(ngModel)]="editingRace.start_at_current"
-                          (ngModelChange)="captureState()"
-                          class="start-at-current-input"
-                          data-testid="start-at-current-input"
-                        />
-                        <span class="checkmark"></span>
-                        <span class="checkbox-label">
-                          {{ "RE_START_AT_CURRENT" | translate }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="config-section checkbox-section">
-                      <label id="hot-start-input" class="checkbox-container">
-                        <input
-                          type="checkbox"
-                          [(ngModel)]="editingRace.hot_start"
-                          (ngModelChange)="captureState()"
-                          class="hot-start-input"
-                          data-testid="hot-start-input"
-                        />
-                        <span class="checkmark"></span>
-                        <span class="checkbox-label">
-                          {{ "RE_HOT_START" | translate }}
-                        </span>
-                      </label>
-                    </div>
-                    <div class="config-section checkbox-section">
-                      <label
-                        id="restart-on-false-start-input"
-                        class="checkbox-container"
-                      >
-                        <input
-                          type="checkbox"
-                          [(ngModel)]="editingRace.restart_on_false_start"
-                          (ngModelChange)="captureState()"
-                          class="restart-on-false-start-input"
-                          data-testid="restart-on-false-start-input"
-                        />
-                        <span class="checkmark"></span>
-                        <span class="checkbox-label">
-                          {{ "RE_RESTART_ON_FALSE_START" | translate }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="editor-section">
-                      <label>
-                        {{ "RE_FALSE_START_LAP_PENALTY" | translate }}
-                      </label>
-                      <input
-                        id="false-start-lap-penalty-input"
-                        type="number"
-                        [(ngModel)]="editingRace.false_start_lap_penalty"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="0.1"
-                        placeholder="0.0"
-                        class="false-start-lap-penalty-input"
-                        data-testid="false-start-lap-penalty-input"
-                      />
-                    </div>
-                    <div class="editor-section">
-                      <label>
-                        {{ "RE_FALSE_START_TIME_PENALTY" | translate }}
-                      </label>
-                      <input
-                        id="false-start-time-penalty-input"
-                        type="number"
-                        [(ngModel)]="editingRace.false_start_time_penalty"
+                        [(ngModel)]="editingRace.auto_advance_time"
                         (ngModelChange)="captureState()"
                         min="0"
                         step="1"
-                        placeholder="0"
-                        class="false-start-time-penalty-input"
-                        data-testid="false-start-time-penalty-input"
                       />
+                    </div>
+                    <div class="config-section">
+                      <label>
+                        {{ "RE_AUTO_ADVANCE_WARMUP_TIME" | translate }}
+                      </label>
+                      <input
+                        id="auto-advance-warmup-time-input"
+                        class="auto-advance-warmup-time-input"
+                        data-testid="auto-advance-warmup-time-input"
+                        type="number"
+                        [(ngModel)]="editingRace.auto_advance_warmup_time"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [max]="editingRace.auto_advance_time || 0"
+                        step="1"
+                      />
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section">
+                      <label>{{ "RE_AUTO_START_TIME" | translate }}</label>
+                      <input
+                        id="auto-start-time-input"
+                        class="auto-start-time-input"
+                        data-testid="auto-start-time-input"
+                        type="number"
+                        [(ngModel)]="editingRace.auto_start_time"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="1"
+                      />
+                    </div>
+                    <div class="config-section">
+                      <label>
+                        {{ "RE_AUTO_START_WARMUP_TIME" | translate }}
+                      </label>
+                      <input
+                        id="auto-start-warmup-time-input"
+                        class="auto-start-warmup-time-input"
+                        data-testid="auto-start-warmup-time-input"
+                        type="number"
+                        [(ngModel)]="editingRace.auto_start_warmup_time"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        [max]="editingRace.auto_start_time || 0"
+                        step="1"
+                      />
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section">
+                      <label>
+                        {{ "RE_HEAT_TIMES_THROUGH" | translate }}
+                      </label>
+                      <input
+                        id="heat-times-through-input"
+                        class="heat-times-through-input"
+                        data-testid="heat-times-through-input"
+                        type="number"
+                        [(ngModel)]="editingRace.heat_times_through"
+                        (ngModelChange)="captureState()"
+                        min="1"
+                        max="100"
+                        step="1"
+                      />
+                    </div>
+                    <div class="config-section checkbox-section">
+                      <label
+                        id="reverse-heats-input"
+                        class="checkbox-container"
+                      >
+                        <input
+                          id="reverse-heats-checkbox"
+                          type="checkbox"
+                          [(ngModel)]="editingRace.reverse_heats"
+                          (ngModelChange)="captureState()"
+                          class="reverse-heats-input"
+                          data-testid="reverse-heats-input"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_REVERSE_HEATS" | translate }}
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
               }
             </div>
+
             <!-- Scoring Section -->
             <div id="scoring-section" class="config-section">
               <div class="section-header" (click)="toggleSection('scoring')">
@@ -688,463 +611,6 @@
               }
             </div>
 
-            <!-- Season Points Section -->
-            <div id="season-points-section" class="config-section">
-              <div
-                class="section-header"
-                (click)="toggleSection('season_points')"
-              >
-                <span
-                  class="expander-icon"
-                  [class.collapsed]="!sectionsExpanded.season_points"
-                  >▼</span
-                >
-                <h1>{{ "SS_TITLE" | translate }}</h1>
-              </div>
-              @if (sectionsExpanded.season_points) {
-                <div class="section-content">
-                  <div class="scoring-layout">
-                    <!-- Overall Position Points -->
-                    <div
-                      id="season-position-points-section"
-                      class="scoring-column"
-                    >
-                      <h2 class="config-header">
-                        {{ "SS_POSITION_POINTS" | translate }}
-                      </h2>
-                      @if (editingRace.season_scoring) {
-                        <div class="config-section">
-                          <div
-                            #seasonPositionPointsList
-                            class="season-points-list"
-                            [class.two-columns]="
-                              (editingRace.season_scoring.position_points
-                                ?.length || 0) > 4
-                            "
-                          >
-                            @for (
-                              pts of editingRace.season_scoring.position_points;
-                              track $index;
-                              let idx = $index
-                            ) {
-                              <div class="season-point-row">
-                                <span class="season-pos-label"
-                                  >#{{ idx + 1 }}:</span
-                                >
-                                <input
-                                  type="number"
-                                  [(ngModel)]="
-                                    editingRace.season_scoring.position_points[
-                                      idx
-                                    ]
-                                  "
-                                  (ngModelChange)="captureState()"
-                                  min="0"
-                                  class="season-point-input"
-                                />
-                                <button
-                                  type="button"
-                                  class="btn-remove-pos"
-                                  (click)="removeSeasonPositionPoint(idx)"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            }
-                          </div>
-                          <button
-                            id="season-add-pos-btn"
-                            data-testid="season-add-pos-btn"
-                            type="button"
-                            class="btn-add-pos"
-                            (click)="addSeasonPositionPoint()"
-                          >
-                            {{ "SS_ADD_POS" | translate }}
-                          </button>
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Heat Position Points -->
-                    <div
-                      id="season-heat-position-points-section"
-                      class="scoring-column"
-                    >
-                      <h2 class="config-header">
-                        {{ "SS_HEAT_POSITION_POINTS" | translate }}
-                      </h2>
-                      @if (editingRace.season_scoring) {
-                        <div class="config-section">
-                          <div
-                            class="season-points-list"
-                            [class.two-columns]="
-                              (editingRace.season_scoring.heat_position_points
-                                ?.length || 0) > 4
-                            "
-                          >
-                            @for (
-                              hpts of editingRace.season_scoring
-                                .heat_position_points;
-                              track $index;
-                              let lidx = $index
-                            ) {
-                              <div class="season-point-row">
-                                <span class="season-pos-label"
-                                  >Lane {{ lidx + 1 }}:</span
-                                >
-                                <input
-                                  type="number"
-                                  [(ngModel)]="
-                                    editingRace.season_scoring
-                                      .heat_position_points[lidx]
-                                  "
-                                  (ngModelChange)="captureState()"
-                                  min="0"
-                                  class="season-point-input"
-                                />
-                              </div>
-                            }
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  </div>
-
-                  <!-- Bonuses Layout -->
-                  <div class="scoring-layout">
-                    <!-- Overall Bonuses -->
-                    <div
-                      id="season-overall-bonuses-section"
-                      class="scoring-column"
-                    >
-                      <h2 class="config-header">
-                        {{ "SS_OVERALL_BONUSES" | translate }}
-                      </h2>
-                      @if (editingRace.season_scoring) {
-                        <div class="editor-section">
-                          <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
-                          <input
-                            id="season-overall-carry-over-input"
-                            class="season-overall-carry-over-input"
-                            data-testid="season-overall-carry-over-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring.overall_carry_over_pct
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                            max="100"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{
-                            "SS_BONUS_FASTEST_LAP" | translate
-                          }}</label>
-                          <input
-                            id="season-overall-fastest-lap-input"
-                            class="season-overall-fastest-lap-input"
-                            data-testid="season-overall-fastest-lap-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring
-                                .overall_bonus_fastest_lap
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{
-                            "SS_BONUS_FASTEST_LAP_LANE" | translate
-                          }}</label>
-                          <input
-                            id="season-overall-fastest-lap-lane-input"
-                            class="season-overall-fastest-lap-lane-input"
-                            data-testid="season-overall-fastest-lap-lane-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring
-                                .overall_bonus_fastest_lap_per_lane
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{
-                            "SS_BONUS_MOST_LAPS_LED" | translate
-                          }}</label>
-                          <input
-                            id="season-overall-most-laps-led-input"
-                            class="season-overall-most-laps-led-input"
-                            data-testid="season-overall-most-laps-led-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring
-                                .overall_bonus_most_laps_led
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
-                          <input
-                            id="season-overall-led-lap-input"
-                            class="season-overall-led-lap-input"
-                            data-testid="season-overall-led-lap-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring.overall_bonus_led_lap
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div
-                          class="config-section checkbox-section"
-                          style="margin-top: 8px; margin-bottom: 0"
-                        >
-                          <label
-                            id="season-overall-one-bonus-input"
-                            class="checkbox-container"
-                          >
-                            <input
-                              type="checkbox"
-                              id="overall_one_bonus"
-                              [(ngModel)]="
-                                editingRace.season_scoring
-                                  .overall_one_bonus_per_driver
-                              "
-                              (ngModelChange)="captureState()"
-                              class="season-overall-one-bonus-input"
-                              data-testid="season-overall-one-bonus-input"
-                            />
-                            <span class="checkmark"></span>
-                            <span class="checkbox-label">{{
-                              "SS_ONE_BONUS_PER_DRIVER" | translate
-                            }}</span>
-                          </label>
-                        </div>
-                      }
-                    </div>
-
-                    <!-- Heat Bonuses -->
-                    <div
-                      id="season-heat-bonuses-section"
-                      class="scoring-column"
-                    >
-                      <h2 class="config-header">
-                        {{ "SS_HEAT_BONUSES" | translate }}
-                      </h2>
-                      @if (editingRace.season_scoring) {
-                        <div class="editor-section">
-                          <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
-                          <input
-                            id="season-heat-carry-over-input"
-                            class="season-heat-carry-over-input"
-                            data-testid="season-heat-carry-over-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring.heat_carry_over_pct
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                            max="100"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{
-                            "SS_BONUS_FASTEST_LAP" | translate
-                          }}</label>
-                          <input
-                            id="season-heat-fastest-lap-input"
-                            class="season-heat-fastest-lap-input"
-                            data-testid="season-heat-fastest-lap-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring.heat_bonus_fastest_lap
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{
-                            "SS_BONUS_MOST_LAPS_LED" | translate
-                          }}</label>
-                          <input
-                            id="season-heat-most-laps-led-input"
-                            class="season-heat-most-laps-led-input"
-                            data-testid="season-heat-most-laps-led-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring
-                                .heat_bonus_most_laps_led
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div class="editor-section">
-                          <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
-                          <input
-                            id="season-heat-led-lap-input"
-                            class="season-heat-led-lap-input"
-                            data-testid="season-heat-led-lap-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.season_scoring.heat_bonus_led_lap
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                          />
-                        </div>
-                        <div
-                          class="config-section checkbox-section"
-                          style="margin-top: 8px; margin-bottom: 0"
-                        >
-                          <label
-                            id="season-heat-one-bonus-input"
-                            class="checkbox-container"
-                          >
-                            <input
-                              type="checkbox"
-                              id="heat_one_bonus"
-                              [(ngModel)]="
-                                editingRace.season_scoring
-                                  .heat_one_bonus_per_driver
-                              "
-                              (ngModelChange)="captureState()"
-                              class="season-heat-one-bonus-input"
-                              data-testid="season-heat-one-bonus-input"
-                            />
-                            <span class="checkmark"></span>
-                            <span class="checkbox-label">{{
-                              "SS_ONE_BONUS_PER_DRIVER" | translate
-                            }}</span>
-                          </label>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-            <!-- Heats Section -->
-            <div id="heats-section" class="config-section">
-              <div class="section-header" (click)="toggleSection('heats')">
-                <span
-                  class="expander-icon"
-                  [class.collapsed]="!sectionsExpanded.heats"
-                  >▼</span
-                >
-                <h1>{{ "RE_HEATS_HEADER" | translate }}</h1>
-              </div>
-              @if (sectionsExpanded.heats) {
-                <div class="section-content">
-                  <div class="config-row">
-                    <div class="config-section">
-                      <label>{{ "RE_AUTO_ADVANCE_TIME" | translate }}</label>
-                      <input
-                        id="auto-advance-time-input"
-                        class="auto-advance-time-input"
-                        data-testid="auto-advance-time-input"
-                        type="number"
-                        [(ngModel)]="editingRace.auto_advance_time"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="1"
-                      />
-                    </div>
-                    <div class="config-section">
-                      <label>
-                        {{ "RE_AUTO_ADVANCE_WARMUP_TIME" | translate }}
-                      </label>
-                      <input
-                        id="auto-advance-warmup-time-input"
-                        class="auto-advance-warmup-time-input"
-                        data-testid="auto-advance-warmup-time-input"
-                        type="number"
-                        [(ngModel)]="editingRace.auto_advance_warmup_time"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        [max]="editingRace.auto_advance_time || 0"
-                        step="1"
-                      />
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="config-section">
-                      <label>{{ "RE_AUTO_START_TIME" | translate }}</label>
-                      <input
-                        id="auto-start-time-input"
-                        class="auto-start-time-input"
-                        data-testid="auto-start-time-input"
-                        type="number"
-                        [(ngModel)]="editingRace.auto_start_time"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="1"
-                      />
-                    </div>
-                    <div class="config-section">
-                      <label>
-                        {{ "RE_AUTO_START_WARMUP_TIME" | translate }}
-                      </label>
-                      <input
-                        id="auto-start-warmup-time-input"
-                        class="auto-start-warmup-time-input"
-                        data-testid="auto-start-warmup-time-input"
-                        type="number"
-                        [(ngModel)]="editingRace.auto_start_warmup_time"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        [max]="editingRace.auto_start_time || 0"
-                        step="1"
-                      />
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="config-section">
-                      <label>
-                        {{ "RE_HEAT_TIMES_THROUGH" | translate }}
-                      </label>
-                      <input
-                        id="heat-times-through-input"
-                        class="heat-times-through-input"
-                        data-testid="heat-times-through-input"
-                        type="number"
-                        [(ngModel)]="editingRace.heat_times_through"
-                        (ngModelChange)="captureState()"
-                        min="1"
-                        max="100"
-                        step="1"
-                      />
-                    </div>
-                    <div class="config-section checkbox-section">
-                      <label
-                        id="reverse-heats-input"
-                        class="checkbox-container"
-                      >
-                        <input
-                          id="reverse-heats-checkbox"
-                          type="checkbox"
-                          [(ngModel)]="editingRace.reverse_heats"
-                          (ngModelChange)="captureState()"
-                          class="reverse-heats-input"
-                          data-testid="reverse-heats-input"
-                        />
-                        <span class="checkmark"></span>
-                        <span class="checkbox-label">
-                          {{ "RE_REVERSE_HEATS" | translate }}
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
             <!-- Group Section -->
             <div id="group-section" class="config-section">
               <div class="section-header" (click)="toggleSection('groups')">
@@ -1383,6 +849,317 @@
                 </div>
               }
             </div>
+
+            <!-- Start Method Section -->
+            <div id="start-method-section" class="config-section">
+              <div
+                class="section-header"
+                (click)="toggleSection('start_method')"
+              >
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.start_method"
+                  >▼</span
+                >
+                <h1>{{ "RE_START_METHOD_HEADER" | translate }}</h1>
+              </div>
+              @if (sectionsExpanded.start_method) {
+                <div class="section-content">
+                  <div class="config-row">
+                    <div class="editor-section">
+                      <label>
+                        {{ "RE_START_TIME" | translate }}
+                      </label>
+                      <input
+                        id="start-time-input"
+                        type="number"
+                        [(ngModel)]="editingRace.start_time"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="0.1"
+                        placeholder="5.0"
+                        class="start-time-input"
+                        data-testid="start-time-input"
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>
+                        {{ "RE_RESTART_TIME" | translate }}
+                      </label>
+                      <input
+                        id="restart-time-input"
+                        type="number"
+                        [(ngModel)]="editingRace.restart_time"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="0.1"
+                        placeholder="5.0"
+                        class="restart-time-input"
+                        data-testid="restart-time-input"
+                      />
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="editor-section">
+                      <label>
+                        {{ "RE_START_RANDOMIZER" | translate }}
+                      </label>
+                      <input
+                        id="start-randomizer-input"
+                        type="number"
+                        [(ngModel)]="editingRace.start_randomizer"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="0.1"
+                        placeholder="0.0"
+                        class="start-randomizer-input"
+                        data-testid="start-randomizer-input"
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>
+                        {{ "RE_RESTART_RANDOMIZER" | translate }}
+                      </label>
+                      <input
+                        id="restart-randomizer-input"
+                        type="number"
+                        [(ngModel)]="editingRace.restart_randomizer"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="0.1"
+                        placeholder="0.0"
+                        class="restart-randomizer-input"
+                        data-testid="restart-randomizer-input"
+                      />
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section checkbox-section">
+                      <label
+                        id="start-behind-sensor-input"
+                        class="checkbox-container"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.start_behind_sensor"
+                          (ngModelChange)="captureState()"
+                          class="start-behind-sensor-input"
+                          data-testid="start-behind-sensor-input"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_START_BEHIND_SENSOR" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                    <div class="config-section checkbox-section">
+                      <label
+                        id="start-at-current-input"
+                        class="checkbox-container"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.start_at_current"
+                          (ngModelChange)="captureState()"
+                          class="start-at-current-input"
+                          data-testid="start-at-current-input"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_START_AT_CURRENT" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section checkbox-section">
+                      <label id="hot-start-input" class="checkbox-container">
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.hot_start"
+                          (ngModelChange)="captureState()"
+                          class="hot-start-input"
+                          data-testid="hot-start-input"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_HOT_START" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                    <div class="config-section checkbox-section">
+                      <label
+                        id="restart-on-false-start-input"
+                        class="checkbox-container"
+                      >
+                        <input
+                          type="checkbox"
+                          [(ngModel)]="editingRace.restart_on_false_start"
+                          (ngModelChange)="captureState()"
+                          class="restart-on-false-start-input"
+                          data-testid="restart-on-false-start-input"
+                        />
+                        <span class="checkmark"></span>
+                        <span class="checkbox-label">
+                          {{ "RE_RESTART_ON_FALSE_START" | translate }}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="editor-section">
+                      <label>
+                        {{ "RE_FALSE_START_LAP_PENALTY" | translate }}
+                      </label>
+                      <input
+                        id="false-start-lap-penalty-input"
+                        type="number"
+                        [(ngModel)]="editingRace.false_start_lap_penalty"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="0.1"
+                        placeholder="0.0"
+                        class="false-start-lap-penalty-input"
+                        data-testid="false-start-lap-penalty-input"
+                      />
+                    </div>
+                    <div class="editor-section">
+                      <label>
+                        {{ "RE_FALSE_START_TIME_PENALTY" | translate }}
+                      </label>
+                      <input
+                        id="false-start-time-penalty-input"
+                        type="number"
+                        [(ngModel)]="editingRace.false_start_time_penalty"
+                        (ngModelChange)="captureState()"
+                        min="0"
+                        step="1"
+                        placeholder="0"
+                        class="false-start-time-penalty-input"
+                        data-testid="false-start-time-penalty-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Team Options Section -->
+            <div id="team-options-section" class="config-section">
+              <div class="section-header" (click)="toggleSection('team')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.team"
+                  >▼</span
+                >
+                <h1>{{ "RE_TEAM_OPTIONS_HEADER" | translate }}</h1>
+              </div>
+              @if (sectionsExpanded.team) {
+                <div class="section-content">
+                  <div class="scoring-layout">
+                    <div class="scoring-column">
+                      <div
+                        class="config-section checkbox-section"
+                        style="margin-bottom: 15px"
+                      >
+                        <label
+                          id="team-pit-stop-change-driver-input"
+                          class="checkbox-container"
+                        >
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="
+                              editingRace.team_options
+                                .require_pit_stop_change_driver
+                            "
+                            (ngModelChange)="captureState()"
+                            class="team-pit-stop-change-driver-input"
+                            data-testid="team-pit-stop-change-driver-input"
+                          />
+                          <span class="checkmark"></span>
+                          <span class="checkbox-label">{{
+                            "RE_TEAM_PIT_STOP_CHANGE_DRIVER" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                      <div class="config-row">
+                        <div class="editor-section">
+                          <label>{{
+                            "RE_TEAM_HEAT_LAP_LIMIT" | translate
+                          }}</label>
+                          <input
+                            id="team-heat-lap-limit-input"
+                            class="team-heat-lap-limit-input"
+                            data-testid="team-heat-lap-limit-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.team_options.heat_lap_limit
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div class="editor-section">
+                          <label>{{
+                            "RE_TEAM_HEAT_TIME_LIMIT" | translate
+                          }}</label>
+                          <input
+                            id="team-heat-time-limit-input"
+                            class="team-heat-time-limit-input"
+                            data-testid="team-heat-time-limit-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.team_options.heat_time_limit
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <div class="config-row">
+                        <div class="editor-section">
+                          <label>{{
+                            "RE_TEAM_OVERALL_LAP_LIMIT" | translate
+                          }}</label>
+                          <input
+                            id="team-overall-lap-limit-input"
+                            class="team-overall-lap-limit-input"
+                            data-testid="team-overall-lap-limit-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.team_options.overall_lap_limit
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div class="editor-section">
+                          <label>{{
+                            "RE_TEAM_OVERALL_TIME_LIMIT" | translate
+                          }}</label>
+                          <input
+                            id="team-overall-time-limit-input"
+                            class="team-overall-time-limit-input"
+                            data-testid="team-overall-time-limit-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.team_options.overall_time_limit
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
             <!-- Analog Fuel Section -->
             <div id="analog-fuel-section" class="config-section">
               <div
@@ -1919,6 +1696,7 @@
                 </div>
               }
             </div>
+
             <!-- Digital Fuel Section -->
             <div id="digital-fuel-outer-section" class="config-section">
               <div
@@ -2406,116 +2184,345 @@
                 </div>
               }
             </div>
-            <!-- Team Options Section -->
-            <div id="team-options-section" class="config-section">
-              <div class="section-header" (click)="toggleSection('team')">
+
+            <!-- Season Points Section -->
+            <div id="season-points-section" class="config-section">
+              <div
+                class="section-header"
+                (click)="toggleSection('season_points')"
+              >
                 <span
                   class="expander-icon"
-                  [class.collapsed]="!sectionsExpanded.team"
+                  [class.collapsed]="!sectionsExpanded.season_points"
                   >▼</span
                 >
-                <h1>{{ "RE_TEAM_OPTIONS_HEADER" | translate }}</h1>
+                <h1>{{ "SS_TITLE" | translate }}</h1>
               </div>
-              @if (sectionsExpanded.team) {
+              @if (sectionsExpanded.season_points) {
                 <div class="section-content">
                   <div class="scoring-layout">
-                    <div class="scoring-column">
-                      <div
-                        class="config-section checkbox-section"
-                        style="margin-bottom: 15px"
-                      >
-                        <label
-                          id="team-pit-stop-change-driver-input"
-                          class="checkbox-container"
+                    <!-- Overall Position Points -->
+                    <div
+                      id="season-position-points-section"
+                      class="scoring-column"
+                    >
+                      <h2 class="config-header">
+                        {{ "SS_POSITION_POINTS" | translate }}
+                      </h2>
+                      @if (editingRace.season_scoring) {
+                        <div class="config-section">
+                          <div
+                            #seasonPositionPointsList
+                            class="season-points-list"
+                            [class.two-columns]="
+                              (editingRace.season_scoring.position_points
+                                ?.length || 0) > 4
+                            "
+                          >
+                            @for (
+                              pts of editingRace.season_scoring.position_points;
+                              track $index;
+                              let idx = $index
+                            ) {
+                              <div class="season-point-row">
+                                <span class="season-pos-label"
+                                  >#{{ idx + 1 }}:</span
+                                >
+                                <input
+                                  type="number"
+                                  [(ngModel)]="
+                                    editingRace.season_scoring.position_points[
+                                      idx
+                                    ]
+                                  "
+                                  (ngModelChange)="captureState()"
+                                  min="0"
+                                  class="season-point-input"
+                                />
+                                <button
+                                  type="button"
+                                  class="btn-remove-pos"
+                                  (click)="removeSeasonPositionPoint(idx)"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            }
+                          </div>
+                          <button
+                            id="season-add-pos-btn"
+                            data-testid="season-add-pos-btn"
+                            type="button"
+                            class="btn-add-pos"
+                            (click)="addSeasonPositionPoint()"
+                          >
+                            {{ "SS_ADD_POS" | translate }}
+                          </button>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Heat Position Points -->
+                    <div
+                      id="season-heat-position-points-section"
+                      class="scoring-column"
+                    >
+                      <h2 class="config-header">
+                        {{ "SS_HEAT_POSITION_POINTS" | translate }}
+                      </h2>
+                      @if (editingRace.season_scoring) {
+                        <div class="config-section">
+                          <div
+                            class="season-points-list"
+                            [class.two-columns]="
+                              (editingRace.season_scoring.heat_position_points
+                                ?.length || 0) > 4
+                            "
+                          >
+                            @for (
+                              hpts of editingRace.season_scoring
+                                .heat_position_points;
+                              track $index;
+                              let lidx = $index
+                            ) {
+                              <div class="season-point-row">
+                                <span class="season-pos-label"
+                                  >Lane {{ lidx + 1 }}:</span
+                                >
+                                <input
+                                  type="number"
+                                  [(ngModel)]="
+                                    editingRace.season_scoring
+                                      .heat_position_points[lidx]
+                                  "
+                                  (ngModelChange)="captureState()"
+                                  min="0"
+                                  class="season-point-input"
+                                />
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Bonuses Layout -->
+                  <div class="scoring-layout">
+                    <!-- Overall Bonuses -->
+                    <div
+                      id="season-overall-bonuses-section"
+                      class="scoring-column"
+                    >
+                      <h2 class="config-header">
+                        {{ "SS_OVERALL_BONUSES" | translate }}
+                      </h2>
+                      @if (editingRace.season_scoring) {
+                        <div class="editor-section">
+                          <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
+                          <input
+                            id="season-overall-carry-over-input"
+                            class="season-overall-carry-over-input"
+                            data-testid="season-overall-carry-over-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.season_scoring.overall_carry_over_pct
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            max="100"
+                          />
+                        </div>
+                        <div class="editor-section">
+                          <label>{{
+                            "SS_BONUS_FASTEST_LAP" | translate
+                          }}</label>
+                          <input
+                            id="season-overall-fastest-lap-input"
+                            class="season-overall-fastest-lap-input"
+                            data-testid="season-overall-fastest-lap-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.season_scoring
+                                .overall_bonus_fastest_lap
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                          />
+                        </div>
+                        <div class="editor-section">
+                          <label>{{
+                            "SS_BONUS_FASTEST_LAP_LANE" | translate
+                          }}</label>
+                          <input
+                            id="season-overall-fastest-lap-lane-input"
+                            class="season-overall-fastest-lap-lane-input"
+                            data-testid="season-overall-fastest-lap-lane-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.season_scoring
+                                .overall_bonus_fastest_lap_per_lane
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                          />
+                        </div>
+                        <div class="editor-section">
+                          <label>{{
+                            "SS_BONUS_MOST_LAPS_LED" | translate
+                          }}</label>
+                          <input
+                            id="season-overall-most-laps-led-input"
+                            class="season-overall-most-laps-led-input"
+                            data-testid="season-overall-most-laps-led-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.season_scoring
+                                .overall_bonus_most_laps_led
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                          />
+                        </div>
+                        <div class="editor-section">
+                          <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
+                          <input
+                            id="season-overall-led-lap-input"
+                            class="season-overall-led-lap-input"
+                            data-testid="season-overall-led-lap-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.season_scoring.overall_bonus_led_lap
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                          />
+                        </div>
+                        <div
+                          class="config-section checkbox-section"
+                          style="margin-top: 8px; margin-bottom: 0"
                         >
-                          <input
-                            type="checkbox"
-                            [(ngModel)]="
-                              editingRace.team_options
-                                .require_pit_stop_change_driver
-                            "
-                            (ngModelChange)="captureState()"
-                            class="team-pit-stop-change-driver-input"
-                            data-testid="team-pit-stop-change-driver-input"
-                          />
-                          <span class="checkmark"></span>
-                          <span class="checkbox-label">{{
-                            "RE_TEAM_PIT_STOP_CHANGE_DRIVER" | translate
-                          }}</span>
-                        </label>
-                      </div>
-                      <div class="config-row">
+                          <label
+                            id="season-overall-one-bonus-input"
+                            class="checkbox-container"
+                          >
+                            <input
+                              type="checkbox"
+                              id="overall_one_bonus"
+                              [(ngModel)]="
+                                editingRace.season_scoring
+                                  .overall_one_bonus_per_driver
+                              "
+                              (ngModelChange)="captureState()"
+                              class="season-overall-one-bonus-input"
+                              data-testid="season-overall-one-bonus-input"
+                            />
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">{{
+                              "SS_ONE_BONUS_PER_DRIVER" | translate
+                            }}</span>
+                          </label>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Heat Bonuses -->
+                    <div
+                      id="season-heat-bonuses-section"
+                      class="scoring-column"
+                    >
+                      <h2 class="config-header">
+                        {{ "SS_HEAT_BONUSES" | translate }}
+                      </h2>
+                      @if (editingRace.season_scoring) {
                         <div class="editor-section">
-                          <label>{{
-                            "RE_TEAM_HEAT_LAP_LIMIT" | translate
-                          }}</label>
+                          <label>{{ "SS_CARRY_OVER_PCT" | translate }}</label>
                           <input
-                            id="team-heat-lap-limit-input"
-                            class="team-heat-lap-limit-input"
-                            data-testid="team-heat-lap-limit-input"
+                            id="season-heat-carry-over-input"
+                            class="season-heat-carry-over-input"
+                            data-testid="season-heat-carry-over-input"
                             type="number"
                             [(ngModel)]="
-                              editingRace.team_options.heat_lap_limit
+                              editingRace.season_scoring.heat_carry_over_pct
                             "
                             (ngModelChange)="captureState()"
                             min="0"
-                            placeholder="0"
+                            max="100"
                           />
                         </div>
                         <div class="editor-section">
                           <label>{{
-                            "RE_TEAM_HEAT_TIME_LIMIT" | translate
+                            "SS_BONUS_FASTEST_LAP" | translate
                           }}</label>
                           <input
-                            id="team-heat-time-limit-input"
-                            class="team-heat-time-limit-input"
-                            data-testid="team-heat-time-limit-input"
+                            id="season-heat-fastest-lap-input"
+                            class="season-heat-fastest-lap-input"
+                            data-testid="season-heat-fastest-lap-input"
                             type="number"
                             [(ngModel)]="
-                              editingRace.team_options.heat_time_limit
+                              editingRace.season_scoring.heat_bonus_fastest_lap
                             "
                             (ngModelChange)="captureState()"
                             min="0"
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-                      <div class="config-row">
-                        <div class="editor-section">
-                          <label>{{
-                            "RE_TEAM_OVERALL_LAP_LIMIT" | translate
-                          }}</label>
-                          <input
-                            id="team-overall-lap-limit-input"
-                            class="team-overall-lap-limit-input"
-                            data-testid="team-overall-lap-limit-input"
-                            type="number"
-                            [(ngModel)]="
-                              editingRace.team_options.overall_lap_limit
-                            "
-                            (ngModelChange)="captureState()"
-                            min="0"
-                            placeholder="0"
                           />
                         </div>
                         <div class="editor-section">
                           <label>{{
-                            "RE_TEAM_OVERALL_TIME_LIMIT" | translate
+                            "SS_BONUS_MOST_LAPS_LED" | translate
                           }}</label>
                           <input
-                            id="team-overall-time-limit-input"
-                            class="team-overall-time-limit-input"
-                            data-testid="team-overall-time-limit-input"
+                            id="season-heat-most-laps-led-input"
+                            class="season-heat-most-laps-led-input"
+                            data-testid="season-heat-most-laps-led-input"
                             type="number"
                             [(ngModel)]="
-                              editingRace.team_options.overall_time_limit
+                              editingRace.season_scoring
+                                .heat_bonus_most_laps_led
                             "
                             (ngModelChange)="captureState()"
                             min="0"
-                            placeholder="0"
                           />
                         </div>
-                      </div>
+                        <div class="editor-section">
+                          <label>{{ "SS_BONUS_LED_LAP" | translate }}</label>
+                          <input
+                            id="season-heat-led-lap-input"
+                            class="season-heat-led-lap-input"
+                            data-testid="season-heat-led-lap-input"
+                            type="number"
+                            [(ngModel)]="
+                              editingRace.season_scoring.heat_bonus_led_lap
+                            "
+                            (ngModelChange)="captureState()"
+                            min="0"
+                          />
+                        </div>
+                        <div
+                          class="config-section checkbox-section"
+                          style="margin-top: 8px; margin-bottom: 0"
+                        >
+                          <label
+                            id="season-heat-one-bonus-input"
+                            class="checkbox-container"
+                          >
+                            <input
+                              type="checkbox"
+                              id="heat_one_bonus"
+                              [(ngModel)]="
+                                editingRace.season_scoring
+                                  .heat_one_bonus_per_driver
+                              "
+                              (ngModelChange)="captureState()"
+                              class="season-heat-one-bonus-input"
+                              data-testid="season-heat-one-bonus-input"
+                            />
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">{{
+                              "SS_ONE_BONUS_PER_DRIVER" | translate
+                            }}</span>
+                          </label>
+                        </div>
+                      }
                     </div>
                   </div>
                 </div>

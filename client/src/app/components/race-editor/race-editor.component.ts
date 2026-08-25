@@ -257,24 +257,24 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         label: this.translationService.translate("RE_GENERAL_HEADER"),
       },
       {
-        id: "start-method-section",
-        label: this.translationService.translate("RE_START_METHOD_HEADER"),
+        id: "heats-section",
+        label: this.translationService.translate("RE_HEATS_HEADER"),
       },
       {
         id: "scoring-section",
         label: this.translationService.translate("RE_SCORING_HEADER"),
       },
       {
-        id: "season-points-section",
-        label: this.translationService.translate("SS_TITLE"),
-      },
-      {
-        id: "heats-section",
-        label: this.translationService.translate("RE_HEATS_HEADER"),
-      },
-      {
         id: "group-section",
         label: this.translationService.translate("RE_GROUPS_HEADER"),
+      },
+      {
+        id: "start-method-section",
+        label: this.translationService.translate("RE_START_METHOD_HEADER"),
+      },
+      {
+        id: "team-options-section",
+        label: this.translationService.translate("RE_TEAM_OPTIONS_HEADER"),
       },
       {
         id: "analog-fuel-section",
@@ -285,8 +285,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         label: this.translationService.translate("RE_DIGITAL_FUEL_HEADER"),
       },
       {
-        id: "team-options-section",
-        label: this.translationService.translate("RE_TEAM_OPTIONS_HEADER"),
+        id: "season-points-section",
+        label: this.translationService.translate("SS_TITLE"),
       },
     ];
   }
@@ -2007,14 +2007,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   getHelpSteps(): GuideStep[] {
     return [
       ...this.getGeneralHelpSteps(),
-      ...this.getStartMethodHelpSteps(),
-      ...this.getScoringHelpSteps(),
-      ...this.getSeasonPointsHelpSteps(),
       ...this.getHeatsHelpSteps(),
+      ...this.getScoringHelpSteps(),
       ...this.getGroupsHelpSteps(),
+      ...this.getStartMethodHelpSteps(),
+      ...this.getTeamOptionsHelpSteps(),
       ...this.getAnalogFuelHelpSteps(),
       ...this.getDigitalFuelHelpSteps(),
-      ...this.getTeamOptionsHelpSteps(),
+      ...this.getSeasonPointsHelpSteps(),
     ];
   }
 
