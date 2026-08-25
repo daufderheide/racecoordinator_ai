@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.32] - 2026-08-25
+
+### 🚀 New Features
+
+- Added lap pin pit behavior to the phidget interface fix: Ensured pit in/out is set at the default for all lap pin pit behavior selectors ([4088e0c8](https://github.com/daufderheide/racecoordinator_ai/commit/4088e0c8))
+- Updated racedirector track power options to handle master on/off to control all per lane relays when no master relay is present ([54b3ae6c](https://github.com/daufderheide/racecoordinator_ai/commit/54b3ae6c))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.31...v1.0.0-beta.32">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.31] - 2026-08-24
 
 ### 🚀 New Features
