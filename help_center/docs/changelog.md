@@ -1,5 +1,25 @@
 # Changelog
 
+## [v1.0.0-beta.34] - 2026-08-26
+
+### 🚀 New Features
+
+- implement PitManager to handle lane pit state transitions and periodic refueling telemetry.  This allows pit data to come in across interfaces ([4e893aae](https://github.com/daufderheide/racecoordinator_ai/commit/4e893aae))
+- add quit menu option with platform-specific keyboard shortcuts.  This is mostly for when you run in full screen mode, users now have a way to exit the app without leaving fullscreen. https://github.com/daufderheide/racecoordinator_ai/issues/651 [skip-screendiff] ([f29f9467](https://github.com/daufderheide/racecoordinator_ai/commit/f29f9467))
+
+### 🐛 Bug Fixes
+
+- **raceday**: allow modification of unstarted heats by removing start status restrictions in handler methods and UI components https://github.com/daufderheide/racecoordinator_ai/issues/655 ([f571f15e](https://github.com/daufderheide/racecoordinator_ai/commit/f571f15e))
+- **charity**: update PayPal donation link and refresh associated component test snapshots https://github.com/daufderheide/racecoordinator_ai/issues/656 ([a2828371](https://github.com/daufderheide/racecoordinator_ai/commit/a2828371))
+- **phidget**: implement Phidget Manager attachment tracking and ensure consistent connection status reporting in client and server https://github.com/daufderheide/racecoordinator_ai/issues/652 [skip-screendiff] ([ba72aefd](https://github.com/daufderheide/racecoordinator_ai/commit/ba72aefd))
+- **phidget**: display disconnected devices in Phidget editor and improve capability detection based on assigned pins https://github.com/daufderheide/racecoordinator_ai/issues/653 [skip-screendiff] ([1a4d2300](https://github.com/daufderheide/racecoordinator_ai/commit/1a4d2300))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.33...v1.0.0-beta.34">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.33] - 2026-08-25
 
 ### 🚀 New Features
