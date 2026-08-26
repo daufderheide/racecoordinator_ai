@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.35] - 2026-08-26
+
+### 🚀 New Features
+
+- implement inline renaming functionality for saved races and add corresponding UI/UX support ([706c7f20](https://github.com/daufderheide/racecoordinator_ai/commit/706c7f20))
+
+### 🐛 Bug Fixes
+
+- **race**: Add end of heat and end of race drift lap support. ([7c9c7fc9](https://github.com/daufderheide/racecoordinator_ai/commit/7c9c7fc9))
+- **season**: add season standings API endpoint and implement season-summary component with utility helpers.  Using this new data update the summary on the race day setup page so it's a bit larger and more readable ([1c84ee11](https://github.com/daufderheide/racecoordinator_ai/commit/1c84ee11))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.34...v1.0.0-beta.35">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.34] - 2026-08-26
 
 ### 🚀 New Features
