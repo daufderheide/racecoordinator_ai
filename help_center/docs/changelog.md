@@ -1,5 +1,34 @@
 # Changelog
 
+## [v1.0.0-beta.36] - 2026-08-27
+
+### 🚀 New Features
+
+- **leds**: implement heat leader analog LED support and pin synchronization for lane reordering/deletion https://github.com/daufderheide/racecoordinator_ai/issues/675 [skip-screendiff] ([93250758](https://github.com/daufderheide/racecoordinator_ai/commit/93250758))
+- **custom_ui**: add master power toggle actions and support for result displays in UI editor https://github.com/daufderheide/racecoordinator_ai/issues/676 [skip-screendiff] ([8f82e11a](https://github.com/daufderheide/racecoordinator_ai/commit/8f82e11a))
+
+### 🐛 Bug Fixes
+
+- **season**: Reduced the size of the season summary so it's not so spread out fix(racedaysetup): Placed the race and season summary side by side to save vertical space https://github.com/daufderheide/racecoordinator_ai/issues/665 https://github.com/daufderheide/racecoordinator_ai/issues/666 ([8d8ff044](https://github.com/daufderheide/racecoordinator_ai/commit/8d8ff044))
+- **raceday**: centralize version management by introducing a dedicated version module and updating services to consume it.  This fixes an issue with the raceday help->about showing the wrong version for the client https://github.com/daufderheide/racecoordinator_ai/issues/662 [skip-screendiff] ([6f16fd93](https://github.com/daufderheide/racecoordinator_ai/commit/6f16fd93))
+- **race**: set default minimum lap time to 1.5 seconds across server and client models https://github.com/daufderheide/racecoordinator_ai/issues/674 [skip-screendiff] ([37f676ef](https://github.com/daufderheide/racecoordinator_ai/commit/37f676ef))
+- **season**: enable independent race expansion and improve deduplication logic by using timestamp-based keys for race records https://github.com/daufderheide/racecoordinator_ai/issues/672 [skip-screendiff] ([e930af64](https://github.com/daufderheide/racecoordinator_ai/commit/e930af64))
+- **tts**: implement case-insensitive TTS variable interpolation with curly brace support and add multilingual documentation https://github.com/daufderheide/racecoordinator_ai/issues/671 ([e7e61b1b](https://github.com/daufderheide/racecoordinator_ai/commit/e7e61b1b))
+- center scrollable result containers horizontally during print operations https://github.com/daufderheide/racecoordinator_ai/issues/668 [skip-screendiff] ([b4bdc7f8](https://github.com/daufderheide/racecoordinator_ai/commit/b4bdc7f8))
+- force change detection on PDF export and apply fixed-scale CSS for print layouts [skip-screendiff] ([e0a7b2d9](https://github.com/daufderheide/racecoordinator_ai/commit/e0a7b2d9))
+- **ui**: Fixed pulldown styling when running on Windows. https://github.com/daufderheide/racecoordinator_ai/issues/670 ([542accd5](https://github.com/daufderheide/racecoordinator_ai/commit/542accd5))
+
+### ⚡ Improvements & Refactoring
+
+- split multi-screenshot tests into isolated test cases per screen state and update documentation to enforce one assertion per test. ([a726277a](https://github.com/daufderheide/racecoordinator_ai/commit/a726277a))
+- remove unused DecimalPipe imports from season and raceday components ([2eb8d758](https://github.com/daufderheide/racecoordinator_ai/commit/2eb8d758))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.35...v1.0.0-beta.36">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.35] - 2026-08-26
 
 ### 🚀 New Features
