@@ -1,5 +1,25 @@
 # Changelog
 
+## [v1.0.0-beta.38] - 2026-08-28
+
+### 🚀 New Features
+
+- **raceday**: automatically skip heats containing no active drivers when entering NotStarted state https://github.com/daufderheide/racecoordinator_ai/issues/677 ([a401e191](https://github.com/daufderheide/racecoordinator_ai/commit/a401e191))
+
+### 🐛 Bug Fixes
+
+- **race**: add support for none audio type and remove redundant lap broadcast in racing state. ([04198ebf](https://github.com/daufderheide/racecoordinator_ai/commit/04198ebf))
+- **raceday**: standardize empty lane handling for pacing and record lap components and utilities [skip-screendiff] ([94a7e67b](https://github.com/daufderheide/racecoordinator_ai/commit/94a7e67b))
+- **custom_ui**: rename driver state label to flag and apply css styles to column width inputs https://github.com/daufderheide/racecoordinator_ai/issues/687 https://github.com/daufderheide/racecoordinator_ai/issues/686 [skip-screendiff] ([3bebb97d](https://github.com/daufderheide/racecoordinator_ai/commit/3bebb97d))
+- **custom_ui**: add driver view QR column back in and consolidate column definitions with integrity tests https://github.com/daufderheide/racecoordinator_ai/issues/688 [skip-screendiff] ([e6645563](https://github.com/daufderheide/racecoordinator_ai/commit/e6645563))
+- **heat_results**: implement localized empty state message for heat results component https://github.com/daufderheide/racecoordinator_ai/issues/684 ([3ac67054](https://github.com/daufderheide/racecoordinator_ai/commit/3ac67054))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.37...v1.0.0-beta.38">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.37] - 2026-08-27
 
 ### 🚀 New Features
