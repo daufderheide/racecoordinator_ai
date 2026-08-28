@@ -1,5 +1,30 @@
 # Changelog
 
+## [v1.0.0-beta.37] - 2026-08-27
+
+### 🚀 New Features
+
+- **raceday**: implement stacked layout for ghost pacing component and add utility for solo center pacing detection [skip-screendiff] ([c36e9bad](https://github.com/daufderheide/racecoordinator_ai/commit/c36e9bad))
+- **season**: add dropped points tracking to season standings and update UI component layout https://github.com/daufderheide/racecoordinator_ai/issues/685 [skip-screendiff] ([6b191e6b](https://github.com/daufderheide/racecoordinator_ai/commit/6b191e6b))
+
+### 🐛 Bug Fixes
+
+- **race_results**: update graph color binding to use line.color and adjust lane color initialization https://github.com/daufderheide/racecoordinator_ai/issues/691 ([32a94c0a](https://github.com/daufderheide/racecoordinator_ai/commit/32a94c0a))
+- **raceday**: update record lap component layout to stack details vertically and add corresponding test assertions https://github.com/daufderheide/racecoordinator_ai/issues/694 [skip-screendiff] ([bba358ba](https://github.com/daufderheide/racecoordinator_ai/commit/bba358ba))
+- **heat_results**: update heat results to use stacked twin graphs with conditional rendering and updated specs https://github.com/daufderheide/racecoordinator_ai/issues/692 ([f7faa334](https://github.com/daufderheide/racecoordinator_ai/commit/f7faa334))
+- **season**: adjust season summary column widths and add test coverage for large numeric values ([b333b715](https://github.com/daufderheide/racecoordinator_ai/commit/b333b715))
+- **heat_results**: implement driver ranking logic and synchronize standings updates across heat components and services https://github.com/daufderheide/racecoordinator_ai/issues/689 [skip-screendiff] ([4e011b01](https://github.com/daufderheide/racecoordinator_ai/commit/4e011b01))
+- **raceday_setup**: rearrange race summary card into 2-column layout and update unit tests accordingly https://github.com/daufderheide/racecoordinator_ai/issues/683 [skip-screendiff] ([c21e0be7](https://github.com/daufderheide/racecoordinator_ai/commit/c21e0be7))
+- increase compact season summary rank column width to accommodate 3-digit positions and add verification test https://github.com/daufderheide/racecoordinator_ai/issues/682 [no-screendiff] ([5b899f1b](https://github.com/daufderheide/racecoordinator_ai/commit/5b899f1b))
+- centralize child window management into a new service to persist windows during navigation to the UI editor https://github.com/daufderheide/racecoordinator_ai/issues/690 [skip-screendiff] ([8e6ba3ee](https://github.com/daufderheide/racecoordinator_ai/commit/8e6ba3ee))
+- **ci**: resolve remote git refs properly in sync_release_branch ([a866ff1d](https://github.com/daufderheide/racecoordinator_ai/commit/a866ff1d))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.36...v1.0.0-beta.37">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.36] - 2026-08-27
 
 ### 🚀 New Features
