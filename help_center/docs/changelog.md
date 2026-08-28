@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.39] - 2026-08-28
+
+### 🐛 Bug Fixes
+
+- improve connection resilience, enhance interface status logging, and refine race start error handling https://github.com/daufderheide/racecoordinator_ai/issues/661 [skip-screendiff] ([350508a3](https://github.com/daufderheide/racecoordinator_ai/commit/350508a3))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.38...v1.0.0-beta.39">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.38] - 2026-08-28
 
 ### 🚀 New Features
