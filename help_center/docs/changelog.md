@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.40] - 2026-08-30
+
+### 🚀 New Features
+
+- **ui**: implement multi-layout theme architecture, custom widget framework, and dynamic widget inspector ([e684f424](https://github.com/daufderheide/racecoordinator_ai/commit/e684f424))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.39...v1.0.0-beta.40">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.39] - 2026-08-28
 
 ### 🐛 Bug Fixes
