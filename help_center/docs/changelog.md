@@ -1,5 +1,29 @@
 # Changelog
 
+## [v1.0.0-beta.41] - 2026-08-31
+
+### 🚀 New Features
+
+- update About Dialog to include new contributors and add harness support for verifying credits list ([dcdb0fce](https://github.com/daufderheide/racecoordinator_ai/commit/dcdb0fce))
+- add roster sorting functionality by seed and name in racing-roster-dialog https://github.com/daufderheide/racecoordinator_ai/issues/714 ([e73eb993](https://github.com/daufderheide/racecoordinator_ai/commit/e73eb993))
+- add RacingRosterDialog component with unit, screen-diff, and harness tests, and update localization strings https://github.com/daufderheide/racecoordinator_ai/issues/714 ([e3a5c064](https://github.com/daufderheide/racecoordinator_ai/commit/e3a5c064))
+- add race start time support to backend proto, Java converter, and client components. ([129a7e6e](https://github.com/daufderheide/racecoordinator_ai/commit/129a7e6e))
+
+### 🐛 Bug Fixes
+
+- modularize CLI argument parsing and add support for skipping installer validation via empty strings ([af27ef82](https://github.com/daufderheide/racecoordinator_ai/commit/af27ef82))
+- Changed scaling on raceday and splashscreen to ensure they're always full screen. ([deed2f09](https://github.com/daufderheide/racecoordinator_ai/commit/deed2f09))
+- implement explicit driver finished status and track across protocol, server state, and UI. ([3726ad3f](https://github.com/daufderheide/racecoordinator_ai/commit/3726ad3f))
+- encapsulate season standings within SeasonSummaryComponent and add dropped points calculation ([7d922961](https://github.com/daufderheide/racecoordinator_ai/commit/7d922961))
+- add NoneAutoSegments finish type and update power management logic to support per-lane control during finish states. ([46800e63](https://github.com/daufderheide/racecoordinator_ai/commit/46800e63))
+- implement version verification script and add dynamic client version resolution logic to improve release consistency https://github.com/daufderheide/racecoordinator_ai/issues/705 [skip-screendiff] ([feb3686a](https://github.com/daufderheide/racecoordinator_ai/commit/feb3686a))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.40...v1.0.0-beta.41">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.40] - 2026-08-30
 
 ### 🚀 New Features
