@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.43] - 2026-08-31
+
+### 🚀 New Features
+
+- update default UI layout with new metrics, column widths, and widget settings [skip-screendiffs] ([449e2b87](https://github.com/daufderheide/racecoordinator_ai/commit/449e2b87))
+- introduce physicalLapCount to track and display raw lap counts independent of adjustments https://github.com/daufderheide/racecoordinator_ai/issues/704 [skip-screendiffs] ([4168a601](https://github.com/daufderheide/racecoordinator_ai/commit/4168a601))
+- pass driver count via query parameters to race manager and update global scrollbar styles ([7c8ddc0e](https://github.com/daufderheide/racecoordinator_ai/commit/7c8ddc0e))
+
+### 🐛 Bug Fixes
+
+- prevent negative connection counts and disable race connection teardown during UI editor mode ([c72649f6](https://github.com/daufderheide/racecoordinator_ai/commit/c72649f6))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.42...v1.0.0-beta.43">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.42] - 2026-08-31
 
 ### 🐛 Bug Fixes
