@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.44] - 2026-08-31
+
+### 🚀 New Features
+
+- **raceday**: Remove fullscreen navigation button by default.  Add an action button widget the user can place if they want it.  Added file->back menu option to allow back navigation even in full screen mode. https://github.com/daufderheide/racecoordinator_ai/issues/728 ([a70689c0](https://github.com/daufderheide/racecoordinator_ai/commit/a70689c0))
+- add search functionality to available and racing participant lists with localized placeholders https://github.com/daufderheide/racecoordinator_ai/issues/729 fix: fixed auto-scrolling when dragging from the rds racing/available lists https://github.com/daufderheide/racecoordinator_ai/issues/727 ([8cfa7abd](https://github.com/daufderheide/racecoordinator_ai/commit/8cfa7abd))
+
+### 🐛 Bug Fixes
+
+- swap styles for confirmation and cancel buttons in confirmation modal https://github.com/daufderheide/racecoordinator_ai/issues/725 ([29afee2a](https://github.com/daufderheide/racecoordinator_ai/commit/29afee2a))
+- ensure window closure compatibility by resetting window context before closing ([d568fc13](https://github.com/daufderheide/racecoordinator_ai/commit/d568fc13))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.43...v1.0.0-beta.44">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.43] - 2026-08-31
 
 ### 🚀 New Features
