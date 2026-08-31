@@ -315,9 +315,12 @@ export class CreditsScrollDirective implements AfterViewInit, OnDestroy {
 
                   <div class="credit-section">
                     <div class="credit-role">CONTRIBUTORS</div>
+                    <div class="credit-name">AV-Git-Account</div>
                     <div class="credit-name">BigBadBuzz</div>
                     <div class="credit-name">crxed9</div>
+                    <div class="credit-name">Dopamine</div>
                     <div class="credit-name">luizvaldetaro</div>
+                    <div class="credit-name">mark h</div>
                     <div class="credit-name">Rinkrat99</div>
                     <div class="credit-name">Slot'n 77</div>
                   </div>
@@ -814,7 +817,7 @@ export class AboutDialogComponent {
   readonly githubIssuesUrl =
     "https://github.com/daufderheide/racecoordinator_ai/issues";
   readonly donateUrl =
-    "https://www.paypal.com/donate?token=L6PFPbwF0z3WOF-qIijTS_MSQjLtTCmiYlq3ObTaqvLhwrKUPo0faql9Qpk9QJ6NolQESAXw0l8YCUKn&locale.x=US";
+    "https://www.paypal.com/donate/?business=daufderh@hotmail.com&currency_code=USD";
   donateQrCodeUrl = signal<string>("");
 
   close = output<void>();

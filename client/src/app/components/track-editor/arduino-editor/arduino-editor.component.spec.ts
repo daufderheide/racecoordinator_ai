@@ -1607,4 +1607,55 @@ describe("ArduinoEditorComponent", () => {
       expect(component.supportsRgbLeds).toBeTrue();
     });
   });
+
+  describe("Heat Leader Analog LED Options", () => {
+    it("should include heat leader analog LED actions in analog LED group for all lanes", () => {
+      fixture.componentRef.setInput("lanes", [
+        { id: 1, name: "Lane 1" } as any,
+        { id: 2, name: "Lane 2" } as any,
+      ]);
+      fixture.detectChanges();
+
+      const groups = component.getFilteredActions(true, 2);
+      const analogGroup = groups.find(
+        (g) => g.key === "AE_BEHAVIOR_GROUP_ANALOG_LED",
+      );
+      expect(analogGroup).toBeDefined();
+
+      const lane1Leader = analogGroup?.actions.find(
+        (a) => a.value === "analogled_heat_leader_0",
+      );
+      const lane2Leader = analogGroup?.actions.find(
+        (a) => a.value === "analogled_heat_leader_1",
+      );
+
+      expect(lane1Leader).toBeDefined();
+      expect(lane2Leader).toBeDefined();
+    });
+
+    it("should set and get pin action for heat leader analog LEDs", () => {
+      component.setPinAction(true, 2, "analogled_heat_leader_0");
+      expect(component.getPinAction(true, 2)).toBe("analogled_heat_leader_0");
+      expect(component.getPinBehavior(true, 2)).toBe(
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE,
+      );
+
+      component.setPinAction(true, 3, "analogled_heat_leader_1");
+      expect(component.getPinAction(true, 3)).toBe("analogled_heat_leader_1");
+      expect(component.getPinBehavior(true, 3)).toBe(
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1,
+      );
+    });
+
+    it("should allow toggling pin state for heat leader analog LEDs", () => {
+      component.setPinAction(true, 2, "analogled_heat_leader_0");
+      expect(component.pinState["D2"]).toBeFalsy();
+
+      component.togglePinState(true, 2);
+      expect(component.pinState["D2"]).toBeTrue();
+
+      component.togglePinState(true, 2);
+      expect(component.pinState["D2"]).toBeFalse();
+    });
+  });
 });

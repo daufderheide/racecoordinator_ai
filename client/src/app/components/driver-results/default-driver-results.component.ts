@@ -47,6 +47,7 @@ interface StandingsRow {
   avatarUrl: string;
 }
 
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import {
   GhostTrajectoryDialogComponent,
   TrajectoryReferenceOption,
@@ -71,6 +72,7 @@ import { SettingsService } from "@app/services/settings.service";
     AvatarUrlPipe,
     RouterModule,
     PdfExportDialogComponent,
+    BrowserNavigationComponent,
   ],
 })
 export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
@@ -428,8 +430,23 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
 
       if (!heatDriver) return;
 
+      let rank = heatDriver.rank || 0;
+      if (
+        !rank &&
+        this.raceConnectionService?.driverRankings?.has(heatDriver.objectId)
+      ) {
+        rank =
+          this.raceConnectionService.driverRankings.get(heatDriver.objectId) ||
+          0;
+      } else if (!rank && heat.standings && heat.standings.length > 0) {
+        const idx = heat.standings.indexOf(heatDriver.objectId);
+        if (idx !== -1) {
+          rank = idx + 1;
+        }
+      }
+
       const row: HeatStandingsRow = {
-        rank: heatDriver.rank || 1,
+        rank,
         objectId: heatDriver.objectId,
         laps: heatDriver.adjustedLapCount,
         averageLapTime: heatDriver.averageLapTime,
@@ -524,6 +541,7 @@ export class DefaultDriverResultsComponent implements OnInit, OnDestroy {
 
   protected onPdfExportConfirm(options: PdfExportOptions) {
     this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
     if (options.saveAsDefault) {
       const settings = this.settingsService.getSettings();
       settings.exportPdfBackgrounds = options.includeBackground;

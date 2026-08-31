@@ -17,15 +17,12 @@ public class PowerManager {
     // Per lane
     final boolean[] currentLanePower;
     final boolean[] firstLanePower;
-    final boolean[] desiredLanePower;
 
     public ProtocolState(int numLanes) {
       this.currentLanePower = new boolean[numLanes];
       Arrays.fill(this.currentLanePower, false);
       this.firstLanePower = new boolean[numLanes];
       Arrays.fill(this.firstLanePower, true);
-      this.desiredLanePower = new boolean[numLanes];
-      Arrays.fill(this.desiredLanePower, true);
     }
   }
 
@@ -56,7 +53,6 @@ public class PowerManager {
     for (ProtocolState state : protocolStates) {
       state.firstMainPower = true;
       Arrays.fill(state.firstLanePower, true);
-      Arrays.fill(state.desiredLanePower, true);
     }
   }
 
@@ -73,21 +69,6 @@ public class PowerManager {
           logger.info("Main Power set to {} for protocol {}", targetMainPower ? "ON" : "OFF", i);
         }
       }
-      if (protocol.hasPerLaneRelays()) {
-        for (int lane = 0; lane < numLanes; lane++) {
-          boolean effectivePower = isWarmup || (on && state.desiredLanePower[lane]);
-          if (state.firstLanePower[lane] || state.currentLanePower[lane] != effectivePower) {
-            protocol.setLanePower(effectivePower, lane);
-            state.firstLanePower[lane] = false;
-            state.currentLanePower[lane] = effectivePower;
-            logger.info(
-                "Main Power (per-lane) set to {} for protocol {} lane {}",
-                effectivePower ? "ON" : "OFF",
-                i,
-                lane + 1);
-          }
-        }
-      }
       state.currentMainPower = isWarmup || on;
     }
   }
@@ -102,19 +83,17 @@ public class PowerManager {
       IProtocol protocol = protocols.get(i);
       ProtocolState state = this.protocolStates[i];
       if (protocol.hasPerLaneRelays()) {
-        boolean effectivePower = isWarmup || (state.currentMainPower && on);
+        boolean effectivePower = isWarmup || on;
         if (state.firstLanePower[lane] || effectivePower != state.currentLanePower[lane]) {
           protocol.setLanePower(effectivePower, lane);
           state.firstLanePower[lane] = false;
           state.currentLanePower[lane] = effectivePower;
           logger.info(
-              "Lane Power set to {} for lane {} (protocol {}, mainPower={})",
+              "Lane Power set to {} for lane {} (protocol {})",
               effectivePower ? "ON" : "OFF",
               lane + 1,
-              i,
-              state.currentMainPower);
+              i);
         }
-        state.desiredLanePower[lane] = on;
       }
     }
   }

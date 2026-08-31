@@ -100,4 +100,36 @@ describe("DriverConverter", () => {
     expect(driverFromProto.name).toBe("Charlie Updated");
     expect(driverFromProto.avatarUrl).toBe("charlie_avatar_updated.png");
   });
+
+  it("should preserve type none for audio configs during fromProto", () => {
+    const proto: IDriverModel = {
+      model: { entityId: "d_none" },
+      name: "Silent Driver",
+      nickname: "Silent",
+      lapAudio: { type: "none" },
+      bestLapAudio: { type: "none" },
+      penaltyAudio: { type: "none" },
+    };
+
+    const driver = DriverConverter.fromProto(proto);
+    expect(driver.lapAudio.type).toBe("none");
+    expect(driver.lapAudio.url).toBeUndefined();
+    expect(driver.bestLapAudio.type).toBe("none");
+    expect(driver.bestLapAudio.url).toBeUndefined();
+    expect(driver.penaltyAudio.type).toBe("none");
+    expect(driver.penaltyAudio.url).toBeUndefined();
+
+    // In-place update
+    const updateProto: IDriverModel = {
+      model: { entityId: "d_none" },
+      name: "Silent Driver Updated",
+      lapAudio: { type: "none" },
+      bestLapAudio: { type: "none" },
+      penaltyAudio: { type: "none" },
+    };
+    const updatedDriver = DriverConverter.fromProto(updateProto);
+    expect(updatedDriver.lapAudio.type).toBe("none");
+    expect(updatedDriver.bestLapAudio.type).toBe("none");
+    expect(updatedDriver.penaltyAudio.type).toBe("none");
+  });
 });

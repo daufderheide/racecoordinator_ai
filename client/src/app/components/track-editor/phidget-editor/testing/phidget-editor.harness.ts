@@ -8,7 +8,22 @@ export class PhidgetEditorHarness
 {
   static hostSelector = PhidgetEditorHarnessBase.hostSelector;
 
+  protected getLapPinPitBehaviorSelect = this.locatorFor(
+    PhidgetEditorHarnessBase.selectors.pitBehaviorSelect,
+  );
+
   async exists(): Promise<boolean> {
     return (await this.host()) !== null;
+  }
+
+  async getLapPinPitBehavior(): Promise<number> {
+    const select = await this.getLapPinPitBehaviorSelect();
+    const value = await select.getProperty("value");
+    return Number(value);
+  }
+
+  async setLapPinPitBehavior(value: number): Promise<void> {
+    const select = await this.getLapPinPitBehaviorSelect();
+    await select.selectOptions(value);
   }
 }

@@ -58,7 +58,7 @@ import org.slf4j.LoggerFactory;
 public class Race implements ProtocolListener {
   private static final Logger logger = LoggerFactory.getLogger(Race.class);
 
-  private final com.antigravity.models.Race model; // fqn-collision
+  private com.antigravity.models.Race model; // fqn-collision
   private final Track track;
   private Theme theme;
   private final List<RaceParticipant> drivers;
@@ -518,8 +518,23 @@ public class Race implements ProtocolListener {
     syncLanePowerWithState(on);
   }
 
+  public void forceUserMainPower(boolean on) {
+    this.mainPower = on;
+    if (hardwareManager.getProtocols() != null) {
+      hardwareManager.getProtocols().setMainPower(on);
+      if (!hardwareManager.getProtocols().hasMainRelay()
+          && hardwareManager.getProtocols().hasPerLaneRelays()) {
+        setLanePower(on, -1);
+      }
+    }
+  }
+
   public com.antigravity.models.Race getRaceModel() { // fqn-collision
     return model;
+  }
+
+  public void setRaceModel(com.antigravity.models.Race model) { // fqn-collision
+    this.model = model;
   }
 
   public List<CustomRotation> getCustomRotations() {
@@ -630,6 +645,7 @@ public class Race implements ProtocolListener {
       for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
         DriverHeatData dhd = currentHeat.getDrivers().get(i);
         if (dhd != null) {
+          dhd.setFinished(state.isDriverFinished(this, i, dhd));
           dhd.setFlag(state.getLaneFlagType(this, i));
         }
       }
@@ -664,6 +680,7 @@ public class Race implements ProtocolListener {
       for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
         DriverHeatData dhd = currentHeat.getDrivers().get(i);
         if (dhd != null) {
+          dhd.setFinished(state.isDriverFinished(this, i, dhd));
           dhd.setFlag(state.getLaneFlagType(this, i));
         }
       }
@@ -952,6 +969,8 @@ public class Race implements ProtocolListener {
       broadcastRecords();
       broadcastTime();
       updateAndBroadcastOverallStandings();
+      setAutoStartFired(false);
+      setAutoAdvanceFired(false);
       changeState(new NotStarted());
     }
   }

@@ -45,7 +45,21 @@ git checkout -b feature/new-telemetry-ui
 *Note: If your branch name does not match these rules, the GitHub server will reject your `git push` command.*
 
 ### 3. Make Changes and Commit
-Write your code, ensure any relevant tests pass locally, and commit your changes with clear, descriptive commit messages.
+Write your code and ensure relevant tests pass locally.
+
+All commit messages **must** follow [Conventional Commits](https://www.conventionalcommits.org/) standards (enforced by a Git hook):
+* `feat:` (New feature, e.g. `feat(phidget): add relay control`)
+* `fix:` (Bug fix, e.g. `fix: resolve race day startup timer crash`)
+* `refactor:` (Code restructuring without behavior changes)
+* `perf:` (Performance optimization)
+* `docs:` (Documentation changes)
+* `test:` (Adding or correcting tests)
+* `chore:` (Maintenance, dependencies, tooling)
+* `ci:` (CI/CD workflows and release automation)
+* `style:` (Code formatting)
+* `build:` (Build scripts and installers)
+
+See [DEVELOPMENT.md](DEVELOPMENT.md#commit-message-conventions--automated-changelogs) for complete details.
 
 ### 4. Push Your Branch
 Push your branch directly to this repository:

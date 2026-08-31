@@ -45,11 +45,40 @@ public class DatabaseInitializerTest {
 
     SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
     List<Race> races = raceRepo.findAll();
-    assertTrue("Should initialize default races", races.size() >= 3);
+    assertEquals("Should initialize 4 default races", 4, races.size());
+    assertTrue(races.stream().anyMatch(r -> "Time Based".equals(r.getName())));
+    assertTrue(races.stream().anyMatch(r -> "Lap Based".equals(r.getName())));
+    assertTrue(races.stream().anyMatch(r -> "Fuel Race".equals(r.getName())));
+    assertTrue(races.stream().anyMatch(r -> "Practice".equals(r.getName())));
 
     SqliteRepository<Team> teamRepo = new SqliteRepository<>(context, "teams", Team.class);
     List<Team> teams = teamRepo.findAll();
     assertEquals(2, teams.size());
+
+    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", com.antigravity.models.CustomUI.class);
+    List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    assertEquals(3, uis.size());
+
+    SqliteRepository<com.antigravity.models.Theme> themeRepo =
+        new SqliteRepository<>(context, "themes", com.antigravity.models.Theme.class);
+    List<com.antigravity.models.Theme> themes = themeRepo.findAll();
+    assertEquals(3, themes.size());
+  }
+
+  @Test
+  public void testResetCustomUIsAndThemesDirectly() {
+    initializer.resetCustomUIs(context);
+    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", com.antigravity.models.CustomUI.class);
+    List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    assertEquals(3, uis.size());
+
+    initializer.resetThemes(context);
+    SqliteRepository<com.antigravity.models.Theme> themeRepo =
+        new SqliteRepository<>(context, "themes", com.antigravity.models.Theme.class);
+    List<com.antigravity.models.Theme> themes = themeRepo.findAll();
+    assertEquals(3, themes.size());
   }
 
   @Test
@@ -65,12 +94,46 @@ public class DatabaseInitializerTest {
     Track track = initializer.resetTracks(context);
     initializer.resetRaces(context, track);
 
-    // Should already have practice race
+    // Should already have practice and fuel race
     initializer.backfillRaces(context);
     SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
     List<Race> races = raceRepo.findAll();
     long practiceCount = races.stream().filter(r -> "Practice".equals(r.getName())).count();
     assertEquals(1, practiceCount);
+    long fuelCount = races.stream().filter(r -> "Fuel Race".equals(r.getName())).count();
+    assertEquals(1, fuelCount);
+
+    // Test backfill when missing
+    raceRepo.drop();
+    initializer.backfillRaces(context);
+    races = raceRepo.findAll();
+    assertEquals(2, races.size());
+    assertTrue(
+        races.stream()
+            .anyMatch(
+                r ->
+                    "Fuel Race".equals(r.getName())
+                        && com.antigravity.models.Theme.FUEL_THEME_ID.equals(r.getThemeId())));
+    assertTrue(
+        races.stream()
+            .anyMatch(
+                r ->
+                    "Practice".equals(r.getName())
+                        && com.antigravity.models.Theme.PRACTICE_THEME_ID.equals(r.getThemeId())));
+
+    // Test backfilling existing custom race missing themeId
+    Race legacyRace =
+        new Race.Builder()
+            .withName("Custom Legacy Race")
+            .withEntityId("legacy_r1")
+            .withThemeId(null)
+            .build();
+    raceRepo.save(legacyRace);
+
+    initializer.backfillRaces(context);
+    Race backfilledLegacy = raceRepo.findByEntityId("legacy_r1");
+    assertNotNull(backfilledLegacy);
+    assertEquals(com.antigravity.models.Theme.DEFAULT_THEME_ID, backfilledLegacy.getThemeId());
   }
 
   @Test
@@ -95,6 +158,7 @@ public class DatabaseInitializerTest {
     initializer.resetRaces(context, track);
     SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
     List<Race> races = raceRepo.findAll();
-    assertTrue(races.size() >= 3);
+    assertEquals(4, races.size());
+    assertTrue(races.stream().anyMatch(r -> "Fuel Race".equals(r.getName())));
   }
 }

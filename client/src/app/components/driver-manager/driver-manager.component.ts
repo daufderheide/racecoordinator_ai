@@ -159,7 +159,6 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 
@@ -193,6 +192,13 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
                   ),
                   url: d.bestLapAudio?.url || d.bestLapSoundUrl,
                   text: d.bestLapAudio?.text || d.bestLapSoundText,
+                },
+                {
+                  type: this.mapSoundType(
+                    d.penaltyAudio?.type || d.penaltySoundType,
+                  ),
+                  url: d.penaltyAudio?.url || d.penaltySoundUrl,
+                  text: d.penaltyAudio?.text || d.penaltySoundText,
                 },
               ),
           )

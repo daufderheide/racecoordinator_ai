@@ -3,9 +3,12 @@ import {
   Component,
   computed,
   effect,
+  inject,
   input,
+  NgZone,
   OnDestroy,
   signal,
+  untracked,
 } from "@angular/core";
 import { DataService } from "@app/data.service";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
@@ -64,6 +67,10 @@ export class AssetPreviewComponent implements OnDestroy {
   private intervalId: any;
   currentIndex = signal(0);
 
+  private dataService = inject(DataService);
+  private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
+
   currentUrl = computed(() => {
     const images = this.images();
     const type = this.type();
@@ -71,7 +78,7 @@ export class AssetPreviewComponent implements OnDestroy {
 
     if (type === "image_set" && images && images.length > 0) {
       const entry = images[index % images.length];
-      return this.getFullUrl(entry.url || "");
+      return this.getFullUrl(entry?.url || "");
     } else {
       const url = this.imageUrl();
       const id = this.assetId();
@@ -82,17 +89,16 @@ export class AssetPreviewComponent implements OnDestroy {
     }
   });
 
-  constructor(
-    private dataService: DataService,
-    private cdr: ChangeDetectorRef,
-  ) {
-    // Effect to handle animation start/stop when type or animate changes
+  constructor() {
     effect(() => {
-      if (this.type() === "image_set" && this.animate()) {
-        this.startAnimation();
-      } else {
-        this.stopAnimation();
-      }
+      const shouldAnimate = this.type() === "image_set" && this.animate();
+      untracked(() => {
+        if (shouldAnimate) {
+          this.startAnimation();
+        } else {
+          this.stopAnimation();
+        }
+      });
     });
   }
 
@@ -114,10 +120,12 @@ export class AssetPreviewComponent implements OnDestroy {
     const images = this.images();
     if (!images || images.length <= 1) return;
 
-    this.intervalId = setInterval(() => {
-      this.currentIndex.update((i) => (i + 1) % images.length);
-      this.cdr.detectChanges();
-    }, 1000);
+    this.ngZone.runOutsideAngular(() => {
+      this.intervalId = setInterval(() => {
+        this.currentIndex.update((i) => (i + 1) % images.length);
+        this.cdr.markForCheck();
+      }, 1000);
+    });
   }
 
   private stopAnimation() {

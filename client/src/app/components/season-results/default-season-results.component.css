@@ -54,6 +54,12 @@
   flex-direction: column;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .page-title {
   font-size: 48px;
   font-weight: 800;
@@ -205,6 +211,28 @@
   letter-spacing: 2px;
   text-transform: uppercase;
   text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+.summary-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-section app-season-summary {
+  display: block;
+  width: 100%;
+  height: auto;
+  flex: none;
+  overflow: visible;
+}
+
+.summary-section app-season-summary ::ng-deep .season-summary-container,
+.summary-section app-season-summary ::ng-deep .detail-content,
+.summary-section app-season-summary ::ng-deep .standings-wrapper,
+.summary-section app-season-summary ::ng-deep .standings-body-container {
+  height: auto;
+  flex: none;
+  overflow: visible;
 }
 
 .empty-standings, .empty-races {
@@ -573,6 +601,7 @@
     padding: 40px !important;
     overflow: visible !important;
     box-sizing: border-box !important;
+    margin: 0 auto !important;
   }
 
   .results-container,
@@ -614,6 +643,15 @@
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     margin-bottom: 30px !important;
+  }
+
+  .summary-section app-season-summary,
+  .summary-section app-season-summary ::ng-deep .season-summary-container,
+  .summary-section app-season-summary ::ng-deep .detail-content,
+  .summary-section app-season-summary ::ng-deep .standings-wrapper,
+  .summary-section app-season-summary ::ng-deep .standings-body-container {
+    height: auto !important;
+    overflow: visible !important;
   }
 
   /* No-background ink-saving print overrides */

@@ -52,5 +52,15 @@ public class RaceTest {
     assertFalse(race.getGroupOptions().isEnabled());
     assertEquals(1, race.getGroupOptions().getMaxGroups());
     assertEquals(0, race.getGroupOptions().getMinAdvancing());
+    assertEquals(1.5, race.getMinLapTime(), 0.001);
+  }
+
+  @Test
+  public void testDefaultMinLapTime() {
+    Race race = new Race.Builder().withName("Default Race").build();
+    assertEquals(1.5, race.getMinLapTime(), 0.001);
+
+    Race customMinLapRace = new Race.Builder().withName("Custom").withMinLapTime(2.5).build();
+    assertEquals(2.5, customMinLapRace.getMinLapTime(), 0.001);
   }
 }

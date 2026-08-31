@@ -204,6 +204,14 @@ describe("playSound Utility", () => {
       expect(context.driver.nickname).toBe("Bob");
     });
 
+    it("should handle null or undefined gracefully", () => {
+      const context = createTTSContext(null, null);
+      expect(context.driver.name).toBe("");
+      expect(context.driver.nickname).toBe("");
+      expect(context.driver.lastLapTime).toBe(0);
+      expect(context.driver.lapCount).toBe(0);
+    });
+
     it("should create a mock context", () => {
       const context = mockTTSContext();
       expect(context.driver.name).toBeDefined();
@@ -218,6 +226,18 @@ describe("playSound Utility", () => {
       expect(interpolate(text, data)).toBe("Hello World");
     });
 
+    it("should interpolate double curly braces paths", () => {
+      const text = "Min lap time for {{driver.nickname}}";
+      const data = { driver: { nickname: "Speedy" } };
+      expect(interpolate(text, data)).toBe("Min lap time for Speedy");
+    });
+
+    it("should handle whitespace inside braces", () => {
+      const text = "Driver {{ driver.nickname }} on lap { driver.lapCount }";
+      const data = { driver: { nickname: "Speedy", lapCount: 5 } };
+      expect(interpolate(text, data)).toBe("Driver Speedy on lap 5");
+    });
+
     it("should interpolate nested paths", () => {
       const text = "{driver.name} has {stats.laps} laps";
       const data = {
@@ -225,6 +245,12 @@ describe("playSound Utility", () => {
         stats: { laps: 10 },
       };
       expect(interpolate(text, data)).toBe("Alice has 10 laps");
+    });
+
+    it("should handle case-insensitivity with double braces", () => {
+      const text = "{{DRIVER.NICKNAME}}";
+      const data = { driver: { nickname: "Bob" } };
+      expect(interpolate(text, data)).toBe("Bob");
     });
 
     it("should handle case-insensitivity", () => {
@@ -240,9 +266,23 @@ describe("playSound Utility", () => {
     });
 
     it("should leave placeholders if value not found", () => {
-      const text = "Keep {missing}";
+      const text = "Keep {missing} and {{other_missing}}";
       const data = {};
-      expect(interpolate(text, data)).toBe("Keep {missing}");
+      expect(interpolate(text, data)).toBe(
+        "Keep {missing} and {{other_missing}}",
+      );
+    });
+
+    it("should leave placeholders if object resolved rather than primitive", () => {
+      const text = "Driver: {driver}";
+      const data = { driver: { name: "Alice" } };
+      expect(interpolate(text, data)).toBe("Driver: {driver}");
+    });
+
+    it("should handle empty or null text and data safely", () => {
+      expect(interpolate("", {})).toBe("");
+      expect(interpolate("Hello", null)).toBe("Hello");
+      expect(interpolate("Hello", undefined)).toBe("Hello");
     });
   });
 });

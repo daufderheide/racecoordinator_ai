@@ -31,6 +31,7 @@ describe("RacedayMenuBarComponent", () => {
           hasPerLaneRelays: false,
         }),
       getDrivers: jasmine.createSpy("getDrivers").and.returnValue(of([])),
+      getThemes: jasmine.createSpy("getThemes").and.returnValue(of([])),
     };
 
     mockAuthService = {
@@ -306,6 +307,53 @@ describe("RacedayMenuBarComponent", () => {
       expect(component.windowsMenuSelect.emit).toHaveBeenCalledWith(
         "SEASON_RESULTS",
       );
+    });
+  });
+
+  describe("Themes Submenu", () => {
+    it("should toggle themes submenu and close other submenus", () => {
+      component.isDriversStationOpen = true;
+      component.isDriversViewOpen = true;
+      component.toggleThemesMenu();
+
+      expect(component.isThemesOpen).toBeTrue();
+      expect(component.isDriversStationOpen).toBeFalse();
+      expect(component.isDriversViewOpen).toBeFalse();
+
+      component.toggleDriversStationMenu();
+      expect(component.isDriversStationOpen).toBeTrue();
+      expect(component.isThemesOpen).toBeFalse();
+
+      component.toggleDriversViewMenu();
+      expect(component.isDriversViewOpen).toBeTrue();
+      expect(component.isThemesOpen).toBeFalse();
+    });
+
+    it("should display themes and emit onThemeMenuSelect", () => {
+      spyOn(component.themeMenuSelect, "emit");
+      spyOn(component.windowsMenuSelect, "emit");
+
+      component.themes = [
+        { entity_id: "t_custom", name: "Custom Theme" } as any,
+      ];
+      component.isWindowsMenuOpen = true;
+      component.isThemesOpen = true;
+      fixture.detectChanges();
+
+      const items = Array.from(
+        fixture.nativeElement.querySelectorAll(".theme-option-item"),
+      );
+      expect(items.length).toBe(1);
+      const themeItem = items[0] as HTMLElement;
+      expect(themeItem.innerText.trim()).toBe("Custom Theme");
+
+      themeItem.click();
+      expect(component.themeMenuSelect.emit).toHaveBeenCalledWith("t_custom");
+      expect(component.windowsMenuSelect.emit).toHaveBeenCalledWith(
+        "THEME:t_custom",
+      );
+      expect(component.isWindowsMenuOpen).toBeFalse();
+      expect(component.isThemesOpen).toBeFalse();
     });
   });
 });

@@ -8,6 +8,8 @@ test.describe("Race Editor Visuals", () => {
     // Setup standard mocks
     await TestSetupHelper.setupStandardMocks(page);
     await TestSetupHelper.setupRaceWebSocketMocks(page);
+    await TestSetupHelper.setupThemeMocks(page);
+    await TestSetupHelper.setupCustomUiMocks(page);
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.waitForLoadState("networkidle");
 
@@ -223,7 +225,7 @@ test.describe("Race Editor Visuals", () => {
     });
 
     // Ensure Fuel section is expanded
-    await ensureSectionState(page, "Analog Fuel Configuration", true);
+    await ensureSectionState(page, "Analog Fuel", true);
 
     // Toggle fuel enabled checkbox by label for reliability
     const fuelLabel = page
@@ -268,7 +270,7 @@ test.describe("Race Editor Visuals", () => {
     await page.waitForTimeout(100);
 
     // Ensure Fuel section is expanded
-    await ensureSectionState(page, "Analog Fuel Configuration", true);
+    await ensureSectionState(page, "Analog Fuel", true);
 
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
@@ -304,11 +306,11 @@ test.describe("Race Editor Visuals", () => {
     await harness.setTrack("t_digital");
 
     // Ensure section is expanded
-    await ensureSectionState(page, "Digital Fuel Configuration", true);
+    await ensureSectionState(page, "Digital Fuel", true);
 
     // Scroll down to ensure digital fuel section is visible in the panel
     await page
-      .locator('.section-header:has-text("Digital Fuel Configuration")')
+      .locator('.section-header:has-text("Digital Fuel")')
       .scrollIntoViewIfNeeded();
     await page.waitForTimeout(50);
 
@@ -343,9 +345,9 @@ test.describe("Race Editor Visuals", () => {
 
     // Collapse sections to isolate Scoring
     await ensureSectionState(page, "General", false);
-    await ensureSectionState(page, "Analog Fuel Configuration", false);
-    await ensureSectionState(page, "Digital Fuel Configuration", false);
-    await ensureSectionState(page, "Team Options", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
     await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
@@ -369,8 +371,8 @@ test.describe("Race Editor Visuals", () => {
     // Collapse sections to isolate Analog Fuel
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
-    await ensureSectionState(page, "Digital Fuel Configuration", false);
-    await ensureSectionState(page, "Team Options", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
     await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
@@ -400,7 +402,7 @@ test.describe("Race Editor Visuals", () => {
     });
 
     // Ensure Fuel section is expanded
-    await ensureSectionState(page, "Analog Fuel Configuration", true);
+    await ensureSectionState(page, "Analog Fuel", true);
 
     // Toggle fuel enabled checkbox by label for reliability
     const fuelLabel = page
@@ -455,7 +457,7 @@ test.describe("Race Editor Visuals", () => {
     });
 
     // Ensure Fuel section is expanded
-    await ensureSectionState(page, "Analog Fuel Configuration", true);
+    await ensureSectionState(page, "Analog Fuel", true);
 
     // Toggle fuel enabled
     const fuelLabel = page
@@ -497,7 +499,7 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
-  test("should display Team Options section expanded", async ({ page }) => {
+  test("should display Teams section expanded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -508,11 +510,11 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
-    // Collapse sections to isolate Team Options
+    // Collapse sections to isolate Teams
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
-    await ensureSectionState(page, "Analog Fuel Configuration", false);
-    await ensureSectionState(page, "Digital Fuel Configuration", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
     await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
@@ -536,12 +538,12 @@ test.describe("Race Editor Visuals", () => {
     // Collapse other sections to isolate Heats
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
-    await ensureSectionState(page, "Analog Fuel Configuration", false);
-    await ensureSectionState(page, "Digital Fuel Configuration", false);
-    await ensureSectionState(page, "Team Options", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
 
     // Expand Heats
-    await ensureSectionState(page, "Heat Configuration", true);
+    await ensureSectionState(page, "Heats", true);
     await page.waitForTimeout(50);
 
     await TestSetupHelper.disableAnimations(page);
@@ -551,9 +553,7 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
-  test("should display Group Configuration section expanded", async ({
-    page,
-  }) => {
+  test("should display Groups section expanded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -564,17 +564,17 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
-    // Collapse sections to isolate Group Configuration
+    // Collapse sections to isolate Groups
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
-    await ensureSectionState(page, "Analog Fuel Configuration", false);
-    await ensureSectionState(page, "Digital Fuel Configuration", false);
-    await ensureSectionState(page, "Team Options", false);
-    await ensureSectionState(page, "Heat Configuration", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
     await page.waitForTimeout(50);
 
-    // Expand Group Configuration
-    await ensureSectionState(page, "Group Configuration", true);
+    // Expand Groups
+    await ensureSectionState(page, "Groups", true);
     await page.waitForTimeout(50);
 
     // Enable groups to show all options - find the first checkbox in the section
@@ -606,11 +606,11 @@ test.describe("Race Editor Visuals", () => {
     // Collapse other sections to isolate Season Points
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
-    await ensureSectionState(page, "Analog Fuel Configuration", false);
-    await ensureSectionState(page, "Digital Fuel Configuration", false);
-    await ensureSectionState(page, "Team Options", false);
-    await ensureSectionState(page, "Heat Configuration", false);
-    await ensureSectionState(page, "Group Configuration", false);
+    await ensureSectionState(page, "Analog Fuel", false);
+    await ensureSectionState(page, "Digital Fuel", false);
+    await ensureSectionState(page, "Teams", false);
+    await ensureSectionState(page, "Heats", false);
+    await ensureSectionState(page, "Groups", false);
 
     // Expand Season Points
     await ensureSectionState(page, "Season Points", true);
@@ -621,5 +621,28 @@ test.describe("Race Editor Visuals", () => {
       "race-editor-season-points-expanded.png",
       { timeout: 15000, maxDiffPixelRatio: 0.05 },
     );
+  });
+
+  test("should display race editor in fullscreen mode with navigation buttons", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await TestSetupHelper.disableAnimations(page);
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator("app-editor-title");
+    await header.waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("race-editor-fullscreen.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
   });
 });

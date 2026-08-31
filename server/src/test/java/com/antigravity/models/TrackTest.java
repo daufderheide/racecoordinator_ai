@@ -231,6 +231,17 @@ public class TrackTest {
     config.digitalIds.set(5, 0); // clear digital
     config.analogIds.set(2, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 1);
     assertEquals(true, track.hasPerLaneRelays());
+
+    // Trackmate with per lane relays
+    com.antigravity.protocols.trackmate.TrackmateConfig tmConfig =
+        new com.antigravity.protocols.trackmate.TrackmateConfig();
+    tmConfig.hasPerLaneRelays = true;
+    Track tmTrack =
+        new Track.Builder()
+            .name("TM Track")
+            .trackmateConfigs(Collections.singletonList(tmConfig))
+            .build();
+    assertEquals(true, tmTrack.hasPerLaneRelays());
   }
 
   @Test
@@ -259,6 +270,21 @@ public class TrackTest {
     config.digitalIds.set(4, 0);
     config.analogIds.set(3, com.antigravity.proto.PinBehavior.BEHAVIOR_RELAY_VALUE);
     assertEquals(true, track.hasMainRelay());
+
+    // Trackmate without per lane relays has main relay
+    com.antigravity.protocols.trackmate.TrackmateConfig tmConfig =
+        new com.antigravity.protocols.trackmate.TrackmateConfig();
+    tmConfig.hasPerLaneRelays = false;
+    Track tmTrack =
+        new Track.Builder()
+            .name("TM Track")
+            .trackmateConfigs(Collections.singletonList(tmConfig))
+            .build();
+    assertEquals(true, tmTrack.hasMainRelay());
+
+    // Trackmate with per lane relays does not have main relay
+    tmConfig.hasPerLaneRelays = true;
+    assertEquals(false, tmTrack.hasMainRelay());
   }
 
   @Test
@@ -278,5 +304,61 @@ public class TrackTest {
     assertEquals(1, track.getTrackmateConfigs().size());
     assertEquals("My TM", track.getTrackmateConfigs().get(0).name);
     assertEquals("COM5", track.getTrackmateConfigs().get(0).commPort);
+  }
+
+  @Test
+  public void testTrackScale_DefaultsAndValidation() {
+    // Default builder
+    Track defaultTrack = new Track.Builder().name("Default Scale").build();
+    assertEquals(1.0, defaultTrack.getTrackScale(), 0.0001);
+
+    // Explicit valid scale (1/32)
+    Track scaleTrack = new Track.Builder().name("1/32 Scale").trackScale(0.03125).build();
+    assertEquals(0.03125, scaleTrack.getTrackScale(), 0.0001);
+
+    // Invalid zero scale defaults to 1.0
+    Track zeroTrack = new Track.Builder().name("Zero Scale").trackScale(0.0).build();
+    assertEquals(1.0, zeroTrack.getTrackScale(), 0.0001);
+
+    // Invalid negative scale defaults to 1.0
+    Track negTrack = new Track.Builder().name("Negative Scale").trackScale(-0.5).build();
+    assertEquals(1.0, negTrack.getTrackScale(), 0.0001);
+
+    // Invalid scale > 1.0 defaults to 1.0
+    Track largeTrack = new Track.Builder().name("Large Scale").trackScale(2.5).build();
+    assertEquals(1.0, largeTrack.getTrackScale(), 0.0001);
+  }
+
+  @Test
+  public void testTrackScale_JsonSerialization() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    Track track =
+        new Track.Builder()
+            .name("JSON Scale Track")
+            .numTrackSections(50)
+            .trackScale(0.03125)
+            .build();
+
+    String json = mapper.writeValueAsString(track);
+    Track deserialized = mapper.readValue(json, Track.class);
+
+    assertEquals(0.03125, deserialized.getTrackScale(), 0.0001);
+    assertEquals("JSON Scale Track", deserialized.getName());
+    assertEquals(50, deserialized.getNumTrackSections());
+  }
+
+  @Test
+  public void testSyncWithLanes_PreservesTrackScale() {
+    Lane lane = new Lane("#FF0000", "#FFFFFF", 10.5);
+    Track track =
+        new Track.Builder()
+            .name("Scaled Track")
+            .trackScale(0.015625)
+            .lanes(Collections.singletonList(lane))
+            .build();
+
+    Track synced = track.syncWithLanes();
+    assertEquals(0.015625, synced.getTrackScale(), 0.0001);
   }
 }

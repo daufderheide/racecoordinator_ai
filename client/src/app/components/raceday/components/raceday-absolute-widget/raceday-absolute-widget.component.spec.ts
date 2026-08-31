@@ -300,4 +300,41 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(colVisStyle.pointerEvents).toBe("auto");
     expect(deleteAnchorStyle.pointerEvents).toBe("auto");
   });
+
+  it("should apply widget zIndex for menu-bar when isCustomizing is true", () => {
+    mockWidget.widgetType = "menu-bar";
+    mockWidget.zIndex = 105;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.style.zIndex).toBe("105");
+  });
+
+  it("should apply 99999 zIndex for menu-bar when isCustomizing is false", () => {
+    mockWidget.widgetType = "menu-bar";
+    mockWidget.zIndex = 105;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.style.zIndex).toBe("99999");
+  });
+
+  it("should apply regular zIndex for other widgets in both customizing and live modes", () => {
+    mockWidget.widgetType = "timer";
+    mockWidget.zIndex = 120;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.style.zIndex).toBe("120");
+
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+    expect(wrapper.style.zIndex).toBe("120");
+  });
 });

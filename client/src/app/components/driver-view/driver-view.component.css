@@ -3,6 +3,14 @@
   height: 100vh;
   overflow: hidden;
   background: var(--surface-card, #1e293b);
+  position: relative;
+}
+
+.driver-view-nav {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
 }
 
 .on-deck-mobile-container {

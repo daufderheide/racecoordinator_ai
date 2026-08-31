@@ -6,7 +6,10 @@
     <!-- Header Bar -->
     <div class="header-bar">
       <div class="title-glow-container">
-        <h1 class="page-title">{{ "RD_WIN_SEASON_RESULTS" | translate }}</h1>
+        <div class="title-row">
+          <app-browser-navigation></app-browser-navigation>
+          <h1 class="page-title">{{ "RD_WIN_SEASON_RESULTS" | translate }}</h1>
+        </div>
         <div class="cyberpunk-line"></div>
       </div>
       <div class="race-name-container">
@@ -37,6 +40,10 @@
               }}</span>
             }
             <span class="meta-pill">
+              {{ "SM_DROPS_COUNT" | translate }}:
+              <strong>{{ season?.drops || 0 }}</strong>
+            </span>
+            <span class="meta-pill">
               {{ "SM_RACES_RUN" | translate }}:
               <strong>{{ season?.races?.length || 0 }}</strong>
             </span>
@@ -49,58 +56,11 @@
             <div class="sub-section-header">
               <h4>{{ "SM_STANDINGS_TITLE" | translate }}</h4>
             </div>
-            @if (standings.length === 0) {
-              <div class="empty-standings">
-                {{ "SM_NO_RACES_RUN" | translate }}
-              </div>
-            } @else {
-              <table class="standings-table">
-                <thead>
-                  <tr>
-                    <th class="col-rank">{{ "SM_RANK" | translate }}</th>
-                    <th class="col-driver">{{ "SM_DRIVER" | translate }}</th>
-                    <th class="col-pts">{{ "SM_NET_POINTS" | translate }}</th>
-                    <th class="col-pts">{{ "SM_GROSS_POINTS" | translate }}</th>
-                    <th class="col-races">{{ "SM_RACES" | translate }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (
-                    item of standings;
-                    track item.driver_id;
-                    let rankIdx = $index
-                  ) {
-                    <tr
-                      [class.podium-1]="rankIdx === 0"
-                      [class.podium-2]="rankIdx === 1"
-                      [class.podium-3]="rankIdx === 2"
-                    >
-                      <td class="col-rank">
-                        @if (rankIdx === 0) {
-                          🥇 1
-                        } @else if (rankIdx === 1) {
-                          🥈 2
-                        } @else if (rankIdx === 2) {
-                          🥉 3
-                        } @else {
-                          {{ rankIdx + 1 }}
-                        }
-                      </td>
-                      <td class="col-driver">
-                        <strong>{{ item.driver_name }}</strong>
-                      </td>
-                      <td class="col-pts net-highlight">
-                        <strong>{{ item.net_points | number: "1.0-2" }}</strong>
-                      </td>
-                      <td class="col-pts">
-                        {{ item.gross_points | number: "1.0-2" }}
-                      </td>
-                      <td class="col-races">{{ item.races_run }}</td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            }
+            <app-season-summary
+              [season]="season"
+              [standings]="standings"
+              [showHeader]="false"
+            ></app-season-summary>
           </div>
 
           <!-- Race Breakdown Section -->
@@ -116,20 +76,18 @@
               <div class="expander-list">
                 @for (
                   race of season.races;
-                  track race.race_id || idx;
+                  track getRaceExpanderKey(race, idx);
                   let idx = $index
                 ) {
                   <div class="race-expander-card">
                     <div
                       class="expander-title-bar"
-                      (click)="toggleRaceExpanded(race.race_id || '' + idx)"
+                      (click)="toggleRaceExpanded(race, idx)"
                     >
                       <div class="expander-title-left">
                         <span
                           class="expander-icon"
-                          [class.collapsed]="
-                            !isRaceExpanded(race.race_id || '' + idx)
-                          "
+                          [class.collapsed]="!isRaceExpanded(race, idx)"
                           >▼</span
                         >
                         <span class="race-step">#{{ idx + 1 }}</span>
@@ -148,9 +106,7 @@
                     </div>
                     <div
                       class="expander-body"
-                      [class.expander-collapsed]="
-                        !isRaceExpanded(race.race_id || '' + idx)
-                      "
+                      [class.expander-collapsed]="!isRaceExpanded(race, idx)"
                     >
                       <table class="race-breakdown-table">
                         <thead>
@@ -174,13 +130,13 @@
                               class="driver-expandable-row"
                               [class.driver-row-expanded]="
                                 isDriverExpanded(
-                                  race.race_id || '' + idx,
+                                  getRaceExpanderKey(race, idx),
                                   res.driver_id
                                 )
                               "
                               (click)="
                                 toggleDriverExpanded(
-                                  race.race_id || '' + idx,
+                                  getRaceExpanderKey(race, idx),
                                   res.driver_id
                                 )
                               "
@@ -191,7 +147,7 @@
                                   class="driver-expander-chevron"
                                   [class.expanded]="
                                     isDriverExpanded(
-                                      race.race_id || '' + idx,
+                                      getRaceExpanderKey(race, idx),
                                       res.driver_id
                                     )
                                   "
@@ -224,7 +180,7 @@
                               class="driver-bonus-details-row"
                               [class.driver-bonus-collapsed]="
                                 !isDriverExpanded(
-                                  race.race_id || '' + idx,
+                                  getRaceExpanderKey(race, idx),
                                   res.driver_id
                                 )
                               "

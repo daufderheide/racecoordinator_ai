@@ -8,9 +8,11 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.PinBehavior;
 import com.antigravity.proto.RaceFlag;
@@ -20,9 +22,11 @@ import com.antigravity.protocols.CarLocation;
 import com.antigravity.protocols.PartialTime;
 import com.antigravity.protocols.ProtocolListener;
 import com.antigravity.protocols.arduino.ArduinoConfig.LapPinPitBehavior;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -57,16 +61,24 @@ public class PhidgetProtocolTest {
   public void testInitialStateAndGetters() {
     assertEquals(0, protocol.getInterfaceIndex());
     assertEquals(4, protocol.getNumLanes());
-    assertFalse(protocol.hasMainRelay()); // Not open yet
-    assertFalse(protocol.hasPerLaneRelays()); // Not open yet
-    assertFalse(protocol.hasDigitalFuel());
+    assertTrue(protocol.hasMainRelay());
+    assertTrue(protocol.hasPerLaneRelays());
+    assertTrue(protocol.hasDigitalFuel());
     assertFalse(protocol.isHealthy()); // Not open yet
+
+    PhidgetConfig emptyConfig = new PhidgetConfig();
+    PhidgetProtocol emptyProtocol = new PhidgetProtocol(emptyConfig, 4, null);
+    assertFalse(emptyProtocol.hasMainRelay());
+    assertFalse(emptyProtocol.hasPerLaneRelays());
+    assertFalse(emptyProtocol.hasDigitalFuel());
   }
 
   @Test
   public void testUpdateConfig() {
     PhidgetConfig newConfig = new PhidgetConfig();
     newConfig.serialNumber = 67890;
+    newConfig.digitalInIds = Arrays.asList(PinBehavior.BEHAVIOR_CALL_BUTTON_VALUE);
+
     protocol.updateConfig(newConfig);
   }
 
@@ -98,6 +110,10 @@ public class PhidgetProtocolTest {
     // Since configured pins exist and at least one channel is attached, it should be healthy
     assertTrue(spyProtocol.isHealthy());
     verify(mockListener).onInterfaceStatus(InterfaceStatus.CONNECTED, 0);
+
+    ArgumentCaptor<InterfaceEvent> eventCaptor = ArgumentCaptor.forClass(InterfaceEvent.class);
+    verify(mockListener, atLeastOnce()).onInterfaceEvent(eventCaptor.capture());
+    assertEquals(InterfaceStatus.CONNECTED, eventCaptor.getValue().getStatus().getStatus());
   }
 
   @Test
@@ -137,9 +153,13 @@ public class PhidgetProtocolTest {
 
     // Closing protocol should update health and notify listener of DISCONNECTED state
     protocol.close();
-    assertFalse(protocol.hasMainRelay());
+    assertTrue(protocol.hasMainRelay());
     assertFalse(protocol.isHealthy());
     verify(mockListener).onInterfaceStatus(InterfaceStatus.DISCONNECTED, 0);
+
+    ArgumentCaptor<InterfaceEvent> eventCaptor = ArgumentCaptor.forClass(InterfaceEvent.class);
+    verify(mockListener).onInterfaceEvent(eventCaptor.capture());
+    assertEquals(InterfaceStatus.DISCONNECTED, eventCaptor.getValue().getStatus().getStatus());
   }
 
   @Test
@@ -463,7 +483,7 @@ public class PhidgetProtocolTest {
   }
 
   @Test
-  public void testOpenWithZeroConfiguredPinsEvaluatesHealthy() {
+  public void testOpenWithZeroConfiguredPinsEvaluatesDisconnectedWhenNotAttached() {
     PhidgetConfig emptyPinsConfig = new PhidgetConfig();
     emptyPinsConfig.serialNumber = 12345;
     emptyPinsConfig.digitalInIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
@@ -477,7 +497,41 @@ public class PhidgetProtocolTest {
     try {
       boolean opened = emptyProtocol.open();
       assertTrue(opened);
+      // Without physical hardware attached, it should not be healthy
+      assertFalse(emptyProtocol.isHealthy());
+      assertFalse(emptyProtocol.isConnected());
+      verify(mockListener, atLeastOnce()).onInterfaceStatus(InterfaceStatus.DISCONNECTED, 0);
+    } finally {
+      emptyProtocol.close();
+    }
+  }
+
+  @Test
+  public void testOpenWithZeroConfiguredPinsEvaluatesHealthyWhenManagerAttached() throws Exception {
+    PhidgetConfig emptyPinsConfig = new PhidgetConfig();
+    emptyPinsConfig.serialNumber = 12345;
+    emptyPinsConfig.digitalInIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    emptyPinsConfig.digitalOutIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    emptyPinsConfig.analogIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+
+    PhidgetProtocol emptyProtocol = new PhidgetProtocol(emptyPinsConfig, 4, null);
+    ProtocolListener mockListener = mock(ProtocolListener.class);
+    emptyProtocol.setListener(mockListener);
+
+    try {
+      boolean opened = emptyProtocol.open();
+      assertTrue(opened);
+
+      Field managerAttachedField = PhidgetProtocol.class.getDeclaredField("managerDeviceAttached");
+      managerAttachedField.setAccessible(true);
+      managerAttachedField.set(emptyProtocol, true);
+
+      Method checkMethod = PhidgetProtocol.class.getDeclaredMethod("checkAttachmentStatus");
+      checkMethod.setAccessible(true);
+      checkMethod.invoke(emptyProtocol);
+
       assertTrue(emptyProtocol.isHealthy());
+      assertTrue(emptyProtocol.isConnected());
       verify(mockListener, atLeastOnce()).onInterfaceStatus(InterfaceStatus.CONNECTED, 0);
     } finally {
       emptyProtocol.close();
@@ -563,5 +617,395 @@ public class PhidgetProtocolTest {
   public void testSyncPowerAndSyncAnalogLedsExecution() {
     protocol.syncPower();
     protocol.syncAnalogLeds();
+  }
+
+  @Test
+  public void testSetPinStateAttachedVsDetached() throws Exception {
+    config.normallyClosedRelays = true;
+    PhidgetProtocol spyProtocol = org.mockito.Mockito.spy(protocol);
+
+    // Detached -> setPinState should return false
+    org.mockito.Mockito.doReturn(false).when(spyProtocol).isOutputChannelAttached(0);
+    boolean resultDetached = spyProtocol.setPinState(true, 0, true);
+    assertFalse(resultDetached);
+
+    // Attached -> setPinState should return true and set state
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isOutputChannelAttached(0);
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setOutputChannelPhysicalState(eq(0), org.mockito.ArgumentMatchers.anyBoolean());
+    boolean resultAttached = spyProtocol.setPinState(true, 0, true);
+    assertTrue(resultAttached);
+    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
+  }
+
+  @Test
+  public void testSetPinStateRelayPolarityNormallyOpenVsNormallyClosed() throws Exception {
+    PhidgetProtocol spyProtocol = org.mockito.Mockito.spy(protocol);
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isOutputChannelAttached(0);
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isOutputChannelAttached(1);
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setOutputChannelPhysicalState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    // Pin 0 is BEHAVIOR_RELAY_VALUE (main relay)
+    // 1. Normally Closed (normallyClosedRelays = true): Power ON (true) -> coil TRUE, OFF (false)
+    // -> coil FALSE
+    config.normallyClosedRelays = true;
+    assertTrue(spyProtocol.setPinState(true, 0, true));
+    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
+
+    assertTrue(spyProtocol.setPinState(true, 0, false));
+    verify(spyProtocol).setOutputChannelPhysicalState(0, false);
+
+    // 2. Normally Open (normallyClosedRelays = false): Power ON (true) -> coil FALSE, OFF (false)
+    // -> coil TRUE
+    config.normallyClosedRelays = false;
+    assertTrue(spyProtocol.setPinState(true, 0, true));
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(0, false);
+
+    assertTrue(spyProtocol.setPinState(true, 0, false));
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(0, true);
+
+    // Pin 1 is BEHAVIOR_RELAY_BASE_VALUE (lane 0 relay)
+    config.normallyClosedRelays = true;
+    assertTrue(spyProtocol.setPinState(true, 1, true));
+    verify(spyProtocol).setOutputChannelPhysicalState(1, true);
+
+    assertTrue(spyProtocol.setPinState(true, 1, false));
+    verify(spyProtocol).setOutputChannelPhysicalState(1, false);
+
+    config.normallyClosedRelays = false;
+    assertTrue(spyProtocol.setPinState(true, 1, true));
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(1, false);
+
+    assertTrue(spyProtocol.setPinState(true, 1, false));
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setOutputChannelPhysicalState(1, true);
+  }
+
+  @Test
+  public void testSetMainPowerAndLanePowerRelayPolarity() throws Exception {
+    PhidgetProtocol spyProtocol = org.mockito.Mockito.spy(protocol);
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isMainRelayAttached();
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isLaneRelayAttached(0);
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setMainRelayPhysicalState(org.mockito.ArgumentMatchers.anyBoolean());
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setLaneRelayPhysicalState(eq(0), org.mockito.ArgumentMatchers.anyBoolean());
+
+    // 1. Normally Closed: on -> true, off -> false
+    config.normallyClosedRelays = true;
+    spyProtocol.setMainPower(true);
+    verify(spyProtocol).setMainRelayPhysicalState(true);
+
+    spyProtocol.setMainPower(false);
+    verify(spyProtocol).setMainRelayPhysicalState(false);
+
+    spyProtocol.setLanePower(true, 0);
+    verify(spyProtocol).setLaneRelayPhysicalState(0, true);
+
+    spyProtocol.setLanePower(false, 0);
+    verify(spyProtocol).setLaneRelayPhysicalState(0, false);
+
+    // 2. Normally Open: on -> false, off -> true
+    config.normallyClosedRelays = false;
+    spyProtocol.setMainPower(true);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setMainRelayPhysicalState(false);
+
+    spyProtocol.setMainPower(false);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setMainRelayPhysicalState(true);
+
+    spyProtocol.setLanePower(true, 0);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setLaneRelayPhysicalState(0, false);
+
+    spyProtocol.setLanePower(false, 0);
+    verify(spyProtocol, org.mockito.Mockito.times(2)).setLaneRelayPhysicalState(0, true);
+  }
+
+  @Test
+  public void testSyncPowerRelayPolarity() throws Exception {
+    PhidgetProtocol spyProtocol = org.mockito.Mockito.spy(protocol);
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isMainRelayAttached();
+    org.mockito.Mockito.doReturn(true).when(spyProtocol).isLaneRelayAttached(0);
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setMainRelayPhysicalState(org.mockito.ArgumentMatchers.anyBoolean());
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setLaneRelayPhysicalState(eq(0), org.mockito.ArgumentMatchers.anyBoolean());
+
+    Field relayOutputsField = PhidgetProtocol.class.getDeclaredField("relayOutputs");
+    relayOutputsField.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Map<Integer, Object> relayMap = (Map<Integer, Object>) relayOutputsField.get(spyProtocol);
+    relayMap.put(0, null);
+
+    Field lastMainPowerField =
+        PhidgetProtocol.class.getSuperclass().getDeclaredField("lastMainPower");
+    lastMainPowerField.setAccessible(true);
+    lastMainPowerField.set(spyProtocol, true);
+
+    Field lastLanePowerField =
+        PhidgetProtocol.class.getSuperclass().getDeclaredField("lastLanePower");
+    lastLanePowerField.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Map<Integer, Boolean> lanePowerMap =
+        (Map<Integer, Boolean>) lastLanePowerField.get(spyProtocol);
+    lanePowerMap.put(0, true);
+
+    // NC = true: power ON -> setState(true)
+    config.normallyClosedRelays = true;
+    spyProtocol.syncPower();
+    verify(spyProtocol).setMainRelayPhysicalState(true);
+    verify(spyProtocol).setLaneRelayPhysicalState(0, true);
+
+    // NC = false: power ON -> setState(false)
+    config.normallyClosedRelays = false;
+    spyProtocol.syncPower();
+    verify(spyProtocol).setMainRelayPhysicalState(false);
+    verify(spyProtocol).setLaneRelayPhysicalState(0, false);
+  }
+
+  @Test
+  public void testApplyOutputChannelStateRelayPolarity() throws Exception {
+    PhidgetProtocol spyProtocol = org.mockito.Mockito.spy(protocol);
+    org.mockito.Mockito.doNothing()
+        .when(spyProtocol)
+        .setOutputChannelPhysicalState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    Field lastMainPowerField =
+        PhidgetProtocol.class.getSuperclass().getDeclaredField("lastMainPower");
+    lastMainPowerField.setAccessible(true);
+    lastMainPowerField.set(spyProtocol, true);
+
+    Field lastLanePowerField =
+        PhidgetProtocol.class.getSuperclass().getDeclaredField("lastLanePower");
+    lastLanePowerField.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Map<Integer, Boolean> lanePowerMap =
+        (Map<Integer, Boolean>) lastLanePowerField.get(spyProtocol);
+    lanePowerMap.put(0, true);
+
+    // Channel 0 is BEHAVIOR_RELAY_VALUE (main relay)
+    config.normallyClosedRelays = true;
+    spyProtocol.applyOutputChannelState(0);
+    verify(spyProtocol).setOutputChannelPhysicalState(0, true);
+
+    config.normallyClosedRelays = false;
+    spyProtocol.applyOutputChannelState(0);
+    verify(spyProtocol).setOutputChannelPhysicalState(0, false);
+
+    // Channel 1 is BEHAVIOR_RELAY_BASE_VALUE (lane 0 relay)
+    config.normallyClosedRelays = true;
+    spyProtocol.applyOutputChannelState(1);
+    verify(spyProtocol).setOutputChannelPhysicalState(1, true);
+
+    config.normallyClosedRelays = false;
+    spyProtocol.applyOutputChannelState(1);
+    verify(spyProtocol).setOutputChannelPhysicalState(1, false);
+  }
+
+  @Test
+  public void testUpdateConfigDynamicChannelRemapAndSyncPower() throws Exception {
+    PhidgetProtocol spyProtocol = org.mockito.Mockito.spy(protocol);
+
+    // Set opened = true
+    Field openedField = PhidgetProtocol.class.getDeclaredField("opened");
+    openedField.setAccessible(true);
+    openedField.set(spyProtocol, true);
+
+    PhidgetConfig updated = new PhidgetConfig();
+    updated.serialNumber = 12345; // Same device
+    updated.normallyClosedRelays = true;
+    updated.digitalOutIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_UNUSED_VALUE, PinBehavior.BEHAVIOR_RELAY_BASE_VALUE // Lane 0 relay
+            );
+
+    spyProtocol.updateConfig(updated);
+    assertEquals(updated, spyProtocol.getConfig());
+  }
+
+  @Test
+  public void testOpenAndCapabilityDetection() {
+    PhidgetConfig phidgetConfig = new PhidgetConfig();
+    phidgetConfig.serialNumber = 147992;
+    phidgetConfig.digitalOutIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_RELAY_VALUE, // Main relay
+            PinBehavior.BEHAVIOR_RELAY_BASE_VALUE, // Lane 0 relay
+            PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 1, // Lane 1 relay
+            PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE);
+    phidgetConfig.analogIds = Arrays.asList(PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE_VALUE);
+
+    PhidgetProtocol testProto = new PhidgetProtocol(phidgetConfig, 4, null);
+    testProto.setInterfaceIndex(0);
+
+    assertTrue(testProto.hasMainRelay());
+    assertTrue(testProto.hasPerLaneRelays());
+    assertTrue(testProto.hasDigitalFuel());
+
+    // Update with empty config
+    PhidgetConfig emptyConfig = new PhidgetConfig();
+    emptyConfig.serialNumber = 147992;
+    emptyConfig.digitalOutIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    emptyConfig.analogIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+    testProto.updateConfig(emptyConfig);
+
+    assertFalse(testProto.hasMainRelay());
+    assertFalse(testProto.hasPerLaneRelays());
+    assertFalse(testProto.hasDigitalFuel());
+  }
+
+  @Test
+  public void testTwoPhidgetsMultiInterfacePowerDelegation() throws Exception {
+    // Phidget 1 (8/8/8): Lap inputs, no relays
+    PhidgetConfig sensorConfig = new PhidgetConfig();
+    sensorConfig.serialNumber = 147992;
+    sensorConfig.digitalInIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_LAP_BASE_VALUE,
+            PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 1,
+            PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 2,
+            PinBehavior.BEHAVIOR_LAP_BASE_VALUE + 3);
+    sensorConfig.digitalOutIds = Arrays.asList(PinBehavior.BEHAVIOR_UNUSED_VALUE);
+
+    // Phidget 2 (0/0/4): 4 Lane Relays
+    PhidgetConfig relayConfig = new PhidgetConfig();
+    relayConfig.serialNumber = 147993;
+    relayConfig.normallyClosedRelays = false;
+    relayConfig.digitalOutIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_RELAY_BASE_VALUE,
+            PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 1,
+            PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 2,
+            PinBehavior.BEHAVIOR_RELAY_BASE_VALUE + 3);
+
+    PhidgetProtocol sensorProto =
+        org.mockito.Mockito.spy(new PhidgetProtocol(sensorConfig, 4, null));
+    sensorProto.setInterfaceIndex(0);
+
+    PhidgetProtocol relayProto = org.mockito.Mockito.spy(new PhidgetProtocol(relayConfig, 4, null));
+    relayProto.setInterfaceIndex(1);
+
+    org.mockito.Mockito.doReturn(true).when(relayProto).isLaneRelayAttached(0);
+    org.mockito.Mockito.doReturn(true).when(relayProto).isLaneRelayAttached(1);
+    org.mockito.Mockito.doNothing()
+        .when(relayProto)
+        .setLaneRelayPhysicalState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    List<com.antigravity.protocols.IProtocol> protocolsList =
+        Arrays.asList(sensorProto, relayProto);
+    com.antigravity.protocols.ProtocolDelegate delegate =
+        new com.antigravity.protocols.ProtocolDelegate(protocolsList);
+
+    assertFalse(delegate.hasMainRelay());
+    assertTrue(delegate.hasPerLaneRelays());
+
+    // Main power ON across all lanes (Should NO LONGER touch lane relays)
+    delegate.setMainPower(true);
+    verify(relayProto, org.mockito.Mockito.never())
+        .setLanePower(
+            org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.anyInt());
+
+    // Explicitly set Lane Power
+    delegate.setLanePower(true, 0);
+    delegate.setLanePower(true, 1);
+    delegate.setLanePower(true, 2);
+    delegate.setLanePower(true, 3);
+
+    verify(relayProto).setLanePower(true, 0);
+    verify(relayProto).setLanePower(true, 1);
+    verify(relayProto).setLanePower(true, 2);
+    verify(relayProto).setLanePower(true, 3);
+    // Normally Open (normallyClosedRelays = false): on -> false
+    verify(relayProto).setLaneRelayPhysicalState(0, false);
+    verify(relayProto).setLaneRelayPhysicalState(1, false);
+
+    // Turn Lane 1 power OFF
+    delegate.setLanePower(false, 0);
+    verify(relayProto).setLanePower(false, 0);
+    verify(relayProto).setLaneRelayPhysicalState(0, true);
+  }
+
+  @Test
+  public void testAnalogLedHeatLeader() throws Exception {
+    PhidgetConfig ledConfig = new PhidgetConfig();
+    ledConfig.serialNumber = 147994;
+    ledConfig.digitalOutIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE, // Lane 0
+            PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1 // Lane 1
+            );
+
+    PhidgetProtocol spyProto = org.mockito.Mockito.spy(new PhidgetProtocol(ledConfig, 2, null));
+    spyProto.setInterfaceIndex(0);
+    doNothing()
+        .when(spyProto)
+        .setAnalogLedState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    Field analogLedOutputsField = PhidgetProtocol.class.getDeclaredField("analogLedOutputs");
+    analogLedOutputsField.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Map<Integer, Object> map = (Map<Integer, Object>) analogLedOutputsField.get(spyProto);
+    map.put(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE, null);
+    map.put(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1, null);
+
+    // 1. Lane 0 is leader
+    spyProto.setHeatStandings(Arrays.asList(0, 1));
+    verify(spyProto)
+        .setAnalogLedState(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE, true);
+    verify(spyProto)
+        .setAnalogLedState(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1, false);
+
+    // 2. Lane 1 becomes leader
+    org.mockito.Mockito.clearInvocations(spyProto);
+    spyProto.setHeatStandings(Arrays.asList(1, 0));
+    verify(spyProto)
+        .setAnalogLedState(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE, false);
+    verify(spyProto)
+        .setAnalogLedState(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1, true);
+
+    // 3. Clear LEDs
+    org.mockito.Mockito.clearInvocations(spyProto);
+    spyProto.clearLeds();
+    verify(spyProto)
+        .setAnalogLedState(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE, false);
+    verify(spyProto)
+        .setAnalogLedState(PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1, false);
+  }
+
+  @Test
+  public void testApplyOutputChannelState_HeatLeader() throws Exception {
+    PhidgetConfig ledConfig = new PhidgetConfig();
+    ledConfig.serialNumber = 147995;
+    ledConfig.digitalOutIds =
+        Arrays.asList(
+            PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE, // Lane 0
+            PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1 // Lane 1
+            );
+
+    PhidgetProtocol spyProto = org.mockito.Mockito.spy(new PhidgetProtocol(ledConfig, 2, null));
+    org.mockito.Mockito.doNothing()
+        .when(spyProto)
+        .setOutputChannelPhysicalState(
+            org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyBoolean());
+
+    Field lastLeaderLaneField =
+        PhidgetProtocol.class.getSuperclass().getDeclaredField("lastLeaderLane");
+    lastLeaderLaneField.setAccessible(true);
+    lastLeaderLaneField.set(spyProto, 0); // Lane 0 is leader
+
+    spyProto.applyOutputChannelState(0);
+    verify(spyProto).setOutputChannelPhysicalState(0, true);
+
+    spyProto.applyOutputChannelState(1);
+    verify(spyProto).setOutputChannelPhysicalState(1, false);
   }
 }

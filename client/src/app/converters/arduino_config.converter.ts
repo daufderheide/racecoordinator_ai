@@ -38,7 +38,7 @@ export class ArduinoConfigConverter {
       usePitsAsLaps: p.usePitsAsLaps ?? p.use_pits_as_laps ?? false,
       useLapsForSegments:
         p.useLapsForSegments ?? p.use_laps_for_segments ?? false,
-      lapPinPitBehavior: p.lapPinPitBehavior || p.lap_pin_pit_behavior || 0,
+      lapPinPitBehavior: p.lapPinPitBehavior ?? p.lap_pin_pit_behavior ?? 3,
       digitalIds: p.digitalIds || p.digital_ids || [],
       analogIds: p.analogIds || p.analog_ids || [],
       ledStrings: ledStrings,

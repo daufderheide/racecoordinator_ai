@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import com.antigravity.auth.Role;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AudioConfig;
+import com.antigravity.models.CustomUI;
 import com.antigravity.models.Theme;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Race;
@@ -38,50 +39,112 @@ public class ThemeTaskHandler {
     try {
       databaseContext.ensureTable("themes");
       List<Theme> themes = themeRepository.findAll();
-      boolean hasDefault = false;
+      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
       for (Theme t : themes) {
-        boolean updated = false;
-        Map<String, String> s = new HashMap<>(t.getSlots());
-        if (migrateThemeSlots(s, t.isDefault())) {
-          updated = true;
-        }
-        if (s.containsKey("audio.countdown")) {
-          s.remove("audio.countdown");
-          updated = true;
-        }
-        if (s.containsKey("audio.seconds_left")) {
-          s.remove("audio.seconds_left");
-          updated = true;
-        }
-
-        Map<String, AudioConfig> as =
-            t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
-        if (populateDefaultAudioSlots(as)) {
-          updated = true;
-        }
-
-        if (t.isDefault()) {
-          hasDefault = true;
-        }
-
-        if (updated) {
-          Theme newTheme = new Theme(t.getName(), t.isDefault(), s, as, t.getEntityId(), t.getId());
-          themeRepository.save(newTheme);
-        }
+        migrateAndCheckTheme(t, foundFlags);
       }
-      if (!hasDefault) {
-        Map<String, String> slots = createDefaultSlots();
-        Map<String, AudioConfig> audioSlots = new HashMap<>();
-        populateDefaultAudioSlots(audioSlots);
 
-        Theme defaultTheme =
-            new Theme("Default Theme", true, slots, audioSlots, Theme.DEFAULT_THEME_ID, null);
-        themeRepository.save(defaultTheme);
-        logger.info("Created default theme with ID {}", Theme.DEFAULT_THEME_ID);
+      if (!foundFlags[0]) {
+        createAndSaveFactoryTheme(Theme.DEFAULT_THEME_ID, "Default Theme", CustomUI.DEFAULT_UI_ID);
+      }
+      if (!foundFlags[1]) {
+        createAndSaveFactoryTheme(
+            Theme.PRACTICE_THEME_ID, "Practice Theme", CustomUI.PRACTICE_UI_ID);
+      }
+      if (!foundFlags[2]) {
+        createAndSaveFactoryTheme(Theme.FUEL_THEME_ID, "Fuel Theme", CustomUI.FUEL_UI_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to ensure default theme", e);
     }
+  }
+
+  private void migrateAndCheckTheme(Theme t, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = t.getEntityId();
+
+    if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
+      foundFlags[0] = true;
+    }
+    if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
+      foundFlags[1] = true;
+    }
+    if (Theme.FUEL_THEME_ID.equals(entityId)) {
+      foundFlags[2] = true;
+    }
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(t.getName()))) {
+      themeRepository.delete("2");
+      entityId = Theme.FUEL_THEME_ID;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    Map<String, String> s = new HashMap<>(t.getSlots());
+    if (migrateThemeSlots(s, t.isDefault())) {
+      updated = true;
+    }
+    if (s.remove("audio.countdown") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.seconds_left") != null) {
+      updated = true;
+    }
+
+    Map<String, AudioConfig> as =
+        t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
+    if (populateDefaultAudioSlots(as)) {
+      updated = true;
+    }
+
+    String uiId = t.getUiId();
+    if (Theme.FUEL_THEME_ID.equals(entityId) && "2".equals(uiId)) {
+      uiId = CustomUI.FUEL_UI_ID;
+      updated = true;
+    }
+
+    if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (uiId == null) {
+        uiId = CustomUI.DEFAULT_UI_ID;
+        updated = true;
+      }
+    }
+    if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (uiId == null) {
+        uiId = CustomUI.PRACTICE_UI_ID;
+        updated = true;
+      }
+    }
+    if (Theme.FUEL_THEME_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (uiId == null) {
+        uiId = CustomUI.FUEL_UI_ID;
+        updated = true;
+      }
+    }
+    if (uiId == null || uiId.trim().isEmpty()) {
+      uiId = CustomUI.DEFAULT_UI_ID;
+      updated = true;
+    }
+
+    if (updated) {
+      Theme newTheme = new Theme(t.getName(), t.isDefault(), s, as, uiId, entityId, t.getId());
+      themeRepository.save(newTheme);
+    }
+  }
+
+  private void createAndSaveFactoryTheme(String entityId, String name, String uiId) {
+    Map<String, String> slots = createDefaultSlots();
+    Map<String, AudioConfig> audioSlots = new HashMap<>();
+    populateDefaultAudioSlots(audioSlots);
+
+    Theme theme = new Theme(name, true, slots, audioSlots, uiId, entityId, null);
+    themeRepository.save(theme);
+    logger.info("Created factory theme with ID {}", entityId);
   }
 
   private boolean migrateThemeSlots(Map<String, String> s, boolean isDefault) {
@@ -305,7 +368,13 @@ public class ThemeTaskHandler {
         String nextId = getNextSequence("themes");
         theme =
             new Theme(
-                theme.getName(), false, theme.getSlots(), theme.getAudioSlots(), nextId, null);
+                theme.getName(),
+                false,
+                theme.getSlots(),
+                theme.getAudioSlots(),
+                theme.getUiId(),
+                nextId,
+                null);
       }
 
       themeRepository.save(theme);
@@ -340,18 +409,15 @@ public class ThemeTaskHandler {
         return;
       }
 
-      if (current.isDefault()) {
-        setStatus(ctx, 403);
-        setResult(ctx, "Cannot update the default theme");
-        return;
-      }
-
       theme =
           new Theme(
-              theme.getName(),
+              theme.getName() != null && !theme.getName().trim().isEmpty()
+                  ? theme.getName()
+                  : current.getName(),
               current.isDefault(),
               theme.getSlots(),
               theme.getAudioSlots(),
+              theme.getUiId(),
               id,
               null);
 
@@ -376,11 +442,6 @@ public class ThemeTaskHandler {
     try {
       String id = getPathParam(ctx, "id");
       Theme theme = themeRepository.findByEntityId(id);
-      if (theme != null && theme.isDefault()) {
-        setStatus(ctx, 400);
-        setResult(ctx, "Cannot delete the default theme");
-        return;
-      }
 
       if (theme == null) {
         setStatus(ctx, 404);
@@ -452,7 +513,14 @@ public class ThemeTaskHandler {
 
       String nextId = getNextSequence("themes");
       Theme copy =
-          new Theme(newName, false, source.getSlots(), source.getAudioSlots(), nextId, null);
+          new Theme(
+              newName,
+              false,
+              source.getSlots(),
+              source.getAudioSlots(),
+              source.getUiId(),
+              nextId,
+              null);
       themeRepository.save(copy);
       setStatus(ctx, 201);
       setJson(ctx, copy);

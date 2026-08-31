@@ -145,4 +145,11 @@ public class ThemeTest {
       tempDir.delete();
     }
   }
+
+  @Test
+  public void testThemeConstants() {
+    assertEquals("default_classic_rc_ai", Theme.DEFAULT_THEME_ID);
+    assertEquals("practice_theme_rc_ai", Theme.PRACTICE_THEME_ID);
+    assertEquals("default_fuel_theme_rc_ai", Theme.FUEL_THEME_ID);
+  }
 }

@@ -162,6 +162,9 @@ public class RaceConverter {
       builder.setSoloLaneIndex(race.getSoloLaneIndex());
       builder.setPractice(race.isPractice());
       builder.setAdjustDriftLaps(race.isAdjustDriftLaps());
+      if (race.getThemeId() != null) {
+        builder.setThemeId(race.getThemeId());
+      }
       if (race.getCustomRotationSequence() != null) {
         builder.addAllCustomRotationSequence(race.getCustomRotationSequence());
       }
@@ -253,6 +256,7 @@ public class RaceConverter {
                       .setDriverName(standing.getDriverName())
                       .setNetPoints(standing.getNetPoints())
                       .setGrossPoints(standing.getGrossPoints())
+                      .setDroppedPoints(standing.getDroppedPoints())
                       .setRacesRun(standing.getRacesRun())
                       .setCurrentRacePoints(standing.getCurrentRacePoints());
               if (currentDetail != null) {
@@ -276,6 +280,10 @@ public class RaceConverter {
           }
         }
       }
+    }
+
+    if (race.getStatistics() != null && race.getStatistics().getStartMillis() > 0) {
+      builder.setStartTimeMillis(race.getStatistics().getStartMillis());
     }
 
     return builder.build();

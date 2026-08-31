@@ -143,4 +143,24 @@ test.describe("Race Manager Visuals", () => {
     // Screenshot
     await expect(page).toHaveScreenshot("race-manager-scrolled-selection.png");
   });
+
+  test("should display race manager in fullscreen mode with navigation buttons", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-manager?driverCount=4"),
+    );
+    await TestSetupHelper.disableAnimations(page);
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator("app-manager-header");
+    await header.waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("race-manager-fullscreen.png");
+  });
 });

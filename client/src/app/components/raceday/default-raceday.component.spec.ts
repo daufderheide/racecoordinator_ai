@@ -18,7 +18,8 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { DataService } from "@app/data.service";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { OverallRanking } from "@app/models/overall_scoring";
-import { ColumnVisibility, Settings } from "@app/models/settings";
+import { Settings } from "@app/models/settings";
+import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
@@ -27,6 +28,8 @@ import { RacePredictionService } from "@app/services/race-prediction.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+
+import { CustomUiService } from "../../services/custom-ui.service";
 
 @Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
@@ -125,6 +128,31 @@ describe("DefaultRacedayComponent", () => {
       const result = (component as any).gridTemplateRowsVertical;
       expect(result).toBe(
         "minmax(0, 100fr) minmax(0, 250fr) minmax(0, 1250fr) minmax(0, 250fr)",
+      );
+    });
+
+    it("should assign largeHeight to bestLapTime and other lap time columns", () => {
+      (component as any).columns = [
+        { propertyName: "laneNumber", width: 200 },
+        { propertyName: "driver.nickname", width: 200 },
+        { propertyName: "lastLapTime", width: 330 },
+        { propertyName: "bestLapTime", width: 330 },
+        { propertyName: "lastLaps", width: 1650 },
+        { propertyName: "lapCount", width: 200 },
+      ] as any[];
+
+      // largeHeight = max(330, 200) = 330
+      // smallHeight = min(330, 200) = 200
+      // laneNumber = smallHeight (200)
+      // driver.nickname = smallHeight (200)
+      // lastLapTime = largeHeight (330)
+      // bestLapTime = largeHeight (330)
+      // lastLaps = largeHeight * 5 (1650)
+      // lapCount = largeHeight (330)
+
+      const result = (component as any).gridTemplateRowsVertical;
+      expect(result).toBe(
+        "minmax(0, 200fr) minmax(0, 200fr) minmax(0, 330fr) minmax(0, 330fr) minmax(0, 1650fr) minmax(0, 330fr)",
       );
     });
   });
@@ -320,18 +348,50 @@ describe("DefaultRacedayComponent", () => {
     mockSettings = createDefaultSettings({
       sortByStandings: true,
       racedayColumns: ["driver.nickname", "lapCount", "fuelPercentage"],
-      columnVisibility: {
-        fuelPercentage: ColumnVisibility.FuelRaceOnly,
-      },
     });
 
     const mockActivatedRoute = {
       queryParams: of({}),
       snapshot: {
+        queryParams: {},
         queryParamMap: {
           get: jasmine.createSpy("get").and.returnValue(null),
         },
       },
+    };
+
+    const mockCustomUiService = {
+      getCustomUI: jasmine.createSpy("getCustomUI").and.returnValue(undefined),
+      getCustomUIs: jasmine.createSpy("getCustomUIs").and.returnValue([]),
+      initialize: jasmine
+        .createSpy("initialize")
+        .and.returnValue(Promise.resolve()),
+      isInitialized: jasmine.createSpy("isInitialized").and.returnValue(true),
+      customUIs$: of([]),
+    };
+
+    const mockThemeService = {
+      resolveAssetId: jasmine.createSpy("resolveAssetId"),
+      resolveAudioConfig: jasmine.createSpy("resolveAudioConfig"),
+      getActiveTheme: jasmine
+        .createSpy("getActiveTheme")
+        .and.returnValue({ entity_id: "t1" }),
+      setTransientActiveTheme: jasmine
+        .createSpy("setTransientActiveTheme")
+        .and.returnValue(Promise.resolve()),
+      getTransientThemeId: jasmine
+        .createSpy("getTransientThemeId")
+        .and.returnValue(null),
+      clearTransientActiveTheme: jasmine.createSpy("clearTransientActiveTheme"),
+      activateForRace: jasmine
+        .createSpy("activateForRace")
+        .and.returnValue(Promise.resolve()),
+      isInitialized: jasmine.createSpy("isInitialized").and.returnValue(true),
+      initialize: jasmine
+        .createSpy("initialize")
+        .and.returnValue(Promise.resolve()),
+      getThemes: jasmine.createSpy("getThemes").and.returnValue([]),
+      activeTheme$: of(null),
     };
 
     await TestBed.configureTestingModule({
@@ -343,6 +403,7 @@ describe("DefaultRacedayComponent", () => {
         MockTranslatePipe,
       ],
       providers: [
+        { provide: CustomUiService, useValue: mockCustomUiService },
         { provide: DataService, useValue: mockDataService },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: RaceService, useValue: mockRaceService },
@@ -357,10 +418,7 @@ describe("DefaultRacedayComponent", () => {
         },
         {
           provide: ThemeService,
-          useValue: jasmine.createSpyObj("ThemeService", [
-            "resolveAssetId",
-            "resolveAudioConfig",
-          ]),
+          useValue: mockThemeService,
         },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -1186,29 +1244,43 @@ describe("DefaultRacedayComponent", () => {
       expect(component["heats"][0].heatDrivers[0].userLaps).toBe(1.5);
     });
 
-    it("should block opening add-lap dialog or shortcut edits on unstarted heats", () => {
+    it("should allow opening add-lap dialog and shortcut edits on unstarted heats with or without auto-start", () => {
       fixture.detectChanges();
-      const mockHd = { laneIndex: 1, userLaps: 1.0 } as any;
+      const mockHd = {
+        laneIndex: 1,
+        userLaps: 1.0,
+        adjustedLapCount: 1.0,
+      } as any;
       component["heat"] = { started: false } as any; // Unstarted heat
+      mockDataService.updateUserLaps.and.returnValue(
+        of({ adjustedLapCount: 1.25 }),
+      );
 
       mockDataService.updateUserLaps.calls.reset();
       component["showAddLapSectionsDialog"] = false;
 
-      // Try click
+      // Regular click opens dialog
       component.onCellClick(
         mockHd,
         { propertyName: "lapCount" } as any,
         new MouseEvent("click"),
       );
-      expect(component["showAddLapSectionsDialog"]).toBeFalse();
+      expect(component["showAddLapSectionsDialog"]).toBeTrue();
+      expect(component["selectedHeatDriver"]).toBe(mockHd);
 
-      // Try ctrl+click shortcut
+      // Shift+click performs lap adjustment even in unstarted heat
+      component["autoStartRemaining"] = 5.0; // with auto-start active
+      const shiftEvent = {
+        shiftKey: true,
+        preventDefault: jasmine.createSpy("preventDefault"),
+      } as any;
       component.onCellClick(
         mockHd,
         { propertyName: "lapCount" } as any,
-        new MouseEvent("click", { ctrlKey: true }),
+        shiftEvent,
       );
-      expect(mockDataService.updateUserLaps).not.toHaveBeenCalled();
+      expect(shiftEvent.preventDefault).toHaveBeenCalled();
+      expect(mockDataService.updateUserLaps).toHaveBeenCalledWith(1, 1.25);
     });
 
     it("should show restart heat confirmation dialog when RESTART_HEAT selected", () => {
@@ -1318,14 +1390,69 @@ describe("DefaultRacedayComponent", () => {
       expect(mockDataService.startRace).not.toHaveBeenCalled();
     });
 
-    it("should show interface error modal when startRace fails", () => {
+    it("should show interface error modal when startRace fails with interface error message", () => {
       spyOn<any>(component, "showInterfaceError");
       mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
-      mockDataService.startRace.and.returnValue(of(false));
+      mockDataService.startRace.and.returnValue(
+        of({ success: false, message: "Track interface not connected." }),
+      );
       component.onMenuSelect("START_RESUME");
       expect((component as any).showInterfaceError).toHaveBeenCalledWith(
         "ACK_MODAL_TITLE_DISCONNECTED",
         "ACK_MODAL_MSG_DISCONNECTED",
+      );
+    });
+
+    it("should show start failed modal when startRace fails with non-interface message", () => {
+      spyOn<any>(component, "showInterfaceError");
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.startRace.and.returnValue(
+        of({ success: false, message: "Race cannot start in current state" }),
+      );
+      component.onMenuSelect("START_RESUME");
+      expect((component as any).showInterfaceError).toHaveBeenCalledWith(
+        "ACK_MODAL_TITLE_START_FAILED",
+        "Race cannot start in current state",
+      );
+    });
+
+    it("should show permission denied modal when startRace returns 401 or 403", () => {
+      spyOn<any>(component, "showInterfaceError");
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.startRace.and.returnValue(
+        throwError(() => ({ status: 403 })),
+      );
+      component.onMenuSelect("START_RESUME");
+      expect((component as any).showInterfaceError).toHaveBeenCalledWith(
+        "ACK_MODAL_TITLE_PERMISSION_DENIED",
+        "ACK_MODAL_MSG_PERMISSION_DENIED",
+      );
+    });
+
+    it("should show race inactive modal when startRace returns 404", () => {
+      spyOn<any>(component, "showInterfaceError");
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.startRace.and.returnValue(
+        throwError(() => ({ status: 404 })),
+      );
+      component.onMenuSelect("START_RESUME");
+      expect(component.raceHasEnded).toBeTrue();
+      expect((component as any).showInterfaceError).toHaveBeenCalledWith(
+        "ACK_MODAL_TITLE_RACE_INACTIVE",
+        "ACK_MODAL_MSG_RACE_INACTIVE",
+      );
+    });
+
+    it("should show generic start failed modal when startRace throws other error", () => {
+      spyOn<any>(component, "showInterfaceError");
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.startRace.and.returnValue(
+        throwError(() => ({ status: 500, message: "Internal server error" })),
+      );
+      component.onMenuSelect("START_RESUME");
+      expect((component as any).showInterfaceError).toHaveBeenCalledWith(
+        "ACK_MODAL_TITLE_START_FAILED",
+        "Internal server error",
       );
     });
 
@@ -1805,6 +1932,28 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should use driver finished flag if driver isFinished is true", () => {
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/driver_finished.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/driver_finished.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.driver_finished",
+      );
+    });
+
+    it("should evaluate isDriverFinished based on server isFinished state", () => {
+      expect(component.isDriverFinished(null as any)).toBeFalse();
+      expect(
+        component.isDriverFinished({ isFinished: false } as any),
+      ).toBeFalse();
+      expect(
+        component.isDriverFinished({ isFinished: true } as any),
+      ).toBeTrue();
+    });
+
     it("should format laneNumber correctly (1-indexed)", () => {
       const mockLaneHd = { ...mockHd, laneIndex: 2 } as any;
       const result = component.formatValue("laneNumber", null, mockLaneHd);
@@ -1905,8 +2054,8 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
-  describe("loadColumns with visibility", () => {
-    it("should filter out FuelRaceOnly columns when fuel is disabled", () => {
+  describe("loadColumns", () => {
+    it("should load all configured columns regardless of race fuel settings", () => {
       const mockRace = { fuel_options: { enabled: false } };
       mockRaceService.getRace.and.returnValue(mockRace);
 
@@ -1914,32 +2063,7 @@ describe("DefaultRacedayComponent", () => {
 
       expect(
         component["columns"].some((c) => c.propertyName === "fuelPercentage"),
-      ).toBeFalse();
-    });
-
-    it("should include FuelRaceOnly columns when fuel is enabled", () => {
-      const mockRace = { fuel_options: { enabled: true } };
-      mockRaceService.getRace.and.returnValue(mockRace);
-
-      (component as any).loadColumns();
-
-      expect(
-        component["columns"].some((c) => c.propertyName === "fuelPercentage"),
       ).toBeTrue();
-    });
-
-    it("should filter out NonFuelRaceOnly columns when fuel is enabled", () => {
-      mockSettings.columnVisibility["lapCount"] =
-        ColumnVisibility.NonFuelRaceOnly;
-
-      const mockRace = { fuel_options: { enabled: true } };
-      mockRaceService.getRace.and.returnValue(mockRace);
-
-      (component as any).loadColumns();
-
-      expect(
-        component["columns"].some((c) => c.propertyName === "lapCount"),
-      ).toBeFalse();
     });
 
     it("should return correct label key for driver.avatarUrl", () => {
@@ -2122,6 +2246,21 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBe("6.58");
     });
 
+    it("should calculate scaled speed when track_scale is set (1/32 scale)", () => {
+      component["track"] = {
+        track_scale: 1 / 32,
+        lanes: [{ length: 60 }],
+      } as any;
+      const mockHd = { laneIndex: 0, lastLapTime: 10.0 };
+      // Scaled Length = 60 / (1/32) = 1920 ft
+      // FPH = (1920 / 10) * 3600 = 691200
+      expect(component.formatValue("fph", null, mockHd as any)).toBe("691200");
+      // MPH = 691200 / 5280 = 130.90909... -> 130.91
+      expect(component.formatValue("mph", null, mockHd as any)).toBe("130.91");
+      // KPH = 130.90909... * 1.609344 = 210.6773... -> 210.68
+      expect(component.formatValue("kph", null, mockHd as any)).toBe("210.68");
+    });
+
     it("should return default placeholder if lastLapTime is 0 or missing", () => {
       const mockHd = { laneIndex: 0, lastLapTime: 0 };
       expect(component.formatValue("fph", null, mockHd as any)).toBe("--.--");
@@ -2157,6 +2296,115 @@ describe("DefaultRacedayComponent", () => {
       expect(mphLoaded?.width).toBe(330);
       expect(kphLoaded?.width).toBe(330);
       expect(fphLoaded?.width).toBe(330);
+    });
+
+    it("should evenly share remaining width between multiple 0-width dynamic columns", () => {
+      // dashboardWidth is 1920
+      (component as any).dashboardWidth = 1920;
+      // Fixed: lapCount=216, gapLeader=330. Total fixed = 546.
+      // Gaps: (4 - 1) * 20 = 60.
+      // Total remaining = 1920 - 546 - 60 = 1314.
+      // 2 zero-width columns: driver.name and driver.nickname -> 1314 / 2 = 657 each.
+      mockSettings.racedayColumns = [
+        "driver.name",
+        "driver.nickname",
+        "lapCount",
+        "gapLeader",
+      ];
+      mockSettings.columnWidths = {};
+      (component as any).loadColumns();
+
+      const nameCol = component["columns"].find(
+        (c) => c.propertyName === "driver.name",
+      );
+      const nickCol = component["columns"].find(
+        (c) => c.propertyName === "driver.nickname",
+      );
+      const lapCol = component["columns"].find(
+        (c) => c.propertyName === "lapCount",
+      );
+
+      expect(nameCol?.width).toBe(657);
+      expect(nickCol?.width).toBe(657);
+      expect(lapCol?.width).toBe(216);
+      expect(nameCol?.scaleToFit).toBeTrue();
+      expect(nickCol?.scaleToFit).toBeTrue();
+      expect(lapCol?.scaleToFit).toBeFalse();
+    });
+
+    it("should respect custom column widths from settings", () => {
+      (component as any).dashboardWidth = 1920;
+      mockSettings.racedayColumns = ["driver.name", "lapCount", "lastLapTime"];
+      mockSettings.columnWidths = {
+        "driver.name": 400, // custom fixed width
+        lapCount: 150, // custom fixed width
+        lastLapTime: 0, // custom dynamic width
+      };
+      (component as any).loadColumns();
+
+      const nameCol = component["columns"].find(
+        (c) => c.propertyName === "driver.name",
+      );
+      const lapCol = component["columns"].find(
+        (c) => c.propertyName === "lapCount",
+      );
+      const lastLapCol = component["columns"].find(
+        (c) => c.propertyName === "lastLapTime",
+      );
+
+      expect(nameCol?.width).toBe(400);
+      expect(lapCol?.width).toBe(150);
+      // Remaining = 1920 - (400 + 150) - 2 * 20 = 1920 - 550 - 40 = 1330
+      expect(lastLapCol?.width).toBe(1330);
+      expect(lastLapCol?.scaleToFit).toBeTrue();
+    });
+
+    it("should use practiceColumnWidths when in practice layout", () => {
+      fixture.componentRef.setInput("isPracticeLayoutEditor", true);
+      mockSettings.practiceRacedayColumns = ["driver.name", "lapCount"];
+      mockSettings.practiceColumnWidths = {
+        "driver.name": 500,
+        lapCount: 300,
+      };
+      (component as any).loadColumns();
+
+      const nameCol = component["columns"].find(
+        (c) => c.propertyName === "driver.name",
+      );
+      const lapCol = component["columns"].find(
+        (c) => c.propertyName === "lapCount",
+      );
+
+      expect(nameCol?.width).toBe(500);
+      expect(lapCol?.width).toBe(300);
+      fixture.componentRef.setInput("isPracticeLayoutEditor", false);
+    });
+
+    it("should default laneNumber width to 170 when in practice layout with horizontal layout", () => {
+      fixture.componentRef.setInput("isPracticeLayoutEditor", true);
+      mockSettings.practiceRacedayColumns = ["laneNumber", "lapCount"];
+      mockSettings.practiceColumnWidths = {};
+      mockSettings.practiceRacedayLayout = {
+        widgets: [
+          {
+            id: "lane-view-widget",
+            widgetType: "lane-view",
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+            zIndex: 1,
+            customSettings: { isVertical: false },
+          },
+        ],
+      };
+      (component as any).loadColumns();
+
+      const laneCol = component["columns"].find(
+        (c) => c.propertyName === "laneNumber",
+      );
+      expect(laneCol?.width).toBe(170);
+      fixture.componentRef.setInput("isPracticeLayoutEditor", false);
     });
   });
 
@@ -2541,6 +2789,70 @@ describe("DefaultRacedayComponent", () => {
       lapsSubject.next({
         objectId: "hd1",
         type: LapType.FALSE_START,
+      });
+
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+  });
+
+  describe("Lap Audio", () => {
+    let mockHd: any;
+
+    beforeEach(() => {
+      mockHd = {
+        objectId: "hd1",
+        laneIndex: 0,
+        driver: {
+          name: "Test Driver",
+          penaltyAudio: { type: "none" },
+          bestLapAudio: { type: "none" },
+          lapAudio: { type: "none" },
+        },
+      };
+      const mockHeat = { heatDrivers: [mockHd], heatNumber: 1 };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      component["heat"] = mockHeat as any;
+      mockAudioInstance.play.calls.reset();
+      fixture.detectChanges();
+    });
+
+    it("should not play any sound on best lap if bestLapAudio type is none", () => {
+      mockHd.driver.bestLapAudio = { type: "none" };
+      mockHd.driver.lapAudio = { type: "none" };
+
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.LAP,
+        lapTime: 1.0,
+        bestLapTime: 1.0,
+      });
+
+      expect(mockAudioInstance.play).not.toHaveBeenCalled();
+    });
+
+    it("should not play any sound on normal lap if lapAudio type is none", () => {
+      mockHd.driver.bestLapAudio = { type: "none" };
+      mockHd.driver.lapAudio = { type: "none" };
+
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.LAP,
+        lapTime: 1.5,
+        bestLapTime: 1.0,
+      });
+
+      expect(mockAudioInstance.play).not.toHaveBeenCalled();
+    });
+
+    it("should play best lap sound when bestLapAudio type is preset and isBestLap is true", () => {
+      mockHd.driver.bestLapAudio = { type: "preset", url: "default_driveby" };
+      mockHd.driver.lapAudio = { type: "none" };
+
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.LAP,
+        lapTime: 1.0,
+        bestLapTime: 1.0,
       });
 
       expect(mockAudioInstance.play).toHaveBeenCalled();
@@ -3105,6 +3417,46 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component["heatBestNickname"]).toBe("---");
       expect(component["heatBestTime"]).toBe(0);
+    });
+
+    it("should get lane record entry, time, holder, and date correctly", () => {
+      const mockRecords: IRecordData = {
+        overall: {
+          laneFastestLap: [
+            {
+              value: 4.1234,
+              holderNickname: "Speedy",
+              date: new Date(2026, 7, 21).getTime(),
+            },
+            {
+              value: 5.6789,
+              holderName: "Jane Doe",
+              date: 1724212800000,
+            },
+          ],
+        },
+      };
+      recordDataSubject.next(mockRecords);
+
+      const hd0 = { laneIndex: 0 } as any;
+      const hd1 = { laneIndex: 1 } as any;
+      const hd2 = { laneIndex: 2 } as any;
+
+      expect(component.getLaneRecordEntry(hd0)?.value).toBe(4.1234);
+      expect(component.getLaneRecordEntry(hd1)?.value).toBe(5.6789);
+      expect(component.getLaneRecordEntry(hd2)).toBeUndefined();
+      expect(component.getLaneRecordEntry(0)?.value).toBe(4.1234);
+
+      expect(component.getLaneRecordTime(hd0)).toBe("4.123");
+      expect(component.getLaneRecordTime(hd1)).toBe("5.679");
+      expect(component.getLaneRecordTime(hd2)).toBe("--.---");
+
+      expect(component.getLaneRecordHolder(hd0)).toBe("Speedy");
+      expect(component.getLaneRecordHolder(hd1)).toBe("Jane Doe");
+      expect(component.getLaneRecordHolder(hd2)).toBe("---");
+
+      expect(component.getLaneRecordDate(hd0)).toBe("2026-08-21");
+      expect(component.getLaneRecordDate(hd2)).toBe("---");
     });
   });
 
@@ -4572,9 +4924,6 @@ describe("DefaultRacedayComponent", () => {
             "center-center": "driver.nickname",
           },
         },
-        columnVisibility: {
-          "driver.nickname": ColumnVisibility.Always,
-        },
       });
 
       fixture.componentRef.setInput("editingSettings", mockSettings);
@@ -4678,18 +5027,6 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
 
-    it("should change column visibility on changeColumnVisibility", () => {
-      spyOn((component as any).columnsChanged, "emit");
-      const colData = { propertyName: "driver.nickname" } as any;
-
-      component.changeColumnVisibility(colData, "FuelRaceOnly");
-
-      expect(mockSettings.columnVisibility["driver.nickname"]).toBe(
-        ColumnVisibility.FuelRaceOnly,
-      );
-      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
-    });
-
     it("should drop column key into anchor slot", () => {
       spyOn((component as any).columnsChanged, "emit");
       const element = document.createElement("div");
@@ -4732,6 +5069,40 @@ describe("DefaultRacedayComponent", () => {
 
       expect(event.stopPropagation).toHaveBeenCalled();
       expect(component.hasAnchorValue(colData, "center-center")).toBeFalse();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should reorder columns and emit columnsChanged on onColumnDrop", () => {
+      spyOn((component as any).columnsChanged, "emit");
+      const dropEvent = {
+        previousIndex: 0,
+        currentIndex: 1,
+      } as any;
+
+      component.onColumnDrop(dropEvent);
+
+      expect(mockSettings.racedayColumns[1]).toBe("driver.nickname");
+      expect(mockSettings.racedayColumns[0]).toBe("lapCount");
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should update customUi columnsJson when activeCustomUi is present", () => {
+      spyOn((component as any).columnsChanged, "emit");
+      const customUi = {
+        entity_id: "custom_ui_test",
+        name: "Custom UI Test",
+        columnsJson: JSON.stringify(["col1", "col2"]),
+      } as any;
+      fixture.componentRef.setInput("activeCustomUi", customUi);
+      fixture.detectChanges();
+
+      const dropEvent = {
+        previousIndex: 0,
+        currentIndex: 1,
+      } as any;
+      component.onColumnDrop(dropEvent);
+
+      expect(JSON.parse(customUi.columnsJson)).toEqual(["col2", "col1"]);
       expect((component as any).columnsChanged.emit).toHaveBeenCalled();
     });
   });
@@ -4873,7 +5244,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.dashboardWidth).toBe(1920);
     });
 
-    it("should calculate scale based on min aspect ratio and keep dashboardWidth at layout baseWidth in normal mode", () => {
+    it("should keep scale at 1 and dashboardWidth at layout baseWidth in normal mode", () => {
       const _widthSpy = spyOnProperty(
         window,
         "innerWidth",
@@ -4891,21 +5262,21 @@ describe("DefaultRacedayComponent", () => {
       _heightSpy.and.returnValue(900);
 
       component.onResize();
-      expect(component.scale).toBeCloseTo(1440 / 1920, 3); // scaleX (0.75) < scaleY (0.833)
+      expect(component.scale).toBe(1);
       expect(component.dashboardWidth).toBe(1920);
 
       _widthSpy.and.returnValue(2560);
       _heightSpy.and.returnValue(1080);
 
       component.onResize();
-      expect(component.scale).toBeCloseTo(1.0, 3); // scaleY (1.0) < scaleX (1.33)
+      expect(component.scale).toBe(1);
       expect(component.dashboardWidth).toBe(1920);
 
       _widthSpy.and.returnValue(1024);
       _heightSpy.and.returnValue(768);
 
       component.onResize();
-      expect(component.scale).toBeCloseTo(1024 / 1920, 3); // scaleX (0.533) < scaleY (0.711)
+      expect(component.scale).toBe(1);
       expect(component.dashboardWidth).toBe(1920);
     });
   });
@@ -5334,11 +5705,20 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).predictionResultsWindow).toBeNull();
     });
 
-    it("should close predictionResultsWindow on ngOnDestroy", () => {
+    it("should close predictionResultsWindow on ngOnDestroy when navigating to non-race-preserving route", () => {
       (component as any).onWindowsMenuSelect("PREDICTION_RESULTS");
+      (component as any).pendingNavigationUrl = "/raceday-setup";
       component.ngOnDestroy();
       expect(mockChildWindow.close).toHaveBeenCalled();
       expect((component as any).predictionResultsWindow).toBeNull();
+    });
+
+    it("should not close predictionResultsWindow on ngOnDestroy when navigating to /ui-editor", () => {
+      (component as any).onWindowsMenuSelect("PREDICTION_RESULTS");
+      (component as any).pendingNavigationUrl = "/ui-editor";
+      component.ngOnDestroy();
+      expect(mockChildWindow.close).not.toHaveBeenCalled();
+      expect((component as any).predictionResultsWindow).toBe(mockChildWindow);
     });
   });
 
@@ -5363,11 +5743,156 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).seasonResultsWindow).toBeNull();
     });
 
-    it("should close seasonResultsWindow on ngOnDestroy", () => {
+    it("should close seasonResultsWindow on ngOnDestroy when navigating to non-race-preserving route", () => {
       (component as any).onWindowsMenuSelect("SEASON_RESULTS");
+      (component as any).pendingNavigationUrl = "/raceday-setup";
       component.ngOnDestroy();
       expect(mockChildWindow.close).toHaveBeenCalled();
       expect((component as any).seasonResultsWindow).toBeNull();
+    });
+
+    it("should not close seasonResultsWindow on ngOnDestroy when navigating to /ui-editor", () => {
+      (component as any).onWindowsMenuSelect("SEASON_RESULTS");
+      (component as any).pendingNavigationUrl = "/ui-editor";
+      component.ngOnDestroy();
+      expect(mockChildWindow.close).not.toHaveBeenCalled();
+      expect((component as any).seasonResultsWindow).toBe(mockChildWindow);
+    });
+  });
+
+  describe("heatResultsWindow and raceResultsWindow management", () => {
+    let mockChildWindow: any;
+
+    beforeEach(() => {
+      mockChildWindow = { close: jasmine.createSpy("close"), closed: false };
+      spyOn(window, "open").and.returnValue(mockChildWindow);
+    });
+
+    it("should open heatResultsWindow when HEAT_RESULTS action is called", () => {
+      (component as any).onWindowsMenuSelect("HEAT_RESULTS");
+      expect(window.open).toHaveBeenCalledWith("mock-url", "_blank");
+      expect((component as any).heatResultsWindow).toBe(mockChildWindow);
+    });
+
+    it("should not close heatResultsWindow when navigating to /ui-editor", () => {
+      (component as any).onWindowsMenuSelect("HEAT_RESULTS");
+      (component as any).pendingNavigationUrl = "/ui-editor";
+      component.ngOnDestroy();
+      expect(mockChildWindow.close).not.toHaveBeenCalled();
+      expect((component as any).heatResultsWindow).toBe(mockChildWindow);
+    });
+
+    it("should open raceResultsWindow when RACE_RESULTS action is called", () => {
+      (component as any).onWindowsMenuSelect("RACE_RESULTS");
+      expect(window.open).toHaveBeenCalledWith("mock-url", "_blank");
+      expect((component as any).raceResultsWindow).toBe(mockChildWindow);
+    });
+
+    it("should not close raceResultsWindow when navigating to /ui-editor", () => {
+      (component as any).onWindowsMenuSelect("RACE_RESULTS");
+      (component as any).pendingNavigationUrl = "/ui-editor";
+      component.ngOnDestroy();
+      expect(mockChildWindow.close).not.toHaveBeenCalled();
+      expect((component as any).raceResultsWindow).toBe(mockChildWindow);
+    });
+
+    it("should open theme window when onThemeMenuSelect is called", () => {
+      const childWindowManager = TestBed.inject(ChildWindowManagerService);
+      spyOn(childWindowManager, "openThemeWindow");
+      (component as any).onThemeMenuSelect("t_leaderboard");
+      expect(childWindowManager.openThemeWindow).toHaveBeenCalledWith(
+        "mock-url",
+      );
+    });
+
+    it("should handle THEME: action in onWindowsMenuSelect", () => {
+      spyOn(component as any, "onThemeMenuSelect");
+      (component as any).onWindowsMenuSelect("THEME:t_custom");
+      expect((component as any).onThemeMenuSelect).toHaveBeenCalledWith(
+        "t_custom",
+      );
+    });
+  });
+
+  describe("Theme & Custom UI Transient Layout Management", () => {
+    it("should update layout in updateRacedayLayout when not in UI editor mode", () => {
+      const mockLayout = { widgets: [{ type: "leaderboard", id: "w1" }] };
+      spyOnProperty(component, "currentRacedayLayout", "get").and.returnValue(
+        mockLayout as any,
+      );
+      (component as any).updateRacedayLayout();
+      expect(component.layout).toEqual(mockLayout as any);
+    });
+
+    it("should skip updateRacedayLayout when in UI editor mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      const originalLayout = { widgets: [{ type: "lane-view" }] };
+      component.layout = originalLayout as any;
+
+      const mockLayout = { widgets: [{ type: "leaderboard" }] };
+      spyOnProperty(component, "currentRacedayLayout", "get").and.returnValue(
+        mockLayout as any,
+      );
+
+      (component as any).updateRacedayLayout();
+      expect(component.layout).toBe(originalLayout as any);
+    });
+
+    it("should skip activateForRace on race update when transientThemeId is set", () => {
+      const themeService = TestBed.inject(ThemeService);
+      const raceService = TestBed.inject(RaceService);
+      (raceService.getRace as jasmine.Spy).and.returnValue({
+        entity_id: "race-1",
+        track: { lanes: [] },
+      });
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(
+        "theme-1",
+      );
+      (themeService.activateForRace as jasmine.Spy).calls.reset();
+
+      (component as any).loadRaceData();
+      expect(themeService.activateForRace).not.toHaveBeenCalled();
+    });
+
+    it("should skip activateForRace on race update when queryParam themeId is present", () => {
+      const themeService = TestBed.inject(ThemeService);
+      const raceService = TestBed.inject(RaceService);
+      (raceService.getRace as jasmine.Spy).and.returnValue({
+        entity_id: "race-1",
+        track: { lanes: [] },
+      });
+      (themeService.getTransientThemeId as jasmine.Spy).and.returnValue(null);
+      (themeService.activateForRace as jasmine.Spy).calls.reset();
+      if (!(component as any).route.snapshot.queryParams) {
+        (component as any).route.snapshot.queryParams = {};
+      }
+      (component as any).route.snapshot.queryParams["themeId"] = "theme-1";
+
+      (component as any).loadRaceData();
+      expect(themeService.activateForRace).not.toHaveBeenCalled();
+      delete (component as any).route.snapshot.queryParams["themeId"];
+    });
+
+    it("should initialize customUiService and activate theme on themeId query param", async () => {
+      const themeService = TestBed.inject(ThemeService);
+      const customUiService = TestBed.inject(CustomUiService);
+
+      const updateSpy = spyOn(component as any, "updateRacedayLayout");
+
+      const queryParamsSubject = new BehaviorSubject<{ [key: string]: any }>({
+        themeId: "theme-1",
+      });
+      (component as any).route.queryParams = queryParamsSubject.asObservable();
+      (component as any).subscribeToUIEvents();
+
+      expect(themeService.setTransientActiveTheme).toHaveBeenCalledWith(
+        "theme-1",
+      );
+      expect(customUiService.initialize).toHaveBeenCalled();
+
+      await fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(updateSpy).toHaveBeenCalled();
     });
   });
 
@@ -5419,22 +5944,6 @@ describe("DefaultRacedayComponent", () => {
 
       component.onLayoutEditorDragEnded(mockDragEvent);
       expect(component.layoutEditorPosition).toEqual({ x: 120, y: 240 });
-    });
-
-    it("should get and set column visibility for practice and standard layouts", () => {
-      fixture.componentRef.setInput("isPracticeLayoutEditor", false);
-      component.currentColumnVisibility = { col1: ColumnVisibility.Always };
-      expect(component.currentColumnVisibility["col1"]).toBe(
-        ColumnVisibility.Always,
-      );
-
-      fixture.componentRef.setInput("isPracticeLayoutEditor", true);
-      component.currentColumnVisibility = {
-        col2: ColumnVisibility.FuelRaceOnly,
-      };
-      expect(component.currentColumnVisibility["col2"]).toBe(
-        ColumnVisibility.FuelRaceOnly,
-      );
     });
 
     it("should get and set column layouts for practice and standard layouts", () => {
@@ -5709,6 +6218,194 @@ describe("DefaultRacedayComponent", () => {
       expect(component.isPacingProperty("ghostPacingLeaderBest")).toBe(true);
       expect(component.isPacingProperty("lapCount")).toBe(false);
       expect(component.isPacingProperty("")).toBe(false);
+    });
+  });
+
+  describe("Save Race Dialog", () => {
+    it("should open save dialog with race name when saveRace is called", () => {
+      spyOnProperty(component, "isSaveDisabled", "get").and.returnValue(false);
+      (component as any).race = { name: "Test Championship" };
+      component.saveRace();
+
+      expect(component.showSaveRaceDialog).toBeTrue();
+      expect(component.saveRaceName).toBe("Test Championship");
+    });
+
+    it("should not open save dialog if save is disabled", () => {
+      spyOnProperty(component, "isSaveDisabled", "get").and.returnValue(true);
+      component.showSaveRaceDialog = false;
+      component.saveRace();
+
+      expect(component.showSaveRaceDialog).toBeFalse();
+    });
+
+    it("should call dataService.saveRace with custom name and handle success", () => {
+      mockDataService.saveRace.and.returnValue(
+        of("Race saved successfully: 20260826_Test.json"),
+      );
+      fixture.detectChanges();
+      component.showSaveRaceDialog = true;
+
+      component.onSaveRaceConfirm("Renamed Race");
+
+      expect(component.showSaveRaceDialog).toBeFalse();
+      expect(mockDataService.saveRace).toHaveBeenCalledWith("Renamed Race");
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalMessage).toBe(
+        "Race saved successfully: 20260826_Test.json",
+      );
+    });
+
+    it("should handle error when saving race fails", () => {
+      mockDataService.saveRace.and.returnValue(
+        throwError(() => ({ error: "Server Error" })),
+      );
+      fixture.detectChanges();
+      component.showSaveRaceDialog = true;
+
+      component.onSaveRaceConfirm("Renamed Race");
+
+      expect(component.showSaveRaceDialog).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalMessage).toBe("Server Error");
+    });
+
+    it("should close dialog on onSaveRaceCancel", () => {
+      component.showSaveRaceDialog = true;
+      component.onSaveRaceCancel();
+
+      expect(component.showSaveRaceDialog).toBeFalse();
+    });
+  });
+
+  describe("Master Power Actions and Unused Widgets", () => {
+    it("should compute isMainPowerDisabled correctly based on role and relays", () => {
+      mockAuthService.currentRoleSubject.next(Role.VIEWER);
+      expect(component.isMainPowerDisabled).toBeTrue();
+
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.getSystemStateValue.and.returnValue(null);
+      expect(component.isMainPowerDisabled).toBeTrue();
+
+      mockDataService.getSystemStateValue.and.returnValue({
+        hasMainRelay: false,
+        hasPerLaneRelays: false,
+      } as any);
+      expect(component.isMainPowerDisabled).toBeTrue();
+
+      mockDataService.getSystemStateValue.and.returnValue({
+        hasMainRelay: true,
+        hasPerLaneRelays: false,
+      } as any);
+      expect(component.isMainPowerDisabled).toBeFalse();
+
+      mockDataService.getSystemStateValue.and.returnValue({
+        hasMainRelay: false,
+        hasPerLaneRelays: true,
+      } as any);
+      expect(component.isMainPowerDisabled).toBeFalse();
+    });
+
+    it("should include master power widgets in getUnusedWidgets when not in layout", () => {
+      component.layout = { widgets: [] } as any;
+      const unused = component.getUnusedWidgets();
+      expect(unused).toContain("action-master-power-on");
+      expect(unused).toContain("action-master-power-off");
+      expect(unused).toContain("action-open-season-results");
+      expect(unused).toContain("action-open-prediction-results");
+
+      component.layout = {
+        widgets: [
+          { widgetType: "action-master-power-on" } as any,
+          { widgetType: "action-master-power-off" } as any,
+        ],
+      } as any;
+      const updatedUnused = component.getUnusedWidgets();
+      expect(updatedUnused).not.toContain("action-master-power-on");
+      expect(updatedUnused).not.toContain("action-master-power-off");
+    });
+
+    it("should include custom widgets in getUnusedWidgets and format labels", () => {
+      const mockCustomService = {
+        getCustomWidgets: () => [
+          { manifest: { id: "telemetry", name: "Live Telemetry" } },
+        ],
+        getWidgetDefinition: (key: string) => {
+          if (key === "custom:telemetry") {
+            return { manifest: { id: "telemetry", name: "Live Telemetry" } };
+          }
+          return undefined;
+        },
+      };
+      (component as any).customWidgetService = mockCustomService;
+
+      component.layout = { widgets: [] } as any;
+      const unused = component.getUnusedWidgets();
+      expect(unused).toContain("custom:telemetry");
+
+      expect(component.getWidgetTypeLabelKey("custom:telemetry")).toBe(
+        "Live Telemetry",
+      );
+      expect(component.getWidgetTypeLabelKey("custom:unknown")).toBe("unknown");
+    });
+
+    it("should execute master power actions on executeWidgetAction", () => {
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.getSystemStateValue.and.returnValue({
+        hasMainRelay: true,
+      } as any);
+      spyOn(component, "onTrackPowerMainSelect");
+      spyOn(component, "onWindowsMenuSelect");
+      spyOn(component, "onFileMenuSelect");
+
+      component["executeWidgetAction"]("action-master-power-on");
+      expect(component.onTrackPowerMainSelect).toHaveBeenCalledWith(true);
+
+      component["executeWidgetAction"]("action-master-power-off");
+      expect(component.onTrackPowerMainSelect).toHaveBeenCalledWith(false);
+
+      component["executeWidgetAction"]("action-open-season-results");
+      expect(component.onWindowsMenuSelect).toHaveBeenCalledWith(
+        "SEASON_RESULTS",
+      );
+
+      component["executeWidgetAction"]("action-open-prediction-results");
+      expect(component.onWindowsMenuSelect).toHaveBeenCalledWith(
+        "PREDICTION_RESULTS",
+      );
+
+      component["executeWidgetAction"]("action-export-pdf");
+      expect(component.onFileMenuSelect).toHaveBeenCalledWith("EXPORT_PDF");
+    });
+
+    it("should trigger master power action from keyboard shortcut", () => {
+      mockAuthService.currentRoleSubject.next(Role.DIRECTOR);
+      mockDataService.getSystemStateValue.and.returnValue({
+        hasMainRelay: true,
+      } as any);
+      spyOn(component, "onTrackPowerMainSelect");
+
+      component.layout = {
+        widgets: [
+          {
+            widgetType: "action-master-power-on",
+            customSettings: { shortcut: "Ctrl+P" },
+          } as any,
+        ],
+      } as any;
+
+      const event = new KeyboardEvent("keydown", {
+        key: "p",
+        code: "KeyP",
+        ctrlKey: true,
+      });
+      spyOn(event, "preventDefault");
+      spyOn(event, "stopPropagation");
+
+      const handled = component["checkWidgetShortcuts"](event);
+      expect(handled).toBeTrue();
+      expect(component.onTrackPowerMainSelect).toHaveBeenCalledWith(true);
+      expect(event.preventDefault).toHaveBeenCalled();
     });
   });
 });

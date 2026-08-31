@@ -25,6 +25,7 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 
 @Component({
@@ -70,6 +71,7 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private route = inject(ActivatedRoute);
   private logger = inject(LoggerService);
   private navigationService = inject(NavigationService);
+  private settingsService = inject(SettingsService);
   private translationService = inject(TranslationService);
 
   constructor() {

@@ -32,27 +32,28 @@ import {
   ITrackModel,
 } from "@app/proto/antigravity";
 import { LoggerService } from "@app/services/logger.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { LaneEqualityResult } from "@app/utils/lane-equality";
+
 import {
-  checkLaneEquality,
-  LaneEqualityResult,
-} from "@app/utils/lane-equality";
-
+  areCustomRotationStatesEqual,
+  buildRotationsAssetExportJson,
+  buildSingleRotationExportJson,
+  checkRotationLaneEqualityDirect,
+  cloneCustomRotationState,
+  CustomRotationState,
+  downloadJsonFile,
+  driverHasGroupConflict,
+  getDriverGroupConflicts,
+  getRotationSignature,
+  hasValidationErrors,
+  heatHasError,
+  heatHasGroupConflict,
+  LocalRotation,
+} from "./rotation-export.utils";
 import { parseAndValidateImportFile } from "./rotation-import.utils";
-
-interface LocalRotation extends ICustomRotation {
-  isExpanded?: boolean;
-  isEqual?: boolean;
-  equalityReport?: any[];
-}
-
-interface CustomRotationState {
-  assetName: string;
-  selectedTrackId: string;
-  numLanes: number;
-  rotations: ICustomRotation[];
-}
 
 @Component({
   standalone: true,
@@ -145,6 +146,7 @@ export class CustomRotationEditorComponent
 
   constructor(
     private dataService: DataService,
+    private settingsService: SettingsService,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
@@ -153,47 +155,8 @@ export class CustomRotationEditorComponent
   ) {
     this.undoManager = new UndoManager<CustomRotationState>(
       {
-        clonner: (state) => ({
-          assetName: state.assetName,
-          selectedTrackId: state.selectedTrackId,
-          numLanes: state.numLanes,
-          rotations: deepCopy(state.rotations),
-        }),
-        equalizer: (a, b) => {
-          if (
-            a.assetName !== b.assetName ||
-            a.selectedTrackId !== b.selectedTrackId ||
-            a.numLanes !== b.numLanes
-          ) {
-            return false;
-          }
-          if (a.rotations.length !== b.rotations.length) {
-            return false;
-          }
-          return a.rotations.every((rot, rotIdx) => {
-            const otherRot = b.rotations[rotIdx];
-            if (rot.numDrivers !== otherRot.numDrivers) {
-              return false;
-            }
-            const heats = rot.heats || [];
-            const otherHeats = otherRot.heats || [];
-            if (heats.length !== otherHeats.length) {
-              return false;
-            }
-            return heats.every((heat, heatIdx) => {
-              const otherHeat = otherHeats[heatIdx];
-              if (heat.group !== otherHeat.group) {
-                return false;
-              }
-              const lanes = heat.driverIndices || [];
-              const otherLanes = otherHeat.driverIndices || [];
-              if (lanes.length !== otherLanes.length) {
-                return false;
-              }
-              return lanes.every((drv, laneIdx) => drv === otherLanes[laneIdx]);
-            });
-          });
-        },
+        clonner: cloneCustomRotationState,
+        equalizer: areCustomRotationStatesEqual,
         applier: (state) => {
           this.internalAssetName = state.assetName;
           this.selectedTrackId = state.selectedTrackId;
@@ -263,7 +226,6 @@ export class CustomRotationEditorComponent
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 
@@ -871,94 +833,35 @@ export class CustomRotationEditorComponent
   }
 
   getDriverGroupConflicts(rotation: ICustomRotation): Set<number> {
-    const driverToGroups = new Map<number, Set<number>>();
-    rotation.heats?.forEach((heat) => {
-      const group = heat.group || 0;
-      heat.driverIndices?.forEach((driverId) => {
-        if (driverId && driverId > 0) {
-          if (!driverToGroups.has(driverId)) {
-            driverToGroups.set(driverId, new Set<number>());
-          }
-          driverToGroups.get(driverId)!.add(group);
-        }
-      });
-    });
-
-    const conflictingDrivers = new Set<number>();
-    driverToGroups.forEach((groups, driverId) => {
-      if (groups.size > 1) {
-        conflictingDrivers.add(driverId);
-      }
-    });
-    return conflictingDrivers;
+    return getDriverGroupConflicts(rotation);
   }
 
   heatHasGroupConflict(rotation: ICustomRotation, heatIdx: number): boolean {
-    const heat = rotation.heats?.[heatIdx];
-    if (!heat || !heat.driverIndices) {
-      return false;
-    }
-    const conflicts = this.getDriverGroupConflicts(rotation);
-    return heat.driverIndices.some(
-      (driverId) => driverId > 0 && conflicts.has(driverId),
-    );
+    return heatHasGroupConflict(rotation, heatIdx);
   }
 
   driverHasGroupConflict(rotation: ICustomRotation, driverId: number): boolean {
-    if (!driverId || driverId <= 0) return false;
-    const conflicts = this.getDriverGroupConflicts(rotation);
-    return conflicts.has(driverId);
+    return driverHasGroupConflict(rotation, driverId);
   }
 
   heatHasError(rotation: ICustomRotation, heatIdx: number): boolean {
-    const heat = rotation.heats?.[heatIdx];
-    if (!heat || !heat.driverIndices) {
-      return false;
-    }
-
-    const assigned = heat.driverIndices.filter(
-      (idx) => idx !== undefined && idx !== null && idx > 0,
-    );
-    const unique = new Set(assigned);
-    return assigned.length !== unique.size;
+    return heatHasError(rotation, heatIdx);
   }
 
   hasValidationErrors(): boolean {
-    return this.internalRotations.some((rot) => {
-      const hasLaneConflict =
-        rot.heats?.some((_, idx) => this.heatHasError(rot, idx)) ?? false;
-      if (hasLaneConflict) return true;
-
-      const conflicts = this.getDriverGroupConflicts(rot);
-      return conflicts.size > 0;
-    });
+    return hasValidationErrors(this.internalRotations);
   }
 
   private getRotationSignature(rotation: ICustomRotation): string {
-    const heatsSig = (rotation.heats || [])
-      .map((h) => (h.driverIndices || []).join(","))
-      .join("|");
-    return `${rotation.numDrivers || 0}:${this.internalNumLanes}:${heatsSig}`;
+    return getRotationSignature(rotation, this.internalNumLanes);
   }
 
   private checkRotationLaneEqualityDirect(
     rotation: ICustomRotation,
   ): LaneEqualityResult {
-    const numDrivers = rotation.numDrivers ?? 0;
-    const driverIds: string[] = [];
-    for (let d = 1; d <= numDrivers; d++) {
-      driverIds.push(d.toString());
-    }
-    const heats = (rotation.heats || []).map((h) =>
-      (h.driverIndices || []).map((idx) =>
-        idx && idx > 0 ? idx.toString() : null,
-      ),
-    );
-    return checkLaneEquality(
+    return checkRotationLaneEqualityDirect(
+      rotation,
       this.internalNumLanes,
-      driverIds,
-      heats,
-      undefined,
       this.translationService,
     );
   }
@@ -1052,62 +955,24 @@ export class CustomRotationEditorComponent
   }
 
   async exportSingleRotation(rotation: LocalRotation) {
-    const numDrivers = rotation.numDrivers || 0;
-    const numLanes = this.internalNumLanes;
-    const fileName = `${this.internalAssetName}_L${numLanes}_D${numDrivers}.json`;
-
-    const exportObj = {
-      Version: "1.0",
-      NumDrivers: numDrivers,
-      NumLanes: numLanes,
-      Heats:
-        rotation.heats?.map((h) => ({
-          Drivers: h.driverIndices,
-          Group: h.group !== undefined && h.group !== null ? h.group + 1 : 1,
-        })) || [],
-    };
-
-    const jsonContent = JSON.stringify(exportObj, null, 2);
-    this.downloadFile(fileName, jsonContent);
-    this.logger.info(`Exported rotation for ${numDrivers} drivers completed`);
+    const { fileName, jsonContent } = buildSingleRotationExportJson(
+      this.internalAssetName,
+      this.internalNumLanes,
+      rotation,
+    );
+    downloadJsonFile(fileName, jsonContent);
+    this.logger.info(
+      `Exported rotation for ${rotation.numDrivers || 0} drivers completed`,
+    );
   }
 
   async exportRotations() {
-    const numLanes = this.internalNumLanes;
-    const fileName = `${this.internalAssetName}_L${numLanes}_Asset.json`;
-
-    const exportObj = {
-      Version: "1.0",
-      IsAsset: true,
-      AssetName: this.internalAssetName,
-      NumLanes: numLanes,
-      Rotations: this.internalRotations.map((rotation) => ({
-        NumDrivers: rotation.numDrivers || 0,
-        Heats:
-          rotation.heats?.map((h) => ({
-            Drivers: h.driverIndices,
-            Group: h.group !== undefined && h.group !== null ? h.group + 1 : 1,
-          })) || [],
-      })),
-    };
-
-    const jsonContent = JSON.stringify(exportObj, null, 2);
-    this.downloadFile(fileName, jsonContent);
+    const { fileName, jsonContent } = buildRotationsAssetExportJson(
+      this.internalAssetName,
+      this.internalNumLanes,
+      this.internalRotations,
+    );
+    downloadJsonFile(fileName, jsonContent);
     this.logger.info("Export asset process completed");
-  }
-
-  private downloadFile(fileName: string, content: string) {
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.style.display = "none";
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 5000);
   }
 }

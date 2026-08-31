@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -8,17 +9,21 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.App;
+import com.antigravity.models.Event;
 import com.antigravity.models.FuelOptions;
+import com.antigravity.models.GroupOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Track;
+import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,6 +34,12 @@ public class AnalyticsServiceTest {
   @Before
   public void setup() {
     service = AnalyticsService.getInstance();
+    EventExecutionManager.getInstance().cancelEvent();
+  }
+
+  @After
+  public void tearDown() {
+    EventExecutionManager.getInstance().cancelEvent();
   }
 
   @Test
@@ -387,5 +398,195 @@ public class AnalyticsServiceTest {
     assertEquals("None", params.get("fuel_system"));
     assertEquals(HeatScoring.HeatRanking.FASTEST_LAP.name(), params.get("heat_scoring_method"));
     assertEquals("None", params.get("hardware_interface"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_GroupsEnabled() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    GroupOptions mockGroupOptions = mock(GroupOptions.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockModel.getGroupOptions()).thenReturn(mockGroupOptions);
+    when(mockGroupOptions.isEnabled()).thenReturn(true);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(true, params.get("groups_enabled"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_GroupsDisabled() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+    GroupOptions mockGroupOptions = mock(GroupOptions.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockModel.getGroupOptions()).thenReturn(mockGroupOptions);
+    when(mockGroupOptions.isEnabled()).thenReturn(false);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(false, params.get("groups_enabled"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_NullGroupOptions() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockModel.getGroupOptions()).thenReturn(null);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(false, params.get("groups_enabled"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_HasSeason() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockRace.getSeasonEntityId()).thenReturn("season_abc123");
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(true, params.get("has_season"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_NoSeason() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+    when(mockRace.getSeasonEntityId()).thenReturn(null);
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+
+    assertEquals(false, params.get("has_season"));
+
+    when(mockRace.getSeasonEntityId()).thenReturn("");
+    Map<String, Object> paramsEmpty = service.buildRaceStartParams(mockRace);
+    assertEquals(false, paramsEmpty.get("has_season"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_IsEvent() throws Exception {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+
+    EventExecutionManager eventMgr = EventExecutionManager.getInstance();
+    List<Event.EventRaceItem> raceItems = new ArrayList<>();
+    raceItems.add(new Event.EventRaceItem("race_1", 0));
+    Event event = new Event("Championship", "Test Event", 5.0, raceItems, "e1", null);
+
+    Field activeEventField = EventExecutionManager.class.getDeclaredField("activeEvent");
+    activeEventField.setAccessible(true);
+    activeEventField.set(eventMgr, event);
+
+    Field currentIndexField = EventExecutionManager.class.getDeclaredField("currentRaceIndex");
+    currentIndexField.setAccessible(true);
+    currentIndexField.set(eventMgr, 0);
+
+    assertTrue(eventMgr.isEventActive());
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+    assertEquals(true, params.get("is_event"));
+  }
+
+  @Test
+  public void testBuildRaceStartParams_NotEvent() {
+    Race mockRace = mock(Race.class);
+    Track mockTrack = mock(Track.class);
+    com.antigravity.models.Race mockModel = mock(com.antigravity.models.Race.class);
+    HeatScoring mockHeatScoring = mock(HeatScoring.class);
+    OverallScoring mockOverallScoring = mock(OverallScoring.class);
+
+    when(mockRace.getTrack()).thenReturn(mockTrack);
+    when(mockTrack.getLanes()).thenReturn(new ArrayList<>());
+    when(mockRace.getDrivers()).thenReturn(new ArrayList<>());
+    when(mockRace.getRaceModel()).thenReturn(mockModel);
+    when(mockModel.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+    when(mockModel.getHeatScoring()).thenReturn(mockHeatScoring);
+    when(mockHeatScoring.getHeatRanking()).thenReturn(HeatScoring.HeatRanking.LAP_COUNT);
+    when(mockModel.getOverallScoring()).thenReturn(mockOverallScoring);
+    when(mockOverallScoring.getRankingMethod()).thenReturn(OverallScoring.OverallRanking.LAP_COUNT);
+
+    EventExecutionManager.getInstance().cancelEvent();
+    assertFalse(EventExecutionManager.getInstance().isEventActive());
+
+    Map<String, Object> params = service.buildRaceStartParams(mockRace);
+    assertEquals(false, params.get("is_event"));
   }
 }

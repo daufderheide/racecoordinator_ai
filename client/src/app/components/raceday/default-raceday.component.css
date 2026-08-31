@@ -25,15 +25,22 @@ app-default-raceday {
     overflow: hidden;
   }
 
+  .raceday-fullscreen-nav {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 2000;
+  }
+
   .scalable-content {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 0;
+    left: 0;
     width: 100%;
     min-width: 0;
-    height: 1080px;
-    min-height: 1080px;
-    transform-origin: center center;
+    height: 100%;
+    min-height: 0;
+    transform-origin: top left;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -230,7 +237,7 @@ app-default-raceday {
     position: absolute;
     top: 12px;
     left: 12px;
-    z-index: 10000;
+    z-index: 100000;
     transform-origin: top left;
     pointer-events: none; /* Make wrapper transparent to pointer events */
   }
@@ -410,6 +417,18 @@ app-default-raceday {
     width: 100% !important;
     height: 1080px !important;
     overflow: visible !important;
+  }
+
+  .scalable-content {
+    width: 1920px !important;
+    min-width: 1920px !important;
+    height: 1080px !important;
+    min-height: 1080px !important;
+    transform: none !important;
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    margin: 0 auto !important;
   }
 
   :host-context(body.print-no-background) :host,

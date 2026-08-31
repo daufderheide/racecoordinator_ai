@@ -99,6 +99,8 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
         "/api/saved-races/{filename}", raceExportSaveHandler::deleteSavedRace, Role.DIRECTOR);
     app.post(
         "/api/delete-saved-race/{filename}", raceExportSaveHandler::deleteSavedRace, Role.DIRECTOR);
+    app.post("/api/rename-saved-race", raceExportSaveHandler::renameSavedRace, Role.DIRECTOR);
+    app.put("/api/saved-races/{filename}", raceExportSaveHandler::renameSavedRace, Role.DIRECTOR);
     app.post("/api/load-race", raceExportSaveHandler::loadRace, Role.DIRECTOR);
 
     // Analytics Endpoints

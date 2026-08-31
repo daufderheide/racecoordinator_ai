@@ -39,7 +39,7 @@ test.describe("Toolbar Component Visuals", () => {
     await expect(toolbar).toHaveScreenshot("toolbar-track-editor-style.png");
   });
 
-  test("should show hover states", async ({ page }) => {
+  test("should show help button hover state", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
@@ -53,6 +53,17 @@ test.describe("Toolbar Component Visuals", () => {
     await page.waitForTimeout(200); // Wait for hover transition
 
     await expect(toolbar).toHaveScreenshot("toolbar-help-hover.png");
+  });
+
+  test("should show delete button hover state", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-manager"),
+    );
+
+    const toolbar = page.locator("app-toolbar");
+    const harness = new ToolbarHarnessE2e(toolbar);
 
     await harness.hoverDelete();
     await page.waitForTimeout(200);

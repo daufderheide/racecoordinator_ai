@@ -35,4 +35,23 @@ describe('find_changed_screendiff_tests', () => {
     assert.strictEqual(directRes.length, 1);
     assert.ok(directRes[0].endsWith('raceday-setup_screendiff_test.ts'));
   });
+
+  test('should resolve sample-widgets to ui-editor and raceday screendiff tests', () => {
+    const widgetRes = resolveTestsForFile('client/src/assets/sample-widgets/sample-detailed-leaderboard/widget.ts');
+    assert.ok(widgetRes.length > 0);
+    const hasUiEditor = widgetRes.some(t => t.includes('ui-editor'));
+    const hasRaceday = widgetRes.some(t => t.includes('raceday'));
+    const hasDriverEditor = widgetRes.some(t => t.includes('driver-editor'));
+    assert.ok(hasUiEditor, 'Should include ui-editor tests');
+    assert.ok(hasRaceday, 'Should include raceday tests');
+    assert.strictEqual(hasDriverEditor, false, 'Should not include unrelated manager/editor tests');
+  });
+
+  test('should ignore non-component layer files (models, services, converters, etc.)', () => {
+    assert.deepStrictEqual(resolveTestsForFile('client/src/app/models/race.ts'), []);
+    assert.deepStrictEqual(resolveTestsForFile('client/src/app/services/race-connection.service.ts'), []);
+    assert.deepStrictEqual(resolveTestsForFile('client/src/app/converters/race.converter.ts'), []);
+    assert.deepStrictEqual(resolveTestsForFile('client/src/app/guards/auth.guard.ts'), []);
+    assert.deepStrictEqual(resolveTestsForFile('client/src/app/pipes/translate.pipe.ts'), []);
+  });
 });

@@ -138,6 +138,8 @@ public class Starting implements IRaceState {
   public void restartHeat(Race race) {
     logger.info("Starting.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
+    race.setAutoStartFired(false);
+    race.setAutoAdvanceFired(false);
     race.changeState(new NotStarted());
   }
 

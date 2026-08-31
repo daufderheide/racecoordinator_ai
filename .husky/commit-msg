@@ -1,1 +1,3 @@
+node scripts/validate_commit_message.js "$1"
 node scripts/check_screendiff_changes.js "$1"
+

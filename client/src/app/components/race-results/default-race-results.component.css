@@ -53,6 +53,12 @@
   flex-direction: column;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .page-title {
   font-size: 48px;
   font-weight: 800;
@@ -95,6 +101,14 @@
   color: #ffffff;
   font-weight: 800;
   letter-spacing: 1px;
+}
+
+.race-date-text {
+  font-size: 16px;
+  color: #8fa0b5;
+  font-weight: 500;
+  margin-left: 12px;
+  letter-spacing: 0.5px;
 }
 
 /* Export PDF button in header */
@@ -812,6 +826,11 @@
     text-shadow: none !important;
   }
 
+  :host-context(body.print-no-background) .race-date-text {
+    color: #64748b !important;
+    text-shadow: none !important;
+  }
+
   .scalable-content {
     position: relative !important;
     top: 0 !important;
@@ -823,6 +842,7 @@
     min-height: 0 !important;
     padding: 20px !important;
     overflow: visible !important;
+    margin: 0 auto !important;
   }
 
   .results-container {

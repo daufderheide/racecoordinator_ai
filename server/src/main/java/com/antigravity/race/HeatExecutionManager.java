@@ -264,6 +264,8 @@ public class HeatExecutionManager {
 
     if (driverFinished) {
       finishedLanes.add(lane);
+      driverData.setFinished(true);
+      driverData.setFlag(race.getState().getLaneFlagType(race, lane));
       logger.info(
           "Driver {} finished on lane {} ({} laps)",
           driverData.getDriver().getDriver().getName(),
@@ -271,6 +273,7 @@ public class HeatExecutionManager {
           driverData.getLapCount());
 
       if (allowFinish == AllowFinish.None
+          || allowFinish == AllowFinish.NoneAutoSegments
           || finishedLanes.size() >= race.getCurrentHeat().getActiveDriverCount()) {
         // Heat ends
         if (race.isLastHeat()) {

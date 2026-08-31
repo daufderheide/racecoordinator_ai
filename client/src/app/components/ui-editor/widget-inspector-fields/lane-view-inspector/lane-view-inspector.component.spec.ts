@@ -132,14 +132,6 @@ describe("LaneViewInspectorComponent", () => {
     expect(changeSpy).toHaveBeenCalled();
   });
 
-  it("should handle changeColumnVisibility", () => {
-    component.changeColumnVisibility("col2", "NonFuelRaceOnly");
-    expect(component.globalSettings()?.columnVisibility["col2"]).toBe(
-      "NonFuelRaceOnly" as any,
-    );
-    expect(changeSpy).toHaveBeenCalled();
-  });
-
   it("should return the correct column label", () => {
     expect(component.getColumnLabel("col1")).toBe("Col 1");
     expect(component.getColumnLabel("imageset_fuel-gauge-builtin")).toBe(
@@ -209,5 +201,107 @@ describe("LaneViewInspectorComponent", () => {
     );
     expect(changeSpy).toHaveBeenCalled();
     expect(component.getCustomLabel("col1")).toBe("Custom Label");
+  });
+
+  it("should get default column width when no custom width is set", () => {
+    expect(component.getColumnWidth("driver.nickname")).toBe(0);
+    expect(component.getColumnWidth("lapCount")).toBe(216);
+  });
+
+  it("should get and set custom column width in widget customSettings and globalSettings", () => {
+    fixture.componentRef.setInput("widget", { customSettings: {} });
+    component.setColumnWidth("col1", 350);
+    expect(component.widget()?.customSettings["columnWidths"]["col1"]).toBe(
+      350,
+    );
+    expect(component.globalSettings()?.columnWidths?.["col1"]).toBe(350);
+    expect(changeSpy).toHaveBeenCalled();
+    expect(component.getColumnWidth("col1")).toBe(350);
+  });
+
+  it("should handle practice mode column widths", () => {
+    fixture.componentRef.setInput("isPracticeMode", true);
+    fixture.componentRef.setInput("widget", { customSettings: {} });
+    component.setColumnWidth("pcol1", 500);
+    expect(component.globalSettings()?.practiceColumnWidths?.["pcol1"]).toBe(
+      500,
+    );
+    expect(component.getColumnWidth("pcol1")).toBe(500);
+  });
+
+  it("should return default width of 170 for laneNumber in practice mode with horizontal layout", () => {
+    fixture.componentRef.setInput("isPracticeMode", true);
+    fixture.componentRef.setInput("settings", { isVertical: false });
+    expect(component.getColumnWidth("laneNumber")).toBe(170);
+
+    fixture.componentRef.setInput("settings", { isVertical: true });
+    expect(component.getColumnWidth("laneNumber")).toBe(120);
+  });
+
+  it("should clean up column width on deleteColumn", () => {
+    fixture.componentRef.setInput("widget", {
+      customSettings: { columnWidths: { col1: 300 } },
+    });
+    const global = component.globalSettings();
+    if (global) {
+      global.columnWidths = { col1: 300 };
+    }
+    component.deleteColumn("col1");
+    expect(global?.columnWidths?.["col1"]).toBeUndefined();
+    expect(
+      component.widget()?.customSettings["columnWidths"]["col1"],
+    ).toBeUndefined();
+    expect(changeSpy).toHaveBeenCalled();
+  });
+
+  it("should parse invalid or negative width values as 0", () => {
+    fixture.componentRef.setInput("widget", { customSettings: {} });
+    component.setColumnWidth("col1", "");
+    expect(component.getColumnWidth("col1")).toBe(0);
+
+    component.setColumnWidth("col1", -50);
+    expect(component.getColumnWidth("col1")).toBe(0);
+
+    component.setColumnWidth("col1", "abc");
+    expect(component.getColumnWidth("col1")).toBe(0);
+  });
+
+  it("should use customUi columnsJson when provided", () => {
+    const customUi = {
+      entity_id: "custom_ui_1",
+      name: "Custom UI 1",
+      columnsJson: JSON.stringify(["colA", "ghostPacingPersonalAvg"]),
+    } as any;
+    fixture.componentRef.setInput("customUi", customUi);
+    fixture.componentRef.setInput("availableColumns", [
+      { key: "colA", label: "Col A" },
+      { key: "ghostPacingPersonalAvg", label: "Pacing Personal Avg" },
+      { key: "unusedCol", label: "Unused Col" },
+    ]);
+    fixture.detectChanges();
+
+    expect(component.currentColumns).toEqual([
+      "colA",
+      "ghostPacingPersonalAvg",
+    ]);
+    expect(component.unusedColumns).toEqual([
+      { key: "unusedCol", label: "Unused Col" },
+    ]);
+
+    // Test drop reordering with customUi
+    const dropEvent: any = { previousIndex: 0, currentIndex: 1 };
+    component.drop(dropEvent);
+    expect(JSON.parse(customUi.columnsJson)).toEqual([
+      "ghostPacingPersonalAvg",
+      "colA",
+    ]);
+    expect(changeSpy).toHaveBeenCalled();
+
+    // Test deleteColumn with customUi
+    component.deleteColumn("colA");
+    expect(JSON.parse(customUi.columnsJson)).toEqual([
+      "ghostPacingPersonalAvg",
+    ]);
+    expect(component.unusedColumns.map((c) => c.key)).toContain("colA");
   });
 });

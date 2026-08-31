@@ -8,6 +8,7 @@ import {
   OnInit,
 } from "@angular/core";
 import { Subscription } from "rxjs";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { RaceState } from "@app/proto/antigravity";
 import { RaceService } from "@app/services/race.service";
@@ -25,7 +26,7 @@ import { TranslationService } from "@app/services/translation.service";
   selector: "app-default-prediction-results",
   templateUrl: "./default-prediction-results.component.html",
   styleUrls: ["./default-prediction-results.component.css"],
-  imports: [CommonModule, TranslatePipe],
+  imports: [CommonModule, TranslatePipe, BrowserNavigationComponent],
 })
 export class DefaultPredictionResultsComponent implements OnInit, OnDestroy {
   predictionRecord: RacePredictionRecord | null = null;

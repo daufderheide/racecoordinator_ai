@@ -7,7 +7,7 @@ This document explains the architecture and logic behind lap timing in Race Coor
 To guarantee extremely high precision and avoid PC operating system latency (jitter), both interfaces rely on hardware-level timers rather than using the PC's clock. The PC software never uses `System.currentTimeMillis()` or any other OS-level clock to determine a lap time.
 
 ### Arduino
-*   The custom Arduino sketch uses its internal `micros()` clock for microsecond precision.
+*   The Arduino sketch (both Race Coordinator AI `v2.1.0.x` and original Race Coordinator 1.0 `v1.0.0.x` sketches) uses its internal `micros()` clock for microsecond precision.
 *   It handles debouncing locally on the board. 
 *   The Arduino continuously sends a "heartbeat" message to the PC containing the `timeInUse` (time elapsed since the last heartbeat). The PC accurately accumulates this time for each lane into a `HwTime` object.
 *   **The "Delta-Before-Event" Design:** When a car crosses the sensor, the Arduino immediately calculates the exact microsecond delta since the *last* time it sent a message to the PC. It sends a "Time Update" message to the PC **immediately before** it sends the "Pin Trigger" message. This guarantees precision regardless of how slow the PC is to read the data.

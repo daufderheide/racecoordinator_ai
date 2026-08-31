@@ -42,6 +42,7 @@ export class DriverHeatData {
   public rank: number = 0;
   public flag: number = 0;
   public lapsLed: number = 0;
+  public isFinished: boolean = false;
 
   constructor(
     objectId: string,
@@ -84,6 +85,7 @@ export class DriverHeatData {
     this.currentLocation = -1;
     this.flag = 0;
     this.lapsLed = 0;
+    this.isFinished = false;
   }
 
   addLapTime(

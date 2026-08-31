@@ -306,11 +306,6 @@ public class DriverLaneHeatHandler {
         return;
       }
 
-      if (!currentHeat.isStarted()) {
-        ctx.status(400).result("Cannot add lap sections to a heat that has not run yet");
-        return;
-      }
-
       List<DriverHeatData> drivers = currentHeat.getDrivers();
       if (lane >= 0 && lane < drivers.size()) {
         DriverHeatData dhd = drivers.get(lane);
@@ -365,11 +360,6 @@ public class DriverLaneHeatHandler {
 
       if (targetHeat == null) {
         ctx.status(404).result("Heat not found: " + heatNumber);
-        return;
-      }
-
-      if (!targetHeat.isStarted()) {
-        ctx.status(400).result("Cannot add lap sections to a heat that has not run yet");
         return;
       }
 
@@ -428,12 +418,6 @@ public class DriverLaneHeatHandler {
 
         if (targetHeat == null) {
           ctx.status(404).result("Heat not found: " + heatNumber);
-          return;
-        }
-
-        if (!targetHeat.isStarted()) {
-          ctx.status(400)
-              .result("Cannot add lap sections to a heat that has not run yet: " + heatNumber);
           return;
         }
 

@@ -9,6 +9,7 @@ import {
   RaceState,
 } from "@app/proto/antigravity";
 
+import { ChildWindowManagerService } from "./child-window-manager.service";
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
 
@@ -135,6 +136,15 @@ describe("RaceConnectionService", () => {
       // Should be called immediately without ticking
       expect((service as any).stopConnection).toHaveBeenCalledTimes(1);
     }));
+
+    it("should call closeAllWindows on childWindowManagerService when stopConnection runs", () => {
+      const childWindowManager = TestBed.inject(ChildWindowManagerService);
+      spyOn(childWindowManager, "closeAllWindows");
+
+      (service as any).stopConnection();
+
+      expect(childWindowManager.closeAllWindows).toHaveBeenCalled();
+    });
   });
 
   describe("Watchdog and Alerts", () => {
@@ -233,6 +243,39 @@ describe("RaceConnectionService", () => {
       });
 
       sub.unsubscribe();
+      flush();
+    }));
+
+    it("should log status transitions and watchdog timeouts", fakeAsync(() => {
+      const logger = (service as any).logger;
+      spyOn(logger, "info");
+      spyOn(logger, "debug");
+      spyOn(logger, "warn");
+
+      service.connect();
+
+      // First status change
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.CONNECTED },
+      });
+      expect(logger.info).toHaveBeenCalledWith(
+        `RaceConnectionService: Interface status changed from -1 to ${InterfaceStatus.CONNECTED}`,
+      );
+
+      // Same status should log debug/trace without info spam
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.CONNECTED },
+      });
+      expect(logger.debug).toHaveBeenCalledWith(
+        "RaceConnectionService: Interface status unchanged:",
+        InterfaceStatus.CONNECTED,
+      );
+
+      // Watchdog timeout warning
+      tick(6000); // 5s watchdog after initial connection
+      expect(logger.warn).toHaveBeenCalledWith(
+        jasmine.stringMatching(/Interface watchdog timeout reached/),
+      );
       flush();
     }));
 

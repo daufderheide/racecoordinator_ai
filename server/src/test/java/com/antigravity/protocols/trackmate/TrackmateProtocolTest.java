@@ -1,7 +1,6 @@
 package com.antigravity.protocols.trackmate;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 import com.antigravity.mocks.MockScheduler;
@@ -579,5 +578,20 @@ public class TrackmateProtocolTest {
     assertEquals(config.hasPerLaneRelays, defaultProto.hasPerLaneRelays());
     org.junit.Assert.assertFalse(defaultProto.hasDigitalFuel());
     assertEquals(0, defaultProto.getInterfaceIndex());
+  }
+
+  @Test
+  public void testTrackmateWithPerLaneRelays() {
+    TrackmateConfig laneRelayConfig = new TrackmateConfig();
+    laneRelayConfig.hasPerLaneRelays = true;
+    laneRelayConfig.normallyClosedRelays = false;
+    TrackmateProtocol proto =
+        new TestableTrackmateProtocol(laneRelayConfig, 4, scheduler, serialConnection);
+    assertFalse(proto.hasMainRelay());
+    assertTrue(proto.hasPerLaneRelays());
+
+    proto.initializeHardwareState();
+    assertNotNull(serialConnection.lastWrittenData);
+    assertEquals((byte) 'E', serialConnection.lastWrittenData[0]);
   }
 }

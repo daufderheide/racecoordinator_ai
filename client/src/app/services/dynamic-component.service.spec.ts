@@ -119,4 +119,40 @@ describe("DynamicComponentService", () => {
     expect(instance.baseMethod()).toBe("overridden");
     expect(instance.customMethod()).toBe("custom");
   });
+
+  it("should evaluate standard Angular component class code with imports and decorators", async () => {
+    const baseClass = class {
+      baseProp = "baseValue";
+    };
+
+    const tsCode = `
+      import { Component } from '@angular/core';
+      import { CustomWidgetBaseComponent } from '@app/components/shared/custom-widget-base/custom-widget-base.component';
+
+      @Component({
+        standalone: true,
+        templateUrl: './widget.html',
+        styleUrls: ['./widget.css']
+      })
+      export class MyWidgetComponent extends CustomWidgetBaseComponent {
+        title: string = "Widget Title";
+        getComputed(): string {
+          return this.title.toUpperCase();
+        }
+      }
+    `;
+
+    const component = await service.createDynamicComponent(
+      baseClass,
+      "<div>{{ title }}</div>",
+      "",
+      tsCode,
+    );
+
+    expect(component).toBeTruthy();
+    const instance = new component();
+    expect(instance instanceof baseClass).toBeTrue();
+    expect(instance.title).toBe("Widget Title");
+    expect(instance.getComputed()).toBe("WIDGET TITLE");
+  });
 });

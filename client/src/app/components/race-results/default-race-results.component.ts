@@ -1,4 +1,4 @@
-import { CommonModule, DecimalPipe } from "@angular/common";
+import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -81,6 +81,7 @@ const NEON_COLORS = [
   { color: "#c6ff00", bg: "#233000" }, // Lime Green
 ];
 
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import {
   PdfExportDialogComponent,
   PdfExportOptions,
@@ -95,12 +96,14 @@ import { SettingsService } from "@app/services/settings.service";
   imports: [
     TwinGraphsComponent,
     CommonModule,
+    DatePipe,
     DecimalPipe,
     TranslatePipe,
     AvatarUrlPipe,
     RouterModule,
     AcknowledgementModalComponent,
     PdfExportDialogComponent,
+    BrowserNavigationComponent,
   ],
 })
 export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
@@ -170,14 +173,24 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  protected scale = 1;
+  scale = 1;
   protected participants: RaceParticipant[] = [];
   protected race?: Race;
   protected standingsRows: StandingsRow[] = [];
   protected driverLines: DriverLine[] = [];
   protected recordData: IRecordData | null = null;
   private subscriptions: Subscription[] = [];
-  private raceStartTime: Date = new Date();
+  private fallbackRaceStartTime: Date = new Date();
+
+  get raceStartTime(): Date {
+    const millis =
+      (this.race as any)?.start_time_millis ||
+      (this.race as any)?.startTimeMillis;
+    if (millis && Number(millis) > 0) {
+      return new Date(Number(millis));
+    }
+    return this.fallbackRaceStartTime;
+  }
 
   protected getDriverId(d: any): string {
     if (!d) return "";
@@ -306,7 +319,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
           !this.participants || this.participants.length === 0;
         this.participants = participants || [];
         if (hadNoParticipants && this.participants.length > 0) {
-          this.raceStartTime = new Date();
+          this.fallbackRaceStartTime = new Date();
         }
         this.recalculateStandings();
       }),
@@ -372,6 +385,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
 
   onPdfExportConfirm(options: PdfExportOptions) {
     this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
     if (options.saveAsDefault) {
       const settings = this.settingsService.getSettings();
       settings.exportPdfBackgrounds = options.includeBackground;
@@ -444,7 +458,6 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
       const laneColumnsWidth = numLanes * 110;
       const paddingWidth = 30; // padding of wrapper
       const gridWidth = baseColumnsWidth + laneColumnsWidth + paddingWidth;
-
       const availableWidth = 1920 - 80;
       if (gridWidth > availableWidth) {
         return availableWidth / gridWidth;
@@ -462,11 +475,7 @@ export class DefaultRaceResultsComponent implements OnInit, OnDestroy {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
-    const newScale = Math.min(scaleX, scaleY);
-    if (Math.abs(this.scale - newScale) > 0.001) {
-      this.scale = newScale;
-    }
+    this.scale = Math.min(scaleX, scaleY);
   }
 
   protected recalculateStandings() {

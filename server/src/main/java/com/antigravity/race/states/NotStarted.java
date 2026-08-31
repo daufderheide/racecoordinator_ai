@@ -55,6 +55,13 @@ public class NotStarted implements IRaceState {
   public void enter(Race race) {
     logger.info("NotStarted state entered.");
     this.race = race;
+    if (race.getCurrentHeat() != null && race.getCurrentHeat().isEmpty()) {
+      logger.info(
+          "NotStarted.enter(): Current heat {} has no drivers. Automatically skipping.",
+          race.getCurrentHeat().getHeatNumber());
+      Common.advanceToNextHeat(race);
+      return;
+    }
     race.setHasRacedInCurrentHeat(false);
     race.prepareHeat();
     double autoStartTime = race.getRaceModel().getAutoStartTime();
@@ -121,6 +128,7 @@ public class NotStarted implements IRaceState {
     race.clearAutoTimers();
     RaceFlag flag = getFlagType(race);
     race.broadcastFlag(flag);
+    race.updatePowerForFlag(flag);
     race.setRaceState(RaceState.NOT_STARTED, flag, 0);
     race.resetRaceTime();
     broadcastTime(race);
@@ -130,6 +138,8 @@ public class NotStarted implements IRaceState {
   public void restartHeat(Race race) {
     logger.info("NotStarted.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
+    race.setAutoStartFired(false);
+    race.setAutoAdvanceFired(false);
     // Re-enter NotStarted state to restart the auto-start timer if configured
     race.changeState(new NotStarted());
   }
@@ -272,7 +282,8 @@ public class NotStarted implements IRaceState {
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
-          RaceFlag lastFlag = RaceFlag.RED;
+          RaceFlag lastFlag = getFlagType(race);
+          boolean warmupEnded = false;
 
           @Override
           public void run() {
@@ -308,21 +319,19 @@ public class NotStarted implements IRaceState {
               } else {
                 race.setAutoStartRemaining(remaining);
 
-                if (autoStartWarmupTime > 0) {
-                  if (elapsed > autoStartWarmupTime) {
-                    if (race.isMainPower()) {
-                      // Warmup just ended
-                      logger.info("NotStarted: Warmup ended. Resetting heat.");
-                      race.resetCurrentHeat();
-                      race.broadcastFlag(getFlagType(race));
-                    }
-                  }
+                if (autoStartWarmupTime > 0 && elapsed > autoStartWarmupTime && !warmupEnded) {
+                  warmupEnded = true;
+                  logger.info("NotStarted: Warmup ended. Resetting heat.");
+                  race.resetCurrentHeat();
+                  race.updatePowerForFlag(RaceFlag.RED);
+                  race.broadcastFlag(getFlagType(race));
                 }
 
                 RaceFlag currentFlag = getFlagType(race);
                 if (currentFlag != lastFlag) {
                   logger.info("Auto-start flag changed to: {}", currentFlag);
                   race.broadcastFlag(currentFlag);
+                  race.updatePowerForFlag(currentFlag);
                   lastFlag = currentFlag;
                 }
 

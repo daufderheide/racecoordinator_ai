@@ -3,7 +3,7 @@
   (click)="toggleDropdown($event)"
   data-testid="menu-item-automatic-updates"
 >
-  {{ "RDS_MENU_AUTOMATIC_UPDATES" | translate }}
+  <span>{{ "RDS_MENU_AUTOMATIC_UPDATES" | translate }}</span>
   <span class="submenu-arrow">▶</span>
   @if (isUpdateDropdownOpen) {
     <div class="menu-dropdown submenu" data-testid="submenu-automatic-updates">
@@ -24,10 +24,10 @@
           (click)="selectChannel(ch.id, $event)"
           [attr.data-testid]="'channel-' + ch.id.toLowerCase()"
         >
+          <span class="check-slot">{{
+            currentChannel === ch.id ? "✓" : ""
+          }}</span>
           <span>{{ ch.labelKey | translate }}</span>
-          @if (currentChannel === ch.id) {
-            <span class="selected-indicator">✓</span>
-          }
         </div>
       }
     </div>

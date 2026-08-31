@@ -2,88 +2,65 @@
   display: block;
   width: 100vw;
   height: 100vh;
-  background-color: #0f172a;
-  /* Slate 900 */
+  background-color: #000;
   color: #e2e8f0;
-  /* Slate 200 */
   font-family: 'Rajdhani', sans-serif;
   overflow: hidden;
   position: relative;
 }
 
 .page-container {
-  width: 1600px;
-  height: 900px;
+  width: 100%;
+  height: 100%;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center center;
-  transform: translate(-50%, -50%);
-  /* Start centered, JS handles scale */
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  background-image: url('../../../assets/images/track_manager_bg.png');
-  background-size: 1600px 900px;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: #0f172a;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 40%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
   overflow: hidden;
 }
 
-/* Header */
-.header {
-  height: 80px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 40px;
-  background: linear-gradient(to right, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
-  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
-  /* Sky 400 */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #38bdf8;
-  /* Sky 400 */
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-  margin: 0;
-}
+/* Header style moved to app-editor-title */
 
 /* Content */
 .content-split {
   flex: 1;
   display: flex;
-  height: calc(100% - 80px);
-  /* Fill remaining */
-  margin: 0 55px 45px 55px;
   gap: 20px;
   overflow: hidden;
+  margin: 0;
+  padding: 0 30px 24px 30px;
+  transform: translateZ(0);
+  will-change: transform;
+  border-top: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
 }
 
 /* Editor Panel (Left) */
 .editor-panel {
-  margin-left: 90px;
-  width: 310px;
-  background: transparent;
-  flex-direction: column;
-  padding-top: 40px;
-  padding-bottom: 40px;
+  width: 300px;
+  height: calc(100% + 15px);
   display: flex;
-  overflow: hidden;
+  flex-direction: column;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding-top: 0;
+  margin-top: 0;
+  margin-left: 0;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  overflow: visible;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 .editor-row {
@@ -102,6 +79,23 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.editor-section.fixed-header {
+  margin-bottom: 20px;
+  margin-top: 30px;
+  flex-shrink: 0;
+}
+
+.editor-panel .section-label {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+  text-transform: none;
+  display: block;
+  margin-bottom: 10px;
 }
 
 .editor-section.invalid input[type="text"] {
@@ -135,7 +129,23 @@
 }
 
 .editor-section select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: rgba(15, 23, 42, 0.5);
+  background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPScjOTRhM2I4JyBoZWlnaHQ9JzI0JyB2aWV3Qm94PScwIDAgMjQgMjQnIHdpZHRoPScyNCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48cGF0aCBkPSdNNyAxMGw1IDUgNS01eicvPjwvc3ZnPg==");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px 20px;
+  padding-right: 32px;
   cursor: pointer;
+  color-scheme: dark;
+}
+
+.editor-section select option,
+.editor-section select optgroup {
+  background-color: #0f172a;
+  color: #f1f5f9;
 }
 
 .heat-list-section {
@@ -396,22 +406,32 @@
   flex: 1;
 }
 
-/* Preview Panel (Right) - Matching Track/Driver Editor */
-.preview-panel {
+/* RHS Wrapper & Preview Panel */
+.rhs-wrapper {
   flex: 1;
-  border: none;
-  margin-left: 160px;
-  margin-top: 50px;
-  margin-right: 120px;
-  /* Slight bump to right margin buffer */
-  margin-bottom: 40px;
+  min-width: 0;
+  margin: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
+  border-left: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: inset 15px 0 15px -15px rgba(0, 0, 0, 0.8);
   overflow: hidden;
-  /* Changed from overflow-y: auto to let inner wrapper scroll */
+}
+
+.preview-panel {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
   position: relative;
   background-color: transparent;
-  padding: 0;
+  padding: 24px 0 0 24px;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* Custom Scrollbar for Preview Panel */
@@ -437,10 +457,9 @@
 .sections-wrapper {
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 22px;
-  margin-right: 0;
-  /* Removed negative margin hiding scrollbars */
+  overflow-x: hidden !important;
+  padding-right: 5px;
+  margin-right: 5px;
 }
 
 .sections-wrapper::-webkit-scrollbar {
@@ -575,8 +594,28 @@
   cursor: pointer;
 }
 
+.preview-panel select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: rgba(15, 23, 42, 0.6);
+  background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPScjOTRhM2I4JyBoZWlnaHQ9JzI0JyB2aWV3Qm94PScwIDAgMjQgMjQnIHdpZHRoPScyNCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48cGF0aCBkPSdNNyAxMGw1IDUgNS01eicvPjwvc3ZnPg==");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px 20px;
+  padding-right: 32px;
+  color-scheme: dark;
+}
+
 .preview-panel select:focus {
   border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.preview-panel select option,
+.preview-panel select optgroup {
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
 /* RHS Label Overrides (matching Arduino Editor style) */
@@ -636,10 +675,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px 12px;
-}
-
-.season-points-list.two-columns .btn-add-pos {
-  grid-column: 1 / -1;
 }
 
 .season-points-list::-webkit-scrollbar {
@@ -854,8 +889,7 @@
 
 /* Fuel Config Section */
 .fuel-config-section {
-  border-top: 1px solid rgba(56, 189, 248, 0.2);
-  padding-top: 30px;
+  padding-top: 0;
 }
 
 .fuel-enabled-row {

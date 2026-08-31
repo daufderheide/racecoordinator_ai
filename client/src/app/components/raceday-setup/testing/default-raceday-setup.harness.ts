@@ -46,6 +46,15 @@ export class DefaultRacedaySetupHarness
   protected getRemoveAllBtn = this.locatorForOptional(
     DefaultRacedaySetupHarnessBase.selectors.removeAllBtn,
   );
+  protected getAddAllBtn = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.addAllBtn,
+  );
+  protected getRandomizeBtn = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.randomizeBtn,
+  );
+  protected getViewRosterBtn = this.locatorForOptional(
+    DefaultRacedaySetupHarnessBase.selectors.viewRosterBtn,
+  );
   protected getStartBtn = this.locatorForOptional(
     DefaultRacedaySetupHarnessBase.selectors.startBtn,
   );
@@ -92,17 +101,39 @@ export class DefaultRacedaySetupHarness
   }
 
   async clickAddAll(): Promise<void> {
+    const btn = await this.getAddAllBtn();
+    if (btn) {
+      await btn.click();
+      return;
+    }
+    const buttons = await this.locatorForAll(
+      DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn,
+    )();
+    if (buttons.length > 1) await buttons[1].click();
+  }
+
+  async clickRandomize(): Promise<void> {
+    const btn = await this.getRandomizeBtn();
+    if (btn) {
+      await btn.click();
+      return;
+    }
+    const buttons = await this.locatorForAll(
+      DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn,
+    )();
+    if (buttons.length > 3) await buttons[3].click();
+  }
+
+  async clickOpenRoster(): Promise<void> {
+    const btn = await this.getViewRosterBtn();
+    if (btn) {
+      await btn.click();
+      return;
+    }
     const buttons = await this.locatorForAll(
       DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn,
     )();
     if (buttons.length > 0) await buttons[0].click();
-  }
-
-  async clickRandomize(): Promise<void> {
-    const buttons = await this.locatorForAll(
-      DefaultRacedaySetupHarnessBase.selectors.driverActionBarBtn,
-    )();
-    if (buttons.length > 2) await buttons[2].click();
   }
 
   async isStartEnabled(): Promise<boolean> {
@@ -170,6 +201,15 @@ export class DefaultRacedaySetupHarness
   async clickRaceDropdown(): Promise<void> {
     const trigger = await this.getDropdownTrigger();
     if (trigger) await trigger.click();
+  }
+
+  async selectSeason(_name: string): Promise<void> {
+    const select = await this.locatorForOptional(
+      DefaultRacedaySetupHarnessBase.selectors.seasonSelect,
+    )();
+    if (select) {
+      await select.dispatchEvent("change");
+    }
   }
 
   async openOptionsMenu(): Promise<void> {

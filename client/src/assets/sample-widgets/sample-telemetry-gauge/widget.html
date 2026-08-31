@@ -1,0 +1,32 @@
+<div
+  class="telemetry-gauge-card"
+  [style.--dial-color]="getSetting('dialColor', '#38bdf8')"
+>
+  <div class="gauge-header">
+    <span class="gauge-title">{{ headerDisplay }}</span>
+    <span *ngIf="getSetting('showMaxSpeed', true)" class="max-badge">
+      MAX: {{ formatMaxSpeed(maxRecordedSpeed) }} {{ getSetting('unitLabel',
+      'MPH') }}
+    </span>
+  </div>
+
+  <div class="gauge-body">
+    <div
+      class="speed-dial"
+      [class.warning]="simulatedSpeed >= getSetting('warningThreshold', 80)"
+    >
+      <span class="speed-value">{{ formatSpeed(simulatedSpeed) }}</span>
+      <span class="speed-unit">{{ getSetting('unitLabel', 'MPH') }}</span>
+    </div>
+    <div class="lap-stats">
+      <div class="stat-row">
+        <span class="stat-label">Best Lap:</span>
+        <span class="stat-value">{{ formatLapTime(bestLapTime) }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Last Lap:</span>
+        <span class="stat-value">{{ formatLapTime(lastLapTime) }}</span>
+      </div>
+    </div>
+  </div>
+</div>

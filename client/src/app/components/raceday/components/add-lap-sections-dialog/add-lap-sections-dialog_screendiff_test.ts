@@ -334,7 +334,7 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
     );
   });
 
-  test("should display no heats message in menu mode when no heats have started", async ({
+  test("should display no heats message in menu mode when no heats exist", async ({
     page,
   }) => {
     await TestSetupHelper.waitForLocalization(
@@ -347,7 +347,7 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
       race: {
         race: {
           model: { entityId: "r1" },
-          name: "Screendiff No Started Heats Race",
+          name: "Screendiff No Heats Race",
           track: {
             model: { entityId: "t1" },
             name: "Test Track",
@@ -362,26 +362,14 @@ test.describe("Add Lap Sections Dialog Visuals", () => {
             ],
           },
         },
-        heats: [
-          {
-            objectId: "h1",
-            heatNumber: 1,
-            started: false, // Unstarted
-            heatDrivers: [],
-          },
-        ],
+        heats: [],
         drivers: [
           {
             objectId: "rp1",
             driver: { name: "Alice", nickname: "Rocket" },
           },
         ],
-        currentHeat: {
-          objectId: "h1",
-          heatNumber: 1,
-          started: false,
-          heatDrivers: [],
-        },
+        currentHeat: null,
       },
     };
 

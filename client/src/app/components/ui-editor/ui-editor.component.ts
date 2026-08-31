@@ -1,19 +1,19 @@
-/* eslint-disable max-lines */
 import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
   computed,
   HostListener,
+  inject,
   NgZone,
+  NO_ERRORS_SCHEMA,
   OnDestroy,
   OnInit,
 } from "@angular/core";
-import { NO_ERRORS_SCHEMA } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
-import { forkJoin, of, Subscription } from "rxjs";
+import { ActivatedRoute, NavigationStart, Router } from "@angular/router";
+import { Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
@@ -24,11 +24,14 @@ import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.compone
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
-import { AssetType, normalizeAssetType } from "@app/models/asset";
+import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
 import { LayoutConfig, Settings } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -39,13 +42,83 @@ import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
 import { deepCopy } from "@app/utils/clone.utils";
 
-export interface UIEditorState {
-  settings: Settings;
-  themes: Theme[];
-}
-
+import {
+  ThemeTemplateModalComponent,
+  ThemeTemplateType,
+} from "./components/theme-template-modal/theme-template-modal";
+import {
+  applyLoadedUiEditorData,
+  areSettingsEqual,
+  areUIEditorStatesEqual,
+  AVAILABLE_TRANSITIONS,
+  BASE_AVAILABLE_COLUMNS,
+  buildAutoSaveContext,
+  buildDisplayColumnSlots,
+  buildLayoutExport,
+  buildUiEditorHelpContext,
+  calculatePreviewScaleNumber,
+  cloneSettings,
+  cloneUIEditorState,
+  DEFAULT_SECTIONS_EXPANDED,
+  downloadJsonFile,
+  executeAutoSaveState,
+  executeClearFolder,
+  executeClearWidgetFolder,
+  executeImportLayout,
+  executeResetLayout,
+  executeSelectFolder,
+  executeSelectWidgetFolder,
+  executeTemplateFileSelected,
+  extractAssetId,
+  fetchUiEditorData,
+  findDefaultWidgetId,
+  getCustomUiDisplayNameKey,
+  getDefaultLayoutResetData,
+  getThemeAudioConfigForSlot,
+  getThemeAudioUrl,
+  getThemeDisplayNameKey,
+  getUiEditorHelpSteps,
+  handleConfirmDeleteCustomUi,
+  handleConfirmDeleteTheme,
+  handleCreateCustomUi,
+  handleCreateTheme,
+  handleCustomUiSelection,
+  handleDuplicateCustomUi,
+  handleDuplicateTheme,
+  handleThemeAudioChange,
+  handleThemeSlotChange,
+  handleUiEditorDataLoadError,
+  handleUiEditorDestroy,
+  handleUiEditorHelpStep,
+  handleUiEditorKeyboardShortcut,
+  handleWidgetColorChange,
+  handleWidgetSelection,
+  isCustomUiDefault,
+  isCustomUiNameInvalid,
+  isThemeDefault,
+  isThemeNameDuplicate,
+  isThemeNameInvalid,
+  loadExpanderStateFromStorage,
+  MAIN_AUDIO_SLOTS,
+  MOCK_RACEDAY_PROPERTIES,
+  resolveActiveLayout,
+  resolveTargetCustomUi,
+  resolveThemeAsset,
+  resolveThemeFlag,
+  resolveThemeFuelGauge,
+  resolveThemeLamp,
+  saveExpanderStateToStorage,
+  sortCustomUisForDisplay,
+  sortThemesForDisplay,
+  syncEditorCoordinates,
+  toggleThemeExpander,
+  toggleUiExpander,
+  UIEditorState,
+  updateLayoutOnModel,
+} from "./ui-editor-helpers";
 import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
-import { WIDGET_REGISTRY } from "./widget-registry";
+
+export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
 
 @Component({
   standalone: true,
@@ -64,6 +137,7 @@ import { WIDGET_REGISTRY } from "./widget-registry";
     AcknowledgementModalComponent,
     DefaultRacedayComponent,
     WidgetInspectorFieldsComponent,
+    ThemeTemplateModalComponent,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -73,9 +147,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private helpSubscription: Subscription | null = null;
   isLoading = true;
   isSaving = false;
-  private getSaveDelay(): number {
-    return 0;
-  }
+  private getSaveDelay = () => 0;
   saveTimeout: any;
   autoSaveTimeout: any;
   isAutoSaving = false;
@@ -86,533 +158,91 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   backTargetUrl = computed(() => {
     const p = this.params();
     const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
-    const returnUrl =
+    const ret =
       p?.["returnUrl"] || this.route.snapshot.queryParamMap.get("returnUrl");
-    if (from === "modify-heats") {
-      return returnUrl || "/default-raceday";
-    }
-    return returnUrl || "/raceday-setup";
+    return from === "modify-heats"
+      ? ret || "/default-raceday"
+      : ret || "/raceday-setup";
   });
 
   backQueryParams = computed(() => {
-    const p = this.params();
-    const from = p?.["from"] || this.route.snapshot.queryParamMap.get("from");
+    const from =
+      this.params()?.["from"] || this.route.snapshot.queryParamMap.get("from");
     return from === "modify-heats" ? { modifyHeats: "true" } : {};
   });
 
-  // Unified state for undo/redo
   state!: UIEditorState;
   editingState!: UIEditorState;
-
   displayThemes: Theme[] = [];
-  displayColumnSlots: any[] = [];
+  displayCustomUIs: CustomUI[] = [];
+  activeCustomUiId = "default_ui_layout_rc_ai";
 
-  get editingSettings(): Settings {
+  get activeCustomUi(): CustomUI | undefined {
+    return (
+      this.displayCustomUIs.find(
+        (u) => u.entity_id === this.activeCustomUiId,
+      ) || this.displayCustomUIs[0]
+    );
+  }
+
+  showThemeTemplateModal = false;
+  displayColumnSlots: any[] = [];
+  get isCurrentLayoutPractice() {
+    return this.activeCustomUiId === "practice_ui_layout_rc_ai";
+  }
+  get currentSelectedWidget(): any | null {
+    const layout = this.getLayout(this.activeCustomUi);
+    return this.selectedWidgetId && layout?.widgets
+      ? layout.widgets.find((w: any) => w.id === this.selectedWidgetId) || null
+      : null;
+  }
+  get activeLayoutTitleKey() {
+    return this.isCurrentLayoutPractice
+      ? "UE_LABEL_RACEDAY_LAYOUT_PRACTICE"
+      : "UE_LABEL_RACEDAY_LAYOUT";
+  }
+  get editingSettings() {
     return this.editingState?.settings;
   }
-
   customDirectoryName: string | null = null;
   isNavigationApproved = false;
-
-  get hasLaneViewWidget(): boolean {
-    return !!this.editingSettings?.racedayLayout?.widgets?.some(
+  get hasLaneViewWidget() {
+    return !!this.getLayout(this.activeCustomUi)?.widgets?.some(
       (w) => w.widgetType === "lane-view",
     );
   }
 
-  get hasPracticeLaneViewWidget(): boolean {
-    return !!this.editingSettings?.practiceRacedayLayout?.widgets?.some(
-      (w) => w.widgetType === "lane-view",
-    );
-  }
-
-  // Success modal properties
   showSuccessModal = false;
   successModalTitle = "";
   successModalMessage = "";
   successModalParams: any = {};
-  private themeToCollapseAfterSuccess: string | null = null;
-
+  themeToCollapseAfterSuccess: string | null = null;
   showDeleteConfirm = false;
   themeToDelete: Theme | null = null;
   deleteThemeParams: any = {};
-
+  showDeleteUiConfirm = false;
+  uiToDelete: CustomUI | null = null;
+  deleteUiParams: any = {};
   showDiscardConfirm = false;
   private pendingDeactivate: ((result: boolean) => void) | null = null;
 
-  // TODO(aufderheide): I think this list is duplicated below.  If they're the same they should share the code.
-  layoutResolutionOptions: { label: string; width: number; height: number }[] =
-    [];
-  availableColumns = [
-    { key: "driver.name", label: "RD_COL_NAME" },
-    { key: "driver.nickname", label: "RD_COL_NICKNAME" },
-    { key: "driver.avatarUrl", label: "RD_COL_AVATAR" },
-    { key: "lapCount", label: "RD_COL_LAP" },
-    { key: "lapsLed", label: "RD_COL_LAPS_LED" },
-    { key: "reactionTime", label: "RD_COL_REACTION_TIME" },
-    { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
-    { key: "lastLaps", label: "RD_COL_LAST_LAPS" },
-    { key: "medianLapTime", label: "RD_COL_MEDIAN_LAP" },
-    { key: "averageLapTime", label: "RD_COL_AVG_LAP" },
-    { key: "bestLapTime", label: "RD_COL_BEST_LAP" },
-    { key: "totalTime", label: "RD_COL_TOTAL_TIME" },
-    { key: "gapLeader", label: "UI_EDITOR_COL_GAP_LEADER" },
-    { key: "gapPosition", label: "UI_EDITOR_COL_GAP_POSITION" },
-    { key: "gapLeaderF1", label: "UI_EDITOR_COL_GAP_LEADER_F1" },
-    { key: "gapPositionF1", label: "UI_EDITOR_COL_GAP_POSITION_F1" },
-    { key: "seed", label: "RD_COL_SEED" },
-    { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
-    { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },
-    { key: "rankGroup", label: "RD_COL_RANK_GROUP" },
-    { key: "winProbability", label: "RD_COL_WIN_PROB" },
-    { key: "projectedRank", label: "RD_COL_PROJ_RANK" },
-    { key: "projectedLaps", label: "RD_COL_PROJ_LAPS" },
-    { key: "participant.team.name", label: "RD_COL_TEAM" },
-    { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
-    { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
-    { key: "fuelPercentage", label: "RD_COL_FUEL_PERCENTAGE" },
-    { key: "imageset_fuel-gauge-builtin", label: "RD_COL_FUEL_GAUGE" },
-    { key: "mph", label: "RD_COL_MPH" },
-    { key: "kph", label: "RD_COL_KPH" },
-    { key: "fph", label: "RD_COL_FPH" },
-    { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
-    { key: "flag", label: "RD_COL_DRIVER_STATE" },
-    { key: "qrCode", label: "RD_COL_LANE_QR" },
-    { key: "driverViewQrCode", label: "RD_COL_DRIVER_VIEW_QR" },
-    { key: "laneNumber", label: "RD_COL_LANE" },
-    { key: "ghostPacing", label: "RD_COL_GHOST_PACING" },
+  availableColumns: { key: string; label: string }[] = [
+    ...BASE_AVAILABLE_COLUMNS,
   ];
-  availableTransitions = [
-    { key: "none", label: "UE_TRANSITION_NONE" },
-    { key: "random", label: "UE_TRANSITION_RANDOM" },
-    { key: "slide", label: "UE_TRANSITION_SLIDE" },
-    { key: "zoom", label: "UE_TRANSITION_ZOOM" },
-    { key: "blur", label: "UE_TRANSITION_BLUR" },
-    { key: "fade", label: "UE_TRANSITION_FADE" },
-  ];
-
+  availableTransitions = AVAILABLE_TRANSITIONS;
   undoManager!: UndoManager<UIEditorState>;
-
   sectionsExpanded: { [key: string]: boolean } = {
-    racedayLayout: true,
-    practiceRacedayLayout: false,
-    layout: true,
-    themes: true,
-    config: true,
-    flags: true,
-    countdown: false,
-    fuelGauge: false,
-    audio: false,
+    ...DEFAULT_SECTIONS_EXPANDED,
   };
+  mainAudioSlots = MAIN_AUDIO_SLOTS;
 
-  mainAudioSlots: {
-    key: string;
-    label: string;
-    mode: "single" | "set";
-    helpId: string;
-  }[] = [
-    {
-      key: "audio.yellowflag",
-      label: "UE_LABEL_YELLOW_FLAG_AUDIO",
-      mode: "single",
-      helpId: "help-audio-yellowflag",
-    },
-    {
-      key: "audio.countdown",
-      label: "UE_LABEL_COUNTDOWN_AUDIO",
-      mode: "set",
-      helpId: "help-audio-countdown",
-    },
-    {
-      key: "audio.seconds_left",
-      label: "UE_LABEL_SECONDS_LEFT_AUDIO",
-      mode: "set",
-      helpId: "help-audio-seconds-left",
-    },
-    {
-      key: "audio.seconds_left.halfway",
-      label: "UE_LABEL_SECONDS_LEFT_HALFWAY",
-      mode: "single",
-      helpId: "help-audio-halfway",
-    },
-    {
-      key: "audio.heat_over",
-      label: "UE_LABEL_HEAT_OVER_AUDIO",
-      mode: "single",
-      helpId: "help-audio-heat-over",
-    },
-    {
-      key: "audio.race_over",
-      label: "UE_LABEL_RACE_OVER_AUDIO",
-      mode: "single",
-      helpId: "help-audio-race-over",
-    },
-    {
-      key: "audio.min_lap_time",
-      label: "UE_LABEL_MIN_LAP_TIME_AUDIO",
-      mode: "single",
-      helpId: "help-audio-min-lap-time",
-    },
-    {
-      key: "audio.drift_lap",
-      label: "UE_LABEL_DRIFT_LAP_AUDIO",
-      mode: "single",
-      helpId: "help-audio-drift-lap",
-    },
-  ];
-
-  // Mock properties required by RacedayLayoutNodeComponent for preview
-  track: any = undefined;
-  race: any = undefined;
-  heat: any = undefined;
-  totalHeats = 0;
-  qrCodeUrl = "";
-  formattedTime = "0:00.00";
-  autoStatusLabel = "";
-  isWarmup = false;
-  showCountdownOverlay = false;
-  raceRecordLapNickname = "RecordHolder";
-  raceRecordLapTime = "5.000";
-  raceRecordScoreNickname = "ScoreHolder";
-  raceRecordScore = "10";
-  currentRaceBestNickname = "RaceBest";
-  currentRaceBestTime = "5.100";
-  heatBestNickname = "HeatBest";
-  heatBestTime = "5.200";
-  leaderboardEntries: any[] = [];
-
+  track: any = MOCK_RACEDAY_PROPERTIES.track;
   selectedWidgetId: string | null = null;
-  selectedPracticeWidgetId: string | null = null;
-
-  get selectedWidget(): any | null {
-    if (
-      !this.selectedWidgetId ||
-      !this.editingSettings?.racedayLayout?.widgets
-    ) {
-      return null;
-    }
-    return (
-      this.editingSettings.racedayLayout.widgets.find(
-        (w: any) => w.id === this.selectedWidgetId,
-      ) || null
-    );
-  }
-
-  get selectedPracticeWidget(): any | null {
-    if (
-      !this.selectedPracticeWidgetId ||
-      !this.editingSettings?.practiceRacedayLayout?.widgets
-    ) {
-      return null;
-    }
-    return (
-      this.editingSettings.practiceRacedayLayout.widgets.find(
-        (w: any) => w.id === this.selectedPracticeWidgetId,
-      ) || null
-    );
-  }
-
-  onWidgetSelected(id: string | null, isPractice: boolean = false) {
-    if (isPractice) {
-      this.selectedPracticeWidgetId = id;
-    } else {
-      this.selectedWidgetId = id;
-    }
-    if (id) {
-      const widget = isPractice
-        ? this.selectedPracticeWidget
-        : this.selectedWidget;
-      if (widget) {
-        let mutated = false;
-        if (widget.fontFamily === undefined || widget.fontFamily === null) {
-          widget.fontFamily = "";
-          mutated = true;
-        }
-        if (widget.scaleMode === undefined || widget.scaleMode === null) {
-          widget.scaleMode = "auto";
-          mutated = true;
-        }
-
-        if (
-          widget.widgetType === "branding" ||
-          widget.widgetType === "qr" ||
-          widget.widgetType === "flag"
-        ) {
-          if (widget.scaleMode !== "auto") {
-            widget.scaleMode = "auto";
-            mutated = true;
-          }
-        }
-        if (widget.textColor === undefined || widget.textColor === null) {
-          widget.textColor = "";
-          mutated = true;
-        }
-        if (
-          widget.backgroundColor === undefined ||
-          widget.backgroundColor === null
-        ) {
-          widget.backgroundColor = "";
-          mutated = true;
-        }
-        if (widget.fontSize === undefined) {
-          widget.fontSize = 24;
-          mutated = true;
-        }
-        if (widget.textScaleFactor === undefined) {
-          widget.textScaleFactor = 1.0;
-          mutated = true;
-        }
-        const registryEntry = WIDGET_REGISTRY[widget.widgetType];
-        if (registryEntry?.defaultSettings) {
-          if (!widget.customSettings) {
-            widget.customSettings = registryEntry.defaultSettings();
-            mutated = true;
-          } else {
-            const defaults = registryEntry.defaultSettings();
-            for (const key of Object.keys(defaults)) {
-              if (widget.customSettings[key] === undefined) {
-                widget.customSettings[key] = defaults[key];
-                mutated = true;
-              }
-            }
-          }
-        }
-        if (mutated) {
-          this.editingState.settings = this.cloneSettings(
-            this.editingState.settings,
-          );
-        }
-      }
-    }
-    this.cdr.markForCheck();
-  }
-
-  onTextColorChange(event: Event, isPractice: boolean = false) {
-    const value = (event.target as HTMLInputElement).value;
-    const widget = isPractice
-      ? this.selectedPracticeWidget
-      : this.selectedWidget;
-    if (widget) {
-      widget.textColor = value;
-      this.captureState();
-      this.cdr.markForCheck();
-    }
-  }
-
-  onBackgroundColorChange(event: Event, isPractice: boolean = false) {
-    const value = (event.target as HTMLInputElement).value;
-    const widget = isPractice
-      ? this.selectedPracticeWidget
-      : this.selectedWidget;
-    if (widget) {
-      widget.backgroundColor = value;
-      this.captureState();
-      this.cdr.markForCheck();
-    }
-  }
-
-  getCurrentFlagUrl() {
-    return "";
-  }
-
-  onRacedayLayoutChanged(newLayout: any) {
-    if (this.isSaving) return;
-    this.editingSettings.racedayLayout = newLayout;
-    this.undoManager.captureState();
-  }
-
-  onPracticeRacedayLayoutChanged(newLayout: any) {
-    if (this.isSaving) return;
-    this.editingSettings.practiceRacedayLayout = newLayout;
-    this.undoManager.captureState();
-  }
-
-  onColumnsChanged() {
-    if (this.isSaving) return;
-    // editingSettings.racedayColumns and columnLayouts are mutated directly by default-raceday
-    // we just need to capture the state
-    this.undoManager.captureState();
-  }
-
-  resetRacedayLayout() {
-    // Deselect any widget first to prevent the inspector from rendering
-    // with undefined customSettings during the layout replacement.
-    this.selectedWidgetId = null;
-    if (
-      this.layoutResolutionOptions &&
-      this.layoutResolutionOptions.length > 0
-    ) {
-      this.layoutResolutionOptions[0].width = window.innerWidth;
-      this.layoutResolutionOptions[0].height = window.innerHeight;
-    }
-    this.editingSettings.racedayLayout = this.getScaledDefaultLayout(false);
-    this.editingSettings.racedayColumns = [...Settings.DEFAULT_COLUMNS];
-    this.editingSettings.columnLayouts = JSON.parse(
-      JSON.stringify(new Settings().columnLayouts),
-    );
-    this.editingSettings.columnVisibility = JSON.parse(
-      JSON.stringify(new Settings().columnVisibility),
-    );
-    // Provide new object reference for child components to detect change
-    this.editingState.settings = deepCopy(this.editingSettings);
-    this.undoManager.captureState();
-    this.refreshDisplayProperties();
-    this.cdr.detectChanges();
-  }
-
-  resetPracticeRacedayLayout() {
-    this.selectedPracticeWidgetId = null;
-    if (
-      this.layoutResolutionOptions &&
-      this.layoutResolutionOptions.length > 0
-    ) {
-      this.layoutResolutionOptions[0].width = window.innerWidth;
-      this.layoutResolutionOptions[0].height = window.innerHeight;
-    }
-    this.editingSettings.practiceRacedayLayout =
-      this.getScaledDefaultLayout(true);
-    this.editingSettings.practiceRacedayColumns = [
-      ...Settings.DEFAULT_PRACTICE_COLUMNS,
-    ];
-    this.editingSettings.practiceColumnLayouts = JSON.parse(
-      JSON.stringify(new Settings().practiceColumnLayouts),
-    );
-    this.editingSettings.practiceColumnVisibility = JSON.parse(
-      JSON.stringify(new Settings().practiceColumnVisibility),
-    );
-    this.editingState.settings = deepCopy(this.editingSettings);
-    this.undoManager.captureState();
-    this.refreshDisplayProperties();
-    this.cdr.detectChanges();
-  }
-
-  exportRacedayLayout() {
-    const layoutExport = {
-      layout: this.editingSettings.racedayLayout,
-      columns: this.editingSettings.racedayColumns,
-      columnLayouts: this.editingSettings.columnLayouts,
-      columnVisibility: this.editingSettings.columnVisibility,
-      columnAnchors: this.editingSettings.columnAnchors,
-    };
-    this.downloadJson(layoutExport, "raceday-layout.json");
-  }
-
-  onImportRacedayLayout(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const layoutData = JSON.parse(e.target?.result as string);
-        const layout =
-          layoutData.layout ||
-          layoutData.racedayLayout ||
-          layoutData.practiceRacedayLayout;
-
-        if (layout) {
-          this.editingSettings.racedayLayout = layout;
-          this.editingSettings.racedayColumns =
-            layoutData.columns ||
-            layoutData.racedayColumns ||
-            layoutData.practiceRacedayColumns ||
-            Settings.DEFAULT_COLUMNS;
-          this.editingSettings.columnLayouts =
-            layoutData.columnLayouts || layoutData.practiceColumnLayouts || {};
-          this.editingSettings.columnVisibility =
-            layoutData.columnVisibility ||
-            layoutData.practiceColumnVisibility ||
-            {};
-
-          const anchors =
-            layoutData.columnAnchors || layoutData.practiceColumnAnchors;
-          if (anchors) {
-            this.editingSettings.columnAnchors = anchors;
-          }
-          this.editingState.settings = deepCopy(this.editingSettings);
-          this.undoManager.captureState();
-          this.refreshDisplayProperties();
-          this.cdr.detectChanges();
-        }
-      } catch (err) {
-        this.logger.error("Failed to parse layout file", err);
-      }
-    };
-    reader.readAsText(file);
-    input.value = "";
-  }
-
-  exportPracticeRacedayLayout() {
-    const layoutExport = {
-      layout: this.editingSettings.practiceRacedayLayout,
-      columns: this.editingSettings.practiceRacedayColumns,
-      columnLayouts: this.editingSettings.practiceColumnLayouts,
-      columnVisibility: this.editingSettings.practiceColumnVisibility,
-      columnAnchors: this.editingSettings.practiceColumnAnchors,
-    };
-    this.downloadJson(layoutExport, "practice-raceday-layout.json");
-  }
-
-  onImportPracticeRacedayLayout(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-    const file = input.files[0];
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const layoutData = JSON.parse(e.target?.result as string);
-        const layout =
-          layoutData.layout ||
-          layoutData.practiceRacedayLayout ||
-          layoutData.racedayLayout;
-
-        if (layout) {
-          this.editingSettings.practiceRacedayLayout = layout;
-          this.editingSettings.practiceRacedayColumns =
-            layoutData.columns ||
-            layoutData.practiceRacedayColumns ||
-            layoutData.racedayColumns ||
-            Settings.DEFAULT_PRACTICE_COLUMNS;
-          this.editingSettings.practiceColumnLayouts =
-            layoutData.columnLayouts || layoutData.practiceColumnLayouts || {};
-          this.editingSettings.practiceColumnVisibility =
-            layoutData.columnVisibility ||
-            layoutData.practiceColumnVisibility ||
-            {};
-
-          const anchors =
-            layoutData.columnAnchors || layoutData.practiceColumnAnchors;
-          if (anchors) {
-            this.editingSettings.practiceColumnAnchors = anchors;
-          }
-          this.editingState.settings = deepCopy(this.editingSettings);
-          this.undoManager.captureState();
-          this.refreshDisplayProperties();
-          this.cdr.detectChanges();
-        }
-      } catch (err) {
-        this.logger.error("Failed to parse layout file", err);
-      }
-    };
-    reader.readAsText(file);
-    input.value = "";
-  }
-
-  private downloadJson(data: any, filename: string) {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  }
+  soundAssets: any[] = [];
+  previewTTSContext: any = mockTTSContext();
+  customWidgetDirectoryName: string | null = null;
+  private pendingNavigationUrl = "";
+  private childWindowManagerService: ChildWindowManagerService;
 
   constructor(
     private settingsService: SettingsService,
@@ -621,51 +251,33 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private cdr: ChangeDetectorRef,
     private router: Router,
     public themeService: ThemeService,
+    public customUiService: CustomUiService,
     private translationService: TranslationService,
     private logger: LoggerService,
     private route: ActivatedRoute,
     private raceConnectionService: RaceConnectionService,
     private helpService: HelpService,
     private ngZone: NgZone,
+    childWindowManagerService?: ChildWindowManagerService,
+    public customWidgetService?: CustomWidgetService,
   ) {
-    this.layoutResolutionOptions = [
-      {
-        label: "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY",
-        width: window.innerWidth,
-        height: window.innerHeight,
-      },
-      { label: "UI_EDITOR_RESOLUTION_DESKTOP_TV", width: 1920, height: 1080 },
-      { label: "UI_EDITOR_RESOLUTION_MAC_PC", width: 1920, height: 1200 },
-      { label: "UI_EDITOR_RESOLUTION_OLDER_PC", width: 1600, height: 1200 },
-      { label: "UI_EDITOR_RESOLUTION_1280_1024", width: 1280, height: 1024 },
-      { label: "UI_EDITOR_RESOLUTION_ULTRAWIDE", width: 2560, height: 1080 },
-      {
-        label: "UI_EDITOR_RESOLUTION_MODERN_PHONES",
-        width: 2532,
-        height: 1170,
-      },
-      { label: "UI_EDITOR_RESOLUTION_IPAD_TABLET", width: 1024, height: 768 },
-    ];
+    this.childWindowManagerService =
+      childWindowManagerService ?? inject(ChildWindowManagerService);
+    this.customWidgetService =
+      customWidgetService ??
+      inject(CustomWidgetService, { optional: true }) ??
+      undefined;
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart)
+        this.pendingNavigationUrl = event.url;
+    });
+
     this.undoManager = new UndoManager<UIEditorState>(
       {
-        clonner: (s: UIEditorState) => this.cloneState(s),
-        equalizer: (a: UIEditorState, b: UIEditorState) =>
-          this.areStatesEqual(a, b),
-        applier: (s: UIEditorState) => {
-          if (this.editingState && this.editingState.settings && s.settings) {
-            s.settings.layoutEditorMinimized =
-              this.editingState.settings.layoutEditorMinimized;
-            s.settings.layoutEditorPositionX =
-              this.editingState.settings.layoutEditorPositionX;
-            s.settings.layoutEditorPositionY =
-              this.editingState.settings.layoutEditorPositionY;
-            s.settings.columnEditorMinimized =
-              this.editingState.settings.columnEditorMinimized;
-            s.settings.columnEditorPositionX =
-              this.editingState.settings.columnEditorPositionX;
-            s.settings.columnEditorPositionY =
-              this.editingState.settings.columnEditorPositionY;
-          }
+        clonner: (s) => this.cloneState(s),
+        equalizer: (a, b) => this.areStatesEqual(a, b),
+        applier: (s) => {
+          syncEditorCoordinates(s.settings, this.editingState?.settings);
           this.editingState = s;
           this.refreshDisplayProperties();
         },
@@ -674,563 +286,415 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  /* eslint-disable max-lines-per-function */
   ngOnInit() {
     this.sortAvailableColumns();
     this.updateScale();
     this.loadExpanderState();
     this.loadData();
-    this.dataService.setConnectionIntent("preview");
     this.raceConnectionService.connect();
 
-    // Auto-save on changes (like Driver Editor)
-    if (this.undoManager) {
-      this.undoManager.stateCommitted$.subscribe(() => {
-        this.autoSaveState();
-      });
-    }
-
+    this.undoManager?.stateCommitted$.subscribe(() => this.autoSaveState());
     this.dataSubscription = this.translationService
       .getTranslationsLoaded()
       .subscribe((loaded) => {
         if (loaded) {
           this.sortAvailableColumns();
-          if (!this.isDestroyed) {
-            this.cdr.markForCheck();
-          }
+          if (!this.isDestroyed) this.cdr.markForCheck();
         }
       });
 
     this.helpSubscription = this.helpService.currentStep$.subscribe((step) => {
-      if (step && step.selector) {
-        let changed = false;
-        if (step.selector.startsWith("#help-raceday-")) {
-          if (!this.sectionsExpanded["racedayLayout"]) {
-            this.sectionsExpanded["racedayLayout"] = true;
-            changed = true;
-          }
-        } else if (step.selector.startsWith("#help-practice-ui")) {
-          if (!this.sectionsExpanded["practiceRacedayLayout"]) {
-            this.sectionsExpanded["practiceRacedayLayout"] = true;
-            changed = true;
-          }
-        } else if (step.selector.startsWith("#help-themes")) {
-          if (!this.sectionsExpanded["themes"]) {
-            this.sectionsExpanded["themes"] = true;
-            changed = true;
-          }
-        } else if (step.selector.startsWith("#help-custom-ui")) {
-          if (!this.sectionsExpanded["config"]) {
-            this.sectionsExpanded["config"] = true;
-            changed = true;
-          }
-        }
-
-        if (changed) {
-          this.saveExpanderState();
-          this.cdr.markForCheck();
-        }
+      if (handleUiEditorHelpStep(step, this.sectionsExpanded)) {
+        this.saveExpanderState();
+        this.cdr.markForCheck();
       }
     });
   }
 
   ngOnDestroy() {
-    this.isDestroyed = true;
-    if (this.saveTimeout) clearTimeout(this.saveTimeout);
-    if (this.autoSaveTimeout) clearTimeout(this.autoSaveTimeout);
+    handleUiEditorDestroy(this);
+  }
+
+  @HostListener("window:pagehide", ["$event"])
+  onPageHide(_event: any) {
     this.raceConnectionService.disconnect();
-    this.dataService.setConnectionIntent("");
-    if (this.dataSubscription) {
-      this.dataSubscription.unsubscribe();
-    }
-    if (this.helpSubscription) {
-      this.helpSubscription.unsubscribe();
-    }
-    this.undoManager.destroy();
+    this.childWindowManagerService.closeAllWindows();
   }
 
   @HostListener("window:resize")
   onResize() {
     this.updateScale();
-    const currentDisplayOption = this.layoutResolutionOptions.find(
-      (o) => o.label === "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY",
-    );
-    if (currentDisplayOption) {
-      currentDisplayOption.width = window.innerWidth;
-      currentDisplayOption.height = window.innerHeight;
-    }
   }
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
-    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
-      event.preventDefault();
-      if (event.shiftKey) {
-        this.redo();
-      } else {
-        this.undo();
-      }
-    }
-    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
-      event.preventDefault();
-      this.redo();
-    }
+    handleUiEditorKeyboardShortcut(
+      event,
+      () => this.undo(),
+      () => this.redo(),
+    );
   }
 
   private updateScale() {
-    const targetWidth = 1600;
-    const targetHeight = 900;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-    this.scale = Math.min(scaleX, scaleY);
+    this.scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
   }
 
-  /* eslint-disable max-lines-per-function */
   loadData() {
     this.isLoading = true;
-    this.dataSubscription = forkJoin({
-      assets: this.dataService.listAssets(),
-      dirHandle: this.fileSystem.getCustomDirectoryHandle(),
-      themes: this.dataService.getThemes(),
-      tracks: this.dataService.getTracks(),
-    }).subscribe({
-      next: (result) => {
-        // Include both images and image_sets
-        // Include images, image_sets, and sounds
-        this.assets = result.assets.filter(
-          (a: any) =>
-            a.type === "image" ||
-            a.type === "image_set" ||
-            normalizeAssetType(a.type) === AssetType.AUDIO ||
-            a.type === "audio_set",
-        );
-        this.soundAssets = this.assets.filter(
-          (a) =>
-            normalizeAssetType(a.type) === AssetType.AUDIO ||
-            a.type === "audio_set",
-        );
-
-        // Dynamic columns for image sets
-        const imageSetColumns = result.assets
-          .filter(
-            (a: any) =>
-              a.type === "image_set" &&
-              a.name?.toLowerCase() !== "fuel gauge" &&
-              a.name?.toLowerCase() !== "default fuel gauge" &&
-              a.name?.toLowerCase() !== "default fuel guage" &&
-              a.model?.entityId !== "fuel-gauge-builtin" &&
-              a.model?.entityId !== "default_fuel-gauge-builtin" &&
-              a.model?.entityId !== "default_fuel_gauge" &&
-              a.id !== "default_fuel_gauge",
-          )
-          .map((a: any) => ({
-            key: `imageset_${a.model?.entityId || a.id}`,
-            label: a.name || "AM_UNKNOWN_ASSET",
-          }));
-
-        // Reset availableColumns to base set + dynamic image sets
-        this.availableColumns = [
-          { key: "driver.name", label: "RD_COL_NAME" },
-          { key: "driver.nickname", label: "RD_COL_NICKNAME" },
-          { key: "driver.avatarUrl", label: "RD_COL_AVATAR" },
-          { key: "lapCount", label: "RD_COL_LAP" },
-          { key: "lapsLed", label: "RD_COL_LAPS_LED" },
-          { key: "reactionTime", label: "RD_COL_REACTION_TIME" },
-          { key: "lastLapTime", label: "RD_COL_LAP_TIME" },
-          { key: "lastLaps", label: "RD_COL_LAST_LAPS" },
-          { key: "medianLapTime", label: "RD_COL_MEDIAN_LAP" },
-          { key: "averageLapTime", label: "RD_COL_AVG_LAP" },
-          { key: "bestLapTime", label: "RD_COL_BEST_LAP" },
-          { key: "totalTime", label: "RD_COL_TOTAL_TIME" },
-          { key: "gapLeader", label: "UI_EDITOR_COL_GAP_LEADER" },
-          { key: "gapPosition", label: "UI_EDITOR_COL_GAP_POSITION" },
-          { key: "gapLeaderF1", label: "UI_EDITOR_COL_GAP_LEADER_F1" },
-          { key: "gapPositionF1", label: "UI_EDITOR_COL_GAP_POSITION_F1" },
-          { key: "seed", label: "RD_COL_SEED" },
-          { key: "rankHeat", label: "RD_COL_RANK_HEAT" },
-          { key: "rankOverall", label: "RD_COL_RANK_OVERALL" },
-          { key: "rankGroup", label: "RD_COL_RANK_GROUP" },
-          { key: "winProbability", label: "RD_COL_WIN_PROB" },
-          { key: "projectedRank", label: "RD_COL_PROJ_RANK" },
-          { key: "projectedLaps", label: "RD_COL_PROJ_LAPS" },
-          { key: "participant.team.name", label: "RD_COL_TEAM" },
-          { key: "participant.fuelLevel", label: "RD_COL_FUEL_LEVEL" },
-          { key: "fuelCapacity", label: "RD_COL_FUEL_CAPACITY" },
-          { key: "fuelPercentage", label: "RD_COL_FUEL_PERCENTAGE" },
-          { key: "imageset_fuel-gauge-builtin", label: "RD_COL_FUEL_GAUGE" },
-          { key: "mph", label: "RD_COL_MPH" },
-          { key: "kph", label: "RD_COL_KPH" },
-          { key: "fph", label: "RD_COL_FPH" },
-          { key: "segmentTime", label: "RD_COL_SEGMENT_TIME" },
-          { key: "flag", label: "RD_COL_DRIVER_STATE" },
-          { key: "qrCode", label: "RD_COL_LANE_QR" },
-          { key: "laneNumber", label: "RD_COL_LANE" },
-          { key: "ghostPacing", label: "RD_COL_GHOST_PACING_LANE_RECORD" },
-          { key: "ghostPacingPB", label: "RD_COL_GHOST_PACING_PERSONAL_BEST" },
-          {
-            key: "ghostPacingPersonalAvg",
-            label: "RD_COL_GHOST_PACING_PERSONAL_AVG",
-          },
-          {
-            key: "ghostPacingPersonalMedian",
-            label: "RD_COL_GHOST_PACING_PERSONAL_MEDIAN",
-          },
-          {
-            key: "ghostPacingLeaderAvg",
-            label: "RD_COL_GHOST_PACING_LEADER_AVG",
-          },
-          {
-            key: "ghostPacingLeaderMedian",
-            label: "RD_COL_GHOST_PACING_LEADER_MEDIAN",
-          },
-          {
-            key: "ghostPacingLeaderBest",
-            label: "RD_COL_GHOST_PACING_LEADER_BEST",
-          },
-          ...imageSetColumns,
-        ];
-        this.sortAvailableColumns();
-
-        this.customDirectoryName = result.dirHandle?.name || null;
-        const themes = result.themes || [];
-        const tracks = result.tracks || [];
-        if (tracks.length > 0) {
-          this.track = tracks[0];
-        }
-
-        const settings = this.settingsService.getSettings();
-        const editingSettings = this.cloneSettings(settings);
-
-        // Populate default layout if none exists (e.g. fresh install)
-        // so that hasLaneViewWidget evaluates correctly and shows the column toolbox
-        if (!editingSettings.racedayLayout) {
-          editingSettings.racedayLayout = JSON.parse(
-            JSON.stringify(Settings.DEFAULT_LAYOUT),
-          );
-        }
-
-        if (!editingSettings.practiceRacedayLayout) {
-          editingSettings.practiceRacedayLayout = JSON.parse(
-            JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
-          );
-        }
-
-        if (!editingSettings.activeThemeId && themes.length > 0) {
-          const defaultTheme = themes.find((t) => t.is_default);
-          if (defaultTheme) {
-            editingSettings.activeThemeId = defaultTheme.entity_id;
-            this.themeService.setActiveTheme(defaultTheme.entity_id);
-          }
-        }
-
-        this.editingState = {
-          settings: editingSettings,
-          themes: deepCopy(themes),
-        };
-        this.refreshDisplayProperties();
-        this.undoManager.initialize(this.editingState);
-
-        this.isLoading = false;
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      },
-      error: (err) => {
-        this.logger.error("Failed to load UI editor data", err);
-        this.isLoading = false;
-        // Provide empty defaults if loading failed to prevent template crashes
-        this.isLoading = false;
-        // Provide empty defaults if loading failed to prevent template crashes
-        if (!this.editingState) {
-          const settings = this.settingsService.getSettings();
-          const editingSettings = this.cloneSettings(settings);
-          this.editingState = {
-            settings: editingSettings,
-            themes: [],
-          };
-          this.undoManager.initialize(this.editingState);
-        }
-        this.refreshDisplayProperties();
-        if (!this.isDestroyed) {
-          this.cdr.markForCheck();
-        }
-      },
+    this.dataSubscription = fetchUiEditorData(
+      this.dataService,
+      this.fileSystem,
+    ).subscribe({
+      next: (res: any) => applyLoadedUiEditorData(this, res),
+      error: (err: any) => handleUiEditorDataLoadError(this, err),
     });
   }
 
+  parsedLayouts = new Map<string, LayoutConfig>();
+
   refreshDisplayProperties() {
     if (!this.editingState) return;
-
-    // Refresh displayThemes
-    const list = this.editingState.themes || [];
-    const defaultTheme = list.find((t) => t.is_default);
-    const others = list.filter((t) => !t.is_default);
-    this.displayThemes = defaultTheme ? [defaultTheme, ...others] : others;
-
-    // Refresh displayColumnSlots
-    if (this.editingSettings) {
-      this.displayColumnSlots = this.editingSettings.racedayColumns.map(
-        (key) => {
-          const col = this.availableColumns.find((c) => c.key === key);
-          return { key, label: col ? col.label : key };
-        },
-      );
-    }
+    this.parsedLayouts.clear();
+    this.displayThemes = sortThemesForDisplay(this.editingState.themes);
+    this.displayCustomUIs = sortCustomUisForDisplay(
+      this.editingState.customUIs || this.customUiService?.getCustomUIs() || [],
+    );
+    this.displayColumnSlots = buildDisplayColumnSlots(
+      this.editingSettings?.racedayColumns,
+      this.availableColumns,
+    );
+    this.ensureWidgetSelected();
     this.cdr.markForCheck();
   }
 
-  trackByThemeId(index: number, theme: Theme): string {
+  trackByThemeId(_index: number, theme: Theme) {
     return theme.entity_id;
   }
-
-  private cloneSettings(s: Settings): Settings {
-    const clone = Object.assign(new Settings(), s);
-    clone.recentRaceIds = [...(s.recentRaceIds || [])];
-    clone.selectedDriverIds = [...(s.selectedDriverIds || [])];
-    clone.racedayColumns = [...(s.racedayColumns || [])];
-    clone.columnAnchors = { ...(s.columnAnchors || {}) };
-    clone.practiceRacedayColumns = [...(s.practiceRacedayColumns || [])];
-    clone.practiceColumnAnchors = { ...(s.practiceColumnAnchors || {}) };
-
-    // Safely clone layouts and visibility
-    const layouts = s.columnLayouts || {};
-    clone.columnLayouts = deepCopy(layouts);
-
-    const visibility = s.columnVisibility || {};
-    clone.columnVisibility = deepCopy(visibility);
-
-    const practiceLayouts = s.practiceColumnLayouts || {};
-    clone.practiceColumnLayouts = deepCopy(practiceLayouts);
-
-    const practiceVisibility = s.practiceColumnVisibility || {};
-    clone.practiceColumnVisibility = deepCopy(practiceVisibility);
-
-    clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
-    clone.highlightPracticeRowOnLap = s.highlightPracticeRowOnLap ?? true;
-    clone.pageTransition = s.pageTransition || "slide";
-
-    // Theme fields
-    clone.activeThemeId = s.activeThemeId;
-    clone.raceThemeOverrides = { ...(s.raceThemeOverrides || {}) };
-    clone.lampRedOn = s.lampRedOn;
-    clone.lampRedDim = s.lampRedDim;
-    clone.lampGreen = s.lampGreen;
-    clone.fuelGaugeImageSet = s.fuelGaugeImageSet;
-    clone.demoConfig = s.demoConfig ? { ...s.demoConfig } : undefined;
-    clone.racedayLayout = s.racedayLayout
-      ? deepCopy(s.racedayLayout)
-      : undefined;
-    clone.practiceRacedayLayout = s.practiceRacedayLayout
-      ? deepCopy(s.practiceRacedayLayout)
-      : undefined;
-
-    return clone;
+  getSelectedWidgetId(ui: CustomUI) {
+    return this.activeCustomUiId === ui.entity_id
+      ? this.selectedWidgetId
+      : null;
+  }
+  get selectedWidget(): any | null {
+    const layout = this.getLayout(this.activeCustomUi);
+    return this.selectedWidgetId && layout?.widgets
+      ? layout.widgets.find((w: any) => w.id === this.selectedWidgetId) || null
+      : null;
   }
 
-  isColumnSelected(columnKey: string): boolean {
+  onWidgetSelected(id: string | null, ui?: CustomUI) {
+    handleWidgetSelection(this, id, ui);
+  }
+
+  onTextColorChange(event: Event) {
+    handleWidgetColorChange(this, "textColor", event);
+  }
+
+  onBackgroundColorChange(event: Event) {
+    handleWidgetColorChange(this, "backgroundColor", event);
+  }
+
+  getCurrentFlagUrl() {
+    return "";
+  }
+  isCustomUiPractice(ui?: CustomUI) {
+    if (!ui) return this.isCurrentLayoutPractice;
+    return (
+      ui.entity_id === "practice_ui_layout_rc_ai" ||
+      (ui.name || "").toLowerCase().includes("practice")
+    );
+  }
+
+  getLayout(ui?: CustomUI): LayoutConfig | undefined {
+    return resolveActiveLayout(
+      ui || this.activeCustomUi,
+      this.editingSettings,
+      this.parsedLayouts,
+    );
+  }
+
+  getLayoutBaseWidth(ui?: CustomUI) {
+    return this.getLayout(ui)?.baseWidth || 1920;
+  }
+  getLayoutBaseHeight(ui?: CustomUI) {
+    return this.getLayout(ui)?.baseHeight || 1080;
+  }
+
+  onLayoutChanged(newLayout: any, ui?: CustomUI) {
+    if (this.isSaving) return;
+    updateLayoutOnModel(
+      newLayout,
+      ui,
+      this.editingSettings,
+      this.isCurrentLayoutPractice,
+      this.parsedLayouts,
+    );
+    const widgets = newLayout?.widgets || [];
+    if (
+      widgets.length > 0 &&
+      (!this.selectedWidgetId ||
+        !widgets.some((w: any) => w.id === this.selectedWidgetId))
+    ) {
+      this.selectedWidgetId = findDefaultWidgetId(newLayout);
+    }
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+
+  onWidgetInspectorChange(widget?: any, ui?: CustomUI) {
+    if (this.isSaving) return;
+    const targetUi = ui || this.activeCustomUi;
+    const targetWidget = widget || this.currentSelectedWidget;
+    const layout = this.getLayout(targetUi);
+    if (layout && targetWidget && layout.widgets) {
+      const idx = layout.widgets.findIndex(
+        (w: any) => w.id === targetWidget.id,
+      );
+      if (idx !== -1) {
+        layout.widgets[idx] = targetWidget;
+      }
+      updateLayoutOnModel(
+        layout,
+        targetUi,
+        this.editingSettings,
+        this.isCurrentLayoutPractice,
+        this.parsedLayouts,
+      );
+    }
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+
+  onRacedayLayoutChanged(newLayout: any) {
+    this.onLayoutChanged(
+      newLayout,
+      this.displayCustomUIs.find(
+        (u) => u.entity_id === "default_ui_layout_rc_ai",
+      ),
+    );
+  }
+
+  onPracticeRacedayLayoutChanged(newLayout: any) {
+    this.onLayoutChanged(
+      newLayout,
+      this.displayCustomUIs.find(
+        (u) => u.entity_id === "practice_ui_layout_rc_ai",
+      ),
+    );
+  }
+
+  getScaledDefaultLayout(isPractice = false) {
+    return getDefaultLayoutResetData(isPractice).defaultLayout;
+  }
+
+  getTargetCustomUi(kind?: "practice" | "raceday" | "current") {
+    return resolveTargetCustomUi(
+      kind,
+      this.activeCustomUiId,
+      this.displayCustomUIs,
+      this.isCurrentLayoutPractice,
+    );
+  }
+
+  resetCurrentLayout() {
+    if (this.isCurrentLayoutPractice) {
+      this.resetPracticeRacedayLayout();
+    } else if (this.activeCustomUiId === "default_ui_layout_rc_ai") {
+      this.resetRacedayLayout();
+    } else if (this.activeCustomUi) {
+      this.resetLayout(this.activeCustomUi);
+    }
+  }
+
+  exportCurrentLayout() {
+    if (this.isCurrentLayoutPractice) {
+      this.exportPracticeRacedayLayout();
+    } else if (this.activeCustomUiId === "default_ui_layout_rc_ai") {
+      this.exportRacedayLayout();
+    } else if (this.activeCustomUi) {
+      this.exportLayout(this.activeCustomUi);
+    }
+  }
+
+  onImportCurrentLayout(event: Event) {
+    if (this.isCurrentLayoutPractice) {
+      this.onImportPracticeRacedayLayout(event);
+    } else if (this.activeCustomUiId === "default_ui_layout_rc_ai") {
+      this.onImportRacedayLayout(event);
+    } else if (this.activeCustomUi) {
+      this.onImportLayout(event, this.activeCustomUi);
+    }
+  }
+
+  onColumnsChanged(_ui?: CustomUI) {
+    this.captureState();
+  }
+
+  resetLayout(ui: CustomUI) {
+    executeResetLayout(ui, this.editingSettings);
+    if (this.editingState?.settings)
+      this.editingState.settings = deepCopy(this.editingSettings);
+    this.undoManager.captureState();
+    this.refreshDisplayProperties();
+    this.cdr.detectChanges();
+  }
+
+  resetRacedayLayout() {
+    const u = this.getTargetCustomUi("raceday");
+    if (u) this.resetLayout(u);
+  }
+
+  resetPracticeRacedayLayout() {
+    this.selectedWidgetId = "widget-lane-view";
+    const u = this.getTargetCustomUi("practice");
+    if (u) this.resetLayout(u);
+  }
+
+  exportLayout(ui: CustomUI) {
+    const { layoutExport, fileName } = buildLayoutExport(
+      ui,
+      this.editingSettings,
+    );
+    this.downloadJson(layoutExport, fileName);
+  }
+
+  downloadJson(data: any, filename: string) {
+    downloadJsonFile(data, filename);
+  }
+
+  exportRacedayLayout() {
+    const u = this.getTargetCustomUi("raceday");
+    if (u) this.exportLayout(u);
+  }
+
+  exportPracticeRacedayLayout() {
+    const u = this.getTargetCustomUi("practice");
+    if (u) this.exportLayout(u);
+  }
+
+  onImportLayout(event: Event, ui: CustomUI) {
+    executeImportLayout(event, ui, this.editingSettings, this.logger, () => {
+      if (this.editingState?.settings)
+        this.editingState.settings = deepCopy(this.editingSettings);
+      this.undoManager.captureState();
+      this.refreshDisplayProperties();
+      this.cdr.detectChanges();
+    });
+  }
+
+  onImportRacedayLayout(event: Event) {
+    const u = this.getTargetCustomUi("raceday");
+    if (u) this.onImportLayout(event, u);
+  }
+
+  onImportPracticeRacedayLayout(event: Event) {
+    const u = this.getTargetCustomUi("practice");
+    if (u) this.onImportLayout(event, u);
+  }
+
+  cloneSettings(s: Settings) {
+    return cloneSettings(s);
+  }
+  isColumnSelected(key: string) {
     return this.editingSettings.racedayColumns.some(
-      (colKey) => colKey === columnKey || colKey.split("_").includes(columnKey),
+      (k) => k === key || k.split("_").includes(key),
     );
   }
-
-  private cloneState(s: UIEditorState): UIEditorState {
-    return {
-      settings: this.cloneSettings(s.settings),
-      themes: deepCopy(s.themes),
-    };
+  cloneState(s: UIEditorState) {
+    return cloneUIEditorState(s);
   }
-
-  private areStatesEqual(a: UIEditorState, b: UIEditorState): boolean {
-    return (
-      this.areSettingsEqual(a.settings, b.settings) &&
-      JSON.stringify(a.themes) === JSON.stringify(b.themes)
-    );
+  areStatesEqual(a: UIEditorState, b: UIEditorState) {
+    return areUIEditorStatesEqual(a, b);
   }
-
-  private areSettingsEqual(a: Settings, b: Settings): boolean {
-    return (
-      a.flagRacing === b.flagRacing &&
-      a.flagHeatPaused === b.flagHeatPaused &&
-      a.flagHeatOver === b.flagHeatOver &&
-      a.flagRaceOver === b.flagRaceOver &&
-      a.flagNotStarted === b.flagNotStarted &&
-      a.flagStarting === b.flagStarting &&
-      a.flagRestarting === b.flagRestarting &&
-      a.flagOneLapToGo === b.flagOneLapToGo &&
-      a.flagHeatFinishing === b.flagHeatFinishing &&
-      a.flagWarmup === b.flagWarmup &&
-      a.flagDriverFinished === b.flagDriverFinished &&
-      a.flagPenalty === b.flagPenalty &&
-      a.sortByStandings === b.sortByStandings &&
-      a.highlightRowOnLap === b.highlightRowOnLap &&
-      a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&
-      a.pageTransition === b.pageTransition &&
-      a.activeThemeId === b.activeThemeId &&
-      a.lampRedOn === b.lampRedOn &&
-      a.lampRedDim === b.lampRedDim &&
-      a.lampGreen === b.lampGreen &&
-      a.fuelGaugeImageSet === b.fuelGaugeImageSet &&
-      JSON.stringify(a.demoConfig) === JSON.stringify(b.demoConfig) &&
-      JSON.stringify(a.racedayColumns) === JSON.stringify(b.racedayColumns) &&
-      JSON.stringify(a.columnAnchors) === JSON.stringify(b.columnAnchors) &&
-      JSON.stringify(a.columnLayouts) === JSON.stringify(b.columnLayouts) &&
-      JSON.stringify(a.columnVisibility) ===
-        JSON.stringify(b.columnVisibility) &&
-      JSON.stringify(a.racedayLayout) === JSON.stringify(b.racedayLayout) &&
-      JSON.stringify(a.practiceRacedayColumns) ===
-        JSON.stringify(b.practiceRacedayColumns) &&
-      JSON.stringify(a.practiceColumnAnchors) ===
-        JSON.stringify(b.practiceColumnAnchors) &&
-      JSON.stringify(a.practiceColumnLayouts) ===
-        JSON.stringify(b.practiceColumnLayouts) &&
-      JSON.stringify(a.practiceColumnVisibility) ===
-        JSON.stringify(b.practiceColumnVisibility) &&
-      JSON.stringify(a.practiceRacedayLayout) ===
-        JSON.stringify(b.practiceRacedayLayout)
-    );
+  areSettingsEqual(a: Settings, b: Settings) {
+    return areSettingsEqual(a, b);
   }
 
   async selectDirectory() {
-    const success = await this.fileSystem.selectCustomFolder();
-    if (success) {
-      const handle = await this.fileSystem.getCustomDirectoryHandle();
-      this.customDirectoryName = handle?.name || null;
+    const name = await executeSelectFolder(this.fileSystem);
+    if (name) {
+      this.customDirectoryName = name;
       this.cdr.markForCheck();
     }
   }
 
   async resetDefault() {
-    await this.fileSystem.clearCustomFolder();
+    await executeClearFolder(this.fileSystem);
     this.customDirectoryName = null;
     this.cdr.markForCheck();
+  }
+
+  async selectWidgetDirectory() {
+    const name = await executeSelectWidgetFolder(this.fileSystem);
+    if (name) {
+      this.customWidgetDirectoryName = name;
+      if (this.customWidgetService) {
+        await this.customWidgetService.reloadCustomWidgets();
+      }
+      this.cdr.markForCheck();
+    }
+  }
+
+  async resetWidgetDefault() {
+    await executeClearWidgetFolder(this.fileSystem);
+    this.customWidgetDirectoryName = null;
+    if (this.customWidgetService) {
+      await this.customWidgetService.reloadCustomWidgets();
+    }
+    this.cdr.markForCheck();
+  }
+
+  async exportStarterWidgets() {
+    await this.updateSampleWidgets();
+  }
+
+  async updateSampleWidgets() {
+    if (this.customWidgetService) {
+      try {
+        const result = await this.customWidgetService.exportStarterWidgets();
+        if (result && result.success) {
+          this.openSuccessModal({
+            title: "UE_UPDATE_SAMPLE_WIDGETS_SUCCESS_TITLE",
+            message: "UE_UPDATE_SAMPLE_WIDGETS_SUCCESS_MSG",
+            params: {
+              count: result.count,
+              directory:
+                result.directory || this.customWidgetDirectoryName || "",
+            },
+          });
+        }
+        this.cdr.markForCheck();
+      } catch (e) {
+        this.logger.error("Failed to update sample widgets", e);
+      }
+    }
   }
 
   save() {
     this.isSaving = true;
     this.settingsService.saveSettings(this.editingSettings);
-    this.ngZone.runOutsideAngular(() => {
-      this.saveTimeout = setTimeout(() => {
-        this.ngZone.run(() => {
-          this.isSaving = false;
-          this.undoManager.resetTracking(this.editingState);
-          if (!this.isDestroyed) {
-            this.cdr.markForCheck();
-          }
-        });
-      }, this.getSaveDelay());
-    });
+    this.saveTimeout = setTimeout(() => {
+      this.isSaving = false;
+      this.undoManager.resetTracking(this.editingState);
+      if (!this.isDestroyed) this.cdr.markForCheck();
+    }, this.getSaveDelay());
   }
 
   private autoSaveState(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (
-        this.isLoading ||
-        this.isSaving ||
-        !this.hasChanges() ||
-        this.isAnyThemeNameInvalid()
-      ) {
-        resolve();
-        return;
-      }
-
-      this.isAutoSaving = true;
-      this.isSaving = true;
-
-      // 1. Save Settings
-      this.settingsService.saveSettings(this.editingSettings);
-
-      // 2. Save changed Themes
-      const savePromises = [];
-      const initialState = this.undoManager.getInitialState();
-
-      for (const theme of this.displayThemes) {
-        if (!theme.is_default) {
-          let hasChanged = true;
-          if (initialState && initialState.themes) {
-            const initialTheme = initialState.themes.find(
-              (t) => t.entity_id === theme.entity_id,
-            );
-            if (
-              initialTheme &&
-              JSON.stringify(initialTheme) === JSON.stringify(theme)
-            ) {
-              hasChanged = false;
-            }
-          }
-          if (hasChanged) {
-            savePromises.push(
-              this.dataService.updateTheme(theme.entity_id, theme),
-            );
-          }
-        }
-      }
-
-      const obs = savePromises.length > 0 ? forkJoin(savePromises) : of([null]);
-
-      obs.subscribe({
-        next: () => {
-          this.undoManager.resetTracking(this.editingState);
-          const activeTheme = this.themeService.getActiveTheme();
-          if (
-            activeTheme &&
-            this.displayThemes.find(
-              (t) => t.entity_id === activeTheme.entity_id,
-            )
-          ) {
-            this.themeService.refresh();
-          }
-
-          this.ngZone.runOutsideAngular(() => {
-            this.autoSaveTimeout = setTimeout(() => {
-              this.ngZone.run(() => {
-                this.isAutoSaving = false;
-                this.isSaving = false;
-                if (!this.isDestroyed) {
-                  this.cdr.markForCheck();
-                }
-              });
-            }, this.getSaveDelay());
-          });
-          resolve();
-        },
-        error: (err) => {
-          this.logger.error("Auto-save failed", err);
-          this.isAutoSaving = false;
-          this.isSaving = false;
-          if (!this.isDestroyed) {
-            if (err.status !== 409) {
-              alert(this.translationService.translate("UE_ERROR_SAVE_FAILED"));
-            }
-            this.cdr.markForCheck();
-          }
-          reject(err);
-        },
-      });
-    });
+    return executeAutoSaveState(buildAutoSaveContext(this));
   }
 
   async confirmDiscard(): Promise<boolean> {
-    // Flush any pending debounced changes in the undo manager
     this.undoManager.commitState();
-
-    if (!this.hasChanges()) {
-      return true;
-    }
-
-    // If changes are saveable, try to auto-save before showing the modal
-    if (!this.isAnyThemeNameInvalid()) {
+    if (!this.hasChanges()) return true;
+    if (!this.isAnyThemeNameInvalid() && !this.isAnyCustomUiNameInvalid()) {
       try {
         await this.autoSaveState();
-        if (!this.hasChanges()) {
-          return true; // Successfully saved, allow navigation
-        }
+        if (!this.hasChanges()) return true;
       } catch (e) {
         this.logger.error("Final auto-save failed before navigation", e);
       }
     }
-
     this.showDiscardConfirm = true;
     this.cdr.markForCheck();
     return new Promise((resolve) => {
@@ -1264,7 +728,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   hasChanges() {
     return this.undoManager.hasChanges();
   }
-
   undo() {
     this.undoManager.undo();
   }
@@ -1272,7 +735,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.undoManager.redo();
   }
   captureState() {
-    this.editingState.settings = this.cloneSettings(this.editingState.settings);
+    this.editingState.settings = cloneSettings(this.editingState.settings);
+    if (this.displayCustomUIs?.length) {
+      this.editingState.customUIs = deepCopy(this.displayCustomUIs);
+    }
     this.undoManager.captureState();
   }
 
@@ -1282,87 +748,47 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   toggleThemeSection(themeId: string, activate = false) {
-    const wasExpanded = !!this.sectionsExpanded[themeId];
-
-    // Collapse all theme sections
-    this.displayThemes.forEach(
-      (t) => (this.sectionsExpanded[t.entity_id] = false),
+    toggleThemeExpander(
+      themeId,
+      this.displayThemes,
+      this.sectionsExpanded,
+      activate,
+      this.editingSettings.activeThemeId,
+      (id) => this.onThemeSelected(id),
     );
-
-    if (!wasExpanded) {
-      // Expand
-      this.sectionsExpanded[themeId] = true;
-      // Only activate if not already active to prevent recursion
-      if (activate && this.editingSettings.activeThemeId !== themeId) {
-        this.onThemeSelected(themeId);
-      }
-    }
-
-    this.saveExpanderState();
   }
 
   saveExpanderState() {
-    try {
-      localStorage.setItem(
-        "ui_editor_expanders",
-        JSON.stringify(this.sectionsExpanded),
-      );
-    } catch (e) {
-      this.logger.error("Error saving expander state", e);
-    }
+    saveExpanderStateToStorage(this.sectionsExpanded, this.logger);
   }
-
   loadExpanderState() {
-    try {
-      const saved = localStorage.getItem("ui_editor_expanders");
-      if (saved) {
-        this.sectionsExpanded = {
-          ...this.sectionsExpanded,
-          ...JSON.parse(saved),
-        };
-      }
-    } catch (e) {
-      this.logger.error("Error loading expander state", e);
+    this.sectionsExpanded = loadExpanderStateFromStorage(this.sectionsExpanded);
+  }
+  isThemeNameInvalid(theme: Theme) {
+    return isThemeNameInvalid(theme, this.displayThemes);
+  }
+  isThemeNameDuplicate(theme: Theme) {
+    return isThemeNameDuplicate(theme, this.displayThemes);
+  }
+  isAnyThemeNameInvalid() {
+    return this.displayThemes.some((t) => this.isThemeNameInvalid(t));
+  }
+  getWidgetTypeLabelKey(w: string) {
+    if (w?.startsWith("custom:")) {
+      const def = this.customWidgetService?.getWidgetDefinition(w);
+      return def?.manifest?.name || w.substring("custom:".length);
     }
+    return "UE_WIDGET_TYPE_" + w.toUpperCase().replace(/-/g, "_");
   }
-
-  isThemeNameInvalid(theme: Theme): boolean {
-    if (!theme.name?.trim()) return true;
-    return this.isThemeNameDuplicate(theme);
+  isCustomWidget(w: string | undefined): boolean {
+    return w?.startsWith("custom:") ?? false;
   }
-
-  isThemeNameDuplicate(theme: Theme): boolean {
-    if (!theme.name) return false;
-    const name = theme.name.trim().toLowerCase();
-    return this.displayThemes.some(
-      (t) =>
-        t.entity_id !== theme.entity_id &&
-        (t.name || "").trim().toLowerCase() === name,
-    );
-  }
-
-  isAnyThemeNameInvalid(): boolean {
-    return this.displayThemes.some(
-      (t) => !t.is_default && this.isThemeNameInvalid(t),
-    );
-  }
-
-  getWidgetTypeLabelKey(widgetType: string): string {
-    return "UE_WIDGET_TYPE_" + widgetType.toUpperCase().replace(/-/g, "_");
-  }
-
-  // --- Theme management ---
-
-  get activeTheme(): Theme | null {
+  get activeTheme() {
     return this.themeService.getActiveTheme();
   }
-
-  get isThemeActive(): boolean {
+  get isThemeActive() {
     return this.themeService.isThemeActive();
   }
-
-  soundAssets: any[] = [];
-  previewTTSContext: any = mockTTSContext();
 
   private sortAvailableColumns() {
     this.availableColumns.sort((a, b) => {
@@ -1372,95 +798,37 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     });
   }
 
-  /**
-   * Provides mock context data for previewing Text-to-Speech in the editor.
-   * This is only used for the UI Editor's preview functionality.
-   */
-
   async loadThemes() {
     await this.themeService.refresh();
-    this.editingState.themes = this.themeService.getThemes();
-    this.refreshDisplayProperties();
-    this.cdr.markForCheck();
   }
-
   async onThemeSelected(themeId: string) {
     this.editingSettings.activeThemeId = themeId;
     this.themeService.setActiveTheme(themeId);
     this.captureState();
-    if (!this.isDestroyed) {
-      this.cdr.markForCheck();
-    }
+    if (!this.isDestroyed) this.cdr.markForCheck();
   }
 
-  getFlagUrl(slot: string, theme?: Theme): string | undefined {
-    return this.getUrlForAsset(this.getAssetForSlot(slot, theme));
+  getFlagUrl(slot: string, theme?: Theme) {
+    return resolveThemeFlag(this, slot, theme);
   }
-
-  getLampUrl(slot: string, theme?: Theme): string | undefined {
-    return this.getUrlForAsset(this.getAssetForSlot(slot, theme));
+  getLampUrl(slot: string, theme?: Theme) {
+    return resolveThemeLamp(this, slot, theme);
   }
-
-  getFuelGaugeUrl(theme?: Theme): string | undefined {
-    return this.getUrlForAsset(this.getAssetForSlot("gauge.fuel", theme));
+  getFuelGaugeUrl(theme?: Theme) {
+    return resolveThemeFuelGauge(this, theme);
   }
-
-  getAudioUrl(slot: string, theme: Theme): string | undefined {
-    const config = this.getAudioConfigForSlot(slot, theme);
-    if (config.type === "preset" && config.url) {
-      const asset = this.assets.find(
-        (a) =>
-          a.model?.entityId === config.url ||
-          a.entity_id === config.url ||
-          a.url === config.url,
-      );
-      return this.getUrlForAsset(asset);
-    }
-    return config.url;
+  getAudioUrl(slot: string, theme: Theme) {
+    return getThemeAudioUrl(slot, theme, this.dataService, this.assets);
   }
-
-  private getUrlForAsset(asset: any): string | undefined {
-    if (!asset) return undefined;
-    const assetId = asset.model?.entityId || asset.entity_id;
-    if (assetId) {
-      return this.dataService.getAssetUrl(assetId);
-    }
-    return asset.url || undefined;
-  }
-
-  getAssetForSlot(slot: string, theme?: Theme): any | undefined {
-    let assetId: string | undefined | null;
-
-    if (theme?.slots && theme.slots[slot]) {
-      assetId = theme.slots[slot];
-    } else {
-      assetId =
-        (slot === "gauge.fuel"
-          ? this.editingSettings.fuelGaugeImageSet
-          : undefined) || this.themeService.resolveAssetId(slot);
-    }
-
-    if (!assetId) return undefined;
-    return (this.assets || []).find(
-      (a) => a.model?.entityId === assetId || a.entity_id === assetId,
-    );
+  getAssetForSlot(slot: string, theme?: Theme) {
+    return resolveThemeAsset(this, slot, theme);
   }
 
   onTemplateFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        if (this.editingSettings) {
-          this.editingSettings.customExportTemplateBase64 = base64;
-          this.captureState();
-          this.cdr.markForCheck();
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    executeTemplateFileSelected(event, this.editingSettings, () => {
+      this.captureState();
+      this.cdr.markForCheck();
+    });
   }
 
   clearCustomTemplate() {
@@ -1479,62 +847,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {
-    if (theme.is_default) return;
-
-    // Robust asset ID extraction
-    const assetId =
-      asset?.model?.entityId ||
-      asset?.entity_id ||
-      asset?.entityId ||
-      asset?.id ||
-      null;
-
-    if (!theme.slots) {
-      theme.slots = {};
-    }
-
-    const previousAssetId = theme.slots[slot];
-    if (assetId === previousAssetId) return;
-
-    if (assetId) {
-      theme.slots[slot] = assetId;
-      // Register asset if it's new (e.g. from upload)
-      if (
-        !this.assets.find(
-          (a) => (a.model?.entityId || a.entity_id || a.id) === assetId,
-        )
-      ) {
-        this.assets = [...this.assets, asset];
-      }
-    } else {
-      delete theme.slots[slot];
-    }
-
-    this.captureState();
-    this.cdr.markForCheck();
+    handleThemeSlotChange(this, theme, slot, asset);
   }
 
   getAudioConfigForSlot(slot: string, theme: Theme): AudioConfig {
-    if (!theme.audio_slots) theme.audio_slots = {};
-    const config = theme.audio_slots[slot];
-    if (config && config.type) return config;
-
-    // Fallback: If it's in the old slots map or missing, convert/default on the fly
-    const legacyAssetId = theme.slots?.[slot];
-    const isSet = slot === "audio.countdown" || slot === "audio.seconds_left";
-    const defaultAssetId = isSet
-      ? slot === "audio.countdown"
-        ? "default_countdown"
-        : "default_seconds_left"
-      : undefined;
-
-    const fallbackConfig: AudioConfig = {
-      type: isSet ? "audio_set" : "preset",
-      url: legacyAssetId || defaultAssetId,
-    };
-
-    theme.audio_slots[slot] = fallbackConfig;
-    return fallbackConfig;
+    return getThemeAudioConfigForSlot(slot, theme);
   }
 
   onAudioConfigChanged(
@@ -1543,63 +860,101 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     field: "type" | "url" | "text",
     value: any,
   ) {
-    if (theme.is_default) return;
-    if (!theme.audio_slots) theme.audio_slots = {};
-
-    const current = this.getAudioConfigForSlot(slot, theme);
-    const updated = { ...current, [field]: value };
-
-    theme.audio_slots[slot] = updated;
-
-    this.captureState();
-    this.cdr.markForCheck();
+    handleThemeAudioChange(this, theme, slot, field, value);
   }
 
   onAudioAssetSelected(theme: Theme, slot: string, asset: any) {
-    if (theme.is_default) return;
+    this.onAudioConfigChanged(theme, slot, "url", extractAssetId(asset));
+  }
 
-    const assetId =
-      asset?.model?.entityId ||
-      asset?.entity_id ||
-      asset?.entityId ||
-      asset?.id ||
-      null;
+  ensureWidgetSelected(ui?: CustomUI) {
+    const layout = this.getLayout(ui || this.activeCustomUi);
+    const widgets = layout?.widgets || [];
+    if (
+      widgets.length > 0 &&
+      (!this.selectedWidgetId ||
+        !widgets.some((w: any) => w.id === this.selectedWidgetId))
+    ) {
+      this.selectedWidgetId = findDefaultWidgetId(layout);
+    }
+  }
 
-    this.onAudioConfigChanged(theme, slot, "url", assetId);
+  onCustomUiSelected(uiId: string) {
+    handleCustomUiSelection(this, uiId);
+  }
+
+  getCustomUiDisplayNameKey(ui: CustomUI) {
+    return getCustomUiDisplayNameKey(ui);
+  }
+  isCustomUiDefault(ui: CustomUI) {
+    return isCustomUiDefault(ui);
+  }
+  toggleUiSection(uiId: string) {
+    toggleUiExpander(uiId, this.displayCustomUIs, this.sectionsExpanded, (id) =>
+      this.onCustomUiSelected(id),
+    );
+  }
+
+  async createNewCustomUi() {
+    await handleCreateCustomUi(this);
+  }
+
+  async onDuplicateCustomUi(ui: CustomUI) {
+    await handleDuplicateCustomUi(this, ui);
+  }
+
+  onDeleteCustomUi(ui: CustomUI) {
+    this.uiToDelete = ui;
+    this.deleteUiParams = { name: ui.name };
+    this.showDeleteUiConfirm = true;
+    this.cdr.markForCheck();
+  }
+
+  cancelDeleteCustomUi() {
+    this.showDeleteUiConfirm = false;
+    this.uiToDelete = null;
+    this.cdr.markForCheck();
+  }
+
+  async confirmDeleteCustomUi() {
+    await handleConfirmDeleteCustomUi(this);
+  }
+
+  onCustomUiNameChanged(_ui: CustomUI) {
+    this.captureState();
+    this.cdr.markForCheck();
+  }
+  isCustomUiNameInvalid(ui: CustomUI) {
+    return isCustomUiNameInvalid(ui, this.displayCustomUIs);
+  }
+  isAnyCustomUiNameInvalid() {
+    return this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
+  }
+  getThemeDisplayNameKey(theme: Theme) {
+    return getThemeDisplayNameKey(theme);
+  }
+  isThemeDefault(theme: Theme) {
+    return isThemeDefault(theme);
+  }
+
+  private openSuccessModal(
+    params?: { title?: string; message?: string; params?: any },
+    collapseThemeId: string | null = null,
+  ) {
+    this.themeToCollapseAfterSuccess = collapseThemeId;
+    this.successModalTitle = params?.title || "";
+    this.successModalMessage = params?.message || "";
+    this.successModalParams = params?.params || {};
+    this.showSuccessModal = true;
   }
 
   async createNewTheme() {
-    const defaultTheme = this.displayThemes.find((t) => t.is_default);
-    if (!defaultTheme) return;
+    await handleCreateTheme(this);
+  }
 
-    try {
-      const baseName = defaultTheme.is_default
-        ? this.translationService.translate("UE_LABEL_DEFAULT_THEME")
-        : defaultTheme.name;
-      const copySuffix = this.translationService.translate(
-        "UE_LABEL_COPY_SUFFIX",
-      );
-
-      const created = await this.themeService.duplicateTheme(
-        defaultTheme.entity_id,
-        baseName + copySuffix,
-      );
-      this.editingState.themes = [...this.editingState.themes, created];
-      this.refreshDisplayProperties();
-
-      // Expand the new theme without activating it
-      this.toggleThemeSection(created.entity_id, false);
-      this.captureState();
-
-      // Show success message using RCAI modal
-      this.successModalTitle = "GEN_SUCCESS";
-      this.successModalMessage = "UE_SUCCESS_CREATE";
-      this.successModalParams = { name: created.name };
-      this.showSuccessModal = true;
-    } catch (e) {
-      this.logger.error("Failed to create theme from default", e);
-      alert(this.translationService.translate("UE_ERROR_CREATE_FAILED"));
-    }
+  async onConfirmThemeTemplate(_templateType: ThemeTemplateType) {
+    this.showThemeTemplateModal = false;
+    await this.createNewTheme();
   }
 
   async onThemeNameChanged(_theme: Theme) {
@@ -1607,95 +962,18 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   async onDuplicateTheme(theme: Theme) {
-    const baseName = theme.is_default
-      ? this.translationService.translate("UE_LABEL_DEFAULT_THEME")
-      : theme.name;
-    const copySuffix = this.translationService.translate(
-      "UE_LABEL_COPY_SUFFIX",
-    );
-
-    try {
-      const created = await this.themeService.duplicateTheme(
-        theme.entity_id,
-        baseName + copySuffix,
-      );
-      this.editingState.themes = [...this.editingState.themes, created];
-      this.refreshDisplayProperties();
-
-      // Preserve current active theme - do not activate the new theme
-      const currentActiveThemeId = this.editingSettings.activeThemeId;
-
-      // Always keep new theme collapsed
-      this.sectionsExpanded[created.entity_id] = false;
-
-      // Collapse original theme after success modal
-      this.themeToCollapseAfterSuccess = theme.entity_id;
-
-      this.saveExpanderState();
-
-      // Ensure the new theme is not activated
-      this.editingSettings.activeThemeId = currentActiveThemeId;
-
-      this.captureState();
-
-      // Show success message using RCAI modal
-      this.successModalTitle = "GEN_SUCCESS";
-      this.successModalMessage = "UE_SUCCESS_DUPLICATE";
-      this.successModalParams = { name: created.name };
-      this.showSuccessModal = true;
-    } catch (e) {
-      this.logger.error("Failed to duplicate theme", e);
-      alert(this.translationService.translate("UE_ERROR_DUPLICATE_FAILED"));
-    }
+    await handleDuplicateTheme(this, theme);
   }
 
   onDeleteTheme(theme: Theme) {
-    if (!theme.is_default) {
-      this.themeToDelete = theme;
-      this.deleteThemeParams = { name: theme.name };
-      this.showDeleteConfirm = true;
-    }
+    this.themeToDelete = theme;
+    this.deleteThemeParams = { name: theme.name };
+    this.showDeleteConfirm = true;
+    this.cdr.markForCheck();
   }
 
-  onConfirmDeleteTheme() {
-    if (!this.themeToDelete) return;
-
-    const themeIdToDelete = this.themeToDelete.entity_id;
-    const wasActive = this.editingSettings.activeThemeId === themeIdToDelete;
-
-    this.themeService.deleteTheme(themeIdToDelete).then(() => {
-      this.editingState.themes = this.editingState.themes.filter(
-        (t) => t.entity_id !== themeIdToDelete,
-      );
-      this.refreshDisplayProperties();
-
-      if (wasActive) {
-        const defaultTheme = this.displayThemes.find((t) => t.is_default);
-        if (defaultTheme) {
-          this.onThemeSelected(defaultTheme.entity_id);
-        }
-      }
-
-      // Clean history: remove deleted theme from all snapshots
-      this.undoManager.updateHistory((state) => {
-        const s = deepCopy(state);
-        s.themes = (s.themes || []).filter(
-          (t: any) => t.entity_id !== themeIdToDelete,
-        );
-        if (s.settings.activeThemeId === themeIdToDelete) {
-          const def = (s.themes || []).find((t: any) => t.is_default);
-          s.settings.activeThemeId = def ? def.entity_id : undefined;
-        }
-        return s;
-      });
-
-      // Reset tracking to new state (deletion is permanent)
-      this.undoManager.resetTracking(this.editingState);
-      this.cdr.markForCheck();
-
-      this.showDeleteConfirm = false;
-      this.themeToDelete = null;
-    });
+  async onConfirmDeleteTheme() {
+    await handleConfirmDeleteTheme(this);
   }
 
   onCancelDeleteTheme() {
@@ -1709,597 +987,44 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.successModalTitle = "";
     this.successModalMessage = "";
     this.successModalParams = {};
-
-    // Collapse all themes after successful duplication
+    this.themeToCollapseAfterSuccess = null;
     this.editingState.themes.forEach((t) => {
-      this.sectionsExpanded[t.entity_id] = false;
+      this.sectionsExpanded[`theme_${t.entity_id}`] = false;
     });
     this.saveExpanderState();
-    this.themeToCollapseAfterSuccess = null;
   }
 
   onDetachTheme() {
     this.themeService.detachToSettings(this.assets);
-    this.editingState.settings = this.cloneSettings(
+    this.editingState.settings = cloneSettings(
       this.settingsService.getSettings(),
     );
     this.captureState();
-    if (!this.isDestroyed) {
-      this.cdr.markForCheck();
-    }
+    if (!this.isDestroyed) this.cdr.markForCheck();
   }
 
-  getLayoutResolution(isPractice: boolean): string {
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-    if (layout && layout.baseWidth && layout.baseHeight) {
-      return `${layout.baseWidth}x${layout.baseHeight}`;
-    }
-    return "1920x1080";
+  getPreviewScale(ui?: CustomUI) {
+    return `scale(${this.getPreviewScaleNumber(ui)})`;
   }
-
-  // Cached custom options
-  private customRacedayLayoutOption: any = null;
-  private customPracticeLayoutOption: any = null;
-
-  private cachedPracticeLayoutOptions: any[] | null = null;
-  private cachedRacedayLayoutOptions: any[] | null = null;
-
-  getLayoutResolutionOptions(isPractice: boolean) {
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-
-    if (layout && layout.baseWidth && layout.baseHeight) {
-      const found = this.layoutResolutionOptions.find(
-        (o) => o.width === layout.baseWidth && o.height === layout.baseHeight,
-      );
-      if (!found) {
-        if (isPractice) {
-          if (
-            !this.customPracticeLayoutOption ||
-            this.customPracticeLayoutOption.width !== layout.baseWidth ||
-            this.customPracticeLayoutOption.height !== layout.baseHeight
-          ) {
-            this.customPracticeLayoutOption = {
-              label: `${layout.baseWidth}x${layout.baseHeight}`,
-              width: layout.baseWidth,
-              height: layout.baseHeight,
-            };
-            this.cachedPracticeLayoutOptions = [
-              ...this.layoutResolutionOptions,
-              this.customPracticeLayoutOption,
-            ];
-          }
-          if (!this.cachedPracticeLayoutOptions) {
-            this.cachedPracticeLayoutOptions = [
-              ...this.layoutResolutionOptions,
-              this.customPracticeLayoutOption,
-            ];
-          }
-          return this.cachedPracticeLayoutOptions;
-        } else {
-          if (
-            !this.customRacedayLayoutOption ||
-            this.customRacedayLayoutOption.width !== layout.baseWidth ||
-            this.customRacedayLayoutOption.height !== layout.baseHeight
-          ) {
-            this.customRacedayLayoutOption = {
-              label: `${layout.baseWidth}x${layout.baseHeight}`,
-              width: layout.baseWidth,
-              height: layout.baseHeight,
-            };
-            this.cachedRacedayLayoutOptions = [
-              ...this.layoutResolutionOptions,
-              this.customRacedayLayoutOption,
-            ];
-          }
-          if (!this.cachedRacedayLayoutOptions) {
-            this.cachedRacedayLayoutOptions = [
-              ...this.layoutResolutionOptions,
-              this.customRacedayLayoutOption,
-            ];
-          }
-          return this.cachedRacedayLayoutOptions;
-        }
-      }
-    }
-    return this.layoutResolutionOptions;
+  getPreviewScaleNumber(ui?: CustomUI) {
+    return calculatePreviewScaleNumber(
+      this.getLayout(ui || this.activeCustomUi)?.baseWidth || 1920,
+      !!this.currentSelectedWidget,
+      window.innerWidth,
+    );
   }
-
-  setLayoutResolution(isPractice: boolean, event: Event) {
-    const value = (event.target as HTMLSelectElement).value;
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-    if (!layout) return;
-    const [widthStr, heightStr] = value.split("x");
-    const newWidth = parseInt(widthStr, 10);
-    const newHeight = parseInt(heightStr, 10);
-    const oldWidth = layout.baseWidth || 1920;
-    const oldHeight = layout.baseHeight || 1080;
-
-    const scaleX = newWidth / oldWidth;
-    const scaleY = newHeight / oldHeight;
-
-    layout.baseWidth = newWidth;
-    layout.baseHeight = newHeight;
-
-    if (layout.widgets) {
-      layout.widgets.forEach((widget) => {
-        widget.x = Math.round(widget.x * scaleX);
-        widget.y = Math.round(widget.y * scaleY);
-        widget.width = Math.round(widget.width * scaleX);
-        widget.height = Math.round(widget.height * scaleY);
-      });
-    }
-
-    this.captureState();
+  getPreviewContainerWidth(ui?: CustomUI) {
+    return (
+      (this.getLayout(ui)?.baseWidth || 1920) * this.getPreviewScaleNumber(ui)
+    );
   }
-
-  onCustomResolutionChange(
-    isPractice: boolean,
-    dimension: "width" | "height",
-    event: Event,
-  ) {
-    const input = event.target as HTMLInputElement;
-    const newValue = parseInt(input.value, 10);
-    if (isNaN(newValue) || newValue <= 0) return;
-
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-
-    if (!layout) return;
-
-    const oldWidth = layout.baseWidth || 1920;
-    const oldHeight = layout.baseHeight || 1080;
-
-    const newWidth = dimension === "width" ? newValue : oldWidth;
-    const newHeight = dimension === "height" ? newValue : oldHeight;
-
-    const scaleX = newWidth / oldWidth;
-    const scaleY = newHeight / oldHeight;
-
-    layout.baseWidth = newWidth;
-    layout.baseHeight = newHeight;
-
-    if (layout.widgets) {
-      layout.widgets.forEach((widget) => {
-        widget.x = Math.round(widget.x * scaleX);
-        widget.y = Math.round(widget.y * scaleY);
-        widget.width = Math.round(widget.width * scaleX);
-        widget.height = Math.round(widget.height * scaleY);
-      });
-    }
-
-    this.captureState();
-  }
-
-  getPreviewScale(isPractice: boolean): string {
-    return `scale(${this.getPreviewScaleNumber(isPractice)})`;
-  }
-
-  getPreviewScaleNumber(isPractice: boolean): number {
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-    const baseWidth = layout?.baseWidth || 1920;
-    const baseHeight = layout?.baseHeight || 1080;
-
-    // Use the container dimensions that `.raceday-preview-container` is constrained to
-    const containerWidth = 1080;
-    const containerHeight = 608;
-    return Math.min(containerWidth / baseWidth, containerHeight / baseHeight);
-  }
-
-  getPreviewContainerWidth(isPractice: boolean): number {
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-    const baseWidth = layout?.baseWidth || 1920;
-    return baseWidth * this.getPreviewScaleNumber(isPractice);
-  }
-
-  getPreviewContainerHeight(isPractice: boolean): number {
-    const layout = isPractice
-      ? this.editingSettings?.practiceRacedayLayout
-      : this.editingSettings?.racedayLayout;
-    const baseHeight = layout?.baseHeight || 1080;
-    return baseHeight * this.getPreviewScaleNumber(isPractice);
-  }
-
-  private getScaledDefaultLayout(isPractice: boolean): LayoutConfig {
-    const layout = JSON.parse(
-      JSON.stringify(
-        isPractice ? Settings.DEFAULT_PRACTICE_LAYOUT : Settings.DEFAULT_LAYOUT,
-      ),
-    ) as LayoutConfig;
-
-    const targetW = window.innerWidth;
-    const targetH = window.innerHeight;
-    const oldWidth = layout.baseWidth || 1920;
-    const oldHeight = layout.baseHeight || 1080;
-
-    const scaleX = targetW / oldWidth;
-    const scaleY = targetH / oldHeight;
-
-    layout.baseWidth = targetW;
-    layout.baseHeight = targetH;
-
-    if (layout.widgets) {
-      layout.widgets.forEach((w: any) => {
-        w.x = Math.round(w.x * scaleX);
-        w.y = Math.round(w.y * scaleY);
-        w.width = Math.round(w.width * scaleX);
-        w.height = Math.round(w.height * scaleY);
-      });
-    }
-
-    return layout;
+  getPreviewContainerHeight(ui?: CustomUI) {
+    return (
+      (this.getLayout(ui)?.baseHeight || 1080) * this.getPreviewScaleNumber(ui)
+    );
   }
 
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("UE_TITLE"),
-        content: this.translationService.translate("UE_HELP_GENERAL"),
-        position: "center",
-      },
-      {
-        selector: "#help-raceday-ui",
-        title: this.translationService.translate("UE_LABEL_RACEDAY_LAYOUT"),
-        content: this.translationService.translate("UE_HELP_RACEDAY_UI"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-raceday-sort",
-        title: this.translationService.translate("UE_LABEL_SORT_STANDINGS"),
-        content: this.translationService.translate("UE_HELP_RACEDAY_SORT"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-raceday-highlight",
-        title: this.translationService.translate("UE_LABEL_HIGHLIGHT_LAP"),
-        content: this.translationService.translate("UE_HELP_RACEDAY_HIGHLIGHT"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-raceday-resolution",
-        title: this.translationService.translate("UI_EDITOR_LAYOUT_RESOLUTION"),
-        content: this.translationService.translate(
-          "UE_HELP_RACEDAY_RESOLUTION",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#help-raceday-dimensions",
-        title: this.translationService.translate("UI_EDITOR_LAYOUT_RESOLUTION"),
-        content: this.translationService.translate(
-          "UE_HELP_RACEDAY_DIMENSIONS",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#help-raceday-reset",
-        title: this.translationService.translate(
-          "UI_EDITOR_RESET_LAYOUT_DEFAULTS",
-        ),
-        content: this.translationService.translate("UE_HELP_RACEDAY_RESET"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-raceday-canvas",
-        title:
-          this.translationService.translate("UE_HELP_RACEDAY_CANVAS_TITLE") ||
-          "Canvas Area",
-        content: this.translationService.translate("UE_HELP_RACEDAY_CANVAS"),
-        position: "center",
-      },
-      {
-        selector: "#help-widget-toolbox",
-        title: this.translationService.translate("UE_LABEL_LAYOUT_EDITOR"),
-        content: this.translationService.translate(
-          "UE_HELP_RACEDAY_WIDGET_TOOLBOX",
-        ),
-        position: "right",
-      },
-      {
-        selector: "#help-widget-inspector",
-        title:
-          this.translationService.translate(
-            "UE_HELP_RACEDAY_WIDGET_INSPECTOR_TITLE",
-          ) || "Widget Inspector",
-        content: this.translationService.translate(
-          "UE_HELP_RACEDAY_WIDGET_INSPECTOR",
-        ),
-        position: "left",
-        onEnter: () => {
-          if (!this.selectedWidgetId) {
-            const layout = this.editingSettings.racedayLayout;
-            const widgets = layout?.widgets || [];
-            const laneView = widgets.find(
-              (w: any) => w.widgetType === "lane-view",
-            );
-            if (laneView) {
-              this.onWidgetSelected(laneView.id, false);
-              this.cdr.detectChanges();
-            } else if (widgets.length > 0) {
-              this.onWidgetSelected(widgets[0].id, false);
-              this.cdr.detectChanges();
-            }
-          }
-        },
-      },
-      {
-        selector: "#help-raceday-import-export",
-        title:
-          this.translationService.translate(
-            "UE_HELP_RACEDAY_IMPORT_EXPORT_TITLE",
-          ) || "Import / Export Layout",
-        content: this.translationService.translate(
-          "UE_HELP_RACEDAY_IMPORT_EXPORT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#help-practice-ui",
-        title: this.translationService.translate(
-          "UE_LABEL_RACEDAY_LAYOUT_PRACTICE",
-        ),
-        content: this.translationService.translate("UE_HELP_PRACTICE_UI"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-themes",
-        title: this.translationService.translate("UE_HEADER_THEMES"),
-        content: this.translationService.translate("UE_HELP_THEMES"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-default-theme",
-        title: this.translationService.translate("UE_LABEL_DEFAULT_THEME"),
-        content: this.translationService.translate("UE_HELP_DEFAULT_THEME"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-default-badge",
-        title: this.translationService.translate("UE_BADGE_DEFAULT"),
-        content: this.translationService.translate("UE_HELP_DEFAULT_BADGE"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-readonly-badge",
-        title: this.translationService.translate("UE_BADGE_READONLY"),
-        content: this.translationService.translate("UE_HELP_READONLY_BADGE"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-active-badge",
-        title: this.translationService.translate("UE_LABEL_SELECTED"),
-        content: this.translationService.translate("UE_HELP_ACTIVE_BADGE"),
-        position: "bottom",
-      },
-      {
-        selector: "#activate-item-btn",
-        title: this.translationService.translate("TEM_BTN_ACTIVATE"),
-        content: this.translationService.translate(
-          "UE_HELP_ACTIVATE_THEME_BTN",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#copy-item-btn",
-        title: this.translationService.translate("UE_BTN_DUPLICATE_THEME"),
-        content: this.translationService.translate(
-          "UE_HELP_DUPLICATE_THEME_BTN",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#add-item-btn",
-        title: this.translationService.translate("UE_BTN_CREATE_THEME"),
-        content: this.translationService.translate("UE_HELP_CREATE_THEME_BTN"),
-        position: "bottom",
-      },
-      {
-        selector: "#help-theme-flags",
-        title: this.translationService.translate("UE_HEADER_FLAGS"),
-        content: this.translationService.translate("UE_HELP_THEME_FLAGS"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["flags"] = true;
-        },
-      },
-      {
-        selector: "#help-theme-countdown",
-        title: this.translationService.translate("UE_HEADER_COUNTDOWN"),
-        content: this.translationService.translate("UE_HELP_THEME_COUNTDOWN"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["countdown"] = true;
-        },
-      },
-      {
-        selector: "#help-theme-fuel",
-        title: this.translationService.translate("UE_HEADER_FUEL_GAUGE"),
-        content: this.translationService.translate("UE_HELP_THEME_FUEL"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["fuelGauge"] = true;
-        },
-      },
-      {
-        selector: "#help-theme-audio",
-        title: this.translationService.translate("UE_HEADER_AUDIO"),
-        content: this.translationService.translate("UE_HELP_THEME_AUDIO"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-yellowflag",
-        title: this.translationService.translate("UE_LABEL_YELLOW_FLAG_AUDIO"),
-        content: this.translationService.translate("UE_HELP_AUDIO_YELLOWFLAG"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-countdown",
-        title: this.translationService.translate("UE_LABEL_COUNTDOWN_AUDIO"),
-        content: this.translationService.translate("UE_HELP_AUDIO_COUNTDOWN"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-seconds-left",
-        title: this.translationService.translate("UE_LABEL_SECONDS_LEFT_AUDIO"),
-        content: this.translationService.translate(
-          "UE_HELP_AUDIO_SECONDS_LEFT",
-        ),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-halfway",
-        title: this.translationService.translate(
-          "UE_LABEL_SECONDS_LEFT_HALFWAY",
-        ),
-        content: this.translationService.translate("UE_HELP_AUDIO_HALFWAY"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-heat-over",
-        title: this.translationService.translate("UE_LABEL_HEAT_OVER_AUDIO"),
-        content: this.translationService.translate("UE_HELP_AUDIO_HEAT_OVER"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-race-over",
-        title: this.translationService.translate("UE_LABEL_RACE_OVER_AUDIO"),
-        content: this.translationService.translate("UE_HELP_AUDIO_RACE_OVER"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-min-lap-time",
-        title: this.translationService.translate("UE_LABEL_MIN_LAP_TIME_AUDIO"),
-        content: this.translationService.translate(
-          "UE_HELP_AUDIO_MIN_LAP_TIME",
-        ),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-audio-drift-lap",
-        title: this.translationService.translate("UE_LABEL_DRIFT_LAP_AUDIO"),
-        content: this.translationService.translate("UE_HELP_AUDIO_DRIFT_LAP"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["themes"] = true;
-          if (this.editingSettings?.activeThemeId) {
-            this.sectionsExpanded[this.editingSettings.activeThemeId] = true;
-          }
-          this.sectionsExpanded["audio"] = true;
-        },
-      },
-      {
-        selector: "#help-custom-ui",
-        title: this.translationService.translate("UE_HEADER_CUSTOM_UI"),
-        content: this.translationService.translate(
-          "UE_HELP_CUSTOM_UI_SETTINGS",
-        ),
-        position: "top",
-      },
-      {
-        selector: "#help-custom-ui-dir",
-        title: this.translationService.translate("UE_DIRECTORY_LABEL"),
-        content: this.translationService.translate("UE_HELP_CUSTOM_UI_DIR"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["config"] = true;
-        },
-      },
-      {
-        selector: "#help-export-template",
-        title: this.translationService.translate("UE_LABEL_EXPORT_TEMPLATE"),
-        content: this.translationService.translate("UE_HELP_EXPORT_TEMPLATE"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["config"] = true;
-        },
-      },
-      {
-        selector: "#help-page-transition",
-        title: this.translationService.translate("UE_LABEL_PAGE_TRANSITION"),
-        content: this.translationService.translate("UE_HELP_PAGE_TRANSITION"),
-        position: "bottom",
-        onEnter: () => {
-          this.sectionsExpanded["config"] = true;
-        },
-      },
-    ];
+    return getUiEditorHelpSteps(buildUiEditorHelpContext(this));
   }
 }

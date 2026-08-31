@@ -97,4 +97,9 @@ describe("ManagerHeaderComponent", () => {
     component.edit.emit();
     expect(component.edit.emit).toHaveBeenCalled();
   });
+
+  it("should contain app-browser-navigation element", () => {
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+  });
 });

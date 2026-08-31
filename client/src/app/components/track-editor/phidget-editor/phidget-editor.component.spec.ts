@@ -1,6 +1,11 @@
 import { ComponentRef } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of, Subject } from "rxjs";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
+import { of, Subject, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { PhidgetConfig } from "@app/models/track";
 import {
@@ -43,9 +48,13 @@ describe("PhidgetEditorComponent", () => {
       "getPhidgetDevices",
       "getInterfaceEvents",
       "setInterfacePinState",
+      "updateInterfaceConfig",
     ]);
     mockDataService.setInterfacePinState.and.returnValue(
       of(SetInterfacePinStateResponse.create({ success: true, message: "OK" })),
+    );
+    mockDataService.updateInterfaceConfig.and.returnValue(
+      of({ success: true, message: "Config updated" } as any),
     );
     mockDataService.getPhidgetDevices.and.returnValue(
       of([
@@ -116,10 +125,11 @@ describe("PhidgetEditorComponent", () => {
     expect(caps.analogInputs).toBe(8);
     expect(component.availableDigitalInputPins.length).toBe(8);
     expect(component.availableDigitalOutputPins.length).toBe(8);
-    expect(component.availableAnalogInputPins.length).toBe(8);
   });
 
   it("should correctly detect capabilities for 0/0/4 relay board", () => {
+    component.config().digitalInIds = [];
+    component.config().analogIds = [];
     component.onDeviceSelectChange("67890_false_0");
     const caps = component.getCapabilities();
     expect(caps.digitalInputs).toBe(0);
@@ -127,7 +137,6 @@ describe("PhidgetEditorComponent", () => {
     expect(caps.analogInputs).toBe(0);
     expect(component.availableDigitalInputPins.length).toBe(0);
     expect(component.availableDigitalOutputPins.length).toBe(4);
-    expect(component.availableAnalogInputPins.length).toBe(0);
   });
 
   it("should set and retrieve digital input pin behavior correctly", () => {
@@ -161,6 +170,14 @@ describe("PhidgetEditorComponent", () => {
       PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG,
     );
     expect(component.getPinAction("out", 2)).toBe("analogled_green");
+  });
+
+  it("should not render analog inputs in the template", () => {
+    fixture.detectChanges();
+    const analogItem = fixture.nativeElement.querySelector(
+      "#phidget-analog-item-0-0",
+    );
+    expect(analogItem).toBeNull();
   });
 
   it("should set and retrieve analog input pin behavior correctly", () => {
@@ -232,6 +249,20 @@ describe("PhidgetEditorComponent", () => {
         status: InterfaceStatus.DISCONNECTED,
       },
     });
+    fixture.detectChanges();
+    expect(component.status).toBe("DISCONNECTED");
+    expect(badgeEl.classList.contains("connected")).toBeFalse();
+  });
+
+  it("should reset status to DISCONNECTED when switching device", () => {
+    component.status = "CONNECTED";
+    fixture.detectChanges();
+    const badgeEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#phidget-status-badge-0",
+    );
+    expect(badgeEl.classList.contains("connected")).toBeTrue();
+
+    component.onDeviceSelectChange("67890_false_0");
     fixture.detectChanges();
     expect(component.status).toBe("DISCONNECTED");
     expect(badgeEl.classList.contains("connected")).toBeFalse();
@@ -339,7 +370,6 @@ describe("PhidgetEditorComponent", () => {
       pins: false,
       digitalIn: false,
       digitalOut: false,
-      analogIn: false,
     };
     component.ensureSectionsExpanded();
     expect(component.sectionsExpanded.phidget).toBeTrue();
@@ -347,7 +377,6 @@ describe("PhidgetEditorComponent", () => {
     expect(component.sectionsExpanded.pins).toBeTrue();
     expect(component.sectionsExpanded.digitalIn).toBeTrue();
     expect(component.sectionsExpanded.digitalOut).toBeTrue();
-    expect(component.sectionsExpanded.analogIn).toBeTrue();
   });
 
   it("should return guide steps and expand appropriate sections onEnter", () => {
@@ -446,5 +475,260 @@ describe("PhidgetEditorComponent", () => {
     fixture.detectChanges();
     // sampleConfig has PinBehavior.BEHAVIOR_CALL_BUTTON on pin 1
     expect(component.isPinActive("in", 1)).toBeTrue();
+  });
+
+  it("should not light up badge if setInterfacePinState returns success false", () => {
+    mockDataService.setInterfacePinState.and.returnValue(
+      of(
+        SetInterfacePinStateResponse.create({
+          success: false,
+          message: "Channel not attached",
+        }),
+      ),
+    );
+
+    fixture.detectChanges();
+    const outBadgeEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#phidget-out-status-0",
+    );
+    expect(outBadgeEl).toBeTruthy();
+
+    outBadgeEl.click();
+    fixture.detectChanges();
+
+    expect(mockDataService.setInterfacePinState).toHaveBeenCalledWith(
+      0,
+      true,
+      true,
+      0,
+    );
+    expect(component.isPinActive("out", 0)).toBeFalse();
+    expect(outBadgeEl.classList.contains("connected")).toBeFalse();
+  });
+
+  it("should not light up badge if setInterfacePinState throws error", () => {
+    mockDataService.setInterfacePinState.and.returnValue(
+      throwError(() => new Error("Network failure")),
+    );
+
+    fixture.detectChanges();
+    const outBadgeEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#phidget-out-status-0",
+    );
+    expect(outBadgeEl).toBeTruthy();
+
+    outBadgeEl.click();
+    fixture.detectChanges();
+
+    expect(component.isPinActive("out", 0)).toBeFalse();
+    expect(outBadgeEl.classList.contains("connected")).toBeFalse();
+  });
+
+  it("should call updateInterfaceConfig and emit change on onConfigChange", () => {
+    spyOn(component.change, "emit");
+    component.onConfigChange();
+
+    expect(mockDataService.updateInterfaceConfig).toHaveBeenCalledWith(
+      null,
+      0,
+      component.config(),
+    );
+    expect(component.change.emit).toHaveBeenCalled();
+  });
+
+  it("should toggle output pin on and off when status badge is clicked", () => {
+    mockDataService.setInterfacePinState.and.returnValue(
+      of(
+        SetInterfacePinStateResponse.create({
+          success: true,
+          message: "Pin state updated",
+        }),
+      ),
+    );
+
+    fixture.detectChanges();
+    const outBadgeEl: HTMLElement = fixture.nativeElement.querySelector(
+      "#phidget-out-status-0",
+    );
+    expect(outBadgeEl).toBeTruthy();
+    expect(component.isPinActive("out", 0)).toBeFalse();
+    expect(outBadgeEl.classList.contains("connected")).toBeFalse();
+
+    // Click 1: Turn ON
+    outBadgeEl.click();
+    fixture.detectChanges();
+
+    expect(mockDataService.setInterfacePinState).toHaveBeenCalledWith(
+      0,
+      true,
+      true,
+      0,
+    );
+    expect(component.isPinActive("out", 0)).toBeTrue();
+    expect(outBadgeEl.classList.contains("connected")).toBeTrue();
+
+    // Click 2: Turn OFF
+    outBadgeEl.click();
+    fixture.detectChanges();
+
+    expect(mockDataService.setInterfacePinState).toHaveBeenCalledWith(
+      0,
+      true,
+      false,
+      0,
+    );
+    expect(component.isPinActive("out", 0)).toBeFalse();
+    expect(outBadgeEl.classList.contains("connected")).toBeFalse();
+  });
+
+  it("should trigger pulse on analogData event", fakeAsync(() => {
+    fixture.detectChanges();
+    expect(component.isPinActive("analog", 2)).toBeFalse();
+
+    eventsSubject.next({
+      analogData: {
+        interfaceIndex: 0,
+        pin: 2,
+        value: 512,
+      },
+    });
+    tick();
+    fixture.detectChanges();
+
+    expect(component.isPinActive("analog", 2)).toBeTrue();
+
+    tick(600);
+    fixture.detectChanges();
+    expect(component.isPinActive("analog", 2)).toBeFalse();
+  }));
+
+  it("should clear pinState when selecting new pin behavior for output", () => {
+    component.pinState["out-0"] = true;
+    expect(component.isPinActive("out", 0)).toBeTrue();
+
+    component.selectPinAction("out", 0, "unused");
+    expect(component.isPinActive("out", 0)).toBeFalse();
+  });
+
+  it("should show 0 pins when no device is selected and no pins are assigned", () => {
+    componentRef.setInput("config", {
+      name: "Phidget 1",
+      serialNumber: -1,
+      isHubPort: false,
+      hubPort: 0,
+      normallyClosedLaneSensors: true,
+      normallyClosedRelays: true,
+      useLapsForSegments: false,
+      lapPinPitBehavior: 3,
+      digitalInIds: Array(32).fill(0),
+      digitalOutIds: Array(32).fill(0),
+      analogIds: Array(16).fill(0),
+    });
+    component.updateSelectedDeviceKey();
+    fixture.detectChanges();
+
+    const caps = component.getCapabilities();
+    expect(caps.digitalInputs).toBe(0);
+    expect(caps.digitalOutputs).toBe(0);
+    expect(caps.analogInputs).toBe(0);
+    expect(component.availableDigitalInputPins.length).toBe(0);
+    expect(component.availableDigitalOutputPins.length).toBe(0);
+  });
+
+  it("should show sections with assigned pins when board is disconnected and 8/8/8 is configured", () => {
+    componentRef.setInput("config", {
+      name: "Phidget 8/8/8",
+      serialNumber: 99999,
+      isHubPort: false,
+      hubPort: 0,
+      normallyClosedLaneSensors: true,
+      normallyClosedRelays: true,
+      useLapsForSegments: true,
+      lapPinPitBehavior: 0,
+      digitalInIds: [PinBehavior.BEHAVIOR_LAP_BASE, 0, 0, 0],
+      digitalOutIds: [PinBehavior.BEHAVIOR_RELAY, 0, 0, 0],
+      analogIds: [0],
+    });
+    component.updateSelectedDeviceKey();
+    fixture.detectChanges();
+
+    expect(component.isConfiguredDeviceDisconnected).toBeTrue();
+    const caps = component.getCapabilities();
+    expect(caps.digitalInputs).toBe(8);
+    expect(caps.digitalOutputs).toBe(8);
+    expect(component.availableDigitalInputPins.length).toBe(8);
+    expect(component.availableDigitalOutputPins.length).toBe(8);
+
+    const selectEl: HTMLSelectElement =
+      fixture.nativeElement.querySelector("#device-0");
+    const options = Array.from(selectEl.options);
+    const discOpt = options.find((opt) => opt.value === "99999_false_0");
+    expect(discOpt).toBeTruthy();
+    expect(discOpt?.textContent).toContain("Phidget 8/8/8 (99999)");
+    expect(discOpt?.textContent).toContain("PHIDGET_STATUS_DISCONNECTED");
+  });
+
+  it("should show assigned pins even if device type has 0 inputs", () => {
+    componentRef.setInput("config", {
+      name: "Phidget 0/0/4",
+      serialNumber: 88888,
+      isHubPort: false,
+      hubPort: 0,
+      normallyClosedLaneSensors: true,
+      normallyClosedRelays: true,
+      useLapsForSegments: true,
+      lapPinPitBehavior: 0,
+      digitalInIds: [
+        PinBehavior.BEHAVIOR_LAP_BASE,
+        PinBehavior.BEHAVIOR_LAP_BASE + 1,
+      ],
+      digitalOutIds: [PinBehavior.BEHAVIOR_RELAY],
+      analogIds: [],
+    });
+    component.updateSelectedDeviceKey();
+    fixture.detectChanges();
+
+    const caps = component.getCapabilities();
+    expect(caps.digitalInputs).toBe(2);
+    expect(caps.digitalOutputs).toBe(4);
+    expect(component.availableDigitalInputPins.length).toBe(2);
+    expect(component.availableDigitalOutputPins.length).toBe(4);
+  });
+
+  describe("Heat Leader Analog LED Options", () => {
+    it("should include heat leader analog LED actions in analog LED group for all lanes", () => {
+      componentRef.setInput("lanes", 2);
+      fixture.detectChanges();
+
+      const groups = component.getFilteredActions("out", 0);
+      const analogGroup = groups.find(
+        (g) => g.key === "AE_BEHAVIOR_GROUP_ANALOG_LED",
+      );
+      expect(analogGroup).toBeDefined();
+
+      const lane1Leader = analogGroup?.actions.find(
+        (a) => a.value === "analogled_heat_leader_0",
+      );
+      const lane2Leader = analogGroup?.actions.find(
+        (a) => a.value === "analogled_heat_leader_1",
+      );
+
+      expect(lane1Leader).toBeDefined();
+      expect(lane2Leader).toBeDefined();
+    });
+
+    it("should select and get pin action for heat leader analog LEDs", () => {
+      component.selectPinAction("out", 0, "analogled_heat_leader_0");
+      expect(component.getPinAction("out", 0)).toBe("analogled_heat_leader_0");
+      expect(component.config()?.digitalOutIds?.[0]).toBe(
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE,
+      );
+
+      component.selectPinAction("out", 1, "analogled_heat_leader_1");
+      expect(component.getPinAction("out", 1)).toBe("analogled_heat_leader_1");
+      expect(component.config()?.digitalOutIds?.[1]).toBe(
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1,
+      );
+    });
   });
 });

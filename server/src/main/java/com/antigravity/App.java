@@ -7,6 +7,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.AssetTaskHandler;
 import com.antigravity.handlers.AuthTaskHandler;
 import com.antigravity.handlers.ClientCommandTaskHandler;
+import com.antigravity.handlers.CustomUITaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
@@ -419,6 +420,7 @@ public class App {
       new ClientCommandTaskHandler(databaseContext, app);
       new DatabaseTaskHandler(databaseContext, app);
       new AssetTaskHandler(databaseContext, app);
+      new CustomUITaskHandler(databaseContext, app);
       new ThemeTaskHandler(databaseContext, app);
       new SettingsTaskHandler(app, configService);
 

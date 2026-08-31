@@ -25,6 +25,7 @@ export interface FormatContext {
   getLaneQrCodeUrl?: (laneIndex: number) => string;
   getDriverViewQrCodeUrl?: (hd: DriverHeatData) => string;
   isDriverFinished?: (hd: DriverHeatData, scoring?: any) => boolean;
+  getLaneRecordEntry?: (laneIndex: number) => any;
 }
 
 export class RacedayFormatUtils {
@@ -106,7 +107,9 @@ export class RacedayFormatUtils {
         baseKey === "rankHeat" ||
         baseKey === "rankOverall" ||
         baseKey === "rankGroup" ||
-        baseKey === "lapsLed"
+        baseKey === "lapsLed" ||
+        baseKey === "recordLapTime" ||
+        baseKey.startsWith("ghostPacing")
       ) {
         return "--";
       }
@@ -128,7 +131,37 @@ export class RacedayFormatUtils {
       }
     }
 
-    if (
+    if (baseKey === "recordLapTime") {
+      const entry = ctx.getLaneRecordEntry
+        ? ctx.getLaneRecordEntry(hd?.laneIndex ?? 0)
+        : undefined;
+      if (entry && entry.value > 0) {
+        const timeStr = entry.value.toFixed(timeDecimals);
+        const nickname = entry.holderNickname || entry.holderName || "---";
+        let dateStr = "---";
+        if (entry.date) {
+          let ms = 0;
+          if (typeof entry.date === "number") {
+            ms = entry.date;
+          } else if (entry.date.toNumber) {
+            ms = entry.date.toNumber();
+          } else if (typeof entry.date === "string") {
+            ms = parseInt(entry.date, 10);
+          } else {
+            ms = Number(entry.date);
+          }
+          if (ms > 0 && !isNaN(ms)) {
+            const d = new Date(ms);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            dateStr = `${year}-${month}-${day}`;
+          }
+        }
+        return `${timeStr} (${nickname}, ${dateStr})`;
+      }
+      return `${timePlaceholder} (---, ---)`;
+    } else if (
       baseKey.includes("LapTime") ||
       baseKey === "reactionTime" ||
       baseKey === "totalTime"
@@ -181,7 +214,7 @@ export class RacedayFormatUtils {
       return String(led);
     } else if (baseKey === "laneNumber") {
       return String((hd?.laneIndex ?? 0) + 1);
-    } else if (baseKey === "ghostPacing") {
+    } else if (baseKey.startsWith("ghostPacing")) {
       if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
       const ghostLap = (hd as any).ghostLapTime ?? 0;
       const currentLapTime = (hd as any).currentLapTime ?? hd.lastLapTime ?? 0;
@@ -290,10 +323,10 @@ export class RacedayFormatUtils {
         return ctx.getFlagUrl("flag.penalty");
       }
       if (
-        value === RaceFlag.RED &&
         hd &&
-        ctx.isDriverFinished &&
-        ctx.isDriverFinished(hd, ctx.getRace()?.heat_scoring)
+        (hd.isFinished ||
+          (ctx.isDriverFinished &&
+            ctx.isDriverFinished(hd, ctx.getRace()?.heat_scoring)))
       ) {
         return ctx.getFlagUrl("flag.driver_finished");
       }
@@ -360,9 +393,14 @@ export class RacedayFormatUtils {
       const track = ctx.getTrack();
       const lane = track?.lanes?.[hd.laneIndex];
       const length = lane?.length;
+      const scale =
+        track?.track_scale && track.track_scale > 0 && track.track_scale <= 1
+          ? track.track_scale
+          : 1.0;
 
       if (lastLapTime > 0 && length !== undefined && length > 0) {
-        const fph = (length / lastLapTime) * 3600;
+        const scaledLength = length / scale;
+        const fph = (scaledLength / lastLapTime) * 3600;
         if (baseKey === "fph") return fph.toFixed(0);
 
         const mph = fph / 5280;

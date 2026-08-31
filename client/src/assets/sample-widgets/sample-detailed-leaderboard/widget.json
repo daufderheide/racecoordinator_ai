@@ -1,0 +1,64 @@
+{
+  "id": "sample-detailed-leaderboard",
+  "name": "Detailed Leaderboard",
+  "version": "1.0.0",
+  "description": "Comprehensive race leaderboard table displaying position, driver, elapsed time, laps, gap, best lap, and average lap times",
+  "author": "Race Coordinator AI",
+  "defaultWidth": 620,
+  "defaultHeight": 460,
+  "minWidth": 380,
+  "minHeight": 220,
+  "settingsSchema": [
+    {
+      "key": "title",
+      "label": "Header Title",
+      "type": "string",
+      "default": ""
+    },
+    {
+      "key": "maxRows",
+      "label": "Max Rows (0 for all)",
+      "type": "number",
+      "default": 0,
+      "min": 0,
+      "max": 100,
+      "step": 1
+    },
+    {
+      "key": "showTime",
+      "label": "Show Time Column",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showGap",
+      "label": "Show Gap Column",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showBestLap",
+      "label": "Show Best Lap Column",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "showAvgLap",
+      "label": "Show Avg Lap Column",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "bestLapColor",
+      "label": "Best Lap Highlight Color",
+      "type": "color",
+      "default": "#38bdf8"
+    },
+    {
+      "key": "avgLapColor",
+      "label": "Avg Lap Highlight Color",
+      "type": "color",
+      "default": "#f59e0b"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+@if (isFullscreen()) {
+  <div class="browser-nav-container">
+    <button
+      id="browser-nav-back-btn"
+      class="browser-nav-btn back-btn"
+      [disabled]="!canGoBack()"
+      (click)="goBack()"
+      [title]="'NAV_BACK' | translate"
+      [attr.aria-label]="'NAV_BACK' | translate"
+    >
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <button
+      id="browser-nav-forward-btn"
+      class="browser-nav-btn forward-btn"
+      [disabled]="!canGoForward()"
+      (click)="goForward()"
+      [title]="'NAV_FORWARD' | translate"
+      [attr.aria-label]="'NAV_FORWARD' | translate"
+    >
+      <span class="material-icons">arrow_forward</span>
+    </button>
+  </div>
+}

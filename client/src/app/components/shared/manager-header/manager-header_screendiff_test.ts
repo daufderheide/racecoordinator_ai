@@ -15,7 +15,7 @@ test.describe("Manager Header Component Visuals", () => {
     );
 
     const header = page.locator("app-manager-header");
-    await expect(header).toBeVisible();
+    await header.waitFor({ state: "visible" });
     await expect(header).toHaveScreenshot(
       "manager-header-track-manager-style.png",
     );
@@ -31,9 +31,27 @@ test.describe("Manager Header Component Visuals", () => {
     );
 
     const header = page.locator("app-manager-header");
-    await expect(header).toBeVisible();
+    await header.waitFor({ state: "visible" });
     await expect(header).toHaveScreenshot(
       "manager-header-driver-manager-style.png",
     );
+  });
+
+  test("should display manager header in fullscreen mode with navigation buttons", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-manager"),
+    );
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator("app-manager-header");
+    await header.waitFor({ state: "visible" });
+    await expect(header).toHaveScreenshot("manager-header-fullscreen.png");
   });
 });

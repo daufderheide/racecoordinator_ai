@@ -1,0 +1,56 @@
+.sponsor-banner-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.8) 100%);
+  border: 1px solid var(--accent-color, #f59e0b);
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  gap: 16px;
+}
+
+.banner-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  background: var(--accent-color, #f59e0b);
+  color: #0f172a;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 600;
+  animation: marquee-scroll 15s linear infinite;
+}
+
+.marquee-content .divider {
+  color: var(--accent-color, #f59e0b);
+  font-size: 10px;
+}
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}

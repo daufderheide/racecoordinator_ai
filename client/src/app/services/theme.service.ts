@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { firstValueFrom } from "rxjs";
+import { BehaviorSubject, firstValueFrom } from "rxjs";
 import { DataService } from "@app/data.service";
 import { AudioConfig } from "@app/models/driver";
 import {} from "@app/models/settings";
@@ -24,8 +24,11 @@ import { SettingsService } from "@app/services/settings.service";
 })
 export class ThemeService {
   private activeTheme: Theme | null = null;
+  private transientThemeId: string | null = null;
   private themes: Theme[] = [];
   private initialized = false;
+  private activeThemeSubject = new BehaviorSubject<Theme | null>(null);
+  readonly activeTheme$ = this.activeThemeSubject.asObservable();
 
   constructor(
     private dataService: DataService,
@@ -49,6 +52,11 @@ export class ThemeService {
     }
   }
 
+  private setActiveThemeInternal(theme: Theme | null): void {
+    this.activeTheme = theme;
+    this.activeThemeSubject.next(this.activeTheme);
+  }
+
   /**
    * Fetch all themes from the server and set the active theme.
    * Should be called once during app initialization or when the database changes.
@@ -69,21 +77,24 @@ export class ThemeService {
 
     const settings = this.settingsService.getSettings();
 
-    // Try to activate the configured theme
-    if (settings.activeThemeId) {
-      this.activeTheme =
-        this.themes.find((t) => t.entity_id === settings.activeThemeId) || null;
+    // Try to activate the configured theme, prioritizing transient override
+    const themeIdToActivate = this.transientThemeId || settings.activeThemeId;
+    let selectedTheme: Theme | null = null;
+    if (themeIdToActivate) {
+      selectedTheme =
+        this.themes.find((t) => t.entity_id === themeIdToActivate) || null;
     }
 
     // Deleted theme or first-time user → fall back to default
-    if (!this.activeTheme) {
-      this.activeTheme = this.themes.find((t) => t.is_default) || null;
-      if (this.activeTheme) {
-        settings.activeThemeId = this.activeTheme.entity_id;
+    if (!selectedTheme) {
+      selectedTheme = this.themes.find((t) => t.is_default) || null;
+      if (selectedTheme && !this.transientThemeId) {
+        settings.activeThemeId = selectedTheme.entity_id;
         this.settingsService.saveSettings(settings);
       }
     }
 
+    this.setActiveThemeInternal(selectedTheme);
     this.initialized = true;
   }
 
@@ -109,19 +120,45 @@ export class ThemeService {
 
   /**
    * Set the global active theme. Pass null to clear (no theme).
+   * This is persisted to local storage.
    */
   setActiveTheme(themeId: string | null): void {
     const settings = this.settingsService.getSettings();
 
     if (themeId) {
-      this.activeTheme =
-        this.themes.find((t) => t.entity_id === themeId) || null;
+      this.setActiveThemeInternal(
+        this.themes.find((t) => t.entity_id === themeId) || null,
+      );
     } else {
-      this.activeTheme = null;
+      this.setActiveThemeInternal(null);
     }
 
     settings.activeThemeId = this.activeTheme?.entity_id;
     this.settingsService.saveSettings(settings);
+  }
+
+  /**
+   * Sets the active theme for this specific browser session tab only.
+   * Does NOT persist to local storage.
+   */
+  async setTransientActiveTheme(themeId: string): Promise<void> {
+    this.transientThemeId = themeId;
+    let theme = this.themes.find((t) => t.entity_id === themeId);
+    if (!theme) {
+      await this.initialize();
+      theme = this.themes.find((t) => t.entity_id === themeId);
+    }
+    if (theme) {
+      this.setActiveThemeInternal(theme);
+    }
+  }
+
+  getTransientThemeId(): string | null {
+    return this.transientThemeId;
+  }
+
+  clearTransientActiveTheme(): void {
+    this.transientThemeId = null;
   }
 
   /**
@@ -162,12 +199,24 @@ export class ThemeService {
    * Called when a race is selected (e.g., on Raceday Setup).
    * Checks for a race-specific theme override and activates it.
    */
-  activateForRace(raceId: string): void {
+  async activateForRace(raceId: string): Promise<void> {
+    if (this.transientThemeId) {
+      if (!this.initialized) {
+        await this.initialize();
+      }
+      const transientTheme = this.themes.find(
+        (t) => t.entity_id === this.transientThemeId,
+      );
+      if (transientTheme) {
+        this.setActiveThemeInternal(transientTheme);
+        return;
+      }
+    }
     if (!this.initialized) {
-      this.initialize()
-        .then(() => this.activateForRace(raceId))
-        .catch(() => {});
-      return;
+      await this.initialize();
+      if (this.transientThemeId && this.activeTheme) {
+        return;
+      }
     }
     const settings = this.settingsService.getSettings();
     const overrideThemeId = settings.raceThemeOverrides?.[raceId];
@@ -177,7 +226,7 @@ export class ThemeService {
         (t) => t.entity_id === overrideThemeId,
       );
       if (overrideTheme) {
-        this.activeTheme = overrideTheme;
+        this.setActiveThemeInternal(overrideTheme);
         return;
       }
       // Override points to a deleted theme — clean up
@@ -185,11 +234,27 @@ export class ThemeService {
       this.settingsService.saveSettings(settings);
     }
 
-    // No race override → use the global active theme
-    this.activeTheme =
-      this.themes.find((t) => t.entity_id === settings.activeThemeId) ||
-      this.themes.find((t) => t.is_default) ||
-      null;
+    // Fallback to the Race's defined themeId
+    try {
+      const races = await import("rxjs").then((m) =>
+        m.firstValueFrom(this.dataService.getRaces()),
+      );
+      const race = races.find((r) => r.entity_id === raceId);
+
+      let themeId = race?.theme_id;
+      if (themeId) {
+        const t = this.themes.find((t) => t.entity_id === themeId) || null;
+        if (t) {
+          this.setActiveThemeInternal(t);
+          return;
+        }
+      }
+    } catch (e) {
+      // ignore data fetch errors
+    }
+
+    // Fallback to default
+    this.setActiveThemeInternal(this.themes.find((t) => t.is_default) || null);
   }
 
   /**
@@ -258,7 +323,7 @@ export class ThemeService {
       this.activeTheme.slots["fuel_gauge"];
     settings.activeThemeId = undefined;
 
-    this.activeTheme = null;
+    this.setActiveThemeInternal(null);
     this.settingsService.saveSettings(settings);
   }
 
@@ -278,22 +343,34 @@ export class ThemeService {
       }
     }
 
+    if (this.transientThemeId) {
+      const t =
+        this.themes.find((t) => t.entity_id === this.transientThemeId) || null;
+      if (t) {
+        this.setActiveThemeInternal(t);
+        return;
+      }
+    }
+
     // Re-validate active theme
-    if (this.activeTheme) {
-      this.activeTheme =
-        this.themes.find((t) => t.entity_id === this.activeTheme!.entity_id) ||
+    let newActiveTheme = this.activeTheme;
+    if (newActiveTheme) {
+      newActiveTheme =
+        this.themes.find((t) => t.entity_id === newActiveTheme!.entity_id) ||
         null;
     }
 
     // If active theme was deleted, fall back to default
-    if (!this.activeTheme) {
+    if (!newActiveTheme) {
       const settings = this.settingsService.getSettings();
-      this.activeTheme = this.themes.find((t) => t.is_default) || null;
-      if (this.activeTheme) {
-        settings.activeThemeId = this.activeTheme.entity_id;
+      newActiveTheme = this.themes.find((t) => t.is_default) || null;
+      if (newActiveTheme) {
+        settings.activeThemeId = newActiveTheme.entity_id;
         this.settingsService.saveSettings(settings);
       }
     }
+
+    this.setActiveThemeInternal(newActiveTheme);
   }
 
   /**

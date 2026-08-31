@@ -203,4 +203,105 @@ describe("FileSystemService", () => {
       expect(mockHandle.getFileHandle).not.toHaveBeenCalled();
     });
   });
+
+  describe("Custom Widgets methods", () => {
+    let mockWidgetDirHandle: any;
+
+    beforeEach(() => {
+      mockWidgetDirHandle = {
+        name: "test-widget",
+        kind: "directory",
+        queryPermission: jasmine
+          .createSpy("queryPermission")
+          .and.returnValue(Promise.resolve("granted")),
+        getDirectoryHandle: jasmine
+          .createSpy("getDirectoryHandle")
+          .and.returnValue(Promise.resolve(mockSubfolderHandle)),
+        values: async function* () {
+          yield { name: "my-widget", kind: "directory" };
+          yield { name: "readme.txt", kind: "file" };
+        },
+      };
+
+      spyOn(service, "getCustomWidgetDirectoryHandle").and.returnValue(
+        Promise.resolve(mockWidgetDirHandle),
+      );
+    });
+
+    it("should get custom widget directories", async () => {
+      const dirs = await service.getCustomWidgetDirectories();
+      expect(dirs.length).toBe(1);
+      expect(dirs[0].name).toBe("my-widget");
+    });
+
+    it("should return empty list if getCustomWidgetDirectoryHandle returns undefined", async () => {
+      (service.getCustomWidgetDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      const dirs = await service.getCustomWidgetDirectories();
+      expect(dirs).toEqual([]);
+    });
+
+    it("should fetch widget file", async () => {
+      const content = await service.getWidgetFile("my-widget", "widget.json");
+      expect(content).toBe("test content");
+      expect(mockWidgetDirHandle.getDirectoryHandle).toHaveBeenCalledWith(
+        "my-widget",
+      );
+      expect(mockSubfolderHandle.getFileHandle).toHaveBeenCalledWith(
+        "widget.json",
+      );
+    });
+
+    it("should throw in getWidgetFile if handle is undefined", async () => {
+      (service.getCustomWidgetDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      await expectAsync(
+        service.getWidgetFile("my-widget", "widget.json"),
+      ).toBeRejectedWithError("No custom widget directory configured");
+    });
+
+    it("should check if widget file exists", async () => {
+      const exists = await service.hasWidgetFile("my-widget", "widget.json");
+      expect(exists).toBeTrue();
+
+      mockWidgetDirHandle.getDirectoryHandle.and.returnValue(
+        Promise.reject("not found"),
+      );
+      const notExists = await service.hasWidgetFile(
+        "my-widget",
+        "missing.json",
+      );
+      expect(notExists).toBeFalse();
+    });
+
+    it("should write widget file", async () => {
+      mockSubfolderHandle.getFileHandle.and.returnValue(
+        Promise.resolve(mockFileHandle),
+      );
+      await service.writeWidgetFile("my-widget", "widget.json", "{}");
+      expect(mockWidgetDirHandle.getDirectoryHandle).toHaveBeenCalledWith(
+        "my-widget",
+        {
+          create: true,
+        },
+      );
+      expect(mockSubfolderHandle.getFileHandle).toHaveBeenCalledWith(
+        "widget.json",
+        {
+          create: true,
+        },
+      );
+    });
+
+    it("should throw in writeWidgetFile if handle is undefined", async () => {
+      (service.getCustomWidgetDirectoryHandle as jasmine.Spy).and.returnValue(
+        Promise.resolve(undefined),
+      );
+      await expectAsync(
+        service.writeWidgetFile("my-widget", "widget.json", "{}"),
+      ).toBeRejectedWithError("No custom widget directory configured");
+    });
+  });
 });

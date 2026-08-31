@@ -1,7 +1,4 @@
-<div
-  class="page-container"
-  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
->
+<div class="page-container" [attr.data-is-dirty]="isDirty ? 'true' : 'false'">
   <app-editor-title
     [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
     [undoManager]="undoManager"
@@ -169,20 +166,18 @@
               <div class="expander-list">
                 @for (
                   race of editingSeason.races;
-                  track race.race_id || idx;
+                  track getRaceExpanderKey(race, idx);
                   let idx = $index
                 ) {
                   <div class="race-expander-card">
                     <div
                       class="expander-title-bar"
-                      (click)="toggleRaceExpanded(race.race_id || '' + idx)"
+                      (click)="toggleRaceExpanded(race, idx)"
                     >
                       <div class="expander-title-left">
                         <span
                           class="expander-icon"
-                          [class.collapsed]="
-                            !isRaceExpanded(race.race_id || '' + idx)
-                          "
+                          [class.collapsed]="!isRaceExpanded(race, idx)"
                           >▼</span
                         >
                         <span class="race-step">#{{ idx + 1 }}</span>
@@ -206,7 +201,7 @@
                         {{ "SE_REMOVE_RACE" | translate }}
                       </button>
                     </div>
-                    @if (isRaceExpanded(race.race_id || "" + idx)) {
+                    @if (isRaceExpanded(race, idx)) {
                       <div class="expander-body">
                         <table class="race-breakdown-table">
                           <thead>

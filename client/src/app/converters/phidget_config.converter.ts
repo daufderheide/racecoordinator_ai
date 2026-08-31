@@ -20,7 +20,7 @@ export class PhidgetConfigConverter {
       normallyClosedLaneSensors: proto.normallyClosedLaneSensors ?? false,
       normallyClosedRelays: proto.normallyClosedRelays ?? false,
       useLapsForSegments: proto.useLapsForSegments ?? false,
-      lapPinPitBehavior: proto.lapPinPitBehavior || 0,
+      lapPinPitBehavior: proto.lapPinPitBehavior ?? 3,
       digitalInIds: proto.digitalInIds || [],
       digitalOutIds: proto.digitalOutIds || [],
       analogIds: proto.analogIds || [],

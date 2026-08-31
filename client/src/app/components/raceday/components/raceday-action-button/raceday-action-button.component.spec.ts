@@ -185,6 +185,24 @@ describe("RacedayActionButtonComponent", () => {
         action: "SEASON_RESULTS",
         method: "onWindowsMenuSelect",
       },
+      {
+        widgetType: "action-open-prediction-results",
+        label: "RD_WIN_PREDICTION_RESULTS",
+        action: "PREDICTION_RESULTS",
+        method: "onWindowsMenuSelect",
+      },
+      {
+        widgetType: "action-master-power-on",
+        label: "RD_MENU_MAIN_POWER_ON",
+        action: true,
+        method: "onTrackPowerMainSelect",
+      },
+      {
+        widgetType: "action-master-power-off",
+        label: "RD_MENU_MAIN_POWER_OFF",
+        action: false,
+        method: "onTrackPowerMainSelect",
+      },
     ];
 
     actionTests.forEach((testCase) => {
@@ -217,6 +235,29 @@ describe("RacedayActionButtonComponent", () => {
         expect(event.stopPropagation).toHaveBeenCalled();
         expect(methodSpy).toHaveBeenCalledWith(testCase.action);
       });
+    });
+
+    it("should check isMainPowerDisabled for master power action buttons", () => {
+      const parentWithPower = {
+        isUIEditorMode: () => false,
+        isMainPowerDisabled: true,
+      };
+      fixture.componentRef.setInput("parent", parentWithPower);
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        widgetType: "action-master-power-on" as any,
+      });
+      expect(component.isActionDisabled).toBeTrue();
+
+      fixture.componentRef.setInput("widget", {
+        ...mockWidget,
+        widgetType: "action-master-power-off" as any,
+      });
+      expect(component.isActionDisabled).toBeTrue();
+
+      parentWithPower.isMainPowerDisabled = false;
+      expect(component.isActionDisabled).toBeFalse();
     });
   });
 });

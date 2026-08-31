@@ -24,8 +24,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -351,7 +353,7 @@ public class LogReplayService {
       int lane = (Integer) mapParams.get("lane");
       Map<String, Object> body = (Map<String, Object>) mapParams.get("body");
       Heat currentHeat = race.getCurrentHeat();
-      if (currentHeat != null && currentHeat.isStarted()) {
+      if (currentHeat != null) {
         List<DriverHeatData> drivers = currentHeat.getDrivers();
         if (lane >= 0 && lane < drivers.size()) {
           DriverHeatData dhd = drivers.get(lane);
@@ -379,19 +381,17 @@ public class LogReplayService {
       List<Heat> heats = race.getHeats();
       if (heatNumber >= 1 && heatNumber <= heats.size()) {
         Heat heat = heats.get(heatNumber - 1);
-        if (heat.isStarted()) {
-          List<DriverHeatData> drivers = heat.getDrivers();
-          if (lane >= 0 && lane < drivers.size()) {
-            DriverHeatData dhd = drivers.get(lane);
-            if (body.containsKey("userLaps")) {
-              double value = ((Number) body.get("userLaps")).doubleValue();
-              dhd.setUserLaps(value);
-              heat.initializeStandings(
-                  race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
-              race.updateAndBroadcastOverallStandings();
-              race.updateScoreRecords();
-              race.broadcast(race.createSnapshot());
-            }
+        List<DriverHeatData> drivers = heat.getDrivers();
+        if (lane >= 0 && lane < drivers.size()) {
+          DriverHeatData dhd = drivers.get(lane);
+          if (body.containsKey("userLaps")) {
+            double value = ((Number) body.get("userLaps")).doubleValue();
+            dhd.setUserLaps(value);
+            heat.initializeStandings(
+                race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+            race.updateAndBroadcastOverallStandings();
+            race.updateScoreRecords();
+            race.broadcast(race.createSnapshot());
           }
         }
       }
@@ -403,20 +403,40 @@ public class LogReplayService {
   private void handleUpdateBatchUserLaps(Map<String, Object> mapParams, Race race) {
     if (mapParams != null) {
       List<Map<String, Object>> updates = (List<Map<String, Object>>) mapParams.get("updates");
-      Heat currentHeat = race.getCurrentHeat();
-      if (currentHeat != null && currentHeat.isStarted()) {
-        List<DriverHeatData> drivers = currentHeat.getDrivers();
+      if (updates != null) {
+        Set<Heat> heatsToRecalculate = new HashSet<>();
         for (Map<String, Object> update : updates) {
-          int lane = Integer.parseInt(update.get("lane").toString());
-          if (update.containsKey("userLaps")) {
-            double value = ((Number) update.get("userLaps")).doubleValue();
+          int heatNumber =
+              update.containsKey("heatNumber")
+                  ? ((Number) update.get("heatNumber")).intValue()
+                  : (race.getCurrentHeat() != null ? race.getCurrentHeat().getHeatNumber() : 1);
+          int lane =
+              update.containsKey("laneIndex")
+                  ? ((Number) update.get("laneIndex")).intValue()
+                  : (update.containsKey("lane")
+                      ? Integer.parseInt(update.get("lane").toString())
+                      : 0);
+
+          Heat targetHeat = null;
+          for (Heat h : race.getHeats()) {
+            if (h.getHeatNumber() == heatNumber) {
+              targetHeat = h;
+              break;
+            }
+          }
+          if (targetHeat != null && update.containsKey("userLaps")) {
+            List<DriverHeatData> drivers = targetHeat.getDrivers();
             if (lane >= 0 && lane < drivers.size()) {
+              double value = ((Number) update.get("userLaps")).doubleValue();
               drivers.get(lane).setUserLaps(value);
+              heatsToRecalculate.add(targetHeat);
             }
           }
         }
-        currentHeat.initializeStandings(
-            race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+        for (Heat heat : heatsToRecalculate) {
+          heat.initializeStandings(
+              race.getRaceModel().getHeatScoring(), race.getRaceModel().isPractice());
+        }
         race.updateAndBroadcastOverallStandings();
         race.updateScoreRecords();
         race.broadcast(race.createSnapshot());

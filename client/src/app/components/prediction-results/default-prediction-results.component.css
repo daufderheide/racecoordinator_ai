@@ -41,6 +41,12 @@
   flex-direction: column;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .page-title {
   font-size: 48px;
   font-weight: 800;

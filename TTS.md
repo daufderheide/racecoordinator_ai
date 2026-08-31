@@ -4,9 +4,9 @@ Race Coordinator AI supports dynamic variable substitution in Text-to-Speech str
 
 ## Syntax
 
-TTS variables use a single curly brace syntax: `{variable.path}`.
+TTS variables support single or double curly brace syntax: `{variable.path}` or `{{variable.path}}`.
 
-Interpolation is **case-insensitive**, meaning `{driver.lastLapTime}` and `{DRIVER.LASTLAPTIME}` are treated the same.
+Interpolation is **case-insensitive**, meaning `{driver.lastLapTime}` and `{DRIVER.LASTLAPTIME}` are treated the same. Whitespace inside the braces (e.g., `{{ driver.nickname }}`) is also supported.
 
 ## Available Variables
 

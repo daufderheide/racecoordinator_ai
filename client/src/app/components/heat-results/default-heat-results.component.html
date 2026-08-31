@@ -3,9 +3,12 @@
     <!-- Top Cyberpunk Title Bar -->
     <div class="header-bar">
       <div class="title-glow-container">
-        <h1 class="page-title">
-          {{ "HR_TITLE" | translate: { heat: heat?.heatNumber } }}
-        </h1>
+        <div class="title-row">
+          <app-browser-navigation></app-browser-navigation>
+          <h1 class="page-title">
+            {{ "HR_TITLE" | translate: { heat: heat?.heatNumber } }}
+          </h1>
+        </div>
         <div class="cyberpunk-line"></div>
       </div>
       @if (race) {
@@ -23,55 +26,56 @@
       }
     </div>
 
-    <!-- Standings Grid Glass Overlay -->
-    <div class="results-container">
-      <div class="section-container">
-        <div class="heats-section-container">
-          @if (heatData && heatData.length > 0) {
-            @for (dh of heatData; track dh.heatDriver.objectId) {
-              <app-heat-driver-expander
-                [heatData]="dh"
-                [isExpanded]="expandedHeats.has(dh.heatDriver.objectId)"
-                [isTeam]="!!dh.heatDriver.participant.team"
-                [participants]="participants"
-                [allHeats]="[dh.heat]"
-                [customStatsTitle]="dh.driverName"
-                [isGroupRace]="race?.group_options?.enabled ?? false"
-                [groupNames]="race?.group_options?.names ?? []"
-                (toggle)="toggleHeat(dh.heatDriver.objectId)"
-              ></app-heat-driver-expander>
-            }
-          } @else {
-            <div class="no-data-row">
-              <div class="no-data-msg">
-                <span class="material-icons warning-icon">warning</span>
-                <span>No driver data available for this heat.</span>
-              </div>
+    <!-- Heat Drivers Section -->
+    <div class="heats-section-container">
+      @if (heatData && heatData.length > 0) {
+        @for (dh of heatData; track dh.heatDriver.objectId) {
+          <app-heat-driver-expander
+            [heatData]="dh"
+            [isExpanded]="expandedHeats.has(dh.heatDriver.objectId)"
+            [isTeam]="!!dh.heatDriver.participant.team"
+            [participants]="participants"
+            [allHeats]="[dh.heat]"
+            [customStatsTitle]="dh.driverName"
+            [isGroupRace]="race?.group_options?.enabled ?? false"
+            [groupNames]="race?.group_options?.names ?? []"
+            (toggle)="toggleHeat(dh.heatDriver.objectId)"
+          ></app-heat-driver-expander>
+        }
+      } @else {
+        <div class="results-container no-heats-container">
+          <div class="no-data-row">
+            <div class="no-data-msg">
+              <span class="material-icons warning-icon">warning</span>
+              <span>{{ "HR_NO_HEAT_DATA" | translate }}</span>
             </div>
-          }
+          </div>
         </div>
-      </div>
+      }
     </div>
 
-    <app-twin-graphs
-      [driverLines]="driverLines"
-      [xTicks]="xTicks"
-      [yTicksLeft]="yTicksLeft"
-      [yTicks]="yTicks"
-      [width]="width"
-      [height]="height"
-      [padding]="padding"
-      [maxX]="maxX"
-      [maxY]="maxY"
-      titleKey="HR_TITLE"
-      [titleParams]="{ heat: heat?.heatNumber }"
-      leftTitleKey="HR_RANKINGS_HEADER"
-      rightTitleKey="HR_LAP_TIMES_HEADER"
-      leftXAxisKey="HR_X_AXIS"
-      rightXAxisKey="HR_X_AXIS"
-      leftYAxisKey="HR_HEAT_POSITION"
-      rightYAxisKey="HR_Y_AXIS"
-    ></app-twin-graphs>
+    @if (driverLines.length > 0) {
+      <app-twin-graphs
+        [driverLines]="driverLines"
+        [xTicks]="xTicks"
+        [yTicksLeft]="yTicksLeft"
+        [yTicks]="yTicks"
+        [width]="width"
+        [height]="height"
+        [padding]="padding"
+        [maxX]="maxX"
+        [maxY]="maxY"
+        [stacked]="true"
+        titleKey="HR_TITLE"
+        [titleParams]="{ heat: heat?.heatNumber }"
+        leftTitleKey="HR_RANKINGS_HEADER"
+        rightTitleKey="HR_LAP_TIMES_HEADER"
+        leftXAxisKey="HR_X_AXIS"
+        rightXAxisKey="HR_X_AXIS"
+        leftYAxisKey="HR_HEAT_POSITION"
+        rightYAxisKey="HR_Y_AXIS"
+      ></app-twin-graphs>
+    }
   </div>
 </div>
 

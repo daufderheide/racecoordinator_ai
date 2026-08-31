@@ -24,4 +24,35 @@ describe("Driver Model", () => {
     const mockDriver = { name: "Mock Driver" };
     expect(Driver.isEmpty(mockDriver)).toBeFalse();
   });
+
+  it("should initialize default preset audio when audio configs are omitted", () => {
+    const driver = new Driver("d1", "Dave", "Dave");
+    expect(driver.lapAudio).toEqual({ type: "preset", url: "default_beep" });
+    expect(driver.bestLapAudio).toEqual({
+      type: "preset",
+      url: "default_driveby",
+    });
+    expect(driver.penaltyAudio).toEqual({
+      type: "preset",
+      url: "default_penalty",
+    });
+  });
+
+  it("should not set default preset sound urls when type is none", () => {
+    const driver = new Driver(
+      "d1",
+      "Dave",
+      "Dave",
+      undefined,
+      { type: "none" },
+      { type: "none" },
+      { type: "none" },
+    );
+    expect(driver.lapAudio.type).toBe("none");
+    expect(driver.lapAudio.url).toBeUndefined();
+    expect(driver.bestLapAudio.type).toBe("none");
+    expect(driver.bestLapAudio.url).toBeUndefined();
+    expect(driver.penaltyAudio.type).toBe("none");
+    expect(driver.penaltyAudio.url).toBeUndefined();
+  });
 });

@@ -1,0 +1,51 @@
+:host {
+  display: block;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.editor-tabs-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 15px;
+  background: rgba(15, 23, 42, 0.4);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.editor-tabs-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.editor-tabs-container::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.editor-tabs-container::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+}
+
+.editor-tab {
+  background: rgba(30, 41, 59, 0.6);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.editor-tab:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.5);
+}

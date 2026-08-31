@@ -4,7 +4,10 @@
     [id]="'phidget-editor-' + interfaceIndex()"
   >
     <div class="config-section">
-      <div class="section-header" (click)="toggleSection('phidget')">
+      <div
+        class="section-header phidget-section-header"
+        (click)="toggleSection('phidget')"
+      >
         <span
           class="expander-icon"
           [class.collapsed]="!sectionsExpanded.phidget"
@@ -12,7 +15,6 @@
         >
         <h1>
           {{ "PHIDGET_HEADER" | translate }}
-          <span class="interface-badge alpha-badge">ALPHA</span>
         </h1>
         <div class="spacer"></div>
         <button
@@ -25,11 +27,14 @@
       </div>
 
       @if (sectionsExpanded.phidget) {
-        <div class="section-content">
+        <div class="section-content phidget-section-content">
           <div class="sections-wrapper">
             <!-- Main Configuration Section -->
             <div class="config-section">
-              <div class="section-header" (click)="toggleSection('main')">
+              <div
+                class="section-header main-section-header"
+                (click)="toggleSection('main')"
+              >
                 <span
                   class="expander-icon"
                   [class.collapsed]="!sectionsExpanded.main"
@@ -39,47 +44,124 @@
               </div>
 
               @if (sectionsExpanded.main) {
-                <div class="section-content">
+                <div class="section-content main-section-content">
                   <div class="config-top-section">
-                    <div class="board-controls">
-                      <div class="control-group">
-                        <label>{{ "PHIDGET_DEVICE" | translate }}</label>
-                        <div class="com-port-row">
-                          <select
-                            [id]="'device-' + interfaceIndex()"
-                            [ngModel]="selectedDeviceKeyStr"
-                            (ngModelChange)="onDeviceSelectChange($event)"
-                          >
-                            <option value="" disabled>
-                              {{ "PHIDGET_SELECT_DEVICE" | translate }}
-                            </option>
-                            @for (
-                              device of devices;
-                              track getDeviceKey(device)
-                            ) {
-                              <option
-                                [value]="getDeviceKey(device)"
-                                [disabled]="isDeviceSelectedByOther(device)"
-                              >
-                                {{ device.name }} ({{ device.serialNumber }})
-                                @if (device.isHubPort) {
-                                  - Port {{ device.hubPort }}
-                                }
-                                @if (isDeviceSelectedByOther(device)) {
-                                  - ({{ "PHIDGET_DEVICE_IN_USE" | translate }})
-                                }
+                    <div class="main-settings-group">
+                      <div class="board-controls">
+                        <div class="control-group">
+                          <label>{{ "PHIDGET_DEVICE" | translate }}</label>
+                          <div class="com-port-row">
+                            <select
+                              [id]="'device-' + interfaceIndex()"
+                              [ngModel]="selectedDeviceKeyStr"
+                              (ngModelChange)="onDeviceSelectChange($event)"
+                            >
+                              <option value="" disabled>
+                                {{ "PHIDGET_SELECT_DEVICE" | translate }}
                               </option>
-                            }
-                          </select>
-                          <button
-                            type="button"
-                            [id]="'phidget-status-badge-' + interfaceIndex()"
-                            class="status-badge"
-                            [class.connected]="status === 'CONNECTED'"
-                            [title]="'PHIDGET_STATUS_' + status | translate"
-                          >
-                            <div class="status-dot"></div>
-                          </button>
+                              @if (isConfiguredDeviceDisconnected) {
+                                <option [value]="selectedDeviceKeyStr">
+                                  {{ config().name }} ({{
+                                    config().serialNumber
+                                  }})
+                                  @if (config().isHubPort) {
+                                    - Port {{ config().hubPort }}
+                                  }
+                                  - ({{
+                                    "PHIDGET_STATUS_DISCONNECTED" | translate
+                                  }})
+                                </option>
+                              }
+                              @for (
+                                device of devices;
+                                track getDeviceKey(device)
+                              ) {
+                                <option
+                                  [value]="getDeviceKey(device)"
+                                  [disabled]="isDeviceSelectedByOther(device)"
+                                >
+                                  {{ device.name }} ({{ device.serialNumber }})
+                                  @if (device.isHubPort) {
+                                    - Port {{ device.hubPort }}
+                                  }
+                                  @if (isDeviceSelectedByOther(device)) {
+                                    - ({{
+                                      "PHIDGET_DEVICE_IN_USE" | translate
+                                    }})
+                                  }
+                                </option>
+                              }
+                            </select>
+                            <button
+                              type="button"
+                              [id]="'phidget-status-badge-' + interfaceIndex()"
+                              class="status-badge"
+                              [class.connected]="status === 'CONNECTED'"
+                              [title]="'PHIDGET_STATUS_' + status | translate"
+                            >
+                              <div class="status-dot"></div>
+                            </button>
+                          </div>
+                        </div>
+
+                        @if (getCapabilities().digitalInputs > 0) {
+                          <div class="control-group">
+                            <label>{{
+                              "PHIDGET_LAP_PIN_PIT_BEHAVIOR" | translate
+                            }}</label>
+                            <div class="com-port-row">
+                              <select
+                                [id]="
+                                  'phidget-pit-behavior-' + interfaceIndex()
+                                "
+                                [(ngModel)]="config()!.lapPinPitBehavior"
+                                (change)="onConfigChange()"
+                              >
+                                <option [value]="0">
+                                  {{ "PHIDGET_LAP_PIN_PIT_NONE" | translate }}
+                                </option>
+                                <option [value]="1">
+                                  {{ "PHIDGET_LAP_PIN_PIT_IN" | translate }}
+                                </option>
+                                <option [value]="2">
+                                  {{ "PHIDGET_LAP_PIN_PIT_OUT" | translate }}
+                                </option>
+                                <option [value]="3">
+                                  {{ "PHIDGET_LAP_PIN_PIT_IN_OUT" | translate }}
+                                </option>
+                              </select>
+                              <div
+                                class="status-badge"
+                                style="visibility: hidden"
+                              ></div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="right-controls">
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [id]="'phidget-nc-sensors-' + interfaceIndex()"
+                              [(ngModel)]="config()!.normallyClosedLaneSensors"
+                              (change)="onConfigChange()"
+                            />
+                            {{ "PHIDGET_NORMALLY_CLOSED_SENSORS" | translate }}
+                          </label>
+                        </div>
+
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [id]="'phidget-nc-relays-' + interfaceIndex()"
+                              [(ngModel)]="config()!.normallyClosedRelays"
+                              (change)="onConfigChange()"
+                            />
+                            {{ "PHIDGET_NORMALLY_CLOSED_RELAYS" | translate }}
+                          </label>
                         </div>
                       </div>
                     </div>
@@ -90,32 +172,6 @@
                         [alt]="config().name || 'Phidget Device'"
                         class="board-image"
                       />
-                    </div>
-
-                    <div class="right-controls">
-                      <div class="control-group">
-                        <label class="checkbox-label">
-                          <input
-                            type="checkbox"
-                            [id]="'phidget-nc-sensors-' + interfaceIndex()"
-                            [(ngModel)]="config()!.normallyClosedLaneSensors"
-                            (change)="onConfigChange()"
-                          />
-                          {{ "PHIDGET_NORMALLY_CLOSED_SENSORS" | translate }}
-                        </label>
-                      </div>
-
-                      <div class="control-group">
-                        <label class="checkbox-label">
-                          <input
-                            type="checkbox"
-                            [id]="'phidget-nc-relays-' + interfaceIndex()"
-                            [(ngModel)]="config()!.normallyClosedRelays"
-                            (change)="onConfigChange()"
-                          />
-                          {{ "PHIDGET_NORMALLY_CLOSED_RELAYS" | translate }}
-                        </label>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -129,7 +185,7 @@
                 @if (availableDigitalInputPins.length > 0) {
                   <div class="config-section">
                     <div
-                      class="section-header"
+                      class="section-header digital-in-section-header"
                       (click)="toggleSection('digitalIn')"
                     >
                       <span
@@ -140,7 +196,7 @@
                       <h4>{{ "PHIDGET_DIGITAL_INPUTS" | translate }}</h4>
                     </div>
                     @if (sectionsExpanded.digitalIn) {
-                      <div class="section-content">
+                      <div class="section-content digital-in-section-content">
                         <div class="pin-grid">
                           @for (pin of availableDigitalInputPins; track pin) {
                             <div
@@ -233,7 +289,13 @@
                                                   )
                                                 "
                                               >
-                                                {{ action.label }}
+                                                <span class="check-slot">{{
+                                                  getPinAction("in", pin) ===
+                                                  action.value
+                                                    ? "✓"
+                                                    : ""
+                                                }}</span>
+                                                <span>{{ action.label }}</span>
                                               </div>
                                             }
                                           </div>
@@ -257,7 +319,13 @@
                                               )
                                             "
                                           >
-                                            {{ action.label }}
+                                            <span class="check-slot">{{
+                                              getPinAction("in", pin) ===
+                                              action.value
+                                                ? "✓"
+                                                : ""
+                                            }}</span>
+                                            <span>{{ action.label }}</span>
                                           </div>
                                         }
                                       }
@@ -277,7 +345,7 @@
                 @if (availableDigitalOutputPins.length > 0) {
                   <div class="config-section">
                     <div
-                      class="section-header"
+                      class="section-header digital-out-section-header"
                       (click)="toggleSection('digitalOut')"
                     >
                       <span
@@ -288,7 +356,7 @@
                       <h4>{{ "PHIDGET_DIGITAL_OUTPUTS" | translate }}</h4>
                     </div>
                     @if (sectionsExpanded.digitalOut) {
-                      <div class="section-content">
+                      <div class="section-content digital-out-section-content">
                         <div class="pin-grid">
                           @for (pin of availableDigitalOutputPins; track pin) {
                             <div
@@ -383,7 +451,13 @@
                                                   )
                                                 "
                                               >
-                                                {{ action.label }}
+                                                <span class="check-slot">{{
+                                                  getPinAction("out", pin) ===
+                                                  action.value
+                                                    ? "✓"
+                                                    : ""
+                                                }}</span>
+                                                <span>{{ action.label }}</span>
                                               </div>
                                             }
                                           </div>
@@ -407,162 +481,13 @@
                                               )
                                             "
                                           >
-                                            {{ action.label }}
-                                          </div>
-                                        }
-                                      }
-                                    }
-                                  </div>
-                                }
-                              </div>
-                            </div>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-
-                <!-- Analog Inputs Section -->
-                @if (availableAnalogInputPins.length > 0) {
-                  <div class="config-section">
-                    <div
-                      class="section-header"
-                      (click)="toggleSection('analogIn')"
-                    >
-                      <span
-                        class="expander-icon"
-                        [class.collapsed]="!sectionsExpanded.analogIn"
-                        >▼</span
-                      >
-                      <h4>{{ "PHIDGET_ANALOG_INPUTS" | translate }}</h4>
-                    </div>
-                    @if (sectionsExpanded.analogIn) {
-                      <div class="section-content">
-                        <div class="pin-grid">
-                          @for (pin of availableAnalogInputPins; track pin) {
-                            <div
-                              class="pin-item"
-                              [id]="
-                                'phidget-analog-item-' +
-                                pin +
-                                '-' +
-                                interfaceIndex()
-                              "
-                            >
-                              <div class="pin-header">
-                                <label>Analog {{ pin }}</label>
-                                <span
-                                  [id]="'phidget-analog-status-' + pin"
-                                  class="status-badge small"
-                                  [class.connected]="isPinActive('analog', pin)"
-                                ></span>
-                              </div>
-                              <div
-                                class="custom-dropdown-container pin-selector"
-                              >
-                                <div
-                                  class="dropdown-trigger"
-                                  [class.open]="
-                                    isPinDropdownOpen('analog-' + pin)
-                                  "
-                                  (click)="
-                                    togglePinDropdown('analog-' + pin, $event)
-                                  "
-                                >
-                                  <span class="selected-value">{{
-                                    getCurrentActionLabel("analog", pin)
-                                  }}</span>
-                                  <div
-                                    class="dropdown-arrow"
-                                    [class.open]="
-                                      isPinDropdownOpen('analog-' + pin)
-                                    "
-                                  >
-                                    ▼
-                                  </div>
-                                </div>
-                                @if (isPinDropdownOpen("analog-" + pin)) {
-                                  <div
-                                    class="dropdown-menu"
-                                    [class.open-up]="
-                                      dropdownOpenUp['analog-' + pin]
-                                    "
-                                    (click)="$event.stopPropagation()"
-                                  >
-                                    @for (
-                                      group of getFilteredActions(
-                                        "analog",
-                                        pin
-                                      );
-                                      track group.key
-                                    ) {
-                                      @if (group.label) {
-                                        <div
-                                          class="group-header"
-                                          (click)="
-                                            toggleGroupCollapse(
-                                              group.key,
-                                              $event
-                                            )
-                                          "
-                                        >
-                                          <span
-                                            class="expander-icon"
-                                            [class.collapsed]="
-                                              isGroupCollapsed(group.key)
-                                            "
-                                            >▼</span
-                                          >
-                                          {{ group.label }}
-                                        </div>
-                                        @if (!isGroupCollapsed(group.key)) {
-                                          <div class="group-items">
-                                            @for (
-                                              action of group.actions;
-                                              track action.value
-                                            ) {
-                                              <div
-                                                class="dropdown-item"
-                                                [class.selected]="
-                                                  getPinAction(
-                                                    'analog',
-                                                    pin
-                                                  ) === action.value
-                                                "
-                                                (click)="
-                                                  selectPinAction(
-                                                    'analog',
-                                                    pin,
-                                                    action.value
-                                                  )
-                                                "
-                                              >
-                                                {{ action.label }}
-                                              </div>
-                                            }
-                                          </div>
-                                        }
-                                      } @else {
-                                        @for (
-                                          action of group.actions;
-                                          track action.value
-                                        ) {
-                                          <div
-                                            class="dropdown-item"
-                                            [class.selected]="
-                                              getPinAction('analog', pin) ===
+                                            <span class="check-slot">{{
+                                              getPinAction("out", pin) ===
                                               action.value
-                                            "
-                                            (click)="
-                                              selectPinAction(
-                                                'analog',
-                                                pin,
-                                                action.value
-                                              )
-                                            "
-                                          >
-                                            {{ action.label }}
+                                                ? "✓"
+                                                : ""
+                                            }}</span>
+                                            <span>{{ action.label }}</span>
                                           </div>
                                         }
                                       }

@@ -7,6 +7,7 @@ export class FileSystemService {
   private readonly DB_NAME = "race-coordinator-fs";
   private readonly STORE_NAME = "handles";
   private readonly HANDLE_KEY = "raceday-setup-dir";
+  private readonly WIDGETS_HANDLE_KEY = "custom-widgets-dir";
   private dbPromise: Promise<IDBDatabase>;
 
   constructor() {
@@ -87,6 +88,141 @@ export class FileSystemService {
         resolve(undefined);
       };
     });
+  }
+
+  async selectCustomWidgetFolder(): Promise<boolean> {
+    try {
+      const handle = await window.showDirectoryPicker();
+      const db = await this.dbPromise;
+
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction([this.STORE_NAME], "readwrite");
+        const store = transaction.objectStore(this.STORE_NAME);
+        const request = store.put(handle, this.WIDGETS_HANDLE_KEY);
+
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+
+      return true;
+    } catch (err) {
+      console.error("Error selecting custom widget folder:", err);
+      return false;
+    }
+  }
+
+  async clearCustomWidgetFolder(): Promise<void> {
+    const db = await this.dbPromise;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([this.STORE_NAME], "readwrite");
+      const store = transaction.objectStore(this.STORE_NAME);
+      const request = store.delete(this.WIDGETS_HANDLE_KEY);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getCustomWidgetDirectoryHandle(): Promise<
+    FileSystemDirectoryHandle | undefined
+  > {
+    const db = await this.dbPromise;
+
+    return new Promise((resolve, _reject) => {
+      const transaction = db.transaction([this.STORE_NAME], "readonly");
+      const store = transaction.objectStore(this.STORE_NAME);
+      const request = store.get(this.WIDGETS_HANDLE_KEY);
+
+      request.onsuccess = () => {
+        resolve(request.result as FileSystemDirectoryHandle);
+      };
+
+      request.onerror = () => {
+        resolve(undefined);
+      };
+    });
+  }
+
+  async getCustomWidgetDirectories(): Promise<
+    { name: string; handle: FileSystemDirectoryHandle }[]
+  > {
+    const handle = await this.getCustomWidgetDirectoryHandle();
+    if (!handle) return [];
+
+    const permission = await this.verifyPermission(handle, false);
+    if (!permission) return [];
+
+    const results: { name: string; handle: FileSystemDirectoryHandle }[] = [];
+    try {
+      for await (const entry of (handle as any).values()) {
+        if (entry.kind === "directory") {
+          results.push({
+            name: entry.name,
+            handle: entry as FileSystemDirectoryHandle,
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error listing widget directories:", err);
+    }
+    return results;
+  }
+
+  async getWidgetFile(
+    widgetFolderName: string,
+    filename: string,
+  ): Promise<string> {
+    const handle = await this.getCustomWidgetDirectoryHandle();
+    if (!handle) throw new Error("No custom widget directory configured");
+
+    const permission = await this.verifyPermission(handle, false);
+    if (!permission) throw new Error("Permission denied");
+
+    const widgetDir = await handle.getDirectoryHandle(widgetFolderName);
+    const fileHandle = await widgetDir.getFileHandle(filename);
+    const file = await fileHandle.getFile();
+    return file.text();
+  }
+
+  async hasWidgetFile(
+    widgetFolderName: string,
+    filename: string,
+  ): Promise<boolean> {
+    const handle = await this.getCustomWidgetDirectoryHandle();
+    if (!handle) return false;
+
+    const permission = await this.verifyPermission(handle, false);
+    if (!permission) return false;
+
+    try {
+      const widgetDir = await handle.getDirectoryHandle(widgetFolderName);
+      await widgetDir.getFileHandle(filename);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async writeWidgetFile(
+    widgetFolderName: string,
+    filename: string,
+    content: string,
+  ): Promise<void> {
+    const handle = await this.getCustomWidgetDirectoryHandle();
+    if (!handle) throw new Error("No custom widget directory configured");
+
+    const permission = await this.verifyPermission(handle, true);
+    if (!permission) throw new Error("Permission denied");
+
+    const targetDir = widgetFolderName
+      ? await handle.getDirectoryHandle(widgetFolderName, { create: true })
+      : handle;
+    const fileHandle = await targetDir.getFileHandle(filename, {
+      create: true,
+    });
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
   }
 
   async hasCustomFiles(

@@ -565,6 +565,18 @@ public class DatabaseTaskHandlerTest {
       handler.getSeasonById(ctxSeasonById);
       org.mockito.Mockito.verify(ctxSeasonById).json(any());
 
+      // Season: Standings
+      io.javalin.http.Context ctxSeasonStandings = mock(io.javalin.http.Context.class);
+      when(ctxSeasonStandings.pathParam("id")).thenReturn("1");
+      handler.getSeasonStandings(ctxSeasonStandings);
+      org.mockito.Mockito.verify(ctxSeasonStandings).json(any());
+
+      io.javalin.http.Context ctxSeasonStandings404 = mock(io.javalin.http.Context.class);
+      when(ctxSeasonStandings404.pathParam("id")).thenReturn("nonexistent");
+      when(ctxSeasonStandings404.status(anyInt())).thenReturn(ctxSeasonStandings404);
+      handler.getSeasonStandings(ctxSeasonStandings404);
+      org.mockito.Mockito.verify(ctxSeasonStandings404).status(404);
+
       // Season: Update
       io.javalin.http.Context ctxSeasonUpdate = mock(io.javalin.http.Context.class);
       when(ctxSeasonUpdate.pathParam("id")).thenReturn("1");

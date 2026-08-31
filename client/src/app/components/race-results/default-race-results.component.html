@@ -10,13 +10,21 @@
     <!-- Top Cyberpunk Title Bar -->
     <div class="header-bar">
       <div class="title-glow-container">
-        <h1 class="page-title">{{ "RD_WIN_RACE_RESULTS" | translate }}</h1>
+        <div class="title-row">
+          <app-browser-navigation></app-browser-navigation>
+          <h1 class="page-title">{{ "RD_WIN_RACE_RESULTS" | translate }}</h1>
+        </div>
         <div class="cyberpunk-line"></div>
       </div>
       @if (race) {
         <div class="race-name-container">
           <span class="label-text">{{ "DR_LABEL_RACE" | translate }}</span>
           <span class="value-text">{{ race.name }}</span>
+          @if (raceStartTime) {
+            <span class="race-date-text"
+              >({{ raceStartTime | date: "short" }})</span
+            >
+          }
           <button
             class="export-pdf-btn no-print"
             (click)="exportPdf()"

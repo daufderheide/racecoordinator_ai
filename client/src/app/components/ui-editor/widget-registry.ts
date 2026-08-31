@@ -316,4 +316,22 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       shortcut: "",
     }),
   },
+  "action-master-power-on": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
+  "action-master-power-off": {
+    defaultSettings: () => ({
+      fontFamily: "",
+      fontSize: 24,
+      textColor: "",
+      backgroundColor: "",
+      shortcut: "",
+    }),
+  },
 };

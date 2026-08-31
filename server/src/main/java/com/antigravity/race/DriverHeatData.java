@@ -105,6 +105,7 @@ public class DriverHeatData extends ServerToClientObject
   private boolean isRefueling = false;
   private double remainingFalseStartTimePenalty = 0.0;
   private RaceFlag flag = RaceFlag.UNKNOWN_FLAG;
+  private boolean isFinished = false;
   private double carryOverTime = 0.0;
   private boolean hasDriftTime = false;
   private int lane = 0;
@@ -326,6 +327,7 @@ public class DriverHeatData extends ServerToClientObject
     remainingFalseStartTimePenalty = 0.0;
     penaltyLaps = 0.0;
     hasDriftTime = false;
+    isFinished = false;
   }
 
   public void resetForFalseStart() {
@@ -485,6 +487,14 @@ public class DriverHeatData extends ServerToClientObject
 
   public void setFlag(RaceFlag flag) {
     this.flag = flag;
+  }
+
+  public boolean isFinished() {
+    return isFinished;
+  }
+
+  public void setFinished(boolean isFinished) {
+    this.isFinished = isFinished;
   }
 
   public void markDriftTime() {

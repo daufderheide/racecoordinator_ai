@@ -101,6 +101,10 @@ public class SeasonPointsCalculator {
       return grossPoints;
     }
 
+    public double getDroppedPoints() {
+      return Math.round(Math.max(0.0, grossPoints - netPoints) * 100.0) / 100.0;
+    }
+
     public int getRacesRun() {
       return racesRun;
     }

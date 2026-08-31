@@ -1,6 +1,6 @@
 <div
   class="page-container"
-  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
+  [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'"
 >
   <app-editor-title
     titleKey="RD_MODIFY_HEATS"

@@ -13,6 +13,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format.utils";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { DataService } from "@app/data.service";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
@@ -34,7 +35,12 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
   selector: "app-default-driver-station",
   templateUrl: "./default-driver-station.component.html",
   styleUrls: ["./default-driver-station.component.css"],
-  imports: [DecimalPipe, TranslatePipe, AcknowledgementModalComponent],
+  imports: [
+    DecimalPipe,
+    TranslatePipe,
+    AcknowledgementModalComponent,
+    BrowserNavigationComponent,
+  ],
 })
 export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
@@ -206,9 +212,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
             if (
               isBestLap &&
-              (driver.bestLapAudio.url ||
-                (driver.bestLapAudio.type === "tts" &&
-                  driver.bestLapAudio.text))
+              driver.bestLapAudio?.type !== "none" &&
+              (driver.bestLapAudio?.url ||
+                (driver.bestLapAudio?.type === "tts" &&
+                  driver.bestLapAudio?.text))
             ) {
               playSound(
                 driver.bestLapAudio.type,
@@ -219,8 +226,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
                 this.logger,
               );
             } else if (
-              driver.lapAudio.url ||
-              (driver.lapAudio.type === "tts" && driver.lapAudio.text)
+              driver.lapAudio?.type !== "none" &&
+              (driver.lapAudio?.url ||
+                (driver.lapAudio?.type === "tts" && driver.lapAudio?.text))
             ) {
               playSound(
                 driver.lapAudio.type,

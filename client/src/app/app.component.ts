@@ -136,9 +136,10 @@ export class AppComponent implements OnInit {
       if (state) {
         if (state.resourceLockState === "IDLE") {
           // If we are on raceday (but not setup) and the race ends, go back to splash
+          const currentPath = this.router.url.split("?")[0];
           if (
-            this.router.url.includes("raceday") &&
-            !this.router.url.includes("raceday-setup")
+            currentPath === "/raceday" ||
+            currentPath === "/default-raceday"
           ) {
             this.router.navigate(["/raceday-setup"]);
           }

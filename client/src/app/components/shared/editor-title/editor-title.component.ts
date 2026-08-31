@@ -6,6 +6,7 @@ import {
   output,
   ViewChild,
 } from "@angular/core";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
@@ -17,7 +18,7 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-editor-title",
   templateUrl: "./editor-title.component.html",
   styleUrls: ["./editor-title.component.css"],
-  imports: [ToolbarComponent, TranslatePipe],
+  imports: [ToolbarComponent, TranslatePipe, BrowserNavigationComponent],
 })
 export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
@@ -46,8 +47,8 @@ export class EditorTitleComponent implements AfterViewChecked {
   disabledImport = input(false);
   disabledImportRc1 = input(false);
   disabledExport = input(false);
-  marginTop = input<number>(60);
-  marginBottom = input<number>(40);
+  marginTop = input<number>(0);
+  marginBottom = input<number>(0);
   isSaving = input(false);
   helpSteps = input<GuideStep[]>([]);
   helpTitle = input("");

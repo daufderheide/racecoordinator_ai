@@ -50,4 +50,10 @@ public interface IProtocol {
   boolean isHealthy();
 
   void initializeHardwareState();
+
+  boolean hasPitInConfigured(int laneIndex);
+
+  boolean isLaneInPits(int laneIndex);
+
+  void setPitManager(PitManager pitManager);
 }

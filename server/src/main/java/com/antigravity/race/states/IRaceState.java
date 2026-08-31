@@ -41,19 +41,12 @@ public interface IRaceState {
           : RaceFlag.BLACK;
     }
 
-    // 3) Finished in Allow Finish mode - show driver_finished instead of CHECKERED for the driver
-    if (race.getRaceModel() != null && race.getRaceModel().getHeatScoring() != null) {
-      HeatScoring scoring = race.getRaceModel().getHeatScoring();
-      if (scoring.getAllowFinish() != null
-          && scoring.getAllowFinish() != AllowFinish.None
-          && scoring.getAllowFinish() != AllowFinish.NoneAutoSegments) {
-        if (isDriverFinished(race, lane, dhd)) {
-          return race.getTheme() != null
-              ? race.getTheme()
-                  .resolveFlag("flag.driver_finished", RaceFlag.RED, race.getDatabaseContext())
-              : RaceFlag.RED;
-        }
-      }
+    // 3) Driver Finished
+    if (isDriverFinished(race, lane, dhd)) {
+      return race.getTheme() != null
+          ? race.getTheme()
+              .resolveFlag("flag.driver_finished", RaceFlag.RED, race.getDatabaseContext())
+          : RaceFlag.RED;
     }
 
     return baseFlag;
@@ -64,6 +57,11 @@ public interface IRaceState {
     HeatScoring scoring = race.getRaceModel().getHeatScoring();
     if (scoring == null) return false;
 
+    // In HeatOver or RaceOver, all active drivers in the current heat have finished
+    if (this instanceof HeatOver || this instanceof RaceOver) {
+      return true;
+    }
+
     // Check if they are already in the finished lanes list (most authoritative)
     if (race.getHeatExecutionManager() != null
         && race.getHeatExecutionManager().getFinishedLanes().contains(laneIndex)) {
@@ -72,6 +70,11 @@ public interface IRaceState {
 
     if (scoring.getFinishMethod() == FinishMethod.Lap) {
       return hd.getLapCount() >= scoring.getFinishValue();
+    } else if (scoring.getFinishMethod() == FinishMethod.Timed) {
+      if (scoring.getAllowFinish() == AllowFinish.None
+          || scoring.getAllowFinish() == AllowFinish.NoneAutoSegments) {
+        return race.getRaceTime() <= 0;
+      }
     }
     return false;
   }

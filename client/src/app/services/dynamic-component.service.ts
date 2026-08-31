@@ -66,28 +66,9 @@ export class DynamicComponentService {
     const id = ++this.componentCount;
     const selector = `app-dynamic-component-${id}`;
 
-    // Create a named class to help with debugging
     let DynamicComponent = class extends baseClass {};
-
     if (tsCode && tsCode.trim().length > 0) {
-      try {
-        const ts = await this.loadTypeScript();
-        const jsCode = ts.transpile(tsCode, { target: ts.ScriptTarget.ES2022 });
-        const createClass = new Function("baseClass", jsCode);
-        const UserComponent = createClass(baseClass);
-        if (UserComponent && UserComponent.prototype instanceof baseClass) {
-          DynamicComponent = UserComponent;
-        } else {
-          console.error(
-            "Custom component must return a class that extends baseClass",
-          );
-        }
-      } catch (e) {
-        console.error(
-          "Failed to compile or evaluate custom typescript code",
-          e,
-        );
-      }
+      DynamicComponent = await this.compileTypeScript(tsCode, baseClass);
     }
 
     // Ensure custom dynamic components always act as a block-level full-height container
@@ -130,5 +111,68 @@ export class DynamicComponentService {
         UpdateSelectorComponent,
       ],
     })(DynamicComponent);
+  }
+
+  private async compileTypeScript(
+    tsCode: string,
+    baseClass: Type<any>,
+  ): Promise<Type<any>> {
+    try {
+      const ts = await this.loadTypeScript();
+      let cleanedTs = tsCode;
+
+      cleanedTs = cleanedTs.replace(
+        /import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g,
+        "",
+      );
+      cleanedTs = cleanedTs.replace(/import\s+['"][^'"]+['"];?/g, "");
+      cleanedTs = cleanedTs.replace(/@Component\s*\([\s\S]*?\)/g, "");
+      cleanedTs = cleanedTs.replace(
+        /extends\s+CustomWidgetBaseComponent\b/g,
+        "extends baseClass",
+      );
+      cleanedTs = cleanedTs.replace(/export\s+default\s+class\b/g, "class");
+      cleanedTs = cleanedTs.replace(/export\s+class\b/g, "class");
+      cleanedTs = cleanedTs.replace(
+        /export\s+(interface|type|enum|const|let|var|function)\b/g,
+        "$1",
+      );
+
+      let className = "";
+      const classMatch = cleanedTs.match(/class\s+([A-Za-z0-9_$]+)/);
+      if (classMatch) {
+        className = classMatch[1];
+      }
+
+      const jsCode = ts.transpile(cleanedTs, {
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.None,
+      });
+
+      let fnBody = jsCode;
+      if (cleanedTs.trim().startsWith("return ")) {
+        fnBody = jsCode;
+      } else if (className) {
+        fnBody = `${jsCode}\nreturn ${className};`;
+      }
+
+      const createClass = new Function("baseClass", "exports", fnBody);
+      const exportsObj: Record<string, any> = {};
+      const UserComponent = createClass(baseClass, exportsObj);
+      if (
+        UserComponent &&
+        (UserComponent.prototype instanceof baseClass ||
+          UserComponent === baseClass ||
+          typeof UserComponent === "function")
+      ) {
+        return UserComponent;
+      }
+      console.error(
+        "Custom component must return a class that extends baseClass",
+      );
+    } catch (e) {
+      console.error("Failed to compile or evaluate custom typescript code", e);
+    }
+    return class extends baseClass {};
   }
 }

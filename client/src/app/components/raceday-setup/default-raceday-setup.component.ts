@@ -26,12 +26,14 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { DemoConfigModalComponent } from "@app/components/shared/demo-config-modal/demo-config-modal.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { LanguageSelectorComponent } from "@app/components/shared/language-selector/language-selector.component";
+import { RacingRosterDialogComponent } from "@app/components/shared/racing-roster-dialog/racing-roster-dialog.component";
+import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
 import { Race } from "@app/models/race";
-import { Season } from "@app/models/season";
+import { Season, SeasonStandingItem } from "@app/models/season";
 import { Settings } from "@app/models/settings";
 import { Team } from "@app/models/team";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -45,6 +47,7 @@ import { RaceService } from "@app/services/race.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 interface ISavedRace {
@@ -69,6 +72,8 @@ type Participant = Driver | Team;
     ConfirmationModalComponent,
     AcknowledgementModalComponent,
     DemoConfigModalComponent,
+    RacingRosterDialogComponent,
+    SeasonSummaryComponent,
     TranslatePipe,
     EditorTitleComponent,
     LanguageSelectorComponent,
@@ -111,12 +116,17 @@ export class DefaultRacedaySetupComponent implements OnInit {
   isEventDropdownOpen: boolean = false;
   isOptionsDropdownOpen: boolean = false;
   isFileDropdownOpen: boolean = false;
+  isMac: boolean = false;
+  quitShortcut: string = "Alt+F4";
   showLoadRaceModal: boolean = false;
+  editingSaveFilename: string | null = null;
+  editingSaveNewName: string = "";
   showAutoSavePrompt: boolean = false;
   autoSaveFileToLoad: string | null = null;
   pendingIsDemo: boolean = false;
   savedRaces: ISavedRace[] = [];
   selectedSavedRace: ISavedRace | null = null;
+  loadedRaceName: string = "";
   public isRefreshingList: boolean = false;
   public showWelcomeMessage: boolean = true;
   isAvailableDriversCollapsed: boolean = false;
@@ -125,15 +135,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
   showErrorModal: boolean = false;
   errorTitle: string = "";
   errorMessage: string = "";
-  errorMessageParams: any = {};
-
-  // Demo Config State
+  errorMessageParams?: Record<string, string>;
   showDemoConfigModal: boolean = false;
+  showRacingRosterDialog: boolean = false;
   demoConfig?: IDemoConfig;
 
   // Season State
   seasons: Season[] = [];
   selectedSeason?: Season;
+  seasonStandings: SeasonStandingItem[] = [];
 
   // Race State Additions
   isRaceRunning: boolean = false;
@@ -209,16 +219,35 @@ export class DefaultRacedaySetupComponent implements OnInit {
               {
                 type:
                   d.lapAudio?.type ||
-                  (d.lapSoundType === "tts" ? "tts" : "preset"),
+                  (d.lapSoundType === "tts"
+                    ? "tts"
+                    : d.lapSoundType === "none"
+                      ? "none"
+                      : "preset"),
                 url: d.lapAudio?.url || d.lapSoundUrl,
                 text: d.lapAudio?.text || d.lapSoundText,
               },
               {
                 type:
                   d.bestLapAudio?.type ||
-                  (d.bestLapSoundType === "tts" ? "tts" : "preset"),
+                  (d.bestLapSoundType === "tts"
+                    ? "tts"
+                    : d.bestLapSoundType === "none"
+                      ? "none"
+                      : "preset"),
                 url: d.bestLapAudio?.url || d.bestLapSoundUrl,
                 text: d.bestLapAudio?.text || d.bestLapSoundText,
+              },
+              {
+                type:
+                  d.penaltyAudio?.type ||
+                  (d.penaltySoundType === "tts"
+                    ? "tts"
+                    : d.penaltySoundType === "none"
+                      ? "none"
+                      : "preset"),
+                url: d.penaltyAudio?.url || d.penaltySoundUrl,
+                text: d.penaltyAudio?.text || d.penaltySoundText,
               },
             ),
         );
@@ -258,6 +287,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           );
           if (matchedSeason) {
             this.selectedSeason = matchedSeason;
+            this.calculateSeasonStandings();
           }
         }
 
@@ -398,6 +428,44 @@ export class DefaultRacedaySetupComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    this.detectShortcutKey();
+  }
+
+  detectShortcutKey() {
+    if (typeof navigator !== "undefined") {
+      this.isMac =
+        navigator.platform?.toUpperCase().indexOf("MAC") >= 0 ||
+        navigator.userAgent?.toUpperCase().indexOf("MAC") >= 0;
+      this.quitShortcut = this.isMac ? "Cmd+Q" : "Alt+F4";
+    }
+  }
+
+  @HostListener("window:keydown", ["$event"])
+  onKeyDown(event: KeyboardEvent) {
+    const inInputField =
+      document.activeElement &&
+      (document.activeElement.tagName === "INPUT" ||
+        document.activeElement.tagName === "TEXTAREA");
+
+    if (inInputField) {
+      return;
+    }
+
+    if (this.isMac) {
+      if (event.metaKey && (event.key === "q" || event.key === "Q")) {
+        event.preventDefault();
+        this.quit();
+      }
+    } else {
+      if (
+        (event.altKey && event.key === "F4") ||
+        (event.ctrlKey && (event.key === "q" || event.key === "Q"))
+      ) {
+        event.preventDefault();
+        this.quit();
+      }
+    }
   }
 
   @HostListener("window:resize")
@@ -433,7 +501,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 
@@ -1031,9 +1098,8 @@ export class DefaultRacedaySetupComponent implements OnInit {
       : undefined;
 
     const themeId =
-      this.themeService.getActiveTheme()?.entity_id ||
       (raceId ? settings.raceThemeOverrides?.[raceId] : undefined) ||
-      settings.activeThemeId ||
+      this.selectedRace?.theme_id ||
       undefined;
 
     const initializeObservable =
@@ -1080,7 +1146,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
           } else if (response.errorCode === "TRACK_DELETED") {
             this.errorMessage = "RDS_ERR_TRACK_DELETED";
             this.errorMessageParams = {
-              race: this.selectedRace?.name || "",
+              race: this.selectedRace?.name || this.selectedEvent?.name || "",
+            };
+          } else if (response.errorCode === "THEME_DELETED") {
+            this.errorMessage = "RDS_ERR_THEME_DELETED";
+            this.errorMessageParams = {
+              race: this.selectedRace?.name || this.selectedEvent?.name || "",
             };
           } else if (response.errorCode === "NO_CUSTOM_ROTATIONS") {
             this.errorMessage = "RDS_ERR_NO_CUSTOM_ROTATIONS";
@@ -1101,7 +1172,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
                 ? "RDS_ERR_NO_CUSTOM_ROTATIONS_FIX"
                 : response.errorCode === "TRACK_DELETED"
                   ? "RDS_ERR_TRACK_DELETED_FIX"
-                  : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
+                  : response.errorCode === "THEME_DELETED"
+                    ? "RDS_ERR_THEME_DELETED_FIX"
+                    : "RDS_ERR_START_RACE_FIX_DESCRIPTION";
             const fixDescription = this.translationService.translate(fixKey);
             this.errorMessage = translatedMessage + "\n\n" + fixDescription;
             // Clear messageParams since we've already done the translation for the main part
@@ -1328,6 +1401,16 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
+  openRacingRosterDialog(): void {
+    this.showRacingRosterDialog = true;
+    this.cdr.detectChanges();
+  }
+
+  closeRacingRosterDialog(): void {
+    this.showRacingRosterDialog = false;
+    this.cdr.detectChanges();
+  }
+
   toggleServerLogDropdown(event: Event) {
     event.stopPropagation();
     this.isServerLogOpen = !this.isServerLogOpen;
@@ -1393,6 +1476,15 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   closeFileDropdown() {
     this.isFileDropdownOpen = false;
+  }
+
+  quit() {
+    this.closeFileDropdown();
+    this.closeWindow();
+  }
+
+  closeWindow() {
+    window.close();
   }
 
   exportSettings() {
@@ -1512,12 +1604,44 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   onSeasonChange() {
+    this.calculateSeasonStandings();
+    if (this.selectedSeason?.entity_id) {
+      this.dataService
+        .getSeasonStandings(this.selectedSeason.entity_id)
+        .subscribe({
+          next: (standings) => {
+            this.seasonStandings = standings;
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            this.logger.warn("Failed to fetch season standings", err);
+          },
+        });
+    }
     this.saveSettings();
   }
 
   selectSeason(season?: Season) {
     this.selectedSeason = season;
+    this.calculateSeasonStandings();
+    if (season?.entity_id) {
+      this.dataService.getSeasonStandings(season.entity_id).subscribe({
+        next: (standings) => {
+          if (this.selectedSeason?.entity_id === season.entity_id) {
+            this.seasonStandings = standings;
+            this.cdr.detectChanges();
+          }
+        },
+        error: (err) => {
+          this.logger.warn("Failed to fetch season standings", err);
+        },
+      });
+    }
     this.saveSettings();
+  }
+
+  calculateSeasonStandings(): void {
+    this.seasonStandings = calculateSeasonStandings(this.selectedSeason);
   }
 
   compareSeasons(s1?: Season, s2?: Season): boolean {
@@ -1654,6 +1778,59 @@ export class DefaultRacedaySetupComponent implements OnInit {
     return val !== undefined && val !== null ? String(val) : "";
   }
 
+  getThemeDisplayNameKey(theme: any): string {
+    if (!theme) return "";
+    if (
+      theme.entity_id === "default_classic_rc_ai" ||
+      theme.id === "default_classic_rc_ai" ||
+      theme._id === "default_classic_rc_ai"
+    ) {
+      return "UE_LABEL_DEFAULT_THEME";
+    }
+    if (
+      theme.entity_id === "practice_theme_rc_ai" ||
+      theme.id === "practice_theme_rc_ai" ||
+      theme._id === "practice_theme_rc_ai"
+    ) {
+      return "UE_LABEL_PRACTICE_THEME";
+    }
+    if (
+      theme.entity_id === "default_fuel_theme_rc_ai" ||
+      theme.id === "default_fuel_theme_rc_ai" ||
+      theme._id === "default_fuel_theme_rc_ai"
+    ) {
+      return "UE_LABEL_FUEL_THEME";
+    }
+    return theme.name || theme.entity_id || "";
+  }
+
+  getThemeDisplay(race: any): string {
+    const themeId = race?.theme_id || "default_classic_rc_ai";
+    const themes = this.themeService.getThemes() || [];
+    const theme = themes.find(
+      (t) => (t.entity_id || (t as any).id || (t as any)._id) === themeId,
+    );
+    if (theme) {
+      const key = this.getThemeDisplayNameKey(theme);
+      return this.translationService.translate(key) || theme.name || themeId;
+    }
+    if (themeId === "default_classic_rc_ai") {
+      return (
+        this.translationService.translate("UE_LABEL_DEFAULT_THEME") || "Default"
+      );
+    }
+    if (themeId === "practice_theme_rc_ai") {
+      return (
+        this.translationService.translate("UE_LABEL_PRACTICE_THEME") ||
+        "Practice"
+      );
+    }
+    if (themeId === "default_fuel_theme_rc_ai") {
+      return this.translationService.translate("UE_LABEL_FUEL_THEME") || "Fuel";
+    }
+    return themeId;
+  }
+
   openHelpCenter() {
     this.closeHelpDropdown();
     this.helpLinkService.openHelp("");
@@ -1702,6 +1879,26 @@ export class DefaultRacedaySetupComponent implements OnInit {
         content: this.translationService.translate("RDS_HELP_WELCOME_CONTENT"),
       },
       {
+        targetId: "available-drivers-section",
+        title: this.translationService.translate(
+          "RDS_HELP_DRIVER_AVAILABLE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
+        ),
+        position: "right",
+      },
+      {
+        selector: "#available-drivers-section .header-actions",
+        title: this.translationService.translate(
+          "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
         targetId: "racing-drivers-section",
         title: this.translationService.translate(
           "RDS_HELP_DRIVER_RACING_TITLE",
@@ -1720,26 +1917,6 @@ export class DefaultRacedaySetupComponent implements OnInit {
           "RDS_HELP_DRIVER_ACTIONS_CONTENT",
         ),
         position: "bottom",
-      },
-      {
-        targetId: "available-drivers-section",
-        title: this.translationService.translate(
-          "RDS_HELP_DRIVER_AVAILABLE_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: "#available-drivers-section .header-actions",
-        title: this.translationService.translate(
-          "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
-        ),
-        position: "right",
       },
       {
         selector: ".custom-dropdown-container",
@@ -1850,6 +2027,66 @@ export class DefaultRacedaySetupComponent implements OnInit {
       return;
     }
     this.selectedSavedRace = file;
+  }
+
+  startInlineRename(event: MouseEvent, file: ISavedRace) {
+    event.stopPropagation();
+    if (file.corrupt) return;
+    this.editingSaveFilename = file.filename;
+    let name = file.filename;
+    if (name.toLowerCase().endsWith(".json")) {
+      name = name.substring(0, name.length - 5);
+    }
+    this.editingSaveNewName = name;
+    this.cdr.detectChanges();
+  }
+
+  saveInlineRename(file: ISavedRace) {
+    if (!this.editingSaveNewName || !this.editingSaveNewName.trim()) {
+      this.cancelInlineRename();
+      return;
+    }
+    let normalized = this.editingSaveNewName.trim();
+    if (!normalized.toLowerCase().endsWith(".json")) {
+      normalized += ".json";
+    }
+    if (normalized === file.filename) {
+      this.cancelInlineRename();
+      return;
+    }
+    const oldFilename = file.filename;
+    this.dataService
+      .renameSavedRace(oldFilename, normalized, file.isDemo)
+      .subscribe({
+        next: () => {
+          file.filename = normalized;
+          this.savedRaces = [...this.savedRaces];
+          if (this.selectedSavedRace?.filename === oldFilename) {
+            this.selectedSavedRace = file;
+          }
+          this.editingSaveFilename = null;
+          this.editingSaveNewName = "";
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error("Failed to rename saved race:", err);
+          this.errorTitle = "Error";
+          this.errorMessage =
+            typeof err?.error === "string" && err.error.trim()
+              ? err.error
+              : err?.message || "Failed to rename saved race";
+          this.showErrorModal = true;
+          this.editingSaveFilename = null;
+          this.editingSaveNewName = "";
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  cancelInlineRename() {
+    this.editingSaveFilename = null;
+    this.editingSaveNewName = "";
+    this.cdr.detectChanges();
   }
 
   closeLoadRaceModal() {

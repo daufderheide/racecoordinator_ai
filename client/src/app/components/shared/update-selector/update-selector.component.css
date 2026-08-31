@@ -9,40 +9,20 @@ app-update-selector .menu-dropdown.submenu {
   left: 100%;
   z-index: 4000;
   box-sizing: border-box;
-}
-
-/* Raceday Setup Page dropdown container styling */
-app-update-selector:has(.menu-dropdown-item) .menu-dropdown.submenu {
-  background: #0f172a;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-  border-radius: 6px;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.5),
-    0 8px 10px -6px rgba(0, 0, 0, 0.5),
-    0 0 15px rgba(56, 189, 248, 0.15);
-  min-width: 260px;
+  background: #1e2430;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  min-width: 240px;
   margin-top: 0;
   margin-left: 2px;
-  padding: 6px 0;
-  backdrop-filter: blur(12px);
-}
-
-/* Raceday Page dropdown container styling */
-app-update-selector:has(.menu-item) .menu-dropdown.submenu {
-  background-color: #1a2332;
-  border: 1px solid #2d3748;
-  min-width: 240px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  margin-top: -6px;
-  margin-left: -1px;
-  padding: 5px 0;
-  border-radius: 4px;
+  padding: 4px;
 }
 
 /* Submenu Arrow styling */
 app-update-selector .submenu-arrow {
   font-size: 10px;
-  margin-left: 10px;
+  margin-left: auto;
   opacity: 0.6;
 }
 
@@ -50,90 +30,44 @@ app-update-selector .submenu-arrow {
 app-update-selector .menu-dropdown-divider {
   height: 1px;
   margin: 4px 0;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.08);
   border: none;
-}
-
-/* Selected checkmark indicator */
-app-update-selector .selected-indicator {
-  margin-left: auto;
-  padding-left: 12px;
-  font-weight: bold;
-  color: #38bdf8;
 }
 
 /* Race Day page items */
 app-update-selector .menu-item {
   color: #e2e8f0;
-  padding: 10px 20px;
+  padding: 6px 10px;
   cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   font-size: 14px;
   box-sizing: border-box;
-  font-family: 'Tahoma', sans-serif;
-}
-
-app-update-selector .menu-item:hover:not(.disabled) {
-  background-color: #334155;
-  color: #e2e8f0;
-}
-
-app-update-selector .menu-item.selected {
-  background-color: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  font-weight: bold;
+  font-family: inherit;
+  border-radius: 5px;
 }
 
 app-update-selector .menu-item.disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 /* Race Day Setup page items */
+app-update-selector .setup-menu-dropdown-item,
 app-update-selector .menu-dropdown-item {
-  padding: 10px 16px;
+  padding: 6px 10px;
   color: #e2e8f0;
   cursor: pointer;
-  transition: all 0.2s;
   font-size: 0.9rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
-  justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
-  text-align: left;
+  font-family: inherit;
+  border-radius: 5px;
 }
 
-app-update-selector .menu-dropdown-item.has-submenu {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
-}
-
-app-update-selector .menu-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-app-update-selector .menu-dropdown-item:nth-of-type(even) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-app-update-selector .menu-dropdown-item:hover:not(.disabled) {
-  background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-}
-
-app-update-selector .menu-dropdown-item.selected {
-  background-color: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
-  font-weight: 600;
-}
-
+app-update-selector .setup-menu-dropdown-item.disabled,
 app-update-selector .menu-dropdown-item.disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
 }

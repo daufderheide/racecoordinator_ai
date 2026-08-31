@@ -210,4 +210,28 @@ test.describe("Race Results Visuals", () => {
       fullPage: true,
     });
   });
+
+  test("should display race results in fullscreen mode with navigation buttons", async ({
+    page,
+  }) => {
+    const mockData = RaceResultsHelper.createMockRaceData();
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator(".header-bar");
+    await header.waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("race-results-fullscreen.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });

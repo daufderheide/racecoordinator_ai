@@ -46,19 +46,15 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import {
-  ColumnVisibility,
-  LayoutConfig,
-  Settings,
-  WidgetType,
-} from "@app/models/settings";
+import { LayoutConfig, Settings, WidgetType } from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { LapType, RaceState } from "@app/proto/antigravity";
+import { IRecordEntry, LapType, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
+import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
@@ -72,11 +68,16 @@ export interface LapDisplayInfo {
   lapTime: string;
   segments: string[];
 }
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
+import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
+import { CustomUI } from "@app/models/custom-ui";
+import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { HelpService } from "@app/services/help.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -97,7 +98,10 @@ import {
   RacedayFormatUtils,
 } from "./utils/raceday-format.utils";
 import { RacedayLayoutUtils } from "./utils/raceday-layout.utils";
-import { createMockEditorData } from "./utils/raceday-mock.utils";
+import {
+  createMockEditorData,
+  createMockLaneRecordEntries,
+} from "./utils/raceday-mock.utils";
 
 /**
  * The raceday component is the main component for the raceday screen.
@@ -117,6 +121,8 @@ import { createMockEditorData } from "./utils/raceday-mock.utils";
     TranslatePipe,
     AddLapSectionsDialogComponent,
     PdfExportDialogComponent,
+    BrowserNavigationComponent,
+    InputDialogComponent,
   ],
 })
 export class DefaultRacedayComponent
@@ -124,6 +130,8 @@ export class DefaultRacedayComponent
 {
   showPdfExportDialog = false;
   defaultIncludeBackground = true;
+  showSaveRaceDialog = false;
+  saveRaceName = "";
 
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
@@ -426,9 +434,7 @@ export class DefaultRacedayComponent
   protected get gridTemplateRowsVertical(): string {
     if (!this.columns || this.columns.length === 0) return "1fr";
 
-    const lapTimeCol = this.columns.find((c) =>
-      c.propertyName.startsWith("lastLapTime"),
-    );
+    const lapTimeCol = this.columns.find((c) => this.isLapTimeColumn(c));
     const nicknameCol = this.columns.find(
       (c) =>
         c.propertyName.startsWith("driver.nickname") ||
@@ -448,10 +454,7 @@ export class DefaultRacedayComponent
         if (c.propertyName === "lastLaps") {
           return `minmax(0, ${largeHeight * 5}fr)`;
         }
-        if (
-          c.propertyName === "lapCount" ||
-          c.propertyName.startsWith("lastLapTime")
-        ) {
+        if (c.propertyName === "lapCount" || this.isLapTimeColumn(c)) {
           return `minmax(0, ${largeHeight}fr)`;
         }
         return `minmax(0, ${smallHeight}fr)`;
@@ -590,10 +593,12 @@ export class DefaultRacedayComponent
     if (this.viewerRaceEndedHandler)
       this.viewerRaceEndedHandler.ackModalButtonText = v;
   }
+  private _raceHasEnded = false;
   get raceHasEnded(): boolean {
-    return this.viewerRaceEndedHandler?.raceHasEnded ?? false;
+    return this.viewerRaceEndedHandler?.raceHasEnded ?? this._raceHasEnded;
   }
   set raceHasEnded(v: boolean) {
+    this._raceHasEnded = v;
     if (this.viewerRaceEndedHandler)
       this.viewerRaceEndedHandler.raceHasEnded = v;
   }
@@ -602,6 +607,8 @@ export class DefaultRacedayComponent
   public Role = Role;
   showLoginModal = false;
   private pendingNavigationUrl = "";
+
+  private childWindowManagerService: ChildWindowManagerService;
 
   constructor(
     private el: ElementRef,
@@ -614,13 +621,22 @@ export class DefaultRacedayComponent
     private raceConnectionService: RaceConnectionService,
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
+    private customUiService: CustomUiService,
     private logger: LoggerService,
     private route: ActivatedRoute,
     private printService: PrintService,
     public authService: AuthService,
     private helpService: HelpService,
     private predictionService?: RacePredictionService,
+    childWindowManagerService?: ChildWindowManagerService,
+    private customWidgetService?: CustomWidgetService,
   ) {
+    this.childWindowManagerService =
+      childWindowManagerService ?? inject(ChildWindowManagerService);
+    this.customWidgetService =
+      customWidgetService ??
+      inject(CustomWidgetService, { optional: true }) ??
+      undefined;
     // Initial default columns, will be overwritten in ngOnInit
     this.columns = [];
     this.router.events.subscribe((event) => {
@@ -649,6 +665,7 @@ export class DefaultRacedayComponent
   isPracticeLayoutEditor = input<boolean>(false);
   uiScale = input<number>(1);
   editingSettings = input<Settings | undefined>(undefined);
+  activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
   widgetSelected = output<string | null>();
 
@@ -748,14 +765,79 @@ export class DefaultRacedayComponent
       : [];
   }
 
+  private parsedThemeLayouts = new Map<string, any>();
+
+  private getParsedCustomUiProperty(
+    customUI: any,
+    propName: string,
+    fallbackVal: any,
+  ): any {
+    if (!customUI) return fallbackVal;
+    const jsonStr = customUI[propName] as string;
+    if (!jsonStr) return fallbackVal;
+
+    if (!this.parsedThemeLayouts.has(jsonStr)) {
+      try {
+        this.parsedThemeLayouts.set(jsonStr, JSON.parse(jsonStr));
+      } catch (e) {
+        this.parsedThemeLayouts.set(jsonStr, fallbackVal);
+      }
+    }
+    return this.parsedThemeLayouts.get(jsonStr);
+  }
+
   get currentRacedayLayout(): LayoutConfig | undefined {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      if (ui.layoutJson && ui.layoutJson !== "[]") {
+        return this.getParsedCustomUiProperty(ui, "layoutJson", undefined);
+      }
+      return this.isPracticeLayout
+        ? this.editingSettings()?.practiceRacedayLayout ||
+            JSON.parse(JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT))
+        : this.editingSettings()?.racedayLayout ||
+            JSON.parse(JSON.stringify(Settings.DEFAULT_LAYOUT));
+    }
+    if (this.editingSettings()) {
+      return this.isPracticeLayout
+        ? this.editingSettings()!.practiceRacedayLayout
+        : this.editingSettings()!.racedayLayout;
+    }
+    const settings = this.settingsService.getSettings();
+    const activeTheme = this.themeService.getActiveTheme();
+    const customUI =
+      activeTheme && activeTheme.uiId
+        ? this.customUiService.getCustomUI(activeTheme.uiId)
+        : undefined;
     return this.isPracticeLayout
-      ? settings.practiceRacedayLayout
-      : settings.racedayLayout;
+      ? this.getParsedCustomUiProperty(
+          customUI,
+          "layoutJson",
+          settings.practiceRacedayLayout,
+        )
+      : this.getParsedCustomUiProperty(
+          customUI,
+          "layoutJson",
+          settings.racedayLayout,
+        );
   }
   set currentRacedayLayout(layout: LayoutConfig | undefined) {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      ui.layoutJson = layout ? JSON.stringify(layout) : "";
+      if (
+        ui.entity_id === "default_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.racedayLayout = layout;
+      } else if (
+        ui.entity_id === "practice_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.practiceRacedayLayout = layout;
+      }
+      return;
+    }
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     if (this.isPracticeLayout) settings.practiceRacedayLayout = layout;
@@ -763,13 +845,55 @@ export class DefaultRacedayComponent
   }
 
   get currentRacedayColumns(): string[] {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      if (ui.columnsJson) {
+        return this.getParsedCustomUiProperty(ui, "columnsJson", []);
+      }
+      return this.isPracticeLayout
+        ? this.editingSettings()?.practiceRacedayColumns || []
+        : this.editingSettings()?.racedayColumns || [];
+    }
+    if (this.editingSettings()) {
+      return this.isPracticeLayout
+        ? this.editingSettings()!.practiceRacedayColumns || []
+        : this.editingSettings()!.racedayColumns || [];
+    }
+    const settings = this.settingsService.getSettings();
+    const activeTheme = this.themeService.getActiveTheme();
+    const customUI =
+      activeTheme && activeTheme.uiId
+        ? this.customUiService.getCustomUI(activeTheme.uiId)
+        : undefined;
     return this.isPracticeLayout
-      ? settings.practiceRacedayColumns || []
-      : settings.racedayColumns || [];
+      ? this.getParsedCustomUiProperty(
+          customUI,
+          "columnsJson",
+          settings.practiceRacedayColumns || [],
+        )
+      : this.getParsedCustomUiProperty(
+          customUI,
+          "columnsJson",
+          settings.racedayColumns || [],
+        );
   }
   set currentRacedayColumns(cols: string[]) {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      ui.columnsJson = JSON.stringify(cols);
+      if (
+        ui.entity_id === "default_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.racedayColumns = cols;
+      } else if (
+        ui.entity_id === "practice_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.practiceRacedayColumns = cols;
+      }
+      return;
+    }
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     if (this.isPracticeLayout) settings.practiceRacedayColumns = cols;
@@ -777,13 +901,55 @@ export class DefaultRacedayComponent
   }
 
   get currentColumnAnchors(): { [key: string]: AnchorPoint } {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      if (ui.columnAnchorsJson) {
+        return this.getParsedCustomUiProperty(ui, "columnAnchorsJson", {});
+      }
+      return this.isPracticeLayout
+        ? this.editingSettings()?.practiceColumnAnchors || {}
+        : this.editingSettings()?.columnAnchors || {};
+    }
+    if (this.editingSettings()) {
+      return this.isPracticeLayout
+        ? this.editingSettings()!.practiceColumnAnchors || {}
+        : this.editingSettings()!.columnAnchors || {};
+    }
+    const settings = this.settingsService.getSettings();
+    const activeTheme = this.themeService.getActiveTheme();
+    const customUI =
+      activeTheme && activeTheme.uiId
+        ? this.customUiService.getCustomUI(activeTheme.uiId)
+        : undefined;
     return this.isPracticeLayout
-      ? settings.practiceColumnAnchors || {}
-      : settings.columnAnchors || {};
+      ? this.getParsedCustomUiProperty(
+          customUI,
+          "columnAnchorsJson",
+          settings.practiceColumnAnchors || {},
+        )
+      : this.getParsedCustomUiProperty(
+          customUI,
+          "columnAnchorsJson",
+          settings.columnAnchors || {},
+        );
   }
   set currentColumnAnchors(anchors: { [key: string]: AnchorPoint }) {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      ui.columnAnchorsJson = JSON.stringify(anchors);
+      if (
+        ui.entity_id === "default_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.columnAnchors = anchors;
+      } else if (
+        ui.entity_id === "practice_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.practiceColumnAnchors = anchors;
+      }
+      return;
+    }
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     if (this.isPracticeLayout) settings.practiceColumnAnchors = anchors;
@@ -793,33 +959,117 @@ export class DefaultRacedayComponent
   get currentColumnLayouts(): {
     [columnKey: string]: { [A in AnchorPoint]?: string };
   } {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      if (ui.columnLayoutsJson) {
+        return this.getParsedCustomUiProperty(ui, "columnLayoutsJson", {});
+      }
+      return this.isPracticeLayout
+        ? this.editingSettings()?.practiceColumnLayouts || {}
+        : this.editingSettings()?.columnLayouts || {};
+    }
+    if (this.editingSettings()) {
+      return this.isPracticeLayout
+        ? this.editingSettings()!.practiceColumnLayouts || {}
+        : this.editingSettings()!.columnLayouts || {};
+    }
+    const settings = this.settingsService.getSettings();
+    const activeTheme = this.themeService.getActiveTheme();
+    const customUI =
+      activeTheme && activeTheme.uiId
+        ? this.customUiService.getCustomUI(activeTheme.uiId)
+        : undefined;
     return this.isPracticeLayout
-      ? settings.practiceColumnLayouts || {}
-      : settings.columnLayouts || {};
+      ? this.getParsedCustomUiProperty(
+          customUI,
+          "columnLayoutsJson",
+          settings.practiceColumnLayouts || {},
+        )
+      : this.getParsedCustomUiProperty(
+          customUI,
+          "columnLayoutsJson",
+          settings.columnLayouts || {},
+        );
   }
   set currentColumnLayouts(layouts: {
     [columnKey: string]: { [A in AnchorPoint]?: string };
   }) {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      ui.columnLayoutsJson = JSON.stringify(layouts);
+      if (
+        ui.entity_id === "default_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.columnLayouts = layouts;
+      } else if (
+        ui.entity_id === "practice_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.practiceColumnLayouts = layouts;
+      }
+      return;
+    }
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
     if (this.isPracticeLayout) settings.practiceColumnLayouts = layouts;
     else settings.columnLayouts = layouts;
   }
 
-  get currentColumnVisibility(): { [columnKey: string]: ColumnVisibility } {
-    const settings =
-      this.editingSettings() || this.settingsService.getSettings();
+  get currentColumnWidths(): { [columnKey: string]: number } {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      if (ui.columnWidthsJson) {
+        return this.getParsedCustomUiProperty(ui, "columnWidthsJson", {});
+      }
+      return this.isPracticeLayout
+        ? this.editingSettings()?.practiceColumnWidths || {}
+        : this.editingSettings()?.columnWidths || {};
+    }
+    if (this.editingSettings()) {
+      return this.isPracticeLayout
+        ? this.editingSettings()!.practiceColumnWidths || {}
+        : this.editingSettings()!.columnWidths || {};
+    }
+    const settings = this.settingsService.getSettings();
+    const activeTheme = this.themeService.getActiveTheme();
+    const customUI =
+      activeTheme && activeTheme.uiId
+        ? this.customUiService.getCustomUI(activeTheme.uiId)
+        : undefined;
     return this.isPracticeLayout
-      ? settings.practiceColumnVisibility || {}
-      : settings.columnVisibility || {};
+      ? this.getParsedCustomUiProperty(
+          customUI,
+          "columnWidthsJson",
+          settings.practiceColumnWidths || {},
+        )
+      : this.getParsedCustomUiProperty(
+          customUI,
+          "columnWidthsJson",
+          settings.columnWidths || {},
+        );
   }
-  set currentColumnVisibility(vis: { [columnKey: string]: ColumnVisibility }) {
+  set currentColumnWidths(widths: { [columnKey: string]: number }) {
+    if (this.isUIEditorMode() && this.activeCustomUi()) {
+      const ui = this.activeCustomUi()!;
+      ui.columnWidthsJson = JSON.stringify(widths);
+      if (
+        ui.entity_id === "default_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.columnWidths = widths;
+      } else if (
+        ui.entity_id === "practice_ui_layout_rc_ai" &&
+        this.editingSettings()
+      ) {
+        this.editingSettings()!.practiceColumnWidths = widths;
+      }
+      return;
+    }
     const settings =
       this.editingSettings() || this.settingsService.getSettings();
-    if (this.isPracticeLayout) settings.practiceColumnVisibility = vis;
-    else settings.columnVisibility = vis;
+    if (this.isPracticeLayout) settings.practiceColumnWidths = widths;
+    else settings.columnWidths = widths;
   }
 
   toggleLayoutEditorMinimize(event: Event) {
@@ -855,11 +1105,13 @@ export class DefaultRacedayComponent
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (
-      changes["editingSettings"] &&
-      !changes["editingSettings"].firstChange &&
-      this.isUIEditorMode()
-    ) {
+    const settingsChange = changes["editingSettings"];
+    const uiChange = changes["activeCustomUi"];
+    const hasMeaningfulChange =
+      (settingsChange && !settingsChange.firstChange) ||
+      (uiChange && !uiChange.firstChange);
+
+    if (hasMeaningfulChange && this.isUIEditorMode()) {
       const settings = this.editingSettings();
       if (settings) {
         this.isLayoutEditorMinimized = settings.layoutEditorMinimized ?? false;
@@ -871,11 +1123,11 @@ export class DefaultRacedayComponent
         ) {
           this.layoutEditorPosition = { x: targetX, y: targetY };
         }
-        if (this.currentRacedayLayout?.widgets) {
-          this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
-        } else {
-          this.layout = this.getDefaultLayout();
-        }
+      }
+      if (this.currentRacedayLayout?.widgets) {
+        this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
+      } else {
+        this.layout = this.getDefaultLayout();
       }
       this.updateScale();
       this.loadColumns();
@@ -930,6 +1182,18 @@ export class DefaultRacedayComponent
           this.loadPredictionsForCurrentRace();
           this.cdr.markForCheck();
         }
+      }),
+    );
+
+    this.subscriptions.push(
+      this.themeService.activeTheme$.subscribe(() => {
+        this.updateRacedayLayout();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.customUiService.customUIs$.subscribe(() => {
+        this.updateRacedayLayout();
       }),
     );
   }
@@ -1259,9 +1523,9 @@ export class DefaultRacedayComponent
 
     if (
       isBestLap &&
-      driver.bestLapAudio.type !== "none" &&
-      (driver.bestLapAudio.url ||
-        (driver.bestLapAudio.type === "tts" && driver.bestLapAudio.text))
+      driver.bestLapAudio?.type !== "none" &&
+      (driver.bestLapAudio?.url ||
+        (driver.bestLapAudio?.type === "tts" && driver.bestLapAudio?.text))
     ) {
       playSound(
         driver.bestLapAudio.type,
@@ -1274,9 +1538,9 @@ export class DefaultRacedayComponent
     } else if (lap.isDrift) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
     } else if (
-      driver.lapAudio.type !== "none" &&
-      (driver.lapAudio.url ||
-        (driver.lapAudio.type === "tts" && driver.lapAudio.text))
+      driver.lapAudio?.type !== "none" &&
+      (driver.lapAudio?.url ||
+        (driver.lapAudio?.type === "tts" && driver.lapAudio?.text))
     ) {
       playSound(
         driver.lapAudio.type,
@@ -1372,6 +1636,15 @@ export class DefaultRacedayComponent
   private subscribeToUIEvents() {
     this.subscriptions.push(
       this.route.queryParams.subscribe((params: any) => {
+        if (params["themeId"]) {
+          const themeId = params["themeId"];
+          Promise.all([
+            this.themeService.setTransientActiveTheme(themeId),
+            this.customUiService.initialize(),
+          ]).then(() => {
+            this.updateRacedayLayout();
+          });
+        }
         if (params["modifyHeats"] === "true") {
           const returnUrl = this.router.url.split("?")[0];
           this.router.navigate(["/modify-heats"], {
@@ -1412,6 +1685,20 @@ export class DefaultRacedayComponent
         }
       }),
     );
+  }
+
+  private updateRacedayLayout() {
+    if (this.isUIEditorMode()) {
+      return;
+    }
+    if (this.currentRacedayLayout && this.currentRacedayLayout.widgets) {
+      this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
+    } else {
+      this.layout = this.getDefaultLayout();
+    }
+    this.updateScale();
+    this.loadColumns();
+    this.cdr.markForCheck();
   }
 
   private handleRecordDataUpdate(records: any) {
@@ -1485,6 +1772,65 @@ export class DefaultRacedayComponent
     return this.raceRecordLapTime || this.currentRaceBestTime || 0;
   }
 
+  getLaneRecordEntry(hd?: DriverHeatData | number): IRecordEntry | undefined {
+    const laneIndex = typeof hd === "number" ? hd : (hd?.laneIndex ?? 0);
+    const laneFastestLap = this.recordData?.overall?.laneFastestLap;
+    if (Array.isArray(laneFastestLap) && laneFastestLap[laneIndex]) {
+      return laneFastestLap[laneIndex];
+    }
+    if (this.isUIEditorMode()) {
+      const mockEntries = createMockLaneRecordEntries();
+      return mockEntries[laneIndex];
+    }
+    return undefined;
+  }
+
+  getLaneRecordTime(hd?: DriverHeatData, anchor?: string): string {
+    const entry = this.getLaneRecordEntry(hd);
+    const isInset = anchor ? !anchor.startsWith("center-") : false;
+    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
+      (w: any) => w.widgetType === "lane-view",
+    );
+    const timeDecimals = isInset
+      ? laneViewWidget?.customSettings?.["insetTimeDecimalPlaces"] !== undefined
+        ? Number(laneViewWidget.customSettings["insetTimeDecimalPlaces"])
+        : 3
+      : laneViewWidget?.customSettings?.["timeDecimalPlaces"] !== undefined
+        ? Number(laneViewWidget.customSettings["timeDecimalPlaces"])
+        : 3;
+    const timePlaceholder =
+      timeDecimals > 0 ? "--." + "-".repeat(timeDecimals) : "--";
+    if (!entry || !entry.value || entry.value <= 0) return timePlaceholder;
+    return entry.value.toFixed(timeDecimals);
+  }
+
+  getLaneRecordHolder(hd?: DriverHeatData): string {
+    const entry = this.getLaneRecordEntry(hd);
+    if (!entry || !entry.value || entry.value <= 0) return "---";
+    return entry.holderNickname || entry.holderName || "---";
+  }
+
+  getLaneRecordDate(hd?: DriverHeatData): string {
+    const entry = this.getLaneRecordEntry(hd);
+    if (!entry?.date || !entry?.value || entry.value <= 0) return "---";
+    let ms = 0;
+    if (typeof entry.date === "number") {
+      ms = entry.date;
+    } else if ((entry.date as any).toNumber) {
+      ms = (entry.date as any).toNumber();
+    } else if (typeof entry.date === "string") {
+      ms = parseInt(entry.date, 10);
+    } else {
+      ms = Number(entry.date);
+    }
+    if (ms <= 0 || isNaN(ms)) return "---";
+    const d = new Date(ms);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   getPersonalBest(hd?: DriverHeatData): number {
     if (!hd) return 0;
     return hd.bestLapTime > 0 ? hd.bestLapTime : 0;
@@ -1548,12 +1894,49 @@ export class DefaultRacedayComponent
     return this.heatBestTime || 0;
   }
 
-  private leaderBoardWindow: Window | null = null;
-  private heatResultsWindow: Window | null = null;
-  private raceResultsWindow: Window | null = null;
-  private seasonResultsWindow: Window | null = null;
-  private predictionResultsWindow: Window | null = null;
-  private driverStationTabs: Window[] = [];
+  get leaderBoardWindow(): Window | null {
+    return this.childWindowManagerService.getLeaderBoardWindow();
+  }
+  set leaderBoardWindow(val: Window | null) {
+    this.childWindowManagerService.setLeaderBoardWindow(val);
+  }
+
+  get heatResultsWindow(): Window | null {
+    return this.childWindowManagerService.getHeatResultsWindow();
+  }
+  set heatResultsWindow(val: Window | null) {
+    this.childWindowManagerService.setHeatResultsWindow(val);
+  }
+
+  get raceResultsWindow(): Window | null {
+    return this.childWindowManagerService.getRaceResultsWindow();
+  }
+  set raceResultsWindow(val: Window | null) {
+    this.childWindowManagerService.setRaceResultsWindow(val);
+  }
+
+  get seasonResultsWindow(): Window | null {
+    return this.childWindowManagerService.getSeasonResultsWindow();
+  }
+  set seasonResultsWindow(val: Window | null) {
+    this.childWindowManagerService.setSeasonResultsWindow(val);
+  }
+
+  get predictionResultsWindow(): Window | null {
+    return this.childWindowManagerService.getPredictionResultsWindow();
+  }
+  set predictionResultsWindow(val: Window | null) {
+    this.childWindowManagerService.setPredictionResultsWindow(val);
+  }
+
+  get driverStationTabs(): Window[] {
+    return this.childWindowManagerService.getDriverStationTabs();
+  }
+  set driverStationTabs(val: Window[]) {
+    if (val.length === 0) {
+      this.childWindowManagerService.clearDriverStationTabs();
+    }
+  }
 
   private setupMockDataForEditor() {
     const mockData = createMockEditorData();
@@ -1584,6 +1967,7 @@ export class DefaultRacedayComponent
     this.currentRaceBestTime = 1.955;
     this.heatBestNickname = "Peach";
     this.heatBestTime = 2.012;
+    this.recordData = mockData.recordData;
 
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
@@ -1607,32 +1991,9 @@ export class DefaultRacedayComponent
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.subscriptions = [];
 
-    if (this.leaderBoardWindow) {
-      this.leaderBoardWindow.close();
-      this.leaderBoardWindow = null;
+    if (!this.childWindowManagerService.isRacePreservingRoute(destUrl)) {
+      this.childWindowManagerService.closeAllWindows();
     }
-    if (this.heatResultsWindow) {
-      this.heatResultsWindow.close();
-      this.heatResultsWindow = null;
-    }
-    if (this.raceResultsWindow) {
-      this.raceResultsWindow.close();
-      this.raceResultsWindow = null;
-    }
-    if (this.seasonResultsWindow) {
-      this.seasonResultsWindow.close();
-      this.seasonResultsWindow = null;
-    }
-    if (this.predictionResultsWindow) {
-      this.predictionResultsWindow.close();
-      this.predictionResultsWindow = null;
-    }
-    this.driverStationTabs.forEach((tab) => {
-      if (tab && !tab.closed) {
-        tab.close();
-      }
-    });
-    this.driverStationTabs = [];
   }
 
   private showInterfaceError(titleKey: string, messageKey: string) {
@@ -1934,10 +2295,19 @@ export class DefaultRacedayComponent
 
       if (isNewRace) {
         // Reset timer state ONLY when advancing to a new race
-        this.autoStartRemaining = 0;
+        this.autoStartRemaining =
+          (race as any)?.auto_start_remaining_seconds ||
+          (race as any)?.auto_start_remaining ||
+          race.auto_start_time ||
+          0;
         this.autoAdvanceRemaining =
-          (race as any)?.auto_advance_remaining_seconds || 0;
-        this.time = this.autoAdvanceRemaining;
+          (race as any)?.auto_advance_remaining_seconds ||
+          (race as any)?.auto_advance_remaining ||
+          0;
+        this.time =
+          this.autoStartRemaining > 0
+            ? this.autoStartRemaining
+            : this.autoAdvanceRemaining;
         this.previousTime = this.time;
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
@@ -1954,6 +2324,8 @@ export class DefaultRacedayComponent
 
       if (
         race.entity_id &&
+        !this.route.snapshot?.queryParams?.["themeId"] &&
+        !this.themeService?.getTransientThemeId?.() &&
         typeof this.themeService?.activateForRace === "function"
       ) {
         this.themeService.activateForRace(race.entity_id);
@@ -2062,19 +2434,23 @@ export class DefaultRacedayComponent
   }
 
   getWidgets(): any[] {
-    const layout = this.layout;
-    return layout?.widgets || [];
+    if (!this.layout) {
+      if (this.currentRacedayLayout?.widgets) {
+        this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
+      } else {
+        this.layout = this.getDefaultLayout();
+      }
+    }
+    return this.layout?.widgets || [];
   }
 
   getTableBodyHeight(): number {
-    const layout = this.layout;
-    return RacedayLayoutUtils.getTableBodyHeight(layout);
+    return RacedayLayoutUtils.getTableBodyHeight(this.layout);
   }
 
   getRowHeight(): number {
-    const layout = this.layout;
     return RacedayLayoutUtils.getRowHeight(
-      layout,
+      this.layout,
       this.track?.lanes?.length || 1,
     );
   }
@@ -2191,16 +2567,7 @@ export class DefaultRacedayComponent
         ? record.realtime_snapshots[record.realtime_snapshots.length - 1]
         : record.pre_race;
 
-    console.log("[DEBUG-V3] applyPredictionsToDrivers", {
-      completed_laps: snapshot?.completed_laps,
-      actualLapsRun: actualLapsRun,
-      standings: snapshot?.projected_standings,
-    });
-
     if (!snapshot || !snapshot.projected_standings) {
-      console.log(
-        "[DEBUG-V3] Hiding predictions, snapshot or projected_standings missing",
-      );
       // Hide predictions until at least one lap is run
       for (const hd of allDrivers) {
         if (!hd) continue;
@@ -2218,7 +2585,6 @@ export class DefaultRacedayComponent
           (hd.participant as any).projectedLaps = undefined;
         }
       }
-      this.cdr.markForCheck();
       return;
     }
 
@@ -2369,6 +2735,7 @@ export class DefaultRacedayComponent
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
       getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -2483,30 +2850,7 @@ export class DefaultRacedayComponent
     const targetWidth = layout?.baseWidth || 1920;
     const targetHeight = layout?.baseHeight || 1080;
 
-    if (this.isUIEditorMode()) {
-      this.scale = 1;
-      if (
-        this.dashboardWidth !== targetWidth ||
-        this.dashboardHeight !== targetHeight
-      ) {
-        this.dashboardWidth = targetWidth;
-        this.dashboardHeight = targetHeight;
-        this.loadColumns();
-      }
-
-      return;
-    }
-
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-    const newScale = Math.min(scaleX, scaleY);
-
-    if (Math.abs(this.scale - newScale) > 0.001) {
-      this.scale = newScale;
-    }
+    this.scale = 1;
 
     if (
       this.dashboardWidth !== targetWidth ||
@@ -2714,23 +3058,47 @@ export class DefaultRacedayComponent
     }
     if (action === "START_RESUME") {
       this.dataService.startRace().subscribe(
-        (success) => {
-          if (success) {
+        (response) => {
+          if (response && response.success) {
             this.logger.debug("Race start command sent successfully");
           } else {
-            this.logger.error("Failed to send race start command");
-            this.showInterfaceError(
-              "ACK_MODAL_TITLE_DISCONNECTED",
-              "ACK_MODAL_MSG_DISCONNECTED",
+            this.logger.error(
+              "Failed to send race start command:",
+              response?.message,
             );
+            const msg = response?.message || "";
+            if (msg.toLowerCase().includes("interface")) {
+              this.showInterfaceError(
+                "ACK_MODAL_TITLE_DISCONNECTED",
+                "ACK_MODAL_MSG_DISCONNECTED",
+              );
+            } else {
+              this.showInterfaceError(
+                "ACK_MODAL_TITLE_START_FAILED",
+                msg || "ACK_MODAL_MSG_RACE_INACTIVE",
+              );
+            }
           }
         },
         (error) => {
           this.logger.error("Error starting race:", error);
-          this.showInterfaceError(
-            "ACK_MODAL_TITLE_DISCONNECTED",
-            "ACK_MODAL_MSG_DISCONNECTED",
-          );
+          if (error?.status === 401 || error?.status === 403) {
+            this.showInterfaceError(
+              "ACK_MODAL_TITLE_PERMISSION_DENIED",
+              "ACK_MODAL_MSG_PERMISSION_DENIED",
+            );
+          } else if (error?.status === 404) {
+            this.raceHasEnded = true;
+            this.showInterfaceError(
+              "ACK_MODAL_TITLE_RACE_INACTIVE",
+              "ACK_MODAL_MSG_RACE_INACTIVE",
+            );
+          } else {
+            this.showInterfaceError(
+              "ACK_MODAL_TITLE_START_FAILED",
+              error?.error || error?.message || "ACK_MODAL_MSG_DISCONNECTED",
+            );
+          }
         },
       );
     } else if (action === "PAUSE" || action === "ABORT_TIMERS") {
@@ -2808,12 +3176,12 @@ export class DefaultRacedayComponent
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/heat-results"]),
       );
-      this.heatResultsWindow = window.open(url, "_blank");
+      this.childWindowManagerService.openWindow(action, url);
     } else if (action === "RACE_RESULTS") {
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/race-results"]),
       );
-      this.raceResultsWindow = window.open(url, "_blank");
+      this.childWindowManagerService.openWindow(action, url);
     } else if (action === "SEASON_RESULTS") {
       const seasonId =
         (this.race as any)?.season_id || (this.race as any)?.seasonId || "";
@@ -2821,13 +3189,31 @@ export class DefaultRacedayComponent
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/season-results"], { queryParams }),
       );
-      this.seasonResultsWindow = window.open(url, "_blank");
+      this.childWindowManagerService.openWindow(action, url);
     } else if (action === "PREDICTION_RESULTS") {
       const url = this.router.serializeUrl(
         this.router.createUrlTree(["/prediction-results"]),
       );
-      this.predictionResultsWindow = window.open(url, "_blank");
+      this.childWindowManagerService.openWindow(action, url);
+    } else if (action === "DISPLAY_CLIENT") {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(["/display-client"]),
+      );
+      window.open(url, "_blank");
+    } else if (action.startsWith("THEME:")) {
+      const themeId = action.substring("THEME:".length);
+      this.onThemeMenuSelect(themeId);
     }
+  }
+
+  onThemeMenuSelect(themeId: string) {
+    this.logger.debug("Opening theme window for themeId:", themeId);
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(["/default-raceday"], {
+        queryParams: { themeId },
+      }),
+    );
+    this.childWindowManagerService.openThemeWindow(url);
   }
 
   @HostListener("window:beforeunload", ["$event"])
@@ -2841,32 +3227,7 @@ export class DefaultRacedayComponent
   @HostListener("window:pagehide", ["$event"])
   onPageHide(_event: any) {
     this.raceConnectionService.disconnect();
-    if (this.leaderBoardWindow) {
-      this.leaderBoardWindow.close();
-      this.leaderBoardWindow = null;
-    }
-    if (this.heatResultsWindow) {
-      this.heatResultsWindow.close();
-      this.heatResultsWindow = null;
-    }
-    if (this.raceResultsWindow) {
-      this.raceResultsWindow.close();
-      this.raceResultsWindow = null;
-    }
-    if (this.seasonResultsWindow) {
-      this.seasonResultsWindow.close();
-      this.seasonResultsWindow = null;
-    }
-    if (this.predictionResultsWindow) {
-      this.predictionResultsWindow.close();
-      this.predictionResultsWindow = null;
-    }
-    this.driverStationTabs.forEach((tab) => {
-      if (tab && !tab.closed) {
-        tab.close();
-      }
-    });
-    this.driverStationTabs = [];
+    this.childWindowManagerService.closeAllWindows();
   }
 
   // Layout Editing - Column and Anchor Handlers
@@ -2876,11 +3237,9 @@ export class DefaultRacedayComponent
     const settings = this.editingSettings();
     if (!settings || !this.currentRacedayColumns) return;
 
-    moveItemInArray(
-      this.currentRacedayColumns,
-      event.previousIndex,
-      event.currentIndex,
-    );
+    const cols = [...this.currentRacedayColumns];
+    moveItemInArray(cols, event.previousIndex, event.currentIndex);
+    this.currentRacedayColumns = cols;
     this.loadColumns();
     this.cdr.markForCheck();
     this.columnsChanged.emit();
@@ -2914,36 +3273,19 @@ export class DefaultRacedayComponent
             if (!settings) return;
             let changed = false;
 
-            const idx = this.currentRacedayColumns.indexOf(
-              dropColData.propertyName,
-            );
-            if (!this.currentRacedayColumns.includes(data.key)) {
+            const cols = [...this.currentRacedayColumns];
+            const idx = cols.indexOf(dropColData.propertyName);
+            if (!cols.includes(data.key)) {
               if (idx >= 0) {
-                this.currentRacedayColumns.splice(idx, 0, data.key);
+                cols.splice(idx, 0, data.key);
               } else {
-                this.currentRacedayColumns.push(data.key);
+                cols.push(data.key);
               }
               changed = true;
             }
 
-            const fuelKeys = [
-              "participant.fuelLevel",
-              "fuelCapacity",
-              "fuelPercentage",
-              "imageset_fuel-gauge-builtin",
-            ];
-            const defaultVis = fuelKeys.includes(data.key)
-              ? ColumnVisibility.FuelRaceOnly
-              : ColumnVisibility.Always;
-
-            if (this.currentColumnVisibility?.[data.key] !== defaultVis) {
-              if (!this.currentColumnVisibility)
-                this.currentColumnVisibility = {};
-              this.currentColumnVisibility[data.key] = defaultVis;
-              changed = true;
-            }
-
             if (changed) {
+              this.currentRacedayColumns = cols;
               this.loadColumns();
               this.cdr.markForCheck();
               this.columnsChanged.emit();
@@ -2969,29 +3311,14 @@ export class DefaultRacedayComponent
             if (!settings) return;
             let changed = false;
 
-            if (!this.currentRacedayColumns.includes(data.key)) {
-              this.currentRacedayColumns.push(data.key);
-              changed = true;
-            }
-
-            const fuelKeys = [
-              "participant.fuelLevel",
-              "fuelCapacity",
-              "fuelPercentage",
-              "imageset_fuel-gauge-builtin",
-            ];
-            const defaultVis = fuelKeys.includes(data.key)
-              ? ColumnVisibility.FuelRaceOnly
-              : ColumnVisibility.Always;
-
-            if (this.currentColumnVisibility?.[data.key] !== defaultVis) {
-              if (!this.currentColumnVisibility)
-                this.currentColumnVisibility = {};
-              this.currentColumnVisibility[data.key] = defaultVis;
+            const cols = [...this.currentRacedayColumns];
+            if (!cols.includes(data.key)) {
+              cols.push(data.key);
               changed = true;
             }
 
             if (changed) {
+              this.currentRacedayColumns = cols;
               this.loadColumns();
               this.cdr.markForCheck();
               this.columnsChanged.emit();
@@ -3010,18 +3337,9 @@ export class DefaultRacedayComponent
     this.currentRacedayColumns = this.currentRacedayColumns.filter(
       (c) => c !== colData.propertyName,
     );
-    this.loadColumns();
-    this.cdr.markForCheck();
-    this.columnsChanged.emit();
-  }
-
-  changeColumnVisibility(colData: ColumnDefinition, visibility: string) {
-    if (!this.isUIEditorMode()) return;
-    const settings = this.editingSettings();
-    if (!settings) return;
-    if (!this.currentColumnVisibility) this.currentColumnVisibility = {};
-    this.currentColumnVisibility[colData.propertyName] =
-      visibility as ColumnVisibility;
+    if (this.currentColumnWidths) {
+      delete this.currentColumnWidths[colData.propertyName];
+    }
     this.loadColumns();
     this.cdr.markForCheck();
     this.columnsChanged.emit();
@@ -3057,15 +3375,18 @@ export class DefaultRacedayComponent
           if (data.type === "new-column" && data.key) {
             const settings = this.editingSettings();
             if (!settings) return;
-            if (!this.currentColumnLayouts) this.currentColumnLayouts = {};
-            if (!this.currentColumnLayouts[colData.propertyName]) {
-              this.currentColumnLayouts[colData.propertyName] = {
+            const layouts = { ...(this.currentColumnLayouts || {}) };
+            if (!layouts[colData.propertyName]) {
+              layouts[colData.propertyName] = {
                 "center-center": colData.propertyName,
               };
+            } else {
+              layouts[colData.propertyName] = {
+                ...layouts[colData.propertyName],
+              };
             }
-            this.currentColumnLayouts[colData.propertyName][
-              anchor as AnchorPoint
-            ] = data.key;
+            layouts[colData.propertyName][anchor as AnchorPoint] = data.key;
+            this.currentColumnLayouts = layouts;
             this.loadColumns();
             this.cdr.markForCheck();
             this.columnsChanged.emit();
@@ -3080,16 +3401,12 @@ export class DefaultRacedayComponent
     event.stopPropagation();
     const settings = this.editingSettings();
     if (!settings) return;
-    if (!this.currentColumnLayouts) this.currentColumnLayouts = {};
-    if (!this.currentColumnLayouts[colData.propertyName]) {
-      this.currentColumnLayouts[colData.propertyName] = {
-        "center-center": colData.propertyName,
-      };
+    const layouts = { ...(this.currentColumnLayouts || {}) };
+    if (layouts[colData.propertyName]) {
+      layouts[colData.propertyName] = { ...layouts[colData.propertyName] };
+      delete layouts[colData.propertyName][anchor as AnchorPoint];
+      this.currentColumnLayouts = layouts;
     }
-
-    delete this.currentColumnLayouts[colData.propertyName][
-      anchor as AnchorPoint
-    ];
     this.loadColumns();
     this.cdr.markForCheck();
     this.columnsChanged.emit();
@@ -3135,8 +3452,15 @@ export class DefaultRacedayComponent
 
   saveRace() {
     if (this.isSaveDisabled) return;
+    this.saveRaceName = this.race?.name || "";
+    this.showSaveRaceDialog = true;
+    this.cdr.markForCheck();
+  }
 
-    this.dataService.saveRace().subscribe({
+  onSaveRaceConfirm(name: string) {
+    this.showSaveRaceDialog = false;
+    const trimmed = typeof name === "string" ? name.trim() : "";
+    this.dataService.saveRace(trimmed || undefined).subscribe({
       next: (response) => {
         this.ackModalTitle =
           this.translationService.translate("RD_SAVE_SUCCESS");
@@ -3151,6 +3475,11 @@ export class DefaultRacedayComponent
         this.cdr.markForCheck();
       },
     });
+  }
+
+  onSaveRaceCancel() {
+    this.showSaveRaceDialog = false;
+    this.cdr.markForCheck();
   }
 
   resetLane(lane: number, event: Event) {
@@ -3202,6 +3531,7 @@ export class DefaultRacedayComponent
 
   onPdfExportConfirm(options: PdfExportOptions): void {
     this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
     if (options.saveAsDefault) {
       const settings = this.settingsService.getSettings();
       settings.exportPdfBackgrounds = options.includeBackground;
@@ -3215,7 +3545,6 @@ export class DefaultRacedayComponent
       timestamp,
       options.includeBackground,
     );
-    this.cdr.detectChanges();
   }
 
   onPdfExportCancel(): void {
@@ -3617,6 +3946,33 @@ export class DefaultRacedayComponent
       case "action-modify-heats":
         if (!this.isModifyDisabled) this.onMenuSelect("MODIFY");
         break;
+      case "action-export-pdf":
+        this.onFileMenuSelect("EXPORT_PDF");
+        break;
+      case "action-export-csv":
+        this.onFileMenuSelect("EXPORT_CSV");
+        break;
+      case "action-export-xls":
+        this.onFileMenuSelect("EXPORT_XLS");
+        break;
+      case "action-open-heat-results":
+        this.onWindowsMenuSelect("HEAT_RESULTS");
+        break;
+      case "action-open-race-results":
+        this.onWindowsMenuSelect("RACE_RESULTS");
+        break;
+      case "action-open-season-results":
+        this.onWindowsMenuSelect("SEASON_RESULTS");
+        break;
+      case "action-open-prediction-results":
+        this.onWindowsMenuSelect("PREDICTION_RESULTS");
+        break;
+      case "action-master-power-on":
+        if (!this.isMainPowerDisabled) this.onTrackPowerMainSelect(true);
+        break;
+      case "action-master-power-off":
+        if (!this.isMainPowerDisabled) this.onTrackPowerMainSelect(false);
+        break;
     }
   }
 
@@ -3639,6 +3995,15 @@ export class DefaultRacedayComponent
     this.dataService.setLanePower(event.lane, event.on).subscribe({
       error: (err) => this.logger.error("Error setting lane power", err),
     });
+  }
+
+  public get isMainPowerDisabled(): boolean {
+    if (this.authService.currentRole === Role.VIEWER) {
+      return true;
+    }
+    const s = this.dataService.getSystemStateValue();
+    const hasRelay = s ? !!s.hasMainRelay || !!s.hasPerLaneRelays : false;
+    return !hasRelay;
   }
 
   public get isStartResumeDisabled(): boolean {
@@ -3705,17 +4070,10 @@ export class DefaultRacedayComponent
 
   isDriverFinished(
     hd: DriverHeatData,
-    scoring: HeatScoring | null | undefined,
+    _scoring?: HeatScoring | null | undefined,
   ): boolean {
-    if (!scoring || !hd) return false;
-
-    if (scoring.finishMethod === FinishMethod.Lap) {
-      return hd.lapCount >= scoring.finishValue;
-    } else if (scoring.finishMethod === FinishMethod.Timed) {
-      // In a timed race, a driver is finished if their total time is at or beyond the finish value.
-      return hd.totalTime >= scoring.finishValue;
-    }
-    return false;
+    if (!hd) return false;
+    return !!hd.isFinished;
   }
 
   public getFlagUrl(flag: any): string {
@@ -3818,24 +4176,10 @@ export class DefaultRacedayComponent
       selectedColumns = Settings.DEFAULT_COLUMNS;
     }
 
-    // Filter columns based on race settings
-    const race = this.raceService.getRace();
-    const isFuelRace =
-      (race?.fuel_options?.enabled || race?.digital_fuel_options?.enabled) ??
-      false;
-    const visibilityMap = this.currentColumnVisibility || {};
-
-    selectedColumns = selectedColumns.filter((key) => {
-      if (this.isUIEditorMode()) return true;
-      const visibility = visibilityMap[key] || ColumnVisibility.Always;
-      if (visibility === ColumnVisibility.Always) return true;
-      if (visibility === ColumnVisibility.FuelRaceOnly) return isFuelRace;
-      if (visibility === ColumnVisibility.NonFuelRaceOnly) return !isFuelRace;
-      return true;
-    });
-
-    const { resizingColumnKey, remainingWidth, fixedWidths } =
-      this.resolveColumnLayout(selectedColumns, settings);
+    const { calculatedWidths, zeroWidthColumnKeys } = this.resolveColumnLayout(
+      selectedColumns,
+      settings,
+    );
 
     this.columns = selectedColumns.map((key) => {
       const layout = (this.currentColumnLayouts || {})[key] || {
@@ -3843,11 +4187,10 @@ export class DefaultRacedayComponent
       };
       const primaryProp =
         layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
-      const baseKey = primaryProp.split("_")[0];
 
       const labelKey = this.getLabelKeyForColumn(key, layout);
-      const isResizing = key === resizingColumnKey;
-      const width = isResizing ? remainingWidth : fixedWidths[baseKey] || 275;
+      const isResizing = zeroWidthColumnKeys.has(key);
+      const width = calculatedWidths[key] ?? 275;
       const anchor = this.currentColumnAnchors[key] || AnchorPoint.CenterCenter;
 
       const renderer = (
@@ -3873,7 +4216,7 @@ export class DefaultRacedayComponent
           "",
           key,
           width,
-          false,
+          isResizing,
           "middle",
           0,
           anchor,
@@ -3914,81 +4257,67 @@ export class DefaultRacedayComponent
     selectedColumns: string[],
     _settings: any,
   ): {
-    resizingColumnKey: string | null;
-    remainingWidth: number;
-    fixedWidths: { [key: string]: number };
+    calculatedWidths: { [key: string]: number };
+    zeroWidthColumnKeys: Set<string>;
   } {
-    const nameKeys = ["driver.name", "driver.nickname"];
-    const fixedWidths: { [key: string]: number } = {
-      lapCount: 216,
-      lapsLed: 216,
-      reactionTime: 330,
-      lastLapTime: 330,
-      lastLaps: 1650,
-      medianLapTime: 330,
-      averageLapTime: 330,
-      bestLapTime: 330,
-      totalTime: 330,
-      gapLeader: 330,
-      gapPosition: 330,
-      gapLeaderF1: 330,
-      gapPositionF1: 330,
-      "driver.name": 480,
-      "driver.nickname": 480,
-      "driver.avatarUrl": 120,
-      "participant.team.name": 330,
-      "participant.fuelLevel": 216,
-      fuelCapacity: 216,
-      fuelPercentage: 216,
-      seed: 216,
-      rankHeat: 108,
-      rankOverall: 108,
-      rankGroup: 108,
-      mph: 330,
-      kph: 330,
-      fph: 330,
-      segmentTime: 330,
-      flag: 120,
-      laneNumber: 120,
-      imageset: 216,
-    };
-
-    let resizingColumnKey: string | null = null;
-    for (const key of selectedColumns) {
-      const layout = (this.currentColumnLayouts || {})[key] || {
-        [AnchorPoint.CenterCenter]: key,
-      };
-      const containsName = Object.values(layout).some((v) =>
-        nameKeys.includes((v as string).split("_")[0]),
-      );
-      if (containsName) {
-        resizingColumnKey = key;
-        break;
-      }
-    }
-    if (!resizingColumnKey && selectedColumns.length > 0) {
-      resizingColumnKey = selectedColumns[0];
-    }
-
+    const configuredWidths: { [key: string]: number } = {};
+    const zeroWidthColumnKeys = new Set<string>();
     let totalFixed = 0;
+
+    const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
+      (w: any) => w.widgetType === "lane-view",
+    );
+    const isVertical = laneViewWidget?.customSettings?.["isVertical"] ?? false;
+    const widgetWidths = laneViewWidget?.customSettings?.["columnWidths"] || {};
+    const currentWidths = this.currentColumnWidths || {};
+
     selectedColumns.forEach((key) => {
-      if (key === resizingColumnKey) return;
       const layout = (this.currentColumnLayouts || {})[key] || {
         [AnchorPoint.CenterCenter]: key,
       };
-      const primaryProp =
-        layout[AnchorPoint.CenterCenter] || Object.values(layout)[0] || key;
-      const baseKey = (primaryProp as string).split("_")[0];
-      totalFixed += fixedWidths[baseKey] || 275;
+      let width: number | undefined = undefined;
+      if (widgetWidths[key] !== undefined && widgetWidths[key] !== null) {
+        width = Number(widgetWidths[key]);
+      } else if (
+        currentWidths[key] !== undefined &&
+        currentWidths[key] !== null
+      ) {
+        width = Number(currentWidths[key]);
+      } else {
+        width = RacedayLayoutUtils.getDefaultColumnWidth(key, layout, {
+          isPractice: this.isPracticeLayout,
+          isVertical,
+        });
+      }
+
+      configuredWidths[key] = width;
+      if (width === 0) {
+        zeroWidthColumnKeys.add(key);
+      } else {
+        totalFixed += width;
+      }
     });
 
     const totalGapsWidth = Math.max(0, selectedColumns.length - 1) * 20;
-    const remainingWidth = Math.max(
-      300,
+    const totalRemaining = Math.max(
+      0,
       this.dashboardWidth - totalFixed - totalGapsWidth,
     );
 
-    return { resizingColumnKey, remainingWidth, fixedWidths };
+    const calculatedWidths: { [key: string]: number } = {};
+    const zeroCount = zeroWidthColumnKeys.size;
+    const sharedWidth =
+      zeroCount > 0 ? Math.max(50, Math.floor(totalRemaining / zeroCount)) : 0;
+
+    selectedColumns.forEach((key) => {
+      if (zeroWidthColumnKeys.has(key)) {
+        calculatedWidths[key] = sharedWidth;
+      } else {
+        calculatedWidths[key] = configuredWidths[key];
+      }
+    });
+
+    return { calculatedWidths, zeroWidthColumnKeys };
   }
 
   private reindexColumnLayout(layout: { [A in AnchorPoint]?: string }): {
@@ -4154,6 +4483,7 @@ export class DefaultRacedayComponent
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
       getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,
@@ -4628,9 +4958,6 @@ export class DefaultRacedayComponent
       return;
     }
     if (col.propertyName === "lapCount") {
-      if (this.heat && this.heat.started === false) {
-        return;
-      }
       if (event.shiftKey) {
         event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
@@ -4860,6 +5187,10 @@ export class DefaultRacedayComponent
   }
 
   getWidgetTypeLabelKey(widgetType: string): string {
+    if (widgetType?.startsWith("custom:")) {
+      const def = this.customWidgetService?.getWidgetDefinition(widgetType);
+      return def?.manifest?.name || widgetType.substring("custom:".length);
+    }
     return "UE_WIDGET_TYPE_" + widgetType.toUpperCase().replace(/-/g, "_");
   }
 
@@ -4934,7 +5265,17 @@ export class DefaultRacedayComponent
       "action-export-xls",
       "action-open-heat-results",
       "action-open-race-results",
+      "action-open-season-results",
+      "action-open-prediction-results",
+      "action-master-power-on",
+      "action-master-power-off",
     ];
+
+    const customWidgets = this.customWidgetService?.getCustomWidgets() || [];
+    for (const cw of customWidgets) {
+      allTypes.push(`custom:${cw.manifest.id}`);
+    }
+
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     return allTypes
       .filter((t) => !used.has(t))
@@ -4982,24 +5323,33 @@ export class DefaultRacedayComponent
 
     const isActionButton = this.draggedWidgetType?.startsWith("action-");
 
-    const width = isHeaderWidget
-      ? 200
-      : isLeaderboardOrDeck
-        ? 384
-        : isActionButton
-          ? 170
-          : 400;
-    const height = isHeaderWidget
-      ? 18
-      : this.draggedWidgetType === "leaderboard" ||
-          this.draggedWidgetType === "group-leaderboard" ||
-          this.draggedWidgetType === "season-leaderboard" ||
-          this.draggedWidgetType === "season-race-leaderboard" ||
-          this.draggedWidgetType === "image"
-        ? 239
-        : isActionButton
-          ? 80
-          : 300;
+    let width = 400;
+    let height = 200;
+
+    if (this.draggedWidgetType?.startsWith("custom:")) {
+      const def = this.customWidgetService?.getWidgetDefinition(
+        this.draggedWidgetType,
+      );
+      width = def?.manifest?.defaultWidth || 400;
+      height = def?.manifest?.defaultHeight || 250;
+    } else if (isHeaderWidget) {
+      width = 200;
+      height = 18;
+    } else if (isLeaderboardOrDeck) {
+      width = 384;
+      height =
+        this.draggedWidgetType === "leaderboard" ||
+        this.draggedWidgetType === "group-leaderboard" ||
+        this.draggedWidgetType === "season-leaderboard" ||
+        this.draggedWidgetType === "season-race-leaderboard"
+          ? 239
+          : this.draggedWidgetType === "image"
+            ? 300
+            : 200;
+    } else if (isActionButton) {
+      width = 170;
+      height = 80;
+    }
 
     const scaleX = rect.width / scalableContent.offsetWidth || 1;
     const scaleY = rect.height / scalableContent.offsetHeight || 1;
@@ -5027,12 +5377,16 @@ export class DefaultRacedayComponent
       }
     }
 
+    if (!this.layout) {
+      this.layout = this.getDefaultLayout();
+    }
     if (!this.layout.widgets) this.layout.widgets = [];
     this.layout.widgets.push(newWidget);
 
     this.draggedWidgetType = null;
-    this.cdr.detectChanges();
     this.layoutChanged.emit(this.layout);
+    this.widgetSelected.emit(newWidget.id);
+    this.cdr.markForCheck();
   }
 
   getNextZIndex(): number {
@@ -5073,6 +5427,13 @@ export class DefaultRacedayComponent
     if (!this.layout?.widgets) return;
     this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
     this.layoutChanged.emit(this.layout);
+    if (this.selectedWidgetId() === id) {
+      const laneView = this.layout.widgets.find(
+        (w: any) => w.widgetType === "lane-view",
+      );
+      const nextWidget = laneView || this.layout.widgets[0];
+      this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
+    }
   }
 
   snapToEdges(
@@ -5098,12 +5459,8 @@ export class DefaultRacedayComponent
     );
   }
 
-  onCanvasPointerDown(event: PointerEvent) {
-    if (!this.isLayoutCustomizing) return;
-    const target = event.target as HTMLElement;
-    if (target.classList.contains("raceday-absolute-layout-root-wrapper")) {
-      this.widgetSelected.emit(null);
-    }
+  onCanvasPointerDown(_event: PointerEvent) {
+    // Preserve widget selection so widget inspector remains open
   }
 
   private getDefaultLayout(): LayoutConfig {

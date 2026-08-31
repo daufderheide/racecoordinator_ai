@@ -53,6 +53,7 @@ nav:
     - Introduction: introduction.md
     - System Overview: system-overview.md
     - Downloads & Releases: downloads.md
+    - Release Notes & Changelog: changelog.md
     - Installation: installation.md
     - Arduino UNO Q Setup: arduino-uno-q.md
   - Configuration:
@@ -78,6 +79,7 @@ nav:
     - Custom Rotations: custom-rotations.md
     - Custom Raceday: custom-raceday.md
     - Custom XLS Export: custom-xls-export.md
+    - Text-to-Speech (TTS): tts.md
   - Data Management:
     - Database Manager: database-manager.md
     - Saving & Loading Races: saving-loading.md

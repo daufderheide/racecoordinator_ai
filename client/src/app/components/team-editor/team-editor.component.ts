@@ -228,7 +228,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 

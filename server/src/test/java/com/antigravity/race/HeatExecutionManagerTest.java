@@ -200,6 +200,129 @@ public class HeatExecutionManagerTest {
         "Heat should end after Driver 2 completes their single extra lap",
         race.getState() instanceof HeatOver);
     assertTrue(executionManager.getFinishedLanes().contains(1));
+    assertFalse("Master power should be OFF after all drivers finish", race.isMainPower());
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
+  }
+
+  @Test
+  public void testTimedRace_AllowFinish_SingleLap_RelayPowerControl() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLap);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race Allow Finish")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_1")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    // Initial racing state
+    assertTrue("Master power should be ON while racing", race.isMainPower());
+    assertTrue("Lane 0 power should be ON", race.isLanePower(0));
+    assertTrue("Lane 1 power should be ON", race.isLanePower(1));
+
+    // Laps during active countdown (raceTime > 0)
+    race.addRaceTime(30.0f); // Time remaining = 30s
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    executionManager.onLap(1, 5.2, 1, false, true, false);
+    assertFalse(executionManager.getFinishedLanes().contains(0));
+    assertFalse(executionManager.getFinishedLanes().contains(1));
+    assertTrue("Master power should remain ON", race.isMainPower());
+    assertTrue("Lane 0 power should remain ON", race.isLanePower(0));
+    assertTrue("Lane 1 power should remain ON", race.isLanePower(1));
+
+    // Time expires: raceTime <= 0
+    race.resetRaceTime();
+    assertEquals(0.0f, race.getRaceTime(), 0.001f);
+
+    // Checkered flag broadcast when time expires
+    race.broadcastFlag(com.antigravity.proto.RaceFlag.CHECKERED);
+    assertTrue(
+        "Master power must remain ON when time expires in AllowFinish.SingleLap",
+        race.isMainPower());
+    assertTrue("Lane 0 power must remain ON for finishing lap", race.isLanePower(0));
+    assertTrue("Lane 1 power must remain ON for finishing lap", race.isLanePower(1));
+    assertFalse(
+        "Heat should not end until active drivers finish", race.getState() instanceof HeatOver);
+
+    // Driver 1 crosses the finish line on/after time expiration
+    executionManager.onLap(0, 5.0, 2, false, true, false);
+    assertTrue(
+        "Driver 1 should be marked finished", executionManager.getFinishedLanes().contains(0));
+    assertFalse(
+        "Driver 2 should not be marked finished yet",
+        executionManager.getFinishedLanes().contains(1));
+    assertFalse("Lane 0 power should be turned OFF after Driver 1 finishes", race.isLanePower(0));
+    assertTrue("Lane 1 power must remain ON for Driver 2", race.isLanePower(1));
+    assertTrue("Master power must remain ON while Driver 2 is still racing", race.isMainPower());
+    assertFalse("Heat should still be in Racing state", race.getState() instanceof HeatOver);
+
+    // Driver 2 crosses the finish line on/after time expiration
+    executionManager.onLap(1, 5.1, 2, false, true, false);
+    assertTrue(
+        "Driver 2 should be marked finished", executionManager.getFinishedLanes().contains(1));
+    assertTrue(
+        "Heat should transition to HeatOver once all active drivers finish",
+        race.getState() instanceof HeatOver);
+    assertFalse(
+        "Master power must be turned OFF when all drivers have finished", race.isMainPower());
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
+  }
+
+  @Test
+  public void testTimedRace_AllowFinish_NoneAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.NoneAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race NoneAutoSegments")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_auto")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+    race.resetRaceTime(); // Time expired
+
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction time
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 1 (triggers finish)
+    assertTrue(
+        "Heat should end immediately for NoneAutoSegments", race.getState() instanceof HeatOver);
   }
 
   @Test

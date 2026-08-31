@@ -50,6 +50,9 @@ export class RacedayActionButtonComponent {
         return this.parent().isAddLapDisabled;
       case "action-modify-heats":
         return this.parent().isModifyDisabled;
+      case "action-master-power-on":
+      case "action-master-power-off":
+        return this.parent().isMainPowerDisabled;
       default:
         return false;
     }
@@ -88,7 +91,11 @@ export class RacedayActionButtonComponent {
       case "action-open-season-results":
         return "RD_WIN_SEASON_RESULTS";
       case "action-open-prediction-results":
-        return "PREDICTIONS & ODDS";
+        return "RD_WIN_PREDICTION_RESULTS";
+      case "action-master-power-on":
+        return "RD_MENU_MAIN_POWER_ON";
+      case "action-master-power-off":
+        return "RD_MENU_MAIN_POWER_OFF";
       default:
         return "";
     }
@@ -148,6 +155,12 @@ export class RacedayActionButtonComponent {
       case "action-open-prediction-results":
         actionString = "PREDICTION_RESULTS";
         break;
+      case "action-master-power-on":
+        actionString = "MASTER_POWER_ON";
+        break;
+      case "action-master-power-off":
+        actionString = "MASTER_POWER_OFF";
+        break;
     }
 
     if (actionString) {
@@ -164,6 +177,10 @@ export class RacedayActionButtonComponent {
         actionString === "PREDICTION_RESULTS"
       ) {
         this.parent().onWindowsMenuSelect(actionString);
+      } else if (actionString === "MASTER_POWER_ON") {
+        this.parent().onTrackPowerMainSelect(true);
+      } else if (actionString === "MASTER_POWER_OFF") {
+        this.parent().onTrackPowerMainSelect(false);
       } else {
         this.parent().onMenuSelect(actionString);
       }

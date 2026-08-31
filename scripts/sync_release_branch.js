@@ -50,6 +50,34 @@ function parseReleaseBranches(lines) {
 }
 
 /**
+ * Resolves a branch or ref name to a valid git reference (checking local and remote tracking branches).
+ *
+ * @param {string} ref Branch or ref name (e.g. 'release/v1.0.0' or 'develop')
+ * @param {Function} [customExec]
+ * @returns {string} Resolved git reference
+ */
+function resolveGitRef(ref, customExec) {
+  if (!ref) return '';
+  const exec = customExec || execSync;
+  const candidates = [
+    ref,
+    `origin/${ref}`,
+    `remotes/origin/${ref}`,
+    `refs/heads/${ref}`,
+    `refs/remotes/origin/${ref}`
+  ];
+  for (const candidate of candidates) {
+    try {
+      exec(`git rev-parse --verify "${candidate}"`, { stdio: 'ignore' });
+      return candidate;
+    } catch {
+      // try next candidate
+    }
+  }
+  return ref;
+}
+
+/**
  * Counts unmerged commits on a release branch not yet present in develop.
  *
  * @param {string} releaseBranch (e.g. 'origin/release/v1.0.0' or 'release/v1.0.0')
@@ -59,8 +87,10 @@ function parseReleaseBranches(lines) {
  */
 function getUnmergedCommitCount(releaseBranch, targetBranch = 'develop', customExec) {
   const exec = customExec || execSync;
+  const resolvedTarget = resolveGitRef(targetBranch, customExec);
+  const resolvedRelease = resolveGitRef(releaseBranch, customExec);
   try {
-    const countStr = exec(`git rev-list --count "${targetBranch}..${releaseBranch}"`, {
+    const countStr = exec(`git rev-list --count "${resolvedTarget}..${resolvedRelease}"`, {
       encoding: 'utf8'
     }).trim();
     return parseInt(countStr, 10) || 0;
@@ -80,14 +110,16 @@ function getUnmergedCommitCount(releaseBranch, targetBranch = 'develop', customE
  */
 function checkHasMergeConflict(releaseBranch, targetBranch = 'develop', customExec) {
   const exec = customExec || execSync;
+  const resolvedTarget = resolveGitRef(targetBranch, customExec);
+  const resolvedRelease = resolveGitRef(releaseBranch, customExec);
   try {
     // Check if git merge-tree can simulate the 3-way merge cleanly
-    const mergeBase = exec(`git merge-base "${targetBranch}" "${releaseBranch}"`, {
+    const mergeBase = exec(`git merge-base "${resolvedTarget}" "${resolvedRelease}"`, {
       encoding: 'utf8'
     }).trim();
     if (!mergeBase) return false;
 
-    const treeOutput = exec(`git merge-tree "${mergeBase}" "${targetBranch}" "${releaseBranch}"`, {
+    const treeOutput = exec(`git merge-tree "${mergeBase}" "${resolvedTarget}" "${resolvedRelease}"`, {
       encoding: 'utf8'
     });
 
@@ -182,6 +214,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  resolveGitRef,
   getActiveReleaseBranches,
   parseReleaseBranches,
   getUnmergedCommitCount,

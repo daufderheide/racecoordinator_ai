@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   HostListener,
+  inject,
   input,
   OnDestroy,
   OnInit,
@@ -13,9 +14,11 @@ import { LanguageSelectorComponent } from "@app/components/shared/language-selec
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
+import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { ThemeService } from "@app/services/theme.service";
 
 @Component({
   standalone: true,
@@ -61,6 +64,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   laneMenuSelect = output<number>();
   windowsMenuSelect = output<string>();
   driverViewMenuSelect = output<string>();
+  themeMenuSelect = output<string>();
   optionsMenuSelect = output<string>();
   languageSelected = output<void>();
   checkForUpdatesRequested = output<void>();
@@ -73,9 +77,12 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   isDriversStationOpen = false;
   isWindowsMenuOpen = false;
   isDriversViewOpen = false;
+  isThemesOpen = false;
   isOptionsMenuOpen = false;
   isHelpMenuOpen = false;
   isTrackPowerMenuOpen = false;
+
+  themes: Theme[] = [];
 
   get driverViewMenuOptions(): { id: string; value: string; label: string }[] {
     const options: { id: string; value: string; label: string }[] = [];
@@ -128,7 +135,12 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     public dataService: DataService,
-  ) {}
+    private themeService?: ThemeService,
+  ) {
+    if (!this.themeService) {
+      this.themeService = inject(ThemeService, { optional: true }) ?? undefined;
+    }
+  }
 
   ngOnInit() {
     this.subscriptions.push(
@@ -136,10 +148,32 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
         this.allDrivers = drivers || [];
       }),
     );
+    this.loadThemes();
   }
 
   ngOnDestroy() {
     this.subscriptions.forEach((s) => s.unsubscribe());
+  }
+
+  async loadThemes() {
+    this.themes = this.themeService?.getThemes?.() || [];
+    if (this.themes.length === 0 && this.themeService?.initialize) {
+      try {
+        await this.themeService.initialize();
+        this.themes = this.themeService?.getThemes?.() || [];
+      } catch {
+        // Fallback to dataService if initialize fails
+      }
+    }
+    if (this.themes.length === 0 && this.dataService) {
+      this.subscriptions.push(
+        this.dataService.getThemes().subscribe((themes) => {
+          if (themes && themes.length > 0) {
+            this.themes = themes;
+          }
+        }),
+      );
+    }
   }
 
   trackPowerShortcut(digit: number, off: boolean): string {
@@ -177,6 +211,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.isDriversStationOpen = !this.isDriversStationOpen;
     if (this.isDriversStationOpen) {
       this.isDriversViewOpen = false;
+      this.isThemesOpen = false;
     }
   }
 
@@ -184,6 +219,18 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.isDriversViewOpen = !this.isDriversViewOpen;
     if (this.isDriversViewOpen) {
       this.isDriversStationOpen = false;
+      this.isThemesOpen = false;
+    }
+  }
+
+  toggleThemesMenu() {
+    this.isThemesOpen = !this.isThemesOpen;
+    if (this.isThemesOpen) {
+      this.isDriversStationOpen = false;
+      this.isDriversViewOpen = false;
+      if (this.themes.length === 0) {
+        this.loadThemes();
+      }
     }
   }
 
@@ -218,6 +265,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
       if (!this.isWindowsMenuOpen) {
         this.isDriversStationOpen = false;
         this.isDriversViewOpen = false;
+        this.isThemesOpen = false;
       }
       if (!this.isMenuOpen) {
         this.isTrackPowerMenuOpen = false;
@@ -262,6 +310,12 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.closeAll();
   }
 
+  onThemeMenuSelect(themeId: string) {
+    this.themeMenuSelect.emit(themeId);
+    this.windowsMenuSelect.emit(`THEME:${themeId}`);
+    this.closeAll();
+  }
+
   onOptionsSelect(action: string) {
     this.optionsMenuSelect.emit(action);
     this.closeAll();
@@ -294,6 +348,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
       this.isWindowsMenuOpen = false;
       this.isDriversStationOpen = false;
       this.isDriversViewOpen = false;
+      this.isThemesOpen = false;
     }
     if (active !== "options") this.isOptionsMenuOpen = false;
     if (active !== "help") this.isHelpMenuOpen = false;
@@ -304,6 +359,7 @@ export class RacedayMenuBarComponent implements OnInit, OnDestroy {
     this.isMenuOpen = false;
     this.isDriversStationOpen = false;
     this.isDriversViewOpen = false;
+    this.isThemesOpen = false;
     this.isWindowsMenuOpen = false;
     this.isOptionsMenuOpen = false;
     this.isHelpMenuOpen = false;

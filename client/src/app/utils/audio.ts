@@ -81,19 +81,29 @@ export function playSound(
 }
 
 export function interpolate(text: string, data: any): string {
-  return text.replace(/\{([^}]+)\}/g, (match, path) => {
-    const parts = path.toLowerCase().split(".");
-    let value = data;
+  if (!text || !data) {
+    return text || "";
+  }
+  return text.replace(/\{+([^{}]+)\}+/g, (match, path) => {
+    const cleanPath = path.trim();
+    if (!cleanPath) {
+      return match;
+    }
+    const parts = cleanPath.toLowerCase().split(".");
+    let value: any = data;
     for (const part of parts) {
-      if (value === undefined || value === null) break;
+      if (value === undefined || value === null || typeof value !== "object") {
+        value = undefined;
+        break;
+      }
 
       // Case-insensitive property lookup
       const keys = Object.keys(value);
       const key = keys.find((k) => k.toLowerCase() === part);
-      value = key ? value[key] : undefined;
+      value = key !== undefined ? value[key] : undefined;
     }
 
-    if (value === undefined || value === null) {
+    if (value === undefined || value === null || typeof value === "object") {
       return match;
     }
 
@@ -107,17 +117,19 @@ export function interpolate(text: string, data: any): string {
 }
 
 export function createTTSContext(
-  driver: TTSDriverData,
-  driverData: TTSLapData,
+  driver?: TTSDriverData | null,
+  driverData?: TTSLapData | null,
 ): TTSContext {
+  const driverName = driver?.name ?? "";
+  const driverNickname = driver?.nickname || driverName;
   return {
     driver: {
-      name: driver.name,
-      nickname: driver.nickname || driver.name,
-      lastLapTime: driverData.lastLapTime,
-      bestLapTime: driverData.bestLapTime,
-      averageLapTime: driverData.averageLapTime,
-      lapCount: driverData.lapCount,
+      name: driverName,
+      nickname: driverNickname,
+      lastLapTime: driverData?.lastLapTime ?? 0,
+      bestLapTime: driverData?.bestLapTime ?? 0,
+      averageLapTime: driverData?.averageLapTime ?? 0,
+      lapCount: driverData?.lapCount ?? 0,
     },
   };
 }

@@ -9,6 +9,7 @@ import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.proto.DemoConfig;
+import com.antigravity.service.AnalyticsService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.util.SeasonPointsCalculator;
 import java.util.ArrayList;
@@ -422,10 +423,19 @@ public class EventExecutionManager {
       throw new IllegalStateException("Track not found for race: " + raceModel.getName());
     }
 
-    Theme activeTheme =
-        ClientSubscriptionManager.getInstance().getRace() != null
-            ? ClientSubscriptionManager.getInstance().getRace().getTheme()
-            : null;
+    Theme activeTheme = null;
+    if (raceModel.getThemeId() != null && !raceModel.getThemeId().trim().isEmpty()) {
+      activeTheme = dbService.getTheme(databaseContext, raceModel.getThemeId().trim());
+      if (activeTheme == null) {
+        throw new IllegalStateException("Theme not found for race: " + raceModel.getName());
+      }
+    }
+    if (activeTheme == null && ClientSubscriptionManager.getInstance().getRace() != null) {
+      activeTheme = ClientSubscriptionManager.getInstance().getRace().getTheme();
+    }
+    if (activeTheme == null) {
+      throw new IllegalStateException("Theme not found for race: " + raceModel.getName());
+    }
 
     Race runtimeRace =
         new Race.Builder()
@@ -441,6 +451,7 @@ public class EventExecutionManager {
 
     ClientSubscriptionManager.getInstance().setRace(runtimeRace);
     runtimeRace.init();
+    AnalyticsService.getInstance().trackRaceStart(runtimeRace);
     com.antigravity.proto.RaceData raceDataSnapshot = runtimeRace.createSnapshot(); // fqn-collision
     runtimeRace.broadcast(raceDataSnapshot);
   }

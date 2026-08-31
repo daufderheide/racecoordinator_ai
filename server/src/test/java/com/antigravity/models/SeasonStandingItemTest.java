@@ -22,8 +22,15 @@ public class SeasonStandingItemTest {
     assertEquals("Driver 1", item.getDriverName());
     assertEquals(43.0, item.getNetPoints(), 0.001);
     assertEquals(43.0, item.getGrossPoints(), 0.001);
+    assertEquals(0.0, item.getDroppedPoints(), 0.001);
     assertEquals(2, item.getRacesRun());
     assertEquals(2, item.getRaceScores().size());
+
+    SeasonStandingItem itemWithDrops =
+        new SeasonStandingItem("d2", "Driver 2", 40.0, 55.0, 3, Arrays.asList(detail1, detail2));
+    assertEquals(40.0, itemWithDrops.getNetPoints(), 0.001);
+    assertEquals(55.0, itemWithDrops.getGrossPoints(), 0.001);
+    assertEquals(15.0, itemWithDrops.getDroppedPoints(), 0.001);
 
     item.setRank(1);
     assertEquals(1, item.getRank());

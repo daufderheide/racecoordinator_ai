@@ -66,3 +66,8 @@ MyCustomUI/
 In this example:
 - The **Raceday** screen is fully customized with HTML, CSS, and logic located in the `raceday/` subfolder.
 - The **Raceday Setup** screen is customized with only a root HTML file (no custom CSS or logic).
+
+## Custom Widgets
+
+If you want to build modular components (e.g. telemetry gauges, delta timers, sponsor banners) and place them directly into Custom UI layouts or fullscreen secondary screens rather than replacing entire pages, see the [Custom Widgets Guide](CUSTOM_WIDGETS.md).
+

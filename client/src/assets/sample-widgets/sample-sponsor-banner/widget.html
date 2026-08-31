@@ -1,0 +1,24 @@
+<div
+  class="sponsor-banner-card"
+  [style.--accent-color]="getSetting('accentColor', '#f59e0b')"
+>
+  <div class="banner-badge">{{ getSetting('badgeText', 'SPONSOR') }}</div>
+  <div class="marquee-track">
+    <div
+      class="marquee-content"
+      [style.animation-duration]="getSetting('marqueeSpeed', 15) + 's'"
+    >
+      <span
+        >{{ getSetting('sponsorText', 'Official Event Sponsor • High Performance
+        Slot Car Racing') }}</span
+      >
+      <span class="divider">★</span>
+      <span>{{ raceName || 'Race Day Event' }}</span>
+      <span class="divider">★</span>
+      <span
+        >{{ getSetting('sponsorText', 'Official Event Sponsor • High Performance
+        Slot Car Racing') }}</span
+      >
+    </div>
+  </div>
+</div>

@@ -1,4 +1,3 @@
-import { DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -17,12 +16,9 @@ import { forkJoin, of, Subscription } from "rxjs";
 import { catchError } from "rxjs/operators";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
+import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { DataService } from "@app/data.service";
-import {
-  Season,
-  SeasonStandingDetail,
-  SeasonStandingItem,
-} from "@app/models/season";
+import { Season, SeasonStandingItem } from "@app/models/season";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   ConnectionMonitorService,
@@ -33,6 +29,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { calculateSeasonStandings } from "@app/utils/season.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 @Component({
@@ -43,8 +40,8 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
   imports: [
     ManagerHeaderComponent,
     ConfirmationModalComponent,
+    SeasonSummaryComponent,
     TranslatePipe,
-    DecimalPipe,
     FormsModule,
   ],
 })
@@ -232,88 +229,24 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
       this.settingsService.saveSettings(settings);
     }
     this.calculateStandings(season);
+    if (season && season.entity_id) {
+      this.dataService.getSeasonStandings(season.entity_id).subscribe({
+        next: (standings) => {
+          if (this.selectedSeason?.entity_id === season.entity_id) {
+            this.standings = standings;
+            this.cdr.detectChanges();
+          }
+        },
+        error: (err) => {
+          this.logger.warn("Failed to fetch season standings from server", err);
+        },
+      });
+    }
     this.cdr.detectChanges();
   }
 
   calculateStandings(season: Season): void {
-    if (!season || !season.races || season.races.length === 0) {
-      this.standings = [];
-      return;
-    }
-
-    // Sort races by date run (oldest to most recent)
-    season.races.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-
-    const driverMap = new Map<
-      string,
-      { driver_name: string; scores: SeasonStandingDetail[] }
-    >();
-
-    for (const race of season.races) {
-      if (!race.driver_results) continue;
-      for (const res of race.driver_results) {
-        let entry = driverMap.get(res.driver_id);
-        if (!entry) {
-          entry = { driver_name: res.driver_name, scores: [] };
-          driverMap.set(res.driver_id, entry);
-        }
-        entry.scores.push({
-          race_id: race.race_id,
-          race_name: race.race_name,
-          overall_rank: res.overall_rank,
-          overall_points: res.overall_points,
-          heat_points: res.heat_points,
-          total_points: res.total_points,
-          is_dropped: false,
-        });
-      }
-    }
-
-    const result: SeasonStandingItem[] = [];
-
-    driverMap.forEach((entry, driverId) => {
-      const scores = entry.scores;
-      const drops = season.drops || 0;
-      const racesRun = scores.length;
-
-      if (racesRun > drops && drops > 0) {
-        // Sort copy to find lowest scores to drop
-        const sortedIndices = scores
-          .map((s, idx) => ({ total: s.total_points, idx }))
-          .sort((a, b) => a.total - b.total);
-
-        for (let i = 0; i < drops; i++) {
-          scores[sortedIndices[i].idx].is_dropped = true;
-        }
-      }
-
-      let net = 0;
-      let gross = 0;
-      for (const s of scores) {
-        gross += s.total_points;
-        if (!s.is_dropped) {
-          net += s.total_points;
-        }
-      }
-
-      result.push({
-        driver_id: driverId,
-        driver_name: entry.driver_name,
-        net_points: net,
-        gross_points: gross,
-        races_run: racesRun,
-        race_scores: scores,
-      });
-    });
-
-    result.sort((a, b) => {
-      if (b.net_points !== a.net_points) return b.net_points - a.net_points;
-      if (b.gross_points !== a.gross_points)
-        return b.gross_points - a.gross_points;
-      return b.races_run - a.races_run;
-    });
-
-    this.standings = result;
+    this.standings = calculateSeasonStandings(season);
   }
 
   onNew(): void {

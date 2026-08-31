@@ -40,68 +40,116 @@
               @if (sectionsExpanded.main) {
                 <div class="section-content">
                   <div class="config-top-section">
-                    <div class="board-controls">
-                      <div class="control-group">
-                        <label>{{ "TME_COMM_PORT" | translate }}</label>
-                        <div class="com-port-row">
-                          <select
-                            [id]="'commPort-' + interfaceIndex()"
-                            [(ngModel)]="config().commPort"
-                            (change)="onPortChange()"
-                          >
-                            <option value="" disabled>
-                              {{ "TME_SELECT_PORT" | translate }}
-                            </option>
-                            @for (port of serialPorts; track port) {
-                              <option [value]="port">
-                                {{ port }}
+                    <div class="main-settings-group">
+                      <div class="board-controls">
+                        <div class="control-group">
+                          <label>{{ "TME_COMM_PORT" | translate }}</label>
+                          <div class="com-port-row">
+                            <select
+                              [id]="'commPort-' + interfaceIndex()"
+                              [(ngModel)]="config().commPort"
+                              (change)="onPortChange()"
+                            >
+                              <option value="" disabled>
+                                {{ "TME_SELECT_PORT" | translate }}
                               </option>
-                            }
-                          </select>
-                          <button
-                            type="button"
-                            [id]="'trakmate-status-badge-' + interfaceIndex()"
-                            class="status-badge"
-                            [class.connected]="status === 'CONNECTED'"
-                            [title]="'TME_STATUS_' + status | translate"
+                              @for (port of serialPorts; track port) {
+                                <option [value]="port">
+                                  {{ port }}
+                                </option>
+                              }
+                            </select>
+                            <button
+                              type="button"
+                              [id]="'trakmate-status-badge-' + interfaceIndex()"
+                              class="status-badge"
+                              [class.connected]="status === 'CONNECTED'"
+                              [title]="'TME_STATUS_' + status | translate"
+                            >
+                              <div class="status-dot"></div>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="control-group">
+                          <label>{{ "TME_DEBOUNCE" | translate }}</label>
+                          <select
+                            [id]="'debounce-' + interfaceIndex()"
+                            [(ngModel)]="config().debounce"
+                            (change)="onConfigChange()"
                           >
-                            <div class="status-dot"></div>
-                          </button>
+                            <option [ngValue]="1">1</option>
+                            <option [ngValue]="2">2</option>
+                            <option [ngValue]="3">3</option>
+                            <option [ngValue]="4">4</option>
+                          </select>
+                        </div>
+
+                        <div class="control-group">
+                          <label>{{
+                            "TME_LAP_PIN_PIT_BEHAVIOR" | translate
+                          }}</label>
+                          <div class="com-port-row">
+                            <select
+                              [id]="'lapPinPitBehavior-' + interfaceIndex()"
+                              [(ngModel)]="config().lapPinPitBehavior"
+                              (change)="onConfigChange()"
+                            >
+                              @for (
+                                option of lapPinPitBehaviors;
+                                track option.value
+                              ) {
+                                <option [ngValue]="option.value">
+                                  {{ option.label | translate }}
+                                </option>
+                              }
+                            </select>
+                            <div
+                              class="status-badge"
+                              style="visibility: hidden"
+                            ></div>
+                          </div>
                         </div>
                       </div>
 
-                      <div class="control-group">
-                        <label>{{ "TME_DEBOUNCE" | translate }}</label>
-                        <select
-                          [id]="'debounce-' + interfaceIndex()"
-                          [(ngModel)]="config().debounce"
-                          (change)="onConfigChange()"
-                        >
-                          <option [ngValue]="1">1</option>
-                          <option [ngValue]="2">2</option>
-                          <option [ngValue]="3">3</option>
-                          <option [ngValue]="4">4</option>
-                        </select>
-                      </div>
+                      <div class="right-controls">
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [id]="'trakmate-nc-sensors-' + interfaceIndex()"
+                              [(ngModel)]="config().normallyClosedLaneSensors"
+                              (change)="onConfigChange()"
+                            />
+                            {{ "TME_NORMALLY_CLOSED_SENSORS" | translate }}
+                          </label>
+                        </div>
 
-                      <div class="control-group">
-                        <label>{{
-                          "TME_LAP_PIN_PIT_BEHAVIOR" | translate
-                        }}</label>
-                        <select
-                          [id]="'lapPinPitBehavior-' + interfaceIndex()"
-                          [(ngModel)]="config().lapPinPitBehavior"
-                          (change)="onConfigChange()"
-                        >
-                          @for (
-                            option of lapPinPitBehaviors;
-                            track option.value
-                          ) {
-                            <option [ngValue]="option.value">
-                              {{ option.label | translate }}
-                            </option>
-                          }
-                        </select>
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [id]="'trakmate-nc-relays-' + interfaceIndex()"
+                              [(ngModel)]="config().normallyClosedRelays"
+                              (change)="onConfigChange()"
+                            />
+                            {{ "TME_NORMALLY_CLOSED_RELAYS" | translate }}
+                          </label>
+                        </div>
+
+                        <div class="control-group">
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [id]="
+                                'trakmate-per-lane-relays-' + interfaceIndex()
+                              "
+                              [(ngModel)]="config().hasPerLaneRelays"
+                              (change)="onConfigChange()"
+                            />
+                            {{ "TME_HAS_PER_LANE_RELAYS" | translate }}
+                          </label>
+                        </div>
                       </div>
                     </div>
 
@@ -111,46 +159,6 @@
                         alt="Trakmate"
                         class="board-image"
                       />
-                    </div>
-
-                    <div class="right-controls">
-                      <div class="control-group">
-                        <label class="checkbox-label">
-                          <input
-                            type="checkbox"
-                            [id]="'trakmate-nc-sensors-' + interfaceIndex()"
-                            [(ngModel)]="config().normallyClosedLaneSensors"
-                            (change)="onConfigChange()"
-                          />
-                          {{ "TME_NORMALLY_CLOSED_SENSORS" | translate }}
-                        </label>
-                      </div>
-
-                      <div class="control-group">
-                        <label class="checkbox-label">
-                          <input
-                            type="checkbox"
-                            [id]="'trakmate-nc-relays-' + interfaceIndex()"
-                            [(ngModel)]="config().normallyClosedRelays"
-                            (change)="onConfigChange()"
-                          />
-                          {{ "TME_NORMALLY_CLOSED_RELAYS" | translate }}
-                        </label>
-                      </div>
-
-                      <div class="control-group">
-                        <label class="checkbox-label">
-                          <input
-                            type="checkbox"
-                            [id]="
-                              'trakmate-per-lane-relays-' + interfaceIndex()
-                            "
-                            [(ngModel)]="config().hasPerLaneRelays"
-                            (change)="onConfigChange()"
-                          />
-                          {{ "TME_HAS_PER_LANE_RELAYS" | translate }}
-                        </label>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -281,8 +289,6 @@
                           </button>
                         </div>
                       </div>
-                    </div>
-                    <div class="right-controls">
                       <div class="control-group">
                         <div class="com-port-row">
                           <span

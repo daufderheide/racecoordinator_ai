@@ -42,7 +42,11 @@ export type WidgetType =
   | "action-open-heat-results"
   | "action-open-race-results"
   | "action-open-season-results"
-  | "action-open-prediction-results";
+  | "action-open-prediction-results"
+  | "action-master-power-on"
+  | "action-master-power-off"
+  | `custom:${string}`
+  | (string & {});
 
 export interface AbsoluteWidgetNode {
   id: string; // Unique ID so we can uniquely identify widgets on the page
@@ -153,6 +157,9 @@ export class Settings {
   racedayColumns: string[] = Settings.DEFAULT_COLUMNS;
   columnAnchors: { [key: string]: AnchorPoint } = {};
   columnLayouts: { [columnKey: string]: { [A in AnchorPoint]?: string } } = {
+    laneNumber: {
+      [AnchorPoint.CenterCenter]: "laneNumber",
+    },
     "driver.nickname": {
       [AnchorPoint.CenterCenter]: "driver.nickname",
       [AnchorPoint.BottomRight]: "participant.team.name",
@@ -179,6 +186,7 @@ export class Settings {
   columnVisibility: { [columnKey: string]: ColumnVisibility } = {
     "imageset_fuel-gauge-builtin": ColumnVisibility.FuelRaceOnly,
   };
+  columnWidths: { [columnKey: string]: number } = {};
 
   racedayLayout?: LayoutConfig;
 
@@ -187,6 +195,9 @@ export class Settings {
   practiceColumnLayouts: {
     [columnKey: string]: { [A in AnchorPoint]?: string };
   } = {
+    laneNumber: {
+      [AnchorPoint.CenterCenter]: "laneNumber",
+    },
     "driver.nickname": {
       [AnchorPoint.CenterCenter]: "driver.nickname",
     },
@@ -208,6 +219,7 @@ export class Settings {
     laneNumber: ColumnVisibility.Always,
     lastLaps: ColumnVisibility.Always,
   };
+  practiceColumnWidths: { [columnKey: string]: number } = {};
 
   practiceRacedayLayout?: LayoutConfig;
 

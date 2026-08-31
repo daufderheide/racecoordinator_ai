@@ -73,6 +73,8 @@ public class ArduinoConfig {
       PIN_MODE_MAP.put(
           PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE.getNumber() + i, PinMode.READ_ANALOG);
       PIN_MODE_MAP.put(PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE.getNumber() + i, PinMode.READ);
+      PIN_MODE_MAP.put(
+          PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE.getNumber() + i, PinMode.WRITE);
     }
   }
 

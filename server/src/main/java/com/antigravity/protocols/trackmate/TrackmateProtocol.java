@@ -342,21 +342,32 @@ public class TrackmateProtocol extends AbstractSerialProtocol {
   }
 
   @Override
-  protected boolean hasPitInConfigured(int laneIndex) {
+  public boolean hasPitInConfigured(int laneIndex) {
     if (config == null || config.lapPinBehaviors == null) {
       return false;
     }
-    return config.lapPinBehaviors.contains(PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex);
+    int pitIn = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex;
+    int pitInOut = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + laneIndex;
+    return config.lapPinBehaviors.contains(pitIn) || config.lapPinBehaviors.contains(pitInOut);
+  }
+
+  @Override
+  public void initializeHardwareState() {
+    super.initializeHardwareState();
+    if (config != null && config.hasPerLaneRelays) {
+      byte command = config.normallyClosedRelays ? MAIN_POWER_ON_COMMAND : MAIN_POWER_OFF_COMMAND;
+      writeData(new byte[] {command, TERMINATOR_LF});
+    }
   }
 
   @Override
   public boolean hasPerLaneRelays() {
-    return config.hasPerLaneRelays;
+    return config != null && config.hasPerLaneRelays;
   }
 
   @Override
   public boolean hasMainRelay() {
-    return true;
+    return config != null && !config.hasPerLaneRelays;
   }
 
   @Override

@@ -24,6 +24,7 @@ public class CommonTest {
 
     when(h1.getObjectId()).thenReturn("h1-id");
     when(h2.getObjectId()).thenReturn("h2-id");
+    when(h2.getActiveDriverCount()).thenReturn(1);
 
     List<Heat> heats = new ArrayList<>(Arrays.asList(h1, h2));
     when(race.getHeats()).thenReturn(heats);
@@ -58,6 +59,100 @@ public class CommonTest {
   }
 
   @Test
+  public void testAdvanceToNextHeat_SkipsEmptyHeat() {
+    Race race = mock(Race.class);
+    Heat h1 = mock(Heat.class);
+    Heat h2 = mock(Heat.class);
+    Heat h3 = mock(Heat.class);
+
+    when(h1.getObjectId()).thenReturn("h1-id");
+    when(h2.getObjectId()).thenReturn("h2-id");
+    when(h3.getObjectId()).thenReturn("h3-id");
+
+    when(h1.getActiveDriverCount()).thenReturn(1);
+    when(h2.getActiveDriverCount()).thenReturn(0); // empty heat
+    when(h3.getActiveDriverCount()).thenReturn(2); // non-empty heat
+
+    List<Heat> heats = new ArrayList<>(Arrays.asList(h1, h2, h3));
+    when(race.getHeats()).thenReturn(heats);
+    when(race.getCurrentHeat()).thenReturn(h1);
+
+    RaceParticipant p1 = mock(RaceParticipant.class);
+    when(p1.getObjectId()).thenReturn("p1-id");
+    when(race.getDrivers()).thenReturn(Collections.singletonList(p1));
+
+    Common.advanceToNextHeat(race);
+
+    // Should skip h2 and set current heat to h3
+    verify(race).setCurrentHeat(h3);
+    verify(race, never()).setCurrentHeat(h2);
+
+    ArgumentCaptor<IRaceState> stateCaptor = ArgumentCaptor.forClass(IRaceState.class);
+    verify(race).changeState(stateCaptor.capture());
+    assertTrue(stateCaptor.getValue() instanceof NotStarted);
+  }
+
+  @Test
+  public void testAdvanceToNextHeat_MultipleEmptyHeats() {
+    Race race = mock(Race.class);
+    Heat h1 = mock(Heat.class);
+    Heat h2 = mock(Heat.class);
+    Heat h3 = mock(Heat.class);
+    Heat h4 = mock(Heat.class);
+
+    when(h1.getObjectId()).thenReturn("h1-id");
+    when(h2.getObjectId()).thenReturn("h2-id");
+    when(h3.getObjectId()).thenReturn("h3-id");
+    when(h4.getObjectId()).thenReturn("h4-id");
+
+    when(h1.getActiveDriverCount()).thenReturn(1);
+    when(h2.getActiveDriverCount()).thenReturn(0);
+    when(h3.getActiveDriverCount()).thenReturn(0);
+    when(h4.getActiveDriverCount()).thenReturn(1);
+
+    List<Heat> heats = new ArrayList<>(Arrays.asList(h1, h2, h3, h4));
+    when(race.getHeats()).thenReturn(heats);
+    when(race.getCurrentHeat()).thenReturn(h1);
+
+    Common.advanceToNextHeat(race);
+
+    verify(race).setCurrentHeat(h4);
+    verify(race, never()).setCurrentHeat(h2);
+    verify(race, never()).setCurrentHeat(h3);
+
+    ArgumentCaptor<IRaceState> stateCaptor = ArgumentCaptor.forClass(IRaceState.class);
+    verify(race).changeState(stateCaptor.capture());
+    assertTrue(stateCaptor.getValue() instanceof NotStarted);
+  }
+
+  @Test
+  public void testAdvanceToNextHeat_AllRemainingHeatsEmpty_TransitionsToRaceOver() {
+    Race race = mock(Race.class);
+    Heat h1 = mock(Heat.class);
+    Heat h2 = mock(Heat.class);
+    Heat h3 = mock(Heat.class);
+
+    when(h1.getObjectId()).thenReturn("h1-id");
+    when(h2.getObjectId()).thenReturn("h2-id");
+    when(h3.getObjectId()).thenReturn("h3-id");
+
+    when(h1.getActiveDriverCount()).thenReturn(1);
+    when(h2.getActiveDriverCount()).thenReturn(0);
+    when(h3.getActiveDriverCount()).thenReturn(0);
+
+    List<Heat> heats = new ArrayList<>(Arrays.asList(h1, h2, h3));
+    when(race.getHeats()).thenReturn(heats);
+    when(race.getCurrentHeat()).thenReturn(h1);
+
+    Common.advanceToNextHeat(race);
+
+    verify(race, never()).setCurrentHeat(any());
+    ArgumentCaptor<IRaceState> stateCaptor = ArgumentCaptor.forClass(IRaceState.class);
+    verify(race).changeState(stateCaptor.capture());
+    assertTrue(stateCaptor.getValue() instanceof RaceOver);
+  }
+
+  @Test
   public void testAdvanceToNextHeat_LastHeat() {
     Race race = mock(Race.class);
     Heat h1 = mock(Heat.class);
@@ -80,5 +175,94 @@ public class CommonTest {
     verify(race, never()).resetRaceTime();
     verify(race, never()).prepareHeat();
     verify(race, never()).broadcast(any());
+  }
+
+  @Test
+  public void testHandleDriftLap_NullRaceOrModel() {
+    assertFalse(Common.handleDriftLap(null, System.currentTimeMillis(), "State", 0, 5.0, 1, null));
+
+    Race race = mock(Race.class);
+    when(race.getRaceModel()).thenReturn(null);
+    assertFalse(Common.handleDriftLap(race, System.currentTimeMillis(), "State", 0, 5.0, 1, null));
+  }
+
+  @Test
+  public void testHandleDriftLap_ZeroDriftTime() {
+    Race race = mock(Race.class);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder().withDriftTime(0.0).build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    assertFalse(Common.handleDriftLap(race, System.currentTimeMillis(), "State", 0, 5.0, 1, null));
+  }
+
+  @Test
+  public void testHandleDriftLap_ExpiredDriftTime() {
+    Race race = mock(Race.class);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder().withDriftTime(0.01).build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    long pastStartTime = System.currentTimeMillis() - 50;
+    assertFalse(Common.handleDriftLap(race, pastStartTime, "State", 0, 5.0, 1, null));
+  }
+
+  @Test
+  public void testHandleDriftLap_WithinDriftWindow_SuccessWithCallback() {
+    Race race = mock(Race.class);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder().withDriftTime(1.0).build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    com.antigravity.race.HeatExecutionManager hem =
+        mock(com.antigravity.race.HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(hem);
+    when(hem.onLap(0, 5.0, 1, false, true, true)).thenReturn(true);
+
+    boolean[] callbackRan = new boolean[] {false};
+    boolean result =
+        Common.handleDriftLap(
+            race,
+            System.currentTimeMillis(),
+            "State",
+            0,
+            5.0,
+            1,
+            () -> {
+              callbackRan[0] = true;
+            });
+
+    assertTrue(result);
+    assertTrue(callbackRan[0]);
+    verify(hem).onLap(0, 5.0, 1, false, true, true);
+  }
+
+  @Test
+  public void testHandleDriftLap_WithinDriftWindow_UncountedDoesNotRunCallback() {
+    Race race = mock(Race.class);
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder().withDriftTime(1.0).build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    com.antigravity.race.HeatExecutionManager hem =
+        mock(com.antigravity.race.HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(hem);
+    when(hem.onLap(0, 5.0, 1, false, true, true)).thenReturn(false);
+
+    boolean[] callbackRan = new boolean[] {false};
+    boolean result =
+        Common.handleDriftLap(
+            race,
+            System.currentTimeMillis(),
+            "State",
+            0,
+            5.0,
+            1,
+            () -> {
+              callbackRan[0] = true;
+            });
+
+    assertFalse(result);
+    assertFalse(callbackRan[0]);
   }
 }

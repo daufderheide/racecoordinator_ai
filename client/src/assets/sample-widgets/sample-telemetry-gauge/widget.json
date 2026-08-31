@@ -1,0 +1,46 @@
+{
+  "id": "sample-telemetry-gauge",
+  "name": "Telemetry Gauge",
+  "version": "1.0.0",
+  "description": "Live speedometer and telemetry gauge with configurable colors and thresholds",
+  "author": "Race Coordinator AI",
+  "defaultWidth": 400,
+  "defaultHeight": 250,
+  "minWidth": 200,
+  "minHeight": 150,
+  "settingsSchema": [
+    {
+      "key": "title",
+      "label": "Widget Title",
+      "type": "string",
+      "default": "Telemetry"
+    },
+    {
+      "key": "unitLabel",
+      "label": "Unit Label",
+      "type": "string",
+      "default": "MPH"
+    },
+    {
+      "key": "showMaxSpeed",
+      "label": "Show Max Speed",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "dialColor",
+      "label": "Dial Accent Color",
+      "type": "color",
+      "default": "#38bdf8"
+    },
+    {
+      "key": "warningThreshold",
+      "label": "Warning Threshold",
+      "type": "number",
+      "default": 80,
+      "min": 10,
+      "max": 200,
+      "step": 5
+    }
+  ]
+}

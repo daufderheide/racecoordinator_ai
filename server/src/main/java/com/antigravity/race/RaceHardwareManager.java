@@ -7,6 +7,7 @@ import com.antigravity.protocols.HardwareProtocolFactory;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.demo.Demo;
+import com.antigravity.race.states.Racing;
 import com.antigravity.race.states.Starting;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,18 +108,28 @@ public class RaceHardwareManager {
 
   public void updatePowerForFlag(RaceFlag flag) {
     boolean powerOn = false;
-    switch (flag) {
-      case GREEN:
-      case GREEN_YELLOW:
-      case WHITE:
+    if (race.getState() instanceof Racing) {
+      if (flag == RaceFlag.GREEN || flag == RaceFlag.GREEN_YELLOW || flag == RaceFlag.WHITE) {
         powerOn = true;
-        break;
-      case CHECKERED:
+      } else {
         powerOn = race.getHeatExecutionManager().isAllowFinishEnabled();
-        break;
-      case YELLOW:
-      case RED:
-        break;
+      }
+    } else {
+      switch (flag) {
+        case GREEN:
+        case GREEN_YELLOW:
+        case WHITE:
+          powerOn = true;
+          break;
+        case CHECKERED:
+          powerOn = race.getHeatExecutionManager().isAllowFinishEnabled();
+          break;
+        case YELLOW:
+        case RED:
+        default:
+          powerOn = false;
+          break;
+      }
     }
 
     boolean anyColdStartLanes = false;
@@ -162,6 +173,7 @@ public class RaceHardwareManager {
   public void forceMainPowerSync() {
     if (protocols != null) {
       protocols.setMainPower(race.isMainPower());
+      race.syncLanePowerWithState(race.isMainPower());
     }
   }
 

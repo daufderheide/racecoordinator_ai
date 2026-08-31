@@ -1,12 +1,12 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { RacedaySetupHarnessE2e } from "./testing/raceday-setup.harness.e2e";
 
 test.describe("Splash Screen Visuals", () => {
-  test("should display splash screen and server config modal correctly", async ({
-    page,
-  }) => {
+  async function setupSplashScreen(
+    page: Page,
+  ): Promise<RacedaySetupHarnessE2e> {
     await page.clock.install();
     await TestSetupHelper.setupStandardMocks(page);
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -75,10 +75,20 @@ test.describe("Splash Screen Visuals", () => {
       `,
     });
 
+    return harness;
+  }
+
+  test("should display splash screen correctly", async ({ page }) => {
+    await setupSplashScreen(page);
+
     await expect(page).toHaveScreenshot("splash-screen-initial.png", {
       maxDiffPixels: 500,
       animations: "disabled",
     });
+  });
+
+  test("should display server config modal correctly", async ({ page }) => {
+    const harness = await setupSplashScreen(page);
 
     await harness.clickServerConfig();
 
@@ -91,12 +101,6 @@ test.describe("Splash Screen Visuals", () => {
       maxDiffPixels: 500,
       animations: "disabled",
     });
-
-    // Close Modal - Harness doesn't have closeServerConfig, but it has clickServerConfig which might toggle?
-    // Looking at template:
-    // <button (click)="toggleServerConfig()">{{ 'RDS_BTN_CANCEL' | translate }}</button>
-    // So clickServerConfig (the button outside) opens it.
-    // Modal screenshot taken above, ending test
   });
 
   test("should display update banner correctly", async ({ page }) => {

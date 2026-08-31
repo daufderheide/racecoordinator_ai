@@ -1,12 +1,51 @@
 <div
   class="ghost-pacing-widget"
   [class.compact]="compact()"
+  [class.stacked]="stacked()"
   [class.has-data]="!isEmptyDriver() && targetGhostLapTime() > 0"
 >
   @if (isEmptyDriver()) {
     <div class="pacing-empty">
       <span class="no-benchmark-text">--</span>
     </div>
+  } @else if (stacked()) {
+    @if (targetGhostLapTime() > 0) {
+      <div class="pacing-stacked-content">
+        <div class="pacing-benchmark-label">
+          {{ benchmarkLabelKey() | translate }}
+        </div>
+        <div class="pacing-target-time">
+          {{ targetGhostLapTime().toFixed(2) }}s
+        </div>
+        <div
+          class="delta-badge"
+          [class.ahead]="ghostGap().isAhead && formattedDelta() !== '--'"
+          [class.behind]="!ghostGap().isAhead && formattedDelta() !== '--'"
+        >
+          <span class="delta-arrow">
+            @if (formattedDelta() === "--") {
+              ●
+            } @else if (ghostGap().isAhead) {
+              ▲
+            } @else {
+              ▼
+            }
+          </span>
+          <span class="delta-value">{{ formattedDelta() }}</span>
+        </div>
+      </div>
+    } @else {
+      <div class="pacing-stacked-content">
+        <div class="pacing-benchmark-label">
+          {{ benchmarkLabelKey() | translate }}
+        </div>
+        <div class="pacing-target-time">--.--s</div>
+        <div class="delta-badge">
+          <span class="delta-arrow">●</span>
+          <span class="delta-value">--</span>
+        </div>
+      </div>
+    }
   } @else if (targetGhostLapTime() > 0) {
     <div class="pacing-header">
       <span
@@ -40,22 +79,6 @@
           }
         </span>
         <span class="delta-value">{{ formattedDelta() }}</span>
-      </div>
-    </div>
-
-    <!-- Live vs Ghost Progress Bar -->
-    <div class="pacing-track">
-      <div
-        class="pacing-bar-fill"
-        [style.width.%]="progressWidthPct()"
-        [class.ahead]="ghostGap().isAhead"
-      ></div>
-      <div
-        class="ghost-marker"
-        [style.left.%]="progressWidthPct()"
-        [title]="'RD_GHOST_TELEMETRY_POSITION' | translate"
-      >
-        <div class="marker-dot"></div>
       </div>
     </div>
   } @else {

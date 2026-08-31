@@ -214,4 +214,78 @@ test.describe("Raceday Setup Functional - en", () => {
       timeout: 10000,
     });
   });
+
+  test("Load saved race modal", async ({ page }) => {
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.openFileMenu();
+    const loadItem = page.locator(".setup-menu-dropdown-item").first();
+    await loadItem.waitFor({ state: "visible" });
+    await loadItem.click();
+
+    const modal = page.locator(".modal-overlay .modal-content");
+    await modal.waitFor({ state: "visible" });
+    await page.waitForTimeout(300);
+
+    await expect(modal).toHaveScreenshot("load-saved-race-modal-en.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+      timeout: 10000,
+    });
+  });
+
+  test("Load saved race inline rename", async ({ page }) => {
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.openFileMenu();
+    const loadItem = page.locator(".setup-menu-dropdown-item").first();
+    await loadItem.waitFor({ state: "visible" });
+    await loadItem.click();
+
+    const modal = page.locator(".modal-overlay .modal-content");
+    await modal.waitFor({ state: "visible" });
+
+    const renameBtn = modal.locator(".rename-saved-btn").first();
+    await renameBtn.waitFor({ state: "visible" });
+    await renameBtn.click();
+
+    const inlineInput = modal.locator(".inline-rename-input");
+    await inlineInput.waitFor({ state: "visible" });
+    await page.waitForTimeout(300);
+
+    await expect(modal).toHaveScreenshot(
+      "load-saved-race-inline-rename-en.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
+
+  test("Season selected with standings", async ({ page }) => {
+    const container = page.locator(".setup-container");
+    const harness = new DefaultRacedaySetupHarnessE2e(container);
+
+    await harness.selectSeason("2026 Pro GT Championship");
+
+    const seasonCard = page.locator(".season-summary-card");
+    await seasonCard.waitFor({ state: "visible" });
+    await seasonCard
+      .locator(".standings-wrapper")
+      .waitFor({ state: "visible" });
+
+    await page.waitForTimeout(300);
+
+    await expect(page).toHaveScreenshot(
+      "season-selected-with-standings-en.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+        timeout: 10000,
+      },
+    );
+  });
 });

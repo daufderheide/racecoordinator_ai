@@ -104,16 +104,28 @@ public class Heat extends ServerToClientObject {
   @JsonIgnore
   public int getActiveDriverCount() {
     int count = 0;
-    for (DriverHeatData driverData : drivers) {
-      if (driverData != null
-          && driverData.getDriver() != null
-          && driverData.getDriver().getDriver() != null
-          && driverData.getDriver().getDriver().getEntityId() != null
-          && !driverData.getDriver().getDriver().isEmpty()) {
-        count++;
+    if (drivers != null) {
+      for (DriverHeatData driverData : drivers) {
+        if (driverData != null) {
+          if (driverData.getActualDriver() != null
+              && driverData.getActualDriver().getEntityId() != null
+              && !driverData.getActualDriver().isEmpty()) {
+            count++;
+          } else if (driverData.getDriver() != null
+              && driverData.getDriver().getDriver() != null
+              && driverData.getDriver().getDriver().getEntityId() != null
+              && !driverData.getDriver().getDriver().isEmpty()) {
+            count++;
+          }
+        }
       }
     }
     return count;
+  }
+
+  @JsonIgnore
+  public boolean isEmpty() {
+    return getActiveDriverCount() == 0;
   }
 
   public boolean isStarted() {

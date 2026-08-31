@@ -446,7 +446,7 @@ public class Demo extends DefaultProtocol {
   }
 
   @Override
-  protected boolean hasPitInConfigured(int laneIndex) {
+  public boolean hasPitInConfigured(int laneIndex) {
     return false;
   }
 

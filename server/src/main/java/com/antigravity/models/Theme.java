@@ -16,12 +16,15 @@ import java.util.Map;
 public class Theme extends Model {
 
   public static final String DEFAULT_THEME_ID = "default_classic_rc_ai";
+  public static final String PRACTICE_THEME_ID = "practice_theme_rc_ai";
+  public static final String FUEL_THEME_ID = "default_fuel_theme_rc_ai";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final String name;
   private final boolean isDefault;
   private final Map<String, String> slots;
   private final Map<String, AudioConfig> audioSlots;
+  private final String uiId;
 
   @JsonCreator
   public Theme(
@@ -29,6 +32,7 @@ public class Theme extends Model {
       @JsonProperty("is_default") boolean isDefault,
       @JsonProperty("slots") Map<String, String> slots,
       @JsonProperty("audio_slots") Map<String, AudioConfig> audioSlots,
+      @JsonProperty("uiId") String uiId,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -36,6 +40,17 @@ public class Theme extends Model {
     this.isDefault = isDefault;
     this.slots = slots != null ? slots : new HashMap<>();
     this.audioSlots = audioSlots != null ? audioSlots : new HashMap<>();
+    this.uiId = uiId;
+  }
+
+  public Theme(
+      String name,
+      boolean isDefault,
+      Map<String, String> slots,
+      Map<String, AudioConfig> audioSlots,
+      String entityId,
+      String id) {
+    this(name, isDefault, slots, audioSlots, null, entityId, id);
   }
 
   public String getName() {
@@ -54,6 +69,11 @@ public class Theme extends Model {
   @JsonProperty("audio_slots")
   public Map<String, AudioConfig> getAudioSlots() {
     return audioSlots;
+  }
+
+  @JsonProperty("uiId")
+  public String getUiId() {
+    return uiId;
   }
 
   public RaceFlag resolveFlag(String slotKey, RaceFlag fallback) {

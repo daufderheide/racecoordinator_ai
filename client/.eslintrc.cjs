@@ -3,6 +3,7 @@ module.exports = {
   "ignorePatterns": [
     "projects/**/*",
     "scripts/**/*",
+    "src/assets/**/*",
     "src/app/proto/message.d.ts",
     "src/app/proto/message.js",
     "src/app/proto/antigravity.ts"

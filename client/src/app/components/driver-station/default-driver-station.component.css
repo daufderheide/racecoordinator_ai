@@ -7,6 +7,7 @@
 }
 
 .driver-station-container {
+  position: relative;
   display: grid;
   height: 100vh;
   height: 100dvh;
@@ -19,6 +20,13 @@
   box-sizing: border-box;
   transition: background-color 0.3s, color 0.3s;
   overflow: visible;
+}
+
+.driver-station-nav {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
 }
 
 /* If fuel race, use 3 columns */

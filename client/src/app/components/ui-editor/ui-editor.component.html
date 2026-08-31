@@ -1,7 +1,4 @@
-<div
-  class="page-container ue-container"
-  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
->
+<div class="page-container ue-container">
   <app-editor-title
     titleKey="UE_TITLE"
     [undoManager]="undoManager"
@@ -12,591 +9,357 @@
 
   @if (!isLoading) {
     <div class="content-area sections-wrapper">
-      <!-- Raceday Layout Section -->
+      <!-- UI Layouts Section -->
       <div class="config-section">
         <div
           class="section-header"
-          id="help-raceday-ui"
-          (click)="toggleSection('racedayLayout')"
+          id="help-custom-uis"
+          (click)="toggleSection('customUIs')"
         >
           <span
             class="expander-icon"
-            [class.collapsed]="!sectionsExpanded['racedayLayout']"
+            [class.collapsed]="!sectionsExpanded['customUIs']"
             >▼</span
           >
-          <h1>{{ "UE_LABEL_RACEDAY_LAYOUT" | translate }}</h1>
+          <h1>{{ "UE_HEADER_CUSTOM_UI_LAYOUTS" | translate }}</h1>
           <div
-            id="help-raceday-import-export"
-            class="expander-actions"
-            style="
-              margin-left: auto;
-              display: flex;
-              gap: 8px;
-              padding-right: 15px;
-            "
+            class="custom-ui-toolbar-container"
+            id="help-custom-uis-add"
             (click)="$event.stopPropagation()"
           >
-            <button
-              class="icon-btn"
-              (click)="racedayLayoutFileInput.click()"
-              [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
-              style="
-                background: none;
-                border: none;
-                color: #38bdf8;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 4px;
-              "
+            <app-toolbar
+              [showEdit]="false"
+              [showCopy]="false"
+              [showDelete]="false"
+              [showAdd]="true"
+              (add)="createNewCustomUi()"
+              [showAnalytics]="false"
             >
-              <span class="material-icons">download</span>
-            </button>
-            <button
-              class="icon-btn"
-              (click)="exportRacedayLayout()"
-              [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
-              style="
-                background: none;
-                border: none;
-                color: #38bdf8;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 4px;
-              "
-            >
-              <span class="material-icons">upload</span>
-            </button>
-            <input
-              #racedayLayoutFileInput
-              type="file"
-              accept=".json,.txt"
-              style="display: none"
-              (change)="onImportRacedayLayout($event)"
-            />
+            </app-toolbar>
           </div>
         </div>
-        @if (sectionsExpanded["racedayLayout"]) {
-          <div class="section-content" style="position: relative">
-            <div class="panel layout-panel">
-              <div class="panel-content raceday-layout-section">
+        @if (sectionsExpanded["customUIs"]) {
+          <div class="section-content">
+            @for (
+              ui of displayCustomUIs;
+              track ui.entity_id;
+              let uiIndex = $index
+            ) {
+              <div
+                class="config-section sub-section custom-ui-sub-section"
+                [attr.data-ui-id]="ui.entity_id"
+              >
                 <div
-                  class="layout-controls"
-                  style="
-                    margin-bottom: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 30px;
-                  "
+                  class="section-header"
+                  [attr.id]="uiIndex === 0 ? 'help-default-ui' : null"
+                  (click)="toggleUiSection(ui.entity_id)"
                 >
-                  <div style="display: flex; gap: 25px; align-items: center">
-                    <label
-                      id="help-raceday-sort"
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.sortByStandings"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_SORT_STANDINGS" | translate }}
-                    </label>
-                    <label
-                      id="help-raceday-highlight"
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.highlightRowOnLap"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
-                    </label>
-                    <div
-                      id="help-raceday-resolution"
-                      style="
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        margin-left: 20px;
-                      "
-                    >
-                      <label style="color: #94a3b8; font-size: 14px">{{
-                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
-                      }}</label>
-                      <div
-                        class="select-container select-sm"
-                        style="width: 150px"
-                      >
-                        <select
-                          class="layout-resolution-select"
-                          [ngModel]="getLayoutResolution(false)"
-                          (change)="setLayoutResolution(false, $event)"
-                        >
-                          @for (
-                            option of getLayoutResolutionOptions(false);
-                            track option
-                          ) {
-                            <option
-                              [value]="option.width + 'x' + option.height"
-                            >
-                              {{ option.label | translate }}
-                              @if (
-                                option.label ===
-                                "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY"
-                              ) {
-                                ({{ option.width }}x{{ option.height }})
-                              }
-                            </option>
-                          }
-                        </select>
-                      </div>
-                      <div
-                        id="help-raceday-dimensions"
-                        style="display: flex; align-items: center; gap: 8px"
-                      >
-                        <input
-                          type="number"
-                          class="input-sm"
-                          style="width: 70px"
-                          [ngModel]="editingSettings.racedayLayout?.baseWidth"
-                          (change)="
-                            onCustomResolutionChange(false, 'width', $event)
-                          "
-                        />
-                        <span style="color: #94a3b8">x</span>
-                        <input
-                          type="number"
-                          class="input-sm"
-                          style="width: 70px"
-                          [ngModel]="editingSettings.racedayLayout?.baseHeight"
-                          (change)="
-                            onCustomResolutionChange(false, 'height', $event)
-                          "
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    id="help-raceday-reset"
-                    class="btn btn-danger"
-                    (click)="resetRacedayLayout()"
-                    style="
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 8px;
-                    "
+                  <span
+                    class="expander-icon"
+                    [class.collapsed]="!sectionsExpanded['ui_' + ui.entity_id]"
+                    >▼</span
                   >
-                    <span class="material-icons">refresh</span>
-                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
-                  </button>
-                </div>
-                <div class="raceday-editor-workspace">
-                  <!-- Raceday Full Integration -->
                   <div
-                    id="help-raceday-canvas"
-                    class="raceday-preview-container"
-                    [style.width.px]="getPreviewContainerWidth(false)"
-                    [style.height.px]="getPreviewContainerHeight(false)"
+                    class="custom-ui-title-container"
+                    [class.invalid]="isCustomUiNameInvalid(ui)"
+                    (click)="$event.stopPropagation()"
                   >
-                    <div
-                      class="raceday-preview-scaler"
-                      [style.width.px]="
-                        editingSettings.racedayLayout?.baseWidth || 1920
-                      "
-                      [style.height.px]="
-                        editingSettings.racedayLayout?.baseHeight || 1080
-                      "
-                      [style.transform]="getPreviewScale(false)"
+                    <input
+                      type="text"
+                      [(ngModel)]="ui.name"
+                      (change)="onCustomUiNameChanged(ui)"
+                      class="custom-ui-name-input"
+                      autocomplete="one-time-code"
+                      data-dashlane-ignore="true"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      spellcheck="false"
+                      autocorrect="off"
+                      autocapitalize="off"
+                    />
+                  </div>
+                  <div
+                    class="custom-ui-toolbar-container"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <app-toolbar
+                      [showEdit]="false"
+                      [showCopy]="true"
+                      [showDelete]="true"
+                      [showAdd]="false"
+                      (copy)="onDuplicateCustomUi(ui)"
+                      (delete)="onDeleteCustomUi(ui)"
+                      [showAnalytics]="false"
                     >
-                      <app-default-raceday
-                        [isUIEditorMode]="true"
-                        [editingSettings]="editingSettings"
-                        [uiScale]="getPreviewScaleNumber(false)"
-                        [selectedWidgetId]="selectedWidgetId"
-                        (widgetSelected)="onWidgetSelected($event)"
-                        (layoutChanged)="onRacedayLayoutChanged($event)"
-                        (columnsChanged)="onColumnsChanged()"
-                      ></app-default-raceday>
+                    </app-toolbar>
+                  </div>
+                </div>
+
+                @if (sectionsExpanded["ui_" + ui.entity_id]) {
+                  <div class="section-content" style="position: relative">
+                    <div class="panel layout-panel">
+                      <div class="panel-content raceday-layout-section">
+                        <div
+                          class="layout-controls"
+                          style="
+                            margin-bottom: 10px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 30px;
+                          "
+                        >
+                          <div
+                            style="
+                              display: flex;
+                              gap: 25px;
+                              align-items: center;
+                            "
+                          >
+                            @if (isCustomUiPractice(ui)) {
+                              <label
+                                id="help-raceday-highlight"
+                                class="checkbox-container"
+                                style="margin: 0; white-space: nowrap"
+                              >
+                                <input
+                                  type="checkbox"
+                                  [(ngModel)]="
+                                    editingSettings.highlightPracticeRowOnLap
+                                  "
+                                  (change)="captureState()"
+                                />
+                                <span class="checkmark"></span>
+                                {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
+                              </label>
+                            } @else {
+                              <label
+                                id="help-raceday-sort"
+                                class="checkbox-container"
+                                style="margin: 0; white-space: nowrap"
+                              >
+                                <input
+                                  type="checkbox"
+                                  [(ngModel)]="editingSettings.sortByStandings"
+                                  (change)="captureState()"
+                                />
+                                <span class="checkmark"></span>
+                                {{ "UE_LABEL_SORT_STANDINGS" | translate }}
+                              </label>
+                              <label
+                                id="help-raceday-highlight"
+                                class="checkbox-container"
+                                style="margin: 0; white-space: nowrap"
+                              >
+                                <input
+                                  type="checkbox"
+                                  [(ngModel)]="
+                                    editingSettings.highlightRowOnLap
+                                  "
+                                  (change)="captureState()"
+                                />
+                                <span class="checkmark"></span>
+                                {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
+                              </label>
+                            }
+                          </div>
+
+                          <button
+                            id="help-raceday-reset"
+                            class="btn btn-danger"
+                            (click)="resetLayout(ui)"
+                            style="
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              gap: 8px;
+                            "
+                          >
+                            <span class="material-icons">refresh</span>
+                            {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
+                          </button>
+
+                          <div
+                            id="help-raceday-import-export"
+                            class="expander-actions"
+                            style="display: flex; gap: 8px; margin-left: 10px"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <button
+                              class="icon-btn"
+                              (click)="layoutFileInput.click()"
+                              [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
+                              style="
+                                background: none;
+                                border: none;
+                                color: #38bdf8;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                padding: 4px;
+                              "
+                            >
+                              <span class="material-icons">download</span>
+                            </button>
+                            <button
+                              class="icon-btn"
+                              (click)="exportLayout(ui)"
+                              [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
+                              style="
+                                background: none;
+                                border: none;
+                                color: #38bdf8;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                padding: 4px;
+                              "
+                            >
+                              <span class="material-icons">upload</span>
+                            </button>
+                            <input
+                              #layoutFileInput
+                              type="file"
+                              accept=".json,.txt"
+                              style="display: none"
+                              (change)="onImportLayout($event, ui)"
+                            />
+                          </div>
+                        </div>
+
+                        <div class="raceday-editor-workspace">
+                          <!-- Raceday Full Integration -->
+                          <div
+                            id="help-raceday-canvas"
+                            class="raceday-preview-container"
+                            [style.width.px]="getPreviewContainerWidth(ui)"
+                            [style.height.px]="getPreviewContainerHeight(ui)"
+                          >
+                            <div
+                              class="raceday-preview-scaler"
+                              [style.width.px]="getLayoutBaseWidth(ui)"
+                              [style.height.px]="getLayoutBaseHeight(ui)"
+                              [style.transform]="getPreviewScale(ui)"
+                            >
+                              <app-default-raceday
+                                [isUIEditorMode]="true"
+                                [isPracticeLayoutEditor]="false"
+                                [editingSettings]="editingSettings"
+                                [activeCustomUi]="ui"
+                                [uiScale]="getPreviewScaleNumber(ui)"
+                                [selectedWidgetId]="getSelectedWidgetId(ui)"
+                                (widgetSelected)="onWidgetSelected($event, ui)"
+                                (layoutChanged)="onLayoutChanged($event, ui)"
+                                (columnsChanged)="onColumnsChanged(ui)"
+                              ></app-default-raceday>
+                            </div>
+                          </div>
+
+                          <!-- Widget Inspector Sidebar -->
+                          @if (
+                            currentSelectedWidget &&
+                            ui.entity_id === activeCustomUiId
+                          ) {
+                            <div
+                              id="help-widget-inspector"
+                              class="widget-inspector-panel"
+                              [class.lane-view-inspector-panel]="
+                                currentSelectedWidget.widgetType === 'lane-view'
+                              "
+                              [style.height.px]="getPreviewContainerHeight(ui)"
+                            >
+                              <div class="inspector-header">
+                                <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                              </div>
+
+                              <div class="inspector-body">
+                                <!-- General Section -->
+                                <div
+                                  class="inspector-geometry-title"
+                                  style="margin-top: 0"
+                                >
+                                  {{ "UE_INSPECTOR_GENERAL" | translate }}
+                                </div>
+                                <div class="inspector-section">
+                                  <label class="inspector-label">{{
+                                    "UE_INSPECTOR_WIDGET_TYPE" | translate
+                                  }}</label>
+                                  <div class="inspector-value-readonly">
+                                    {{
+                                      getWidgetTypeLabelKey(
+                                        currentSelectedWidget.widgetType
+                                      ) | translate
+                                    }}
+                                  </div>
+                                </div>
+                                @if (
+                                  !isCustomWidget(
+                                    currentSelectedWidget.widgetType
+                                  ) &&
+                                  currentSelectedWidget.widgetType !==
+                                    "branding" &&
+                                  currentSelectedWidget.widgetType !== "qr" &&
+                                  currentSelectedWidget.widgetType !== "flag"
+                                ) {
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_SCALING_MODE" | translate
+                                    }}</label>
+                                    <div class="select-container select-sm">
+                                      <select
+                                        [(ngModel)]="
+                                          currentSelectedWidget.scaleMode
+                                        "
+                                        (change)="
+                                          onWidgetInspectorChange(
+                                            currentSelectedWidget,
+                                            ui
+                                          )
+                                        "
+                                      >
+                                        <option value="">
+                                          {{
+                                            "UE_INSPECTOR_SCALING_DEFAULT"
+                                              | translate
+                                          }}
+                                        </option>
+                                        <option value="auto">
+                                          {{
+                                            "UE_INSPECTOR_SCALING_AUTO"
+                                              | translate
+                                          }}
+                                        </option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                }
+
+                                <hr class="inspector-divider" />
+
+                                <app-widget-inspector-fields
+                                  [widget]="currentSelectedWidget"
+                                  [globalSettings]="editingSettings"
+                                  [customUi]="ui"
+                                  [availableColumns]="availableColumns"
+                                  [isPracticeMode]="isCustomUiPractice(ui)"
+                                  (change)="onWidgetInspectorChange($event, ui)"
+                                ></app-widget-inspector-fields>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  <!-- Widget Inspector Sidebar -->
-                  @if (selectedWidget) {
-                    <div
-                      id="help-widget-inspector"
-                      class="widget-inspector-panel"
-                      [style.height.px]="getPreviewContainerHeight(false)"
-                    >
-                      <div class="inspector-header">
-                        <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
-                        <button
-                          class="inspector-close-btn"
-                          (click)="onWidgetSelected(null)"
-                        >
-                          ×
-                        </button>
-                      </div>
-
-                      <div class="inspector-body">
-                        <!-- General Section -->
-                        <div
-                          class="inspector-geometry-title"
-                          style="margin-top: 0"
-                        >
-                          {{ "UE_INSPECTOR_GENERAL" | translate }}
-                        </div>
-                        <div class="inspector-section">
-                          <label class="inspector-label">{{
-                            "UE_INSPECTOR_WIDGET_TYPE" | translate
-                          }}</label>
-                          <div class="inspector-value-readonly">
-                            {{
-                              getWidgetTypeLabelKey(selectedWidget.widgetType)
-                                | translate
-                            }}
-                          </div>
-                        </div>
-                        <div class="inspector-section">
-                          <label class="inspector-label">{{
-                            "UE_INSPECTOR_SCALING_MODE" | translate
-                          }}</label>
-                          <div class="select-container select-sm">
-                            <select
-                              [(ngModel)]="selectedWidget.scaleMode"
-                              (change)="captureState()"
-                            >
-                              @if (
-                                selectedWidget.widgetType !== "branding" &&
-                                selectedWidget.widgetType !== "qr" &&
-                                selectedWidget.widgetType !== "flag"
-                              ) {
-                                <option value="">
-                                  {{
-                                    "UE_INSPECTOR_SCALING_DEFAULT" | translate
-                                  }}
-                                </option>
-                              }
-                              <option value="auto">
-                                {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
-                              </option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <hr class="inspector-divider" />
-
-                        <app-widget-inspector-fields
-                          [widget]="selectedWidget"
-                          [globalSettings]="editingSettings"
-                          [availableColumns]="availableColumns"
-                          [isPracticeMode]="false"
-                          (change)="captureState()"
-                        ></app-widget-inspector-fields>
-                      </div>
-                    </div>
-                  }
-                </div>
+                }
               </div>
-            </div>
+            }
           </div>
         }
       </div>
 
-      <!-- Raceday Layout (Practice) Section -->
-      <div class="config-section">
-        <div
-          class="section-header"
-          id="help-practice-ui"
-          (click)="toggleSection('practiceRacedayLayout')"
-        >
-          <span
-            class="expander-icon"
-            [class.collapsed]="!sectionsExpanded['practiceRacedayLayout']"
-            >▼</span
-          >
-          <h1>{{ "UE_LABEL_RACEDAY_LAYOUT_PRACTICE" | translate }}</h1>
-          <div
-            class="expander-actions"
-            style="
-              margin-left: auto;
-              display: flex;
-              gap: 8px;
-              padding-right: 15px;
-            "
-            (click)="$event.stopPropagation()"
-          >
-            <button
-              class="icon-btn"
-              (click)="practiceRacedayLayoutFileInput.click()"
-              [title]="'UE_BTN_IMPORT_LAYOUT' | translate"
-              style="
-                background: none;
-                border: none;
-                color: #38bdf8;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 4px;
-              "
-            >
-              <span class="material-icons">download</span>
-            </button>
-            <button
-              class="icon-btn"
-              (click)="exportPracticeRacedayLayout()"
-              [title]="'UE_BTN_EXPORT_LAYOUT' | translate"
-              style="
-                background: none;
-                border: none;
-                color: #38bdf8;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 4px;
-              "
-            >
-              <span class="material-icons">upload</span>
-            </button>
-            <input
-              #practiceRacedayLayoutFileInput
-              type="file"
-              accept=".json,.txt"
-              style="display: none"
-              (change)="onImportPracticeRacedayLayout($event)"
-            />
-          </div>
-        </div>
-        @if (sectionsExpanded["practiceRacedayLayout"]) {
-          <div class="section-content" style="position: relative">
-            <div class="panel layout-panel">
-              <div class="panel-content practice-raceday-layout-section">
-                <div
-                  class="layout-controls"
-                  style="
-                    margin-bottom: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 30px;
-                  "
-                >
-                  <div style="display: flex; gap: 25px; align-items: center">
-                    <label
-                      class="checkbox-container"
-                      style="margin: 0; white-space: nowrap"
-                    >
-                      <input
-                        type="checkbox"
-                        [(ngModel)]="editingSettings.highlightPracticeRowOnLap"
-                        (change)="captureState()"
-                      />
-                      <span class="checkmark"></span>
-                      {{ "UE_LABEL_HIGHLIGHT_LAP" | translate }}
-                    </label>
-                    <div
-                      style="
-                        display: flex;
-                        align-items: center;
-                        gap: 8px;
-                        margin-left: 20px;
-                      "
-                    >
-                      <label style="color: #94a3b8; font-size: 14px">{{
-                        "UI_EDITOR_LAYOUT_RESOLUTION" | translate
-                      }}</label>
-                      <div
-                        class="select-container select-sm"
-                        style="width: 150px"
-                      >
-                        <select
-                          class="layout-resolution-select"
-                          [ngModel]="getLayoutResolution(true)"
-                          (change)="setLayoutResolution(true, $event)"
-                        >
-                          @for (
-                            option of getLayoutResolutionOptions(true);
-                            track option
-                          ) {
-                            <option
-                              [value]="option.width + 'x' + option.height"
-                            >
-                              {{ option.label | translate }}
-                              @if (
-                                option.label ===
-                                "UI_EDITOR_RESOLUTION_CURRENT_DISPLAY"
-                              ) {
-                                ({{ option.width }}x{{ option.height }})
-                              }
-                            </option>
-                          }
-                        </select>
-                      </div>
-                      <input
-                        type="number"
-                        class="input-sm"
-                        style="width: 70px"
-                        [ngModel]="
-                          editingSettings.practiceRacedayLayout?.baseWidth
-                        "
-                        (change)="
-                          onCustomResolutionChange(true, 'width', $event)
-                        "
-                      />
-                      <span style="color: #94a3b8">x</span>
-                      <input
-                        type="number"
-                        class="input-sm"
-                        style="width: 70px"
-                        [ngModel]="
-                          editingSettings.practiceRacedayLayout?.baseHeight
-                        "
-                        (change)="
-                          onCustomResolutionChange(true, 'height', $event)
-                        "
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    class="btn btn-danger"
-                    (click)="resetPracticeRacedayLayout()"
-                    style="
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 8px;
-                    "
-                  >
-                    <span class="material-icons">refresh</span>
-                    {{ "UI_EDITOR_RESET_LAYOUT_DEFAULTS" | translate }}
-                  </button>
-                </div>
-                <div class="raceday-editor-workspace">
-                  <!-- Raceday Full Integration -->
-                  <div
-                    class="raceday-preview-container"
-                    [style.width.px]="getPreviewContainerWidth(true)"
-                    [style.height.px]="getPreviewContainerHeight(true)"
-                  >
-                    <div
-                      class="raceday-preview-scaler"
-                      [style.width.px]="
-                        editingSettings.practiceRacedayLayout?.baseWidth || 1920
-                      "
-                      [style.height.px]="
-                        editingSettings.practiceRacedayLayout?.baseHeight ||
-                        1080
-                      "
-                      [style.transform]="getPreviewScale(true)"
-                    >
-                      <app-default-raceday
-                        [isUIEditorMode]="true"
-                        [isPracticeLayoutEditor]="true"
-                        [editingSettings]="editingSettings"
-                        [uiScale]="getPreviewScaleNumber(true)"
-                        [selectedWidgetId]="selectedPracticeWidgetId"
-                        (widgetSelected)="onWidgetSelected($event, true)"
-                        (layoutChanged)="onPracticeRacedayLayoutChanged($event)"
-                        (columnsChanged)="onColumnsChanged()"
-                      ></app-default-raceday>
-                    </div>
-                  </div>
-
-                  <!-- Widget Inspector Sidebar -->
-                  @if (selectedPracticeWidget) {
-                    <div
-                      class="widget-inspector-panel"
-                      [style.height.px]="getPreviewContainerHeight(true)"
-                    >
-                      <div class="inspector-header">
-                        <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
-                        <button
-                          class="inspector-close-btn"
-                          (click)="onWidgetSelected(null, true)"
-                        >
-                          ×
-                        </button>
-                      </div>
-
-                      <div class="inspector-body">
-                        <!-- General Section -->
-                        <div
-                          class="inspector-geometry-title"
-                          style="margin-top: 0"
-                        >
-                          {{ "UE_INSPECTOR_GENERAL" | translate }}
-                        </div>
-                        <div class="inspector-section">
-                          <label class="inspector-label">{{
-                            "UE_INSPECTOR_WIDGET_TYPE" | translate
-                          }}</label>
-                          <div class="inspector-value-readonly">
-                            {{
-                              getWidgetTypeLabelKey(
-                                selectedPracticeWidget.widgetType
-                              ) | translate
-                            }}
-                          </div>
-                        </div>
-                        <div class="inspector-section">
-                          <label class="inspector-label">{{
-                            "UE_INSPECTOR_SCALING_MODE" | translate
-                          }}</label>
-                          <div class="select-container select-sm">
-                            <select
-                              [(ngModel)]="selectedPracticeWidget.scaleMode"
-                              (change)="captureState()"
-                            >
-                              @if (
-                                selectedPracticeWidget.widgetType !==
-                                  "branding" &&
-                                selectedPracticeWidget.widgetType !== "qr" &&
-                                selectedPracticeWidget.widgetType !== "flag"
-                              ) {
-                                <option value="">
-                                  {{
-                                    "UE_INSPECTOR_SCALING_DEFAULT" | translate
-                                  }}
-                                </option>
-                              }
-                              <option value="auto">
-                                {{ "UE_INSPECTOR_SCALING_AUTO" | translate }}
-                              </option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <hr class="inspector-divider" />
-
-                        <app-widget-inspector-fields
-                          [widget]="selectedPracticeWidget"
-                          [globalSettings]="editingSettings"
-                          [availableColumns]="availableColumns"
-                          [isPracticeMode]="true"
-                          (change)="captureState()"
-                        ></app-widget-inspector-fields>
-                      </div>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
       <!-- Themes Section -->
       <div class="config-section">
         <div
@@ -610,88 +373,102 @@
             >▼</span
           >
           <h1>{{ "UE_HEADER_THEMES_ALL" | translate }}</h1>
+          <div
+            class="theme-toolbar-container"
+            id="help-themes-add"
+            (click)="$event.stopPropagation()"
+          >
+            <app-toolbar
+              [showEdit]="false"
+              [showCopy]="false"
+              [showDelete]="false"
+              [showAdd]="true"
+              (add)="createNewTheme()"
+              [showAnalytics]="false"
+            >
+            </app-toolbar>
+          </div>
         </div>
         @if (sectionsExpanded["themes"]) {
           <div class="section-content">
             <!-- Individual Theme Expanders -->
-            @for (theme of displayThemes; track trackByThemeId($index, theme)) {
-              <div class="config-section sub-section theme-sub-section">
+            @for (
+              theme of displayThemes;
+              track theme.entity_id;
+              let themeIndex = $index
+            ) {
+              <div
+                class="config-section sub-section theme-sub-section"
+                [attr.data-theme-id]="theme.entity_id"
+              >
                 <div
                   class="section-header"
-                  [attr.id]="theme.is_default ? 'help-default-theme' : null"
+                  [attr.id]="themeIndex === 0 ? 'help-default-theme' : null"
                   (click)="toggleThemeSection(theme.entity_id)"
                 >
                   <span
                     class="expander-icon"
-                    [class.collapsed]="!sectionsExpanded[theme.entity_id]"
+                    [class.collapsed]="
+                      !sectionsExpanded['theme_' + theme.entity_id]
+                    "
                     >▼</span
                   >
-                  @if (theme.is_default) {
-                    <h1>
-                      {{ "UE_LABEL_DEFAULT_THEME" | translate }}
-                    </h1>
-                  }
-                  @if (theme.is_default) {
-                    <span id="help-default-badge" class="default-badge">
-                      {{ "UE_BADGE_DEFAULT" | translate }}
-                    </span>
-                  }
-                  @if (theme.is_default) {
-                    <span id="help-readonly-badge" class="readonly-badge">
-                      {{ "UE_BADGE_READONLY" | translate }}
-                    </span>
-                  }
-                  @if (!theme.is_default) {
-                    <div
-                      class="theme-title-container"
-                      [class.invalid]="isThemeNameInvalid(theme)"
-                      (click)="$event.stopPropagation()"
-                    >
-                      <input
-                        type="text"
-                        [(ngModel)]="theme.name"
-                        (change)="onThemeNameChanged(theme)"
-                        class="theme-name-input"
-                        autocomplete="one-time-code"
-                        data-dashlane-ignore="true"
-                        data-lpignore="true"
-                        data-form-type="other"
-                        spellcheck="false"
-                        autocorrect="off"
-                        autocapitalize="off"
-                        name="theme-name-ignore"
-                      />
-                    </div>
-                  }
-                  @if (theme.entity_id === editingSettings.activeThemeId) {
-                    <span id="help-active-badge" class="selected-badge">
-                      {{ "UE_LABEL_SELECTED" | translate }}
-                    </span>
-                  }
+                  <div
+                    class="theme-title-container"
+                    [class.invalid]="isThemeNameInvalid(theme)"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <input
+                      type="text"
+                      [(ngModel)]="theme.name"
+                      (change)="onThemeNameChanged(theme)"
+                      class="theme-name-input"
+                      autocomplete="one-time-code"
+                      data-dashlane-ignore="true"
+                      data-lpignore="true"
+                      data-form-type="other"
+                      spellcheck="false"
+                      autocorrect="off"
+                      autocapitalize="off"
+                      name="theme-name-ignore"
+                    />
+                  </div>
                   <div
                     class="theme-toolbar-container"
                     (click)="$event.stopPropagation()"
                   >
                     <app-toolbar
-                      [showActivate]="true"
-                      [disabledActivate]="
-                        theme.entity_id === editingSettings.activeThemeId
-                      "
-                      (activate)="onThemeSelected(theme.entity_id)"
                       [showEdit]="false"
                       [showCopy]="true"
-                      [showDelete]="!theme.is_default"
-                      [showAdd]="true"
+                      [showDelete]="true"
+                      [showAdd]="false"
                       (copy)="onDuplicateTheme(theme)"
                       (delete)="onDeleteTheme(theme)"
-                      (add)="createNewTheme()"
                       [showAnalytics]="false"
                     >
                     </app-toolbar>
                   </div>
                 </div>
-                @if (sectionsExpanded[theme.entity_id]) {
+                @if (sectionsExpanded["theme_" + theme.entity_id]) {
                   <div class="section-content">
+                    <!-- Custom UI Layout Selection -->
+                    <div
+                      class="editor-section theme-ui-selector"
+                      id="help-theme-ui-selector"
+                    >
+                      <label>{{ "UE_LABEL_CUSTOM_UI" | translate }}</label>
+                      <select
+                        [(ngModel)]="theme.uiId"
+                        (ngModelChange)="captureState()"
+                      >
+                        @for (ui of displayCustomUIs; track ui.entity_id) {
+                          <option [value]="ui.entity_id">
+                            {{ getCustomUiDisplayNameKey(ui) | translate }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+
                     <!-- Nested Flag Image Settings -->
                     <div class="config-section sub-section">
                       <div
@@ -731,7 +508,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -756,7 +532,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -777,7 +552,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -798,7 +572,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -823,7 +596,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -844,7 +616,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -867,7 +638,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -892,7 +662,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -917,7 +686,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -937,7 +705,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -962,7 +729,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -982,7 +748,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                             </div>
@@ -1029,7 +794,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -1049,7 +813,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                               <app-image-selector
@@ -1069,7 +832,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                             </div>
@@ -1116,7 +878,6 @@
                                   )
                                 "
                                 [assets]="assets"
-                                [disabled]="theme.is_default"
                               >
                               </app-image-selector>
                             </div>
@@ -1198,7 +959,6 @@
                                       $event
                                     )
                                   "
-                                  [readonly]="theme.is_default"
                                   [context]="previewTTSContext"
                                 >
                                 </app-audio-selector>
@@ -1263,6 +1023,46 @@
                         [disabled]="!customDirectoryName"
                       >
                         {{ "UE_BTN_RESET_DEFAULT" | translate }}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="directory-selector" id="help-custom-widget-dir">
+                    <label>{{ "UE_WIDGET_DIRECTORY_LABEL" | translate }}</label>
+                    <div class="directory-info">
+                      @if (customWidgetDirectoryName) {
+                        <span class="directory-path">{{
+                          customWidgetDirectoryName
+                        }}</span>
+                      }
+                      @if (!customWidgetDirectoryName) {
+                        <span class="directory-path placeholder">{{
+                          "UE_LABEL_NO_WIDGET_DIRECTORY" | translate
+                        }}</span>
+                      }
+                    </div>
+                    <div class="directory-actions">
+                      <button
+                        class="btn btn-secondary"
+                        (click)="selectWidgetDirectory()"
+                      >
+                        {{ "UE_BTN_SELECT_WIDGET_DIRECTORY" | translate }}
+                      </button>
+
+                      <button
+                        class="btn btn-danger"
+                        (click)="resetWidgetDefault()"
+                        [disabled]="!customWidgetDirectoryName"
+                      >
+                        {{ "UE_BTN_RESET_DEFAULT" | translate }}
+                      </button>
+
+                      <button
+                        class="btn btn-secondary"
+                        (click)="updateSampleWidgets()"
+                        [disabled]="!customWidgetDirectoryName"
+                        [title]="'UE_BTN_EXPORT_STARTERS_TOOLTIP' | translate"
+                      >
+                        {{ "UE_BTN_EXPORT_STARTERS" | translate }}
                       </button>
                     </div>
                   </div>
@@ -1337,6 +1137,17 @@
     </div>
   }
 
+  <!-- Delete UI Layout Confirmation -->
+  <app-confirmation-modal
+    [visible]="showDeleteUiConfirm"
+    title="UE_DELETE_UI_TITLE"
+    message="UE_DELETE_UI_MESSAGE"
+    [messageParams]="deleteUiParams"
+    (confirm)="confirmDeleteCustomUi()"
+    (cancel)="cancelDeleteCustomUi()"
+  >
+  </app-confirmation-modal>
+
   <!-- Delete Theme Confirmation -->
   <app-confirmation-modal
     [visible]="showDeleteConfirm"
@@ -1367,4 +1178,11 @@
     (acknowledge)="onSuccessModalAcknowledge()"
   >
   </app-acknowledgement-modal>
+
+  <!-- Theme Template Selection Modal -->
+  <app-theme-template-modal
+    [visible]="showThemeTemplateModal"
+    (confirm)="onConfirmThemeTemplate($event)"
+    (cancel)="showThemeTemplateModal = false"
+  ></app-theme-template-modal>
 </div>

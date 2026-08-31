@@ -75,12 +75,12 @@ describe("AboutDialogComponent", () => {
     expect(await harness.isCharityTabVisible()).toBeTrue();
 
     const expectedDonateUrl =
-      "https://www.paypal.com/donate?token=L6PFPbwF0z3WOF-qIijTS_MSQjLtTCmiYlq3ObTaqvLhwrKUPo0faql9Qpk9QJ6NolQESAXw0l8YCUKn&locale.x=US";
+      "https://www.paypal.com/donate/?business=daufderh@hotmail.com&currency_code=USD";
     expect(component.donateUrl).toBe(expectedDonateUrl);
     expect(await harness.getDonateLinkHref()).toBe(expectedDonateUrl);
   });
 
-  it("should switch tabs to Credits", async () => {
+  it("should switch tabs to Credits and list all contributors", async () => {
     fixture.componentRef.setInput("visible", true);
     fixture.detectChanges();
 
@@ -89,6 +89,16 @@ describe("AboutDialogComponent", () => {
 
     expect(component.activeTab()).toBe("credits");
     expect(await harness.isCreditsTabVisible()).toBeTrue();
+
+    const creditNames = await harness.getCreditNames();
+    expect(creditNames).toContain("AV-Git-Account");
+    expect(creditNames).toContain("BigBadBuzz");
+    expect(creditNames).toContain("crxed9");
+    expect(creditNames).toContain("Dopamine");
+    expect(creditNames).toContain("luizvaldetaro");
+    expect(creditNames).toContain("mark h");
+    expect(creditNames).toContain("Rinkrat99");
+    expect(creditNames).toContain("Slot'n 77");
   });
 
   it("should toggle play/pause, speed, and rewind for credits", fakeAsync(() => {

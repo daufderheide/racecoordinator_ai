@@ -11,6 +11,7 @@ import { Subscription } from "rxjs";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { RacedayHeatDriversComponent } from "@app/components/raceday/components/raceday-heat-drivers/raceday-heat-drivers.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { DataService } from "@app/data.service";
 import { Track } from "@app/models/track";
 import { Heat } from "@app/race/heat";
@@ -28,6 +29,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
     DriverStationComponent,
     RacedayHeatDriversComponent,
     AcknowledgementModalComponent,
+    BrowserNavigationComponent,
   ],
 })
 export class DriverViewComponent implements OnInit, OnDestroy {

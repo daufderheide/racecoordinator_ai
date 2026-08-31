@@ -264,7 +264,8 @@
                   <div
                     #fitTextTarget
                     [class]="parent().getAnchorClass(entry.anchor)"
-                    [class.pacing-entry]="isPacingProperty(entry.property)"
+                    [class.pacing-entry]="isPacingActive(entry, hd)"
+                    [class.solo-pacing]="isSoloCenterPacing(col, entry, hd)"
                     [style.word-break]="
                       ['rankHeat', 'rankOverall', 'rankGroup'].includes(
                         entry.property
@@ -297,6 +298,7 @@
                     [style.padding]="
                       !parent().isNameProperty(entry.property) &&
                       entry.property !== 'laneNumber' &&
+                      !isPacingActive(entry, hd) &&
                       entry.anchor !== 'center-center'
                         ? '10px'
                         : '0'
@@ -433,27 +435,14 @@
                         <span class="material-icons">drag_indicator</span>
                       </div>
                     }
-                    @if (
-                      entry.property === "ghostPacing" ||
-                      entry.property === "ghostPacingPB" ||
-                      entry.property === "ghostPacingPersonalAvg" ||
-                      entry.property === "ghostPacingPersonalMedian" ||
-                      entry.property === "ghostPacingLeaderAvg" ||
-                      entry.property === "ghostPacingLeaderMedian" ||
-                      entry.property === "ghostPacingLeaderBest" ||
-                      (entry.property &&
-                        entry.property.startsWith("ghostPacing"))
-                    ) {
-                      @if (
-                        parent()?.isEmptyDriver
-                          ? parent().isEmptyDriver(hd)
-                          : !parent()?.isLaneOccupied(hd)
-                      ) {
+                    @if (isPacingProperty(entry.property)) {
+                      @if (isLaneEmpty(hd)) {
                         <span>--</span>
                       } @else {
                         <app-raceday-ghost-pacing
                           [driverHeatData]="hd"
-                          [compact]="true"
+                          [compact]="!isSoloCenterPacing(col, entry, hd)"
+                          [stacked]="isSoloCenterPacing(col, entry, hd)"
                           [benchmarkType]="
                             getPacingBenchmarkType(entry.property)
                           "
@@ -555,6 +544,27 @@
                           </div>
                         }
                       </div>
+                    } @else if (entry.property === "recordLapTime") {
+                      @if (isLaneEmpty(hd)) {
+                        <span>--</span>
+                      } @else {
+                        <div class="record-lap-content">
+                          <div class="record-lap-time">
+                            {{ parent().getLaneRecordTime(hd, entry.anchor) }}
+                          </div>
+                          <div class="record-lap-sub">
+                            <span
+                              class="record-lap-holder"
+                              [title]="parent().getLaneRecordHolder(hd)"
+                            >
+                              {{ parent().getLaneRecordHolder(hd) }}
+                            </span>
+                            <span class="record-lap-date">
+                              {{ parent().getLaneRecordDate(hd) }}
+                            </span>
+                          </div>
+                        </div>
+                      }
                     } @else if (
                       !parent().isNameProperty(entry.property) ||
                       !parent().isTeam(hd)
@@ -572,8 +582,7 @@
                         "
                         [style.padding-right]="
                           parent().race?.practice &&
-                          (parent().isNameProperty(entry.property) ||
-                            entry.property === 'laneNumber') &&
+                          parent().isNameProperty(entry.property) &&
                           (parent().authService.currentRole$ | async) !==
                             parent().Role.VIEWER
                             ? '44px'

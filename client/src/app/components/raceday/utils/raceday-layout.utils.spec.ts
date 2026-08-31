@@ -190,6 +190,46 @@ describe("RacedayLayoutUtils", () => {
   it("should identify lap time columns", () => {
     expect(RacedayLayoutUtils.isLapTimeColumn(mockColumns[2])).toBe(true);
     expect(RacedayLayoutUtils.isLapTimeColumn(mockColumns[0])).toBe(false);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition("BEST", "bestLapTime", 200, false, "middle", 0),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition("AVG", "averageLapTime", 200, false, "middle", 0),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "MEDIAN",
+          "medianLapTime",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition(
+          "RECORD",
+          "recordLapTime",
+          200,
+          false,
+          "middle",
+          0,
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      RacedayLayoutUtils.isLapTimeColumn(
+        new ColumnDefinition("SEGMENT", "segmentTime", 200, false, "middle", 0),
+      ),
+    ).toBe(true);
+    expect(RacedayLayoutUtils.isLapTimeColumn(null as any)).toBe(false);
   });
 
   it("should identify image and avatar properties", () => {
@@ -243,6 +283,9 @@ describe("RacedayLayoutUtils", () => {
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lastLapTime")).toBe(
       "RD_COL_LAP_TIME",
     );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("recordLapTime")).toBe(
+      "RD_COL_RECORD_LAP_TIME",
+    );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("ghostPacing")).toBe(
       "RD_COL_GHOST_PACING",
     );
@@ -267,6 +310,12 @@ describe("RacedayLayoutUtils", () => {
     expect(
       RacedayLayoutUtils.getLabelKeyForColumn("imageset_fuel-gauge-builtin"),
     ).toBe("RD_COL_FUEL_GAUGE");
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("qrCode")).toBe(
+      "RD_COL_LANE_QR",
+    );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("driverViewQrCode")).toBe(
+      "RD_COL_DRIVER_VIEW_QR",
+    );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("unknown_prop")).toBe(
       "UNKNOWN",
     );
@@ -310,5 +359,121 @@ describe("RacedayLayoutUtils", () => {
       "all",
     );
     expect(snappedAdjacent.x).toBe(300);
+  });
+
+  describe("getDefaultColumnWidth", () => {
+    it("should return 0 for dynamic name and nickname columns", () => {
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("driver.name")).toBe(0);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("driver.nickname")).toBe(
+        0,
+      );
+    });
+
+    it("should return correct default widths for standard fixed columns", () => {
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("lapCount")).toBe(216);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("lapsLed")).toBe(216);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("reactionTime")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("lastLapTime")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("lastLaps")).toBe(1650);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("medianLapTime")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("averageLapTime")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("bestLapTime")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("recordLapTime")).toBe(
+        330,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("totalTime")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("gapLeader")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("gapPosition")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("driver.avatarUrl")).toBe(
+        120,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("flag")).toBe(120);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("laneNumber")).toBe(120);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("qrCode")).toBe(120);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("driverViewQrCode")).toBe(
+        120,
+      );
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("rankHeat")).toBe(108);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("rankOverall")).toBe(108);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("rankGroup")).toBe(108);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("mph")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("kph")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("fph")).toBe(330);
+    });
+
+    it("should return correct default width for fuel gauge and image sets", () => {
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("imageset_fuel-gauge-builtin"),
+      ).toBe(216);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("imageset_custom_asset"),
+      ).toBe(216);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("fuel-gauge-builtin"),
+      ).toBe(216);
+    });
+
+    it("should return correct default width for ghost pacing columns", () => {
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("ghostPacing")).toBe(330);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("ghostPacingPB")).toBe(
+        330,
+      );
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("ghostPacingLeaderBest"),
+      ).toBe(330);
+    });
+
+    it("should return 275 for unknown column keys", () => {
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("custom_unknown_key"),
+      ).toBe(275);
+    });
+
+    it("should return 170 for laneNumber when in practice mode and horizontal layout", () => {
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("laneNumber", undefined, {
+          isPractice: true,
+          isVertical: false,
+        }),
+      ).toBe(170);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth(
+          "customKey",
+          { [AnchorPoint.CenterCenter]: "laneNumber" },
+          { isPractice: true, isVertical: false },
+        ),
+      ).toBe(170);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("laneNumber", undefined, {
+          isPractice: true,
+          isVertical: true,
+        }),
+      ).toBe(120);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("laneNumber", undefined, {
+          isPractice: false,
+          isVertical: false,
+        }),
+      ).toBe(120);
+    });
+
+    it("should determine width from layout CenterCenter or first anchor", () => {
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("customKey", {
+          [AnchorPoint.CenterCenter]: "driver.nickname",
+        }),
+      ).toBe(0);
+      expect(
+        RacedayLayoutUtils.getDefaultColumnWidth("customKey", {
+          [AnchorPoint.CenterCenter]: "lapCount",
+        }),
+      ).toBe(216);
+    });
   });
 });

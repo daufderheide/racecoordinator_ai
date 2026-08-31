@@ -22,6 +22,12 @@ usec = (1 << 24 | 2 << 16 | 3 << 8 | 4)
 ### Example:
   x 56 01 02 03 04 3B
 
+## Sketch & Firmware Compatibility:
+Race Coordinator AI is fully compatible with both the updated Race Coordinator AI sketch (`v2.1.0.x`) and the original Race Coordinator 1.0 sketch (`v1.0.0.x`).
+
+- **Race Coordinator AI Sketch (`v2.1.0.x`)**: Supports all core RMS features plus FastLED addressable RGB LED light strips (start lights, pit lane status, leader indicators, etc.).
+- **Race Coordinator 1.0 Sketch (`v1.0.0.x`)**: Fully supported for all core features (lap timing, sector timing, call buttons, track power relays, analog fuel level sensing, debouncing). There is no need to re-flash existing Arduino hardware when migrating from Race Coordinator 1.0. The only difference is that addressable RGB LEDs are not supported with the RC 1.0 sketch.
+
 ## Input message:
     5 total bytes
     1 byte for opcode

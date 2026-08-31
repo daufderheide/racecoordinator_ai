@@ -28,6 +28,7 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.InitializeRaceRequest;
 import com.antigravity.proto.InitializeRaceResponse;
@@ -80,6 +81,11 @@ public class ClientCommandTaskHandlerTest {
     tempDir = tempFile.toPath();
 
     databaseContext = new DatabaseContext("testdb", null, tempDir.toString() + File.separator);
+    Theme defaultTheme =
+        new Theme(
+            "Default Theme", true, new HashMap<>(), new HashMap<>(), Theme.DEFAULT_THEME_ID, null);
+    new SqliteRepository<>(databaseContext, "themes", Theme.class).insert(defaultTheme);
+
     app = mock(Javalin.class);
 
     HttpServletRequest req = mock(HttpServletRequest.class);
@@ -322,6 +328,13 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testRenameSavedRace_RouteRegistered() {
+    verify(app).post(eq("/api/rename-saved-race"), any(), eq(com.antigravity.auth.Role.DIRECTOR));
+    verify(app)
+        .put(eq("/api/saved-races/{filename}"), any(), eq(com.antigravity.auth.Role.DIRECTOR));
+  }
+
+  @Test
   public void testSkipRace_RouteRegistered() {
     verify(app).post(eq("/api/skip-race"), any(), eq(com.antigravity.auth.Role.DIRECTOR));
   }
@@ -459,7 +472,7 @@ public class ClientCommandTaskHandlerTest {
 
     setMainPowerHandler.handle(mockCtx);
 
-    verify(mockRace).setMainPower(true);
+    verify(mockRace).forceUserMainPower(true);
     verify(mockCtx).status(200);
     verify(mockCtx).result("Main power set to true");
   }
@@ -881,6 +894,40 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
+  public void testInitializeRace_ThemeDeleted_ShouldFail() throws Exception {
+    // 1. Setup Data
+    String raceId = "race-1";
+    String driverId = "driver-1";
+    String trackId = "track-1";
+
+    List<Lane> lanes = Arrays.asList(new Lane("Red", "red", 1));
+    Track track = new Track.Builder().name("Test Track").lanes(lanes).entityId(trackId).build();
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId(trackId)
+            .withThemeId("deleted-theme-id")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Dave", "D", driverId, null);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+
+    // 2. Request
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder().setRaceId(raceId).addDriverIds("d_" + driverId).build();
+
+    // 3. Execute
+    TaskResult result = handler.handleInitializeRace(request);
+
+    // 4. Verify
+    InitializeRaceResponse response = InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse("Validation should fail", response.getSuccess());
+    assertEquals("THEME_DELETED", response.getErrorCode());
+  }
+
+  @Test
   @SuppressWarnings("unchecked")
   public void testInitializeRace_DeletedCustomRotation_ShouldFail() throws Exception {
     // 1. Setup Data
@@ -1090,11 +1137,17 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
-  public void testUpdateUserLaps_Fail_NotStarted() throws Exception {
+  public void testUpdateUserLaps_Success_NotStarted() throws Exception {
     com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
     com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+
     when(mockRace.getCurrentHeat()).thenReturn(mockHeat);
+    when(mockHeat.getDrivers()).thenReturn(Arrays.asList(mockDhd));
     when(mockHeat.isStarted()).thenReturn(false);
+    when(mockDhd.getAdjustedLapCount()).thenReturn(5.25);
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
 
     ClientSubscriptionManager.getInstance().setRace(mockRace);
 
@@ -1109,16 +1162,25 @@ public class ClientCommandTaskHandlerTest {
 
     handler.updateUserLaps(ctx, pathParams, body);
 
-    verify(res).setStatus(400);
+    verify(mockDhd).setUserLaps(1.25);
+    verify(mockHeat).initializeStandings(any(), anyBoolean());
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(res).setStatus(200);
   }
 
   @Test
-  public void testUpdateHeatUserLaps_Fail_NotStarted() throws Exception {
+  public void testUpdateHeatUserLaps_Success_NotStarted() throws Exception {
     com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
     com.antigravity.race.Heat mockHeat = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+
     when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat));
     when(mockHeat.getHeatNumber()).thenReturn(2);
+    when(mockHeat.getDrivers()).thenReturn(Arrays.asList(mockDhd));
     when(mockHeat.isStarted()).thenReturn(false);
+    when(mockDhd.getAdjustedLapCount()).thenReturn(5.25);
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
 
     ClientSubscriptionManager.getInstance().setRace(mockRace);
 
@@ -1142,7 +1204,10 @@ public class ClientCommandTaskHandlerTest {
     m.setAccessible(true);
     m.invoke(handler, ctx);
 
-    verify(res).setStatus(400);
+    verify(mockDhd).setUserLaps(1.25);
+    verify(mockHeat).initializeStandings(any(), anyBoolean());
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(res).setStatus(200);
   }
 
   @Test
@@ -1202,12 +1267,17 @@ public class ClientCommandTaskHandlerTest {
   }
 
   @Test
-  public void testUpdateBatchUserLaps_Fail_NotStarted() throws Exception {
+  public void testUpdateBatchUserLaps_Success_NotStarted() throws Exception {
     com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
     com.antigravity.race.Heat mockHeat1 = mock(com.antigravity.race.Heat.class);
+    DriverHeatData mockDhd1 = mock(DriverHeatData.class);
+    com.antigravity.models.Race mockRaceModel = mock(com.antigravity.models.Race.class);
+
     when(mockRace.getHeats()).thenReturn(Arrays.asList(mockHeat1));
     when(mockHeat1.getHeatNumber()).thenReturn(1);
+    when(mockHeat1.getDrivers()).thenReturn(Arrays.asList(mockDhd1));
     when(mockHeat1.isStarted()).thenReturn(false); // Unstarted
+    when(mockRace.getRaceModel()).thenReturn(mockRaceModel);
 
     ClientSubscriptionManager.getInstance().setRace(mockRace);
 
@@ -1229,7 +1299,10 @@ public class ClientCommandTaskHandlerTest {
     m.setAccessible(true);
     m.invoke(handler, ctx);
 
-    verify(res).setStatus(400);
+    verify(mockDhd1).setUserLaps(1.5);
+    verify(mockHeat1).initializeStandings(any(), anyBoolean());
+    verify(mockRace).updateAndBroadcastOverallStandings();
+    verify(res).setStatus(200);
   }
 
   @Test
@@ -1303,6 +1376,8 @@ public class ClientCommandTaskHandlerTest {
 
     org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
     doReturn(ctx).when(ctx).result(captor.capture());
+
+    doReturn(true).when(phidgetProtocol).setPinState(true, 0, true);
 
     Method m = handler.getClass().getDeclaredMethod("setInterfacePinState", Context.class);
     m.setAccessible(true);

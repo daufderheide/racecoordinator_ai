@@ -56,7 +56,7 @@ export class DriverConverter {
         cached.nickname = proto.nickname || "";
         cached.avatarUrl = proto.avatarUrl || undefined;
         cached.lapAudio = {
-          type: proto.lapAudio?.type === "tts" ? "tts" : "preset",
+          type: (proto.lapAudio?.type as any) || "preset",
           url: proto.lapAudio?.url || undefined,
           text: proto.lapAudio?.text || undefined,
         };
@@ -81,7 +81,7 @@ export class DriverConverter {
         proto.nickname || "",
         proto.avatarUrl || undefined,
         {
-          type: proto.lapAudio?.type === "tts" ? "tts" : "preset",
+          type: (proto.lapAudio?.type as any) || "preset",
           url: proto.lapAudio?.url || undefined,
           text: proto.lapAudio?.text || undefined,
         },

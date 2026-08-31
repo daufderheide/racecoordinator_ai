@@ -26,7 +26,14 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+
+import {
+  areSeasonsEqual,
+  cloneSeason,
+  getSeasonEditorHelpSteps,
+} from "./season-editor.utils";
 
 @Component({
   standalone: true,
@@ -77,6 +84,7 @@ export class SeasonEditorComponent
   private route = inject(ActivatedRoute);
   private logger = inject(LoggerService);
   private navigationService = inject(NavigationService);
+  private settingsService = inject(SettingsService);
   private translationService = inject(TranslationService);
 
   constructor() {
@@ -364,17 +372,32 @@ export class SeasonEditorComponent
     this.standings = result;
   }
 
-  toggleRaceExpanded(raceId: string): void {
-    if (this.expandedRaceIds.has(raceId)) {
-      this.expandedRaceIds.delete(raceId);
+  getRaceExpanderKey(race: SeasonRaceRecord, idx: number): string {
+    return `${race.race_id || "race"}_${race.timestamp || ""}_${idx}`;
+  }
+
+  toggleRaceExpanded(raceOrId: SeasonRaceRecord | string, idx?: number): void {
+    const key =
+      typeof raceOrId === "string"
+        ? raceOrId
+        : this.getRaceExpanderKey(raceOrId, idx ?? 0);
+    if (this.expandedRaceIds.has(key)) {
+      this.expandedRaceIds.delete(key);
     } else {
-      this.expandedRaceIds.add(raceId);
+      this.expandedRaceIds.add(key);
     }
     this.cdr.detectChanges();
   }
 
-  isRaceExpanded(raceId: string): boolean {
-    return this.expandedRaceIds.has(raceId);
+  isRaceExpanded(raceOrId: SeasonRaceRecord | string, idx?: number): boolean {
+    if (typeof raceOrId === "string") {
+      return this.expandedRaceIds.has(raceOrId);
+    }
+    const key = this.getRaceExpanderKey(raceOrId, idx ?? 0);
+    return (
+      this.expandedRaceIds.has(key) ||
+      (Boolean(raceOrId.race_id) && this.expandedRaceIds.has(raceOrId.race_id))
+    );
   }
 
   removeRaceFromSeason(index: number, event?: Event): void {
@@ -395,26 +418,21 @@ export class SeasonEditorComponent
     const isAlreadyInSeason = (candidate: SeasonRaceRecord): boolean => {
       if (!existingRaces || existingRaces.length === 0) return false;
       const candTs = Number(candidate.timestamp) || 0;
-      const candId = String(candidate.race_id || "");
+      const candId = String(candidate.race_id || "").trim();
       const candName = (candidate.race_name || "").trim().toLowerCase();
 
       return existingRaces.some((r) => {
         const rTs = Number(r.timestamp) || 0;
-        const rId = String(r.race_id || "");
+        const rId = String(r.race_id || "").trim();
         const rName = (r.race_name || "").trim().toLowerCase();
 
+        if (candTs > 0 && rTs > 0) {
+          return candTs === rTs;
+        }
         if (rId && candId && rId === candId) {
           return true;
         }
-        if (rTs > 0 && candTs > 0 && rTs === candTs) {
-          return true;
-        }
-        if (
-          (rTs === 0 || candTs === 0) &&
-          rName &&
-          candName &&
-          rName === candName
-        ) {
+        if (rName && candName && rName === candName) {
           return true;
         }
         return false;
@@ -925,75 +943,14 @@ export class SeasonEditorComponent
   }
 
   private cloneSeason(season: Season): Season {
-    return JSON.parse(JSON.stringify(season));
+    return cloneSeason(season);
   }
 
   private areSeasonsEqual(a: Season, b: Season): boolean {
-    return JSON.stringify(a) === JSON.stringify(b);
+    return areSeasonsEqual(a, b);
   }
 
   getHelpSteps(): GuideStep[] {
-    const demoStep: GuideStep = this.hasDemoRaces
-      ? {
-          selector: "#season-editor-demo-badge",
-          title: this.translationService.translate("SE_HELP_DEMO_BADGE_TITLE"),
-          content: this.translationService.translate(
-            "SE_HELP_DEMO_BADGE_PRESENT_CONTENT",
-          ),
-          position: "bottom",
-        }
-      : {
-          selector: "#season-editor-meta",
-          title: this.translationService.translate("SE_HELP_DEMO_BADGE_TITLE"),
-          content: this.translationService.translate(
-            "SE_HELP_DEMO_BADGE_ABSENT_CONTENT",
-          ),
-          position: "bottom",
-        };
-
-    return [
-      {
-        title: this.translationService.translate("SE_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("SE_HELP_WELCOME_CONTENT"),
-        position: "center",
-      },
-      {
-        selector: "#season-name",
-        title: this.translationService.translate("SE_HELP_NAME_TITLE"),
-        content: this.translationService.translate("SE_HELP_NAME_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: "#season-drops",
-        title: this.translationService.translate("SE_HELP_DROPS_TITLE"),
-        content: this.translationService.translate("SE_HELP_DROPS_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: "#season-editor-races-run",
-        title: this.translationService.translate("SE_HELP_RACES_RUN_TITLE"),
-        content: this.translationService.translate("SE_HELP_RACES_RUN_CONTENT"),
-        position: "bottom",
-      },
-      demoStep,
-      {
-        selector: "#btn-add-race",
-        title: this.translationService.translate("SE_HELP_ADD_RACE_TITLE"),
-        content: this.translationService.translate("SE_HELP_ADD_RACE_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#season-editor-standings",
-        title: this.translationService.translate("SE_HELP_STANDINGS_TITLE"),
-        content: this.translationService.translate("SE_HELP_STANDINGS_CONTENT"),
-        position: "left",
-      },
-      {
-        selector: "#season-editor-breakdown",
-        title: this.translationService.translate("SE_HELP_BREAKDOWN_TITLE"),
-        content: this.translationService.translate("SE_HELP_BREAKDOWN_CONTENT"),
-        position: "left",
-      },
-    ];
+    return getSeasonEditorHelpSteps(this.hasDemoRaces, this.translationService);
   }
 }

@@ -43,5 +43,6 @@ message DriverHeatData {
   int32 false_starts = 20;
   RaceFlag flag = 21;
   int32 laps_led = 26;
+  bool is_finished = 27;
 }
 

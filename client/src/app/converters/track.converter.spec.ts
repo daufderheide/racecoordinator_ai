@@ -42,5 +42,20 @@ describe("TrackConverter", () => {
     expect(track.has_digital_fuel).toBeTrue();
     expect(track.has_per_lane_relays).toBeTrue();
     expect(track.has_main_relay).toBeTrue();
+    expect(track.track_scale).toBe(1.0);
+  });
+
+  it("should convert custom trackScale from proto", () => {
+    const proto: ITrackModel = {
+      model: { entityId: "track-2" },
+      name: "HO Scale Track",
+      numTrackSections: 100,
+      trackScale: 1 / 64,
+      lanes: [],
+    };
+
+    const track = TrackConverter.fromProto(proto);
+    expect(track.entity_id).toBe("track-2");
+    expect(track.track_scale).toBeCloseTo(0.015625, 5);
   });
 });

@@ -15,6 +15,7 @@ describe('update_readme_downloads', () => {
       assert.ok(section.includes('https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinatorAI_Offline_Setup_v1.0.0-beta.7.exe'));
       assert.ok(section.includes('https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinator_Mac_v1.0.0-beta.7.dmg'));
       assert.ok(section.includes('https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0-beta.7/RaceCoordinatorAI-Linux-ARM64_v1.0.0-beta.7.tar.gz'));
+      assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/changelog/'));
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/downloads/'));
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/installation/'));
     });
@@ -28,14 +29,15 @@ describe('update_readme_downloads', () => {
       assert.ok(section.includes('https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0/RaceCoordinatorAI_Offline_Setup_v1.0.0.exe'));
       assert.ok(section.includes('https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0/RaceCoordinator_Mac_v1.0.0.dmg'));
       assert.ok(section.includes('https://github.com/daufderheide/racecoordinator_ai/releases/download/v1.0.0/RaceCoordinatorAI-Linux-ARM64_v1.0.0.tar.gz'));
+      assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/changelog/'));
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/downloads/'));
       assert.ok(section.includes('https://daufderheide.github.io/racecoordinator_ai/installation/'));
     });
 
-    test('should infer prerelease if tag contains alpha or beta even if isPrerelease is false', () => {
-      const section = generateDownloadSection('v1.0.0-alpha.20260819', false);
-      assert.ok(section.includes('v1.0.0-alpha.20260819'));
-      assert.ok(section.includes('*(Beta Preview — Help us test upcoming features!)*'));
+    test('should reject alpha tags and throw an error', () => {
+      assert.throws(() => {
+        generateDownloadSection('v1.0.0-alpha.20260819', true);
+      }, /Alpha builds \(v1\.0\.0-alpha\.20260819\) cannot update the main README/);
     });
   });
 

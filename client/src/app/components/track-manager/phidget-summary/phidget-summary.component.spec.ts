@@ -154,9 +154,16 @@ describe("PhidgetSummaryComponent", () => {
       expect(component.hasBehavior("relay")).toBeTrue();
     });
 
-    it("should detect analog leds", () => {
-      const digitalOutIds = [PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG];
-      const config: Partial<PhidgetConfig> = { digitalOutIds };
+    it("should detect analog leds including heat leader", () => {
+      let digitalOutIds = [PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG];
+      let config: Partial<PhidgetConfig> = { digitalOutIds };
+      fixture.componentRef.setInput("config", config as PhidgetConfig);
+      expect(component.hasBehavior("analog_led")).toBeTrue();
+
+      digitalOutIds = [
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE,
+      ];
+      config = { digitalOutIds };
       fixture.componentRef.setInput("config", config as PhidgetConfig);
       expect(component.hasBehavior("analog_led")).toBeTrue();
     });

@@ -98,6 +98,7 @@ public class HeatConverter {
         .setFalseStarts(data.getFalseStarts())
         .setFlag(data.getFlag() != null ? data.getFlag() : RaceFlag.UNKNOWN_FLAG)
         .setLapsLed(data.getLapsLed())
+        .setIsFinished(data.isFinished())
         .build();
   }
 }

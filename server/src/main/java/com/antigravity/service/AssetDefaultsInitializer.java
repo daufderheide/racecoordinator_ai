@@ -2,6 +2,7 @@ package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AudioConfig;
+import com.antigravity.models.CustomUI;
 import com.antigravity.models.Theme;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.proto.SaveAudioSetEntry;
@@ -455,6 +456,7 @@ public class AssetDefaultsInitializer {
           new SqliteRepository<>(databaseContext, "themes", Theme.class);
       List<Theme> themes = themeRepo.findAll();
       boolean hasDefault = false;
+      boolean hasPractice = false;
       for (Theme t : themes) {
         boolean updated = false;
         Map<String, String> s = new HashMap<>(t.getSlots());
@@ -476,12 +478,25 @@ public class AssetDefaultsInitializer {
           updated = true;
         }
 
-        if (t.isDefault()) {
+        String uiId = t.getUiId();
+        if (Theme.DEFAULT_THEME_ID.equals(t.getEntityId())) {
           hasDefault = true;
+          if (uiId == null) {
+            uiId = CustomUI.DEFAULT_UI_ID;
+            updated = true;
+          }
+        }
+        if (Theme.PRACTICE_THEME_ID.equals(t.getEntityId())) {
+          hasPractice = true;
+          if (uiId == null) {
+            uiId = CustomUI.PRACTICE_UI_ID;
+            updated = true;
+          }
         }
 
         if (updated) {
-          Theme newTheme = new Theme(t.getName(), t.isDefault(), s, as, t.getEntityId(), t.getId());
+          Theme newTheme =
+              new Theme(t.getName(), t.isDefault(), s, as, uiId, t.getEntityId(), t.getId());
           themeRepo.save(newTheme);
         }
       }
@@ -491,9 +506,33 @@ public class AssetDefaultsInitializer {
         populateDefaultAudioSlots(audioSlots);
 
         Theme defaultTheme =
-            new Theme("Default Theme", true, slots, audioSlots, Theme.DEFAULT_THEME_ID, null);
+            new Theme(
+                "Default Theme",
+                true,
+                slots,
+                audioSlots,
+                CustomUI.DEFAULT_UI_ID,
+                Theme.DEFAULT_THEME_ID,
+                null);
         themeRepo.save(defaultTheme);
         logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
+      }
+      if (!hasPractice) {
+        Map<String, String> slots = createDefaultSlots();
+        Map<String, AudioConfig> audioSlots = new HashMap<>();
+        populateDefaultAudioSlots(audioSlots);
+
+        Theme practiceTheme =
+            new Theme(
+                "Practice Theme",
+                true,
+                slots,
+                audioSlots,
+                CustomUI.PRACTICE_UI_ID,
+                Theme.PRACTICE_THEME_ID,
+                null);
+        themeRepo.save(practiceTheme);
+        logger.info("Backfilled practice theme with ID {}", Theme.PRACTICE_THEME_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to backfill default theme", e);

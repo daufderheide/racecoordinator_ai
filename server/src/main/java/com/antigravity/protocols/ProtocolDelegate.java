@@ -17,14 +17,24 @@ public class ProtocolDelegate implements IProtocol {
 
   private final List<IProtocol> protocols;
   private final PowerManager powerManager;
+  private final PitManager pitManager;
+  private ProtocolListener listener;
 
   public ProtocolDelegate(List<IProtocol> protocols) {
     this.protocols = protocols;
     this.powerManager = new PowerManager(this);
+    this.pitManager = new PitManager(getNumLanes(), this::hasPitInConfigured, () -> this.listener);
+    for (IProtocol protocol : protocols) {
+      protocol.setPitManager(this.pitManager);
+    }
   }
 
   public List<IProtocol> getProtocols() {
     return protocols;
+  }
+
+  public PitManager getPitManager() {
+    return pitManager;
   }
 
   @Override
@@ -35,11 +45,13 @@ public class ProtocolDelegate implements IProtocol {
         allOpened = false;
       }
     }
+    this.pitManager.start();
     return allOpened;
   }
 
   @Override
   public void close() {
+    this.pitManager.stop();
     for (IProtocol protocol : protocols) {
       protocol.close();
     }
@@ -54,6 +66,7 @@ public class ProtocolDelegate implements IProtocol {
 
   @Override
   public void setListener(ProtocolListener listener) {
+    this.listener = listener;
     for (IProtocol protocol : protocols) {
       protocol.setListener(listener);
     }
@@ -180,8 +193,31 @@ public class ProtocolDelegate implements IProtocol {
   @Override
   public void initializeHardwareState() {
     this.powerManager.reset();
+    this.pitManager.reset();
     for (IProtocol protocol : protocols) {
       protocol.initializeHardwareState();
+    }
+  }
+
+  @Override
+  public boolean hasPitInConfigured(int laneIndex) {
+    for (IProtocol protocol : protocols) {
+      if (protocol.hasPitInConfigured(laneIndex)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isLaneInPits(int laneIndex) {
+    return pitManager != null && pitManager.isLaneInPits(laneIndex);
+  }
+
+  @Override
+  public void setPitManager(PitManager pitManager) {
+    for (IProtocol protocol : protocols) {
+      protocol.setPitManager(pitManager);
     }
   }
 }

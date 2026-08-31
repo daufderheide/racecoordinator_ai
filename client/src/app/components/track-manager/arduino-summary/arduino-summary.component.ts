@@ -88,6 +88,10 @@ export class ArduinoSummaryComponent {
         return allPins.some(
           (id) =>
             id === (PB as any).BEHAVIOR_LED_RGB_STRING ||
+            (id >= PB.BEHAVIOR_ANALOG_LED_GREEN_FLAG &&
+              id <= PB.BEHAVIOR_ANALOG_LED_COUNTDOWN_5) ||
+            (id >= (PB as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
+              id < (PB as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000) ||
             (config?.ledStrings && config.ledStrings.length > 0),
         );
       default:

@@ -1,0 +1,40 @@
+{
+  "id": "sample-sponsor-banner",
+  "name": "Sponsor Banner",
+  "version": "1.0.0",
+  "description": "Animated sponsor ticker and announcement banner for event branding",
+  "author": "Race Coordinator AI",
+  "defaultWidth": 600,
+  "defaultHeight": 100,
+  "minWidth": 250,
+  "minHeight": 60,
+  "settingsSchema": [
+    {
+      "key": "badgeText",
+      "label": "Badge Label",
+      "type": "string",
+      "default": "SPONSOR"
+    },
+    {
+      "key": "sponsorText",
+      "label": "Sponsor Text",
+      "type": "string",
+      "default": "Official Event Sponsor • High Performance Slot Car Racing"
+    },
+    {
+      "key": "accentColor",
+      "label": "Accent Color",
+      "type": "color",
+      "default": "#f59e0b"
+    },
+    {
+      "key": "marqueeSpeed",
+      "label": "Scroll Speed (seconds)",
+      "type": "number",
+      "default": 15,
+      "min": 5,
+      "max": 60,
+      "step": 1
+    }
+  ]
+}

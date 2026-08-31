@@ -222,7 +222,10 @@ describe("DataService", () => {
             expect(updated.name).toBe("Season 2026");
             service.deleteSeason("s1").subscribe((del) => {
               expect(del.success).toBeTrue();
-              done();
+              service.getSeasonStandings("s1").subscribe((st) => {
+                expect(st.length).toBe(1);
+                done();
+              });
             });
           });
         });
@@ -248,11 +251,17 @@ describe("DataService", () => {
     const req5 = httpMock.expectOne((r) => r.url.endsWith("/api/seasons/s1"));
     expect(req5.request.method).toBe("DELETE");
     req5.flush({ success: true });
+
+    const req6 = httpMock.expectOne((r) =>
+      r.url.endsWith("/api/seasons/s1/standings"),
+    );
+    expect(req6.request.method).toBe("GET");
+    req6.flush([{ driver_id: "d1", driver_name: "Driver 1", net_points: 25 }]);
   });
 
   it("should call race control protobuf endpoints (start, pause, end, abort, nextHeat, restartHeat, skipHeat, skipRace)", (done) => {
-    service.startRace().subscribe((startOk) => {
-      expect(startOk).toBeTrue();
+    service.startRace().subscribe((startResp) => {
+      expect(startResp.success).toBeTrue();
       service.pauseRace().subscribe((pauseOk) => {
         expect(pauseOk).toBeTrue();
         service.endRace().subscribe((endOk) => {
@@ -1141,34 +1150,50 @@ describe("DataService", () => {
   });
 
   describe("Saved Race Operations and Analytics API", () => {
-    it("should handle saveRace, getSavedRaces, loadRace, and deleteSavedRace", (done) => {
-      service.saveRace().subscribe((sRes) => {
+    it("should handle saveRace, getSavedRaces, loadRace, renameSavedRace, and deleteSavedRace", (done) => {
+      service.saveRace("Custom Save").subscribe((sRes) => {
         expect(sRes).toBe("saved_race.json");
         service.getSavedRaces(false).subscribe((races) => {
           expect(races.length).toBe(1);
           expect(races[0].filename).toBe("saved_race.json");
-          service.loadRace("saved_race.json", false).subscribe((loadRes) => {
-            expect(loadRes).toBe("OK");
-            service
-              .deleteSavedRace("saved_race.json", false)
-              .subscribe((delRes) => {
-                expect(delRes).toBe("DELETED");
-                done();
+          service
+            .renameSavedRace("saved_race.json", "renamed_race.json", false)
+            .subscribe((renRes) => {
+              expect(renRes).toBe("OK");
+              service
+                .loadRace("renamed_race.json", false)
+                .subscribe((loadRes) => {
+                  expect(loadRes).toBe("OK");
+                  service
+                    .deleteSavedRace("renamed_race.json", false)
+                    .subscribe((delRes) => {
+                      expect(delRes).toBe("DELETED");
+                      done();
+                    });
+                  const reqDel = httpMock.expectOne((r) =>
+                    r.url.endsWith("/api/saved-races/renamed_race.json"),
+                  );
+                  expect(reqDel.request.method).toBe("DELETE");
+                  reqDel.flush("DELETED");
+                });
+              const reqLoad = httpMock.expectOne((r) =>
+                r.url.endsWith("/api/load-race"),
+              );
+              expect(reqLoad.request.body).toEqual({
+                filename: "renamed_race.json",
+                isDemo: false,
               });
-            const reqDel = httpMock.expectOne((r) =>
-              r.url.endsWith("/api/saved-races/saved_race.json"),
-            );
-            expect(reqDel.request.method).toBe("DELETE");
-            reqDel.flush("DELETED");
-          });
-          const reqLoad = httpMock.expectOne((r) =>
-            r.url.endsWith("/api/load-race"),
+              reqLoad.flush("OK");
+            });
+          const reqRename = httpMock.expectOne((r) =>
+            r.url.endsWith("/api/rename-saved-race"),
           );
-          expect(reqLoad.request.body).toEqual({
-            filename: "saved_race.json",
+          expect(reqRename.request.body).toEqual({
+            oldFilename: "saved_race.json",
+            newFilename: "renamed_race.json",
             isDemo: false,
           });
-          reqLoad.flush("OK");
+          reqRename.flush("OK");
         });
         const reqList = httpMock.expectOne((r) =>
           r.url.endsWith("/api/saved-races"),
@@ -1179,6 +1204,10 @@ describe("DataService", () => {
       const reqSave = httpMock.expectOne((r) =>
         r.url.endsWith("/api/save-race"),
       );
+      expect(reqSave.request.body).toEqual({
+        name: "Custom Save",
+        saveName: "Custom Save",
+      });
       reqSave.flush("saved_race.json");
     });
 
@@ -1389,6 +1418,23 @@ describe("DataService", () => {
       createdSocket.onmessage({ data: { unknown: true } });
       // Invalid base64
       createdSocket.onmessage({ data: "!!!not_base64!!!" });
+
+      // Trigger onerror & onclose
+      jasmine.clock().install();
+      createdSocket.onerror(new Event("error"));
+      createdSocket.onclose();
+      expect((service as any).interfaceDataSocket).toBeUndefined();
+
+      // Fast-forward 2000ms for reconnect
+      jasmine.clock().tick(2001);
+      expect((service as any).interfaceDataSocket).toBeDefined();
+
+      // Test explicit disconnect
+      service.disconnectFromInterfaceDataSocket();
+      expect(
+        (service as any).isInterfaceSocketExplicitlyDisconnected,
+      ).toBeTrue();
+      jasmine.clock().uninstall();
     });
 
     it("should provide observable streams for race events, telemetry, and system state", () => {

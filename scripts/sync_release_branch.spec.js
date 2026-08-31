@@ -1,6 +1,7 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert');
 const {
+  resolveGitRef,
   getActiveReleaseBranches,
   parseReleaseBranches,
   getUnmergedCommitCount,
@@ -9,6 +10,36 @@ const {
 } = require('./sync_release_branch');
 
 describe('sync_release_branch', () => {
+  describe('resolveGitRef', () => {
+    test('should return empty string if ref is falsy', () => {
+      assert.strictEqual(resolveGitRef(''), '');
+      assert.strictEqual(resolveGitRef(null), '');
+    });
+
+    test('should resolve existing local ref first', () => {
+      const mockExec = (cmd) => {
+        if (cmd.includes('rev-parse --verify "release/v1.0.0"')) return '';
+        throw new Error('not found');
+      };
+      assert.strictEqual(resolveGitRef('release/v1.0.0', mockExec), 'release/v1.0.0');
+    });
+
+    test('should fallback to origin/ prefix if local ref does not exist', () => {
+      const mockExec = (cmd) => {
+        if (cmd.includes('rev-parse --verify "origin/release/v1.0.0"')) return '';
+        throw new Error('not found');
+      };
+      assert.strictEqual(resolveGitRef('release/v1.0.0', mockExec), 'origin/release/v1.0.0');
+    });
+
+    test('should fallback to original ref if all verify candidates fail', () => {
+      const mockExec = () => {
+        throw new Error('not found');
+      };
+      assert.strictEqual(resolveGitRef('release/v1.0.0', mockExec), 'release/v1.0.0');
+    });
+  });
+
   describe('parseReleaseBranches', () => {
     test('should parse and clean release branch names', () => {
       const rawLines = [
@@ -60,7 +91,19 @@ describe('sync_release_branch', () => {
   });
 
   describe('getUnmergedCommitCount', () => {
-    test('should return parsed commit count', () => {
+    test('should return parsed commit count with resolved remote branch', () => {
+      const mockExec = (cmd) => {
+        if (cmd.includes('rev-parse --verify "origin/release/v1.0.0"')) return '';
+        if (cmd.includes('rev-list')) {
+          if (cmd.includes('develop..origin/release/v1.0.0')) return ' 5\n';
+        }
+        throw new Error('not found');
+      };
+      const count = getUnmergedCommitCount('release/v1.0.0', 'develop', mockExec);
+      assert.strictEqual(count, 5);
+    });
+
+    test('should return parsed commit count with local branch', () => {
       const mockExec = (cmd) => {
         if (cmd.includes('rev-list')) return ' 5\n';
         return '0';

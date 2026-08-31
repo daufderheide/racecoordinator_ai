@@ -31,13 +31,13 @@ describe("TwinGraphsComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should apply line.backgroundColor as style.--line-color to driver-group when rendered", () => {
+  it("should apply line.color as style.--line-color to driver-group when rendered", () => {
     const mockDriverLines: DriverLine[] = [
       {
         objectId: "d1",
         driverName: "Driver 1",
-        color: "#FFFFFF",
-        backgroundColor: "#FF0000",
+        color: "#00FFFF",
+        backgroundColor: "#0B2E30",
         points: [{ x: 1, y: 1 }],
         pathData: "",
         rankPoints: [{ x: 1, y: 1 }],
@@ -65,10 +65,10 @@ describe("TwinGraphsComponent", () => {
 
     // Verify style.--line-color is bound to color
     const rankGroup = driverGroups[0].nativeElement;
-    expect(rankGroup.style.getPropertyValue("--line-color")).toBe("#FF0000");
+    expect(rankGroup.style.getPropertyValue("--line-color")).toBe("#00FFFF");
 
     const lapGroup = driverGroups[1].nativeElement;
-    expect(lapGroup.style.getPropertyValue("--line-color")).toBe("#FF0000");
+    expect(lapGroup.style.getPropertyValue("--line-color")).toBe("#00FFFF");
   });
 
   describe("Driver Visibility Logic", () => {

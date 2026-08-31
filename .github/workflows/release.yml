@@ -167,8 +167,7 @@ jobs:
           sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" client/package.json
           sed -i "s/#define MyAppVersion \".*\"/#define MyAppVersion \"$VERSION\"/" installer_base.iss
           sed -i "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$VERSION\";/" server/src/main/java/com/antigravity/App.java
-          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/analytics.service.ts
-          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/components/raceday-setup/raceday-setup.component.ts
+          sed -i "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$VERSION\";/" client/src/app/version.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -202,7 +201,14 @@ jobs:
             ${{ runner.os }}-build-cache-
 
       - name: Build Artifacts
+        env:
+          VERSION: ${{ needs.check-changes.outputs.version }}
         run: ./create_installers.sh
+
+      - name: Verify Release Artifacts
+        run: |
+          VERSION="${{ needs.check-changes.outputs.version }}"
+          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator/web server/src/main/java/com/antigravity/App.java installer_base.iss client/src/app/version.ts
 
       - name: Upload Release Directory
         uses: actions/upload-artifact@v4
@@ -280,8 +286,7 @@ jobs:
           echo "Configuring codebase version to $VERSION"
           sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" client/package.json
           sed -i "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$VERSION\";/" server/src/main/java/com/antigravity/App.java
-          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/analytics.service.ts
-          sed -i "s/CLIENT_VERSION_OVERRIDE || \".*\";/CLIENT_VERSION_OVERRIDE || \"$VERSION\";/" client/src/app/components/raceday-setup/raceday-setup.component.ts
+          sed -i "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$VERSION\";/" client/src/app/version.ts
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -307,9 +312,16 @@ jobs:
           echo "ga.api.secret=${{ secrets.GA_API_SECRET }}" >> server/src/main/resources/analytics.properties
 
       - name: Build Linux ARM64 Release Package
+        env:
+          VERSION: ${{ needs.check-changes.outputs.version }}
         run: |
           chmod +x create_linux_arm64_release.sh
           ./create_linux_arm64_release.sh
+
+      - name: Verify Linux Release Artifacts
+        run: |
+          VERSION="${{ needs.check-changes.outputs.version }}"
+          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator_Linux_ARM64/web server/src/main/java/com/antigravity/App.java "" client/src/app/version.ts
 
       - name: Upload Linux Package
         uses: actions/upload-artifact@v4
@@ -451,18 +463,29 @@ jobs:
         run: |
           rm -rf final-release release_body.md changelog_snippet.md
 
-      - name: Update README on Main
+      - name: Update README and Changelog on Main
         if: ${{ !contains(needs.check-changes.outputs.tag, 'alpha') }}
         run: |
+          # Copy release scripts to temp directory so they are available when checking out main
+          SCRIPTS_DIR="${RUNNER_TEMP:-/tmp}/release_scripts"
+          rm -rf "$SCRIPTS_DIR"
+          mkdir -p "$SCRIPTS_DIR"
+          cp -r scripts/* "$SCRIPTS_DIR/"
+
+          # Fetch main and tags
           git fetch origin main
-          git checkout origin/main -- README.md CHANGELOG.md help_center/docs/changelog.md || true
-          node scripts/update_readme_downloads.js "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
-          node scripts/generate_changelog.js "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
+          git fetch --tags --force
+
+          # Switch to clean main branch tracking origin/main
+          git checkout --force -B main origin/main
+
+          # Run scripts from temp directory to update main docs
+          node "$SCRIPTS_DIR/update_readme_downloads.js" "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
+          node "$SCRIPTS_DIR/generate_changelog.js" "${{ env.TAG }}" "${{ env.IS_PRERELEASE }}"
 
       - name: Create Pull Request for README & Changelog
         if: ${{ !contains(needs.check-changes.outputs.tag, 'alpha') }}
         uses: peter-evans/create-pull-request@v6
-        continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           add-paths: |

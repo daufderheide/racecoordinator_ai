@@ -154,6 +154,43 @@ export const MOCK_TRACKS = [
       },
     ],
   },
+  {
+    entity_id: "t5",
+    name: "Phidget Track",
+    lanes: [
+      {
+        entity_id: "l1",
+        length: 12.5,
+        background_color: "#ff0000",
+        foreground_color: "#ffffff",
+      },
+      {
+        entity_id: "l2",
+        length: 12.5,
+        background_color: "#0000ff",
+        foreground_color: "#ffffff",
+      },
+    ],
+    arduino_configs: [],
+    trackmate_configs: [],
+    bart_configs: [],
+    phidget_configs: [
+      {
+        name: "Phidget 8/8/8",
+        serialNumber: 12345,
+        isHubPort: false,
+        hubPort: 0,
+        normallyClosedLaneSensors: true,
+        normallyClosedRelays: true,
+        useLapsForSegments: true,
+        lapPinPitBehavior: 0,
+        digitalInIds: [1000, 1001, 0, 0, 0, 0, 0, 0],
+        digitalOutIds: [3, 4000, 0, 0, 0, 0, 0, 0],
+        analogIds: [0, 0, 0, 0, 0, 0, 0, 0],
+        voltageConfigs: {},
+      },
+    ],
+  },
 ];
 
 export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(

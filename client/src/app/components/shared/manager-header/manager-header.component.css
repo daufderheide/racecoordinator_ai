@@ -1,16 +1,16 @@
+:host {
+  display: block;
+}
+
 .header {
-  height: 60px;
-  min-height: 60px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 30px;
+  padding: 10px 25px;
   background: transparent;
   border-bottom: none;
   box-shadow: none;
-  margin: 60px 55px 40px 90px;
-  transform: translateZ(0);
-  will-change: transform;
+  margin: 0;
   z-index: 2000;
   position: relative;
 }
@@ -22,8 +22,10 @@
 }
 
 .header-right {
-  margin-top: 10px;
-  margin-right: 40px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .page-title {
@@ -40,5 +42,6 @@
   gap: 10px;
   align-items: center;
 }
+
 
 

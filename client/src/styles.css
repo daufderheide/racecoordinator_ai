@@ -1,4 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: dark;
+}
+
 html,
 body {
   margin: 0;
@@ -7,6 +11,134 @@ body {
   height: 100%;
   overflow: hidden;
   background-color: #000;
+  color-scheme: dark;
+}
+
+select {
+  color-scheme: dark;
+}
+
+select option,
+select optgroup {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* Global Baseline for Custom Dropdown Menus & Popups */
+.dropdown-menu,
+.setup-menu-dropdown,
+.menu-dropdown {
+  position: absolute;
+  background: #1e2430;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  padding: 4px;
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+/* Global Baseline for Dropdown & Menu Items */
+.dropdown-item,
+.menu-dropdown-item,
+.setup-menu-dropdown-item,
+.menu-item {
+  background-color: transparent;
+  color: #f1f5f9;
+  cursor: pointer;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  transition: background-color 0.1s ease, color 0.1s ease;
+  user-select: none;
+}
+
+.dropdown-item:hover:not(.disabled),
+.menu-dropdown-item:hover:not(.disabled),
+.setup-menu-dropdown-item:hover:not(.disabled),
+.menu-item:hover:not(.disabled) {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.dropdown-item.selected,
+.menu-dropdown-item.selected,
+.setup-menu-dropdown-item.selected,
+.menu-item.selected {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Checkmark slot on the left */
+.check-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  margin-right: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* Nested Submenus */
+.has-submenu {
+  position: relative;
+}
+
+.submenu,
+.menu-dropdown.submenu,
+.setup-menu-dropdown.submenu,
+.dropdown-menu.submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-top: -4px;
+  margin-left: 2px;
+  z-index: 4000;
+}
+
+.selected-indicator {
+  font-size: 13px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-left: auto;
+  padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.submenu-arrow,
+.setup-submenu-arrow {
+  font-size: 10px;
+  margin-left: auto;
+  opacity: 0.6;
+}
+
+.dropdown-item.disabled,
+.menu-dropdown-item.disabled,
+.setup-menu-dropdown-item.disabled,
+.menu-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dropdown-header {
+  padding: 6px 8px 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 4px;
+  pointer-events: none;
 }
 
 @media print {

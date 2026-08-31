@@ -91,7 +91,8 @@ public class PhidgetConfig {
     this.normallyClosedLaneSensors = normallyClosedLaneSensors;
     this.normallyClosedRelays = normallyClosedRelays;
     this.useLapsForSegments = useLapsForSegments;
-    this.lapPinPitBehavior = lapPinPitBehavior;
+    this.lapPinPitBehavior =
+        lapPinPitBehavior != null ? lapPinPitBehavior : LapPinPitBehavior.PIT_IN_OUT;
     this.digitalInIds = digitalInIds;
     this.digitalOutIds = digitalOutIds;
     this.analogIds = analogIds;

@@ -37,4 +37,36 @@ test.describe("Raceday Modals Visuals", () => {
       "raceday-exit-confirmation-modal.png",
     );
   });
+
+  test("should display save race dialog when triggered", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/raceday-setup"),
+    );
+    await page.evaluate(async () => {
+      await (window as any).angularRouter.navigateByUrl("/default-raceday");
+    });
+
+    await page.locator(".dashboard-wrapper").waitFor();
+
+    const fileMenuButton = page.locator(".menu-button-top").first();
+    await fileMenuButton.waitFor({ state: "visible" });
+    await fileMenuButton.click();
+
+    const saveMenuItem = page.locator(".top-dropdown .menu-item").first();
+    await saveMenuItem.waitFor({ state: "visible" });
+    await saveMenuItem.click();
+
+    const modalContent = page.locator("app-input-dialog .modal-content");
+    await modalContent.waitFor({ state: "visible" });
+
+    await expect(modalContent).toHaveScreenshot(
+      "raceday-save-race-dialog.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+      },
+    );
+  });
 });

@@ -29,6 +29,13 @@ describe("ThemeService", () => {
       slots: { "flag.racing": "asset-1" },
       audio_slots: {},
     },
+    {
+      entity_id: "theme-2",
+      name: "Theme 2",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    },
   ];
 
   beforeEach(() => {
@@ -84,13 +91,23 @@ describe("ThemeService", () => {
     expect(settingsServiceSpy.saveSettings).toHaveBeenCalled();
   });
 
-  it("should use saved active theme on initialization", async () => {
-    const settings = new Settings();
-    settings.activeThemeId = "theme-1";
-    settingsServiceSpy.getSettings.and.returnValue(settings);
+  it("should emit on activeTheme$ when active theme changes", async () => {
+    let emittedTheme: any = null;
+    service.activeTheme$.subscribe((theme) => {
+      emittedTheme = theme;
+    });
 
     await service.initialize();
-    expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
+    expect(emittedTheme?.entity_id).toBe("default_theme");
+
+    service.setActiveTheme("theme-1");
+    expect(emittedTheme?.entity_id).toBe("theme-1");
+
+    await service.setTransientActiveTheme("theme-2");
+    expect(emittedTheme?.entity_id).toBe("theme-2");
+
+    service.setActiveTheme(null);
+    expect(emittedTheme).toBeNull();
   });
 
   it("should resolve asset ID correctly", async () => {
@@ -109,6 +126,48 @@ describe("ThemeService", () => {
     await service.initialize();
     service.activateForRace("race-1");
     expect(service.getActiveTheme()?.entity_id).toBe("theme-1");
+  });
+
+  it("should respect transient active theme over race theme in activateForRace", async () => {
+    const settings = new Settings();
+    settings.activeThemeId = "default_theme";
+    settings.raceThemeOverrides = { "race-1": "theme-1" };
+    settingsServiceSpy.getSettings.and.returnValue(settings);
+
+    await service.initialize();
+    await service.setTransientActiveTheme("theme-2");
+    expect(service.getTransientThemeId()).toBe("theme-2");
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-2");
+
+    await service.activateForRace("race-1");
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-2");
+
+    service.clearTransientActiveTheme();
+    expect(service.getTransientThemeId()).toBeNull();
+  });
+
+  it("should preserve transient active theme across refresh", async () => {
+    await service.initialize();
+    await service.setTransientActiveTheme("theme-2");
+
+    await service.refresh();
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-2");
+  });
+
+  it("should auto-fetch themes when setTransientActiveTheme is called for uncached theme", async () => {
+    const newTheme = {
+      name: "Late Created Theme",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+      uiId: "custom_ui_1",
+      entity_id: "theme-late",
+    };
+    dataServiceSpy.getThemes.and.returnValue(of([...mockThemes, newTheme]));
+
+    await service.setTransientActiveTheme("theme-late");
+    expect(service.getActiveTheme()?.entity_id).toBe("theme-late");
+    expect(service.getActiveTheme()?.uiId).toBe("custom_ui_1");
   });
 
   it("should fall back to global theme if race override points to deleted theme", async () => {

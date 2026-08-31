@@ -495,18 +495,18 @@ describe("DefaultRacedaySetupComponent", () => {
       jasmine.any(Object),
       undefined,
       undefined,
-      undefined,
+      "default_classic_rc_ai",
     );
   }));
 
-  it("should pass active theme ID and activate theme when race is selected", fakeAsync(() => {
+  it("should pass race theme ID and activate theme when race is selected", fakeAsync(() => {
     const themeService = TestBed.inject(ThemeService);
     spyOn(themeService, "activateForRace").and.callThrough();
-    spyOn(themeService, "getActiveTheme").and.returnValue({
-      entity_id: "custom-theme-123",
-    } as any);
 
-    const testRace = (component as any).races[0];
+    const testRace = {
+      ...(component as any).races[0],
+      theme_id: "custom-theme-123",
+    };
     component.selectRace(testRace);
     expect(themeService.activateForRace).toHaveBeenCalledWith(
       testRace.entity_id,
@@ -684,6 +684,97 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.isHelpDropdownOpen).toBeFalse();
   });
 
+  describe("Quit & Keyboard Shortcuts", () => {
+    it("should close file dropdown and close window when quit is called", () => {
+      spyOn(component, "closeWindow");
+      component.isFileDropdownOpen = true;
+      component.quit();
+      expect(component.isFileDropdownOpen).toBeFalse();
+      expect(component.closeWindow).toHaveBeenCalled();
+    });
+
+    it("should call window.close in closeWindow", () => {
+      spyOn(window, "close");
+      component.closeWindow();
+      expect(window.close).toHaveBeenCalled();
+    });
+
+    it("should detect Mac and set quitShortcut to Cmd+Q", () => {
+      spyOnProperty(navigator, "platform", "get").and.returnValue("MacIntel");
+      component.detectShortcutKey();
+      expect(component.isMac).toBeTrue();
+      expect(component.quitShortcut).toBe("Cmd+Q");
+    });
+
+    it("should detect non-Mac and set quitShortcut to Alt+F4", () => {
+      spyOnProperty(navigator, "platform", "get").and.returnValue("Win32");
+      spyOnProperty(navigator, "userAgent", "get").and.returnValue(
+        "Windows NT",
+      );
+      component.detectShortcutKey();
+      expect(component.isMac).toBeFalse();
+      expect(component.quitShortcut).toBe("Alt+F4");
+    });
+
+    it("should trigger quit on Cmd+Q on Mac", () => {
+      component.isMac = true;
+      spyOn(component, "quit");
+      const event = new KeyboardEvent("keydown", {
+        key: "q",
+        metaKey: true,
+        cancelable: true,
+      });
+      spyOn(event, "preventDefault");
+      component.onKeyDown(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.quit).toHaveBeenCalled();
+    });
+
+    it("should trigger quit on Alt+F4 on Windows", () => {
+      component.isMac = false;
+      spyOn(component, "quit");
+      const event = new KeyboardEvent("keydown", {
+        key: "F4",
+        altKey: true,
+        cancelable: true,
+      });
+      spyOn(event, "preventDefault");
+      component.onKeyDown(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.quit).toHaveBeenCalled();
+    });
+
+    it("should trigger quit on Ctrl+Q on Windows", () => {
+      component.isMac = false;
+      spyOn(component, "quit");
+      const event = new KeyboardEvent("keydown", {
+        key: "q",
+        ctrlKey: true,
+        cancelable: true,
+      });
+      spyOn(event, "preventDefault");
+      component.onKeyDown(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(component.quit).toHaveBeenCalled();
+    });
+
+    it("should not trigger quit when inside an input element", () => {
+      component.isMac = true;
+      spyOn(component, "quit");
+      const inputEl = document.createElement("input");
+      document.body.appendChild(inputEl);
+      inputEl.focus();
+
+      const event = new KeyboardEvent("keydown", {
+        key: "q",
+        metaKey: true,
+      });
+      component.onKeyDown(event);
+      expect(component.quit).not.toHaveBeenCalled();
+      document.body.removeChild(inputEl);
+    });
+  });
+
   it("should load demo configuration from settings on init", () => {
     const customConfig = { minLapTimeMs: 1234 };
     (mockSettingsService as any).settings.demoConfig = customConfig;
@@ -755,6 +846,69 @@ describe("DefaultRacedaySetupComponent", () => {
       jasmine.objectContaining({ filename: "race1.json" }),
     );
     expect(component.selectedSavedRace).toBeNull();
+  });
+
+  it("should select saved race", () => {
+    const file = {
+      filename: "20260826-123456_Super_Cup.json",
+      isDemo: false,
+      corrupt: false,
+    };
+    component.selectSavedRace(file);
+    expect(component.selectedSavedRace).toEqual(file);
+
+    const corruptFile = {
+      filename: "bad_race.json",
+      isDemo: false,
+      corrupt: true,
+    };
+    component.selectSavedRace(corruptFile);
+    // Should not select corrupt race
+    expect(component.selectedSavedRace).toEqual(file);
+  });
+
+  it("should start and save inline rename for saved race", () => {
+    const file = {
+      filename: "20260826-123456_Super_Cup.json",
+      isDemo: false,
+      corrupt: false,
+    };
+    component.savedRaces = [file];
+    component.selectedSavedRace = file;
+
+    const event = new MouseEvent("click");
+    spyOn(event, "stopPropagation");
+
+    component.startInlineRename(event, file);
+    expect(event.stopPropagation).toHaveBeenCalled();
+    expect(component.editingSaveFilename).toBe(
+      "20260826-123456_Super_Cup.json",
+    );
+    expect(component.editingSaveNewName).toBe("20260826-123456_Super_Cup");
+
+    mockDataService.renameSavedRace.and.returnValue(
+      of("Race save renamed successfully: My_New_Name.json"),
+    );
+    component.editingSaveNewName = "My_New_Name";
+    component.saveInlineRename(file);
+
+    expect(mockDataService.renameSavedRace).toHaveBeenCalledWith(
+      "20260826-123456_Super_Cup.json",
+      "My_New_Name.json",
+      false,
+    );
+    expect(file.filename).toBe("My_New_Name.json");
+    expect(component.editingSaveFilename).toBeNull();
+  });
+
+  it("should cancel inline rename", () => {
+    component.editingSaveFilename = "test.json";
+    component.editingSaveNewName = "test";
+
+    component.cancelInlineRename();
+
+    expect(component.editingSaveFilename).toBeNull();
+    expect(component.editingSaveNewName).toBe("");
   });
 
   it("should confirm and load normal race", () => {
@@ -877,6 +1031,30 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.errorTitle).toBe("RDS_ERR_VALIDATION_TITLE");
     expect(component.errorMessage).toBe(
       "RDS_ERR_TRACK_DELETED Grand Prix\n\nRDS_ERR_TRACK_DELETED_FIX",
+    );
+  }));
+
+  it("should show error modal when server returns THEME_DELETED", fakeAsync(() => {
+    component.selectedRace = { entity_id: "r1", name: "Grand Prix" } as any;
+    component.selectedParticipants = [
+      { entity_id: "d1", name: "Alice" },
+    ] as any;
+
+    mockDataService.getSavedRaces.and.returnValue(of([]));
+    mockDataService.initializeRace.and.returnValue(
+      of({
+        success: false,
+        errorCode: "THEME_DELETED",
+      } as any),
+    );
+
+    component.startRace();
+    flush();
+
+    expect(component.showErrorModal).toBeTrue();
+    expect(component.errorTitle).toBe("RDS_ERR_VALIDATION_TITLE");
+    expect(component.errorMessage).toBe(
+      "RDS_ERR_THEME_DELETED Grand Prix\n\nRDS_ERR_THEME_DELETED_FIX",
     );
   }));
 
@@ -1078,16 +1256,13 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(rigidSpacer).toBeTruthy();
     });
 
-    it("should wrap the race selection title and dropdown in a bottom-section container", () => {
+    it("should wrap the race selector in a bottom-section container", () => {
       const bottomSection = fixture.nativeElement.querySelector(
         ".setup-bottom-section",
       );
       expect(bottomSection).toBeTruthy();
 
-      const title = bottomSection.querySelector(".race-selection-title");
       const selector = bottomSection.querySelector(".all-races-selector");
-
-      expect(title).toBeTruthy();
       expect(selector).toBeTruthy();
     });
 
@@ -1229,7 +1404,7 @@ describe("DefaultRacedaySetupComponent", () => {
       ).toBeTrue();
     });
 
-    it("should render race summary card when a single race is selected", () => {
+    it("should render race summary card with rearranged 2-column details when a single race is selected", () => {
       component.selectedRace = component.races[0];
       component.selectedEvent = undefined;
       fixture.detectChanges();
@@ -1240,7 +1415,43 @@ describe("DefaultRacedaySetupComponent", () => {
 
       const summaryGrid = raceSummaryCard.querySelector(".summary-grid");
       expect(summaryGrid).toBeTruthy();
-      expect(summaryGrid.querySelectorAll(".summary-item").length).toBe(6);
+      const items = summaryGrid.querySelectorAll(".summary-item");
+      expect(items.length).toBe(7);
+
+      const labels = Array.from(items).map((item: any) =>
+        item.querySelector(".summary-label")?.textContent?.trim(),
+      );
+      expect(labels[0]).toBe("RM_LABEL_HEAT_RANKING:");
+      expect(labels[1]).toBe("RM_LABEL_OVERALL_RANKING:");
+      expect(labels[2]).toBe("RM_LABEL_FINISH_METHOD:");
+      expect(labels[3]).toBe("RM_LABEL_FINISH_VALUE:");
+      expect(labels[4]).toBe("RM_LABEL_HEAT_ROTATION:");
+      expect(labels[5]).toBe("RM_LABEL_FUEL_RACE:");
+      expect(labels[6]).toBe("RM_LABEL_THEME:");
+    });
+
+    it("should correctly return theme display name in getThemeDisplay", () => {
+      const themeService = TestBed.inject(ThemeService);
+      spyOn(themeService, "getThemes").and.returnValue([
+        { entity_id: "default_classic_rc_ai", name: "Default Theme" } as any,
+        { entity_id: "practice_theme_rc_ai", name: "Practice Theme" } as any,
+        { entity_id: "default_fuel_theme_rc_ai", name: "Fuel Theme" } as any,
+        { entity_id: "custom_theme", name: "Custom Theme" } as any,
+      ]);
+
+      expect(
+        component.getThemeDisplay({ theme_id: "default_classic_rc_ai" }),
+      ).toBe("UE_LABEL_DEFAULT_THEME");
+      expect(
+        component.getThemeDisplay({ theme_id: "practice_theme_rc_ai" }),
+      ).toBe("UE_LABEL_PRACTICE_THEME");
+      expect(
+        component.getThemeDisplay({ theme_id: "default_fuel_theme_rc_ai" }),
+      ).toBe("UE_LABEL_FUEL_THEME");
+      expect(component.getThemeDisplay({ theme_id: "custom_theme" })).toBe(
+        "Custom Theme",
+      );
+      expect(component.getThemeDisplay({})).toBe("UE_LABEL_DEFAULT_THEME");
     });
 
     it("should update recentRaceIds and quickStartRaces when an event is started", fakeAsync(() => {
@@ -1665,31 +1876,31 @@ describe("DefaultRacedaySetupComponent", () => {
       });
 
       expect(steps[1]).toEqual({
-        targetId: "racing-drivers-section",
-        title: "RDS_HELP_DRIVER_RACING_TITLE",
-        content: "RDS_HELP_DRIVER_RACING_CONTENT",
-        position: "right",
-      });
-
-      expect(steps[2]).toEqual({
-        selector: "#racing-drivers-section .section-header",
-        title: "RDS_HELP_DRIVER_ACTIONS_TITLE",
-        content: "RDS_HELP_DRIVER_ACTIONS_CONTENT",
-        position: "bottom",
-      });
-
-      expect(steps[3]).toEqual({
         targetId: "available-drivers-section",
         title: "RDS_HELP_DRIVER_AVAILABLE_TITLE",
         content: "RDS_HELP_DRIVER_AVAILABLE_CONTENT",
         position: "right",
       });
 
-      expect(steps[4]).toEqual({
+      expect(steps[2]).toEqual({
         selector: "#available-drivers-section .header-actions",
         title: "RDS_HELP_DRIVER_TEAM_STATS_TITLE",
         content: "RDS_HELP_DRIVER_TEAM_STATS_CONTENT",
+        position: "bottom",
+      });
+
+      expect(steps[3]).toEqual({
+        targetId: "racing-drivers-section",
+        title: "RDS_HELP_DRIVER_RACING_TITLE",
+        content: "RDS_HELP_DRIVER_RACING_CONTENT",
         position: "right",
+      });
+
+      expect(steps[4]).toEqual({
+        selector: "#racing-drivers-section .section-header",
+        title: "RDS_HELP_DRIVER_ACTIONS_TITLE",
+        content: "RDS_HELP_DRIVER_ACTIONS_CONTENT",
+        position: "bottom",
       });
 
       expect(steps[5]).toEqual({
@@ -1747,6 +1958,128 @@ describe("DefaultRacedaySetupComponent", () => {
         content: "RDS_HELP_START_DEMO_CONTENT",
         position: "top",
       });
+    });
+
+    it("should render season-summary-card with empty-standings message when selectedSeason has no races", () => {
+      component.selectedSeason = {
+        entity_id: "s1",
+        name: "Formula Season",
+        drops: 1,
+        races: [],
+      };
+      component.calculateSeasonStandings();
+      fixture.detectChanges();
+
+      const seasonCard = fixture.nativeElement.querySelector(
+        ".season-summary-card",
+      );
+      expect(seasonCard).toBeTruthy();
+      expect(seasonCard.textContent).toContain("Formula Season");
+      expect(seasonCard.querySelector(".empty-standings")).toBeTruthy();
+    });
+
+    it("should render season standings table when selectedSeason has races", () => {
+      component.selectedSeason = {
+        entity_id: "s2",
+        name: "GT Championship",
+        drops: 0,
+        races: [
+          {
+            race_id: "r1",
+            race_name: "Race 1",
+            timestamp: 1000,
+            driver_results: [
+              {
+                driver_id: "d1",
+                driver_name: "Lewis Hamilton",
+                overall_rank: 1,
+                overall_points: 25,
+                heat_points: 0,
+                total_points: 25,
+              },
+              {
+                driver_id: "d2",
+                driver_name: "Max Verstappen",
+                overall_rank: 2,
+                overall_points: 18,
+                heat_points: 0,
+                total_points: 18,
+              },
+            ],
+          },
+        ],
+      };
+      component.calculateSeasonStandings();
+      fixture.detectChanges();
+
+      const seasonCard = fixture.nativeElement.querySelector(
+        ".season-summary-card",
+      );
+      expect(seasonCard).toBeTruthy();
+      expect(seasonCard.querySelector(".standings-table")).toBeTruthy();
+      expect(component.seasonStandings.length).toBe(2);
+      expect(component.seasonStandings[0].driver_name).toBe("Lewis Hamilton");
+      expect(component.seasonStandings[0].net_points).toBe(25);
+    });
+
+    it("should recalculate season standings on selectSeason and onSeasonChange", () => {
+      spyOn(component, "calculateSeasonStandings").and.callThrough();
+
+      const testSeason = {
+        entity_id: "s3",
+        name: "Karting Cup",
+        drops: 1,
+        races: [],
+      };
+
+      component.selectSeason(testSeason);
+      expect(component.calculateSeasonStandings).toHaveBeenCalled();
+      expect(component.selectedSeason).toBe(testSeason);
+
+      component.onSeasonChange();
+      expect(component.calculateSeasonStandings).toHaveBeenCalledTimes(2);
+    });
+
+    it("should render empty-season-card with no season selected text when selectedSeason is undefined", () => {
+      component.selectedSeason = undefined;
+      component.seasonStandings = [];
+      fixture.detectChanges();
+
+      const emptyCard =
+        fixture.nativeElement.querySelector(".empty-season-card");
+      expect(emptyCard).toBeTruthy();
+      expect(emptyCard.textContent).toContain("RDS_NO_SEASON_SELECTED");
+    });
+
+    it("should calculate uniform scale on resize", () => {
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(800);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(600);
+
+      component.onResize();
+      // Target width=1600, height=900
+      // scaleX = 800 / 1600 = 0.5
+      // scaleY = 600 / 900 = 0.6667
+      // uniform scale = min(0.5, 0.6667) = 0.5
+      expect(component.scale).toBeCloseTo(0.5, 3);
+    });
+
+    it("should open and close racing roster dialog", () => {
+      expect(component.showRacingRosterDialog).toBeFalse();
+
+      component.openRacingRosterDialog();
+      expect(component.showRacingRosterDialog).toBeTrue();
+
+      component.closeRacingRosterDialog();
+      expect(component.showRacingRosterDialog).toBeFalse();
+    });
+
+    it("should open racing roster dialog when clicking view roster button", async () => {
+      expect(component.showRacingRosterDialog).toBeFalse();
+
+      await harness.clickOpenRoster();
+      fixture.detectChanges();
+
+      expect(component.showRacingRosterDialog).toBeTrue();
     });
   });
 });

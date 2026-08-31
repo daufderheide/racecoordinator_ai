@@ -72,7 +72,7 @@ public class DefaultProtocolTest {
     }
 
     @Override
-    protected boolean hasPitInConfigured(int laneIndex) {
+    public boolean hasPitInConfigured(int laneIndex) {
       return false;
     }
 
@@ -329,7 +329,7 @@ public class DefaultProtocolTest {
           }
 
           @Override
-          protected boolean hasPitInConfigured(int laneIndex) {
+          public boolean hasPitInConfigured(int laneIndex) {
             return false;
           }
 

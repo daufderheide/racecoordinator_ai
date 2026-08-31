@@ -62,6 +62,8 @@ describe("ActionButtonInspectorComponent", () => {
       "action-open-race-results": "RD_WIN_RACE_RESULTS",
       "action-open-season-results": "RD_WIN_SEASON_RESULTS",
       "action-open-prediction-results": "RD_WIN_PREDICTION_RESULTS",
+      "action-master-power-on": "RD_MENU_MAIN_POWER_ON",
+      "action-master-power-off": "RD_MENU_MAIN_POWER_OFF",
       "unknown-action": "",
     };
 

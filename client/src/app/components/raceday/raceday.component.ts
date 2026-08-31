@@ -16,6 +16,9 @@ import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
 import { AuthService } from "@app/services/auth.service";
+import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { CustomUiService } from "@app/services/custom-ui.service";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
@@ -28,6 +31,7 @@ import { RacePredictionService } from "@app/services/race-prediction.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { CLIENT_VERSION, getClientVersion } from "@app/version";
 
 import { DefaultRacedayComponent } from "./default-raceday.component";
 
@@ -44,12 +48,16 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(RaceConnectionService) raceConnectionService: RaceConnectionService,
     @Inject(ChangeDetectorRef) cdr: ChangeDetectorRef,
     @Inject(ThemeService) themeService: ThemeService,
+    @Inject(CustomUiService) customUiService: CustomUiService,
     @Inject(LoggerService) logger: LoggerService,
     @Inject(ActivatedRoute) route: ActivatedRoute,
     @Inject(PrintService) printService: PrintService,
     @Inject(AuthService) authService: AuthService,
     @Inject(HelpService) helpService: HelpService,
     @Inject(RacePredictionService) predictionService: RacePredictionService,
+    @Inject(ChildWindowManagerService)
+    childWindowManagerService?: ChildWindowManagerService,
+    @Inject(CustomWidgetService) customWidgetService?: CustomWidgetService,
   ) {
     super(
       el,
@@ -62,12 +70,15 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       raceConnectionService,
       cdr,
       themeService,
+      customUiService,
       logger,
       route,
       printService,
       authService,
       helpService,
       predictionService,
+      childWindowManagerService,
+      customWidgetService,
     );
   }
 }
@@ -93,8 +104,7 @@ export class RacedayComponent
   serverVersion = "";
   serverIp = "";
   serverPort = 7070;
-  clientVersion: string =
-    (window as any).CLIENT_VERSION_OVERRIDE || "0.0.0_dev";
+  clientVersion: string = CLIENT_VERSION;
 
   constructor(
     private fileSystem: FileSystemService,
@@ -150,6 +160,7 @@ export class RacedayComponent
     this.dataService.getServerVersion().subscribe({
       next: (version) => {
         this.serverVersion = version;
+        this.clientVersion = getClientVersion(version);
         this.cdr.detectChanges();
       },
       error: (err) => {

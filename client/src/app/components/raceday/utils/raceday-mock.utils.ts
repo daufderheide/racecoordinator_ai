@@ -4,7 +4,7 @@ import { OverallRanking } from "@app/models/overall_scoring";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Track } from "@app/models/track";
-import { RaceState } from "@app/proto/antigravity";
+import { IRecordData, IRecordEntry, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 
@@ -17,12 +17,59 @@ export interface MockEditorData {
   heat: Heat;
   heats: Heat[];
   groupParticipants: RaceParticipant[];
+  recordData: IRecordData;
 }
 
 export function createMockEditorData(): MockEditorData {
   const raceState = RaceState.RACING;
   const time = 3600;
-  const race = {
+  const race = createMockRace();
+  const track = createMockTrack();
+  const participants = createMockRaceParticipants();
+  const heatDrivers = createMockHeatDrivers(participants);
+
+  const heat = {
+    id: "mock_heat_1",
+    objectId: "mock_heat_1",
+    race_id: "mock_race_1",
+    heatNumber: 1,
+    group: 0,
+    start_time: "2026-06-05T12:00:00Z",
+    end_time: "2026-06-05T12:03:00Z",
+    heatDrivers: heatDrivers,
+  } as unknown as Heat;
+
+  const nextHeatDrivers = createMockNextHeatDrivers();
+
+  const nextHeat = {
+    id: "mock_heat_2",
+    objectId: "mock_heat_2",
+    race_id: "mock_race_1",
+    heatNumber: 2,
+    group: 0,
+    started: false,
+    heatDrivers: nextHeatDrivers,
+  } as unknown as Heat;
+
+  const heats = [heat, nextHeat];
+  const groupParticipants = participants;
+  const recordData = createMockRecordData();
+
+  return {
+    raceState,
+    time,
+    race,
+    track,
+    participants,
+    heat,
+    heats,
+    groupParticipants,
+    recordData,
+  };
+}
+
+function createMockRace(): Race {
+  return {
     name: "Mock Editor Race",
     season_name: "Mock Editor Season",
     season_standings: [
@@ -80,48 +127,93 @@ export function createMockEditorData(): MockEditorData {
       enabled: true,
     },
   } as unknown as Race;
+}
 
-  const track = createMockTrack();
-  const participants = createMockRaceParticipants();
-
-  const heatDrivers = createMockHeatDrivers(participants);
-
-  const heat = {
-    id: "mock_heat_1",
-    objectId: "mock_heat_1",
-    race_id: "mock_race_1",
-    heatNumber: 1,
-    group: 0,
-    start_time: "2026-06-05T12:00:00Z",
-    end_time: "2026-06-05T12:03:00Z",
-    heatDrivers: heatDrivers,
-  } as unknown as Heat;
-
-  const nextHeatDrivers = createMockNextHeatDrivers();
-
-  const nextHeat = {
-    id: "mock_heat_2",
-    objectId: "mock_heat_2",
-    race_id: "mock_race_1",
-    heatNumber: 2,
-    group: 0,
-    started: false,
-    heatDrivers: nextHeatDrivers,
-  } as unknown as Heat;
-
-  const heats = [heat, nextHeat];
-  const groupParticipants = participants;
-
+export function createMockRecordData(): IRecordData {
   return {
-    raceState,
-    time,
-    race,
-    track,
-    participants,
-    heat,
-    heats,
-    groupParticipants,
+    overall: {
+      fastestLap: {
+        value: 1.842,
+        holderNickname: "Mario",
+        holderName: "Mario",
+        date: 1747051200000,
+      },
+      highestScore: {
+        value: 24.5,
+        holderNickname: "Luigi",
+        holderName: "Luigi",
+        date: 1747310400000,
+      },
+      laneFastestLap: createMockLaneRecordEntries(),
+    },
+    current: {
+      fastestLap: {
+        value: 1.955,
+        holderNickname: "Bowser",
+        holderName: "Bowser",
+        date: 1749556800000,
+      },
+      heatFastestLap: {
+        value: 2.012,
+        holderNickname: "Peach",
+        holderName: "Peach",
+        date: 1748779200000,
+      },
+    },
   };
+}
+
+export function createMockLaneRecordEntries(): IRecordEntry[] {
+  return [
+    {
+      value: 1.842,
+      holderNickname: "Mario",
+      holderName: "Mario",
+      date: 1747051200000,
+    },
+    {
+      value: 1.895,
+      holderNickname: "Luigi",
+      holderName: "Luigi",
+      date: 1747569600000,
+    },
+    {
+      value: 1.912,
+      holderNickname: "Peach",
+      holderName: "Peach",
+      date: 1748779200000,
+    },
+    {
+      value: 1.955,
+      holderNickname: "Bowser",
+      holderName: "Bowser",
+      date: 1749556800000,
+    },
+    {
+      value: 1.98,
+      holderNickname: "Yoshi",
+      holderName: "Yoshi",
+      date: 1749988800000,
+    },
+    {
+      value: 2.015,
+      holderNickname: "DK",
+      holderName: "Donkey Kong",
+      date: 1750420800000,
+    },
+    {
+      value: 2.042,
+      holderNickname: "Wario",
+      holderName: "Wario",
+      date: 1750593600000,
+    },
+    {
+      value: 2.088,
+      holderNickname: "Waluigi",
+      holderName: "Waluigi",
+      date: 1750852800000,
+    },
+  ];
 }
 
 function createMockHeatDrivers(

@@ -60,4 +60,15 @@ public class TrackConverterTest {
     assertEquals("My Phidget", proto.getPhidgetConfigs(0).getName());
     assertEquals(5551212, proto.getPhidgetConfigs(0).getSerialNumber());
   }
+
+  @Test
+  public void testToProto_WithTrackScale() {
+    Track track =
+        new Track.Builder().name("Scale Track").trackScale(0.03125).entityId("t3").build();
+
+    TrackModel proto = TrackConverter.toProto(track, new HashSet<>());
+
+    assertEquals("Scale Track", proto.getName());
+    assertEquals(0.03125, proto.getTrackScale(), 0.0001);
+  }
 }

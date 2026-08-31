@@ -21,9 +21,11 @@ describe("AppComponent", () => {
   let mockNavigationService: any;
   let mockSettingsService: any;
   let routerEvents: Subject<any>;
+  let systemStateSubject: Subject<any>;
 
   beforeEach(async () => {
     routerEvents = new Subject<any>();
+    systemStateSubject = new Subject<any>();
     mockRouter = {
       navigate: jasmine.createSpy("navigate"),
       events: routerEvents.asObservable(),
@@ -53,7 +55,9 @@ describe("AppComponent", () => {
     mockDataService.connectToInterfaceDataSocket.and.stub();
     mockDataService.disconnectFromInterfaceDataSocket.and.stub();
     mockDataService.getHeats.and.returnValue(new Subject().asObservable());
-    mockDataService.getSystemState.and.returnValue(of(null));
+    mockDataService.getSystemState.and.returnValue(
+      systemStateSubject.asObservable(),
+    );
     mockDataService.getServerLogLevel.and.returnValue(of("INFO"));
     mockDataService.setServerLogLevel.and.returnValue(of({}));
 
@@ -232,5 +236,49 @@ describe("AppComponent", () => {
     expect(component["routeAnimationData"]).toMatch(
       /^slide:forward:new-page:\d+$/,
     );
+  });
+
+  describe("SystemState resourceLockState IDLE navigation", () => {
+    it("should navigate to /raceday-setup when on /raceday and resourceLockState becomes IDLE", () => {
+      mockRouter.url = "/raceday";
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should navigate to /raceday-setup when on /default-raceday and resourceLockState becomes IDLE", () => {
+      mockRouter.url = "/default-raceday";
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should NOT navigate to /raceday-setup when on /ui-editor with returnUrl query param", () => {
+      mockRouter.url = "/ui-editor?returnUrl=/default-raceday";
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(mockRouter.navigate).not.toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should NOT navigate to /raceday-setup when on /driver-station with returnUrl query param", () => {
+      mockRouter.url = "/driver-station/1?returnUrl=/default-raceday";
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(mockRouter.navigate).not.toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should NOT navigate to /raceday-setup when on /driver-view with returnUrl query param", () => {
+      mockRouter.url = "/driver-view/123?returnUrl=/default-raceday";
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(mockRouter.navigate).not.toHaveBeenCalledWith(["/raceday-setup"]);
+    });
+
+    it("should NOT navigate to /raceday-setup when on /raceday-setup already", () => {
+      mockRouter.url = "/raceday-setup";
+      systemStateSubject.next({ resourceLockState: "IDLE" });
+
+      expect(mockRouter.navigate).not.toHaveBeenCalledWith(["/raceday-setup"]);
+    });
   });
 });

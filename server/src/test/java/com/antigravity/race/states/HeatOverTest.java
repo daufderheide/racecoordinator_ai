@@ -92,4 +92,53 @@ public class HeatOverTest {
   public void testDeferHeat_ThrowsWhenHeatOver() {
     heatOver.deferHeat(race);
   }
+
+  @Test
+  public void testOnLap_DuringDriftWindow_CountsDriftLap() {
+    com.antigravity.race.HeatExecutionManager hem =
+        mock(com.antigravity.race.HeatExecutionManager.class);
+    when(race.getHeatExecutionManager()).thenReturn(hem);
+    when(hem.onLap(0, 5.0, 1, false, true, true)).thenReturn(true);
+    when(race.createSnapshot()).thenReturn(com.antigravity.proto.RaceData.getDefaultInstance());
+
+    heatOver.enter(race);
+    boolean result = heatOver.onLap(0, 5.0, 1, false);
+
+    org.junit.Assert.assertTrue(result);
+    verify(hem).onLap(0, 5.0, 1, false, true, true);
+    verify(race).updateScoreRecords();
+    verify(race, org.mockito.Mockito.atLeastOnce())
+        .broadcast(org.mockito.ArgumentMatchers.any(com.antigravity.proto.RaceData.class));
+  }
+
+  @Test
+  public void testOnLap_DriftTimeZero_ReturnsFalse() {
+    com.antigravity.models.Race zeroDriftRaceModel =
+        new com.antigravity.models.Race.Builder()
+            .withDriftTime(0.0)
+            .withHeatScoring(new HeatScoring())
+            .build();
+    when(race.getRaceModel()).thenReturn(zeroDriftRaceModel);
+
+    heatOver.enter(race);
+    boolean result = heatOver.onLap(0, 5.0, 1, false);
+
+    org.junit.Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testOnLap_DriftTimeExpired_ReturnsFalse() throws Exception {
+    com.antigravity.models.Race shortDriftRaceModel =
+        new com.antigravity.models.Race.Builder()
+            .withDriftTime(0.01)
+            .withHeatScoring(new HeatScoring())
+            .build();
+    when(race.getRaceModel()).thenReturn(shortDriftRaceModel);
+
+    heatOver.enter(race);
+    Thread.sleep(30);
+    boolean result = heatOver.onLap(0, 5.0, 1, false);
+
+    org.junit.Assert.assertFalse(result);
+  }
 }

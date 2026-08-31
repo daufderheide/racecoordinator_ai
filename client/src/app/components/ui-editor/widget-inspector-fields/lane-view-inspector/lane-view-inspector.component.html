@@ -291,29 +291,19 @@
 
         <div
           class="col-actions"
-          style="
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            width: 100%;
-            margin-top: 4px;
-          "
+          style="display: flex; gap: 6px; align-items: center; margin-top: 4px"
         >
-          <div class="select-container select-sm" style="flex: 1">
-            <select
-              [ngModel]="columnVisibility[col] || 'Always'"
-              (change)="changeColumnVisibility(col, $any($event.target).value)"
-            >
-              <option value="Always">
-                {{ "UE_COL_VIS_ALWAYS" | translate }}
-              </option>
-              <option value="FuelRaceOnly">
-                {{ "UE_COL_VIS_FUEL" | translate }}
-              </option>
-              <option value="NonFuelRaceOnly">
-                {{ "UE_COL_VIS_NONFUEL" | translate }}
-              </option>
-            </select>
+          <div class="col-width-wrapper">
+            <input
+              type="number"
+              min="0"
+              class="inspector-input col-width-input"
+              [placeholder]="'0'"
+              [ngModel]="getColumnWidth(col)"
+              (ngModelChange)="setColumnWidth(col, $event)"
+              [title]="'UE_INSPECTOR_LANE_VIEW_COLUMN_WIDTH' | translate"
+            />
+            <span class="col-width-unit">px</span>
           </div>
           <button
             class="icon-btn delete-btn"

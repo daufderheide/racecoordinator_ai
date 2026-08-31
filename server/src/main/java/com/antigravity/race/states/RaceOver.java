@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 
 public class RaceOver implements IRaceState {
   private static final Logger logger = LoggerFactory.getLogger(RaceOver.class);
+  private Race race;
+  private long raceOverStartTimeMillis;
 
   @Override
   public RaceFlag getFlagType(Race race) {
@@ -31,7 +33,9 @@ public class RaceOver implements IRaceState {
     if (race.isLastHeat()
         && race.getRaceModel() != null
         && race.getRaceModel().getHeatScoring() != null
-        && race.getRaceModel().getHeatScoring().getAllowFinish() == HeatScoring.AllowFinish.None) {
+        && (race.getRaceModel().getHeatScoring().getAllowFinish() == HeatScoring.AllowFinish.None
+            || race.getRaceModel().getHeatScoring().getAllowFinish()
+                == HeatScoring.AllowFinish.NoneAutoSegments)) {
       return race.getTheme() != null
           ? race.getTheme()
               .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
@@ -45,6 +49,8 @@ public class RaceOver implements IRaceState {
   @Override
   public void enter(Race race) {
     logger.info("RaceOver state entered.");
+    this.race = race;
+    this.raceOverStartTimeMillis = System.currentTimeMillis();
     race.broadcastFlag(getFlagType(race));
 
     race.getStatistics().setEndTime(OffsetDateTime.now().toString());
@@ -76,6 +82,10 @@ public class RaceOver implements IRaceState {
       logger.error("Error notifying EventExecutionManager on race over", e);
     }
 
+    savePostRaceData(race);
+  }
+
+  private void savePostRaceData(Race race) {
     // Save history and update stats (separately if in demo mode)
     try {
       DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
@@ -95,6 +105,7 @@ public class RaceOver implements IRaceState {
                 && !EventExecutionManager.getInstance().isEventActive()) {
               String raceName =
                   race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
+              long raceStart = race.getStatistics().getStartMillis();
               List<SeasonDriverResult> seasonResults =
                   SeasonPointsCalculator.calculateDriverResultsForRace(race);
               dbService.commitRaceToSeason(
@@ -204,7 +215,19 @@ public class RaceOver implements IRaceState {
 
   @Override
   public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
-    return false;
+    return Common.handleDriftLap(
+        race,
+        raceOverStartTimeMillis,
+        "RaceOver",
+        lane,
+        lapTime,
+        interfaceId,
+        () -> {
+          race.updateAndBroadcastOverallStandings();
+          race.updateScoreRecords();
+          race.broadcast(race.createSnapshot());
+          savePostRaceData(race);
+        });
   }
 
   @Override

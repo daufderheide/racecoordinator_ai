@@ -63,6 +63,7 @@ export interface SeasonStandingItem {
   driver_name: string;
   net_points: number;
   gross_points: number;
+  dropped_points?: number;
   races_run: number;
   current_race_points?: number;
   currentRacePoints?: number;

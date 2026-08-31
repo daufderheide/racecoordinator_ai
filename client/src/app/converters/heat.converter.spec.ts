@@ -154,4 +154,59 @@ describe("HeatConverter", () => {
 
     expect(driverData.lapsLed).toBe(4);
   });
+
+  it("should assign driver heat ranks from proto.standings", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      standings: ["hd2", "hd1"],
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+        } as any,
+        {
+          objectId: "hd2",
+          driver: {
+            objectId: "p2",
+            driver: { name: "Driver 2" },
+          },
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(2);
+
+    const hd1 = heat.heatDrivers.find((d) => d.objectId === "hd1");
+    const hd2 = heat.heatDrivers.find((d) => d.objectId === "hd2");
+
+    expect(hd2?.rank).toBe(1);
+    expect(hd1?.rank).toBe(2);
+  });
+
+  it("should map isFinished from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          isFinished: true,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const driverData = heat.heatDrivers[0]!;
+
+    expect(driverData.isFinished).toBeTrue();
+  });
 });

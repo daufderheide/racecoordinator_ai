@@ -1,0 +1,129 @@
+<div class="custom-widget-inspector">
+  @if (widgetDescription) {
+    <div class="widget-description">
+      {{ widgetDescription }}
+    </div>
+  }
+
+  @if (schema.length > 0) {
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_CUSTOM_PROPERTIES" | translate }}
+    </div>
+
+    @for (field of schema; track field.key) {
+      <div class="inspector-section">
+        @switch (field.type) {
+          @case ("boolean") {
+            <label
+              class="inspector-checkbox-label"
+              [title]="field.description || field.label"
+            >
+              <input
+                type="checkbox"
+                [checked]="getSettingValue(field.key, field.default ?? false)"
+                (change)="onCheckboxChange(field.key, $event)"
+              />
+              {{ field.label }}
+            </label>
+          }
+
+          @case ("number") {
+            <label
+              class="inspector-label"
+              [title]="field.description || field.label"
+            >
+              {{ field.label }}
+            </label>
+            <input
+              type="number"
+              class="inspector-input"
+              [min]="field.min ?? null"
+              [max]="field.max ?? null"
+              [step]="field.step ?? 1"
+              [value]="getSettingValue(field.key, field.default ?? 0)"
+              (input)="onNumberInput(field.key, $event)"
+            />
+          }
+
+          @case ("color") {
+            <label
+              class="inspector-label"
+              [title]="field.description || field.label"
+            >
+              {{ field.label }}
+            </label>
+            <div
+              class="color-picker-wrapper"
+              [class.is-null]="!getSettingValue(field.key, field.default ?? '')"
+            >
+              <input
+                type="color"
+                class="color-picker-input"
+                [value]="getSettingValue(field.key, field.default ?? '#ffffff')"
+                (change)="onColorChange(field.key, $event)"
+              />
+              @if (!getSettingValue(field.key, field.default ?? "")) {
+                <span class="color-picker-placeholder">{{
+                  "UE_INSPECTOR_COLOR_DEFAULT" | translate
+                }}</span>
+              }
+              @if (getSettingValue(field.key, field.default ?? "")) {
+                <span class="color-value-badge">{{
+                  getSettingValue(field.key, field.default ?? "#ffffff")
+                }}</span>
+                @if (field.default) {
+                  <button
+                    class="color-reset-btn"
+                    (click)="resetColor(field.key, field.default)"
+                    [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+                  >
+                    ✕
+                  </button>
+                }
+              }
+            </div>
+          }
+
+          @case ("select") {
+            <label
+              class="inspector-label"
+              [title]="field.description || field.label"
+            >
+              {{ field.label }}
+            </label>
+            <div class="select-container select-sm">
+              <select
+                [value]="getSettingValue(field.key, field.default ?? '')"
+                (change)="onSelectChange(field.key, $event)"
+              >
+                @for (opt of field.options || []; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          @case ("string") {
+            <label
+              class="inspector-label"
+              [title]="field.description || field.label"
+            >
+              {{ field.label }}
+            </label>
+            <input
+              type="text"
+              class="inspector-input"
+              [placeholder]="field.default ?? ''"
+              [value]="getSettingValue(field.key, field.default ?? '')"
+              (input)="onTextInput(field.key, $event)"
+            />
+          }
+        }
+      </div>
+    }
+  } @else {
+    <div class="inspector-empty-settings">
+      <span>{{ "UE_INSPECTOR_NO_CUSTOM_PROPERTIES" | translate }}</span>
+    </div>
+  }
+</div>

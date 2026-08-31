@@ -129,6 +129,18 @@ describe("ArduinoSummaryComponent", () => {
       expect(component.hasBehavior("relay")).toBeTrue();
     });
 
+    it("should detect leds including analog heat leaders", () => {
+      let digitalIds = [PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG];
+      let config: Partial<ArduinoConfig> = { digitalIds, lapPinPitBehavior: 3 };
+      fixture.componentRef.setInput("config", config as ArduinoConfig);
+      expect(component.hasBehavior("led")).toBeTrue();
+
+      digitalIds = [(PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE];
+      config = { digitalIds, lapPinPitBehavior: 3 };
+      fixture.componentRef.setInput("config", config as ArduinoConfig);
+      expect(component.hasBehavior("led")).toBeTrue();
+    });
+
     it("should return false if behavior absent", () => {
       const config: Partial<ArduinoConfig> = {
         digitalIds: [],
@@ -140,6 +152,7 @@ describe("ArduinoSummaryComponent", () => {
       expect(component.hasBehavior("segment")).toBeFalse();
       expect(component.hasBehavior("call")).toBeFalse();
       expect(component.hasBehavior("relay")).toBeFalse();
+      expect(component.hasBehavior("led")).toBeFalse();
     });
   });
 });

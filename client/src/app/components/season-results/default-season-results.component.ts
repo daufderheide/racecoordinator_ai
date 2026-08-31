@@ -9,10 +9,12 @@ import {
 } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { Subscription } from "rxjs";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { DataService } from "@app/data.service";
 import {
   Season,
@@ -40,6 +42,8 @@ import { TranslationService } from "@app/services/translation.service";
     DatePipe,
     DecimalPipe,
     PdfExportDialogComponent,
+    BrowserNavigationComponent,
+    SeasonSummaryComponent,
   ],
 })
 export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
@@ -366,11 +370,17 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
         }
       }
 
+      const netPoints = Math.round(net * 100) / 100;
+      const grossPoints = Math.round(gross * 100) / 100;
+      const droppedPoints =
+        Math.round(Math.max(0, grossPoints - netPoints) * 100) / 100;
+
       result.push({
         driver_id: driverId,
         driver_name: entry.driver_name,
-        net_points: net,
-        gross_points: gross,
+        net_points: netPoints,
+        gross_points: grossPoints,
+        dropped_points: droppedPoints,
         races_run: racesRun,
         race_scores: scores,
       });
@@ -386,35 +396,67 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
     this.standings = result;
   }
 
-  toggleRaceExpanded(raceId: string): void {
-    if (this.expandedRaceIds.has(raceId)) {
-      this.expandedRaceIds.delete(raceId);
+  getRaceExpanderKey(race: SeasonRaceRecord, idx: number): string {
+    return `${race.race_id || "race"}_${race.timestamp || ""}_${idx}`;
+  }
+
+  toggleRaceExpanded(raceOrId: SeasonRaceRecord | string, idx?: number): void {
+    const key =
+      typeof raceOrId === "string"
+        ? raceOrId
+        : this.getRaceExpanderKey(raceOrId, idx ?? 0);
+    if (this.expandedRaceIds.has(key)) {
+      this.expandedRaceIds.delete(key);
     } else {
-      this.expandedRaceIds.add(raceId);
+      this.expandedRaceIds.add(key);
     }
     this.cdr.detectChanges();
   }
 
-  isRaceExpanded(raceId: string): boolean {
-    return this.expandedRaceIds.has(raceId);
+  isRaceExpanded(raceOrId: SeasonRaceRecord | string, idx?: number): boolean {
+    if (typeof raceOrId === "string") {
+      return this.expandedRaceIds.has(raceOrId);
+    }
+    const key = this.getRaceExpanderKey(raceOrId, idx ?? 0);
+    return (
+      this.expandedRaceIds.has(key) ||
+      (Boolean(raceOrId.race_id) && this.expandedRaceIds.has(raceOrId.race_id))
+    );
   }
 
-  getDriverKey(raceId: string, driverId: string): string {
-    return `${raceId}__${driverId}`;
+  getDriverKey(raceIdOrKey: string, driverId: string): string {
+    return `${raceIdOrKey}__${driverId}`;
   }
 
-  toggleDriverExpanded(raceId: string, driverId: string): void {
-    const key = this.getDriverKey(raceId, driverId);
+  toggleDriverExpanded(raceIdOrKey: string, driverId: string): void {
+    const key = this.getDriverKey(raceIdOrKey, driverId);
     if (this.expandedDriverKeys.has(key)) {
       this.expandedDriverKeys.delete(key);
     } else {
-      this.expandedDriverKeys.add(key);
+      const existing = Array.from(this.expandedDriverKeys).find(
+        (k) =>
+          k.endsWith(`__${driverId}`) &&
+          (k.startsWith(`${raceIdOrKey}_`) || k.startsWith(`${raceIdOrKey}__`)),
+      );
+      if (existing) {
+        this.expandedDriverKeys.delete(existing);
+      } else {
+        this.expandedDriverKeys.add(key);
+      }
     }
     this.cdr.detectChanges();
   }
 
-  isDriverExpanded(raceId: string, driverId: string): boolean {
-    return this.expandedDriverKeys.has(this.getDriverKey(raceId, driverId));
+  isDriverExpanded(raceIdOrKey: string, driverId: string): boolean {
+    const exactKey = this.getDriverKey(raceIdOrKey, driverId);
+    if (this.expandedDriverKeys.has(exactKey)) {
+      return true;
+    }
+    return Array.from(this.expandedDriverKeys).some(
+      (k) =>
+        k.endsWith(`__${driverId}`) &&
+        (k.startsWith(`${raceIdOrKey}_`) || k.startsWith(`${raceIdOrKey}__`)),
+    );
   }
 
   hasAnyBonuses(res: SeasonDriverResult): boolean {
@@ -548,6 +590,7 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
 
   onPdfExportConfirm(options: PdfExportOptions): void {
     this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
     if (options.saveAsDefault) {
       const settings = this.settingsService.getSettings();
       settings.exportPdfBackgrounds = options.includeBackground;
@@ -560,7 +603,6 @@ export class DefaultSeasonResultsComponent implements OnInit, OnDestroy {
       undefined,
       options.includeBackground,
     );
-    this.cdr.detectChanges();
   }
 
   onPdfExportCancel(): void {

@@ -24,6 +24,7 @@ export class RaceResultsHelper {
             ],
           },
         },
+        startTimeMillis: 1735689600000,
         drivers: [
           {
             objectId: "rp1",

@@ -13,6 +13,10 @@ export class LaneViewInspectorHarnessE2e implements LaneViewInspectorHarnessBase
     return this.locator.locator(this.base.selectors.selects);
   }
 
+  private get widthInputs() {
+    return this.locator.locator(this.base.selectors.columnWidthInputs);
+  }
+
   async getTimeDecimalPlaces(): Promise<number> {
     const val = await this.selects.nth(1).inputValue();
     return Number(val);
@@ -29,5 +33,14 @@ export class LaneViewInspectorHarnessE2e implements LaneViewInspectorHarnessBase
 
   async setLapDecimalPlaces(val: number): Promise<void> {
     await this.selects.nth(2).selectOption({ value: val.toString() });
+  }
+
+  async getColumnWidth(columnIndex: number): Promise<number> {
+    const val = await this.widthInputs.nth(columnIndex).inputValue();
+    return Number(val);
+  }
+
+  async setColumnWidth(columnIndex: number, val: number): Promise<void> {
+    await this.widthInputs.nth(columnIndex).fill(val.toString());
   }
 }

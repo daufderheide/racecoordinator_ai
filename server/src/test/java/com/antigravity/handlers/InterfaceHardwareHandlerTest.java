@@ -71,7 +71,7 @@ public class InterfaceHardwareHandlerTest {
     when(mockCtx.status(org.mockito.ArgumentMatchers.anyInt())).thenReturn(mockCtx);
 
     handler.setMainPower(mockCtx);
-    org.mockito.Mockito.verify(mockRace).setMainPower(true);
+    org.mockito.Mockito.verify(mockRace).forceUserMainPower(true);
     org.mockito.Mockito.verify(mockCtx).status(200);
 
     handler.setLanePower(mockCtx);
@@ -214,7 +214,7 @@ public class InterfaceHardwareHandlerTest {
   }
 
   @Test
-  public void testSetInterfacePinState_WithPhidgetProtocol() {
+  public void testSetInterfacePinState_WithPhidgetProtocol() throws Exception {
     com.antigravity.protocols.phidget.PhidgetConfig config =
         new com.antigravity.protocols.phidget.PhidgetConfig();
     config.serialNumber = 12345;
@@ -238,8 +238,82 @@ public class InterfaceHardwareHandlerTest {
     when(mockCtx.bodyAsBytes()).thenReturn(pinReq.toByteArray());
     when(mockCtx.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(mockCtx);
 
+    org.mockito.ArgumentCaptor<byte[]> responseCaptor =
+        org.mockito.ArgumentCaptor.forClass(byte[].class);
+
     handler.setInterfacePinState(mockCtx);
-    org.mockito.Mockito.verify(mockCtx).result(org.mockito.ArgumentMatchers.any(byte[].class));
+    org.mockito.Mockito.verify(mockCtx).result(responseCaptor.capture());
+
+    com.antigravity.proto.SetInterfacePinStateResponse resp =
+        com.antigravity.proto.SetInterfacePinStateResponse.parseFrom(responseCaptor.getValue());
+    org.junit.Assert.assertFalse(resp.getSuccess());
+    org.junit.Assert.assertTrue(resp.getMessage().contains("not attached"));
+  }
+
+  @Test
+  public void testSetInterfacePinState_WithAttachedPhidget_ReturnsSuccess() throws Exception {
+    com.antigravity.protocols.phidget.PhidgetConfig config =
+        new com.antigravity.protocols.phidget.PhidgetConfig();
+    config.serialNumber = 12345;
+    com.antigravity.protocols.phidget.PhidgetProtocol phidgetProtocol =
+        org.mockito.Mockito.spy(
+            new com.antigravity.protocols.phidget.PhidgetProtocol(config, 4, null));
+    phidgetProtocol.setInterfaceIndex(0);
+    org.mockito.Mockito.doReturn(true).when(phidgetProtocol).setPinState(true, 1, true);
+
+    com.antigravity.protocols.ProtocolDelegate delegate =
+        new com.antigravity.protocols.ProtocolDelegate(Collections.singletonList(phidgetProtocol));
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(delegate);
+
+    com.antigravity.proto.SetInterfacePinStateRequest pinReq =
+        com.antigravity.proto.SetInterfacePinStateRequest.newBuilder()
+            .setInterfaceIndex(0)
+            .setPin(1)
+            .setIsDigital(true)
+            .setIsHigh(true)
+            .build();
+
+    io.javalin.http.Context mockCtx = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(mockCtx.bodyAsBytes()).thenReturn(pinReq.toByteArray());
+    when(mockCtx.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(mockCtx);
+
+    org.mockito.ArgumentCaptor<byte[]> responseCaptor =
+        org.mockito.ArgumentCaptor.forClass(byte[].class);
+
+    handler.setInterfacePinState(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).result(responseCaptor.capture());
+
+    com.antigravity.proto.SetInterfacePinStateResponse resp =
+        com.antigravity.proto.SetInterfacePinStateResponse.parseFrom(responseCaptor.getValue());
+    org.junit.Assert.assertTrue(resp.getSuccess());
+  }
+
+  @Test
+  public void testSetInterfacePinState_InvalidInterfaceIndex_ReturnsFailure() throws Exception {
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setProtocol(null);
+
+    com.antigravity.proto.SetInterfacePinStateRequest pinReq =
+        com.antigravity.proto.SetInterfacePinStateRequest.newBuilder()
+            .setInterfaceIndex(99)
+            .setPin(0)
+            .setIsDigital(true)
+            .setIsHigh(true)
+            .build();
+
+    io.javalin.http.Context mockCtx = org.mockito.Mockito.mock(io.javalin.http.Context.class);
+    when(mockCtx.bodyAsBytes()).thenReturn(pinReq.toByteArray());
+    when(mockCtx.contentType(org.mockito.ArgumentMatchers.anyString())).thenReturn(mockCtx);
+
+    org.mockito.ArgumentCaptor<byte[]> responseCaptor =
+        org.mockito.ArgumentCaptor.forClass(byte[].class);
+
+    handler.setInterfacePinState(mockCtx);
+    org.mockito.Mockito.verify(mockCtx).result(responseCaptor.capture());
+
+    com.antigravity.proto.SetInterfacePinStateResponse resp =
+        com.antigravity.proto.SetInterfacePinStateResponse.parseFrom(responseCaptor.getValue());
+    org.junit.Assert.assertFalse(resp.getSuccess());
+    org.junit.Assert.assertTrue(resp.getMessage().contains("invalid or unsupported"));
   }
 
   @Test

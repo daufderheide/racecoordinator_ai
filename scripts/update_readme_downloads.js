@@ -2,7 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 function generateDownloadSection(tag, isPrerelease) {
-  const isPre = isPrerelease === 'true' || isPrerelease === true || tag.includes('beta') || tag.includes('alpha');
+  if (tag.includes('alpha')) {
+    throw new Error(`Alpha builds (${tag}) cannot update the main README download section.`);
+  }
+  const isPre = isPrerelease === 'true' || isPrerelease === true || tag.includes('beta');
   const typeLabel = isPre ? '*(Beta Preview — Help us test upcoming features!)*' : '*(Official Stable Release)*';
   const baseUrl = `https://github.com/daufderheide/racecoordinator_ai/releases/download/${tag}`;
 
@@ -28,6 +31,7 @@ Click your operating system below to **download directly**:
 ---
 
 ### 🌐 Downloads & Documentation
+* 📋 **[Release Notes & Changelog](https://daufderheide.github.io/racecoordinator_ai/changelog/)** — Detailed list of features, bug fixes, and release history.
 * 📦 **[Help Center Downloads & Release Portal](https://daufderheide.github.io/racecoordinator_ai/downloads/)** — Explore all releases (Official, Beta, Alpha) and downloads.
 * 📖 **[Installation Guide & System Requirements](https://daufderheide.github.io/racecoordinator_ai/installation/)** — Detailed step-by-step setup guides for each platform.
 <!-- DOWNLOAD_SECTION_END -->`;
@@ -69,7 +73,13 @@ function main() {
     process.exit(1);
   }
 
-  const readmePath = path.resolve(__dirname, '..', 'README.md');
+  if (tag.includes('alpha')) {
+    console.log(`Skipping README update: ${tag} is an alpha/daily build and should not update main README.`);
+    process.exit(0);
+  }
+
+  const repoRoot = process.env.GITHUB_WORKSPACE || process.cwd();
+  const readmePath = path.resolve(repoRoot, 'README.md');
   updateReadmeFile(readmePath, tag, isPrerelease);
   console.log(`Updated README.md with download links for tag: ${tag}`);
 }

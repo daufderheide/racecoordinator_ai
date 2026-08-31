@@ -158,7 +158,10 @@ public class BartProtocolTest {
           @Override
           public void onInterfaceEvent(InterfaceEvent event) {
             if (event.hasStatus()) {
-              detectedChannels.set(event.getStatus().getDetectedChannels());
+              int channels = event.getStatus().getDetectedChannels();
+              if (channels > detectedChannels.get()) {
+                detectedChannels.set(channels);
+              }
             }
           }
         });
@@ -407,7 +410,10 @@ public class BartProtocolTest {
           @Override
           public void onInterfaceEvent(InterfaceEvent event) {
             if (event.hasStatus()) {
-              detectedChannels.set(event.getStatus().getDetectedChannels());
+              int channels = event.getStatus().getDetectedChannels();
+              if (channels > detectedChannels.get()) {
+                detectedChannels.set(channels);
+              }
             }
           }
         });

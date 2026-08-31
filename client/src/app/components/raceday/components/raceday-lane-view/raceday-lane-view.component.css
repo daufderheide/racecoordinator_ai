@@ -268,9 +268,9 @@
   width: 100% !important;
   transform: none !important;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: stretch;
-  padding: 2px 6px !important;
+  padding: 1px 3px !important;
   box-sizing: border-box;
   z-index: 2;
 }
@@ -280,20 +280,22 @@
 .body-cell .pacing-entry.anchor-top-right {
   top: 0;
   bottom: auto;
-  height: 33.33%;
+  height: calc(100% / 3);
 }
 
 .body-cell .pacing-entry.anchor-center-left,
 .body-cell .pacing-entry.anchor-center-center,
 .body-cell .pacing-entry.anchor-center-right {
-  top: 33.33%;
+  top: calc(100% / 3);
   bottom: auto;
-  height: 33.33%;
+  height: calc(100% / 3);
 }
 
+.body-cell .pacing-entry.anchor-center-center.solo-pacing,
 .body-cell .pacing-entry.anchor-center-center:only-child {
-  top: 0;
-  height: 100%;
+  top: 0 !important;
+  height: 100% !important;
+  padding: 2px 4px !important;
 }
 
 .body-cell .pacing-entry.anchor-bottom-left,
@@ -301,12 +303,13 @@
 .body-cell .pacing-entry.anchor-bottom-right {
   top: auto;
   bottom: 0;
-  height: 33.33%;
+  height: calc(100% / 3);
 }
 
 .body-cell app-raceday-ghost-pacing {
-  display: block;
+  display: flex;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
 }
 
@@ -413,6 +416,50 @@
   text-transform: uppercase;
   z-index: 5;
   white-space: nowrap;
+}
+
+.record-lap-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 1.1;
+  text-align: center;
+  box-sizing: border-box;
+  padding: 2px 4px;
+}
+
+.record-lap-time {
+  font-size: 1em;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+}
+
+.record-lap-sub {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.42em;
+  opacity: 0.85;
+  margin-top: 2px;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.record-lap-holder {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.record-lap-date {
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* UI Editor Mode - Column Drop Zones */
@@ -522,13 +569,15 @@
 .widget-wrapper.scale-auto .anchor-top-right,
 .widget-wrapper.scale-auto .anchor-bottom-left,
 .widget-wrapper.scale-auto .anchor-bottom-center,
-.widget-wrapper.scale-auto .anchor-bottom-right {
+.widget-wrapper.scale-auto .anchor-bottom-right,
+.widget-wrapper.scale-auto .body-cell .pacing-entry:not(.solo-pacing) {
   font-size: calc(var(--custom-font-size, 3.4cqh) * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
 }
 
-.widget-wrapper.scale-auto .anchor-center-left,
-.widget-wrapper.scale-auto .anchor-center-center,
-.widget-wrapper.scale-auto .anchor-center-right,
+.widget-wrapper.scale-auto .anchor-center-left:not(.pacing-entry),
+.widget-wrapper.scale-auto .anchor-center-center:not(.pacing-entry),
+.widget-wrapper.scale-auto .anchor-center-right:not(.pacing-entry),
+.widget-wrapper.scale-auto .body-cell .pacing-entry.solo-pacing,
 .widget-wrapper.scale-auto app-raceday-lane-view .teammate-display-name {
   font-size: calc(var(--custom-font-size, 7.6cqh) * var(--widget-scale-factor, 1) * var(--text-fit-scale, 1)) !important;
 }
@@ -545,13 +594,15 @@
 .widget-wrapper.scale-fixed .anchor-top-right,
 .widget-wrapper.scale-fixed .anchor-bottom-left,
 .widget-wrapper.scale-fixed .anchor-bottom-center,
-.widget-wrapper.scale-fixed .anchor-bottom-right {
+.widget-wrapper.scale-fixed .anchor-bottom-right,
+.widget-wrapper.scale-fixed .body-cell .pacing-entry:not(.solo-pacing) {
   font-size: calc(var(--custom-font-size, calc(1 * var(--widget-font-size))) * var(--text-fit-scale, 1)) !important;
 }
 
-.widget-wrapper.scale-fixed .anchor-center-left,
-.widget-wrapper.scale-fixed .anchor-center-center,
-.widget-wrapper.scale-fixed .anchor-center-right,
+.widget-wrapper.scale-fixed .anchor-center-left:not(.pacing-entry),
+.widget-wrapper.scale-fixed .anchor-center-center:not(.pacing-entry),
+.widget-wrapper.scale-fixed .anchor-center-right:not(.pacing-entry),
+.widget-wrapper.scale-fixed .body-cell .pacing-entry.solo-pacing,
 .widget-wrapper.scale-fixed app-raceday-lane-view .teammate-display-name {
   font-size: calc(var(--custom-font-size, calc(2.25 * var(--widget-font-size))) * var(--text-fit-scale, 1)) !important;
 }

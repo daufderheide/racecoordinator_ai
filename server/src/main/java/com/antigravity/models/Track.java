@@ -20,6 +20,7 @@ public class Track extends Model {
 
   private final String name;
   private final int numTrackSections;
+  private final double trackScale;
   private final List<Lane> lanes;
   private final List<ArduinoConfig> arduinoConfigs;
   private final List<TrackmateConfig> trackmateConfigs;
@@ -30,6 +31,7 @@ public class Track extends Model {
   public Track(
       @JsonProperty("name") String name,
       @JsonProperty("num_track_sections") Integer numTrackSections,
+      @JsonProperty("track_scale") Double trackScale,
       @JsonProperty("lanes") List<Lane> lanes,
       @JsonProperty("arduino_configs") List<ArduinoConfig> arduinoConfigs,
       @JsonProperty("trackmate_configs") List<TrackmateConfig> trackmateConfigs,
@@ -40,6 +42,8 @@ public class Track extends Model {
     super(id, entityId);
     this.name = name;
     this.numTrackSections = numTrackSections != null ? numTrackSections : 100;
+    this.trackScale =
+        (trackScale != null && trackScale > 0.0 && trackScale <= 1.0) ? trackScale : 1.0;
     this.lanes = lanes != null ? Collections.unmodifiableList(lanes) : Collections.emptyList();
     this.arduinoConfigs =
         arduinoConfigs != null
@@ -57,9 +61,33 @@ public class Track extends Model {
         bartConfigs != null ? Collections.unmodifiableList(bartConfigs) : Collections.emptyList();
   }
 
+  public Track(
+      String name,
+      Integer numTrackSections,
+      List<Lane> lanes,
+      List<ArduinoConfig> arduinoConfigs,
+      List<TrackmateConfig> trackmateConfigs,
+      List<PhidgetConfig> phidgetConfigs,
+      List<BartConfig> bartConfigs,
+      String entityId,
+      String id) {
+    this(
+        name,
+        numTrackSections,
+        1.0,
+        lanes,
+        arduinoConfigs,
+        trackmateConfigs,
+        phidgetConfigs,
+        bartConfigs,
+        entityId,
+        id);
+  }
+
   public static class Builder {
     private String name;
     private Integer numTrackSections = 100;
+    private Double trackScale = 1.0;
     private List<Lane> lanes = new ArrayList<>();
     private List<ArduinoConfig> arduinoConfigs = new ArrayList<>();
     private List<TrackmateConfig> trackmateConfigs = new ArrayList<>();
@@ -75,6 +103,11 @@ public class Track extends Model {
 
     public Builder numTrackSections(Integer numTrackSections) {
       this.numTrackSections = numTrackSections;
+      return this;
+    }
+
+    public Builder trackScale(Double trackScale) {
+      this.trackScale = trackScale;
       return this;
     }
 
@@ -117,6 +150,7 @@ public class Track extends Model {
       return new Track(
           name,
           numTrackSections,
+          trackScale,
           lanes,
           arduinoConfigs,
           trackmateConfigs,
@@ -134,6 +168,11 @@ public class Track extends Model {
   @JsonProperty("num_track_sections")
   public int getNumTrackSections() {
     return numTrackSections;
+  }
+
+  @JsonProperty("track_scale")
+  public double getTrackScale() {
+    return trackScale;
   }
 
   @JsonProperty("has_digital_fuel")
@@ -205,6 +244,14 @@ public class Track extends Model {
         }
       }
     }
+    if (this.trackmateConfigs != null) {
+      for (TrackmateConfig config : this.trackmateConfigs) {
+        if (config != null && config.hasPerLaneRelays) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -249,6 +296,15 @@ public class Track extends Model {
         }
       }
     }
+
+    if (this.trackmateConfigs != null) {
+      for (TrackmateConfig config : this.trackmateConfigs) {
+        if (config != null && !config.hasPerLaneRelays) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }
 
@@ -356,10 +412,12 @@ public class Track extends Model {
     return new Builder()
         .name(this.name)
         .numTrackSections(this.numTrackSections)
+        .trackScale(this.trackScale)
         .lanes(this.lanes)
         .arduinoConfigs(syncedConfigs)
         .trackmateConfigs(this.trackmateConfigs)
         .phidgetConfigs(this.phidgetConfigs)
+        .bartConfigs(this.bartConfigs)
         .entityId(this.getEntityId())
         .id(this.getId())
         .build();

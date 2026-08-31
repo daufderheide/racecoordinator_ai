@@ -13,6 +13,8 @@ export interface Theme extends Model {
   is_default: boolean;
   slots: { [key: string]: string }; // image slot key → asset entity ID
   audio_slots: { [key: string]: AudioConfig }; // audio slot key → AudioConfig
+
+  uiId?: string;
 }
 
 /** All known theme slot keys for Phase 1 (images). */

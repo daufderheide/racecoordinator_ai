@@ -40,7 +40,6 @@ export interface PhidgetEditorSections {
   pins: boolean;
   digitalIn: boolean;
   digitalOut: boolean;
-  analogIn: boolean;
 }
 
 @Component({
@@ -69,7 +68,6 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     pins: true,
     digitalIn: true,
     digitalOut: true,
-    analogIn: true,
   };
 
   selectedDeviceKeyStr: string = "";
@@ -211,6 +209,13 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         delete this.pinActivityTimers[key];
       }
       this.cdr.detectChanges();
+    } else if (
+      event.analogData &&
+      (event.analogData.interfaceIndex ?? 0) === this.interfaceIndex()
+    ) {
+      const pin = event.analogData.pin ?? 0;
+      const key = `analog-${pin}`;
+      this.triggerPinPulse(key);
     }
   }
 
@@ -235,7 +240,25 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
 
   onConfigChange() {
     this.updateSelectedDeviceKey();
-    this.change.emit();
+    const c = this.config();
+    if (c) {
+      this.dataService
+        .updateInterfaceConfig(null, this.interfaceIndex(), c)
+        .subscribe({
+          next: () => {
+            this.change.emit();
+          },
+          error: (err) => {
+            this.logger.error(
+              "Error calling updateInterfaceConfig for Phidget",
+              err,
+            );
+            this.change.emit();
+          },
+        });
+    } else {
+      this.change.emit();
+    }
   }
 
   updateSelectedDeviceKey() {
@@ -278,6 +301,7 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
   }
 
   onDeviceSelectChange(key: string) {
+    this.status = "DISCONNECTED";
     const selected = this.devices.find((d) => this.getDeviceKey(d) === key);
     const c = this.config();
     if (selected && c) {
@@ -309,6 +333,21 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  isDeviceSelected(): boolean {
+    const c = this.config();
+    return !!(
+      (this.selectedDeviceKeyStr && this.selectedDeviceKeyStr !== "") ||
+      (c && c.serialNumber && c.serialNumber > 0)
+    );
+  }
+
+  get isConfiguredDeviceDisconnected(): boolean {
+    const c = this.config();
+    if (!c || !c.serialNumber || c.serialNumber <= 0) return false;
+    const key = this.getDeviceKey(c);
+    return !this.devices.some((d) => this.getDeviceKey(d) === key);
+  }
+
   getCapabilities(): {
     digitalInputs: number;
     digitalOutputs: number;
@@ -325,14 +364,7 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     if (inCount === 0 && outCount === 0 && analogCount === 0) {
       const name = selected?.name || c?.name || "";
       const match = name.match(/(\d+)\/(\d+)\/(\d+)/);
-      if (match) {
-        inCount = parseInt(match[1], 10);
-        outCount = parseInt(match[2], 10);
-        analogCount = parseInt(match[3], 10);
-      } else if (
-        name.includes("0/0/4") ||
-        name.toLowerCase().includes("1014")
-      ) {
+      if (name.includes("0/0/4") || name.toLowerCase().includes("1014")) {
         inCount = 0;
         outCount = 4;
         analogCount = 0;
@@ -343,21 +375,25 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         inCount = 8;
         outCount = 8;
         analogCount = 8;
-      } else {
-        inCount = this.getHighestAssignedIndex(c?.digitalInIds) + 1;
-        outCount = this.getHighestAssignedIndex(c?.digitalOutIds) + 1;
-        analogCount = this.getHighestAssignedIndex(c?.analogIds) + 1;
-        if (inCount === 0 && outCount === 0 && analogCount === 0) {
-          inCount = 8;
-          outCount = 8;
-          analogCount = 8;
-        }
+      } else if (match) {
+        inCount = parseInt(match[1], 10);
+        outCount = parseInt(match[2], 10);
+        analogCount = parseInt(match[3], 10);
+      } else if (this.isDeviceSelected()) {
+        inCount = 8;
+        outCount = 8;
+        analogCount = 8;
       }
     }
+
+    const assignedIn = this.getHighestAssignedIndex(c?.digitalInIds) + 1;
+    const assignedOut = this.getHighestAssignedIndex(c?.digitalOutIds) + 1;
+    const assignedAnalog = this.getHighestAssignedIndex(c?.analogIds) + 1;
+
     return {
-      digitalInputs: inCount,
-      digitalOutputs: outCount,
-      analogInputs: analogCount,
+      digitalInputs: Math.max(inCount, assignedIn),
+      digitalOutputs: Math.max(outCount, assignedOut),
+      analogInputs: Math.max(analogCount, assignedAnalog),
     };
   }
 
@@ -424,11 +460,6 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
 
   get availableDigitalOutputPins(): number[] {
     const count = this.getCapabilities().digitalOutputs;
-    return Array.from({ length: count }, (_, i) => i);
-  }
-
-  get availableAnalogInputPins(): number[] {
-    const count = this.getCapabilities().analogInputs;
     return Array.from({ length: count }, (_, i) => i);
   }
 
@@ -599,6 +630,15 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
           value: `analogled_countdown_${i}`,
         });
       }
+      for (let i = 0; i < numLanes; i++) {
+        analogLedActions.push({
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_HEAT_LEADER_LANE",
+            { lane: i + 1 },
+          ),
+          value: `analogled_heat_leader_${i}`,
+        });
+      }
       groups.push({
         key: "AE_BEHAVIOR_GROUP_ANALOG_LED",
         label: this.translationService.translate(
@@ -714,6 +754,12 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         return `analogled_countdown_${i}`;
       }
     }
+    if (
+      val >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
+      val < (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000
+    ) {
+      return `analogled_heat_leader_${val - (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE}`;
+    }
 
     return "";
   }
@@ -778,6 +824,10 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     } else if (action.startsWith("analogled_countdown_")) {
       const index = parseInt(action.split("_")[2], 10);
       val = (PinBehavior as any)[`BEHAVIOR_ANALOG_LED_COUNTDOWN_${index}`];
+    } else if (action.startsWith("analogled_heat_leader_")) {
+      const laneIndex = parseInt(action.split("_")[3], 10);
+      val =
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + laneIndex;
     }
 
     const c = this.config();
@@ -798,6 +848,11 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         targetArray.push(PinBehavior.BEHAVIOR_UNUSED);
       }
       targetArray[channel] = val;
+    }
+
+    if (type === "out") {
+      const key = `${type}-${channel}`;
+      delete this.pinState[key];
     }
 
     this.openPinDropdown = null;
@@ -847,39 +902,30 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
 
   togglePinState(type: "in" | "out" | "analog", pin: number) {
     if (type !== "out") return;
-    const behavior = this.getPinBehaviorVal(type, pin);
-    const isOutput =
-      behavior === PinBehavior.BEHAVIOR_RELAY ||
-      (behavior >= PinBehavior.BEHAVIOR_RELAY_BASE &&
-        behavior < PinBehavior.BEHAVIOR_RELAY_BASE + 1000) ||
-      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG ||
-      behavior === PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG ||
-      (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1 &&
-        behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5);
 
-    if (isOutput) {
-      const key = `${type}-${pin}`;
-      const currentState = !!this.pinState[key];
-      const newState = !currentState;
+    const key = `${type}-${pin}`;
+    const currentState = !!this.pinState[key];
+    const newState = !currentState;
 
-      this.pinState[key] = newState;
-      this.dataService
-        .setInterfacePinState(pin, true, newState, this.interfaceIndex())
-        .subscribe({
-          next: (response) => {
-            if (!response.success) {
-              this.logger.warn("Failed to set pin state", response.message);
-              this.pinState[key] = currentState;
-              this.cdr.detectChanges();
-            }
-          },
-          error: (err) => {
-            this.logger.error("Error setting pin state", err);
+    this.pinState[key] = newState;
+    this.cdr.detectChanges();
+
+    this.dataService
+      .setInterfacePinState(pin, true, newState, this.interfaceIndex())
+      .subscribe({
+        next: (response) => {
+          if (!response.success) {
+            this.logger.warn("Failed to set pin state", response.message);
             this.pinState[key] = currentState;
             this.cdr.detectChanges();
-          },
-        });
-    }
+          }
+        },
+        error: (err) => {
+          this.logger.error("Error setting pin state", err);
+          this.pinState[key] = currentState;
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   ensureSectionsExpanded(): void {
@@ -888,7 +934,6 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     this.sectionsExpanded.pins = true;
     this.sectionsExpanded.digitalIn = true;
     this.sectionsExpanded.digitalOut = true;
-    this.sectionsExpanded.analogIn = true;
     this.cdr.detectChanges();
   }
 
@@ -906,11 +951,6 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
     const expandDigitalOut = () => {
       this.sectionsExpanded.phidget = true;
       this.sectionsExpanded.digitalOut = true;
-      this.cdr.detectChanges();
-    };
-    const expandAnalogIn = () => {
-      this.sectionsExpanded.phidget = true;
-      this.sectionsExpanded.analogIn = true;
       this.cdr.detectChanges();
     };
 
@@ -978,17 +1018,6 @@ export class PhidgetEditorComponent implements OnInit, OnDestroy {
         content: "TE_HELP_PHIDGET_DIGITAL_OUT_CONTENT",
         position: "bottom",
         onEnter: expandDigitalOut,
-      });
-    }
-
-    if (this.availableAnalogInputPins.length > 0) {
-      const firstPin = this.availableAnalogInputPins[0];
-      steps.push({
-        selector: `#phidget-analog-item-${firstPin}-${this.interfaceIndex()}`,
-        title: "TE_HELP_PHIDGET_ANALOG_IN_TITLE",
-        content: "TE_HELP_PHIDGET_ANALOG_IN_CONTENT",
-        position: "bottom",
-        onEnter: expandAnalogIn,
       });
     }
 

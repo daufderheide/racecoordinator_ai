@@ -1,6 +1,6 @@
 import { Component, input, output, ViewChild } from "@angular/core";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
-import { ToolbarComponent as ToolbarComponent_1 } from "@app/components/shared/toolbar/toolbar.component";
 import { Settings } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep } from "@app/services/help.service";
@@ -10,7 +10,7 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-manager-header",
   templateUrl: "./manager-header.component.html",
   styleUrls: ["./manager-header.component.css"],
-  imports: [ToolbarComponent_1, TranslatePipe],
+  imports: [ToolbarComponent, TranslatePipe, BrowserNavigationComponent],
 })
 export class ManagerHeaderComponent {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;

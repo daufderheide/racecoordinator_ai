@@ -5,11 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Event;
 import com.antigravity.models.Event.EventRaceItem;
+import com.antigravity.models.Lane;
 import com.antigravity.models.Track;
 import com.antigravity.service.DatabaseService;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +26,7 @@ public class EventExecutionManagerTest {
   @After
   public void resetEventExecutionManager() {
     EventExecutionManager.getInstance().cancelEvent();
+    ClientSubscriptionManager.setInstance(null);
   }
 
   @Test
@@ -333,6 +337,20 @@ public class EventExecutionManagerTest {
       raceRepo.insert(race1);
       raceRepo.insert(race2);
 
+      // Seed Theme
+      com.antigravity.repository.SqliteRepository<com.antigravity.models.Theme> themeRepo =
+          new com.antigravity.repository.SqliteRepository<>(
+              dbCtx, "themes", com.antigravity.models.Theme.class);
+      com.antigravity.models.Theme defaultTheme =
+          new com.antigravity.models.Theme(
+              "Default Theme",
+              true,
+              new java.util.HashMap<>(),
+              new java.util.HashMap<>(),
+              com.antigravity.models.Theme.DEFAULT_THEME_ID,
+              null);
+      themeRepo.insert(defaultTheme);
+
       // Create Event with 2 races and maxDrivers=2 for race 1
       List<EventRaceItem> raceItems = new ArrayList<>();
       raceItems.add(new EventRaceItem("r1", 2));
@@ -358,6 +376,55 @@ public class EventExecutionManagerTest {
       // Cancel
       manager.cancelEvent();
       assertFalse(manager.isEventActive());
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testStartEvent_DeletedTheme_ThrowsException() throws Exception {
+    String tmpDir = System.getProperty("java.io.tmpdir");
+    File tempFile = new File(tmpDir, "event_exec_del_theme_" + System.currentTimeMillis());
+    tempFile.mkdirs();
+    DatabaseContext dbCtx =
+        new DatabaseContext("testdb", null, tempFile.toPath().toString() + File.separator);
+    try {
+      com.antigravity.repository.SqliteRepository<com.antigravity.models.Track> trackRepo =
+          new com.antigravity.repository.SqliteRepository<>(
+              dbCtx, "tracks", com.antigravity.models.Track.class);
+      Track track =
+          new Track.Builder()
+              .name("Test Track")
+              .lanes(Arrays.asList(new Lane("red", "black", 100)))
+              .entityId("t1")
+              .build();
+      trackRepo.insert(track);
+
+      com.antigravity.repository.SqliteRepository<Driver> driverRepo =
+          new com.antigravity.repository.SqliteRepository<>(dbCtx, "drivers", Driver.class);
+      driverRepo.insert(new Driver("Driver One", "D1", "d1", "d1_id"));
+
+      com.antigravity.repository.SqliteRepository<com.antigravity.models.Race> raceRepo =
+          new com.antigravity.repository.SqliteRepository<>(
+              dbCtx, "races", com.antigravity.models.Race.class);
+      com.antigravity.models.Race race1 =
+          new com.antigravity.models.Race.Builder()
+              .withName("Heat 1")
+              .withEntityId("r1")
+              .withTrackEntityId("t1")
+              .withThemeId("deleted-theme-id")
+              .withHeatRotationType(com.antigravity.models.HeatRotationType.RoundRobin)
+              .build();
+      raceRepo.insert(race1);
+
+      List<EventRaceItem> raceItems = new ArrayList<>();
+      raceItems.add(new EventRaceItem("r1", 1));
+      Event event = new Event("Grand Prix", "Championship Event", 0.0, raceItems, "e1", null);
+
+      EventExecutionManager manager = EventExecutionManager.getInstance();
+      manager.startEvent(event, Arrays.asList("d_d1"), true, null, dbCtx);
     } finally {
       if (dbCtx.getConnection() != null) {
         dbCtx.getConnection().close();

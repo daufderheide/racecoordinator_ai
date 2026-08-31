@@ -27,6 +27,9 @@ export class AboutDialogHarnessE2e implements AboutDialogHarnessBase {
   private get creditsPanelElement() {
     return this.locator.locator(this.base.selectors.creditsPanel);
   }
+  private get creditNamesElements() {
+    return this.locator.locator(this.base.selectors.creditNames);
+  }
   private get tabButtons() {
     return this.locator.locator(this.base.selectors.tabButtons);
   }
@@ -73,5 +76,9 @@ export class AboutDialogHarnessE2e implements AboutDialogHarnessBase {
 
   async isCreditsTabVisible(): Promise<boolean> {
     return await this.creditsPanelElement.isVisible();
+  }
+
+  async getCreditNames(): Promise<string[]> {
+    return await this.creditNamesElements.allInnerTexts();
   }
 }

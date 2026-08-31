@@ -171,7 +171,7 @@ public class AbstractSerialProtocolTest {
     }
 
     @Override
-    protected boolean hasPitInConfigured(int laneIndex) {
+    public boolean hasPitInConfigured(int laneIndex) {
       return false;
     }
 

@@ -262,4 +262,58 @@ The repository uses automated GitHub Actions workflows for continuous delivery:
    - The workflow runs a pre-flight synchronization check against any active `release/*` branches. If unmerged fixes exist, they are merged into `develop` before building.
 3. **Official Production Releases (`main`)**:
    - Production releases are triggered by pushing official version tags (e.g. `v1.0.0`) or manually dispatching a release on `main`.
+4. **README Download Links & Changelog**:
+   - Automated pull requests to update the direct download links in `README.md` and `CHANGELOG.md` on `main` are created only for Official Releases and Beta Previews (`release/*`).
+   - Daily alpha builds (`develop`) never update the `main` README.
+
+---
+
+## Commit Message Conventions & Automated Changelogs
+
+All commits to the repository are validated by a Git `commit-msg` hook (powered by Husky) and must adhere to [Conventional Commits](https://www.conventionalcommits.org/).
+
+### Format
+```text
+<type>(<optional scope>): <short description>
+```
+Or for breaking changes:
+```text
+<type>(<optional scope>)!: <short description>
+```
+
+### Supported Commit Types
+
+| Prefix | Description | Release Notes Impact |
+| :--- | :--- | :--- |
+| `feat:` | New feature or capability | Included in Release Notes under **🚀 New Features** |
+| `fix:` | Bug fix or patch | Included in Release Notes under **🐛 Bug Fixes** |
+| `refactor:` | Code restructuring without behavioral change | Included under **⚡ Improvements & Refactoring** |
+| `perf:` | Performance optimization | Included under **⚡ Improvements & Refactoring** |
+| `docs:` | Documentation updates (Help Center, README, markdown) | Internal / excluded from user release notes |
+| `test:` | Adding, refactoring, or updating unit/visual tests | Internal / excluded from user release notes |
+| `chore:` | Tooling, dependency updates, maintenance | Internal / excluded from user release notes |
+| `ci:` | CI/CD workflows and release automation scripts | Internal / excluded from user release notes |
+| `style:` | Code formatting, whitespace, spotless adjustments | Internal / excluded from user release notes |
+| `build:` | Installer build scripts, Inno Setup, packaging | Internal / excluded from user release notes |
+
+### Scopes & The Special `(beta)` Scope
+
+Commit types support optional scopes in parentheses (e.g. `feat(phidget): ...`, `fix(timer): ...`).
+
+* **General scopes** (e.g. `feat(webcam): ...`, `fix(timer): ...`):
+  - Formatted into release notes with the scope highlighted (e.g. `- **webcam**: add webcam track interface`).
+* **Special `(beta)` scope** (e.g. `fix(beta): ...`, `feat(beta): ...`):
+  - **In Beta Previews**: Included in beta release notes under **🐛 Bug Fixes** or **🚀 New Features** so beta testers know their reported issue was resolved.
+  - **In Official Releases**: **Automatically omitted**. Because the underlying feature is brand new to official users, interim bug fixes made during beta testing are omitted to keep official release notes concise and noise-free.
+
+### Examples
+- `feat(phidget): add relay output control handler`
+- `fix: resolve race day startup timer crash`
+- `fix(beta): resolve webcam frame rate drop on macOS` *(Shows in beta release notes; omitted from official release notes)*
+- `perf(ui): optimize track map rendering during live heats`
+- `docs: add troubleshooting instructions for macOS permissions`
+- `chore: update angular dependencies to latest patch`
+
+### Why This is Enforced
+Conventional commit prefixes drive our **automated release notes generation**. When a new official or beta release is published, the release workflow automatically extracts `feat:`, `fix:`, and `perf:` commits since the previous release, filters out internal noise (`chore:`, `ci:`, `test:`, `screendiff:`), and compiles clean, professional change lists for GitHub Releases, `CHANGELOG.md`, and the Help Center (with an expandable link to the full raw commit diff on GitHub for developers).
 

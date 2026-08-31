@@ -39,6 +39,12 @@
 
    For complete license details please visit:
    http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+   Compatibility Note:
+   Race Coordinator AI is fully backward-compatible with original Race Coordinator 1.0
+   sketches (V1.0.0.x) for all core features (lap timing, sector timing, call buttons,
+   track power relays, analog fuel level sensing, etc.). You only need this V2.1.0.0
+   sketch if you want to use FastLED addressable RGB LED light strips.
 */
 
 // Comment in to enable rgb led support.  You'll also likely

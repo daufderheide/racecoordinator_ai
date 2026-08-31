@@ -37,15 +37,33 @@ export class Driver implements Model {
 
     this.lapAudio =
       lapAudio && lapAudio.type
-        ? { ...lapAudio, url: lapAudio.url || "default_beep" }
+        ? {
+            ...lapAudio,
+            url:
+              lapAudio.type === "none"
+                ? undefined
+                : lapAudio.url || "default_beep",
+          }
         : { type: "preset", url: "default_beep" };
     this.bestLapAudio =
       bestLapAudio && bestLapAudio.type
-        ? { ...bestLapAudio, url: bestLapAudio.url || "default_driveby" }
+        ? {
+            ...bestLapAudio,
+            url:
+              bestLapAudio.type === "none"
+                ? undefined
+                : bestLapAudio.url || "default_driveby",
+          }
         : { type: "preset", url: "default_driveby" };
     this.penaltyAudio =
       penaltyAudio && penaltyAudio.type
-        ? { ...penaltyAudio, url: penaltyAudio.url || "default_penalty" }
+        ? {
+            ...penaltyAudio,
+            url:
+              penaltyAudio.type === "none"
+                ? undefined
+                : penaltyAudio.url || "default_penalty",
+          }
         : { type: "preset", url: "default_penalty" };
   }
 

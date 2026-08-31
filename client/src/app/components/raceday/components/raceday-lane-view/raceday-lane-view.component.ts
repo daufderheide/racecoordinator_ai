@@ -205,4 +205,26 @@ export class RacedayLaneViewComponent implements AfterViewInit, OnDestroy {
   isPacingProperty(property?: string): boolean {
     return RacedayLayoutUtils.isPacingProperty(property || "");
   }
+
+  isLaneEmpty(hd: any): boolean {
+    if (this.parent()?.isEmptyDriver) {
+      return this.parent().isEmptyDriver(hd);
+    }
+    if (this.parent()?.isLaneOccupied) {
+      return !this.parent().isLaneOccupied(hd);
+    }
+    return false;
+  }
+
+  isPacingActive(entry: any, hd: any): boolean {
+    return this.isPacingProperty(entry?.property) && !this.isLaneEmpty(hd);
+  }
+
+  isSoloCenterPacing(col: any, entry: any, hd?: any): boolean {
+    if (hd && this.isLaneEmpty(hd)) return false;
+    if (!entry || entry.anchor !== "center-center") return false;
+    if (!this.isPacingProperty(entry.property)) return false;
+    const entries = this.parent()?.getLayoutEntries?.(col);
+    return Boolean(entries && entries.length === 1);
+  }
 }

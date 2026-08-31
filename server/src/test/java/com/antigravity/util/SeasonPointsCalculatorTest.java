@@ -1826,4 +1826,158 @@ public class SeasonPointsCalculatorTest {
     // d1 wins position points (25.0) + overall fastest lap (3.0) + overall fastest lap lane 1 (2.0)
     assertTrue(results.get(0).getTotalPoints() > 25.0);
   }
+
+  @Test
+  public void testHeatPointsWithMoreConfiguredPointsThanHeatLanes() {
+    Race race = mock(Race.class);
+    com.antigravity.models.Race raceModel = mock(com.antigravity.models.Race.class);
+    // 4 heat points configured, but heat will only have 2 lanes/drivers
+    SeasonScoring scoring =
+        new SeasonScoring(Arrays.asList(100.0, 50.0), Arrays.asList(10.0, 8.0, 6.0, 4.0));
+    when(raceModel.getSeasonScoring()).thenReturn(scoring);
+    when(race.getRaceModel()).thenReturn(raceModel);
+    when(race.getState()).thenReturn(new RaceOver());
+
+    Driver d1 = new Driver("D1", "D1", "d1", null);
+    Driver d2 = new Driver("D2", "D2", "d2", null);
+
+    RaceParticipant rp1 = new RaceParticipant(d1);
+    rp1.setRank(1);
+    RaceParticipant rp2 = new RaceParticipant(d2);
+    rp2.setRank(2);
+
+    when(race.getDrivers()).thenReturn(Arrays.asList(rp1, rp2));
+
+    DriverHeatData dhd1 = new DriverHeatData(rp1);
+    dhd1.setLane(0);
+    dhd1.addLap(4.0, false, true);
+
+    DriverHeatData dhd2 = new DriverHeatData(rp2);
+    dhd2.setLane(1);
+    dhd2.addLap(5.0, false, true);
+
+    Heat heat1 = new Heat(1, Arrays.asList(dhd1, dhd2), false);
+    when(race.getHeats()).thenReturn(Collections.singletonList(heat1));
+
+    List<SeasonDriverResult> results = SeasonPointsCalculator.calculateDriverResultsForRace(race);
+    assertNotNull(results);
+    assertEquals(2, results.size());
+
+    SeasonDriverResult r1 =
+        results.stream().filter(r -> r.getDriverId().equals("d1")).findFirst().get();
+    SeasonDriverResult r2 =
+        results.stream().filter(r -> r.getDriverId().equals("d2")).findFirst().get();
+
+    assertEquals(10.0, r1.getHeatPoints(), 0.001);
+    assertEquals(8.0, r2.getHeatPoints(), 0.001);
+    assertEquals(110.0, r1.getTotalPoints(), 0.001); // 100 pos + 10 heat
+    assertEquals(58.0, r2.getTotalPoints(), 0.001); // 50 pos + 8 heat
+  }
+
+  @Test
+  public void testHeatPointsWithFewerConfiguredPointsThanHeatLanes() {
+    Race race = mock(Race.class);
+    com.antigravity.models.Race raceModel = mock(com.antigravity.models.Race.class);
+    // 4 heat points configured, but heat will have 8 lanes/drivers
+    SeasonScoring scoring =
+        new SeasonScoring(
+            Arrays.asList(100.0, 80.0, 60.0, 50.0, 40.0, 30.0, 20.0, 10.0),
+            Arrays.asList(10.0, 8.0, 6.0, 4.0));
+    when(raceModel.getSeasonScoring()).thenReturn(scoring);
+    when(race.getRaceModel()).thenReturn(raceModel);
+    when(race.getState()).thenReturn(new RaceOver());
+
+    List<RaceParticipant> participants = new java.util.ArrayList<>();
+    List<DriverHeatData> heatDrivers = new java.util.ArrayList<>();
+
+    for (int i = 1; i <= 8; i++) {
+      Driver d = new Driver("D" + i, "D" + i, "d" + i, null);
+      RaceParticipant rp = new RaceParticipant(d);
+      rp.setRank(i);
+      participants.add(rp);
+
+      DriverHeatData dhd = new DriverHeatData(rp);
+      dhd.setLane(i - 1);
+      // Driver 1 fastest (4.0s), Driver 8 slowest (4.0 + 8*0.5 = 8.0s)
+      dhd.addLap(4.0 + (i * 0.5), false, true);
+      heatDrivers.add(dhd);
+    }
+
+    when(race.getDrivers()).thenReturn(participants);
+
+    Heat heat1 = new Heat(1, heatDrivers, false);
+    when(race.getHeats()).thenReturn(Collections.singletonList(heat1));
+
+    List<SeasonDriverResult> results = SeasonPointsCalculator.calculateDriverResultsForRace(race);
+    assertNotNull(results);
+    assertEquals(8, results.size());
+
+    // 1st through 4th receive 10.0, 8.0, 6.0, 4.0 heat points
+    assertEquals(
+        10.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d1"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+    assertEquals(
+        8.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d2"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+    assertEquals(
+        6.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d3"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+    assertEquals(
+        4.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d4"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+
+    // 5th through 8th receive 0.0 heat points
+    assertEquals(
+        0.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d5"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+    assertEquals(
+        0.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d6"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+    assertEquals(
+        0.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d7"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+    assertEquals(
+        0.0,
+        results.stream()
+            .filter(r -> r.getDriverId().equals("d8"))
+            .findFirst()
+            .get()
+            .getHeatPoints(),
+        0.001);
+  }
 }

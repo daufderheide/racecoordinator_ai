@@ -61,6 +61,41 @@ public class HeatTest {
 
     Heat heat = new Heat(1, drivers, new HeatScoring(), false);
     assertEquals(1, heat.getActiveDriverCount());
+    org.junit.Assert.assertFalse(heat.isEmpty());
+  }
+
+  @Test
+  public void testIsEmpty_EmptyHeat() {
+    Heat heat = new Heat(1, new ArrayList<>(), new HeatScoring(), false);
+    assertEquals(0, heat.getActiveDriverCount());
+    org.junit.Assert.assertTrue(heat.isEmpty());
+
+    Heat nullDriversHeat = new Heat();
+    nullDriversHeat.setDrivers(null);
+    assertEquals(0, nullDriversHeat.getActiveDriverCount());
+    org.junit.Assert.assertTrue(nullDriversHeat.isEmpty());
+  }
+
+  @Test
+  public void testGetActiveDriverCount_WithActualDriverOverride() {
+    List<DriverHeatData> drivers = new ArrayList<>();
+    DriverHeatData dhd1 = mock(DriverHeatData.class);
+    Driver actualDriver = mock(Driver.class);
+    when(actualDriver.getEntityId()).thenReturn("actual_d1");
+    when(actualDriver.isEmpty()).thenReturn(false);
+    when(dhd1.getActualDriver()).thenReturn(actualDriver);
+    drivers.add(dhd1);
+
+    DriverHeatData dhd2 = mock(DriverHeatData.class);
+    Driver emptyActualDriver = mock(Driver.class);
+    when(emptyActualDriver.getEntityId()).thenReturn(Driver.EMPTY_DRIVER_ID);
+    when(emptyActualDriver.isEmpty()).thenReturn(true);
+    when(dhd2.getActualDriver()).thenReturn(emptyActualDriver);
+    drivers.add(dhd2);
+
+    Heat heat = new Heat(1, drivers, new HeatScoring(), false);
+    assertEquals(1, heat.getActiveDriverCount());
+    org.junit.Assert.assertFalse(heat.isEmpty());
   }
 
   private DriverHeatData createMockDriver(String entityId) {
@@ -71,7 +106,8 @@ public class HeatTest {
     when(mockData.getDriver()).thenReturn(mockParticipant);
     when(mockParticipant.getDriver()).thenReturn(mockDriver);
     when(mockDriver.getEntityId()).thenReturn(entityId);
-    when(mockDriver.isEmpty()).thenReturn(Driver.EMPTY_DRIVER_ID.equals(entityId));
+    when(mockDriver.isEmpty())
+        .thenReturn(entityId == null || Driver.EMPTY_DRIVER_ID.equals(entityId));
     when(mockData.getObjectId()).thenReturn("obj_" + entityId);
 
     return mockData;

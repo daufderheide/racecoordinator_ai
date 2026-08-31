@@ -18,4 +18,5 @@ message SeasonStanding {
   int32 current_race_overall_rank = 11;
   map<string, double> current_race_overall_bonus_breakdown = 12;
   map<string, double> current_race_heat_bonus_breakdown = 13;
+  double dropped_points = 14;
 }

@@ -474,6 +474,97 @@ describe("SeasonEditorComponent", () => {
     expect(component.availableFinishedRaces.length).toBe(0);
   });
 
+  it("should keep remaining finished runs of the same race template available when one run is added to the season", () => {
+    // 3 runs of the same race template (same original_entity_id, distinct timestamps)
+    const run1 = {
+      original_entity_id: "race_template_1",
+      timestamp: 1000,
+      model: { name: "Club Sprint" },
+      driver_results: [],
+    };
+    const run2 = {
+      original_entity_id: "race_template_1",
+      timestamp: 2000,
+      model: { name: "Club Sprint" },
+      driver_results: [],
+    };
+    const run3 = {
+      original_entity_id: "race_template_1",
+      timestamp: 3000,
+      model: { name: "Club Sprint" },
+      driver_results: [],
+    };
+
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(
+      of([run1, run2, run3]),
+    );
+
+    // Initial state: season has no races
+    component.editingSeason.races = [];
+    component.openAddRaceModal();
+
+    // All 3 runs should initially be available
+    expect(component.availableFinishedRaces.length).toBe(3);
+
+    // Add run 1 to the season
+    component.addRaceToSeason(component.availableFinishedRaces[2]); // timestamp 1000
+    expect(component.editingSeason.races.length).toBe(1);
+    expect(component.editingSeason.races[0].timestamp).toBe(1000);
+
+    // Open modal again: run 2 and run 3 must still be available (not filtered out by race_id)
+    component.openAddRaceModal();
+    expect(component.availableFinishedRaces.length).toBe(2);
+    expect(
+      component.availableFinishedRaces.some((r) => r.timestamp === 2000),
+    ).toBeTrue();
+    expect(
+      component.availableFinishedRaces.some((r) => r.timestamp === 3000),
+    ).toBeTrue();
+
+    // Add run 2 to the season
+    component.addRaceToSeason(
+      component.availableFinishedRaces.find((r) => r.timestamp === 2000),
+    );
+    expect(component.editingSeason.races.length).toBe(2);
+
+    // Open modal again: only run 3 should remain
+    component.openAddRaceModal();
+    expect(component.availableFinishedRaces.length).toBe(1);
+    expect(component.availableFinishedRaces[0].timestamp).toBe(3000);
+  });
+
+  it("should toggle race expanders independently when multiple runs share the same race_id", () => {
+    const race1 = {
+      race_id: "race_template_1",
+      race_name: "Club Sprint",
+      timestamp: 1000,
+      driver_results: [],
+    };
+    const race2 = {
+      race_id: "race_template_1",
+      race_name: "Club Sprint",
+      timestamp: 2000,
+      driver_results: [],
+    };
+    component.editingSeason.races = [race1, race2];
+
+    expect(component.isRaceExpanded(race1, 0)).toBeFalse();
+    expect(component.isRaceExpanded(race2, 1)).toBeFalse();
+
+    component.toggleRaceExpanded(race1, 0);
+    expect(component.isRaceExpanded(race1, 0)).toBeTrue();
+    expect(component.isRaceExpanded(race2, 1)).toBeFalse();
+
+    component.toggleRaceExpanded(race2, 1);
+    expect(component.isRaceExpanded(race1, 0)).toBeTrue();
+    expect(component.isRaceExpanded(race2, 1)).toBeTrue();
+
+    component.toggleRaceExpanded(race1, 0);
+    expect(component.isRaceExpanded(race1, 0)).toBeFalse();
+    expect(component.isRaceExpanded(race2, 1)).toBeTrue();
+  });
+
   it("should render modal-race-list with title attribute on race item names when add finished race modal is open", () => {
     const dataService = TestBed.inject(DataService);
     spyOn(dataService, "getAllFinishedRaceHistory").and.returnValue(

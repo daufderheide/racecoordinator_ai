@@ -1,10 +1,10 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
-import { DecimalPipe } from "@angular/common";
 import { Component, NO_ERRORS_SCHEMA } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
+import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
@@ -37,6 +37,7 @@ describe("SeasonManagerComponent", () => {
       getSeasons: () => of([]),
       getAllFinishedRaceHistory: () => of([]),
       deleteSeason: () => of({}),
+      getSeasonStandings: () => of([]),
     };
 
     const mockConnectionMonitorService = {
@@ -52,9 +53,9 @@ describe("SeasonManagerComponent", () => {
     await TestBed.configureTestingModule({
       imports: [
         SeasonManagerComponent,
+        SeasonSummaryComponent,
         FormsModule,
         TranslatePipe,
-        DecimalPipe,
       ],
       providers: [
         { provide: DataService, useValue: mockDataService },
@@ -80,8 +81,8 @@ describe("SeasonManagerComponent", () => {
         set: {
           imports: [
             MockManagerHeaderComponent,
+            SeasonSummaryComponent,
             TranslatePipe,
-            DecimalPipe,
             FormsModule,
           ],
           schemas: [NO_ERRORS_SCHEMA],

@@ -3,7 +3,7 @@
   (click)="toggleLocalizationDropdown($event)"
   data-testid="menu-item-localization"
 >
-  {{ "RDS_MENU_LOCALIZATION" | translate }}
+  <span>{{ "RDS_MENU_LOCALIZATION" | translate }}</span>
   <span class="submenu-arrow">▶</span>
   @if (isLocalizationDropdownOpen) {
     <div class="menu-dropdown submenu" data-testid="submenu-localization">
@@ -12,7 +12,8 @@
         (click)="selectLanguage('')"
         [class.selected]="!currentLanguage"
       >
-        {{ getLanguageDisplayName("") }}
+        <span class="check-slot">{{ !currentLanguage ? "✓" : "" }}</span>
+        <span>{{ getLanguageDisplayName("") }}</span>
       </div>
       @for (lang of supportedLanguages; track lang) {
         <div
@@ -20,7 +21,10 @@
           (click)="selectLanguage(lang.code)"
           [class.selected]="currentLanguage === lang.code"
         >
-          {{ getLanguageDisplayName(lang.code) }}
+          <span class="check-slot">{{
+            currentLanguage === lang.code ? "✓" : ""
+          }}</span>
+          <span>{{ getLanguageDisplayName(lang.code) }}</span>
         </div>
       }
     </div>

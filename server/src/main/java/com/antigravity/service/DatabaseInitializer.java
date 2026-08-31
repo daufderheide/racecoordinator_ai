@@ -1,8 +1,11 @@
 package com.antigravity.service;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.AudioConfig;
+import com.antigravity.models.CustomUI;
 import com.antigravity.models.Driver;
+import com.antigravity.models.FuelOptions;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.HeatScoring.FinishMethod;
@@ -12,6 +15,8 @@ import com.antigravity.models.Lane;
 import com.antigravity.models.OverallScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.TeamOptions;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.protocols.arduino.ArduinoConfig;
@@ -19,6 +24,7 @@ import com.antigravity.repository.SqliteRepository;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,6 +57,8 @@ public class DatabaseInitializer {
     resetDrivers(context);
     resetTeams(context);
     Track track = resetTracks(context);
+    resetCustomUIs(context);
+    resetThemes(context);
     resetRaces(context, track);
 
     logger.info("Database reset complete.");
@@ -286,6 +294,7 @@ public class DatabaseInitializer {
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
             .withStartBehindSensor(true)
+            .withThemeId(Theme.DEFAULT_THEME_ID)
             .withEntityId(context.getNextSequence("races"))
             .build();
 
@@ -308,77 +317,213 @@ public class DatabaseInitializer {
             .withAutoAdvanceWarmupTime(0.0)
             .withAutoStartWarmupTime(0.0)
             .withStartBehindSensor(true)
+            .withThemeId(Theme.DEFAULT_THEME_ID)
             .withEntityId(context.getNextSequence("races"))
             .build();
 
     raceRepo.save(race);
 
-    heatScoring =
-        new HeatScoring(
-            FinishMethod.Timed, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    Race fuelRace = createDefaultFuelRace(track.getEntityId(), context.getNextSequence("races"));
+    raceRepo.save(fuelRace);
 
     Race practiceRace =
-        new Race.Builder()
-            .withName("Practice")
-            .withTrackEntityId(track.getEntityId())
-            .withHeatRotationType(HeatRotationType.Custom)
-            .withHeatScoring(heatScoring)
-            .withOverallScoring(overallScoring)
-            .withMinLapTime(3.0)
-            .withAutoAdvanceTime(0.0)
-            .withAutoStartTime(0.0)
-            .withAutoAdvanceWarmupTime(0.0)
-            .withAutoStartWarmupTime(0.0)
-            .withStartBehindSensor(true)
-            .withCustomRotationAssetId("default_practice_single_heat")
-            .withPractice(true)
-            .withEntityId(context.getNextSequence("races"))
-            .build();
-
+        createDefaultPracticeRace(track.getEntityId(), context.getNextSequence("races"));
     raceRepo.save(practiceRace);
     logger.info("Races reset.");
+  }
+
+  public Race createDefaultFuelRace(String trackEntityId, String raceEntityId) {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Lap, 25, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring overallScoring = new OverallScoring();
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            true,
+            false,
+            FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            FuelOptions.FuelUsageType.QUADRATIC,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0,
+            1.0,
+            1.0);
+    TeamOptions teamOptions = new TeamOptions(25, 0.0, 50, 0.0, false);
+    return new Race.Builder()
+        .withName("Fuel Race")
+        .withTrackEntityId(trackEntityId)
+        .withHeatRotationType(HeatRotationType.FriendlyRoundRobin)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withFuelOptions(fuelOptions)
+        .withTeamOptions(teamOptions)
+        .withMinLapTime(3.0)
+        .withAutoAdvanceTime(60.0)
+        .withAutoStartTime(60.0)
+        .withAutoAdvanceWarmupTime(0.0)
+        .withAutoStartWarmupTime(0.0)
+        .withStartBehindSensor(true)
+        .withThemeId(Theme.FUEL_THEME_ID)
+        .withEntityId(raceEntityId)
+        .build();
+  }
+
+  public Race createDefaultPracticeRace(String trackEntityId, String raceEntityId) {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            FinishMethod.Timed, 0, HeatRanking.LAP_COUNT, HeatRankingTiebreaker.AVERAGE_LAP_TIME);
+    OverallScoring overallScoring = new OverallScoring();
+    return new Race.Builder()
+        .withName("Practice")
+        .withTrackEntityId(trackEntityId)
+        .withHeatRotationType(HeatRotationType.Custom)
+        .withHeatScoring(heatScoring)
+        .withOverallScoring(overallScoring)
+        .withMinLapTime(3.0)
+        .withAutoAdvanceTime(0.0)
+        .withAutoStartTime(0.0)
+        .withAutoAdvanceWarmupTime(0.0)
+        .withAutoStartWarmupTime(0.0)
+        .withStartBehindSensor(true)
+        .withCustomRotationAssetId("default_practice_single_heat")
+        .withPractice(true)
+        .withThemeId(Theme.PRACTICE_THEME_ID)
+        .withEntityId(raceEntityId)
+        .build();
+  }
+
+  public void resetCustomUIs(DatabaseContext context) {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+    uiRepo.save(CustomUI.createDefault());
+    uiRepo.save(CustomUI.createPractice());
+    uiRepo.save(CustomUI.createFuel());
+    logger.info("Custom UIs reset.");
+  }
+
+  public void resetThemes(DatabaseContext context) {
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    themeRepo.drop();
+
+    Map<String, String> slots = createDefaultThemeSlots();
+    Map<String, AudioConfig> audioSlots = createDefaultThemeAudioSlots();
+
+    Theme defaultTheme =
+        new Theme(
+            "Default Theme",
+            true,
+            slots,
+            audioSlots,
+            CustomUI.DEFAULT_UI_ID,
+            Theme.DEFAULT_THEME_ID,
+            null);
+    Theme practiceTheme =
+        new Theme(
+            "Practice Theme",
+            true,
+            slots,
+            audioSlots,
+            CustomUI.PRACTICE_UI_ID,
+            Theme.PRACTICE_THEME_ID,
+            null);
+    Theme fuelTheme =
+        new Theme(
+            "Fuel Theme", true, slots, audioSlots, CustomUI.FUEL_UI_ID, Theme.FUEL_THEME_ID, null);
+
+    themeRepo.save(defaultTheme);
+    themeRepo.save(practiceTheme);
+    themeRepo.save(fuelTheme);
+    logger.info("Themes reset.");
+  }
+
+  private Map<String, String> createDefaultThemeSlots() {
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.racing", "default_flag_green");
+    slots.put("flag.heat_paused", "default_flag_yellow");
+    slots.put("flag.heat_over", "default_flag_red");
+    slots.put("flag.race_over", "default_flag_checkered");
+    slots.put("flag.not_started", "default_flag_red");
+    slots.put("flag.starting", "default_flag_red");
+    slots.put("flag.restarting", "default_flag_yellow");
+    slots.put("flag.one_lap_to_go", "default_flag_white");
+    slots.put("flag.heat_finishing", "default_flag_checkered");
+    slots.put("flag.warmup", "default_flag_green_yellow");
+    slots.put("flag.driver_finished", "default_flag_red");
+    slots.put("flag.penalty", "default_flag_black");
+    slots.put("lamp.red.on", "default_start_red_on");
+    slots.put("lamp.red.dim", "default_start_red_dim");
+    slots.put("lamp.green", "default_start_green");
+    slots.put("gauge.fuel", "default_fuel_gauge");
+    return slots;
+  }
+
+  private Map<String, AudioConfig> createDefaultThemeAudioSlots() {
+    Map<String, AudioConfig> as = new HashMap<>();
+    as.put("audio.countdown", new AudioConfig("audio_set", "default_countdown", null));
+    as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+    as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
+    as.put("audio.seconds_left.halfway", new AudioConfig("preset", "default_heat_half", null));
+    as.put("audio.heat_over", new AudioConfig("preset", "default_heat_over", null));
+    as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
+    as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
+    as.put(
+        "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
+    as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+    return as;
   }
 
   public void backfillRaces(DatabaseContext context) {
     SqliteRepository<Race> raceRepo = new SqliteRepository<>(context, "races", Race.class);
     List<Race> races = raceRepo.findAll();
     boolean hasPractice = false;
+    boolean hasFuelRace = false;
     for (Race race : races) {
       if ("Practice".equals(race.getName())) {
         hasPractice = true;
-        break;
+      }
+      if ("Fuel Race".equals(race.getName())) {
+        hasFuelRace = true;
+      }
+      if (race.getThemeId() == null || race.getThemeId().trim().isEmpty()) {
+        String themeId = Theme.DEFAULT_THEME_ID;
+        if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
+          themeId = Theme.PRACTICE_THEME_ID;
+        } else if ((race.getFuelOptions() != null && race.getFuelOptions().isEnabled())
+            || "Fuel Race".equalsIgnoreCase(race.getName())) {
+          themeId = Theme.FUEL_THEME_ID;
+        }
+        Race updated = new Race.Builder().from(race).withThemeId(themeId).build();
+        raceRepo.save(updated);
+        logger.info(
+            "Backfilled themeId '{}' for race '{}' ({})",
+            themeId,
+            race.getName(),
+            race.getEntityId());
       }
     }
 
-    if (!hasPractice) {
+    if (!hasPractice || !hasFuelRace) {
       SqliteRepository<Track> trackRepo = new SqliteRepository<>(context, "tracks", Track.class);
       List<Track> tracks = trackRepo.findAll();
       Track track = tracks.isEmpty() ? null : tracks.get(0);
       if (track != null) {
-        HeatScoring heatScoring =
-            new HeatScoring(
-                FinishMethod.Timed,
-                0,
-                HeatRanking.LAP_COUNT,
-                HeatRankingTiebreaker.AVERAGE_LAP_TIME);
-        Race practiceRace =
-            new Race.Builder()
-                .withName("Practice")
-                .withTrackEntityId(track.getEntityId())
-                .withHeatRotationType(HeatRotationType.Custom)
-                .withHeatScoring(heatScoring)
-                .withOverallScoring(new OverallScoring())
-                .withMinLapTime(3.0)
-                .withAutoAdvanceTime(0.0)
-                .withAutoStartTime(0.0)
-                .withAutoAdvanceWarmupTime(0.0)
-                .withAutoStartWarmupTime(0.0)
-                .withStartBehindSensor(true)
-                .withCustomRotationAssetId("default_practice_single_heat")
-                .withPractice(true)
-                .withEntityId(context.getNextSequence("races"))
-                .build();
-        raceRepo.save(practiceRace);
+        if (!hasFuelRace) {
+          Race fuelRace =
+              createDefaultFuelRace(track.getEntityId(), context.getNextSequence("races"));
+          raceRepo.save(fuelRace);
+          logger.info("Backfilled Fuel Race to database.");
+        }
+        if (!hasPractice) {
+          Race practiceRace =
+              createDefaultPracticeRace(track.getEntityId(), context.getNextSequence("races"));
+          raceRepo.save(practiceRace);
+          logger.info("Backfilled Practice Race to database.");
+        }
       }
     }
   }

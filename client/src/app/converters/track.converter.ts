@@ -49,6 +49,7 @@ export class TrackConverter {
           entity_id: objectId,
           name: proto.name || "Unknown Track",
           num_track_sections: proto.numTrackSections || 100,
+          track_scale: proto.trackScale ?? 1.0,
           lanes: lanes,
           has_digital_fuel: proto.hasDigitalFuel ?? false,
           arduino_configs: (proto.arduinoConfigs || []).map((ac) =>

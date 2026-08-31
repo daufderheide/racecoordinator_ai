@@ -764,6 +764,37 @@ describe("DefaultRaceResultsComponent", () => {
       expect(component["raceStartTime"]).toBe(firstTime);
     });
 
+    it("should prioritize race.start_time_millis over fallback arrival time", () => {
+      const explicitTime = 1756578000000;
+      component["race"] = {
+        name: "Test Race",
+        start_time_millis: explicitTime,
+      } as any;
+
+      expect(component.raceStartTime.getTime()).toBe(explicitTime);
+    });
+
+    it("should render race date/time element in header next to race name", () => {
+      const explicitTime = new Date("2026-08-30T14:30:00Z").getTime();
+      component["race"] = {
+        name: "Grand Prix",
+        start_time_millis: explicitTime,
+      } as any;
+      fixture.detectChanges();
+
+      const raceNameEl = fixture.nativeElement.querySelector(
+        ".race-name-container .value-text",
+      );
+      const raceDateEl = fixture.nativeElement.querySelector(
+        ".race-name-container .race-date-text",
+      );
+
+      expect(raceNameEl).toBeTruthy();
+      expect(raceNameEl.textContent).toContain("Grand Prix");
+      expect(raceDateEl).toBeTruthy();
+      expect(raceDateEl.textContent.trim().length).toBeGreaterThan(0);
+    });
+
     it("should render driver rows as div (not anchor links) when printing", () => {
       const d1 = createDriver("d1", "Alice", "Ally");
       const p1 = createParticipant("d1", d1, 1, 5, 25.0, 4.5, 5.0, 5.0, 100, 1);
@@ -1047,6 +1078,19 @@ describe("DefaultRaceResultsComponent", () => {
 
         expect(component.showAckModal).toBeFalse();
         expect(routerSpy.navigate).not.toHaveBeenCalled();
+      });
+
+      it("should calculate uniform scale on resize", () => {
+        spyOnProperty(window, "innerWidth", "get").and.returnValue(960);
+        spyOnProperty(window, "innerHeight", "get").and.returnValue(1080);
+
+        component.onResize();
+        // Target width=1920, height=1080
+        // scaleX = 960 / 1920 = 0.5
+        // scaleY = 1080 / 1080 = 1.0
+        // uniform scale = min(0.5, 1.0) = 0.5
+        expect(component.scale).toBeCloseTo(0.5, 3);
+        expect(component.currentScale).toBeCloseTo(0.5, 3);
       });
     });
   });

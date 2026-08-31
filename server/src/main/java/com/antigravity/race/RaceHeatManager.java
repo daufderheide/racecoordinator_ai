@@ -8,6 +8,8 @@ import com.antigravity.proto.ModifyHeatsRequest;
 import com.antigravity.proto.ModifyHeatsResponse;
 import com.antigravity.proto.RegenerateHeatsRequest;
 import com.antigravity.proto.RegenerateHeatsResponse;
+import com.antigravity.race.states.Common;
+import com.antigravity.race.states.NotStarted;
 import com.antigravity.race.states.RaceOver;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -338,8 +340,14 @@ public class RaceHeatManager {
       }
     }
 
-    this.race.updateAndBroadcastOverallStandings();
-    this.race.broadcast(this.race.createSnapshot());
+    if (this.race.getState() instanceof NotStarted
+        && this.race.getCurrentHeat() != null
+        && this.race.getCurrentHeat().isEmpty()) {
+      Common.advanceToNextHeat(this.race);
+    } else {
+      this.race.updateAndBroadcastOverallStandings();
+      this.race.broadcast(this.race.createSnapshot());
+    }
   }
 
   public synchronized RegenerateHeatsResponse regenerateHeats(RegenerateHeatsRequest request) {

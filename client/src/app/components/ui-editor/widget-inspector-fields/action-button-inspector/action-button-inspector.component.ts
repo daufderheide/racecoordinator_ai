@@ -60,6 +60,10 @@ export class ActionButtonInspectorComponent {
         return "RD_WIN_SEASON_RESULTS";
       case "action-open-prediction-results":
         return "RD_WIN_PREDICTION_RESULTS";
+      case "action-master-power-on":
+        return "RD_MENU_MAIN_POWER_ON";
+      case "action-master-power-off":
+        return "RD_MENU_MAIN_POWER_OFF";
       default:
         return "";
     }

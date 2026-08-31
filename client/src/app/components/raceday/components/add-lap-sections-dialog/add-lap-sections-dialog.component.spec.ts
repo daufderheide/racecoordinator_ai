@@ -217,14 +217,8 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(driverInfoText2).toContain("Charlie");
   });
 
-  it("should display no heats message and disable apply button if no heats are started in menu mode", () => {
-    const mockHeats = [
-      {
-        heatNumber: 1,
-        started: false,
-        heatDrivers: [],
-      },
-    ] as any[];
+  it("should display no heats message and disable apply button if heats list is empty in menu mode", () => {
+    const mockHeats = [] as any[];
 
     fixture.componentRef.setInput("heats", mockHeats);
     fixture.componentRef.setInput("isMenuMode", true);
@@ -241,13 +235,48 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(confirmBtn.disabled).toBeTrue();
   });
 
+  it("should allow selecting and modifying unstarted heats in menu mode", () => {
+    const mockHeats = [
+      {
+        heatNumber: 1,
+        started: false,
+        heatDrivers: [
+          {
+            laneIndex: 0,
+            userLaps: 0,
+            driver: { name: "Alice" },
+          },
+        ],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", mockHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("currentHeatNumber", 1);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const noHeatsPanel = fixture.nativeElement.querySelector(".no-heats-panel");
+    expect(noHeatsPanel).toBeNull();
+
+    const heatSelect = fixture.nativeElement.querySelector(
+      "#heatSelect",
+    ) as HTMLSelectElement;
+    expect(heatSelect).not.toBeNull();
+    expect(heatSelect.options.length).toBe(1);
+
+    const driverInfoText =
+      fixture.nativeElement.querySelector(".driver-info-panel").textContent;
+    expect(driverInfoText).toContain("Alice");
+  });
+
   it("should preserve edits across selectors and emit batch confirm payload on confirm in menu mode", () => {
     spyOn(component.confirm, "emit");
 
     const mockHeats = [
       {
         heatNumber: 1,
-        started: true,
+        started: false,
         heatDrivers: [
           {
             laneIndex: 0,
@@ -314,7 +343,7 @@ describe("AddLapSectionsDialogComponent", () => {
     });
   });
 
-  it("should default to the current heat if it has started, or the last started heat in the list if the current heat is not started", () => {
+  it("should default to the current heat even if it has not started", () => {
     const mockHeats = [
       {
         heatNumber: 1,
@@ -325,7 +354,7 @@ describe("AddLapSectionsDialogComponent", () => {
       },
       {
         heatNumber: 2,
-        started: true,
+        started: false,
         heatDrivers: [{ laneIndex: 0, userLaps: 2.0, driver: { name: "Bob" } }],
       },
       {
@@ -337,27 +366,25 @@ describe("AddLapSectionsDialogComponent", () => {
       },
     ] as any[];
 
-    // Case 1: Current heat has started (heat 2)
+    // Case 1: Current heat is heat 2 (unstarted)
     fixture.componentRef.setInput("heats", mockHeats);
     fixture.componentRef.setInput("isMenuMode", true);
     fixture.componentRef.setInput("currentHeatNumber", 2);
     fixture.componentRef.setInput("visible", true);
     fixture.detectChanges();
 
-    // Since heat 2 is started, it should default to heat 2 (index 1 of active/started heats)
     expect(component.selectedHeatIndex()).toBe(1);
 
     // Close and reset visible to re-trigger dialog opening effect
     fixture.componentRef.setInput("visible", false);
     fixture.detectChanges();
 
-    // Case 2: Current heat has not started (heat 3 is unstarted)
+    // Case 2: Current heat is heat 3 (unstarted)
     fixture.componentRef.setInput("currentHeatNumber", 3);
     fixture.componentRef.setInput("visible", true);
     fixture.detectChanges();
 
-    // Since heat 3 is not started, it should default to the last started heat in the list (heat 2, index 1)
-    expect(component.selectedHeatIndex()).toBe(1);
+    expect(component.selectedHeatIndex()).toBe(2);
   });
 
   it("should register updates specifically to the selected heat instead of the current heat when selecting a different heat in the dropdown", () => {

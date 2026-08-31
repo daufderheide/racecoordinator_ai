@@ -24,4 +24,5 @@ message TrackModel {
   bool has_main_relay = 9;
   repeated PhidgetConfig phidget_configs = 10;
   repeated BartConfig bart_configs = 11;
+  double track_scale = 12;
 }

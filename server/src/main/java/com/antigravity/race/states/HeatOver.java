@@ -42,10 +42,14 @@ public class HeatOver implements IRaceState {
 
   private ScheduledExecutorService scheduler;
   private ScheduledFuture<?> timerHandle;
+  private Race race;
+  private long heatOverStartTimeMillis;
 
   @Override
   public void enter(Race race) {
     logger.info("HeatOver state entered.");
+    this.race = race;
+    this.heatOverStartTimeMillis = System.currentTimeMillis();
 
     if (race.getCurrentHeat() != null) {
       race.getCurrentHeat().getStatistics().setEndTime(OffsetDateTime.now().toString());
@@ -132,6 +136,8 @@ public class HeatOver implements IRaceState {
   public void restartHeat(Race race) {
     logger.info("HeatOver.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
+    race.setAutoStartFired(false);
+    race.setAutoAdvanceFired(false);
     race.changeState(new NotStarted());
   }
 
@@ -143,7 +149,17 @@ public class HeatOver implements IRaceState {
 
   @Override
   public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
-    return false;
+    return Common.handleDriftLap(
+        race,
+        heatOverStartTimeMillis,
+        "HeatOver",
+        lane,
+        lapTime,
+        interfaceId,
+        () -> {
+          race.updateScoreRecords();
+          race.broadcast(race.createSnapshot());
+        });
   }
 
   @Override
@@ -157,7 +173,7 @@ public class HeatOver implements IRaceState {
     final Runnable ticker =
         new Runnable() {
           long lastTime = 0;
-          RaceFlag lastFlag = RaceFlag.RED;
+          RaceFlag lastFlag = getFlagType(race);
 
           @Override
           public void run() {
@@ -183,12 +199,13 @@ public class HeatOver implements IRaceState {
                 race.setAutoAdvanceRemaining(remaining);
 
                 // Handle warmup time power logic
-                // Flag changes are handled by broadcastFlag
+                // Flag changes are handled by broadcastFlag and updatePowerForFlag
 
                 RaceFlag currentFlag = getFlagType(race);
                 if (currentFlag != lastFlag) {
                   logger.info("Auto-advance flag changed to: {}", currentFlag);
                   race.broadcastFlag(currentFlag);
+                  race.updatePowerForFlag(currentFlag);
                   lastFlag = currentFlag;
                 }
 

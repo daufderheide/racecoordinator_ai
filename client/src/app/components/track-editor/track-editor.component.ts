@@ -22,6 +22,10 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { InputDialogComponent } from "@app/components/shared/input-dialog/input-dialog.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -53,6 +57,7 @@ import { GuideStep, HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 
@@ -67,6 +72,8 @@ import { deepCopy } from "@app/utils/clone.utils";
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
+    EditorTitleComponent,
+    EditorTabsComponent,
     ArduinoEditorComponent,
     TrakmateEditorComponent,
     PhidgetEditorComponent,
@@ -87,6 +94,15 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private subscriptions: Subscription[] = [];
   trackName: string = "";
   numTrackSections: number = 100;
+  trackScale: number = 1.0;
+  readonly trackScaleOptions = [
+    { label: "1/87", value: 1 / 87 },
+    { label: "1/64", value: 1 / 64 },
+    { label: "1/43", value: 1 / 43 },
+    { label: "1/32", value: 1 / 32 },
+    { label: "1/24", value: 1 / 24 },
+    { label: "1/1", value: 1.0 },
+  ];
   lanes: Lane[] = [];
   editingTrack?: Track;
   arduinoConfigs: ArduinoConfig[] = [];
@@ -134,6 +150,74 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
+  get interfaceTabs(): EditorTab[] {
+    const tabs: EditorTab[] = [];
+
+    this.arduinoConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-arduino-${i}`, label: `Arduino ${i + 1}` });
+    });
+
+    this.trackmateConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-trackmate-${i}`, label: `Trakmate ${i + 1}` });
+    });
+
+    this.phidgetConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-phidget-${i}`, label: `Phidget ${i + 1}` });
+    });
+
+    this.bartConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-bart-${i}`, label: `BART ${i + 1}` });
+    });
+
+    return tabs;
+  }
+
+  scrollToAndExpandInterface(tabId: string) {
+    const match = tabId.match(
+      /interface-(arduino|trackmate|phidget|bart)-(\d+)/,
+    );
+    if (!match) return;
+
+    const type = match[1];
+    const index = parseInt(match[2], 10);
+
+    switch (type) {
+      case "arduino":
+        this.arduinoEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "trackmate":
+        this.trakmateEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "phidget":
+        this.phidgetEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "bart":
+        this.bartEditors.get(index)?.ensureSectionsExpanded();
+        break;
+    }
+
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".preview-panel");
+      if (element && container) {
+        // Calculate the relative position to scroll safely without shifting the whole page or outer containers
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+
+        container.scrollTo({
+          top: topPos - 24, // 24px padding-top adjustment
+          behavior: "smooth",
+        });
+      } else if (element) {
+        // Fallback
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
@@ -144,6 +228,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private helpService: HelpService,
     private connectionMonitor: ConnectionMonitorService,
     private raceConnectionService: RaceConnectionService,
+    private settingsService: SettingsService,
     private logger: LoggerService,
     private navigationService: NavigationService,
   ) {
@@ -156,6 +241,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           if (this.editingTrack) {
             this.trackName = this.editingTrack.name;
             this.numTrackSections = this.editingTrack.num_track_sections;
+            this.trackScale = this.normalizeTrackScale(
+              this.editingTrack.track_scale,
+            );
             this.lanes = [...this.editingTrack.lanes];
 
             // Restore Arduino Configs
@@ -341,7 +429,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 
@@ -418,6 +505,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                       "TM_DEFAULT_TRACK_NAME",
                     ),
                     num_track_sections: factoryTrack.num_track_sections || 100,
+                    track_scale: factoryTrack.track_scale ?? 1.0,
                     lanes: factoryTrack.lanes.map(
                       (l: any) =>
                         new Lane(
@@ -445,6 +533,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                     entity_id: "new",
                     name: "",
                     num_track_sections: 100,
+                    track_scale: 1.0,
                     lanes: [
                       new Lane(this.generateId(), "#ef4444", "black", 100),
                       new Lane(this.generateId(), "#ffffff", "black", 100),
@@ -548,17 +637,20 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
       this.trackName = this.editingTrack.name;
       this.numTrackSections = this.editingTrack.num_track_sections;
+      this.trackScale = this.normalizeTrackScale(this.editingTrack.track_scale);
       this.lanes = [...this.editingTrack.lanes];
     } else {
       this.editingTrack = new Track({
         entity_id: "new",
         name: "",
         num_track_sections: 100,
+        track_scale: 1.0,
         lanes: [],
         has_digital_fuel: false,
       });
       this.trackName = "";
       this.numTrackSections = 100;
+      this.trackScale = 1.0;
       this.lanes = [];
       this.arduinoConfigs = [];
       this.trackmateConfigs = [];
@@ -642,6 +734,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       entity_id: track.entity_id,
       name: track.name,
       num_track_sections: track.num_track_sections,
+      track_scale: track.track_scale ?? 1.0,
       lanes: lanesCopy,
       has_digital_fuel: track.has_digital_fuel,
       arduino_configs: arduinoCopy,
@@ -659,6 +752,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         entity_id: "new",
         name: "",
         num_track_sections: 100,
+        track_scale: 1.0,
         lanes: [],
         has_digital_fuel: false,
       });
@@ -673,6 +767,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       entity_id: this.editingTrack.entity_id,
       name: this.trackName,
       num_track_sections: this.numTrackSections,
+      track_scale: this.trackScale,
       lanes: this.lanes.map(
         (l) =>
           new Lane(
@@ -695,7 +790,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private areTracksEqual(t1: Track, t2: Track): boolean {
     if (
       t1.name !== t2.name ||
-      t1.num_track_sections !== t2.num_track_sections
+      t1.num_track_sections !== t2.num_track_sections ||
+      (t1.track_scale ?? 1.0) !== (t2.track_scale ?? 1.0)
     ) {
       return false;
     }
@@ -1006,6 +1102,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
       {
+        selector: "#track-scale-section",
+        title: this.translationService.translate("TE_HELP_TRACK_SCALE_TITLE"),
+        content: this.translationService.translate(
+          "TE_HELP_TRACK_SCALE_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
         selector: "#lane-editor-section",
         title: this.translationService.translate("TE_HELP_LANES_TITLE"),
         content: this.translationService.translate("TE_HELP_LANES_CONTENT"),
@@ -1260,6 +1364,26 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
         ) {
           base = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+        } else if (
+          val >= PinBehavior.BEHAVIOR_PIT_IN_BASE &&
+          val < PinBehavior.BEHAVIOR_PIT_OUT_BASE
+        ) {
+          base = PinBehavior.BEHAVIOR_PIT_IN_BASE;
+        } else if (
+          val >= PinBehavior.BEHAVIOR_PIT_OUT_BASE &&
+          val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
+        ) {
+          base = PinBehavior.BEHAVIOR_PIT_OUT_BASE;
+        } else if (
+          val >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE &&
+          val < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 1000
+        ) {
+          base = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE;
+        } else if (
+          val >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
+          val < (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000
+        ) {
+          base = (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE;
         }
 
         if (base !== -1) {
@@ -1397,6 +1521,26 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1000
         ) {
           base = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+        } else if (
+          val >= PinBehavior.BEHAVIOR_PIT_IN_BASE &&
+          val < PinBehavior.BEHAVIOR_PIT_OUT_BASE
+        ) {
+          base = PinBehavior.BEHAVIOR_PIT_IN_BASE;
+        } else if (
+          val >= PinBehavior.BEHAVIOR_PIT_OUT_BASE &&
+          val < PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
+        ) {
+          base = PinBehavior.BEHAVIOR_PIT_OUT_BASE;
+        } else if (
+          val >= PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE &&
+          val < PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE + 1000
+        ) {
+          base = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE;
+        } else if (
+          val >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
+          val < (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000
+        ) {
+          base = (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE;
         }
 
         if (base !== -1) {
@@ -1534,14 +1678,36 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, 400);
   }
 
+  onTrackScaleChange(val: any) {
+    this.trackScale = this.normalizeTrackScale(Number(val));
+    this.onInputChange();
+  }
+
+  private normalizeTrackScale(scale: number | undefined): number {
+    if (
+      scale === undefined ||
+      scale === null ||
+      isNaN(scale) ||
+      scale <= 0 ||
+      scale > 1.0
+    ) {
+      return 1.0;
+    }
+    const matched = this.trackScaleOptions.find(
+      (opt) => Math.abs(opt.value - scale) < 0.0001,
+    );
+    return matched ? matched.value : scale;
+  }
+
   updateLaneLength(index: number, length: any) {
-    const val = parseInt(length, 10);
+    const val = typeof length === "number" ? length : parseFloat(length);
+    const parsedVal = isNaN(val) ? 0 : val;
     const l = this.lanes[index];
     this.lanes[index] = new Lane(
       l.entity_id,
       l.foreground_color,
       l.background_color,
-      val,
+      parsedVal,
     );
     this.onInputChange();
   }
@@ -1633,7 +1799,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       deviceAddress: "",
       numLanes: this.lanes.length,
       minLapMs: 1,
-      lapPinPitBehavior: 0,
+      lapPinPitBehavior: 3,
       lapPinBehaviors: Array(this.lanes.length)
         .fill(0)
         .map((_, i) => PinBehavior.BEHAVIOR_LAP_BASE + i),
@@ -1698,9 +1864,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       normallyClosedLaneSensors: true,
       normallyClosedRelays: true,
       useLapsForSegments: false,
-      lapPinPitBehavior: 0,
-      digitalInIds: Array(60).fill(0),
-      digitalOutIds: Array(60).fill(0),
+      lapPinPitBehavior: 3,
+      digitalInIds: Array(32).fill(0),
+      digitalOutIds: Array(32).fill(0),
       analogIds: Array(16).fill(0),
     });
     this.phidgetConfigs = [...this.phidgetConfigs];
@@ -1728,7 +1894,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
-    this.initializeInterfaces();
   }
 
   trackByPhidgetConfig(index: number, _config: any): number {
@@ -1814,6 +1979,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             entity_id: result.entity_id,
             name: result.name,
             num_track_sections: result.num_track_sections ?? 100,
+            track_scale: result.track_scale ?? 1.0,
             lanes: result.lanes,
             has_digital_fuel: result.has_digital_fuel ?? false,
             arduino_configs: result.arduino_configs,

@@ -9,6 +9,7 @@ import {
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
+import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import {
   HeatDriverExpanderComponent,
   HeatExpanderData,
@@ -46,6 +47,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
     HeatDriverExpanderComponent,
     TwinGraphsComponent,
     PdfExportDialogComponent,
+    BrowserNavigationComponent,
   ],
 })
 export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
@@ -190,6 +192,14 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
       }),
     );
 
+    this.subscriptions.push(
+      this.raceConnectionService.standingsUpdate$.subscribe(() => {
+        this.updateGraph();
+        this.calculateHeatStandings();
+        this.cdr.markForCheck();
+      }),
+    );
+
     this.loadRaceData();
     this.updateGraph();
     this.calculateHeatStandings();
@@ -236,6 +246,7 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   onPdfExportConfirm(options: PdfExportOptions) {
     this.showPdfExportDialog = false;
+    this.cdr.detectChanges();
     if (options.saveAsDefault) {
       const settings = this.settingsService.getSettings();
       settings.exportPdfBackgrounds = options.includeBackground;
@@ -307,8 +318,40 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     );
     if (isSkip) return null;
 
+    let rank = heatDriver.rank || 0;
+    if (
+      !rank &&
+      this.raceConnectionService?.driverRankings?.has(heatDriver.objectId)
+    ) {
+      rank =
+        this.raceConnectionService.driverRankings.get(heatDriver.objectId) || 0;
+    } else if (
+      !rank &&
+      heatDriver.participant?.objectId &&
+      this.raceConnectionService?.driverRankings?.has(
+        heatDriver.participant.objectId,
+      )
+    ) {
+      rank =
+        this.raceConnectionService.driverRankings.get(
+          heatDriver.participant.objectId,
+        ) || 0;
+    } else if (
+      !rank &&
+      this.heat?.standings &&
+      this.heat.standings.length > 0
+    ) {
+      let idx = this.heat.standings.indexOf(heatDriver.objectId);
+      if (idx === -1 && heatDriver.participant?.objectId) {
+        idx = this.heat.standings.indexOf(heatDriver.participant.objectId);
+      }
+      if (idx !== -1) {
+        rank = idx + 1;
+      }
+    }
+
     const row: HeatStandingsRow = {
-      rank: heatDriver.rank || 1,
+      rank,
       objectId: heatDriver.objectId,
       laps: heatDriver.adjustedLapCount,
       averageLapTime: heatDriver.averageLapTime,
@@ -398,7 +441,7 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
           hd.driver?.driver?.model?.entityId ||
           "";
         const lane = this.race?.track?.lanes[hd.laneIndex];
-        const color = lane?.foreground_color || "#ffffff";
+        const color = lane?.background_color || "#ffffff";
         const backgroundColor = lane?.background_color || "#333333";
 
         const laps = hd.lapTimes; // Uses our new getter

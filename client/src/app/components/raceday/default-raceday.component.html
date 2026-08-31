@@ -4,6 +4,9 @@
   (dragover)="onCanvasDragOver($event)"
   (drop)="onCanvasDrop($event)"
 >
+  <app-browser-navigation
+    class="raceday-fullscreen-nav"
+  ></app-browser-navigation>
   <app-raceday-modals
     [showAckModal]="showAckModal"
     [ackModalTitle]="ackModalTitle"
@@ -74,16 +77,21 @@
   <div
     class="scalable-content"
     [class.edit-mode]="isLayoutCustomizing"
-    [style.width.px]="isPrinting ? 1920 : dashboardWidth"
-    [style.min-width.px]="isPrinting ? 1920 : dashboardWidth"
-    [style.height.px]="isPrinting ? 1080 : dashboardHeight"
-    [style.min-height.px]="isPrinting ? 1080 : dashboardHeight"
-    [style.transform]="
-      isPrinting ? 'none' : 'translate(-50%, -50%) scale(' + scale + ')'
+    [style.width]="
+      isPrinting ? '1920px' : isUIEditorMode() ? dashboardWidth + 'px' : '100%'
+    "
+    [style.min-width]="
+      isPrinting ? '1920px' : isUIEditorMode() ? dashboardWidth + 'px' : '0'
+    "
+    [style.height]="
+      isPrinting ? '1080px' : isUIEditorMode() ? dashboardHeight + 'px' : '100%'
+    "
+    [style.min-height]="
+      isPrinting ? '1080px' : isUIEditorMode() ? dashboardHeight + 'px' : '0'
     "
     [style.position]="isPrinting ? 'relative' : 'absolute'"
-    [style.top]="isPrinting ? '0' : '50%'"
-    [style.left]="isPrinting ? '0' : '50%'"
+    [style.top]="'0'"
+    [style.left]="'0'"
   >
     <div
       class="raceday-absolute-layout-root-wrapper"
@@ -278,3 +286,14 @@
   (confirm)="onPdfExportConfirm($event)"
   (cancel)="onPdfExportCancel()"
 ></app-pdf-export-dialog>
+
+<app-input-dialog
+  [visible]="showSaveRaceDialog"
+  [title]="'RD_SAVE_RACE_TITLE'"
+  [message]="'RD_SAVE_RACE_MSG'"
+  [initialValue]="saveRaceName"
+  [placeholder]="'RD_ENTER_SAVE_NAME'"
+  (confirm)="onSaveRaceConfirm($event)"
+  (cancel)="onSaveRaceCancel()"
+>
+</app-input-dialog>

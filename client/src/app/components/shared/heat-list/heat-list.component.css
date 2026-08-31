@@ -1,4 +1,8 @@
 /* HEAT LIST */
+:host {
+  display: block;
+}
+
 .heat-list {
   margin-top: 10px;
   margin-bottom: 10px;

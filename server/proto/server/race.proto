@@ -30,4 +30,5 @@ message Race {
   string season_id = 15;
   string season_name = 16;
   repeated SeasonStanding season_standings = 17;
+  int64 start_time_millis = 18;
 }

@@ -58,6 +58,8 @@ public class Paused implements IRaceState {
   public void restartHeat(Race race) {
     logger.info("Paused.restartHeat() called. Resetting current heat.");
     race.resetCurrentHeat();
+    race.setAutoStartFired(false);
+    race.setAutoAdvanceFired(false);
     race.changeState(new NotStarted());
   }
 
@@ -75,25 +77,8 @@ public class Paused implements IRaceState {
 
   @Override
   public boolean onLap(int lane, double lapTime, int interfaceId, boolean isDrift) {
-    if (race != null && race.getRaceModel() != null) {
-      double driftTime = race.getRaceModel().getDriftTime();
-      if (driftTime > 0) {
-        long elapsedMillis = System.currentTimeMillis() - pauseStartTimeMillis;
-        if (elapsedMillis <= driftTime * 1000) {
-          logger.info(
-              "Paused: Counting lap during drift time. Elapsed: {}ms, Drift: {}ms",
-              elapsedMillis,
-              (driftTime * 1000));
-          return handleLap(race, lane, lapTime, interfaceId, true);
-        } else {
-          logger.info(
-              "Paused: Drift time expired. Lap ignored. Elapsed: {}ms, Drift: {}ms",
-              elapsedMillis,
-              (driftTime * 1000));
-        }
-      }
-    }
-    return false;
+    return Common.handleDriftLap(
+        race, pauseStartTimeMillis, "Paused", lane, lapTime, interfaceId, null);
   }
 
   @Override

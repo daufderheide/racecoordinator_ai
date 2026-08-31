@@ -584,6 +584,37 @@ describe("TrackEditorComponent", () => {
     expect(updatedConfig.voltageConfigs?.[1]).toBe(600); // Shifted
   });
 
+  it("should update heat leader analog LEDs on lane reordering and deletion", () => {
+    component.lanes = [
+      new Lane("l1", "white", "black", 100),
+      new Lane("l2", "white", "black", 100),
+      new Lane("l3", "white", "black", 100),
+    ];
+
+    component.addArduinoConfig();
+    const config = component.arduinoConfigs[0];
+    config.digitalIds = [9000, 9001, 9002]; // Heat Leader Lane 1, Lane 2, Lane 3
+
+    // Move Lane 1 (index 0) to Lane 2 (index 1)
+    const event = {
+      previousIndex: 0,
+      currentIndex: 1,
+      container: { data: component.lanes },
+      item: { data: component.lanes[0] },
+    } as any;
+
+    component.onLaneDropped(event);
+    expect(config.digitalIds[0]).toBe(9001);
+    expect(config.digitalIds[1]).toBe(9000);
+    expect(config.digitalIds[2]).toBe(9002);
+
+    // Delete Lane 2 (index 1)
+    component.removeLane(1);
+    expect(config.digitalIds[0]).toBe(0); // Pin assigned to deleted Lane 2 (9001) becomes UNUSED (0)
+    expect(config.digitalIds[1]).toBe(9000); // Pin assigned to Lane 1 (9000) unchanged
+    expect(config.digitalIds[2]).toBe(9001); // Pin assigned to Lane 3 (9002) shifted down to 9001
+  });
+
   it("should re-initialize interfaces when onTrackmateConfigChange is called", () => {
     component.addTrackmateConfig();
     (dataService.initializeInterface as jasmine.Spy).calls.reset();
@@ -883,7 +914,7 @@ describe("TrackEditorComponent", () => {
   });
 
   describe("Interface List Ordering & Badges", () => {
-    it("should render interfaces in alphabetical order with correct badges", fakeAsync(() => {
+    it("should render interfaces in alphabetical order without unexpected badges", fakeAsync(() => {
       component.sectionsExpanded.interfaces = true;
       fixture.detectChanges();
       tick();
@@ -891,27 +922,19 @@ describe("TrackEditorComponent", () => {
       const interfaceHeaders = fixture.nativeElement.querySelectorAll(
         ".config-section .section-content .editor-section .section-header",
       );
-      expect(interfaceHeaders.length).toBe(4);
+      expect(interfaceHeaders.length).toBe(3);
 
       const names = Array.from(interfaceHeaders).map((header: any) =>
         header.querySelector("span")?.textContent?.trim(),
       );
-      expect(names).toEqual(["Arduino", "BART (BLE)", "Phidget", "Trackmate"]);
-
-      // Check badges
-      const bartBadge = interfaceHeaders[1].querySelector(".interface-badge");
-      expect(bartBadge).toBeTruthy();
-      expect(bartBadge.textContent.trim()).toBe("ALPHA");
-      expect(bartBadge.classList.contains("alpha-badge")).toBeTrue();
+      expect(names).toEqual(["Arduino", "Phidget", "Trackmate"]);
 
       const phidgetBadge =
-        interfaceHeaders[2].querySelector(".interface-badge");
-      expect(phidgetBadge).toBeTruthy();
-      expect(phidgetBadge.textContent.trim()).toBe("ALPHA");
-      expect(phidgetBadge.classList.contains("alpha-badge")).toBeTrue();
+        interfaceHeaders[1].querySelector(".interface-badge");
+      expect(phidgetBadge).toBeNull();
 
       const trakmateBadge =
-        interfaceHeaders[3].querySelector(".interface-badge");
+        interfaceHeaders[2].querySelector(".interface-badge");
       expect(trakmateBadge).toBeNull();
     }));
   });
@@ -1113,6 +1136,88 @@ describe("TrackEditorComponent", () => {
       expect(component.phidgetConfigs.length).toBe(1);
       component.removePhidgetConfig(0);
       expect(component.phidgetConfigs.length).toBe(0);
+    });
+
+    it("should handle onPhidgetConfigChange without calling initializeInterfaces", () => {
+      const initSpy = spyOn<any>(component, "initializeInterfaces");
+      spyOn<any>(component, "captureState");
+
+      component.addPhidgetConfig();
+      expect(initSpy).toHaveBeenCalledTimes(1);
+
+      initSpy.calls.reset();
+      component.onPhidgetConfigChange();
+
+      expect((component as any).captureState).toHaveBeenCalled();
+      expect(initSpy).not.toHaveBeenCalled();
+    });
+
+    describe("Track Scale and Decimal Lane Length", () => {
+      it("should update track scale and mark change on onTrackScaleChange", () => {
+        spyOn(component, "onInputChange");
+        component.onTrackScaleChange(1 / 32);
+        expect(component.trackScale).toBeCloseTo(0.03125, 5);
+        expect(component.onInputChange).toHaveBeenCalled();
+      });
+
+      it("should normalize track scale properly", () => {
+        expect((component as any).normalizeTrackScale(undefined)).toBe(1.0);
+        expect((component as any).normalizeTrackScale(-1)).toBe(1.0);
+        expect((component as any).normalizeTrackScale(2.5)).toBe(1.0);
+        expect((component as any).normalizeTrackScale(0.03125)).toBe(1 / 32);
+        expect((component as any).normalizeTrackScale(0.015625)).toBe(1 / 64);
+      });
+
+      it("should allow decimal lane lengths in updateLaneLength", () => {
+        component.lanes = [new Lane("l1", "#ff0000", "#000000", 50)];
+        spyOn(component, "onInputChange");
+
+        component.updateLaneLength(0, "52.75");
+        expect(component.lanes[0].length).toBe(52.75);
+        expect(component.onInputChange).toHaveBeenCalled();
+
+        component.updateLaneLength(0, 60.5);
+        expect(component.lanes[0].length).toBe(60.5);
+
+        component.updateLaneLength(0, "invalid");
+        expect(component.lanes[0].length).toBe(0);
+      });
+
+      it("should include track scale in snapshot and track comparison", () => {
+        component.editingTrack = new Track({
+          entity_id: "t1",
+          name: "Test Track",
+          track_scale: 1 / 32,
+          lanes: [new Lane("l1", "#ff0000", "#000000", 50.5)],
+        });
+        component.trackName = "Test Track";
+        component.trackScale = 1 / 32;
+        component.lanes = [new Lane("l1", "#ff0000", "#000000", 50.5)];
+
+        const snapshot = (component as any).createSnapshot();
+        expect(snapshot.track_scale).toBeCloseTo(0.03125, 5);
+        expect(snapshot.lanes[0].length).toBe(50.5);
+
+        const clone = (component as any).cloneTrack(snapshot);
+        expect(clone.track_scale).toBeCloseTo(0.03125, 5);
+        expect((component as any).areTracksEqual(snapshot, clone)).toBeTrue();
+
+        const modified = (component as any).cloneTrack(snapshot);
+        (modified as any).track_scale = 1.0;
+        expect(
+          (component as any).areTracksEqual(snapshot, modified),
+        ).toBeFalse();
+      });
+
+      it("should include track scale help step in getBaseHelpSteps", () => {
+        const steps = (component as any).getBaseHelpSteps();
+        const scaleStep = steps.find(
+          (s: any) => s.selector === "#track-scale-section",
+        );
+        expect(scaleStep).toBeTruthy();
+        expect(scaleStep.title).toBe("TE_HELP_TRACK_SCALE_TITLE");
+        expect(scaleStep.content).toBe("TE_HELP_TRACK_SCALE_CONTENT");
+      });
     });
   });
 });

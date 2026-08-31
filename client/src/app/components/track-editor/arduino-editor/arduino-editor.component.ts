@@ -620,7 +620,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
       behavior === PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG ||
       behavior === PinBehavior.BEHAVIOR_ANALOG_LED_YELLOW_FLAG ||
       (behavior >= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_1 &&
-        behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5);
+        behavior <= PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5) ||
+      (behavior >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
+        behavior <
+          (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000);
 
     if (isRelay) {
       const key = isDigital ? `D${pin}` : `A${pin}`;
@@ -724,6 +727,12 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
         return `analogled_countdown_${i}`;
       }
     }
+    if (
+      val >= (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE &&
+      val < (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + 1000
+    ) {
+      return `analogled_heat_leader_${val - (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE}`;
+    }
 
     return "";
   }
@@ -766,6 +775,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     } else if (action.startsWith("analogled_countdown_")) {
       const index = parseInt(action.split("_")[2], 10);
       val = (PinBehavior as any)[`BEHAVIOR_ANALOG_LED_COUNTDOWN_${index}`];
+    } else if (action.startsWith("analogled_heat_leader_")) {
+      const laneIndex = parseInt(action.split("_")[3], 10);
+      val =
+        (PinBehavior as any).BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE + laneIndex;
     }
 
     this.setPinBehavior(isDigital, pinIndex, val.toString());
@@ -1558,6 +1571,15 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
           value: "analogled_countdown_5",
         },
       ];
+      lanes.forEach((_, i) => {
+        analogLedActions.push({
+          label: this.translationService.translate(
+            "AE_PIN_ANALOG_LED_HEAT_LEADER_LANE",
+            { lane: i + 1 },
+          ),
+          value: `analogled_heat_leader_${i}`,
+        });
+      });
       groups.push({
         key: "AE_BEHAVIOR_GROUP_ANALOG_LED",
         label: this.translationService.translate(

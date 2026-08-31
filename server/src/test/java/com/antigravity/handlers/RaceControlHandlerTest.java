@@ -1,6 +1,7 @@
 package com.antigravity.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.when;
@@ -42,6 +43,16 @@ public class RaceControlHandlerTest {
     tempDir = tempFile.toPath();
 
     databaseContext = new DatabaseContext("testdb", null, tempDir.toString() + File.separator);
+    Theme defaultTheme =
+        new Theme(
+            "Default Theme",
+            true,
+            new java.util.HashMap<>(),
+            new java.util.HashMap<>(),
+            Theme.DEFAULT_THEME_ID,
+            null);
+    new SqliteRepository<>(databaseContext, "themes", Theme.class).insert(defaultTheme);
+
     ClientSubscriptionManager.setInstance(null);
     handler = new RaceControlHandler(databaseContext);
   }
@@ -400,7 +411,7 @@ public class RaceControlHandlerTest {
     new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
     new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
 
-    // Whitespace themeId
+    // Whitespace themeId falls back to race theme (which is default_classic_rc_ai, seeded in setUp)
     InitializeRaceRequest whitespaceReq =
         InitializeRaceRequest.newBuilder()
             .setRaceId(raceId)
@@ -414,7 +425,7 @@ public class RaceControlHandlerTest {
     com.antigravity.race.Race race1 = ClientSubscriptionManager.getInstance().getRace();
     assertNotNull(race1);
 
-    // Non-existent themeId
+    // Non-existent/deleted themeId in request fails with THEME_DELETED
     InitializeRaceRequest nonExistentReq =
         InitializeRaceRequest.newBuilder()
             .setRaceId(raceId)
@@ -425,8 +436,51 @@ public class RaceControlHandlerTest {
 
     TaskResult result2 = handler.handleInitializeRace(nonExistentReq);
     assertEquals(200, result2.status);
-    com.antigravity.race.Race race2 = ClientSubscriptionManager.getInstance().getRace();
-    assertNotNull(race2);
+    com.antigravity.proto.InitializeRaceResponse resp2 =
+        com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result2.result);
+    assertFalse(resp2.getSuccess());
+    assertEquals("THEME_DELETED", resp2.getErrorCode());
+  }
+
+  @Test
+  public void testHandleInitializeRace_WithDeletedRaceTheme_ShouldFail() throws Exception {
+    String raceId = "race-theme-deleted";
+    String driverId = "d-deleted";
+
+    Race race =
+        new Race.Builder()
+            .withName("Deleted Theme Race")
+            .withTrackEntityId("track-1")
+            .withThemeId("deleted-theme-id")
+            .withEntityId(raceId)
+            .build();
+    Driver driver = new Driver("Deleted Driver", "DD", driverId, null);
+    Lane lane = new Lane("red", "black", 100);
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(Arrays.asList(lane))
+            .entityId("track-1")
+            .id(null)
+            .build();
+
+    new SqliteRepository<>(databaseContext, "races", Race.class).insert(race);
+    new SqliteRepository<>(databaseContext, "drivers", Driver.class).insert(driver);
+    new SqliteRepository<>(databaseContext, "tracks", Track.class).insert(track);
+
+    InitializeRaceRequest request =
+        InitializeRaceRequest.newBuilder()
+            .setRaceId(raceId)
+            .addDriverIds("d_" + driverId)
+            .setIsDemoMode(true)
+            .build();
+
+    TaskResult result = handler.handleInitializeRace(request);
+    assertEquals(200, result.status);
+    com.antigravity.proto.InitializeRaceResponse response =
+        com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse(response.getSuccess());
+    assertEquals("THEME_DELETED", response.getErrorCode());
   }
 
   @Test
@@ -469,10 +523,12 @@ public class RaceControlHandlerTest {
             .setIsDemoMode(true)
             .build();
 
-    // handleInitializeRace catches theme lookup exception, logs warning, and proceeds
+    // handleInitializeRace catches theme lookup exception, logs warning, and returns THEME_DELETED
     TaskResult result = handler.handleInitializeRace(req);
     assertEquals(200, result.status);
-    com.antigravity.race.Race activeRace = ClientSubscriptionManager.getInstance().getRace();
-    assertNotNull(activeRace);
+    com.antigravity.proto.InitializeRaceResponse response =
+        com.antigravity.proto.InitializeRaceResponse.parseFrom((byte[]) result.result);
+    assertFalse(response.getSuccess());
+    assertEquals("THEME_DELETED", response.getErrorCode());
   }
 }

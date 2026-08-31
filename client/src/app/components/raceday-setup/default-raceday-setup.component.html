@@ -1,8 +1,5 @@
 @if (translationsLoaded) {
-  <div
-    class="page-container setup-container"
-    [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
-  >
+  <div class="page-container setup-container">
     <!-- Modernized Horizontal Menu/Dropdown Toolbar sitting right above the Title Bar -->
     <div class="setup-menu-bar">
       @for (item of menuItems; track item) {
@@ -87,6 +84,14 @@
               >
                 {{ "RDS_MENU_IMPORT_SETTINGS" | translate }}
               </div>
+              <hr class="setup-menu-dropdown-divider" />
+              <div
+                class="setup-menu-dropdown-item has-shortcut"
+                (click)="quit()"
+              >
+                <span>{{ "RDS_MENU_QUIT" | translate }}</span>
+                <span class="setup-menu-shortcut">{{ quitShortcut }}</span>
+              </div>
             </div>
           }
           <input
@@ -112,14 +117,14 @@
                 {{ "RDS_MENU_SERVER" | translate }}
               </div>
               <app-language-selector
-                wrapperClass="menu-dropdown-item"
-                itemClass="menu-dropdown-item"
+                wrapperClass="setup-menu-dropdown-item"
+                itemClass="setup-menu-dropdown-item"
                 (languageSelected)="onLanguageSelected()"
               ></app-language-selector>
               <hr class="setup-menu-dropdown-divider" />
               <app-update-selector
-                wrapperClass="menu-dropdown-item"
-                itemClass="menu-dropdown-item"
+                wrapperClass="setup-menu-dropdown-item"
+                itemClass="setup-menu-dropdown-item"
                 (checkForUpdatesRequested)="onCheckForUpdates()"
               ></app-update-selector>
               <hr class="setup-menu-dropdown-divider" />
@@ -135,25 +140,30 @@
                 class="setup-menu-dropdown-item has-submenu"
                 (click)="toggleLogDropdown($event)"
               >
-                {{ "RDS_MENU_LOG_LEVELS" | translate }}
+                <span>{{ "RDS_MENU_LOG_LEVELS" | translate }}</span>
                 <span class="setup-submenu-arrow">▶</span>
                 @if (isLogDropdownOpen) {
-                  <div class="menu-dropdown submenu">
+                  <div class="setup-menu-dropdown submenu">
                     <div
                       class="setup-menu-dropdown-item has-submenu"
                       (click)="toggleClientLogDropdown($event)"
                     >
-                      {{ "RDS_LOG_CLIENT" | translate }}
+                      <span>{{ "RDS_LOG_CLIENT" | translate }}</span>
                       <span class="setup-submenu-arrow">▶</span>
                       @if (isClientLogOpen) {
-                        <div class="menu-dropdown submenu">
+                        <div class="setup-menu-dropdown submenu">
                           @for (level of clientLogLevels; track level) {
                             <div
                               class="setup-menu-dropdown-item"
                               (click)="setClientLogLevel(level)"
                               [class.selected]="currentClientLogLevel === level"
                             >
-                              {{ "LOG_LEVEL_" + level | translate }}
+                              <span class="check-slot">{{
+                                currentClientLogLevel === level ? "✓" : ""
+                              }}</span>
+                              <span>{{
+                                "LOG_LEVEL_" + level | translate
+                              }}</span>
                             </div>
                           }
                         </div>
@@ -163,17 +173,22 @@
                       class="setup-menu-dropdown-item has-submenu"
                       (click)="toggleServerLogDropdown($event)"
                     >
-                      {{ "RDS_LOG_SERVER" | translate }}
+                      <span>{{ "RDS_LOG_SERVER" | translate }}</span>
                       <span class="setup-submenu-arrow">▶</span>
                       @if (isServerLogOpen) {
-                        <div class="menu-dropdown submenu">
+                        <div class="setup-menu-dropdown submenu">
                           @for (level of serverLogLevels; track level) {
                             <div
                               class="setup-menu-dropdown-item"
                               (click)="setServerLogLevel(level)"
                               [class.selected]="currentServerLogLevel === level"
                             >
-                              {{ "LOG_LEVEL_" + level | translate }}
+                              <span class="check-slot">{{
+                                currentServerLogLevel === level ? "✓" : ""
+                              }}</span>
+                              <span>{{
+                                "LOG_LEVEL_" + level | translate
+                              }}</span>
                             </div>
                           }
                         </div>
@@ -199,8 +214,8 @@
     <!-- New Premium Editor Title Bar -->
     <app-editor-title
       titleKey="RDS_TITLE"
-      [marginTop]="25"
-      [marginBottom]="25"
+      [marginTop]="5"
+      [marginBottom]="12"
       [showHelp]="true"
       [showUndo]="false"
       [showRedo]="false"
@@ -212,163 +227,12 @@
     <!-- Main Content split into LHS and RHS -->
     <div class="content-split">
       <!-- Left Panel: Drivers Pool (Redesigned matching Modify Heats modal) -->
+      <!-- Left Panel: Drivers Pool (Available on left, Racing on right) -->
       <div class="editor-panel panel driver-panel">
-        <!-- Section 1: Racing Drivers (Connected Drop List) -->
-        <div id="racing-drivers-section" class="driver-pool-section">
+        <!-- Section 1: Available Drivers (Connected to Racing) -->
+        <div id="available-drivers-section" class="driver-pool-section">
           <div class="section-header">
             <div class="header-title-container">
-              <h3>{{ "RDS_SECTION_RACING" | translate }}</h3>
-              <span class="badge">{{ selectedParticipants.length }}</span>
-            </div>
-            <div
-              class="header-actions driver-action-bar"
-              (click)="$event.stopPropagation()"
-            >
-              <button
-                class="action-btn"
-                (click)="addAllParticipants()"
-                (mousedown)="$event.preventDefault()"
-                tabindex="-1"
-                [title]="'RDS_BTN_ADD_ALL' | translate"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                </svg>
-              </button>
-              <button
-                class="action-btn"
-                (click)="removeAllParticipants()"
-                (mousedown)="$event.preventDefault()"
-                tabindex="-1"
-                [title]="'RDS_BTN_REMOVE_ALL' | translate"
-                data-testid="btn-remove-all"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M19 13H5v-2h14v2z" />
-                </svg>
-              </button>
-              <button
-                class="action-btn"
-                (click)="randomizeParticipants()"
-                (mousedown)="$event.preventDefault()"
-                tabindex="-1"
-                [title]="'RDS_BTN_RANDOMIZE' | translate"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div
-            id="selected-list"
-            cdkDropList
-            [cdkDropListData]="selectedParticipants"
-            [cdkDropListConnectedTo]="['available-list']"
-            class="driver-pool"
-            (cdkDropListDropped)="drop($event)"
-            #scrollContainer
-            cdkScrollable
-            (selectstart)="preventSelection($event)"
-          >
-            @if (!isRefreshingList) {
-              @for (
-                participant of selectedParticipants;
-                track trackByParticipant(i, participant);
-                let i = $index
-              ) {
-                <div
-                  class="driver-item selected"
-                  cdkDrag
-                  [cdkDragScale]="scale"
-                  [cdkDragData]="participant"
-                  (cdkDragStarted)="onDragStarted($event)"
-                  (dblclick)="toggleParticipantSelection(participant, true)"
-                >
-                  <div class="driver-seed">({{ i + 1 }})</div>
-                  <div class="avatar-container">
-                    @if (
-                      participant.avatarUrl &&
-                      !imageErrors.has(getParticipantUniqueId(participant))
-                    ) {
-                      <img
-                        [src]="getParticipantAvatarUrl(participant)"
-                        (error)="onParticipantImageError(participant)"
-                        class="driver-avatar"
-                        alt="Avatar"
-                        draggable="false"
-                      />
-                    }
-                    @if (
-                      !participant.avatarUrl ||
-                      imageErrors.has(getParticipantUniqueId(participant))
-                    ) {
-                      <svg
-                        class="driver-avatar placeholder"
-                        width="32"
-                        height="32"
-                        viewBox="0 0 24 24"
-                        fill="#64748b"
-                      >
-                        <path
-                          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                        />
-                      </svg>
-                    }
-                  </div>
-                  <div class="driver-details">
-                    <div class="driver-name">
-                      {{ getLocalizedName(participant) }}
-                    </div>
-                    <div class="driver-meta">
-                      @if (isDriver(participant)) {
-                        {{ getLocalizedNickname(participant) }}
-                      } @else {
-                        {{ getLocalizedTeamMembers(participant) }}
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            }
-          </div>
-        </div>
-
-        <!-- Section 2: Available Drivers (Collapsible, connected to Racing) -->
-        <div
-          id="available-drivers-section"
-          class="driver-pool-section"
-          [class.collapsed]="isAvailableDriversCollapsed"
-        >
-          <div
-            class="section-header clickable"
-            (click)="toggleAvailableDrivers()"
-            [title]="'RDS_CLICK_TO_TOGGLE' | translate"
-          >
-            <div class="header-title-container">
-              <span
-                class="expander-icon"
-                [class.collapsed]="isAvailableDriversCollapsed"
-                >▼</span
-              >
               <h3>{{ "RDS_SECTION_AVAILABLE" | translate }}</h3>
             </div>
             <div class="header-actions" (click)="$event.stopPropagation()">
@@ -631,6 +495,166 @@
             }
           </div>
         </div>
+
+        <!-- Section 2: Racing Drivers (Connected Drop List) -->
+        <div id="racing-drivers-section" class="driver-pool-section">
+          <div class="section-header">
+            <div class="header-title-container">
+              <h3>{{ "RDS_SECTION_RACING" | translate }}</h3>
+              <span class="badge">{{ selectedParticipants.length }}</span>
+            </div>
+            <div
+              class="header-actions driver-action-bar"
+              (click)="$event.stopPropagation()"
+            >
+              <button
+                class="action-btn"
+                (click)="openRacingRosterDialog()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_VIEW_ROSTER' | translate"
+                data-testid="btn-view-roster"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"
+                  />
+                </svg>
+              </button>
+              <button
+                class="action-btn"
+                (click)="addAllParticipants()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_ADD_ALL' | translate"
+                data-testid="btn-add-all"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                </svg>
+              </button>
+              <button
+                class="action-btn"
+                (click)="removeAllParticipants()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_REMOVE_ALL' | translate"
+                data-testid="btn-remove-all"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M19 13H5v-2h14v2z" />
+                </svg>
+              </button>
+              <button
+                class="action-btn"
+                (click)="randomizeParticipants()"
+                (mousedown)="$event.preventDefault()"
+                tabindex="-1"
+                [title]="'RDS_BTN_RANDOMIZE' | translate"
+                data-testid="btn-randomize"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div
+            id="selected-list"
+            cdkDropList
+            [cdkDropListData]="selectedParticipants"
+            [cdkDropListConnectedTo]="['available-list']"
+            class="driver-pool"
+            (cdkDropListDropped)="drop($event)"
+            #scrollContainer
+            cdkScrollable
+            (selectstart)="preventSelection($event)"
+          >
+            @if (!isRefreshingList) {
+              @for (
+                participant of selectedParticipants;
+                track trackByParticipant(i, participant);
+                let i = $index
+              ) {
+                <div
+                  class="driver-item selected"
+                  cdkDrag
+                  [cdkDragScale]="scale"
+                  [cdkDragData]="participant"
+                  (cdkDragStarted)="onDragStarted($event)"
+                  (dblclick)="toggleParticipantSelection(participant, true)"
+                >
+                  <div class="driver-seed">({{ i + 1 }})</div>
+                  <div class="avatar-container">
+                    @if (
+                      participant.avatarUrl &&
+                      !imageErrors.has(getParticipantUniqueId(participant))
+                    ) {
+                      <img
+                        [src]="getParticipantAvatarUrl(participant)"
+                        (error)="onParticipantImageError(participant)"
+                        class="driver-avatar"
+                        alt="Avatar"
+                        draggable="false"
+                      />
+                    }
+                    @if (
+                      !participant.avatarUrl ||
+                      imageErrors.has(getParticipantUniqueId(participant))
+                    ) {
+                      <svg
+                        class="driver-avatar placeholder"
+                        width="32"
+                        height="32"
+                        viewBox="0 0 24 24"
+                        fill="#64748b"
+                      >
+                        <path
+                          d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                        />
+                      </svg>
+                    }
+                  </div>
+                  <div class="driver-details">
+                    <div class="driver-name">
+                      {{ getLocalizedName(participant) }}
+                    </div>
+                    <div class="driver-meta">
+                      @if (isDriver(participant)) {
+                        {{ getLocalizedNickname(participant) }}
+                      } @else {
+                        {{ getLocalizedTeamMembers(participant) }}
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
       </div>
 
       <!-- Right Panel: Race Configuration (Beautiful Dark Cards and Neon start) -->
@@ -658,10 +682,6 @@
         <div class="rigid-spacer"></div>
 
         <div class="setup-bottom-section">
-          <div class="race-selection-title">
-            {{ "RDS_SECTION_ALL_RACES" | translate }}
-          </div>
-
           <div class="all-races-selector">
             <div class="custom-dropdown-container">
               <div class="dropdown-trigger" (click)="toggleDropdown($event)">
@@ -682,7 +702,10 @@
                         selectedRace?.entity_id === race.entity_id
                       "
                     >
-                      {{ race.name }}
+                      <span class="check-slot">{{
+                        selectedRace?.entity_id === race.entity_id ? "✓" : ""
+                      }}</span>
+                      <span class="dropdown-item-label">{{ race.name }}</span>
                     </div>
                   }
                   @if (filteredEvents.length > 0) {
@@ -697,8 +720,15 @@
                           selectedEvent?.entity_id === ev.entity_id
                         "
                       >
-                        {{ ev.name }} ({{ ev.races ? ev.races.length : 0 }}
-                        races)
+                        <span class="check-slot">{{
+                          selectedEvent?.entity_id === ev.entity_id ? "✓" : ""
+                        }}</span>
+                        <span class="dropdown-item-label"
+                          >{{ ev.name }} ({{
+                            ev.races ? ev.races.length : 0
+                          }}
+                          races)</span
+                        >
                       </div>
                     }
                   }
@@ -751,127 +781,155 @@
             </div>
           </div>
 
-          @if (selectedEvent) {
-            <div class="event-details-card">
-              <div class="event-detail-header">
-                <div class="event-detail-title">{{ selectedEvent.name }}</div>
-                <div class="event-detail-sub">
-                  Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
+          <div class="setup-summaries-row">
+            @if (selectedEvent) {
+              <div class="event-details-card">
+                <div class="event-detail-header">
+                  <div class="event-detail-title">{{ selectedEvent.name }}</div>
+                  <div class="event-detail-sub">
+                    Auto-Advance: {{ selectedEvent.auto_advance_time || 0 }}s
+                  </div>
                 </div>
-              </div>
-              <div class="event-races-table-header">
-                <table class="race-sequence-table header-table">
-                  <thead>
-                    <tr>
-                      <th class="col-num">#</th>
-                      <th class="col-name">Race Name</th>
-                      <th class="col-method">
-                        {{ "RM_LABEL_FINISH_METHOD" | translate }}
-                      </th>
-                      <th class="col-value">
-                        {{ "RM_LABEL_FINISH_VALUE" | translate }}
-                      </th>
-                      <th class="col-drivers">
-                        {{ "EE_LABEL_MAX_DRIVERS" | translate }}
-                      </th>
-                    </tr>
-                  </thead>
-                </table>
-              </div>
-              <div class="event-races-summary">
-                <table class="race-sequence-table body-table">
-                  <tbody>
-                    @for (
-                      item of selectedEvent.races;
-                      track item;
-                      let idx = $index
-                    ) {
+                <div class="event-races-table-header">
+                  <table class="race-sequence-table header-table">
+                    <thead>
                       <tr>
-                        <td class="col-num">{{ idx + 1 }}</td>
-                        <td class="col-name">
-                          {{ getRaceName(getItemRaceId(item)) }}
-                        </td>
-                        <td class="col-method">
-                          {{ getRaceFinishMethod(getItemRaceId(item)) }}
-                        </td>
-                        <td class="col-value">
-                          {{ getRaceFinishValue(getItemRaceId(item)) }}
-                        </td>
-                        <td class="col-drivers">
-                          @if (getItemMaxDrivers(item) > 0) {
-                            {{ getItemMaxDrivers(item) }}
-                          } @else {
-                            {{ "EE_UNLIMITED" | translate }}
-                          }
-                        </td>
+                        <th class="col-num">#</th>
+                        <th class="col-name">Race Name</th>
+                        <th class="col-method">
+                          {{ "RM_LABEL_FINISH_METHOD" | translate }}
+                        </th>
+                        <th class="col-value">
+                          {{ "RM_LABEL_FINISH_VALUE" | translate }}
+                        </th>
+                        <th class="col-drivers">
+                          {{ "EE_LABEL_MAX_DRIVERS" | translate }}
+                        </th>
                       </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          } @else if (selectedRace) {
-            <div class="event-details-card race-summary-card">
-              <div class="event-detail-title">{{ selectedRace.name }}</div>
-              <div class="summary-grid">
-                <div class="summary-item">
-                  <span class="summary-label"
-                    >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    getHeatRankingDisplay(selectedRace)
-                  }}</span>
+                    </thead>
+                  </table>
                 </div>
-                <div class="summary-item">
-                  <span class="summary-label"
-                    >{{ "RM_LABEL_FINISH_METHOD" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    formatEnumDisplay(
-                      $any(selectedRace).heat_scoring?.finish_method
-                    )
-                  }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label"
-                    >{{ "RM_LABEL_HEAT_ROTATION" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    getHeatRotationTypeDisplay(
-                      $any(selectedRace).heat_rotation_type
-                    )
-                  }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label"
-                    >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    getOverallRankingDisplay(selectedRace)
-                  }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label"
-                    >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    getFinishValueDisplay(selectedRace)
-                  }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label"
-                    >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
-                  >
-                  <span class="summary-value">{{
-                    $any(selectedRace).fuel_options?.enabled ||
-                    $any(selectedRace).digital_fuel_options?.enabled
-                      ? ("GEN_YES" | translate)
-                      : ("GEN_NO" | translate)
-                  }}</span>
+                <div class="event-races-summary">
+                  <table class="race-sequence-table body-table">
+                    <tbody>
+                      @for (
+                        item of selectedEvent.races;
+                        track item;
+                        let idx = $index
+                      ) {
+                        <tr>
+                          <td class="col-num">{{ idx + 1 }}</td>
+                          <td class="col-name">
+                            {{ getRaceName(getItemRaceId(item)) }}
+                          </td>
+                          <td class="col-method">
+                            {{ getRaceFinishMethod(getItemRaceId(item)) }}
+                          </td>
+                          <td class="col-value">
+                            {{ getRaceFinishValue(getItemRaceId(item)) }}
+                          </td>
+                          <td class="col-drivers">
+                            @if (getItemMaxDrivers(item) > 0) {
+                              {{ getItemMaxDrivers(item) }}
+                            } @else {
+                              {{ "EE_UNLIMITED" | translate }}
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
                 </div>
               </div>
-            </div>
-          }
+            } @else if (selectedRace) {
+              <div class="event-details-card race-summary-card">
+                <div class="event-detail-title">{{ selectedRace.name }}</div>
+                <div class="summary-grid">
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_HEAT_RANKING" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      getHeatRankingDisplay(selectedRace)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_OVERALL_RANKING" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      getOverallRankingDisplay(selectedRace)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FINISH_METHOD" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      formatEnumDisplay(
+                        $any(selectedRace).heat_scoring?.finish_method
+                      )
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FINISH_VALUE" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      getFinishValueDisplay(selectedRace)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_HEAT_ROTATION" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      getHeatRotationTypeDisplay(
+                        $any(selectedRace).heat_rotation_type
+                      )
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_FUEL_RACE" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      $any(selectedRace).fuel_options?.enabled ||
+                      $any(selectedRace).digital_fuel_options?.enabled
+                        ? ("GEN_YES" | translate)
+                        : ("GEN_NO" | translate)
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label"
+                      >{{ "RM_LABEL_THEME" | translate }}:</span
+                    >
+                    <span class="summary-value">{{
+                      getThemeDisplay(selectedRace)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (selectedSeason) {
+              <div class="event-details-card season-summary-card">
+                <app-season-summary
+                  [season]="selectedSeason"
+                  [standings]="seasonStandings"
+                  [compact]="true"
+                ></app-season-summary>
+              </div>
+            } @else {
+              <div
+                class="event-details-card season-summary-card empty-season-card"
+              >
+                <div class="empty-standings">
+                  {{ "RDS_NO_SEASON_SELECTED" | translate }}
+                </div>
+              </div>
+            }
+          </div>
 
           @if (getEventDriverLimitWarning()) {
             <div class="event-warning-banner">
@@ -944,22 +1002,63 @@
               class="saved-race-item"
               [class.selected]="selectedSavedRace?.filename === file.filename"
               [class.corrupt]="file.corrupt"
+              [class.editing]="editingSaveFilename === file.filename"
               (click)="selectSavedRace(file)"
             >
-              <span class="race-file-name">{{ file.filename }}</span>
-              @if (file.isDemo) {
-                <span class="demo-indicator-badge">Demo</span>
+              @if (editingSaveFilename === file.filename) {
+                <div
+                  class="inline-rename-container"
+                  (click)="$event.stopPropagation()"
+                >
+                  <input
+                    type="text"
+                    [(ngModel)]="editingSaveNewName"
+                    (keyup.enter)="saveInlineRename(file)"
+                    (keyup.escape)="cancelInlineRename()"
+                    class="inline-rename-input"
+                    [placeholder]="'RDS_ENTER_SAVE_NAME' | translate"
+                    autoFocus
+                  />
+                  <button
+                    class="inline-rename-btn confirm"
+                    (click)="saveInlineRename(file)"
+                    title="Save"
+                  >
+                    &#10004;
+                  </button>
+                  <button
+                    class="inline-rename-btn cancel"
+                    (click)="cancelInlineRename()"
+                    title="Cancel"
+                  >
+                    &times;
+                  </button>
+                </div>
+              } @else {
+                <span class="race-file-name">{{ file.filename }}</span>
+                @if (file.isDemo) {
+                  <span class="demo-indicator-badge">Demo</span>
+                }
+                @if (file.corrupt) {
+                  <span class="corrupt-indicator-badge">Corrupt</span>
+                }
+                <div class="saved-race-actions">
+                  <button
+                    class="rename-saved-btn"
+                    (click)="startInlineRename($event, file)"
+                    [title]="'RDS_RENAME_SAVE_TOOLTIP' | translate"
+                  >
+                    &#9998;
+                  </button>
+                  <button
+                    class="delete-saved-btn"
+                    (click)="deleteSavedRace($event, file)"
+                    title="Delete Save"
+                  >
+                    &times;
+                  </button>
+                </div>
               }
-              @if (file.corrupt) {
-                <span class="corrupt-indicator-badge">Corrupt</span>
-              }
-              <button
-                class="delete-saved-btn"
-                (click)="deleteSavedRace($event, file)"
-                title="Delete Save"
-              >
-                &times;
-              </button>
             </div>
           }
         </div>
@@ -1035,3 +1134,11 @@
   (cancel)="onCancelTrackEditor()"
 >
 </app-confirmation-modal>
+
+<!-- Racing Roster Dialog -->
+<app-racing-roster-dialog
+  [visible]="showRacingRosterDialog"
+  [participants]="selectedParticipants"
+  (close)="closeRacingRosterDialog()"
+>
+</app-racing-roster-dialog>

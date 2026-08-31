@@ -1,7 +1,10 @@
 package com.antigravity.race.states;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.antigravity.models.Driver;
@@ -88,10 +91,12 @@ public class RacingTest {
     double[] times = new double[] {5.0, 0.0};
     when(executionManager.getTimeSinceLastLap()).thenReturn(times);
 
+    org.mockito.Mockito.clearInvocations(race);
     racing.calculateAutoSegments();
 
     assertEquals(0.5, d1.getAutoCalculatedLaps(), 0.001);
     assertEquals(2.5, d1.getAdjustedLapCount(), 0.001);
+    verify(race, never()).broadcast(any());
   }
 
   @Test

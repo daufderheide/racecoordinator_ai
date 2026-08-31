@@ -57,6 +57,74 @@ function findAllScreendiffTests() {
 }
 
 /**
+ * Recursively search for files containing a specific string (used for reverse dependency lookups).
+ */
+function findFilesContainingString(dirPath, searchString) {
+    if (!fs.existsSync(dirPath)) return [];
+    let results = [];
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        if (entry.isDirectory()) {
+            // Skip node_modules, snapshots, and hidden directories
+            if (entry.name === 'node_modules' || entry.name.endsWith('-snapshots') || entry.name.startsWith('.')) continue;
+            results = results.concat(findFilesContainingString(fullPath, searchString));
+        } else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.html'))) {
+            try {
+                const content = fs.readFileSync(fullPath, 'utf8');
+                if (content.includes(searchString)) {
+                    results.push(fullPath);
+                }
+            } catch (e) {
+                // Ignore read errors
+            }
+        }
+    }
+    return results;
+}
+
+/**
+ * Resolves screendiff tests by recursively finding files that import/depend on the target file.
+ */
+function resolveTestsByReverseDependency(filePath, visited = new Set()) {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    if (visited.has(normalizedPath)) return [];
+    visited.add(normalizedPath);
+
+    let currentDir = fs.existsSync(filePath) && fs.statSync(filePath).isDirectory() 
+        ? filePath 
+        : path.dirname(filePath);
+
+    // 1. Search current directory and all subdirectories
+    let tests = findScreendiffTestsInDir(currentDir);
+    if (tests.length > 0) {
+        return tests;
+    }
+
+    // 2. If no tests found, find dependents (files that import this file)
+    const ext = path.extname(filePath);
+    const basename = path.basename(filePath, ext);
+    
+    // Ignore extremely common or short names to avoid full-app false-positive searches
+    if (basename === 'index' || basename === 'module' || basename.length <= 3) {
+        return [];
+    }
+
+    console.error(`Note: No direct tests for ${path.basename(filePath)}. Resolving reverse dependencies...`);
+    const dependents = findFilesContainingString(APP_DIR, basename);
+    
+    let allTests = [];
+    for (const dep of dependents) {
+        if (dep.replace(/\\/g, '/') === normalizedPath) continue;
+        const depTests = resolveTestsByReverseDependency(dep, visited);
+        allTests = allTests.concat(depTests);
+    }
+    
+    return allTests;
+}
+
+
+/**
  * Get list of changed file paths from git.
  * Detects:
  * 1. All changes on current branch compared to main/master (using merge-base `origin/main...`)
@@ -117,6 +185,14 @@ function resolveTestsForFile(filePath) {
         return [];
     }
 
+    // 0b. Sample widgets are rendered by custom widget components in UI Editor and Raceday
+    if (normalized.includes('/client/src/assets/sample-widgets/')) {
+        return [
+            ...findScreendiffTestsInDir(path.join(APP_DIR, 'components', 'ui-editor')),
+            ...findScreendiffTestsInDir(path.join(APP_DIR, 'components', 'raceday'))
+        ];
+    }
+
     // 1. Global styling, index.html, root component, or global assets (images, fonts)
     if (
         normalized.endsWith('/client/src/styles.scss') ||
@@ -143,36 +219,25 @@ function resolveTestsForFile(filePath) {
         return [fullPath];
     }
 
-    // Only process client/src/app files for component-scoped testing
-    if (!normalized.includes('/client/src/app/')) {
+    // Only process client/src/app/components files for component-scoped testing.
+    // Non-UI layers (models, services, converters, pipes, utils, guards, interfaces, proto, race, testing)
+    // are logic/data layers that do not directly define visual rendering.
+    if (!normalized.includes('/client/src/app/components/')) {
         return [];
     }
 
-    let currentDir = fs.existsSync(fullPath) && fs.statSync(fullPath).isDirectory() 
-        ? fullPath 
-        : path.dirname(fullPath);
-
-    // Search current directory and all subdirectories
-    let tests = findScreendiffTestsInDir(currentDir);
-    if (tests.length > 0) {
-        return tests;
-    }
-
-    // Walk up parent directories up to client/src/app
-    const appDirNormalized = APP_DIR.replace(/\\/g, '/');
-    while (currentDir && currentDir.replace(/\\/g, '/').startsWith(appDirNormalized) && currentDir.replace(/\\/g, '/') !== appDirNormalized) {
-        currentDir = path.dirname(currentDir);
-        tests = findScreendiffTestsInDir(currentDir);
-        if (tests.length > 0) {
-            return tests;
-        }
-    }
-
-    return [];
+    // Use reverse dependency resolution to find tests that depend on this file
+    return resolveTestsByReverseDependency(fullPath);
 }
 
 function main() {
     const args = process.argv.slice(2);
+    if (args.includes('--count-all')) {
+        const allTests = findAllScreendiffTests();
+        console.log(allTests.length);
+        process.exit(0);
+    }
+
     let baseRef = null;
     for (const arg of args) {
         if (arg.startsWith('--base=')) {

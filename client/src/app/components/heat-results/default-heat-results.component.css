@@ -78,6 +78,12 @@
   flex-direction: column;
 }
 
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .page-title {
   font-size: 42px;
   font-weight: 800;
@@ -157,7 +163,43 @@
   font-size: 24px;
 }
 
-/* Standings Grid Glass Overlay */
+/* Heats Section */
+.heats-section-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.no-heats-container {
+  padding: 20px;
+}
+
+.no-data-row {
+  text-align: center;
+  padding: 40px;
+  background: rgba(13, 22, 38, 0.3);
+}
+
+.no-data-msg {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.no-data-msg span {
+  font-size: 16px;
+  color: #90a4ae;
+  letter-spacing: 0.5px;
+}
+
+.warning-icon {
+  font-size: 32px;
+  color: #ffaa00;
+}
+
+/* Standings Grid Glass Overlay (Fallback container) */
 .results-container {
   background: rgba(8, 14, 24, 0.72);
   backdrop-filter: blur(16px);
@@ -234,6 +276,10 @@
     min-height: 0 !important;
     overflow: visible !important;
     display: block !important;
+  }
+
+  .scrollable-container {
+    margin: 0 auto !important;
   }
 
   body:not(.print-no-background) .dashboard-wrapper {

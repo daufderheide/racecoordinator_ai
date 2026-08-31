@@ -1,0 +1,37 @@
+{
+  "id": "sample-lap-delta",
+  "name": "Lap Time Delta",
+  "version": "1.0.0",
+  "description": "Displays real-time lap time deltas and intervals between top race competitors",
+  "author": "Race Coordinator AI",
+  "defaultWidth": 350,
+  "defaultHeight": 200,
+  "minWidth": 200,
+  "minHeight": 120,
+  "settingsSchema": [
+    {
+      "key": "title",
+      "label": "Widget Title",
+      "type": "string",
+      "default": "Lap Delta (P1 vs P2)"
+    },
+    {
+      "key": "showMilliseconds",
+      "label": "Show Milliseconds",
+      "type": "boolean",
+      "default": true
+    },
+    {
+      "key": "positiveColor",
+      "label": "Lead Delta Color",
+      "type": "color",
+      "default": "#22c55e"
+    },
+    {
+      "key": "negativeColor",
+      "label": "Trailing Delta Color",
+      "type": "color",
+      "default": "#ef4444"
+    }
+  ]
+}

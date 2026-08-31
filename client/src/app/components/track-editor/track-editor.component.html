@@ -1,6 +1,5 @@
 <div
   class="page-container"
-  [style.transform]="'translate(-50%, -50%) scale(' + scale + ')'"
   [attr.data-is-dirty]="isDirtyState() ? 'true' : 'false'"
 >
   <app-editor-title
@@ -54,6 +53,24 @@
           name="numTrackSectionsInput"
           min="1"
         />
+      </div>
+
+      <div id="track-scale-section" class="editor-section">
+        <label for="track-scale-select">{{
+          "TE_TRACK_SCALE" | translate
+        }}</label>
+        <select
+          id="track-scale-select"
+          [ngModel]="trackScale"
+          (ngModelChange)="onTrackScaleChange($event)"
+          (focus)="onInputFocus()"
+          (blur)="onInputBlur()"
+          name="trackScaleSelect"
+        >
+          @for (opt of trackScaleOptions; track opt.label) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
       </div>
 
       <div class="sections-wrapper">
@@ -117,15 +134,21 @@
                       [style.color]="lane.foreground_color"
                     >
                       <span class="preview-number">#{{ i + 1 }}</span>
-                      <input
-                        [id]="'lane-length-' + i"
-                        type="number"
-                        class="preview-length-input"
-                        [ngModel]="lane.length"
-                        (ngModelChange)="updateLaneLength(i, $event)"
-                        (focus)="onInputFocus()"
-                        (blur)="onInputBlur()"
-                      />
+                      <div class="preview-length-wrapper">
+                        <input
+                          [id]="'lane-length-' + i"
+                          type="number"
+                          step="any"
+                          class="preview-length-input"
+                          [ngModel]="lane.length"
+                          (ngModelChange)="updateLaneLength(i, $event)"
+                          (focus)="onInputFocus()"
+                          (blur)="onInputBlur()"
+                        />
+                        <span class="preview-length-unit">{{
+                          "TE_FEET_UNIT" | translate
+                        }}</span>
+                      </div>
                     </div>
                     <div class="lane-controls">
                       <div class="control-group">
@@ -218,40 +241,8 @@
                       font-weight: 600;
                       text-transform: uppercase;
                     "
-                    >BART (BLE)</span
-                  >
-                  <span class="interface-badge alpha-badge">ALPHA</span>
-                  <div class="spacer"></div>
-                  <button
-                    id="add-bart-btn"
-                    class="action-btn small add-list-btn"
-                    (click)="addBartConfig(); $event.stopPropagation()"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-              <div class="editor-section">
-                <div
-                  class="section-header"
-                  style="
-                    cursor: default;
-                    background: transparent;
-                    padding-left: 0;
-                    min-height: auto;
-                    margin-bottom: 0;
-                  "
-                >
-                  <span
-                    style="
-                      font-size: 1.1rem;
-                      color: #94a3b8;
-                      font-weight: 600;
-                      text-transform: uppercase;
-                    "
                     >Phidget</span
                   >
-                  <span class="interface-badge alpha-badge">ALPHA</span>
                   <div class="spacer"></div>
                   <button
                     id="add-phidget-btn"
@@ -304,6 +295,11 @@
 
     <!-- Track Interface Visualization -->
     <div class="rhs-interface-wrapper">
+      <app-editor-tabs
+        [tabs]="interfaceTabs"
+        (tabClicked)="scrollToAndExpandInterface($event)"
+      ></app-editor-tabs>
+
       <div
         class="preview-panel"
         [style.overflow-y]="
@@ -333,7 +329,7 @@
           track trackByArduinoConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
+          <div class="interface-container" [id]="'interface-arduino-' + i">
             <app-arduino-editor
               [config]="config"
               [lanes]="lanes"
@@ -348,19 +344,19 @@
         }
 
         @for (
-          config of bartConfigs;
-          track trackByBartConfig(i, config);
+          config of trackmateConfigs;
+          track trackByTrackmateConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
-            <app-bart-editor
+          <div class="interface-container" [id]="'interface-trackmate-' + i">
+            <app-trakmate-editor
               [config]="config"
               [lanes]="lanes.length"
               [interfaceIndex]="i + arduinoConfigs.length"
-              (change)="onBartConfigChange()"
-              (remove)="removeBartConfig(i)"
+              (change)="onTrackmateConfigChange()"
+              (remove)="removeTrackmateConfig(i)"
             >
-            </app-bart-editor>
+            </app-trakmate-editor>
           </div>
         }
 
@@ -369,12 +365,14 @@
           track trackByPhidgetConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
+          <div class="interface-container" [id]="'interface-phidget-' + i">
             <app-phidget-editor
               [config]="config"
               [allPhidgetConfigs]="phidgetConfigs"
               [lanes]="lanes.length"
-              [interfaceIndex]="i + arduinoConfigs.length + bartConfigs.length"
+              [interfaceIndex]="
+                i + arduinoConfigs.length + trackmateConfigs.length
+              "
               (change)="onPhidgetConfigChange()"
               (remove)="removePhidgetConfig(i)"
               (driverError)="onPhidgetDriverError()"
@@ -384,24 +382,24 @@
         }
 
         @for (
-          config of trackmateConfigs;
-          track trackByTrackmateConfig(i, config);
+          config of bartConfigs;
+          track trackByBartConfig(i, config);
           let i = $index
         ) {
-          <div class="interface-container">
-            <app-trakmate-editor
+          <div class="interface-container" [id]="'interface-bart-' + i">
+            <app-bart-editor
               [config]="config"
               [lanes]="lanes.length"
               [interfaceIndex]="
                 i +
                 arduinoConfigs.length +
-                bartConfigs.length +
+                trackmateConfigs.length +
                 phidgetConfigs.length
               "
-              (change)="onTrackmateConfigChange()"
-              (remove)="removeTrackmateConfig(i)"
+              (change)="onBartConfigChange()"
+              (remove)="removeBartConfig(i)"
             >
-            </app-trakmate-editor>
+            </app-bart-editor>
           </div>
         }
       </div>

@@ -52,11 +52,8 @@ public abstract class DefaultProtocol implements IProtocol {
   protected byte hwReset = 1;
 
   // Input states
-  protected boolean[] laneInPits;
-  protected long[] lastRefuelTimeMs;
+  protected PitManager pitManager;
   protected long[] lastAnalogTimeMs;
-  protected int[] lastPitOutState;
-  protected int[] lastLapPinState;
   protected Map<Integer, Integer> lastCallButtonState = new HashMap<>();
   protected Map<Integer, Boolean> pinStateCache = new HashMap<>();
 
@@ -64,10 +61,12 @@ public abstract class DefaultProtocol implements IProtocol {
   protected Boolean lastMainPower = null;
   protected Map<Integer, Boolean> lastLanePower = new HashMap<>();
 
+  // Heat leader state
+  protected Integer lastLeaderLane = null;
+
   // Scheduling
   protected ScheduledExecutorService statusScheduler;
   protected ScheduledFuture<?> statusFuture;
-  protected ScheduledFuture<?> refuelFuture;
   protected volatile long lastHeartbeatTimeMs = 0;
   protected volatile long openTimeMs = 0;
   protected volatile long lastReconnectAttemptTimeMs = 0;
@@ -86,16 +85,16 @@ public abstract class DefaultProtocol implements IProtocol {
       this.hwSegmentTime[i] = new HwTime();
     }
 
-    this.laneInPits = new boolean[numLanes];
-    this.lastRefuelTimeMs = new long[numLanes];
+    this.pitManager =
+        new PitManager(
+            numLanes,
+            this::hasPitInConfigured,
+            () -> this.listener,
+            this::now,
+            () -> this.statusScheduler);
     this.lastAnalogTimeMs = new long[numLanes];
-    this.lastPitOutState = new int[numLanes];
-    this.lastLapPinState = new int[numLanes];
     for (int i = 0; i < numLanes; i++) {
-      this.lastRefuelTimeMs[i] = 0;
       this.lastAnalogTimeMs[i] = 0;
-      this.lastPitOutState[i] = -1;
-      this.lastLapPinState[i] = -1;
     }
   }
 
@@ -110,7 +109,8 @@ public abstract class DefaultProtocol implements IProtocol {
 
   protected abstract double getHardwareDebounceUs();
 
-  protected abstract boolean hasPitInConfigured(int laneIndex);
+  @Override
+  public abstract boolean hasPitInConfigured(int laneIndex);
 
   protected long now() {
     return System.currentTimeMillis();
@@ -155,40 +155,7 @@ public abstract class DefaultProtocol implements IProtocol {
               ANALOG_LED_BLINK_INTERVAL_MS,
               TimeUnit.MILLISECONDS);
 
-      refuelFuture =
-          statusScheduler.scheduleAtFixedRate(
-              () -> {
-                try {
-                  if (listener != null) {
-                    long currentTime = now();
-                    for (int laneIndex = 0; laneIndex < numLanes; laneIndex++) {
-                      if (laneInPits[laneIndex]) {
-                        double deltaTimeSeconds = 0.0;
-                        if (lastRefuelTimeMs[laneIndex] > 0) {
-                          deltaTimeSeconds = (currentTime - lastRefuelTimeMs[laneIndex]) / 1000.0;
-                        }
-                        lastRefuelTimeMs[laneIndex] = currentTime;
-
-                        listener.onCarData(
-                            new CarData(
-                                laneIndex,
-                                deltaTimeSeconds,
-                                0.0,
-                                0.0,
-                                true,
-                                CarLocation.PitRow,
-                                CarLocation.PitRow,
-                                -1));
-                      }
-                    }
-                  }
-                } catch (Exception e) {
-                  logger.error("Error in refuel scheduler", e);
-                }
-              },
-              0,
-              100,
-              TimeUnit.MILLISECONDS);
+      pitManager.start();
     } catch (RejectedExecutionException e) {
       logger.warn("Status scheduler task rejected during startup: {}", e.getMessage());
     }
@@ -203,9 +170,8 @@ public abstract class DefaultProtocol implements IProtocol {
       analogLedFuture.cancel(true);
       analogLedFuture = null;
     }
-    if (refuelFuture != null) {
-      refuelFuture.cancel(true);
-      refuelFuture = null;
+    if (pitManager != null) {
+      pitManager.stop();
     }
     if (statusScheduler != null) {
       statusScheduler.shutdownNow();
@@ -354,34 +320,16 @@ public abstract class DefaultProtocol implements IProtocol {
         listener.onLap(laneIndex, time, interfaceId, getInterfaceIndex());
 
         ArduinoConfig.LapPinPitBehavior behavior = getLapPinPitBehavior();
-        if (behavior == ArduinoConfig.LapPinPitBehavior.PIT_IN
-            || behavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
-          if (state == wantState) {
-            updatePitState(laneIndex, true);
-          }
-        } else if (behavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-          if (hasPitInConfigured(laneIndex)) {
-            if (state != wantState && lastLapPinState[laneIndex] == wantState) {
-              updatePitState(laneIndex, false);
-            }
-          } else {
-            if (state == wantState) {
-              updatePitState(laneIndex, false);
-            }
-          }
+        if (behavior != null && behavior != ArduinoConfig.LapPinPitBehavior.NONE) {
+          pitManager.handleLapPinPit(laneIndex, behavior, state == wantState);
         }
       }
     } else {
       ArduinoConfig.LapPinPitBehavior behavior = getLapPinPitBehavior();
-      if (behavior == ArduinoConfig.LapPinPitBehavior.PIT_IN_OUT) {
-        updatePitState(laneIndex, false);
-      } else if (behavior == ArduinoConfig.LapPinPitBehavior.PIT_OUT) {
-        if (hasPitInConfigured(laneIndex) && lastLapPinState[laneIndex] == wantState) {
-          updatePitState(laneIndex, false);
-        }
+      if (behavior != null && behavior != ArduinoConfig.LapPinPitBehavior.NONE) {
+        pitManager.handleLapPinPit(laneIndex, behavior, state == wantState);
       }
     }
-    lastLapPinState[laneIndex] = state;
   }
 
   protected void handleSegmentCounter(int laneIndex, int state, int interfaceId) {
@@ -433,58 +381,27 @@ public abstract class DefaultProtocol implements IProtocol {
   protected void handlePitIn(int laneIndex, int state) {
     if (laneIndex < 0 || laneIndex >= numLanes) return;
     int wantState = isNormallyClosedLaneSensors() ? 1 : 0;
-    if (state == wantState) {
-      updatePitState(laneIndex, true);
-    }
+    pitManager.handlePitIn(laneIndex, state == wantState);
   }
 
   protected void handlePitOut(int laneIndex, int state) {
     if (laneIndex < 0 || laneIndex >= numLanes) return;
     int wantState = isNormallyClosedLaneSensors() ? 1 : 0;
-
-    if (hasPitInConfigured(laneIndex)) {
-      if (lastPitOutState[laneIndex] == wantState && state != wantState) {
-        updatePitState(laneIndex, false);
-      }
-    } else {
-      updatePitState(laneIndex, state == wantState);
-    }
-    lastPitOutState[laneIndex] = state;
+    pitManager.handlePitOut(laneIndex, state == wantState);
   }
 
   protected void handlePitOutPulse(int laneIndex) {
-    int activeState = isNormallyClosedLaneSensors() ? 1 : 0;
-    int inactiveState = isNormallyClosedLaneSensors() ? 0 : 1;
-    handlePitOut(laneIndex, activeState);
-    handlePitOut(laneIndex, inactiveState);
+    pitManager.handlePitOutPulse(laneIndex);
   }
 
   protected void handlePitInOut(int laneIndex, int state) {
     if (laneIndex < 0 || laneIndex >= numLanes) return;
     int wantState = isNormallyClosedLaneSensors() ? 1 : 0;
-    updatePitState(laneIndex, state == wantState);
+    pitManager.handlePitInOut(laneIndex, state == wantState);
   }
 
   protected void updatePitState(int laneIndex, boolean inPits) {
-    if (laneInPits[laneIndex] != inPits) {
-      logger.info(
-          "updatePitState: Lane {} transition to {}", laneIndex, inPits ? "IN_PITS" : "OUT_PITS");
-      laneInPits[laneIndex] = inPits;
-
-      if (inPits) {
-        lastRefuelTimeMs[laneIndex] = now();
-        if (listener != null) {
-          listener.onCarData(
-              new CarData(laneIndex, 0.0, 0, 0, true, CarLocation.PitRow, CarLocation.Main, -1));
-        }
-      } else {
-        lastRefuelTimeMs[laneIndex] = 0;
-        if (listener != null) {
-          listener.onCarData(
-              new CarData(laneIndex, 0.0, 0, 0, false, CarLocation.Main, CarLocation.PitRow, -1));
-        }
-      }
-    }
+    pitManager.updatePitState(laneIndex, inPits);
   }
 
   // Base IProtocol methods
@@ -559,6 +476,7 @@ public abstract class DefaultProtocol implements IProtocol {
     for (int i = 0; i < 5; i++) {
       isCountdownOn[i] = false;
     }
+    lastLeaderLane = null;
     onAnalogLedsChanged();
   }
 
@@ -702,5 +620,26 @@ public abstract class DefaultProtocol implements IProtocol {
   }
 
   @Override
-  public void initializeHardwareState() {}
+  public boolean isLaneInPits(int laneIndex) {
+    return pitManager != null && pitManager.isLaneInPits(laneIndex);
+  }
+
+  @Override
+  public void setPitManager(PitManager pitManager) {
+    if (this.pitManager != null && this.pitManager != pitManager) {
+      this.pitManager.stop();
+    }
+    this.pitManager =
+        pitManager != null
+            ? pitManager
+            : new PitManager(numLanes, this::hasPitInConfigured, () -> this.listener);
+  }
+
+  @Override
+  public void initializeHardwareState() {
+    if (pitManager != null) {
+      pitManager.reset();
+    }
+    lastLeaderLane = null;
+  }
 }

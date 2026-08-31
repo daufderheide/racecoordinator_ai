@@ -26,6 +26,9 @@ export class AboutDialogHarness
   protected getCreditsPanelElement = this.locatorForOptional(
     AboutDialogHarnessBase.selectors.creditsPanel,
   );
+  protected getCreditNamesElements = this.locatorForAll(
+    AboutDialogHarnessBase.selectors.creditNames,
+  );
   protected getTabButtons = this.locatorForAll(
     AboutDialogHarnessBase.selectors.tabButtons,
   );
@@ -70,5 +73,10 @@ export class AboutDialogHarness
 
   async isCreditsTabVisible(): Promise<boolean> {
     return (await this.getCreditsPanelElement()) !== null;
+  }
+
+  async getCreditNames(): Promise<string[]> {
+    const elements = await this.getCreditNamesElements();
+    return Promise.all(elements.map((el) => el.text()));
   }
 }

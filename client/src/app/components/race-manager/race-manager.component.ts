@@ -15,6 +15,10 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
@@ -38,6 +42,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
   styleUrls: ["./race-manager.component.css"],
   imports: [
     ConfirmationModalComponent,
+    EditorTabsComponent,
     ManagerHeaderComponent,
     HeatListComponent,
     TranslatePipe,
@@ -47,6 +52,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   races: any[] = [];
   tracks: any[] = [];
+  themes: any[] = [];
   selectedRace?: any;
   editingRace?: any;
   isLoading: boolean = true;
@@ -162,7 +168,6 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 
@@ -216,6 +221,16 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.logger.error("Failed to load tracks", err);
+      },
+    });
+
+    this.dataService.getThemes().subscribe({
+      next: (themes) => {
+        this.themes = themes || [];
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to load themes", err);
       },
     });
   }
@@ -377,6 +392,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         ranking_method: "LAP_COUNT",
         tiebreaker: "TOTAL_TIME",
       },
+      min_lap_time: 1.5,
     };
 
     if (this.tracks && this.tracks.length > 0) {
@@ -457,6 +473,58 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
     return val !== undefined && val !== null ? String(val) : "";
   }
 
+  getThemeDisplayNameKey(theme: any): string {
+    if (!theme) return "";
+    if (
+      theme.entity_id === "default_classic_rc_ai" ||
+      theme.id === "default_classic_rc_ai" ||
+      theme._id === "default_classic_rc_ai"
+    ) {
+      return "UE_LABEL_DEFAULT_THEME";
+    }
+    if (
+      theme.entity_id === "practice_theme_rc_ai" ||
+      theme.id === "practice_theme_rc_ai" ||
+      theme._id === "practice_theme_rc_ai"
+    ) {
+      return "UE_LABEL_PRACTICE_THEME";
+    }
+    if (
+      theme.entity_id === "default_fuel_theme_rc_ai" ||
+      theme.id === "default_fuel_theme_rc_ai" ||
+      theme._id === "default_fuel_theme_rc_ai"
+    ) {
+      return "UE_LABEL_FUEL_THEME";
+    }
+    return theme.name || theme.entity_id || "";
+  }
+
+  getThemeDisplay(race: any): string {
+    const themeId = race?.theme_id || "default_classic_rc_ai";
+    const theme = this.themes.find(
+      (t) => (t.entity_id || t.id || t._id) === themeId,
+    );
+    if (theme) {
+      const key = this.getThemeDisplayNameKey(theme);
+      return this.translationService.translate(key) || theme.name || themeId;
+    }
+    if (themeId === "default_classic_rc_ai") {
+      return (
+        this.translationService.translate("UE_LABEL_DEFAULT_THEME") || "Default"
+      );
+    }
+    if (themeId === "practice_theme_rc_ai") {
+      return (
+        this.translationService.translate("UE_LABEL_PRACTICE_THEME") ||
+        "Practice"
+      );
+    }
+    if (themeId === "default_fuel_theme_rc_ai") {
+      return this.translationService.translate("UE_LABEL_FUEL_THEME") || "Fuel";
+    }
+    return themeId;
+  }
+
   getHelpSteps(): GuideStep[] {
     return [
       {
@@ -477,5 +545,46 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         position: "left",
       },
     ];
+  }
+
+  get detailTabs(): EditorTab[] {
+    if (!this.selectedRace) return [];
+    return [
+      {
+        id: "summary-general",
+        label:
+          this.translationService.translate("RM_HEADER_SUMMARY") || "Summary",
+      },
+      {
+        id: "summary-heats",
+        label:
+          this.translationService.translate("RM_HEADER_HEAT_LIST") || "Heats",
+      },
+    ];
+  }
+
+  scrollToSection(tabId: string) {
+    if (tabId === "summary-general") {
+      this.isSummaryExpanded = true;
+    } else if (tabId === "summary-heats") {
+      this.isHeatListExpanded = true;
+    }
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".detail-content");
+      if (element && container) {
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+        container.scrollTo({
+          top: topPos,
+          behavior: "smooth",
+        });
+      } else if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
   }
 }

@@ -5,6 +5,7 @@ import { of, Subject } from "rxjs";
 import { Settings } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
+import { CLIENT_VERSION } from "@app/version";
 
 import { AnalyticsService } from "./analytics.service";
 import { DataService } from "./data.service";
@@ -155,7 +156,7 @@ describe("AnalyticsService", () => {
         {
           send_page_view: false,
           client_id: "test-client-id-123",
-          client_version: "0.0.0.22",
+          client_version: CLIENT_VERSION,
           server_version: "1.2.3",
         },
       ]);

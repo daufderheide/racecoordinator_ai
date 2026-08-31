@@ -12,6 +12,10 @@ export class LaneViewInspectorHarness
     LaneViewInspectorHarnessBase.selectors.selects,
   );
 
+  protected getWidthInputs = this.locatorForAll(
+    LaneViewInspectorHarnessBase.selectors.columnWidthInputs,
+  );
+
   async getTimeDecimalPlaces(): Promise<number> {
     const selects = await this.getSelects();
     return Number(await selects[0].getProperty("value"));
@@ -32,5 +36,18 @@ export class LaneViewInspectorHarness
     const selects = await this.getSelects();
     await selects[1].sendKeys(val.toString());
     await selects[1].dispatchEvent("change");
+  }
+
+  async getColumnWidth(columnIndex: number): Promise<number> {
+    const inputs = await this.getWidthInputs();
+    return Number(await inputs[columnIndex].getProperty("value"));
+  }
+
+  async setColumnWidth(columnIndex: number, val: number): Promise<void> {
+    const inputs = await this.getWidthInputs();
+    await inputs[columnIndex].clear();
+    await inputs[columnIndex].sendKeys(val.toString());
+    await inputs[columnIndex].dispatchEvent("input");
+    await inputs[columnIndex].dispatchEvent("change");
   }
 }

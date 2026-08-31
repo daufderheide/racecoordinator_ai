@@ -47,6 +47,7 @@ export function createRaceManagerDataServiceMock(): any {
   const mock = jasmine.createSpyObj("DataService", [
     "getRaces",
     "getTracks",
+    "getThemes",
     "createRace",
     "updateRace",
     "deleteRace",
@@ -95,6 +96,7 @@ export function createRaceManagerDataServiceMock(): any {
   mock.generateHeats.and.returnValue(of({ heats: [] }));
   mock.previewHeats.and.returnValue(of({ heats: [] }));
   mock.listAssets.and.returnValue(of([]));
+  mock.getThemes.and.returnValue(of([]));
 
   return mock;
 }

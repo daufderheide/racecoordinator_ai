@@ -216,4 +216,20 @@ describe("UpdateSelectorComponent", () => {
     expect(betaItem.nativeElement.classList.contains("disabled")).toBeFalse();
     expect(betaItem.nativeElement.getAttribute("title")).toBe("");
   });
+
+  it("should close dropdown when another submenu is opened", () => {
+    component.isUpdateDropdownOpen = true;
+    component.onOtherSubmenuOpened(
+      new CustomEvent("rc-submenu-opened", { detail: {} }),
+    );
+    expect(component.isUpdateDropdownOpen).toBeFalse();
+  });
+
+  it("should not close dropdown when this component opened event fires", () => {
+    component.isUpdateDropdownOpen = true;
+    component.onOtherSubmenuOpened(
+      new CustomEvent("rc-submenu-opened", { detail: component }),
+    );
+    expect(component.isUpdateDropdownOpen).toBeTrue();
+  });
 });

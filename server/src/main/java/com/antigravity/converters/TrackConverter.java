@@ -20,6 +20,7 @@ public class TrackConverter {
           .setModel(Model.newBuilder().setEntityId(track.getObjectId()).build())
           .setName(track.getName())
           .setNumTrackSections(track.getNumTrackSections())
+          .setTrackScale(track.getTrackScale())
           .setHasDigitalFuel(hasDigitalFuel(track))
           .setHasPerLaneRelays(hasPerLaneRelays(track))
           .setHasMainRelay(hasMainRelay(track))

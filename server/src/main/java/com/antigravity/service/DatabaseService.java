@@ -15,6 +15,7 @@ import com.antigravity.models.Season;
 import com.antigravity.models.SeasonRaceRecord;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RecordData;
 import com.antigravity.race.EventExecutionManager;
@@ -91,6 +92,10 @@ public class DatabaseService {
 
   public Track getTrack(DatabaseContext context, String entityId) {
     return new SqliteRepository<>(context, "tracks", Track.class).findByEntityId(entityId);
+  }
+
+  public Theme getTheme(DatabaseContext context, String entityId) {
+    return new SqliteRepository<>(context, "themes", Theme.class).findByEntityId(entityId);
   }
 
   public Driver getDriver(DatabaseContext context, String entityId) {
@@ -471,6 +476,53 @@ public class DatabaseService {
 
   public boolean deleteSavedRace(DatabaseContext context, String saveName, boolean isDemo) {
     return deleteSavedRace(context, saveName, RaceScope.fromBoolean(isDemo));
+  }
+
+  public boolean renameSavedRace(
+      DatabaseContext context, String oldSaveName, String newSaveName, RaceScope scope) {
+    if (context == null
+        || oldSaveName == null
+        || newSaveName == null
+        || newSaveName.trim().isEmpty()) {
+      return false;
+    }
+    String tableName = getCollectionName("saved_races", scope);
+    context.ensureTable(tableName);
+    RaceSaveData existing = getSavedRace(context, oldSaveName, scope);
+    if (existing == null) {
+      return false;
+    }
+
+    String normalizedNewName = newSaveName.trim();
+    if (!normalizedNewName.toLowerCase().endsWith(".json")) {
+      normalizedNewName += ".json";
+    }
+    existing.setSaveName(normalizedNewName);
+
+    String sql =
+        "UPDATE "
+            + tableName
+            + " SET sequence_id = ?, entity_id = ?, json_data = ? "
+            + " WHERE sequence_id = ? OR entity_id = ? OR json_extract(json_data, '$.saveName') = ? OR json_extract(json_data, '$.save_name') = ?";
+    try (PreparedStatement pstmt = context.getConnection().prepareStatement(sql)) {
+      pstmt.setString(1, normalizedNewName);
+      pstmt.setString(2, normalizedNewName);
+      pstmt.setString(3, objectMapper.writeValueAsString(existing));
+      pstmt.setString(4, oldSaveName);
+      pstmt.setString(5, oldSaveName);
+      pstmt.setString(6, oldSaveName);
+      pstmt.setString(7, oldSaveName);
+      int rows = pstmt.executeUpdate();
+      return rows > 0;
+    } catch (Exception e) {
+      logger.error("Error renaming saved race from {} to {}", oldSaveName, normalizedNewName, e);
+      return false;
+    }
+  }
+
+  public boolean renameSavedRace(
+      DatabaseContext context, String oldSaveName, String newSaveName, boolean isDemo) {
+    return renameSavedRace(context, oldSaveName, newSaveName, RaceScope.fromBoolean(isDemo));
   }
 
   public void resetRaceData(DatabaseContext context, String raceEntityId) {

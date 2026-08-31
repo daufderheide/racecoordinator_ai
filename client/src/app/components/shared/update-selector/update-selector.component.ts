@@ -73,6 +73,11 @@ export class UpdateSelectorComponent implements OnInit {
   toggleDropdown(event: Event) {
     event.stopPropagation();
     this.isUpdateDropdownOpen = !this.isUpdateDropdownOpen;
+    if (this.isUpdateDropdownOpen) {
+      window.dispatchEvent(
+        new CustomEvent("rc-submenu-opened", { detail: this }),
+      );
+    }
     this.cdr.markForCheck();
   }
 
@@ -104,6 +109,14 @@ export class UpdateSelectorComponent implements OnInit {
       },
     });
     this.cdr.markForCheck();
+  }
+
+  @HostListener("window:rc-submenu-opened", ["$event"])
+  onOtherSubmenuOpened(event: Event) {
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail !== this) {
+      this.closeDropdown();
+    }
   }
 
   @HostListener("document:click", ["$event"])

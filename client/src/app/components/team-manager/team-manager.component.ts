@@ -138,7 +138,6 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
 
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
-
     this.scale = Math.min(scaleX, scaleY);
   }
 

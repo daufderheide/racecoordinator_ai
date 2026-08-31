@@ -1,11 +1,16 @@
 import { DragDropModule } from "@angular/cdk/drag-drop";
-import { CommonModule } from "@angular/common";
+import { CommonModule, NgComponentOutlet } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  inject,
   input,
+  OnDestroy,
+  OnInit,
+  Type,
   ViewEncapsulation,
 } from "@angular/core";
+import { Subscription } from "rxjs";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
 import { RacedayEventNameComponent } from "@app/components/raceday/components/raceday-event-name/raceday-event-name.component";
@@ -27,6 +32,8 @@ import { RacedaySeasonRaceLeaderboardComponent } from "@app/components/raceday/c
 import { RacedayTimerComponent } from "@app/components/raceday/components/raceday-timer/raceday-timer.component";
 import { RacedayTrackNameComponent } from "@app/components/raceday/components/raceday-track-name/raceday-track-name.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
+import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { CustomWidgetService } from "@app/services/custom-widget.service";
 
 @Component({
   standalone: true,
@@ -36,7 +43,9 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
   encapsulation: ViewEncapsulation.None,
   imports: [
     CommonModule,
+    NgComponentOutlet,
     DragDropModule,
+    TranslatePipe,
     RacedayMenuBarComponent,
     RacedayRaceNameComponent,
     RacedayEventNameComponent,
@@ -59,11 +68,14 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
     RacedayActionButtonComponent,
   ],
 })
-export class RacedayAbsoluteWidgetComponent {
+export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
   widget = input.required<AbsoluteWidgetNode>();
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
+
+  private customWidgetService = inject(CustomWidgetService);
+  private widgetSub?: Subscription;
 
   get isSelected(): boolean {
     return this.selectedWidgetId() === this.widget().id;
@@ -78,6 +90,18 @@ export class RacedayAbsoluteWidgetComponent {
   private startPointerY = 0;
 
   constructor(private cdr: ChangeDetectorRef) {}
+
+  ngOnInit() {
+    if (this.customWidgetService?.customWidgets$) {
+      this.widgetSub = this.customWidgetService.customWidgets$.subscribe(() => {
+        this.cdr.markForCheck();
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    this.widgetSub?.unsubscribe();
+  }
 
   onResizeStart(event: PointerEvent, handle: string) {
     if (!this.isCustomizing()) return;
@@ -236,5 +260,61 @@ export class RacedayAbsoluteWidgetComponent {
     if (this.parentComponent() && this.parentComponent().bringToFront) {
       this.parentComponent().bringToFront(this.widget().id);
     }
+  }
+
+  isCustomWidget(type: string | undefined): boolean {
+    if (!type) return false;
+    if (
+      this.customWidgetService &&
+      typeof this.customWidgetService.isCustomWidget === "function"
+    ) {
+      return this.customWidgetService.isCustomWidget(type);
+    }
+    return type.startsWith("custom:");
+  }
+
+  getCustomWidgetComponent(type: string | undefined): Type<any> | null {
+    if (
+      this.customWidgetService &&
+      typeof this.customWidgetService.getWidgetComponent === "function"
+    ) {
+      return this.customWidgetService.getWidgetComponent(type) ?? null;
+    }
+    return null;
+  }
+
+  getCustomWidgetName(type: string | undefined): string {
+    if (
+      this.customWidgetService &&
+      typeof this.customWidgetService.getWidgetDefinition === "function"
+    ) {
+      const def = this.customWidgetService.getWidgetDefinition(type);
+      if (def?.manifest?.name) {
+        return def.manifest.name;
+      }
+    }
+    if (type?.startsWith("custom:")) {
+      return type.substring("custom:".length);
+    }
+    return type || "";
+  }
+
+  getCustomWidgetError(type: string | undefined): string | undefined {
+    if (
+      this.customWidgetService &&
+      typeof this.customWidgetService.getWidgetDefinition === "function"
+    ) {
+      const def = this.customWidgetService.getWidgetDefinition(type);
+      return def?.error;
+    }
+    return undefined;
+  }
+
+  getCustomWidgetInputs() {
+    return {
+      widget: this.widget(),
+      parent: this.parentComponent(),
+      isCustomizing: this.isCustomizing(),
+    };
   }
 }

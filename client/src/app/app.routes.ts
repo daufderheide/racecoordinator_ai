@@ -2,6 +2,7 @@ import { Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
+import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
 import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
@@ -51,6 +52,12 @@ export const routes: Routes = [
     component: RacedaySetupComponent,
     title: "Raceday Setup",
     data: { animation: "RacedaySetupPage" },
+  },
+  {
+    path: "display-client",
+    component: DisplayClient,
+    title: "Display Client",
+    data: { animation: "DisplayClientPage" },
   },
   {
     path: "asset-manager",

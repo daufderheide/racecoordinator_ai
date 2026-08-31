@@ -1,28 +1,29 @@
 :host {
-    display: block;
-    width: 100vw;
-    height: 100vh;
-    background-color: #0b1011;
-    color: #e0f2f1;
-    font-family: 'Inter', sans-serif;
-    position: relative;
-    overflow: hidden;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  color: #e2e8f0;
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
+  position: relative;
 }
 
 .page-container {
-  width: 1600px;
-  height: 900px;
+  width: 100%;
+  height: 100%;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform-origin: center center;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-  background-image: url('../../../assets/images/track_manager_bg.png');
-  background-size: 1600px 900px;
-  background-position: center;
-  background-repeat: no-repeat;
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 40%),
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 30px 30px, 30px 30px;
   overflow: hidden;
 }
 
@@ -32,19 +33,39 @@
   display: flex;
   gap: 20px;
   overflow: hidden;
-  margin: 0 55px 45px 55px;
+  margin: 0;
+  padding: 0 30px 24px 30px;
+  transform: translateZ(0);
+  will-change: transform;
+  border-top: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
 }
 
 /* Editor Panel (Left) */
 .editor-panel {
-  margin-left: 90px;
   width: 300px;
-  height: calc(100% - 50px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   background-color: transparent;
-  padding-top: 50px;
-  overflow: visible;
+  padding-top: 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0;
+}
+
+.editor-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.editor-panel::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 10px;
+}
+
+.editor-panel::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
 }
 
 .editor-section {
@@ -97,16 +118,14 @@
   flex: 1;
   border: none;
   border-radius: 0;
-  margin-left: 160px;
-  margin-top: 50px;
-  margin-right: 105px;
-  margin-bottom: 40px;
+  margin: 0;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: transparent;
-  padding: 0;
+  padding: 15px 10px 0 20px;
+  border-left: 1px solid rgba(56, 189, 248, 0.15);
 }
 
 /* Custom Scrollbar for Preview Panel */
@@ -207,6 +226,7 @@
   cursor: not-allowed;
   transform: none;
 }
+
 #driver-avatar-section {
   align-items: center;
 }
@@ -229,40 +249,40 @@
 /* OVERLAYS */
 .loader-overlay,
 .connection-lost-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .spinner,
 .connection-spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid rgba(0, 255, 255, 0.3);
-    border-top-color: #00ffff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 20px;
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(0, 255, 255, 0.3);
+  border-top-color: #00ffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
 }
 
 @keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .connection-lost-text {
-    color: #00ffff;
-    font-size: 24px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
+  color: #00ffff;
+  font-size: 24px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
 }

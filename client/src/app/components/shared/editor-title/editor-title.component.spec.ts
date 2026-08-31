@@ -105,4 +105,9 @@ describe("EditorTitleComponent", () => {
     fixture.detectChanges();
     expect(component.isHeatsEqual()).toBeTrue();
   });
+
+  it("should contain app-browser-navigation element", () => {
+    const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
+    expect(navEl).toBeTruthy();
+  });
 });

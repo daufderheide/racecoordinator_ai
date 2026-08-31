@@ -16,7 +16,10 @@
           />
         </div>
         <div class="title-glow-container">
-          <h1 class="page-title">{{ driver?.nickname || driver?.name }}</h1>
+          <div class="title-row">
+            <app-browser-navigation></app-browser-navigation>
+            <h1 class="page-title">{{ driver?.nickname || driver?.name }}</h1>
+          </div>
           @if (driver?.nickname && driver?.nickname !== driver?.name) {
             <div class="driver-sub-name">{{ driver?.name }}</div>
           }

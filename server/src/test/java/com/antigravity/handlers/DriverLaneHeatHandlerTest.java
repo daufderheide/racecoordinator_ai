@@ -157,5 +157,39 @@ public class DriverLaneHeatHandlerTest {
     when(ctx.pathParam("lane")).thenReturn("all");
     handler.resetLaneHeatData(ctx);
     verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+
+    // updateUserLaps on unstarted heat
+    Map<String, String> pathParams = new HashMap<>();
+    pathParams.put("lane", "0");
+    Map<String, Object> body = new HashMap<>();
+    body.put("userLaps", 1.5);
+    handler.updateUserLaps(ctx, pathParams, body);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(
+        1.5, activeRace.getCurrentHeat().getDrivers().get(0).getUserLaps(), 0.001);
+
+    // updateHeatUserLaps on unstarted heat
+    when(ctx.pathParam("heatNumber")).thenReturn("1");
+    when(ctx.pathParam("lane")).thenReturn("1");
+    HashMap<String, Object> heatBody = new HashMap<>();
+    heatBody.put("userLaps", 2.25);
+    when(ctx.bodyAsClass(HashMap.class)).thenReturn(heatBody);
+    handler.updateHeatUserLaps(ctx);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(
+        2.25, activeRace.getHeats().get(0).getDrivers().get(1).getUserLaps(), 0.001);
+
+    // updateBatchUserLaps on unstarted heat
+    java.util.ArrayList<Map<String, Object>> updates = new java.util.ArrayList<>();
+    Map<String, Object> u1 = new HashMap<>();
+    u1.put("heatNumber", 1);
+    u1.put("laneIndex", 0);
+    u1.put("userLaps", 3.75);
+    updates.add(u1);
+    when(ctx.bodyAsClass(java.util.List.class)).thenReturn(updates);
+    handler.updateBatchUserLaps(ctx);
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(
+        3.75, activeRace.getHeats().get(0).getDrivers().get(0).getUserLaps(), 0.001);
   }
 }

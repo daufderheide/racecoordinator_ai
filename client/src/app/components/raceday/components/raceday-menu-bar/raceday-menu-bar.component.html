@@ -118,7 +118,7 @@
             class="menu-item has-submenu"
             (click)="toggleTrackPowerMenu(); $event.stopPropagation()"
           >
-            {{ "RD_MENU_TRACK_POWER" | translate }}
+            <span>{{ "RD_MENU_TRACK_POWER" | translate }}</span>
             <span class="submenu-arrow">▶</span>
             @if (isTrackPowerMenuOpen) {
               <div class="menu-dropdown submenu">
@@ -256,13 +256,15 @@
             class="menu-item has-submenu"
             (click)="toggleDriversStationMenu(); $event.stopPropagation()"
           >
-            {{ "RD_MENU_DRIVERS_STATION" | translate }}
+            <span>{{ "RD_MENU_DRIVERS_STATION" | translate }}</span>
             <span class="submenu-arrow">▶</span>
             @if (isDriversStationOpen) {
               <div class="menu-dropdown submenu">
                 @for (lane of track()!.lanes; track lane; let i = $index) {
                   <div class="menu-item" (click)="onLaneMenuSelect(i)">
-                    {{ "RD_MENU_LANE" | translate: { lane: i + 1 } }}
+                    <span>{{
+                      "RD_MENU_LANE" | translate: { lane: i + 1 }
+                    }}</span>
                   </div>
                 }
               </div>
@@ -272,7 +274,7 @@
             class="menu-item has-submenu"
             (click)="toggleDriversViewMenu(); $event.stopPropagation()"
           >
-            {{ "RD_MENU_DRIVERS_VIEW" | translate }}
+            <span>{{ "RD_MENU_DRIVERS_VIEW" | translate }}</span>
             <span class="submenu-arrow">▶</span>
             @if (isDriversViewOpen) {
               <div class="menu-dropdown submenu">
@@ -288,6 +290,29 @@
             }
           </div>
         }
+        <div class="menu-separator"></div>
+        <div
+          id="themes-menu-item"
+          class="menu-item has-submenu"
+          (click)="toggleThemesMenu(); $event.stopPropagation()"
+        >
+          <span>{{ "RD_MENU_THEMES" | translate }}</span>
+          <span class="submenu-arrow">▶</span>
+          @if (isThemesOpen) {
+            <div class="menu-dropdown submenu">
+              @for (theme of themes; track theme.entity_id) {
+                <div
+                  class="menu-item theme-option-item"
+                  (click)="
+                    onThemeMenuSelect(theme.entity_id); $event.stopPropagation()
+                  "
+                >
+                  {{ theme.name }}
+                </div>
+              }
+            </div>
+          }
+        </div>
       </div>
     }
   </div>

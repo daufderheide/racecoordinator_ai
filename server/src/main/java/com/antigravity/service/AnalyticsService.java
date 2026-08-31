@@ -1,6 +1,7 @@
 package com.antigravity.service;
 
 import com.antigravity.App;
+import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
@@ -158,6 +159,14 @@ public class AnalyticsService {
       hardwareInterface = "Trackmate";
     }
     params.put("hardware_interface", hardwareInterface);
+    params.put(
+        "groups_enabled",
+        race.getRaceModel() != null
+            && race.getRaceModel().getGroupOptions() != null
+            && race.getRaceModel().getGroupOptions().isEnabled());
+    params.put(
+        "has_season", race.getSeasonEntityId() != null && !race.getSeasonEntityId().isEmpty());
+    params.put("is_event", EventExecutionManager.getInstance().isEventActive());
 
     params.put("engagement_time_msec", 1L);
     params.put("session_id", System.currentTimeMillis());

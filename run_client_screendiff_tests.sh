@@ -22,6 +22,8 @@ for arg in "$@"; do
     fi
 done
 
+TOTAL_TESTS=$(node "$(dirname "$0")/scripts/find_changed_screendiff_tests.js" --count-all)
+
 if [ -n "$CHANGED_FLAG" ]; then
     echo "Resolving screendiff tests for changed files..."
     CHANGED_TESTS=$(node "$(dirname "$0")/scripts/find_changed_screendiff_tests.js" "$CHANGED_FLAG")
@@ -29,9 +31,11 @@ if [ -n "$CHANGED_FLAG" ]; then
         echo "No changed components or screendiff tests detected from git changes."
         exit 0
     fi
-    echo "Found changed screendiff tests: $CHANGED_TESTS"
+    NUM_CHANGED=$(echo "$CHANGED_TESTS" | wc -w | tr -d ' ')
+    echo "Running $NUM_CHANGED of $TOTAL_TESTS screendiff tests..."
     PLAYWRIGHT_ARGS="$CHANGED_TESTS ${REMAINING_ARGS[*]}"
 else
+    echo "Running all $TOTAL_TESTS of $TOTAL_TESTS screendiff tests..."
     PLAYWRIGHT_ARGS="$*"
 fi
 

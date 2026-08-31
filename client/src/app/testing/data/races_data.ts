@@ -22,6 +22,7 @@ export const MOCK_RACES = [
     entity_id: "r1",
     name: "Grand Prix",
     track_entity_id: "t1",
+    theme_id: "default_classic_rc_ai",
     heat_rotation_type: "RoundRobin",
     heat_scoring: {
       finish_method: "Lap",
@@ -105,6 +106,7 @@ export const MOCK_RACES = [
     entity_id: "r2",
     name: "Endurance Challenge",
     track_entity_id: "t1",
+    theme_id: "default_classic_rc_ai",
     heat_rotation_type: "RoundRobin",
     heat_scoring: {
       finish_method: "Timed",
@@ -143,6 +145,7 @@ export const MOCK_RACES = [
     entity_id: "r3",
     name: "Digital Sprint",
     track_entity_id: "t1",
+    theme_id: "default_classic_rc_ai",
     heat_rotation_type: "RoundRobin",
     heat_scoring: {
       finish_method: "Lap",
@@ -271,6 +274,7 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     },
     r.practice || false,
     r.adjust_drift_laps || false,
+    r.theme_id || "default_classic_rc_ai",
     r.season_scoring,
   );
 });

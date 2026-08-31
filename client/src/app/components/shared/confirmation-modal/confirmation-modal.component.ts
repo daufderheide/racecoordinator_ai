@@ -6,18 +6,22 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   selector: "app-confirmation-modal",
   template: `
     @if (visible()) {
-      <div id="confirmation-modal-backdrop" class="modal-backdrop" [class]="className()">
+      <div
+        id="confirmation-modal-backdrop"
+        class="modal-backdrop"
+        [class]="className()"
+      >
         <div id="confirmation-modal-content" class="modal-content">
           <h2 class="modal-title">{{ title() | translate }}</h2>
           <p class="modal-message">
             {{ message() | translate: $any(messageParams() || {}) }}
           </p>
           <div class="modal-actions">
-            <button class="btn-cancel" (click)="onCancel()">
-              {{ cancelText() | translate }}
-            </button>
             <button class="btn-confirm" (click)="onConfirm()">
               {{ confirmText() | translate }}
+            </button>
+            <button class="btn-cancel" (click)="onCancel()">
+              {{ cancelText() | translate }}
             </button>
           </div>
         </div>

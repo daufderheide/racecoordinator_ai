@@ -1,31 +1,83 @@
 :host {
-  display: block;
+  display: flex;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
 }
 
 .ghost-pacing-widget {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
   background: rgba(15, 23, 42, 0.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 6px 10px;
+  border-radius: 4px;
+  padding: 0 8px;
   box-sizing: border-box;
   width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  height: 100%;
+  font-family: inherit;
+  font-size: inherit;
   color: #e2e8f0;
   transition: all 0.25s ease;
 }
 
 .ghost-pacing-widget.compact {
-  padding: 3px 6px;
-  gap: 2px;
-  border-radius: 6px;
+  padding: 0 6px;
+  border-radius: 4px;
   width: 100%;
+  height: 100%;
+}
+
+.ghost-pacing-widget.stacked {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.pacing-stacked-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  height: 100%;
+  line-height: 1.1;
+  text-align: center;
+  box-sizing: border-box;
+  padding: 2px 0;
+}
+
+.pacing-benchmark-label {
+  font-size: 0.38em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.1;
+}
+
+.pacing-target-time {
+  font-size: 0.9em;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.ghost-pacing-widget.stacked .delta-badge {
+  font-size: 0.42em;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  margin-top: 1px;
 }
 
 .pacing-header {
@@ -34,6 +86,7 @@
   justify-content: space-between;
   gap: 6px;
   width: 100%;
+  height: 100%;
   white-space: nowrap;
 }
 
@@ -41,8 +94,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 500;
+  font-size: 0.9em;
+  font-weight: 600;
   color: #94a3b8;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -63,9 +116,9 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 9999px;
-  font-size: 0.78rem;
+  font-size: 0.95em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   background: rgba(100, 116, 139, 0.2);
@@ -93,7 +146,7 @@
 }
 
 .delta-arrow {
-  font-size: 0.65rem;
+  font-size: 0.85em;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -103,52 +156,14 @@
   flex-shrink: 0;
 }
 
-.pacing-track {
-  position: relative;
-  width: 100%;
-  height: 5px;
-  background: rgba(30, 41, 59, 0.8);
-  border-radius: 9999px;
-  overflow: visible;
-  margin-top: 2px;
-}
-
-.pacing-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #60a5fa);
-  border-radius: 9999px;
-  transition: width 0.1s linear;
-}
-
-.pacing-bar-fill.ahead {
-  background: linear-gradient(90deg, #10b981, #34d399);
-}
-
-.ghost-marker {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.marker-dot {
-  width: 9px;
-  height: 9px;
-  background: #ffffff;
-  border: 2px solid #3b82f6;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
-}
-
-.pacing-bar-fill.ahead + .ghost-marker .marker-dot {
-  border-color: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
-}
-
 .pacing-empty {
   display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: 0.9em;
   color: #64748b;
 }
+

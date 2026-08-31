@@ -7,6 +7,19 @@ TARBALL="release/RaceCoordinatorAI-Linux-ARM64.tar.gz"
 
 echo "Building Race Coordinator AI for Linux ARM64 (Arduino UNO Q)..."
 
+# 0.5. Configure Version in Files if RELEASE_VERSION is specified
+RELEASE_VERSION="${VERSION:-}"
+if [ -z "$RELEASE_VERSION" ] && [ -f "VERSION" ]; then
+    RELEASE_VERSION=$(cat VERSION | tr -d '\r\n')
+fi
+
+if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
+    echo "Configuring codebase version to $RELEASE_VERSION..."
+    sed -i.bak "s/\"version\": \".*\"/\"version\": \"$RELEASE_VERSION\"/" client/package.json && rm -f client/package.json.bak
+    sed -i.bak "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$RELEASE_VERSION\";/" server/src/main/java/com/antigravity/App.java && rm -f server/src/main/java/com/antigravity/App.java.bak
+    sed -i.bak "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$RELEASE_VERSION\";/" client/src/app/version.ts && rm -f client/src/app/version.ts.bak
+fi
+
 # 1. Clean and Build Client
 echo "Building Client..."
 cd client
@@ -157,7 +170,13 @@ echo "To enable local USB-C kiosk display: sudo systemctl enable --now racecoord
 EOF
 chmod +x "$DIST_DIR/install.sh"
 
-# 8. Create Tarball
+# 8. Verify Release Artifacts
+if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
+    echo "Verifying Linux ARM64 release artifacts..."
+    node scripts/verify_release_artifacts.js "$RELEASE_VERSION" "$DIST_DIR/web" server/src/main/java/com/antigravity/App.java "" client/src/app/version.ts
+fi
+
+# 9. Create Tarball
 echo "Creating release tarball $TARBALL..."
 mkdir -p release
 cd release

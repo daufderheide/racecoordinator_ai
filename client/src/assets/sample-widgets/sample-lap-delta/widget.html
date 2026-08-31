@@ -1,0 +1,36 @@
+<div class="lap-delta-card">
+  <div class="delta-header">
+    <span class="delta-title">{{ title }}</span>
+  </div>
+
+  <div class="delta-body">
+    <ng-container *ngIf="leader && runnerUp; else noData">
+      <div class="competitor-row leader">
+        <div class="driver-info">
+          <span class="pos-badge">P1</span>
+          <span class="driver-name">{{ leader.name }}</span>
+        </div>
+        <span class="lap-time">{{ formatTime(leader.best_lap_time) }}</span>
+      </div>
+
+      <div class="delta-gap-row" [style.color]="deltaColor">
+        <span class="delta-label">GAP</span>
+        <span class="delta-value">{{ deltaFormatted }}</span>
+      </div>
+
+      <div class="competitor-row runner-up">
+        <div class="driver-info">
+          <span class="pos-badge">P2</span>
+          <span class="driver-name">{{ runnerUp.name }}</span>
+        </div>
+        <span class="lap-time">{{ formatTime(runnerUp.best_lap_time) }}</span>
+      </div>
+    </ng-container>
+
+    <ng-template #noData>
+      <div class="empty-delta">
+        <span>Awaiting race heat data...</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

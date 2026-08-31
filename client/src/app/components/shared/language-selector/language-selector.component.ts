@@ -50,6 +50,11 @@ export class LanguageSelectorComponent implements OnInit {
   toggleLocalizationDropdown(event: Event) {
     event.stopPropagation();
     this.isLocalizationDropdownOpen = !this.isLocalizationDropdownOpen;
+    if (this.isLocalizationDropdownOpen) {
+      window.dispatchEvent(
+        new CustomEvent("rc-submenu-opened", { detail: this }),
+      );
+    }
     this.cdr.markForCheck();
   }
 
@@ -63,6 +68,15 @@ export class LanguageSelectorComponent implements OnInit {
 
   getLanguageDisplayName(code: string): string {
     return this.translationService.getLanguageDisplayName(code);
+  }
+
+  @HostListener("window:rc-submenu-opened", ["$event"])
+  onOtherSubmenuOpened(event: Event) {
+    const customEvent = event as CustomEvent;
+    if (customEvent.detail !== this) {
+      this.isLocalizationDropdownOpen = false;
+      this.cdr.markForCheck();
+    }
   }
 
   @HostListener("document:click", ["$event"])

@@ -196,4 +196,163 @@ public class RaceExportSaveHandlerTest {
     handler.getSavedRaces(getCtx);
     verify(getCtx).contentType("application/json");
   }
+
+  @Test
+  public void testSaveRace_WithCustomName() {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.models.Lane lane = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track 1")
+            .lanes(java.util.Collections.singletonList(lane))
+            .build();
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Initial Name")
+            .withEntityId("r_custom")
+            .build();
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Collections.singletonList(p1))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    java.util.HashMap<String, Object> body = new java.util.HashMap<>();
+    body.put("name", "Custom Renamed Race");
+    when(ctx.body()).thenReturn("{\"name\":\"Custom Renamed Race\"}");
+    when(ctx.bodyAsClass(java.util.HashMap.class)).thenReturn(body);
+
+    handler.saveRace(ctx);
+    verify(ctx).status(200);
+
+    com.antigravity.service.DatabaseService dbService =
+        com.antigravity.service.DatabaseService.getInstance();
+    java.util.List<com.antigravity.race.RaceSaveData> saves =
+        dbService.getSavedRaces(databaseContext, com.antigravity.context.RaceScope.DEMO);
+    org.junit.Assert.assertFalse(saves.isEmpty());
+    org.junit.Assert.assertEquals("Custom Renamed Race.json", saves.get(0).getSaveName());
+  }
+
+  @Test
+  public void testLoadRace_WithCustomName() {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.models.Lane lane = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track 1")
+            .lanes(java.util.Collections.singletonList(lane))
+            .build();
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Original Saved Name")
+            .withEntityId("r_saved_2")
+            .build();
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Collections.singletonList(p1))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    handler.saveRace(ctx);
+    verify(ctx).status(200);
+
+    // Fetch saved races to get the generated saveName
+    com.antigravity.service.DatabaseService dbService =
+        com.antigravity.service.DatabaseService.getInstance();
+    java.util.List<com.antigravity.race.RaceSaveData> saves =
+        dbService.getSavedRaces(databaseContext, com.antigravity.context.RaceScope.DEMO);
+    org.junit.Assert.assertFalse(saves.isEmpty());
+    String saveName = saves.get(0).getSaveName();
+
+    // Now load the saved race with a custom name
+    io.javalin.http.Context loadCtx = mock(io.javalin.http.Context.class);
+    when(loadCtx.status(any(Integer.class))).thenReturn(loadCtx);
+    when(loadCtx.result(any(String.class))).thenReturn(loadCtx);
+    java.util.HashMap<String, Object> loadBody = new java.util.HashMap<>();
+    loadBody.put("filename", saveName);
+    loadBody.put("name", "Newly Loaded Custom Name");
+    loadBody.put("isDemo", true);
+    when(loadCtx.queryParam("demo")).thenReturn("true");
+    when(loadCtx.body())
+        .thenReturn(
+            "{\"filename\":\""
+                + saveName
+                + "\",\"name\":\"Newly Loaded Custom Name\",\"isDemo\":true}");
+    when(loadCtx.bodyAsClass(java.util.HashMap.class)).thenReturn(loadBody);
+
+    handler.loadRace(loadCtx);
+    verify(loadCtx).status(200);
+
+    com.antigravity.race.Race loadedRace = ClientSubscriptionManager.getInstance().getRace();
+    org.junit.Assert.assertNotNull(loadedRace);
+    org.junit.Assert.assertEquals("Newly Loaded Custom Name", loadedRace.getRaceModel().getName());
+  }
+
+  @Test
+  public void testRenameSavedRace_Success() {
+    com.antigravity.service.DatabaseService dbService =
+        com.antigravity.service.DatabaseService.getInstance();
+    com.antigravity.race.RaceSaveData save = new com.antigravity.race.RaceSaveData();
+    save.setId("my_race.json");
+    save.setSaveName("my_race.json");
+    dbService.saveManualRace(databaseContext, save);
+
+    io.javalin.http.Context renameCtx = mock(io.javalin.http.Context.class);
+    when(renameCtx.status(any(Integer.class))).thenReturn(renameCtx);
+    when(renameCtx.result(any(String.class))).thenReturn(renameCtx);
+    java.util.HashMap<String, Object> body = new java.util.HashMap<>();
+    body.put("oldFilename", "my_race.json");
+    body.put("newFilename", "my_renamed_race");
+    body.put("isDemo", false);
+    when(renameCtx.body())
+        .thenReturn("{\"oldFilename\":\"my_race.json\",\"newFilename\":\"my_renamed_race\"}");
+    when(renameCtx.bodyAsClass(java.util.HashMap.class)).thenReturn(body);
+    when(renameCtx.pathParamMap()).thenReturn(java.util.Collections.emptyMap());
+
+    handler.renameSavedRace(renameCtx);
+    verify(renameCtx).status(200);
+
+    org.junit.Assert.assertNull(dbService.getSavedRace(databaseContext, "my_race.json", false));
+    org.junit.Assert.assertNotNull(
+        dbService.getSavedRace(databaseContext, "my_renamed_race.json", false));
+  }
+
+  @Test
+  public void testRenameSavedRace_MissingParamsAndNotFound() {
+    io.javalin.http.Context badCtx = mock(io.javalin.http.Context.class);
+    when(badCtx.status(any(Integer.class))).thenReturn(badCtx);
+    when(badCtx.result(any(String.class))).thenReturn(badCtx);
+    when(badCtx.body()).thenReturn("{}");
+    when(badCtx.bodyAsClass(java.util.HashMap.class)).thenReturn(new java.util.HashMap<>());
+    when(badCtx.pathParamMap()).thenReturn(java.util.Collections.emptyMap());
+
+    handler.renameSavedRace(badCtx);
+    verify(badCtx).status(400);
+
+    io.javalin.http.Context notFoundCtx = mock(io.javalin.http.Context.class);
+    when(notFoundCtx.status(any(Integer.class))).thenReturn(notFoundCtx);
+    when(notFoundCtx.result(any(String.class))).thenReturn(notFoundCtx);
+    java.util.HashMap<String, Object> body = new java.util.HashMap<>();
+    body.put("oldFilename", "nonexistent.json");
+    body.put("newFilename", "new_name");
+    when(notFoundCtx.body())
+        .thenReturn("{\"oldFilename\":\"nonexistent.json\",\"newFilename\":\"new_name\"}");
+    when(notFoundCtx.bodyAsClass(java.util.HashMap.class)).thenReturn(body);
+    when(notFoundCtx.pathParamMap()).thenReturn(java.util.Collections.emptyMap());
+
+    handler.renameSavedRace(notFoundCtx);
+    verify(notFoundCtx).status(404);
+  }
 }

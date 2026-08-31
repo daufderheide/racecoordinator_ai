@@ -6,11 +6,14 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
-import { of } from "rxjs";
+import { of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { LoggerService } from "@app/services/logger.service";
+import { TranslationService } from "@app/services/translation.service";
+import { mockTranslationService } from "@app/testing/unit-test-mocks";
+import { CLIENT_VERSION } from "@app/version";
 
 import { DefaultRacedayComponent } from "./default-raceday.component";
 import { RacedayComponent } from "./raceday.component";
@@ -63,6 +66,7 @@ describe("RacedayComponent", () => {
         { provide: LoggerService, useValue: mockLoggerService },
         { provide: ChangeDetectorRef, useValue: mockCdr },
         { provide: DataService, useValue: mockDataService },
+        { provide: TranslationService, useValue: mockTranslationService },
       ],
       imports: [RacedayComponent],
     }).compileComponents();
@@ -82,6 +86,35 @@ describe("RacedayComponent", () => {
   it("should create", () => {
     expect(component).toBeTruthy();
   });
+
+  it("should initialize clientVersion to CLIENT_VERSION", () => {
+    expect(component.clientVersion).toBe(CLIENT_VERSION);
+  });
+
+  it("should update clientVersion when server version is refreshed", () => {
+    mockDataService.getServerVersion.and.returnValue(of("3.0.0"));
+    (component as any).refreshServerInfo();
+    expect(component.serverVersion).toBe("3.0.0");
+  });
+
+  it("should display about dialog when child component requests about", fakeAsync(() => {
+    mockFileSystemService.hasCustomFiles.and.returnValue(
+      Promise.resolve(false),
+    );
+    const mockRequestAbout = new Subject<void>();
+    mockContainer.createComponent.and.returnValue({
+      instance: {
+        requestAbout: mockRequestAbout.asObservable(),
+      },
+    } as any);
+
+    component.ngOnInit();
+    tick();
+
+    expect(component.showAboutDialog).toBeFalse();
+    mockRequestAbout.next();
+    expect(component.showAboutDialog).toBeTrue();
+  }));
 
   describe("Custom UI Loading Logic", () => {
     it("should try to load from 'raceday' subfolder first", fakeAsync(() => {

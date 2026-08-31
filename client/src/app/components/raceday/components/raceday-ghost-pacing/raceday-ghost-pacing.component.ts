@@ -31,6 +31,7 @@ export class RacedayGhostPacingComponent {
   personalMedian = input<number>(0);
   benchmarkType = input<GhostBenchmarkType>("LANE_RECORD");
   compact = input<boolean>(false);
+  stacked = input<boolean>(false);
   lapProgress = input<number | null>(null);
 
   isEmptyDriver = computed(() => {
@@ -130,12 +131,6 @@ export class RacedayGhostPacingComponent {
   // Human-readable benchmark label
   benchmarkLabel = computed(() => {
     return this.translationService.translate(this.benchmarkLabelKey());
-  });
-
-  // Percentage formatted for progress indicator (0 to 100%)
-  progressWidthPct = computed(() => {
-    const pct = this.ghostGap().progressPct;
-    return Math.min(100, Math.max(0, Math.round(pct * 100)));
   });
 
   // Formatted delta string: e.g. "+0.34s" or "-0.52s"

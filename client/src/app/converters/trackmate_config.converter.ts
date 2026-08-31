@@ -12,7 +12,7 @@ export class TrackmateConfigConverter {
       debounce: proto.debounce || 1,
       numLanes: proto.numLanes || 8,
       hasPerLaneRelays: proto.hasPerLaneRelays ?? false,
-      lapPinPitBehavior: proto.lapPinPitBehavior || 0,
+      lapPinPitBehavior: proto.lapPinPitBehavior ?? 3,
       lapPinBehaviors: proto.lapPinBehaviors || [],
     };
   }

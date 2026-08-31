@@ -98,8 +98,9 @@ describe("DefaultDriverResultsComponent", () => {
       d.laps.forEach((lap, idx) => {
         hd.addLapTime(idx + 1, lap, 0, 0, 0, idx + 1);
       });
-      // also mock adjusted lap count
+      // also mock adjusted lap count and rank
       hd.adjustedLapCount = d.laps.length;
+      hd.rank = i + 1;
       return hd;
     });
     return new Heat(heatId, heatNumber, heatDrivers);
@@ -123,6 +124,7 @@ describe("DefaultDriverResultsComponent", () => {
       overallStandingsUpdate$: overallStandingsUpdateSubject.asObservable(),
       laps$: lapsSubject.asObservable(),
       raceState$: raceStateSubject.asObservable(),
+      driverRankings: new Map<string, number>(),
     };
 
     mockRaceService = {

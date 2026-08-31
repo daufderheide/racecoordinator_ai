@@ -945,8 +945,13 @@ test.describe("Raceday Visuals for Fuel", () => {
       document.body.classList.add("print-full-scroll");
       window.dispatchEvent(new Event("beforeprint"));
     });
-    // Wait a brief moment for change detection
-    await page.waitForTimeout(100);
+    const scalable = page.locator('.scalable-content[style*="1920px"]');
+    await scalable.waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".scalable-content"),
+    );
+    await page.mouse.move(0, 0);
 
     await expect(page).toHaveScreenshot("raceday-pdf-print-preview.png", {
       maxDiffPixelRatio: 0.05,
@@ -1015,7 +1020,13 @@ test.describe("Raceday Visuals for Fuel", () => {
       document.body.classList.add("print-full-scroll", "print-no-background");
       window.dispatchEvent(new Event("beforeprint"));
     });
-    await page.waitForTimeout(100);
+    const scalable = page.locator('.scalable-content[style*="1920px"]');
+    await scalable.waitFor({ state: "visible" });
+    await page.evaluate(() => document.fonts.ready);
+    await TestSetupHelper.waitForImagesLoaded(
+      page.locator(".scalable-content"),
+    );
+    await page.mouse.move(0, 0);
 
     await expect(page).toHaveScreenshot(
       "raceday-pdf-no-background-print-preview.png",
@@ -1024,5 +1035,27 @@ test.describe("Raceday Visuals for Fuel", () => {
         fullPage: true,
       },
     );
+  });
+
+  test("should display raceday in fullscreen mode with navigation buttons", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/default-raceday"),
+    );
+    await page.locator(".dashboard-wrapper").waitFor({ state: "visible" });
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const nav = page.locator("app-browser-navigation");
+    await nav.waitFor({ state: "visible" });
+
+    await expect(page).toHaveScreenshot("raceday-fullscreen.png", {
+      maxDiffPixelRatio: 0.05,
+    });
   });
 });

@@ -171,6 +171,7 @@ public class SeasonStandingsCalculatorTest {
     SeasonStandingItem item = standings.get(0);
     assertEquals(50.0, item.getNetPoints(), 0.001);
     assertEquals(60.0, item.getGrossPoints(), 0.001);
+    assertEquals(10.0, item.getDroppedPoints(), 0.001);
     assertEquals(5.0, item.getOverallBonusPoints(), 0.001);
     assertEquals(2.0, item.getHeatBonusPoints(), 0.001);
     assertEquals(7.0, item.getTotalBonusPoints(), 0.001);

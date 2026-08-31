@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { BehaviorSubject, Observable } from "rxjs";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
 import { Settings } from "@app/models/settings";
 import { LoggerService } from "@app/services/logger.service";
@@ -8,6 +9,8 @@ import { LoggerService } from "@app/services/logger.service";
 })
 export class SettingsService {
   private readonly STORAGE_KEY = "racecoordinator_settings";
+  private settingsSubject = new BehaviorSubject<Settings>(this.getSettings());
+  public settings$: Observable<Settings> = this.settingsSubject.asObservable();
 
   constructor(private logger: LoggerService) {}
 
@@ -45,6 +48,7 @@ export class SettingsService {
   saveSettings(settings: Settings): void {
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+      this.settingsSubject.next(settings);
     } catch (e) {
       this.logger.error("Error saving settings to localStorage", e);
     }
@@ -52,5 +56,6 @@ export class SettingsService {
 
   resetToDefaults(): void {
     localStorage.removeItem(this.STORAGE_KEY);
+    this.settingsSubject.next(new Settings());
   }
 }

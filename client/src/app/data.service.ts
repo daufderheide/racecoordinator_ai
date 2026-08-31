@@ -12,7 +12,7 @@ import {
 } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 import { Event } from "@app/models/event";
-import { Season } from "@app/models/season";
+import { Season, SeasonStandingItem } from "@app/models/season";
 import {
   ArduinoConfig,
   BartConfig,
@@ -52,6 +52,7 @@ import {
   ISaveImageSetEntry,
   ISegment,
   IStandingsUpdate,
+  IStartRaceResponse,
   ITeamModel,
   LedString as ProtoLedString,
   ListAssetsResponse,
@@ -293,6 +294,12 @@ export class DataService {
 
   deleteSeason(id: string): Observable<any> {
     return this.http.delete<any>(`${this.seasonsUrl}/${id}`);
+  }
+
+  getSeasonStandings(id: string): Observable<SeasonStandingItem[]> {
+    return this.http.get<SeasonStandingItem[]>(
+      `${this.seasonsUrl}/${id}/standings`,
+    );
   }
 
   getRaceHistory(isDemo?: boolean): Observable<any[]> {
@@ -774,7 +781,7 @@ export class DataService {
     return this.http.post(`${this.baseUrl}/api/close-interface`, {});
   }
 
-  startRace(): Observable<boolean> {
+  startRace(): Observable<IStartRaceResponse> {
     const request = StartRaceRequest.create({});
     const buffer = StartRaceRequest.encode(request).finish();
 
@@ -790,10 +797,9 @@ export class DataService {
       })
       .pipe(
         map((response) => {
-          const startResponse = StartRaceResponse.decode(
+          return StartRaceResponse.decode(
             Reader.create(new Uint8Array(response as any)),
           );
-          return startResponse.success;
         }),
       );
   }
@@ -1087,6 +1093,36 @@ export class DataService {
 
   deleteTeam(id: string): Observable<any> {
     return this.http.delete<any>(`${this.baseUrl}/api/teams/${id}`);
+  }
+
+  // --- Custom UI API ---
+  getCustomUIs(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/api/custom-ui`);
+  }
+
+  getCustomUI(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/api/custom-ui/${id}`);
+  }
+
+  createCustomUI(ui: any): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/api/custom-ui`, ui);
+  }
+
+  updateCustomUI(id: string, ui: any): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/api/custom-ui/${id}`, ui);
+  }
+
+  deleteCustomUI(id: string): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/api/custom-ui/${id}`);
+  }
+
+  duplicateCustomUI(id: string, name?: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/api/custom-ui/${id}/duplicate`,
+      {
+        name,
+      },
+    );
   }
 
   // --- Theme API ---
@@ -1436,6 +1472,7 @@ export class DataService {
   public socketConnected$ = this.socketConnectedSubject.asObservable();
 
   private shouldSubscribeToRaceData = false;
+  private isInterfaceSocketExplicitlyDisconnected = false;
 
   public updateRaceSubscription(subscribe: boolean) {
     this.shouldSubscribeToRaceData = subscribe;
@@ -1601,6 +1638,8 @@ export class DataService {
       return;
     }
 
+    this.isInterfaceSocketExplicitlyDisconnected = false;
+
     if (this.interfaceDataSocket) {
       try {
         this.interfaceDataSocket.close();
@@ -1660,10 +1699,23 @@ export class DataService {
     this.interfaceDataSocket.onclose = () => {
       this.logger.info("Interface Data WebSocket closed.");
       this.interfaceDataSocket = undefined;
+      if (!this.isInterfaceSocketExplicitlyDisconnected) {
+        this.logger.info("Reconnecting Interface WebSocket in 2 seconds...");
+        setTimeout(() => {
+          if (!this.isInterfaceSocketExplicitlyDisconnected) {
+            this.connectToInterfaceDataSocket();
+          }
+        }, 2000);
+      }
+    };
+
+    this.interfaceDataSocket.onerror = (err) => {
+      this.logger.error("Interface Data WebSocket error on " + wsUrl, err);
     };
   }
 
   public disconnectFromInterfaceDataSocket() {
+    this.isInterfaceSocketExplicitlyDisconnected = true;
     if (this.interfaceDataSocket) {
       this.interfaceDataSocket.close();
       this.interfaceDataSocket = undefined;
@@ -1775,12 +1827,11 @@ export class DataService {
       .pipe(map(() => true));
   }
 
-  saveRace(): Observable<string> {
-    return this.http.post(
-      `${this.baseUrl}/api/save-race`,
-      {},
-      { responseType: "text" },
-    );
+  saveRace(name?: string): Observable<string> {
+    const payload = name ? { name, saveName: name } : {};
+    return this.http.post(`${this.baseUrl}/api/save-race`, payload, {
+      responseType: "text",
+    });
   }
 
   getSavedRaces(
@@ -1793,11 +1844,13 @@ export class DataService {
   }
 
   loadRace(filename: string, isDemo: boolean = false): Observable<string> {
-    return this.http.post(
-      `${this.baseUrl}/api/load-race`,
-      { filename, isDemo },
-      { responseType: "text" },
-    );
+    const payload = {
+      filename,
+      isDemo,
+    };
+    return this.http.post(`${this.baseUrl}/api/load-race`, payload, {
+      responseType: "text",
+    });
   }
 
   deleteSavedRace(
@@ -1808,6 +1861,21 @@ export class DataService {
       ? `${this.baseUrl}/api/saved-races/${filename}?demo=true`
       : `${this.baseUrl}/api/saved-races/${filename}`;
     return this.http.delete(url, {
+      responseType: "text",
+    });
+  }
+
+  renameSavedRace(
+    oldFilename: string,
+    newFilename: string,
+    isDemo: boolean = false,
+  ): Observable<string> {
+    const payload = {
+      oldFilename,
+      newFilename,
+      isDemo,
+    };
+    return this.http.post(`${this.baseUrl}/api/rename-saved-race`, payload, {
       responseType: "text",
     });
   }

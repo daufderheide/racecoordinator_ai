@@ -3,6 +3,7 @@ package com.antigravity.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
@@ -475,5 +476,29 @@ public class DatabaseServiceTest {
     com.antigravity.models.DriverStatistics stats =
         dbService.getDriverStatistics(dc, "d1", "RACE123", RaceScope.DEMO);
     assertEquals(0.0, stats.getBestLapTime(), 0.001);
+  }
+
+  @Test
+  public void testRenameSavedRace_SuccessAndNotFound() {
+    com.antigravity.race.RaceSaveData save = new com.antigravity.race.RaceSaveData();
+    save.setId("orig_save.json");
+    save.setSaveName("orig_save.json");
+    dbService.saveManualRace(databaseContext, save);
+
+    assertNotNull(dbService.getSavedRace(databaseContext, "orig_save.json", false));
+
+    boolean renamed =
+        dbService.renameSavedRace(databaseContext, "orig_save.json", "renamed_save", false);
+    assertTrue(renamed);
+
+    assertNull(dbService.getSavedRace(databaseContext, "orig_save.json", false));
+    com.antigravity.race.RaceSaveData updated =
+        dbService.getSavedRace(databaseContext, "renamed_save.json", false);
+    assertNotNull(updated);
+    assertEquals("renamed_save.json", updated.getSaveName());
+
+    boolean notFound =
+        dbService.renameSavedRace(databaseContext, "nonexistent.json", "anything", false);
+    assertFalse(notFound);
   }
 }

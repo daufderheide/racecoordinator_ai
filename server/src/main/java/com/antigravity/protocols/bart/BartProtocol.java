@@ -353,10 +353,12 @@ public class BartProtocol extends DefaultProtocol implements ConnectionDataListe
   }
 
   @Override
-  protected boolean hasPitInConfigured(int laneIndex) {
-    if (config.lapPinBehaviors != null) {
+  public boolean hasPitInConfigured(int laneIndex) {
+    if (config != null && config.lapPinBehaviors != null) {
+      int pitIn = PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex;
+      int pitInOut = PinBehavior.BEHAVIOR_PIT_IN_OUT_BASE_VALUE + laneIndex;
       for (Integer behavior : config.lapPinBehaviors) {
-        if (behavior != null && (behavior == PinBehavior.BEHAVIOR_PIT_IN_BASE_VALUE + laneIndex)) {
+        if (behavior != null && (behavior == pitIn || behavior == pitInOut)) {
           return true;
         }
       }

@@ -271,7 +271,11 @@ describe("RaceManagerComponent", () => {
 
       component.createNewRace();
 
-      expect(dataService.createRace).toHaveBeenCalled();
+      expect(dataService.createRace).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          min_lap_time: 1.5,
+        }),
+      );
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: {
           id: "r-new",
@@ -478,6 +482,85 @@ describe("RaceManagerComponent", () => {
     it("should return guide steps for help service", () => {
       const steps = component.getHelpSteps();
       expect(steps.length).toBe(3);
+    });
+
+    describe("detailTabs and scrollToSection", () => {
+      it("should return empty array if no race is selected", () => {
+        component.selectedRace = undefined;
+        expect(component.detailTabs).toEqual([]);
+      });
+
+      it("should return tabs for Summary and Heats when a race is selected", () => {
+        component.selectedRace = { name: "Test Race" };
+        const tabs = component.detailTabs;
+        expect(tabs.length).toBe(2);
+        expect(tabs[0].id).toBe("summary-general");
+        expect(tabs[1].id).toBe("summary-heats");
+      });
+
+      it("should expand summary section on scrollToSection with summary-general", fakeAsync(() => {
+        component.isSummaryExpanded = false;
+        component.scrollToSection("summary-general");
+        expect(component.isSummaryExpanded).toBeTrue();
+        tick(50);
+      }));
+
+      it("should expand heat list section on scrollToSection with summary-heats", fakeAsync(() => {
+        component.isHeatListExpanded = false;
+        component.scrollToSection("summary-heats");
+        expect(component.isHeatListExpanded).toBeTrue();
+        tick(50);
+      }));
+    });
+
+    describe("theme display", () => {
+      it("should return correct translation keys and names from getThemeDisplayNameKey", () => {
+        expect(
+          component.getThemeDisplayNameKey({
+            entity_id: "default_classic_rc_ai",
+          }),
+        ).toBe("UE_LABEL_DEFAULT_THEME");
+        expect(
+          component.getThemeDisplayNameKey({
+            entity_id: "practice_theme_rc_ai",
+          }),
+        ).toBe("UE_LABEL_PRACTICE_THEME");
+        expect(
+          component.getThemeDisplayNameKey({
+            entity_id: "default_fuel_theme_rc_ai",
+          }),
+        ).toBe("UE_LABEL_FUEL_THEME");
+        expect(
+          component.getThemeDisplayNameKey({
+            entity_id: "custom_1",
+            name: "Custom Theme",
+          }),
+        ).toBe("Custom Theme");
+        expect(component.getThemeDisplayNameKey(null)).toBe("");
+      });
+
+      it("should return correct display string from getThemeDisplay", () => {
+        component.themes = [
+          { entity_id: "default_classic_rc_ai", name: "Default" },
+          { entity_id: "practice_theme_rc_ai", name: "Practice" },
+          { entity_id: "default_fuel_theme_rc_ai", name: "Fuel" },
+          { entity_id: "custom_1", name: "Custom Theme" },
+        ];
+
+        expect(
+          component.getThemeDisplay({ theme_id: "default_classic_rc_ai" }),
+        ).toBe("UE_LABEL_DEFAULT_THEME");
+        expect(
+          component.getThemeDisplay({ theme_id: "practice_theme_rc_ai" }),
+        ).toBe("UE_LABEL_PRACTICE_THEME");
+        expect(
+          component.getThemeDisplay({ theme_id: "default_fuel_theme_rc_ai" }),
+        ).toBe("UE_LABEL_FUEL_THEME");
+        expect(component.getThemeDisplay({ theme_id: "custom_1" })).toBe(
+          "Custom Theme",
+        );
+        expect(component.getThemeDisplay({})).toBe("UE_LABEL_DEFAULT_THEME");
+      });
     });
   });
 });

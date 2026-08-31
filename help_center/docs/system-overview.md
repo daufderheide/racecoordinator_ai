@@ -39,7 +39,10 @@ Race Coordinator AI consists of a central software application running on a PC, 
 ### Raspberry Pi
 - Java 17
 
-!!! Raspberry Pi is currently not supported, but it can be and is planned to be in the future.
+### Arduino Uno Q
+- Java 17
+
+!!! Raspberry Pi and Arduino Uno Q are currently not supported, but it can be and is planned to be in the future.  They are under slow but active development.
 
 !!! NOTE:
     Mobile devices currently do not support running the RC AI server/database. They can, however, be used to display the RC AI web pages and allow remote control of the race.

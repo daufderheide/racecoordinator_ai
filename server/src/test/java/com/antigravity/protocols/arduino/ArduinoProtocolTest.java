@@ -196,7 +196,7 @@ public class ArduinoProtocolTest {
   private void setupAnalogLedPins() {
     ArduinoConfig newConfig = new ArduinoConfig();
     newConfig.commPort = "COM1";
-    for (int i = 0; i < 9; i++) {
+    for (int i = 0; i < 11; i++) {
       newConfig.digitalIds.add(PinBehavior.BEHAVIOR_UNUSED_VALUE);
     }
     newConfig.digitalIds.set(2, PinBehavior.BEHAVIOR_ANALOG_LED_GREEN_FLAG_VALUE);
@@ -206,6 +206,8 @@ public class ArduinoProtocolTest {
     newConfig.digitalIds.set(6, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_3_VALUE);
     newConfig.digitalIds.set(7, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_4_VALUE);
     newConfig.digitalIds.set(8, PinBehavior.BEHAVIOR_ANALOG_LED_COUNTDOWN_5_VALUE);
+    newConfig.digitalIds.set(9, PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE);
+    newConfig.digitalIds.set(10, PinBehavior.BEHAVIOR_ANALOG_LED_HEAT_LEADER_BASE_VALUE + 1);
     protocol = new TestableArduinoProtocol(newConfig, 2, scheduler, serialConnection);
     protocol.open();
 
@@ -283,6 +285,47 @@ public class ArduinoProtocolTest {
     assertPinState(2, false); // Green OFF
     assertPinState(3, true); // Yellow ON
     assertPinState(4, false); // Countdowns OFF
+  }
+
+  @Test
+  public void testAnalogLed_HeatLeader() {
+    setupAnalogLedPins();
+
+    // 1. Lane 0 is leader
+    protocol.setHeatStandings(Arrays.asList(0, 1));
+    assertPinState(9, true); // Lane 0 leader LED ON
+    assertPinState(10, false); // Lane 1 leader LED OFF
+
+    // 2. Lane 1 becomes leader
+    serialConnection.allWrittenData.clear();
+    protocol.clearPinStateCache();
+    protocol.setHeatStandings(Arrays.asList(1, 0));
+    assertPinState(9, false); // Lane 0 leader LED OFF
+    assertPinState(10, true); // Lane 1 leader LED ON
+
+    // 3. Clear LEDs
+    serialConnection.allWrittenData.clear();
+    protocol.clearPinStateCache();
+    protocol.clearLeds();
+    assertPinState(9, false);
+    assertPinState(10, false);
+  }
+
+  @Test
+  public void testAnalogLed_HeatLeader_InitializeHardwareState() {
+    setupAnalogLedPins();
+
+    // Lane 0 is leader
+    protocol.setHeatStandings(Arrays.asList(0, 1));
+    assertPinState(9, true);
+    assertPinState(10, false);
+
+    // Initialize hardware state
+    serialConnection.allWrittenData.clear();
+    protocol.clearPinStateCache();
+    protocol.initializeHardwareState();
+    assertPinState(9, false);
+    assertPinState(10, false);
   }
 
   private static class TestableArduinoProtocol extends ArduinoProtocol {

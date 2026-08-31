@@ -7,8 +7,10 @@ import com.antigravity.models.Event;
 import com.antigravity.models.Race;
 import com.antigravity.models.RacePredictionRecord;
 import com.antigravity.models.Season;
+import com.antigravity.models.SeasonStandingItem;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
+import com.antigravity.race.SeasonStandingsCalculator;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.DatabaseService;
 import io.javalin.Javalin;
@@ -85,6 +87,7 @@ public class DatabaseTaskHandler {
     // Season Endpoints
     app.get("/api/seasons", this::getSeasons, Role.VIEWER);
     app.get("/api/seasons/{id}", this::getSeasonById, Role.VIEWER);
+    app.get("/api/seasons/{id}/standings", this::getSeasonStandings, Role.VIEWER);
     app.post("/api/seasons", this::handleCreateSeason, Role.DIRECTOR);
     app.put("/api/seasons/{id}", this::handleUpdateSeason, Role.DIRECTOR);
     app.delete("/api/seasons/{id}", this::handleDeleteSeason, Role.DIRECTOR);
@@ -337,6 +340,7 @@ public class DatabaseTaskHandler {
             new Track.Builder()
                 .name(track.getName())
                 .numTrackSections(track.getNumTrackSections())
+                .trackScale(track.getTrackScale())
                 .lanes(track.getLanes())
                 .arduinoConfigs(track.getArduinoConfigs())
                 .trackmateConfigs(track.getTrackmateConfigs())
@@ -378,6 +382,7 @@ public class DatabaseTaskHandler {
           new Track.Builder()
               .name(track.getName())
               .numTrackSections(track.getNumTrackSections())
+              .trackScale(track.getTrackScale())
               .lanes(track.getLanes())
               .arduinoConfigs(track.getArduinoConfigs())
               .trackmateConfigs(track.getTrackmateConfigs())
@@ -538,6 +543,22 @@ public class DatabaseTaskHandler {
     } catch (Exception e) {
       logger.error("Error getting season", e);
       ctx.status(500).result("Error getting season: " + e.getMessage());
+    }
+  }
+
+  public void getSeasonStandings(Context ctx) {
+    try {
+      String id = ctx.pathParam("id");
+      Season season = seasonRepository.findByEntityId(id);
+      if (season != null) {
+        List<SeasonStandingItem> standings = SeasonStandingsCalculator.calculateStandings(season);
+        ctx.json(standings);
+      } else {
+        ctx.status(404).result("Season not found");
+      }
+    } catch (Exception e) {
+      logger.error("Error getting season standings", e);
+      ctx.status(500).result("Error getting season standings: " + e.getMessage());
     }
   }
 

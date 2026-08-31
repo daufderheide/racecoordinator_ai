@@ -21,7 +21,7 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Run screendiffs inside Docker**: All Playwright visual / screendiff test runs and snapshot generations must be executed inside the Linux Docker container via `./run_client_screendiff_tests.sh` (or `run_client_screendiff_tests.ps1`).
 - **No host snapshots**: Never generate or commit host macOS/Windows visual snapshots (`*-darwin.png`, `*-win32.png`). All snapshot baselines must remain consistent with the Linux Docker environment used in CI.
 - **Image validation only (no functional `expect` statements)**: Do not use `expect()` statements in screendiff tests unless strictly needed for test setup (e.g. ensuring an element is attached before triggering an action). Visual validation must rely solely on screenshot comparison (`expect(...).toHaveScreenshot(...)`), while behavioral and DOM value assertions belong in Angular unit tests.
-- **Single screenshot assertion per test**: Each screendiff `test(...)` must contain only one `toHaveScreenshot()` assertion. If multiple visual states or components need to be verified, split them into distinct, independent `test(...)` cases so that `./run_client_screendiff_tests.sh` evaluates all image comparisons in a single execution rather than aborting subsequent checks when an earlier screenshot in the same test differs.
+- **Strict single screenshot assertion per test**: Each screendiff `test(...)` MUST contain exactly ONE `toHaveScreenshot()` assertion. NEVER include multiple `toHaveScreenshot()` calls within a single `test(...)` block. When a screenshot fails, Playwright immediately aborts that test, preventing subsequent screenshots in the same test from running and requiring multiple full test suite runs and `--sync-only` cycles to update each image one-by-one. Extract navigation and setup into shared helper functions and create dedicated, isolated `test(...)` cases for every visual state, tab, hover effect, or modal.
 - **UI Component Screendiff Commit Gate**: Commits modifying client UI components (`*.component.{ts,html,scss,css}`, global styles, index.html) must include updated screendiff snapshots or visual tests. For strict refactors with no visual change, bypass using `refactor:` commit prefix, `[skip-screendiff]` in commit message, or `SKIP_SCREENDIFF_CHECK=1`.
 
 ## Protobuf Synchronization
@@ -39,9 +39,69 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Automated downstream sync to develop**: Pushes to `release/vX.Y.Z` automatically merge into `develop` on release completion, ensuring `develop` always contains all fixes.
 - **Daily schedule builds**: Automatically publish daily alpha builds from `develop` named `vX.Y.Z-alpha.YYYYMMDD` (where `X.Y.Z` comes from the `VERSION` file). Daily builds pre-check active release branches to guarantee `develop` is synced before publishing.
 - **Manual releases from develop**: Manual workflow dispatch on `develop` without an explicit version override publishes an alpha build named `vX.Y.Z-alpha.<hash>` (using the commit SHA).
+- **README Updates Restricted to Beta & Official Releases**: Automated README download link updates and PRs targeting `main` are strictly restricted to official stable releases (`vX.Y.Z`) and beta prereleases (`vX.Y.Z-beta.N`). Daily alpha and manual develop builds (`*-alpha.*`) must never update the main README or open documentation PRs.
 
 ## Meaningful Test Assertions & Mutation Resistance
 - **Test real behavior, not just line coverage**: New unit and integration tests must validate outputs, state changes, and boundary conditions with explicit assertions rather than writing trivial executions that only aim to pass line coverage counters. Tests must withstand mutation testing (PIT / Stryker).
 
 ## Flake-Free Async Testing
 - **Avoid arbitrary sleep timers**: In visual and unit tests, avoid arbitrary wall-clock timers (`page.waitForTimeout(ms)`, `Thread.sleep(ms)`) where deterministic alternatives exist (e.g., `waitFor({ state: 'visible' })`, `TestSetupHelper.waitForLocalization()`, or explicit event/condition polling).
+
+## Conventional Commit Message Discipline
+- **Use supported conventional commit prefixes**: All git commit messages must use supported conventional prefixes (`feat:`, `fix:`, `refactor:`, `perf:`, `docs:`, `test:`, `chore:`, `ci:`, `style:`, `build:`), optional scopes (e.g. `feat(phidget): ...`), and concise descriptions to ensure automated release changelog generation remains accurate and clean.
+
+## Server-Side Calculations & Single Source of Truth
+- **All calculations performed on the server**: All calculations with very few if any exceptions should be done on the server. The client should get calculations from the server and display them.
+- **Calculations scope**: Calculations include overall/heat standings, average lap times, median lap times, gaps, probabilities, etc.
+- **Server as single source of truth**: The server is the authoritative source of truth and the client is strictly a display layer.
+
+## Production Code Hygiene (No Test or Leftover Debug Code)
+- **No test code in production files**: Test hooks, test-specific methods, test fixtures, or test branches must never be added to production code files. All testing logic belongs strictly in dedicated test files (`*.spec.ts`, `*Test.java`, test harnesses, or testing helper directories).
+- **Remove temporary debug code**: Temporary debug code (e.g., temporary `console.log` / `System.out.println`, debug flags, or ad-hoc bypasses) may only be added during active debugging and must be completely removed before the task is finished.
+
+## Guided Tour & Help Synchronization
+- **Keep guided help in sync**: Whenever modifying, adding, or removing UI controls, form fields, tabs, or sections on editor pages or any view with guided help (`getHelpSteps()` in `*-editor.component.ts` or similar):
+  - Add or update the corresponding guided help step (`GuideStep`) with its DOM selector (`#...`), localized title, content, and `onEnter` accordion/tab expansion hook.
+  - Define all new guided help translation keys across all 7 supported languages (`en`, `de`, `es`, `fr`, `it`, `nl`, `pt` in `client/src/assets/i18n/`).
+  - Update client unit tests (`*.spec.ts`) asserting `getHelpSteps()` order, step count, selectors, and `onEnter` execution.
+
+## End-to-End Object Configuration & Field Lifecycle Checklist
+Whenever a new configuration setting, property, or field is added, modified, or moved on domain entities (e.g. `Race`, `Track`, `Theme`, `CustomUI`, `Driver`, `Heat`, `FuelOptions`, `SeasonScoring`), changes MUST be completed and validated across ALL layers of the end-to-end stack:
+
+1. **Java Server Domain Model & Builders (`server/src/main/java/com/antigravity/models/`)**:
+   - Add field, getters/setters, and Jackson annotations (`@JsonProperty("snake_case") @JsonAlias("camelCase")`).
+   - Add `with<Field>(...)` builder method and sensible default in `Builder`.
+   - **CRITICAL - Copy Constructor / `Builder.from(other)`**: Always update `Builder.from(Other other)` to copy the new field. Omitting this causes silent regressions where updates/saves reset the property to its default.
+   - Update `DatabaseInitializer` and `AssetDefaultsInitializer` for default/factory entities or backfill migrations.
+
+2. **Java Server Task Handlers & Repositories (`server/src/main/java/com/antigravity/handlers/`)**:
+   - Ensure `create<Entity>()` and `handleUpdate<Entity>()` explicitly populate the field when constructing the new instance.
+   - Verify SQLite repository (`SqliteRepository<Entity>`) insert/replace operations persist the field.
+
+3. **Protobuf Schema & Code Generation (`server/proto/`)**:
+   - Add the field tag and type to the corresponding `.proto` message (e.g. `RaceModel`, `TrackModel`).
+   - Immediately execute `./server/generate_protos.sh` (or `npm run proto`) to regenerate both Java classes and TypeScript bindings.
+
+4. **Protobuf & DTO Converters (`server/.../converters/` & `client/.../converters/`)**:
+   - Java Server `*Converter.java`: Update `toProto()` and `fromProto()` to serialize and deserialize the field.
+   - Angular Client `*.converter.ts`: Update `fromProto()` and `toProto()` to map between protobuf DTOs and TypeScript models (including constructor parameter ordering).
+
+5. **Client Models & Editor Components (`client/src/app/models/`, `client/src/app/components/*-editor/`)**:
+   - Update TypeScript model class constructors, interfaces, and default instances.
+   - Ensure editor components include the field in `buildPayload()`, dirty state comparison (`isDirtyState()`), undo/redo tracking (`captureState()`), and `originalEntity` deep copies.
+
+6. **Guided Help & Interactive Tours (`client/src/app/components/*-editor/`)**:
+   - Add or update the guided help step (`getHelpSteps()`) for the new field with appropriate DOM selector (`#...`), localized title, content, and `onEnter` accordion expansion hook.
+
+7. **UI Localization Across All 7 Languages (`client/src/assets/i18n/*.json`)**:
+   - Every label, tooltip, error message, guided help title/content, and select dropdown placeholder (e.g. `-- Select Option --`) MUST be defined in all 7 translation files (`en`, `de`, `es`, `fr`, `it`, `nl`, `pt`). Never leave hardcoded English strings in templates.
+
+8. **Mandatory Multi-Layer Automated Tests**:
+   - **Server Unit Tests**:
+     - `*ConverterTest.java`: Verify protobuf `toProto()` and `fromProto()` preserve the field with custom values.
+     - `*TaskHandlerTest.java`: Test complete CRUD lifecycle (Create with custom value -> verify in SQLite repository -> Update -> verify field persists and is not reset to default).
+     - Model tests verifying `Builder.from(other)` preserves the field.
+   - **Client Unit Tests**:
+     - `*.converter.spec.ts`: Test `fromProto()` maps the new field into the client model.
+     - `*-editor.component.spec.ts`: Test UI selection updates dirty tracking, `update<Entity>` sends the field in the payload, and `getHelpSteps()` asserts the new step selector/order.
+

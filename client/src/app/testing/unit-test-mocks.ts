@@ -121,6 +121,9 @@ export const mockDataService = {
   getSystemState: jasmine
     .createSpy("getSystemState")
     .and.returnValue(new Subject().asObservable()),
+  getSystemStateValue: jasmine
+    .createSpy("getSystemStateValue")
+    .and.returnValue(null),
   getServerIp: jasmine
     .createSpy("getServerIp")
     .and.returnValue(of("127.0.0.1")),
@@ -186,6 +189,18 @@ export const mockSettingsService = {
   saveSettings: jasmine.createSpy("saveSettings"),
 };
 
+export const mockNavigationService = {
+  getLastEditedId: jasmine.createSpy("getLastEditedId").and.returnValue(null),
+  setLastEditedId: jasmine.createSpy("setLastEditedId"),
+  clearLastEditedId: jasmine.createSpy("clearLastEditedId"),
+  canGoBack: jasmine.createSpy("canGoBack").and.returnValue(false),
+  canGoForward: jasmine.createSpy("canGoForward").and.returnValue(false),
+  canGoBack$: of(false),
+  canGoForward$: of(false),
+  goBack: jasmine.createSpy("goBack"),
+  goForward: jasmine.createSpy("goForward"),
+};
+
 export const mockLoggerService = jasmine.createSpyObj("LoggerService", [
   "debug",
   "info",
@@ -205,6 +220,7 @@ export function resetMocks() {
     mockAnalyticsService,
     mockSettingsService,
     mockLoggerService,
+    mockNavigationService,
   ];
 
   mocks.forEach((mock) => {
@@ -247,6 +263,7 @@ export function resetMocks() {
   mockDataService.getHeats.and.returnValue(new Subject().asObservable());
   mockDataService.getRecordData.and.returnValue(of(null));
   mockDataService.getSystemState.and.returnValue(new Subject().asObservable());
+  mockDataService.getSystemStateValue.and.returnValue(null);
   mockDataService.getServerIp.and.returnValue(of("127.0.0.1"));
   mockDataService.getTracks.and.returnValue(of([]));
   mockDataService.socketConnected$ = of(true);

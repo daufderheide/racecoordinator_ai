@@ -330,8 +330,34 @@ public class RaceExportSaveHandler {
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
       String timestamp = now.format(formatter);
       String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
-      raceName = raceName.replaceAll("[^a-zA-Z0-9_-]", "_");
-      String saveName = timestamp + "_" + raceName + ".json";
+      String customSaveName = null;
+
+      try {
+        if (ctx.body() != null && !ctx.body().trim().isEmpty()) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
+          if (body != null) {
+            customSaveName = (String) body.get("saveName");
+            if (customSaveName == null) {
+              customSaveName = (String) body.get("name");
+            }
+          }
+        }
+      } catch (Exception e) {
+        logger.warn("Failed to parse custom save name in saveRace body", e);
+      }
+
+      String saveName;
+      if (customSaveName != null && !customSaveName.trim().isEmpty()) {
+        String trimmed = customSaveName.trim();
+        if (!trimmed.toLowerCase().endsWith(".json")) {
+          trimmed += ".json";
+        }
+        saveName = trimmed;
+      } else {
+        String sanitized = raceName.replaceAll("[^a-zA-Z0-9_-]", "_");
+        saveName = timestamp + "_" + sanitized + ".json";
+      }
       saveData.setSaveName(saveName);
 
       DatabaseService dbService = DatabaseService.getInstance();
@@ -378,11 +404,80 @@ public class RaceExportSaveHandler {
     }
   }
 
+  public void renameSavedRace(Context ctx) {
+    try {
+      String oldSaveName = ctx.pathParamMap().get("filename");
+      boolean isDemo = "true".equalsIgnoreCase(ctx.queryParam("isDemo"));
+      String newSaveName = null;
+
+      try {
+        if (ctx.body() != null && !ctx.body().trim().isEmpty()) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
+          if (body != null) {
+            if (oldSaveName == null || oldSaveName.trim().isEmpty()) {
+              oldSaveName = (String) body.get("oldFilename");
+              if (oldSaveName == null) {
+                oldSaveName = (String) body.get("filename");
+              }
+            }
+            newSaveName = (String) body.get("newFilename");
+            if (newSaveName == null) {
+              newSaveName = (String) body.get("newName");
+            }
+            if (newSaveName == null) {
+              newSaveName = (String) body.get("saveName");
+            }
+            if (body.containsKey("isDemo")) {
+              Object d = body.get("isDemo");
+              if (d instanceof Boolean) {
+                isDemo = (Boolean) d;
+              } else if (d instanceof String) {
+                isDemo = Boolean.parseBoolean((String) d);
+              }
+            }
+          }
+        }
+      } catch (Exception e) {
+        logger.warn("Failed to parse renameSavedRace body", e);
+      }
+
+      if (oldSaveName == null || oldSaveName.trim().isEmpty()) {
+        ctx.status(400).result("Old filename is required");
+        return;
+      }
+      if (newSaveName == null || newSaveName.trim().isEmpty()) {
+        ctx.status(400).result("New filename is required");
+        return;
+      }
+
+      DatabaseService dbService = DatabaseService.getInstance();
+      RaceScope scope = RaceScope.fromBoolean(isDemo);
+      boolean renamed =
+          dbService.renameSavedRace(databaseContext, oldSaveName.trim(), newSaveName.trim(), scope);
+      if (!renamed) {
+        ctx.status(404).result("Save file not found or could not be renamed");
+        return;
+      }
+
+      String normalizedNewName = newSaveName.trim();
+      if (!normalizedNewName.toLowerCase().endsWith(".json")) {
+        normalizedNewName += ".json";
+      }
+
+      ctx.status(200).result("Race save renamed successfully: " + normalizedNewName);
+    } catch (Exception e) {
+      logger.error("Error renaming saved race", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
   @SuppressWarnings("unchecked")
   public void loadRace(Context ctx) {
     try {
       Map<String, Object> body = ctx.bodyAsClass(HashMap.class);
       String saveName = (String) body.get("filename");
+      String customName = (String) body.get("name");
       RaceScope scope = RequestContextUtils.getRaceScope(ctx);
       if (saveName == null) {
         ctx.status(400).result("Filename is required");
@@ -395,6 +490,14 @@ public class RaceExportSaveHandler {
       if (saveData == null) {
         ctx.status(404).result("Save file not found");
         return;
+      }
+
+      if (customName != null && !customName.trim().isEmpty() && saveData.getModel() != null) {
+        saveData.setModel(
+            new com.antigravity.models.Race.Builder() // fqn-collision
+                .from(saveData.getModel())
+                .withName(customName.trim())
+                .build());
       }
 
       Track savedTrack = saveData.getTrack();

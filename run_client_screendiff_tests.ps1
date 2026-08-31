@@ -47,17 +47,21 @@ foreach ($arg in $args) {
     }
 }
 
+$FindScript = Join-Path $ProjectRoot "scripts\find_changed_screendiff_tests.js"
+$TotalTests = (node $FindScript --count-all).Trim()
+
 if ($ChangedFlag) {
     Write-Host "Resolving screendiff tests for changed files..." -ForegroundColor Cyan
-    $FindScript = Join-Path $ProjectRoot "scripts\find_changed_screendiff_tests.js"
     $ChangedTests = (node $FindScript $ChangedFlag).Trim()
     if (-not $ChangedTests) {
         Write-Host "No changed components or screendiff tests detected from git changes." -ForegroundColor Yellow
         exit 0
     }
-    Write-Host "Found changed screendiff tests: $ChangedTests" -ForegroundColor Green
+    $ChangedCount = ($ChangedTests -split '\s+').Count
+    Write-Host "Running $ChangedCount of $TotalTests screendiff tests..." -ForegroundColor Green
     $PlaywrightArgs = "$ChangedTests " + ($RemainingArgs -join " ")
 } else {
+    Write-Host "Running all $TotalTests of $TotalTests screendiff tests..." -ForegroundColor Green
     $PlaywrightArgs = $args -join " "
 }
 

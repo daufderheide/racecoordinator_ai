@@ -16,6 +16,20 @@ if [ ! -f "$ANALYTICS_FILE" ]; then
     exit 1
 fi
 
+# 0.5. Configure Version in Files if RELEASE_VERSION is specified
+RELEASE_VERSION="${VERSION:-}"
+if [ -z "$RELEASE_VERSION" ] && [ -f "VERSION" ]; then
+    RELEASE_VERSION=$(cat VERSION | tr -d '\r\n')
+fi
+
+if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
+    echo "Configuring codebase version to $RELEASE_VERSION..."
+    sed -i.bak "s/\"version\": \".*\"/\"version\": \"$RELEASE_VERSION\"/" client/package.json && rm -f client/package.json.bak
+    sed -i.bak "s/#define MyAppVersion \".*\"/#define MyAppVersion \"$RELEASE_VERSION\"/" installer_base.iss && rm -f installer_base.iss.bak
+    sed -i.bak "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$RELEASE_VERSION\";/" server/src/main/java/com/antigravity/App.java && rm -f server/src/main/java/com/antigravity/App.java.bak
+    sed -i.bak "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$RELEASE_VERSION\";/" client/src/app/version.ts && rm -f client/src/app/version.ts.bak
+fi
+
 # 1. Clean and Build Client
 echo "Building Client..."
 cd client
@@ -403,8 +417,10 @@ create_scripts release/RaceCoordinator
 echo "Generating scripts for offline distribution..."
 create_scripts release/RaceCoordinator_Offline
 
-echo "Manual Step for Windows: Build installers using Inno Setup (installer_online.iss, installer_offline.iss)"
-echo "Manual Step for Mac: Run create_mac_dmg.sh on a macOS machine to build the DMG."
+if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
+    echo "Verifying release artifacts..."
+    node scripts/verify_release_artifacts.js "$RELEASE_VERSION" release/RaceCoordinator/web server/src/main/java/com/antigravity/App.java installer_base.iss client/src/app/version.ts
+fi
 
 echo "Build Complete!"
 echo "Artifacts in 'release/' directory."

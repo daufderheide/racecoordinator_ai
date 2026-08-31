@@ -18,6 +18,7 @@ export interface TrackParams {
   entity_id: string;
   name: string;
   num_track_sections?: number;
+  track_scale?: number;
   lanes: Lane[];
   has_digital_fuel?: boolean;
   has_per_lane_relays?: boolean;
@@ -32,6 +33,7 @@ export class Track implements Model {
   readonly entity_id!: string;
   readonly name!: string;
   readonly num_track_sections!: number;
+  readonly track_scale!: number;
   readonly lanes!: Lane[];
   readonly has_digital_fuel!: boolean;
   readonly has_per_lane_relays!: boolean;
@@ -46,6 +48,12 @@ export class Track implements Model {
 
     // Apply defaults for optional parameters that weren't provided
     this.num_track_sections ??= 100;
+    this.track_scale =
+      this.track_scale != null &&
+      this.track_scale > 0 &&
+      this.track_scale <= 1.0
+        ? this.track_scale
+        : 1.0;
     this.has_digital_fuel ??= false;
     this.has_per_lane_relays ??= false;
     this.has_main_relay ??= false;

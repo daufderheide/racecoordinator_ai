@@ -15,6 +15,7 @@ Race Coordinator AI supports all the common operating systems, track interfaces 
 - Linux
 - Arduino (DIY and commercially through [Viasue](https://viasue.com/))
 - [Trackmate](https://trackmateracing.com/shop/en/)
+- Phidget
 - IR Sensors
 - Reed switches
 - Dead strips
@@ -29,8 +30,10 @@ Race Coordinator AI also provides an impressive list of features that will accom
 - Custom heat editor; any rotation you want to use you can, all you have to do is create it.
 - Analog/Digital fuel support
 - Per lane relay support
+- Events (practice, qualifying and main races all tied together)
 - Driver grouping
 - Team racing
+- Season/Championship mode
 - False start detection and handling
 - Permanent storage of race stats and the ability to export them to Microsoft Excel any time after the race has finished.
 - Save/Load races, including auto saves in the event of a power outage or other issue during a race.

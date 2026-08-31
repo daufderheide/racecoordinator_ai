@@ -49,4 +49,26 @@ test.describe("Editor Title Visuals", () => {
       "editor-title-track.png",
     );
   });
+
+  test("should display editor title in fullscreen mode with navigation buttons", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    await page.evaluate(() => {
+      (window as any).fullscreenService?.setFullscreenOverride(true);
+    });
+
+    const header = page.locator("app-editor-title");
+    await header.waitFor({ state: "visible" });
+
+    await expect(page.locator("app-editor-title")).toHaveScreenshot(
+      "editor-title-fullscreen.png",
+    );
+  });
 });

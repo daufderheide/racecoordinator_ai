@@ -84,6 +84,7 @@ public class HeatConverterTest {
     dhd.setUserLaps(2.0);
     dhd.setPenaltyLaps(-1.0);
     dhd.setAutoCalculatedLaps(0.5);
+    dhd.setFinished(true);
 
     Set<String> sentObjectIds = new HashSet<>();
 
@@ -95,6 +96,7 @@ public class HeatConverterTest {
     assertEquals(1.2, proto.getGapLeader(), 0.001);
     assertEquals(0.3, proto.getGapPosition(), 0.001);
     assertTrue(proto.getIsRefueling());
+    assertTrue(proto.getIsFinished());
     assertEquals(
         com.antigravity.protocols.CarLocation.PitRow.getValue(), proto.getCurrentLocation());
     assertEquals(100.0, proto.getInitialFuelLevel(), 0.001);

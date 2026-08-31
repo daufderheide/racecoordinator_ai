@@ -21,7 +21,11 @@
     '%'
   "
   [style.z-index]="
-    widget().widgetType === 'menu-bar' ? 99999 : widget().zIndex || 100
+    isCustomizing()
+      ? widget().zIndex || 100
+      : widget().widgetType === 'menu-bar'
+        ? 99999
+        : widget().zIndex || 100
   "
   [style.font-family]="widget().fontFamily || null"
   [style.color]="widget().textColor || null"
@@ -32,249 +36,300 @@
   window-id="absolute-widget"
 >
   <div class="widget-content">
-    @switch (widget().widgetType) {
-      @case ("menu-bar") {
-        <app-raceday-menu-bar
-          [track]="parentComponent().track"
-          [race]="parentComponent().race"
-          [participants]="parentComponent().participants"
-          [isSaveDisabled]="parentComponent().isSaveDisabled"
-          [isStartResumeDisabled]="parentComponent().isStartResumeDisabled"
-          [isPauseDisabled]="parentComponent().isPauseDisabled"
-          [isNextHeatDisabled]="parentComponent().isNextHeatDisabled"
-          [isRestartHeatDisabled]="parentComponent().isRestartHeatDisabled"
-          [isDeferHeatDisabled]="parentComponent().isDeferHeatDisabled"
-          [isSkipHeatDisabled]="parentComponent().isSkipHeatDisabled"
-          [isSkipRaceDisabled]="parentComponent().isSkipRaceDisabled"
-          [isAddLapDisabled]="parentComponent().isAddLapDisabled"
-          [isModifyDisabled]="parentComponent().isModifyDisabled"
-          [startResumeShortcut]="parentComponent().startResumeShortcut"
-          [pauseShortcut]="parentComponent().pauseShortcut"
-          [nextHeatShortcut]="parentComponent().nextHeatShortcut"
-          [restartHeatShortcut]="parentComponent().restartHeatShortcut"
-          [skipHeatShortcut]="parentComponent().skipHeatShortcut"
-          [deferHeatShortcut]="parentComponent().deferHeatShortcut"
-          (fileMenuSelect)="parentComponent().onFileMenuSelect($event)"
-          (menuSelect)="parentComponent().onMenuSelect($event)"
-          (laneMenuSelect)="parentComponent().onLaneMenuSelect($event)"
-          (windowsMenuSelect)="parentComponent().onWindowsMenuSelect($event)"
-          (driverViewMenuSelect)="
-            parentComponent().onDriverViewMenuSelect($event)
+    @if (isCustomWidget(widget().widgetType)) {
+      @if (getCustomWidgetComponent(widget().widgetType)) {
+        <ng-container
+          *ngComponentOutlet="
+            getCustomWidgetComponent(widget().widgetType);
+            inputs: getCustomWidgetInputs()
           "
-          (optionsMenuSelect)="parentComponent().onOptionsSelect($event)"
-          (languageSelected)="parentComponent().onLanguageSelected()"
-          (trackPowerMainSelect)="
-            parentComponent().onTrackPowerMainSelect($event)
-          "
-          (trackPowerLaneSelect)="
-            parentComponent().onTrackPowerLaneSelect($event)
-          "
-        ></app-raceday-menu-bar>
+        ></ng-container>
+      } @else {
+        <div class="custom-widget-missing-placeholder">
+          <span class="material-icons">extension_off</span>
+          <div class="missing-text">
+            <strong>{{ getCustomWidgetName(widget().widgetType) }}</strong>
+            <span>{{
+              getCustomWidgetError(widget().widgetType) ||
+                ("UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE" | translate)
+            }}</span>
+          </div>
+        </div>
       }
-      @case ("race-name") {
-        <app-raceday-race-name
-          [race]="parentComponent().race"
-          [widget]="widget()"
-        ></app-raceday-race-name>
-      }
-      @case ("event-name") {
-        <app-raceday-event-name
-          [race]="parentComponent().race"
-          [widget]="widget()"
-        ></app-raceday-event-name>
-      }
-      @case ("season-name") {
-        <app-raceday-season-name
-          [seasonName]="parentComponent().seasonName"
-          [widget]="widget()"
-        ></app-raceday-season-name>
-      }
-      @case ("heat-info") {
-        <app-raceday-heat-info
-          [heat]="parentComponent().heat"
-          [race]="parentComponent().race"
-          [totalHeats]="parentComponent().totalHeats"
-          [widget]="widget()"
-        ></app-raceday-heat-info>
-      }
-      @case ("track-name") {
-        <app-raceday-track-name
-          [track]="parentComponent().track"
-          [widget]="widget()"
-        ></app-raceday-track-name>
-      }
-      @case ("branding") {
-        <app-raceday-branding></app-raceday-branding>
-      }
-      @case ("qr") {
-        <app-raceday-qr
-          [qrCodeUrl]="parentComponent().qrCodeUrl"
-        ></app-raceday-qr>
-      }
-      @case ("flag") {
-        <app-raceday-flag
-          [currentFlagUrl]="parentComponent().getCurrentFlagUrl()"
-        ></app-raceday-flag>
-      }
-      @case ("timer") {
-        <app-raceday-timer
-          [widget]="widget()"
-          [formattedTime]="parentComponent().formattedTime"
-          [autoStatusLabel]="parentComponent().autoStatusLabel"
-          [isWarmup]="parentComponent().isWarmup"
-          [showCountdownOverlay]="parentComponent().showCountdownOverlay"
-        ></app-raceday-timer>
-      }
-      @case ("records") {
-        <app-raceday-records
-          [widget]="widget()"
-          [raceRecordLapNickname]="parentComponent().raceRecordLapNickname"
-          [raceRecordLapTime]="parentComponent().raceRecordLapTime"
-          [raceRecordScoreNickname]="parentComponent().raceRecordScoreNickname"
-          [raceRecordScore]="parentComponent().raceRecordScore"
-          [currentRaceBestNickname]="parentComponent().currentRaceBestNickname"
-          [currentRaceBestTime]="parentComponent().currentRaceBestTime"
-          [heatBestNickname]="parentComponent().heatBestNickname"
-          [heatBestTime]="parentComponent().heatBestTime"
-        ></app-raceday-records>
-      }
-      @case ("leaderboard") {
-        <app-raceday-leaderboard
-          [leaderboardEntries]="parentComponent().leaderboardEntries"
-          [widget]="widget()"
-        ></app-raceday-leaderboard>
-      }
-      @case ("group-leaderboard") {
-        <app-raceday-group-leaderboard
-          [leaderboardEntries]="parentComponent().groupLeaderboardEntries"
-          [groupNumber]="parentComponent().currentGroup"
-          [groupEnabled]="parentComponent().groupEnabled"
-          [groupNames]="parentComponent().race?.group_options?.names || []"
-          [widget]="widget()"
-        ></app-raceday-group-leaderboard>
-      }
-      @case ("season-leaderboard") {
-        <app-raceday-season-leaderboard
-          [seasonStandings]="parentComponent().seasonStandings"
-          [widget]="widget()"
-        ></app-raceday-season-leaderboard>
-      }
-      @case ("season-race-leaderboard") {
-        <app-raceday-season-race-leaderboard
-          [seasonStandings]="parentComponent().seasonStandings"
-          [widget]="widget()"
-        ></app-raceday-season-race-leaderboard>
-      }
-      @case ("lane-view") {
-        <app-raceday-lane-view
-          [parent]="parentComponent()"
-          [widget]="widget()"
-        ></app-raceday-lane-view>
-      }
-      @case ("on-deck") {
-        <app-raceday-on-deck
-          [track]="parentComponent().track"
-          [currentHeat]="parentComponent().heat"
-          [heats]="parentComponent().heats"
-          [parent]="parentComponent()"
-          [widget]="widget()"
-        ></app-raceday-on-deck>
-      }
-      @case ("next-heat") {
-        <app-raceday-next-heat
-          [track]="parentComponent().track"
-          [currentHeat]="parentComponent().heat"
-          [heats]="parentComponent().heats"
-          [parent]="parentComponent()"
-          [widget]="widget()"
-        ></app-raceday-next-heat>
-      }
-      @case ("image") {
-        <app-raceday-image [widget]="widget()"></app-raceday-image>
-      }
-      @case ("action-start-resume") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-pause") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-next-heat") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-restart-heat") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-defer-heat") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-skip-heat") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-skip-race") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-add-lap") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-modify-heats") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-export-pdf") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-export-csv") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-export-xls") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-open-heat-results") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
-      }
-      @case ("action-open-race-results") {
-        <app-raceday-action-button
-          [widget]="widget()"
-          [parent]="parentComponent()"
-        ></app-raceday-action-button>
+    } @else {
+      @switch (widget().widgetType) {
+        @case ("menu-bar") {
+          <app-raceday-menu-bar
+            [track]="parentComponent().track"
+            [race]="parentComponent().race"
+            [participants]="parentComponent().participants"
+            [isSaveDisabled]="parentComponent().isSaveDisabled"
+            [isStartResumeDisabled]="parentComponent().isStartResumeDisabled"
+            [isPauseDisabled]="parentComponent().isPauseDisabled"
+            [isNextHeatDisabled]="parentComponent().isNextHeatDisabled"
+            [isRestartHeatDisabled]="parentComponent().isRestartHeatDisabled"
+            [isDeferHeatDisabled]="parentComponent().isDeferHeatDisabled"
+            [isSkipHeatDisabled]="parentComponent().isSkipHeatDisabled"
+            [isSkipRaceDisabled]="parentComponent().isSkipRaceDisabled"
+            [isAddLapDisabled]="parentComponent().isAddLapDisabled"
+            [isModifyDisabled]="parentComponent().isModifyDisabled"
+            [startResumeShortcut]="parentComponent().startResumeShortcut"
+            [pauseShortcut]="parentComponent().pauseShortcut"
+            [nextHeatShortcut]="parentComponent().nextHeatShortcut"
+            [restartHeatShortcut]="parentComponent().restartHeatShortcut"
+            [skipHeatShortcut]="parentComponent().skipHeatShortcut"
+            [deferHeatShortcut]="parentComponent().deferHeatShortcut"
+            (fileMenuSelect)="parentComponent().onFileMenuSelect($event)"
+            (menuSelect)="parentComponent().onMenuSelect($event)"
+            (laneMenuSelect)="parentComponent().onLaneMenuSelect($event)"
+            (windowsMenuSelect)="parentComponent().onWindowsMenuSelect($event)"
+            (themeMenuSelect)="parentComponent().onThemeMenuSelect($event)"
+            (driverViewMenuSelect)="
+              parentComponent().onDriverViewMenuSelect($event)
+            "
+            (optionsMenuSelect)="parentComponent().onOptionsSelect($event)"
+            (languageSelected)="parentComponent().onLanguageSelected()"
+            (trackPowerMainSelect)="
+              parentComponent().onTrackPowerMainSelect($event)
+            "
+            (trackPowerLaneSelect)="
+              parentComponent().onTrackPowerLaneSelect($event)
+            "
+          ></app-raceday-menu-bar>
+        }
+        @case ("race-name") {
+          <app-raceday-race-name
+            [race]="parentComponent().race"
+            [widget]="widget()"
+          ></app-raceday-race-name>
+        }
+        @case ("event-name") {
+          <app-raceday-event-name
+            [race]="parentComponent().race"
+            [widget]="widget()"
+          ></app-raceday-event-name>
+        }
+        @case ("season-name") {
+          <app-raceday-season-name
+            [seasonName]="parentComponent().seasonName"
+            [widget]="widget()"
+          ></app-raceday-season-name>
+        }
+        @case ("heat-info") {
+          <app-raceday-heat-info
+            [heat]="parentComponent().heat"
+            [race]="parentComponent().race"
+            [totalHeats]="parentComponent().totalHeats"
+            [widget]="widget()"
+          ></app-raceday-heat-info>
+        }
+        @case ("track-name") {
+          <app-raceday-track-name
+            [track]="parentComponent().track"
+            [widget]="widget()"
+          ></app-raceday-track-name>
+        }
+        @case ("branding") {
+          <app-raceday-branding></app-raceday-branding>
+        }
+        @case ("qr") {
+          <app-raceday-qr
+            [qrCodeUrl]="parentComponent().qrCodeUrl"
+          ></app-raceday-qr>
+        }
+        @case ("flag") {
+          <app-raceday-flag
+            [currentFlagUrl]="parentComponent().getCurrentFlagUrl()"
+          ></app-raceday-flag>
+        }
+        @case ("timer") {
+          <app-raceday-timer
+            [widget]="widget()"
+            [formattedTime]="parentComponent().formattedTime"
+            [autoStatusLabel]="parentComponent().autoStatusLabel"
+            [isWarmup]="parentComponent().isWarmup"
+            [showCountdownOverlay]="parentComponent().showCountdownOverlay"
+          ></app-raceday-timer>
+        }
+        @case ("records") {
+          <app-raceday-records
+            [widget]="widget()"
+            [raceRecordLapNickname]="parentComponent().raceRecordLapNickname"
+            [raceRecordLapTime]="parentComponent().raceRecordLapTime"
+            [raceRecordScoreNickname]="
+              parentComponent().raceRecordScoreNickname
+            "
+            [raceRecordScore]="parentComponent().raceRecordScore"
+            [currentRaceBestNickname]="
+              parentComponent().currentRaceBestNickname
+            "
+            [currentRaceBestTime]="parentComponent().currentRaceBestTime"
+            [heatBestNickname]="parentComponent().heatBestNickname"
+            [heatBestTime]="parentComponent().heatBestTime"
+          ></app-raceday-records>
+        }
+        @case ("leaderboard") {
+          <app-raceday-leaderboard
+            [leaderboardEntries]="parentComponent().leaderboardEntries"
+            [widget]="widget()"
+          ></app-raceday-leaderboard>
+        }
+        @case ("group-leaderboard") {
+          <app-raceday-group-leaderboard
+            [leaderboardEntries]="parentComponent().groupLeaderboardEntries"
+            [groupNumber]="parentComponent().currentGroup"
+            [groupEnabled]="parentComponent().groupEnabled"
+            [groupNames]="parentComponent().race?.group_options?.names || []"
+            [widget]="widget()"
+          ></app-raceday-group-leaderboard>
+        }
+        @case ("season-leaderboard") {
+          <app-raceday-season-leaderboard
+            [seasonStandings]="parentComponent().seasonStandings"
+            [widget]="widget()"
+          ></app-raceday-season-leaderboard>
+        }
+        @case ("season-race-leaderboard") {
+          <app-raceday-season-race-leaderboard
+            [seasonStandings]="parentComponent().seasonStandings"
+            [widget]="widget()"
+          ></app-raceday-season-race-leaderboard>
+        }
+        @case ("lane-view") {
+          <app-raceday-lane-view
+            [parent]="parentComponent()"
+            [widget]="widget()"
+          ></app-raceday-lane-view>
+        }
+        @case ("on-deck") {
+          <app-raceday-on-deck
+            [track]="parentComponent().track"
+            [currentHeat]="parentComponent().heat"
+            [heats]="parentComponent().heats"
+            [parent]="parentComponent()"
+            [widget]="widget()"
+          ></app-raceday-on-deck>
+        }
+        @case ("next-heat") {
+          <app-raceday-next-heat
+            [track]="parentComponent().track"
+            [currentHeat]="parentComponent().heat"
+            [heats]="parentComponent().heats"
+            [parent]="parentComponent()"
+            [widget]="widget()"
+          ></app-raceday-next-heat>
+        }
+        @case ("image") {
+          <app-raceday-image [widget]="widget()"></app-raceday-image>
+        }
+        @case ("action-start-resume") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-pause") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-next-heat") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-restart-heat") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-defer-heat") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-skip-heat") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-skip-race") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-add-lap") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-modify-heats") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-export-pdf") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-export-csv") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-export-xls") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-open-heat-results") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-open-race-results") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-open-season-results") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-open-prediction-results") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-master-power-on") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
+        @case ("action-master-power-off") {
+          <app-raceday-action-button
+            [widget]="widget()"
+            [parent]="parentComponent()"
+          ></app-raceday-action-button>
+        }
       }
     }
   </div>

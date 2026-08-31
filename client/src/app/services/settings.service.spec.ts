@@ -142,4 +142,18 @@ describe("SettingsService", () => {
     expect(settings.language).toBe("");
     expect(mockLogger.error).toHaveBeenCalled();
   });
+
+  it("should save, retrieve and emit pageTransition setting via settings$", (done) => {
+    const settings = Object.assign(new Settings(), {
+      pageTransition: "fade",
+    });
+    service.settings$.subscribe((emitted) => {
+      if (emitted.pageTransition === "fade") {
+        expect(emitted.pageTransition).toBe("fade");
+        expect(service.getSettings().pageTransition).toBe("fade");
+        done();
+      }
+    });
+    service.saveSettings(settings);
+  });
 });

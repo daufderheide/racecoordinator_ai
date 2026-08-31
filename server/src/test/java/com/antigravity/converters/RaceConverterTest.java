@@ -275,6 +275,21 @@ public class RaceConverterTest {
   }
 
   @Test
+  public void testToProto_ThemeId() {
+    Race race =
+        new Race.Builder()
+            .withName("Practice Race")
+            .withTrackEntityId("t1")
+            .withThemeId("practice_theme_rc_ai")
+            .build();
+    Track track = new Track.Builder().name("Track").lanes(new ArrayList<>()).entityId("t1").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertNotNull(proto);
+    assertEquals("practice_theme_rc_ai", proto.getThemeId());
+  }
+
+  @Test
   public void testToProto_SeasonStandingBreakdownFields() {
     com.antigravity.models.SeasonScoring scoring =
         new com.antigravity.models.SeasonScoring(
@@ -437,6 +452,34 @@ public class RaceConverterTest {
     org.junit.Assert.assertTrue(proto.getHeatsCount() > 0);
     com.antigravity.proto.Heat heat0 = proto.getHeats(0);
     assertEquals(2, heat0.getHeatDriversCount());
+  }
+
+  @Test
+  public void testToProto_PopulatesStartTimeMillis() {
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("red", "white", 10));
+    Track track =
+        new Track.Builder().name("Track").lanes(lanes).arduinoConfigs(null).entityId("t1").build();
+
+    List<com.antigravity.race.RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Driver 1", "D1", "d1", null)));
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(new com.antigravity.models.Race.Builder().withName("Test Race").build())
+            .track(track)
+            .drivers(drivers)
+            .isDemoMode(true)
+            .build();
+
+    long testStartMillis = 1756578000000L;
+    race.getStatistics().setStartMillis(testStartMillis);
+
+    com.antigravity.proto.Race proto = RaceConverter.toProto(race);
+    assertNotNull(proto);
+    assertEquals(testStartMillis, proto.getStartTimeMillis());
   }
 
   private void assertNotNull(Object obj) {

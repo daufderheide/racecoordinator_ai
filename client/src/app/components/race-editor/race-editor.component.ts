@@ -4,10 +4,12 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  ElementRef,
   HostListener,
   inject,
   OnDestroy,
   OnInit,
+  ViewChild,
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
@@ -15,6 +17,10 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import {
+  EditorTab,
+  EditorTabsComponent,
+} from "@app/components/shared/editor-tabs/editor-tabs.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -22,6 +28,7 @@ import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
 import { Role } from "@app/models/role";
+import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
@@ -44,6 +51,7 @@ import { deepCopy } from "@app/utils/clone.utils";
   styleUrls: ["./race-editor.component.css"],
   imports: [
     AcknowledgementModalComponent,
+    EditorTabsComponent,
     EditorTitleComponent,
     FormsModule,
     HeatListComponent,
@@ -65,12 +73,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   public navigateBackOnSave = false;
   undoManager: UndoManager<any>;
   tracks: Track[] = [];
+  themes: Theme[] = [];
   races: any[] = [];
   driverCount: number = 4;
   generatedHeats: any[] = [];
   customRotationAssets: any[] = [];
   selectedCustomRotationAssetId: string = "";
   customSequenceText: string = "";
+  @ViewChild("seasonPositionPointsList")
+  seasonPositionPointsList?: ElementRef<HTMLDivElement>;
 
   heatRotationTypes = [
     "RoundRobin",
@@ -236,6 +247,93 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         from: this.route.snapshot.queryParamMap.get("from"),
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },
+    });
+  }
+
+  get raceTabs(): EditorTab[] {
+    return [
+      {
+        id: "general-section",
+        label: this.translationService.translate("RE_GENERAL_HEADER"),
+      },
+      {
+        id: "heats-section",
+        label: this.translationService.translate("RE_HEATS_HEADER"),
+      },
+      {
+        id: "scoring-section",
+        label: this.translationService.translate("RE_SCORING_HEADER"),
+      },
+      {
+        id: "group-section",
+        label: this.translationService.translate("RE_GROUPS_HEADER"),
+      },
+      {
+        id: "start-method-section",
+        label: this.translationService.translate("RE_START_METHOD_HEADER"),
+      },
+      {
+        id: "team-options-section",
+        label: this.translationService.translate("RE_TEAM_OPTIONS_HEADER"),
+      },
+      {
+        id: "analog-fuel-section",
+        label: this.translationService.translate("RE_ANALOG_FUEL_HEADER"),
+      },
+      {
+        id: "digital-fuel-outer-section",
+        label: this.translationService.translate("RE_DIGITAL_FUEL_HEADER"),
+      },
+      {
+        id: "season-points-section",
+        label: this.translationService.translate("SS_TITLE"),
+      },
+    ];
+  }
+
+  scrollToAndExpandSection(tabId: string) {
+    const sectionMap: Record<string, keyof typeof this.sectionsExpanded> = {
+      "general-section": "general",
+      "start-method-section": "start_method",
+      "scoring-section": "scoring",
+      "season-points-section": "season_points",
+      "heats-section": "heats",
+      "group-section": "groups",
+      "analog-fuel-section": "fuel_analog",
+      "digital-fuel-outer-section": "fuel_digital",
+      "team-options-section": "team",
+    };
+
+    const sectionKey = sectionMap[tabId];
+    if (sectionKey) {
+      this.sectionsExpanded[sectionKey] = true;
+      try {
+        localStorage.setItem(
+          "race_editor_expanders",
+          JSON.stringify(this.sectionsExpanded),
+        );
+      } catch (e) {
+        this.logger.error("Error saving expander state", e);
+      }
+    }
+
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      const element = document.getElementById(tabId);
+      const container = document.querySelector(".sections-wrapper");
+      if (element && container) {
+        const topPos =
+          element.getBoundingClientRect().top -
+          container.getBoundingClientRect().top +
+          container.scrollTop;
+
+        container.scrollTo({
+          top: topPos - 24,
+          behavior: "smooth",
+        });
+      } else if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   }
 
@@ -460,6 +558,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       }
     }
     this.loadTracks();
+    this.loadThemes();
     this.loadRaces();
     this.loadCustomRotationAssets();
 
@@ -510,6 +609,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
     this.scale = Math.min(scaleX, scaleY);
+
     if (this.scale <= 0 || isNaN(this.scale)) {
       this.scale = 1;
     }
@@ -648,6 +748,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         } else {
           this.createNewRace();
         }
+        if (
+          this.editingRace &&
+          !this.editingRace.theme_id &&
+          this.themes.length > 0
+        ) {
+          const defaultTheme =
+            this.themes.find(
+              (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+            ) || this.themes[0];
+          this.editingRace.theme_id = defaultTheme.entity_id;
+        }
         if (!this.editingRace.digital_fuel_options) {
           this.editingRace.digital_fuel_options = {
             enabled: false,
@@ -662,6 +773,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           };
         }
         this.enforceFuelRules();
+        this.syncHeatPositionPoints();
         this.originalRace = deepCopy(this.editingRace);
         this.undoManager.initialize(this.editingRace);
         this.syncSelectedCustomRotationAsset();
@@ -679,6 +791,42 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.isLoading = false;
       },
     });
+  }
+
+  loadThemes() {
+    this.dataService.getThemes().subscribe({
+      next: (themes) => {
+        this.themes = themes || [];
+        if (
+          this.editingRace &&
+          !this.editingRace.theme_id &&
+          this.themes.length > 0
+        ) {
+          const defaultTheme =
+            this.themes.find(
+              (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+            ) || this.themes[0];
+          this.editingRace.theme_id = defaultTheme.entity_id;
+        }
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.logger.error("Failed to load themes", err);
+      },
+    });
+  }
+
+  getThemeDisplayNameKey(theme: Theme): string {
+    if (theme.entity_id === "practice_theme_rc_ai") {
+      return "UE_LABEL_PRACTICE_THEME";
+    }
+    if (theme.entity_id === "default_fuel_theme_rc_ai") {
+      return "UE_LABEL_FUEL_THEME";
+    }
+    if (theme.is_default || theme.entity_id === "default_classic_rc_ai") {
+      return "UE_LABEL_DEFAULT_THEME";
+    }
+    return theme.name;
   }
 
   loadTracks() {
@@ -704,8 +852,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           this.tracks.length > 0
         ) {
           this.editingRace.track_entity_id = this.tracks[0].entity_id;
+          this.syncHeatPositionPoints();
           this.originalRace = deepCopy(this.editingRace);
           this.undoManager.initialize(this.editingRace);
+        } else if (this.editingRace) {
+          this.syncHeatPositionPoints();
         }
         this.enforceFuelRules();
         // Safe to call here - triggered by async data load, not user input
@@ -807,6 +958,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       entity_id: "new",
       name: "",
       track_entity_id: this.tracks.length > 0 ? this.tracks[0].entity_id : "",
+      theme_id:
+        this.themes.length > 0
+          ? this.themes[0].entity_id
+          : "default_classic_rc_ai",
       heat_rotation_type: "RoundRobin",
       heat_scoring: {
         finish_method: "Lap",
@@ -881,7 +1036,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         rotate_group_heats: false,
         min_advancing: 0,
       },
+      season_scoring: {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [3, 2, 1, 0],
+      },
     };
+    this.syncHeatPositionPoints();
     this.originalRace = deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
     this.syncSelectedCustomRotationAsset();
@@ -961,6 +1121,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.validateHeatConfigurations();
     this.enforceFuelRules();
     this.syncSelectedCustomRotationAsset();
+    this.syncHeatPositionPoints();
     this.undoManager.captureState();
     // Regenerate heats when rotation type changes (even for new races)
     if (this.driverCount > 0) {
@@ -1321,7 +1482,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   canSaveAsNew(): boolean {
-    if (!this.editingRace?.name) {
+    if (!this.editingRace?.name || !this.editingRace?.theme_id) {
       return false;
     }
     return true;
@@ -1333,8 +1494,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       return false;
     }
 
-    // And the name must not be a duplicate and rotation must be valid
-    return !this.isNameDuplicate() && !this.isRotationInvalid;
+    // And the name must not be a duplicate, rotation must be valid, and theme must be selected
+    return (
+      !this.isNameDuplicate() &&
+      !this.isRotationInvalid &&
+      !!this.editingRace?.theme_id
+    );
   }
 
   getUpdateTooltip(): string {
@@ -1885,14 +2050,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   getHelpSteps(): GuideStep[] {
     return [
       ...this.getGeneralHelpSteps(),
-      ...this.getStartMethodHelpSteps(),
-      ...this.getScoringHelpSteps(),
-      ...this.getSeasonPointsHelpSteps(),
       ...this.getHeatsHelpSteps(),
+      ...this.getScoringHelpSteps(),
       ...this.getGroupsHelpSteps(),
+      ...this.getStartMethodHelpSteps(),
+      ...this.getTeamOptionsHelpSteps(),
       ...this.getAnalogFuelHelpSteps(),
       ...this.getDigitalFuelHelpSteps(),
-      ...this.getTeamOptionsHelpSteps(),
+      ...this.getSeasonPointsHelpSteps(),
     ];
   }
 
@@ -1955,6 +2120,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         selector: "#track-select",
         title: this.translationService.translate("RM_LABEL_TRACK"),
         content: this.translationService.translate("RE_HELP_TRACK_CONTENT"),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.general) {
+            this.sectionsExpanded.general = true;
+          }
+        },
+      },
+      {
+        selector: "#theme-select",
+        title: this.translationService.translate("RM_LABEL_THEME"),
+        content: this.translationService.translate("RE_HELP_THEME_CONTENT"),
         position: "bottom",
         onEnter: () => {
           if (!this.sectionsExpanded.general) {
@@ -3077,6 +3253,16 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
     this.editingRace.season_scoring.position_points.push(0);
     this.captureState();
+    this.scrollPositionPointsToBottom();
+  }
+
+  private scrollPositionPointsToBottom(): void {
+    setTimeout(() => {
+      if (this.seasonPositionPointsList?.nativeElement) {
+        this.seasonPositionPointsList.nativeElement.scrollTop =
+          this.seasonPositionPointsList.nativeElement.scrollHeight;
+      }
+    }, 0);
   }
 
   removeSeasonPositionPoint(index: number): void {
@@ -3088,6 +3274,43 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       return;
     this.editingRace.season_scoring.position_points.splice(index, 1);
     this.captureState();
+  }
+
+  syncHeatPositionPoints(): void {
+    if (!this.editingRace) return;
+    if (!this.editingRace.season_scoring) {
+      this.editingRace.season_scoring = {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [],
+      };
+    }
+    if (!Array.isArray(this.editingRace.season_scoring.heat_position_points)) {
+      this.editingRace.season_scoring.heat_position_points = [];
+    }
+
+    const track = this.tracks.find(
+      (t) => t.entity_id === this.editingRace?.track_entity_id,
+    );
+    if (!track) return;
+
+    const laneCount = track.lanes ? track.lanes.length : 0;
+    const currentPoints = this.editingRace.season_scoring.heat_position_points;
+
+    if (currentPoints.length === 0 && laneCount > 0) {
+      const defaultPoints = [3, 2, 1, 0];
+      const initialPoints = defaultPoints.slice(0, laneCount);
+      while (initialPoints.length < laneCount) {
+        initialPoints.push(0);
+      }
+      this.editingRace.season_scoring.heat_position_points = initialPoints;
+    } else if (currentPoints.length < laneCount) {
+      while (currentPoints.length < laneCount) {
+        currentPoints.push(0);
+      }
+    } else if (currentPoints.length > laneCount) {
+      this.editingRace.season_scoring.heat_position_points =
+        currentPoints.slice(0, laneCount);
+    }
   }
 
   startHelp() {

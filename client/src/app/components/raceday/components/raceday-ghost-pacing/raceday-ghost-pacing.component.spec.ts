@@ -69,7 +69,11 @@ describe("RacedayGhostPacingComponent", () => {
 
     expect(component.targetGhostLapTime()).toBe(5.0);
     expect(component.benchmarkLabel()).toBe("Lane Record");
-    expect(component.progressWidthPct()).toBe(40);
+    expect(component.ghostGap().progressPct).toBe(0.4);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector(".pacing-track")).toBeNull();
+    expect(compiled.querySelector(".ghost-marker")).toBeNull();
   });
 
   it("should render ahead badge with green formatting when delta is positive", () => {
@@ -167,5 +171,54 @@ describe("RacedayGhostPacingComponent", () => {
     fixture.detectChanges();
     expect(component.benchmarkLabel()).toBe("Leader Best");
     expect(component.targetGhostLapTime()).toBe(4.1);
+  });
+
+  it("should render 3-row stacked view when stacked is true with benchmark data", () => {
+    const mockHd = {
+      laneIndex: 0,
+      currentLapTime: 2.0,
+      driver: { name: "Driver 1" },
+    } as unknown as DriverHeatData;
+
+    fixture.componentRef.setInput("driverHeatData", mockHd);
+    fixture.componentRef.setInput("laneRecord", 5.2);
+    fixture.componentRef.setInput("benchmarkType", "LANE_RECORD");
+    fixture.componentRef.setInput("lapProgress", 0.5);
+    fixture.componentRef.setInput("stacked", true);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const stackedContent = compiled.querySelector(".pacing-stacked-content");
+    expect(stackedContent).toBeTruthy();
+
+    const labelEl = compiled.querySelector(".pacing-benchmark-label");
+    expect(labelEl?.textContent?.trim()).toBe("Lane Record");
+
+    const timeEl = compiled.querySelector(".pacing-target-time");
+    expect(timeEl?.textContent?.trim()).toBe("5.20s");
+
+    const badgeEl = compiled.querySelector(".delta-badge");
+    expect(badgeEl).toBeTruthy();
+    expect(badgeEl?.classList.contains("ahead")).toBeTrue();
+  });
+
+  it("should render stacked placeholder when stacked is true and targetGhostLapTime is 0", () => {
+    const mockHd = {
+      laneIndex: 0,
+      driver: { name: "Driver 1" },
+    } as unknown as DriverHeatData;
+    fixture.componentRef.setInput("driverHeatData", mockHd);
+    fixture.componentRef.setInput("laneRecord", 0);
+    fixture.componentRef.setInput("personalBest", 0);
+    fixture.componentRef.setInput("benchmarkType", "LANE_RECORD");
+    fixture.componentRef.setInput("stacked", true);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const stackedContent = compiled.querySelector(".pacing-stacked-content");
+    expect(stackedContent).toBeTruthy();
+
+    const timeEl = compiled.querySelector(".pacing-target-time");
+    expect(timeEl?.textContent?.trim()).toBe("--.--s");
   });
 });

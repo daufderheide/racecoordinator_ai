@@ -74,4 +74,20 @@ describe("LanguageSelectorComponent", () => {
     );
     expect(name).toBe("English");
   });
+
+  it("should close dropdown when another submenu is opened", () => {
+    component.isLocalizationDropdownOpen = true;
+    component.onOtherSubmenuOpened(
+      new CustomEvent("rc-submenu-opened", { detail: {} }),
+    );
+    expect(component.isLocalizationDropdownOpen).toBeFalse();
+  });
+
+  it("should not close dropdown when this component opened event fires", () => {
+    component.isLocalizationDropdownOpen = true;
+    component.onOtherSubmenuOpened(
+      new CustomEvent("rc-submenu-opened", { detail: component }),
+    );
+    expect(component.isLocalizationDropdownOpen).toBeTrue();
+  });
 });

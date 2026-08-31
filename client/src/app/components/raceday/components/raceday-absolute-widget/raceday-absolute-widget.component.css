@@ -460,3 +460,33 @@
     -webkit-backdrop-filter: none !important;
   }
 }
+
+.custom-widget-missing-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  border: 1px dashed rgba(245, 158, 11, 0.6);
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: 6px;
+  color: #fbbf24;
+  text-align: center;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.custom-widget-missing-placeholder .material-icons {
+  font-size: 28px;
+  opacity: 0.8;
+}
+
+.custom-widget-missing-placeholder .missing-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+

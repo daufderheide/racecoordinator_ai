@@ -446,7 +446,7 @@ export class AddLapSectionsDialogComponent {
   private editedSectionsMap = new Map<string, number>();
 
   activeHeats = computed(() => {
-    return (this.heats() || []).filter((h) => h.started);
+    return this.heats() || [];
   });
 
   currentHeatDrivers = computed(() => {
@@ -512,22 +512,13 @@ export class AddLapSectionsDialogComponent {
         untracked(() => {
           this.editedSectionsMap.clear();
           if (this.isMenuMode()) {
-            const startedHeats = this.activeHeats();
-            if (startedHeats.length > 0) {
+            const allHeats = this.activeHeats();
+            if (allHeats.length > 0) {
               const currentHeatNum = this.currentHeatNumber();
-              const currentHeat = (this.heats() || []).find(
+              const currentIdx = allHeats.findIndex(
                 (h) => h.heatNumber === currentHeatNum,
               );
-              const isCurrentHeatStarted = currentHeat?.started === true;
-
-              if (isCurrentHeatStarted) {
-                const currentIdx = startedHeats.findIndex(
-                  (h) => h.heatNumber === currentHeatNum,
-                );
-                this.selectedHeatIndex.set(currentIdx >= 0 ? currentIdx : 0);
-              } else {
-                this.selectedHeatIndex.set(startedHeats.length - 1);
-              }
+              this.selectedHeatIndex.set(currentIdx >= 0 ? currentIdx : 0);
             } else {
               this.selectedHeatIndex.set(0);
             }

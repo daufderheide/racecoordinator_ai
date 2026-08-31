@@ -198,6 +198,41 @@ public class RaceHardwareManagerTest {
     hardwareManager.updatePowerForFlag(RaceFlag.CHECKERED);
     assertTrue(
         "Main power should be ON for CHECKERED when allow finish is enabled", race.isMainPower());
+
+    // Checkered flag with single lap allow finish
+    when(race.getRaceModel().getHeatScoring().getAllowFinish())
+        .thenReturn(HeatScoring.AllowFinish.SingleLap);
+    hardwareManager.updatePowerForFlag(RaceFlag.CHECKERED);
+    assertTrue(
+        "Main power should be ON for CHECKERED when single lap allow finish is enabled",
+        race.isMainPower());
+  }
+
+  @Test
+  public void testUpdatePowerForFlagDuringRacingState() {
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    when(race.getRaceModel().getHeatScoring().getAllowFinish())
+        .thenReturn(HeatScoring.AllowFinish.SingleLap);
+
+    // During Racing state with AllowFinish.SingleLap, power should stay ON for finishing flags
+    hardwareManager.updatePowerForFlag(RaceFlag.GREEN);
+    assertTrue("Main power should be ON for GREEN", race.isMainPower());
+
+    hardwareManager.updatePowerForFlag(RaceFlag.WHITE);
+    assertTrue("Main power should be ON for WHITE", race.isMainPower());
+
+    hardwareManager.updatePowerForFlag(RaceFlag.CHECKERED);
+    assertTrue(
+        "Main power should be ON for CHECKERED in Racing state with SingleLap", race.isMainPower());
+
+    // With AllowFinish.None, power should turn OFF for CHECKERED
+    when(race.getRaceModel().getHeatScoring().getAllowFinish())
+        .thenReturn(HeatScoring.AllowFinish.None);
+    hardwareManager.updatePowerForFlag(RaceFlag.CHECKERED);
+    assertFalse(
+        "Main power should be OFF for CHECKERED in Racing state with AllowFinish.None",
+        race.isMainPower());
   }
 
   private com.antigravity.race.Race createHotStartRace(ProtocolDelegate protocols) {

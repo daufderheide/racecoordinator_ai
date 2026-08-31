@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, Page, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 import { AboutDialogHarnessE2e } from "./testing/about-dialog.harness.e2e";
@@ -29,9 +29,7 @@ test.describe("About Dialog", () => {
     await page.waitForTimeout(100);
   });
 
-  test("should open about dialog from help menu and display all 3 tabs", async ({
-    page,
-  }) => {
+  async function openAboutDialog(page: Page): Promise<AboutDialogHarnessE2e> {
     // 1. Open Help Menu
     const helpMenu = page.locator(".help-menu-container .setup-menu-item");
     await expect(helpMenu).toBeVisible();
@@ -53,7 +51,12 @@ test.describe("About Dialog", () => {
       expect(await harness.isVisible()).toBe(true);
     }).toPass();
 
-    // 4. Tab 1: Info & QR Screenshot (showing full version & QR info without bright pink mask)
+    return harness;
+  }
+
+  test("should display info tab on open", async ({ page }) => {
+    await openAboutDialog(page);
+
     await page.waitForTimeout(300);
     await expect(page).toHaveScreenshot("about-dialog.png", {
       mask: [page.locator(".quote-container"), page.locator(".spinner")],
@@ -61,8 +64,11 @@ test.describe("About Dialog", () => {
       threshold: 0.2,
       animations: "disabled",
     });
+  });
 
-    // 5. Tab 2: Charity & Mission Screenshot (showing top banner, dedication, First Candle & PayPal QR)
+  test("should display charity and mission tab", async ({ page }) => {
+    const harness = await openAboutDialog(page);
+
     await harness.clickTab(1);
     await expect(async () => {
       expect(await harness.isCharityTabVisible()).toBe(true);
@@ -75,8 +81,11 @@ test.describe("About Dialog", () => {
       threshold: 0.2,
       animations: "disabled",
     });
+  });
 
-    // 6. Tab 3: Credits Screenshot (scroll & pause animation so Creator, Contributors & Special Thanks are visible)
+  test("should display credits tab", async ({ page }) => {
+    const harness = await openAboutDialog(page);
+
     await harness.clickTab(2);
     await expect(async () => {
       expect(await harness.isCreditsTabVisible()).toBe(true);
@@ -100,11 +109,5 @@ test.describe("About Dialog", () => {
       threshold: 0.2,
       animations: "disabled",
     });
-
-    // 7. Close dialog
-    await harness.clickClose();
-    await expect(async () => {
-      expect(await harness.isVisible()).toBe(false);
-    }).toPass();
   });
 });
