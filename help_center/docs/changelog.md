@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.42] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- limit lap column to 2 decimal places on the detailed leader board and add unit tests test: update some screendiffs that didn't update before ([c1033f94](https://github.com/daufderheide/racecoordinator_ai/commit/c1033f94))
+- Fixed next heat and ondeck widget lane badges to scale with the text size test: implement component harnesses and screen diff regression tests across the raceday suite https://github.com/daufderheide/racecoordinator_ai/issues/709 ([b8e918d8](https://github.com/daufderheide/racecoordinator_ai/commit/b8e918d8))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.41...v1.0.0-beta.42">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.41] - 2026-08-31
 
 ### 🚀 New Features
