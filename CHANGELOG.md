@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.45] - 2026-09-01
+
+### 🚀 New Features
+
+- implement auto-scrolling to theme sections when expanded in ui-editor.  This puts the top of the them at the top of the page so its more easily viewed ([27640954](https://github.com/daufderheide/racecoordinator_ai/commit/27640954))
+
+### 🐛 Bug Fixes
+
+- **server**: use imported types in syncDriverFlags to satisfy checkstyle ([182d6d13](https://github.com/daufderheide/racecoordinator_ai/commit/182d6d13))
+- fix driver flag logic. http://localhost:9323/#?testId=feeaac045dd0d9290c71-c9cafc40ee6e2129aa05 [skip-screendiffs] ([c2f376fc](https://github.com/daufderheide/racecoordinator_ai/commit/c2f376fc))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.44...v1.0.0-beta.45">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.44] - 2026-08-31
 
 ### 🚀 New Features
