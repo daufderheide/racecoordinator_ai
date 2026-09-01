@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.46] - 2026-09-01
+
+### 🐛 Bug Fixes
+
+- improve null safety for theme slots and update change detection in UI editor. ([920aa445](https://github.com/daufderheide/racecoordinator_ai/commit/920aa445))
+- apply custom dark theme colors to select elements.  This is an attempt to fix the white flash most easily seen on Edge browsers when opening pulldown selectors https://github.com/daufderheide/racecoordinator_ai/issues/670 [skip-screendiffs] ([3a6c011c](https://github.com/daufderheide/racecoordinator_ai/commit/3a6c011c))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.45...v1.0.0-beta.46">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.45] - 2026-09-01
 
 ### 🚀 New Features
