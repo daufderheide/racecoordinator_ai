@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.51] - 2026-09-02
+
+### 🐛 Bug Fixes
+
+- **ui**: update UI component styles and refresh visual regression test snapshots ([f91dbc4f](https://github.com/daufderheide/racecoordinator_ai/commit/f91dbc4f))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.50...v1.0.0-beta.51">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.50] - 2026-09-02
 
 ### 🐛 Bug Fixes
