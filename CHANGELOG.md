@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.0.0-beta.47] - 2026-09-02
+
+### 🚀 New Features
+
+- add heat progress, race flag, and time display to race and heat results components https://github.com/daufderheide/racecoordinator_ai/issues/720 ([baab6f12](https://github.com/daufderheide/racecoordinator_ai/commit/baab6f12))
+
+### 🐛 Bug Fixes
+
+- make locator public and readonly in RaceResultsHarnessE2e constructor [skip-screendiffs] ([2d869fc4](https://github.com/daufderheide/racecoordinator_ai/commit/2d869fc4))
+- remove optional chaining on theme slots to ensure required asset access ([3bd041b0](https://github.com/daufderheide/racecoordinator_ai/commit/3bd041b0))
+- use percentages for compact season summary columns to prevent horizontal scrolling ([7d1ba0e8](https://github.com/daufderheide/racecoordinator_ai/commit/7d1ba0e8))
+
+### ⚡ Improvements & Refactoring
+
+- stabilize screenshot tests by scoping to component locators and removing redundant animation delays ([fefa0d72](https://github.com/daufderheide/racecoordinator_ai/commit/fefa0d72))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.46...v1.0.0-beta.47">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.46] - 2026-09-01
 
 ### 🐛 Bug Fixes
