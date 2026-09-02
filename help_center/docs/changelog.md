@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.48] - 2026-09-02
+
+### 🚀 New Features
+
+- add zoom functionality to toolbar and custom rotation editor ([6c620e8d](https://github.com/daufderheide/racecoordinator_ai/commit/6c620e8d))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.47...v1.0.0-beta.48">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.47] - 2026-09-02
 
 ### 🚀 New Features
