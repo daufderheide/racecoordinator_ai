@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.50] - 2026-09-02
+
+### 🐛 Bug Fixes
+
+- **ui**: implement custom-select component and replace native select elements in race-editor https://github.com/daufderheide/racecoordinator_ai/issues/670 ([dc7feac8](https://github.com/daufderheide/racecoordinator_ai/commit/dc7feac8))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.49...v1.0.0-beta.50">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.49] - 2026-09-02
 
 ### 🐛 Bug Fixes
