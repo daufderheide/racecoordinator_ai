@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.49] - 2026-09-02
+
+### 🐛 Bug Fixes
+
+- remove explicit select option background and color styles to rely on system color-scheme defaults ([79635ed7](https://github.com/daufderheide/racecoordinator_ai/commit/79635ed7))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.48...v1.0.0-beta.49">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.48] - 2026-09-02
 
 ### 🚀 New Features
