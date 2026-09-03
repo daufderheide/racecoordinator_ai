@@ -1,5 +1,26 @@
 # Changelog
 
+## [v1.0.0-beta.52] - 2026-09-03
+
+### 🚀 New Features
+
+- added aspect ratio and a zoom bar to the custom ui layout editor.  Moved the sort and highlight options into the lane-view widget ([76df497c](https://github.com/daufderheide/racecoordinator_ai/commit/76df497c))
+- add visibility toggles for race record data points in the UI editor and update translations https://github.com/daufderheide/racecoordinator_ai/issues/736 ([09591341](https://github.com/daufderheide/racecoordinator_ai/commit/09591341))
+
+### 🐛 Bug Fixes
+
+- **ui**: standardize scrollbar styling across all components with consistent colors and border radii https://github.com/daufderheide/racecoordinator_ai/issues/654 ([f742a419](https://github.com/daufderheide/racecoordinator_ai/commit/f742a419))
+
+### ⚡ Improvements & Refactoring
+
+- remove unused TranslatePipe import and update checkstyle encoding configuration ([7d477bf5](https://github.com/daufderheide/racecoordinator_ai/commit/7d477bf5))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.51...v1.0.0-beta.52">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.51] - 2026-09-02
 
 ### 🐛 Bug Fixes
