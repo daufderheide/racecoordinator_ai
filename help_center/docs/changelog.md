@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.53] - 2026-09-03
+
+### 🚀 New Features
+
+- implement RacedayHeatList component and inspector for dynamic race heat tracking https://github.com/daufderheide/racecoordinator_ai/issues/680 ([b8f5e89d](https://github.com/daufderheide/racecoordinator_ai/commit/b8f5e89d))
+- add portrait layout mode for start sequence lamps with responsive styling and regression tests https://github.com/daufderheide/racecoordinator_ai/issues/742 ([cea2920b](https://github.com/daufderheide/racecoordinator_ai/commit/cea2920b))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.52...v1.0.0-beta.53">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.52] - 2026-09-03
 
 ### 🚀 New Features
