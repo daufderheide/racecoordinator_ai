@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.54] - 2026-09-04
+
+### 🚀 New Features
+
+- track and display heat number for fastest lap records across session and lanes https://github.com/daufderheide/racecoordinator_ai/issues/706 [skip-screendiffs] ([2b2898aa](https://github.com/daufderheide/racecoordinator_ai/commit/2b2898aa))
+- implement categorized widget toolbox with search, localize action labels, and add toolbox helper functionality ([b2360874](https://github.com/daufderheide/racecoordinator_ai/commit/b2360874))
+- add support for separators in CustomSelect and include Current Display option in UI editor aspect ratio settings fix: moved current display aspect ratio to the top of the selector [skip-screendiffs] ([cdd58c9a](https://github.com/daufderheide/racecoordinator_ai/commit/cdd58c9a))
+
+### 🐛 Bug Fixes
+
+- fixed screendiff tests that are failing the ci build ([58f730a2](https://github.com/daufderheide/racecoordinator_ai/commit/58f730a2))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.53...v1.0.0-beta.54">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.53] - 2026-09-03
 
 ### 🚀 New Features
