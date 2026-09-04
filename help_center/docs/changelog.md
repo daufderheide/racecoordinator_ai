@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.55] - 2026-09-04
+
+### 🚀 New Features
+
+- **race**: Added a way to disallow lap times for best laps/records https://github.com/daufderheide/racecoordinator_ai/issues/673 ([7daa80d0](https://github.com/daufderheide/racecoordinator_ai/commit/7daa80d0))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.54...v1.0.0-beta.55">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.54] - 2026-09-04
 
 ### 🚀 New Features
