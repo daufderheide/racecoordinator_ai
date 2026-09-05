@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.0.0-beta.56] - 2026-09-05
+
+### 🚀 New Features
+
+- **racedaysetup**: added acknowledgetment dialog when checking for updates and none are avaialable https://github.com/daufderheide/racecoordinator_ai/issues/745 ([75038480](https://github.com/daufderheide/racecoordinator_ai/commit/75038480))
+- **custom_ui**: extract UI editor logic into helpers, add clearing functionality, and expand help documentation with tests ([62e82d7a](https://github.com/daufderheide/racecoordinator_ai/commit/62e82d7a))
+
+### 🐛 Bug Fixes
+
+- **ui**: standardize file export across the various elements that can be exported.  They can now all have their name changed and output directory assigned.  They also all use the standard windows save as dialog https://github.com/daufderheide/racecoordinator_ai/issues/734 [skip-screendiffs] ([54d2217f](https://github.com/daufderheide/racecoordinator_ai/commit/54d2217f))
+- fixed race results page race state flag and timer.  It now shares code with the widgets they're based off of. https://github.com/daufderheide/racecoordinator_ai/issues/753 https://github.com/daufderheide/racecoordinator_ai/issues/752 [skip-screendiffs] ([55aadb4e](https://github.com/daufderheide/racecoordinator_ai/commit/55aadb4e))
+- **race**: Fixed custom round robins to work properly when there are fewer drivers than number of lanes on the track https://github.com/daufderheide/racecoordinator_ai/issues/746 ([74f727dc](https://github.com/daufderheide/racecoordinator_ai/commit/74f727dc))
+- **race**: add persistence for overall highest score records and lane-specific tracking during a race. https://github.com/daufderheide/racecoordinator_ai/issues/755 ([225e08d3](https://github.com/daufderheide/racecoordinator_ai/commit/225e08d3))
+- **racedaysetup**: add quit blocked notification modal and corresponding unit tests https://github.com/daufderheide/racecoordinator_ai/issues/755 [skip-screendiffs] ([1216acbb](https://github.com/daufderheide/racecoordinator_ai/commit/1216acbb))
+- **xls**: fixed support for custom export templates and initialize UI editor component tests https://github.com/daufderheide/racecoordinator_ai/issues/748 [skip-screendiffs] ([8b1f6515](https://github.com/daufderheide/racecoordinator_ai/commit/8b1f6515))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.55...v1.0.0-beta.56">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.55] - 2026-09-04
 
 ### 🚀 New Features
