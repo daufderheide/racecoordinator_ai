@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.57] - 2026-09-05
+
+### 🐛 Bug Fixes
+
+- swapped the dropped and gross values in the season tables.  Added dropped value to the season results table on the edit page https://github.com/daufderheide/racecoordinator_ai/issues/723 ([295037f2](https://github.com/daufderheide/racecoordinator_ai/commit/295037f2))
+- implement natural alphabetical sorting for custom UIs and update associated snapshots. https://github.com/daufderheide/racecoordinator_ai/issues/758 ([0ec9e146](https://github.com/daufderheide/racecoordinator_ai/commit/0ec9e146))
+- Rearranged race history and dissallow dialog so all races and their lap times can be viewed at once.  This makes it really easy to find the track record https://github.com/daufderheide/racecoordinator_ai/issues/763 ([ced9394f](https://github.com/daufderheide/racecoordinator_ai/commit/ced9394f))
+- remove ellipses from internationalized menu labels https://github.com/daufderheide/racecoordinator_ai/issues/761 ([e2571ad0](https://github.com/daufderheide/racecoordinator_ai/commit/e2571ad0))
+- Fixed every other element highlighting in the custom menus https://github.com/daufderheide/racecoordinator_ai/issues/762 [skip-screendiffs] ([2b9dc177](https://github.com/daufderheide/racecoordinator_ai/commit/2b9dc177))
+- fix trajectory link on the heat results page https://github.com/daufderheide/racecoordinator_ai/issues/766 ([21409290](https://github.com/daufderheide/racecoordinator_ai/commit/21409290))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.56...v1.0.0-beta.57">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.56] - 2026-09-05
 
 ### 🚀 New Features
