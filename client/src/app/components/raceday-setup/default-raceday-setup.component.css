@@ -375,26 +375,11 @@
   box-sizing: border-box;
 }
 
-.driver-item:hover {
+.driver-item:hover,
+.driver-item.keyboard-active {
   background: rgba(56, 189, 248, 0.15);
   border-color: #38bdf8;
   transform: translateX(4px);
-}
-
-.driver-item.selected {
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.02));
-  border: 1px solid #38bdf8;
-  border-left: 4px solid #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-}
-
-.driver-item.keyboard-active {
-  background: rgba(56, 189, 248, 0.25);
-  border-color: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-  transform: translateX(4px);
-  outline: 2px solid #38bdf8;
-  outline-offset: 1px;
 }
 
 .driver-item.cdk-drag-placeholder {
