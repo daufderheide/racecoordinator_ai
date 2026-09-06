@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.59] - 2026-09-06
+
+### 🚀 New Features
+
+- implement column grouping and search functionality for lane view inspector [skip-screendiffs] ([6ab09d95](https://github.com/daufderheide/racecoordinator_ai/commit/6ab09d95))
+- add race statistics including standard deviation, consistency, average top-N laps, and consecutive lap times to driver data.  This new data can now be used as column data on the lane-view widget https://github.com/daufderheide/racecoordinator_ai/issues/769 [skip-screendiffs] ([414f581b](https://github.com/daufderheide/racecoordinator_ai/commit/414f581b))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.58...v1.0.0-beta.59">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.58] - 2026-09-06
 
 ### 🚀 New Features
