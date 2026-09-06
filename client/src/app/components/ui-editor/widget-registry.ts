@@ -61,6 +61,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       insetFontFamily: "",
       insetFontSize: 24,
       insetTextColor: "",
+      collapsedColumnGroups: {},
     }),
   },
   "on-deck": {

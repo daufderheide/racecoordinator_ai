@@ -3693,6 +3693,109 @@ describe("UIEditorComponent", () => {
       expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 
+    it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
+      spyOn(component.undoManager, "captureState");
+      const customUi1: any = {
+        entity_id: "custom_ui_1",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lv1",
+              widgetType: "lane-view",
+              customSettings: { collapsedColumnGroups: { analysis: true } },
+            },
+          ],
+        }),
+      };
+      const customUi2: any = {
+        entity_id: "custom_ui_2",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lv2",
+              widgetType: "lane-view",
+              customSettings: { collapsedColumnGroups: { analysis: false } },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi1, customUi2];
+
+      // Update layout 1 widget
+      component.activeCustomUiId = "custom_ui_1";
+      component.selectedWidgetId = "lv1";
+      const updatedWidget1 = {
+        id: "lv1",
+        widgetType: "lane-view",
+        customSettings: {
+          collapsedColumnGroups: { analysis: true, driver: true },
+        },
+      };
+      component.onWidgetInspectorChange(updatedWidget1, customUi1);
+
+      const parsed1 = JSON.parse(customUi1.layoutJson);
+      const parsed2 = JSON.parse(customUi2.layoutJson);
+      expect(parsed1.widgets[0].customSettings.collapsedColumnGroups).toEqual({
+        analysis: true,
+        driver: true,
+      });
+      expect(parsed2.widgets[0].customSettings.collapsedColumnGroups).toEqual({
+        analysis: false,
+      });
+    });
+
+    it("should preserve collapsed toolbox groupings per layout independently", () => {
+      const customUi1: any = {
+        entity_id: "custom_ui_1",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [],
+          collapsedToolboxGroups: { "race-coordinator-ai": true },
+          collapsedToolboxSubgroups: { actions: true },
+        }),
+      };
+      const customUi2: any = {
+        entity_id: "custom_ui_2",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [],
+          collapsedToolboxGroups: { "race-coordinator-ai": false },
+          collapsedToolboxSubgroups: { actions: false },
+        }),
+      };
+      component.displayCustomUIs = [customUi1, customUi2];
+
+      // Update layout 1 toolbox state via onLayoutChanged with customUi1
+      component.activeCustomUiId = "custom_ui_1";
+      const updatedLayout1 = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+        collapsedToolboxGroups: {
+          "race-coordinator-ai": false,
+          telemetry: true,
+        },
+        collapsedToolboxSubgroups: { actions: false },
+      };
+      component.onLayoutChanged(updatedLayout1, customUi1);
+
+      const parsed1 = JSON.parse(customUi1.layoutJson);
+      const parsed2 = JSON.parse(customUi2.layoutJson);
+      expect(parsed1.collapsedToolboxGroups).toEqual({
+        "race-coordinator-ai": false,
+        telemetry: true,
+      });
+      expect(parsed2.collapsedToolboxGroups).toEqual({
+        "race-coordinator-ai": false,
+      });
+    });
+
     it("should manage aspect ratio and scale mode settings on layouts", () => {
       const customUi: CustomUI = {
         _id: "ui_aspect_test",
