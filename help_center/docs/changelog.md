@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.0.0-beta.58] - 2026-09-06
+
+### 🚀 New Features
+
+- add driver search functionality to raceday setup and update localized help tooltips ([2dcd912b](https://github.com/daufderheide/racecoordinator_ai/commit/2dcd912b))
+- Add hands free and warmup information to the race summary.  Adjusted the spacing on the rds race summary ([545cad78](https://github.com/daufderheide/racecoordinator_ai/commit/545cad78))
+
+### 🐛 Bug Fixes
+
+- removed extra black background on the heat results page.  Added screendiff tests for the page https://github.com/daufderheide/racecoordinator_ai/issues/711 ([68556090](https://github.com/daufderheide/racecoordinator_ai/commit/68556090))
+- **xls**: introduce Settings model and add support for custom export template filename and path tracking https://github.com/daufderheide/racecoordinator_ai/issues/764 [skip-screendiffs] ([b6e1db74](https://github.com/daufderheide/racecoordinator_ai/commit/b6e1db74))
+- **raceday**: add disabled state to back menu opion and action button when there is nowhere to navigate back to https://github.com/daufderheide/racecoordinator_ai/issues/750 fix(ui_editor): alphabetized widget toolbox items ([b10d36e0](https://github.com/daufderheide/racecoordinator_ai/commit/b10d36e0))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.57...v1.0.0-beta.58">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.57] - 2026-09-05
 
 ### 🐛 Bug Fixes
