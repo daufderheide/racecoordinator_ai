@@ -2235,7 +2235,7 @@ export class TestSetupHelper {
       const themes = customThemesList ?? [
         {
           entity_id: "default_classic_rc_ai",
-          name: "Classic Theme",
+          name: "RaceCoordinator AI",
           is_default: true,
           uiId: "default_ui_layout_rc_ai",
           slots: {
@@ -2260,7 +2260,7 @@ export class TestSetupHelper {
         },
         {
           entity_id: "practice_theme_rc_ai",
-          name: "Practice Theme",
+          name: "RaceCoordinator AI (Practice)",
           is_default: true,
           uiId: "practice_ui_layout_rc_ai",
           slots: {
@@ -2285,7 +2285,7 @@ export class TestSetupHelper {
         },
         {
           entity_id: "default_fuel_theme_rc_ai",
-          name: "Fuel Theme",
+          name: "RaceCoordinator AI (Fuel)",
           is_default: true,
           uiId: "default_fuel_ui_layout_rc_ai",
           slots: {
@@ -2355,21 +2355,21 @@ export class TestSetupHelper {
       const customUIs = customUIsList ?? [
         {
           entity_id: "default_ui_layout_rc_ai",
-          name: "Default UI Layout",
+          name: "RaceCoordinator AI",
           is_default: true,
           layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),
         },
         {
           entity_id: "practice_ui_layout_rc_ai",
-          name: "Practice UI Layout",
+          name: "RaceCoordinator AI (Practice)",
           is_default: true,
           layoutJson: JSON.stringify(Settings.DEFAULT_PRACTICE_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_PRACTICE_COLUMNS),
         },
         {
           entity_id: "default_fuel_ui_layout_rc_ai",
-          name: "Fuel Race UI Layout",
+          name: "RaceCoordinator AI (Fuel)",
           is_default: true,
           layoutJson: JSON.stringify(Settings.DEFAULT_LAYOUT),
           columnsJson: JSON.stringify(Settings.DEFAULT_COLUMNS),

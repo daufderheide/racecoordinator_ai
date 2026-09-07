@@ -415,7 +415,7 @@ public class DatabaseInitializer {
 
     Theme defaultTheme =
         new Theme(
-            "Default Theme",
+            "RaceCoordinator AI",
             true,
             slots,
             audioSlots,
@@ -424,7 +424,7 @@ public class DatabaseInitializer {
             null);
     Theme practiceTheme =
         new Theme(
-            "Practice Theme",
+            "RaceCoordinator AI (Practice)",
             true,
             slots,
             audioSlots,
@@ -433,7 +433,13 @@ public class DatabaseInitializer {
             null);
     Theme fuelTheme =
         new Theme(
-            "Fuel Theme", true, slots, audioSlots, CustomUI.FUEL_UI_ID, Theme.FUEL_THEME_ID, null);
+            "RaceCoordinator AI (Fuel)",
+            true,
+            slots,
+            audioSlots,
+            CustomUI.FUEL_UI_ID,
+            Theme.FUEL_THEME_ID,
+            null);
 
     themeRepo.save(defaultTheme);
     themeRepo.save(practiceTheme);

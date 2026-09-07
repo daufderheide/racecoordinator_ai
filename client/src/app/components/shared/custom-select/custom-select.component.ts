@@ -1,6 +1,8 @@
 import {
+  AfterContentChecked,
   AfterContentInit,
   booleanAttribute,
+  ChangeDetectorRef,
   Component,
   ContentChildren,
   effect,
@@ -57,7 +59,7 @@ export class CustomOptionComponent {
   ],
 })
 export class CustomSelectComponent
-  implements ControlValueAccessor, AfterContentInit
+  implements ControlValueAccessor, AfterContentInit, AfterContentChecked
 {
   id = input<string>("");
   disabled = input(false);
@@ -76,7 +78,10 @@ export class CustomSelectComponent
   onChange: any = () => {};
   onTouch: any = () => {};
 
-  constructor(private elementRef: ElementRef) {
+  constructor(
+    private elementRef: ElementRef,
+    private cdr: ChangeDetectorRef,
+  ) {
     effect(() => {
       this.value();
       this.updateSelectedLabel();
@@ -90,6 +95,10 @@ export class CustomSelectComponent
     });
   }
 
+  ngAfterContentChecked() {
+    this.updateSelectedLabel();
+  }
+
   isSelected(optValue: any): boolean {
     const fn = this.compareWith() || ((o1: any, o2: any) => o1 === o2);
     return fn(optValue, this.value());
@@ -100,7 +109,11 @@ export class CustomSelectComponent
     const selected = this.customOptions.find((opt) =>
       this.isSelected(opt.value()),
     );
-    this.selectedLabel = selected ? selected.label : "";
+    const newLabel = selected ? selected.label : "";
+    if (this.selectedLabel !== newLabel) {
+      this.selectedLabel = newLabel;
+      this.cdr.markForCheck();
+    }
   }
 
   writeValue(val: any): void {
@@ -122,8 +135,7 @@ export class CustomSelectComponent
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.onTouch();
-      // Ensure the labels are up to date when opened
-      setTimeout(() => this.updateSelectedLabel(), 0);
+      this.updateSelectedLabel();
     }
   }
 

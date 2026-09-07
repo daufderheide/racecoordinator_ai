@@ -131,7 +131,7 @@ public class CustomUI extends Model {
     String columnVisibilityJson = "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\"}";
     String columnWidthsJson = "{\"ghostPacingLeaderAvg\":200,\"averageLapTime\":310}";
     return new CustomUI(
-        "Default UI Layout",
+        "RaceCoordinator AI",
         true,
         layoutJson,
         columnsJson,
@@ -158,7 +158,7 @@ public class CustomUI extends Model {
     String columnVisibilityJson =
         "{\"imageset_fuel-gauge-builtin\":\"FuelRaceOnly\",\"laneNumber\":\"Always\",\"lastLaps\":\"Always\"}";
     return new CustomUI(
-        "Practice UI Layout",
+        "RaceCoordinator AI (Practice)",
         true,
         layoutJson,
         columnsJson,
@@ -222,7 +222,7 @@ public class CustomUI extends Model {
         "{\"lapCount\":210,\"imageset_fuel-gauge-builtin\":210,\"lastLapTime\":310,"
             + "\"gapLeader\":310}";
     return new CustomUI(
-        "Default Fuel UI Layout",
+        "RaceCoordinator AI (Fuel)",
         true,
         layoutJson,
         columnsJson,

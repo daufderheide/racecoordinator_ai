@@ -507,7 +507,7 @@ public class AssetDefaultsInitializer {
 
         Theme defaultTheme =
             new Theme(
-                "Default Theme",
+                "RaceCoordinator AI",
                 true,
                 slots,
                 audioSlots,
@@ -524,7 +524,7 @@ public class AssetDefaultsInitializer {
 
         Theme practiceTheme =
             new Theme(
-                "Practice Theme",
+                "RaceCoordinator AI (Practice)",
                 true,
                 slots,
                 audioSlots,

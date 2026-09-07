@@ -28,6 +28,7 @@ import {
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
@@ -860,16 +861,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getThemeDisplayNameKey(theme: Theme): string {
-    if (theme.entity_id === "practice_theme_rc_ai") {
-      return "UE_LABEL_PRACTICE_THEME";
-    }
-    if (theme.entity_id === "default_fuel_theme_rc_ai") {
-      return "UE_LABEL_FUEL_THEME";
-    }
-    if (theme.is_default || theme.entity_id === "default_classic_rc_ai") {
-      return "UE_LABEL_DEFAULT_THEME";
-    }
-    return theme.name;
+    return getThemeDisplayNameKey(theme, this.translationService);
   }
 
   loadTracks() {

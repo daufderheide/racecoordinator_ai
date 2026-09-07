@@ -868,7 +868,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getCustomUiDisplayNameKey(ui: CustomUI) {
-    return getCustomUiDisplayNameKey(ui);
+    return getCustomUiDisplayNameKey(ui, this.translationService);
   }
   isCustomUiDefault(ui: CustomUI) {
     return isCustomUiDefault(ui);
@@ -897,6 +897,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
   onCustomUiNameChanged(_ui: CustomUI) {
     this.captureState();
+    this.refreshDisplayProperties();
     this.cdr.markForCheck();
   }
   isCustomUiNameInvalid(ui: CustomUI) {
@@ -906,7 +907,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
   }
   getThemeDisplayNameKey(theme: Theme) {
-    return getThemeDisplayNameKey(theme);
+    return getThemeDisplayNameKey(theme, this.translationService);
   }
   isThemeDefault(theme: Theme) {
     return isThemeDefault(theme);
@@ -928,6 +929,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
   async onThemeNameChanged(_theme: Theme) {
     this.captureState();
+    this.refreshDisplayProperties();
+    this.cdr.markForCheck();
   }
   async onDuplicateTheme(theme: Theme) {
     await handleDuplicateTheme(this, theme);

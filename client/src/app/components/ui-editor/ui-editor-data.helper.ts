@@ -117,7 +117,7 @@ export function ensureDefaultCustomUis(
 ): void {
   if (!customUIs.some((u: any) => u.entity_id === "default_ui_layout_rc_ai")) {
     customUIs.push({
-      name: "Default UI Layout",
+      name: "RaceCoordinator AI",
       is_default: true,
       layoutJson: JSON.stringify(s.racedayLayout || Settings.DEFAULT_LAYOUT),
       columnsJson: JSON.stringify(s.racedayColumns || Settings.DEFAULT_COLUMNS),
@@ -137,7 +137,7 @@ export function ensureDefaultCustomUis(
   }
   if (!customUIs.some((u: any) => u.entity_id === "practice_ui_layout_rc_ai")) {
     customUIs.push({
-      name: "Practice UI Layout",
+      name: "RaceCoordinator AI (Practice)",
       is_default: true,
       layoutJson: JSON.stringify(
         s.practiceRacedayLayout || Settings.DEFAULT_PRACTICE_LAYOUT,

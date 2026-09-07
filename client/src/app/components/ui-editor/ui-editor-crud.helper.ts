@@ -2,15 +2,93 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Theme } from "@app/models/theme";
 import { TranslationService } from "@app/services/translation.service";
 
-export function getCustomUiDisplayNameKey(ui: CustomUI): string {
+const DEFAULT_RACEDAY_UI_NAMES = new Set([
+  "",
+  "racecoordinator ai",
+  "default ui layout",
+  "raceday ui layout",
+]);
+
+const DEFAULT_PRACTICE_UI_NAMES = new Set([
+  "",
+  "racecoordinator ai (practice)",
+  "default practice ui layout",
+  "practice ui layout",
+]);
+
+const DEFAULT_FUEL_UI_NAMES = new Set([
+  "",
+  "racecoordinator ai (fuel)",
+  "default fuel ui layout",
+  "fuel ui layout",
+]);
+
+const DEFAULT_THEME_NAMES = new Set([
+  "",
+  "default",
+  "racecoordinator ai",
+  "classic",
+  "classic theme",
+  "default theme",
+]);
+
+const DEFAULT_PRACTICE_THEME_NAMES = new Set([
+  "",
+  "racecoordinator ai (practice)",
+  "practice",
+  "practice theme",
+]);
+
+const DEFAULT_FUEL_THEME_NAMES = new Set([
+  "",
+  "racecoordinator ai (fuel)",
+  "fuel",
+  "fuel theme",
+]);
+
+export function getCustomUiDisplayNameKey(
+  ui: CustomUI,
+  translationService?: TranslationService,
+): string {
+  const nameNorm = (ui.name || "").trim().toLowerCase();
   if (ui.entity_id === "default_ui_layout_rc_ai") {
-    return "UE_LABEL_DEFAULT_RACEDAY_UI";
+    const translated = translationService
+      ?.translate("UE_LABEL_DEFAULT_RACEDAY_UI")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_RACEDAY_UI_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DEFAULT_RACEDAY_UI";
+    }
+    return ui.name;
   }
   if (ui.entity_id === "practice_ui_layout_rc_ai") {
-    return "UE_LABEL_DEFAULT_PRACTICE_UI";
+    const translated = translationService
+      ?.translate("UE_LABEL_DEFAULT_PRACTICE_UI")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_PRACTICE_UI_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DEFAULT_PRACTICE_UI";
+    }
+    return ui.name;
   }
   if (ui.entity_id === "default_fuel_ui_layout_rc_ai") {
-    return "UE_LABEL_DEFAULT_FUEL_UI";
+    const translated = translationService
+      ?.translate("UE_LABEL_DEFAULT_FUEL_UI")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_FUEL_UI_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DEFAULT_FUEL_UI";
+    }
+    return ui.name;
   }
   return ui.name || "UE_LABEL_DEFAULT_UI";
 }
@@ -37,15 +115,49 @@ export function isCustomUiNameInvalid(
   );
 }
 
-export function getThemeDisplayNameKey(theme: Theme): string {
+export function getThemeDisplayNameKey(
+  theme: Theme,
+  translationService?: TranslationService,
+): string {
+  const nameNorm = (theme.name || "").trim().toLowerCase();
   if (theme.entity_id === "practice_theme_rc_ai") {
-    return "UE_LABEL_PRACTICE_THEME";
+    const translated = translationService
+      ?.translate("UE_LABEL_PRACTICE_THEME")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_PRACTICE_THEME_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_PRACTICE_THEME";
+    }
+    return theme.name;
   }
   if (theme.entity_id === "default_fuel_theme_rc_ai") {
-    return "UE_LABEL_FUEL_THEME";
+    const translated = translationService
+      ?.translate("UE_LABEL_FUEL_THEME")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_FUEL_THEME_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_FUEL_THEME";
+    }
+    return theme.name;
   }
   if (theme.is_default || theme.entity_id === "default_classic_rc_ai") {
-    return "UE_LABEL_DEFAULT_THEME";
+    const translated = translationService
+      ?.translate("UE_LABEL_DEFAULT_THEME")
+      ?.trim()
+      .toLowerCase();
+    if (
+      DEFAULT_THEME_NAMES.has(nameNorm) ||
+      (translated && nameNorm === translated)
+    ) {
+      return "UE_LABEL_DEFAULT_THEME";
+    }
+    return theme.name;
   }
   return theme.name;
 }

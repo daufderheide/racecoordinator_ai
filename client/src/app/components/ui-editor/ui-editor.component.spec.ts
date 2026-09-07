@@ -3040,6 +3040,15 @@ describe("UIEditorComponent", () => {
         "My Custom Layout",
       );
 
+      const renamedDefaultUi: any = {
+        entity_id: "default_ui_layout_rc_ai",
+        is_default: true,
+        name: "Renamed Default Layout",
+      };
+      expect(component.getCustomUiDisplayNameKey(renamedDefaultUi)).toBe(
+        "Renamed Default Layout",
+      );
+
       expect(component.isCustomUiDefault(defaultUi)).toBeTrue();
       expect(component.isCustomUiDefault(practiceUi)).toBeTrue();
       expect(component.isCustomUiDefault(fuelUi)).toBeTrue();
@@ -3079,10 +3088,34 @@ describe("UIEditorComponent", () => {
         "My Custom Theme",
       );
 
+      const renamedDefaultTheme: any = {
+        entity_id: "default_classic_rc_ai",
+        is_default: true,
+        name: "Renamed Default Theme",
+      };
+      expect(component.getThemeDisplayNameKey(renamedDefaultTheme)).toBe(
+        "Renamed Default Theme",
+      );
+
       expect(component.isThemeDefault(defaultTheme)).toBeTrue();
       expect(component.isThemeDefault(practiceTheme)).toBeTrue();
       expect(component.isThemeDefault(fuelTheme)).toBeTrue();
       expect(component.isThemeDefault(customTheme)).toBeFalse();
+    });
+
+    it("should capture state and refresh display properties when custom UI name or theme name changes", async () => {
+      spyOn(component, "captureState");
+      spyOn(component, "refreshDisplayProperties");
+
+      const ui: any = { entity_id: "u1", name: "New UI Name" };
+      component.onCustomUiNameChanged(ui);
+      expect(component.captureState).toHaveBeenCalled();
+      expect(component.refreshDisplayProperties).toHaveBeenCalled();
+
+      const theme: any = { entity_id: "t1", name: "New Theme Name" };
+      await component.onThemeNameChanged(theme);
+      expect(component.captureState).toHaveBeenCalledTimes(2);
+      expect(component.refreshDisplayProperties).toHaveBeenCalledTimes(2);
     });
 
     it("should handle onCustomUiSelected and only select default widget when no valid widget is selected", () => {
