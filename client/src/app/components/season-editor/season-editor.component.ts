@@ -28,6 +28,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
   areSeasonsEqual,
@@ -124,6 +125,40 @@ export class SeasonEditorComponent
 
   hasChanges(): boolean {
     return this.isDirty;
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (!this.editingSeason) return reasons;
+
+    const nameTrimmed = this.editingSeason.name?.trim() || "";
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_SEASON_NAME_EMPTY");
+    } else if (this.isNameDuplicate) {
+      reasons.push("DISCARD_REASON_SEASON_NAME_DUPLICATE");
+    }
+
+    if (
+      this.editingSeason.drops === undefined ||
+      this.editingSeason.drops < 0
+    ) {
+      reasons.push("DISCARD_REASON_SEASON_DROPS_INVALID");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirty) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   confirmDiscard(): Promise<boolean> {

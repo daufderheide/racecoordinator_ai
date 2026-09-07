@@ -2100,6 +2100,60 @@ describe("RaceEditorComponent", () => {
       tick();
       expect(resolvedValue).toBeFalse();
     }));
+
+    it("should identify reasons why race changes could not be saved", () => {
+      component.editingRace = {
+        entity_id: "r1",
+        name: "Race 1",
+        track_entity_id: "t1",
+        heat_rotation_type: "RoundRobin",
+      } as any;
+      component.races = [
+        { entity_id: "r1", name: "Race 1" } as any,
+        { entity_id: "r2", name: "Existing Race" } as any,
+      ];
+
+      // Empty name
+      component.editingRace.name = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_RACE_NAME_EMPTY",
+      );
+
+      // Duplicate name
+      component.editingRace.name = "Existing Race";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_RACE_NAME_DUPLICATE",
+      );
+
+      // Missing track
+      component.editingRace.name = "Unique Race";
+      component.editingRace.track_entity_id = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_RACE_NO_TRACK",
+      );
+      component.editingRace.track_entity_id = "t1";
+
+      // Missing rotation
+      component.editingRace.heat_rotation_type = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_RACE_NO_ROTATION",
+      );
+      component.editingRace.heat_rotation_type = "RoundRobin";
+
+      // Saving
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exit too quickly
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // Formatted discard message
+      expect(component.discardMessage).toContain("•");
+    });
   });
 
   describe("Fuel Usage Graphs, Pit Graphs, and Interactive Hover Tooltips", () => {

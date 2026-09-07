@@ -2320,6 +2320,38 @@ describe("UIEditorComponent", () => {
       const result = await promise;
       expect(result).toBeTrue();
     });
+
+    it("should provide unsaved reasons when changes cannot be saved", () => {
+      // Invalid theme name
+      spyOn(component, "isAnyThemeNameInvalid").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_THEME_NAME_INVALID",
+      );
+
+      // Invalid custom UI name
+      (component.isAnyThemeNameInvalid as jasmine.Spy).and.returnValue(false);
+      spyOn(component, "isAnyCustomUiNameInvalid").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_CUSTOM_UI_NAME_INVALID",
+      );
+
+      // Saving in progress
+      (component.isAnyCustomUiNameInvalid as jasmine.Spy).and.returnValue(
+        false,
+      );
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exited too quickly (dirty, valid, not saving)
+      spyOn(component, "hasChanges").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // discardMessage contains bullet points
+      expect(component.discardMessage).toContain("•");
+    });
   });
 
   describe("success modal functionality", () => {

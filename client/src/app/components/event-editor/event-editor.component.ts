@@ -31,6 +31,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
   standalone: true,
@@ -268,6 +269,37 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   hasChanges(): boolean {
     return this.isDirtyState();
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (!this.editingEvent) return reasons;
+
+    const nameTrimmed = this.editingEvent.name?.trim() || "";
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_EVENT_NAME_EMPTY");
+    } else if (this.isDuplicateName()) {
+      reasons.push("DISCARD_REASON_EVENT_NAME_DUPLICATE");
+    }
+
+    if (!this.editingEvent.races || this.editingEvent.races.length === 0) {
+      reasons.push("DISCARD_REASON_EVENT_NO_RACES");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirtyState()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   confirmDiscard(): Promise<boolean> {

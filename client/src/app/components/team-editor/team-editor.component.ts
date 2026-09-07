@@ -36,6 +36,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
   standalone: true,
@@ -439,6 +440,33 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   hasChanges(): boolean {
     return this.isDirtyState();
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (!this.editingTeam) return reasons;
+
+    const nameTrimmed = this.editingTeam.name?.trim() || "";
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_TEAM_NAME_EMPTY");
+    } else if (!this.isNameUnique(true)) {
+      reasons.push("DISCARD_REASON_TEAM_NAME_DUPLICATE");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirtyState()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   confirmDiscard(): Promise<boolean> {

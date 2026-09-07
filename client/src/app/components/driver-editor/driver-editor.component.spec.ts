@@ -722,6 +722,56 @@ describe("DriverEditorComponent", () => {
       expect(component.isConfigValid()).toBeFalse();
       expect(component.isNicknameInvalid).toBeTrue();
     });
+
+    it("should identify reasons why driver changes could not be saved", () => {
+      const driver = new Driver("d1", "ValidName", "OrigNick");
+      setupDriver(driver);
+      component.allDrivers = [
+        new Driver("d1", "ValidName", "OrigNick"),
+        new Driver("d2", "ExistingName", "ExistingNick"),
+      ];
+
+      // Empty name
+      component.editingDriver!.name = "";
+      component.editingDriver!.nickname = "ValidNick";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NAME_EMPTY",
+      );
+
+      // Duplicate name
+      component.editingDriver!.name = "ExistingName";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NAME_DUPLICATE",
+      );
+
+      // Empty nickname
+      component.editingDriver!.name = "UniqueName";
+      component.editingDriver!.nickname = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NICKNAME_EMPTY",
+      );
+
+      // Duplicate nickname
+      component.editingDriver!.nickname = "ExistingNick";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NICKNAME_DUPLICATE",
+      );
+
+      // Saving in progress
+      component.editingDriver!.nickname = "UniqueNick";
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exited too quickly (dirty but valid and not saving)
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // Formatted discard message
+      expect(component.discardMessage).toContain("•");
+    });
   });
 
   describe("guided help", () => {

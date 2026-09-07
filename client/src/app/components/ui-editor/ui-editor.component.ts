@@ -45,6 +45,7 @@ import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
 import { deepCopy } from "@app/utils/clone.utils";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
   ThemeTemplateModalComponent,
@@ -649,6 +650,31 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   private autoSaveState(): Promise<void> {
     return executeAutoSaveState(buildAutoSaveContext(this));
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (this.isAnyThemeNameInvalid()) {
+      reasons.push("DISCARD_REASON_THEME_NAME_INVALID");
+    }
+    if (this.isAnyCustomUiNameInvalid()) {
+      reasons.push("DISCARD_REASON_CUSTOM_UI_NAME_INVALID");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.hasChanges()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   async confirmDiscard(): Promise<boolean> {
