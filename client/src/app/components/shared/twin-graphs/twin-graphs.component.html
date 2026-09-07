@@ -1,5 +1,9 @@
 <div class="graphs-container">
-  <h2 class="graphs-section-title">{{ titleKey | translate: titleParams }}</h2>
+  @if (titleKey) {
+    <h2 class="graphs-section-title">
+      {{ titleKey | translate: titleParams }}
+    </h2>
+  }
   <svg
     [attr.width]="width"
     [attr.height]="effectiveHeight"

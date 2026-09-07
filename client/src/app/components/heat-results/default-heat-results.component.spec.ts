@@ -188,6 +188,9 @@ describe("DefaultHeatResultsComponent", () => {
     // Verify axis titles for both graphs are rendered (X and Y for each = 4 total)
     const axisTitles = compiled.querySelectorAll(".axis-title");
     expect(axisTitles.length).toBe(4);
+
+    // Verify title above graphs is not rendered
+    expect(compiled.querySelector(".graphs-section-title")).toBeNull();
   });
 
   it("should calculate ranking timeline correctly", () => {

@@ -39,6 +39,7 @@ describe("DefaultRaceResultsComponent", () => {
   let standingsUpdateSubject: Subject<any>;
   let overallStandingsUpdateSubject: Subject<any>;
   let lapsSubject: Subject<any>;
+  let recordDataSubject: BehaviorSubject<any>;
   let mockRouter: any;
 
   // Reusable test helpers
@@ -112,6 +113,7 @@ describe("DefaultRaceResultsComponent", () => {
     standingsUpdateSubject = new Subject<any>();
     overallStandingsUpdateSubject = new Subject<any>();
     lapsSubject = new Subject<any>();
+    recordDataSubject = new BehaviorSubject<any>(null);
     mockRouter = {
       navigate: jasmine.createSpy("navigate"),
     };
@@ -122,7 +124,7 @@ describe("DefaultRaceResultsComponent", () => {
       standingsUpdate$: standingsUpdateSubject.asObservable(),
       overallStandingsUpdate$: overallStandingsUpdateSubject.asObservable(),
       laps$: lapsSubject.asObservable(),
-      recordData$: new BehaviorSubject(null).asObservable(),
+      recordData$: recordDataSubject.asObservable(),
       raceState$: new BehaviorSubject<any>(0),
       raceTime$: new BehaviorSubject<any>({ time: 0 }),
     };
@@ -1141,6 +1143,60 @@ describe("DefaultRaceResultsComponent", () => {
       it("should update formattedTime when raceTimeService emits", () => {
         formattedTimeSubject.next("05:43.2");
         expect(component.formattedTime).toBe("05:43.2");
+      });
+    });
+
+    describe("Track Records Dashboard", () => {
+      it("should not render records dashboard when recordData is null", () => {
+        fixture.detectChanges();
+        const recordsDashboard =
+          fixture.nativeElement.querySelector(".records-dashboard");
+        expect(recordsDashboard).toBeNull();
+      });
+
+      it("should render records dashboard at the bottom of results container when recordData is present", () => {
+        const mockRecords = {
+          overall: {
+            fastestLap: {
+              value: 4.123,
+              driverName: "Alice",
+              date: "2026-09-01T12:00:00Z",
+            },
+            highestScore: {
+              value: 50,
+              driverName: "Bob",
+              date: "2026-09-01T12:00:00Z",
+            },
+            laneFastestLap: [
+              { value: 4.2, driverName: "Alice" },
+              { value: 4.3, driverName: "Bob" },
+            ],
+          },
+        };
+
+        recordDataSubject.next(mockRecords);
+        fixture.detectChanges();
+
+        const resultsContainer =
+          fixture.nativeElement.querySelector(".results-container");
+        expect(resultsContainer).toBeTruthy();
+
+        const recordsDashboard =
+          resultsContainer.querySelector(".records-dashboard");
+        expect(recordsDashboard).toBeTruthy();
+
+        const tableWrapper = resultsContainer.querySelector(
+          ".results-table-wrapper",
+        );
+        expect(tableWrapper).toBeTruthy();
+
+        // Verify that records-dashboard is placed after results-table-wrapper at the bottom
+        const children = Array.from(resultsContainer.children);
+        const tableWrapperIndex = children.indexOf(tableWrapper);
+        const recordsDashboardIndex = children.indexOf(recordsDashboard);
+
+        expect(recordsDashboardIndex).toBeGreaterThan(tableWrapperIndex);
+        expect(resultsContainer.lastElementChild).toBe(recordsDashboard);
       });
     });
   });

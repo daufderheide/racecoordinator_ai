@@ -164,4 +164,27 @@ describe("TwinGraphsComponent", () => {
       );
     });
   });
+
+  describe("Section Title", () => {
+    it("should not render graphs-section-title when titleKey is empty or not provided", () => {
+      component.titleKey = "";
+      fixture.detectChanges();
+
+      const titleEl = fixture.debugElement.query(
+        By.css(".graphs-section-title"),
+      );
+      expect(titleEl).toBeNull();
+    });
+
+    it("should render graphs-section-title when titleKey is provided", () => {
+      component.titleKey = "HR_TITLE";
+      fixture.detectChanges();
+
+      const titleEl = fixture.debugElement.query(
+        By.css(".graphs-section-title"),
+      );
+      expect(titleEl).toBeTruthy();
+      expect(titleEl.nativeElement.textContent).toContain("HR_TITLE");
+    });
+  });
 });
