@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
+import { CommonModule, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -23,6 +23,7 @@ import {
   SeasonStandingDetail,
   SeasonStandingItem,
 } from "@app/models/season";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
 import { PrintService } from "@app/services/print.service";
@@ -39,7 +40,7 @@ import { TranslationService } from "@app/services/translation.service";
   imports: [
     CommonModule,
     TranslatePipe,
-    DatePipe,
+    LocalDatePipe,
     DecimalPipe,
     PdfExportDialogComponent,
     BrowserNavigationComponent,

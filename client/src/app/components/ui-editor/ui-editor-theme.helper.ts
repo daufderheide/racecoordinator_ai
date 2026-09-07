@@ -2,6 +2,7 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { AudioConfig } from "@app/models/driver";
 import { Theme } from "@app/models/theme";
 import { deepCopy } from "@app/utils/clone.utils";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { UIEditorState } from "./ui-editor-constants";
 import { isThemeDefault } from "./ui-editor-crud.helper";
@@ -12,14 +13,13 @@ import {
 } from "./ui-editor-theme-assets.helper";
 
 export function sortThemesForDisplay(themes: Theme[]): Theme[] {
-  const defaults = (themes || []).filter((t) => isThemeDefault(t));
-  const others = (themes || []).filter((t) => !isThemeDefault(t));
-  defaults.sort((a, b) => {
-    if (a.entity_id === "default_classic_rc_ai") return -1;
-    if (b.entity_id === "default_classic_rc_ai") return 1;
-    return 0;
+  const list = [...(themes || [])];
+  list.sort((a, b) => {
+    const cmp = naturalSortCompare(a.name || "", b.name || "");
+    if (cmp !== 0) return cmp;
+    return (a.entity_id || "").localeCompare(b.entity_id || "");
   });
-  return [...defaults, ...others];
+  return list;
 }
 
 export function applyThemeSlotUpdate(

@@ -6,6 +6,7 @@ import { NgTemplateOutlet } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  effect,
   ElementRef,
   HostBinding,
   HostListener,
@@ -58,6 +59,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -740,6 +742,7 @@ export class DefaultRacedayComponent
   private pendingNavigationUrl = "";
 
   private childWindowManagerService: ChildWindowManagerService;
+  private dateTimeFormatService: DateTimeFormatService;
 
   constructor(
     private el: ElementRef,
@@ -762,9 +765,12 @@ export class DefaultRacedayComponent
     childWindowManagerService?: ChildWindowManagerService,
     private customWidgetService?: CustomWidgetService,
     private navigationService?: NavigationService,
+    dateTimeFormatService?: DateTimeFormatService,
   ) {
     this.childWindowManagerService =
       childWindowManagerService ?? inject(ChildWindowManagerService);
+    this.dateTimeFormatService =
+      dateTimeFormatService ?? inject(DateTimeFormatService);
     this.customWidgetService =
       customWidgetService ??
       inject(CustomWidgetService, { optional: true }) ??
@@ -779,6 +785,11 @@ export class DefaultRacedayComponent
       if (event instanceof NavigationStart) {
         this.pendingNavigationUrl = event.url;
       }
+    });
+    effect(() => {
+      this.activeCustomUi();
+      this.hasLoadedToolboxStates = false;
+      this.loadToolboxExpandedStatesFromLayout();
     });
   }
 
@@ -831,6 +842,7 @@ export class DefaultRacedayComponent
   toolboxSearchTerm = "";
   toolboxGroupExpandedStates = new Map<string, boolean>();
   toolboxSubgroupExpandedStates = new Map<string, boolean>();
+  private hasLoadedToolboxStates = false;
 
   get isPracticeLayout(): boolean {
     const isDemo = this.race?.entity_id?.startsWith("demo_") || false;
@@ -2116,11 +2128,7 @@ export class DefaultRacedayComponent
       ms = Number(entry.date);
     }
     if (ms <= 0 || isNaN(ms)) return "---";
-    const d = new Date(ms);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return this.dateTimeFormatService.formatDate(ms, "short", "---");
   }
 
   getBestRaceLapEntry(hd?: DriverHeatData | number): IRecordEntry | undefined {
@@ -3112,6 +3120,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
+      formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -3147,6 +3156,7 @@ export class DefaultRacedayComponent
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
@@ -4875,6 +4885,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
+      formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,
@@ -5673,7 +5684,141 @@ export class DefaultRacedayComponent
       .sort((a, b) => a.localeCompare(b));
   }
 
+  loadToolboxExpandedStatesFromLayout(): void {
+    const layout = this.layout || this.currentRacedayLayout;
+    this.toolboxGroupExpandedStates.clear();
+    this.toolboxSubgroupExpandedStates.clear();
+    this.hasLoadedToolboxStates = true;
+    if (!layout) return;
+
+    // Groups: default is expanded (true) unless collapsed
+    const collapsedGroups = layout.collapsedToolboxGroups;
+    if (Array.isArray(collapsedGroups)) {
+      for (const id of collapsedGroups) {
+        this.toolboxGroupExpandedStates.set(id, false);
+      }
+    } else if (collapsedGroups && typeof collapsedGroups === "object") {
+      for (const [id, isCollapsed] of Object.entries(collapsedGroups)) {
+        this.toolboxGroupExpandedStates.set(id, !isCollapsed);
+      }
+    }
+
+    if (
+      layout.toolboxGroupExpandedStates &&
+      typeof layout.toolboxGroupExpandedStates === "object"
+    ) {
+      for (const [id, isExpanded] of Object.entries(
+        layout.toolboxGroupExpandedStates,
+      )) {
+        this.toolboxGroupExpandedStates.set(id, !!isExpanded);
+      }
+    }
+
+    // Subgroups: default is collapsed (false) unless expanded
+    const collapsedSubgroups = layout.collapsedToolboxSubgroups;
+    if (Array.isArray(collapsedSubgroups)) {
+      for (const id of collapsedSubgroups) {
+        this.toolboxSubgroupExpandedStates.set(id, false);
+      }
+    } else if (collapsedSubgroups && typeof collapsedSubgroups === "object") {
+      for (const [id, isCollapsed] of Object.entries(collapsedSubgroups)) {
+        this.toolboxSubgroupExpandedStates.set(id, !isCollapsed);
+      }
+    }
+
+    if (
+      layout.toolboxSubgroupExpandedStates &&
+      typeof layout.toolboxSubgroupExpandedStates === "object"
+    ) {
+      for (const [id, isExpanded] of Object.entries(
+        layout.toolboxSubgroupExpandedStates,
+      )) {
+        this.toolboxSubgroupExpandedStates.set(id, !!isExpanded);
+      }
+    }
+  }
+
+  ensureToolboxExpandedStatesLoaded(): void {
+    if (!this.hasLoadedToolboxStates) {
+      this.loadToolboxExpandedStatesFromLayout();
+    }
+  }
+
+  private saveToolboxExpandedStatesToLayout(): void {
+    if (!this.layout) {
+      if (this.currentRacedayLayout) {
+        this.layout = JSON.parse(JSON.stringify(this.currentRacedayLayout));
+      } else {
+        this.layout = this.getDefaultLayout();
+      }
+    }
+
+    if (!this.layout.collapsedToolboxGroups) {
+      this.layout.collapsedToolboxGroups = {};
+    }
+    if (Array.isArray(this.layout.collapsedToolboxGroups)) {
+      const set = new Set<string>(this.layout.collapsedToolboxGroups);
+      for (const [
+        id,
+        isExpanded,
+      ] of this.toolboxGroupExpandedStates.entries()) {
+        if (!isExpanded) {
+          set.add(id);
+        } else {
+          set.delete(id);
+        }
+      }
+      this.layout.collapsedToolboxGroups = Array.from(set);
+    } else {
+      for (const [
+        id,
+        isExpanded,
+      ] of this.toolboxGroupExpandedStates.entries()) {
+        this.layout.collapsedToolboxGroups[id] = !isExpanded;
+      }
+    }
+
+    if (!this.layout.collapsedToolboxSubgroups) {
+      this.layout.collapsedToolboxSubgroups = {};
+    }
+    if (Array.isArray(this.layout.collapsedToolboxSubgroups)) {
+      const set = new Set<string>(this.layout.collapsedToolboxSubgroups);
+      for (const [
+        id,
+        isExpanded,
+      ] of this.toolboxSubgroupExpandedStates.entries()) {
+        if (!isExpanded) {
+          set.add(id);
+        } else {
+          set.delete(id);
+        }
+      }
+      this.layout.collapsedToolboxSubgroups = Array.from(set);
+    } else {
+      for (const [
+        id,
+        isExpanded,
+      ] of this.toolboxSubgroupExpandedStates.entries()) {
+        this.layout.collapsedToolboxSubgroups[id] = !isExpanded;
+      }
+    }
+
+    if (this.isUIEditorMode()) {
+      this.layoutChanged.emit(this.layout);
+    } else {
+      this.currentRacedayLayout = this.layout;
+      const settings = this.settingsService.getSettings();
+      if (this.isPracticeLayout) {
+        settings.practiceRacedayLayout = this.layout;
+      } else {
+        settings.racedayLayout = this.layout;
+      }
+      this.settingsService.saveSettings(settings);
+    }
+  }
+
   getToolboxGroups(): ToolboxGroup[] {
+    this.ensureToolboxExpandedStatesLoaded();
     const used = new Set(this.layout?.widgets?.map((w) => w.widgetType) || []);
     const customWidgets = this.customWidgetService?.getCustomWidgets() || [];
     return ToolboxGroupHelper.buildToolboxGroups(
@@ -5687,17 +5832,21 @@ export class DefaultRacedayComponent
   }
 
   toggleToolboxGroup(groupId: string) {
+    this.ensureToolboxExpandedStatesLoaded();
     const current = this.toolboxGroupExpandedStates.has(groupId)
       ? this.toolboxGroupExpandedStates.get(groupId)!
       : true;
     this.toolboxGroupExpandedStates.set(groupId, !current);
+    this.saveToolboxExpandedStatesToLayout();
   }
 
   toggleToolboxSubgroup(subgroupId: string) {
+    this.ensureToolboxExpandedStatesLoaded();
     const current = this.toolboxSubgroupExpandedStates.has(subgroupId)
       ? this.toolboxSubgroupExpandedStates.get(subgroupId)!
       : false;
     this.toolboxSubgroupExpandedStates.set(subgroupId, !current);
+    this.saveToolboxExpandedStatesToLayout();
   }
 
   clearToolboxSearch() {

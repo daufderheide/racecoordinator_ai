@@ -79,3 +79,39 @@ test.describe("Disallow Lap Records Dialog Visuals", () => {
     );
   });
 });
+
+test.describe("Disallow Lap Records Dialog Visuals - Australian Locale", () => {
+  test.use({ locale: "en-AU" });
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page, {
+      skipIntro: true,
+      walkthroughSeen: true,
+    });
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/raceday-setup"),
+    );
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator(".setup-container")).toBeVisible({
+      timeout: 15000,
+    });
+  });
+
+  test("should display disallow lap records dialog with Australian date format", async ({
+    page,
+  }) => {
+    const dialog = await openDisallowDialog(page);
+
+    await expect(dialog).toHaveScreenshot(
+      "disallow-lap-records-dialog-en-au.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        animations: "disabled",
+      },
+    );
+  });
+});

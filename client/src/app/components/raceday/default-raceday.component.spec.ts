@@ -24,6 +24,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { RaceParticipant } from "@app/race/race_participant";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
@@ -3716,7 +3717,14 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getLaneRecordHolder(hd1)).toBe("Jane Doe");
       expect(component.getLaneRecordHolder(hd2)).toBe("---");
 
-      expect(component.getLaneRecordDate(hd0)).toBe("2026-08-21");
+      const dtService = TestBed.inject(DateTimeFormatService);
+      expect(component.getLaneRecordDate(hd0)).toBe(
+        dtService.formatDate(
+          mockRecords.overall!.laneFastestLap![0].date,
+          "short",
+          "---",
+        ),
+      );
       expect(component.getLaneRecordDate(hd2)).toBe("---");
     });
 
@@ -7009,6 +7017,83 @@ describe("DefaultRacedayComponent", () => {
       component.toolboxSearchTerm = "lap";
       component.clearToolboxSearch();
       expect(component.toolboxSearchTerm).toBe("");
+    });
+
+    it("should persist collapsed toolbox groups and subgroups to layout and emit layoutChanged in UI editor mode", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.layout = { widgets: [] } as any;
+      spyOn(component.layoutChanged, "emit");
+
+      component.toggleToolboxGroup("race-coordinator-ai");
+      expect(
+        (component.layout.collapsedToolboxGroups as Record<string, boolean>)[
+          "race-coordinator-ai"
+        ],
+      ).toBeTrue();
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+
+      component.toggleToolboxSubgroup("actions");
+      expect(
+        (component.layout.collapsedToolboxSubgroups as Record<string, boolean>)[
+          "actions"
+        ],
+      ).toBeFalse();
+    });
+
+    it("should handle array-based collapsedToolboxGroups and collapsedToolboxSubgroups in layout", () => {
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.layout = {
+        widgets: [],
+        collapsedToolboxGroups: ["other-group"],
+        collapsedToolboxSubgroups: ["actions"],
+      } as any;
+      component.loadToolboxExpandedStatesFromLayout();
+
+      component.toggleToolboxGroup("race-coordinator-ai");
+      expect(component.layout.collapsedToolboxGroups).toEqual(
+        jasmine.arrayContaining(["other-group", "race-coordinator-ai"]),
+      );
+
+      // actions was collapsed in the layout; toggling expands it and removes it from collapsed array
+      component.toggleToolboxSubgroup("actions");
+      expect(component.layout.collapsedToolboxSubgroups).not.toContain(
+        "actions",
+      );
+    });
+
+    it("should restore and isolate toolbox collapsed states across layouts", () => {
+      const layout1 = {
+        widgets: [],
+        collapsedToolboxGroups: { "race-coordinator-ai": true },
+        collapsedToolboxSubgroups: { actions: false },
+      } as any;
+      const layout2 = {
+        widgets: [],
+        collapsedToolboxGroups: { "race-coordinator-ai": false },
+        collapsedToolboxSubgroups: { actions: true },
+      } as any;
+
+      component.layout = layout1;
+      component.loadToolboxExpandedStatesFromLayout();
+      let groups = component.getToolboxGroups();
+      expect(
+        groups.find((g) => g.id === "race-coordinator-ai")?.expanded,
+      ).toBeFalse();
+      expect(
+        groups[0].subgroups.find((s) => s.id === "actions")?.expanded,
+      ).toBeTrue();
+
+      component.layout = layout2;
+      component.loadToolboxExpandedStatesFromLayout();
+      groups = component.getToolboxGroups();
+      expect(
+        groups.find((g) => g.id === "race-coordinator-ai")?.expanded,
+      ).toBeTrue();
+      expect(
+        groups[0].subgroups.find((s) => s.id === "actions")?.expanded,
+      ).toBeFalse();
     });
 
     it("should execute master power actions on executeWidgetAction", () => {

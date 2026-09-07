@@ -75,6 +75,10 @@ export interface LayoutConfig {
   baseHeight?: number;
   scaleMode?: LayoutScaleMode;
   aspectRatio?: string;
+  collapsedToolboxGroups?: Record<string, boolean> | string[];
+  collapsedToolboxSubgroups?: Record<string, boolean> | string[];
+  toolboxGroupExpandedStates?: Record<string, boolean>;
+  toolboxSubgroupExpandedStates?: Record<string, boolean>;
 }
 
 export class Settings {

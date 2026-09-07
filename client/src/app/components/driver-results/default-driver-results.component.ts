@@ -57,6 +57,7 @@ import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { SettingsService } from "@app/services/settings.service";
 
 @Component({
@@ -70,6 +71,7 @@ import { SettingsService } from "@app/services/settings.service";
     CommonModule,
     DecimalPipe,
     TranslatePipe,
+    LocalDatePipe,
     AvatarUrlPipe,
     RouterModule,
     PdfExportDialogComponent,

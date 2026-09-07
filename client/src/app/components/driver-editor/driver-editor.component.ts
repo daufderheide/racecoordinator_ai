@@ -31,6 +31,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
   standalone: true,
@@ -325,7 +326,7 @@ export class DriverEditorComponent
 
   get isNicknameInvalid(): boolean {
     if (this.isLoading || !this.editingDriver) return false;
-    return !this.isNicknameUnique(true);
+    return !this.editingDriver.nickname?.trim() || !this.isNicknameUnique(true);
   }
 
   private areDriversEqual(d1: Driver, d2: Driver): boolean {
@@ -373,12 +374,12 @@ export class DriverEditorComponent
   isNicknameUnique(excludeSelf: boolean = true): boolean {
     if (!this.editingDriver) return true;
     const nickname = this.editingDriver.nickname?.trim().toLowerCase();
-    if (!nickname) return true;
+    if (!nickname) return false;
 
     return !this.allDrivers.some(
       (d) =>
         (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
-        d.nickname?.toLowerCase() === nickname,
+        d.nickname?.trim().toLowerCase() === nickname,
     );
   }
 
@@ -455,6 +456,40 @@ export class DriverEditorComponent
 
   hasChanges(): boolean {
     return this.isDirtyState();
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (!this.editingDriver) return reasons;
+
+    const nameTrimmed = this.editingDriver.name?.trim() || "";
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_DRIVER_NAME_EMPTY");
+    } else if (!this.isNameUnique(true)) {
+      reasons.push("DISCARD_REASON_DRIVER_NAME_DUPLICATE");
+    }
+
+    const nickTrimmed = this.editingDriver.nickname?.trim() || "";
+    if (!nickTrimmed) {
+      reasons.push("DISCARD_REASON_DRIVER_NICKNAME_EMPTY");
+    } else if (!this.isNicknameUnique(true)) {
+      reasons.push("DISCARD_REASON_DRIVER_NICKNAME_DUPLICATE");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirtyState()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   confirmDiscard(): Promise<boolean> {

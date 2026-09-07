@@ -43,7 +43,7 @@ public class CustomUITest {
 
     CustomUI defaultUi = CustomUI.createDefault();
     assertTrue(defaultUi.isDefault());
-    assertEquals("Default UI Layout", defaultUi.getName());
+    assertEquals("RaceCoordinator AI", defaultUi.getName());
     assertEquals(CustomUI.DEFAULT_UI_ID, defaultUi.getEntityId());
     assertTrue(defaultUi.getColumnsJson().contains("averageLapTime"));
     assertTrue(defaultUi.getColumnsJson().contains("ghostPacingLeaderAvg"));
@@ -53,12 +53,12 @@ public class CustomUITest {
 
     CustomUI practiceUi = CustomUI.createPractice();
     assertTrue(practiceUi.isDefault());
-    assertEquals("Practice UI Layout", practiceUi.getName());
+    assertEquals("RaceCoordinator AI (Practice)", practiceUi.getName());
     assertEquals(CustomUI.PRACTICE_UI_ID, practiceUi.getEntityId());
 
     CustomUI fuelUi = CustomUI.createFuel();
     assertTrue(fuelUi.isDefault());
-    assertEquals("Default Fuel UI Layout", fuelUi.getName());
+    assertEquals("RaceCoordinator AI (Fuel)", fuelUi.getName());
     assertEquals(CustomUI.FUEL_UI_ID, fuelUi.getEntityId());
     assertTrue(fuelUi.getColumnsJson().contains("imageset_fuel-gauge-builtin"));
     assertTrue(fuelUi.getColumnWidthsJson().contains("\"imageset_fuel-gauge-builtin\":210"));

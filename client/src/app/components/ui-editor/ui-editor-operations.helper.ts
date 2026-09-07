@@ -22,7 +22,7 @@ export async function createCustomUiEntity(
   const newName = buildDuplicateEntityName(
     defaultUi.name,
     isCustomUiDefault(defaultUi),
-    getCustomUiDisplayNameKey(defaultUi),
+    getCustomUiDisplayNameKey(defaultUi, translationService),
     translationService,
   );
   return firstValueFrom(
@@ -38,7 +38,7 @@ export async function duplicateCustomUiEntity(
   const newName = buildDuplicateEntityName(
     ui.name,
     isCustomUiDefault(ui),
-    getCustomUiDisplayNameKey(ui),
+    getCustomUiDisplayNameKey(ui, translationService),
     translationService,
   );
   return firstValueFrom(dataService.duplicateCustomUI(ui.entity_id, newName));
@@ -59,7 +59,7 @@ export async function createThemeEntity(
   const newName = buildDuplicateEntityName(
     defaultTheme.name,
     isThemeDefault(defaultTheme),
-    getThemeDisplayNameKey(defaultTheme),
+    getThemeDisplayNameKey(defaultTheme, translationService),
     translationService,
   );
   return themeService.duplicateTheme(defaultTheme.entity_id, newName);
@@ -73,7 +73,7 @@ export async function duplicateThemeEntity(
   const newName = buildDuplicateEntityName(
     theme.name,
     isThemeDefault(theme),
-    getThemeDisplayNameKey(theme),
+    getThemeDisplayNameKey(theme, translationService),
     translationService,
   );
   return themeService.duplicateTheme(theme.entity_id, newName);

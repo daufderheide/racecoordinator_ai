@@ -7,6 +7,7 @@ import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -70,6 +71,7 @@ describe("SeasonEditorComponent", () => {
         SeasonEditorComponent,
         FormsModule,
         TranslatePipe,
+        LocalDatePipe,
         DatePipe,
         DecimalPipe,
       ],
@@ -94,6 +96,7 @@ describe("SeasonEditorComponent", () => {
             MockEditorTitleComponent,
             MockConfirmationModalComponent,
             TranslatePipe,
+            LocalDatePipe,
             FormsModule,
             DatePipe,
             DecimalPipe,
@@ -218,6 +221,52 @@ describe("SeasonEditorComponent", () => {
     expect(result).toBeFalse();
     expect(component.showDiscardConfirm).toBeFalse();
     expect(component.isNavigationApproved).toBeFalse();
+  });
+
+  it("should identify reasons why season changes could not be saved", () => {
+    component.editingSeason = {
+      entity_id: "s1",
+      name: "Season 1",
+      drops: 1,
+    } as any;
+    component.existingSeasons = [
+      { entity_id: "s1", name: "Season 1" } as any,
+      { entity_id: "s2", name: "Existing Season" } as any,
+    ];
+
+    // Empty name
+    component.editingSeason.name = "";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_SEASON_NAME_EMPTY",
+    );
+
+    // Duplicate name
+    component.editingSeason.name = "Existing Season";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_SEASON_NAME_DUPLICATE",
+    );
+
+    // Invalid drops
+    component.editingSeason.name = "Unique Season";
+    component.editingSeason.drops = -1;
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_SEASON_DROPS_INVALID",
+    );
+    component.editingSeason.drops = 0;
+
+    // Saving
+    component.isSaving = true;
+    expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+    component.isSaving = false;
+
+    // Exit too quickly
+    spyOnProperty(component, "isDirty", "get").and.returnValue(true);
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EXIT_TOO_QUICKLY",
+    );
+
+    // Formatted discard message
+    expect(component.discardMessage).toContain("•");
   });
 
   it("should generate unique default name for new season", () => {

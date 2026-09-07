@@ -130,7 +130,7 @@ export class LaneViewColumnGroupHelper {
   static buildColumnGroups(
     unusedColumns: { key: string; label: string }[],
     searchTerm: string,
-    expandedStates: Map<string, boolean>,
+    expandedStates: Map<string, boolean> | Record<string, boolean>,
     translateFn: (key: string) => string,
   ): LaneViewColumnGroup[] {
     const term = searchTerm ? searchTerm.trim().toLowerCase() : "";
@@ -169,17 +169,25 @@ export class LaneViewColumnGroupHelper {
       }
 
       if (cols.length > 0) {
-        const expanded = term
-          ? true
-          : expandedStates.has(groupDef.id)
+        let isExpanded = true;
+        if (term) {
+          isExpanded = true;
+        } else if (expandedStates instanceof Map) {
+          isExpanded = expandedStates.has(groupDef.id)
             ? expandedStates.get(groupDef.id)!
             : true;
+        } else if (expandedStates && typeof expandedStates === "object") {
+          isExpanded =
+            expandedStates[groupDef.id] !== undefined
+              ? !!expandedStates[groupDef.id]
+              : true;
+        }
 
         result.push({
           id: groupDef.id,
           nameKey: groupDef.nameKey,
           columns: cols,
-          expanded,
+          expanded: isExpanded,
         });
       }
     }

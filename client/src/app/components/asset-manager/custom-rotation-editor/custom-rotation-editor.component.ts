@@ -40,6 +40,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { LaneEqualityResult } from "@app/utils/lane-equality";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
   areCustomRotationStatesEqual,
@@ -399,6 +400,37 @@ export class CustomRotationEditorComponent
 
   hasChanges(): boolean {
     return this.isDirtyState();
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    const nameTrimmed = (this.internalAssetName || "").trim();
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_ROTATION_NAME_EMPTY");
+    } else if (!this.isNameUnique()) {
+      reasons.push("DISCARD_REASON_ROTATION_NAME_DUPLICATE");
+    }
+
+    if (this.internalRotations.length === 0) {
+      reasons.push("DISCARD_REASON_ROTATION_EMPTY");
+    } else if (this.hasValidationErrors()) {
+      reasons.push("DISCARD_REASON_ROTATION_ERRORS");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirtyState()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   confirmDiscard(): Promise<boolean> {

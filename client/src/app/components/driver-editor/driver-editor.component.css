@@ -118,6 +118,11 @@
   background: rgba(239, 68, 68, 0.05);
 }
 
+.editor-section.invalid input[type="text"]:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
+}
+
 /* Preview Panel (Right) */
 .preview-panel {
   flex: 1;

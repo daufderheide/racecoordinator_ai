@@ -36,7 +36,7 @@
           <span class="value-text">{{ race.name }}</span>
           @if (raceStartTime) {
             <span class="race-date-text"
-              >({{ raceStartTime | date: "short" }})</span
+              >({{ raceStartTime | localDate: "short" }})</span
             >
           }
           <button
@@ -90,7 +90,9 @@
                   getRecordDate(recordData.overall?.fastestLap?.date);
                   as d
                 ) {
-                  <div class="record-date">{{ d | date: "yyyy-MM-dd" }}</div>
+                  <div class="record-date">
+                    {{ d | localDate: "shortDate" }}
+                  </div>
                 }
               </div>
             </div>
@@ -124,7 +126,9 @@
                   getRecordDate(recordData.overall?.highestScore?.date);
                   as d
                 ) {
-                  <div class="record-date">{{ d | date: "yyyy-MM-dd" }}</div>
+                  <div class="record-date">
+                    {{ d | localDate: "shortDate" }}
+                  </div>
                 }
               </div>
             </div>
@@ -159,7 +163,9 @@
                     getRecordDate(recordData.overall?.highestScore?.date);
                     as d
                   ) {
-                    <div class="record-date">{{ d | date: "yyyy-MM-dd" }}</div>
+                    <div class="record-date">
+                      {{ d | localDate: "shortDate" }}
+                    </div>
                   }
                 </div>
               </div>
@@ -215,7 +221,7 @@
                       @if (getRecordDate(lapRecord?.date); as d) {
                         <div class="lane-stat-date-row">
                           <span class="lane-stat-date">{{
-                            d | date: "yyyy-MM-dd"
+                            d | localDate: "shortDate"
                           }}</span>
                         </div>
                       }
@@ -242,7 +248,7 @@
                         @if (getRecordDate(scoreRecord?.date); as d) {
                           <div class="lane-stat-date-row">
                             <span class="lane-stat-date">{{
-                              d | date: "yyyy-MM-dd"
+                              d | localDate: "shortDate"
                             }}</span>
                           </div>
                         }

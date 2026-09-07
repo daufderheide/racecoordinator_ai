@@ -28,6 +28,7 @@ import {
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
@@ -47,6 +48,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
   standalone: true,
@@ -203,6 +205,42 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   hasChanges(): boolean {
     return this.isDirtyState();
+  }
+
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (!this.editingRace) return reasons;
+
+    const nameTrimmed = this.editingRace.name?.trim() || "";
+    if (!nameTrimmed) {
+      reasons.push("DISCARD_REASON_RACE_NAME_EMPTY");
+    } else if (this.isNameDuplicate()) {
+      reasons.push("DISCARD_REASON_RACE_NAME_DUPLICATE");
+    }
+
+    if (!this.editingRace.track_entity_id) {
+      reasons.push("DISCARD_REASON_RACE_NO_TRACK");
+    }
+    if (!this.editingRace.heat_rotation_type) {
+      reasons.push("DISCARD_REASON_RACE_NO_ROTATION");
+    } else if (this.isRotationInvalid) {
+      reasons.push("DISCARD_REASON_RACE_ROTATION_INVALID");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.isDirtyState()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
   }
 
   confirmDiscard(): Promise<boolean> {
@@ -823,16 +861,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getThemeDisplayNameKey(theme: Theme): string {
-    if (theme.entity_id === "practice_theme_rc_ai") {
-      return "UE_LABEL_PRACTICE_THEME";
-    }
-    if (theme.entity_id === "default_fuel_theme_rc_ai") {
-      return "UE_LABEL_FUEL_THEME";
-    }
-    if (theme.is_default || theme.entity_id === "default_classic_rc_ai") {
-      return "UE_LABEL_DEFAULT_THEME";
-    }
-    return theme.name;
+    return getThemeDisplayNameKey(theme, this.translationService);
   }
 
   loadTracks() {

@@ -1054,6 +1054,41 @@ describe("TrackEditorComponent", () => {
       expect(resolvedValue).toBeFalse();
     }));
 
+    it("should identify reasons why track changes could not be saved", () => {
+      component.editingTrack = { entity_id: "t1", name: "Track 1" } as any;
+      component.allTracks = [
+        { entity_id: "t1", name: "Track 1" } as any,
+        { entity_id: "t2", name: "Existing Track" } as any,
+      ];
+
+      // Empty name
+      component.trackName = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_TRACK_NAME_EMPTY",
+      );
+
+      // Duplicate name
+      component.trackName = "Existing Track";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_TRACK_NAME_DUPLICATE",
+      );
+
+      // Saving
+      component.trackName = "Unique Track";
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exit too quickly
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // Formatted discard message
+      expect(component.discardMessage).toContain("•");
+    });
+
     it("should generate help guide steps and expand required sections", () => {
       component.sectionsExpanded.lanes = false;
       component.sectionsExpanded.interfaces = false;

@@ -1456,6 +1456,57 @@ describe("CustomRotationEditorComponent", () => {
       // Should only have called autoSave once
       expect(autoSaveSpy).toHaveBeenCalledTimes(1);
     });
+    it("should provide unsaved reasons when changes cannot be saved", () => {
+      // Empty name
+      component.internalAssetName = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_NAME_EMPTY",
+      );
+
+      // Duplicate name
+      component.internalAssetName = "Existing Rotation";
+      component.allAssets = [
+        {
+          type: "custom_rotation",
+          name: "Existing Rotation",
+          model: { entityId: "other-id" },
+        } as any,
+      ];
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_NAME_DUPLICATE",
+      );
+
+      // Empty rotations
+      component.internalAssetName = "Unique Name";
+      component.internalRotations = [];
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_EMPTY",
+      );
+
+      // Rotation validation errors
+      component.internalRotations = [
+        { heat: 1, driverId: "d1", lane: 1, stage: 1 } as any,
+      ];
+      spyOn(component, "hasValidationErrors").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_ROTATION_ERRORS",
+      );
+
+      // Saving in progress
+      (component.hasValidationErrors as jasmine.Spy).and.returnValue(false);
+      (component as any).savingCount = 1;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      (component as any).savingCount = 0;
+
+      // Exited too quickly (dirty, valid, not saving)
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // discardMessage contains bullet points
+      expect(component.discardMessage).toContain("•");
+    });
     describe("Zoom Support", () => {
       it("should update zoomLevel and bind it to the heats grid", () => {
         fixture.detectChanges();

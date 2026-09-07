@@ -45,6 +45,7 @@ import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
 import { deepCopy } from "@app/utils/clone.utils";
+import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
   ThemeTemplateModalComponent,
@@ -651,6 +652,31 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return executeAutoSaveState(buildAutoSaveContext(this));
   }
 
+  getUnsavedReasons(): string[] {
+    const reasons: string[] = [];
+    if (this.isAnyThemeNameInvalid()) {
+      reasons.push("DISCARD_REASON_THEME_NAME_INVALID");
+    }
+    if (this.isAnyCustomUiNameInvalid()) {
+      reasons.push("DISCARD_REASON_CUSTOM_UI_NAME_INVALID");
+    }
+
+    if (this.isSaving) {
+      reasons.push("DISCARD_REASON_SAVING");
+    } else if (reasons.length === 0 && this.hasChanges()) {
+      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+    }
+
+    return reasons;
+  }
+
+  get discardMessage(): string {
+    return formatUnsavedChangesMessage(
+      this.translationService,
+      this.getUnsavedReasons(),
+    );
+  }
+
   async confirmDiscard(): Promise<boolean> {
     return new Promise((resolve) => {
       executeConfirmDiscard({
@@ -707,6 +733,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.editingState.settings = cloneSettings(this.editingState.settings);
     if (this.displayCustomUIs?.length) {
       this.editingState.customUIs = deepCopy(this.displayCustomUIs);
+    }
+    if (this.displayThemes?.length) {
+      this.editingState.themes = deepCopy(this.displayThemes);
     }
     this.undoManager.captureState();
   }
@@ -842,7 +871,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getCustomUiDisplayNameKey(ui: CustomUI) {
-    return getCustomUiDisplayNameKey(ui);
+    return getCustomUiDisplayNameKey(ui, this.translationService);
   }
   isCustomUiDefault(ui: CustomUI) {
     return isCustomUiDefault(ui);
@@ -871,6 +900,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
   onCustomUiNameChanged(_ui: CustomUI) {
     this.captureState();
+    this.refreshDisplayProperties();
     this.cdr.markForCheck();
   }
   isCustomUiNameInvalid(ui: CustomUI) {
@@ -880,7 +910,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.displayCustomUIs.some((ui) => this.isCustomUiNameInvalid(ui));
   }
   getThemeDisplayNameKey(theme: Theme) {
-    return getThemeDisplayNameKey(theme);
+    return getThemeDisplayNameKey(theme, this.translationService);
   }
   isThemeDefault(theme: Theme) {
     return isThemeDefault(theme);
@@ -900,8 +930,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.showThemeTemplateModal = false;
     await this.createNewTheme();
   }
-  async onThemeNameChanged(_theme: Theme) {
+  onThemeNameChanged(_theme: Theme) {
     this.captureState();
+    this.refreshDisplayProperties();
+    this.cdr.markForCheck();
   }
   async onDuplicateTheme(theme: Theme) {
     await handleDuplicateTheme(this, theme);

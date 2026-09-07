@@ -72,6 +72,37 @@ describe("ui-editor-crud.helper", () => {
       audio_slots: {},
     };
     expect(getThemeDisplayNameKey(customTheme)).toBe("My Custom");
+
+    const renamedClassicTheme: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Renamed Classic Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    expect(getThemeDisplayNameKey(renamedClassicTheme)).toBe(
+      "Renamed Classic Theme",
+    );
+
+    const renamedPracticeTheme: Theme = {
+      entity_id: "practice_theme_rc_ai",
+      name: "Renamed Practice",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    expect(getThemeDisplayNameKey(renamedPracticeTheme)).toBe(
+      "Renamed Practice",
+    );
+
+    const renamedFuelTheme: Theme = {
+      entity_id: "default_fuel_theme_rc_ai",
+      name: "Renamed Fuel",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    expect(getThemeDisplayNameKey(renamedFuelTheme)).toBe("Renamed Fuel");
   });
 
   it("should validate theme names for emptiness and duplicates", () => {
@@ -147,6 +178,33 @@ describe("ui-editor-crud.helper", () => {
     };
     expect(isCustomUiDefault(customUi)).toBeFalse();
     expect(getCustomUiDisplayNameKey(customUi)).toBe("My Layout");
+
+    const renamedDefaultUi: CustomUI = {
+      entity_id: "default_ui_layout_rc_ai",
+      name: "Renamed Default Layout",
+      is_default: true,
+    };
+    expect(getCustomUiDisplayNameKey(renamedDefaultUi)).toBe(
+      "Renamed Default Layout",
+    );
+
+    const renamedPracticeUi: CustomUI = {
+      entity_id: "practice_ui_layout_rc_ai",
+      name: "Renamed Practice Layout",
+      is_default: true,
+    };
+    expect(getCustomUiDisplayNameKey(renamedPracticeUi)).toBe(
+      "Renamed Practice Layout",
+    );
+
+    const renamedFuelUi: CustomUI = {
+      entity_id: "default_fuel_ui_layout_rc_ai",
+      name: "Renamed Fuel Layout",
+      is_default: true,
+    };
+    expect(getCustomUiDisplayNameKey(renamedFuelUi)).toBe(
+      "Renamed Fuel Layout",
+    );
 
     expect(isCustomUiNameInvalid(customUi, [customUi])).toBeFalse();
 

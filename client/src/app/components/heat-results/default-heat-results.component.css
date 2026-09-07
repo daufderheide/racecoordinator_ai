@@ -168,6 +168,14 @@
   letter-spacing: 1px;
 }
 
+.race-date-text {
+  font-size: 16px;
+  color: #8fa0b5;
+  font-weight: 500;
+  margin-left: 12px;
+  letter-spacing: 0.5px;
+}
+
 /* Export PDF button in header */
 .export-pdf-btn {
   background: transparent;

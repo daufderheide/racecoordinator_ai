@@ -143,3 +143,33 @@ test.describe("Season Results Visuals", () => {
     });
   });
 });
+
+test.describe("Season Results Visuals - French Locale", () => {
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+  });
+
+  test("should display season race list in French date format", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, { language: "fr" });
+    const mockSeason = SeasonResultsHelper.createMockSeason();
+    await SeasonResultsHelper.injectMockSeasonsData(page, [mockSeason]);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "fr",
+      page.goto("/season-results?id=" + mockSeason.entity_id),
+    );
+
+    const racesSection = page.locator(".races-expander-section");
+    await racesSection.waitFor({ state: "visible" });
+
+    await page.mouse.move(0, 0);
+    await expect(racesSection).toHaveScreenshot("season-results-races-fr.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+});

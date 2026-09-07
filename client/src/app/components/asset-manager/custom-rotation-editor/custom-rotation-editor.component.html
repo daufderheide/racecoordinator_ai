@@ -578,7 +578,7 @@
   <app-confirmation-modal
     [visible]="showDiscardConfirm"
     title="UE_CONFIRM_DISCARD_TITLE"
-    message="UE_CONFIRM_DISCARD_MESSAGE"
+    [message]="discardMessage"
     (confirm)="onConfirmDiscard()"
     (cancel)="onCancelDiscard()"
   >

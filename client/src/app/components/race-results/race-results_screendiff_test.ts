@@ -322,3 +322,40 @@ test.describe("Race Results Visuals", () => {
     );
   });
 });
+
+test.describe("Race Results Visuals - Australian Locale", () => {
+  test.use({ locale: "en-AU" });
+
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page);
+    await TestSetupHelper.disableAnimations(page);
+    await page.setViewportSize({ width: 1600, height: 900 });
+  });
+
+  test("should display race results header in Australian date format", async ({
+    page,
+  }) => {
+    const mockData = RaceResultsHelper.createMockRaceData();
+    mockData.race.startTimeMillis = 1700000000000;
+    await RaceResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-results"),
+    );
+
+    const header = page.locator(".header-bar");
+    await header.waitFor({ state: "visible" });
+    await page
+      .locator("app-twin-graphs .graph-path-rank")
+      .first()
+      .waitFor({ state: "attached" });
+
+    await page.mouse.move(0, 0);
+    await expect(header).toHaveScreenshot("race-results-header-en-au.png", {
+      maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
+    });
+  });
+});

@@ -443,6 +443,65 @@ describe("LaneViewInspectorComponent", () => {
       expect(component.columnGroupExpandedStates.get("analysis")).toBeTrue();
     });
 
+    it("should save collapsed state to settings.collapsedColumnGroups and emit change on toggle", () => {
+      component.toggleColumnGroup("telemetry");
+      expect(
+        component.settings().collapsedColumnGroups["telemetry"],
+      ).toBeTrue();
+      expect(changeSpy).toHaveBeenCalled();
+
+      component.toggleColumnGroup("telemetry");
+      expect(
+        component.settings().collapsedColumnGroups["telemetry"],
+      ).toBeFalse();
+    });
+
+    it("should load collapsed state from settings.collapsedColumnGroups object on initialization", () => {
+      const customFixture = TestBed.createComponent(LaneViewInspectorComponent);
+      const customComp = customFixture.componentInstance;
+      customFixture.componentRef.setInput("settings", {
+        collapsedColumnGroups: {
+          analysis: true,
+          telemetry: false,
+        },
+      });
+      customFixture.componentRef.setInput("globalSettings", {});
+      customFixture.componentRef.setInput("availableColumns", [
+        { key: "standardDeviation", label: "Std Dev" },
+      ]);
+      customFixture.detectChanges();
+
+      expect(customComp.columnGroupExpandedStates.get("analysis")).toBeFalse();
+      expect(customComp.columnGroupExpandedStates.get("telemetry")).toBeTrue();
+
+      const groups = customComp.getColumnGroups();
+      const analysisGroup = groups.find((g) => g.id === "analysis");
+      expect(analysisGroup?.expanded).toBeFalse();
+    });
+
+    it("should load collapsed state from settings.collapsedColumnGroups array on initialization", () => {
+      const customFixture = TestBed.createComponent(LaneViewInspectorComponent);
+      const customComp = customFixture.componentInstance;
+      customFixture.componentRef.setInput("settings", {
+        collapsedColumnGroups: ["analysis", "gaps"],
+      });
+      customFixture.componentRef.setInput("globalSettings", {});
+      customFixture.componentRef.setInput("availableColumns", [
+        { key: "col1", label: "Col 1" },
+      ]);
+      customFixture.detectChanges();
+
+      expect(customComp.columnGroupExpandedStates.get("analysis")).toBeFalse();
+      expect(customComp.columnGroupExpandedStates.get("gaps")).toBeFalse();
+
+      // Toggle one that was in array to expand it
+      customComp.toggleColumnGroup("analysis");
+      expect(customComp.settings().collapsedColumnGroups).not.toContain(
+        "analysis",
+      );
+      expect(customComp.settings().collapsedColumnGroups).toContain("gaps");
+    });
+
     it("should filter groups and columns by search term", () => {
       component.columnSearchTerm = "pacing";
       fixture.detectChanges();

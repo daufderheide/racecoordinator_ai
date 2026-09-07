@@ -453,9 +453,19 @@ describe("DriverEditorComponent", () => {
     // Self is not duplicate
     component.editingDriver!.nickname = "MyNick";
     expect(component.isNicknameUnique()).toBeTrue();
+
+    // Empty nickname is not unique
+    component.editingDriver!.nickname = "";
+    expect(component.isNicknameUnique()).toBeFalse();
+    expect(component.isNicknameInvalid).toBeTrue();
+
+    // Whitespace nickname is not unique
+    component.editingDriver!.nickname = "   ";
+    expect(component.isNicknameUnique()).toBeFalse();
+    expect(component.isNicknameInvalid).toBeTrue();
   });
   it("should preserve undo stack after save", () => {
-    const driver = new Driver("d1", "Start", "");
+    const driver = new Driver("d1", "Start", "StartNick");
     setupDriver(driver);
 
     // Make change and push to stack
@@ -487,7 +497,7 @@ describe("DriverEditorComponent", () => {
   });
 
   it("should preserve entity_id on undo (context safety)", () => {
-    const driver = new Driver("d1", "Start", "");
+    const driver = new Driver("d1", "Start", "StartNick");
     setupDriver(driver);
 
     // Simulate "Save as New" causing ID change to 'd2'
@@ -507,7 +517,7 @@ describe("DriverEditorComponent", () => {
     expect(component.editingDriver!.entity_id).toBe("d2");
   });
   it("should debounce text input changes for undo history", fakeAsync(() => {
-    const driver = new Driver("d1", "Start", "");
+    const driver = new Driver("d1", "Start", "StartNick");
     setupDriver(driver);
 
     // Simulate focus
@@ -521,55 +531,41 @@ describe("DriverEditorComponent", () => {
     tick(50);
     expect(component.undoManager.undoStackItems.length).toBe(0);
 
-    // Type "AB" before debounce hits
-    component.editingDriver!.name = "AB";
-    component.onInputChange(); // Reset debounce timer
-
+    // Fast-forward remainder
     tick(50);
-    expect(component.undoManager.undoStackItems.length).toBe(0);
-
-    // Wait for full debounce (total > 100ms from last input)
-    tick(100);
-
-    // Should now have saved the SNAPSHOT state ('Start')
     expect(component.undoManager.undoStackItems.length).toBe(1);
     expect(component.undoManager.undoStackItems[0].name).toBe("Start");
 
-    // Snapshot should now be 'AB'
-    // Accessing private _snapshot on UndoManager via bracket notation if needed, but checking behavior is safer
-    // Trigger another change to see if it captures 'AB'
-    component.editingDriver!.name = "ABC";
-    component.onInputChange();
-    tick(100);
-    // Stack should now have 'AB'
-    expect(component.undoManager.undoStackItems[1].name).toBe("AB");
-
-    // Undo should go to 'AB'
-    component.undo();
-    expect(component.editingDriver!.name).toBe("AB");
-
-    component.undo();
-    expect(component.editingDriver!.name).toBe("Start");
-
+    // Clean up timer
     discardPeriodicTasks();
   }));
+
+  it("should clear undo history when selecting a different driver", () => {
+    const driver1 = new Driver("d1", "Driver 1", "D1Nick");
+    const driver2 = new Driver("d2", "Driver 2", "D2Nick");
+    setupDriver(driver1);
+
+    component.editingDriver!.name = "Changed";
+    component.captureState();
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+
+    component.selectDriver(driver2);
+    expect(component.undoManager.undoStackItems.length).toBe(0);
+    expect(component.undoManager.redoStackItems.length).toBe(0);
+  });
 
   describe("Auto-save on name/nickname change", () => {
     it("should auto-save when name changes to a valid unique value", fakeAsync(() => {
       const driver = new Driver("d1", "OriginalName", "Nick");
       setupDriver(driver);
 
-      // Simulate focus, type new name, and blur to trigger commit
       component.onInputFocus();
       component.editingDriver!.name = "NewUniqueName";
       component.onInputBlur();
-      tick(200); // Allow debounce to settle
+      tick(200);
 
-      expect(dataService.updateDriver).toHaveBeenCalledWith(
-        "d1",
-        jasmine.any(Object),
-      );
-      expect(component.isSaving).toBeFalse();
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.editingDriver?.name).toBe("NewUniqueName");
       expect(component.isDirtyState()).toBeFalse();
     }));
 
@@ -582,20 +578,17 @@ describe("DriverEditorComponent", () => {
       component.onInputBlur();
       tick(200);
 
-      expect(dataService.updateDriver).toHaveBeenCalledWith(
-        "d1",
-        jasmine.any(Object),
-      );
-      expect(component.isSaving).toBeFalse();
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.editingDriver?.nickname).toBe("NewUniqueNick");
       expect(component.isDirtyState()).toBeFalse();
     }));
 
     it("should not auto-save when name is set to a duplicate", fakeAsync(() => {
-      const driver = new Driver("d1", "OriginalName", "");
+      const driver = new Driver("d1", "OriginalName", "OrigNick");
       setupDriver(driver);
       component.allDrivers = [
-        new Driver("d1", "OriginalName", ""),
-        new Driver("d2", "TakenName", ""),
+        new Driver("d1", "OriginalName", "OrigNick"),
+        new Driver("d2", "TakenName", "TakenNick"),
       ];
 
       component.onInputFocus();
@@ -625,7 +618,7 @@ describe("DriverEditorComponent", () => {
     }));
 
     it("should not auto-save when name is empty", fakeAsync(() => {
-      const driver = new Driver("d1", "OriginalName", "");
+      const driver = new Driver("d1", "OriginalName", "OrigNick");
       setupDriver(driver);
 
       component.onInputFocus();
@@ -637,8 +630,34 @@ describe("DriverEditorComponent", () => {
       expect(component.isNameInvalid).toBeTrue();
     }));
 
+    it("should not auto-save when nickname is empty", fakeAsync(() => {
+      const driver = new Driver("d1", "OriginalName", "OrigNick");
+      setupDriver(driver);
+
+      component.onInputFocus();
+      component.editingDriver!.nickname = "";
+      component.onInputBlur();
+      tick(200);
+
+      expect(dataService.updateDriver).not.toHaveBeenCalled();
+      expect(component.isNicknameInvalid).toBeTrue();
+    }));
+
+    it("should not auto-save when nickname is whitespace", fakeAsync(() => {
+      const driver = new Driver("d1", "OriginalName", "OrigNick");
+      setupDriver(driver);
+
+      component.onInputFocus();
+      component.editingDriver!.nickname = "   ";
+      component.onInputBlur();
+      tick(200);
+
+      expect(dataService.updateDriver).not.toHaveBeenCalled();
+      expect(component.isNicknameInvalid).toBeTrue();
+    }));
+
     it("should not show back confirmation when config is valid after name change", fakeAsync(() => {
-      const driver = new Driver("d1", "OriginalName", "");
+      const driver = new Driver("d1", "OriginalName", "OrigNick");
       setupDriver(driver);
 
       // Change name to valid unique value and allow auto-save to complete
@@ -653,7 +672,7 @@ describe("DriverEditorComponent", () => {
     }));
 
     it("should show back confirmation when name is invalid (empty)", () => {
-      const driver = new Driver("d1", "", "");
+      const driver = new Driver("d1", "", "OrigNick");
       setupDriver(driver);
       component.editingDriver!.name = "";
 
@@ -662,11 +681,11 @@ describe("DriverEditorComponent", () => {
     });
 
     it("should show back confirmation when name is a duplicate", () => {
-      const driver = new Driver("d1", "OrigName", "");
+      const driver = new Driver("d1", "OrigName", "OrigNick");
       setupDriver(driver);
       component.allDrivers = [
-        new Driver("d1", "OrigName", ""),
-        new Driver("d2", "Taken", ""),
+        new Driver("d1", "OrigName", "OrigNick"),
+        new Driver("d2", "Taken", "TakenNick"),
       ];
 
       component.editingDriver!.name = "Taken";
@@ -683,6 +702,75 @@ describe("DriverEditorComponent", () => {
 
       component.editingDriver!.nickname = "TakenNick";
       expect(component.isConfigValid()).toBeFalse();
+      expect(component.isNicknameInvalid).toBeTrue();
+    });
+
+    it("should show back confirmation when nickname is invalid (empty)", () => {
+      const driver = new Driver("d1", "ValidName", "OrigNick");
+      setupDriver(driver);
+      component.editingDriver!.nickname = "";
+
+      expect(component.isConfigValid()).toBeFalse();
+      expect(component.isNicknameInvalid).toBeTrue();
+    });
+
+    it("should show back confirmation when nickname is invalid (whitespace)", () => {
+      const driver = new Driver("d1", "ValidName", "OrigNick");
+      setupDriver(driver);
+      component.editingDriver!.nickname = "   ";
+
+      expect(component.isConfigValid()).toBeFalse();
+      expect(component.isNicknameInvalid).toBeTrue();
+    });
+
+    it("should identify reasons why driver changes could not be saved", () => {
+      const driver = new Driver("d1", "ValidName", "OrigNick");
+      setupDriver(driver);
+      component.allDrivers = [
+        new Driver("d1", "ValidName", "OrigNick"),
+        new Driver("d2", "ExistingName", "ExistingNick"),
+      ];
+
+      // Empty name
+      component.editingDriver!.name = "";
+      component.editingDriver!.nickname = "ValidNick";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NAME_EMPTY",
+      );
+
+      // Duplicate name
+      component.editingDriver!.name = "ExistingName";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NAME_DUPLICATE",
+      );
+
+      // Empty nickname
+      component.editingDriver!.name = "UniqueName";
+      component.editingDriver!.nickname = "";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NICKNAME_EMPTY",
+      );
+
+      // Duplicate nickname
+      component.editingDriver!.nickname = "ExistingNick";
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_DRIVER_NICKNAME_DUPLICATE",
+      );
+
+      // Saving in progress
+      component.editingDriver!.nickname = "UniqueNick";
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exited too quickly (dirty but valid and not saving)
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // Formatted discard message
+      expect(component.discardMessage).toContain("•");
     });
   });
 

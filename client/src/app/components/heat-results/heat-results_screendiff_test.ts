@@ -213,4 +213,27 @@ test.describe("Heat Results Visuals", () => {
       maxDiffPixelRatio: 0.05,
     });
   });
+
+  test("should display heat results header in German date format", async ({
+    page,
+  }) => {
+    await TestSetupHelper.setupSettings(page, { language: "de" });
+    const mockData = HeatResultsHelper.createMockHeatData();
+    await HeatResultsHelper.injectMockRaceData(page, mockData);
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "de",
+      page.goto("/heat-results"),
+    );
+
+    // Wait for loader overlay to be hidden and header to be visible
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const header = page.locator(".header-bar");
+    await header.waitFor({ state: "visible" });
+    await expect(header).toHaveScreenshot("heat-results-header-de.png", {
+      maxDiffPixelRatio: 0.05,
+    });
+  });
 });

@@ -99,7 +99,7 @@
                         }
                         @if (race.timestamp) {
                           <span class="race-date"
-                            >({{ race.timestamp | date: "short" }})</span
+                            >({{ race.timestamp | localDate: "short" }})</span
                           >
                         }
                       </div>

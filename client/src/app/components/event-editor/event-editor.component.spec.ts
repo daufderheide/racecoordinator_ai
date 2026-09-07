@@ -257,6 +257,52 @@ describe("EventEditorComponent", () => {
     expect(component.isNavigationApproved).toBeFalse();
   });
 
+  it("should identify reasons why event changes could not be saved", () => {
+    component.editingEvent = {
+      entity_id: "e1",
+      name: "Event 1",
+      races: [{ raceId: "r1", maxDrivers: 0 }],
+    } as any;
+    component.existingEvents = [
+      { entity_id: "e1", name: "Event 1" } as any,
+      { entity_id: "e2", name: "Existing Event" } as any,
+    ];
+
+    // Empty name
+    component.editingEvent.name = "";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EVENT_NAME_EMPTY",
+    );
+
+    // Duplicate name
+    component.editingEvent.name = "Existing Event";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EVENT_NAME_DUPLICATE",
+    );
+
+    // No races
+    component.editingEvent.name = "Unique Event";
+    component.editingEvent.races = [];
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EVENT_NO_RACES",
+    );
+    component.editingEvent.races = [{ raceId: "r1", maxDrivers: 0 }];
+
+    // Saving
+    component.isSaving = true;
+    expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+    component.isSaving = false;
+
+    // Exit too quickly
+    spyOn(component, "isDirtyState").and.returnValue(true);
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EXIT_TOO_QUICKLY",
+    );
+
+    // Formatted discard message
+    expect(component.discardMessage).toContain("•");
+  });
+
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();

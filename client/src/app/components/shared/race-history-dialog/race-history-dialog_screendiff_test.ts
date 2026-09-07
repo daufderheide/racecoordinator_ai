@@ -2,13 +2,11 @@ import { expect, Page, test } from "@playwright/test";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 async function openRaceHistoryDialog(page: Page) {
-  const fileMenu = page.locator(".setup-menu-item").filter({ hasText: "File" });
+  const fileMenu = page.locator(".setup-menu-item").first();
   await expect(fileMenu).toBeVisible();
   await fileMenu.click();
 
-  const historyMenuItem = page
-    .locator(".setup-menu-dropdown-item")
-    .filter({ hasText: "Race History" });
+  const historyMenuItem = page.locator(".setup-menu-dropdown-item").nth(1);
   await expect(historyMenuItem).toBeVisible();
   await historyMenuItem.click();
 
@@ -58,6 +56,38 @@ test.describe("Race History Dialog Visuals", () => {
     await searchInput.fill("Daytona");
 
     await expect(dialog).toHaveScreenshot("race-history-dialog-filtered.png", {
+      maxDiffPixelRatio: 0.05,
+      animations: "disabled",
+    });
+  });
+});
+
+test.describe("Race History Dialog Visuals - German Locale", () => {
+  test.beforeEach(async ({ page }) => {
+    await TestSetupHelper.setupStandardMocks(page, {
+      skipIntro: true,
+      walkthroughSeen: true,
+    });
+    await TestSetupHelper.setupSettings(page, { language: "de" });
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "de",
+      page.goto("/raceday-setup"),
+    );
+    await TestSetupHelper.disableAnimations(page);
+    await expect(page.locator(".setup-container")).toBeVisible({
+      timeout: 15000,
+    });
+  });
+
+  test("should display race history dialog with German date format", async ({
+    page,
+  }) => {
+    const dialog = await openRaceHistoryDialog(page);
+
+    await expect(dialog).toHaveScreenshot("race-history-dialog-de.png", {
       maxDiffPixelRatio: 0.05,
       animations: "disabled",
     });

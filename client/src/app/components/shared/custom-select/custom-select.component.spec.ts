@@ -92,4 +92,49 @@ describe("CustomSelectComponent", () => {
     const options = hostElement.querySelectorAll(".custom-select-option");
     expect(options.length).toBe(4);
   });
+
+  it("should update selectedLabel dynamically when option label text changes", () => {
+    const hostFixture = TestBed.createComponent(DynamicLabelTestHostComponent);
+    hostFixture.detectChanges();
+
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+    const hostElement = hostFixture.nativeElement as HTMLElement;
+
+    expect(select.selectedLabel).toBe("Original Label");
+    expect(
+      hostElement.querySelector(".selected-text")?.textContent?.trim(),
+    ).toBe("Original Label");
+
+    hostFixture.componentInstance.opt1Label = "Renamed Layout";
+    hostFixture.detectChanges();
+
+    expect(select.selectedLabel).toBe("Renamed Layout");
+    expect(
+      hostElement.querySelector(".selected-text")?.textContent?.trim(),
+    ).toBe("Renamed Layout");
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    const optionEl = hostElement.querySelector(
+      '.custom-select-option[data-value="opt1"]',
+    );
+    expect(optionEl?.textContent?.trim()).toBe("Renamed Layout");
+  });
 });
+
+@Component({
+  standalone: true,
+  imports: [CustomSelectComponent, CustomOptionComponent],
+  template: `
+    <app-custom-select [value]="val">
+      <app-custom-option value="opt1">{{ opt1Label }}</app-custom-option>
+      <app-custom-option value="opt2">Option 2</app-custom-option>
+    </app-custom-select>
+  `,
+})
+class DynamicLabelTestHostComponent {
+  val = "opt1";
+  opt1Label = "Original Label";
+}

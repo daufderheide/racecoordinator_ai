@@ -1,4 +1,4 @@
-import { CommonModule, DatePipe, DecimalPipe } from "@angular/common";
+import { CommonModule, DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -88,6 +88,7 @@ import {
   PdfExportDialogComponent,
   PdfExportOptions,
 } from "@app/components/shared/pdf-export-dialog/pdf-export-dialog.component";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { SettingsService } from "@app/services/settings.service";
 
 @Component({
@@ -98,9 +99,9 @@ import { SettingsService } from "@app/services/settings.service";
   imports: [
     TwinGraphsComponent,
     CommonModule,
-    DatePipe,
     DecimalPipe,
     TranslatePipe,
+    LocalDatePipe,
     AvatarUrlPipe,
     RouterModule,
     AcknowledgementModalComponent,

@@ -139,9 +139,9 @@ test.describe("UI Editor Visuals", () => {
       .waitFor({ state: "attached" });
     await TestSetupHelper.waitForImagesLoaded(customThemeSection);
 
-    // Set duplicate name (Classic Theme)
+    // Set duplicate name (RaceCoordinator AI)
     const themeInput = customThemeSection.locator(".theme-name-input").first();
-    await themeInput.fill("Classic Theme");
+    await themeInput.fill("RaceCoordinator AI");
     await themeInput.blur();
 
     // Wait for invalid class to be applied
@@ -199,7 +199,7 @@ test.describe("UI Editor Visuals", () => {
     await TestSetupHelper.waitForImagesLoaded(customThemeSection);
 
     const themeInput = customThemeSection.locator(".theme-name-input").first();
-    await themeInput.fill("Classic Theme");
+    await themeInput.fill("RaceCoordinator AI");
     await themeInput.blur();
 
     const invalidContainer = customThemeSection

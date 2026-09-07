@@ -375,7 +375,29 @@ describe("RacedayFormatUtils", () => {
         undefined,
         ctx,
       );
-      expect(result).toBe("5.123 (Speedy, 2026-08-21)");
+      expect(result).toBe("5.123 (Speedy, 8/21/26)");
+    });
+
+    it("should use ctx.formatDate when provided on ctx", () => {
+      ctx.getLaneRecordEntry = () => ({
+        value: 5.123,
+        holderNickname: "Speedy",
+        date: new Date(2026, 7, 21).getTime(),
+      });
+      ctx.formatDate = (_ms: any) => "21/08/2026";
+
+      const mockHd = {
+        laneIndex: 0,
+        actualDriver: { name: "Speedy" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "recordLapTime",
+        undefined,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("5.123 (Speedy, 21/08/2026)");
     });
 
     it("should fallback to holderName if nickname is not provided", () => {
@@ -396,7 +418,7 @@ describe("RacedayFormatUtils", () => {
         undefined,
         ctx,
       );
-      expect(result).toBe("4.560 (Alice Smith, 2025-01-15)");
+      expect(result).toBe("4.560 (Alice Smith, 1/15/25)");
     });
 
     it("should handle date as object with toNumber", () => {
@@ -417,7 +439,7 @@ describe("RacedayFormatUtils", () => {
         undefined,
         ctx,
       );
-      expect(result).toBe("4.560 (Racer, 2025-06-10)");
+      expect(result).toBe("4.560 (Racer, 6/10/25)");
     });
 
     it("should return placeholder format when no record exists", () => {

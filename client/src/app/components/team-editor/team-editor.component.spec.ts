@@ -435,4 +435,39 @@ describe("TeamEditorComponent", () => {
       },
     });
   }));
+
+  it("should identify reasons why team changes could not be saved", () => {
+    component.editingTeam = new Team("t1", "Team 1");
+    component.allTeams = [
+      new Team("t1", "Team 1"),
+      new Team("t2", "Existing Team"),
+    ];
+
+    // Empty name
+    component.editingTeam.name = "";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_TEAM_NAME_EMPTY",
+    );
+
+    // Duplicate name
+    component.editingTeam.name = "Existing Team";
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_TEAM_NAME_DUPLICATE",
+    );
+
+    // Saving
+    component.editingTeam.name = "Unique Team";
+    component.isSaving = true;
+    expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+    component.isSaving = false;
+
+    // Exit too quickly
+    spyOn(component, "isDirtyState").and.returnValue(true);
+    expect(component.getUnsavedReasons()).toContain(
+      "DISCARD_REASON_EXIT_TOO_QUICKLY",
+    );
+
+    // Formatted discard message
+    expect(component.discardMessage).toContain("•");
+  });
 });

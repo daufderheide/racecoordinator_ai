@@ -1096,10 +1096,10 @@ describe("UIEditorComponent", () => {
 
       const sorted = component.displayThemes;
       expect(sorted.length).toBe(4);
-      expect(sorted[0].entity_id).toBe("default_classic_rc_ai");
-      expect(sorted[1].entity_id).toBe("practice_theme_rc_ai");
-      expect(sorted[2].name).toBe("ZZZ");
-      expect(sorted[3].name).toBe("AAA");
+      expect(sorted[0].name).toBe("AAA");
+      expect(sorted[1].name).toBe("Default");
+      expect(sorted[2].name).toBe("Practice");
+      expect(sorted[3].name).toBe("ZZZ");
     });
     it("should not show activate button on theme toolbar and allow theme selection", () => {
       const themes: Theme[] = [
@@ -1154,16 +1154,24 @@ describe("UIEditorComponent", () => {
       component.refreshDisplayProperties();
       fixture.detectChanges();
 
-      const inputs = fixture.debugElement.queryAll(By.css(".theme-name-input"));
-      expect(inputs.length).toBe(2);
+      const customSection = fixture.debugElement.query(
+        By.css('[data-theme-id="t2"]'),
+      );
+      expect(customSection).toBeTruthy();
+      const input = customSection.query(By.css(".theme-name-input"));
+      expect(input).toBeTruthy();
 
-      inputs[1].nativeElement.value = "Updated Name";
-      inputs[1].nativeElement.dispatchEvent(new Event("input"));
-      inputs[1].nativeElement.dispatchEvent(new Event("change"));
+      input.nativeElement.value = "Updated Name";
+      input.nativeElement.dispatchEvent(new Event("input"));
+      input.nativeElement.dispatchEvent(new Event("change"));
       tick();
 
-      expect(themes[1].name).toBe("Updated Name");
-      expect(mockDataService.updateTheme).toHaveBeenCalledWith("t2", themes[1]);
+      const customTheme = themes.find((t) => t.entity_id === "t2")!;
+      expect(customTheme.name).toBe("Updated Name");
+      expect(mockDataService.updateTheme).toHaveBeenCalledWith(
+        "t2",
+        customTheme,
+      );
     }));
 
     it("should enable image selectors for all themes including default", () => {
@@ -2320,6 +2328,38 @@ describe("UIEditorComponent", () => {
       const result = await promise;
       expect(result).toBeTrue();
     });
+
+    it("should provide unsaved reasons when changes cannot be saved", () => {
+      // Invalid theme name
+      spyOn(component, "isAnyThemeNameInvalid").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_THEME_NAME_INVALID",
+      );
+
+      // Invalid custom UI name
+      (component.isAnyThemeNameInvalid as jasmine.Spy).and.returnValue(false);
+      spyOn(component, "isAnyCustomUiNameInvalid").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_CUSTOM_UI_NAME_INVALID",
+      );
+
+      // Saving in progress
+      (component.isAnyCustomUiNameInvalid as jasmine.Spy).and.returnValue(
+        false,
+      );
+      component.isSaving = true;
+      expect(component.getUnsavedReasons()).toContain("DISCARD_REASON_SAVING");
+      component.isSaving = false;
+
+      // Exited too quickly (dirty, valid, not saving)
+      spyOn(component, "hasChanges").and.returnValue(true);
+      expect(component.getUnsavedReasons()).toContain(
+        "DISCARD_REASON_EXIT_TOO_QUICKLY",
+      );
+
+      // discardMessage contains bullet points
+      expect(component.discardMessage).toContain("•");
+    });
   });
 
   describe("success modal functionality", () => {
@@ -3008,6 +3048,15 @@ describe("UIEditorComponent", () => {
         "My Custom Layout",
       );
 
+      const renamedDefaultUi: any = {
+        entity_id: "default_ui_layout_rc_ai",
+        is_default: true,
+        name: "Renamed Default Layout",
+      };
+      expect(component.getCustomUiDisplayNameKey(renamedDefaultUi)).toBe(
+        "Renamed Default Layout",
+      );
+
       expect(component.isCustomUiDefault(defaultUi)).toBeTrue();
       expect(component.isCustomUiDefault(practiceUi)).toBeTrue();
       expect(component.isCustomUiDefault(fuelUi)).toBeTrue();
@@ -3047,10 +3096,102 @@ describe("UIEditorComponent", () => {
         "My Custom Theme",
       );
 
+      const renamedDefaultTheme: any = {
+        entity_id: "default_classic_rc_ai",
+        is_default: true,
+        name: "Renamed Default Theme",
+      };
+      expect(component.getThemeDisplayNameKey(renamedDefaultTheme)).toBe(
+        "Renamed Default Theme",
+      );
+
       expect(component.isThemeDefault(defaultTheme)).toBeTrue();
       expect(component.isThemeDefault(practiceTheme)).toBeTrue();
       expect(component.isThemeDefault(fuelTheme)).toBeTrue();
       expect(component.isThemeDefault(customTheme)).toBeFalse();
+    });
+
+    it("should capture state and refresh display properties when custom UI name or theme name changes", () => {
+      spyOn(component, "captureState");
+      spyOn(component, "refreshDisplayProperties");
+
+      const ui: any = { entity_id: "u1", name: "New UI Name" };
+      component.onCustomUiNameChanged(ui);
+      expect(component.captureState).toHaveBeenCalled();
+      expect(component.refreshDisplayProperties).toHaveBeenCalled();
+
+      const theme: any = { entity_id: "t1", name: "New Theme Name" };
+      component.onThemeNameChanged(theme);
+      expect(component.captureState).toHaveBeenCalledTimes(2);
+      expect(component.refreshDisplayProperties).toHaveBeenCalledTimes(2);
+    });
+
+    it("should re-sort themes alphabetically upon onThemeNameChanged while preserving expanded state", () => {
+      const t1 = {
+        entity_id: "theme_1",
+        name: "Bravo Theme",
+        slots: {},
+      } as Theme;
+      const t2 = {
+        entity_id: "theme_2",
+        name: "Delta Theme",
+        slots: {},
+      } as Theme;
+      const t3 = {
+        entity_id: "theme_3",
+        name: "Echo Theme",
+        slots: {},
+      } as Theme;
+
+      component.editingState.themes = [t1, t2, t3];
+      component.refreshDisplayProperties();
+
+      expect(component.displayThemes.map((t) => t.name)).toEqual([
+        "Bravo Theme",
+        "Delta Theme",
+        "Echo Theme",
+      ]);
+
+      // Expand Delta Theme
+      component.sectionsExpanded["theme_theme_2"] = true;
+
+      // User modifies theme in place (simulating typing in the input before blur)
+      const deltaTheme = component.displayThemes.find(
+        (t) => t.entity_id === "theme_2",
+      )!;
+      deltaTheme.name = "Alpha Theme";
+
+      // displayThemes should still be in the previous order until onThemeNameChanged is invoked
+      expect(component.displayThemes.map((t) => t.entity_id)).toEqual([
+        "theme_1",
+        "theme_2",
+        "theme_3",
+      ]);
+
+      // Commit rename (simulating blur/enter triggering onThemeNameChanged)
+      component.onThemeNameChanged(deltaTheme);
+
+      // Now displayThemes should be re-sorted alphabetically
+      expect(component.displayThemes.map((t) => t.name)).toEqual([
+        "Alpha Theme",
+        "Bravo Theme",
+        "Echo Theme",
+      ]);
+      expect(component.displayThemes[0].entity_id).toBe("theme_2");
+
+      // Expanded state must be preserved
+      expect(component.sectionsExpanded["theme_theme_2"]).toBeTrue();
+    });
+
+    it("should sync editingState.themes in captureState", () => {
+      const t1 = { entity_id: "theme_1", name: "Theme 1", slots: {} } as Theme;
+      component.displayThemes = [t1];
+      component.editingState.themes = [];
+
+      component.captureState();
+
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].name).toBe("Theme 1");
     });
 
     it("should handle onCustomUiSelected and only select default widget when no valid widget is selected", () => {
@@ -3691,6 +3832,109 @@ describe("UIEditorComponent", () => {
       const parsed = JSON.parse(customUi.layoutJson);
       expect(parsed.widgets[0].customSettings.showGap).toBeFalse();
       expect(component.undoManager.captureState).toHaveBeenCalled();
+    });
+
+    it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
+      spyOn(component.undoManager, "captureState");
+      const customUi1: any = {
+        entity_id: "custom_ui_1",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lv1",
+              widgetType: "lane-view",
+              customSettings: { collapsedColumnGroups: { analysis: true } },
+            },
+          ],
+        }),
+      };
+      const customUi2: any = {
+        entity_id: "custom_ui_2",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lv2",
+              widgetType: "lane-view",
+              customSettings: { collapsedColumnGroups: { analysis: false } },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi1, customUi2];
+
+      // Update layout 1 widget
+      component.activeCustomUiId = "custom_ui_1";
+      component.selectedWidgetId = "lv1";
+      const updatedWidget1 = {
+        id: "lv1",
+        widgetType: "lane-view",
+        customSettings: {
+          collapsedColumnGroups: { analysis: true, driver: true },
+        },
+      };
+      component.onWidgetInspectorChange(updatedWidget1, customUi1);
+
+      const parsed1 = JSON.parse(customUi1.layoutJson);
+      const parsed2 = JSON.parse(customUi2.layoutJson);
+      expect(parsed1.widgets[0].customSettings.collapsedColumnGroups).toEqual({
+        analysis: true,
+        driver: true,
+      });
+      expect(parsed2.widgets[0].customSettings.collapsedColumnGroups).toEqual({
+        analysis: false,
+      });
+    });
+
+    it("should preserve collapsed toolbox groupings per layout independently", () => {
+      const customUi1: any = {
+        entity_id: "custom_ui_1",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [],
+          collapsedToolboxGroups: { "race-coordinator-ai": true },
+          collapsedToolboxSubgroups: { actions: true },
+        }),
+      };
+      const customUi2: any = {
+        entity_id: "custom_ui_2",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [],
+          collapsedToolboxGroups: { "race-coordinator-ai": false },
+          collapsedToolboxSubgroups: { actions: false },
+        }),
+      };
+      component.displayCustomUIs = [customUi1, customUi2];
+
+      // Update layout 1 toolbox state via onLayoutChanged with customUi1
+      component.activeCustomUiId = "custom_ui_1";
+      const updatedLayout1 = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+        collapsedToolboxGroups: {
+          "race-coordinator-ai": false,
+          telemetry: true,
+        },
+        collapsedToolboxSubgroups: { actions: false },
+      };
+      component.onLayoutChanged(updatedLayout1, customUi1);
+
+      const parsed1 = JSON.parse(customUi1.layoutJson);
+      const parsed2 = JSON.parse(customUi2.layoutJson);
+      expect(parsed1.collapsedToolboxGroups).toEqual({
+        "race-coordinator-ai": false,
+        telemetry: true,
+      });
+      expect(parsed2.collapsedToolboxGroups).toEqual({
+        "race-coordinator-ai": false,
+      });
     });
 
     it("should manage aspect ratio and scale mode settings on layouts", () => {

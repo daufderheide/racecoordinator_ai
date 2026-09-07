@@ -31,6 +31,7 @@ import {
 import { DataService } from "@app/data.service";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
@@ -50,6 +51,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
   styleUrls: ["./default-heat-results.component.css"],
   imports: [
     TranslatePipe,
+    LocalDatePipe,
     AcknowledgementModalComponent,
     HeatDriverExpanderComponent,
     TwinGraphsComponent,
@@ -132,6 +134,18 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     return this.participants.some((p) => !!p.team);
   }
   protected race?: Race;
+  private fallbackRaceStartTime: Date = new Date();
+
+  get raceStartTime(): Date {
+    const millis =
+      (this.race as any)?.start_time_millis ||
+      (this.race as any)?.startTimeMillis;
+    if (millis && Number(millis) > 0) {
+      return new Date(Number(millis));
+    }
+    return this.fallbackRaceStartTime;
+  }
+
   protected driverLines: DriverLine[] = [];
   private driverResultsWindows: Window[] = [];
 
@@ -217,7 +231,16 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
     this.subscriptions.push(
       this.raceService.participants$.subscribe((participants) => {
+        const hadNoParticipants =
+          !this.participants || this.participants.length === 0;
         this.participants = participants;
+        if (
+          hadNoParticipants &&
+          this.participants &&
+          this.participants.length > 0
+        ) {
+          this.fallbackRaceStartTime = new Date();
+        }
       }),
     );
 

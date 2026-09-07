@@ -534,4 +534,29 @@ describe("DefaultHeatResultsComponent", () => {
       expect(await harness.hasTrajectoryModal()).toBeTrue();
     });
   });
+
+  describe("raceStartTime and date header", () => {
+    it("should return start_time_millis when present on race", () => {
+      const explicitTime = 1788784800000;
+      (component as any).race = {
+        name: "Test Race",
+        start_time_millis: explicitTime,
+      };
+      expect(component.raceStartTime.getTime()).toBe(explicitTime);
+    });
+
+    it("should render race-date-text when race and raceStartTime exist", () => {
+      (component as any).race = {
+        name: "Test Race",
+        start_time_millis: 1788784800000,
+      };
+      fixture.detectChanges();
+
+      const dateEl = fixture.nativeElement.querySelector(
+        ".race-name-container .race-date-text",
+      );
+      expect(dateEl).toBeTruthy();
+      expect(dateEl.textContent).toContain("26");
+    });
+  });
 });

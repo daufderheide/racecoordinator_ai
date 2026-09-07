@@ -16,7 +16,7 @@
 
   @if (isOpen) {
     <div class="custom-select-dropdown">
-      @for (option of customOptions; track $index) {
+      @for (option of customOptions; track option.value() ?? $index) {
         <div
           class="custom-select-option"
           [attr.data-value]="option.value()"

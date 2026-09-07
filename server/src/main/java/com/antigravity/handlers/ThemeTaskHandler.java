@@ -45,14 +45,16 @@ public class ThemeTaskHandler {
       }
 
       if (!foundFlags[0]) {
-        createAndSaveFactoryTheme(Theme.DEFAULT_THEME_ID, "Default Theme", CustomUI.DEFAULT_UI_ID);
+        createAndSaveFactoryTheme(
+            Theme.DEFAULT_THEME_ID, "RaceCoordinator AI", CustomUI.DEFAULT_UI_ID);
       }
       if (!foundFlags[1]) {
         createAndSaveFactoryTheme(
-            Theme.PRACTICE_THEME_ID, "Practice Theme", CustomUI.PRACTICE_UI_ID);
+            Theme.PRACTICE_THEME_ID, "RaceCoordinator AI (Practice)", CustomUI.PRACTICE_UI_ID);
       }
       if (!foundFlags[2]) {
-        createAndSaveFactoryTheme(Theme.FUEL_THEME_ID, "Fuel Theme", CustomUI.FUEL_UI_ID);
+        createAndSaveFactoryTheme(
+            Theme.FUEL_THEME_ID, "RaceCoordinator AI (Fuel)", CustomUI.FUEL_UI_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to ensure default theme", e);
