@@ -50,6 +50,7 @@ export class RacingRosterDialogComponent {
   }
 
   rosterItems = computed<RosterItem[]>(() => {
+    this.visible();
     const rawList = this.participants() || [];
     const items: RosterItem[] = rawList.map((p, index) => {
       let name = p?.name || "";

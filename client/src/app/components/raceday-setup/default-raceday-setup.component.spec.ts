@@ -13,6 +13,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject as _BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { HelpOverlayComponent } from "@app/components/shared/help-overlay/help-overlay.component";
+import { RacingRosterDialogHarness } from "@app/components/shared/racing-roster-dialog/testing/racing-roster-dialog.harness";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Settings as _Settings } from "@app/models/settings";
@@ -2320,6 +2321,57 @@ describe("DefaultRacedaySetupComponent", () => {
       fixture.detectChanges();
 
       expect(component.showRacingRosterDialog).toBeTrue();
+    });
+
+    it("should display newly dragged drivers in racing roster dialog when opened, closed, dragged, and reopened", async () => {
+      const d1 = new Driver("d1", "Driver One", "D1");
+      const d2 = new Driver("d2", "Driver Two", "D2");
+      const d3 = new Driver("d3", "Driver Three", "D3");
+
+      component.selectedParticipants = [d1, d2];
+      component.unselectedParticipants = [d3];
+      fixture.detectChanges();
+
+      // Open roster dialog initially
+      component.openRacingRosterDialog();
+      fixture.detectChanges();
+      expect(component.showRacingRosterDialog).toBeTrue();
+
+      const loader = TestbedHarnessEnvironment.loader(fixture);
+      const rosterHarness = await loader.getHarness(RacingRosterDialogHarness);
+      expect(await rosterHarness.isVisible()).toBeTrue();
+      expect(await rosterHarness.getItemCount()).toBe(2);
+
+      // Close roster dialog
+      component.closeRacingRosterDialog();
+      fixture.detectChanges();
+      expect(component.showRacingRosterDialog).toBeFalse();
+      expect(await rosterHarness.isVisible()).toBeFalse();
+
+      const initialRef = component.selectedParticipants;
+
+      // Drag d3 from available to selected
+      const addEvent: any = {
+        previousIndex: 0,
+        currentIndex: 2,
+        container: { id: "selected-list" },
+        previousContainer: { id: "available-list", data: [d3] },
+      };
+      component.drop(addEvent);
+      fixture.detectChanges();
+
+      expect(component.selectedParticipants.length).toBe(3);
+      expect(component.selectedParticipants).not.toBe(initialRef);
+
+      // Reopen roster dialog
+      component.openRacingRosterDialog();
+      fixture.detectChanges();
+      expect(component.showRacingRosterDialog).toBeTrue();
+
+      // Verify that all 3 drivers are visible in the roster dialog immediately
+      expect(await rosterHarness.isVisible()).toBeTrue();
+      expect(await rosterHarness.getItemCount()).toBe(3);
+      expect(await rosterHarness.getItemName(2)).toBe("Driver Three");
     });
 
     it("should render all config menu items with setup-menu-dropdown-item and not suppress even items", () => {

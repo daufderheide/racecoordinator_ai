@@ -451,6 +451,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
         // Populate Selected (in saved order)
         if (localSettings && localSettings.selectedDriverIds) {
+          const loadedParticipants: Participant[] = [];
           for (const rawId of localSettings.selectedDriverIds) {
             // Support both prefixed and non-prefixed IDs for backward compatibility
             let prefixedId = rawId;
@@ -465,9 +466,10 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
             const p = participantMap.get(prefixedId);
             if (p) {
-              this.selectedParticipants.push(p);
+              loadedParticipants.push(p);
             }
           }
+          this.selectedParticipants = loadedParticipants;
         }
         this.updateUnselectedParticipants();
 
@@ -1056,11 +1058,9 @@ export class DefaultRacedaySetupComponent implements OnInit {
           // Disable reordering while searching
           return;
         }
-        moveItemInArray(
-          this.selectedParticipants,
-          event.previousIndex,
-          event.currentIndex,
-        );
+        const updated = [...this.selectedParticipants];
+        moveItemInArray(updated, event.previousIndex, event.currentIndex);
+        this.selectedParticipants = updated;
         this.saveSettings();
       }
     } else {
@@ -1101,14 +1101,13 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
         // Apply changes
         this.updateListWithRefresh(() => {
-          if (
-            targetIndex >= 0 &&
-            targetIndex <= this.selectedParticipants.length
-          ) {
-            this.selectedParticipants.splice(targetIndex, 0, participant);
+          const updated = [...this.selectedParticipants];
+          if (targetIndex >= 0 && targetIndex <= updated.length) {
+            updated.splice(targetIndex, 0, participant);
           } else {
-            this.selectedParticipants.push(participant);
+            updated.push(participant);
           }
+          this.selectedParticipants = updated;
           this.updateUnselectedParticipants();
         });
       } else if (event.container.id === "available-list") {
@@ -1711,6 +1710,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   }
 
   openRacingRosterDialog(): void {
+    this.selectedParticipants = [...this.selectedParticipants];
     this.showRacingRosterDialog = true;
     this.cdr.detectChanges();
   }

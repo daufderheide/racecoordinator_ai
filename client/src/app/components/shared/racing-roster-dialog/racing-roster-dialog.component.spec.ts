@@ -339,4 +339,36 @@ describe("RacingRosterDialogComponent", () => {
     expect(await harness.getItemName(0)).toBe("Zack");
     expect(await harness.getItemSeed(0)).toBe("1");
   });
+
+  it("should refresh roster items when reopened after participants array is mutated in place", async () => {
+    const p1 = new Driver("d1", "Mario Andretti", "Speedy");
+    const p2 = new Driver("d2", "Ayrton Senna", "Magic");
+    const p3 = new Driver("d3", "Lewis Hamilton", "Hammer");
+    const participantList = [p1, p2];
+
+    hostComponent.participants.set(participantList);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.isVisible()).toBeTrue();
+    expect(await harness.getItemCount()).toBe(2);
+
+    // Close the dialog
+    await harness.clickCloseButton();
+    fixture.detectChanges();
+    expect(await harness.isVisible()).toBeFalse();
+
+    // Mutate the array in place without changing array reference
+    participantList.push(p3);
+
+    // Reopen dialog
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    // New driver should immediately appear without changing sort
+    expect(await harness.isVisible()).toBeTrue();
+    expect(await harness.getItemCount()).toBe(3);
+    expect(await harness.getItemName(2)).toBe("Lewis Hamilton");
+    expect(await harness.getItemNickname(2)).toBe('"Hammer"');
+  });
 });
