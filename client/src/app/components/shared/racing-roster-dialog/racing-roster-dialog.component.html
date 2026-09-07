@@ -118,11 +118,25 @@
                 </div>
                 <div class="driver-info">
                   <div class="driver-name">{{ item.name }}</div>
-                  @if (item.nickname) {
-                    <div class="driver-nickname">
-                      {{
-                        item.isTeam ? item.nickname : '"' + item.nickname + '"'
-                      }}
+                  @if (item.nickname || (item.teamName && !item.isTeam)) {
+                    <div class="driver-meta">
+                      @if (item.nickname) {
+                        <span class="driver-nickname">
+                          {{
+                            item.isTeam
+                              ? item.nickname
+                              : '"' + item.nickname + '"'
+                          }}
+                        </span>
+                      }
+                      @if (
+                        item.teamName &&
+                        (!item.isTeam || item.teamName !== item.name)
+                      ) {
+                        <span class="team-name" [title]="item.teamName">
+                          {{ item.teamName }}
+                        </span>
+                      }
                     </div>
                   }
                 </div>

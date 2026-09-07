@@ -16,6 +16,8 @@ import { RacingRosterDialogHarness } from "./testing/racing-roster-dialog.harnes
     <app-racing-roster-dialog
       [visible]="visible()"
       [participants]="participants()"
+      [teams]="teams()"
+      [allDrivers]="allDrivers()"
       (close)="onClose()"
     ></app-racing-roster-dialog>
   `,
@@ -23,6 +25,8 @@ import { RacingRosterDialogHarness } from "./testing/racing-roster-dialog.harnes
 class TestHostComponent {
   visible = signal(false);
   participants = signal<any[]>([]);
+  teams = signal<Team[]>([]);
+  allDrivers = signal<Driver[]>([]);
   closed = false;
 
   onClose(): void {
@@ -370,5 +374,175 @@ describe("RacingRosterDialogComponent", () => {
     expect(await harness.getItemCount()).toBe(3);
     expect(await harness.getItemName(2)).toBe("Lewis Hamilton");
     expect(await harness.getItemNickname(2)).toBe('"Hammer"');
+  });
+
+  it("should not display team name when the team is not added to the racing list", async () => {
+    const d1 = new Driver("d1", "Charles Leclerc", "Lord Perceval");
+    const d2 = new Driver("d2", "Max Verstappen", "Mad Max");
+    const t1 = new Team("t1", "Scuderia Ferrari", undefined, ["d1"]);
+
+    // Team t1 is in the teams pool but NOT added to the racing list (participants)
+    hostComponent.participants.set([d1, d2]);
+    hostComponent.teams.set([t1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.getItemCount()).toBe(2);
+    expect(await harness.getItemName(0)).toBe("Charles Leclerc");
+    expect(await harness.getItemNickname(0)).toBe('"Lord Perceval"');
+    // Team name must NOT be shown because the team is not in the racing list
+    expect(await harness.getItemTeam(0)).toBe("");
+
+    expect(await harness.getItemName(1)).toBe("Max Verstappen");
+    expect(await harness.getItemNickname(1)).toBe('"Mad Max"');
+    expect(await harness.getItemTeam(1)).toBe("");
+  });
+
+  it("should display driver nickname and team name side-by-side when the team is added to the racing list", async () => {
+    const d1 = new Driver("d1", "Charles Leclerc", "Lord Perceval");
+    const d2 = new Driver("d2", "Max Verstappen", "Mad Max");
+    const t1 = new Team("t1", "Scuderia Ferrari", undefined, ["d1"]);
+
+    // Team t1 IS added to the racing list (participants)
+    hostComponent.participants.set([d1, t1, d2]);
+    hostComponent.teams.set([t1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.getItemCount()).toBe(3);
+    expect(await harness.getItemName(0)).toBe("Charles Leclerc");
+    expect(await harness.getItemNickname(0)).toBe('"Lord Perceval"');
+    expect(await harness.getItemTeam(0)).toBe("Scuderia Ferrari");
+
+    // t1 team card has team name on line 1 and no duplicate on line 2
+    expect(await harness.getItemName(1)).toBe("Scuderia Ferrari");
+    expect(await harness.getItemTeam(1)).toBe("");
+
+    expect(await harness.getItemName(2)).toBe("Max Verstappen");
+    expect(await harness.getItemNickname(2)).toBe('"Mad Max"');
+    expect(await harness.getItemTeam(2)).toBe("");
+  });
+
+  it("should resolve member driver nicknames for a team participant when allDrivers is provided", async () => {
+    const d1 = new Driver("d1", "Lando Norris", "Lando");
+    const d2 = new Driver("d2", "Oscar Piastri", "Pastry");
+    const t1 = new Team("t1", "McLaren F1", undefined, ["d1", "d2"]);
+
+    hostComponent.participants.set([t1]);
+    hostComponent.teams.set([t1]);
+    hostComponent.allDrivers.set([d1, d2]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    expect(await harness.getItemCount()).toBe(1);
+    expect(await harness.getItemName(0)).toBe("McLaren F1");
+    expect(await harness.getItemNickname(0)).toBe("Lando, Pastry");
+    // Team name is already the card name on line 1, so line 2 teamName span is not duplicated
+    expect(await harness.getItemTeam(0)).toBe("");
+  });
+
+  it("should include team name in tooltip when driver belongs to a team", () => {
+    const dialogComponent = fixture.debugElement.children[0]
+      .componentInstance as RacingRosterDialogComponent;
+
+    const itemWithTeam = {
+      seed: 1,
+      name: "Carlos Sainz",
+      nickname: "Smooth Operator",
+      teamName: "Williams Racing",
+      isTeam: false,
+    };
+    expect(dialogComponent.getItemTooltip(itemWithTeam)).toBe(
+      '(#1) Carlos Sainz "Smooth Operator" [Williams Racing]',
+    );
+
+    const itemWithoutTeam = {
+      seed: 2,
+      name: "Fernando Alonso",
+      nickname: "El Nano",
+      isTeam: false,
+    };
+    expect(dialogComponent.getItemTooltip(itemWithoutTeam)).toBe(
+      '(#2) Fernando Alonso "El Nano"',
+    );
+
+    const teamItem = {
+      seed: 3,
+      name: "Red Bull Racing",
+      nickname: "Max, Checo",
+      teamName: "Red Bull Racing",
+      isTeam: true,
+    };
+    expect(dialogComponent.getItemTooltip(teamItem)).toBe(
+      "(#3) Red Bull Racing (Max, Checo)",
+    );
+  });
+
+  it("should apply scaleText to calculate dynamic font sizes without crashing", () => {
+    const dialogComponent = fixture.debugElement.children[0]
+      .componentInstance as RacingRosterDialogComponent;
+
+    const d1 = new Driver(
+      "d1",
+      "Maximilian Alexander von Montgomery-Smith",
+      "The Unstoppable Intergalactic Speed Bullet",
+    );
+    const t1 = new Team(
+      "t1",
+      "Aston Martin Aramco Cognizant Formula One Team",
+      undefined,
+      ["d1"],
+    );
+
+    hostComponent.participants.set([d1, t1]);
+    hostComponent.teams.set([t1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    // Trigger scaleText
+    expect(() => dialogComponent.scaleText()).not.toThrow();
+
+    // Trigger window resize event
+    expect(() => dialogComponent.onWindowResize()).not.toThrow();
+  });
+
+  it("should calculate and apply --card-name-font-size and --card-meta-font-size to driver-info, scaling up when space allows", () => {
+    const dialogComponent = fixture.debugElement.children[0]
+      .componentInstance as RacingRosterDialogComponent;
+
+    const d1 = new Driver("d1", "Austin", "Sports Mode");
+
+    hostComponent.participants.set([d1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    const cardEl = fixture.nativeElement.querySelector(
+      ".roster-card",
+    ) as HTMLElement;
+    const infoEl = fixture.nativeElement.querySelector(
+      ".driver-info",
+    ) as HTMLElement;
+    expect(cardEl).toBeTruthy();
+    expect(infoEl).toBeTruthy();
+
+    // Emulate spacious card dimensions (e.g. 300px wide, 90px tall)
+    Object.defineProperty(cardEl, "clientHeight", {
+      value: 90,
+      configurable: true,
+    });
+    Object.defineProperty(infoEl, "clientWidth", {
+      value: 280,
+      configurable: true,
+    });
+
+    dialogComponent.scaleText();
+
+    const nameFontSize = infoEl.style.getPropertyValue("--card-name-font-size");
+    const metaFontSize = infoEl.style.getPropertyValue("--card-meta-font-size");
+    expect(nameFontSize).toBeTruthy();
+    expect(metaFontSize).toBeTruthy();
+    // In a 90px tall card with ample width, text scales up to fill vertical space (> 25px)
+    expect(parseFloat(nameFontSize)).toBeGreaterThanOrEqual(28);
+    expect(parseFloat(metaFontSize)).toBeGreaterThanOrEqual(20);
   });
 });
