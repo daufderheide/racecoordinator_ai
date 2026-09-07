@@ -1096,10 +1096,10 @@ describe("UIEditorComponent", () => {
 
       const sorted = component.displayThemes;
       expect(sorted.length).toBe(4);
-      expect(sorted[0].entity_id).toBe("default_classic_rc_ai");
-      expect(sorted[1].entity_id).toBe("practice_theme_rc_ai");
-      expect(sorted[2].name).toBe("ZZZ");
-      expect(sorted[3].name).toBe("AAA");
+      expect(sorted[0].name).toBe("AAA");
+      expect(sorted[1].name).toBe("Default");
+      expect(sorted[2].name).toBe("Practice");
+      expect(sorted[3].name).toBe("ZZZ");
     });
     it("should not show activate button on theme toolbar and allow theme selection", () => {
       const themes: Theme[] = [
@@ -1154,16 +1154,24 @@ describe("UIEditorComponent", () => {
       component.refreshDisplayProperties();
       fixture.detectChanges();
 
-      const inputs = fixture.debugElement.queryAll(By.css(".theme-name-input"));
-      expect(inputs.length).toBe(2);
+      const customSection = fixture.debugElement.query(
+        By.css('[data-theme-id="t2"]'),
+      );
+      expect(customSection).toBeTruthy();
+      const input = customSection.query(By.css(".theme-name-input"));
+      expect(input).toBeTruthy();
 
-      inputs[1].nativeElement.value = "Updated Name";
-      inputs[1].nativeElement.dispatchEvent(new Event("input"));
-      inputs[1].nativeElement.dispatchEvent(new Event("change"));
+      input.nativeElement.value = "Updated Name";
+      input.nativeElement.dispatchEvent(new Event("input"));
+      input.nativeElement.dispatchEvent(new Event("change"));
       tick();
 
-      expect(themes[1].name).toBe("Updated Name");
-      expect(mockDataService.updateTheme).toHaveBeenCalledWith("t2", themes[1]);
+      const customTheme = themes.find((t) => t.entity_id === "t2")!;
+      expect(customTheme.name).toBe("Updated Name");
+      expect(mockDataService.updateTheme).toHaveBeenCalledWith(
+        "t2",
+        customTheme,
+      );
     }));
 
     it("should enable image selectors for all themes including default", () => {
@@ -3103,7 +3111,7 @@ describe("UIEditorComponent", () => {
       expect(component.isThemeDefault(customTheme)).toBeFalse();
     });
 
-    it("should capture state and refresh display properties when custom UI name or theme name changes", async () => {
+    it("should capture state and refresh display properties when custom UI name or theme name changes", () => {
       spyOn(component, "captureState");
       spyOn(component, "refreshDisplayProperties");
 
@@ -3113,9 +3121,77 @@ describe("UIEditorComponent", () => {
       expect(component.refreshDisplayProperties).toHaveBeenCalled();
 
       const theme: any = { entity_id: "t1", name: "New Theme Name" };
-      await component.onThemeNameChanged(theme);
+      component.onThemeNameChanged(theme);
       expect(component.captureState).toHaveBeenCalledTimes(2);
       expect(component.refreshDisplayProperties).toHaveBeenCalledTimes(2);
+    });
+
+    it("should re-sort themes alphabetically upon onThemeNameChanged while preserving expanded state", () => {
+      const t1 = {
+        entity_id: "theme_1",
+        name: "Bravo Theme",
+        slots: {},
+      } as Theme;
+      const t2 = {
+        entity_id: "theme_2",
+        name: "Delta Theme",
+        slots: {},
+      } as Theme;
+      const t3 = {
+        entity_id: "theme_3",
+        name: "Echo Theme",
+        slots: {},
+      } as Theme;
+
+      component.editingState.themes = [t1, t2, t3];
+      component.refreshDisplayProperties();
+
+      expect(component.displayThemes.map((t) => t.name)).toEqual([
+        "Bravo Theme",
+        "Delta Theme",
+        "Echo Theme",
+      ]);
+
+      // Expand Delta Theme
+      component.sectionsExpanded["theme_theme_2"] = true;
+
+      // User modifies theme in place (simulating typing in the input before blur)
+      const deltaTheme = component.displayThemes.find(
+        (t) => t.entity_id === "theme_2",
+      )!;
+      deltaTheme.name = "Alpha Theme";
+
+      // displayThemes should still be in the previous order until onThemeNameChanged is invoked
+      expect(component.displayThemes.map((t) => t.entity_id)).toEqual([
+        "theme_1",
+        "theme_2",
+        "theme_3",
+      ]);
+
+      // Commit rename (simulating blur/enter triggering onThemeNameChanged)
+      component.onThemeNameChanged(deltaTheme);
+
+      // Now displayThemes should be re-sorted alphabetically
+      expect(component.displayThemes.map((t) => t.name)).toEqual([
+        "Alpha Theme",
+        "Bravo Theme",
+        "Echo Theme",
+      ]);
+      expect(component.displayThemes[0].entity_id).toBe("theme_2");
+
+      // Expanded state must be preserved
+      expect(component.sectionsExpanded["theme_theme_2"]).toBeTrue();
+    });
+
+    it("should sync editingState.themes in captureState", () => {
+      const t1 = { entity_id: "theme_1", name: "Theme 1", slots: {} } as Theme;
+      component.displayThemes = [t1];
+      component.editingState.themes = [];
+
+      component.captureState();
+
+      expect(component.editingState.themes.length).toBe(1);
+      expect(component.editingState.themes[0].name).toBe("Theme 1");
     });
 
     it("should handle onCustomUiSelected and only select default widget when no valid widget is selected", () => {

@@ -734,6 +734,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.displayCustomUIs?.length) {
       this.editingState.customUIs = deepCopy(this.displayCustomUIs);
     }
+    if (this.displayThemes?.length) {
+      this.editingState.themes = deepCopy(this.displayThemes);
+    }
     this.undoManager.captureState();
   }
 
@@ -927,7 +930,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.showThemeTemplateModal = false;
     await this.createNewTheme();
   }
-  async onThemeNameChanged(_theme: Theme) {
+  onThemeNameChanged(_theme: Theme) {
     this.captureState();
     this.refreshDisplayProperties();
     this.cdr.markForCheck();
