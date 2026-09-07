@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.0.0-beta.60] - 2026-09-07
+
+### 🚀 New Features
+
+- add DateFormatService and expand visual regression testing across components https://github.com/daufderheide/racecoordinator_ai/issues/773 ([7ab91306](https://github.com/daufderheide/racecoordinator_ai/commit/7ab91306))
+- implement comprehensive unsaved changes validation with detailed contextual discard reasons across all editors https://github.com/daufderheide/racecoordinator_ai/issues/778 ([fb8d3d0f](https://github.com/daufderheide/racecoordinator_ai/commit/fb8d3d0f))
+- persist widget toolbox groups and lane view column groupings in client settings https://github.com/daufderheide/racecoordinator_ai/issues/785 [skip-screendiffs] ([bd29be28](https://github.com/daufderheide/racecoordinator_ai/commit/bd29be28))
+
+### 🐛 Bug Fixes
+
+- alphabetize themes in the custom ui page https://github.com/daufderheide/racecoordinator_ai/issues/776 ([6c4b1f75](https://github.com/daufderheide/racecoordinator_ai/commit/6c4b1f75))
+- fixed factory layout and theme naming fix: fixed renaming layouts and how they appear in themes [skip-screendiffs] ([0b1fa83c](https://github.com/daufderheide/racecoordinator_ai/commit/0b1fa83c))
+- properly detect empty nickname for driver and treat it as an error preventing saving from working https://github.com/daufderheide/racecoordinator_ai/issues/779 ([8614fe6f](https://github.com/daufderheide/racecoordinator_ai/commit/8614fe6f))
+- **race_day_setup**: cleaned up and unified racing and available driver selection on the rds page https://github.com/daufderheide/racecoordinator_ai/issues/775 ([e39f8902](https://github.com/daufderheide/racecoordinator_ai/commit/e39f8902))
+- replace 'Manche' with 'Heat' in Dutch DLR translation strings (#774) ([4ecc2cee](https://github.com/daufderheide/racecoordinator_ai/commit/4ecc2cee))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.59...v1.0.0-beta.60">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.59] - 2026-09-06
 
 ### 🚀 New Features
