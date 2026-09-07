@@ -342,6 +342,30 @@ public class DatabaseTaskHandlerTest {
       invoke(handler, "createDriver", ctxCreate);
       org.mockito.Mockito.verify(ctxCreate).status(201);
 
+      // Blank Nickname Create -> 400
+      io.javalin.http.Context ctxBlankNick = mock(io.javalin.http.Context.class);
+      when(ctxBlankNick.body())
+          .thenReturn("{\"name\":\"Valtteri Bottas\",\"nickname\":\"\",\"entity_id\":\"new\"}");
+      when(ctxBlankNick.status(anyInt())).thenReturn(ctxBlankNick);
+      invoke(handler, "createDriver", ctxBlankNick);
+      org.mockito.Mockito.verify(ctxBlankNick).status(400);
+
+      // Whitespace Nickname Create -> 400
+      io.javalin.http.Context ctxWsNick = mock(io.javalin.http.Context.class);
+      when(ctxWsNick.body())
+          .thenReturn("{\"name\":\"Valtteri Bottas\",\"nickname\":\"   \",\"entity_id\":\"new\"}");
+      when(ctxWsNick.status(anyInt())).thenReturn(ctxWsNick);
+      invoke(handler, "createDriver", ctxWsNick);
+      org.mockito.Mockito.verify(ctxWsNick).status(400);
+
+      // Blank Name Create -> 400
+      io.javalin.http.Context ctxBlankName = mock(io.javalin.http.Context.class);
+      when(ctxBlankName.body())
+          .thenReturn("{\"name\":\"  \",\"nickname\":\"VB77\",\"entity_id\":\"new\"}");
+      when(ctxBlankName.status(anyInt())).thenReturn(ctxBlankName);
+      invoke(handler, "createDriver", ctxBlankName);
+      org.mockito.Mockito.verify(ctxBlankName).status(400);
+
       // Duplicate Driver Name
       io.javalin.http.Context ctxDup = mock(io.javalin.http.Context.class);
       when(ctxDup.body())
@@ -363,6 +387,24 @@ public class DatabaseTaskHandlerTest {
               "{\"name\":\"Sir Lewis Hamilton\",\"nickname\":\"LH44\",\"entity_id\":\"1\"}");
       invoke(handler, "updateDriver", ctxUpdate);
       org.mockito.Mockito.verify(ctxUpdate).json(any());
+
+      // Blank Nickname Update -> 400
+      io.javalin.http.Context ctxUpdateBlankNick = mock(io.javalin.http.Context.class);
+      when(ctxUpdateBlankNick.pathParam("id")).thenReturn("1");
+      when(ctxUpdateBlankNick.body())
+          .thenReturn("{\"name\":\"Sir Lewis Hamilton\",\"nickname\":\"\",\"entity_id\":\"1\"}");
+      when(ctxUpdateBlankNick.status(anyInt())).thenReturn(ctxUpdateBlankNick);
+      invoke(handler, "updateDriver", ctxUpdateBlankNick);
+      org.mockito.Mockito.verify(ctxUpdateBlankNick).status(400);
+
+      // Blank Name Update -> 400
+      io.javalin.http.Context ctxUpdateBlankName = mock(io.javalin.http.Context.class);
+      when(ctxUpdateBlankName.pathParam("id")).thenReturn("1");
+      when(ctxUpdateBlankName.body())
+          .thenReturn("{\"name\":\" \",\"nickname\":\"LH44\",\"entity_id\":\"1\"}");
+      when(ctxUpdateBlankName.status(anyInt())).thenReturn(ctxUpdateBlankName);
+      invoke(handler, "updateDriver", ctxUpdateBlankName);
+      org.mockito.Mockito.verify(ctxUpdateBlankName).status(400);
 
       // Create Driver 2
       io.javalin.http.Context ctxD2 = mock(io.javalin.http.Context.class);

@@ -325,7 +325,7 @@ export class DriverEditorComponent
 
   get isNicknameInvalid(): boolean {
     if (this.isLoading || !this.editingDriver) return false;
-    return !this.isNicknameUnique(true);
+    return !this.editingDriver.nickname?.trim() || !this.isNicknameUnique(true);
   }
 
   private areDriversEqual(d1: Driver, d2: Driver): boolean {
@@ -373,12 +373,12 @@ export class DriverEditorComponent
   isNicknameUnique(excludeSelf: boolean = true): boolean {
     if (!this.editingDriver) return true;
     const nickname = this.editingDriver.nickname?.trim().toLowerCase();
-    if (!nickname) return true;
+    if (!nickname) return false;
 
     return !this.allDrivers.some(
       (d) =>
         (excludeSelf ? d.entity_id !== this.editingDriver!.entity_id : true) &&
-        d.nickname?.toLowerCase() === nickname,
+        d.nickname?.trim().toLowerCase() === nickname,
     );
   }
 

@@ -103,15 +103,26 @@ public class DatabaseTaskHandler {
     try {
       Driver driver = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Driver.class);
 
-      final String driverName = driver.getName();
-      final String driverNick = driver.getNickname();
+      if (driver.getName() == null || driver.getName().trim().isEmpty()) {
+        ctx.status(400).result("Driver name cannot be empty");
+        return;
+      }
+
+      if (driver.getNickname() == null || driver.getNickname().trim().isEmpty()) {
+        ctx.status(400).result("Driver nickname cannot be empty");
+        return;
+      }
+
+      final String driverName = driver.getName().trim();
+      final String driverNick = driver.getNickname().trim();
       List<Driver> allDrivers = driverRepository.findAll();
       boolean existing =
           allDrivers.stream()
               .anyMatch(
                   d ->
-                      (driverName != null && driverName.equalsIgnoreCase(d.getName()))
-                          || (driverNick != null && driverNick.equalsIgnoreCase(d.getNickname())));
+                      (d.getName() != null && driverName.equalsIgnoreCase(d.getName().trim()))
+                          || (d.getNickname() != null
+                              && driverNick.equalsIgnoreCase(d.getNickname().trim())));
 
       if (existing) {
         ctx.status(409).result("Driver name or nickname already exists");
@@ -155,16 +166,28 @@ public class DatabaseTaskHandler {
       String id = ctx.pathParam("id");
       Driver driver = DatabaseHandlerUtils.bodyAsClassWithId(ctx.body(), Driver.class);
 
+      if (driver.getName() == null || driver.getName().trim().isEmpty()) {
+        ctx.status(400).result("Driver name cannot be empty");
+        return;
+      }
+
+      if (driver.getNickname() == null || driver.getNickname().trim().isEmpty()) {
+        ctx.status(400).result("Driver nickname cannot be empty");
+        return;
+      }
+
+      final String updateDriverName = driver.getName().trim();
+      final String updateDriverNick = driver.getNickname().trim();
       List<Driver> allDrivers = driverRepository.findAll();
       boolean existing =
           allDrivers.stream()
               .anyMatch(
                   d ->
                       !id.equals(d.getEntityId())
-                          && ((driver.getName() != null
-                                  && driver.getName().equalsIgnoreCase(d.getName()))
-                              || (driver.getNickname() != null
-                                  && driver.getNickname().equalsIgnoreCase(d.getNickname()))));
+                          && ((d.getName() != null
+                                  && updateDriverName.equalsIgnoreCase(d.getName().trim()))
+                              || (d.getNickname() != null
+                                  && updateDriverNick.equalsIgnoreCase(d.getNickname().trim()))));
 
       if (existing) {
         ctx.status(409).result("Driver name or nickname already exists");

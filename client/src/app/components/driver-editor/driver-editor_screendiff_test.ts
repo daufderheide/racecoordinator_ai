@@ -101,6 +101,65 @@ test.describe("Driver Editor Visuals", () => {
     });
   });
 
+  test("should show validation error on blank nickname", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const container = page.locator(".page-container");
+    const harness = new DriverEditorHarnessE2e(container);
+
+    await harness.setNickname("");
+    await page.keyboard.press("Tab");
+
+    await expect(page).toHaveScreenshot(
+      "driver-editor-blank-nickname-error.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
+
+  test("should show validation error on duplicate nickname", async ({
+    page,
+  }) => {
+    await page.route("**/api/drivers", async (route) => {
+      await route.fulfill({
+        json: [
+          MOCK_DRIVERS[0],
+          { ...MOCK_DRIVERS[1], nickname: "Duplicate Nickname" },
+        ],
+      });
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const container = page.locator(".page-container");
+    const harness = new DriverEditorHarnessE2e(container);
+
+    await harness.setNickname("Duplicate Nickname");
+    await page.keyboard.press("Tab");
+
+    await expect(page).toHaveScreenshot(
+      "driver-editor-duplicate-nickname-error.png",
+      {
+        animations: "disabled",
+        maxDiffPixelRatio: 0.05,
+      },
+    );
+  });
+
   test("should show guided help on first visit", async ({ page }) => {
     // Override standard mock with helpShown=false to trigger auto-open
     await TestSetupHelper.setupStandardMocks(page, {

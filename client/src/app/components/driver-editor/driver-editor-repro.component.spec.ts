@@ -181,7 +181,7 @@ describe("DriverEditorComponent Reproduction", () => {
     mockAnalyticsService.isEnabled.and.returnValue(true);
 
     mockDataService.getDrivers.and.returnValue(
-      of([{ entity_id: "d1", name: "Original", nickname: "" }]),
+      of([{ entity_id: "d1", name: "Original", nickname: "OrigNick" }]),
     );
     mockDataService.listAssets.and.returnValue(of([]));
     mockDataService.createDriver.and.returnValue(of({ entity_id: "d2" }));
