@@ -1939,7 +1939,17 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should use driver finished flag if driver isFinished is true", () => {
+    it("should use driver finished flag if driver isFinished is true in allow finish race", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).currentHeat = {
+        heatDrivers: [
+          { ...mockHd, isFinished: true },
+          { isFinished: false, driver: { name: "Driver 2" } },
+        ],
+      };
+      (component as any).raceState = RaceState.RACING;
       mockRaceFlagService.getFlagUrl.and.returnValue(
         "http://localhost/driver_finished.png",
       );
@@ -1949,6 +1959,97 @@ describe("DefaultRacedayComponent", () => {
       expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
         "flag.driver_finished",
       );
+    });
+
+    it("should use heat over flag when all drivers finish in HeatOver", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).raceState = RaceState.HEAT_OVER;
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/heat_over.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/heat_over.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.heat_over",
+      );
+    });
+
+    it("should use race over flag when all drivers finish in RaceOver", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "Allow" },
+      } as any);
+      (component as any).raceState = RaceState.RACE_OVER;
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/race_over.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.RED, finishedHd);
+      expect(result).toBe("http://localhost/race_over.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        "flag.race_over",
+      );
+    });
+
+    it("should not use driver finished flag when allow finish is None", () => {
+      mockRaceService.getRace.and.returnValue({
+        heat_scoring: { allow_finish: "None" },
+      } as any);
+      (component as any).raceState = RaceState.RACING;
+      (component as any).currentHeat = {
+        heatDrivers: [
+          { ...mockHd, isFinished: true },
+          { isFinished: false, driver: { name: "Driver 2" } },
+        ],
+      };
+      mockRaceFlagService.getFlagUrl.and.returnValue(
+        "http://localhost/green.png",
+      );
+      const finishedHd = { ...mockHd, isFinished: true } as any;
+      const result = component.formatValue("flag", RaceFlag.GREEN, finishedHd);
+      expect(result).toBe("http://localhost/green.png");
+      expect(mockRaceFlagService.getFlagUrl).toHaveBeenCalledWith(
+        RaceFlag.GREEN,
+      );
+    });
+
+    it("should evaluate areAllDriversFinished correctly across states", () => {
+      (component as any).raceState = RaceState.HEAT_OVER;
+      expect(component.areAllDriversFinished()).toBeTrue();
+
+      (component as any).raceState = RaceState.RACE_OVER;
+      expect(component.areAllDriversFinished()).toBeTrue();
+
+      (component as any).raceState = RaceState.NOT_STARTED;
+      expect(component.areAllDriversFinished()).toBeFalse();
+
+      (component as any).raceState = RaceState.STARTING;
+      expect(component.areAllDriversFinished()).toBeFalse();
+
+      (component as any).raceState = RaceState.RACING;
+      const unfinishedHeat = {
+        heatDrivers: [
+          { isFinished: true, driver: { name: "D1" } },
+          { isFinished: false, driver: { name: "D2" } },
+        ],
+      };
+      (component as any).currentHeat = unfinishedHeat;
+      (component as any).heat = unfinishedHeat;
+      mockRaceService.getCurrentHeat.and.returnValue(unfinishedHeat);
+      expect(component.areAllDriversFinished()).toBeFalse();
+
+      const finishedHeat = {
+        heatDrivers: [
+          { isFinished: true, driver: { name: "D1" } },
+          { isFinished: true, driver: { name: "D2" } },
+        ],
+      };
+      (component as any).currentHeat = finishedHeat;
+      (component as any).heat = finishedHeat;
+      mockRaceService.getCurrentHeat.and.returnValue(finishedHeat);
+      expect(component.areAllDriversFinished()).toBeTrue();
     });
 
     it("should evaluate isDriverFinished based on server isFinished state", () => {

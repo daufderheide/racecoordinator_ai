@@ -3118,6 +3118,8 @@ export class DefaultRacedayComponent
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
       getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      areAllDriversFinished: () => this.areAllDriversFinished(),
+      isRaceOver: () => this.isRaceOver(),
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
@@ -3156,6 +3158,8 @@ export class DefaultRacedayComponent
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      areAllDriversFinished: () => this.areAllDriversFinished(),
+      isRaceOver: () => this.isRaceOver(),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
 
@@ -4470,10 +4474,59 @@ export class DefaultRacedayComponent
 
   isDriverFinished(
     hd: DriverHeatData,
-    _scoring?: HeatScoring | null | undefined,
+    scoring?: HeatScoring | null | undefined,
   ): boolean {
     if (!hd) return false;
-    return !!hd.isFinished;
+    if (hd.isFinished) return true;
+    const sc: any =
+      scoring || this.race?.heat_scoring || (this.race as any)?.heatScoring;
+    const finishMethod = sc?.finishMethod ?? sc?.finish_method;
+    const finishValue = sc?.finishValue ?? sc?.finish_value;
+    if (
+      (finishMethod === FinishMethod.Lap ||
+        finishMethod === "Lap" ||
+        finishMethod === 1) &&
+      finishValue !== undefined &&
+      finishValue > 0
+    ) {
+      return (hd.lapCount ?? 0) >= finishValue;
+    }
+    return false;
+  }
+
+  areAllDriversFinished(): boolean {
+    if (
+      this.raceState === RaceState.HEAT_OVER ||
+      this.raceState === RaceState.RACE_OVER
+    ) {
+      return true;
+    }
+    if (
+      this.raceState === RaceState.NOT_STARTED ||
+      this.raceState === RaceState.STARTING
+    ) {
+      return false;
+    }
+    const currentHeat: any =
+      (this as any).currentHeat ||
+      this.raceService.getCurrentHeat() ||
+      this.heat;
+    const drivers: DriverHeatData[] =
+      currentHeat?.heatDrivers || currentHeat?.drivers || [];
+    if (!drivers || drivers.length === 0) {
+      return false;
+    }
+    const activeDrivers = drivers.filter(
+      (d) => d && !RacedayFormatUtils.isEmptyDriver(d),
+    );
+    if (activeDrivers.length === 0) {
+      return false;
+    }
+    return activeDrivers.every((d) => this.isDriverFinished(d));
+  }
+
+  isRaceOver(): boolean {
+    return this.raceState === RaceState.RACE_OVER;
   }
 
   public getFlagUrl(flag: any): string {
@@ -4883,6 +4936,8 @@ export class DefaultRacedayComponent
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
       getDriverViewQrCodeUrl: (hd) => this.getDriverViewQrCodeUrl(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      areAllDriversFinished: () => this.areAllDriversFinished(),
+      isRaceOver: () => this.isRaceOver(),
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
       formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),

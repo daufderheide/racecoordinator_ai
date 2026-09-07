@@ -1291,7 +1291,7 @@ public class RaceTest {
     }
 
     @Test
-    public void testRaceOver_RedFlagWhenNotLastHeat() {
+    public void testRaceOver_CheckeredFlagWhenNotLastHeat() {
       RaceOver raceOver = new RaceOver();
       com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
       Race mockModel = mock(Race.class);
@@ -1303,11 +1303,11 @@ public class RaceTest {
       when(mockRace.isLastHeat()).thenReturn(false);
 
       RaceFlag flag = raceOver.getFlagType(mockRace);
-      assertTrue(flag == RaceFlag.RED);
+      assertTrue(flag == RaceFlag.CHECKERED);
     }
 
     @Test
-    public void testRaceOver_RedFlagWhenAllowFinishEnabled() {
+    public void testRaceOver_CheckeredFlagWhenAllowFinishEnabled() {
       RaceOver raceOver = new RaceOver();
       com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
       Race mockModel = mock(Race.class);
@@ -1319,7 +1319,7 @@ public class RaceTest {
       when(mockRace.isLastHeat()).thenReturn(true);
 
       RaceFlag flag = raceOver.getFlagType(mockRace);
-      assertTrue(flag == RaceFlag.RED);
+      assertTrue(flag == RaceFlag.CHECKERED);
     }
 
     @Test
@@ -1374,11 +1374,13 @@ public class RaceTest {
       assertEquals(RaceFlag.GREEN, dhd.getFlag());
 
       // Transition to HeatOver (time expired or heat finished)
+      // Once all drivers finish, driver flag uses heat_over flag in HeatOver
       race.changeState(new HeatOver());
       assertTrue(dhd.isFinished());
-      assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
+      assertEquals(RaceFlag.RED, dhd.getFlag());
 
       // Transition to RaceOver
+      // Driver flag uses race_over flag in RaceOver
       race.changeState(new RaceOver());
       assertTrue(dhd.isFinished());
       assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
@@ -3112,7 +3114,7 @@ public class RaceTest {
     @Test
     public void testRaceOverFlag() {
       RaceOver state = new RaceOver();
-      assertEquals(RaceFlag.RED, state.getFlagType(race));
+      assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
     }
 
     @Test
@@ -3179,7 +3181,7 @@ public class RaceTest {
 
       assertEquals(RaceFlag.CHECKERED, state.getFlagType(race));
       assertEquals(RaceFlag.RED, state.getLaneFlagType(race, 0));
-      assertEquals(RaceFlag.CHECKERED, state.getLaneFlagType(race, 1));
+      assertEquals(RaceFlag.GREEN, state.getLaneFlagType(race, 1));
     }
 
     @Test

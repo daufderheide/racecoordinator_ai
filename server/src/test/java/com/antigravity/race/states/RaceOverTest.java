@@ -35,15 +35,8 @@ public class RaceOverTest {
   }
 
   @Test
-  public void testGetFlagType_CheckeredOnLastHeatWhenNoFinishAllowed() {
-    when(race.isLastHeat()).thenReturn(true);
+  public void testGetFlagType_ReturnsCheckeredRaceOverFlag() {
     assertEquals(RaceFlag.CHECKERED, raceOver.getFlagType(race));
-  }
-
-  @Test
-  public void testGetFlagType_RedWhenNotLastHeat() {
-    when(race.isLastHeat()).thenReturn(false);
-    assertEquals(RaceFlag.RED, raceOver.getFlagType(race));
   }
 
   @Test
@@ -55,11 +48,7 @@ public class RaceOverTest {
         new com.antigravity.models.Theme("Custom", true, slots, null, "theme-1", "id-1");
     when(race.getTheme()).thenReturn(theme);
 
-    when(race.isLastHeat()).thenReturn(true);
     assertEquals(RaceFlag.YELLOW, raceOver.getFlagType(race));
-
-    when(race.isLastHeat()).thenReturn(false);
-    assertEquals(RaceFlag.GREEN, raceOver.getFlagType(race));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -140,7 +129,6 @@ public class RaceOverTest {
     when(race.isLastHeat()).thenReturn(true);
 
     raceOver.enter(race);
-
-    assertEquals(RaceFlag.RED, dhd.getFlag());
+    assertEquals(RaceFlag.CHECKERED, dhd.getFlag());
   }
 }

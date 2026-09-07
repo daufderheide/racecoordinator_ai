@@ -61,6 +61,22 @@ public class ThemeTest {
   }
 
   @Test
+  public void testResolveFlag_PreventsCollisionsForDriverFinishedAndHeatFinishing() {
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.driver_finished", "default_flag_black");
+    slots.put("flag.heat_finishing", "default_flag_green_yellow");
+
+    Theme theme = new Theme("Collision Prevention Theme", false, slots, null, "theme-cp", "id-cp");
+
+    // "flag.driver_finished" with black asset must return fallback (RED), not BLACK (penalty)
+    assertEquals(RaceFlag.RED, theme.resolveFlag("flag.driver_finished", RaceFlag.RED));
+
+    // "flag.heat_finishing" with green_yellow asset must return fallback (CHECKERED), not
+    // GREEN_YELLOW (warmup)
+    assertEquals(RaceFlag.CHECKERED, theme.resolveFlag("flag.heat_finishing", RaceFlag.CHECKERED));
+  }
+
+  @Test
   public void testResolveFlag_FallbacksAndNulls() {
     Theme emptyTheme = new Theme("Empty Theme", false, null, null, "theme-3", "id-3");
     assertEquals(RaceFlag.RED, emptyTheme.resolveFlag("any.slot", RaceFlag.RED));

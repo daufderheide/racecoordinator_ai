@@ -42,7 +42,9 @@ public interface IRaceState {
     }
 
     // 3) Driver Finished
-    if (isDriverFinished(race, lane, dhd)) {
+    // The driver finished driver state flag should only be shown in allow finish races
+    // when the driver has finished but not all drivers have finished.
+    if (isAllowFinish(race) && isDriverFinished(race, lane, dhd) && !areAllDriversFinished(race)) {
       RaceFlag warmupFlag =
           race.getTheme() != null
               ? race.getTheme()
@@ -58,7 +60,108 @@ public interface IRaceState {
           : RaceFlag.RED;
     }
 
+    // Once all drivers finish the driver state flag should use the heat over or race over flag
+    // depending on the state of the race.
+    if (areAllDriversFinished(race)) {
+      RaceFlag warmupFlag =
+          race.getTheme() != null
+              ? race.getTheme()
+                  .resolveFlag("flag.warmup", RaceFlag.GREEN_YELLOW, race.getDatabaseContext())
+              : RaceFlag.GREEN_YELLOW;
+      if (baseFlag == warmupFlag) {
+        return baseFlag;
+      }
+
+      boolean isRaceOver =
+          (this instanceof RaceOver)
+              || (race.getState() instanceof RaceOver)
+              || (!(this instanceof HeatOver) && race.isLastHeat());
+      if (isRaceOver) {
+        return race.getTheme() != null
+            ? race.getTheme()
+                .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
+            : RaceFlag.CHECKERED;
+      } else {
+        return race.getTheme() != null
+            ? race.getTheme().resolveFlag("flag.heat_over", RaceFlag.RED, race.getDatabaseContext())
+            : RaceFlag.RED;
+      }
+    }
+
+    if (this instanceof Racing || (race.getState() instanceof Racing)) {
+      HeatScoring scoring =
+          race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null;
+      if (scoring != null && scoring.getFinishMethod() == FinishMethod.Lap) {
+        if (dhd.getLapCount() == scoring.getFinishValue() - 1) {
+          return race.getTheme() != null
+              ? race.getTheme()
+                  .resolveFlag("flag.one_lap_to_go", RaceFlag.WHITE, race.getDatabaseContext())
+              : RaceFlag.WHITE;
+        }
+      }
+      return race.getTheme() != null
+          ? race.getTheme().resolveFlag("flag.racing", RaceFlag.GREEN, race.getDatabaseContext())
+          : RaceFlag.GREEN;
+    }
+
     return baseFlag;
+  }
+
+  default boolean isAllowFinish(Race race) {
+    if (race == null || race.getRaceModel() == null) return false;
+    HeatScoring scoring = race.getRaceModel().getHeatScoring();
+    return scoring != null
+        && scoring.getAllowFinish() != null
+        && scoring.getAllowFinish() != AllowFinish.None
+        && scoring.getAllowFinish() != AllowFinish.NoneAutoSegments;
+  }
+
+  default boolean areAllDriversFinished(Race race) {
+    if (race == null || race.getCurrentHeat() == null) return false;
+
+    // In HeatOver or RaceOver, all active drivers in the current heat have finished
+    if (this instanceof HeatOver || this instanceof RaceOver) {
+      return true;
+    }
+
+    if (this instanceof NotStarted || this instanceof Starting) {
+      return false;
+    }
+
+    List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
+    if (drivers == null || drivers.isEmpty()) return false;
+
+    int activeCount = race.getCurrentHeat().getActiveDriverCount();
+    if (activeCount > 0
+        && race.getHeatExecutionManager() != null
+        && race.getHeatExecutionManager().getFinishedLanes().size() >= activeCount) {
+      return true;
+    }
+
+    int checkedCount = 0;
+    for (int i = 0; i < drivers.size(); i++) {
+      DriverHeatData dhd = drivers.get(i);
+      if (dhd != null && (activeCount == 0 || isDriverActive(dhd))) {
+        checkedCount++;
+        if (!isDriverFinished(race, i, dhd)) {
+          return false;
+        }
+      }
+    }
+    return checkedCount > 0;
+  }
+
+  default boolean isDriverActive(DriverHeatData driverData) {
+    if (driverData == null) return false;
+    if (driverData.getActualDriver() != null
+        && driverData.getActualDriver().getEntityId() != null
+        && !driverData.getActualDriver().isEmpty()) {
+      return true;
+    }
+    return driverData.getDriver() != null
+        && driverData.getDriver().getDriver() != null
+        && driverData.getDriver().getDriver().getEntityId() != null
+        && !driverData.getDriver().getDriver().isEmpty();
   }
 
   default boolean isDriverFinished(Race race, int laneIndex, DriverHeatData hd) {

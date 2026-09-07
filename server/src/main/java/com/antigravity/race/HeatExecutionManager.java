@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.converters.HeatConverter;
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.Driver;
@@ -284,6 +285,12 @@ public class HeatExecutionManager {
       } else {
         // Other drivers still racing so turn off power to this lane
         race.setLanePower(false, lane);
+        if (race.getCurrentHeat() != null) {
+          race.broadcast(
+              RaceData.newBuilder()
+                  .setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+                  .build());
+        }
       }
     }
   }

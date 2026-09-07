@@ -2069,6 +2069,46 @@ export class TestSetupHelper {
       });
     }
 
+    if (data?.race?.race) {
+      const r = data.race.race;
+      if (r.heat_scoring && !r.heatScoring) {
+        r.heatScoring = { ...r.heat_scoring };
+      }
+      if (r.heatScoring) {
+        if (
+          r.heatScoring.allow_finish !== undefined &&
+          r.heatScoring.allowFinish === undefined
+        ) {
+          r.heatScoring.allowFinish = r.heatScoring.allow_finish;
+        }
+        if (
+          r.heatScoring.allowFinish === "Allow" ||
+          r.heatScoring.allowFinish === "AF_ALLOW" ||
+          r.heatScoring.allowFinish === 1
+        ) {
+          r.heatScoring.allowFinish = 1;
+        } else if (
+          r.heatScoring.allowFinish === "SingleLap" ||
+          r.heatScoring.allowFinish === "AF_SINGLE_LAP" ||
+          r.heatScoring.allowFinish === 2
+        ) {
+          r.heatScoring.allowFinish = 2;
+        } else if (
+          r.heatScoring.allowFinish === "NoneAutoSegments" ||
+          r.heatScoring.allowFinish === "AF_NONE_AUTO_SEGMENTS" ||
+          r.heatScoring.allowFinish === 3
+        ) {
+          r.heatScoring.allowFinish = 3;
+        } else if (
+          r.heatScoring.allowFinish === "None" ||
+          r.heatScoring.allowFinish === "AF_NONE" ||
+          r.heatScoring.allowFinish === 0
+        ) {
+          r.heatScoring.allowFinish = 0;
+        }
+      }
+    }
+
     const injectHeatStandings = (heat: any) => {
       if (!heat) return;
       if (heat.heatDrivers) {

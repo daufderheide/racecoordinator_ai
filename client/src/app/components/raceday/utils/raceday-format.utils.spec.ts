@@ -1,3 +1,4 @@
+import { AllowFinish } from "@app/models/heat_scoring";
 import { RaceFlag } from "@app/proto/antigravity";
 
 import { DriverHeatData } from "../../../race/driver_heat_data";
@@ -753,7 +754,9 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("url-for-flag.warmup");
     });
 
-    it("should return driver_finished flag when hd.isFinished is true", () => {
+    it("should return driver_finished flag when hd.isFinished is true and allow finish is enabled and not all finished", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => false;
       const mockHd = { isFinished: true } as any;
       const result = RacedayFormatUtils.formatValue(
         "flag",
@@ -765,9 +768,10 @@ describe("RacedayFormatUtils", () => {
       expect(result).toBe("url-for-flag.driver_finished");
     });
 
-    it("should return driver_finished flag when ctx.isDriverFinished returns true", () => {
+    it("should return driver_finished flag when ctx.isDriverFinished returns true and allow finish enabled", () => {
       ctx.isDriverFinished = () => true;
-      ctx.getRace = () => ({ heat_scoring: {} }) as any;
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => false;
       const mockHd = { isFinished: false } as any;
       const result = RacedayFormatUtils.formatValue(
         "flag",
@@ -777,6 +781,121 @@ describe("RacedayFormatUtils", () => {
         ctx,
       );
       expect(result).toBe("url-for-flag.driver_finished");
+    });
+
+    it("should not return driver_finished flag when allow finish is None", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "None" } }) as any;
+      ctx.areAllDriversFinished = () => false;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe(`url-for-${RaceFlag.GREEN}`);
+    });
+
+    it("should return heat_over flag when all drivers finished and not race over", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => false;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.heat_over");
+    });
+
+    it("should return race_over flag when all drivers finished and race over", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => true;
+      ctx.isRaceOver = () => true;
+      const mockHd = { isFinished: true } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.GREEN,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.race_over");
+    });
+
+    it("should return driver_finished even if hd.flag is RaceFlag.BLACK when finished in allow finish", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => false;
+      const mockHd = { isFinished: true, flag: RaceFlag.BLACK } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.BLACK,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.driver_finished");
+    });
+
+    it("should return racing flag for unfinished driver during allow finish heat_finishing period", () => {
+      ctx.getRace = () => ({ heat_scoring: { allow_finish: "Allow" } }) as any;
+      ctx.areAllDriversFinished = () => false;
+      ctx.getFlagType = () => "flag.heat_finishing";
+      const mockHd = { isFinished: false, flag: RaceFlag.GREEN } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.UNKNOWN_FLAG,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.racing");
+    });
+
+    it("should return one_lap_to_go for unfinished driver on their last lap during allow finish", () => {
+      ctx.getRace = () =>
+        ({
+          heat_scoring: {
+            allow_finish: "Allow",
+            finish_method: "Lap",
+            finish_value: 10,
+          },
+        }) as any;
+      ctx.areAllDriversFinished = () => false;
+      ctx.getFlagType = () => "flag.heat_finishing";
+      const mockHd = { isFinished: false, lapCount: 9 } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "flag",
+        RaceFlag.UNKNOWN_FLAG,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("url-for-flag.one_lap_to_go");
+    });
+
+    it("should correctly evaluate isAllowFinish", () => {
+      expect(RacedayFormatUtils.isAllowFinish(undefined)).toBeFalse();
+      expect(RacedayFormatUtils.isAllowFinish({} as any)).toBeFalse();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: { allow_finish: "None" },
+        } as any),
+      ).toBeFalse();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: { allow_finish: "Allow" },
+        } as any),
+      ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: { allowFinish: AllowFinish.AF_SINGLE_LAP },
+        } as any),
+      ).toBeTrue();
     });
 
     it("should return flag URL based on value when flag is valid", () => {
