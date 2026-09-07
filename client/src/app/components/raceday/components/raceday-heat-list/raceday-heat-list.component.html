@@ -62,58 +62,236 @@
               }
             </div>
 
-            @if (heat.isCurrent) {
-              <span class="current-heat-badge">{{
-                "UE_INSPECTOR_HEAT_LIST_CURRENT_BADGE" | translate
-              }}</span>
+            @if (
+              heat.isCurrent &&
+              ((showCurrentHeatFlag() && displayFlagUrl()) ||
+                (showCurrentHeatTime() && displayFormattedTime()))
+            ) {
+              <div class="header-center-status">
+                @if (showCurrentHeatFlag() && displayFlagUrl()) {
+                  <div class="header-flag-container">
+                    <img
+                      [src]="displayFlagUrl()"
+                      class="header-flag"
+                      alt="Race Flag"
+                    />
+                  </div>
+                }
+                @if (showCurrentHeatTime() && displayFormattedTime()) {
+                  <div class="header-time">{{ displayFormattedTime() }}</div>
+                }
+              </div>
             }
-          </div>
 
-          <div
-            class="heat-lanes-grid"
-            [style.grid-template-columns]="getLaneColumnsStyle()"
-          >
-            @for (lane of heat.lanes; track trackByLaneNumber($index, lane)) {
-              <div
-                class="lane-badge-item"
-                [style.background-color]="lane.backgroundColor"
-                [style.color]="lane.foregroundColor"
-                [style.font-family]="
-                  widget()?.customSettings?.['laneFontFamily'] || null
-                "
-                [style.font-size.px]="
-                  widget()?.scaleMode === 'auto' || scaleToWindow()
-                    ? null
-                    : widget()?.customSettings?.['laneFontSize'] || null
-                "
-                [style.color]="
-                  widget()?.customSettings?.['laneTextColor'] ||
-                  lane.foregroundColor
-                "
-              >
-                <div class="lane-badge-header">
-                  <span class="lane-badge-tag">L{{ lane.laneNumber }}</span>
-                </div>
-                <div class="lane-driver-info">
-                  <span
-                    class="lane-driver-nickname"
-                    [title]="lane.driverNickname"
-                  >
-                    {{
-                      lane.isOccupied
-                        ? lane.driverNickname || ("RD_EMPTY_LANE" | translate)
-                        : ("RD_EMPTY_LANE" | translate)
-                    }}
-                  </span>
-                  @if (lane.isTeam && lane.teamName) {
-                    <span class="lane-team-name" [title]="lane.teamName">{{
-                      lane.teamName
-                    }}</span>
-                  }
-                </div>
+            @if (heat.isCurrent) {
+              <div class="current-heat-status">
+                <span class="current-heat-badge">{{
+                  "UE_INSPECTOR_HEAT_LIST_CURRENT_BADGE" | translate
+                }}</span>
               </div>
             }
           </div>
+
+          @if (heat.showSummary) {
+            <div
+              class="heat-summary-container"
+              [style.--summary-border-color]="
+                widget()?.customSettings?.['summaryBorderColor'] || null
+              "
+            >
+              <table class="heat-summary-table">
+                <thead>
+                  <tr
+                    class="summary-header-row"
+                    [style.font-family]="
+                      widget()?.customSettings?.['summaryHeaderFontFamily'] ||
+                      null
+                    "
+                    [style.font-size.px]="
+                      widget()?.scaleMode === 'auto' || scaleToWindow()
+                        ? null
+                        : widget()?.customSettings?.['summaryHeaderFontSize'] ||
+                          null
+                    "
+                    [style.color]="
+                      widget()?.customSettings?.['summaryHeaderTextColor'] ||
+                      null
+                    "
+                    [style.background-color]="
+                      widget()?.customSettings?.[
+                        'summaryHeaderBackgroundColor'
+                      ] || null
+                    "
+                  >
+                    @if (summaryShowPosition()) {
+                      <th class="summary-col-pos">
+                        {{ "HL_SUMMARY_POS" | translate }}
+                      </th>
+                    }
+                    @if (summaryShowDriver()) {
+                      <th class="summary-col-driver">
+                        {{ "HL_SUMMARY_DRIVER" | translate }}
+                      </th>
+                    }
+                    @if (summaryShowLaps()) {
+                      <th class="summary-col-laps">
+                        {{ "HL_SUMMARY_LAPS" | translate }}
+                      </th>
+                    }
+                    @if (summaryShowBestLap()) {
+                      <th class="summary-col-best-lap">
+                        {{ "HL_SUMMARY_BEST_LAP" | translate }}
+                      </th>
+                    }
+                    @if (summaryShowGap()) {
+                      <th class="summary-col-gap">
+                        {{ "HL_SUMMARY_GAP" | translate }}
+                      </th>
+                    }
+                    @if (summaryShowAverageLap()) {
+                      <th class="summary-col-avg-lap">
+                        {{ "HL_SUMMARY_AVG_LAP" | translate }}
+                      </th>
+                    }
+                    @if (summaryShowMedianLap()) {
+                      <th class="summary-col-median-lap">
+                        {{ "HL_SUMMARY_MEDIAN_LAP" | translate }}
+                      </th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (
+                    lane of heat.lanes;
+                    track trackByLaneNumber($index, lane)
+                  ) {
+                    <tr
+                      class="summary-lane-row"
+                      [style.background-color]="
+                        summaryUseLaneColors() ? lane.backgroundColor : null
+                      "
+                      [style.color]="
+                        widget()?.customSettings?.['summaryRowTextColor'] ||
+                        lane.foregroundColor
+                      "
+                      [style.font-family]="
+                        widget()?.customSettings?.['summaryRowFontFamily'] ||
+                        null
+                      "
+                      [style.font-size.px]="
+                        widget()?.scaleMode === 'auto' || scaleToWindow()
+                          ? null
+                          : widget()?.customSettings?.['summaryRowFontSize'] ||
+                            null
+                      "
+                    >
+                      @if (summaryShowPosition()) {
+                        <td class="summary-cell-pos">
+                          {{ lane.formattedRank }}
+                        </td>
+                      }
+                      @if (summaryShowDriver()) {
+                        <td
+                          class="summary-cell-driver"
+                          [title]="lane.driverNickname || lane.teamName"
+                        >
+                          <div class="summary-driver-info">
+                            <span class="summary-driver-nickname">
+                              {{
+                                lane.isOccupied
+                                  ? lane.driverNickname ||
+                                    ("RD_EMPTY_LANE" | translate)
+                                  : ("RD_EMPTY_LANE" | translate)
+                              }}
+                            </span>
+                            @if (lane.isTeam && lane.teamName) {
+                              <span
+                                class="summary-team-name"
+                                [title]="lane.teamName"
+                              >
+                                {{ lane.teamName }}
+                              </span>
+                            }
+                          </div>
+                        </td>
+                      }
+                      @if (summaryShowLaps()) {
+                        <td class="summary-cell-laps">
+                          {{ lane.formattedLaps }}
+                        </td>
+                      }
+                      @if (summaryShowBestLap()) {
+                        <td class="summary-cell-best-lap">
+                          {{ lane.formattedBestLap }}
+                        </td>
+                      }
+                      @if (summaryShowGap()) {
+                        <td class="summary-cell-gap">
+                          {{ lane.formattedGap }}
+                        </td>
+                      }
+                      @if (summaryShowAverageLap()) {
+                        <td class="summary-cell-avg-lap">
+                          {{ lane.formattedAvgLap }}
+                        </td>
+                      }
+                      @if (summaryShowMedianLap()) {
+                        <td class="summary-cell-median-lap">
+                          {{ lane.formattedMedianLap }}
+                        </td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div
+              class="heat-lanes-grid"
+              [style.grid-template-columns]="getLaneColumnsStyle()"
+            >
+              @for (lane of heat.lanes; track trackByLaneNumber($index, lane)) {
+                <div
+                  class="lane-badge-item"
+                  [style.background-color]="lane.backgroundColor"
+                  [style.color]="lane.foregroundColor"
+                  [style.font-family]="
+                    widget()?.customSettings?.['laneFontFamily'] || null
+                  "
+                  [style.font-size.px]="
+                    widget()?.scaleMode === 'auto' || scaleToWindow()
+                      ? null
+                      : widget()?.customSettings?.['laneFontSize'] || null
+                  "
+                  [style.color]="
+                    widget()?.customSettings?.['laneTextColor'] ||
+                    lane.foregroundColor
+                  "
+                >
+                  <div class="lane-badge-header">
+                    <span class="lane-badge-tag">L{{ lane.laneNumber }}</span>
+                  </div>
+                  <div class="lane-driver-info">
+                    <span
+                      class="lane-driver-nickname"
+                      [title]="lane.driverNickname"
+                    >
+                      {{
+                        lane.isOccupied
+                          ? lane.driverNickname || ("RD_EMPTY_LANE" | translate)
+                          : ("RD_EMPTY_LANE" | translate)
+                      }}
+                    </span>
+                    @if (lane.isTeam && lane.teamName) {
+                      <span class="lane-team-name" [title]="lane.teamName">{{
+                        lane.teamName
+                      }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
       }
 
