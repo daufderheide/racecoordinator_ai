@@ -88,6 +88,8 @@ export class DriverEditorComponent
     audio: true,
   };
 
+  isNameNicknameLinked: boolean = false;
+
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
     this.saveExpanderState();
@@ -115,6 +117,45 @@ export class DriverEditorComponent
       }
     } catch (e) {
       this.logger.error("Error loading expander state", e);
+    }
+  }
+
+  saveLinkState() {
+    try {
+      localStorage.setItem(
+        "driver_editor_name_nickname_linked",
+        JSON.stringify(this.isNameNicknameLinked),
+      );
+    } catch (e) {
+      this.logger.error("Error saving link state", e);
+    }
+  }
+
+  loadLinkState() {
+    try {
+      const saved = localStorage.getItem("driver_editor_name_nickname_linked");
+      if (saved !== null) {
+        this.isNameNicknameLinked = JSON.parse(saved);
+      }
+    } catch (e) {
+      this.logger.error("Error loading link state", e);
+    }
+  }
+
+  toggleNameNicknameLink() {
+    this.isNameNicknameLinked = !this.isNameNicknameLinked;
+    this.saveLinkState();
+    if (this.isNameNicknameLinked && this.editingDriver) {
+      if (
+        this.editingDriver.name &&
+        this.editingDriver.nickname !== this.editingDriver.name
+      ) {
+        this.editingDriver.nickname = this.editingDriver.name;
+        this.onInputChange();
+      } else if (!this.editingDriver.name && this.editingDriver.nickname) {
+        this.editingDriver.name = this.editingDriver.nickname;
+        this.onInputChange();
+      }
     }
   }
 
@@ -155,6 +196,7 @@ export class DriverEditorComponent
     this.monitorConnection();
     this.raceConnectionService.connect();
     this.loadExpanderState();
+    this.loadLinkState();
 
     this.subscriptions.push(
       this.helpService.currentStep$.subscribe((step) => {
@@ -661,6 +703,22 @@ export class DriverEditorComponent
     this.undoManager.onInputChange();
     this.cdr.detectChanges();
   }
+  onNameChange(name: string) {
+    if (!this.editingDriver) return;
+    this.editingDriver.name = name;
+    if (this.isNameNicknameLinked) {
+      this.editingDriver.nickname = name;
+    }
+    this.onInputChange();
+  }
+  onNicknameChange(nickname: string) {
+    if (!this.editingDriver) return;
+    this.editingDriver.nickname = nickname;
+    if (this.isNameNicknameLinked) {
+      this.editingDriver.name = nickname;
+    }
+    this.onInputChange();
+  }
   onInputBlur() {
     this.undoManager.onInputBlur();
     this.cdr.detectChanges();
@@ -839,6 +897,12 @@ export class DriverEditorComponent
         selector: "#driver-name-section",
         title: this.translationService.translate("DE_HELP_NAME_TITLE"),
         content: this.translationService.translate("DE_HELP_NAME_CONTENT"),
+        position: "bottom",
+      },
+      {
+        selector: "#driver-name-nickname-link-section",
+        title: this.translationService.translate("DE_HELP_LINK_TITLE"),
+        content: this.translationService.translate("DE_HELP_LINK_CONTENT"),
         position: "bottom",
       },
       {

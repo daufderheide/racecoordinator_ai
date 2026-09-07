@@ -15,6 +15,9 @@ export class DriverEditorHarness
   protected getNicknameEl = this.locatorFor(
     DriverEditorHarnessBase.selectors.nicknameInput,
   );
+  protected getLinkToggleBtn = this.locatorFor(
+    DriverEditorHarnessBase.selectors.linkToggleBtn,
+  );
   protected getUndoBtn = this.locatorFor(
     DriverEditorHarnessBase.selectors.undoBtn,
   );
@@ -43,6 +46,16 @@ export class DriverEditorHarness
     const input = await this.getNicknameEl();
     await input.clear();
     await input.sendKeys(nickname);
+  }
+
+  async isNameNicknameLinked(): Promise<boolean> {
+    const btn = await this.getLinkToggleBtn();
+    return await btn.hasClass("linked");
+  }
+
+  async toggleNameNicknameLink(): Promise<void> {
+    const btn = await this.getLinkToggleBtn();
+    await btn.click();
   }
 
   async clickUndo(): Promise<void> {

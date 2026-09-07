@@ -41,8 +41,8 @@
           <input
             id="driver-name-input"
             type="text"
-            [(ngModel)]="editingDriver.name"
-            (ngModelChange)="onInputChange()"
+            [ngModel]="editingDriver.name"
+            (ngModelChange)="onNameChange($event)"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             class="dm-input"
@@ -51,6 +51,41 @@
             data-form-type="other"
             name="driverNameInput"
           />
+        </div>
+        <!-- Link / Unlink Visualization and Toggle -->
+        <div
+          id="driver-name-nickname-link-section"
+          class="name-nickname-link-divider"
+          [class.linked]="isNameNicknameLinked"
+        >
+          <div class="link-divider-line"></div>
+          <button
+            type="button"
+            id="driver-link-toggle-btn"
+            class="driver-link-btn"
+            [class.linked]="isNameNicknameLinked"
+            (click)="toggleNameNicknameLink()"
+            [title]="
+              (isNameNicknameLinked
+                ? 'DE_LINK_TOOLTIP_LINKED'
+                : 'DE_LINK_TOOLTIP_UNLINKED'
+              ) | translate
+            "
+            [attr.aria-label]="
+              (isNameNicknameLinked
+                ? 'DE_LINK_TOOLTIP_LINKED'
+                : 'DE_LINK_TOOLTIP_UNLINKED'
+              ) | translate
+            "
+          >
+            <span class="material-icons link-icon">{{
+              isNameNicknameLinked ? "link" : "link_off"
+            }}</span>
+            <span class="link-status-text">{{
+              (isNameNicknameLinked ? "DE_LINKED" : "DE_UNLINKED") | translate
+            }}</span>
+          </button>
+          <div class="link-divider-line"></div>
         </div>
         <!-- Nickname Section -->
         <div
@@ -64,8 +99,8 @@
           <input
             id="driver-nickname-input"
             type="text"
-            [(ngModel)]="editingDriver.nickname"
-            (ngModelChange)="onInputChange()"
+            [ngModel]="editingDriver.nickname"
+            (ngModelChange)="onNicknameChange($event)"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             class="dm-input"
