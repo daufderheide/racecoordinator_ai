@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from "@angular/common";
+import { DecimalPipe } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
@@ -22,6 +22,7 @@ import {
   SeasonStandingDetail,
   SeasonStandingItem,
 } from "@app/models/season";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { GuideStep } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -44,9 +45,9 @@ import {
   imports: [
     EditorTitleComponent,
     TranslatePipe,
+    LocalDatePipe,
     FormsModule,
     ConfirmationModalComponent,
-    DatePipe,
     DecimalPipe,
   ],
 })

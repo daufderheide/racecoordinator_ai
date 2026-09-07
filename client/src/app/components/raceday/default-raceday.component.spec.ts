@@ -24,6 +24,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { RaceParticipant } from "@app/race/race_participant";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
@@ -3716,7 +3717,14 @@ describe("DefaultRacedayComponent", () => {
       expect(component.getLaneRecordHolder(hd1)).toBe("Jane Doe");
       expect(component.getLaneRecordHolder(hd2)).toBe("---");
 
-      expect(component.getLaneRecordDate(hd0)).toBe("2026-08-21");
+      const dtService = TestBed.inject(DateTimeFormatService);
+      expect(component.getLaneRecordDate(hd0)).toBe(
+        dtService.formatDate(
+          mockRecords.overall!.laneFastestLap![0].date,
+          "short",
+          "---",
+        ),
+      );
       expect(component.getLaneRecordDate(hd2)).toBe("---");
     });
 

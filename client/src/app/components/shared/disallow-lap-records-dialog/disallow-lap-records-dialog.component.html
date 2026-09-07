@@ -111,7 +111,7 @@
               @for (r of availableRaceOptions; track r.id) {
                 <app-custom-option [value]="r.id">
                   <span class="date-option-item">
-                    {{ r.date ? (r.date | date: "medium") : "—" }}
+                    {{ r.date ? (r.date | localDate: "medium") : "—" }}
                   </span>
                 </app-custom-option>
               }
@@ -482,10 +482,12 @@
                     <span
                       class="race-cell-date"
                       [title]="
-                        lap.raceDate ? (lap.raceDate | date: 'medium') : ''
+                        lap.raceDate ? (lap.raceDate | localDate: 'medium') : ''
                       "
                     >
-                      {{ lap.raceDate ? (lap.raceDate | date: "short") : "—" }}
+                      {{
+                        lap.raceDate ? (lap.raceDate | localDate: "short") : "—"
+                      }}
                     </span>
                   </div>
 

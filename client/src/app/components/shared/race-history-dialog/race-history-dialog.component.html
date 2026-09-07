@@ -75,7 +75,7 @@
                           <span class="meta-label"
                             >{{ "RHD_EARLIEST_DATE" | translate }}:</span
                           >
-                          {{ earliest | date: "short" }}
+                          {{ earliest | localDate: "short" }}
                         </span>
                       }
                       @if (group.latestDate; as latest) {
@@ -84,7 +84,7 @@
                           <span class="meta-label"
                             >{{ "RHD_LATEST_DATE" | translate }}:</span
                           >
-                          {{ latest | date: "short" }}
+                          {{ latest | localDate: "short" }}
                         </span>
                       }
                       @if (group.trackName) {

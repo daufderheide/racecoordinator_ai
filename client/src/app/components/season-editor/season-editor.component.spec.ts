@@ -7,6 +7,7 @@ import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -70,6 +71,7 @@ describe("SeasonEditorComponent", () => {
         SeasonEditorComponent,
         FormsModule,
         TranslatePipe,
+        LocalDatePipe,
         DatePipe,
         DecimalPipe,
       ],
@@ -94,6 +96,7 @@ describe("SeasonEditorComponent", () => {
             MockEditorTitleComponent,
             MockConfirmationModalComponent,
             TranslatePipe,
+            LocalDatePipe,
             FormsModule,
             DatePipe,
             DecimalPipe,

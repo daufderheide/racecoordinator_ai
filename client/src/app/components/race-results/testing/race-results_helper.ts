@@ -9,6 +9,43 @@ export class RaceResultsHelper {
    * Helper to construct fully compliant mock RaceData structure.
    */
   static createMockRaceData() {
+    const currentHeat = {
+      objectId: "h1",
+      heatNumber: 1,
+      started: true,
+      completed: false,
+      standings: ["hd1", "hd2", "hd3"],
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "rp1",
+            driver: { model: { entityId: "d1" }, name: "Alice" },
+          },
+          actualDriver: { model: { entityId: "d1" }, name: "Alice" },
+          laps: [{ lapTime: 10.5 }, { lapTime: 10.2 }, { lapTime: 10.4 }],
+        },
+        {
+          objectId: "hd2",
+          driver: {
+            objectId: "rp2",
+            driver: { model: { entityId: "d2" }, name: "Bob" },
+          },
+          actualDriver: { model: { entityId: "d2" }, name: "Bob" },
+          laps: [{ lapTime: 11.1 }, { lapTime: 10.8 }, { lapTime: 10.7 }],
+        },
+        {
+          objectId: "hd3",
+          driver: {
+            objectId: "rp3",
+            driver: { model: { entityId: "d3" }, name: "Charlie" },
+          },
+          actualDriver: { model: { entityId: "d3" }, name: "Charlie" },
+          laps: [{ lapTime: 12.0 }, { lapTime: 11.2 }, { lapTime: 11.5 }],
+        },
+      ],
+    };
+
     return {
       race: {
         race: {
@@ -75,42 +112,8 @@ export class RaceResultsHelper {
             },
           },
         ],
-        heats: [
-          {
-            objectId: "h1",
-            heatNumber: 1,
-            started: true,
-            heatDrivers: [
-              {
-                objectId: "hd1",
-                driver: {
-                  objectId: "rp1",
-                  driver: { model: { entityId: "d1" }, name: "Alice" },
-                },
-                actualDriver: { model: { entityId: "d1" }, name: "Alice" },
-                laps: [{ lapTime: 10.5 }, { lapTime: 10.2 }, { lapTime: 10.4 }],
-              },
-              {
-                objectId: "hd2",
-                driver: {
-                  objectId: "rp2",
-                  driver: { model: { entityId: "d2" }, name: "Bob" },
-                },
-                actualDriver: { model: { entityId: "d2" }, name: "Bob" },
-                laps: [{ lapTime: 11.1 }, { lapTime: 10.8 }, { lapTime: 10.7 }],
-              },
-              {
-                objectId: "hd3",
-                driver: {
-                  objectId: "rp3",
-                  driver: { model: { entityId: "d3" }, name: "Charlie" },
-                },
-                actualDriver: { model: { entityId: "d3" }, name: "Charlie" },
-                laps: [{ lapTime: 12.0 }, { lapTime: 11.2 }, { lapTime: 11.5 }],
-              },
-            ],
-          },
-        ],
+        heats: [currentHeat],
+        currentHeat: currentHeat,
       },
       raceState: 2, // RACING
       raceTime: {
@@ -118,42 +121,7 @@ export class RaceResultsHelper {
         showTime: true,
         durationMode: false,
       },
-      heat: {
-        objectId: "h1",
-        heatNumber: 1,
-        started: true,
-        completed: false,
-        standings: ["hd1", "hd2", "hd3"],
-        heatDrivers: [
-          {
-            objectId: "hd1",
-            driver: {
-              objectId: "rp1",
-              driver: { model: { entityId: "d1" }, name: "Alice" },
-            },
-            actualDriver: { model: { entityId: "d1" }, name: "Alice" },
-            laps: [{ lapTime: 10.5 }, { lapTime: 10.2 }, { lapTime: 10.4 }],
-          },
-          {
-            objectId: "hd2",
-            driver: {
-              objectId: "rp2",
-              driver: { model: { entityId: "d2" }, name: "Bob" },
-            },
-            actualDriver: { model: { entityId: "d2" }, name: "Bob" },
-            laps: [{ lapTime: 11.1 }, { lapTime: 10.8 }, { lapTime: 10.7 }],
-          },
-          {
-            objectId: "hd3",
-            driver: {
-              objectId: "rp3",
-              driver: { model: { entityId: "d3" }, name: "Charlie" },
-            },
-            actualDriver: { model: { entityId: "d3" }, name: "Charlie" },
-            laps: [{ lapTime: 12.0 }, { lapTime: 11.2 }, { lapTime: 11.5 }],
-          },
-        ],
-      },
+      heat: currentHeat,
     };
   }
 

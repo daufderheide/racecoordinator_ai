@@ -59,6 +59,7 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { AuthService } from "@app/services/auth.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
@@ -741,6 +742,7 @@ export class DefaultRacedayComponent
   private pendingNavigationUrl = "";
 
   private childWindowManagerService: ChildWindowManagerService;
+  private dateTimeFormatService: DateTimeFormatService;
 
   constructor(
     private el: ElementRef,
@@ -763,9 +765,12 @@ export class DefaultRacedayComponent
     childWindowManagerService?: ChildWindowManagerService,
     private customWidgetService?: CustomWidgetService,
     private navigationService?: NavigationService,
+    dateTimeFormatService?: DateTimeFormatService,
   ) {
     this.childWindowManagerService =
       childWindowManagerService ?? inject(ChildWindowManagerService);
+    this.dateTimeFormatService =
+      dateTimeFormatService ?? inject(DateTimeFormatService);
     this.customWidgetService =
       customWidgetService ??
       inject(CustomWidgetService, { optional: true }) ??
@@ -2123,11 +2128,7 @@ export class DefaultRacedayComponent
       ms = Number(entry.date);
     }
     if (ms <= 0 || isNaN(ms)) return "---";
-    const d = new Date(ms);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return this.dateTimeFormatService.formatDate(ms, "short", "---");
   }
 
   getBestRaceLapEntry(hd?: DriverHeatData | number): IRecordEntry | undefined {
@@ -3119,6 +3120,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
+      formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
     return RacedayFormatUtils.formatColumnValue(
       heatDriver,
@@ -3154,6 +3156,7 @@ export class DefaultRacedayComponent
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
+      formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
 
     const isInset = anchor ? anchor !== "center-center" : false;
@@ -4882,6 +4885,7 @@ export class DefaultRacedayComponent
       isDriverFinished: (hd, scoring) => this.isDriverFinished(hd, scoring),
       getLaneRecordEntry: (laneIndex) => this.getLaneRecordEntry(laneIndex),
       getBestRaceLapEntry: (laneIndex) => this.getBestRaceLapEntry(laneIndex),
+      formatDate: (d: any) => this.dateTimeFormatService.formatDate(d, "short"),
     };
     return RacedayFormatUtils.formatValue(
       propertyName,

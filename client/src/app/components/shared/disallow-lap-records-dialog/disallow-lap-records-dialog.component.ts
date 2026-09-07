@@ -49,6 +49,9 @@ export type {
   LaneOption,
 };
 
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
+
 @Component({
   standalone: true,
   selector: "app-disallow-lap-records-dialog",
@@ -59,6 +62,7 @@ export type {
     CommonModule,
     FormsModule,
     TranslatePipe,
+    LocalDatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
   ],
@@ -69,6 +73,7 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
   private raceService = inject(RaceService, { optional: true });
+  private dateTimeFormatService = inject(DateTimeFormatService);
 
   visible = input<boolean>(false);
   races = input<any[]>([]);
@@ -150,9 +155,7 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
         (r) => r.id === this.selectedRaceId,
       );
       if (found && found.date) {
-        return typeof found.date === "number"
-          ? new Date(found.date).toLocaleString()
-          : String(found.date);
+        return this.dateTimeFormatService.format(found.date, "short");
       }
     }
     const races = this.availableRaceOptions;
@@ -168,16 +171,20 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
         .filter((d): d is number => d !== null && !isNaN(d))
         .sort((a, b) => a - b);
       if (dates.length > 0) {
-        const earliest = new Date(dates[0]).toLocaleDateString();
-        const latest = new Date(dates[dates.length - 1]).toLocaleDateString();
+        const earliest = this.dateTimeFormatService.formatDate(
+          dates[0],
+          "short",
+        );
+        const latest = this.dateTimeFormatService.formatDate(
+          dates[dates.length - 1],
+          "short",
+        );
         return earliest === latest ? earliest : `${earliest} – ${latest}`;
       }
     }
     const eff = this.effectiveRaceDate;
     if (eff) {
-      return typeof eff === "number"
-        ? new Date(eff).toLocaleString()
-        : String(eff);
+      return this.dateTimeFormatService.format(eff, "short");
     }
     return null;
   }

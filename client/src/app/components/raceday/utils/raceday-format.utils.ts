@@ -27,6 +27,7 @@ export interface FormatContext {
   isDriverFinished?: (hd: DriverHeatData, scoring?: any) => boolean;
   getLaneRecordEntry?: (laneIndex: number) => any;
   getBestRaceLapEntry?: (laneIndex: number) => any;
+  formatDate?: (date: any) => string;
 }
 
 export class RacedayFormatUtils {
@@ -163,11 +164,14 @@ export class RacedayFormatUtils {
             ms = Number(entry.date);
           }
           if (ms > 0 && !isNaN(ms)) {
-            const d = new Date(ms);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, "0");
-            const day = String(d.getDate()).padStart(2, "0");
-            dateStr = `${year}-${month}-${day}`;
+            if (ctx.formatDate) {
+              dateStr = ctx.formatDate(ms);
+            } else {
+              const d = new Date(ms);
+              dateStr = new Intl.DateTimeFormat("en-US", {
+                dateStyle: "short",
+              }).format(d);
+            }
           }
         }
         return `${timeStr} (${nickname}, ${dateStr})`;

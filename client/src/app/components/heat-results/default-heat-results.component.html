@@ -29,6 +29,11 @@
         <div class="race-name-container">
           <span class="label-text">{{ "DR_LABEL_RACE" | translate }}</span>
           <span class="value-text">{{ race.name }}</span>
+          @if (raceStartTime) {
+            <span class="race-date-text"
+              >({{ raceStartTime | localDate: "short" }})</span
+            >
+          }
           <button
             class="export-pdf-btn no-print"
             (click)="exportPdf()"

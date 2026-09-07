@@ -64,7 +64,7 @@
                 </span>
                 @if (driverStats?.best_lap_time_date) {
                   <span class="highlight-date">{{
-                    driverStats.best_lap_time_date | date: "shortDate"
+                    driverStats.best_lap_time_date | localDate: "shortDate"
                   }}</span>
                 }
               </div>
@@ -87,7 +87,7 @@
                 </span>
                 @if (driverStats?.best_lap_count_date) {
                   <span class="highlight-date">{{
-                    driverStats.best_lap_count_date | date: "shortDate"
+                    driverStats.best_lap_count_date | localDate: "shortDate"
                   }}</span>
                 }
               </div>
@@ -134,7 +134,7 @@
                       @if (driverStats?.lane_best_lap_times_dates?.[i]) {
                         <span class="lane-metric-date">{{
                           driverStats.lane_best_lap_times_dates[i]
-                            | date: "shortDate"
+                            | localDate: "shortDate"
                         }}</span>
                       }
                     </div>
@@ -153,7 +153,7 @@
                       @if (driverStats?.lane_best_lap_counts_dates?.[i]) {
                         <span class="lane-metric-date">{{
                           driverStats.lane_best_lap_counts_dates[i]
-                            | date: "shortDate"
+                            | localDate: "shortDate"
                         }}</span>
                       }
                     </div>

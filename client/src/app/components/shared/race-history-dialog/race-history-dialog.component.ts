@@ -30,6 +30,8 @@ export interface GroupedRaceHistory {
   trackName?: string;
 }
 
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
+
 @Component({
   standalone: true,
   selector: "app-race-history-dialog",
@@ -40,6 +42,7 @@ export interface GroupedRaceHistory {
     CommonModule,
     FormsModule,
     TranslatePipe,
+    LocalDatePipe,
     DisallowLapRecordsDialogComponent,
   ],
 })
