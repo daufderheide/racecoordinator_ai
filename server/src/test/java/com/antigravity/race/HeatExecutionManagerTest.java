@@ -1494,4 +1494,19 @@ public class HeatExecutionManagerTest {
       System.out.println("mockStatic not supported, skipping defensive copy strict verification.");
     }
   }
+
+  @Test
+  public void testResetLaneAndResetAllLanes() {
+    executionManager.processTicker(5.0f);
+    assertEquals(5.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+    assertEquals(5.0, executionManager.getTimeSinceLastLap()[1], 0.001);
+
+    executionManager.resetLane(0);
+    assertEquals(0.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+    assertEquals(5.0, executionManager.getTimeSinceLastLap()[1], 0.001);
+
+    executionManager.resetAllLanes();
+    assertEquals(0.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+    assertEquals(0.0, executionManager.getTimeSinceLastLap()[1], 0.001);
+  }
 }

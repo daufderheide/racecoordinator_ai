@@ -95,6 +95,7 @@
 
 /* Heat Card Header */
 .heat-card-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -108,6 +109,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  max-width: calc(38% - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .heat-label {
@@ -119,6 +124,56 @@
   opacity: 0.85;
 }
 
+/* Centered race state flag and race time in card header */
+.heat-card-header .header-center-status {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.heat-card-header .header-flag-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  width: 26px;
+  flex-shrink: 0;
+}
+
+.heat-card-header .header-flag {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.3));
+}
+
+.heat-card-header .header-time {
+  font-size: 13px;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 800;
+  color: #00e5ff;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.current-heat-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  max-width: calc(35% - 8px);
+  justify-content: flex-end;
+}
+
 .current-heat-badge {
   background: #38bdf8;
   color: #0f172a;
@@ -128,6 +183,7 @@
   padding: 1px 6px;
   border-radius: 3px;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* Lanes Grid inside Heat Card */
@@ -203,6 +259,137 @@
   padding: 20px;
 }
 
+/* HEAT SUMMARY TABLE STYLES (LANE-VIEW MODEL) */
+.heat-summary-container {
+  width: 100%;
+  border: 1px solid var(--summary-border-color, rgba(56, 189, 248, 0.3));
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.heat-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  line-height: 1.2;
+}
+
+.summary-header-row {
+  background: rgba(30, 41, 59, 0.85);
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--summary-border-color, rgba(56, 189, 248, 0.3));
+  user-select: none;
+}
+
+.summary-header-row th {
+  padding: 3px 6px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-lane-row {
+  font-size: 11px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  transition: background-color 0.15s ease;
+}
+
+.summary-lane-row:last-child {
+  border-bottom: none;
+}
+
+.summary-lane-row td {
+  padding: 3px 6px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-col-pos,
+.summary-cell-pos {
+  text-align: center;
+  width: 15%;
+  font-weight: 700;
+}
+
+.summary-col-driver,
+.summary-cell-driver {
+  text-align: left;
+  width: auto;
+  font-weight: 600;
+}
+
+.summary-driver-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.summary-driver-nickname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-team-name {
+  font-size: 0.85em;
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-col-laps,
+.summary-cell-laps {
+  text-align: right;
+  width: 22%;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-col-best-lap,
+.summary-cell-best-lap {
+  text-align: right;
+  width: 26%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-col-gap,
+.summary-cell-gap {
+  text-align: right;
+  width: 22%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-col-avg-lap,
+.summary-cell-avg-lap {
+  text-align: right;
+  width: 24%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-col-median-lap,
+.summary-cell-median-lap {
+  text-align: right;
+  width: 24%;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* AUTO-SCALE ADAPTATIONS VIA CONTAINER QUERIES */
 .raceday-heat-list-container.scale-auto .heat-list-title {
   font-size: calc(min(7cqh, 4.5cqw) * var(--widget-scale-factor, 1));
@@ -225,8 +412,43 @@
     calc(min(2cqh, 1.2cqw) * var(--widget-scale-factor, 1));
 }
 
+.raceday-heat-list-container.scale-auto .heat-card-header .header-center-status {
+  gap: calc(min(1.5cqh, 1cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .heat-card-header .header-flag-container {
+  height: calc(min(4.5cqh, 2.5cqw) * var(--widget-scale-factor, 1));
+  width: calc(min(5.5cqh, 3.2cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .heat-card-header .header-time {
+  font-size: calc(min(4.2cqh, 2.3cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .current-heat-status {
+  gap: calc(min(1.5cqh, 1cqw) * var(--widget-scale-factor, 1));
+}
+
 .raceday-heat-list-container.scale-auto .current-heat-badge {
   font-size: calc(min(3.2cqh, 1.8cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .summary-header-row {
+  font-size: calc(min(3.4cqh, 1.9cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .summary-header-row th {
+  padding: calc(min(1cqh, 0.6cqw) * var(--widget-scale-factor, 1))
+    calc(min(1.5cqh, 0.8cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .summary-lane-row {
+  font-size: calc(min(3.6cqh, 2cqw) * var(--widget-scale-factor, 1));
+}
+
+.raceday-heat-list-container.scale-auto .summary-lane-row td {
+  padding: calc(min(1.2cqh, 0.7cqw) * var(--widget-scale-factor, 1))
+    calc(min(1.5cqh, 0.8cqw) * var(--widget-scale-factor, 1));
 }
 
 /* SCALE TO WINDOW ADAPTATIONS (NO SCROLLBAR, FIT ALL HEATS) */
@@ -311,7 +533,54 @@
   line-height: 1.15;
 }
 
+.raceday-heat-list-container.scale-to-window .current-heat-status {
+  gap: calc(5px * var(--heat-scale, 1));
+}
+
+.raceday-heat-list-container.scale-to-window .heat-card-header .header-center-status {
+  gap: calc(5px * var(--heat-scale, 1));
+}
+
+.raceday-heat-list-container.scale-to-window .heat-card-header .header-flag-container {
+  height: calc(14px * var(--heat-scale, 1));
+  width: calc(18px * var(--heat-scale, 1));
+}
+
+.raceday-heat-list-container.scale-to-window .heat-card-header .header-time {
+  font-size: calc(11px * var(--heat-scale, 1));
+}
+
 .raceday-heat-list-container.scale-to-window .current-heat-badge {
   font-size: calc(9px * var(--heat-scale, 1));
   padding: 0 calc(4px * var(--heat-scale, 1));
 }
+
+.raceday-heat-list-container.scale-to-window .heat-summary-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.raceday-heat-list-container.scale-to-window .heat-summary-table {
+  height: 100%;
+  width: 100%;
+}
+
+.raceday-heat-list-container.scale-to-window .summary-header-row {
+  font-size: calc(11px * var(--heat-scale, 1));
+}
+
+.raceday-heat-list-container.scale-to-window .summary-header-row th {
+  padding: calc(1px * var(--heat-scale, 1)) calc(4px * var(--heat-scale, 1));
+}
+
+.raceday-heat-list-container.scale-to-window .summary-lane-row {
+  font-size: calc(11px * var(--heat-scale, 1));
+}
+
+.raceday-heat-list-container.scale-to-window .summary-lane-row td {
+  padding: calc(1px * var(--heat-scale, 1)) calc(4px * var(--heat-scale, 1));
+}
+

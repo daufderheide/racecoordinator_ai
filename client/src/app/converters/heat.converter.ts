@@ -17,6 +17,14 @@ export class HeatConverter {
     this.heatCache.clear();
   }
 
+  static invalidateHeat(objectId?: string) {
+    if (objectId) {
+      this.heatCache.remove(objectId);
+    } else {
+      this.clearCache();
+    }
+  }
+
   private static parseHeatDriver(
     dProto: any,
     index: number,
@@ -61,6 +69,7 @@ export class HeatConverter {
     hd.flag = dProto.flag || 0;
     hd.lapsLed = dProto.lapsLed || 0;
     hd.isFinished = !!(dProto.isFinished ?? (dProto as any).is_finished);
+    hd.trackCalls = dProto.trackCalls ?? (dProto as any).track_calls ?? 0;
     if (dProto.laps) {
       dProto.laps.forEach((lap: any, i: number) => {
         const time =
@@ -112,45 +121,11 @@ export class HeatConverter {
     const isReference = !proto.heatDrivers || proto.heatDrivers.length === 0;
 
     return this.heatCache.process(objectId, isReference, () => {
-      const existingHeat = objectId ? this.heatCache.get(objectId) : undefined;
       let heatDrivers: Array<DriverHeatData | null> = [];
       if (proto.heatDrivers) {
-        heatDrivers = proto.heatDrivers.map((dProto, index) => {
-          const hd = this.parseHeatDriver(dProto, index);
-          if (
-            hd &&
-            (!dProto.laps || dProto.laps.length === 0) &&
-            existingHeat?.heatDrivers
-          ) {
-            const existingHd = existingHeat.heatDrivers.find(
-              (prev) =>
-                (hd.objectId && prev.objectId === hd.objectId) ||
-                prev.laneIndex === hd.laneIndex,
-            );
-            if (
-              existingHd &&
-              existingHd.lapsWithDetails &&
-              existingHd.lapsWithDetails.length > 0
-            ) {
-              existingHd.lapsWithDetails.forEach((lap, i) => {
-                hd.addLapTime(
-                  i + 1,
-                  lap.time,
-                  dProto.averageLapTime || existingHd.averageLapTime || 0,
-                  dProto.medianLapTime || existingHd.medianLapTime || 0,
-                  dProto.bestLapTime || existingHd.bestLapTime || 0,
-                  dProto.adjustedLapCount || existingHd.adjustedLapCount || 0,
-                  lap.driverId,
-                  lap.isDrift,
-                  undefined,
-                  lap.segments ? [...lap.segments] : undefined,
-                  lap.countTowardsRecords !== false,
-                );
-              });
-            }
-          }
-          return hd;
-        });
+        heatDrivers = proto.heatDrivers.map((dProto, index) =>
+          this.parseHeatDriver(dProto, index),
+        );
       }
       const validHeatDrivers = heatDrivers.filter(
         (d): d is DriverHeatData => d !== null,
@@ -177,6 +152,9 @@ export class HeatConverter {
         !!proto.started,
       );
       h.group = proto.group || 0;
+      h.masterTrackCalls =
+        proto.masterTrackCalls ?? (proto as any).master_track_calls ?? 0;
+      h.trackCalls = proto.trackCalls ?? (proto as any).track_calls ?? 0;
       return h;
     });
   }

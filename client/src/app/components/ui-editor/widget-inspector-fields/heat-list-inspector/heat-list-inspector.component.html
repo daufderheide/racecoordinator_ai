@@ -37,6 +37,28 @@
     <label class="inspector-checkbox-label">
       <input
         type="checkbox"
+        [(ngModel)]="settings().showCurrentHeatFlag"
+        (change)="onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_CURRENT_FLAG" | translate }}
+    </label>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showCurrentHeatTime"
+        (change)="onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_CURRENT_TIME" | translate }}
+    </label>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
         [(ngModel)]="settings().scaleToWindow"
         (change)="onSettingsChange()"
       />
@@ -319,4 +341,371 @@
       }
     </div>
   </div>
+
+  <!-- Heat Summary Section -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showCompletedSummary"
+        (change)="onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_COMPLETED_SUMMARY" | translate }}
+    </label>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [(ngModel)]="settings().showActiveSummary"
+        (change)="onSettingsChange()"
+      />
+      {{ "UE_INSPECTOR_HEAT_LIST_SHOW_ACTIVE_SUMMARY" | translate }}
+    </label>
+  </div>
+
+  @if (settings().showCompletedSummary || settings().showActiveSummary) {
+    <!-- Summary Columns -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEAT_LIST_SUMMARY_COLUMNS" | translate
+      }}</label>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding-left: 4px;
+        "
+      >
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowPosition"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_POS" | translate }}
+        </label>
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowDriver"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_DRIVER" | translate }}
+        </label>
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowLaps"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_LAPS" | translate }}
+        </label>
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowBestLap"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_BEST_LAP" | translate }}
+        </label>
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowGap"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_GAP" | translate }}
+        </label>
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowAverageLap"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_AVG_LAP" | translate }}
+        </label>
+        <label class="inspector-checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="settings().summaryShowMedianLap"
+            (change)="onSettingsChange()"
+          />
+          {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_COL_MEDIAN_LAP" | translate }}
+        </label>
+      </div>
+    </div>
+
+    <!-- Decimals -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEAT_LIST_SUMMARY_LAP_DECIMALS" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().summaryLapDecimalPlaces"
+          (change)="onSettingsChange()"
+        >
+          <app-custom-option value="auto">
+            {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_LAP_DECIMALS_AUTO" | translate }}
+          </app-custom-option>
+          <app-custom-option [value]="0">0</app-custom-option>
+          <app-custom-option [value]="1">1</app-custom-option>
+          <app-custom-option [value]="2">2</app-custom-option>
+          <app-custom-option [value]="3">3</app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEAT_LIST_SUMMARY_TIME_DECIMALS" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().summaryTimeDecimalPlaces"
+          (change)="onSettingsChange()"
+        >
+          <app-custom-option [value]="1">1</app-custom-option>
+          <app-custom-option [value]="2">2</app-custom-option>
+          <app-custom-option [value]="3">3</app-custom-option>
+          <app-custom-option [value]="4">4</app-custom-option>
+        </app-custom-select>
+      </div>
+    </div>
+
+    <!-- Border Color -->
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEAT_LIST_SUMMARY_BORDER_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().summaryBorderColor"
+      >
+        <input
+          type="color"
+          [value]="settings().summaryBorderColor || '#38bdf8'"
+          (change)="onColorChange('summaryBorderColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().summaryBorderColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().summaryBorderColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('summaryBorderColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            ✕
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Summary Header Appearance -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_HEADER_SETTINGS" | translate }}
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().summaryHeaderFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{ settings().summaryHeaderFontSize || 12 }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="8"
+        max="48"
+        [(ngModel)]="settings().summaryHeaderFontSize"
+        [disabled]="disableFontSizes() || settings().scaleToWindow"
+        (change)="onSettingsChange()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().summaryHeaderTextColor"
+      >
+        <input
+          type="color"
+          [value]="settings().summaryHeaderTextColor || '#38bdf8'"
+          (change)="onColorChange('summaryHeaderTextColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().summaryHeaderTextColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().summaryHeaderTextColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('summaryHeaderTextColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            ✕
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEAT_LIST_SUMMARY_HEADER_BG_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().summaryHeaderBackgroundColor"
+      >
+        <input
+          type="color"
+          [value]="settings().summaryHeaderBackgroundColor || '#1e293b'"
+          (change)="onColorChange('summaryHeaderBackgroundColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().summaryHeaderBackgroundColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().summaryHeaderBackgroundColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('summaryHeaderBackgroundColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            ✕
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Summary Row Appearance -->
+    <div class="inspector-geometry-title">
+      {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_ROW_SETTINGS" | translate }}
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-checkbox-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="settings().summaryUseLaneColors"
+          (change)="onSettingsChange()"
+        />
+        {{ "UE_INSPECTOR_HEAT_LIST_SUMMARY_USE_LANE_COLORS" | translate }}
+      </label>
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_FONT_FAMILY" | translate
+      }}</label>
+      <div class="select-container select-sm">
+        <app-custom-select
+          [(ngModel)]="settings().summaryRowFontFamily"
+          (change)="onSettingsChange()"
+          (focus)="fontService.loadLocalFonts()"
+          (click)="fontService.loadLocalFonts()"
+        >
+          <app-custom-option value="">
+            {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+          </app-custom-option>
+          @for (font of fontService.availableFonts(); track font) {
+            <app-custom-option [value]="font">{{ font }}</app-custom-option>
+          }
+        </app-custom-select>
+      </div>
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_FONT_SIZE" | translate
+        }}</label>
+        <span class="inspector-val-badge"
+          >{{ settings().summaryRowFontSize || 12 }}px</span
+        >
+      </div>
+      <input
+        type="range"
+        min="8"
+        max="48"
+        [(ngModel)]="settings().summaryRowFontSize"
+        [disabled]="disableFontSizes() || settings().scaleToWindow"
+        (change)="onSettingsChange()"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TEXT_COLOR" | translate
+      }}</label>
+      <div
+        class="color-picker-wrapper"
+        [class.is-null]="!settings().summaryRowTextColor"
+      >
+        <input
+          type="color"
+          [value]="settings().summaryRowTextColor || '#ffffff'"
+          (change)="onColorChange('summaryRowTextColor', $event)"
+          class="color-picker-input"
+        />
+        @if (!settings().summaryRowTextColor) {
+          <span class="color-picker-placeholder">{{
+            "UE_INSPECTOR_COLOR_DEFAULT" | translate
+          }}</span>
+        }
+        @if (settings().summaryRowTextColor) {
+          <button
+            class="color-reset-btn"
+            (click)="resetColor('summaryRowTextColor')"
+            [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+          >
+            ✕
+          </button>
+        }
+      </div>
+    </div>
+  }
 }

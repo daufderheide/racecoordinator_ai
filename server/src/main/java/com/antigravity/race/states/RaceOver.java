@@ -1,7 +1,6 @@
 package com.antigravity.race.states;
 
 import com.antigravity.context.DatabaseContext;
-import com.antigravity.models.HeatScoring;
 import com.antigravity.models.RacePredictionRecord.DriverProjection;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.proto.RaceFlag;
@@ -28,22 +27,11 @@ public class RaceOver implements IRaceState {
 
   @Override
   public RaceFlag getFlagType(Race race) {
-    if (race == null) return RaceFlag.RED;
-    // Show checkered flag at the end of the last heat when finish is not allowed
-    if (race.isLastHeat()
-        && race.getRaceModel() != null
-        && race.getRaceModel().getHeatScoring() != null
-        && (race.getRaceModel().getHeatScoring().getAllowFinish() == HeatScoring.AllowFinish.None
-            || race.getRaceModel().getHeatScoring().getAllowFinish()
-                == HeatScoring.AllowFinish.NoneAutoSegments)) {
-      return race.getTheme() != null
-          ? race.getTheme()
-              .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
-          : RaceFlag.CHECKERED;
-    }
+    if (race == null) return RaceFlag.CHECKERED;
     return race.getTheme() != null
-        ? race.getTheme().resolveFlag("flag.heat_over", RaceFlag.RED, race.getDatabaseContext())
-        : RaceFlag.RED;
+        ? race.getTheme()
+            .resolveFlag("flag.race_over", RaceFlag.CHECKERED, race.getDatabaseContext())
+        : RaceFlag.CHECKERED;
   }
 
   @Override

@@ -1,6 +1,7 @@
 import { fakeAsync, flush, TestBed, tick } from "@angular/core/testing";
 import { of, Subject } from "rxjs";
 import { DataService } from "@app/data.service";
+import { Driver } from "@app/models/driver";
 import {
   IInterfaceEvent,
   ILap,
@@ -8,6 +9,8 @@ import {
   RaceFlag,
   RaceState,
 } from "@app/proto/antigravity";
+import { DriverHeatData } from "@app/race/driver_heat_data";
+import { RaceParticipant } from "@app/race/race_participant";
 
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { RaceService } from "./race.service";
@@ -428,6 +431,46 @@ describe("RaceConnectionService", () => {
       });
 
       lapsSubject.next(lapData);
+    });
+
+    it("should route lap to Lane 2 without affecting Lane 1 in solo practice mode", () => {
+      const driver = new Driver("d_solo", "McLaren Red", "MR");
+      const participant = new RaceParticipant("p_solo", driver);
+      const lane0Driver = new DriverHeatData(
+        "dhd_lane0",
+        participant,
+        0,
+        driver,
+      );
+      const lane1Driver = new DriverHeatData(
+        "dhd_lane1",
+        participant,
+        1,
+        driver,
+      );
+
+      spyOn(lane0Driver, "addLapTime");
+      spyOn(lane1Driver, "addLapTime");
+
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "heat_solo",
+        heatDrivers: [lane0Driver, lane1Driver],
+      });
+
+      service.connect();
+
+      // Lap occurs on Lane 2 (lane index 1)
+      const lapOnLane2: ILap = {
+        objectId: "dhd_lane1",
+        interfaceId: 1,
+        driverId: "d_solo",
+        lapNumber: 1,
+        lapTime: 3.456,
+      };
+      lapsSubject.next(lapOnLane2);
+
+      expect(lane1Driver.addLapTime).toHaveBeenCalled();
+      expect(lane0Driver.addLapTime).not.toHaveBeenCalled();
     });
 
     it("should pipe flags to raceFlag$", (done) => {

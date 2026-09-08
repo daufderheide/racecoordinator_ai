@@ -32,6 +32,7 @@ export const LANE_VIEW_COLUMN_GROUPS: readonly ColumnGroupDefinition[] = [
       "lapCount",
       "physicalLapCount",
       "lapsLed",
+      "trackCalls",
       "rankHeat",
       "rankOverall",
       "rankGroup",

@@ -27,9 +27,16 @@ export class ConverterCache<T> {
   }
 
   /**
+   * Removes an item from the cache by its ID.
+   */
+  remove(id: string): boolean {
+    return this.cache.delete(id);
+  }
+
+  /**
    * Retrieves an item from the cache if available and isReference is true.
    * Otherwise, creates a new item using the creator function, caches it, and returns it.
-   * 
+   *
    * @param id The entity ID (can be null/undefined)
    * @param isReference Boolean indicating if the proto is a reference (missing full data)
    * @param create Function to create the model instance
@@ -39,7 +46,7 @@ export class ConverterCache<T> {
     id: string | undefined | null,
     isReference: boolean,
     create: () => T,
-    validate?: () => void
+    validate?: () => void,
   ): T {
     if (id && this.cache.has(id)) {
       if (isReference) {

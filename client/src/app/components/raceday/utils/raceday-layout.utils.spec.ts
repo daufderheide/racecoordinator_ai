@@ -379,6 +379,9 @@ describe("RacedayLayoutUtils", () => {
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lapsLed")).toBe(
       "RD_COL_LAPS_LED",
     );
+    expect(RacedayLayoutUtils.getLabelKeyForColumn("trackCalls")).toBe(
+      "RD_COL_TRACK_CALLS",
+    );
     expect(RacedayLayoutUtils.getLabelKeyForColumn("lastLapTime")).toBe(
       "RD_COL_LAP_TIME",
     );
@@ -498,6 +501,7 @@ describe("RacedayLayoutUtils", () => {
         210,
       );
       expect(RacedayLayoutUtils.getDefaultColumnWidth("lapsLed")).toBe(216);
+      expect(RacedayLayoutUtils.getDefaultColumnWidth("trackCalls")).toBe(216);
       expect(RacedayLayoutUtils.getDefaultColumnWidth("reactionTime")).toBe(
         330,
       );

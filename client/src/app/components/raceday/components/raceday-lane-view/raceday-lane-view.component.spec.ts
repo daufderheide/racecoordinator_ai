@@ -883,4 +883,29 @@ describe("RacedayLaneViewComponent", () => {
     expect(firstRowCells[1].textContent.trim()).toBe("97.8%");
     expect(firstRowCells[2].textContent.trim()).toBe("5.120");
   });
+
+  it("should render trackCalls column header and formatted value", () => {
+    mockParent.columns = [
+      {
+        propertyName: "trackCalls",
+        labelKey: "RD_COL_TRACK_CALLS",
+      },
+    ];
+    mockParent.formatColumnValue = (hd: any, _col: any, prop: string) => {
+      if (prop === "trackCalls") return hd.objectId === "hd1" ? "3" : "0";
+      return "";
+    };
+    mockParent.isNameProperty = () => false;
+    fixture.detectChanges();
+
+    const headerCells = fixture.nativeElement.querySelectorAll(".header-cell");
+    expect(headerCells.length).toBe(1);
+    expect(headerCells[0].textContent.trim()).toBe("RD_COL_TRACK_CALLS");
+
+    const firstRowCells = fixture.nativeElement.querySelectorAll(
+      ".table-row:first-of-type .body-cell",
+    );
+    expect(firstRowCells.length).toBe(1);
+    expect(firstRowCells[0].textContent.trim()).toBe("3");
+  });
 });

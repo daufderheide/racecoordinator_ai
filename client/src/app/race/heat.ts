@@ -13,6 +13,8 @@ export class Heat {
   readonly standings: string[];
   started: boolean = false;
   group: number = 0;
+  masterTrackCalls?: number = 0;
+  trackCalls?: number = 0;
 
   constructor(
     objectId: string,

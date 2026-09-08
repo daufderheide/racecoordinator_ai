@@ -123,6 +123,109 @@
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
 }
 
+#driver-name-section {
+  margin-bottom: 10px;
+}
+
+.name-nickname-link-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.link-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.25),
+    transparent
+  );
+  transition: background 0.3s ease;
+}
+
+.name-nickname-link-divider.linked .link-divider-line {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(56, 189, 248, 0.45),
+    transparent
+  );
+}
+
+.driver-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.75px;
+  text-transform: uppercase;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #94a3b8;
+  backdrop-filter: blur(8px);
+  user-select: none;
+  outline: none;
+}
+
+.driver-link-btn:hover {
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.5);
+  background: rgba(30, 41, 59, 0.85);
+  transform: translateY(-1px);
+}
+
+.driver-link-btn:active {
+  transform: translateY(0);
+}
+
+.driver-link-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+}
+
+.driver-link-btn.linked {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.driver-link-btn.linked:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #7dd3fc;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+}
+
+.driver-link-btn .link-icon {
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.driver-link-btn:hover .link-icon {
+  transform: scale(1.1);
+}
+
+.driver-link-btn .link-status-text {
+  line-height: 1;
+}
+
 /* Preview Panel (Right) */
 .preview-panel {
   flex: 1;

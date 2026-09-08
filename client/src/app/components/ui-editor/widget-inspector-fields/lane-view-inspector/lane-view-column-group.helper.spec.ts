@@ -56,6 +56,9 @@ describe("LaneViewColumnGroupHelper", () => {
       expect(LaneViewColumnGroupHelper.getGroupIdForColumn("lapsLed")).toBe(
         "laps-standings",
       );
+      expect(LaneViewColumnGroupHelper.getGroupIdForColumn("trackCalls")).toBe(
+        "laps-standings",
+      );
     });
 
     it("should return lap-times for timing and record columns", () => {

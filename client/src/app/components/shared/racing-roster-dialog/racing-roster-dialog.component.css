@@ -245,27 +245,51 @@
   justify-content: center;
   min-width: 0;
   flex: 1 1 auto;
+  height: 100%;
+  gap: var(--card-lines-gap, 3px);
   overflow: hidden;
 }
 
 .driver-name {
   font-weight: 600;
   color: #f8fafc;
-  font-size: var(--name-font-size, 0.95rem);
+  font-size: var(--card-name-font-size, var(--name-font-size, 0.95rem));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.2;
 }
 
+.driver-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--card-meta-gap, 6px);
+  min-width: 0;
+  overflow: hidden;
+  line-height: 1.2;
+}
+
 .driver-nickname {
   color: #94a3b8;
-  font-size: var(--nickname-font-size, 0.8rem);
+  font-size: var(--card-meta-font-size, var(--nickname-font-size, 0.8rem));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.2;
   font-style: italic;
+  flex-shrink: 1;
+}
+
+.team-name {
+  color: #38bdf8;
+  font-size: var(--card-meta-font-size, var(--nickname-font-size, 0.8rem));
+  font-weight: 500;
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+  flex-shrink: 1;
 }
 
 /* Density Modifiers */
@@ -273,20 +297,20 @@
   --grid-gap: 10px;
   --card-padding-h: 12px;
   --card-gap: 10px;
-  --seed-size: 32px;
-  --seed-font-size: 1rem;
-  --name-font-size: 1.1rem;
-  --nickname-font-size: 0.9rem;
+  --seed-size: 34px;
+  --seed-font-size: 1.05rem;
+  --name-font-size: 1.4rem;
+  --nickname-font-size: 1.05rem;
 }
 
 .density-regular {
   --grid-gap: 8px;
   --card-padding-h: 10px;
   --card-gap: 8px;
-  --seed-size: 28px;
-  --seed-font-size: 0.9rem;
-  --name-font-size: 0.95rem;
-  --nickname-font-size: 0.8rem;
+  --seed-size: 30px;
+  --seed-font-size: 0.95rem;
+  --name-font-size: 1.25rem;
+  --nickname-font-size: 0.95rem;
 }
 
 .density-compact {

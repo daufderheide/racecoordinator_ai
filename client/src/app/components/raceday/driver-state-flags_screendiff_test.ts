@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { AnchorPoint } from "@app/components/raceday/column_definition";
-import { RaceFlag, RaceState } from "@app/proto/antigravity";
+import { AllowFinish, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { TestSetupHelper } from "@app/testing/test-setup_helper";
 
 test.describe("Raceday Driver State Flags Visuals", () => {
@@ -55,6 +55,12 @@ test.describe("Raceday Driver State Flags Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Driver State Flags Championship",
+          heatScoring: {
+            allowFinish: AllowFinish.AF_ALLOW,
+          },
+          heat_scoring: {
+            allow_finish: AllowFinish.AF_ALLOW,
+          },
           track: {
             model: { entityId: "t1" },
             name: "Grand Prix Circuit",
@@ -334,6 +340,12 @@ test.describe("Raceday Driver State Flags Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Flag Column Championship",
+          heatScoring: {
+            allowFinish: AllowFinish.AF_ALLOW,
+          },
+          heat_scoring: {
+            allow_finish: AllowFinish.AF_ALLOW,
+          },
           track: {
             model: { entityId: "t1" },
             name: "Grand Prix Circuit",
@@ -595,6 +607,12 @@ test.describe("Raceday Driver State Flags Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Fuel Championship",
+          heatScoring: {
+            allowFinish: AllowFinish.AF_ALLOW,
+          },
+          heat_scoring: {
+            allow_finish: AllowFinish.AF_ALLOW,
+          },
           fuelOptions: {
             enabled: true,
             capacity: 100,
@@ -755,6 +773,12 @@ test.describe("Raceday Driver State Flags Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "Paused Heat Flags Test",
+          heatScoring: {
+            allowFinish: AllowFinish.AF_ALLOW,
+          },
+          heat_scoring: {
+            allow_finish: AllowFinish.AF_ALLOW,
+          },
           track: {
             model: { entityId: "t1" },
             name: "Grand Prix Circuit",
@@ -980,6 +1004,12 @@ test.describe("Raceday Driver State Flags Visuals", () => {
         race: {
           model: { entityId: "r1" },
           name: "One Lap To Go Race",
+          heatScoring: {
+            allowFinish: AllowFinish.AF_ALLOW,
+          },
+          heat_scoring: {
+            allow_finish: AllowFinish.AF_ALLOW,
+          },
           track: {
             model: { entityId: "t1" },
             name: "Grand Prix Circuit",

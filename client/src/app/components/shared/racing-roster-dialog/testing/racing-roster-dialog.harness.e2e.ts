@@ -82,6 +82,15 @@ export class RacingRosterDialogHarnessE2e implements RacingRosterDialogHarnessBa
     );
   }
 
+  async getItemTeam(index: number): Promise<string> {
+    const card = this.cards.nth(index);
+    const teamEl = card.locator(this.base.selectors.teamName);
+    if ((await teamEl.count()) > 0) {
+      return (await teamEl.textContent())?.trim() || "";
+    }
+    return "";
+  }
+
   async clickSortBySeed(): Promise<void> {
     await this.sortSeedBtn.click();
   }

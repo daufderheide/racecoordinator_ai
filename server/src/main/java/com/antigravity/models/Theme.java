@@ -90,15 +90,31 @@ public class Theme extends Model {
     }
     RaceFlag matched = matchFlagString(assetId);
     if (matched != null) {
+      if (isFlagCollision(slotKey, matched)) {
+        return fallback;
+      }
       return matched;
     }
     if (dbCtx != null) {
       RaceFlag fromDb = lookupFlagFromDatabase(dbCtx, assetId);
       if (fromDb != null) {
+        if (isFlagCollision(slotKey, fromDb)) {
+          return fallback;
+        }
         return fromDb;
       }
     }
     return fallback;
+  }
+
+  private boolean isFlagCollision(String slotKey, RaceFlag flag) {
+    if ("flag.driver_finished".equals(slotKey) && flag == RaceFlag.BLACK) {
+      return true;
+    }
+    if ("flag.heat_finishing".equals(slotKey) && flag == RaceFlag.GREEN_YELLOW) {
+      return true;
+    }
+    return false;
   }
 
   private RaceFlag lookupFlagFromDatabase(DatabaseContext dbCtx, String assetId) {

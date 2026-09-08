@@ -232,6 +232,7 @@ describe("DriverEditorComponent", () => {
 
   // Helper to setup driver state for change tracking and undo/redo
   function setupDriver(driver: Driver) {
+    component.isLoading = false;
     component.selectDriver(driver);
     component.allDrivers = [driver];
   }
@@ -791,6 +792,216 @@ describe("DriverEditorComponent", () => {
       fixture.detectChanges();
 
       expect(component.sectionsExpanded.audio).toBeFalse();
+    });
+
+    it("should provide all guide steps including the name and nickname link step in correct order", () => {
+      const steps = component.getHelpSteps();
+      expect(steps.length).toBe(9);
+
+      const selectors = steps.map((s) => s.selector).filter(Boolean);
+      expect(selectors).toEqual([
+        "#driver-avatar-section",
+        "#driver-name-section",
+        "#driver-name-nickname-link-section",
+        "#driver-nickname-section",
+        "#driver-audio-section",
+        "#driver-lap-audio",
+        "#driver-best-lap-audio",
+        "#driver-penalty-audio",
+      ]);
+
+      const linkStep = steps.find(
+        (s) => s.selector === "#driver-name-nickname-link-section",
+      );
+      expect(linkStep).toBeDefined();
+      expect(linkStep?.title).toBe("DE_HELP_LINK_TITLE");
+      expect(linkStep?.content).toBe("DE_HELP_LINK_CONTENT");
+      expect(linkStep?.position).toBe("bottom");
+    });
+  });
+
+  describe("name and nickname linking", () => {
+    beforeEach(() => {
+      localStorage.removeItem("driver_editor_name_nickname_linked");
+    });
+
+    afterEach(() => {
+      localStorage.removeItem("driver_editor_name_nickname_linked");
+    });
+
+    it("should default isNameNicknameLinked to false if not in localStorage", () => {
+      component.loadLinkState();
+      expect(component.isNameNicknameLinked).toBeFalse();
+    });
+
+    it("should load isNameNicknameLinked as true if stored in localStorage", () => {
+      localStorage.setItem("driver_editor_name_nickname_linked", "true");
+      component.loadLinkState();
+      expect(component.isNameNicknameLinked).toBeTrue();
+    });
+
+    it("should load isNameNicknameLinked as false if stored in localStorage", () => {
+      localStorage.setItem("driver_editor_name_nickname_linked", "false");
+      component.loadLinkState();
+      expect(component.isNameNicknameLinked).toBeFalse();
+    });
+
+    it("should handle localStorage errors gracefully when loading and saving", () => {
+      const loggerSpy = spyOn((component as any).logger, "error");
+      spyOn(localStorage, "getItem").and.throwError("Storage error");
+      component.loadLinkState();
+      expect(loggerSpy).toHaveBeenCalledWith(
+        "Error loading link state",
+        jasmine.any(Error),
+      );
+
+      spyOn(localStorage, "setItem").and.throwError("Quota exceeded");
+      component.saveLinkState();
+      expect(loggerSpy).toHaveBeenCalledWith(
+        "Error saving link state",
+        jasmine.any(Error),
+      );
+    });
+
+    it("should toggle isNameNicknameLinked and persist to localStorage", () => {
+      expect(component.isNameNicknameLinked).toBeFalse();
+
+      component.toggleNameNicknameLink();
+      expect(component.isNameNicknameLinked).toBeTrue();
+      expect(localStorage.getItem("driver_editor_name_nickname_linked")).toBe(
+        "true",
+      );
+
+      component.toggleNameNicknameLink();
+      expect(component.isNameNicknameLinked).toBeFalse();
+      expect(localStorage.getItem("driver_editor_name_nickname_linked")).toBe(
+        "false",
+      );
+    });
+
+    it("should sync nickname to name when toggling link on if name is set and differs from nickname", () => {
+      const driver = new Driver("d1", "Lewis Hamilton", "Hammer");
+      setupDriver(driver);
+      component.isNameNicknameLinked = false;
+
+      component.toggleNameNicknameLink();
+
+      expect(component.isNameNicknameLinked).toBeTrue();
+      expect(component.editingDriver?.nickname).toBe("Lewis Hamilton");
+      expect(component.editingDriver?.name).toBe("Lewis Hamilton");
+    });
+
+    it("should sync name to nickname when toggling link on if name is empty and nickname is set", () => {
+      const driver = new Driver("d1", "", "Speedy");
+      setupDriver(driver);
+      component.isNameNicknameLinked = false;
+
+      component.toggleNameNicknameLink();
+
+      expect(component.isNameNicknameLinked).toBeTrue();
+      expect(component.editingDriver?.name).toBe("Speedy");
+      expect(component.editingDriver?.nickname).toBe("Speedy");
+    });
+
+    it("should not modify nickname when toggling link off", () => {
+      const driver = new Driver("d1", "Lewis Hamilton", "Lewis Hamilton");
+      setupDriver(driver);
+      component.isNameNicknameLinked = true;
+
+      component.toggleNameNicknameLink();
+
+      expect(component.isNameNicknameLinked).toBeFalse();
+      expect(component.editingDriver?.nickname).toBe("Lewis Hamilton");
+      expect(component.editingDriver?.name).toBe("Lewis Hamilton");
+    });
+
+    it("should update nickname when name changes if linked", () => {
+      const driver = new Driver("d1", "Original Name", "Original Nick");
+      setupDriver(driver);
+      component.isNameNicknameLinked = true;
+
+      component.onNameChange("New Driver Name");
+
+      expect(component.editingDriver?.name).toBe("New Driver Name");
+      expect(component.editingDriver?.nickname).toBe("New Driver Name");
+    });
+
+    it("should update name when nickname changes if linked", () => {
+      const driver = new Driver("d1", "Original Name", "Original Nick");
+      setupDriver(driver);
+      component.isNameNicknameLinked = true;
+
+      component.onNicknameChange("New Nickname");
+
+      expect(component.editingDriver?.nickname).toBe("New Nickname");
+      expect(component.editingDriver?.name).toBe("New Nickname");
+    });
+
+    it("should not update nickname when name changes if unlinked", () => {
+      const driver = new Driver("d1", "Original Name", "Original Nick");
+      setupDriver(driver);
+      component.isNameNicknameLinked = false;
+
+      component.onNameChange("New Driver Name");
+
+      expect(component.editingDriver?.name).toBe("New Driver Name");
+      expect(component.editingDriver?.nickname).toBe("Original Nick");
+    });
+
+    it("should not update name when nickname changes if unlinked", () => {
+      const driver = new Driver("d1", "Original Name", "Original Nick");
+      setupDriver(driver);
+      component.isNameNicknameLinked = false;
+
+      component.onNicknameChange("New Nickname");
+
+      expect(component.editingDriver?.nickname).toBe("New Nickname");
+      expect(component.editingDriver?.name).toBe("Original Name");
+    });
+
+    it("should safely ignore onNameChange and onNicknameChange if editingDriver is undefined", () => {
+      component.editingDriver = undefined;
+      component.isNameNicknameLinked = true;
+
+      expect(() => component.onNameChange("Test")).not.toThrow();
+      expect(() => component.onNicknameChange("Test")).not.toThrow();
+    });
+
+    it("should preserve isNameNicknameLinked when selecting another driver without mutating new driver", () => {
+      component.isNameNicknameLinked = true;
+      const driver2 = new Driver("d2", "Max Verstappen", "Mad Max");
+
+      component.selectDriver(driver2);
+
+      expect(component.isNameNicknameLinked).toBeTrue();
+      expect(component.editingDriver?.name).toBe("Max Verstappen");
+      expect(component.editingDriver?.nickname).toBe("Mad Max");
+      expect(component.isDirtyState()).toBeFalse();
+    });
+
+    it("should toggle linkage and update DOM elements when clicked", () => {
+      const driver = new Driver("d1", "Driver One", "Nick One");
+      setupDriver(driver);
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector(
+        "#driver-link-toggle-btn",
+      ) as HTMLButtonElement;
+      expect(button).toBeTruthy();
+      expect(button.classList.contains("linked")).toBeFalse();
+
+      button.click();
+      fixture.detectChanges();
+
+      expect(component.isNameNicknameLinked).toBeTrue();
+      expect(button.classList.contains("linked")).toBeTrue();
+      expect(component.editingDriver?.nickname).toBe("Driver One");
+
+      button.click();
+      fixture.detectChanges();
+
+      expect(component.isNameNicknameLinked).toBeFalse();
+      expect(button.classList.contains("linked")).toBeFalse();
     });
   });
 });

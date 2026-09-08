@@ -52,216 +52,6 @@
 
     <!-- Standings Grid Glass Overlay -->
     <div class="results-container">
-      <!-- Records Dashboard -->
-      @if (recordData) {
-        <div class="records-dashboard no-print">
-          <div class="records-header">
-            <span class="records-title">{{ "TRACK RECORDS" | translate }}</span>
-            <div class="records-subtitle-line"></div>
-          </div>
-
-          <!-- Global Records Grid -->
-          <div class="global-records-grid">
-            <!-- Record Lap Time -->
-            <div class="record-card border-cyan">
-              <div class="card-icon cyan-glow">
-                <span class="material-icons">timer</span>
-              </div>
-              <div class="card-content">
-                <div class="record-label">
-                  {{ "RD_COL_BEST_LAP" | translate }}
-                </div>
-                <div class="record-value cyan-text">
-                  @if (recordData.overall?.fastestLap?.value) {
-                    {{
-                      recordData.overall!.fastestLap!.value | number: "1.3-3"
-                    }}s
-                  } @else {
-                    --.---
-                  }
-                </div>
-                <div class="record-holder">
-                  <span class="holder-label">HOLDER:</span>
-                  <span class="holder-name">{{
-                    getHolderDisplay(recordData.overall?.fastestLap)
-                  }}</span>
-                </div>
-                @if (
-                  getRecordDate(recordData.overall?.fastestLap?.date);
-                  as d
-                ) {
-                  <div class="record-date">
-                    {{ d | localDate: "shortDate" }}
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Record Score -->
-            <div class="record-card border-magenta">
-              <div class="card-icon magenta-glow">
-                <span class="material-icons">emoji_events</span>
-              </div>
-              <div class="card-content">
-                <div class="record-label">
-                  {{ "DR_COL_SCORE" | translate }} RECORD
-                </div>
-                <div class="record-value magenta-text">
-                  @if (recordData.overall?.highestScore?.value) {
-                    {{
-                      recordData.overall!.highestScore!.value
-                        | number: getScoreFormat()
-                    }}
-                  } @else {
-                    ---
-                  }
-                </div>
-                <div class="record-holder">
-                  <span class="holder-label">HOLDER:</span>
-                  <span class="holder-name">{{
-                    getHolderDisplay(recordData.overall?.highestScore)
-                  }}</span>
-                </div>
-                @if (
-                  getRecordDate(recordData.overall?.highestScore?.date);
-                  as d
-                ) {
-                  <div class="record-date">
-                    {{ d | localDate: "shortDate" }}
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Record Laps -->
-            @if (!isAllowFinishLapBasedRace()) {
-              <div class="record-card border-amber">
-                <div class="card-icon amber-glow">
-                  <span class="material-icons">flag</span>
-                </div>
-                <div class="card-content">
-                  <div class="record-label">
-                    {{ "RD_COL_LAP" | translate }} RECORD
-                  </div>
-                  <div class="record-value amber-text">
-                    @if (recordData.overall?.highestScore?.value) {
-                      {{
-                        recordData.overall!.highestScore!.value
-                          | number: "1.2-2"
-                      }}
-                    } @else {
-                      --.--
-                    }
-                  </div>
-                  <div class="record-holder">
-                    <span class="holder-label">HOLDER:</span>
-                    <span class="holder-name">{{
-                      getHolderDisplay(recordData.overall?.highestScore)
-                    }}</span>
-                  </div>
-                  @if (
-                    getRecordDate(recordData.overall?.highestScore?.date);
-                    as d
-                  ) {
-                    <div class="record-date">
-                      {{ d | localDate: "shortDate" }}
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- Lane Records List -->
-          @if (
-            recordData.overall?.laneFastestLap &&
-            recordData.overall!.laneFastestLap!.length > 0
-          ) {
-            <div class="lane-records-section">
-              <div class="lane-records-title">LANE RECORDS</div>
-              <div class="lane-cards-container">
-                @for (
-                  lapRecord of recordData.overall!.laneFastestLap;
-                  track $index
-                ) {
-                  @let scoreRecord =
-                    recordData.overall!.laneHighestScore?.[$index];
-                  <div
-                    class="lane-record-card"
-                    [style.border-left-color]="getLaneBackgroundColor($index)"
-                  >
-                    <div
-                      class="lane-card-header"
-                      [style.background-color]="getLaneBackgroundColor($index)"
-                      [style.color]="getLaneForegroundColor($index)"
-                      [style.border-color]="getLaneForegroundColor($index)"
-                    >
-                      LANE {{ $index + 1 }}
-                    </div>
-                    <div class="lane-card-body">
-                      <!-- Best Lap -->
-                      <div class="lane-stat-row">
-                        <div class="lane-stat-info">
-                          <span class="lane-stat-label">LAP:</span>
-                          <span class="lane-stat-value text-best-lap">
-                            @if (lapRecord?.value) {
-                              {{ lapRecord.value | number: "1.3-3" }}s
-                            } @else {
-                              --.---
-                            }
-                          </span>
-                        </div>
-                        <div
-                          class="lane-stat-holder"
-                          [title]="getHolderDisplay(lapRecord)"
-                        >
-                          {{ getHolderDisplay(lapRecord) }}
-                        </div>
-                      </div>
-                      @if (getRecordDate(lapRecord?.date); as d) {
-                        <div class="lane-stat-date-row">
-                          <span class="lane-stat-date">{{
-                            d | localDate: "shortDate"
-                          }}</span>
-                        </div>
-                      }
-                      <!-- Best Laps -->
-                      @if (!isAllowFinishLapBasedRace()) {
-                        <div class="lane-stat-row">
-                          <div class="lane-stat-info">
-                            <span class="lane-stat-label">LAPS:</span>
-                            <span class="lane-stat-value text-highlight">
-                              @if (scoreRecord?.value) {
-                                {{ scoreRecord!.value | number: "1.2-2" }}
-                              } @else {
-                                --.--
-                              }
-                            </span>
-                          </div>
-                          <div
-                            class="lane-stat-holder"
-                            [title]="getHolderDisplay(scoreRecord)"
-                          >
-                            {{ getHolderDisplay(scoreRecord) }}
-                          </div>
-                        </div>
-                        @if (getRecordDate(scoreRecord?.date); as d) {
-                          <div class="lane-stat-date-row">
-                            <span class="lane-stat-date">{{
-                              d | localDate: "shortDate"
-                            }}</span>
-                          </div>
-                        }
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-
       <div class="results-table-wrapper">
         <div class="results-table">
           <!-- Header -->
@@ -499,7 +289,6 @@
             [maxX]="maxX"
             [maxY]="maxY"
             [stacked]="true"
-            titleKey="OR_TITLE"
             leftTitleKey="OR_RANKINGS_HEADER"
             rightTitleKey="HR_LAP_TIMES_HEADER"
             leftXAxisKey="OR_X_AXIS"
@@ -509,6 +298,216 @@
           ></app-twin-graphs>
         }
       </div>
+
+      <!-- Records Dashboard -->
+      @if (recordData) {
+        <div class="records-dashboard no-print">
+          <div class="records-header">
+            <span class="records-title">{{ "TRACK RECORDS" | translate }}</span>
+            <div class="records-subtitle-line"></div>
+          </div>
+
+          <!-- Global Records Grid -->
+          <div class="global-records-grid">
+            <!-- Record Lap Time -->
+            <div class="record-card border-cyan">
+              <div class="card-icon cyan-glow">
+                <span class="material-icons">timer</span>
+              </div>
+              <div class="card-content">
+                <div class="record-label">
+                  {{ "RD_COL_BEST_LAP" | translate }}
+                </div>
+                <div class="record-value cyan-text">
+                  @if (recordData.overall?.fastestLap?.value) {
+                    {{
+                      recordData.overall!.fastestLap!.value | number: "1.3-3"
+                    }}s
+                  } @else {
+                    --.---
+                  }
+                </div>
+                <div class="record-holder">
+                  <span class="holder-label">HOLDER:</span>
+                  <span class="holder-name">{{
+                    getHolderDisplay(recordData.overall?.fastestLap)
+                  }}</span>
+                </div>
+                @if (
+                  getRecordDate(recordData.overall?.fastestLap?.date);
+                  as d
+                ) {
+                  <div class="record-date">
+                    {{ d | localDate: "shortDate" }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Record Score -->
+            <div class="record-card border-magenta">
+              <div class="card-icon magenta-glow">
+                <span class="material-icons">emoji_events</span>
+              </div>
+              <div class="card-content">
+                <div class="record-label">
+                  {{ "DR_COL_SCORE" | translate }} RECORD
+                </div>
+                <div class="record-value magenta-text">
+                  @if (recordData.overall?.highestScore?.value) {
+                    {{
+                      recordData.overall!.highestScore!.value
+                        | number: getScoreFormat()
+                    }}
+                  } @else {
+                    ---
+                  }
+                </div>
+                <div class="record-holder">
+                  <span class="holder-label">HOLDER:</span>
+                  <span class="holder-name">{{
+                    getHolderDisplay(recordData.overall?.highestScore)
+                  }}</span>
+                </div>
+                @if (
+                  getRecordDate(recordData.overall?.highestScore?.date);
+                  as d
+                ) {
+                  <div class="record-date">
+                    {{ d | localDate: "shortDate" }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Record Laps -->
+            @if (!isAllowFinishLapBasedRace()) {
+              <div class="record-card border-amber">
+                <div class="card-icon amber-glow">
+                  <span class="material-icons">flag</span>
+                </div>
+                <div class="card-content">
+                  <div class="record-label">
+                    {{ "RD_COL_LAP" | translate }} RECORD
+                  </div>
+                  <div class="record-value amber-text">
+                    @if (recordData.overall?.highestScore?.value) {
+                      {{
+                        recordData.overall!.highestScore!.value
+                          | number: "1.2-2"
+                      }}
+                    } @else {
+                      --.--
+                    }
+                  </div>
+                  <div class="record-holder">
+                    <span class="holder-label">HOLDER:</span>
+                    <span class="holder-name">{{
+                      getHolderDisplay(recordData.overall?.highestScore)
+                    }}</span>
+                  </div>
+                  @if (
+                    getRecordDate(recordData.overall?.highestScore?.date);
+                    as d
+                  ) {
+                    <div class="record-date">
+                      {{ d | localDate: "shortDate" }}
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Lane Records List -->
+          @if (
+            recordData.overall?.laneFastestLap &&
+            recordData.overall!.laneFastestLap!.length > 0
+          ) {
+            <div class="lane-records-section">
+              <div class="lane-records-title">LANE RECORDS</div>
+              <div class="lane-cards-container">
+                @for (
+                  lapRecord of recordData.overall!.laneFastestLap;
+                  track $index
+                ) {
+                  @let scoreRecord =
+                    recordData.overall!.laneHighestScore?.[$index];
+                  <div
+                    class="lane-record-card"
+                    [style.border-left-color]="getLaneBackgroundColor($index)"
+                  >
+                    <div
+                      class="lane-card-header"
+                      [style.background-color]="getLaneBackgroundColor($index)"
+                      [style.color]="getLaneForegroundColor($index)"
+                      [style.border-color]="getLaneForegroundColor($index)"
+                    >
+                      LANE {{ $index + 1 }}
+                    </div>
+                    <div class="lane-card-body">
+                      <!-- Best Lap -->
+                      <div class="lane-stat-row">
+                        <div class="lane-stat-info">
+                          <span class="lane-stat-label">LAP:</span>
+                          <span class="lane-stat-value text-best-lap">
+                            @if (lapRecord?.value) {
+                              {{ lapRecord.value | number: "1.3-3" }}s
+                            } @else {
+                              --.---
+                            }
+                          </span>
+                        </div>
+                        <div
+                          class="lane-stat-holder"
+                          [title]="getHolderDisplay(lapRecord)"
+                        >
+                          {{ getHolderDisplay(lapRecord) }}
+                        </div>
+                      </div>
+                      @if (getRecordDate(lapRecord?.date); as d) {
+                        <div class="lane-stat-date-row">
+                          <span class="lane-stat-date">{{
+                            d | localDate: "shortDate"
+                          }}</span>
+                        </div>
+                      }
+                      <!-- Best Laps -->
+                      @if (!isAllowFinishLapBasedRace()) {
+                        <div class="lane-stat-row">
+                          <div class="lane-stat-info">
+                            <span class="lane-stat-label">LAPS:</span>
+                            <span class="lane-stat-value text-highlight">
+                              @if (scoreRecord?.value) {
+                                {{ scoreRecord!.value | number: "1.2-2" }}
+                              } @else {
+                                --.--
+                              }
+                            </span>
+                          </div>
+                          <div
+                            class="lane-stat-holder"
+                            [title]="getHolderDisplay(scoreRecord)"
+                          >
+                            {{ getHolderDisplay(scoreRecord) }}
+                          </div>
+                        </div>
+                        @if (getRecordDate(scoreRecord?.date); as d) {
+                          <div class="lane-stat-date-row">
+                            <span class="lane-stat-date">{{
+                              d | localDate: "shortDate"
+                            }}</span>
+                          </div>
+                        }
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 </div>

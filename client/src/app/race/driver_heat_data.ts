@@ -46,6 +46,7 @@ export class DriverHeatData {
   public flag: number = 0;
   public lapsLed: number = 0;
   public isFinished: boolean = false;
+  public trackCalls: number = 0;
 
   constructor(
     objectId: string,
@@ -89,6 +90,7 @@ export class DriverHeatData {
     this.flag = 0;
     this.lapsLed = 0;
     this.isFinished = false;
+    this.trackCalls = 0;
   }
 
   addLapTime(

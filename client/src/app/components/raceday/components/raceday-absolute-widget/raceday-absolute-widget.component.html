@@ -223,10 +223,10 @@
         @case ("heat-list") {
           <app-raceday-heat-list
             [widget]="widget()"
-            [track]="parentComponent().track"
-            [race]="parentComponent().race"
-            [currentHeat]="parentComponent().heat"
-            [heats]="parentComponent().heats"
+            [track]="parentComponent()?.track"
+            [race]="parentComponent()?.race"
+            [currentHeat]="parentComponent()?.heat"
+            [heats]="parentComponent()?.heats"
             [parent]="parentComponent()"
           ></app-raceday-heat-list>
         }

@@ -13,6 +13,37 @@ public class Heat extends ServerToClientObject {
   @com.fasterxml.jackson.annotation.JsonIgnore private HeatStandings heatStandings;
   private boolean started = false;
   private int group = 0;
+  private int masterTrackCalls = 0;
+  private int trackCalls = 0;
+
+  public int getMasterTrackCalls() {
+    return masterTrackCalls;
+  }
+
+  public void setMasterTrackCalls(int masterTrackCalls) {
+    this.masterTrackCalls = masterTrackCalls;
+  }
+
+  public void incrementMasterTrackCalls() {
+    this.masterTrackCalls++;
+  }
+
+  public int getTrackCalls() {
+    return trackCalls;
+  }
+
+  public void setTrackCalls(int trackCalls) {
+    this.trackCalls = trackCalls;
+  }
+
+  public void incrementTrackCalls() {
+    this.trackCalls++;
+  }
+
+  public void resetTrackCalls() {
+    this.masterTrackCalls = 0;
+    this.trackCalls = 0;
+  }
 
   public Heat(int heatNumber, List<DriverHeatData> drivers, HeatScoring scoring, boolean practice) {
     super();

@@ -1,6 +1,7 @@
 package com.antigravity.race;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.converters.HeatConverter;
 import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.DigitalFuelOptions;
 import com.antigravity.models.Driver;
@@ -284,6 +285,12 @@ public class HeatExecutionManager {
       } else {
         // Other drivers still racing so turn off power to this lane
         race.setLanePower(false, lane);
+        if (race.getCurrentHeat() != null) {
+          race.broadcast(
+              RaceData.newBuilder()
+                  .setHeat(HeatConverter.toProto(race.getCurrentHeat(), new HashSet<>()))
+                  .build());
+        }
       }
     }
   }
@@ -521,6 +528,39 @@ public class HeatExecutionManager {
     stutterAccumulatedTime[to] = tempStutter;
 
     logger.info("Swapped transient lane state for lanes {} and {}", from, to);
+  }
+
+  public void resetLane(int lane) {
+    if (lane >= 0) {
+      if (refuelDelayRemaining != null && lane < refuelDelayRemaining.length) {
+        refuelDelayRemaining[lane] = -1.0;
+      }
+      if (isRefueling != null && lane < isRefueling.length) {
+        isRefueling[lane] = false;
+      }
+      if (accumulatedRefuelTime != null && lane < accumulatedRefuelTime.length) {
+        accumulatedRefuelTime[lane] = 0.0;
+      }
+      if (timeSinceLastLap != null && lane < timeSinceLastLap.length) {
+        timeSinceLastLap[lane] = 0.0;
+      }
+      if (excludedPendingLapTime != null && lane < excludedPendingLapTime.length) {
+        excludedPendingLapTime[lane] = 0.0;
+      }
+      if (stutterAccumulatedTime != null && lane < stutterAccumulatedTime.length) {
+        stutterAccumulatedTime[lane] = 0.0;
+      }
+      finishedLanes.remove(lane);
+      logger.info("Reset transient lane execution state for lane {}", lane);
+    }
+  }
+
+  public void resetAllLanes() {
+    if (timeSinceLastLap != null) {
+      for (int i = 0; i < timeSinceLastLap.length; i++) {
+        resetLane(i);
+      }
+    }
   }
 
   public void handlePitDetection(com.antigravity.protocols.CarData carData) { // fqn-collision

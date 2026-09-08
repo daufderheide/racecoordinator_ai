@@ -14,4 +14,6 @@ message Heat {
   repeated string standings = 4;
   bool started = 5;
   int32 group = 6;
+  int32 master_track_calls = 7;
+  int32 track_calls = 8;
 }

@@ -15,6 +15,7 @@ export abstract class RacingRosterDialogHarnessBase {
     seedBadge: ".seed-badge",
     driverName: ".driver-name",
     driverNickname: ".driver-nickname",
+    teamName: ".team-name",
     emptyMessage: ".empty-roster-message",
   };
 
@@ -25,6 +26,7 @@ export abstract class RacingRosterDialogHarnessBase {
   abstract getItemSeed(index: number): Promise<string>;
   abstract getItemName(index: number): Promise<string>;
   abstract getItemNickname(index: number): Promise<string>;
+  abstract getItemTeam(index: number): Promise<string>;
   abstract clickSortBySeed(): Promise<void>;
   abstract clickSortByName(): Promise<void>;
   abstract isSortBySeedActive(): Promise<boolean>;

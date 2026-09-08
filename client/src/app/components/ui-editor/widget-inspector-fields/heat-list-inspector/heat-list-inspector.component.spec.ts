@@ -108,4 +108,48 @@ describe("HeatListInspectorComponent", () => {
     expect(sliders[1].disabled).toBeTrue();
     expect(sliders[2].disabled).toBeTrue();
   });
+
+  it("should handle summary configuration toggles and color updates", () => {
+    fixture.componentRef.setInput("settings", {
+      ...component.settings(),
+      showCompletedSummary: true,
+      showActiveSummary: true,
+      summaryShowPosition: true,
+      summaryShowDriver: true,
+      summaryShowLaps: true,
+      summaryShowBestLap: true,
+      summaryShowGap: false,
+      summaryShowAverageLap: false,
+      summaryShowMedianLap: false,
+      summaryLapDecimalPlaces: "auto",
+      summaryTimeDecimalPlaces: 3,
+      summaryHeaderTextColor: "",
+      summaryBorderColor: "",
+    });
+    fixture.detectChanges();
+
+    component.settings().summaryShowMedianLap = true;
+    component.onSettingsChange();
+    expect(component.settings().summaryShowMedianLap).toBeTrue();
+    expect(changeSpy).toHaveBeenCalled();
+
+    component.onColorChange("summaryBorderColor", {
+      target: { value: "#00ffff" },
+    } as unknown as Event);
+    expect(component.settings().summaryBorderColor).toBe("#00ffff");
+
+    component.resetColor("summaryBorderColor");
+    expect(component.settings().summaryBorderColor).toBe("");
+  });
+
+  it("should toggle showCurrentHeatFlag and showCurrentHeatTime settings", () => {
+    component.settings().showCurrentHeatFlag = false;
+    component.onSettingsChange();
+    expect(component.settings().showCurrentHeatFlag).toBeFalse();
+    expect(changeSpy).toHaveBeenCalled();
+
+    component.settings().showCurrentHeatTime = false;
+    component.onSettingsChange();
+    expect(component.settings().showCurrentHeatTime).toBeFalse();
+  });
 });

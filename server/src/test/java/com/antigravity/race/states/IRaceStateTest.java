@@ -19,6 +19,7 @@ import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -200,11 +201,18 @@ public class IRaceStateTest {
 
   @Test
   public void testGetLaneFlagType_DriverFinished_DuringThemedWarmup_ReturnsWarmupFlag() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(new HeatScoring(FinishMethod.Lap, 10, null, null, AllowFinish.Allow))
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+
     DriverHeatData dhd = createDriver("d1", "Driver 1", 100, 0);
     for (int i = 0; i < 10; i++) {
       dhd.addLap(5.0, false, true);
     }
-    when(heat.getDrivers()).thenReturn(Collections.singletonList(dhd));
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd, dhd2));
 
     Map<String, String> slots = new HashMap<>();
     slots.put("flag.warmup", "default_flag_green");
@@ -220,23 +228,38 @@ public class IRaceStateTest {
 
   @Test
   public void testGetLaneFlagType_DriverFinished_NotWarmup_ReturnsFinishedFlag() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(new HeatScoring(FinishMethod.Lap, 10, null, null, AllowFinish.Allow))
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+
     DriverHeatData dhd = createDriver("d1", "Driver 1", 100, 0);
     for (int i = 0; i < 10; i++) {
       dhd.addLap(5.0, false, true);
     }
-    when(heat.getDrivers()).thenReturn(Collections.singletonList(dhd));
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd, dhd2));
     state.setFlagToReturn(RaceFlag.GREEN);
 
     assertEquals(RaceFlag.RED, state.getLaneFlagType(race, 0));
+    assertEquals(RaceFlag.GREEN, state.getLaneFlagType(race, 1));
   }
 
   @Test
   public void testGetLaneFlagType_DriverFinished_ThemedFinishedFlag() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(new HeatScoring(FinishMethod.Lap, 10, null, null, AllowFinish.Allow))
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+
     DriverHeatData dhd = createDriver("d1", "Driver 1", 100, 0);
     for (int i = 0; i < 10; i++) {
       dhd.addLap(5.0, false, true);
     }
-    when(heat.getDrivers()).thenReturn(Collections.singletonList(dhd));
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd, dhd2));
     state.setFlagToReturn(RaceFlag.GREEN);
 
     Map<String, String> slots = new HashMap<>();
@@ -245,6 +268,136 @@ public class IRaceStateTest {
     when(race.getTheme()).thenReturn(theme);
 
     assertEquals(RaceFlag.CHECKERED, state.getLaneFlagType(race, 0));
+    assertEquals(RaceFlag.GREEN, state.getLaneFlagType(race, 1));
+  }
+
+  @Test
+  public void testGetLaneFlagType_RacingState_UnfinishedDriverGetsGreenFlag() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(new HeatScoring(FinishMethod.Lap, 10, null, null, AllowFinish.Allow))
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    DriverHeatData dhd1 = createDriver("d1", "Driver 1", 100, 0);
+    for (int i = 0; i < 10; i++) {
+      dhd1.addLap(5.0, false, true); // Finished
+    }
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    for (int i = 0; i < 5; i++) {
+      dhd2.addLap(5.0, false, true); // Still racing (5 / 10 laps)
+    }
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd1, dhd2));
+
+    Racing racing = new Racing();
+    when(race.getState()).thenReturn(racing);
+
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.driver_finished", "default_flag_red");
+    slots.put("flag.heat_finishing", "default_flag_checkered");
+    slots.put("flag.racing", "default_flag_green");
+    slots.put("flag.one_lap_to_go", "default_flag_white");
+    Theme theme = new Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    // Driver 1 finished in allow finish -> driver_finished
+    assertEquals(RaceFlag.RED, racing.getLaneFlagType(race, 0));
+    // Driver 2 still racing -> flag.racing (GREEN), not heat_finishing (CHECKERED)
+    assertEquals(RaceFlag.GREEN, racing.getLaneFlagType(race, 1));
+  }
+
+  @Test
+  public void testGetLaneFlagType_RacingState_UnfinishedDriverWithOneLapToGoGetsWhiteFlag() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(new HeatScoring(FinishMethod.Lap, 10, null, null, AllowFinish.Allow))
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    DriverHeatData dhd1 = createDriver("d1", "Driver 1", 100, 0);
+    for (int i = 0; i < 10; i++) {
+      dhd1.addLap(5.0, false, true); // Finished
+    }
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    for (int i = 0; i < 9; i++) {
+      dhd2.addLap(5.0, false, true); // 9 / 10 laps -> 1 lap to go
+    }
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd1, dhd2));
+
+    Racing racing = new Racing();
+    when(race.getState()).thenReturn(racing);
+
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.driver_finished", "default_flag_red");
+    slots.put("flag.heat_finishing", "default_flag_checkered");
+    slots.put("flag.racing", "default_flag_green");
+    slots.put("flag.one_lap_to_go", "default_flag_white");
+    Theme theme = new Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    // Driver 1 finished in allow finish -> driver_finished
+    assertEquals(RaceFlag.RED, racing.getLaneFlagType(race, 0));
+    // Driver 2 has 1 lap to go -> flag.one_lap_to_go (WHITE)
+    assertEquals(RaceFlag.WHITE, racing.getLaneFlagType(race, 1));
+  }
+
+  @Test
+  public void testGetLaneFlagType_DriverFinished_AllowFinishNone_DoesNotShowDriverFinished() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withHeatScoring(new HeatScoring(FinishMethod.Lap, 10, null, null, AllowFinish.None))
+            .build();
+    when(race.getRaceModel()).thenReturn(model);
+
+    DriverHeatData dhd = createDriver("d1", "Driver 1", 100, 0);
+    for (int i = 0; i < 10; i++) {
+      dhd.addLap(5.0, false, true);
+    }
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd, dhd2));
+    state.setFlagToReturn(RaceFlag.GREEN);
+
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.driver_finished", "default_flag_checkered");
+    Theme theme = new Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    assertEquals(RaceFlag.GREEN, state.getLaneFlagType(race, 0));
+  }
+
+  @Test
+  public void testGetLaneFlagType_AllDriversFinished_HeatOver_UsesHeatOverFlag() {
+    DriverHeatData dhd1 = createDriver("d1", "Driver 1", 100, 0);
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd1, dhd2));
+
+    HeatOver heatOver = new HeatOver();
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.heat_over", "default_flag_yellow");
+    slots.put("flag.driver_finished", "default_flag_checkered");
+    Theme theme = new Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    assertEquals(RaceFlag.YELLOW, heatOver.getLaneFlagType(race, 0));
+    assertEquals(RaceFlag.YELLOW, heatOver.getLaneFlagType(race, 1));
+  }
+
+  @Test
+  public void testGetLaneFlagType_AllDriversFinished_RaceOver_UsesRaceOverFlag() {
+    DriverHeatData dhd1 = createDriver("d1", "Driver 1", 100, 0);
+    DriverHeatData dhd2 = createDriver("d2", "Driver 2", 100, 0);
+    when(heat.getDrivers()).thenReturn(Arrays.asList(dhd1, dhd2));
+
+    RaceOver raceOver = new RaceOver();
+    Map<String, String> slots = new HashMap<>();
+    slots.put("flag.race_over", "default_flag_yellow");
+    slots.put("flag.heat_over", "default_flag_green");
+    slots.put("flag.driver_finished", "default_flag_red");
+    Theme theme = new Theme("Custom", true, slots, null, "theme-1", "id-1");
+    when(race.getTheme()).thenReturn(theme);
+
+    assertEquals(RaceFlag.YELLOW, raceOver.getLaneFlagType(race, 0));
+    assertEquals(RaceFlag.YELLOW, raceOver.getLaneFlagType(race, 1));
   }
 
   @Test

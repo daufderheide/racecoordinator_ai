@@ -5,6 +5,7 @@ import {
   ColumnDefinition,
 } from "@app/components/raceday/column_definition";
 import { Driver } from "@app/models/driver";
+import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
 import { Track } from "@app/models/track";
 import { RaceFlag } from "@app/proto/antigravity";
@@ -25,6 +26,8 @@ export interface FormatContext {
   getLaneQrCodeUrl?: (laneIndex: number) => string;
   getDriverViewQrCodeUrl?: (hd: DriverHeatData) => string;
   isDriverFinished?: (hd: DriverHeatData, scoring?: any) => boolean;
+  areAllDriversFinished?: () => boolean;
+  isRaceOver?: () => boolean;
   getLaneRecordEntry?: (laneIndex: number) => any;
   getBestRaceLapEntry?: (laneIndex: number) => any;
   formatDate?: (date: any) => string;
@@ -52,6 +55,23 @@ export class RacedayFormatUtils {
 
     if (hd.driver && !hd.driver.driver) return Driver.isEmpty(hd.driver);
     return true;
+  }
+
+  static isAllowFinish(race?: Race): boolean {
+    if (!race) return false;
+    const scoring: any = race.heat_scoring ?? (race as any).heatScoring;
+    if (!scoring) return false;
+    const af = scoring.allowFinish ?? scoring.allow_finish;
+    return (
+      af === AllowFinish.AF_ALLOW ||
+      af === "Allow" ||
+      af === "AF_ALLOW" ||
+      af === AllowFinish.AF_SINGLE_LAP ||
+      af === "SingleLap" ||
+      af === "AF_SINGLE_LAP" ||
+      af === 1 ||
+      af === 2
+    );
   }
 
   static getPropertyValue(
@@ -110,6 +130,7 @@ export class RacedayFormatUtils {
         baseKey === "rankOverall" ||
         baseKey === "rankGroup" ||
         baseKey === "lapsLed" ||
+        baseKey === "trackCalls" ||
         baseKey === "physicalLapCount" ||
         baseKey === "recordLapTime" ||
         baseKey === "bestRaceLapTime" ||
@@ -270,6 +291,13 @@ export class RacedayFormatUtils {
           ? value
           : (hd?.lapsLed ?? (hd as any)?.laps_led ?? 0);
       return String(led);
+    } else if (baseKey === "trackCalls") {
+      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+      const calls =
+        value !== undefined && value !== null
+          ? value
+          : (hd?.trackCalls ?? (hd as any)?.track_calls ?? 0);
+      return String(calls);
     } else if (baseKey === "laneNumber") {
       return String((hd?.laneIndex ?? 0) + 1);
     } else if (baseKey.startsWith("ghostPacing")) {
@@ -386,32 +414,76 @@ export class RacedayFormatUtils {
             (hd.driver as any).fuelLevel !== undefined &&
             (hd.driver as any).fuelLevel <= 0));
 
-      if (
-        hd &&
-        ((hd as any).remainingFalseStartTimePenalty > 0 || isOutOfFuel)
-      ) {
+      const isPenalized = Boolean(
+        hd && ((hd as any).remainingFalseStartTimePenalty > 0 || isOutOfFuel),
+      );
+
+      if (isPenalized) {
         return ctx.getFlagUrl("flag.penalty");
       }
-      if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
-        return ctx.getFlagUrl("flag.penalty");
+
+      const allFinished =
+        ctx.areAllDriversFinished !== undefined
+          ? ctx.areAllDriversFinished()
+          : false;
+
+      if (allFinished) {
+        const isRaceOver = ctx.isRaceOver ? ctx.isRaceOver() : false;
+        return ctx.getFlagUrl(isRaceOver ? "flag.race_over" : "flag.heat_over");
       }
+
+      const isFinished =
+        Boolean(hd?.isFinished) ||
+        Boolean(
+          ctx.isDriverFinished &&
+          ctx.isDriverFinished(
+            hd,
+            ctx.getRace()?.heat_scoring ?? (ctx.getRace() as any)?.heatScoring,
+          ),
+        );
+
+      if (isFinished && RacedayFormatUtils.isAllowFinish(ctx.getRace())) {
+        return ctx.getFlagUrl("flag.driver_finished");
+      }
+
+      // Check for one lap to go
+      const scoring: any = race?.heat_scoring ?? (race as any)?.heatScoring;
+      const finishMethod = scoring?.finishMethod ?? scoring?.finish_method;
+      const finishValue = scoring?.finishValue ?? scoring?.finish_value;
+      const isOneLapToGo =
+        value === RaceFlag.WHITE ||
+        hd?.flag === RaceFlag.WHITE ||
+        Boolean(
+          (finishMethod === "Lap" ||
+            finishMethod === 1 ||
+            finishMethod === FinishMethod.Lap) &&
+          finishValue !== undefined &&
+          finishValue > 0 &&
+          hd?.lapCount === finishValue - 1,
+        );
+
+      if (isOneLapToGo) {
+        return ctx.getFlagUrl("flag.one_lap_to_go");
+      }
+
+      // If actively racing in allow-finish heat_finishing period,
+      // an unfinished driver who is still racing displays flag.racing.
+      const flagType = ctx.getFlagType?.();
+      if (flagType === "flag.heat_finishing") {
+        return ctx.getFlagUrl("flag.racing");
+      }
+
       if (
         value === RaceFlag.GREEN_YELLOW ||
         hd?.flag === RaceFlag.GREEN_YELLOW
       ) {
         return ctx.getFlagUrl("flag.warmup");
       }
-      if (value === RaceFlag.WHITE || hd?.flag === RaceFlag.WHITE) {
-        return ctx.getFlagUrl("flag.one_lap_to_go");
+
+      if (value === RaceFlag.BLACK || hd?.flag === RaceFlag.BLACK) {
+        return ctx.getFlagUrl("flag.penalty");
       }
-      if (
-        hd &&
-        (hd.isFinished ||
-          (ctx.isDriverFinished &&
-            ctx.isDriverFinished(hd, ctx.getRace()?.heat_scoring)))
-      ) {
-        return ctx.getFlagUrl("flag.driver_finished");
-      }
+
       const flag =
         value === RaceFlag.UNKNOWN_FLAG || value === 0
           ? ctx.getFlagType()

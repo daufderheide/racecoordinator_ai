@@ -110,6 +110,7 @@ public class DriverHeatData extends ServerToClientObject
   private boolean hasDriftTime = false;
   private int lane = 0;
   private int lapsLed = 0;
+  private int trackCalls = 0;
 
   public int getLapsLed() {
     return lapsLed;
@@ -117,6 +118,18 @@ public class DriverHeatData extends ServerToClientObject
 
   public void setLapsLed(int lapsLed) {
     this.lapsLed = lapsLed;
+  }
+
+  public int getTrackCalls() {
+    return trackCalls;
+  }
+
+  public void setTrackCalls(int trackCalls) {
+    this.trackCalls = trackCalls;
+  }
+
+  public void incrementTrackCalls() {
+    this.trackCalls++;
   }
 
   public int getLane() {
@@ -333,6 +346,7 @@ public class DriverHeatData extends ServerToClientObject
     penaltyLaps = 0.0;
     hasDriftTime = false;
     isFinished = false;
+    trackCalls = 0;
   }
 
   public void resetForFalseStart() {
