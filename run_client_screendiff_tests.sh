@@ -130,7 +130,9 @@ if [ $TEST_EXIT_CODE -ne 0 ]; then
     echo "Tests failed. Opening report..."
     cd "$CLIENT_DIR" || exit
     # Run the show-report command (this will block the terminal until you exit)
-    npx playwright show-report "$ISOLATED_DIR/playwright-report"
+    if [ -t 0 ] && [ -z "$CI" ]; then
+        npx playwright show-report "$ISOLATED_DIR/playwright-report"
+    fi
 fi
 
 exit $TEST_EXIT_CODE

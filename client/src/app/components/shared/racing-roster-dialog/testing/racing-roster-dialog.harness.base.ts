@@ -7,7 +7,10 @@ export abstract class RacingRosterDialogHarnessBase {
     title: ".modal-header h2",
     countBadge: ".count-badge",
     sortSeedBtn: '[data-testid="sort-seed-btn"]',
-    sortNameBtn: '[data-testid="sort-name-btn"]',
+    sortNicknameBtn: '[data-testid="sort-nickname-btn"]',
+    sortDriverBtn: '[data-testid="sort-driver-btn"]',
+    sortNameBtn:
+      '[data-testid="sort-nickname-btn"], [data-testid="sort-name-btn"]',
     closeBtn: ".close-btn",
     footerCloseBtn: ".modal-footer .btn-close",
     rosterGrid: ".roster-grid",
@@ -26,11 +29,17 @@ export abstract class RacingRosterDialogHarnessBase {
   abstract getItemSeed(index: number): Promise<string>;
   abstract getItemName(index: number): Promise<string>;
   abstract getItemNickname(index: number): Promise<string>;
+  abstract getItemPrimaryName(index: number): Promise<string>;
+  abstract getItemSecondaryName(index: number): Promise<string>;
   abstract getItemTeam(index: number): Promise<string>;
   abstract clickSortBySeed(): Promise<void>;
   abstract clickSortByName(): Promise<void>;
+  abstract clickSortByNickname(): Promise<void>;
+  abstract clickSortByDriver(): Promise<void>;
   abstract isSortBySeedActive(): Promise<boolean>;
   abstract isSortByNameActive(): Promise<boolean>;
+  abstract isSortByNicknameActive(): Promise<boolean>;
+  abstract isSortByDriverActive(): Promise<boolean>;
   abstract clickCloseButton(): Promise<void>;
   abstract clickFooterCloseButton(): Promise<void>;
   abstract clickBackdrop(): Promise<void>;

@@ -471,6 +471,9 @@
                 <div
                   [id]="'avail-item-' + i"
                   class="driver-item"
+                  [attr.data-participant-id]="
+                    getParticipantUniqueId(participant)
+                  "
                   [class.keyboard-active]="availableActiveIndex === i"
                   (mouseenter)="availableActiveIndex = i"
                   cdkDrag
@@ -656,6 +659,9 @@
                 <div
                   [id]="'racing-item-' + i"
                   class="driver-item selected"
+                  [attr.data-participant-id]="
+                    getParticipantUniqueId(participant)
+                  "
                   [class.keyboard-active]="racingActiveIndex === i"
                   (mouseenter)="racingActiveIndex = i"
                   cdkDrag
@@ -902,7 +908,29 @@
               </div>
             } @else if (selectedRace) {
               <div class="event-details-card race-summary-card">
-                <div class="event-detail-title">{{ selectedRace.name }}</div>
+                <div class="event-detail-header">
+                  <div class="event-detail-title">{{ selectedRace.name }}</div>
+                  <button
+                    type="button"
+                    class="action-btn edit-race-btn"
+                    id="edit-selected-race-btn"
+                    (click)="editSelectedRace()"
+                    (mousedown)="$event.preventDefault()"
+                    [title]="'RDS_BTN_EDIT_RACE' | translate"
+                    data-testid="edit-selected-race-btn"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                      />
+                    </svg>
+                  </button>
+                </div>
                 <div class="summary-grid">
                   <div class="summary-item">
                     <span class="summary-label"
@@ -997,6 +1025,8 @@
                   [season]="selectedSeason"
                   [standings]="seasonStandings"
                   [compact]="true"
+                  [showEdit]="true"
+                  (edit)="editSelectedSeason()"
                 ></app-season-summary>
               </div>
             } @else {

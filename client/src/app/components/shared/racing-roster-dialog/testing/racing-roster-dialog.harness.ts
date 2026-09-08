@@ -33,6 +33,14 @@ export class RosterCardHarness extends ComponentHarness {
     return el ? (await el.text()).trim() : "";
   }
 
+  async getPrimaryName(): Promise<string> {
+    return this.getName();
+  }
+
+  async getSecondaryName(): Promise<string> {
+    return this.getNickname();
+  }
+
   async getTeam(): Promise<string> {
     const el = await this.getTeamEl();
     return el ? (await el.text()).trim() : "";
@@ -56,6 +64,12 @@ export class RacingRosterDialogHarness
   );
   private getSortSeedBtn = this.locatorForOptional(
     RacingRosterDialogHarnessBase.selectors.sortSeedBtn,
+  );
+  private getSortNicknameBtn = this.locatorForOptional(
+    RacingRosterDialogHarnessBase.selectors.sortNicknameBtn,
+  );
+  private getSortDriverBtn = this.locatorForOptional(
+    RacingRosterDialogHarnessBase.selectors.sortDriverBtn,
   );
   private getSortNameBtn = this.locatorForOptional(
     RacingRosterDialogHarnessBase.selectors.sortNameBtn,
@@ -109,6 +123,14 @@ export class RacingRosterDialogHarness
     return await cards[index].getNickname();
   }
 
+  async getItemPrimaryName(index: number): Promise<string> {
+    return this.getItemName(index);
+  }
+
+  async getItemSecondaryName(index: number): Promise<string> {
+    return this.getItemNickname(index);
+  }
+
   async getItemTeam(index: number): Promise<string> {
     const cards = await this.getCards();
     if (index >= cards.length) return "";
@@ -125,6 +147,16 @@ export class RacingRosterDialogHarness
     if (btn) await btn.click();
   }
 
+  async clickSortByNickname(): Promise<void> {
+    const btn = await this.getSortNicknameBtn();
+    if (btn) await btn.click();
+  }
+
+  async clickSortByDriver(): Promise<void> {
+    const btn = await this.getSortDriverBtn();
+    if (btn) await btn.click();
+  }
+
   async isSortBySeedActive(): Promise<boolean> {
     const btn = await this.getSortSeedBtn();
     return btn ? await btn.hasClass("active") : false;
@@ -132,6 +164,16 @@ export class RacingRosterDialogHarness
 
   async isSortByNameActive(): Promise<boolean> {
     const btn = await this.getSortNameBtn();
+    return btn ? await btn.hasClass("active") : false;
+  }
+
+  async isSortByNicknameActive(): Promise<boolean> {
+    const btn = await this.getSortNicknameBtn();
+    return btn ? await btn.hasClass("active") : false;
+  }
+
+  async isSortByDriverActive(): Promise<boolean> {
+    const btn = await this.getSortDriverBtn();
     return btn ? await btn.hasClass("active") : false;
   }
 

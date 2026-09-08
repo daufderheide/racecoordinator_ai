@@ -820,6 +820,27 @@ describe("RaceEditorComponent", () => {
     });
   }));
 
+  it("should navigate to /raceday-setup with skipIntro when navigating back from raceday-setup", fakeAsync(() => {
+    sessionStorage.clear();
+    activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+      if (key === "from") return "raceday-setup";
+      if (key === "returnUrl") return "/raceday-setup";
+      if (key === "id") return "r1";
+      return null;
+    });
+
+    component.ngOnInit();
+    tick();
+
+    component.onBackClicked();
+    tick();
+
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+      queryParams: { skipIntro: "true" },
+    });
+  }));
+
   it("should set lastEditedId in NavigationService when loading race id", fakeAsync(() => {
     const navService = TestBed.inject(NavigationService);
     spyOn(navService, "setLastEditedId");

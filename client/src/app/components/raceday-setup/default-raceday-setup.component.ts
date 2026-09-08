@@ -632,47 +632,60 @@ export class DefaultRacedaySetupComponent implements OnInit {
     isSelected: boolean,
     forcedFocusElem?: HTMLInputElement,
   ) {
-    this.updateListWithRefresh(() => {
-      if (isSelected) {
-        // Was selected, now unselecting
-        this.selectedParticipants = this.selectedParticipants.filter(
-          (p) =>
-            !(
-              p.entity_id === participant.entity_id &&
-              this.isDriver(p) === this.isDriver(participant)
-            ),
-        );
-      } else {
-        // Was unselected, now selecting
-        // Perform validation
-        const potentialParticipants = [
-          ...this.selectedParticipants,
-          participant,
-        ];
-        const validationResult = this.validationService.validate(
-          potentialParticipants,
-          this.allTeams,
-          this.allDrivers,
-        );
-
-        if (!validationResult.isValid) {
-          this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
-          this.errorMessage = this.validationService.getErrorMessage(
-            validationResult,
-            this.translationService,
+    let added = false;
+    this.updateListWithRefresh(
+      () => {
+        if (isSelected) {
+          // Was selected, now unselecting
+          this.selectedParticipants = this.selectedParticipants.filter(
+            (p) =>
+              !(
+                p.entity_id === participant.entity_id &&
+                this.isDriver(p) === this.isDriver(participant)
+              ),
           );
-          // RDS uses errorMessageParams but getErrorMessage already translates it.
-          // We clear errorMessageParams to avoid double translation if the component tries to translate again.
-          this.errorMessageParams = {};
-          this.showErrorModal = true;
-          this.cdr.detectChanges();
-          return;
-        }
+        } else {
+          // Was unselected, now selecting
+          // Perform validation
+          const potentialParticipants = [
+            ...this.selectedParticipants,
+            participant,
+          ];
+          const validationResult = this.validationService.validate(
+            potentialParticipants,
+            this.allTeams,
+            this.allDrivers,
+          );
 
-        this.selectedParticipants = [...this.selectedParticipants, participant];
-      }
-      this.updateUnselectedParticipants();
-    }, forcedFocusElem);
+          if (!validationResult.isValid) {
+            this.errorTitle = "RDS_ERR_VALIDATION_TITLE";
+            this.errorMessage = this.validationService.getErrorMessage(
+              validationResult,
+              this.translationService,
+            );
+            // RDS uses errorMessageParams but getErrorMessage already translates it.
+            // We clear errorMessageParams to avoid double translation if the component tries to translate again.
+            this.errorMessageParams = {};
+            this.showErrorModal = true;
+            this.cdr.detectChanges();
+            return;
+          }
+
+          this.selectedParticipants = [
+            ...this.selectedParticipants,
+            participant,
+          ];
+          added = true;
+        }
+        this.updateUnselectedParticipants();
+      },
+      forcedFocusElem,
+      () => {
+        if (added) {
+          this.scrollRacingParticipantIntoView(participant);
+        }
+      },
+    );
   }
 
   addAllParticipants() {
@@ -903,6 +916,22 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }, 0);
   }
 
+  scrollRacingParticipantIntoView(participant: Participant) {
+    setTimeout(() => {
+      const uniqueId = this.getParticipantUniqueId(participant);
+      const index = this.filteredRacingParticipants.findIndex(
+        (p) => this.getParticipantUniqueId(p) === uniqueId,
+      );
+      if (index === -1) return;
+      const container = this.racingScrollContainer?.nativeElement;
+      const el =
+        (typeof container?.querySelector === "function"
+          ? container.querySelector(`[data-participant-id="${uniqueId}"]`)
+          : null) || document.getElementById(`racing-item-${index}`);
+      el?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
+    }, 0);
+  }
+
   removeAllParticipants() {
     this.updateListWithRefresh(() => {
       this.selectedParticipants = [];
@@ -951,6 +980,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
   private updateListWithRefresh(
     action: () => void,
     forcedFocusElem?: HTMLInputElement,
+    onComplete?: () => void,
   ) {
     // Capture scroll positions
     const availScrollTop =
@@ -976,6 +1006,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ) {
         activeElem.focus();
       }
+      onComplete?.();
       return;
     }
 
@@ -1004,6 +1035,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       if (this.racingScrollContainer?.nativeElement) {
         this.racingScrollContainer.nativeElement.scrollTop = racingScrollTop;
       }
+      onComplete?.();
     }, 0);
   }
 
@@ -1100,16 +1132,22 @@ export class DefaultRacedaySetupComponent implements OnInit {
         }
 
         // Apply changes
-        this.updateListWithRefresh(() => {
-          const updated = [...this.selectedParticipants];
-          if (targetIndex >= 0 && targetIndex <= updated.length) {
-            updated.splice(targetIndex, 0, participant);
-          } else {
-            updated.push(participant);
-          }
-          this.selectedParticipants = updated;
-          this.updateUnselectedParticipants();
-        });
+        this.updateListWithRefresh(
+          () => {
+            const updated = [...this.selectedParticipants];
+            if (targetIndex >= 0 && targetIndex <= updated.length) {
+              updated.splice(targetIndex, 0, participant);
+            } else {
+              updated.push(participant);
+            }
+            this.selectedParticipants = updated;
+            this.updateUnselectedParticipants();
+          },
+          undefined,
+          () => {
+            this.scrollRacingParticipantIntoView(participant);
+          },
+        );
       } else if (event.container.id === "available-list") {
         // Dragging from selected-list to available-list
         const participant = this.selectedParticipants[event.previousIndex];
@@ -1932,6 +1970,31 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   onCancelTrackEditor() {
     this.showTrackEditorPrompt = false;
+  }
+
+  editSelectedRace() {
+    if (!this.selectedRace) return;
+    sessionStorage.setItem("skipIntro", "true");
+    const queryParams: any = {
+      id: this.selectedRace.entity_id,
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+    if (this.selectedParticipants?.length > 0) {
+      queryParams.driverCount = this.selectedParticipants.length;
+    }
+    this.router.navigate(["/race-editor"], { queryParams });
+  }
+
+  editSelectedSeason() {
+    if (!this.selectedSeason) return;
+    sessionStorage.setItem("skipIntro", "true");
+    const queryParams: any = {
+      id: this.selectedSeason.entity_id,
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+    this.router.navigate(["/season-editor"], { queryParams });
   }
 
   openRaceManager() {

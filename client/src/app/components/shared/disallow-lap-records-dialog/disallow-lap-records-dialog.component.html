@@ -474,6 +474,9 @@
                   class="table-row dlr-table-row"
                   [class.row-disallowed]="!lap.countTowardsRecords"
                   [class.dlr-row-disallowed]="!lap.countTowardsRecords"
+                  [class.row-gold]="lap.recordTier === 'gold'"
+                  [class.row-silver]="lap.recordTier === 'silver'"
+                  [class.row-bronze]="lap.recordTier === 'bronze'"
                   [class.row-fastest]="lap.isFastest"
                   [class.dlr-row-fastest]="lap.isFastest"
                 >
@@ -541,6 +544,36 @@
                       <span class="badge badge-disallowed">
                         <span class="material-icons badge-icon">block</span>
                         {{ "DLR_STATUS_DISALLOWED" | translate }}
+                      </span>
+                    } @else if (lap.recordTier === "gold") {
+                      <span
+                        class="badge badge-gold"
+                        [title]="'DLR_TOOLTIP_GOLD' | translate"
+                      >
+                        <span class="material-icons badge-icon"
+                          >emoji_events</span
+                        >
+                        {{ "DLR_STATUS_GOLD" | translate }}
+                      </span>
+                    } @else if (lap.recordTier === "silver") {
+                      <span
+                        class="badge badge-silver"
+                        [title]="'DLR_TOOLTIP_SILVER' | translate"
+                      >
+                        <span class="material-icons badge-icon"
+                          >military_tech</span
+                        >
+                        {{ "DLR_STATUS_SILVER" | translate }}
+                      </span>
+                    } @else if (lap.recordTier === "bronze") {
+                      <span
+                        class="badge badge-bronze"
+                        [title]="'DLR_TOOLTIP_BRONZE' | translate"
+                      >
+                        <span class="material-icons badge-icon"
+                          >workspace_premium</span
+                        >
+                        {{ "DLR_STATUS_BRONZE" | translate }}
                       </span>
                     } @else if (lap.isFastest) {
                       <span class="badge badge-fastest">

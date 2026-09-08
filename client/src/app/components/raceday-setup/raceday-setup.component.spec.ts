@@ -7,7 +7,7 @@ import {
   TestBed,
   tick,
 } from "@angular/core/testing";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
@@ -45,11 +45,19 @@ describe("RacedaySetupComponent", () => {
   let mockRouter: jasmine.SpyObj<Router>;
   let mockNavigationService: jasmine.SpyObj<NavigationService>;
   let mockUpdateService: jasmine.SpyObj<UpdateService>;
+  let mockActivatedRoute: any;
   let connectionStateSubject: BehaviorSubject<ConnectionState>;
 
   beforeEach(() => {
     sessionStorage.clear();
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
+    mockActivatedRoute = {
+      snapshot: {
+        queryParamMap: {
+          get: jasmine.createSpy("get").and.returnValue(null),
+        },
+      },
+    };
     mockNavigationService = jasmine.createSpyObj("NavigationService", [
       "getPreviousUrl",
       "getDirection",
@@ -217,6 +225,7 @@ describe("RacedaySetupComponent", () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: NavigationService, useValue: mockNavigationService },
         { provide: UpdateService, useValue: mockUpdateService },
+        { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
       imports: [RacedaySetupComponent],
     }).compileComponents();
@@ -254,6 +263,45 @@ describe("RacedaySetupComponent", () => {
       expect(component.showSplash).toBeFalse();
       expect(component.minTimeElapsed).toBeTrue();
       expect(component.connectionVerified).toBeTrue();
+    }));
+
+    it("should bypass splash screen if returning from race-editor", fakeAsync(() => {
+      mockNavigationService.getPreviousUrl.and.returnValue("/race-editor");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+    }));
+
+    it("should bypass splash screen if returning from raceday-setup", fakeAsync(() => {
+      mockNavigationService.getPreviousUrl.and.returnValue("/raceday-setup");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+    }));
+
+    it("should bypass splash screen if skipIntro query param is true", fakeAsync(() => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (param: string) => (param === "skipIntro" ? "true" : null),
+      );
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+    }));
+
+    it("should bypass splash screen if sessionStorage has skipIntro === 'true'", fakeAsync(() => {
+      sessionStorage.setItem("skipIntro", "true");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
     }));
 
     it("should NOT bypass splash screen if returning from a race screen", fakeAsync(() => {

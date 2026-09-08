@@ -61,10 +61,10 @@
               <button
                 type="button"
                 class="sort-btn"
-                [class.active]="sortBy() === 'name'"
-                (click)="setSort('name')"
-                data-testid="sort-name-btn"
-                [title]="'RDS_ROSTER_SORT_NAME' | translate"
+                [class.active]="sortBy() === 'nickname' || sortBy() === 'name'"
+                (click)="setSort('nickname')"
+                data-testid="sort-nickname-btn"
+                [title]="'RDS_ROSTER_SORT_NICKNAME' | translate"
               >
                 <svg
                   width="14"
@@ -76,7 +76,27 @@
                     d="M9.25 16.5l.82-2.37h3.86l.82 2.37h1.96L13.3 6h-2.6L7.29 16.5h1.96zm2.75-8.08l1.32 3.86h-2.64l1.32-3.86zM17 14h5v2h-5zM17 9h5v2h-5z"
                   />
                 </svg>
-                <span>{{ "RDS_ROSTER_SORT_NAME" | translate }}</span>
+                <span>{{ "RDS_ROSTER_SORT_NICKNAME" | translate }}</span>
+              </button>
+              <button
+                type="button"
+                class="sort-btn"
+                [class.active]="sortBy() === 'driverName'"
+                (click)="setSort('driverName')"
+                data-testid="sort-driver-btn"
+                [title]="'RDS_ROSTER_SORT_DRIVER_NAME' | translate"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                  />
+                </svg>
+                <span>{{ "RDS_ROSTER_SORT_DRIVER_NAME" | translate }}</span>
               </button>
             </div>
           </div>
@@ -117,21 +137,21 @@
                   {{ item.seed }}
                 </div>
                 <div class="driver-info">
-                  <div class="driver-name">{{ item.name }}</div>
-                  @if (item.nickname || (item.teamName && !item.isTeam)) {
+                  <div class="driver-name">{{ item.primaryName }}</div>
+                  @if (
+                    item.secondaryName ||
+                    (item.teamName &&
+                      (!item.isTeam || item.teamName !== item.primaryName))
+                  ) {
                     <div class="driver-meta">
-                      @if (item.nickname) {
+                      @if (item.secondaryName) {
                         <span class="driver-nickname">
-                          {{
-                            item.isTeam
-                              ? item.nickname
-                              : '"' + item.nickname + '"'
-                          }}
+                          {{ item.secondaryName }}
                         </span>
                       }
                       @if (
                         item.teamName &&
-                        (!item.isTeam || item.teamName !== item.name)
+                        (!item.isTeam || item.teamName !== item.primaryName)
                       ) {
                         <span class="team-name" [title]="item.teamName">
                           {{ item.teamName }}

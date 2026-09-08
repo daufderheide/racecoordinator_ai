@@ -1,5 +1,5 @@
 import { DecimalPipe } from "@angular/common";
-import { Component, computed, input } from "@angular/core";
+import { Component, computed, input, output } from "@angular/core";
 import { Season, SeasonStandingItem } from "@app/models/season";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { calculateSeasonStandings } from "@app/utils/season.utils";
@@ -17,6 +17,15 @@ export class SeasonSummaryComponent {
   emptyMessage = input<string>("SM_NO_RACES_RUN");
   compact = input<boolean>(false);
   showHeader = input<boolean>(true);
+  showEdit = input<boolean>(false);
+
+  edit = output<void>();
+
+  onEdit(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.edit.emit();
+  }
 
   hasDemoRaces = computed(() => {
     const s = this.season();

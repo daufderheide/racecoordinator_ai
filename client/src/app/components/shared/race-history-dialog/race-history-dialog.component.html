@@ -178,6 +178,7 @@
   <app-disallow-lap-records-dialog
     [visible]="showDisallowDialog"
     [races]="selectedRaceGroup.races"
+    [allRaces]="raceHistories"
     [heats]="
       selectedHistoryDetails?.heats || selectedRaceGroup.races[0]?.heats || []
     "
