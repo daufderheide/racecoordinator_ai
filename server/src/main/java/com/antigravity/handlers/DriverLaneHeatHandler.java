@@ -3,6 +3,7 @@ package com.antigravity.handlers;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Driver;
 import com.antigravity.models.RaceHistoryRecord;
+import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.models.TeamOptions;
 import com.antigravity.protocols.CarLocation;
 import com.antigravity.race.ClientSubscriptionManager;
@@ -14,6 +15,7 @@ import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.race.states.Racing;
 import com.antigravity.service.DatabaseService;
+import com.antigravity.util.SeasonPointsCalculator;
 import io.javalin.http.Context;
 import java.util.Collections;
 import java.util.Comparator;
@@ -331,6 +333,10 @@ public class DriverLaneHeatHandler {
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
 
+          if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+            postProcessHistoryRaceAlteration(race);
+          }
+
           ctx.status(200)
               .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
         } else {
@@ -387,6 +393,10 @@ public class DriverLaneHeatHandler {
           race.updateAndBroadcastOverallStandings();
           race.updateScoreRecords();
           race.broadcast(race.createSnapshot());
+
+          if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+            postProcessHistoryRaceAlteration(race);
+          }
 
           ctx.status(200)
               .json(Collections.singletonMap("adjustedLapCount", dhd.getAdjustedLapCount()));
@@ -452,9 +462,64 @@ public class DriverLaneHeatHandler {
       race.updateScoreRecords();
       race.broadcast(race.createSnapshot());
 
+      if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+        postProcessHistoryRaceAlteration(race);
+      }
+
       ctx.status(200).result("OK");
     } catch (Exception e) {
       ctx.status(500).result("Error: " + e.getMessage());
+    }
+  }
+
+  private void postProcessHistoryRaceAlteration(Race race) {
+    if (race == null || race.getHistoryRecordId() == null || race.getHistoryRecordId().isEmpty()) {
+      return;
+    }
+    try {
+      DatabaseService dbService = DatabaseService.getInstance();
+      if (dbService == null || databaseContext == null) return;
+
+      dbService.saveRaceHistory(databaseContext, race);
+
+      String seasonEntityId = race.getSeasonEntityId();
+      String raceName = race.getRaceModel() != null ? race.getRaceModel().getName() : "Race";
+      long raceStart = race.getStatistics() != null ? race.getStatistics().getStartMillis() : 0L;
+      if (seasonEntityId == null || seasonEntityId.isEmpty()) {
+        seasonEntityId =
+            dbService.findSeasonIdForHistoryRecord(
+                databaseContext, race.getHistoryRecordId(), raceStart, raceName, race.isDemoMode());
+        if (seasonEntityId != null) {
+          race.setSeasonEntityId(seasonEntityId);
+        }
+      }
+
+      if (seasonEntityId != null && !seasonEntityId.isEmpty()) {
+        List<SeasonDriverResult> newSeasonResults =
+            SeasonPointsCalculator.calculateDriverResultsForRace(race);
+        dbService.updateSeasonRaceResults(
+            databaseContext,
+            seasonEntityId,
+            race.getHistoryRecordId(),
+            raceStart,
+            raceName,
+            race.isDemoMode(),
+            newSeasonResults);
+      }
+
+      String raceEntityId = race.getRaceModel() != null ? race.getRaceModel().getEntityId() : null;
+      if (raceEntityId != null && !raceEntityId.isEmpty()) {
+        dbService.recalculateStatisticsAfterHistoryEdit(
+            databaseContext, raceEntityId, race.isDemoMode());
+      }
+      dbService.updateDriverTrackStats(databaseContext, race, race.isDemoMode());
+      dbService.saveRaceRecords(databaseContext, race);
+      ClientSubscriptionManager.getInstance().broadcast(race.createSnapshot());
+      logger.info(
+          "Successfully updated history race alteration for historyRecordId={}",
+          race.getHistoryRecordId());
+    } catch (Exception e) {
+      logger.error("Error post-processing history race alteration", e);
     }
   }
 

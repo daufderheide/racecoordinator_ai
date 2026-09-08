@@ -4017,6 +4017,10 @@ public class RaceTest {
 
       // All heats empty -> should end up in RaceOver
       assertTrue(race.getState() instanceof RaceOver);
+      race.setAutoStartRemaining(10.0);
+      race.setAutoAdvanceRemaining(5.0);
+      assertEquals(0.0, race.getAutoStartRemaining(), 0.001);
+      assertEquals(0.0, race.getAutoAdvanceRemaining(), 0.001);
     }
   }
 }

@@ -114,6 +114,7 @@ public class Race implements ProtocolListener {
       this.theme = null;
     }
     this.seasonEntityId = builder.seasonEntityId;
+    this.historyRecordId = builder.historyRecordId;
     this.drivers = builder.drivers != null ? new ArrayList<>(builder.drivers) : new ArrayList<>();
     this.databaseContext = builder.databaseContext;
     this.customRotations =
@@ -173,7 +174,13 @@ public class Race implements ProtocolListener {
             model.getGroupOptions(),
             model.isPractice());
     this.demoConfig = builder.demoConfig;
-    this.hardwareManager.createProtocols(builder.isDemoMode, builder.demoConfig);
+    boolean isFinishedRace =
+        builder.skipHardwareInterface
+            || (builder.stateClassName != null
+                && builder.stateClassName.equals(RaceOver.class.getName()));
+    if (!isFinishedRace) {
+      this.hardwareManager.createProtocols(builder.isDemoMode, builder.demoConfig);
+    }
     this.isDemoMode = builder.isDemoMode;
 
     this.executionManager = new HeatExecutionManager(this);
@@ -274,6 +281,10 @@ public class Race implements ProtocolListener {
     }
   }
 
+  public boolean isFinished() {
+    return this.state instanceof RaceOver;
+  }
+
   public static class Builder {
     private com.antigravity.models.Race model; // fqn-collision
     private List<RaceParticipant> drivers;
@@ -292,7 +303,19 @@ public class Race implements ProtocolListener {
     private DemoConfig demoConfig;
     private RecordData existingRecords;
     private String seasonEntityId;
+    private String historyRecordId;
     private Theme theme;
+    private boolean skipHardwareInterface = false;
+
+    public Builder historyRecordId(String historyRecordId) {
+      this.historyRecordId = historyRecordId;
+      return this;
+    }
+
+    public Builder skipHardwareInterface(boolean skipHardwareInterface) {
+      this.skipHardwareInterface = skipHardwareInterface;
+      return this;
+    }
 
     public Builder theme(Theme theme) {
       this.theme = theme;
@@ -485,6 +508,9 @@ public class Race implements ProtocolListener {
   }
 
   public double getAutoStartRemaining() {
+    if (state instanceof RaceOver) {
+      return 0.0;
+    }
     return autoStartRemaining;
   }
 
@@ -493,6 +519,9 @@ public class Race implements ProtocolListener {
   }
 
   public double getAutoAdvanceRemaining() {
+    if (state instanceof RaceOver) {
+      return 0.0;
+    }
     EventExecutionManager eventMgr = EventExecutionManager.getInstance();
     if (eventMgr.isEventActive() && eventMgr.getAutoAdvanceRemainingSeconds() > 0) {
       return eventMgr.getAutoAdvanceRemainingSeconds();

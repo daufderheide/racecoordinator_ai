@@ -64,6 +64,10 @@ public class RaceOver implements IRaceState {
 
     race.broadcast(race.createSnapshot());
 
+    if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+      return;
+    }
+
     // Notify EventExecutionManager if running as part of an Event
     try {
       EventExecutionManager.getInstance().onRaceOver(race);
@@ -75,6 +79,9 @@ public class RaceOver implements IRaceState {
   }
 
   private void savePostRaceData(Race race) {
+    if (race.getHistoryRecordId() != null && !race.getHistoryRecordId().isEmpty()) {
+      return;
+    }
     // Save history and update stats (separately if in demo mode)
     try {
       DatabaseContext dbCtx = ClientSubscriptionManager.getInstance().getDatabaseContext();
@@ -103,7 +110,8 @@ public class RaceOver implements IRaceState {
                   raceName,
                   raceStart,
                   race.isDemoMode(),
-                  seasonResults);
+                  seasonResults,
+                  race.getHistoryRecordId());
             }
 
             List<DriverProjection> actuals = new ArrayList<>();

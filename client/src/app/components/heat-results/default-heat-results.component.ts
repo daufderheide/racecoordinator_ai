@@ -6,10 +6,16 @@ import {
   OnDestroy,
   OnInit,
 } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import { AddLapSectionsDialogComponent } from "@app/components/raceday/components/add-lap-sections-dialog/add-lap-sections-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import {
   GhostTrajectoryDialogComponent,
   TrajectoryReferenceOption,
@@ -31,6 +37,7 @@ import {
 import { DataService } from "@app/data.service";
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
+import { isAtLeast, Role } from "@app/models/role";
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { Heat } from "@app/race/heat";
@@ -50,6 +57,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
   templateUrl: "./default-heat-results.component.html",
   styleUrls: ["./default-heat-results.component.css"],
   imports: [
+    FormsModule,
     TranslatePipe,
     LocalDatePipe,
     AcknowledgementModalComponent,
@@ -58,6 +66,9 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
     PdfExportDialogComponent,
     BrowserNavigationComponent,
     GhostTrajectoryDialogComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
+    AddLapSectionsDialogComponent,
   ],
 })
 export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
@@ -69,6 +80,65 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   showPdfExportDialog = false;
   defaultIncludeBackground = true;
+  showAddLapSectionsDialog = false;
+  selectedHeatIndex = 0;
+
+  get canEdit(): boolean {
+    return isAtLeast(this.authService.currentRole, Role.DIRECTOR);
+  }
+
+  get heats(): Heat[] {
+    return this.raceService.getHeats() || [];
+  }
+
+  get isReviewingPastRace(): boolean {
+    return Boolean((this.race as any)?.historyRecordId);
+  }
+
+  exitReview(): void {
+    this.router.navigate(["/"]);
+  }
+
+  navigateToRaceResults(): void {
+    this.router.navigate(["/race-results"]);
+  }
+
+  onHeatSelected(index: number): void {
+    this.selectedHeatIndex = index;
+    if (this.heats && this.heats[index]) {
+      this.heat = this.heats[index];
+      this.updateGraph();
+      this.calculateHeatStandings();
+      this.cdr.markForCheck();
+    }
+  }
+
+  openAddLapSections(): void {
+    this.showAddLapSectionsDialog = true;
+    this.cdr.markForCheck();
+  }
+
+  onAddLapSectionsConfirm(event: any): void {
+    if (event?.isBatch && event.updates) {
+      const histId = (this.race as any)?.historyRecordId;
+      const isDemo = Boolean((this.race as any)?.is_demo);
+      if (histId) {
+        this.dataService
+          .updateHistoryLapSections(histId, event.updates, isDemo)
+          .subscribe(() => {
+            this.showAddLapSectionsDialog = false;
+            this.cdr.markForCheck();
+          });
+      } else {
+        this.dataService.updateBatchUserLaps(event.updates).subscribe(() => {
+          this.showAddLapSectionsDialog = false;
+          this.cdr.markForCheck();
+        });
+      }
+    } else {
+      this.showAddLapSectionsDialog = false;
+    }
+  }
 
   get showAckModal(): boolean {
     return this.viewerRaceEndedHandler?.showAckModal ?? false;
@@ -215,7 +285,17 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.push(
-      this.raceService.currentHeat$.subscribe(() => {
+      this.raceService.currentHeat$.subscribe((currHeat) => {
+        if (!this.isReviewingPastRace && currHeat) {
+          const idx = this.heats.findIndex(
+            (h) =>
+              h.heatNumber === currHeat.heatNumber ||
+              h.objectId === currHeat.objectId,
+          );
+          if (idx >= 0) {
+            this.selectedHeatIndex = idx;
+          }
+        }
         this.loadRaceData();
         this.updateGraph();
         this.calculateHeatStandings();
@@ -498,7 +578,24 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
 
   private loadRaceData() {
     this.race = this.raceService.getRace();
-    this.heat = this.raceService.getCurrentHeat();
+    if (
+      this.selectedHeatIndex >= 0 &&
+      this.heats.length > this.selectedHeatIndex
+    ) {
+      this.heat = this.heats[this.selectedHeatIndex];
+    } else {
+      this.heat = this.raceService.getCurrentHeat();
+      if (this.heat && this.heats.length > 0) {
+        const idx = this.heats.findIndex(
+          (h) =>
+            h.heatNumber === this.heat?.heatNumber ||
+            h.objectId === this.heat?.objectId,
+        );
+        if (idx >= 0) {
+          this.selectedHeatIndex = idx;
+        }
+      }
+    }
   }
 
   /* eslint-disable max-lines-per-function */

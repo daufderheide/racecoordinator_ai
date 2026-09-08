@@ -333,6 +333,33 @@ export class DataService {
     ]).pipe(map(([prod, demo]) => [...(prod || []), ...(demo || [])]));
   }
 
+  loadRaceHistory(id: string, isDemo?: boolean): Observable<any> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}/load?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}/load`;
+    return this.http.post(url, {}, { responseType: "text" });
+  }
+
+  exportRaceHistoryToCsv(id: string, isDemo?: boolean): Observable<string> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}/export?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}/export`;
+    return this.http.get(url, {
+      responseType: "text",
+    });
+  }
+
+  updateHistoryLapSections(
+    id: string,
+    updates: any[],
+    isDemo?: boolean,
+  ): Observable<any> {
+    const url = isDemo
+      ? `${this.baseUrl}/api/history/races/${id}/lap-sections?demo=true`
+      : `${this.baseUrl}/api/history/races/${id}/lap-sections`;
+    return this.http.post(url, updates, { responseType: "text" });
+  }
+
   exportRaceToCsv(): Observable<string> {
     return this.http.get(`${this.baseUrl}/api/races/current/export-csv`, {
       responseType: "text",

@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { Role } from "@app/models/role";
@@ -11,6 +12,7 @@ describe("RaceHistoryDialogComponent", () => {
   let component: RaceHistoryDialogComponent;
   let fixture: ComponentFixture<RaceHistoryDialogComponent>;
   let mockDataService: jasmine.SpyObj<DataService>;
+  let mockRouter: jasmine.SpyObj<Router>;
   let roleSubject: BehaviorSubject<Role>;
   let mockAuthService: { currentRole$: BehaviorSubject<Role> };
 
@@ -61,11 +63,19 @@ describe("RaceHistoryDialogComponent", () => {
       "getRaceHistoryById",
       "updateLiveLapRecordStatus",
       "updateHistoryLapRecordStatus",
+      "loadRaceHistory",
+      "exportRaceHistoryToCsv",
+      "updateHistoryLapSections",
     ]);
     mockDataService.getAllFinishedRaceHistory.and.returnValue(
       of(mockHistories),
     );
     mockDataService.getRaceHistoryById.and.returnValue(of(mockHistories[0]));
+    mockDataService.loadRaceHistory.and.returnValue(of({} as any));
+    mockDataService.exportRaceHistoryToCsv.and.returnValue(of("csv data"));
+    mockDataService.updateHistoryLapSections.and.returnValue(of({} as any));
+
+    mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
 
     roleSubject = new BehaviorSubject<Role>(Role.VIEWER);
     mockAuthService = {
@@ -83,6 +93,7 @@ describe("RaceHistoryDialogComponent", () => {
         { provide: DataService, useValue: mockDataService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: Router, useValue: mockRouter },
       ],
     }).compileComponents();
 
@@ -574,5 +585,155 @@ describe("RaceHistoryDialogComponent", () => {
     expect(
       component.selectedRaceGroup?.races.every((r) => !r.is_demo),
     ).toBeTrue();
+  });
+
+  describe("race run selection and openRace", () => {
+    it("should default getSelectedRaceId to the first race in the group", () => {
+      const group = component.groupedHistories[0];
+      expect(component.getSelectedRaceId(group)).toBe(group.races[0]._id);
+      expect(component.getSelectedRace(group)).toBe(group.races[0]);
+    });
+
+    it("should update selected race ID when onSelectRaceForGroup is called", () => {
+      const group = {
+        id: "prod:::multi_group",
+        raceName: "Multi Run Race",
+        isDemo: false,
+        earliestDate: 1000,
+        latestDate: 2000,
+        ineligibleLapCount: 0,
+        races: [
+          { _id: "run_alpha", timestamp: 2000 },
+          { _id: "run_beta", timestamp: 1000 },
+        ],
+      };
+
+      expect(component.getSelectedRaceId(group)).toBe("run_alpha");
+      expect(component.getSelectedRace(group)).toBe(group.races[0]);
+
+      component.onSelectRaceForGroup(group.id, "run_beta");
+      expect(component.getSelectedRaceId(group)).toBe("run_beta");
+      expect(component.getSelectedRace(group)).toBe(group.races[1]);
+    });
+
+    it("should call loadRaceHistory and navigate to /raceday on success", () => {
+      const closeSpy = spyOn(component.close, "emit");
+      const group = component.groupedHistories[0];
+
+      component.openRace(group);
+
+      expect(mockDataService.loadRaceHistory).toHaveBeenCalledWith(
+        group.races[0]._id,
+        group.isDemo,
+      );
+      expect(closeSpy).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+    });
+
+    it("should load the specifically selected run when user picks a different run in group", () => {
+      const closeSpy = spyOn(component.close, "emit");
+      const group = {
+        id: "prod:::custom_runs",
+        raceName: "Custom Runs",
+        isDemo: true,
+        earliestDate: 500,
+        latestDate: 1500,
+        ineligibleLapCount: 0,
+        races: [
+          { _id: "run_1", timestamp: 1500 },
+          { _id: "run_2", timestamp: 500 },
+        ],
+      };
+
+      component.onSelectRaceForGroup(group.id, "run_2");
+      component.openRace(group);
+
+      expect(mockDataService.loadRaceHistory).toHaveBeenCalledWith(
+        "run_2",
+        true,
+      );
+      expect(closeSpy).toHaveBeenCalled();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+    });
+
+    it("should handle loadRaceHistory error gracefully", () => {
+      mockDataService.loadRaceHistory.and.returnValue(
+        throwError(() => new Error("Network error")),
+      );
+      const closeSpy = spyOn(component.close, "emit");
+      const group = component.groupedHistories[0];
+
+      component.openRace(group);
+
+      expect(mockDataService.loadRaceHistory).toHaveBeenCalled();
+      expect(component.isLoadingDetails).toBeFalse();
+      expect(closeSpy).not.toHaveBeenCalled();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should use selected race run when editing race laps in a group", () => {
+      const group = {
+        id: "prod:::edit_group",
+        raceName: "Edit Group",
+        isDemo: false,
+        earliestDate: 100,
+        latestDate: 200,
+        ineligibleLapCount: 0,
+        races: [
+          { _id: "run_edit_1", model: { name: "Edit Group" } },
+          { _id: "run_edit_2", model: { name: "Edit Group" } },
+        ],
+      };
+
+      component.onSelectRaceForGroup(group.id, "run_edit_2");
+      component.editRaceLaps(group);
+
+      expect(component.showDisallowDialog).toBeTrue();
+      expect(component.selectedHistoryDetails).toBe(group.races[1]);
+    });
+
+    it("should deduplicate multiple history records with matching run timestamps", () => {
+      component.raceHistories = [
+        {
+          _id: "rec_orig",
+          entity_id: "race_same",
+          timestamp: 5000,
+          heats: [
+            {
+              heatNumber: 1,
+              drivers: [
+                {
+                  laps: [{ lapTime: 4.0 }],
+                  adjustedLapCount: 5,
+                  userLaps: 0,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          _id: "rec_edited",
+          entity_id: "race_same",
+          timestamp: 5000,
+          heats: [
+            {
+              heatNumber: 1,
+              drivers: [
+                {
+                  laps: [{ lapTime: 4.0 }],
+                  adjustedLapCount: 5,
+                  userLaps: 3,
+                },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const groups = component.groupedHistories;
+      expect(groups.length).toBe(1);
+      expect(groups[0].races.length).toBe(1);
+      expect(groups[0].races[0]._id).toBe("rec_edited");
+    });
   });
 });

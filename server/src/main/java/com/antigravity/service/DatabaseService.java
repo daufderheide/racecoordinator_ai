@@ -18,6 +18,7 @@ import com.antigravity.models.Team;
 import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RecordData;
+import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Heat;
 import com.antigravity.race.RaceSaveData;
@@ -29,7 +30,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,8 +144,10 @@ public class DatabaseService {
       SqliteRepository<RaceHistoryRecord> repo =
           new SqliteRepository<>(context, tableName, RaceHistoryRecord.class);
       RaceHistoryRecord record = new RaceHistoryRecord();
-      record.setId(java.util.UUID.randomUUID().toString());
+      String recordId = resolveHistoryRecordId(repo, runtimeRace);
+      record.setId(recordId);
       record.setDemo(isDemo);
+      record.setSeasonEntityId(runtimeRace.getSeasonEntityId());
       if (runtimeRace.getRaceModel() != null) {
         record.setOriginalEntityId(runtimeRace.getRaceModel().getEntityId());
         record.setModel(runtimeRace.getRaceModel());
@@ -184,6 +189,35 @@ public class DatabaseService {
     }
   }
 
+  private String resolveHistoryRecordId(
+      SqliteRepository<RaceHistoryRecord> repo,
+      com.antigravity.race.Race runtimeRace) { // fqn-collision
+    String recordId = runtimeRace.getHistoryRecordId();
+    if (recordId != null && !recordId.trim().isEmpty()) {
+      return recordId;
+    }
+    long startMillis =
+        (runtimeRace.getStatistics() != null && runtimeRace.getStatistics().getStartMillis() > 0)
+            ? runtimeRace.getStatistics().getStartMillis()
+            : 0L;
+    String origEntityId =
+        runtimeRace.getRaceModel() != null ? runtimeRace.getRaceModel().getEntityId() : null;
+    if (startMillis > 0 && origEntityId != null) {
+      for (RaceHistoryRecord existing : repo.findAll()) {
+        if (origEntityId.equals(existing.getOriginalEntityId())) {
+          long existingTs = existing.getTimestamp() != null ? existing.getTimestamp() : 0L;
+          if (existing.getStatistics() != null && existing.getStatistics().getStartMillis() > 0) {
+            existingTs = existing.getStatistics().getStartMillis();
+          }
+          if (Math.abs(existingTs - startMillis) < 1000) {
+            return existing.getId();
+          }
+        }
+      }
+    }
+    return UUID.randomUUID().toString();
+  }
+
   public void saveRawRaceHistoryRecord(DatabaseContext context, RaceHistoryRecord record) {
     if (context == null || record == null) return;
     try {
@@ -211,7 +245,8 @@ public class DatabaseService {
       String raceName,
       long timestamp,
       boolean isDemo,
-      List<SeasonDriverResult> driverResults) {
+      List<SeasonDriverResult> driverResults,
+      String historyRecordId) {
     if (seasonId == null
         || seasonId.trim().isEmpty()
         || driverResults == null
@@ -230,20 +265,195 @@ public class DatabaseService {
       String nextRaceId = String.valueOf(races.size() + 1);
       long recordTimestamp = timestamp > 0 ? timestamp : System.currentTimeMillis();
       SeasonRaceRecord newRecord =
-          new SeasonRaceRecord(nextRaceId, raceName, recordTimestamp, isDemo, driverResults);
+          new SeasonRaceRecord(
+              nextRaceId, raceName, recordTimestamp, isDemo, driverResults, historyRecordId);
       races.add(newRecord);
 
       Season updatedSeason =
           new Season(season.getName(), season.getDrops(), races, season.getEntityId(), null);
       repo.save(updatedSeason);
       logger.info(
-          "Committed race '{}' results (isDemo={}) to season '{}'",
+          "Committed race '{}' results (isDemo={}, historyRecordId={}) to season '{}'",
           raceName,
           isDemo,
+          historyRecordId,
           season.getName());
     } catch (Exception e) {
       logger.error("Failed to commit race to season", e);
     }
+  }
+
+  public void commitRaceToSeason(
+      DatabaseContext context,
+      String seasonId,
+      String raceName,
+      long timestamp,
+      boolean isDemo,
+      List<SeasonDriverResult> driverResults) {
+    commitRaceToSeason(context, seasonId, raceName, timestamp, isDemo, driverResults, null);
+  }
+
+  public void updateSeasonRaceResults(
+      DatabaseContext context,
+      String seasonId,
+      String historyRecordId,
+      long timestamp,
+      String raceName,
+      boolean isDemo,
+      List<SeasonDriverResult> updatedResults) {
+    if (seasonId == null || seasonId.trim().isEmpty() || updatedResults == null) {
+      return;
+    }
+    try {
+      SqliteRepository<Season> repo = new SqliteRepository<>(context, "seasons", Season.class);
+      Season season = repo.findByEntityId(seasonId);
+      if (season == null) {
+        logger.warn("Season not found for entity_id: {}", seasonId);
+        return;
+      }
+      List<SeasonRaceRecord> races = season.getRaces();
+      if (races == null || races.isEmpty()) {
+        return;
+      }
+
+      List<SeasonRaceRecord> updatedRaces = new ArrayList<>();
+      boolean matched = false;
+
+      for (SeasonRaceRecord r : races) {
+        boolean isMatch = false;
+        if (historyRecordId != null
+            && !historyRecordId.isEmpty()
+            && historyRecordId.equals(r.getHistoryRecordId())) {
+          isMatch = true;
+        } else if (!matched && timestamp > 0 && Math.abs(r.getTimestamp() - timestamp) < 60000) {
+          isMatch = true;
+        } else if (!matched
+            && raceName != null
+            && raceName.equals(r.getRaceName())
+            && isDemo == r.isDemo()) {
+          isMatch = true;
+        }
+
+        if (isMatch && !matched) {
+          matched = true;
+          updatedRaces.add(
+              new SeasonRaceRecord(
+                  r.getRaceId(),
+                  r.getRaceName(),
+                  r.getTimestamp(),
+                  r.isDemo(),
+                  updatedResults,
+                  (historyRecordId != null && !historyRecordId.isEmpty())
+                      ? historyRecordId
+                      : r.getHistoryRecordId()));
+        } else {
+          updatedRaces.add(r);
+        }
+      }
+
+      if (matched) {
+        Season updatedSeason =
+            new Season(
+                season.getName(), season.getDrops(), updatedRaces, season.getEntityId(), null);
+        repo.save(updatedSeason);
+        logger.info(
+            "Updated season '{}' race results for historyRecordId={}",
+            season.getName(),
+            historyRecordId);
+      } else {
+        logger.warn("Could not find matching race in season '{}' to update", season.getName());
+      }
+    } catch (Exception e) {
+      logger.error("Failed to update race in season", e);
+    }
+  }
+
+  public String findSeasonIdForHistoryRecord(
+      DatabaseContext context,
+      String historyRecordId,
+      long timestamp,
+      String raceName,
+      boolean isDemo) {
+    if (context == null) return null;
+    try {
+      SqliteRepository<Season> repo = new SqliteRepository<>(context, "seasons", Season.class);
+      for (Season season : repo.findAll()) {
+        if (season.getRaces() != null) {
+          for (SeasonRaceRecord r : season.getRaces()) {
+            if (historyRecordId != null
+                && !historyRecordId.isEmpty()
+                && historyRecordId.equals(r.getHistoryRecordId())) {
+              return season.getEntityId();
+            }
+            if (timestamp > 0 && Math.abs(r.getTimestamp() - timestamp) < 60000) {
+              return season.getEntityId();
+            }
+            if (raceName != null && raceName.equals(r.getRaceName()) && isDemo == r.isDemo()) {
+              return season.getEntityId();
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Failed to find season for history record", e);
+    }
+    return null;
+  }
+
+  public com.antigravity.race.Race buildRuntimeRaceFromHistory( // fqn-collision
+      DatabaseContext context, RaceHistoryRecord record) {
+    if (record == null) return null;
+    Track trackToUse = record.getTrack();
+    if (record.getModel() != null && record.getModel().getTrackEntityId() != null) {
+      Track dbTrack = getTrack(context, record.getModel().getTrackEntityId());
+      if (dbTrack != null
+          && trackToUse != null
+          && dbTrack.getLanes().size() == trackToUse.getLanes().size()) {
+        trackToUse = dbTrack;
+      }
+    }
+
+    if (record.getHeats() != null) {
+      for (Heat heat : record.getHeats()) {
+        if (record.getModel() != null) {
+          heat.initializeStandings(
+              record.getModel().getHeatScoring(), record.getModel().isPractice());
+        }
+      }
+    }
+
+    int currentHeatIdx =
+        (record.getHeats() != null && !record.getHeats().isEmpty())
+            ? record.getHeats().size() - 1
+            : 0;
+
+    String seasonEntityId = record.getSeasonEntityId();
+    if (seasonEntityId == null || seasonEntityId.isEmpty()) {
+      long ts = record.getTimestamp() != null ? record.getTimestamp() : 0L;
+      String rName = record.getModel() != null ? record.getModel().getName() : null;
+      seasonEntityId =
+          findSeasonIdForHistoryRecord(context, record.getId(), ts, rName, record.isDemo());
+    }
+
+    com.antigravity.race.Race race = // fqn-collision
+        new com.antigravity.race.Race.Builder() // fqn-collision
+            .model(record.getModel())
+            .drivers(record.getDrivers())
+            .track(trackToUse)
+            .heats(record.getHeats())
+            .currentHeatIndex(currentHeatIdx)
+            .accumulatedRaceTime(record.getAccumulatedRaceTime())
+            .stateClassName(com.antigravity.race.states.RaceOver.class.getName()) // fqn-collision
+            .isDemoMode(record.isDemo())
+            .statistics(record.getStatistics())
+            .databaseContext(context)
+            .skipHardwareInterface(true)
+            .seasonEntityId(seasonEntityId)
+            .historyRecordId(record.getId())
+            .build();
+
+    race.setHistoryRecordId(record.getId());
+    return race;
   }
 
   public void commitRaceToSeason(
@@ -352,7 +562,66 @@ public class DatabaseService {
 
   public List<RaceHistoryRecord> getRaceHistory(DatabaseContext context, RaceScope scope) {
     String tableName = getCollectionName("race_history", scope);
+    deduplicateRaceHistoryTable(context, tableName);
     return new SqliteRepository<>(context, tableName, RaceHistoryRecord.class).findAll();
+  }
+
+  public void deduplicateRaceHistory(DatabaseContext context) {
+    if (context == null) return;
+    deduplicateRaceHistoryTable(context, "race_history");
+    deduplicateRaceHistoryTable(context, "demo_race_history");
+  }
+
+  public void deduplicateRaceHistoryTable(DatabaseContext context, String tableName) {
+    try {
+      SqliteRepository<RaceHistoryRecord> repo =
+          new SqliteRepository<>(context, tableName, RaceHistoryRecord.class);
+      List<RaceHistoryRecord> records = repo.findAll();
+      if (records == null || records.size() <= 1) return;
+
+      Map<String, List<RaceHistoryRecord>> grouped = new HashMap<>();
+      for (RaceHistoryRecord rec : records) {
+        long ts = rec.getTimestamp() != null ? rec.getTimestamp() : 0L;
+        if (rec.getStatistics() != null && rec.getStatistics().getStartMillis() > 0) {
+          ts = rec.getStatistics().getStartMillis();
+        }
+        if (ts <= 0) continue;
+        String origId = rec.getOriginalEntityId() != null ? rec.getOriginalEntityId() : "";
+        String key = origId + ":::" + ts;
+        grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(rec);
+      }
+
+      for (List<RaceHistoryRecord> dups : grouped.values()) {
+        if (dups.size() > 1) {
+          dups.sort((a, b) -> Double.compare(calculateTotalLaps(b), calculateTotalLaps(a)));
+          RaceHistoryRecord keep = dups.get(0);
+          for (int i = 1; i < dups.size(); i++) {
+            RaceHistoryRecord toDelete = dups.get(i);
+            repo.delete(toDelete.getId());
+            logger.info(
+                "Removed duplicate history record {} in favor of {} for table {}",
+                toDelete.getId(),
+                keep.getId(),
+                tableName);
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Failed to deduplicate race history for table {}", tableName, e);
+    }
+  }
+
+  private double calculateTotalLaps(RaceHistoryRecord rec) {
+    if (rec == null || rec.getHeats() == null) return 0.0;
+    double total = 0.0;
+    for (Heat h : rec.getHeats()) {
+      if (h.getDrivers() != null) {
+        for (DriverHeatData dhd : h.getDrivers()) {
+          total += dhd.getAdjustedLapCount() + dhd.getUserLaps();
+        }
+      }
+    }
+    return total;
   }
 
   public List<RaceHistoryRecord> getRaceHistory(DatabaseContext context, boolean isDemo) {

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,7 @@ import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.race.states.IRaceState;
+import com.antigravity.race.states.RaceOver;
 import io.javalin.websocket.WsContext;
 import java.io.File;
 import java.lang.reflect.Field;
@@ -677,5 +679,55 @@ public class ClientSubscriptionManagerTest {
         .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
     verify(mockRemote, org.mockito.Mockito.never())
         .sendStringByFuture(org.mockito.ArgumentMatchers.anyString());
+  }
+
+  @Test
+  public void testAddInterfaceSessionDoesNotSendStatusWhenRaceOver() throws Exception {
+    Race mockRace = mock(Race.class);
+    RaceHardwareManager mockHwManager = mock(RaceHardwareManager.class);
+    ProtocolDelegate mockDelegate = mock(ProtocolDelegate.class);
+    DefaultProtocol mockProtocol = mock(DefaultProtocol.class);
+    RaceOver mockRaceOver = mock(RaceOver.class);
+
+    when(mockRace.getHardwareManager()).thenReturn(mockHwManager);
+    when(mockHwManager.getProtocols()).thenReturn(mockDelegate);
+    when(mockDelegate.getProtocols()).thenReturn(Collections.singletonList(mockProtocol));
+    when(mockRace.getState()).thenReturn(mockRaceOver);
+
+    manager.setRace(mockRace);
+
+    WsContext mockContext = mock(WsContext.class);
+    org.eclipse.jetty.websocket.api.Session mockSession =
+        mock(org.eclipse.jetty.websocket.api.Session.class);
+    Field sessionField = WsContext.class.getDeclaredField("session");
+    sessionField.setAccessible(true);
+    sessionField.set(mockContext, mockSession);
+
+    manager.addInterfaceSession(mockContext);
+
+    verify(mockContext, never()).send(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+    verify(mockContext, never()).send(org.mockito.ArgumentMatchers.any(byte[].class));
+  }
+
+  @Test
+  public void testBroadcastInterfaceEventSuppressedWhenRaceOver() {
+    org.eclipse.jetty.websocket.api.RemoteEndpoint mockRemote =
+        mock(org.eclipse.jetty.websocket.api.RemoteEndpoint.class);
+    WsContext context = createMockWsContext(mockRemote);
+
+    Race mockRace = mock(Race.class);
+    RaceOver mockRaceOver = mock(RaceOver.class);
+    when(mockRace.getState()).thenReturn(mockRaceOver);
+    manager.setRace(mockRace);
+
+    manager.addInterfaceSession(context);
+    org.mockito.Mockito.reset(mockRemote);
+
+    com.antigravity.proto.InterfaceEvent event =
+        com.antigravity.proto.InterfaceEvent.newBuilder().build();
+    manager.broadcastInterfaceEvent(event);
+
+    verify(mockRemote, never())
+        .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
   }
 }

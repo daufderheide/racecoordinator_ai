@@ -84,7 +84,11 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                     ) {
                       <app-custom-option [value]="idx">
                         {{ "RD_LANE" | translate }} {{ d.laneIndex + 1 }}:
-                        {{ d.driver?.name || ("RD_EMPTY_LANE" | translate) }}
+                        {{
+                          d.driverName ||
+                            d.driver?.name ||
+                            ("RD_EMPTY_LANE" | translate)
+                        }}
                       </app-custom-option>
                     }
                   </app-custom-select>
@@ -118,7 +122,8 @@ import { DriverHeatData } from "@app/race/driver_heat_data";
                   >{{ "RD_ADD_LAP_SECTIONS_DRIVER" | translate }}:</span
                 >
                 <span class="info-value">{{
-                  activeDriverHeatData()?.driver?.name ||
+                  activeDriverHeatData()?.driverName ||
+                    activeDriverHeatData()?.driver?.name ||
                     ("RD_EMPTY_LANE" | translate)
                 }}</span>
               </div>
@@ -464,7 +469,22 @@ export class AddLapSectionsDialogComponent {
     if (!heatsList || heatsList.length === 0) return [];
     const hIdx = this.selectedHeatIndex();
     const heat = heatsList[hIdx];
-    return heat ? heat.heatDrivers || [] : [];
+    const rawDrivers = heat ? heat.heatDrivers || heat.drivers || [] : [];
+    return rawDrivers.map((d: any, idx: number) => ({
+      ...d,
+      laneIndex:
+        d.laneIndex !== undefined
+          ? d.laneIndex
+          : d.lane !== undefined
+            ? d.lane
+            : idx,
+      driverName:
+        d.driver?.name ||
+        d.actualDriver?.name ||
+        d.participant?.driver?.name ||
+        d.name ||
+        "",
+    }));
   });
 
   activeDriverHeatData = computed(() => {

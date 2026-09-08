@@ -13,6 +13,7 @@ import com.antigravity.models.Event;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.RaceHistoryRecord;
 import com.antigravity.models.Season;
+import com.antigravity.models.SeasonRaceRecord;
 import com.antigravity.models.SeasonRaceRecord.SeasonDriverResult;
 import com.antigravity.race.EventExecutionManager;
 import com.antigravity.race.Race;
@@ -21,6 +22,7 @@ import com.antigravity.repository.SqliteRepository;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -500,5 +502,203 @@ public class DatabaseServiceTest {
     boolean notFound =
         dbService.renameSavedRace(databaseContext, "nonexistent.json", "anything", false);
     assertFalse(notFound);
+  }
+
+  @Test
+  public void testSaveRaceHistory_PreservesHistoryRecordId() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Preserve ID Race")
+            .withEntityId("ID_PRES")
+            .build();
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(new RaceParticipant(new Driver("Dave", "DB")));
+
+    Race runtimeRace =
+        new Race.Builder()
+            .model(model)
+            .drivers(drivers)
+            .track(dbService.getFactoryTrack())
+            .accumulatedRaceTime(10.0f)
+            .isDemoMode(false)
+            .build();
+
+    runtimeRace.setHistoryRecordId("hist_preserved_123");
+    dbService.saveRaceHistory(databaseContext, runtimeRace);
+
+    RaceHistoryRecord record =
+        dbService.getRaceHistoryById(databaseContext, "hist_preserved_123", false);
+    assertNotNull(record);
+    assertEquals("hist_preserved_123", record.getId());
+  }
+
+  @Test
+  public void testBuildRuntimeRaceFromHistory() {
+    // Setup a season in the DB referencing this history record
+    SqliteRepository<Season> seasonRepo =
+        new SqliteRepository<>(databaseContext, "seasons", Season.class);
+    SeasonRaceRecord seasonRace =
+        new SeasonRaceRecord(
+            "r_build",
+            "Build Test Race",
+            System.currentTimeMillis(),
+            false,
+            Collections.emptyList(),
+            "hist_build_test");
+    Season testSeason =
+        new Season("Auto Season", 0, Collections.singletonList(seasonRace), "season_auto_1", null);
+    seasonRepo.save(testSeason);
+
+    RaceHistoryRecord history = new RaceHistoryRecord();
+    history.setId("hist_build_test");
+    history.setOriginalEntityId("race_model_1");
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("race_model_1")
+            .withName("Build Test Race")
+            .build();
+    history.setModel(model);
+    history.setTrack(dbService.getFactoryTrack());
+
+    RaceParticipant p = new RaceParticipant(new Driver("Dave", "D"));
+    history.setDrivers(Arrays.asList(p));
+
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData();
+    dhd.setLane(1);
+    dhd.setDriver(p);
+    dhd.addLap(4.0, false, true);
+    com.antigravity.race.Heat heat = new com.antigravity.race.Heat(1, Arrays.asList(dhd), false);
+    history.setHeats(new ArrayList<>(Arrays.asList(heat)));
+
+    // Count history records before building
+    SqliteRepository<RaceHistoryRecord> histRepo =
+        new SqliteRepository<>(databaseContext, "race_history", RaceHistoryRecord.class);
+    int countBefore = histRepo.findAll().size();
+
+    Race builtRace = dbService.buildRuntimeRaceFromHistory(databaseContext, history);
+    assertNotNull(builtRace);
+    assertEquals("hist_build_test", builtRace.getHistoryRecordId());
+    assertEquals("season_auto_1", builtRace.getSeasonEntityId());
+    assertTrue(builtRace.getState() instanceof com.antigravity.race.states.RaceOver);
+    assertEquals(1, builtRace.getDrivers().size());
+    assertNull(builtRace.getHardwareManager().getProtocols());
+
+    // Verify building from history did NOT insert a duplicate history record
+    int countAfter = histRepo.findAll().size();
+    assertEquals(countBefore, countAfter);
+  }
+
+  @Test
+  public void testUpdateSeasonRaceResults() {
+    SqliteRepository<Season> repo =
+        new SqliteRepository<>(databaseContext, "seasons", Season.class);
+    SeasonDriverResult res1 = new SeasonDriverResult("d1", "Dave", 1, 10.0, 0.0, 10.0);
+    SeasonRaceRecord raceRecord =
+        new SeasonRaceRecord(
+            "r1", "Race 1", System.currentTimeMillis(), false, Arrays.asList(res1), "hist_rec_1");
+    Season season = new Season("2026 Championship", 0, Arrays.asList(raceRecord), "season_1", null);
+    repo.save(season);
+
+    SeasonDriverResult updatedRes = new SeasonDriverResult("d1", "Dave", 2, 8.0, 0.0, 8.0);
+    dbService.updateSeasonRaceResults(
+        databaseContext,
+        "season_1",
+        "hist_rec_1",
+        raceRecord.getTimestamp(),
+        "Race 1",
+        false,
+        Arrays.asList(updatedRes));
+
+    Season updatedSeason = repo.findByEntityId("season_1");
+    assertNotNull(updatedSeason);
+    assertEquals(1, updatedSeason.getRaces().size());
+    SeasonRaceRecord updatedRecord = updatedSeason.getRaces().get(0);
+    assertEquals(8.0, updatedRecord.getDriverResults().get(0).getTotalPoints(), 0.001);
+    assertEquals(2, updatedRecord.getDriverResults().get(0).getOverallRank());
+    assertEquals("hist_rec_1", updatedRecord.getHistoryRecordId());
+  }
+
+  @Test
+  public void testSaveRaceHistory_ReusesExistingIdMatchingRunTimestamp() {
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Reuse Run Race")
+            .withEntityId("REUSE_RUN_1")
+            .build();
+    List<RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(new RaceParticipant(new Driver("Dave", "D")));
+
+    Race runtimeRace1 =
+        new Race.Builder()
+            .model(model)
+            .drivers(drivers)
+            .track(dbService.getFactoryTrack())
+            .accumulatedRaceTime(10.0f)
+            .isDemoMode(false)
+            .build();
+    runtimeRace1.getStatistics().setStartMillis(1788800000000L);
+
+    dbService.saveRaceHistory(databaseContext, runtimeRace1);
+    String generatedId = runtimeRace1.getHistoryRecordId();
+    assertNotNull(generatedId);
+
+    // Create another runtime race for the same run, but without historyRecordId set
+    Race runtimeRace2 =
+        new Race.Builder()
+            .model(model)
+            .drivers(drivers)
+            .track(dbService.getFactoryTrack())
+            .accumulatedRaceTime(12.0f)
+            .isDemoMode(false)
+            .build();
+    runtimeRace2.getStatistics().setStartMillis(1788800000000L);
+
+    dbService.saveRaceHistory(databaseContext, runtimeRace2);
+    assertEquals(generatedId, runtimeRace2.getHistoryRecordId());
+
+    SqliteRepository<RaceHistoryRecord> repo =
+        new SqliteRepository<>(databaseContext, "race_history", RaceHistoryRecord.class);
+    assertEquals(1, repo.findAll().size());
+  }
+
+  @Test
+  public void testDeduplicateRaceHistoryTable_RemovesDuplicatesAndRetainsEditedRecord() {
+    SqliteRepository<RaceHistoryRecord> repo =
+        new SqliteRepository<>(databaseContext, "demo_race_history", RaceHistoryRecord.class);
+
+    RaceParticipant p = new RaceParticipant(new Driver("Alice", "A"));
+
+    // Record 1: unedited (1 lap)
+    RaceHistoryRecord rec1 = new RaceHistoryRecord();
+    rec1.setId("rec_dup_1");
+    rec1.setOriginalEntityId("model_dup");
+    rec1.setTimestamp(1788990000000L);
+    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData();
+    dhd1.setLane(1);
+    dhd1.setDriver(p);
+    dhd1.addLap(4.0, false, true);
+    rec1.setHeats(Arrays.asList(new com.antigravity.race.Heat(1, Arrays.asList(dhd1), false)));
+    repo.save(rec1);
+
+    // Record 2: edited (1 lap + 3 user laps = 4 laps)
+    RaceHistoryRecord rec2 = new RaceHistoryRecord();
+    rec2.setId("rec_dup_2");
+    rec2.setOriginalEntityId("model_dup");
+    rec2.setTimestamp(1788990000000L);
+    com.antigravity.race.DriverHeatData dhd2 = new com.antigravity.race.DriverHeatData();
+    dhd2.setLane(1);
+    dhd2.setDriver(p);
+    dhd2.addLap(4.0, false, true);
+    dhd2.setUserLaps(3.0);
+    rec2.setHeats(Arrays.asList(new com.antigravity.race.Heat(1, Arrays.asList(dhd2), false)));
+    repo.save(rec2);
+
+    assertEquals(2, repo.findAll().size());
+
+    dbService.deduplicateRaceHistoryTable(databaseContext, "demo_race_history");
+
+    List<RaceHistoryRecord> remaining = repo.findAll();
+    assertEquals(1, remaining.size());
+    assertEquals("rec_dup_2", remaining.get(0).getId());
   }
 }

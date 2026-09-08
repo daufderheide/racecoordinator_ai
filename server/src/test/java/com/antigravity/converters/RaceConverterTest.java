@@ -482,6 +482,33 @@ public class RaceConverterTest {
     assertEquals(testStartMillis, proto.getStartTimeMillis());
   }
 
+  @Test
+  public void testToProto_PopulatesStateAndFlag() {
+    List<com.antigravity.models.Lane> lanes = new ArrayList<>();
+    lanes.add(new com.antigravity.models.Lane("red", "white", 10));
+    Track track =
+        new Track.Builder().name("Track").lanes(lanes).arduinoConfigs(null).entityId("t1").build();
+
+    List<com.antigravity.race.RaceParticipant> drivers = new ArrayList<>();
+    drivers.add(
+        new com.antigravity.race.RaceParticipant(
+            new com.antigravity.models.Driver("Driver 1", "D1", "d1", null)));
+
+    com.antigravity.race.Race race =
+        new com.antigravity.race.Race.Builder()
+            .model(new com.antigravity.models.Race.Builder().withName("Test Race").build())
+            .track(track)
+            .drivers(drivers)
+            .isDemoMode(true)
+            .stateClassName(com.antigravity.race.states.RaceOver.class.getName()) // fqn-collision
+            .build();
+
+    com.antigravity.proto.Race proto = RaceConverter.toProto(race);
+    assertNotNull(proto);
+    assertEquals(com.antigravity.proto.RaceState.RACE_OVER, proto.getState());
+    assertEquals(com.antigravity.proto.RaceFlag.CHECKERED, proto.getFlag());
+  }
+
   private void assertNotNull(Object obj) {
     org.junit.Assert.assertNotNull(obj);
   }

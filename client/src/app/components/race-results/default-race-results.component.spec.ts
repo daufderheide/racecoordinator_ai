@@ -41,6 +41,8 @@ describe("DefaultRaceResultsComponent", () => {
   let lapsSubject: Subject<any>;
   let recordDataSubject: BehaviorSubject<any>;
   let mockRouter: any;
+  let mockDataService: any;
+  let mockAuthService: any;
 
   // Reusable test helpers
   const createDriver = (id: string, name: string, nickname: string): Driver => {
@@ -139,7 +141,11 @@ describe("DefaultRaceResultsComponent", () => {
         .and.returnValue(undefined),
     };
 
-    mockPrintService = jasmine.createSpyObj("PrintService", ["print"]);
+    mockPrintService = jasmine.createSpyObj("PrintService", [
+      "print",
+      "formatExportTimestamp",
+    ]);
+    mockPrintService.formatExportTimestamp.and.returnValue("_20260908");
 
     mockTranslationService = {
       translate: jasmine
@@ -173,6 +179,28 @@ describe("DefaultRaceResultsComponent", () => {
       time: 83,
     };
 
+    mockDataService = {
+      serverUrl: "http://localhost:8080",
+      getSystemState: () => of(null),
+      updateRaceSubscription: jasmine.createSpy("updateRaceSubscription"),
+      updateBatchUserLaps: jasmine
+        .createSpy("updateBatchUserLaps")
+        .and.returnValue(of({})),
+      updateHistoryLapSections: jasmine
+        .createSpy("updateHistoryLapSections")
+        .and.returnValue(of({})),
+      exportRaceToCsv: jasmine
+        .createSpy("exportRaceToCsv")
+        .and.returnValue(of("csv data")),
+      exportRaceHistoryToCsv: jasmine
+        .createSpy("exportRaceHistoryToCsv")
+        .and.returnValue(of("history csv data")),
+    };
+
+    mockAuthService = {
+      currentRole: Role.VIEWER,
+    };
+
     await TestBed.configureTestingModule({
       imports: [DefaultRaceResultsComponent],
       providers: [
@@ -198,15 +226,11 @@ describe("DefaultRaceResultsComponent", () => {
         },
         {
           provide: DataService,
-          useValue: {
-            serverUrl: "http://localhost:8080",
-            getSystemState: () => of(null),
-            updateRaceSubscription: () => {},
-          },
+          useValue: mockDataService,
         },
         {
           provide: AuthService,
-          useValue: { currentRole: Role.VIEWER },
+          useValue: mockAuthService,
         },
         { provide: Router, useValue: mockRouter },
       ],
@@ -1198,6 +1222,75 @@ describe("DefaultRaceResultsComponent", () => {
         expect(recordsDashboardIndex).toBeGreaterThan(tableWrapperIndex);
         expect(resultsContainer.lastElementChild).toBe(recordsDashboard);
       });
+    });
+  });
+
+  describe("Past Race Review, Lap Sections, and CSV Export", () => {
+    it("should detect whether reviewing a past race based on historyRecordId", () => {
+      expect(component.isReviewingPastRace).toBeFalse();
+
+      (component as any).race = { historyRecordId: "hist_123" };
+      expect(component.isReviewingPastRace).toBeTrue();
+    });
+
+    it("should navigate to root on exitReview", () => {
+      component.exitReview();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
+    });
+
+    it("should navigate to heat results on navigateToHeatResults", () => {
+      component.navigateToHeatResults();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/heat-results"]);
+    });
+
+    it("should open and close add lap sections dialog", () => {
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+      component.openAddLapSections();
+      expect(component.showAddLapSectionsDialog).toBeTrue();
+
+      component.onAddLapSectionsConfirm(null);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateHistoryLapSections when confirming batch update on a past race", () => {
+      (component as any).race = { historyRecordId: "hist_123", is_demo: false };
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 1, sections: 25 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateHistoryLapSections).toHaveBeenCalledWith(
+        "hist_123",
+        updates,
+        false,
+      );
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateBatchUserLaps when confirming batch update on a live race", () => {
+      (component as any).race = {};
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 1, sections: 25 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateBatchUserLaps).toHaveBeenCalledWith(updates);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should export CSV for past race using exportRaceHistoryToCsv", async () => {
+      (component as any).race = { historyRecordId: "hist_123", is_demo: true };
+      await component.exportCsv();
+      expect(mockDataService.exportRaceHistoryToCsv).toHaveBeenCalledWith(
+        "hist_123",
+        true,
+      );
+    });
+
+    it("should export CSV for live race using exportRaceToCsv", async () => {
+      (component as any).race = {};
+      await component.exportCsv();
+      expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
     });
   });
 });

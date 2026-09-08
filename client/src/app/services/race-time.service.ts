@@ -66,7 +66,19 @@ export class RaceTimeService implements OnDestroy {
 
     if (this.raceService?.selectedRace$) {
       this.subscriptions.add(
-        this.raceService.selectedRace$.subscribe(() => {
+        this.raceService.selectedRace$.subscribe((race) => {
+          if (
+            (race as any)?.state === RaceState.RACE_OVER ||
+            (race as any)?.raceState === RaceState.RACE_OVER ||
+            (race as any)?.is_finished
+          ) {
+            this._raceState = RaceState.RACE_OVER;
+            this._autoStartRemaining = 0;
+            this._autoAdvanceRemaining = 0;
+            this._time = 0;
+            this.previousTime = 0;
+            this._timeFormat = "1.0-0";
+          }
           this.notifySubscribers();
         }),
       );
@@ -148,6 +160,16 @@ export class RaceTimeService implements OnDestroy {
   handleRaceTimeUpdate(raceTime: IRaceTime): void {
     if (!raceTime) return;
 
+    if (this._raceState === RaceState.RACE_OVER) {
+      this._autoStartRemaining = 0;
+      this._autoAdvanceRemaining = 0;
+      this._time = 0;
+      this.previousTime = 0;
+      this._timeFormat = "1.0-0";
+      this.notifySubscribers();
+      return;
+    }
+
     this._autoStartRemaining = raceTime.autoStartRemaining || 0;
     const race = this.raceService?.getRace();
     this._autoAdvanceRemaining =
@@ -207,6 +229,14 @@ export class RaceTimeService implements OnDestroy {
     const previousState = this._raceState;
     this._raceState = state;
 
+    if (state === RaceState.RACE_OVER) {
+      this._autoStartRemaining = 0;
+      this._autoAdvanceRemaining = 0;
+      this._time = 0;
+      this.previousTime = 0;
+      this._timeFormat = "1.0-0";
+    }
+
     if (
       state === RaceState.NOT_STARTED ||
       state === RaceState.UNKNOWN_STATE ||
@@ -244,6 +274,9 @@ export class RaceTimeService implements OnDestroy {
   }
 
   get autoStatusLabel(): string {
+    if (this._raceState === RaceState.RACE_OVER) {
+      return "";
+    }
     if (this._autoStartRemaining > 0) {
       return "RD_AUTO_STARTING";
     }
@@ -254,6 +287,9 @@ export class RaceTimeService implements OnDestroy {
   }
 
   get isWarmup(): boolean {
+    if (this._raceState === RaceState.RACE_OVER) {
+      return false;
+    }
     const race = this.raceService?.getRace();
     if (this._autoStartRemaining > 0 && race) {
       const warmupTime = race.auto_start_warmup_time || 0;
@@ -262,11 +298,7 @@ export class RaceTimeService implements OnDestroy {
         return totalTime - this._autoStartRemaining < warmupTime;
       }
     }
-    if (
-      this._autoAdvanceRemaining > 0 &&
-      race &&
-      this._raceState !== RaceState.RACE_OVER
-    ) {
+    if (this._autoAdvanceRemaining > 0 && race) {
       const warmupTime = race.auto_advance_warmup_time || 0;
       const totalTime = race.auto_advance_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
@@ -317,7 +349,7 @@ export class RaceTimeService implements OnDestroy {
 
     const time = this._time || 0;
 
-    if (s === RaceState.HEAT_OVER && time <= 0) {
+    if ((s === RaceState.HEAT_OVER || s === RaceState.RACE_OVER) && time <= 0) {
       return "0";
     }
     const hours = Math.floor(time / 3600);

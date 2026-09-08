@@ -13,9 +13,15 @@ import {
 } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { DisallowLapRecordsDialogComponent } from "@app/components/shared/disallow-lap-records-dialog/disallow-lap-records-dialog.component";
 import { DataService } from "@app/data.service";
 import { isAtLeast, Role } from "@app/models/role";
+import { LocalDatePipe } from "@app/pipes/local-date.pipe";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
 
@@ -30,8 +36,6 @@ export interface GroupedRaceHistory {
   trackName?: string;
 }
 
-import { LocalDatePipe } from "@app/pipes/local-date.pipe";
-
 @Component({
   standalone: true,
   selector: "app-race-history-dialog",
@@ -43,12 +47,15 @@ import { LocalDatePipe } from "@app/pipes/local-date.pipe";
     FormsModule,
     TranslatePipe,
     LocalDatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
     DisallowLapRecordsDialogComponent,
   ],
 })
 export class RaceHistoryDialogComponent implements OnInit, OnChanges {
   private dataService = inject(DataService);
   private authService = inject(AuthService);
+  private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private destroyRef = inject(DestroyRef);
 
@@ -64,6 +71,8 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
   selectedHistoryDetails: any | null = null;
   showDisallowDialog: boolean = false;
   isLoadingDetails: boolean = false;
+
+  selectedRaceIdByGroup: Map<string, string> = new Map();
 
   ngOnInit(): void {
     this.authService.currentRole$
@@ -191,9 +200,27 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
         groupsMap.set(groupKey, group);
       }
 
-      group.races.push(h);
-
       const ts = this.getNumericRaceTimestamp(h);
+      const existingIndex =
+        ts !== null
+          ? group.races.findIndex((r) => {
+              const rTs = this.getNumericRaceTimestamp(r);
+              return rTs !== null && Math.abs(rTs - ts) < 1000;
+            })
+          : -1;
+
+      if (existingIndex >= 0) {
+        const existing = group.races[existingIndex];
+        if (
+          this.calculateRecordLapWeight(h) >
+          this.calculateRecordLapWeight(existing)
+        ) {
+          group.races[existingIndex] = h;
+        }
+      } else {
+        group.races.push(h);
+      }
+
       if (ts !== null) {
         if (group.earliestDate === null || ts < group.earliestDate) {
           group.earliestDate = ts;
@@ -204,6 +231,14 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
       }
 
       group.ineligibleLapCount += this.getIneligibleLapCount(h);
+    }
+
+    for (const group of groupsMap.values()) {
+      group.races.sort((a, b) => {
+        const timeA = this.getNumericRaceTimestamp(a) || 0;
+        const timeB = this.getNumericRaceTimestamp(b) || 0;
+        return timeB - timeA;
+      });
     }
 
     return Array.from(groupsMap.values()).sort((a, b) => {
@@ -226,12 +261,58 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
     });
   }
 
+  private calculateRecordLapWeight(race: any): number {
+    if (!race || !Array.isArray(race.heats)) return 0;
+    let total = 0;
+    for (const heat of race.heats) {
+      const drivers = heat?.drivers || heat?.heatDrivers || heat?.heat_drivers;
+      if (!Array.isArray(drivers)) continue;
+      for (const d of drivers) {
+        const userLaps = Number(d?.userLaps ?? d?.user_laps ?? 0);
+        const adj = Number(d?.adjustedLapCount ?? d?.adjusted_lap_count ?? 0);
+        const laps = Array.isArray(d?.laps) ? d.laps.length : 0;
+        total += userLaps + adj + laps;
+      }
+    }
+    return total;
+  }
+
+  getSelectedRaceId(group: GroupedRaceHistory): string {
+    if (!group || !group.races || group.races.length === 0) return "";
+    const selectedId = this.selectedRaceIdByGroup.get(group.id);
+    if (
+      selectedId &&
+      group.races.some((r) => (r._id || r.id || r.entity_id) === selectedId)
+    ) {
+      return selectedId;
+    }
+    return (
+      group.races[0]._id || group.races[0].id || group.races[0].entity_id || ""
+    );
+  }
+
+  onSelectRaceForGroup(groupId: string, raceId: string): void {
+    this.selectedRaceIdByGroup.set(groupId, raceId);
+    this.cdr.markForCheck();
+  }
+
+  getSelectedRace(group: GroupedRaceHistory): any {
+    if (!group || !group.races || group.races.length === 0) return null;
+    const selectedId = this.getSelectedRaceId(group);
+    return (
+      group.races.find((r) => (r._id || r.id || r.entity_id) === selectedId) ||
+      group.races[0]
+    );
+  }
+
   editRaceLaps(target: any): void {
     if (!target) return;
 
     if (Array.isArray(target.races)) {
       this.selectedRaceGroup = target;
-      this.selectedHistoryDetails = target.races[0] || null;
+      const selectedRun =
+        this.getSelectedRace(target) || target.races[0] || null;
+      this.selectedHistoryDetails = selectedRun;
       this.showDisallowDialog = true;
       this.cdr.markForCheck();
       return;
@@ -386,6 +467,27 @@ export class RaceHistoryDialogComponent implements OnInit, OnChanges {
     this.selectedHistoryDetails = null;
     this.loadHistories();
     this.cdr.markForCheck();
+  }
+
+  openRace(group: GroupedRaceHistory): void {
+    if (!group || !group.races || group.races.length === 0) return;
+    const selectedRace = this.getSelectedRace(group);
+    const id = selectedRace?._id || selectedRace?.id || selectedRace?.entity_id;
+    if (!id) return;
+
+    this.isLoadingDetails = true;
+    this.cdr.markForCheck();
+    this.dataService.loadRaceHistory(id, group.isDemo).subscribe({
+      next: () => {
+        this.isLoadingDetails = false;
+        this.close.emit();
+        this.router.navigate(["/raceday"]);
+      },
+      error: () => {
+        this.isLoadingDetails = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   onDismiss(): void {

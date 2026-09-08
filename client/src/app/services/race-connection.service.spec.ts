@@ -416,6 +416,65 @@ describe("RaceConnectionService", () => {
       sub.unsubscribe();
       flush();
     }));
+
+    it("should suppress watchdog alerts and not connect to interface socket if raceState is RACE_OVER", fakeAsync(() => {
+      mockDataService.getRaceState.and.returnValue(of(RaceState.RACE_OVER));
+
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      expect(
+        mockDataService.connectToInterfaceDataSocket,
+      ).not.toHaveBeenCalled();
+
+      // Tick watchdog timeout
+      tick(30000);
+      expect(emittedAlert).toBeNull();
+
+      // Even if an interface event arrives, alert is suppressed
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+      tick(30000);
+      expect(emittedAlert).toBeNull();
+
+      sub.unsubscribe();
+      flush();
+    }));
+
+    it("should disconnect from interface socket and suppress alerts when race transitions to RACE_OVER", fakeAsync(() => {
+      const raceStateSubject = new Subject<RaceState>();
+      mockDataService.getRaceState.and.returnValue(
+        raceStateSubject.asObservable(),
+      );
+
+      let emittedAlert: any = null;
+      const sub = service.interfaceAlert$.subscribe(
+        (alert) => (emittedAlert = alert),
+      );
+
+      service.connect();
+
+      // Transition to RACE_OVER
+      raceStateSubject.next(RaceState.RACE_OVER);
+      expect(
+        mockDataService.disconnectFromInterfaceDataSocket,
+      ).toHaveBeenCalled();
+
+      // Interface events after RACE_OVER should not emit alerts
+      interfaceEventsSubject.next({
+        status: { status: InterfaceStatus.DISCONNECTED },
+      });
+      tick(30000);
+      expect(emittedAlert).toBeNull();
+
+      sub.unsubscribe();
+      flush();
+    }));
   });
 
   describe("Data Stream Forwarding", () => {

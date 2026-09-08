@@ -381,6 +381,49 @@ describe("DataService", () => {
     req.flush("Driver,Laps,Time\nRacer1,10,12.34");
   });
 
+  it("should call loadRaceHistory endpoint", (done) => {
+    service.loadRaceHistory("hist_1", false).subscribe((res) => {
+      expect(res).toBe("Race history loaded successfully");
+      done();
+    });
+
+    const req = httpMock.expectOne((r) =>
+      r.url.endsWith("/api/history/races/hist_1/load"),
+    );
+    expect(req.request.method).toBe("POST");
+    req.flush("Race history loaded successfully");
+  });
+
+  it("should call exportRaceHistoryToCsv endpoint", (done) => {
+    service.exportRaceHistoryToCsv("hist_1", true).subscribe((csv) => {
+      expect(csv).toBe("col1,col2");
+      done();
+    });
+
+    const req = httpMock.expectOne((r) =>
+      r.url.includes("/api/history/races/hist_1/export?demo=true"),
+    );
+    expect(req.request.method).toBe("GET");
+    req.flush("col1,col2");
+  });
+
+  it("should call updateHistoryLapSections endpoint", (done) => {
+    const updates = [{ heatNumber: 1, laneIndex: 0, userLaps: 1.5 }];
+    service
+      .updateHistoryLapSections("hist_1", updates, false)
+      .subscribe((res) => {
+        expect(res).toBe("ok");
+        done();
+      });
+
+    const req = httpMock.expectOne((r) =>
+      r.url.endsWith("/api/history/races/hist_1/lap-sections"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual(updates);
+    req.flush("ok");
+  });
+
   it("should call initialize-interface endpoint with configs", (done) => {
     const arduinoConfigs: ArduinoConfig[] = [
       {
