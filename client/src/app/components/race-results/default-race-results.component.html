@@ -1,4 +1,20 @@
 <div class="dashboard-wrapper">
+  @if (isReviewingPastRace) {
+    <div class="review-past-race-banner no-print">
+      <div class="review-banner-content">
+        <span class="material-icons review-icon">history_toggle_off</span>
+        <span class="review-text">
+          {{
+            "RHD_REVIEW_BANNER_TITLE" | translate: { name: race?.name || "" }
+          }}
+        </span>
+      </div>
+      <button type="button" class="btn-exit-review" (click)="exitReview()">
+        <span class="material-icons btn-icon">close</span>
+        <span>{{ "RHD_BTN_EXIT_REVIEW" | translate }}</span>
+      </button>
+    </div>
+  }
   <div
     class="scalable-content"
     [style.transform]="
@@ -45,6 +61,29 @@
             title="Export PDF"
           >
             <span class="material-icons">picture_as_pdf</span>
+          </button>
+          <button
+            class="export-pdf-btn no-print"
+            (click)="exportCsv()"
+            [title]="'RR_BTN_EXPORT_CSV' | translate"
+          >
+            <span class="material-icons">file_download</span>
+          </button>
+          @if (canEdit) {
+            <button
+              class="export-pdf-btn no-print"
+              (click)="openAddLapSections()"
+              [title]="'RR_BTN_ADD_LAP_SECTIONS' | translate"
+            >
+              <span class="material-icons">more_time</span>
+            </button>
+          }
+          <button
+            class="export-pdf-btn no-print"
+            (click)="navigateToHeatResults()"
+            [title]="'RR_BTN_HEAT_RESULTS' | translate"
+          >
+            <span class="material-icons">view_list</span>
           </button>
         </div>
       }
@@ -528,3 +567,17 @@
   (cancel)="onPdfExportCancel()"
 >
 </app-pdf-export-dialog>
+
+@if (showAddLapSectionsDialog && race?.track) {
+  <app-add-lap-sections-dialog
+    [visible]="showAddLapSectionsDialog"
+    [isMenuMode]="true"
+    [heats]="heats"
+    [track]="race?.track"
+    [numTrackSections]="race?.track?.num_track_sections || 100"
+    [currentHeatNumber]="currentHeatNumber || 1"
+    (confirm)="onAddLapSectionsConfirm($event)"
+    (cancel)="showAddLapSectionsDialog = false"
+  >
+  </app-add-lap-sections-dialog>
+}

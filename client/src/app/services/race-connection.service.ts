@@ -188,7 +188,7 @@ export class RaceConnectionService implements OnDestroy {
     this.pendingUpdate = null;
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
-    this.isRaceEnded = false;
+    this.isRaceEnded = this.raceStateSubject.value === RaceState.RACE_OVER;
     this.dataService.updateRaceSubscription(true);
 
     this.subscriptions.push(
@@ -202,8 +202,12 @@ export class RaceConnectionService implements OnDestroy {
             }
             this.clearDisconnectedError();
           } else if (state.resourceLockState === "RACE_RUNNING") {
-            if (this.isRaceEnded) {
+            if (
+              this.isRaceEnded &&
+              this.raceStateSubject.value !== RaceState.RACE_OVER
+            ) {
               this.isRaceEnded = false;
+              this.dataService.connectToInterfaceDataSocket();
               this.resetWatchdog();
             }
           }
@@ -435,6 +439,15 @@ export class RaceConnectionService implements OnDestroy {
 
     this.subscriptions.push(
       this.dataService.getRaceState().subscribe((state) => {
+        if (state === RaceState.RACE_OVER) {
+          this.isRaceEnded = true;
+          if (this.noStatusWatchdog) {
+            clearTimeout(this.noStatusWatchdog);
+            this.noStatusWatchdog = null;
+          }
+          this.clearDisconnectedError();
+          this.dataService.disconnectFromInterfaceDataSocket();
+        }
         this.raceStateSubject.next(state);
       }),
     );
@@ -462,8 +475,10 @@ export class RaceConnectionService implements OnDestroy {
       }),
     );
 
-    this.dataService.connectToInterfaceDataSocket();
-    this.resetWatchdog();
+    if (!this.isRaceEnded) {
+      this.dataService.connectToInterfaceDataSocket();
+      this.resetWatchdog();
+    }
   }
 
   private stopConnection() {
@@ -526,6 +541,21 @@ export class RaceConnectionService implements OnDestroy {
       "RaceConnectionService: processRaceUpdate called with:",
       update,
     );
+    if (
+      update.state === RaceState.RACE_OVER ||
+      (update as any).raceState === RaceState.RACE_OVER
+    ) {
+      this.isRaceEnded = true;
+      if (this.noStatusWatchdog) {
+        clearTimeout(this.noStatusWatchdog);
+        this.noStatusWatchdog = null;
+      }
+      this.clearDisconnectedError();
+      this.dataService.disconnectFromInterfaceDataSocket();
+      if (this.raceStateSubject.value !== RaceState.RACE_OVER) {
+        this.raceStateSubject.next(RaceState.RACE_OVER);
+      }
+    }
     if (update.race) {
       const currentRace = this.raceService.getRace();
       const newRaceId = update.race.model?.entityId;
@@ -544,6 +574,18 @@ export class RaceConnectionService implements OnDestroy {
         TeamConverter.clearCache();
       }
       const race = RaceConverter.fromProto(update.race);
+      if (update.state !== undefined && update.state !== null) {
+        (race as any).state = update.state;
+      }
+      if (update.flag !== undefined && update.flag !== null) {
+        (race as any).flag = update.flag;
+      }
+      if (
+        update.state === RaceState.RACE_OVER ||
+        (update as any).raceState === RaceState.RACE_OVER
+      ) {
+        (race as any).is_finished = true;
+      }
       if (update.isEvent) {
         (race as any).is_event = update.isEvent;
         (race as any).event_id = update.eventId;
@@ -658,7 +700,10 @@ export class RaceConnectionService implements OnDestroy {
   // ... inside starting connection ...
 
   private handleInterfaceEvent(event: IInterfaceEvent) {
-    if (this.isRaceEnded) {
+    if (
+      this.isRaceEnded ||
+      this.raceStateSubject.value === RaceState.RACE_OVER
+    ) {
       return;
     }
     if (event.status) {
@@ -716,7 +761,10 @@ export class RaceConnectionService implements OnDestroy {
 
   private resetWatchdog() {
     if (this.noStatusWatchdog) clearTimeout(this.noStatusWatchdog);
-    if (this.isRaceEnded) {
+    if (
+      this.isRaceEnded ||
+      this.raceStateSubject.value === RaceState.RACE_OVER
+    ) {
       this.noStatusWatchdog = null;
       return;
     }
@@ -753,7 +801,10 @@ export class RaceConnectionService implements OnDestroy {
   }
 
   private scheduleDisconnectedError(titleKey: string, messageKey: string) {
-    if (this.isRaceEnded) {
+    if (
+      this.isRaceEnded ||
+      this.raceStateSubject.value === RaceState.RACE_OVER
+    ) {
       return;
     }
     if (this.noStatusWatchdog) {

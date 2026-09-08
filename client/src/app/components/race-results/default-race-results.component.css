@@ -898,3 +898,67 @@
   text-shadow: 0 0 10px rgba(0, 229, 255, 0.6);
   margin-left: 20px;
 }
+
+/* Review Past Race Banner */
+.review-past-race-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(245, 158, 11, 0.25) 100%);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.review-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.review-icon {
+  color: #f59e0b;
+  font-size: 24px;
+}
+
+.review-text {
+  color: #fbbf24;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.btn-exit-review {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-exit-review:hover {
+  background: rgba(239, 68, 68, 0.4);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-exit-review .btn-icon {
+  font-size: 16px;
+}
+

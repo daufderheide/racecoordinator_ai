@@ -215,6 +215,11 @@ public class RaceConverter {
             .setCurrentHeat(HeatConverter.toProto(race.getCurrentHeat(), sentObjectIds))
             .setRecordData(race.getRecordData());
 
+    if (race.getState() != null) {
+      builder.setState(com.antigravity.race.Race.getProtoState(race.getState())); // fqn-collision
+      builder.setFlag(race.getState().getFlagType(race));
+    }
+
     com.antigravity.race.EventExecutionManager eventMgr = // fqn-collision
         com.antigravity.race.EventExecutionManager.getInstance(); // fqn-collision
     if (eventMgr.isEventActive()) {

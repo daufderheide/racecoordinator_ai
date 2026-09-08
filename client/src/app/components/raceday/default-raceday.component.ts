@@ -472,6 +472,9 @@ export class DefaultRacedayComponent
   }
 
   protected get autoStatusLabel(): string {
+    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
+      return "";
+    }
     if (this.autoStartRemaining > 0) {
       return "RD_AUTO_STARTING";
     }
@@ -527,7 +530,12 @@ export class DefaultRacedayComponent
 
     const time = this.time || 0;
 
-    if (s === RaceState.HEAT_OVER && time <= 0) {
+    if (
+      (s === RaceState.HEAT_OVER ||
+        s === RaceState.RACE_OVER ||
+        this.raceHasEnded) &&
+      time <= 0
+    ) {
       return "0";
     }
     const hours = Math.floor(time / 3600);
@@ -627,6 +635,9 @@ export class DefaultRacedayComponent
   }
 
   protected get isWarmup(): boolean {
+    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
+      return false;
+    }
     if (this.autoStartRemaining > 0 && this.race) {
       const warmupTime = this.race.auto_start_warmup_time || 0;
       const totalTime = this.race.auto_start_time || 0;
@@ -636,11 +647,7 @@ export class DefaultRacedayComponent
         return totalTime - this.autoStartRemaining < warmupTime;
       }
     }
-    if (
-      this.autoAdvanceRemaining > 0 &&
-      this.race &&
-      this.raceState !== RaceState.RACE_OVER
-    ) {
+    if (this.autoAdvanceRemaining > 0 && this.race) {
       const warmupTime = this.race.auto_advance_warmup_time || 0;
       const totalTime = this.race.auto_advance_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
@@ -1573,6 +1580,18 @@ export class DefaultRacedayComponent
   private subscribeToRaceTime() {
     this.subscriptions.push(
       this.raceConnectionService.raceTime$.subscribe((raceTime) => {
+        if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
+          this.autoStartRemaining = 0;
+          this.autoAdvanceRemaining = 0;
+          this.time = 0;
+          this.previousTime = 0;
+          this.timeFormat = "1.0-0";
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+          return;
+        }
+
         this.autoStartRemaining = raceTime.autoStartRemaining || 0;
         this.autoAdvanceRemaining =
           raceTime.autoAdvanceRemaining ||
@@ -1968,7 +1987,9 @@ export class DefaultRacedayComponent
 
     this.subscriptions.push(
       this.raceConnectionService.interfaceAlert$.subscribe((alert) => {
-        this.showInterfaceError(alert.titleKey, alert.messageKey);
+        if (!this.raceHasEnded && this.raceState !== RaceState.RACE_OVER) {
+          this.showInterfaceError(alert.titleKey, alert.messageKey);
+        }
       }),
     );
 
@@ -2371,6 +2392,9 @@ export class DefaultRacedayComponent
   }
 
   private showInterfaceError(titleKey: string, messageKey: string) {
+    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
+      return;
+    }
     this.ackModalTitle = titleKey;
     this.ackModalMessage = messageKey;
     this.showAckModal = true;
@@ -2674,7 +2698,26 @@ export class DefaultRacedayComponent
       this.race = race;
       this.track = race.track;
 
-      if (isNewRace) {
+      const isEnded =
+        this.raceHasEnded ||
+        this.raceState === RaceState.RACE_OVER ||
+        (race as any)?.is_finished ||
+        (race as any)?.isFinished ||
+        (race as any)?.state === RaceState.RACE_OVER ||
+        (race as any)?.raceState === RaceState.RACE_OVER ||
+        (race as any)?.state_class_name?.includes("RaceOver");
+
+      if (isEnded) {
+        this.raceHasEnded = true;
+        this.raceState = RaceState.RACE_OVER;
+        this.autoStartRemaining = 0;
+        this.autoAdvanceRemaining = 0;
+        this.time = 0;
+        this.previousTime = 0;
+        this.timeFormat = "1.0-0";
+        this.playedSecondsLeft.clear();
+        this.playedHalfway = false;
+      } else if (isNewRace) {
         // Reset timer state ONLY when advancing to a new race
         this.autoStartRemaining =
           (race as any)?.auto_start_remaining_seconds ||
@@ -4163,7 +4206,11 @@ export class DefaultRacedayComponent
       const RS = RaceState;
 
       // If an auto-timer is active, space bar should pause/cancel it
-      if (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0) {
+      if (
+        !this.raceHasEnded &&
+        this.raceState !== RaceState.RACE_OVER &&
+        (this.autoStartRemaining > 0 || this.autoAdvanceRemaining > 0)
+      ) {
         if (!this.isPauseDisabled) {
           this.onMenuSelect("ABORT_TIMERS");
           return;
@@ -5274,6 +5321,15 @@ export class DefaultRacedayComponent
       state,
     );
     this.raceState = state;
+
+    if (state === RaceState.RACE_OVER) {
+      this.raceHasEnded = true;
+      this.autoStartRemaining = 0;
+      this.autoAdvanceRemaining = 0;
+      this.time = 0;
+      this.previousTime = 0;
+      this.timeFormat = "1.0-0";
+    }
 
     // Reset overlay if we enter a state that shouldn't show it
     if (

@@ -259,6 +259,92 @@
   color: #f87171;
 }
 
+.race-card-action {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-action:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.race-run-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.race-run-select-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.race-run-select {
+  min-width: 170px;
+  max-width: 230px;
+}
+
+.race-run-select ::ng-deep .custom-select-trigger {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  background-color: #11141b;
+  border-color: #2d3748;
+}
+
+.race-run-select ::ng-deep .custom-select-dropdown {
+  background-color: #11141b;
+  border-color: #2d3748;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+}
+
+.race-run-select ::ng-deep .custom-select-option {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+
+.btn-open-race {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #6ee7b7;
+}
+
+.btn-open-race:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.35);
+  color: #ffffff;
+  border-color: #10b981;
+}
+
 .btn-edit-laps {
   display: inline-flex;
   align-items: center;
@@ -266,7 +352,7 @@
   background: rgba(59, 130, 246, 0.15);
   border: 1px solid rgba(59, 130, 246, 0.4);
   color: #93c5fd;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;

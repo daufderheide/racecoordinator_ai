@@ -64,6 +64,10 @@ public class RaceHistoryRecord {
   @JsonAlias({"ineligibleLapCount"})
   private Integer ineligibleLapCount;
 
+  @JsonProperty("season_entity_id")
+  @JsonAlias({"seasonEntityId", "season_id", "seasonId"})
+  private String seasonEntityId;
+
   public RaceHistoryRecord() {}
 
   public RaceHistoryRecord(
@@ -307,5 +311,16 @@ public class RaceHistoryRecord {
   @JsonAlias({"ineligibleLapCount"})
   public void setIneligibleLapCount(Integer ineligibleLapCount) {
     this.ineligibleLapCount = ineligibleLapCount;
+  }
+
+  @JsonProperty("season_entity_id")
+  public String getSeasonEntityId() {
+    return seasonEntityId;
+  }
+
+  @JsonProperty("season_entity_id")
+  @JsonAlias({"seasonEntityId", "season_id", "seasonId"})
+  public void setSeasonEntityId(String seasonEntityId) {
+    this.seasonEntityId = seasonEntityId;
   }
 }

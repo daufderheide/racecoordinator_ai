@@ -924,6 +924,16 @@ describe("DefaultRacedayComponent", () => {
 
       expect(component.onMenuSelect).toHaveBeenCalledWith("ABORT_TIMERS");
     });
+
+    it("should not trigger ABORT_TIMERS when race has ended or raceState is RACE_OVER", () => {
+      component["raceState"] = RaceState.RACE_OVER;
+      component["raceHasEnded"] = true;
+      component["autoStartRemaining"] = 5.0;
+
+      component.handleKeyUpEvent(mockEvent);
+
+      expect(component.onMenuSelect).not.toHaveBeenCalledWith("ABORT_TIMERS");
+    });
   });
 
   describe("onMenuSelect", () => {
@@ -5348,6 +5358,32 @@ describe("DefaultRacedayComponent", () => {
       expect(component.ackModalTitle).toBe("ACK_MODAL_TITLE_CONNECTED");
       expect(component.ackModalMessage).toBe("ACK_MODAL_MSG_CONNECTED");
     });
+
+    it("should not show interface error modal if raceHasEnded is true", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.showAckModal = false;
+
+      interfaceAlertSubject.next({
+        titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
+        messageKey: "ACK_MODAL_MSG_DISCONNECTED",
+      });
+
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should not show interface error modal if raceState is RACE_OVER", () => {
+      fixture.detectChanges();
+      (component as any).raceState = RaceState.RACE_OVER;
+      component.showAckModal = false;
+
+      interfaceAlertSubject.next({
+        titleKey: "ACK_MODAL_TITLE_DISCONNECTED",
+        messageKey: "ACK_MODAL_MSG_DISCONNECTED",
+      });
+
+      expect(component.showAckModal).toBeFalse();
+    });
   });
   describe("Z-Order Widget Reordering", () => {
     beforeEach(() => {
@@ -6856,6 +6892,48 @@ describe("DefaultRacedayComponent", () => {
 
       (component as any).autoAdvanceRemaining = 0;
       expect((component as any).isWarmup).toBeFalse();
+    });
+
+    it("should evaluate isWarmup and autoStatusLabel as false/empty when raceHasEnded or raceState is RACE_OVER", () => {
+      (component as any).race = {
+        auto_start_warmup_time: 5,
+        auto_start_time: 10,
+        auto_advance_warmup_time: 4,
+        auto_advance_time: 12,
+      };
+
+      (component as any).autoStartRemaining = 8;
+      (component as any).raceState = RaceState.RACE_OVER;
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+
+      (component as any).raceState = RaceState.NOT_STARTED;
+      (component as any).raceHasEnded = true;
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+    });
+
+    it("should zero timers and show 0 formattedTime when loading a finished race from history", () => {
+      const finishedRace = {
+        entity_id: "finished_race_1",
+        auto_start_time: 10,
+        auto_advance_time: 15,
+        state: RaceState.RACE_OVER,
+        is_finished: true,
+        track: { lanes: [] },
+      } as any;
+
+      mockRaceService.getRace.and.returnValue(finishedRace);
+      (component as any).race = null;
+      (component as any).loadRaceData();
+
+      expect((component as any).autoStartRemaining).toBe(0);
+      expect((component as any).autoAdvanceRemaining).toBe(0);
+      expect((component as any).time).toBe(0);
+      expect((component as any).raceHasEnded).toBeTrue();
+      expect((component as any).isWarmup).toBeFalse();
+      expect((component as any).autoStatusLabel).toBe("");
+      expect(component["formattedTime"]).toBe("0");
     });
 
     it("should delegate layout queries and handle viewer race modal getters/setters", () => {

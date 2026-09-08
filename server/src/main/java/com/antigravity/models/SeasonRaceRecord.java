@@ -163,23 +163,39 @@ public class SeasonRaceRecord {
   @JsonProperty("driver_results")
   private final List<SeasonDriverResult> driverResults;
 
+  @JsonProperty("history_record_id")
+  @JsonAlias({"historyRecordId", "history_id"})
+  private final String historyRecordId;
+
   @JsonCreator
   public SeasonRaceRecord(
       @JsonProperty("race_id") String raceId,
       @JsonProperty("race_name") String raceName,
       @JsonProperty("timestamp") Long timestamp,
       @JsonProperty("is_demo") @JsonAlias({"isDemo", "demo"}) Boolean isDemo,
-      @JsonProperty("driver_results") List<SeasonDriverResult> driverResults) {
+      @JsonProperty("driver_results") List<SeasonDriverResult> driverResults,
+      @JsonProperty("history_record_id") @JsonAlias({"historyRecordId", "history_id"})
+          String historyRecordId) {
     this.raceId = raceId != null ? raceId : "";
     this.raceName = raceName != null ? raceName : "";
     this.timestamp = timestamp != null ? timestamp : System.currentTimeMillis();
     this.isDemo = isDemo != null ? isDemo : false;
     this.driverResults = driverResults != null ? new ArrayList<>(driverResults) : new ArrayList<>();
+    this.historyRecordId = historyRecordId != null ? historyRecordId : "";
+  }
+
+  public SeasonRaceRecord(
+      String raceId,
+      String raceName,
+      Long timestamp,
+      Boolean isDemo,
+      List<SeasonDriverResult> driverResults) {
+    this(raceId, raceName, timestamp, isDemo, driverResults, "");
   }
 
   public SeasonRaceRecord(
       String raceId, String raceName, long timestamp, List<SeasonDriverResult> driverResults) {
-    this(raceId, raceName, timestamp, false, driverResults);
+    this(raceId, raceName, timestamp, false, driverResults, "");
   }
 
   public String getRaceId() {
@@ -201,5 +217,10 @@ public class SeasonRaceRecord {
 
   public List<SeasonDriverResult> getDriverResults() {
     return new ArrayList<>(driverResults);
+  }
+
+  @JsonProperty("history_record_id")
+  public String getHistoryRecordId() {
+    return historyRecordId;
   }
 }

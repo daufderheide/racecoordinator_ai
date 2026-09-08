@@ -479,4 +479,30 @@ describe("AddLapSectionsDialogComponent", () => {
     expect(inputEl.focus).toHaveBeenCalled();
     expect(inputEl.select).toHaveBeenCalled();
   });
+
+  it("should handle historical race record format with heat.drivers, lane, and driverName", () => {
+    const historicalHeats = [
+      {
+        heatNumber: 1,
+        drivers: [
+          {
+            lane: 2,
+            userLaps: 0.5,
+            name: "Historical Racer",
+            laps: [{ lapTime: 3.2 }],
+          },
+        ],
+      },
+    ] as any[];
+
+    fixture.componentRef.setInput("heats", historicalHeats);
+    fixture.componentRef.setInput("isMenuMode", true);
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const drivers = component.currentHeatDrivers();
+    expect(drivers.length).toBe(1);
+    expect(drivers[0].laneIndex).toBe(2);
+    expect(drivers[0].driverName).toBe("Historical Racer");
+  });
 });

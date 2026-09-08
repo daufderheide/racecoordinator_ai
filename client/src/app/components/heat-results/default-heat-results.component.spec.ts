@@ -42,6 +42,8 @@ describe("DefaultHeatResultsComponent", () => {
   let mockRaceFlagService: any;
   let mockRaceTimeService: any;
   let mockTranslationService: any;
+  let mockDataService: any;
+  let mockAuthService: any;
 
   beforeEach(async () => {
     mockRouter = {
@@ -134,6 +136,22 @@ describe("DefaultHeatResultsComponent", () => {
       translate: jasmine.createSpy("translate").and.callFake((k: string) => k),
     };
 
+    mockDataService = {
+      serverUrl: "http://localhost:8080",
+      getSystemState: () => of(null),
+      updateRaceSubscription: jasmine.createSpy("updateRaceSubscription"),
+      updateBatchUserLaps: jasmine
+        .createSpy("updateBatchUserLaps")
+        .and.returnValue(of({})),
+      updateHistoryLapSections: jasmine
+        .createSpy("updateHistoryLapSections")
+        .and.returnValue(of({})),
+    };
+
+    mockAuthService = {
+      currentRole: Role.VIEWER,
+    };
+
     await TestBed.configureTestingModule({
       imports: [DefaultHeatResultsComponent, MockTranslatePipe],
       providers: [
@@ -145,15 +163,11 @@ describe("DefaultHeatResultsComponent", () => {
         { provide: TranslationService, useValue: mockTranslationService },
         {
           provide: DataService,
-          useValue: {
-            serverUrl: "http://localhost:8080",
-            getSystemState: () => of(null),
-            updateRaceSubscription: () => {},
-          },
+          useValue: mockDataService,
         },
         {
           provide: AuthService,
-          useValue: { currentRole: Role.VIEWER },
+          useValue: mockAuthService,
         },
         { provide: Router, useValue: mockRouter },
       ],
@@ -560,6 +574,72 @@ describe("DefaultHeatResultsComponent", () => {
       );
       expect(dateEl).toBeTruthy();
       expect(dateEl.textContent).toContain("26");
+    });
+  });
+
+  describe("Past Race Review, Heat Selection, and Lap Sections", () => {
+    it("should detect whether reviewing a past race based on historyRecordId", () => {
+      expect(component.isReviewingPastRace).toBeFalse();
+
+      (component as any).race = { historyRecordId: "hist_123" };
+      expect(component.isReviewingPastRace).toBeTrue();
+    });
+
+    it("should navigate to root on exitReview", () => {
+      component.exitReview();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
+    });
+
+    it("should navigate to race results on navigateToRaceResults", () => {
+      component.navigateToRaceResults();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-results"]);
+    });
+
+    it("should switch heat on onHeatSelected", () => {
+      const mockH1 = new Heat("h1", 1, []);
+      const mockH2 = new Heat("h2", 2, []);
+      mockRaceService.getHeats.and.returnValue([mockH1, mockH2]);
+
+      expect(component.heats.length).toBe(2);
+
+      component.onHeatSelected(1);
+      expect(component.selectedHeatIndex).toBe(1);
+      expect((component as any).heat).toBe(mockH2);
+    });
+
+    it("should open and close add lap sections dialog", () => {
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+      component.openAddLapSections();
+      expect(component.showAddLapSectionsDialog).toBeTrue();
+
+      component.onAddLapSectionsConfirm(null);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateHistoryLapSections when confirming batch update on past race", () => {
+      (component as any).race = { historyRecordId: "hist_456", is_demo: true };
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 0, sections: 50 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateHistoryLapSections).toHaveBeenCalledWith(
+        "hist_456",
+        updates,
+        true,
+      );
+      expect(component.showAddLapSectionsDialog).toBeFalse();
+    });
+
+    it("should call updateBatchUserLaps when confirming batch update on live race", () => {
+      (component as any).race = {};
+      component.showAddLapSectionsDialog = true;
+
+      const updates = [{ heatIndex: 0, laneIndex: 0, sections: 50 }];
+      component.onAddLapSectionsConfirm({ isBatch: true, updates });
+
+      expect(mockDataService.updateBatchUserLaps).toHaveBeenCalledWith(updates);
+      expect(component.showAddLapSectionsDialog).toBeFalse();
     });
   });
 });

@@ -7,34 +7,54 @@ TARBALL="release/RaceCoordinatorAI-Linux-ARM64.tar.gz"
 
 echo "Building Race Coordinator AI for Linux ARM64 (Arduino UNO Q)..."
 
+# 0. Check for from-artifacts flag
+FROM_ARTIFACTS=false
+for arg in "$@"; do
+    if [ "$arg" == "--from-artifacts" ]; then
+        FROM_ARTIFACTS=true
+    fi
+done
+
 # 0.5. Configure Version in Files if RELEASE_VERSION is specified
 RELEASE_VERSION="${VERSION:-}"
 if [ -z "$RELEASE_VERSION" ] && [ -f "VERSION" ]; then
     RELEASE_VERSION=$(cat VERSION | tr -d '\r\n')
 fi
 
-if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
-    echo "Configuring codebase version to $RELEASE_VERSION..."
-    sed -i.bak "s/\"version\": \".*\"/\"version\": \"$RELEASE_VERSION\"/" client/package.json && rm -f client/package.json.bak
-    sed -i.bak "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$RELEASE_VERSION\";/" server/src/main/java/com/antigravity/App.java && rm -f server/src/main/java/com/antigravity/App.java.bak
-    sed -i.bak "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$RELEASE_VERSION\";/" client/src/app/version.ts && rm -f client/src/app/version.ts.bak
+if [ "$FROM_ARTIFACTS" = "true" ]; then
+    echo "Using pre-built release artifacts from release/RaceCoordinator..."
+    if [ ! -f "release/RaceCoordinator/RaceCoordinator.jar" ]; then
+        echo "ERROR: release/RaceCoordinator/RaceCoordinator.jar not found!"
+        exit 1
+    fi
+    if [ ! -d "release/RaceCoordinator/web" ]; then
+        echo "ERROR: release/RaceCoordinator/web directory not found!"
+        exit 1
+    fi
+else
+    if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
+        echo "Configuring codebase version to $RELEASE_VERSION..."
+        sed -i.bak "s/\"version\": \".*\"/\"version\": \"$RELEASE_VERSION\"/" client/package.json && rm -f client/package.json.bak
+        sed -i.bak "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$RELEASE_VERSION\";/" server/src/main/java/com/antigravity/App.java && rm -f server/src/main/java/com/antigravity/App.java.bak
+        sed -i.bak "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$RELEASE_VERSION\";/" client/src/app/version.ts && rm -f client/src/app/version.ts.bak
+    fi
+
+    # 1. Clean and Build Client
+    echo "Building Client..."
+    cd client
+    NPM_CONFIG_CACHE="$(pwd)/.npm_cache" npm install
+    npm run build
+    cd ..
+
+    # 2. Build Server
+    echo "Building Server (Modern - Java 11)..."
+    cd server
+    mvn clean -Dbuild.dist.dir=$RELEASE_BUILD_DIR
+    chmod +x generate_protos.sh
+    PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh --server-only
+    mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=$RELEASE_BUILD_DIR -DskipProtobuf=true
+    cd ..
 fi
-
-# 1. Clean and Build Client
-echo "Building Client..."
-cd client
-NPM_CONFIG_CACHE="$(pwd)/.npm_cache" npm install
-npm run build
-cd ..
-
-# 2. Build Server
-echo "Building Server (Modern - Java 11)..."
-cd server
-mvn clean -Dbuild.dist.dir=$RELEASE_BUILD_DIR
-chmod +x generate_protos.sh
-PROTO_DEST_DIR="$(pwd)/$RELEASE_BUILD_DIR" ./generate_protos.sh --server-only
-mvn package -Dmaven.test.skip=true -Dbuild.dist.dir=$RELEASE_BUILD_DIR -DskipProtobuf=true
-cd ..
 
 # 3. Create Release Structure
 echo "Packaging Linux ARM64 Release..."
@@ -45,9 +65,19 @@ mkdir -p "$DIST_DIR/scripts"
 mkdir -p "$DIST_DIR/systemd"
 
 # Copy Artifacts
-cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar "$DIST_DIR/RaceCoordinator.jar"
-cp -r client/dist/client/* "$DIST_DIR/web/"
-cp -r server/src/main/resources/arduino/* "$DIST_DIR/arduino/"
+if [ "$FROM_ARTIFACTS" = "true" ]; then
+    cp release/RaceCoordinator/RaceCoordinator.jar "$DIST_DIR/RaceCoordinator.jar"
+    cp -r release/RaceCoordinator/web/* "$DIST_DIR/web/"
+    if [ -d "release/RaceCoordinator/arduino" ]; then
+        cp -r release/RaceCoordinator/arduino/* "$DIST_DIR/arduino/"
+    elif [ -d "server/src/main/resources/arduino" ]; then
+        cp -r server/src/main/resources/arduino/* "$DIST_DIR/arduino/"
+    fi
+else
+    cp server/$RELEASE_BUILD_DIR/server-1.0-SNAPSHOT.jar "$DIST_DIR/RaceCoordinator.jar"
+    cp -r client/dist/client/* "$DIST_DIR/web/"
+    cp -r server/src/main/resources/arduino/* "$DIST_DIR/arduino/"
+fi
 
 # 4. Create Kiosk Launcher Script
 cat << 'EOF' > "$DIST_DIR/scripts/start_kiosk.sh"
@@ -173,7 +203,11 @@ chmod +x "$DIST_DIR/install.sh"
 # 8. Verify Release Artifacts
 if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "0.0.0_dev" ]; then
     echo "Verifying Linux ARM64 release artifacts..."
-    node scripts/verify_release_artifacts.js "$RELEASE_VERSION" "$DIST_DIR/web" server/src/main/java/com/antigravity/App.java "" client/src/app/version.ts
+    if [ "$FROM_ARTIFACTS" = "true" ]; then
+        node scripts/verify_release_artifacts.js "$RELEASE_VERSION" "$DIST_DIR/web" "" "" ""
+    else
+        node scripts/verify_release_artifacts.js "$RELEASE_VERSION" "$DIST_DIR/web" server/src/main/java/com/antigravity/App.java "" client/src/app/version.ts
+    fi
 fi
 
 # 9. Create Tarball

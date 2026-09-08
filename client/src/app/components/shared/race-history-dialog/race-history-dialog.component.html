@@ -110,9 +110,47 @@
                     </div>
                   </div>
                   <div class="race-card-action">
+                    <div class="race-run-select-wrapper">
+                      <span class="race-run-select-label"
+                        >{{ "RHD_SELECT_RUN" | translate }}:</span
+                      >
+                      <app-custom-select
+                        class="race-run-select"
+                        [ngModel]="getSelectedRaceId(group)"
+                        (ngModelChange)="onSelectRaceForGroup(group.id, $event)"
+                      >
+                        @for (
+                          race of group.races;
+                          track race._id || race.id || race.entity_id || $index
+                        ) {
+                          <app-custom-option
+                            [value]="race._id || race.id || race.entity_id"
+                          >
+                            @if (getNumericRaceTimestamp(race); as ts) {
+                              {{ ts | localDate: "short" }}
+                            } @else {
+                              {{
+                                "RHD_RACE_RUN_FALLBACK"
+                                  | translate: { index: $index + 1 }
+                              }}
+                            }
+                          </app-custom-option>
+                        }
+                      </app-custom-select>
+                    </div>
                     <button
                       type="button"
-                      class="btn-edit-laps"
+                      class="btn-action btn-open-race"
+                      [disabled]="isLoadingDetails"
+                      (click)="openRace(group)"
+                      [title]="'RHD_BTN_OPEN_RACE' | translate"
+                    >
+                      <span class="material-icons btn-icon">sports_score</span>
+                      <span>{{ "RHD_BTN_OPEN_RACE" | translate }}</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-action btn-edit-laps"
                       [disabled]="isLoadingDetails"
                       (click)="editRaceLaps(group)"
                     >
@@ -140,17 +178,29 @@
   <app-disallow-lap-records-dialog
     [visible]="showDisallowDialog"
     [races]="selectedRaceGroup.races"
-    [heats]="selectedRaceGroup.races[0]?.heats || []"
-    [drivers]="selectedRaceGroup.races[0]?.drivers || []"
-    [track]="selectedRaceGroup.races[0]?.track"
+    [heats]="
+      selectedHistoryDetails?.heats || selectedRaceGroup.races[0]?.heats || []
+    "
+    [drivers]="
+      selectedHistoryDetails?.drivers ||
+      selectedRaceGroup.races[0]?.drivers ||
+      []
+    "
+    [track]="selectedHistoryDetails?.track || selectedRaceGroup.races[0]?.track"
     [currentHeatNumber]="1"
     [raceHistoryId]="
+      selectedHistoryDetails?._id ||
+      selectedHistoryDetails?.id ||
+      selectedHistoryDetails?.entity_id ||
       selectedRaceGroup.races[0]?._id ||
       selectedRaceGroup.races[0]?.id ||
       selectedRaceGroup.races[0]?.entity_id
     "
     [raceName]="selectedRaceGroup.raceName"
-    [raceDate]="selectedRaceGroup.latestDate"
+    [raceDate]="
+      getNumericRaceTimestamp(selectedHistoryDetails) ||
+      selectedRaceGroup.latestDate
+    "
     [isDemo]="selectedRaceGroup.isDemo"
     (recordsUpdated)="onRecordsUpdated($event)"
     (close)="closeDisallowDialog()"

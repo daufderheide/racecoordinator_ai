@@ -11,6 +11,7 @@ import com.antigravity.proto.SystemState;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.LogReplayService;
 import com.antigravity.util.NetworkUtils;
@@ -267,7 +268,9 @@ public class ClientSubscriptionManager {
         sessions.size(),
         interfaceSubscribers.size());
 
-    if (currentRace != null && currentRace.getHardwareManager() != null) {
+    if (currentRace != null
+        && currentRace.getHardwareManager() != null
+        && !(currentRace.getState() instanceof RaceOver)) {
       ProtocolDelegate delegate = currentRace.getHardwareManager().getProtocols();
       if (delegate != null && delegate.getProtocols() != null) {
         for (IProtocol p : delegate.getProtocols()) {
@@ -611,6 +614,9 @@ public class ClientSubscriptionManager {
 
   public void broadcastInterfaceEvent(InterfaceEvent event) {
     if (interfaceSubscribers.isEmpty()) {
+      return;
+    }
+    if (currentRace != null && (currentRace.getState() instanceof RaceOver)) {
       return;
     }
 

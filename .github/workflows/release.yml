@@ -152,7 +152,7 @@ jobs:
       ref: ${{ needs.check-changes.outputs.commit_sha }}
 
   build-artifacts:
-    needs: [check-changes, run-tests]
+    needs: check-changes
     if: ${{ needs.check-changes.outputs.should_run == 'true' }}
     runs-on: ubuntu-latest
     steps:
@@ -280,48 +280,28 @@ jobs:
         with:
           ref: ${{ needs.check-changes.outputs.commit_sha }}
 
-      - name: Set Version in Files
-        run: |
-          VERSION="${{ needs.check-changes.outputs.version }}"
-          echo "Configuring codebase version to $VERSION"
-          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" client/package.json
-          sed -i "s/SERVER_VERSION = \".*\";/SERVER_VERSION = \"$VERSION\";/" server/src/main/java/com/antigravity/App.java
-          sed -i "s/CLIENT_VERSION_BUILD: string = \".*\";/CLIENT_VERSION_BUILD: string = \"$VERSION\";/" client/src/app/version.ts
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: release/
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "25.1"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Analytics Properties
-        run: |
-          mkdir -p server/src/main/resources
-          echo "ga.measurement.id=${{ secrets.GA_MEASUREMENT_ID }}" > server/src/main/resources/analytics.properties
-          echo "ga.api.secret=${{ secrets.GA_API_SECRET }}" >> server/src/main/resources/analytics.properties
-
       - name: Build Linux ARM64 Release Package
         env:
           VERSION: ${{ needs.check-changes.outputs.version }}
         run: |
           chmod +x create_linux_arm64_release.sh
-          ./create_linux_arm64_release.sh
+          ./create_linux_arm64_release.sh --from-artifacts
 
       - name: Verify Linux Release Artifacts
         run: |
           VERSION="${{ needs.check-changes.outputs.version }}"
-          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator_Linux_ARM64/web server/src/main/java/com/antigravity/App.java "" client/src/app/version.ts
+          node scripts/verify_release_artifacts.js "$VERSION" release/RaceCoordinator_Linux_ARM64/web "" "" ""
 
       - name: Upload Linux Package
         uses: actions/upload-artifact@v4

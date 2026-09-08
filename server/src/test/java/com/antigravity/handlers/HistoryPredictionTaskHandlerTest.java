@@ -34,6 +34,7 @@ public class HistoryPredictionTaskHandlerTest {
         new DatabaseContext("testdb", null, tempFile.toPath().toString() + java.io.File.separator);
     mockJavalin = mock(Javalin.class);
     handler = new HistoryPredictionTaskHandler(mockDbCtx, mockJavalin);
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(null);
   }
 
   @Test
@@ -41,6 +42,8 @@ public class HistoryPredictionTaskHandlerTest {
     verify(mockJavalin).get(eq("/api/history/races"), any(), eq(Role.VIEWER));
     verify(mockJavalin).get(eq("/api/history/races/{id}"), any(), eq(Role.VIEWER));
     verify(mockJavalin).get(eq("/api/history/races/{id}/export"), any(), eq(Role.VIEWER));
+    verify(mockJavalin).post(eq("/api/history/races/{id}/load"), any(), eq(Role.DIRECTOR));
+    verify(mockJavalin).post(eq("/api/history/races/{id}/lap-sections"), any(), eq(Role.DIRECTOR));
     verify(mockJavalin)
         .put(
             eq(
@@ -407,5 +410,167 @@ public class HistoryPredictionTaskHandlerTest {
     // Driver 1's new best lap is 3.8
     org.junit.Assert.assertEquals(
         3.8, updated.getHeats().get(0).getDrivers().get(1).getBestLapTime(), 0.001);
+  }
+
+  @Test
+  public void testLoadRaceHistory_ConflictWhenRaceRunning() {
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("hist_123");
+    when(mockCtx.status(409)).thenReturn(mockCtx);
+
+    com.antigravity.race.Race mockActiveRace = mock(com.antigravity.race.Race.class);
+    when(mockActiveRace.getState()).thenReturn(new com.antigravity.race.states.Racing());
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(mockActiveRace);
+
+    handler.loadRaceHistory(mockCtx);
+    verify(mockCtx).status(409);
+  }
+
+  @Test
+  public void testLoadRaceHistory_NotFound() {
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("non_existent_history");
+    when(mockCtx.status(404)).thenReturn(mockCtx);
+
+    handler.loadRaceHistory(mockCtx);
+    verify(mockCtx).status(404);
+  }
+
+  @Test
+  public void testLoadRaceHistory_Success() {
+    com.antigravity.models.RaceHistoryRecord history =
+        new com.antigravity.models.RaceHistoryRecord();
+    history.setId("hist_load_test");
+    history.setOriginalEntityId("race_load_test");
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("race_load_test")
+            .withName("Load Race")
+            .build();
+    history.setModel(raceModel);
+    history.setTrack(com.antigravity.service.DatabaseService.getInstance().getFactoryTrack());
+    com.antigravity.service.DatabaseService.getInstance()
+        .saveRawRaceHistoryRecord(mockDbCtx, history);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("hist_load_test");
+    when(mockCtx.status(any(Integer.class))).thenReturn(mockCtx);
+    when(mockCtx.result(any(String.class))).thenReturn(mockCtx);
+
+    handler.loadRaceHistory(mockCtx);
+    verify(mockCtx).status(200);
+
+    com.antigravity.race.Race loaded =
+        com.antigravity.race.ClientSubscriptionManager.getInstance().getRace();
+    org.junit.Assert.assertNotNull(loaded);
+    org.junit.Assert.assertEquals("hist_load_test", loaded.getHistoryRecordId());
+  }
+
+  @Test
+  public void testExportRaceHistoryCsv_Success() {
+    com.antigravity.models.RaceHistoryRecord history =
+        new com.antigravity.models.RaceHistoryRecord();
+    history.setId("hist_export_test");
+    history.setOriginalEntityId("race_export_test");
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("race_export_test")
+            .withName("Export Race")
+            .build();
+    history.setModel(raceModel);
+    history.setTrack(com.antigravity.service.DatabaseService.getInstance().getFactoryTrack());
+    com.antigravity.service.DatabaseService.getInstance()
+        .saveRawRaceHistoryRecord(mockDbCtx, history);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("hist_export_test");
+    when(mockCtx.header(any(String.class), any(String.class))).thenReturn(mockCtx);
+    when(mockCtx.contentType(any(String.class))).thenReturn(mockCtx);
+    when(mockCtx.result(any(String.class))).thenReturn(mockCtx);
+    when(mockCtx.status(any(Integer.class))).thenReturn(mockCtx);
+
+    handler.exportRaceHistoryCsv(mockCtx);
+    verify(mockCtx).contentType("text/csv");
+  }
+
+  @Test
+  public void testUpdateHistoryLapSections_EmptyUpdatesReturns400() {
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("hist_updates");
+    when(mockCtx.bodyAsClass(List.class)).thenReturn(new ArrayList<>());
+    when(mockCtx.status(any(Integer.class))).thenReturn(mockCtx);
+    when(mockCtx.result(any(String.class))).thenReturn(mockCtx);
+
+    handler.updateHistoryLapSections(mockCtx);
+    verify(mockCtx).status(400);
+  }
+
+  @Test
+  public void testUpdateHistoryLapSections_NotFoundReturns404() {
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("hist_non_existent");
+    List<java.util.Map<String, Object>> updates = new ArrayList<>();
+    java.util.Map<String, Object> update = new java.util.HashMap<>();
+    update.put("heatNumber", 1);
+    updates.add(update);
+    when(mockCtx.bodyAsClass(List.class)).thenReturn(updates);
+    when(mockCtx.status(any(Integer.class))).thenReturn(mockCtx);
+    when(mockCtx.result(any(String.class))).thenReturn(mockCtx);
+
+    handler.updateHistoryLapSections(mockCtx);
+    verify(mockCtx).status(404);
+  }
+
+  @Test
+  public void testUpdateHistoryLapSections_Success() {
+    com.antigravity.models.RaceHistoryRecord history =
+        new com.antigravity.models.RaceHistoryRecord();
+    history.setId("hist_sections_test");
+    history.setOriginalEntityId("race_sections_test");
+    com.antigravity.models.Race raceModel =
+        new com.antigravity.models.Race.Builder()
+            .withEntityId("race_sections_test")
+            .withName("Sections Race")
+            .build();
+    history.setModel(raceModel);
+    history.setTrack(com.antigravity.service.DatabaseService.getInstance().getFactoryTrack());
+
+    com.antigravity.race.RaceParticipant p =
+        new com.antigravity.race.RaceParticipant(new com.antigravity.models.Driver("Dave", "D"));
+    history.setDrivers(java.util.Collections.singletonList(p));
+
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData();
+    dhd.setLane(0);
+    dhd.setDriver(p);
+    dhd.addLap(3.5, false, true);
+
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, java.util.Collections.singletonList(dhd), false);
+    history.setHeats(new java.util.ArrayList<>(java.util.Collections.singletonList(heat)));
+
+    com.antigravity.service.DatabaseService.getInstance()
+        .saveRawRaceHistoryRecord(mockDbCtx, history);
+
+    Context mockCtx = mock(Context.class);
+    when(mockCtx.pathParam("id")).thenReturn("hist_sections_test");
+    List<java.util.Map<String, Object>> updates = new ArrayList<>();
+    java.util.Map<String, Object> update = new java.util.HashMap<>();
+    update.put("heatNumber", 1);
+    update.put("lane", 0);
+    update.put("userLaps", 0.75);
+    updates.add(update);
+    when(mockCtx.bodyAsClass(List.class)).thenReturn(updates);
+    when(mockCtx.status(any(Integer.class))).thenReturn(mockCtx);
+    when(mockCtx.result(any(String.class))).thenReturn(mockCtx);
+
+    handler.updateHistoryLapSections(mockCtx);
+    verify(mockCtx).status(200);
+
+    com.antigravity.models.RaceHistoryRecord updated =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getRaceHistoryById(mockDbCtx, "hist_sections_test", false);
+    org.junit.Assert.assertNotNull(updated);
+    org.junit.Assert.assertEquals(
+        0.75, updated.getHeats().get(0).getDrivers().get(0).getUserLaps(), 0.001);
   }
 }

@@ -223,6 +223,50 @@ describe("RaceTimeService", () => {
       service.raceState = RaceState.RACE_OVER;
       expect(service.isWarmup).toBeFalse();
     });
+
+    it("should not evaluate isWarmup or autoStatusLabel as active if raceState is RACE_OVER during auto-start", () => {
+      selectedRaceSubject.next({
+        auto_start_warmup_time: 5,
+        auto_start_time: 10,
+      });
+      service.autoStartRemaining = 8;
+      service.raceState = RaceState.RACE_OVER;
+      expect(service.isWarmup).toBeFalse();
+      expect(service.autoStatusLabel).toBe("");
+    });
+
+    it("should format time as '0' when raceState is RACE_OVER and time <= 0", () => {
+      service.raceState = RaceState.RACE_OVER;
+      service.time = 0;
+      expect(service.formattedTime).toBe("0");
+    });
+
+    it("should zero timers and ignore updates when raceState is RACE_OVER", () => {
+      service.raceState = RaceState.RACE_OVER;
+      raceTimeSubject.next({
+        time: 50,
+        autoStartRemaining: 10,
+        autoAdvanceRemaining: 5,
+      });
+      expect(service.time).toBe(0);
+      expect(service.autoStartRemaining).toBe(0);
+      expect(service.autoAdvanceRemaining).toBe(0);
+      expect(service.formattedTime).toBe("0");
+    });
+
+    it("should transition to RACE_OVER and zero timers when selectedRace emits a finished race", () => {
+      service.autoStartRemaining = 10;
+      service.time = 10;
+      selectedRaceSubject.next({
+        state: RaceState.RACE_OVER,
+        is_finished: true,
+      });
+      expect(service.raceState).toBe(RaceState.RACE_OVER);
+      expect(service.autoStartRemaining).toBe(0);
+      expect(service.autoAdvanceRemaining).toBe(0);
+      expect(service.time).toBe(0);
+      expect(service.formattedTime).toBe("0");
+    });
   });
 
   describe("handleRaceTimeUpdate and Subscriptions", () => {
