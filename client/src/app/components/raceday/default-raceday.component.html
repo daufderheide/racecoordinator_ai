@@ -411,6 +411,7 @@
     [currentHeatNumber]="heat?.heatNumber ?? 1"
     [raceName]="race.name || ''"
     [raceDate]="currentRaceDate"
+    [recordData]="recordData"
     (recordsUpdated)="onRecordsUpdated($event)"
     (close)="showDisallowLapRecordsDialog = false"
   ></app-disallow-lap-records-dialog>

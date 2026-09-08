@@ -646,6 +646,7 @@ export class TestSetupHelper {
         drivers: [
           { driver: { name: "Alice", entity_id: "d1" } },
           { driver: { name: "Bob", entity_id: "d2" } },
+          { driver: { name: "Charlie", entity_id: "d3" } },
         ],
         heats: [
           {
@@ -668,6 +669,16 @@ export class TestSetupHelper {
                   { lapTime: 3.245, countTowardsRecords: false },
                   { lapTime: 3.654, countTowardsRecords: true },
                 ],
+              },
+            ],
+          },
+          {
+            heatNumber: 2,
+            drivers: [
+              {
+                lane: 0,
+                driver: { name: "Charlie", entity_id: "d3" },
+                laps: [{ lapTime: 3.5, countTowardsRecords: true }],
               },
             ],
           },

@@ -13,6 +13,8 @@ export type SortColumn =
   | "action";
 export type SortDirection = "asc" | "desc";
 
+export type RecordTier = "gold" | "silver" | "bronze" | null;
+
 export interface NormalizedLap {
   raceId?: string;
   raceName: string;
@@ -28,6 +30,10 @@ export interface NormalizedLap {
   lapTime: number;
   countTowardsRecords: boolean;
   isFastest: boolean;
+  recordTier?: RecordTier;
+  isOverallLaneRecord?: boolean;
+  isRaceLaneRecord?: boolean;
+  isDriverBest?: boolean;
 }
 
 export interface RaceFilterOption {
@@ -427,8 +433,130 @@ export function extractDriverLaps(
   return result;
 }
 
+export interface AssignRecordTiersOptions {
+  overallLaneFastestTimes?:
+    | Map<number, number>
+    | number[]
+    | Record<number, number>
+    | null;
+}
+
+export function assignRecordTiers(
+  laps: NormalizedLap[],
+  options?: AssignRecordTiersOptions,
+): NormalizedLap[] {
+  if (!laps || laps.length === 0) return [];
+
+  // 1. Overall lane bests baseline from options if available
+  const overallLaneBests = new Map<number, number>();
+  if (options?.overallLaneFastestTimes) {
+    const raw = options.overallLaneFastestTimes;
+    if (raw instanceof Map) {
+      raw.forEach((time, lane) => {
+        if (time > 0 && time < Infinity) overallLaneBests.set(lane, time);
+      });
+    } else if (Array.isArray(raw)) {
+      raw.forEach((entry: any, lane: number) => {
+        const time =
+          typeof entry === "number"
+            ? entry
+            : parseFloat(entry?.value ?? entry?.time ?? entry?.lapTime ?? 0);
+        if (!isNaN(time) && time > 0 && time < Infinity) {
+          overallLaneBests.set(lane, time);
+        }
+      });
+    } else if (typeof raw === "object") {
+      Object.entries(raw).forEach(([k, v]) => {
+        const lane = parseInt(k, 10);
+        const time = typeof v === "number" ? v : parseFloat(String(v));
+        if (!isNaN(lane) && !isNaN(time) && time > 0 && time < Infinity) {
+          overallLaneBests.set(lane, time);
+        }
+      });
+    }
+  }
+
+  // 2. Calculate minimum eligible lap time across all laps for:
+  //    - overall lane bests
+  //    - race lane bests
+  //    - race driver bests
+  const raceLaneBests = new Map<string, number>();
+  const raceDriverBests = new Map<string, number>();
+
+  for (const lap of laps) {
+    if (!lap.countTowardsRecords || lap.lapTime <= 0) continue;
+
+    // Overall Lane
+    const currentOverall = overallLaneBests.get(lap.laneIndex) ?? Infinity;
+    if (lap.lapTime < currentOverall) {
+      overallLaneBests.set(lap.laneIndex, lap.lapTime);
+    }
+
+    // Race Lane
+    const raceLaneKey = `${lap.raceId || ""}:${lap.laneIndex}`;
+    const currentRaceLane = raceLaneBests.get(raceLaneKey) ?? Infinity;
+    if (lap.lapTime < currentRaceLane) {
+      raceLaneBests.set(raceLaneKey, lap.lapTime);
+    }
+
+    // Race Driver
+    const raceDriverKey = `${lap.raceId || ""}:${lap.driverName}`;
+    const currentRaceDriver = raceDriverBests.get(raceDriverKey) ?? Infinity;
+    if (lap.lapTime < currentRaceDriver) {
+      raceDriverBests.set(raceDriverKey, lap.lapTime);
+    }
+  }
+
+  // 3. Assign flags and tiers
+  for (const lap of laps) {
+    if (!lap.countTowardsRecords || lap.lapTime <= 0) {
+      lap.recordTier = null;
+      lap.isOverallLaneRecord = false;
+      lap.isRaceLaneRecord = false;
+      lap.isDriverBest = false;
+      lap.isFastest = false;
+      continue;
+    }
+
+    const overallBest = overallLaneBests.get(lap.laneIndex) ?? Infinity;
+    const raceLaneKey = `${lap.raceId || ""}:${lap.laneIndex}`;
+    const raceLaneBest = raceLaneBests.get(raceLaneKey) ?? Infinity;
+    const raceDriverKey = `${lap.raceId || ""}:${lap.driverName}`;
+    const raceDriverBest = raceDriverBests.get(raceDriverKey) ?? Infinity;
+
+    const isOverall =
+      overallBest < Infinity && Math.abs(lap.lapTime - overallBest) < 0.0001;
+    const isRaceLane =
+      raceLaneBest < Infinity && Math.abs(lap.lapTime - raceLaneBest) < 0.0001;
+    const isDriverBest =
+      raceDriverBest < Infinity &&
+      Math.abs(lap.lapTime - raceDriverBest) < 0.0001;
+
+    lap.isOverallLaneRecord = isOverall;
+    lap.isRaceLaneRecord = isRaceLane;
+    lap.isDriverBest = isDriverBest;
+
+    if (isOverall) {
+      lap.recordTier = "gold";
+    } else if (isRaceLane) {
+      lap.recordTier = "silver";
+    } else if (isDriverBest) {
+      lap.recordTier = "bronze";
+    } else {
+      lap.recordTier = null;
+    }
+
+    lap.isFastest = lap.recordTier !== null;
+  }
+
+  return laps;
+}
+
 export function getStatusPriority(lap: NormalizedLap): number {
   if (!lap.countTowardsRecords) return 0;
+  if (lap.recordTier === "gold") return 4;
+  if (lap.recordTier === "silver") return 3;
+  if (lap.recordTier === "bronze") return 2;
   if (lap.isFastest) return 2;
   return 1;
 }

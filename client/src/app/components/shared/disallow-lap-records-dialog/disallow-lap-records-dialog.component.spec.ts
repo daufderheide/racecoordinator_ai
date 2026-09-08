@@ -1212,4 +1212,241 @@ describe("DisallowLapRecordsDialogComponent", () => {
     expect(component.normalizedLaps[0].driverName).toBe("Real Driver");
     expect(component.normalizedLaps[0].raceId).toBe("real_race_run");
   });
+
+  describe("Colour Coded Fastest Lap Records (Gold, Silver, Bronze)", () => {
+    it("should correctly classify Gold (Overall Lane Record), Silver (Race Lane Record), and Bronze (Driver Best)", () => {
+      const testHeats = [
+        {
+          heatNumber: 1,
+          drivers: [
+            {
+              laneIndex: 0,
+              driver: { name: "Alice" },
+              lapsWithDetails: [
+                { time: 1.2, countTowardsRecords: true },
+                { time: 1.5, countTowardsRecords: true },
+              ],
+            },
+            {
+              laneIndex: 1,
+              driver: { name: "Bob" },
+              lapsWithDetails: [{ time: 2.0, countTowardsRecords: true }],
+            },
+          ],
+        },
+        {
+          heatNumber: 2,
+          drivers: [
+            {
+              laneIndex: 0,
+              driver: { name: "Charlie" },
+              lapsWithDetails: [{ time: 1.4, countTowardsRecords: true }],
+            },
+            {
+              laneIndex: 1,
+              driver: { name: "Dave" },
+              lapsWithDetails: [{ time: 2.2, countTowardsRecords: true }],
+            },
+          ],
+        },
+      ];
+
+      const mockRecordData = {
+        overall: {
+          laneFastestLap: [
+            { value: 1.3 }, // Lane 0 baseline
+            { value: 1.8 }, // Lane 1 baseline
+          ],
+        },
+      };
+
+      fixture.componentRef.setInput("heats", testHeats);
+      fixture.componentRef.setInput("recordData", mockRecordData);
+      fixture.detectChanges();
+
+      const laps = component.normalizedLaps;
+      expect(laps.length).toBe(5);
+
+      // 1. Alice 1.2s on Lane 0 (Faster than 1.3s baseline -> Gold)
+      const lapAliceGold = laps.find(
+        (l) => l.driverName === "Alice" && l.lapTime === 1.2,
+      )!;
+      expect(lapAliceGold.recordTier).toBe("gold");
+      expect(lapAliceGold.isOverallLaneRecord).toBeTrue();
+      expect(lapAliceGold.isRaceLaneRecord).toBeTrue();
+      expect(lapAliceGold.isDriverBest).toBeTrue();
+      expect(lapAliceGold.isFastest).toBeTrue();
+
+      // 2. Bob 2.0s on Lane 1 (Fastest on Lane 1 in race, but slower than 1.8s overall baseline -> Silver)
+      const lapBobSilver = laps.find(
+        (l) => l.driverName === "Bob" && l.lapTime === 2.0,
+      )!;
+      expect(lapBobSilver.recordTier).toBe("silver");
+      expect(lapBobSilver.isOverallLaneRecord).toBeFalse();
+      expect(lapBobSilver.isRaceLaneRecord).toBeTrue();
+      expect(lapBobSilver.isDriverBest).toBeTrue();
+      expect(lapBobSilver.isFastest).toBeTrue();
+
+      // 3. Charlie 1.4s on Lane 0 (Charlie's best in race, but Alice was faster on Lane 0 -> Bronze)
+      const lapCharlieBronze = laps.find(
+        (l) => l.driverName === "Charlie" && l.lapTime === 1.4,
+      )!;
+      expect(lapCharlieBronze.recordTier).toBe("bronze");
+      expect(lapCharlieBronze.isOverallLaneRecord).toBeFalse();
+      expect(lapCharlieBronze.isRaceLaneRecord).toBeFalse();
+      expect(lapCharlieBronze.isDriverBest).toBeTrue();
+      expect(lapCharlieBronze.isFastest).toBeTrue();
+
+      // 4. Dave 2.2s on Lane 1 (Dave's best in race -> Bronze)
+      const lapDaveBronze = laps.find(
+        (l) => l.driverName === "Dave" && l.lapTime === 2.2,
+      )!;
+      expect(lapDaveBronze.recordTier).toBe("bronze");
+      expect(lapDaveBronze.isOverallLaneRecord).toBeFalse();
+      expect(lapDaveBronze.isRaceLaneRecord).toBeFalse();
+      expect(lapDaveBronze.isDriverBest).toBeTrue();
+      expect(lapDaveBronze.isFastest).toBeTrue();
+
+      // 5. Alice 1.5s on Lane 0 (Not personal best, not lane best -> Eligible)
+      const lapAliceEligible = laps.find(
+        (l) => l.driverName === "Alice" && l.lapTime === 1.5,
+      )!;
+      expect(lapAliceEligible.recordTier).toBeNull();
+      expect(lapAliceEligible.isOverallLaneRecord).toBeFalse();
+      expect(lapAliceEligible.isRaceLaneRecord).toBeFalse();
+      expect(lapAliceEligible.isDriverBest).toBeFalse();
+      expect(lapAliceEligible.isFastest).toBeFalse();
+      expect(lapAliceEligible.countTowardsRecords).toBeTrue();
+
+      // Verify DOM classes and badges render accurately
+      const compiled = fixture.nativeElement as HTMLElement;
+      expect(compiled.querySelector(".badge-gold")).toBeTruthy();
+      expect(compiled.querySelector(".badge-silver")).toBeTruthy();
+      expect(compiled.querySelector(".badge-bronze")).toBeTruthy();
+      expect(compiled.querySelector(".badge-eligible")).toBeTruthy();
+      expect(compiled.querySelector(".row-gold")).toBeTruthy();
+      expect(compiled.querySelector(".row-silver")).toBeTruthy();
+      expect(compiled.querySelector(".row-bronze")).toBeTruthy();
+    });
+
+    it("should dynamically recalculate tiers when a Gold lap is disallowed", () => {
+      const testHeats = [
+        {
+          heatNumber: 1,
+          drivers: [
+            {
+              laneIndex: 0,
+              driver: { name: "Alice" },
+              lapsWithDetails: [{ time: 1.2, countTowardsRecords: true }],
+            },
+          ],
+        },
+        {
+          heatNumber: 2,
+          drivers: [
+            {
+              laneIndex: 0,
+              driver: { name: "Charlie" },
+              lapsWithDetails: [{ time: 1.4, countTowardsRecords: true }],
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("heats", testHeats);
+      fixture.componentRef.setInput("recordData", null);
+      fixture.detectChanges();
+
+      let laps = component.normalizedLaps;
+      expect(laps[0].lapTime).toBe(1.2);
+      expect(laps[0].recordTier).toBe("gold");
+      expect(laps[1].lapTime).toBe(1.4);
+      expect(laps[1].recordTier).toBe("bronze");
+
+      // Disallow the Gold lap
+      testHeats[0].drivers[0].lapsWithDetails[0].countTowardsRecords = false;
+      fixture.detectChanges();
+
+      laps = component.normalizedLaps;
+      const disallowedLap = laps.find((l) => l.lapTime === 1.2)!;
+      const promotedLap = laps.find((l) => l.lapTime === 1.4)!;
+
+      expect(disallowedLap.countTowardsRecords).toBeFalse();
+      expect(disallowedLap.recordTier).toBeNull();
+      expect(disallowedLap.isFastest).toBeFalse();
+
+      // Charlie's 1.4s is now the fastest eligible lap on Lane 0 -> Gold!
+      expect(promotedLap.countTowardsRecords).toBeTrue();
+      expect(promotedLap.recordTier).toBe("gold");
+      expect(promotedLap.isOverallLaneRecord).toBeTrue();
+    });
+
+    it("should sort correctly by status through all tiers: Disallowed (0) -> Eligible (1) -> Bronze (2) -> Silver (3) -> Gold (4)", () => {
+      const testHeats = [
+        {
+          heatNumber: 1,
+          drivers: [
+            {
+              laneIndex: 0,
+              driver: { name: "Racer" },
+              lapsWithDetails: [
+                { time: 1.0, countTowardsRecords: true }, // Gold (Lane 0 best)
+                { time: 2.0, countTowardsRecords: true }, // Eligible
+                { time: 3.0, countTowardsRecords: false }, // Disallowed
+              ],
+            },
+            {
+              laneIndex: 1,
+              driver: { name: "DriverB" },
+              lapsWithDetails: [
+                { time: 1.5, countTowardsRecords: true }, // Silver (Lane 1 best in race, but slower than baseline 1.1s)
+              ],
+            },
+            {
+              laneIndex: 0,
+              driver: { name: "DriverC" },
+              lapsWithDetails: [
+                { time: 1.2, countTowardsRecords: true }, // Bronze (DriverC best)
+              ],
+            },
+          ],
+        },
+      ];
+
+      const mockRecordData = {
+        overall: {
+          laneFastestLap: [
+            { value: 1.0 }, // Lane 0 baseline
+            { value: 1.1 }, // Lane 1 baseline (so 1.5s is Silver, not Gold)
+          ],
+        },
+      };
+
+      fixture.componentRef.setInput("heats", testHeats);
+      fixture.componentRef.setInput("recordData", mockRecordData);
+      fixture.detectChanges();
+
+      // Sort by status ascending: Disallowed (0) -> Eligible (1) -> Bronze (2) -> Silver (3) -> Gold (4)
+      component.onSort("status");
+      fixture.detectChanges();
+
+      const lapsAsc = component.normalizedLaps;
+      expect(lapsAsc[0].countTowardsRecords).toBeFalse(); // Disallowed
+      expect(lapsAsc[1].recordTier).toBeNull(); // Eligible
+      expect(lapsAsc[2].recordTier).toBe("bronze"); // Bronze
+      expect(lapsAsc[3].recordTier).toBe("silver"); // Silver
+      expect(lapsAsc[4].recordTier).toBe("gold"); // Gold
+
+      // Sort by status descending: Gold (4) -> Silver (3) -> Bronze (2) -> Eligible (1) -> Disallowed (0)
+      component.onSort("status");
+      fixture.detectChanges();
+
+      const lapsDesc = component.normalizedLaps;
+      expect(lapsDesc[0].recordTier).toBe("gold"); // Gold
+      expect(lapsDesc[1].recordTier).toBe("silver"); // Silver
+      expect(lapsDesc[2].recordTier).toBe("bronze"); // Bronze
+      expect(lapsDesc[3].recordTier).toBeNull(); // Eligible
+      expect(lapsDesc[4].countTowardsRecords).toBeFalse(); // Disallowed
+    });
+  });
 });

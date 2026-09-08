@@ -608,6 +608,24 @@
   border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
+.badge-gold {
+  background: rgba(255, 215, 0, 0.18);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.45);
+}
+
+.badge-silver {
+  background: rgba(203, 213, 225, 0.18);
+  color: #e2e8f0;
+  border: 1px solid rgba(203, 213, 225, 0.4);
+}
+
+.badge-bronze {
+  background: rgba(205, 127, 50, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(205, 127, 50, 0.45);
+}
+
 .badge-fastest {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
@@ -682,6 +700,21 @@
 
 .table-row.row-disallowed {
   background: rgba(239, 68, 68, 0.06);
+}
+
+.table-row.row-gold {
+  background: rgba(255, 215, 0, 0.08);
+  border-left: 3px solid #ffd700;
+}
+
+.table-row.row-silver {
+  background: rgba(203, 213, 225, 0.06);
+  border-left: 3px solid #c0c0c0;
+}
+
+.table-row.row-bronze {
+  background: rgba(205, 127, 50, 0.06);
+  border-left: 3px solid #cd7f32;
 }
 
 .table-row.row-fastest {

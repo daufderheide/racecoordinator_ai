@@ -26,6 +26,7 @@ import { AuthService } from "@app/services/auth.service";
 import { RaceService } from "@app/services/race.service";
 
 import {
+  assignRecordTiers,
   compareNormalizedLaps,
   DriverFilterOption,
   extractDriverLaps,
@@ -35,6 +36,7 @@ import {
   LaneOption,
   NormalizedLap,
   RaceFilterOption,
+  RecordTier,
   resolveDriverAndTeam,
   SortColumn,
   SortDirection,
@@ -47,6 +49,7 @@ export type {
   RaceFilterOption,
   DriverFilterOption,
   LaneOption,
+  RecordTier,
 };
 
 import { LocalDatePipe } from "@app/pipes/local-date.pipe";
@@ -77,6 +80,8 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
 
   visible = input<boolean>(false);
   races = input<any[]>([]);
+  allRaces = input<any[]>([]);
+  recordData = input<any>(null);
   heats = input<any[]>([]);
   drivers = input<any[]>([]);
   allDrivers = input<any[]>([]);
@@ -557,9 +562,60 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
     return getDriverLaps(driverData);
   }
 
+  get overallLaneFastestTimes(): number[] | null {
+    const laneFastestLap = this.recordData()?.overall?.laneFastestLap;
+    if (Array.isArray(laneFastestLap) && laneFastestLap.length > 0) {
+      return laneFastestLap.map((entry: any) => {
+        const val =
+          typeof entry === "number" ? entry : parseFloat(entry?.value ?? 0);
+        return isNaN(val) ? 0 : val;
+      });
+    }
+
+    const allRacesList = this.allRaces();
+    if (Array.isArray(allRacesList) && allRacesList.length > 0) {
+      const bests: number[] = [];
+      for (const r of allRacesList) {
+        const heats = this.getRaceHeats(r);
+        for (const h of heats) {
+          const drivers = this.getHeatDrivers(h);
+          if (!drivers) continue;
+          drivers.forEach((d: any, dIdx: number) => {
+            const lane =
+              typeof d.laneIndex === "number"
+                ? d.laneIndex
+                : typeof d.lane === "number"
+                  ? d.lane
+                  : dIdx;
+            const laps = this.getDriverLaps(d);
+            for (const lap of laps) {
+              const countTowardsRecords =
+                typeof lap === "object" && lap !== null
+                  ? (lap.countTowardsRecords ??
+                    lap.count_towards_records ??
+                    true)
+                  : true;
+              if (!countTowardsRecords) continue;
+              const time =
+                typeof lap === "number"
+                  ? lap
+                  : parseFloat(lap?.time ?? lap?.lapTime ?? lap?.lap_time ?? 0);
+              if (time > 0) {
+                while (bests.length <= lane) bests.push(Infinity);
+                if (time < bests[lane]) bests[lane] = time;
+              }
+            }
+          });
+        }
+      }
+      if (bests.length > 0) return bests;
+    }
+    return null;
+  }
+
   get normalizedLaps(): NormalizedLap[] {
     const racesList = this.filteredRaces;
-    const lapsList: NormalizedLap[] = [];
+    const allLaps: NormalizedLap[] = [];
     const allDrivers = this.combinedAllDrivers;
 
     for (const race of racesList) {
@@ -578,13 +634,6 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
       for (const heat of heatsList) {
         if (!heat) continue;
         const heatNum = this.getHeatNumber(heat);
-        if (
-          this.selectedHeatNumber !== -1 &&
-          heatNum !== this.selectedHeatNumber
-        ) {
-          continue;
-        }
-
         const drivers = this.getHeatDrivers(heat);
         if (!drivers || drivers.length === 0) continue;
 
@@ -600,18 +649,46 @@ export class DisallowLapRecordsDialogComponent implements OnInit, OnChanges {
             raceId,
             raceName,
             raceDate,
-            this.selectedLaneIndex,
-            this.selectedDriverName,
+            -1, // extract all lanes for accurate record context
+            "", // extract all drivers for accurate record context
             allDrivers,
           );
           if (driverLaps.length > 0) {
-            lapsList.push(...driverLaps);
+            allLaps.push(...driverLaps);
           }
         });
       }
     }
 
-    return lapsList.sort((a, b) =>
+    // Assign Gold, Silver, Bronze tiers across all eligible laps
+    assignRecordTiers(allLaps, {
+      overallLaneFastestTimes: this.overallLaneFastestTimes,
+    });
+
+    // Filter laps according to active UI selection (Heat, Driver, Lane)
+    const filtered = allLaps.filter((lap) => {
+      if (
+        this.selectedHeatNumber !== -1 &&
+        lap.heatNumber !== this.selectedHeatNumber
+      ) {
+        return false;
+      }
+      if (
+        this.selectedLaneIndex !== -1 &&
+        lap.laneIndex !== this.selectedLaneIndex
+      ) {
+        return false;
+      }
+      if (
+        this.selectedDriverName &&
+        lap.driverName !== this.selectedDriverName
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return filtered.sort((a, b) =>
       compareNormalizedLaps(a, b, this.sortColumn, this.sortDirection),
     );
   }
