@@ -530,6 +530,39 @@ public class HeatExecutionManager {
     logger.info("Swapped transient lane state for lanes {} and {}", from, to);
   }
 
+  public void resetLane(int lane) {
+    if (lane >= 0) {
+      if (refuelDelayRemaining != null && lane < refuelDelayRemaining.length) {
+        refuelDelayRemaining[lane] = -1.0;
+      }
+      if (isRefueling != null && lane < isRefueling.length) {
+        isRefueling[lane] = false;
+      }
+      if (accumulatedRefuelTime != null && lane < accumulatedRefuelTime.length) {
+        accumulatedRefuelTime[lane] = 0.0;
+      }
+      if (timeSinceLastLap != null && lane < timeSinceLastLap.length) {
+        timeSinceLastLap[lane] = 0.0;
+      }
+      if (excludedPendingLapTime != null && lane < excludedPendingLapTime.length) {
+        excludedPendingLapTime[lane] = 0.0;
+      }
+      if (stutterAccumulatedTime != null && lane < stutterAccumulatedTime.length) {
+        stutterAccumulatedTime[lane] = 0.0;
+      }
+      finishedLanes.remove(lane);
+      logger.info("Reset transient lane execution state for lane {}", lane);
+    }
+  }
+
+  public void resetAllLanes() {
+    if (timeSinceLastLap != null) {
+      for (int i = 0; i < timeSinceLastLap.length; i++) {
+        resetLane(i);
+      }
+    }
+  }
+
   public void handlePitDetection(com.antigravity.protocols.CarData carData) { // fqn-collision
     FuelOptions fuelOptions = null;
     if (isAnalogFuelEnabled()) {

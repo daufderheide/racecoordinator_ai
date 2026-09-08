@@ -15,6 +15,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
+import { HeatConverter } from "@app/converters/heat.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { AllowFinish, FinishMethod } from "@app/models/heat_scoring";
@@ -1010,11 +1011,22 @@ describe("DefaultRacedayComponent", () => {
       mockDataService.resetLaneHeatData.and.returnValue(of(true));
       const mockEvent = new MouseEvent("click");
       spyOn(mockEvent, "stopPropagation");
+      spyOn(HeatConverter, "clearCache");
+
+      const dhd = new DriverHeatData(
+        "hd1",
+        new RaceParticipant("p1", new Driver("d1", "Driver 1", "D1")),
+        2,
+      );
+      dhd.addLapTime(1, 3.5, 3.5, 3.5, 3.5, 1);
+      (component as any).heat = { heatDrivers: [dhd] };
 
       component.resetLane(2, mockEvent);
 
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith(2);
+      expect(dhd.lapTimes.length).toBe(0);
+      expect(HeatConverter.clearCache).toHaveBeenCalled();
     });
 
     it("should call resetLane and handle error", () => {
@@ -1036,11 +1048,22 @@ describe("DefaultRacedayComponent", () => {
       mockDataService.resetLaneHeatData.and.returnValue(of(true));
       const mockEvent = new MouseEvent("click");
       spyOn(mockEvent, "stopPropagation");
+      spyOn(HeatConverter, "clearCache");
+
+      const dhd = new DriverHeatData(
+        "hd1",
+        new RaceParticipant("p1", new Driver("d1", "Driver 1", "D1")),
+        0,
+      );
+      dhd.addLapTime(1, 3.5, 3.5, 3.5, 3.5, 1);
+      (component as any).heat = { heatDrivers: [dhd] };
 
       component.resetAllLanes(mockEvent);
 
       expect(mockEvent.stopPropagation).toHaveBeenCalled();
       expect(mockDataService.resetLaneHeatData).toHaveBeenCalledWith("all");
+      expect(dhd.lapTimes.length).toBe(0);
+      expect(HeatConverter.clearCache).toHaveBeenCalled();
     });
 
     it("should call resetAllLanes and handle error", () => {

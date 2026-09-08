@@ -69,6 +69,7 @@ import {
   RacePredictionRecord,
   RacePredictionService,
 } from "@app/services/race-prediction.service";
+import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 
 export interface LapDisplayInfo {
   lapTime: string;
@@ -1649,19 +1650,10 @@ export class DefaultRacedayComponent
       this.raceConnectionService.laps$.subscribe((lap) => {
         const currentHeat = this.raceService.getCurrentHeat() || this.heat;
         if (currentHeat && currentHeat.heatDrivers && lap) {
-          const matchDriver = (d: DriverHeatData) =>
-            Boolean(
-              (lap.objectId && d.objectId === lap.objectId) ||
-              (lap.objectId && d.participant?.objectId === lap.objectId) ||
-              (lap.interfaceId !== undefined &&
-                lap.interfaceId !== null &&
-                d.laneIndex === lap.interfaceId) ||
-              (lap.driverId &&
-                (d.actualDriver?.entity_id === lap.driverId ||
-                  d.participant?.driver?.entity_id === lap.driverId)),
-            );
-
-          const driverData = currentHeat.heatDrivers.find(matchDriver);
+          const driverData = DriverMatchingUtils.findDriverForLap(
+            currentHeat.heatDrivers,
+            lap,
+          );
           if (driverData) {
             const currentLapCount =
               typeof driverData.lapTimes?.length === "number"
@@ -1694,7 +1686,10 @@ export class DefaultRacedayComponent
               this.heat !== currentHeat &&
               this.heat.heatDrivers
             ) {
-              const localHd = this.heat.heatDrivers.find(matchDriver);
+              const localHd = DriverMatchingUtils.findDriverForLap(
+                this.heat.heatDrivers,
+                lap,
+              );
               const localLapCount =
                 localHd && typeof localHd.lapTimes?.length === "number"
                   ? localHd.lapTimes.length
@@ -1731,7 +1726,10 @@ export class DefaultRacedayComponent
                   h.heatNumber === currentHeat.heatNumber,
               );
               if (targetHeat && targetHeat.heatDrivers) {
-                const targetHd = targetHeat.heatDrivers.find(matchDriver);
+                const targetHd = DriverMatchingUtils.findDriverForLap(
+                  targetHeat.heatDrivers,
+                  lap,
+                );
                 if (targetHd && targetHd !== driverData) {
                   const targetLapCount =
                     typeof targetHd.lapTimes?.length === "number"
@@ -3954,6 +3952,7 @@ export class DefaultRacedayComponent
     this.dataService.resetLaneHeatData(lane).subscribe({
       next: () => {
         this.logger.debug(`Reset lane ${lane}`);
+        this.applyLocalLaneReset(lane);
       },
       error: (err) => {
         this.logger.error(`Error resetting lane ${lane}:`, err);
@@ -3969,6 +3968,7 @@ export class DefaultRacedayComponent
     this.dataService.resetLaneHeatData("all").subscribe({
       next: () => {
         this.logger.debug(`Reset all lanes`);
+        this.applyLocalLaneReset("all");
       },
       error: (err) => {
         this.logger.error(`Error resetting all lanes:`, err);
@@ -3977,6 +3977,45 @@ export class DefaultRacedayComponent
         this.showAckModal = true;
       },
     });
+  }
+
+  private applyLocalLaneReset(lane: number | "all") {
+    const resetDriver = (dhd: any) => {
+      if (typeof dhd?.reset === "function") {
+        dhd.reset();
+      } else if (dhd) {
+        if (Array.isArray(dhd.laps)) dhd.laps = [];
+        if (Array.isArray(dhd.lapTimes)) dhd.lapTimes = [];
+        if (Array.isArray(dhd.lapsWithDetails)) dhd.lapsWithDetails = [];
+        if (Array.isArray(dhd._lapsWithDetails)) dhd._lapsWithDetails = [];
+        dhd.lapCount = 0;
+        dhd.bestLapTime = 0;
+        dhd.lastLapTime = 0;
+        dhd.averageLapTime = 0;
+        dhd.medianLapTime = 0;
+        dhd.adjustedLapCount = 0;
+      }
+    };
+
+    const heats = [this.heat, this.raceService.getCurrentHeat()].filter(
+      (h): h is Heat => !!h && !!h.heatDrivers,
+    );
+
+    for (const h of heats) {
+      if (lane === "all") {
+        h.heatDrivers.forEach((d) => resetDriver(d));
+      } else if (lane >= 0) {
+        const target = h.heatDrivers.find((d) => d && d.laneIndex === lane);
+        if (target) {
+          resetDriver(target);
+        } else if (lane < h.heatDrivers.length && h.heatDrivers[lane]) {
+          resetDriver(h.heatDrivers[lane]);
+        }
+      }
+    }
+
+    HeatConverter.clearCache();
+    this.cdr.markForCheck();
   }
 
   getExportTimestamp(): Date {

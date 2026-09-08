@@ -321,4 +321,88 @@ public class DriverLaneHeatHandlerTest {
     verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
     org.junit.Assert.assertFalse(dhd.getLaps().get(0).isCountTowardsRecords());
   }
+
+  @Test
+  public void testResetLaneHeatData_SpecificLaneInPractice_ShouldResetLaneAndExecutionState() {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.models.Driver d2 = new com.antigravity.models.Driver("Bob", "Bobby", "d2", "2");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Lane l2 = new com.antigravity.models.Lane("blue", "white", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track 1")
+            .lanes(java.util.Arrays.asList(l1, l2))
+            .build();
+
+    com.antigravity.models.Race practiceModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Practice Race")
+            .withEntityId("r_practice")
+            .withPractice(true)
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(practiceModel)
+            .drivers(java.util.Arrays.asList(p1, p2))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+
+    com.antigravity.race.DriverHeatData dhd = activeRace.getCurrentHeat().getDrivers().get(0);
+    dhd.addLap(2.5, false, true);
+    org.junit.Assert.assertEquals(1, dhd.getLapCount());
+
+    when(ctx.pathParam("lane")).thenReturn("0");
+    handler.resetLaneHeatData(ctx);
+
+    verify(ctx, org.mockito.Mockito.atLeastOnce()).status(200);
+    org.junit.Assert.assertEquals(0, dhd.getLapCount());
+    org.junit.Assert.assertEquals(
+        0.0, activeRace.getHeatExecutionManager().getTimeSinceLastLap()[0], 0.001);
+  }
+
+  @Test
+  public void testResetLaneHeatData_SpecificLaneNonPractice_ShouldReturn403() {
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("red", "black", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track 1")
+            .lanes(java.util.Collections.singletonList(l1))
+            .build();
+
+    com.antigravity.models.Race nonPracticeModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Non Practice Race")
+            .withEntityId("r_non_practice")
+            .withPractice(false)
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(nonPracticeModel)
+            .drivers(java.util.Collections.singletonList(p1))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+    ClientSubscriptionManager.getInstance().setDatabaseContext(databaseContext);
+
+    when(ctx.pathParam("lane")).thenReturn("0");
+    handler.resetLaneHeatData(ctx);
+
+    verify(ctx).status(403);
+  }
 }

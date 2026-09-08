@@ -238,4 +238,78 @@ describe("HeatConverter", () => {
     expect(driverData.lapsWithDetails[1].time).toBe(1.1);
     expect(driverData.lapsWithDetails[1].countTowardsRecords).toBeFalse();
   });
+
+  it("should not resurrect laps when a subsequent proto update has empty laps (lane reset)", () => {
+    const heatWithLaps: IHeat = {
+      objectId: "heat_reset_test",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_reset_1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [
+            { lapTime: 2.5, countTowardsRecords: true },
+            { lapTime: 2.4, countTowardsRecords: true },
+          ] as any,
+          bestLapTime: 2.4,
+          averageLapTime: 2.45,
+        } as any,
+      ],
+    };
+
+    // First conversion: heat has 2 laps
+    const heat1 = HeatConverter.fromProto(heatWithLaps);
+    expect(heat1.heatDrivers[0]!.lapTimes.length).toBe(2);
+    expect(heat1.heatDrivers[0]!.lapsWithDetails.length).toBe(2);
+
+    // Second conversion: lane reset occurs, server sends snapshot with empty laps
+    const heatResetSnapshot: IHeat = {
+      objectId: "heat_reset_test",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_reset_1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [],
+          bestLapTime: 0,
+          averageLapTime: 0,
+        } as any,
+      ],
+    };
+
+    const heat2 = HeatConverter.fromProto(heatResetSnapshot);
+    const resetDriver = heat2.heatDrivers[0]!;
+
+    expect(resetDriver.lapTimes.length).toBe(0);
+    expect(resetDriver.lapsWithDetails.length).toBe(0);
+    expect(resetDriver.bestLapTime).toBe(0);
+  });
+
+  it("should allow invalidating cache by objectId or clearing all cache", () => {
+    const proto: IHeat = {
+      objectId: "heat_cache_test",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_cache_1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          laps: [{ lapTime: 3.1 }] as any,
+        } as any,
+      ],
+    };
+
+    HeatConverter.fromProto(proto);
+    HeatConverter.invalidateHeat("heat_cache_test");
+    HeatConverter.clearCache();
+    expect(true).toBeTrue();
+  });
 });

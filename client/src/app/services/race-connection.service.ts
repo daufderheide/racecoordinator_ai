@@ -24,7 +24,7 @@ import {
   RaceFlag,
   RaceState,
 } from "@app/proto/antigravity";
-import { DriverHeatData } from "@app/race/driver_heat_data";
+import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
 
 import { ChildWindowManagerService } from "./child-window-manager.service";
 import { LoggerService } from "./logger.service";
@@ -271,19 +271,10 @@ export class RaceConnectionService implements OnDestroy {
         const heat =
           currentHeat || (allHeats && allHeats.length > 0 ? allHeats[0] : null);
         if (heat && heat.heatDrivers && lap) {
-          const matchDriver = (d: DriverHeatData) =>
-            Boolean(
-              (lap.objectId && d.objectId === lap.objectId) ||
-              (lap.objectId && d.participant?.objectId === lap.objectId) ||
-              (lap.interfaceId !== undefined &&
-                lap.interfaceId !== null &&
-                d.laneIndex === lap.interfaceId) ||
-              (lap.driverId &&
-                (d.actualDriver?.entity_id === lap.driverId ||
-                  d.participant?.driver?.entity_id === lap.driverId)),
-            );
-
-          const driverData = heat.heatDrivers.find(matchDriver);
+          const driverData = DriverMatchingUtils.findDriverForLap(
+            heat.heatDrivers,
+            lap,
+          );
           if (driverData) {
             if (lap.type === LapType.REACTION_TIME) {
               driverData.reactionTime = lap.lapTime!;
@@ -326,7 +317,10 @@ export class RaceConnectionService implements OnDestroy {
                     h.heatNumber === heat.heatNumber,
                 );
                 if (targetHeat && targetHeat.heatDrivers) {
-                  const targetHd = targetHeat.heatDrivers.find(matchDriver);
+                  const targetHd = DriverMatchingUtils.findDriverForLap(
+                    targetHeat.heatDrivers,
+                    lap,
+                  );
                   if (
                     targetHd &&
                     targetHd !== driverData &&

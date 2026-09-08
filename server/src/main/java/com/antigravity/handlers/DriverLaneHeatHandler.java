@@ -8,6 +8,7 @@ import com.antigravity.protocols.CarLocation;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.Heat;
+import com.antigravity.race.HeatExecutionManager;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.states.RaceOver;
@@ -75,9 +76,13 @@ public class DriverLaneHeatHandler {
       }
 
       List<DriverHeatData> drivers = currentHeat.getDrivers();
+      HeatExecutionManager execMgr = race.getHeatExecutionManager();
       if (lane == -1) {
         for (DriverHeatData dhd : drivers) {
           dhd.reset();
+        }
+        if (execMgr != null) {
+          execMgr.resetAllLanes();
         }
       } else if (lane >= 0 && lane < drivers.size()) {
         if (!race.getRaceModel().isPractice()) {
@@ -85,6 +90,9 @@ public class DriverLaneHeatHandler {
           return;
         }
         drivers.get(lane).reset();
+        if (execMgr != null) {
+          execMgr.resetLane(lane);
+        }
       } else {
         ctx.status(400).result("Invalid lane index: " + lane);
         return;
