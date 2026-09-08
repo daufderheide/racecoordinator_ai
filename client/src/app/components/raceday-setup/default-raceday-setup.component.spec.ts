@@ -694,6 +694,157 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(mockRacingElement.scrollTop).toBe(250);
   }));
 
+  describe("scrolling racing list on participant addition", () => {
+    it("should scroll racing list to newly added driver when selecting a participant", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView").and.callThrough();
+      const scrollIntoViewSpy = spyOn(Element.prototype, "scrollIntoView");
+
+      const driverToSelect = component.unselectedParticipants.find(
+        (d: any) => d.entity_id === "d2",
+      )!;
+
+      component.toggleParticipantSelection(driverToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).toHaveBeenCalledWith(
+        driverToSelect,
+      );
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }));
+
+    it("should not scroll racing list when unselecting a participant", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      const driverToSelect = component.unselectedParticipants.find(
+        (d: any) => d.entity_id === "d2",
+      )!;
+      component.toggleParticipantSelection(driverToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      component.toggleParticipantSelection(driverToSelect, true);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).not.toHaveBeenCalled();
+    }));
+
+    it("should scroll racing list when dragging participant from available to racing", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      const driverToDrop = component.unselectedParticipants[0];
+
+      const dropEvent: any = {
+        previousIndex: 0,
+        currentIndex: 0,
+        isPointerOverContainer: true,
+        container: { id: "selected-list" },
+        previousContainer: { id: "available-list", data: [driverToDrop] },
+      };
+
+      component.drop(dropEvent);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).toHaveBeenCalledWith(
+        driverToDrop,
+      );
+    }));
+
+    it("should scroll racing list when adding active available participant via keyboard", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      const activeDriver = component.filteredAvailableParticipants[0];
+      component.availableActiveIndex = 0;
+
+      component.addActiveAvailableParticipant();
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).toHaveBeenCalledWith(
+        activeDriver,
+      );
+    }));
+
+    it("should not scroll racing list if participant validation fails", fakeAsync(() => {
+      flush();
+      fixture.detectChanges();
+
+      const validationService = TestBed.inject(ParticipantValidationService);
+      (validationService.validate as jasmine.Spy).and.returnValue({
+        isValid: false,
+        conflicts: ["Validation failed"],
+      });
+
+      spyOn(component, "scrollRacingParticipantIntoView");
+      const driverToSelect = component.unselectedParticipants[0];
+      component.toggleParticipantSelection(driverToSelect, false);
+      flush();
+      fixture.detectChanges();
+
+      expect(component.scrollRacingParticipantIntoView).not.toHaveBeenCalled();
+    }));
+
+    it("should query by data-participant-id in container and scroll into view", fakeAsync(() => {
+      const scrollIntoViewSpy = jasmine.createSpy("scrollIntoView");
+      const mockElement = { scrollIntoView: scrollIntoViewSpy } as any;
+      const mockContainer = {
+        querySelector: jasmine
+          .createSpy("querySelector")
+          .and.returnValue(mockElement),
+      };
+      Object.defineProperty(component, "racingScrollContainer", {
+        get: () => ({ nativeElement: mockContainer }),
+        configurable: true,
+      });
+
+      const participant = component.allDrivers[0];
+      component.selectedParticipants = [participant];
+
+      component.scrollRacingParticipantIntoView(participant);
+      flush();
+
+      expect(mockContainer.querySelector).toHaveBeenCalledWith(
+        `[data-participant-id="${component.getParticipantUniqueId(participant)}"]`,
+      );
+      expect(scrollIntoViewSpy).toHaveBeenCalledWith({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }));
+
+    it("should do nothing when participant is not in filteredRacingParticipants", fakeAsync(() => {
+      const mockContainer = {
+        querySelector: jasmine.createSpy("querySelector"),
+      };
+      Object.defineProperty(component, "racingScrollContainer", {
+        get: () => ({ nativeElement: mockContainer }),
+        configurable: true,
+      });
+
+      const participant = new Driver("missing", "Missing", "M");
+      component.selectedParticipants = [];
+
+      component.scrollRacingParticipantIntoView(participant);
+      flush();
+
+      expect(mockContainer.querySelector).not.toHaveBeenCalled();
+    }));
+  });
+
   it("should toggle help dropdown", () => {
     component.toggleHelpDropdown(new MouseEvent("click"));
     expect(component.isHelpDropdownOpen).toBeTrue();
@@ -2434,7 +2585,7 @@ describe("DefaultRacedaySetupComponent", () => {
       // Verify that all 3 drivers are visible in the roster dialog immediately
       expect(await rosterHarness.isVisible()).toBeTrue();
       expect(await rosterHarness.getItemCount()).toBe(3);
-      expect(await rosterHarness.getItemName(2)).toBe("Driver Three");
+      expect(await rosterHarness.getItemName(2)).toBe("D3");
     });
 
     it("should render all config menu items with setup-menu-dropdown-item and not suppress even items", () => {

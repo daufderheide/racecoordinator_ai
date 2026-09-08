@@ -471,6 +471,9 @@
                 <div
                   [id]="'avail-item-' + i"
                   class="driver-item"
+                  [attr.data-participant-id]="
+                    getParticipantUniqueId(participant)
+                  "
                   [class.keyboard-active]="availableActiveIndex === i"
                   (mouseenter)="availableActiveIndex = i"
                   cdkDrag
@@ -656,6 +659,9 @@
                 <div
                   [id]="'racing-item-' + i"
                   class="driver-item selected"
+                  [attr.data-participant-id]="
+                    getParticipantUniqueId(participant)
+                  "
                   [class.keyboard-active]="racingActiveIndex === i"
                   (mouseenter)="racingActiveIndex = i"
                   cdkDrag
