@@ -696,6 +696,8 @@
   "RDS_BTN_ADD_ALL": "Alles Toevoegen",
   "RDS_BTN_CANCEL": "Annuleren",
   "RDS_BTN_DEMO_RACE": "Demo Race",
+  "RDS_BTN_EDIT_RACE": "Race Bewerken",
+  "RDS_BTN_EDIT_SEASON": "Seizoen Bewerken",
   "RDS_BTN_END_RACE": "Race Beëindigen",
   "RDS_BTN_JOIN_RACE": "Doe mee aan Race",
   "RDS_BTN_RANDOMIZE": "Willekeurig (Seeding)",

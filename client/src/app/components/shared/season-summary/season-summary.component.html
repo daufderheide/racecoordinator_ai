@@ -2,7 +2,31 @@
   @if (season()) {
     @if (showHeader()) {
       <div class="detail-header">
-        <h2 id="season-detail-name">{{ season()?.name }}</h2>
+        <div class="header-title-row">
+          <h2 id="season-detail-name">{{ season()?.name }}</h2>
+          @if (showEdit()) {
+            <button
+              type="button"
+              class="action-btn edit-season-btn"
+              id="edit-selected-season-btn"
+              (click)="onEdit($event)"
+              (mousedown)="$event.preventDefault()"
+              [title]="'RDS_BTN_EDIT_SEASON' | translate"
+              data-testid="edit-selected-season-btn"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                />
+              </svg>
+            </button>
+          }
+        </div>
         <div id="season-detail-meta" class="season-meta">
           <span id="season-detail-drops" class="meta-pill"
             >{{ "SM_DROPS_COUNT" | translate }}:

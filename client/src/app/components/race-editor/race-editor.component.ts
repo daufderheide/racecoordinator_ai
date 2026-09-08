@@ -284,12 +284,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onBack() {
     this.isNavigationApproved = true;
+    sessionStorage.setItem("skipIntro", "true");
+    const from = this.route.snapshot.queryParamMap.get("from");
+    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
+    if (from === "raceday-setup" || returnUrl === "/raceday-setup") {
+      this.router.navigate(["/raceday-setup"], {
+        queryParams: { skipIntro: "true" },
+      });
+      return;
+    }
     this.router.navigate(["/race-manager"], {
       queryParams: {
         id: this.editingRace?.entity_id,
         driverCount: this.driverCount,
-        from: this.route.snapshot.queryParamMap.get("from"),
-        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+        from,
+        returnUrl,
       },
     });
   }

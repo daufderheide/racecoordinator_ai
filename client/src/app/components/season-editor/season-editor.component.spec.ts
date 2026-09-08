@@ -794,6 +794,56 @@ describe("SeasonEditorComponent", () => {
     );
   });
 
+  it("should navigate to /raceday-setup with skipIntro when canceling if from raceday-setup", () => {
+    sessionStorage.clear();
+    const router = TestBed.inject(Router);
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot.queryParams as any) = {
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+
+    component.editingSeason = {
+      entity_id: "season_123",
+      name: "Winter 2026",
+      drops: 0,
+    };
+    component.onCancel();
+
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+      queryParams: { skipIntro: "true" },
+    });
+  });
+
+  it("should delegate onBack to onCancel", () => {
+    spyOn(component, "onCancel");
+    component.onBack();
+    expect(component.onCancel).toHaveBeenCalled();
+  });
+
+  it("should navigate to /raceday-setup with skipIntro when saving if from raceday-setup", () => {
+    sessionStorage.clear();
+    const router = TestBed.inject(Router);
+    const route = TestBed.inject(ActivatedRoute);
+    (route.snapshot.queryParams as any) = {
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+
+    component.editingSeason = {
+      entity_id: "season_123",
+      name: "Winter 2026",
+      drops: 0,
+    };
+    component.onSave();
+
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"], {
+      queryParams: { skipIntro: "true" },
+    });
+  });
+
   it("should interact via SeasonEditorHarness", async () => {
     component.isLoading = false;
     component.editingSeason = {

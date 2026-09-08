@@ -696,6 +696,8 @@
   "RDS_BTN_ADD_ALL": "Add All",
   "RDS_BTN_CANCEL": "Cancel",
   "RDS_BTN_DEMO_RACE": "Demo Race",
+  "RDS_BTN_EDIT_RACE": "Edit Race",
+  "RDS_BTN_EDIT_SEASON": "Edit Season",
   "RDS_BTN_END_RACE": "End Race",
   "RDS_BTN_JOIN_RACE": "Join Race",
   "RDS_BTN_RANDOMIZE": "Randomize",

@@ -1934,6 +1934,31 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.showTrackEditorPrompt = false;
   }
 
+  editSelectedRace() {
+    if (!this.selectedRace) return;
+    sessionStorage.setItem("skipIntro", "true");
+    const queryParams: any = {
+      id: this.selectedRace.entity_id,
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+    if (this.selectedParticipants?.length > 0) {
+      queryParams.driverCount = this.selectedParticipants.length;
+    }
+    this.router.navigate(["/race-editor"], { queryParams });
+  }
+
+  editSelectedSeason() {
+    if (!this.selectedSeason) return;
+    sessionStorage.setItem("skipIntro", "true");
+    const queryParams: any = {
+      id: this.selectedSeason.entity_id,
+      from: "raceday-setup",
+      returnUrl: "/raceday-setup",
+    };
+    this.router.navigate(["/season-editor"], { queryParams });
+  }
+
   openRaceManager() {
     const queryParams: any = this.selectedRace
       ? { id: this.selectedRace.entity_id }

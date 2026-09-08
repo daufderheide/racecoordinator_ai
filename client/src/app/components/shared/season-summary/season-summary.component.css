@@ -30,6 +30,14 @@
   flex-shrink: 0;
 }
 
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
 .detail-header h2 {
   font-size: 3rem;
   color: #f8fafc;
@@ -39,6 +47,28 @@
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+.edit-season-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 4px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.edit-season-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
 }
 
 .season-meta {
@@ -235,11 +265,20 @@
   margin-bottom: 6px;
 }
 
+.season-summary-container.compact .header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
 .season-summary-container.compact .detail-header h2 {
   font-size: 1.25rem;
   font-weight: 700;
   color: #38bdf8;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 .season-summary-container.compact .season-meta {

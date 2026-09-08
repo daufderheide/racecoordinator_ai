@@ -912,6 +912,19 @@ export class SeasonEditorComponent
         }
         this.undoManager.initialize(this.cloneSeason(this.editingSeason));
         this.isNavigationApproved = true;
+        const from =
+          this.route.snapshot?.queryParamMap?.get("from") ??
+          this.route.snapshot?.queryParams?.["from"];
+        const returnUrl =
+          this.route.snapshot?.queryParamMap?.get("returnUrl") ??
+          this.route.snapshot?.queryParams?.["returnUrl"];
+        if (from === "raceday-setup" || returnUrl === "/raceday-setup") {
+          sessionStorage.setItem("skipIntro", "true");
+          this.router.navigate(["/raceday-setup"], {
+            queryParams: { skipIntro: "true" },
+          });
+          return;
+        }
         this.router.navigate(["/season-manager"], {
           queryParams: targetId ? { id: targetId } : {},
         });
@@ -978,11 +991,28 @@ export class SeasonEditorComponent
       );
     }
     this.isNavigationApproved = true;
+    sessionStorage.setItem("skipIntro", "true");
+    const from =
+      this.route.snapshot?.queryParamMap?.get("from") ??
+      this.route.snapshot?.queryParams?.["from"];
+    const returnUrl =
+      this.route.snapshot?.queryParamMap?.get("returnUrl") ??
+      this.route.snapshot?.queryParams?.["returnUrl"];
+    if (from === "raceday-setup" || returnUrl === "/raceday-setup") {
+      this.router.navigate(["/raceday-setup"], {
+        queryParams: { skipIntro: "true" },
+      });
+      return;
+    }
     this.router.navigate(["/season-manager"], {
       queryParams: this.editingSeason?.entity_id
         ? { id: this.editingSeason.entity_id }
         : {},
     });
+  }
+
+  onBack(): void {
+    this.onCancel();
   }
 
   onUndo(): void {

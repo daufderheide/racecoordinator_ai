@@ -405,4 +405,42 @@ describe("SeasonSummaryComponent", () => {
       "Headerless Season",
     );
   });
+
+  it("should not display edit button by default", () => {
+    const season: Season = {
+      entity_id: "s1",
+      name: "Championship Season",
+      drops: 0,
+      races: [],
+    };
+    fixture.componentRef.setInput("season", season);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector("#edit-selected-season-btn")).toBeNull();
+  });
+
+  it("should display edit button when showEdit is true and emit edit event on click", () => {
+    const season: Season = {
+      entity_id: "s1",
+      name: "Championship Season",
+      drops: 0,
+      races: [],
+    };
+    fixture.componentRef.setInput("season", season);
+    fixture.componentRef.setInput("showEdit", true);
+    fixture.detectChanges();
+
+    const editSpy = jasmine.createSpy("edit");
+    component.edit.subscribe(editSpy);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const btn = compiled.querySelector(
+      "#edit-selected-season-btn",
+    ) as HTMLButtonElement;
+    expect(btn).toBeTruthy();
+
+    btn.click();
+    expect(editSpy).toHaveBeenCalled();
+  });
 });

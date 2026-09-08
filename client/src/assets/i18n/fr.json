@@ -696,6 +696,8 @@
   "RDS_BTN_ADD_ALL": "Tout Ajouter",
   "RDS_BTN_CANCEL": "Annuler",
   "RDS_BTN_DEMO_RACE": "Course Démo",
+  "RDS_BTN_EDIT_RACE": "Modifier la course",
+  "RDS_BTN_EDIT_SEASON": "Modifier la saison",
   "RDS_BTN_END_RACE": "Terminer la Course",
   "RDS_BTN_JOIN_RACE": "Rejoindre la Course",
   "RDS_BTN_RANDOMIZE": "Aléatoire",

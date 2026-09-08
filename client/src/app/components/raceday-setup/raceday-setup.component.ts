@@ -4,6 +4,7 @@ import {
   Component,
   HostListener,
   Inject,
+  inject,
   Injector,
   OnDestroy,
   OnInit,
@@ -12,7 +13,7 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer } from "@angular/platform-browser";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { interval, of, Subscription } from "rxjs";
 import { filter, take } from "rxjs/operators";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
@@ -127,6 +128,7 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public showPassword = false;
   private hasLoadedSetupComponent = false;
   private systemStateSubscription?: Subscription;
+  private route = inject(ActivatedRoute, { optional: true });
 
   public updateResult: UpdateCheckResult | null = null;
   public isUpdating = false;
@@ -236,15 +238,20 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         "/driver-results",
       ];
       const normalizedPrevUrl = prevUrl.split("?")[0];
-      const isRaceScreen = raceScreens.some((screen) =>
-        normalizedPrevUrl.startsWith(screen),
+      const isRaceScreen = raceScreens.some(
+        (screen) =>
+          normalizedPrevUrl === screen ||
+          normalizedPrevUrl.startsWith(screen + "/"),
       );
       if (!isRaceScreen) {
         isReturningFromNonRaceScreen = true;
       }
     }
 
+    const querySkipIntro =
+      this.route?.snapshot?.queryParamMap?.get("skipIntro") === "true";
     const skipIntro =
+      querySkipIntro ||
       sessionStorage.getItem("skipIntro") === "true" ||
       isReturningFromNonRaceScreen;
     if (skipIntro) {

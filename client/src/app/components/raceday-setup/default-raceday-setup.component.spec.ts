@@ -1553,6 +1553,23 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(labels[8]).toBe("RM_LABEL_THEME:");
     });
 
+    it("should render edit race button on race summary and invoke editSelectedRace when clicked", () => {
+      component.selectedRace = {
+        entity_id: "r1",
+        name: "Test Race",
+      } as any;
+      component.selectedEvent = undefined;
+      fixture.detectChanges();
+
+      const editBtn: HTMLButtonElement | null =
+        fixture.nativeElement.querySelector("#edit-selected-race-btn");
+      expect(editBtn).toBeTruthy();
+
+      spyOn(component, "editSelectedRace");
+      editBtn?.click();
+      expect(component.editSelectedRace).toHaveBeenCalled();
+    });
+
     it("should correctly evaluate isHandsFree", () => {
       expect(component.isHandsFree(undefined)).toBeFalse();
       expect(component.isHandsFree(null)).toBeFalse();
@@ -2045,6 +2062,52 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
         queryParams: { id: "r1" },
       });
+
+      component.selectedParticipants = [{} as any];
+      component.editSelectedRace();
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: {
+          id: "r1",
+          driverCount: 1,
+          from: "raceday-setup",
+          returnUrl: "/raceday-setup",
+        },
+      });
+
+      sessionStorage.clear();
+      component.selectedParticipants = [];
+      component.editSelectedRace();
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
+        queryParams: {
+          id: "r1",
+          from: "raceday-setup",
+          returnUrl: "/raceday-setup",
+        },
+      });
+
+      sessionStorage.clear();
+      component.selectedRace = undefined;
+      component.editSelectedRace();
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
+
+      sessionStorage.clear();
+      component.selectedSeason = { entity_id: "s1", name: "Season 1" } as any;
+      component.editSelectedSeason();
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/season-editor"], {
+        queryParams: {
+          id: "s1",
+          from: "raceday-setup",
+          returnUrl: "/raceday-setup",
+        },
+      });
+
+      sessionStorage.clear();
+      component.selectedSeason = undefined;
+      component.editSelectedSeason();
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
 
       component.selectedEvent = { entity_id: "e1" } as any;
       component.openEventManager();
