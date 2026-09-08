@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.62] - 2026-09-08
+
+### 🚀 New Features
+
+- implement lap section management, add review mode to heat results, and enforce race-over status for timers https://github.com/daufderheide/racecoordinator_ai/issues/765 ([8a92b2ad](https://github.com/daufderheide/racecoordinator_ai/commit/8a92b2ad))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.61...v1.0.0-beta.62">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.61] - 2026-09-08
 
 ### 🚀 New Features
