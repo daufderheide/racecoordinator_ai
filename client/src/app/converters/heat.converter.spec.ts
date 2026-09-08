@@ -155,6 +155,32 @@ describe("HeatConverter", () => {
     expect(driverData.lapsLed).toBe(4);
   });
 
+  it("should populate trackCalls and masterTrackCalls from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat1",
+      heatNumber: 1,
+      masterTrackCalls: 2,
+      trackCalls: 5,
+      heatDrivers: [
+        {
+          objectId: "hd1",
+          driver: {
+            objectId: "p1",
+            driver: { name: "Driver 1" },
+          },
+          trackCalls: 3,
+        } as any,
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    const driverData = heat.heatDrivers[0]!;
+
+    expect(driverData.trackCalls).toBe(3);
+    expect(heat.masterTrackCalls).toBe(2);
+    expect(heat.trackCalls).toBe(5);
+  });
+
   it("should assign driver heat ranks from proto.standings", () => {
     const proto: IHeat = {
       objectId: "heat1",

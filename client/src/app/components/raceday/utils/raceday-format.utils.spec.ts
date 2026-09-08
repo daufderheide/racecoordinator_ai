@@ -285,6 +285,111 @@ describe("RacedayFormatUtils", () => {
     });
   });
 
+  describe("formatValue - trackCalls", () => {
+    it("should format trackCalls properly for valid driver", () => {
+      const mockHd = {
+        trackCalls: 3,
+        actualDriver: { name: "Driver 1" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "trackCalls",
+        3,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("3");
+    });
+
+    it("should read trackCalls from DriverHeatData if value is null", () => {
+      const mockHd = {
+        trackCalls: 2,
+        actualDriver: { name: "Driver 1" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "trackCalls",
+        null,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("2");
+    });
+
+    it("should return 0 for a valid driver with 0 track calls", () => {
+      const mockHd = {
+        trackCalls: 0,
+        actualDriver: { name: "Driver 1" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "trackCalls",
+        0,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("0");
+    });
+
+    it("should return -- for empty driver with EMPTY_LANE id", () => {
+      const mockHd = {
+        trackCalls: 0,
+        actualDriver: { entity_id: "EMPTY_LANE", name: "Empty" },
+      } as any;
+      const result = RacedayFormatUtils.formatValue(
+        "trackCalls",
+        0,
+        mockHd,
+        undefined,
+        ctx,
+      );
+      expect(result).toBe("--");
+    });
+
+    it("should return -- for empty lane without driver or with isEmpty flag", () => {
+      const mockHd1 = {
+        trackCalls: 0,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "trackCalls",
+          0,
+          mockHd1,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+
+      const mockHd2 = {
+        trackCalls: 0,
+        isEmpty: true,
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "trackCalls",
+          0,
+          mockHd2,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+
+      const mockHd3 = {
+        trackCalls: 0,
+        participant: { driver: { name: "Empty", entity_id: "EMPTY_LANE" } },
+      } as any;
+      expect(
+        RacedayFormatUtils.formatValue(
+          "trackCalls",
+          0,
+          mockHd3,
+          undefined,
+          ctx,
+        ),
+      ).toBe("--");
+    });
+  });
+
   describe("formatValue - Ghost Pacing", () => {
     it("should format delta correctly when driver is faster than ghost", () => {
       const mockHd = {

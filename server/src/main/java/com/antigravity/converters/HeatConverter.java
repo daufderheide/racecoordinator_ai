@@ -23,7 +23,9 @@ public class HeatConverter {
             .addAllStandings(
                 heat.getStandings() != null ? heat.getStandings() : Collections.emptyList())
             .setStarted(heat.isStarted())
-            .setGroup(heat.getGroup());
+            .setGroup(heat.getGroup())
+            .setMasterTrackCalls(heat.getMasterTrackCalls())
+            .setTrackCalls(heat.getTrackCalls());
 
     if (heat.getDrivers() != null) {
       builder.addAllHeatDrivers(
@@ -100,6 +102,7 @@ public class HeatConverter {
         .setFlag(data.getFlag() != null ? data.getFlag() : RaceFlag.UNKNOWN_FLAG)
         .setLapsLed(data.getLapsLed())
         .setIsFinished(data.isFinished())
+        .setTrackCalls(data.getTrackCalls())
         .build();
   }
 }

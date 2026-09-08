@@ -636,6 +636,13 @@ export class RaceConnectionService implements OnDestroy {
             driverData.lapsDownLeader = u.lapsDownLeader || 0;
             driverData.lapsDownPosition = u.lapsDownPosition || 0;
             driverData.lapsLed = u.lapsLed ?? u.laps_led ?? 0;
+            if (
+              u.trackCalls !== undefined ||
+              (u as any).track_calls !== undefined
+            ) {
+              driverData.trackCalls =
+                u.trackCalls ?? (u as any).track_calls ?? 0;
+            }
           }
         }
       });

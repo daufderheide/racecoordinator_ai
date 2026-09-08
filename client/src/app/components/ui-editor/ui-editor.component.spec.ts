@@ -776,6 +776,14 @@ describe("UIEditorComponent", () => {
     expect(lapsLed?.label).toBe("RD_COL_LAPS_LED");
   });
 
+  it("should include trackCalls column in availableColumns", () => {
+    const trackCalls = component.availableColumns.find(
+      (c) => c.key === "trackCalls",
+    );
+    expect(trackCalls).toBeTruthy();
+    expect(trackCalls?.label).toBe("RD_COL_TRACK_CALLS");
+  });
+
   it("should include driver flag column in availableColumns with label RD_COL_DRIVER_FLAG", () => {
     const flag = component.availableColumns.find((c) => c.key === "flag");
     expect(flag).toBeTruthy();

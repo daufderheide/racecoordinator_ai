@@ -231,6 +231,9 @@ public class Starting implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     logger.info("Callbutton pressed during starting. Pausing race.");
+    if (race.hasRacedInCurrentHeat()) {
+      race.recordTrackCall(lane);
+    }
     pause(race);
   }
 

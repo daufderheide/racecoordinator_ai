@@ -726,9 +726,29 @@ public class Race implements ProtocolListener {
     return true;
   }
 
+  public synchronized void recordTrackCall(int lane) {
+    if (currentHeat != null) {
+      if (lane >= 0 && currentHeat.getDrivers() != null && lane < currentHeat.getDrivers().size()) {
+        DriverHeatData dhd = currentHeat.getDrivers().get(lane);
+        if (dhd != null) {
+          dhd.incrementTrackCalls();
+          logger.info("Recorded track call for lane {}. New count: {}", lane, dhd.getTrackCalls());
+        }
+      } else {
+        currentHeat.incrementMasterTrackCalls();
+        logger.info(
+            "Recorded master track call. New master count: {}", currentHeat.getMasterTrackCalls());
+      }
+      currentHeat.incrementTrackCalls();
+    }
+  }
+
   public void pauseRace() {
     if (this.stopped) {
       return;
+    }
+    if (state instanceof Racing || (state instanceof Starting && hasRacedInCurrentHeat())) {
+      recordTrackCall(-1);
     }
     state.pause(this);
   }
@@ -921,6 +941,7 @@ public class Race implements ProtocolListener {
     if (currentHeat != null) {
       statistics.incrementRestartCount();
       for (DriverHeatData driverData : currentHeat.getDrivers()) driverData.reset();
+      currentHeat.resetTrackCalls();
       currentHeat.getHeatStandings().reset();
       currentHeat.setStarted(false);
       resetRaceTime();
@@ -954,6 +975,7 @@ public class Race implements ProtocolListener {
       for (DriverHeatData driverData : currentHeat.getDrivers()) {
         driverData.resetForFalseStart();
       }
+      currentHeat.resetTrackCalls();
       currentHeat.getHeatStandings().reset();
       currentHeat.setStarted(false);
       resetRaceTime();
@@ -1154,7 +1176,7 @@ public class Race implements ProtocolListener {
     EventExecutionManager.getInstance().cancelAutoAdvanceTimer();
 
     if (state instanceof Racing || state instanceof Starting) {
-      pauseRace();
+      state.pause(this);
     } else if (state instanceof NotStarted) {
       state.pause(this);
     } else if (state instanceof HeatOver) {

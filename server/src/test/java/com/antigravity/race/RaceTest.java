@@ -1110,6 +1110,42 @@ public class RaceTest {
     }
 
     @Test
+    public void testOnCallbuttonTracksLaneAndMasterCalls() throws Exception {
+      race.startRace();
+      race.changeState(new Racing());
+      assertTrue(race.getState() instanceof Racing);
+
+      // Lane 0 triggers track call
+      race.onCallbutton(0, 0);
+      assertTrue(race.getState() instanceof Paused);
+      assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(0, race.getCurrentHeat().getMasterTrackCalls());
+      assertEquals(1, race.getCurrentHeat().getTrackCalls());
+
+      // Resuming from Paused state via call button does not increment track calls
+      race.onCallbutton(0, 0);
+      assertTrue(race.getState() instanceof Starting);
+      assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(1, race.getCurrentHeat().getTrackCalls());
+
+      // Move to Racing again
+      race.changeState(new Racing());
+
+      // Master track call via pauseRace()
+      race.pauseRace();
+      assertTrue(race.getState() instanceof Paused);
+      assertEquals(1, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(1, race.getCurrentHeat().getMasterTrackCalls());
+      assertEquals(2, race.getCurrentHeat().getTrackCalls());
+
+      // Restart heat resets track calls to 0
+      race.restartHeat();
+      assertEquals(0, race.getCurrentHeat().getDrivers().get(0).getTrackCalls());
+      assertEquals(0, race.getCurrentHeat().getMasterTrackCalls());
+      assertEquals(0, race.getCurrentHeat().getTrackCalls());
+    }
+
+    @Test
     public void testOnCallbuttonAbortsAutoAdvance() throws Exception {
       race.changeState(new HeatOver());
       race.setAutoAdvanceRemaining(10.0);

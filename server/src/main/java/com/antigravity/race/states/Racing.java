@@ -479,6 +479,7 @@ public class Racing implements IRaceState {
   @Override
   public void onCallbutton(Race race, int lane) {
     logger.info("Racing.onCallbutton() called. Pausing race.");
+    race.recordTrackCall(lane);
     pause(race);
   }
 

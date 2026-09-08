@@ -130,6 +130,7 @@ export class RacedayFormatUtils {
         baseKey === "rankOverall" ||
         baseKey === "rankGroup" ||
         baseKey === "lapsLed" ||
+        baseKey === "trackCalls" ||
         baseKey === "physicalLapCount" ||
         baseKey === "recordLapTime" ||
         baseKey === "bestRaceLapTime" ||
@@ -290,6 +291,13 @@ export class RacedayFormatUtils {
           ? value
           : (hd?.lapsLed ?? (hd as any)?.laps_led ?? 0);
       return String(led);
+    } else if (baseKey === "trackCalls") {
+      if (RacedayFormatUtils.isEmptyDriver(hd)) return "--";
+      const calls =
+        value !== undefined && value !== null
+          ? value
+          : (hd?.trackCalls ?? (hd as any)?.track_calls ?? 0);
+      return String(calls);
     } else if (baseKey === "laneNumber") {
       return String((hd?.laneIndex ?? 0) + 1);
     } else if (baseKey.startsWith("ghostPacing")) {

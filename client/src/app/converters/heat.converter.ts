@@ -69,6 +69,7 @@ export class HeatConverter {
     hd.flag = dProto.flag || 0;
     hd.lapsLed = dProto.lapsLed || 0;
     hd.isFinished = !!(dProto.isFinished ?? (dProto as any).is_finished);
+    hd.trackCalls = dProto.trackCalls ?? (dProto as any).track_calls ?? 0;
     if (dProto.laps) {
       dProto.laps.forEach((lap: any, i: number) => {
         const time =
@@ -151,6 +152,9 @@ export class HeatConverter {
         !!proto.started,
       );
       h.group = proto.group || 0;
+      h.masterTrackCalls =
+        proto.masterTrackCalls ?? (proto as any).master_track_calls ?? 0;
+      h.trackCalls = proto.trackCalls ?? (proto as any).track_calls ?? 0;
       return h;
     });
   }
