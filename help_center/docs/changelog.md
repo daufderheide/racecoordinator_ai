@@ -1,5 +1,28 @@
 # Changelog
 
+## [v1.0.0-beta.61] - 2026-09-08
+
+### 🚀 New Features
+
+- **race_day**: implement track call tracking and reporting across client and server. https://github.com/daufderheide/racecoordinator_ai/issues/794 [skip-screendiffs] ([ca19341f](https://github.com/daufderheide/racecoordinator_ai/commit/ca19341f))
+- **driver_editor**: add link/unlink functionality between driver name and nickname with UI support and internationalization https://github.com/daufderheide/racecoordinator_ai/issues/791 ([76b154cf](https://github.com/daufderheide/racecoordinator_ai/commit/76b154cf))
+- **race_day_setup**: add team support to racing roster display with dynamic font scaling and layout updates https://github.com/daufderheide/racecoordinator_ai/issues/783 ([7fa9de86](https://github.com/daufderheide/racecoordinator_ai/commit/7fa9de86))
+- implement IRaceState interface and add driver flag status logic for fuel, penalties, and completion states. https://github.com/daufderheide/racecoordinator_ai/issues/749 [skip-screendiffs] ([f11b4f54](https://github.com/daufderheide/racecoordinator_ai/commit/f11b4f54))
+- **heat_list**: Added heat summary to the heat list for heats already run or in progress https://github.com/daufderheide/racecoordinator_ai/issues/787 ([463545d0](https://github.com/daufderheide/racecoordinator_ai/commit/463545d0))
+
+### 🐛 Bug Fixes
+
+- **race_day**: remove lap-resurrection logic from HeatConverter and consolidate driver-matching into a reusable utility service ([5e2e13a0](https://github.com/daufderheide/racecoordinator_ai/commit/5e2e13a0))
+- Fixed support for replaying trace session logs to run_server scripts ([fe2e0767](https://github.com/daufderheide/racecoordinator_ai/commit/fe2e0767))
+- **race_results**: Move track records to the bottom and remove extra titles from the page https://github.com/daufderheide/racecoordinator_ai/issues/793 ([4ec97d5f](https://github.com/daufderheide/racecoordinator_ai/commit/4ec97d5f))
+- **race_day_setup**: replace direct mutation of selectedParticipants with immutable updates to ensure UI reactivity and add RacingRosterDialog component https://github.com/daufderheide/racecoordinator_ai/issues/781 ([a21be2ed](https://github.com/daufderheide/racecoordinator_ai/commit/a21be2ed))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.60...v1.0.0-beta.61">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.60] - 2026-09-07
 
 ### 🚀 New Features
