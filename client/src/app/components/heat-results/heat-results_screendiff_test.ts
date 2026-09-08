@@ -33,9 +33,16 @@ test.describe("Heat Results Visuals", () => {
     // Verify Loader not covering canvas
     await expect(page.locator(".loader-overlay")).not.toBeVisible();
 
+    await page.mouse.move(0, 0);
+    await expect(page.locator(".graph-highlight")).toHaveCount(0);
+    await expect(
+      page.locator("app-twin-graphs .graph-path-rank").first(),
+    ).toHaveAttribute("d", /L/);
+
     // Visual screenshot verification
     await expect(page).toHaveScreenshot("heat-results-charts.png", {
       maxDiffPixelRatio: 0.05, // allowance for dynamic elements triggers.
+      maxDiffPixels: 8000,
     });
   });
 
@@ -56,12 +63,19 @@ test.describe("Heat Results Visuals", () => {
     // Verify Loader not covering canvas
     await expect(page.locator(".loader-overlay")).not.toBeVisible();
 
+    await expect(
+      page.locator("app-twin-graphs .graph-path-rank").first(),
+    ).toHaveAttribute("d", /L/);
+
     // Hover over the "Bob" legend item
     await harness.hoverLegendItem("Bob");
+    await expect(page.locator(".graph-highlight")).not.toHaveCount(0);
+    await expect(page.locator(".graph-faded")).not.toHaveCount(0);
 
     // Verify Bob's graph is highlighted, and others are faded
     await expect(page).toHaveScreenshot("heat-results-bob-hovered.png", {
       maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
     });
   });
 
@@ -89,6 +103,7 @@ test.describe("Heat Results Visuals", () => {
       "heat-results-driver-expander.png",
       {
         maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 8000,
       },
     );
   });
@@ -119,6 +134,7 @@ test.describe("Heat Results Visuals", () => {
       "heat-results-driver-collapsed.png",
       {
         maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 8000,
       },
     );
   });
@@ -145,9 +161,14 @@ test.describe("Heat Results Visuals", () => {
     });
 
     await page.mouse.move(0, 0);
+    await expect(page.locator(".graph-highlight")).toHaveCount(0);
+    await expect(
+      page.locator("app-twin-graphs .graph-path-rank").first(),
+    ).toHaveAttribute("d", /L/);
 
     await expect(page).toHaveScreenshot("heat-results-print-layout.png", {
       maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
       fullPage: true,
     });
   });
@@ -175,9 +196,14 @@ test.describe("Heat Results Visuals", () => {
     });
 
     await page.mouse.move(0, 0);
+    await expect(page.locator(".graph-highlight")).toHaveCount(0);
+    await expect(
+      page.locator("app-twin-graphs .graph-path-rank").first(),
+    ).toHaveAttribute("d", /L/);
 
     await expect(page).toHaveScreenshot("heat-results-no-background.png", {
       maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
       fullPage: true,
     });
   });
@@ -211,6 +237,7 @@ test.describe("Heat Results Visuals", () => {
     // Take screenshot of the trajectory dialog
     await expect(modal).toHaveScreenshot("heat-results-trajectory-dialog.png", {
       maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
     });
   });
 
@@ -234,6 +261,7 @@ test.describe("Heat Results Visuals", () => {
     await header.waitFor({ state: "visible" });
     await expect(header).toHaveScreenshot("heat-results-header-de.png", {
       maxDiffPixelRatio: 0.05,
+      maxDiffPixels: 8000,
     });
   });
 });
