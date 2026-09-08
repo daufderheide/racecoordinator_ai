@@ -1,5 +1,20 @@
 # Changelog
 
+## [v1.0.0-beta.63] - 2026-09-08
+
+### 🚀 New Features
+
+- **race_day_setup**: auto-scroll racing list to newly added participants in setup component https://github.com/daufderheide/racecoordinator_ai/issues/797 [skip-screendiffs] ([1b443c3d](https://github.com/daufderheide/racecoordinator_ai/commit/1b443c3d))
+- add driver and nickname sorting options to the racing roster dialog with updated harness and i18n support https://github.com/daufderheide/racecoordinator_ai/issues/798 ([a732aed4](https://github.com/daufderheide/racecoordinator_ai/commit/a732aed4))
+- **race_day_setup**: Added race and season edit buttons for quick editing of the selected race/season https://github.com/daufderheide/racecoordinator_ai/issues/799 ([4390d225](https://github.com/daufderheide/racecoordinator_ai/commit/4390d225))
+- **race_history**: implement lap record tiering with gold, silver, and bronze badges in disallow lap records dialog https://github.com/daufderheide/racecoordinator_ai/issues/800 ([0a7a4c59](https://github.com/daufderheide/racecoordinator_ai/commit/0a7a4c59))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.62...v1.0.0-beta.63">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.62] - 2026-09-08
 
 ### 🚀 New Features
