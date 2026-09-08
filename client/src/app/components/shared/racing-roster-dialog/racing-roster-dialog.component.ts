@@ -10,6 +10,7 @@ import {
   OnDestroy,
   output,
   signal,
+  untracked,
 } from "@angular/core";
 import { Driver } from "@app/models/driver";
 import { Team } from "@app/models/team";
@@ -21,12 +22,14 @@ export interface RosterItem {
   seed: number;
   name: string;
   nickname: string;
+  primaryName: string;
+  secondaryName: string;
   teamName?: string;
   avatarUrl?: string;
   isTeam?: boolean;
 }
 
-export type RosterSortOption = "seed" | "name";
+export type RosterSortOption = "seed" | "nickname" | "driverName" | "name";
 
 @Component({
   standalone: true,
@@ -46,21 +49,30 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
 
   close = output<void>();
 
-  sortBy = signal<RosterSortOption>("seed");
+  sortBy = signal<RosterSortOption>("nickname");
 
   private resizeObserver?: ResizeObserver;
   private canvasContext?: CanvasRenderingContext2D | null;
 
   constructor() {
-    effect(() => {
-      const isVis = this.visible();
-      const items = this.rosterItems();
-      if (isVis && items.length > 0) {
-        requestAnimationFrame(() => {
-          this.scaleText();
-        });
-      }
-    });
+    let prevVisible = false;
+    effect(
+      () => {
+        const isVis = this.visible();
+        if (isVis && !prevVisible) {
+          untracked(() => this.sortBy.set("nickname"));
+        }
+        prevVisible = isVis;
+
+        const items = this.rosterItems();
+        if (isVis && items.length > 0) {
+          requestAnimationFrame(() => {
+            this.scaleText();
+          });
+        }
+      },
+      { allowSignalWrites: true },
+    );
   }
 
   ngAfterViewInit(): void {
@@ -114,7 +126,17 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
       ),
     );
 
-    if (this.sortBy() === "name") {
+    if (this.sortBy() === "nickname" || this.sortBy() === "name") {
+      return [...items].sort((a, b) => {
+        const cmp = naturalSortCompare(
+          a.primaryName || "",
+          b.primaryName || "",
+        );
+        return cmp !== 0 ? cmp : a.seed - b.seed;
+      });
+    }
+
+    if (this.sortBy() === "driverName") {
       return [...items].sort((a, b) => {
         const cmp = naturalSortCompare(a.name || "", b.name || "");
         return cmp !== 0 ? cmp : a.seed - b.seed;
@@ -232,10 +254,19 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
       nickname = this.translationService.translate("RD_EMPTY_LANE");
     }
 
+    const primaryName = isTeamParticipant ? name : nickname || name;
+    const secondaryName = isTeamParticipant
+      ? nickname
+      : nickname && nickname !== name
+        ? name
+        : "";
+
     return {
       seed: index + 1,
       name,
       nickname,
+      primaryName,
+      secondaryName,
       teamName: teamName || undefined,
       avatarUrl: p?.avatarUrl,
       isTeam: isTeamParticipant,
@@ -281,13 +312,13 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
 
   getItemTooltip(item: RosterItem): string {
     const parts: string[] = [`(#${item.seed})`];
-    if (item.name) {
-      parts.push(item.name);
+    if (item.primaryName) {
+      parts.push(item.primaryName);
     }
-    if (item.nickname && item.nickname !== item.name) {
-      parts.push(item.isTeam ? `(${item.nickname})` : `"${item.nickname}"`);
+    if (item.secondaryName) {
+      parts.push(`(${item.secondaryName})`);
     }
-    if (item.teamName && (!item.isTeam || item.teamName !== item.name)) {
+    if (item.teamName && (!item.isTeam || item.teamName !== item.primaryName)) {
       parts.push(`[${item.teamName}]`);
     }
     return parts.join(" ");
@@ -324,39 +355,35 @@ export class RacingRosterDialogComponent implements AfterViewInit, OnDestroy {
       const item = items[i];
       if (!item) continue;
 
-      // Measure line 1 (driver / team name) at 100px
+      // Measure line 1 (driver nickname / team name) at 100px
       ctx.font = `600 100px ${fontFamily}`;
-      const nameWidth100 = ctx.measureText(item.name || "").width || 1;
+      const nameWidth100 = ctx.measureText(item.primaryName || "").width || 1;
 
-      // Measure line 2 (nickname and/or team name) at 100px
-      const nicknameText = item.nickname
-        ? item.isTeam
-          ? item.nickname
-          : `"${item.nickname}"`
-        : "";
+      // Measure line 2 (driver name / member nicknames and/or team name) at 100px
+      const secondaryText = item.secondaryName || "";
       const showTeamName = !!(
         item.teamName &&
-        (!item.isTeam || item.teamName !== item.name)
+        (!item.isTeam || item.teamName !== item.primaryName)
       );
       const teamText = showTeamName ? item.teamName! : "";
 
       let line2Width100 = 0;
-      if (nicknameText && teamText) {
+      if (secondaryText && teamText) {
         ctx.font = `italic 400 100px ${fontFamily}`;
-        const nickWidth100 = ctx.measureText(nicknameText).width;
+        const secWidth100 = ctx.measureText(secondaryText).width;
         ctx.font = `500 100px ${fontFamily}`;
         const teamWidth100 = ctx.measureText(teamText).width;
         const gap100 = 20;
-        line2Width100 = nickWidth100 + teamWidth100 + gap100;
-      } else if (nicknameText) {
+        line2Width100 = secWidth100 + teamWidth100 + gap100;
+      } else if (secondaryText) {
         ctx.font = `italic 400 100px ${fontFamily}`;
-        line2Width100 = ctx.measureText(nicknameText).width;
+        line2Width100 = ctx.measureText(secondaryText).width;
       } else if (teamText) {
         ctx.font = `500 100px ${fontFamily}`;
         line2Width100 = ctx.measureText(teamText).width;
       }
 
-      const hasTwoLines = !!(nicknameText || teamText);
+      const hasTwoLines = !!(secondaryText || teamText);
       const gapPx = hasTwoLines
         ? Math.max(2, Math.min(6, Math.round(cardHeight * 0.04)))
         : 0;

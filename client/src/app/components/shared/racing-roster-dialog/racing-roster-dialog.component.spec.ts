@@ -54,6 +54,8 @@ describe("RacingRosterDialogComponent", () => {
           return "No drivers currently added to the racing list.";
         if (key === "RDS_ROSTER_SORT_BY") return "Sort By";
         if (key === "RDS_ROSTER_SORT_SEED") return "Seed";
+        if (key === "RDS_ROSTER_SORT_NICKNAME") return "Nickname";
+        if (key === "RDS_ROSTER_SORT_DRIVER_NAME") return "Driver Name";
         if (key === "RDS_ROSTER_SORT_NAME") return "A-Z";
         if (key === "RDS_ROSTER_CLOSE") return "Close";
         if (key === "RD_EMPTY_LANE") return "Empty";
@@ -94,7 +96,7 @@ describe("RacingRosterDialogComponent", () => {
     expect(await harness.getItemCount()).toBe(0);
   });
 
-  it("should render drivers with seed, name, and nickname", async () => {
+  it("should render drivers with seed, nickname as primary, and name underneath", async () => {
     const drivers = [
       new Driver("d1", "Mario Andretti", "Speedy"),
       new Driver("d2", "Ayrton Senna", "Magic"),
@@ -110,17 +112,19 @@ describe("RacingRosterDialogComponent", () => {
     expect(await harness.getCountBadgeText()).toBe("Total Drivers: 3");
     expect(await harness.isEmptyMessageVisible()).toBeFalse();
 
-    expect(await harness.getItemSeed(0)).toBe("1");
-    expect(await harness.getItemName(0)).toBe("Mario Andretti");
-    expect(await harness.getItemNickname(0)).toBe('"Speedy"');
+    // Default alphabetical sort:
+    // Hammer (seed 3, Lewis Hamilton) -> Magic (seed 2, Ayrton Senna) -> Speedy (seed 1, Mario Andretti)
+    expect(await harness.getItemSeed(0)).toBe("3");
+    expect(await harness.getItemName(0)).toBe("Hammer");
+    expect(await harness.getItemNickname(0)).toBe("Lewis Hamilton");
 
     expect(await harness.getItemSeed(1)).toBe("2");
-    expect(await harness.getItemName(1)).toBe("Ayrton Senna");
-    expect(await harness.getItemNickname(1)).toBe('"Magic"');
+    expect(await harness.getItemName(1)).toBe("Magic");
+    expect(await harness.getItemNickname(1)).toBe("Ayrton Senna");
 
-    expect(await harness.getItemSeed(2)).toBe("3");
-    expect(await harness.getItemName(2)).toBe("Lewis Hamilton");
-    expect(await harness.getItemNickname(2)).toBe('"Hammer"');
+    expect(await harness.getItemSeed(2)).toBe("1");
+    expect(await harness.getItemName(2)).toBe("Speedy");
+    expect(await harness.getItemNickname(2)).toBe("Mario Andretti");
   });
 
   it("should handle team participants and driver without nickname", async () => {
@@ -134,11 +138,12 @@ describe("RacingRosterDialogComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getItemCount()).toBe(2);
-    expect(await harness.getItemName(0)).toBe("Nigel Mansell");
-    expect(await harness.getItemNickname(0)).toBe("");
+    // Alphabetical sort: "Ferrari Red" comes before "Nigel Mansell"
+    expect(await harness.getItemName(0)).toBe("Ferrari Red");
+    expect(await harness.getItemNickname(0)).toBe("2 Drivers");
 
-    expect(await harness.getItemName(1)).toBe("Ferrari Red");
-    expect(await harness.getItemNickname(1)).toBe("2 Drivers");
+    expect(await harness.getItemName(1)).toBe("Nigel Mansell");
+    expect(await harness.getItemNickname(1)).toBe("");
   });
 
   it("should emit close event on header close button click", async () => {
@@ -263,20 +268,26 @@ describe("RacingRosterDialogComponent", () => {
       seed: 1,
       name: "Driver One",
       nickname: "The Flash",
+      primaryName: "The Flash",
+      secondaryName: "Driver One",
     };
     const itemWithoutNick = {
       seed: 2,
       name: "Driver Two",
       nickname: "",
+      primaryName: "Driver Two",
+      secondaryName: "",
     };
     const itemSameNick = {
       seed: 3,
       name: "Driver Three",
       nickname: "Driver Three",
+      primaryName: "Driver Three",
+      secondaryName: "",
     };
 
     expect(dialogComponent.getItemTooltip(itemWithNick)).toBe(
-      '(#1) Driver One "The Flash"',
+      "(#1) The Flash (Driver One)",
     );
     expect(dialogComponent.getItemTooltip(itemWithoutNick)).toBe(
       "(#2) Driver Two",
@@ -286,7 +297,7 @@ describe("RacingRosterDialogComponent", () => {
     );
   });
 
-  it("should sort by seed by default, and allow toggling to alphabetical sort", async () => {
+  it("should sort alphabetically by default (by team name or driver nickname), and allow toggling to seed sort", async () => {
     const participants = [
       new Driver("d1", "Zack", "Zero"),
       new Driver("d2", "Alice", "The Rocket"),
@@ -297,51 +308,218 @@ describe("RacingRosterDialogComponent", () => {
     hostComponent.participants.set(participants);
     fixture.detectChanges();
 
-    // Default: Sort by seed
-    expect(await harness.isSortBySeedActive()).toBeTrue();
-    expect(await harness.isSortByNameActive()).toBeFalse();
+    // Default: Sort by name (A-Z by nickname)
+    expect(await harness.isSortByNameActive()).toBeTrue();
+    expect(await harness.isSortBySeedActive()).toBeFalse();
 
     expect(await harness.getItemCount()).toBe(3);
-    expect(await harness.getItemSeed(0)).toBe("1");
-    expect(await harness.getItemName(0)).toBe("Zack");
-    expect(await harness.getItemNickname(0)).toBe('"Zero"');
 
+    // "Drift King" (Bob) is first, retains original seed #3
+    expect(await harness.getItemSeed(0)).toBe("3");
+    expect(await harness.getItemName(0)).toBe("Drift King");
+    expect(await harness.getItemNickname(0)).toBe("Bob");
+
+    // "The Rocket" (Alice) is second, retains original seed #2
     expect(await harness.getItemSeed(1)).toBe("2");
-    expect(await harness.getItemName(1)).toBe("Alice");
+    expect(await harness.getItemName(1)).toBe("The Rocket");
+    expect(await harness.getItemNickname(1)).toBe("Alice");
 
-    expect(await harness.getItemSeed(2)).toBe("3");
-    expect(await harness.getItemName(2)).toBe("Bob");
-
-    // Toggle: Sort by name (A-Z)
-    await harness.clickSortByName();
-    fixture.detectChanges();
-
-    expect(await harness.isSortBySeedActive()).toBeFalse();
-    expect(await harness.isSortByNameActive()).toBeTrue();
-
-    // Alice is first, but retains original seed #2
-    expect(await harness.getItemSeed(0)).toBe("2");
-    expect(await harness.getItemName(0)).toBe("Alice");
-    expect(await harness.getItemNickname(0)).toBe('"The Rocket"');
-
-    // Bob is second, retains original seed #3
-    expect(await harness.getItemSeed(1)).toBe("3");
-    expect(await harness.getItemName(1)).toBe("Bob");
-    expect(await harness.getItemNickname(1)).toBe('"Drift King"');
-
-    // Zack is third, retains original seed #1
+    // "Zero" (Zack) is third, retains original seed #1
     expect(await harness.getItemSeed(2)).toBe("1");
-    expect(await harness.getItemName(2)).toBe("Zack");
-    expect(await harness.getItemNickname(2)).toBe('"Zero"');
+    expect(await harness.getItemName(2)).toBe("Zero");
+    expect(await harness.getItemNickname(2)).toBe("Zack");
 
-    // Toggle back to sort by seed
+    // Toggle: Sort by seed
     await harness.clickSortBySeed();
     fixture.detectChanges();
 
     expect(await harness.isSortBySeedActive()).toBeTrue();
     expect(await harness.isSortByNameActive()).toBeFalse();
-    expect(await harness.getItemName(0)).toBe("Zack");
+
     expect(await harness.getItemSeed(0)).toBe("1");
+    expect(await harness.getItemName(0)).toBe("Zero");
+    expect(await harness.getItemNickname(0)).toBe("Zack");
+
+    expect(await harness.getItemSeed(1)).toBe("2");
+    expect(await harness.getItemName(1)).toBe("The Rocket");
+    expect(await harness.getItemNickname(1)).toBe("Alice");
+
+    expect(await harness.getItemSeed(2)).toBe("3");
+    expect(await harness.getItemName(2)).toBe("Drift King");
+    expect(await harness.getItemNickname(2)).toBe("Bob");
+
+    // Toggle back to sort by name
+    await harness.clickSortByName();
+    fixture.detectChanges();
+
+    expect(await harness.isSortByNameActive()).toBeTrue();
+    expect(await harness.isSortBySeedActive()).toBeFalse();
+    expect(await harness.getItemName(0)).toBe("Drift King");
+    expect(await harness.getItemSeed(0)).toBe("3");
+  });
+
+  it("should reset sort to alphabetical when dialog is closed and reopened", async () => {
+    const participants = [
+      new Driver("d1", "Zack", "Zero"),
+      new Driver("d2", "Alice", "The Rocket"),
+    ];
+
+    hostComponent.visible.set(true);
+    hostComponent.participants.set(participants);
+    fixture.detectChanges();
+
+    // Default: Sort by nickname
+    expect(await harness.isSortByNicknameActive()).toBeTrue();
+
+    // Switch to seed sort
+    await harness.clickSortBySeed();
+    fixture.detectChanges();
+    expect(await harness.isSortBySeedActive()).toBeTrue();
+
+    // Close dialog
+    await harness.clickCloseButton();
+    fixture.detectChanges();
+    expect(await harness.isVisible()).toBeFalse();
+
+    // Reopen dialog
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+    expect(await harness.isVisible()).toBeTrue();
+
+    // Must reset to alphabetical sort by default
+    expect(await harness.isSortByNicknameActive()).toBeTrue();
+    expect(await harness.isSortBySeedActive()).toBeFalse();
+  });
+
+  it("should allow sorting by driver name (not nickname) and use team name for teams", async () => {
+    const d1 = new Driver("d1", "Zack", "Alpha"); // Seed 1
+    const d2 = new Driver("d2", "Bob", "Beta"); // Seed 2
+    const t1 = new Team("t1", "Charlie Team", undefined, ["d1", "d2"]); // Seed 3
+    const d3 = new Driver("d3", "Alice", "Zero"); // Seed 4
+
+    hostComponent.participants.set([d1, d2, t1, d3]);
+    hostComponent.teams.set([t1]);
+    hostComponent.allDrivers.set([d1, d2, d3]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    // Default: Sorted by nickname (Alpha -> Beta -> Charlie Team -> Zero)
+    expect(await harness.isSortByNicknameActive()).toBeTrue();
+    expect(await harness.isSortByDriverActive()).toBeFalse();
+    expect(await harness.isSortBySeedActive()).toBeFalse();
+
+    expect(await harness.getItemSeed(0)).toBe("1");
+    expect(await harness.getItemName(0)).toBe("Alpha");
+    expect(await harness.getItemNickname(0)).toBe("Zack");
+
+    expect(await harness.getItemSeed(1)).toBe("2");
+    expect(await harness.getItemName(1)).toBe("Beta");
+    expect(await harness.getItemNickname(1)).toBe("Bob");
+
+    expect(await harness.getItemSeed(2)).toBe("3");
+    expect(await harness.getItemName(2)).toBe("Charlie Team");
+
+    expect(await harness.getItemSeed(3)).toBe("4");
+    expect(await harness.getItemName(3)).toBe("Zero");
+    expect(await harness.getItemNickname(3)).toBe("Alice");
+
+    // Click: Sort by Driver Name (Alice -> Bob -> Charlie Team -> Zack)
+    await harness.clickSortByDriver();
+    fixture.detectChanges();
+
+    expect(await harness.isSortByDriverActive()).toBeTrue();
+    expect(await harness.isSortByNicknameActive()).toBeFalse();
+    expect(await harness.isSortBySeedActive()).toBeFalse();
+
+    // 1st: Alice (Seed 4, Name is "Zero" on line 1, "Alice" on line 2)
+    expect(await harness.getItemSeed(0)).toBe("4");
+    expect(await harness.getItemName(0)).toBe("Zero");
+    expect(await harness.getItemNickname(0)).toBe("Alice");
+
+    // 2nd: Bob (Seed 2, Name is "Beta" on line 1, "Bob" on line 2)
+    expect(await harness.getItemSeed(1)).toBe("2");
+    expect(await harness.getItemName(1)).toBe("Beta");
+    expect(await harness.getItemNickname(1)).toBe("Bob");
+
+    // 3rd: Charlie Team (Seed 3, Team Name is "Charlie Team" on line 1)
+    expect(await harness.getItemSeed(2)).toBe("3");
+    expect(await harness.getItemName(2)).toBe("Charlie Team");
+
+    // 4th: Zack (Seed 1, Name is "Alpha" on line 1, "Zack" on line 2)
+    expect(await harness.getItemSeed(3)).toBe("1");
+    expect(await harness.getItemName(3)).toBe("Alpha");
+    expect(await harness.getItemNickname(3)).toBe("Zack");
+
+    // Switch to Seed Sort (Seed 1 -> 2 -> 3 -> 4)
+    await harness.clickSortBySeed();
+    fixture.detectChanges();
+
+    expect(await harness.isSortBySeedActive()).toBeTrue();
+    expect(await harness.getItemSeed(0)).toBe("1");
+    expect(await harness.getItemSeed(1)).toBe("2");
+    expect(await harness.getItemSeed(2)).toBe("3");
+    expect(await harness.getItemSeed(3)).toBe("4");
+  });
+
+  it("should sort by driver name using natural alphanumeric ordering and tie-break by seed", async () => {
+    // Participants where driver names and nicknames are in contrasting alphabetical orders:
+    // d1: Name = "Driver 10", Nickname = "Echo" (Seed 1)
+    // d2: Name = "Driver 2", Nickname = "Delta" (Seed 2)
+    // d3: Name = "Driver 1", Nickname = "Charlie" (Seed 3)
+    // t1: Team Name = "Driver 1.5 Team", Member Nicknames = "Bravo" (Seed 4)
+    // d4: Name = "Driver 2", Nickname = "Alpha" (Seed 5) - duplicate name to test tie-breaking by seed
+    const d1 = new Driver("d1", "Driver 10", "Echo");
+    const d2 = new Driver("d2", "Driver 2", "Delta");
+    const d3 = new Driver("d3", "Driver 1", "Charlie");
+    const t1 = new Team("t1", "Driver 1.5 Team", undefined, ["dt1"]);
+    const d4 = new Driver("d4", "Driver 2", "Alpha");
+
+    hostComponent.participants.set([d1, d2, d3, t1, d4]);
+    hostComponent.teams.set([t1]);
+    hostComponent.visible.set(true);
+    fixture.detectChanges();
+
+    // Default: Sorted by Nickname (Alpha -> Charlie -> Delta -> Driver 1.5 Team -> Echo)
+    expect(await harness.isSortByNicknameActive()).toBeTrue();
+    expect(await harness.getItemPrimaryName(0)).toBe("Alpha");
+    expect(await harness.getItemSeed(0)).toBe("5");
+
+    // Click: Sort by Driver Name
+    await harness.clickSortByDriver();
+    fixture.detectChanges();
+    expect(await harness.isSortByDriverActive()).toBeTrue();
+
+    // Natural alphanumeric sort by name (Driver Name / Team Name):
+    // 1st: "Driver 1" (d3, seed 3)
+    // 2nd: "Driver 1.5 Team" (t1, seed 4)
+    // 3rd: "Driver 2" (d2, seed 2) - tie-break seed 2 before seed 5
+    // 4th: "Driver 2" (d4, seed 5) - tie-break seed 5 after seed 2
+    // 5th: "Driver 10" (d1, seed 1) - natural sort places "10" after "2"
+    expect(await harness.getItemCount()).toBe(5);
+
+    // 1st item: d3 ("Driver 1")
+    expect(await harness.getItemSeed(0)).toBe("3");
+    expect(await harness.getItemPrimaryName(0)).toBe("Charlie");
+    expect(await harness.getItemSecondaryName(0)).toBe("Driver 1");
+
+    // 2nd item: t1 ("Driver 1.5 Team")
+    expect(await harness.getItemSeed(1)).toBe("4");
+    expect(await harness.getItemPrimaryName(1)).toBe("Driver 1.5 Team");
+
+    // 3rd item: d2 ("Driver 2", seed 2)
+    expect(await harness.getItemSeed(2)).toBe("2");
+    expect(await harness.getItemPrimaryName(2)).toBe("Delta");
+    expect(await harness.getItemSecondaryName(2)).toBe("Driver 2");
+
+    // 4th item: d4 ("Driver 2", seed 5, tie-broken after seed 2)
+    expect(await harness.getItemSeed(3)).toBe("5");
+    expect(await harness.getItemPrimaryName(3)).toBe("Alpha");
+    expect(await harness.getItemSecondaryName(3)).toBe("Driver 2");
+
+    // 5th item: d1 ("Driver 10", seed 1)
+    expect(await harness.getItemSeed(4)).toBe("1");
+    expect(await harness.getItemPrimaryName(4)).toBe("Echo");
+    expect(await harness.getItemSecondaryName(4)).toBe("Driver 10");
   });
 
   it("should refresh roster items when reopened after participants array is mutated in place", async () => {
@@ -369,11 +547,11 @@ describe("RacingRosterDialogComponent", () => {
     hostComponent.visible.set(true);
     fixture.detectChanges();
 
-    // New driver should immediately appear without changing sort
+    // New driver should immediately appear without changing sort (Hammer comes first alphabetically)
     expect(await harness.isVisible()).toBeTrue();
     expect(await harness.getItemCount()).toBe(3);
-    expect(await harness.getItemName(2)).toBe("Lewis Hamilton");
-    expect(await harness.getItemNickname(2)).toBe('"Hammer"');
+    expect(await harness.getItemName(0)).toBe("Hammer");
+    expect(await harness.getItemNickname(0)).toBe("Lewis Hamilton");
   });
 
   it("should not display team name when the team is not added to the racing list", async () => {
@@ -388,17 +566,18 @@ describe("RacingRosterDialogComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getItemCount()).toBe(2);
-    expect(await harness.getItemName(0)).toBe("Charles Leclerc");
-    expect(await harness.getItemNickname(0)).toBe('"Lord Perceval"');
+    // Alphabetical by nickname: "Lord Perceval" (Charles Leclerc), then "Mad Max" (Max Verstappen)
+    expect(await harness.getItemName(0)).toBe("Lord Perceval");
+    expect(await harness.getItemNickname(0)).toBe("Charles Leclerc");
     // Team name must NOT be shown because the team is not in the racing list
     expect(await harness.getItemTeam(0)).toBe("");
 
-    expect(await harness.getItemName(1)).toBe("Max Verstappen");
-    expect(await harness.getItemNickname(1)).toBe('"Mad Max"');
+    expect(await harness.getItemName(1)).toBe("Mad Max");
+    expect(await harness.getItemNickname(1)).toBe("Max Verstappen");
     expect(await harness.getItemTeam(1)).toBe("");
   });
 
-  it("should display driver nickname and team name side-by-side when the team is added to the racing list", async () => {
+  it("should display driver nickname as primary and team name side-by-side on line 2 when the team is added to the racing list", async () => {
     const d1 = new Driver("d1", "Charles Leclerc", "Lord Perceval");
     const d2 = new Driver("d2", "Max Verstappen", "Mad Max");
     const t1 = new Team("t1", "Scuderia Ferrari", undefined, ["d1"]);
@@ -410,16 +589,21 @@ describe("RacingRosterDialogComponent", () => {
     fixture.detectChanges();
 
     expect(await harness.getItemCount()).toBe(3);
-    expect(await harness.getItemName(0)).toBe("Charles Leclerc");
-    expect(await harness.getItemNickname(0)).toBe('"Lord Perceval"');
+    // Alphabetical by primary name:
+    // 1. "Lord Perceval" (Charles Leclerc)
+    // 2. "Mad Max" (Max Verstappen)
+    // 3. "Scuderia Ferrari" (t1)
+    expect(await harness.getItemName(0)).toBe("Lord Perceval");
+    expect(await harness.getItemNickname(0)).toBe("Charles Leclerc");
     expect(await harness.getItemTeam(0)).toBe("Scuderia Ferrari");
 
-    // t1 team card has team name on line 1 and no duplicate on line 2
-    expect(await harness.getItemName(1)).toBe("Scuderia Ferrari");
+    expect(await harness.getItemName(1)).toBe("Mad Max");
+    expect(await harness.getItemNickname(1)).toBe("Max Verstappen");
     expect(await harness.getItemTeam(1)).toBe("");
 
-    expect(await harness.getItemName(2)).toBe("Max Verstappen");
-    expect(await harness.getItemNickname(2)).toBe('"Mad Max"');
+    // t1 team card has team name on line 1 and member nicknames on line 2
+    expect(await harness.getItemName(2)).toBe("Scuderia Ferrari");
+    expect(await harness.getItemNickname(2)).toBe("1 Drivers");
     expect(await harness.getItemTeam(2)).toBe("");
   });
 
@@ -449,27 +633,33 @@ describe("RacingRosterDialogComponent", () => {
       seed: 1,
       name: "Carlos Sainz",
       nickname: "Smooth Operator",
+      primaryName: "Smooth Operator",
+      secondaryName: "Carlos Sainz",
       teamName: "Williams Racing",
       isTeam: false,
     };
     expect(dialogComponent.getItemTooltip(itemWithTeam)).toBe(
-      '(#1) Carlos Sainz "Smooth Operator" [Williams Racing]',
+      "(#1) Smooth Operator (Carlos Sainz) [Williams Racing]",
     );
 
     const itemWithoutTeam = {
       seed: 2,
       name: "Fernando Alonso",
       nickname: "El Nano",
+      primaryName: "El Nano",
+      secondaryName: "Fernando Alonso",
       isTeam: false,
     };
     expect(dialogComponent.getItemTooltip(itemWithoutTeam)).toBe(
-      '(#2) Fernando Alonso "El Nano"',
+      "(#2) El Nano (Fernando Alonso)",
     );
 
     const teamItem = {
       seed: 3,
       name: "Red Bull Racing",
       nickname: "Max, Checo",
+      primaryName: "Red Bull Racing",
+      secondaryName: "Max, Checo",
       teamName: "Red Bull Racing",
       isTeam: true,
     };
