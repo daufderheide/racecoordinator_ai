@@ -54,6 +54,10 @@ The `run_server.sh` script automatically downloads dependencies (including `prot
    ```bash
    ./run_server.sh --headless
    ```
+4. Replay a trace session log:
+   ```bash
+   ./run_server.sh --replay <path-to-trace-log>
+   ```
 
 *Note: The script incrementally compiles. If you encounter compilation errors, run `cd server && mvn clean` then run `./run_server.sh` again.*
 
@@ -72,6 +76,11 @@ The `run_server.ps1` script handles dependency downloading and starts both the J
 3. Run headless server:
    ```powershell
    .\run_server.ps1 -Headless
+   ```
+4. Replay a trace session log:
+   ```powershell
+   .\run_server.ps1 -ReplayLog <path-to-trace-log>
+   # or: .\run_server.ps1 --replay <path-to-trace-log>
    ```
 
 ### Starting Services Individually
