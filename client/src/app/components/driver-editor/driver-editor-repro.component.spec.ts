@@ -12,6 +12,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { DataService } from "@app/data.service";
+import { DirtyCheckGuard } from "@app/guards/dirty-check.guard";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -186,7 +187,9 @@ describe("DriverEditorComponent Reproduction", () => {
     );
     mockDataService.listAssets.and.returnValue(of([]));
     mockDataService.createDriver.and.returnValue(of({ entity_id: "d2" }));
-    mockDataService.updateDriver.and.returnValue(of({ entity_id: "d2" }));
+    mockDataService.updateDriver.and.callFake((id: string, driver: any) =>
+      of({ ...driver, entity_id: id }),
+    );
     mockTranslationService.translate.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
@@ -209,6 +212,7 @@ describe("DriverEditorComponent Reproduction", () => {
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: HelpService, useValue: mockHelpService },
         { provide: AnalyticsService, useValue: mockAnalyticsService },
+        DirtyCheckGuard,
       ],
     }).compileComponents();
   });
@@ -256,6 +260,71 @@ describe("DriverEditorComponent Reproduction", () => {
 
     // Verify that the state remains clean (FIXED behavior)
     expect(component.isDirtyState()).toBeFalse();
+
+    discardPeriodicTasks();
+  }));
+
+  it("should not be saving or dirty after changing driver sound to none, and allow deactivation", fakeAsync(() => {
+    const guard = TestBed.inject(DirtyCheckGuard);
+    component.loadData();
+    tick();
+    expect(component.isDirtyState()).toBeFalse();
+
+    // Change sound type to 'none' as done via template:
+    component.onAudioTypeChange("lap", "none");
+    tick(200);
+
+    expect(mockDataService.updateDriver).toHaveBeenCalled();
+    expect(component.isSaving).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
+    expect(component.getUnsavedReasons()).not.toContain(
+      "DISCARD_REASON_SAVING",
+    );
+    expect(guard.canDeactivate(component)).toBeTrue();
+
+    discardPeriodicTasks();
+  }));
+
+  it("should not be saving or dirty after changing preset sound url, and allow deactivation", fakeAsync(() => {
+    const guard = TestBed.inject(DirtyCheckGuard);
+    component.loadData();
+    tick();
+    expect(component.isDirtyState()).toBeFalse();
+
+    // Change sound url as done via template:
+    component.onAudioUrlChange("lap", "new_sound_url");
+    tick(200);
+
+    expect(mockDataService.updateDriver).toHaveBeenCalled();
+    expect(component.isSaving).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
+    expect(component.getUnsavedReasons()).not.toContain(
+      "DISCARD_REASON_SAVING",
+    );
+    expect(guard.canDeactivate(component)).toBeTrue();
+
+    discardPeriodicTasks();
+  }));
+
+  it("should not be saving or dirty after changing sound tts text, and allow deactivation", fakeAsync(() => {
+    const guard = TestBed.inject(DirtyCheckGuard);
+    component.loadData();
+    tick();
+    expect(component.isDirtyState()).toBeFalse();
+
+    // Switch to TTS and set text
+    component.onAudioTypeChange("lap", "tts");
+    tick(200);
+    component.onAudioTextChange("lap", "Great Lap!");
+    tick(200);
+
+    expect(mockDataService.updateDriver).toHaveBeenCalled();
+    expect(component.isSaving).toBeFalse();
+    expect(component.isDirtyState()).toBeFalse();
+    expect(component.getUnsavedReasons()).not.toContain(
+      "DISCARD_REASON_SAVING",
+    );
+    expect(guard.canDeactivate(component)).toBeTrue();
 
     discardPeriodicTasks();
   }));

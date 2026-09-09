@@ -820,6 +820,88 @@ describe("DriverEditorComponent", () => {
       // Formatted discard message
       expect(component.discardMessage).toContain("•");
     });
+
+    it("should properly handle onAudioTypeChange, onAudioUrlChange, and onAudioTextChange", fakeAsync(() => {
+      const driver = new Driver("d1", "ValidName", "ValidNick");
+      setupDriver(driver);
+      dataService.updateDriver.and.callFake((id: string, d: any) =>
+        of({ ...d, entity_id: id }),
+      );
+
+      // 1. Change type to none
+      component.onAudioTypeChange("lap", "none");
+      expect(component.editingDriver!.lapAudio.type).toBe("none");
+      expect(component.editingDriver!.lapAudio.url).toBeUndefined();
+      expect(component.editingDriver!.lapAudio.text).toBeUndefined();
+
+      tick(200);
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.getUnsavedReasons()).not.toContain(
+        "DISCARD_REASON_SAVING",
+      );
+
+      // 2. Change url
+      component.onAudioTypeChange("bestLap", "preset");
+      component.onAudioUrlChange("bestLap", "custom_best_lap_url");
+      expect(component.editingDriver!.bestLapAudio.url).toBe(
+        "custom_best_lap_url",
+      );
+
+      tick(200);
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+
+      // 3. Change tts text
+      component.onAudioTypeChange("penalty", "tts");
+      component.onAudioTextChange("penalty", "Stop and Go Penalty");
+      expect(component.editingDriver!.penaltyAudio.text).toBe(
+        "Stop and Go Penalty",
+      );
+
+      tick(200);
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+
+      discardPeriodicTasks();
+    }));
+
+    it("should consider drivers equal when audio is none regardless of url, and when tts matches text", () => {
+      const d1 = new Driver("d1", "Test", "TestNick");
+      const d2 = new Driver("d1", "Test", "TestNick");
+
+      // Both none but d1 has leftover url
+      d1.lapAudio = { type: "none", url: "leftover_url" } as any;
+      d2.lapAudio = { type: "none", url: undefined } as any;
+      expect((component as any).areDriversEqual(d1, d2)).toBeTrue();
+
+      // Both tts with same text but different leftover url
+      d1.bestLapAudio = {
+        type: "tts",
+        text: "Nice lap!",
+        url: "old_url",
+      } as any;
+      d2.bestLapAudio = {
+        type: "tts",
+        text: "Nice lap!",
+        url: undefined,
+      } as any;
+      expect((component as any).areDriversEqual(d1, d2)).toBeTrue();
+
+      // TTS with different text
+      d2.bestLapAudio = {
+        type: "tts",
+        text: "Different",
+        url: undefined,
+      } as any;
+      expect((component as any).areDriversEqual(d1, d2)).toBeFalse();
+
+      // Preset with different url
+      d1.penaltyAudio = { type: "preset", url: "url_a" } as any;
+      d2.penaltyAudio = { type: "preset", url: "url_b" } as any;
+      expect((component as any).areDriversEqual(d1, d2)).toBeFalse();
+    });
   });
 
   describe("guided help", () => {

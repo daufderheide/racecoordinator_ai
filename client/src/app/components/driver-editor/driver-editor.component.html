@@ -141,17 +141,11 @@
                       [label]="'DE_LABEL_LAP_SOUNDS' | translate"
                       [assets]="soundAssets"
                       [type]="editingDriver.lapAudio.type"
-                      (typeChange)="
-                        editingDriver.lapAudio.type = $event; captureState()
-                      "
+                      (typeChange)="onAudioTypeChange('lap', $event)"
                       [url]="editingDriver.lapAudio.url"
-                      (urlChange)="
-                        onInputChange(); editingDriver.lapAudio.url = $event
-                      "
+                      (urlChange)="onAudioUrlChange('lap', $event)"
                       [text]="editingDriver.lapAudio.text"
-                      (textChange)="
-                        onInputChange(); editingDriver.lapAudio.text = $event
-                      "
+                      (textChange)="onAudioTextChange('lap', $event)"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>
@@ -163,18 +157,11 @@
                       [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
                       [assets]="soundAssets"
                       [type]="editingDriver.bestLapAudio.type"
-                      (typeChange)="
-                        editingDriver.bestLapAudio.type = $event; captureState()
-                      "
+                      (typeChange)="onAudioTypeChange('bestLap', $event)"
                       [url]="editingDriver.bestLapAudio.url"
-                      (urlChange)="
-                        onInputChange(); editingDriver.bestLapAudio.url = $event
-                      "
+                      (urlChange)="onAudioUrlChange('bestLap', $event)"
                       [text]="editingDriver.bestLapAudio.text"
-                      (textChange)="
-                        onInputChange();
-                        editingDriver.bestLapAudio.text = $event
-                      "
+                      (textChange)="onAudioTextChange('bestLap', $event)"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>
@@ -186,18 +173,11 @@
                       [label]="'DE_LABEL_PENALTY_SOUNDS' | translate"
                       [assets]="soundAssets"
                       [type]="editingDriver.penaltyAudio.type"
-                      (typeChange)="
-                        editingDriver.penaltyAudio.type = $event; captureState()
-                      "
+                      (typeChange)="onAudioTypeChange('penalty', $event)"
                       [url]="editingDriver.penaltyAudio.url"
-                      (urlChange)="
-                        onInputChange(); editingDriver.penaltyAudio.url = $event
-                      "
+                      (urlChange)="onAudioUrlChange('penalty', $event)"
                       [text]="editingDriver.penaltyAudio.text"
-                      (textChange)="
-                        onInputChange();
-                        editingDriver.penaltyAudio.text = $event
-                      "
+                      (textChange)="onAudioTextChange('penalty', $event)"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>
