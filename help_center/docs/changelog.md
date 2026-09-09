@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.65] - 2026-09-09
+
+### 🚀 New Features
+
+- **race_day**: add countdown widget with configurable settings, inspector fields, and i18n support https://github.com/daufderheide/racecoordinator_ai/issues/807 ([2ef0fe0e](https://github.com/daufderheide/racecoordinator_ai/commit/2ef0fe0e))
+
+### 🐛 Bug Fixes
+
+- consolidate audio sanitization logic and enable auto-saving for audio configuration changes in driver editor ([416dd989](https://github.com/daufderheide/racecoordinator_ai/commit/416dd989))
+- **pdf_export**: fixed weird dark background during pdf export of the heat/race results pages https://github.com/daufderheide/racecoordinator_ai/issues/780 ([96cc6121](https://github.com/daufderheide/racecoordinator_ai/commit/96cc6121))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.64...v1.0.0-beta.65">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.64] - 2026-09-09
 
 ### 🐛 Bug Fixes
