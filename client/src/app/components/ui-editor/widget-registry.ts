@@ -38,6 +38,20 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       timeTextColor: "",
     }),
   },
+  countdown: {
+    defaultSettings: () => ({
+      orientation: "horizontal",
+      lampScale: 1.0,
+      blurArea: "fullscreen",
+      blurAmount: 50,
+      blurCustomX: 0,
+      blurCustomY: 0,
+      blurCustomWidth: 1920,
+      blurCustomHeight: 1080,
+      lampSizingMode: "custom",
+      previewLampCount: 5,
+    }),
+  },
   image: {
     defaultSettings: () => ({
       imageUrl: "",

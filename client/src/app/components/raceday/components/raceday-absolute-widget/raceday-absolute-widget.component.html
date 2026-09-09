@@ -1,12 +1,19 @@
 <div
   class="widget-wrapper"
-  [class.edit-mode]="isCustomizing()"
+  [class.edit-mode]="isCustomizing() && !isCountdownGhost"
   [class.selected]="isSelected"
+  [class.countdown-ghost]="isCountdownGhost"
+  [class.countdown-widget]="isCountdownWidget"
+  [class.no-print]="isCountdownWidget"
   [class.has-custom-font]="!!widget().fontFamily"
   [class.has-custom-color]="!!widget().textColor"
   [class.has-custom-bg]="!!widget().backgroundColor"
   [class.scale-auto]="widget().scaleMode === 'auto'"
   [class.scale-fixed]="widget().scaleMode !== 'auto'"
+  [style.display]="!isCountdownActive ? 'none' : null"
+  [style.pointer-events]="
+    isCountdownGhost || (!isCustomizing() && !isCountdownActive) ? 'none' : null
+  "
   [style.left]="
     (widget().x / (parentComponent().layout?.baseWidth || 1920)) * 100 + '%'
   "
@@ -20,19 +27,13 @@
     (widget().height / (parentComponent().layout?.baseHeight || 1080)) * 100 +
     '%'
   "
-  [style.z-index]="
-    isCustomizing()
-      ? widget().zIndex || 100
-      : widget().widgetType === 'menu-bar'
-        ? 99999
-        : widget().zIndex || 100
-  "
+  [style.z-index]="computedZIndex"
   [style.font-family]="widget().fontFamily || null"
   [style.color]="widget().textColor || null"
   [style.background-color]="widget().backgroundColor || null"
   [style.--widget-font-size]="(widget().fontSize || 24) + 'px'"
   [style.--widget-scale-factor]="widget().textScaleFactor || 1"
-  (pointerdown)="isCustomizing() ? bringToFront() : null"
+  (pointerdown)="isCustomizing() && !isCountdownGhost ? bringToFront() : null"
   window-id="absolute-widget"
 >
   <div class="widget-content">
@@ -347,11 +348,20 @@
             [parent]="parentComponent()"
           ></app-raceday-action-button>
         }
+        @case ("countdown") {
+          <app-raceday-countdown
+            [widget]="widget()"
+            [parent]="parentComponent()"
+            [isCustomizing]="isCustomizing() && isCountdownPreviewActive()"
+            [showCountdownOverlay]="parentComponent()?.showCountdownOverlay"
+            [countdownLamps]="parentComponent()?.countdownLamps"
+          ></app-raceday-countdown>
+        }
       }
     }
   </div>
 
-  @if (isCustomizing()) {
+  @if (isCustomizing() && !isCountdownGhost) {
     <div class="customizing-widget-overlay">
       <div
         class="widget-header-drag"

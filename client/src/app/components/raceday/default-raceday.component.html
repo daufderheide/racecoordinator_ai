@@ -50,29 +50,6 @@
   >
   </app-raceday-modals>
 
-  @if (showCountdownOverlay) {
-    <div class="countdown-overlay" [class.portrait]="isPortraitLayout()">
-      @if (race) {
-        <div id="debug-info" style="display: none">
-          TotalLamps: {{ countdownTotalLamps }}, RaceStartTime:
-          {{ race.start_time }}, RaceRestartTime: {{ race.restart_time }},
-          IsRestarting: {{ isRestarting }}
-        </div>
-      }
-      <div class="lamps-container" [class.vertical]="isPortraitLayout()">
-        @for (lamp of countdownLamps; track $index) {
-          <img
-            [src]="lamp.url"
-            class="start-lamp"
-            [class.on]="lamp.state === 'on'"
-            [class.go]="lamp.state === 'go'"
-            alt="Start Lamp"
-          />
-        }
-      </div>
-    </div>
-  }
-
   <div
     class="scalable-content"
     [class.edit-mode]="isLayoutCustomizing"
@@ -96,6 +73,7 @@
           [parentComponent]="this"
           [isCustomizing]="isLayoutCustomizing"
           [selectedWidgetId]="selectedWidgetId()"
+          [isCountdownPreviewActive]="isCountdownPreviewActive()"
         ></app-raceday-absolute-widget>
       }
     </div>

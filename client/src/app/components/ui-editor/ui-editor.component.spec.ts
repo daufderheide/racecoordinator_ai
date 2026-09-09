@@ -4080,4 +4080,56 @@ describe("UIEditorComponent", () => {
       expect(inspectorHeight).toBeLessThanOrEqual(maxViewportHeight);
     });
   });
+
+  describe("Widget Selector and Countdown Preview Toggle", () => {
+    it("should toggle countdown preview state per UI", () => {
+      const customUi = {
+        entity_id: "test-ui-countdown-preview",
+        name: "Test Countdown UI",
+      } as CustomUI;
+
+      expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+      component.toggleCountdownPreview(customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeTrue();
+      component.toggleCountdownPreview(customUi);
+      expect(component.isCountdownPreviewActive(customUi)).toBeFalse();
+    });
+
+    it("should select widget via onWidgetDropdownSelect", () => {
+      const customUi = {
+        entity_id: "test-ui-widget-select",
+        name: "Test Select UI",
+      } as CustomUI;
+      spyOn(component, "onWidgetSelected");
+
+      component.onWidgetDropdownSelect("widget-countdown", customUi);
+      expect(component.onWidgetSelected).toHaveBeenCalledWith(
+        "widget-countdown",
+        customUi,
+      );
+
+      component.onWidgetDropdownSelect("", customUi);
+      expect(component.onWidgetSelected).toHaveBeenCalledWith(null, customUi);
+    });
+
+    it("should return layout widgets and localized display name", () => {
+      const customUi = {
+        entity_id: "test-ui-widgets-list",
+        name: "Test Widgets UI",
+      } as CustomUI;
+      const widgets = component.getLayoutWidgets(customUi);
+      expect(Array.isArray(widgets)).toBeTrue();
+
+      const name = component.getWidgetDisplayName({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        zIndex: 100,
+      });
+      expect(name).toBeTruthy();
+    });
+  });
 });

@@ -35,36 +35,29 @@ export class Driver implements Model {
     this.nickname = nickname;
     this.avatarUrl = avatarUrl;
 
-    this.lapAudio =
-      lapAudio && lapAudio.type
-        ? {
-            ...lapAudio,
-            url:
-              lapAudio.type === "none"
-                ? undefined
-                : lapAudio.url || "default_beep",
-          }
-        : { type: "preset", url: "default_beep" };
-    this.bestLapAudio =
-      bestLapAudio && bestLapAudio.type
-        ? {
-            ...bestLapAudio,
-            url:
-              bestLapAudio.type === "none"
-                ? undefined
-                : bestLapAudio.url || "default_driveby",
-          }
-        : { type: "preset", url: "default_driveby" };
-    this.penaltyAudio =
-      penaltyAudio && penaltyAudio.type
-        ? {
-            ...penaltyAudio,
-            url:
-              penaltyAudio.type === "none"
-                ? undefined
-                : penaltyAudio.url || "default_penalty",
-          }
-        : { type: "preset", url: "default_penalty" };
+    const sanitizeAudio = (
+      audio?: AudioConfig,
+      defaultUrl: string = "default_beep",
+    ): AudioConfig => {
+      if (!audio || !audio.type) {
+        return { type: "preset", url: defaultUrl };
+      }
+      if (audio.type === "none") {
+        return { type: "none", url: undefined, text: undefined };
+      }
+      if (audio.type === "tts") {
+        return { type: "tts", url: undefined, text: audio.text || "" };
+      }
+      return {
+        type: audio.type,
+        url: audio.url || defaultUrl,
+        text: undefined,
+      };
+    };
+
+    this.lapAudio = sanitizeAudio(lapAudio, "default_beep");
+    this.bestLapAudio = sanitizeAudio(bestLapAudio, "default_driveby");
+    this.penaltyAudio = sanitizeAudio(penaltyAudio, "default_penalty");
   }
 
   isEmpty(): boolean {

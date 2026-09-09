@@ -266,6 +266,46 @@
                                 </app-custom-select>
                               </div>
                             </div>
+
+                            <div
+                              id="help-raceday-widget-selector"
+                              style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                margin-left: 10px;
+                              "
+                            >
+                              <label
+                                style="
+                                  color: #94a3b8;
+                                  font-size: 14px;
+                                  white-space: nowrap;
+                                "
+                                >{{
+                                  "UE_LABEL_SELECT_WIDGET" | translate
+                                }}</label
+                              >
+                              <div style="width: 175px">
+                                <app-custom-select
+                                  [value]="getSelectedWidgetId(ui) || ''"
+                                  (change)="onWidgetDropdownSelect($event, ui)"
+                                >
+                                  <app-custom-option value="">
+                                    --
+                                    {{
+                                      "UE_SELECT_WIDGET_PLACEHOLDER" | translate
+                                    }}
+                                    --
+                                  </app-custom-option>
+                                  @for (w of getLayoutWidgets(ui); track w.id) {
+                                    <app-custom-option [value]="w.id">
+                                      {{ getWidgetDisplayName(w) }}
+                                    </app-custom-option>
+                                  }
+                                </app-custom-select>
+                              </div>
+                            </div>
                           </div>
 
                           <div
@@ -278,6 +318,30 @@
                             "
                             (click)="$event.stopPropagation()"
                           >
+                            <button
+                              id="help-raceday-countdown-preview"
+                              class="icon-btn canvas-action-icon-btn"
+                              [class.active]="isCountdownPreviewActive(ui)"
+                              (click)="toggleCountdownPreview(ui)"
+                              [title]="
+                                (isCountdownPreviewActive(ui)
+                                  ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+                                  : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+                                ) | translate
+                              "
+                              [attr.aria-label]="
+                                (isCountdownPreviewActive(ui)
+                                  ? 'UE_TOOLTIP_HIDE_COUNTDOWN_PREVIEW'
+                                  : 'UE_TOOLTIP_SHOW_COUNTDOWN_PREVIEW'
+                                ) | translate
+                              "
+                            >
+                              <span class="material-icons">{{
+                                isCountdownPreviewActive(ui)
+                                  ? "visibility"
+                                  : "visibility_off"
+                              }}</span>
+                            </button>
                             <button
                               id="help-raceday-reset"
                               class="icon-btn canvas-action-icon-btn reset-icon-btn"
@@ -371,6 +435,9 @@
                                   [activeCustomUi]="ui"
                                   [uiScale]="getPreviewScaleNumber(ui)"
                                   [selectedWidgetId]="getSelectedWidgetId(ui)"
+                                  [isCountdownPreviewActive]="
+                                    isCountdownPreviewActive(ui)
+                                  "
                                   (widgetSelected)="
                                     onWidgetSelected($event, ui)
                                   "
@@ -425,7 +492,9 @@
                                   currentSelectedWidget.widgetType !==
                                     "branding" &&
                                   currentSelectedWidget.widgetType !== "qr" &&
-                                  currentSelectedWidget.widgetType !== "flag"
+                                  currentSelectedWidget.widgetType !== "flag" &&
+                                  currentSelectedWidget.widgetType !==
+                                    "countdown"
                                 ) {
                                   <div class="inspector-section">
                                     <label class="inspector-label">{{

@@ -1,6 +1,7 @@
 package com.antigravity.handlers;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.CustomUI;
+import com.antigravity.repository.SqliteRepository;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import java.io.File;
@@ -255,17 +257,14 @@ public class CustomUITaskHandlerTest {
     // Create custom UI with entityId "2"
     CustomUI custom2 =
         new CustomUI("My New Custom UI", false, "[]", null, null, null, null, null, "2", null);
-    new com.antigravity.repository.SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class)
-        .save(custom2);
+    new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class).save(custom2);
 
     // Call ensureDefaultCustomUIs again
     handler.ensureDefaultCustomUIs();
 
     // Verify custom UI "2" was NOT deleted or mutated into Fuel UI
     CustomUI retrieved =
-        new com.antigravity.repository.SqliteRepository<>(
-                databaseContext, "custom_uis", CustomUI.class)
-            .findByEntityId("2");
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class).findByEntityId("2");
     assertNotNull(retrieved);
     assertEquals("My New Custom UI", retrieved.getName());
 
@@ -273,5 +272,38 @@ public class CustomUITaskHandlerTest {
     when(handler.getPathParam(ctx, "id")).thenReturn("2");
     handler.deleteCustomUI(ctx);
     verify(handler).setStatus(ctx, 204);
+  }
+
+  @Test
+  public void testCustomUIPreservesLayoutWithoutCountdownWidget() {
+    handler.ensureDefaultCustomUIs();
+
+    // Save a custom layout without countdown widget (e.g. user removed countdown)
+    String layoutJson =
+        "{\"widgets\":[{\"id\":\"w-old\",\"widgetType\":\"timer\"}],\"baseWidth\":1920,\"baseHeight\":1080}";
+    CustomUI customLayout =
+        new CustomUI(
+            "Heat List",
+            false,
+            layoutJson,
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "heat-list-layout-123",
+            null);
+    new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class).save(customLayout);
+
+    // Call ensureDefaultCustomUIs (called on every listCustomUIs request)
+    handler.ensureDefaultCustomUIs();
+
+    // Verify custom layout still does NOT contain countdown widget (user deletion preserved)
+    CustomUI retrieved =
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class)
+            .findByEntityId("heat-list-layout-123");
+    assertNotNull(retrieved);
+    assertFalse(retrieved.getLayoutJson().contains("widget-countdown"));
+    assertFalse(retrieved.getLayoutJson().contains("\"widgetType\":\"countdown\""));
   }
 }

@@ -582,10 +582,9 @@
     display: block !important;
     align-items: flex-start !important;
     justify-content: flex-start !important;
-  }
-
-  body:not(.print-no-background) .dashboard-wrapper {
-    background: #06090e !important;
+    background: url('/assets/images/race_results_bg.png') no-repeat center center !important;
+    background-size: cover !important;
+    background-attachment: fixed !important;
   }
 
   .scalable-content {

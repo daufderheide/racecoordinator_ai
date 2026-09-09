@@ -260,8 +260,14 @@ export class DriverEditorComponent
 
     if (this.undoManager) {
       this.subscriptions.push(
-        this.undoManager.stateCommitted$.subscribe(() => {
-          this.autoSaveDriver();
+        this.undoManager.stateCommitted$.subscribe((event) => {
+          if (
+            event.type === "push" ||
+            event.type === "undo" ||
+            event.type === "redo"
+          ) {
+            this.autoSaveDriver();
+          }
         }),
       );
     }
@@ -383,12 +389,14 @@ export class DriverEditorComponent
 
     const checkAudio = (a1: any, a2: any) => {
       if (!a1 || !a2) return a1 === a2;
-      return (
-        normalizeString(a1.url) === normalizeString(a2.url) &&
-        normalizeString(a1.type || "preset") ===
-          normalizeString(a2.type || "preset") &&
-        normalizeString(a1.text) === normalizeString(a2.text)
-      );
+      const type1 = normalizeString(a1.type || "preset");
+      const type2 = normalizeString(a2.type || "preset");
+      if (type1 !== type2) return false;
+      if (type1 === "none") return true;
+      if (type1 === "tts") {
+        return normalizeString(a1.text) === normalizeString(a2.text);
+      }
+      return normalizeString(a1.url) === normalizeString(a2.url);
     };
 
     return (
@@ -726,6 +734,74 @@ export class DriverEditorComponent
   captureState() {
     this.undoManager.captureState();
     this.cdr.detectChanges();
+  }
+
+  onAudioTypeChange(
+    slot: "lap" | "bestLap" | "penalty",
+    type: "preset" | "tts" | "none" | "audio_set",
+  ) {
+    if (!this.editingDriver) return;
+    const audioKey =
+      slot === "lap"
+        ? "lapAudio"
+        : slot === "bestLap"
+          ? "bestLapAudio"
+          : "penaltyAudio";
+    const defaultUrl =
+      slot === "lap"
+        ? "default_beep"
+        : slot === "bestLap"
+          ? "default_driveby"
+          : "default_penalty";
+    const audio = this.editingDriver[audioKey];
+    if (audio) {
+      audio.type = type;
+      if (type === "none") {
+        audio.url = undefined;
+        audio.text = undefined;
+      } else if (type === "tts") {
+        audio.url = undefined;
+      } else if (!audio.url) {
+        audio.url = defaultUrl;
+      }
+      this.captureState();
+    }
+  }
+
+  onAudioUrlChange(
+    slot: "lap" | "bestLap" | "penalty",
+    url: string | undefined,
+  ) {
+    if (!this.editingDriver) return;
+    const audioKey =
+      slot === "lap"
+        ? "lapAudio"
+        : slot === "bestLap"
+          ? "bestLapAudio"
+          : "penaltyAudio";
+    const audio = this.editingDriver[audioKey];
+    if (audio) {
+      audio.url = url;
+      this.captureState();
+    }
+  }
+
+  onAudioTextChange(
+    slot: "lap" | "bestLap" | "penalty",
+    text: string | undefined,
+  ) {
+    if (!this.editingDriver) return;
+    const audioKey =
+      slot === "lap"
+        ? "lapAudio"
+        : slot === "bestLap"
+          ? "bestLapAudio"
+          : "penaltyAudio";
+    const audio = this.editingDriver[audioKey];
+    if (audio) {
+      audio.text = text;
+      this.onInputChange();
+    }
   }
 
   selectDriver(driver: Driver) {

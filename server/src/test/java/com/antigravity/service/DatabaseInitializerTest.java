@@ -5,9 +5,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.CustomUI;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
 import com.antigravity.models.Team;
+import com.antigravity.models.Theme;
 import com.antigravity.models.Track;
 import com.antigravity.repository.SqliteRepository;
 import java.io.File;
@@ -55,29 +57,33 @@ public class DatabaseInitializerTest {
     List<Team> teams = teamRepo.findAll();
     assertEquals(2, teams.size());
 
-    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
-        new SqliteRepository<>(context, "custom_uis", com.antigravity.models.CustomUI.class);
-    List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    List<CustomUI> uis = uiRepo.findAll();
     assertEquals(3, uis.size());
+    for (CustomUI ui : uis) {
+      assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+    }
 
-    SqliteRepository<com.antigravity.models.Theme> themeRepo =
-        new SqliteRepository<>(context, "themes", com.antigravity.models.Theme.class);
-    List<com.antigravity.models.Theme> themes = themeRepo.findAll();
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    List<Theme> themes = themeRepo.findAll();
     assertEquals(3, themes.size());
   }
 
   @Test
   public void testResetCustomUIsAndThemesDirectly() {
     initializer.resetCustomUIs(context);
-    SqliteRepository<com.antigravity.models.CustomUI> uiRepo =
-        new SqliteRepository<>(context, "custom_uis", com.antigravity.models.CustomUI.class);
-    List<com.antigravity.models.CustomUI> uis = uiRepo.findAll();
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    List<CustomUI> uis = uiRepo.findAll();
     assertEquals(3, uis.size());
+    for (CustomUI ui : uis) {
+      assertTrue(ui.getLayoutJson().contains("widget-countdown"));
+    }
 
     initializer.resetThemes(context);
-    SqliteRepository<com.antigravity.models.Theme> themeRepo =
-        new SqliteRepository<>(context, "themes", com.antigravity.models.Theme.class);
-    List<com.antigravity.models.Theme> themes = themeRepo.findAll();
+    SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
+    List<Theme> themes = themeRepo.findAll();
     assertEquals(3, themes.size());
   }
 
@@ -160,5 +166,33 @@ public class DatabaseInitializerTest {
     List<Race> races = raceRepo.findAll();
     assertEquals(4, races.size());
     assertTrue(races.stream().anyMatch(r -> "Fuel Race".equals(r.getName())));
+  }
+
+  @Test
+  public void testBackfillCustomUIs() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    CustomUI legacyUi =
+        new CustomUI(
+            "Legacy UI",
+            false,
+            "{\"widgets\":[{\"id\":\"w1\",\"widgetType\":\"timer\"}]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "legacy_ui_id",
+            null);
+    uiRepo.save(legacyUi);
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI updated = uiRepo.findByEntityId("legacy_ui_id");
+    assertNotNull(updated);
+    assertTrue(updated.getLayoutJson().contains("widget-countdown"));
+    assertTrue(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
   }
 }

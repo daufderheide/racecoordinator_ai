@@ -4045,7 +4045,26 @@ describe("DefaultRacedayComponent", () => {
       component.layout = {
         baseWidth: 1080,
         baseHeight: 1920,
-        widgets: [],
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 415,
+            y: 560,
+            width: 250,
+            height: 800,
+            zIndex: 2000,
+            scaleMode: "auto",
+            customSettings: {
+              orientation: "vertical",
+              lampScale: 1.0,
+              blurArea: "fullscreen",
+              blurAmount: 50,
+              lampSizingMode: "custom",
+              previewLampCount: 5,
+            },
+          },
+        ],
       };
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       expect(component.isPortraitLayout()).toBeTrue();
@@ -4104,7 +4123,26 @@ describe("DefaultRacedayComponent", () => {
       component.layout = {
         baseWidth: 1920,
         baseHeight: 1080,
-        widgets: [],
+        widgets: [
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 460,
+            y: 415,
+            width: 1000,
+            height: 250,
+            zIndex: 2000,
+            scaleMode: "auto",
+            customSettings: {
+              orientation: "horizontal",
+              lampScale: 1.0,
+              blurArea: "fullscreen",
+              blurAmount: 50,
+              lampSizingMode: "custom",
+              previewLampCount: 5,
+            },
+          },
+        ],
       };
       component["race"] = { ...MOCK_RACES[0], start_time: 5.0 } as any;
       expect(component.isPortraitLayout()).toBeFalse();
@@ -5450,6 +5488,124 @@ describe("DefaultRacedayComponent", () => {
       );
       expect(component.widgetSelected.emit).toHaveBeenCalledWith("w4");
     });
+
+    it("should keep countdown widget strictly on top when bringing a regular widget to the front", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 2000,
+      } as any);
+
+      component.bringToFront("w3");
+      const w3 = component.layout.widgets.find((w: any) => w.id === "w3");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+
+      // w3 only competes with w1 and w2 (max is 105 -> w3 becomes 106)
+      expect(w3?.zIndex).toBe(106);
+      expect(countdown?.zIndex).toBeGreaterThan(w3?.zIndex || 0);
+    });
+
+    it("should bump countdown widget if regular widget zIndex ever catches up to it", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 106,
+      } as any);
+
+      component.bringToFront("w3");
+      const w3 = component.layout.widgets.find((w: any) => w.id === "w3");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+
+      expect(w3?.zIndex).toBe(106);
+      expect(countdown?.zIndex).toBeGreaterThanOrEqual(2000);
+      expect(countdown?.zIndex).toBeGreaterThan(w3?.zIndex || 0);
+    });
+
+    it("should bring countdown widget to top when bringToFront is called on countdown", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 100,
+      } as any);
+
+      component.bringToFront("widget-countdown");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+      expect(countdown?.zIndex).toBe(2000);
+    });
+
+    it("should normalize z-indices placing countdown widgets above all regular widgets", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 50,
+      } as any);
+
+      component.normalizeZIndices();
+      const w1 = component.layout.widgets.find((w: any) => w.id === "w1");
+      const w2 = component.layout.widgets.find((w: any) => w.id === "w2");
+      const countdown = component.layout.widgets.find(
+        (w: any) => w.id === "widget-countdown",
+      );
+
+      expect(w1?.zIndex).toBe(100);
+      expect(w2?.zIndex).toBe(102);
+      expect(countdown?.zIndex).toBeGreaterThanOrEqual(2000);
+    });
+
+    it("should calculate getNextZIndex ignoring countdown widgets", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+        zIndex: 2500,
+      } as any);
+
+      // Max regular widget is w2 at 105, so next regular widget gets 106
+      expect(component.getNextZIndex()).toBe(106);
+    });
+
+    it("should remove widget by id and emit layoutChanged", () => {
+      component.removeWidget("w2");
+      expect(
+        component.layout.widgets.some((w: any) => w.id === "w2"),
+      ).toBeFalse();
+      expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+        component.layout,
+      );
+    });
+
+    it("should remove countdown widget and ensure getWidgets() does not resurrect it", () => {
+      component.layout.widgets.push({
+        id: "widget-countdown",
+        widgetType: "countdown",
+      } as any);
+      expect(
+        component.getWidgets().some((w: any) => w.id === "widget-countdown"),
+      ).toBeTrue();
+
+      component.removeWidget("widget-countdown");
+      expect(
+        component.layout.widgets.some((w: any) => w.id === "widget-countdown"),
+      ).toBeFalse();
+      expect(
+        component.getWidgets().some((w: any) => w.id === "widget-countdown"),
+      ).toBeFalse();
+    });
+
+    it("should select lane-view or next widget when selected widget is removed", () => {
+      component.layout.widgets.push({
+        id: "lane-view-1",
+        widgetType: "lane-view",
+      } as any);
+      (component as any).selectedWidgetId = () => "w1";
+      component.removeWidget("w1");
+      expect(component.widgetSelected.emit).toHaveBeenCalledWith("lane-view-1");
+    });
   });
 
   describe("Dynamic Table Body Height", () => {
@@ -6093,6 +6249,14 @@ describe("DefaultRacedayComponent", () => {
             y: 0,
             width: 100,
             height: 100,
+          },
+          {
+            id: "widget-countdown",
+            widgetType: "countdown",
+            x: 460,
+            y: 415,
+            width: 1000,
+            height: 250,
           },
         ],
       } as any;

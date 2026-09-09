@@ -344,6 +344,25 @@ test.describe("Raceday Start Sequence Visuals", () => {
     await expect(page).toHaveScreenshot("start-sequence-restart-2-lamps.png");
   });
 
+  const PORTRAIT_COUNTDOWN_WIDGET = {
+    id: "widget-countdown",
+    widgetType: "countdown",
+    x: 0,
+    y: 0,
+    width: 1080,
+    height: 1920,
+    zIndex: 2000,
+    scaleMode: "auto",
+    customSettings: {
+      orientation: "vertical",
+      lampScale: 1.0,
+      blurArea: "fullscreen",
+      blurAmount: 50,
+      lampSizingMode: "custom",
+      previewLampCount: 5,
+    },
+  };
+
   test("should show vertical lamps in portrait mode with top lamp illuminated at 5s", async ({
     page,
   }) => {
@@ -354,7 +373,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
         baseHeight: 1920,
         scaleMode: "letterbox",
         aspectRatio: "9:16",
-        widgets: [],
+        widgets: [PORTRAIT_COUNTDOWN_WIDGET],
       },
     });
     await page.route("**/api/custom-ui", async (route) => {
@@ -369,7 +388,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
               baseWidth: 1080,
               baseHeight: 1920,
               aspectRatio: "9:16",
-              widgets: [],
+              widgets: [PORTRAIT_COUNTDOWN_WIDGET],
             }),
           },
         ]),
@@ -440,7 +459,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
         baseHeight: 1920,
         scaleMode: "letterbox",
         aspectRatio: "9:16",
-        widgets: [],
+        widgets: [PORTRAIT_COUNTDOWN_WIDGET],
       },
     });
     await page.route("**/api/custom-ui", async (route) => {
@@ -455,7 +474,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
               baseWidth: 1080,
               baseHeight: 1920,
               aspectRatio: "9:16",
-              widgets: [],
+              widgets: [PORTRAIT_COUNTDOWN_WIDGET],
             }),
           },
         ]),
@@ -520,7 +539,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
         baseHeight: 1920,
         scaleMode: "letterbox",
         aspectRatio: "9:16",
-        widgets: [],
+        widgets: [PORTRAIT_COUNTDOWN_WIDGET],
       },
     });
     await page.route("**/api/custom-ui", async (route) => {
@@ -535,7 +554,7 @@ test.describe("Raceday Start Sequence Visuals", () => {
               baseWidth: 1080,
               baseHeight: 1920,
               aspectRatio: "9:16",
-              widgets: [],
+              widgets: [PORTRAIT_COUNTDOWN_WIDGET],
             }),
           },
         ]),

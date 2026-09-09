@@ -30,7 +30,12 @@ import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
-import { LayoutConfig, LayoutScaleMode, Settings } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LayoutConfig,
+  LayoutScaleMode,
+  Settings,
+} from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
@@ -433,6 +438,40 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onWidgetSelected(id: string | null, ui?: CustomUI) {
     handleWidgetSelection(this, id, ui);
+  }
+
+  countdownPreviewActiveByUi: Record<string, boolean> = {};
+
+  isCountdownPreviewActive(ui?: CustomUI): boolean {
+    const id = ui?.entity_id || this.activeCustomUiId;
+    return id ? !!this.countdownPreviewActiveByUi[id] : false;
+  }
+
+  toggleCountdownPreview(ui?: CustomUI) {
+    const id = ui?.entity_id || this.activeCustomUiId;
+    if (id) {
+      this.countdownPreviewActiveByUi[id] = !this.isCountdownPreviewActive(ui);
+      this.cdr.markForCheck();
+    }
+  }
+
+  getLayoutWidgets(ui?: CustomUI): AbsoluteWidgetNode[] {
+    const layout = this.getLayout(ui);
+    return layout?.widgets || [];
+  }
+
+  getWidgetDisplayName(widget: AbsoluteWidgetNode): string {
+    const key = this.getWidgetTypeLabelKey(widget.widgetType);
+    const translated = this.translationService.translate(key);
+    return translated || widget.widgetType;
+  }
+
+  onWidgetDropdownSelect(widgetId: string, ui?: CustomUI) {
+    if (widgetId) {
+      this.onWidgetSelected(widgetId, ui);
+    } else {
+      this.onWidgetSelected(null, ui);
+    }
   }
 
   onTextColorChange(event: Event) {
