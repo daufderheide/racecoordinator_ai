@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.66] - 2026-09-09
+
+### 🚀 New Features
+
+- introduce HeatLapRow model and add lap-by-lap data extraction support for race exports https://github.com/daufderheide/racecoordinator_ai/issues/810 ([e9fb1776](https://github.com/daufderheide/racecoordinator_ai/commit/e9fb1776))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.65...v1.0.0-beta.66">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.65] - 2026-09-09
 
 ### 🚀 New Features
