@@ -92,6 +92,27 @@ describe("EditorTitleComponent", () => {
   it("should display title", async () => {
     fixture.detectChanges();
     expect(await harness.getTitle()).toBe("TEST_TITLE");
+    expect(await harness.getItemName()).toBeNull();
+  });
+
+  it("should not display item name if itemName is whitespace only", async () => {
+    fixture.componentRef.setInput("itemName", "   ");
+    fixture.detectChanges();
+    expect(await harness.getTitle()).toBe("TEST_TITLE");
+    expect(await harness.getItemName()).toBeNull();
+  });
+
+  it("should display item name when provided and update reactively", async () => {
+    fixture.componentRef.setInput("itemName", "Grand Prix 2026");
+    fixture.detectChanges();
+    expect(await harness.getItemName()).toBe("Grand Prix 2026");
+    expect(await harness.getTitle()).toContain("TEST_TITLE");
+    expect(await harness.getTitle()).toContain("Grand Prix 2026");
+
+    // Dynamic update
+    fixture.componentRef.setInput("itemName", "Championship Finals");
+    fixture.detectChanges();
+    expect(await harness.getItemName()).toBe("Championship Finals");
   });
 
   it("should emit help event on click", async () => {
@@ -109,5 +130,23 @@ describe("EditorTitleComponent", () => {
   it("should contain app-browser-navigation element", () => {
     const navEl = fixture.nativeElement.querySelector("app-browser-navigation");
     expect(navEl).toBeTruthy();
+  });
+
+  it("should apply has-zoom class to header when showZoom is true", () => {
+    const headerEl = fixture.nativeElement.querySelector(".header");
+    expect(headerEl.classList.contains("has-zoom")).toBeFalse();
+
+    fixture.componentRef.setInput("showZoom", true);
+    fixture.detectChanges();
+    expect(headerEl.classList.contains("has-zoom")).toBeTrue();
+  });
+
+  it("should set title attribute on item-name element to trimmedItemName", () => {
+    fixture.componentRef.setInput("itemName", "  Custom Rotation  ");
+    fixture.detectChanges();
+
+    const itemNameEl = fixture.nativeElement.querySelector(".item-name");
+    expect(itemNameEl).toBeTruthy();
+    expect(itemNameEl.getAttribute("title")).toBe("Custom Rotation");
   });
 });

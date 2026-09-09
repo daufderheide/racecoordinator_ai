@@ -195,6 +195,12 @@
                 [class.has-value]="!!toolboxSearchTerm"
                 [placeholder]="'UE_TOOLBOX_SEARCH_PLACEHOLDER' | translate"
                 [(ngModel)]="toolboxSearchTerm"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
               />
               @if (toolboxSearchTerm) {
                 <button

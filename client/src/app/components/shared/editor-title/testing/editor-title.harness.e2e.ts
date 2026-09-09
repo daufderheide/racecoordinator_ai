@@ -13,6 +13,10 @@ export class EditorTitleHarnessE2e implements EditorTitleHarnessBase {
     return this.locator.locator(this.base.selectors.title);
   }
 
+  private get itemNameElement() {
+    return this.locator.locator(this.base.selectors.itemName);
+  }
+
   protected get undoButtonElement() {
     return this.locator.locator(this.base.selectors.undoButton);
   }
@@ -26,6 +30,13 @@ export class EditorTitleHarnessE2e implements EditorTitleHarnessBase {
   async getTitle(): Promise<string | null> {
     if (await this.titleElement.isVisible()) {
       return await this.titleElement.innerText();
+    }
+    return null;
+  }
+
+  async getItemName(): Promise<string | null> {
+    if (await this.itemNameElement.isVisible()) {
+      return await this.itemNameElement.innerText();
     }
     return null;
   }

@@ -4,6 +4,7 @@
 >
   <app-editor-title
     titleKey="EE_TITLE"
+    [itemName]="editingEvent.name"
     [undoManager]="undoManager"
     [showCopy]="true"
     [disabledCopy]="!isConfigValid()"
@@ -27,7 +28,14 @@
             type="text"
             [(ngModel)]="editingEvent.name"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
             autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
           @if (isDuplicateName()) {
             <span class="error-text">{{
@@ -45,6 +53,8 @@
             rows="7"
             [(ngModel)]="editingEvent.description"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
             class="description-textarea"
           ></textarea>
         </div>
@@ -60,6 +70,14 @@
             step="1"
             [(ngModel)]="editingEvent.auto_advance_time"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
         </div>
       </div>

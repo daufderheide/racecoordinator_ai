@@ -6,6 +6,7 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
 import { of } from "rxjs";
 import { DataService } from "@app/data.service";
@@ -65,6 +66,23 @@ describe("CustomRotationEditorComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should use AM_ROTATION_EDITOR titleKey and bind itemName to internalAssetName", () => {
+    fixture.detectChanges();
+
+    const titleEl = fixture.debugElement.query(By.css("app-editor-title"));
+    expect(titleEl).toBeTruthy();
+    expect(titleEl.componentInstance.titleKey()).toBe("AM_ROTATION_EDITOR");
+    expect(titleEl.componentInstance.itemName()).toBe("New Custom Rotation 1");
+    expect(titleEl.componentInstance.showZoom()).toBeTrue();
+
+    const headerEl = titleEl.nativeElement.querySelector(".header");
+    expect(headerEl.classList.contains("has-zoom")).toBeTrue();
+
+    component.internalAssetName = "Sprint Cup";
+    fixture.detectChanges();
+    expect(titleEl.componentInstance.itemName()).toBe("Sprint Cup");
   });
 
   it("should initialize with no rotations if none provided", () => {

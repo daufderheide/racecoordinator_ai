@@ -28,6 +28,12 @@
               class="search-input"
               [(ngModel)]="searchTerm"
               [placeholder]="'RHD_SEARCH_PLACEHOLDER' | translate"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
             />
             @if (searchTerm) {
               <button

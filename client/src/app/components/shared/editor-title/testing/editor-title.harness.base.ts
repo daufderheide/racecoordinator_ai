@@ -3,6 +3,9 @@ export abstract class EditorTitleHarnessBase {
 
   static readonly selectors = {
     title: ".page-title",
+    titleMain: ".page-title .title-main",
+    itemName: ".page-title .item-name",
+    itemSeparator: ".page-title .item-separator",
     undoButton: "app-toolbar .undo",
     redoButton: "app-toolbar .redo",
     helpButton: "app-toolbar #help-track-btn",
@@ -10,6 +13,9 @@ export abstract class EditorTitleHarnessBase {
 
   /** Gets the title text */
   abstract getTitle(): Promise<string | null>;
+
+  /** Gets the item name text if present */
+  abstract getItemName(): Promise<string | null>;
 
   /** Clicks the undo button */
   abstract clickUndo(): Promise<void>;

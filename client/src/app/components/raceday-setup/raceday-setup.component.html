@@ -141,11 +141,29 @@
       <h3>{{ "RDS_SERVER_CONFIG_TITLE" | translate }}</h3>
       <div class="form-group">
         <label>{{ "RDS_LABEL_IP" | translate }}</label>
-        <input type="text" [(ngModel)]="tempServerIp" />
+        <input
+          type="text"
+          [(ngModel)]="tempServerIp"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+        />
       </div>
       <div class="form-group">
         <label>{{ "RDS_LABEL_PORT" | translate }}</label>
-        <input type="number" [(ngModel)]="tempServerPort" />
+        <input
+          type="number"
+          [(ngModel)]="tempServerPort"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+        />
       </div>
       <div class="form-group">
         <label>{{ "RDS_LABEL_PASSWORD" | translate }}</label>
