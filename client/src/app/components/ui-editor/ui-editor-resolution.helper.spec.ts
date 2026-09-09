@@ -103,6 +103,11 @@ describe("ui-editor-resolution.helper", () => {
     const landscapeOpts = options.filter((o) => o.group === "landscape");
     const portraitOpts = options.filter((o) => o.group === "portrait");
     expect(landscapeOpts.some((o) => o.ratio === "16:9")).toBeTrue();
+    const opt54 = landscapeOpts.find((o) => o.ratio === "5:4");
+    expect(opt54).toBeDefined();
+    expect(opt54?.width).toBe(1350);
+    expect(opt54?.height).toBe(1080);
+    expect(opt54?.label).toBe("UI_EDITOR_ASPECT_5_4");
     expect(portraitOpts.some((o) => o.ratio === "9:16")).toBeTrue();
   });
 
@@ -111,6 +116,9 @@ describe("ui-editor-resolution.helper", () => {
     expect(getLayoutAspectRatio({ widgets: [] })).toBe("current");
     expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "4:3" })).toBe(
       "4:3",
+    );
+    expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "5:4" })).toBe(
+      "5:4",
     );
     expect(getLayoutAspectRatio({ widgets: [], aspectRatio: "16:9" })).toBe(
       "16:9",
@@ -176,6 +184,12 @@ describe("ui-editor-resolution.helper", () => {
     expect(layout.baseHeight).toBe(1080);
     expect(layout.widgets[0].x).toBe(75); // 100 * (1440/1920)
     expect(settings.racedayLayout?.aspectRatio).toBe("4:3");
+
+    applyLayoutAspectRatioChange("5:4", options, layout, ui, settings);
+    expect(layout.aspectRatio).toBe("5:4");
+    expect(layout.baseWidth).toBe(1350);
+    expect(layout.baseHeight).toBe(1080);
+    expect(settings.racedayLayout?.aspectRatio).toBe("5:4");
   });
 
   it("should apply scale mode change and persist", () => {

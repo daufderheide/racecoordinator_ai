@@ -2395,6 +2395,7 @@
   "UI_EDITOR_ASPECT_3_2": "3:2 (Surface / Tablet)",
   "UI_EDITOR_ASPECT_3_4": "3:4 (iPad verticale)",
   "UI_EDITOR_ASPECT_4_3": "4:3 (Classico / iPad)",
+  "UI_EDITOR_ASPECT_5_4": "5:4 (Classico / Monitor)",
   "UI_EDITOR_ASPECT_9_16": "9:16 (Cellulare verticale)",
   "UI_EDITOR_ASPECT_9_19_5": "19.5:9 (Smartphone moderno)",
   "UI_EDITOR_ASPECT_CURRENT_DISPLAY": "Schermo attuale",

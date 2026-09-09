@@ -47,6 +47,13 @@ export function getDefaultAspectRatioOptions(): AspectRatioOption[] {
       group: "landscape",
     },
     {
+      label: "UI_EDITOR_ASPECT_5_4",
+      ratio: "5:4",
+      width: 1350,
+      height: 1080,
+      group: "landscape",
+    },
+    {
       label: "UI_EDITOR_ASPECT_3_2",
       ratio: "3:2",
       width: 1620,
