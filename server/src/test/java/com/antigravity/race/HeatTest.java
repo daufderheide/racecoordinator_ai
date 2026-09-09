@@ -1,6 +1,8 @@
 package com.antigravity.race;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -111,5 +113,90 @@ public class HeatTest {
     when(mockData.getObjectId()).thenReturn("obj_" + entityId);
 
     return mockData;
+  }
+
+  @Test
+  public void testGetDriverOnLane_Boundaries() {
+    List<DriverHeatData> drivers = new ArrayList<>();
+    DriverHeatData dhd0 = mock(DriverHeatData.class);
+    drivers.add(dhd0);
+
+    Heat heat = new Heat(1, drivers, false);
+    assertEquals(dhd0, heat.getDriverOnLane(0));
+    assertNull(heat.getDriverOnLane(-1));
+    assertNull(heat.getDriverOnLane(1));
+
+    Heat nullDrivers = new Heat();
+    nullDrivers.setDrivers(null);
+    assertNull(nullDrivers.getDriverOnLane(0));
+  }
+
+  @Test
+  public void testGetLaneTotalLaps() {
+    List<DriverHeatData> drivers = new ArrayList<>();
+    DriverHeatData dhd0 = mock(DriverHeatData.class);
+    when(dhd0.isEmptyParticipant()).thenReturn(false);
+    when(dhd0.getAdjustedLapCount()).thenReturn(25.5);
+    drivers.add(dhd0);
+
+    DriverHeatData emptyDhd = mock(DriverHeatData.class);
+    when(emptyDhd.isEmptyParticipant()).thenReturn(true);
+    drivers.add(emptyDhd);
+
+    Heat heat = new Heat(1, drivers, false);
+    assertEquals(25.5, heat.getLaneTotalLaps(0), 0.001);
+    assertNull(heat.getLaneTotalLaps(1));
+    assertNull(heat.getLaneTotalLaps(2));
+    assertNull(heat.getLaneTotalLaps(-1));
+  }
+
+  @Test
+  public void testGetLapRows_EmptyOrNull() {
+    Heat heat = new Heat();
+    heat.setDrivers(null);
+    assertTrue(heat.getLapRows().isEmpty());
+
+    heat.setDrivers(new ArrayList<>());
+    assertTrue(heat.getLapRows().isEmpty());
+  }
+
+  @Test
+  public void testGetLapRows_WithLapsAndPadding() {
+    DriverHeatData dhd1 = new DriverHeatData();
+    dhd1.setLane(0);
+    dhd1.addLap(3.5, false, true);
+    dhd1.addLap(3.4, false, true);
+
+    DriverHeatData dhd2 = new DriverHeatData();
+    dhd2.setLane(1);
+    dhd2.addLap(3.8, false, true);
+
+    List<DriverHeatData> drivers = new ArrayList<>();
+    drivers.add(dhd1);
+    drivers.add(dhd2);
+
+    Heat heat = new Heat(1, drivers, false);
+    List<HeatLapRow> rows = heat.getLapRows();
+
+    assertEquals(2, rows.size());
+
+    // Row 1: lap 1
+    HeatLapRow row1 = rows.get(0);
+    assertEquals(1, row1.getLapNumber());
+    // Should pad to at least 4 lanes
+    assertEquals(4, row1.getLaneLaps().size());
+    assertEquals(3.5, row1.getLaneLap(0), 0.001);
+    assertEquals(3.8, row1.getLaneLap(1), 0.001);
+    assertNull(row1.getLaneLap(2));
+    assertNull(row1.getLaneLap(3));
+
+    // Row 2: lap 2
+    HeatLapRow row2 = rows.get(1);
+    assertEquals(2, row2.getLapNumber());
+    assertEquals(4, row2.getLaneLaps().size());
+    assertEquals(3.4, row2.getLaneLap(0), 0.001);
+    assertNull(row2.getLaneLap(1));
+    assertNull(row2.getLaneLap(2));
+    assertNull(row2.getLaneLap(3));
   }
 }
