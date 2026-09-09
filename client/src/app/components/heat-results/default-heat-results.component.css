@@ -315,14 +315,13 @@
     min-height: 0 !important;
     overflow: visible !important;
     display: block !important;
+    background: url('/assets/images/race_results_bg.png') no-repeat center top !important;
+    background-size: cover !important;
+    background-attachment: fixed !important;
   }
 
   .scrollable-container {
     margin: 0 auto !important;
-  }
-
-  body:not(.print-no-background) .dashboard-wrapper {
-    background: #06090e !important;
   }
 
   :host-context(body.print-no-background) :host,
