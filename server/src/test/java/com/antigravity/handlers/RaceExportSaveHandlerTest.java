@@ -355,4 +355,128 @@ public class RaceExportSaveHandlerTest {
     handler.renameSavedRace(notFoundCtx);
     verify(notFoundCtx).status(404);
   }
+
+  @Test
+  public void testExportRaceXls_WithCustomLapByLapTemplate() throws Exception {
+    java.io.File templateFile = new java.io.File("../race_export_template CRXed.xlsx");
+    if (!templateFile.exists()) {
+      templateFile = new java.io.File("race_export_template CRXed.xlsx");
+    }
+    if (!templateFile.exists()) {
+      return;
+    }
+
+    com.antigravity.models.Driver d1 =
+        new com.antigravity.models.Driver("Alice", "Ally", "d1", "1");
+    com.antigravity.models.Driver d2 = new com.antigravity.models.Driver("Bob", "Bobby", "d2", "2");
+    com.antigravity.models.Driver d3 =
+        new com.antigravity.models.Driver("Charlie", "Chuck", "d3", "3");
+    com.antigravity.models.Driver d4 = new com.antigravity.models.Driver("Dave", "Davy", "d4", "4");
+
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.race.RaceParticipant p2 = new com.antigravity.race.RaceParticipant(d2);
+    com.antigravity.race.RaceParticipant p3 = new com.antigravity.race.RaceParticipant(d3);
+    com.antigravity.race.RaceParticipant p4 = new com.antigravity.race.RaceParticipant(d4);
+
+    com.antigravity.race.DriverHeatData dhd1 = new com.antigravity.race.DriverHeatData(p1);
+    dhd1.setLane(0);
+    dhd1.addLap(3.51, false, true);
+    dhd1.addLap(3.42, false, true);
+    dhd1.addLap(3.49, false, true);
+
+    com.antigravity.race.DriverHeatData dhd2 = new com.antigravity.race.DriverHeatData(p2);
+    dhd2.setLane(1);
+    dhd2.addLap(3.81, false, true);
+    dhd2.addLap(3.75, false, true);
+
+    com.antigravity.race.DriverHeatData dhd3 = new com.antigravity.race.DriverHeatData(p3);
+    dhd3.setLane(2);
+    dhd3.addLap(3.62, false, true);
+
+    com.antigravity.race.DriverHeatData dhd4 = new com.antigravity.race.DriverHeatData(p4);
+    dhd4.setLane(3);
+    dhd4.addLap(3.71, false, true);
+    dhd4.addLap(3.68, false, true);
+
+    com.antigravity.race.Heat heat1 =
+        new com.antigravity.race.Heat(1, java.util.Arrays.asList(dhd1, dhd2, dhd3, dhd4), false);
+    heat1.setStarted(true);
+
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Track 1")
+            .lanes(
+                java.util.Arrays.asList(
+                    new com.antigravity.models.Lane("red", "black", 100),
+                    new com.antigravity.models.Lane("white", "black", 101),
+                    new com.antigravity.models.Lane("blue", "white", 102),
+                    new com.antigravity.models.Lane("yellow", "black", 103)))
+            .build();
+
+    com.antigravity.models.Race model =
+        new com.antigravity.models.Race.Builder()
+            .withName("Custom Template Race")
+            .withEntityId("r_custom")
+            .build();
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .drivers(java.util.Arrays.asList(p1, p2, p3, p4))
+            .heats(java.util.Collections.singletonList(heat1))
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    byte[] fileBytes = java.nio.file.Files.readAllBytes(templateFile.toPath());
+    String base64 = java.util.Base64.getEncoder().encodeToString(fileBytes);
+    java.util.Map<String, Object> body = new java.util.HashMap<>();
+    body.put("templateBase64", base64);
+    when(ctx.bodyAsClass(java.util.Map.class)).thenReturn(body);
+
+    handler.exportRaceXls(ctx);
+
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+    org.junit.Assert.assertTrue(exportedBytes.length > 0);
+
+    try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb =
+        new org.apache.poi.xssf.usermodel.XSSFWorkbook(
+            new java.io.ByteArrayInputStream(exportedBytes))) {
+      org.apache.poi.ss.usermodel.Sheet heat1Sheet = wb.getSheet("Heat 1");
+      org.junit.Assert.assertNotNull(heat1Sheet);
+
+      // Verify row 11 (Driver Names across lanes)
+      org.apache.poi.ss.usermodel.Row row11 = heat1Sheet.getRow(10);
+      org.junit.Assert.assertEquals("Alice", row11.getCell(1).getStringCellValue());
+      org.junit.Assert.assertEquals("Bob", row11.getCell(2).getStringCellValue());
+      org.junit.Assert.assertEquals("Charlie", row11.getCell(3).getStringCellValue());
+      org.junit.Assert.assertEquals("Dave", row11.getCell(4).getStringCellValue());
+
+      // Verify row 12 (Total Laps across lanes)
+      org.apache.poi.ss.usermodel.Row row12 = heat1Sheet.getRow(11);
+      org.junit.Assert.assertEquals("Total Laps", row12.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals(3.0, row12.getCell(1).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(2.0, row12.getCell(2).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(1.0, row12.getCell(3).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(2.0, row12.getCell(4).getNumericCellValue(), 0.001);
+
+      // Verify row 13 (Headers)
+      org.apache.poi.ss.usermodel.Row row13 = heat1Sheet.getRow(12);
+      org.junit.Assert.assertEquals("Lap Number", row13.getCell(0).getStringCellValue());
+      org.junit.Assert.assertEquals("Lane 1", row13.getCell(1).getStringCellValue());
+
+      // Verify row 14 (Lap 1 times)
+      org.apache.poi.ss.usermodel.Row row14 = heat1Sheet.getRow(13);
+      org.junit.Assert.assertEquals(1.0, row14.getCell(0).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(3.51, row14.getCell(1).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(3.81, row14.getCell(2).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(3.62, row14.getCell(3).getNumericCellValue(), 0.001);
+      org.junit.Assert.assertEquals(3.71, row14.getCell(4).getNumericCellValue(), 0.001);
+    }
+  }
 }

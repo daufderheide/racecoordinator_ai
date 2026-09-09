@@ -174,4 +174,52 @@ public class Heat extends ServerToClientObject {
   public void setGroup(int group) {
     this.group = group;
   }
+
+  public DriverHeatData getDriverOnLane(int laneIndex) {
+    if (drivers != null && laneIndex >= 0 && laneIndex < drivers.size()) {
+      return drivers.get(laneIndex);
+    }
+    return null;
+  }
+
+  public Double getLaneTotalLaps(int laneIndex) {
+    DriverHeatData dhd = getDriverOnLane(laneIndex);
+    if (dhd != null && !dhd.isEmptyParticipant()) {
+      return dhd.getAdjustedLapCount();
+    }
+    return null;
+  }
+
+  @JsonIgnore
+  public List<HeatLapRow> getLapRows() {
+    List<HeatLapRow> rows = new ArrayList<>();
+    if (drivers == null || drivers.isEmpty()) {
+      return rows;
+    }
+    int maxLaps = 0;
+    for (DriverHeatData dhd : drivers) {
+      if (dhd != null && dhd.getLaps() != null) {
+        maxLaps = Math.max(maxLaps, dhd.getLaps().size());
+      }
+    }
+    int laneCount = Math.max(4, drivers.size());
+    for (int lapIdx = 0; lapIdx < maxLaps; lapIdx++) {
+      List<Double> laneLaps = new ArrayList<>(laneCount);
+      for (int laneIdx = 0; laneIdx < laneCount; laneIdx++) {
+        if (laneIdx < drivers.size()) {
+          DriverHeatData dhd = drivers.get(laneIdx);
+          if (dhd != null && dhd.getLaps() != null && lapIdx < dhd.getLaps().size()) {
+            DriverHeatData.LapData lapData = dhd.getLaps().get(lapIdx);
+            laneLaps.add(lapData != null ? lapData.getLapTime() : null);
+          } else {
+            laneLaps.add(null);
+          }
+        } else {
+          laneLaps.add(null);
+        }
+      }
+      rows.add(new HeatLapRow(lapIdx + 1, laneLaps));
+    }
+    return rows;
+  }
 }
