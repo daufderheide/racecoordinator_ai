@@ -34,6 +34,13 @@
         (change)="onSettingsChange()"
       ></app-timer-inspector>
     }
+    @case ("countdown") {
+      <app-countdown-inspector
+        [settings]="widget().customSettings"
+        [widget]="widget()"
+        (change)="onSettingsChange()"
+      ></app-countdown-inspector>
+    }
     @case ("image") {
       <app-image-inspector
         [settings]="widget().customSettings"

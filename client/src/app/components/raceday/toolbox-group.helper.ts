@@ -152,6 +152,11 @@ export class ToolboxGroupHelper {
       icon: "folder",
       widgets: [
         {
+          type: "countdown",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_COUNTDOWN",
+        },
+        {
           type: "group-leaderboard",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_GROUP_LEADERBOARD",

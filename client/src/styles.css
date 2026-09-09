@@ -295,7 +295,7 @@ select {
   body.print-no-background .next-heat-panel,
   body.print-no-background .on-deck-panel,
   body.print-no-background .image-panel,
-  body.print-no-background .widget-wrapper,
+  body.print-no-background .widget-wrapper:not(.countdown-widget),
   body.print-no-background app-raceday-branding,
   body.print-no-background app-raceday-flag,
   body.print-no-background app-raceday-timer,
@@ -320,6 +320,13 @@ select {
     box-shadow: none !important;
     text-shadow: none !important;
     border-color: #cbd5e1 !important;
+  }
+
+  body.print-no-background .widget-wrapper.countdown-widget,
+  body.print-no-background app-raceday-countdown {
+    display: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   body.print-no-background svg rect:not(.lap-bar-segment):not(.legend-rect) {

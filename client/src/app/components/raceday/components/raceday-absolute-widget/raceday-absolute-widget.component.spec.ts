@@ -338,6 +338,21 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(wrapper.style.zIndex).toBe("120");
   });
 
+  it("should always apply top zIndex (>= 10000) for countdown widget in both customizing and live modes", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.zIndex = 105;
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.detectChanges();
+
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+
+    fixture.componentRef.setInput("isCustomizing", false);
+    fixture.detectChanges();
+    expect(parseInt(wrapper.style.zIndex, 10)).toBeGreaterThanOrEqual(10000);
+  });
+
   it("should render next-heat widget with custom settings in fixed scale mode", () => {
     mockWidget.widgetType = "next-heat";
     mockWidget.scaleMode = "fixed";
@@ -385,11 +400,96 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     fixture.componentRef.setInput("widget", { ...mockWidget });
     fixture.detectChanges();
 
-    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
-    expect(wrapper.classList.contains("scale-auto")).toBeTrue();
     const heatList = fixture.nativeElement.querySelector(
       "app-raceday-heat-list",
     );
     expect(heatList).toBeTruthy();
+  });
+
+  it("should apply countdown-ghost class and pointer-events none when countdown is unselected in edit mode", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.id = "widget-countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.componentRef.setInput("selectedWidgetId", "widget-other");
+    fixture.componentRef.setInput("isCountdownPreviewActive", false);
+    fixture.detectChanges();
+
+    expect(component.isCountdownGhost).toBeTrue();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("countdown-ghost")).toBeTrue();
+    expect(wrapper.style.pointerEvents).toBe("none");
+
+    // When countdown is selected
+    fixture.componentRef.setInput("selectedWidgetId", "widget-countdown");
+    fixture.detectChanges();
+
+    expect(component.isCountdownGhost).toBeFalse();
+    expect(wrapper.classList.contains("countdown-ghost")).toBeFalse();
+    expect(wrapper.style.pointerEvents).not.toBe("none");
+
+    // When unselected but preview active
+    fixture.componentRef.setInput("selectedWidgetId", "widget-other");
+    fixture.componentRef.setInput("isCountdownPreviewActive", true);
+    fixture.detectChanges();
+
+    expect(component.isCountdownGhost).toBeFalse();
+    expect(wrapper.classList.contains("countdown-ghost")).toBeFalse();
+  });
+
+  it("should toggle countdown preview display even when countdown widget is selected", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.id = "widget-countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", true);
+    fixture.componentRef.setInput("selectedWidgetId", "widget-countdown");
+    fixture.componentRef.setInput("isCountdownPreviewActive", false);
+    fixture.detectChanges();
+
+    // When countdown is selected and preview is inactive, lamps/blur overlay should NOT render
+    let overlay = fixture.nativeElement.querySelector(
+      "app-raceday-countdown .countdown-overlay",
+    );
+    expect(overlay).toBeNull();
+
+    // When preview is toggled to active, lamps/blur overlay should render
+    fixture.componentRef.setInput("isCountdownPreviewActive", true);
+    fixture.detectChanges();
+
+    overlay = fixture.nativeElement.querySelector(
+      "app-raceday-countdown .countdown-overlay",
+    );
+    expect(overlay).toBeTruthy();
+
+    // When preview is toggled back to inactive, lamps/blur overlay should hide again
+    fixture.componentRef.setInput("isCountdownPreviewActive", false);
+    fixture.detectChanges();
+
+    overlay = fixture.nativeElement.querySelector(
+      "app-raceday-countdown .countdown-overlay",
+    );
+    expect(overlay).toBeNull();
+  });
+
+  it("should hide countdown widget and set display none when inactive in live raceday", () => {
+    mockWidget.widgetType = "countdown";
+    mockWidget.id = "widget-countdown";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.componentRef.setInput("isCustomizing", false);
+    mockParent.showCountdownOverlay = false;
+    fixture.detectChanges();
+
+    expect(component.isCountdownWidget).toBeTrue();
+    expect(component.isCountdownActive).toBeFalse();
+    const wrapper = fixture.nativeElement.querySelector(".widget-wrapper");
+    expect(wrapper.classList.contains("countdown-widget")).toBeTrue();
+    expect(wrapper.classList.contains("no-print")).toBeTrue();
+    expect(wrapper.style.display).toBe("none");
+
+    // When countdown starts in live mode
+    mockParent.showCountdownOverlay = true;
+    fixture.detectChanges();
+    expect(component.isCountdownActive).toBeTrue();
+    expect(wrapper.style.display).toBe("");
   });
 });

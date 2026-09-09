@@ -13,6 +13,7 @@ import {
 import { Subscription } from "rxjs";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
+import { RacedayCountdownComponent } from "@app/components/raceday/components/raceday-countdown/raceday-countdown.component";
 import { RacedayEventNameComponent } from "@app/components/raceday/components/raceday-event-name/raceday-event-name.component";
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
 import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/components/raceday-group-leaderboard/raceday-group-leaderboard.component";
@@ -68,6 +69,7 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
     RacedayHeatListComponent,
     RacedayImageComponent,
     RacedayActionButtonComponent,
+    RacedayCountdownComponent,
   ],
 })
 export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
@@ -75,12 +77,45 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
   parentComponent = input<any>(undefined);
   isCustomizing = input<boolean>(false);
   selectedWidgetId = input<string | null>(null);
+  isCountdownPreviewActive = input<boolean>(false);
 
   private customWidgetService = inject(CustomWidgetService);
   private widgetSub?: Subscription;
 
   get isSelected(): boolean {
     return this.selectedWidgetId() === this.widget().id;
+  }
+
+  get isCountdownWidget(): boolean {
+    return this.widget().widgetType === "countdown";
+  }
+
+  get isCountdownActive(): boolean {
+    if (!this.isCountdownWidget) {
+      return true;
+    }
+    if (this.isCustomizing()) {
+      return true;
+    }
+    return !!this.parentComponent()?.showCountdownOverlay;
+  }
+
+  get isCountdownGhost(): boolean {
+    if (!this.isCustomizing() || !this.isCountdownWidget) {
+      return false;
+    }
+    return !this.isSelected && !this.isCountdownPreviewActive();
+  }
+
+  get computedZIndex(): number {
+    const w = this.widget();
+    if (!this.isCustomizing() && w.widgetType === "menu-bar") {
+      return 99999;
+    }
+    if (w.widgetType === "countdown") {
+      return Math.max(10000, (w.zIndex || 2000) + 10000);
+    }
+    return w.zIndex || 100;
   }
 
   private isResizing = false;

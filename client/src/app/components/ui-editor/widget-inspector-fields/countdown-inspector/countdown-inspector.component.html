@@ -1,0 +1,209 @@
+@if (settings()) {
+  <!-- Lamps Configuration -->
+  <div class="inspector-geometry-title">
+    {{ "UE_INSPECTOR_COUNTDOWN_LAMPS" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_COUNTDOWN_ORIENTATION" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [value]="orientation"
+        (change)="setOrientation($event)"
+      >
+        <app-custom-option value="horizontal">
+          {{ "UE_INSPECTOR_COUNTDOWN_ORIENTATION_HORIZONTAL" | translate }}
+        </app-custom-option>
+        <app-custom-option value="vertical">
+          {{ "UE_INSPECTOR_COUNTDOWN_ORIENTATION_VERTICAL" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_COUNTDOWN_SIZING_MODE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [value]="lampSizingMode"
+        (change)="setLampSizingMode($event)"
+      >
+        <app-custom-option value="custom">
+          {{ "UE_INSPECTOR_COUNTDOWN_SIZING_CUSTOM" | translate }}
+        </app-custom-option>
+        <app-custom-option value="fit">
+          {{ "UE_INSPECTOR_COUNTDOWN_SIZING_FIT" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  @if (lampSizingMode === "custom") {
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_COUNTDOWN_LAMP_SCALE" | translate
+        }}</label>
+        <span class="inspector-val-badge">{{ getLampScalePercent() }}%</span>
+      </div>
+      <input
+        type="range"
+        min="0.25"
+        max="3.0"
+        step="0.05"
+        [(ngModel)]="settings().lampScale"
+        (input)="onSettingsChange()"
+        (change)="onSettingsChange()"
+        class="inspector-slider"
+      />
+    </div>
+  }
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_COUNTDOWN_PREVIEW_LAMP_COUNT" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [value]="previewLampCount"
+        (change)="setPreviewLampCount($event)"
+      >
+        <app-custom-option [value]="3">3</app-custom-option>
+        <app-custom-option [value]="4">4</app-custom-option>
+        <app-custom-option [value]="5">5</app-custom-option>
+        <app-custom-option [value]="6">6</app-custom-option>
+        <app-custom-option [value]="7">7</app-custom-option>
+        <app-custom-option [value]="8">8</app-custom-option>
+        <app-custom-option [value]="9">9</app-custom-option>
+        <app-custom-option [value]="10">10</app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  <!-- Blur Effect Configuration -->
+  <div class="inspector-geometry-title" style="margin-top: 16px">
+    {{ "UE_INSPECTOR_COUNTDOWN_BLUR" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_COUNTDOWN_BLUR_AREA" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select [value]="blurArea" (change)="setBlurArea($event)">
+        <app-custom-option value="fullscreen">
+          {{ "UE_INSPECTOR_COUNTDOWN_BLUR_FULLSCREEN" | translate }}
+        </app-custom-option>
+        <app-custom-option value="widget">
+          {{ "UE_INSPECTOR_COUNTDOWN_BLUR_WIDGET" | translate }}
+        </app-custom-option>
+        <app-custom-option value="custom">
+          {{ "UE_INSPECTOR_COUNTDOWN_BLUR_CUSTOM" | translate }}
+        </app-custom-option>
+        <app-custom-option value="none">
+          {{ "UE_INSPECTOR_COUNTDOWN_BLUR_NONE" | translate }}
+        </app-custom-option>
+      </app-custom-select>
+    </div>
+  </div>
+
+  @if (blurArea === "custom") {
+    <div class="inspector-section">
+      <div class="inspector-geometry-grid">
+        <div class="geometry-field">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_COUNTDOWN_BLUR_X" | translate
+          }}</label>
+          <input
+            type="number"
+            class="inspector-input"
+            [(ngModel)]="settings().blurCustomX"
+            (change)="onSettingsChange()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+          />
+        </div>
+        <div class="geometry-field">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_COUNTDOWN_BLUR_Y" | translate
+          }}</label>
+          <input
+            type="number"
+            class="inspector-input"
+            [(ngModel)]="settings().blurCustomY"
+            (change)="onSettingsChange()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+          />
+        </div>
+        <div class="geometry-field">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_COUNTDOWN_BLUR_WIDTH" | translate
+          }}</label>
+          <input
+            type="number"
+            class="inspector-input"
+            [(ngModel)]="settings().blurCustomWidth"
+            (change)="onSettingsChange()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+          />
+        </div>
+        <div class="geometry-field">
+          <label class="inspector-label">{{
+            "UE_INSPECTOR_COUNTDOWN_BLUR_HEIGHT" | translate
+          }}</label>
+          <input
+            type="number"
+            class="inspector-input"
+            [(ngModel)]="settings().blurCustomHeight"
+            (change)="onSettingsChange()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+          />
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_COUNTDOWN_BLUR_AMOUNT" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ settings().blurAmount ?? 50 }}%</span
+      >
+    </div>
+    <input
+      type="range"
+      min="0"
+      max="100"
+      step="1"
+      [(ngModel)]="settings().blurAmount"
+      (input)="onSettingsChange()"
+      (change)="onSettingsChange()"
+      class="inspector-slider"
+    />
+  </div>
+}

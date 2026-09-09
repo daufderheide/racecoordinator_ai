@@ -2,7 +2,7 @@ import {
   AnchorPoint,
   ColumnDefinition,
 } from "@app/components/raceday/column_definition";
-import { LayoutConfig } from "@app/models/settings";
+import { AbsoluteWidgetNode, LayoutConfig } from "@app/models/settings";
 
 export class RacedayLayoutUtils {
   static getColumnX(columns: ColumnDefinition[], columnIndex: number): number {
@@ -548,5 +548,69 @@ export class RacedayLayoutUtils {
     const width = layout?.baseWidth ?? dashboardWidth;
     const height = layout?.baseHeight ?? dashboardHeight;
     return width < height;
+  }
+
+  static ensureCountdownWidget(
+    layout?: LayoutConfig,
+  ): LayoutConfig | undefined {
+    if (!layout || !layout.widgets) return layout;
+    const hasCountdown = layout.widgets.some(
+      (w) => w.widgetType === "countdown",
+    );
+    if (hasCountdown) {
+      for (const w of layout.widgets) {
+        if (w.widgetType === "countdown") {
+          w.customSettings = {
+            orientation: "horizontal",
+            lampScale: 1.0,
+            blurArea: "fullscreen",
+            blurAmount: 50,
+            lampSizingMode: "custom",
+            previewLampCount: 5,
+            ...w.customSettings,
+          };
+          if (!w.customSettings["lampSizingMode"]) {
+            w.customSettings["lampSizingMode"] = "custom";
+          }
+          if (!w.customSettings["previewLampCount"]) {
+            w.customSettings["previewLampCount"] = 5;
+          }
+        }
+      }
+      return layout;
+    }
+
+    const baseWidth = layout.baseWidth || 1920;
+    const baseHeight = layout.baseHeight || 1080;
+    const isPortrait = baseWidth < baseHeight;
+
+    const widgetWidth = isPortrait ? 250 : 1000;
+    const widgetHeight = isPortrait ? 800 : 250;
+    const x = Math.max(0, Math.round((baseWidth - widgetWidth) / 2));
+    const y = Math.max(0, Math.round((baseHeight - widgetHeight) / 2));
+
+    const countdownWidget: AbsoluteWidgetNode = {
+      id: "widget-countdown",
+      widgetType: "countdown",
+      x,
+      y,
+      width: widgetWidth,
+      height: widgetHeight,
+      zIndex: 2000,
+      scaleMode: "auto",
+      customSettings: {
+        orientation: isPortrait ? "vertical" : "horizontal",
+        lampScale: 1.0,
+        blurArea: "fullscreen",
+        blurAmount: 50,
+        lampSizingMode: "custom",
+        previewLampCount: 5,
+      },
+    };
+
+    return {
+      ...layout,
+      widgets: [...layout.widgets, countdownWidget],
+    };
   }
 }

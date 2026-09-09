@@ -42,6 +42,7 @@ public class DatabaseInitializer {
       if (is != null) {
         context.importDatabase(dbName, is);
         new AssetService(context, context.getDataRoot() + dbName + "/assets").backfillDefaults();
+        backfillCustomUIs(context);
         logger.info("Database reset to factory complete.");
         return;
       }
@@ -529,6 +530,26 @@ public class DatabaseInitializer {
               createDefaultPracticeRace(track.getEntityId(), context.getNextSequence("races"));
           raceRepo.save(practiceRace);
           logger.info("Backfilled Practice Race to database.");
+        }
+      }
+    }
+  }
+
+  public void backfillCustomUIs(DatabaseContext context) {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    List<CustomUI> uis = uiRepo.findAll();
+    for (CustomUI ui : uis) {
+      String layoutJson = ui.getLayoutJson();
+      if (layoutJson != null && !layoutJson.contains("\"widgetType\":\"countdown\"")) {
+        String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
+        if (!updatedLayoutJson.equals(layoutJson)) {
+          CustomUI updated = ui.withLayoutJson(updatedLayoutJson);
+          uiRepo.save(updated);
+          logger.info(
+              "Backfilled countdown widget into custom UI '{}' ({})",
+              ui.getName(),
+              ui.getEntityId());
         }
       }
     }

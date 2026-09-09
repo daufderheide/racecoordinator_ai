@@ -8,6 +8,24 @@
   background-color: rgba(59, 130, 246, 0.02);
 }
 
+.widget-wrapper.countdown-ghost {
+  outline: 1px dashed rgba(255, 255, 255, 0.2) !important;
+  background-color: transparent !important;
+  pointer-events: none !important;
+}
+
+.widget-wrapper.countdown-widget {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+@media print {
+  .widget-wrapper.countdown-widget,
+  app-raceday-countdown {
+    display: none !important;
+  }
+}
+
 .widget-content {
   box-sizing: border-box;
   width: 100%;

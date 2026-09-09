@@ -1,0 +1,36 @@
+<div
+  class="countdown-widget-root"
+  [class.active]="isVisible"
+  [class.edit-mode]="isCustomizing()"
+>
+  @if (isVisible && blurArea !== "none" && blurAmount > 0) {
+    <div
+      class="countdown-blur-backdrop"
+      [class.fullscreen]="blurArea === 'fullscreen'"
+      [class.widget-area]="blurArea === 'widget'"
+      [class.custom-area]="blurArea === 'custom'"
+      [ngStyle]="blurBackdropStyles"
+    ></div>
+  }
+
+  @if (isVisible) {
+    <div class="countdown-overlay" [class.portrait]="isVertical">
+      <div
+        class="lamps-container"
+        [class.vertical]="isVertical"
+        [ngStyle]="lampsContainerStyles"
+      >
+        @for (lamp of displayLamps; track $index) {
+          <img
+            [src]="lamp.url"
+            class="start-lamp"
+            [class.on]="lamp.state === 'on'"
+            [class.go]="lamp.state === 'go'"
+            [ngStyle]="startLampStyles"
+            alt="Start Lamp"
+          />
+        }
+      </div>
+    </div>
+  }
+</div>

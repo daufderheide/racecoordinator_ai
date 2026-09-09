@@ -77,6 +77,10 @@ public class DatabaseService {
     databaseInitializer.backfillRaces(context);
   }
 
+  public void backfillCustomUIs(DatabaseContext context) {
+    databaseInitializer.backfillCustomUIs(context);
+  }
+
   public Track getFactoryTrack() {
     return databaseInitializer.getFactoryTrack();
   }

@@ -822,6 +822,7 @@ export class DefaultRacedayComponent
   editingSettings = input<Settings | undefined>(undefined);
   activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
+  isCountdownPreviewActive = input<boolean>(false);
   widgetSelected = output<string | null>();
 
   get visualScale(): number {
@@ -970,7 +971,7 @@ export class DefaultRacedayComponent
       activeTheme && activeTheme.uiId
         ? this.customUiService.getCustomUI(activeTheme.uiId)
         : undefined;
-    return this.isPracticeLayout
+    const resolvedLayout = this.isPracticeLayout
       ? this.getParsedCustomUiProperty(
           customUI,
           "layoutJson",
@@ -981,6 +982,7 @@ export class DefaultRacedayComponent
           "layoutJson",
           settings.racedayLayout,
         );
+    return resolvedLayout;
   }
   set currentRacedayLayout(layout: LayoutConfig | undefined) {
     if (this.isUIEditorMode() && this.activeCustomUi()) {
@@ -6118,35 +6120,81 @@ export class DefaultRacedayComponent
 
   getNextZIndex(): number {
     if (!this.layout?.widgets?.length) return 100;
-    return Math.max(...this.layout.widgets.map((w: any) => w.zIndex || 0)) + 1;
+    const nonCountdown = this.layout.widgets.filter(
+      (w: any) => w.widgetType !== "countdown",
+    );
+    if (!nonCountdown.length) return 100;
+    return Math.max(...nonCountdown.map((w: any) => w.zIndex || 0)) + 1;
   }
 
   bringToFront(id: string) {
     if (!this.layout?.widgets) return;
 
-    const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
-    const maxOtherZ =
-      otherWidgets.length > 0
-        ? Math.max(...otherWidgets.map((w: any) => w.zIndex || 0))
-        : 0;
+    const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
+    if (!targetWidget) return;
 
-    const w = this.layout.widgets.find((w: any) => w.id === id);
-    if (w) {
-      if (w.zIndex == null || w.zIndex <= maxOtherZ) {
-        w.zIndex = maxOtherZ + 1;
+    if (targetWidget.widgetType === "countdown") {
+      const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
+      const maxOtherZ =
+        otherWidgets.length > 0
+          ? Math.max(...otherWidgets.map((w: any) => w.zIndex || 0))
+          : 0;
+      if (targetWidget.zIndex == null || targetWidget.zIndex <= maxOtherZ) {
+        targetWidget.zIndex = Math.max(2000, maxOtherZ + 1);
         this.layoutChanged.emit(this.layout);
       }
       this.widgetSelected.emit(id);
+      return;
     }
+
+    const otherNonCountdown = this.layout.widgets.filter(
+      (w: any) => w.id !== id && w.widgetType !== "countdown",
+    );
+    const maxOtherZ =
+      otherNonCountdown.length > 0
+        ? Math.max(...otherNonCountdown.map((w: any) => w.zIndex || 0))
+        : 0;
+
+    let changed = false;
+    if (targetWidget.zIndex == null || targetWidget.zIndex <= maxOtherZ) {
+      targetWidget.zIndex = maxOtherZ + 1;
+      changed = true;
+    }
+
+    // Force countdown widget(s) to always stay strictly on top of all other widgets
+    for (const cw of this.layout.widgets) {
+      if (cw.widgetType === "countdown") {
+        if (cw.zIndex == null || cw.zIndex <= targetWidget.zIndex) {
+          cw.zIndex = Math.max(2000, targetWidget.zIndex + 100);
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      this.layoutChanged.emit(this.layout);
+    }
+    this.widgetSelected.emit(id);
   }
 
   normalizeZIndices() {
     if (!this.layout?.widgets) return;
-    const sorted = [...this.layout.widgets].sort(
-      (a, b) => (a.zIndex || 100) - (b.zIndex || 100),
-    );
-    sorted.forEach((w: any, index: number) => {
+    const regularWidgets = this.layout.widgets
+      .filter((w: any) => w.widgetType !== "countdown")
+      .sort((a, b) => (a.zIndex || 100) - (b.zIndex || 100));
+    regularWidgets.forEach((w: any, index: number) => {
       w.zIndex = 100 + index;
+    });
+
+    const countdownWidgets = this.layout.widgets
+      .filter((w: any) => w.widgetType === "countdown")
+      .sort((a, b) => (a.zIndex || 2000) - (b.zIndex || 2000));
+    const maxRegularZ =
+      regularWidgets.length > 0
+        ? regularWidgets[regularWidgets.length - 1].zIndex
+        : 100;
+    countdownWidgets.forEach((w: any, index: number) => {
+      w.zIndex = Math.max(2000, maxRegularZ + 100) + index;
     });
   }
 

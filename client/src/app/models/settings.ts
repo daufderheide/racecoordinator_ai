@@ -18,6 +18,7 @@ export type WidgetType =
   | "qr"
   | "flag"
   | "timer"
+  | "countdown"
   | "records"
   | "leaderboard"
   | "group-leaderboard"
@@ -390,6 +391,24 @@ export class Settings {
           },
         },
       },
+      {
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 460,
+        y: 390,
+        width: 1000,
+        height: 250,
+        zIndex: 2000,
+        scaleMode: "auto",
+        customSettings: {
+          orientation: "horizontal",
+          lampScale: 1.0,
+          blurArea: "fullscreen",
+          blurAmount: 50,
+          lampSizingMode: "custom",
+          previewLampCount: 5,
+        },
+      },
     ],
     baseWidth: 1920,
     baseHeight: 1080,
@@ -510,6 +529,24 @@ export class Settings {
           insetFontFamily: "",
           insetFontSize: 24,
           insetTextColor: "",
+        },
+      },
+      {
+        id: "widget-countdown",
+        widgetType: "countdown",
+        x: 364,
+        y: 324,
+        width: 1000,
+        height: 250,
+        zIndex: 2000,
+        scaleMode: "auto",
+        customSettings: {
+          orientation: "horizontal",
+          lampScale: 1.0,
+          blurArea: "fullscreen",
+          blurAmount: 50,
+          lampSizingMode: "custom",
+          previewLampCount: 5,
         },
       },
     ],
