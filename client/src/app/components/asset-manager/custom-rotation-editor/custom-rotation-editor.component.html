@@ -4,9 +4,8 @@
 >
   <!-- Sleek Premium Title Bar -->
   <app-editor-title
-    [titleKey]="
-      internalAssetId ? 'AM_EDIT_CUSTOM_ROTATION' : 'AM_NEW_CUSTOM_ROTATION'
-    "
+    titleKey="AM_ROTATION_EDITOR"
+    [itemName]="internalAssetName"
     [undoManager]="undoManager"
     [showAdd]="true"
     [showRegenerate]="false"
@@ -38,6 +37,12 @@
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             [placeholder]="'AM_PLACEHOLDER_ASSET_NAME' | translate"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
         </div>
         <div class="input-group">

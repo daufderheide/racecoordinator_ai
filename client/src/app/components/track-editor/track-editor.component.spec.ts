@@ -9,9 +9,11 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
+import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
 import { Lane } from "@app/models/lane";
 import { Settings } from "@app/models/settings";
@@ -46,6 +48,7 @@ import { createTrackManagerDataServiceMock } from "../track-manager/testing/trac
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backQueryParams = input<any>({});
@@ -195,6 +198,30 @@ describe("TrackEditorComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should configure editor title with track name and update reactively", () => {
+    const editorTitle = fixture.debugElement.query(
+      By.directive(EditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("TE_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe("Classic Circuit");
+
+    component.trackName = "Daytona Tri-Oval";
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe("Daytona Tri-Oval");
+  });
+
+  it("should have password manager ignore attributes on track name input field", () => {
+    const nameEl = fixture.nativeElement.querySelector("#track-name-input");
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-lpignore")).toBe("true");
+    expect(nameEl.getAttribute("data-bwignore")).toBe("true");
+    expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("autocomplete")).toBe("off");
   });
 
   it("should load track data for editing", () => {
@@ -669,6 +696,21 @@ describe("TrackEditorComponent", () => {
       expect(dataService.updateTrack).toHaveBeenCalled();
       expect(component.isDirtyState()).toBeTrue();
       expect(mockLoggerService.error).toHaveBeenCalled();
+    }));
+
+    it("should preserve trackName with trailing space during auto-save", fakeAsync(() => {
+      component.trackName = "Custom Track ";
+      component.onInputChange();
+
+      tick(600);
+      flush();
+      fixture.detectChanges();
+
+      expect(dataService.updateTrack).toHaveBeenCalledWith(
+        jasmine.any(String),
+        jasmine.objectContaining({ name: "Custom Track " }),
+      );
+      expect(component.trackName).toBe("Custom Track ");
     }));
 
     it("should preserve undo/redo history and rebase it after Duplicate", () => {

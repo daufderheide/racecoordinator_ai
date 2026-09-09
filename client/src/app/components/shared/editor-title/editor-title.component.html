@@ -1,11 +1,20 @@
 <div
   class="header"
+  [class.has-zoom]="showZoom()"
   [style.margin-top.px]="marginTop()"
   [style.margin-bottom.px]="marginBottom()"
 >
   <div class="header-left">
     <app-browser-navigation></app-browser-navigation>
-    <h1 class="page-title">{{ titleKey() | translate }}</h1>
+    <h1 class="page-title">
+      <span class="title-main">{{ titleKey() | translate }}</span>
+      @if (trimmedItemName()) {
+        <span class="item-separator">-</span>
+        <span class="item-name" [title]="trimmedItemName()">{{
+          trimmedItemName()
+        }}</span>
+      }
+    </h1>
   </div>
   <div class="header-right">
     <app-toolbar

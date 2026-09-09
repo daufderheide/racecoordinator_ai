@@ -7,9 +7,11 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, throwError } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
+import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
@@ -78,6 +80,7 @@ class MockItemSelectorComponent {
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backQueryParams = input<any>({});
@@ -239,6 +242,50 @@ describe("DriverEditorComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should configure editor title with driver nickname and update reactively", () => {
+    const mockDriver: Driver = {
+      entity_id: "d1",
+      name: "John Doe",
+      nickname: "Speedy",
+      avatarUrl: "",
+    } as any;
+    setupDriver(mockDriver);
+    fixture.detectChanges();
+
+    const editorTitle = fixture.debugElement.query(
+      By.directive(EditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("DE_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe("Speedy");
+
+    component.onNicknameChange("Lightning");
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe("Lightning");
+  });
+
+  it("should have password manager ignore attributes on driver name and nickname input fields", () => {
+    const nameEl = fixture.nativeElement.querySelector("#driver-name-input");
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-lpignore")).toBe("true");
+    expect(nameEl.getAttribute("data-bwignore")).toBe("true");
+    expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("autocomplete")).toBe("off");
+
+    const nicknameEl = fixture.nativeElement.querySelector(
+      "#driver-nickname-input",
+    );
+    expect(nicknameEl).toBeTruthy();
+    expect(nicknameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nicknameEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(nicknameEl.getAttribute("data-lpignore")).toBe("true");
+    expect(nicknameEl.getAttribute("data-bwignore")).toBe("true");
+    expect(nicknameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nicknameEl.getAttribute("autocomplete")).toBe("off");
   });
 
   it("should throw error when no ID provided", () => {

@@ -2,6 +2,7 @@ import {
   AfterViewChecked,
   ChangeDetectorRef,
   Component,
+  computed,
   input,
   output,
   ViewChild,
@@ -23,6 +24,11 @@ import { GuideStep } from "@app/services/help.service";
 export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
   titleKey = input("");
+  itemName = input<string | undefined>(undefined);
+  trimmedItemName = computed(() => {
+    const name = this.itemName();
+    return name && name.trim() ? name.trim() : "";
+  });
   undoManager = input<UndoManager<any>>();
   showUndo = input(true);
   showRedo = input(true);

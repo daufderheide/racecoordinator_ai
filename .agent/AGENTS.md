@@ -115,3 +115,16 @@ Whenever a new configuration setting, property, or field is added, modified, or 
 - **Use clean identifiers**: All domain entity relationships, driver matching, team resolution, and lane status must be determined cleanly through explicit IDs (`entity_id`, `objectId`, `id`, `driverId`, `teamId`) or standard model flags.
 - **Do not rabbit hole into ad-hoc name parsing**: If the domain model or protobufs lack the necessary IDs or structure to resolve an entity cleanly, do not paper over it with heuristic string parsing or complex fallback chains. Address that structure directly at the model/data layer in an explicit follow-up change.
 
+## Form Text Inputs (Prevent Password Manager & Autofill Hijacking)
+- **Disable password manager autofill on all text inputs**: Non-credential text inputs across the application (e.g. entity names, nicknames, descriptions, search bars, filter inputs, configuration fields) must never trigger password manager popups, autofill prompts, or extension icons (such as Dashlane, 1Password, LastPass, Bitwarden).
+- **Mandatory attributes**: Every text input (`<input type="text">` or general text/search field) must include the following attributes:
+  ```html
+  autocomplete="off"
+  data-dashlane-ignore="true"
+  data-1p-ignore="true"
+  data-lpignore="true"
+  data-bwignore="true"
+  data-form-type="other"
+  ```
+- **Automated tests**: Unit tests for forms with text inputs should assert the presence of these ignore attributes (e.g., verifying `data-dashlane-ignore="true"` and `autocomplete="off"`).
+

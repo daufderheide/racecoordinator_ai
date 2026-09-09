@@ -11,6 +11,9 @@ export class EditorTitleHarness
   protected getTitleElement = this.locatorForOptional(
     EditorTitleHarnessBase.selectors.title,
   );
+  protected getItemNameElement = this.locatorForOptional(
+    EditorTitleHarnessBase.selectors.itemName,
+  );
   protected getUndoButtonElement = this.locatorForOptional(
     EditorTitleHarnessBase.selectors.undoButton,
   );
@@ -23,6 +26,11 @@ export class EditorTitleHarness
 
   async getTitle(): Promise<string | null> {
     const el = await this.getTitleElement();
+    return el ? await el.text() : null;
+  }
+
+  async getItemName(): Promise<string | null> {
+    const el = await this.getItemNameElement();
     return el ? await el.text() : null;
   }
 

@@ -30,6 +30,7 @@
 >
   <app-editor-title
     titleKey="RE_TITLE"
+    [itemName]="editingRace?.name"
     [undoManager]="undoManager"
     [showCopy]="true"
     [disabledCopy]="!isConfigValid()"
@@ -59,7 +60,10 @@
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"
             autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
             data-lpignore="true"
+            data-bwignore="true"
             data-form-type="other"
           />
         </div>
@@ -141,7 +145,10 @@
               (blur)="captureState()"
               placeholder="{{ 'RE_CUSTOM_SEQUENCE_HINT' | translate }}"
               autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
               data-lpignore="true"
+              data-bwignore="true"
               data-form-type="other"
             />
           </div>
@@ -876,6 +883,12 @@
                                   (groupIndex + 1)
                                 "
                                 [disabled]="!editingRace.group_options.enabled"
+                                autocomplete="off"
+                                data-dashlane-ignore="true"
+                                data-1p-ignore="true"
+                                data-lpignore="true"
+                                data-bwignore="true"
+                                data-form-type="other"
                               />
                             </div>
                           }

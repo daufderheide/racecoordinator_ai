@@ -4,6 +4,7 @@
 >
   <app-editor-title
     titleKey="TE_TITLE"
+    [itemName]="trackName"
     [undoManager]="undoManager"
     [showCopy]="true"
     [disabledCopy]="!isConfigValid()"
@@ -34,7 +35,10 @@
           (blur)="onInputBlur()"
           (ngModelChange)="onInputChange()"
           autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
           data-lpignore="true"
+          data-bwignore="true"
           data-form-type="other"
           name="trackNameInput"
         />
@@ -50,6 +54,11 @@
           (blur)="onInputBlur()"
           (ngModelChange)="onInputChange()"
           autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
           name="numTrackSectionsInput"
           min="1"
         />

@@ -80,6 +80,7 @@ class MockItemSelectorComponent {
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backQueryParams = input<any>({});

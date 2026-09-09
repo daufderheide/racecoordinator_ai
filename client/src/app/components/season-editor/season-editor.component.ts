@@ -793,9 +793,18 @@ export class SeasonEditorComponent
     this.scale = Math.min(scaleX, scaleY);
   }
 
+  onInputFocus(): void {
+    this.undoManager.onInputFocus();
+  }
+
+  onInputBlur(): void {
+    this.undoManager.onInputBlur();
+    this.cdr.markForCheck();
+  }
+
   onInputChange(): void {
     this.calculateStandings();
-    this.captureState();
+    this.undoManager.onInputChange();
   }
 
   captureState(): void {
@@ -839,7 +848,7 @@ export class SeasonEditorComponent
 
     const payload: Season = {
       ...this.editingSeason,
-      name: this.editingSeason.name.trim(),
+      name: this.editingSeason.name,
       drops: Number(this.editingSeason.drops) || 0,
     };
 
@@ -851,14 +860,14 @@ export class SeasonEditorComponent
       next: (savedSeason) => {
         if (savedSeason) {
           const isNew = !payload.entity_id;
-          this.editingSeason = this.cloneSeason(savedSeason);
-          this.undoManager.resetTracking(this.editingSeason);
           if (savedSeason.entity_id) {
+            this.editingSeason.entity_id = savedSeason.entity_id;
             this.navigationService.setLastEditedId(
               "season",
               savedSeason.entity_id,
             );
           }
+          this.undoManager.resetTracking(this.editingSeason);
           const idx = this.existingSeasons.findIndex(
             (s) => s.entity_id === savedSeason.entity_id,
           );

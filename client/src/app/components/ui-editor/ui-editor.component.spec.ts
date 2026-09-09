@@ -76,6 +76,7 @@ class MockAssetPreviewComponent {
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
   backRoute = input<string>("");
   undoManager = input<any>();
 }

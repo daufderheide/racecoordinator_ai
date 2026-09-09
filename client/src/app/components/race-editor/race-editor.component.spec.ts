@@ -9,9 +9,11 @@ import {
   tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
+import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
 import { FuelUsageType } from "@app/models/fuel_options";
 import { Race } from "@app/models/race";
@@ -216,6 +218,40 @@ describe("RaceEditorComponent", () => {
     tick();
 
     expect(component.editingRace.start_at_current).toBeFalse();
+  }));
+
+  it("should bind race name to editor title itemName and update reactively", fakeAsync(() => {
+    component.ngOnInit();
+    tick();
+    fixture.detectChanges();
+
+    const editorTitle = fixture.debugElement.query(
+      By.directive(EditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("RE_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe(
+      component.editingRace?.name,
+    );
+
+    component.editingRace.name = "Monaco Grand Prix";
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe("Monaco Grand Prix");
+  }));
+
+  it("should have password manager ignore attributes on race name input field", fakeAsync(() => {
+    component.ngOnInit();
+    tick();
+    fixture.detectChanges();
+
+    const nameEl = fixture.nativeElement.querySelector("#race-name-input");
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-lpignore")).toBe("true");
+    expect(nameEl.getAttribute("data-bwignore")).toBe("true");
+    expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("autocomplete")).toBe("off");
   }));
 
   it("should load heats when race is loaded", fakeAsync(() => {

@@ -1,7 +1,12 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { DatePipe, DecimalPipe } from "@angular/common";
 import { Component, input, NO_ERRORS_SCHEMA, output } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -25,7 +30,10 @@ import { SeasonEditorHarness } from "./testing/season-editor.harness";
   selector: "app-editor-title",
   template: "",
 })
-class MockEditorTitleComponent {}
+class MockEditorTitleComponent {
+  titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
+}
 
 @Component({
   standalone: true,
@@ -115,6 +123,23 @@ describe("SeasonEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
+  it("should configure editor title with SE_TITLE and update itemName reactively", () => {
+    const editorTitle = fixture.debugElement.query(
+      By.directive(MockEditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("SE_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe(
+      component.editingSeason.name,
+    );
+
+    component.editingSeason.name = "Updated Championship";
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe(
+      "Updated Championship",
+    );
+  });
+
   it("should auto-save season on state commit if valid and reset hasChanges() to false", () => {
     const dataService = TestBed.inject(DataService);
     const router = TestBed.inject(Router);
@@ -188,6 +213,55 @@ describe("SeasonEditorComponent", () => {
     expect(dataService.updateSeason).toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
   });
+
+  it("should preserve trailing whitespace in season name and not clobber editingSeason on autoSave", () => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "updateSeason").and.returnValue(
+      of({
+        entity_id: "s1",
+        name: "Winter Championship ",
+        drops: 0,
+        races: [],
+      }),
+    );
+
+    component.editingSeason = {
+      entity_id: "s1",
+      name: "Winter Championship ",
+      drops: 0,
+      races: [],
+    };
+
+    component.autoSaveSeason();
+
+    expect(dataService.updateSeason).toHaveBeenCalledWith(
+      "s1",
+      jasmine.objectContaining({ name: "Winter Championship " }),
+    );
+    expect(component.editingSeason.name).toBe("Winter Championship ");
+  });
+
+  it("should handle onInputFocus, onInputChange, and onInputBlur via undoManager", fakeAsync(() => {
+    const dataService = TestBed.inject(DataService);
+    spyOn(dataService, "updateSeason").and.callThrough();
+
+    component.editingSeason.entity_id = "s1";
+    component.onInputFocus();
+    component.editingSeason.name = "Season Typing ";
+    component.onInputChange();
+
+    // Debounced - should not have committed yet
+    tick(50);
+    expect(dataService.updateSeason).not.toHaveBeenCalled();
+
+    // On blur - commits immediately
+    component.onInputBlur();
+    expect(dataService.updateSeason).toHaveBeenCalledWith(
+      "s1",
+      jasmine.objectContaining({ name: "Season Typing " }),
+    );
+    expect(component.editingSeason.name).toBe("Season Typing ");
+  }));
 
   it("should handle confirmDiscard modal confirm event via template binding", async () => {
     const promise = component.confirmDiscard();

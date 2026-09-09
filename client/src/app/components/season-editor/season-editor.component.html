@@ -1,6 +1,7 @@
 <div class="page-container" [attr.data-is-dirty]="isDirty ? 'true' : 'false'">
   <app-editor-title
-    [titleKey]="editingSeason.entity_id ? 'SE_TITLE_EDIT' : 'SE_TITLE_NEW'"
+    titleKey="SE_TITLE"
+    [itemName]="editingSeason.name"
     [undoManager]="undoManager"
     [showCopy]="true"
     [disabledCopy]="!isFormValid || isSaving"
@@ -30,6 +31,8 @@
             "
             [(ngModel)]="editingSeason.name"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
             placeholder="e.g. 2026 Winter Championship"
             autocomplete="off"
             data-dashlane-ignore="true"
@@ -58,6 +61,14 @@
             step="1"
             [(ngModel)]="editingSeason.drops"
             (ngModelChange)="onInputChange()"
+            (focus)="onInputFocus()"
+            (blur)="onInputBlur()"
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
           />
           <span class="help-text">
             {{ "SE_DROPS_HELP" | translate }}

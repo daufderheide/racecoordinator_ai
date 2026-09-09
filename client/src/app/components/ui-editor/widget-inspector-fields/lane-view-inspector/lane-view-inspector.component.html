@@ -295,6 +295,12 @@
               [placeholder]="getColumnLabel(col) | translate"
               [ngModel]="getCustomLabel(col)"
               (ngModelChange)="setCustomLabel(col, $event)"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
             />
             <div class="col-width-wrapper">
               <input
@@ -340,6 +346,12 @@
           [class.has-value]="!!columnSearchTerm"
           [placeholder]="'UE_TOOLBOX_COLUMNS_SEARCH_PLACEHOLDER' | translate"
           [(ngModel)]="columnSearchTerm"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
         />
         @if (columnSearchTerm) {
           <button

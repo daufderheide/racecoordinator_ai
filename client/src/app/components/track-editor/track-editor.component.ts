@@ -2035,7 +2035,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
 
           // Sync local UI state with server result to ensure clean state matches
-          this.trackName = this.editingTrack.name;
+          if (!isAutoSave) {
+            this.trackName = this.editingTrack.name;
+          }
           // Only update lanes if they changed, to avoid triggering child effects unnecessarily
           const newLanesJson = JSON.stringify(this.editingTrack.lanes);
           if (newLanesJson !== JSON.stringify(this.lanes)) {

@@ -63,6 +63,12 @@
         (ngModelChange)="onTextChange($event)"
         class="dm-input"
         [placeholder]="'AS_PLACEHOLDER_TEXT' | translate"
+        autocomplete="off"
+        data-dashlane-ignore="true"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        data-bwignore="true"
+        data-form-type="other"
       />
       <button class="btn-play" (click)="play()">
         @if (!isPlaying) {

@@ -1,5 +1,5 @@
 import { Component, input, NO_ERRORS_SCHEMA, output } from "@angular/core";
-import { TestBed } from "@angular/core/testing";
+import { fakeAsync, TestBed, tick } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -18,6 +18,16 @@ import {
 } from "@app/testing/unit-test-mocks";
 
 import { EventEditorComponent } from "./event-editor.component";
+
+@Component({
+  standalone: true,
+  selector: "app-editor-title",
+  template: "",
+})
+class MockEditorTitleComponent {
+  titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
+}
 
 @Component({
   standalone: true,
@@ -107,7 +117,12 @@ describe("EventEditorComponent", () => {
     })
       .overrideComponent(EventEditorComponent, {
         set: {
-          imports: [MockConfirmationModalComponent, TranslatePipe, FormsModule],
+          imports: [
+            MockEditorTitleComponent,
+            MockConfirmationModalComponent,
+            TranslatePipe,
+            FormsModule,
+          ],
           schemas: [NO_ERRORS_SCHEMA],
         },
       })
@@ -121,6 +136,32 @@ describe("EventEditorComponent", () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
     expect(component.editingEvent.name).toBe("Existing Event");
+  });
+
+  it("should configure editor title with event name and update reactively", () => {
+    fixture.detectChanges();
+    const editorTitle = fixture.debugElement.query(
+      By.directive(MockEditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("EE_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe("Existing Event");
+
+    component.editingEvent.name = "Championship Event";
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe("Championship Event");
+  });
+
+  it("should have password manager ignore attributes on event name input field", () => {
+    fixture.detectChanges();
+    const nameEl = fixture.nativeElement.querySelector("#event-name");
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-lpignore")).toBe("true");
+    expect(nameEl.getAttribute("data-bwignore")).toBe("true");
+    expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("autocomplete")).toBe("off");
   });
 
   it("should validate duplicate names", () => {
@@ -162,8 +203,28 @@ describe("EventEditorComponent", () => {
     fixture.detectChanges();
     component.editingEvent.description = "Updated Description";
     component.onInputChange();
+    component.onInputBlur();
     expect(mockDataService.updateEvent).toHaveBeenCalled();
   });
+
+  it("should handle onInputFocus, onInputChange, and onInputBlur without clobbering editingEvent", fakeAsync(() => {
+    fixture.detectChanges();
+    component.editingEvent.name = "Initial Event";
+    component.onInputFocus();
+
+    component.editingEvent.name = "Event Name With Space ";
+    component.onInputChange();
+
+    tick(50);
+    expect(mockDataService.updateEvent).not.toHaveBeenCalled();
+
+    component.onInputBlur();
+    expect(mockDataService.updateEvent).toHaveBeenCalledWith(
+      jasmine.any(String),
+      jasmine.objectContaining({ name: "Event Name With Space " }),
+    );
+    expect(component.editingEvent.name).toBe("Event Name With Space ");
+  }));
 
   it("should append _1 if 'New Event' already exists", () => {
     component.existingEvents = [

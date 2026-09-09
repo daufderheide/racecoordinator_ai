@@ -241,8 +241,17 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
+  onInputFocus(): void {
+    this.undoManager.onInputFocus();
+  }
+
+  onInputBlur(): void {
+    this.undoManager.onInputBlur();
+    this.cdr.markForCheck();
+  }
+
   onInputChange(): void {
-    this.undoManager.captureState();
+    this.undoManager.onInputChange();
   }
 
   isDuplicateName(): boolean {
@@ -342,11 +351,11 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     op.subscribe({
       next: (saved) => {
         if (saved) {
-          this.editingEvent = this.cloneEvent(saved);
-          this.undoManager.resetTracking(this.editingEvent);
           if (saved.entity_id) {
+            this.editingEvent.entity_id = saved.entity_id;
             this.navigationService.setLastEditedId("event", saved.entity_id);
           }
+          this.undoManager.resetTracking(this.editingEvent);
         }
         this.isSaving = false;
         this.cdr.detectChanges();

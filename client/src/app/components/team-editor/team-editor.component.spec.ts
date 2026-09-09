@@ -9,9 +9,11 @@ import {
   tick as _tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { By } from "@angular/platform-browser";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
 import { BehaviorSubject, of, Subject } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
+import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Team } from "@app/models/team";
@@ -84,6 +86,7 @@ class MockItemSelectorComponent {
 })
 class MockEditorTitleComponent {
   titleKey = input<string>("");
+  itemName = input<string | undefined>(undefined);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backConfirmTitle = input<string>("");
@@ -253,6 +256,32 @@ describe("TeamEditorComponent", () => {
 
   it("should create", () => {
     expect(component).toBeTruthy();
+  });
+
+  it("should configure editor title with team name and update reactively", () => {
+    const editorTitle = fixture.debugElement.query(
+      By.directive(EditorTitleComponent),
+    );
+    expect(editorTitle).toBeTruthy();
+    expect(editorTitle.componentInstance.titleKey()).toBe("TEM_TITLE");
+    expect(editorTitle.componentInstance.itemName()).toBe(
+      component.editingTeam?.name,
+    );
+
+    component.editingTeam!.name = "Scuderia Ferrari";
+    fixture.detectChanges();
+    expect(editorTitle.componentInstance.itemName()).toBe("Scuderia Ferrari");
+  });
+
+  it("should have password manager ignore attributes on team name input field", () => {
+    const inputEl = fixture.nativeElement.querySelector("#team-name-input");
+    expect(inputEl).toBeTruthy();
+    expect(inputEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(inputEl.getAttribute("data-1p-ignore")).toBe("true");
+    expect(inputEl.getAttribute("data-lpignore")).toBe("true");
+    expect(inputEl.getAttribute("data-bwignore")).toBe("true");
+    expect(inputEl.getAttribute("data-form-type")).toBe("other");
+    expect(inputEl.getAttribute("autocomplete")).toBe("off");
   });
 
   it('should initialize with new team when "new" ID provided', () => {

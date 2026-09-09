@@ -438,6 +438,12 @@
               [(ngModel)]="availableSearchQuery"
               (ngModelChange)="onAvailableSearchQueryChange()"
               (keydown)="onAvailableSearchKeydown($event, availSearch)"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
             />
             <svg
               class="search-icon"
@@ -625,6 +631,12 @@
               [(ngModel)]="racingSearchQuery"
               (ngModelChange)="onRacingSearchQueryChange()"
               (keydown)="onRacingSearchKeydown($event, racingSearch)"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
             />
             <svg
               class="search-icon"
@@ -813,6 +825,12 @@
                 [placeholder]="'RDS_SEARCH_RACES' | translate"
                 [(ngModel)]="raceSearchQuery"
                 (ngModelChange)="onSearchChange()"
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
               />
               <svg
                 class="search-icon"
@@ -1127,6 +1145,12 @@
                     class="inline-rename-input"
                     [placeholder]="'RDS_ENTER_SAVE_NAME' | translate"
                     autoFocus
+                    autocomplete="off"
+                    data-dashlane-ignore="true"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
                   />
                   <button
                     class="inline-rename-btn confirm"

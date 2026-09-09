@@ -118,6 +118,12 @@
               [placeholder]="field.default ?? ''"
               [value]="getSettingValue(field.key, field.default ?? '')"
               (input)="onTextInput(field.key, $event)"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
             />
           }
         }
