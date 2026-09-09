@@ -1133,4 +1133,50 @@ describe("DriverEditorComponent", () => {
       expect(button.classList.contains("linked")).toBeFalse();
     });
   });
+
+  describe("onAssetSelected", () => {
+    it("should append newly selected audio asset to soundAssets and not duplicate", () => {
+      const driver = new Driver("d1", "Test Driver", "Tester");
+      setupDriver(driver);
+      component.soundAssets = [
+        { model: { entityId: "existing-audio" }, type: "audio" },
+      ];
+
+      const newAsset = {
+        model: { entityId: "new-audio" },
+        type: "audio",
+        name: "Beep",
+      };
+      component.onAssetSelected(newAsset);
+
+      expect(component.soundAssets.length).toBe(2);
+      expect(component.soundAssets[1]).toEqual(newAsset);
+
+      // Re-selecting same asset should not duplicate
+      component.onAssetSelected(newAsset);
+      expect(component.soundAssets.length).toBe(2);
+    });
+
+    it("should append newly selected image asset to avatarAssets and not duplicate", () => {
+      const driver = new Driver("d1", "Test Driver", "Tester");
+      setupDriver(driver);
+      component.avatarAssets = [
+        { model: { entityId: "existing-avatar" }, type: "image" },
+      ];
+
+      const newAsset = {
+        model: { entityId: "new-avatar" },
+        type: "image",
+        name: "Photo",
+      };
+      component.onAssetSelected(newAsset);
+
+      expect(component.avatarAssets.length).toBe(2);
+      expect(component.avatarAssets[1]).toEqual(newAsset);
+
+      // Re-selecting same asset should not duplicate
+      component.onAssetSelected(newAsset);
+      expect(component.avatarAssets.length).toBe(2);
+    });
+  });
 });

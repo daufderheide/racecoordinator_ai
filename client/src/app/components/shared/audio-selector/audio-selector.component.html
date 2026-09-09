@@ -1,31 +1,39 @@
-<div class="audio-section" [class.readonly]="readonly()">
+<div
+  class="audio-section"
+  [class.readonly]="readonly()"
+  [class.dragging]="isDragging"
+  (dragenter)="onDragEnter($event)"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
   <div class="audio-header">
     <label>{{ label() }}</label>
     @if (!readonly()) {
       <div class="toggle-group">
         @if (mode() === "single") {
           <span
-            [class.active]="type() === 'preset'"
+            [class.active]="effectiveType() === 'preset'"
             (click)="onTypeChange('preset')"
             >{{ "AS_OPTION_PRESET" | translate }}</span
           >
         }
         @if (mode() === "set") {
           <span
-            [class.active]="type() === 'audio_set'"
+            [class.active]="effectiveType() === 'audio_set'"
             (click)="onTypeChange('audio_set')"
             >{{ "AS_OPTION_AUDIO_SET" | translate }}</span
           >
         }
         @if (mode() === "single") {
           <span
-            [class.active]="type() === 'tts'"
+            [class.active]="effectiveType() === 'tts'"
             (click)="onTypeChange('tts')"
             >{{ "AS_OPTION_TTS" | translate }}</span
           >
         }
         <span
-          [class.active]="type() === 'none'"
+          [class.active]="effectiveType() === 'none'"
           (click)="onTypeChange('none')"
           >{{ "AS_OPTION_NONE" | translate }}</span
         >
@@ -34,15 +42,28 @@
   </div>
 
   <!-- Regular Editing Mode -->
-  @if (!readonly() && (type() === "preset" || type() === "audio_set")) {
+  @if (
+    !readonly() &&
+    (effectiveType() === "preset" || effectiveType() === "audio_set")
+  ) {
     <div class="audio-controls">
       <div
         class="dm-select trigger-div"
+        [class.dragging]="isDragging"
         (click)="openItemSelector()"
-        (drop)="onDrop($event)"
-        (dragover)="onDragOver($event)"
       >
-        {{ selectedAssetName() }}
+        @if (isUploading) {
+          <span class="uploading-state">
+            <span class="spinner-small"></span>
+            {{ "IS_UPLOADING" | translate }}
+          </span>
+        } @else if (isDragging) {
+          <span class="dragging-hint">{{
+            "AS_HINT_DRAG_AUDIO" | translate
+          }}</span>
+        } @else {
+          {{ selectedAssetName() }}
+        }
       </div>
       <button class="btn-play" (click)="play()">
         @if (!isPlaying) {
@@ -55,7 +76,35 @@
     </div>
   }
 
-  @if (!readonly() && type() === "tts") {
+  <!-- Active drag or upload placeholder when in None or TTS mode -->
+  @if (
+    !readonly() &&
+    (effectiveType() === "none" || effectiveType() === "tts") &&
+    (isDragging || isUploading)
+  ) {
+    <div class="audio-controls drop-placeholder-controls">
+      <div class="dm-select trigger-div" [class.dragging]="isDragging">
+        @if (isUploading) {
+          <span class="uploading-state">
+            <span class="spinner-small"></span>
+            {{ "IS_UPLOADING" | translate }}
+          </span>
+        } @else {
+          <span class="dragging-hint">{{
+            "AS_HINT_DRAG_AUDIO" | translate
+          }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="audio-error-text">{{ errorMessage | translate }}</div>
+  }
+
+  @if (
+    !readonly() && effectiveType() === "tts" && !isDragging && !isUploading
+  ) {
     <div class="audio-controls">
       <input
         type="text"
@@ -86,7 +135,7 @@
     <div class="audio-controls readonly-controls">
       <div class="dm-select readonly-text">
         {{
-          type() === "preset" || type() === "audio_set"
+          effectiveType() === "preset" || effectiveType() === "audio_set"
             ? selectedAssetName()
             : text() || "---"
         }}
@@ -105,8 +154,10 @@
   <app-item-selector
     [visible]="showItemSelector"
     [title]="'AS_TITLE_SELECT_SOUND' | translate"
-    [items]="assets()"
+    [items]="filteredAssets()"
     [itemType]="mode() === 'set' ? 'audio_set' : 'audio'"
+    [allowBrowse]="!readonly()"
+    (filePicked)="onFilePicked($event)"
     (select)="onAssetSelected($event)"
     (play)="onPlayPreview($event)"
     (close)="closeItemSelector()"

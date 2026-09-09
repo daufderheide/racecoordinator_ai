@@ -1,29 +1,71 @@
 @if (visible()) {
-  <div class="modal-backdrop" (click)="onClose()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <div
+    class="modal-backdrop"
+    (click)="onClose()"
+    [class.dragging]="isDragging"
+    (dragenter)="onDragEnter($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <div
+      class="modal-content"
+      (click)="$event.stopPropagation()"
+      [class.dragging]="isDragging"
+    >
+      <input
+        #filePicker
+        type="file"
+        style="display: none"
+        [accept]="acceptedTypes()"
+        (change)="onFileInput($event)"
+      />
       <div class="modal-header">
         <div class="modal-title">
           {{ title() || ("IS_TITLE_SELECT_ITEM" | translate) }}
         </div>
-        <div class="search-container">
-          <input
-            type="text"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="searchTerm.set($event)"
-            [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
-            class="search-input"
-            autocomplete="off"
-            data-dashlane-ignore="true"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            data-form-type="other"
-          />
+        <div class="header-actions">
+          @if (allowBrowse()) {
+            <button
+              type="button"
+              class="btn-browse"
+              (click)="triggerFilePicker()"
+              [title]="'IS_BTN_BROWSE_FILE' | translate"
+            >
+              <span class="material-icons browse-icon">folder_open</span>
+              <span>{{ "IS_BTN_BROWSE_FILE" | translate }}</span>
+            </button>
+          }
+          <div class="search-container">
+            <input
+              type="text"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="searchTerm.set($event)"
+              [placeholder]="'IS_PLACEHOLDER_SEARCH' | translate"
+              class="search-input"
+              autocomplete="off"
+              data-dashlane-ignore="true"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
+            />
+          </div>
         </div>
       </div>
       <div class="modal-body">
-        @if (filteredItems().length > 0) {
+        @if (filteredItems().length > 0 || (allowBrowse() && !searchTerm())) {
           <div class="item-grid">
+            @if (allowBrowse() && !searchTerm()) {
+              <div class="upload-card" (click)="triggerFilePicker()">
+                <div class="item-preview upload-preview">
+                  <span class="material-icons upload-icon">cloud_upload</span>
+                </div>
+                <div class="item-name">
+                  {{ "IS_LABEL_UPLOAD_NEW" | translate }}
+                </div>
+              </div>
+            }
             @for (item of filteredItems(); track item) {
               <div class="item-card" (click)="onSelect(item)">
                 <div class="item-preview">

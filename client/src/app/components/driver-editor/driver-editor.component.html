@@ -25,6 +25,7 @@
           <app-image-selector
             [(imageUrl)]="editingDriver.avatarUrl"
             (imageUrlChange)="captureState()"
+            (assetSelected)="onAssetSelected($event)"
             [assets]="avatarAssets"
             [size]="'large'"
           >
@@ -144,6 +145,7 @@
                       (typeChange)="onAudioTypeChange('lap', $event)"
                       [url]="editingDriver.lapAudio.url"
                       (urlChange)="onAudioUrlChange('lap', $event)"
+                      (assetSelected)="onAssetSelected($event)"
                       [text]="editingDriver.lapAudio.text"
                       (textChange)="onAudioTextChange('lap', $event)"
                       [context]="ttsContext"
@@ -160,6 +162,7 @@
                       (typeChange)="onAudioTypeChange('bestLap', $event)"
                       [url]="editingDriver.bestLapAudio.url"
                       (urlChange)="onAudioUrlChange('bestLap', $event)"
+                      (assetSelected)="onAssetSelected($event)"
                       [text]="editingDriver.bestLapAudio.text"
                       (textChange)="onAudioTextChange('bestLap', $event)"
                       [context]="ttsContext"
@@ -176,6 +179,7 @@
                       (typeChange)="onAudioTypeChange('penalty', $event)"
                       [url]="editingDriver.penaltyAudio.url"
                       (urlChange)="onAudioUrlChange('penalty', $event)"
+                      (assetSelected)="onAssetSelected($event)"
                       [text]="editingDriver.penaltyAudio.text"
                       (textChange)="onAudioTextChange('penalty', $event)"
                       [context]="ttsContext"

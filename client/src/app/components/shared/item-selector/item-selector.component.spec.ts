@@ -147,4 +147,98 @@ describe("ItemSelectorComponent", () => {
 
     expect(component.close.emit).toHaveBeenCalled();
   });
+
+  it("should compute correct acceptedTypes for image and audio", () => {
+    fixture.componentRef.setInput("itemType", "image");
+    expect(component.acceptedTypes()).toContain("image/*");
+
+    fixture.componentRef.setInput("itemType", "audio");
+    expect(component.acceptedTypes()).toContain("audio/*");
+
+    fixture.componentRef.setInput("itemType", "audio_set");
+    expect(component.acceptedTypes()).toContain("audio/*");
+
+    fixture.componentRef.setInput("itemType", "sound");
+    expect(component.acceptedTypes()).toContain("audio/*");
+  });
+
+  it("should emit filePicked, close dialog, and reset input value when onFileInput is called", () => {
+    spyOn(component.filePicked, "emit");
+    spyOn(component.close, "emit");
+    const testFile = new File(["sample"], "avatar.png", { type: "image/png" });
+    const mockInput = {
+      files: [testFile],
+      value: "C:\\fakepath\\avatar.png",
+    } as any;
+    const mockEvent = { target: mockInput } as unknown as Event;
+
+    component.onFileInput(mockEvent);
+
+    expect(component.filePicked.emit).toHaveBeenCalledWith(testFile);
+    expect(component.close.emit).toHaveBeenCalled();
+    expect(mockInput.value).toBe("");
+  });
+
+  it("should handle drag and drop: track dragCounter and emit filePicked and close on drop", () => {
+    spyOn(component.filePicked, "emit");
+    spyOn(component.close, "emit");
+
+    const enterEvent = new DragEvent("dragenter", { cancelable: true });
+    spyOn(enterEvent, "preventDefault");
+    spyOn(enterEvent, "stopPropagation");
+    component.onDragEnter(enterEvent);
+    expect(component.isDragging).toBeTrue();
+    expect(component.dragCounter).toBe(1);
+
+    const overEvent = new DragEvent("dragover", { cancelable: true });
+    spyOn(overEvent, "preventDefault");
+    spyOn(overEvent, "stopPropagation");
+    component.onDragOver(overEvent);
+    expect(component.isDragging).toBeTrue();
+
+    const leaveEvent = new DragEvent("dragleave", { cancelable: true });
+    component.onDragLeave(leaveEvent);
+    expect(component.dragCounter).toBe(0);
+    expect(component.isDragging).toBeFalse();
+
+    const droppedFile = new File(["sound-data"], "engine.wav", {
+      type: "audio/wav",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(droppedFile);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    component.onDrop(dropEvent);
+
+    expect(component.filePicked.emit).toHaveBeenCalledWith(droppedFile);
+    expect(component.close.emit).toHaveBeenCalled();
+    expect(component.isDragging).toBeFalse();
+    expect(component.dragCounter).toBe(0);
+  });
+
+  it("should display browse button and upload card when allowBrowse is true", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("allowBrowse", true);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const browseBtn = compiled.querySelector(".btn-browse");
+    const uploadCard = compiled.querySelector(".upload-card");
+
+    expect(browseBtn).toBeTruthy();
+    expect(uploadCard).toBeTruthy();
+  });
+
+  it("should hide browse button and upload card when allowBrowse is false", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("allowBrowse", false);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const browseBtn = compiled.querySelector(".btn-browse");
+    const uploadCard = compiled.querySelector(".upload-card");
+
+    expect(browseBtn).toBeNull();
+    expect(uploadCard).toBeNull();
+  });
 });

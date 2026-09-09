@@ -1252,6 +1252,58 @@ export class DataService {
   }
 
   // --- Asset Management ---
+  private assetsSubject = new BehaviorSubject<IAssetMessage[]>([]);
+  assets$ = this.assetsSubject.asObservable();
+
+  get loadedAssets(): IAssetMessage[] {
+    return this.assetsSubject.getValue();
+  }
+
+  setLoadedAssets(assets: IAssetMessage[]): void {
+    this.assetsSubject.next(assets || []);
+  }
+
+  registerAsset(asset: IAssetMessage): void {
+    if (!asset) return;
+    const current = this.assetsSubject.getValue();
+    const assetId = asset.model?.entityId;
+    const index = current.findIndex(
+      (a) =>
+        (assetId && a.model?.entityId === assetId) ||
+        (asset.hash &&
+          a.hash &&
+          a.hash.toLowerCase() === asset.hash.toLowerCase() &&
+          a.type === asset.type),
+    );
+    if (index !== -1) {
+      const updated = [...current];
+      updated[index] = asset;
+      this.assetsSubject.next(updated);
+    } else {
+      this.assetsSubject.next([...current, asset]);
+    }
+  }
+
+  async computeFileHash(file: File): Promise<string> {
+    if (!file) return "";
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  findAssetByHash(hash: string, type?: string): IAssetMessage | undefined {
+    if (!hash) return undefined;
+    const normalizedHash = hash.toLowerCase();
+    const current = this.assetsSubject.getValue();
+    return current.find((a) => {
+      if (!a.hash || a.hash.toLowerCase() !== normalizedHash) return false;
+      if (type && a.type && a.type.toLowerCase() !== type.toLowerCase())
+        return false;
+      return true;
+    });
+  }
+
   listAssets(): Observable<IAssetMessage[]> {
     return this.http
       .get(`${this.baseUrl}/api/assets/list`, {
@@ -1263,7 +1315,9 @@ export class DataService {
             const listResponse = ListAssetsResponse.decode(
               Reader.create(new Uint8Array(response as any)),
             );
-            return listResponse.assets;
+            const assets = listResponse.assets || [];
+            this.assetsSubject.next(assets);
+            return assets;
           } catch (error) {
             this.logger.error("Error decoding asset list protobuf", error);
             return [];
@@ -1306,7 +1360,9 @@ export class DataService {
           if (!uploadResponse.success) {
             throw new Error(uploadResponse.message);
           }
-          return uploadResponse.asset!;
+          const asset = uploadResponse.asset!;
+          this.registerAsset(asset);
+          return asset;
         }),
       );
   }
@@ -1455,6 +1511,10 @@ export class DataService {
           if (!deleteResponse.success) {
             throw new Error(deleteResponse.message);
           }
+          const current = this.assetsSubject.getValue();
+          this.assetsSubject.next(
+            current.filter((a) => a.model?.entityId !== id),
+          );
           return true;
         }),
       );
@@ -1481,6 +1541,13 @@ export class DataService {
           );
           if (!renameResponse.success) {
             throw new Error(renameResponse.message);
+          }
+          const current = this.assetsSubject.getValue();
+          const index = current.findIndex((a) => a.model?.entityId === id);
+          if (index !== -1) {
+            const updated = [...current];
+            updated[index] = { ...updated[index], name: newName };
+            this.assetsSubject.next(updated);
           }
           return true;
         }),

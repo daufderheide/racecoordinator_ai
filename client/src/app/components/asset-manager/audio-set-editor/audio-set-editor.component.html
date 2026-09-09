@@ -87,6 +87,7 @@
                 (urlChange)="
                   entry.url = $event; entry.name = entry.name || entry.url
                 "
+                (assetSelected)="entry.name = $event.name || entry.name"
                 (textChange)="entry.text = $event"
                 (typeChange)="entry.type = $event"
                 mode="single"

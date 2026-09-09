@@ -130,6 +130,58 @@ public class AssetServiceTest {
   }
 
   @Test
+  public void testSaveAsset_DeduplicationReusesExistingAssetAndPreservesOriginalName()
+      throws Exception {
+    byte[] data = "shared content bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    AssetMessage saved1 = assetService.saveAsset("original_sound.wav", "audio", data);
+    assertNotNull(saved1);
+    org.junit.Assert.assertEquals("original_sound.wav", saved1.getName());
+    org.junit.Assert.assertFalse(saved1.getHash().isEmpty());
+
+    // Second upload with exact same bytes but different filename
+    AssetMessage saved2 = assetService.saveAsset("different_name.wav", "audio", data);
+    assertNotNull(saved2);
+    // Must be the same entity ID and keep original name
+    org.junit.Assert.assertEquals(saved1.getModel().getEntityId(), saved2.getModel().getEntityId());
+    org.junit.Assert.assertEquals("original_sound.wav", saved2.getName());
+    org.junit.Assert.assertEquals(saved1.getUrl(), saved2.getUrl());
+
+    // Only 1 file should exist in the assets directory
+    File[] files = new File(assetsDir).listFiles();
+    assertNotNull(files);
+    org.junit.Assert.assertEquals(1, files.length);
+  }
+
+  @Test
+  public void testFindAssetByHashAndType() throws Exception {
+    byte[] data = "unique image bytes".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    AssetMessage saved = assetService.saveAsset("test_img.png", "image", data);
+    String hash = saved.getHash();
+
+    // Matching hash and type
+    AssetMessage found = assetService.findAssetByHashAndType(hash, "image");
+    assertNotNull(found);
+    org.junit.Assert.assertEquals(saved.getModel().getEntityId(), found.getModel().getEntityId());
+
+    // Mismatched type
+    assertNull(assetService.findAssetByHashAndType(hash, "audio"));
+
+    // Unknown hash
+    assertNull(assetService.findAssetByHashAndType("nonexistenthash", "image"));
+    assertNull(assetService.findAssetByHashAndType(null, "image"));
+  }
+
+  @Test
+  public void testCalculateSha256() {
+    byte[] data = "hello world".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    String hash = AssetService.calculateSha256(data);
+    // Known SHA-256 for "hello world"
+    org.junit.Assert.assertEquals(
+        "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9", hash);
+    org.junit.Assert.assertEquals("", AssetService.calculateSha256(null));
+  }
+
+  @Test
   public void testHumanReadableByteCountBin() {
     org.junit.Assert.assertEquals("0 B", AssetService.humanReadableByteCountBin(0));
     org.junit.Assert.assertEquals("500 B", AssetService.humanReadableByteCountBin(500));
