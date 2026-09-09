@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.64] - 2026-09-09
+
+### 🐛 Bug Fixes
+
+- Standardized editors.  Added item name to the title bar, disabled autocomplete text boxes, fixed hitting space on the season editor https://github.com/daufderheide/racecoordinator_ai/issues/654 ([27cdfb73](https://github.com/daufderheide/racecoordinator_ai/commit/27cdfb73))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.63...v1.0.0-beta.64">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.63] - 2026-09-08
 
 ### 🚀 New Features
