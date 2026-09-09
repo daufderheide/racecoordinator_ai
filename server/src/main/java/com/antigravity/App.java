@@ -118,22 +118,6 @@ public class App {
     }
   }
 
-  private static void deleteDirectory(File dir) {
-    if (dir.exists()) {
-      File[] files = dir.listFiles();
-      if (files != null) {
-        for (File file : files) {
-          if (file.isDirectory()) {
-            deleteDirectory(file);
-          } else {
-            file.delete();
-          }
-        }
-      }
-      dir.delete();
-    }
-  }
-
   @SuppressWarnings("checkstyle:MethodLength")
   public static void main(String[] args) {
     triggerLogRollover();
@@ -160,22 +144,6 @@ public class App {
         if ("--headless".equals(arg)) {
           headless = true;
         }
-      }
-
-      // TODO(https://github.com/daufderheide/racecoordinator_ai/issues/581):
-      // Remove this mongodb code after it's been in a release for awhile.
-      // Legacy Mongo Data directory cleanup to reclaim disk space
-      File legacyMongoDir = new File(appDataDir, "mongodb_data");
-      if (legacyMongoDir.exists()) {
-        logger.info(
-            "Found legacy MongoDB data directory at {}. Deleting to reclaim disk space...",
-            legacyMongoDir.getAbsolutePath());
-        deleteDirectory(legacyMongoDir);
-        logger.info("Legacy MongoDB data directory deleted.");
-      }
-      File legacyTempDir = new File(appDataDir, "mongo_temp");
-      if (legacyTempDir.exists()) {
-        deleteDirectory(legacyTempDir);
       }
 
       Runtime.getRuntime()
