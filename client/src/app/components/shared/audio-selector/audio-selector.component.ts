@@ -212,6 +212,9 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   onTypeChange(newType: "preset" | "tts" | "none" | "audio_set") {
+    if (this.isPlaying) {
+      this.stop();
+    }
     this.localType.set(newType);
     if (newType === "none" || newType === "tts") {
       this.localSelectedAsset.set(null);
@@ -243,6 +246,10 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   closeItemSelector() {
+    if (this.previewAudio) {
+      this.previewAudio.pause();
+      this.previewAudio = null;
+    }
     this.showItemSelector = false;
   }
 
@@ -260,20 +267,27 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
 
   isPlaying = false;
   private currentAudio: HTMLAudioElement | null = null;
+  private previewAudio: HTMLAudioElement | null = null;
+  private currentPlaybackId = 0;
 
   onPlayPreview(item: any) {
     if (this.isPlaying) {
       this.stop();
     }
+    if (this.previewAudio) {
+      this.previewAudio.pause();
+      this.previewAudio = null;
+    }
     const playContext = this.context() || mockTTSContext();
-    playSound(
-      item.type === "audio_set" ? "audio_set" : "preset",
-      item.url || item.model?.entityId || item.entity_id,
-      "",
-      this.dataService.serverUrl,
-      playContext,
-      this.logger,
-    );
+    this.previewAudio =
+      playSound(
+        item.type === "audio_set" ? "audio_set" : "preset",
+        item.url || item.model?.entityId || item.entity_id,
+        "",
+        this.dataService.serverUrl,
+        playContext,
+        this.logger,
+      ) || null;
   }
 
   play() {
@@ -292,10 +306,15 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   stop() {
+    this.currentPlaybackId++;
     this.isPlaying = false;
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio = null;
+    }
+    if (this.previewAudio) {
+      this.previewAudio.pause();
+      this.previewAudio = null;
     }
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
@@ -325,11 +344,12 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       return;
     }
 
+    const playbackId = ++this.currentPlaybackId;
     this.isPlaying = true;
     this.cdr.detectChanges();
 
     for (const entry of asset.audioEntries) {
-      if (!this.isPlaying) break;
+      if (!this.isPlaying || this.currentPlaybackId !== playbackId) break;
       try {
         const entryType = entry.type || "preset";
         if (entryType === "preset") {
@@ -341,23 +361,30 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         this.logger.error("Error playing audio set entry", e);
       }
     }
-    this.isPlaying = false;
-    this.cdr.detectChanges();
+    if (this.currentPlaybackId === playbackId) {
+      this.isPlaying = false;
+      this.cdr.detectChanges();
+    }
   }
 
   private playStandard() {
+    const playbackId = ++this.currentPlaybackId;
     this.isPlaying = true;
     this.cdr.detectChanges();
 
     if (this.effectiveType() === "preset") {
       this.playUrl(this.effectiveUrl())
         .then(() => {
-          this.isPlaying = false;
-          this.cdr.detectChanges();
+          if (this.currentPlaybackId === playbackId) {
+            this.isPlaying = false;
+            this.cdr.detectChanges();
+          }
         })
         .catch(() => {
-          this.isPlaying = false;
-          this.cdr.detectChanges();
+          if (this.currentPlaybackId === playbackId) {
+            this.isPlaying = false;
+            this.cdr.detectChanges();
+          }
         });
     } else if (this.effectiveType() === "tts") {
       this.playTTS(this.text());
@@ -371,14 +398,23 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       const audio = new Audio(playableUrl);
       this.currentAudio = audio;
       audio.onended = () => {
-        this.currentAudio = null;
+        if (this.currentAudio === audio) {
+          this.currentAudio = null;
+        }
         resolve();
       };
       audio.onerror = (err) => {
-        this.currentAudio = null;
+        if (this.currentAudio === audio) {
+          this.currentAudio = null;
+        }
         reject(err);
       };
-      audio.play().catch(reject);
+      audio.play().catch((err) => {
+        if (this.currentAudio === audio) {
+          this.currentAudio = null;
+        }
+        reject(err);
+      });
     });
   }
 
@@ -389,6 +425,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       return;
     }
 
+    const playbackId = this.currentPlaybackId;
     window.speechSynthesis.cancel();
 
     const playContext = this.context() || mockTTSContext();
@@ -396,12 +433,16 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
 
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
     utterance.onend = () => {
-      this.isPlaying = false;
-      this.cdr.detectChanges();
+      if (this.currentPlaybackId === playbackId) {
+        this.isPlaying = false;
+        this.cdr.detectChanges();
+      }
     };
     utterance.onerror = () => {
-      this.isPlaying = false;
-      this.cdr.detectChanges();
+      if (this.currentPlaybackId === playbackId) {
+        this.isPlaying = false;
+        this.cdr.detectChanges();
+      }
     };
 
     window.speechSynthesis.speak(utterance);
@@ -539,7 +580,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   private selectResolvedAsset(asset: any) {
-    if (!asset) return;
+    if (!asset || this.readonly()) return;
 
     this.closeItemSelector();
 
@@ -569,5 +610,8 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.onUrlChange(val);
       this.assetSelected.emit(asset);
     }
+
+    this.stop();
+    this.play();
   }
 }

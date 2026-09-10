@@ -804,4 +804,137 @@ describe("AudioSelectorComponent", () => {
       expect(component.isDragging).toBeFalse();
     });
   });
+
+  describe("Auto-play on resource selection", () => {
+    it("should auto-play preset audio resource immediately upon selection as if play button was pressed", async () => {
+      mockAudioInstance.play.calls.reset();
+      component.onAssetSelected({
+        model: { entityId: "preview-sound-id" },
+        name: "Engine Sound",
+        type: "audio",
+        url: "/assets/engine.mp3",
+      });
+
+      expect(window.Audio).toHaveBeenCalled();
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+      expect(component.isPlaying).toBeTrue();
+
+      // Simulate sound ended
+      if (mockAudioInstance.onended) {
+        mockAudioInstance.onended();
+      }
+      await Promise.resolve();
+      expect(component.isPlaying).toBeFalse();
+    });
+
+    it("should auto-play audio_set entries sequentially upon selection", async () => {
+      const audioSet = {
+        entity_id: "set-autoplay-1",
+        name: "Countdown Set",
+        type: "audio_set",
+        audioEntries: [
+          { url: "beep1.mp3", timeSeconds: 1 },
+          { url: "beep2.mp3", timeSeconds: 2 },
+        ],
+      };
+      fixture.componentRef.setInput("mode", "set");
+      fixture.detectChanges();
+
+      const audioSpy = (window.Audio as unknown as jasmine.Spy).and.callFake(
+        function (_url: string) {
+          setTimeout(() => {
+            if (mockAudioInstance.onended) mockAudioInstance.onended();
+          }, 0);
+          return mockAudioInstance;
+        },
+      );
+
+      component.onAssetSelected(audioSet);
+      expect(component.isPlaying).toBeTrue();
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(component.isPlaying).toBeFalse();
+      expect(audioSpy).toHaveBeenCalledTimes(2);
+      expect(audioSpy.calls.argsFor(0)[0]).toContain("beep1.mp3");
+      expect(audioSpy.calls.argsFor(1)[0]).toContain("beep2.mp3");
+    });
+
+    it("should stop in-flight playback before auto-playing newly selected resource", () => {
+      spyOn(component, "stop").and.callThrough();
+
+      // Select first sound
+      component.onAssetSelected({
+        entity_id: "sound-1",
+        name: "Sound 1",
+        type: "audio",
+        url: "sound1.mp3",
+      });
+      expect(component.isPlaying).toBeTrue();
+
+      // Select second sound while first is playing
+      component.onAssetSelected({
+        entity_id: "sound-2",
+        name: "Sound 2",
+        type: "audio",
+        url: "sound2.mp3",
+      });
+
+      expect(component.stop).toHaveBeenCalled();
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect(component.isPlaying).toBeTrue();
+    });
+
+    it("should stop active modal preview when newly selecting an asset", () => {
+      const previewItem = {
+        entity_id: "modal-preview-sound",
+        name: "Preview Sound",
+        type: "audio",
+        url: "modal_preview.mp3",
+      };
+      component.onPlayPreview(previewItem);
+
+      // Now select an asset
+      component.onAssetSelected({
+        entity_id: "selected-sound",
+        name: "Selected Sound",
+        type: "audio",
+        url: "selected.mp3",
+      });
+
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should stop active playback when switching type to none", () => {
+      component.onAssetSelected({
+        entity_id: "sound-to-stop",
+        name: "Sound To Stop",
+        type: "audio",
+        url: "sound.mp3",
+      });
+      expect(component.isPlaying).toBeTrue();
+
+      component.onTypeChange("none");
+
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect(component.isPlaying).toBeFalse();
+    });
+
+    it("should not auto-play if component is readonly", () => {
+      fixture.componentRef.setInput("readonly", true);
+      fixture.detectChanges();
+      mockAudioInstance.play.calls.reset();
+
+      (component as any).selectResolvedAsset({
+        entity_id: "readonly-sound",
+        name: "Readonly Sound",
+        type: "audio",
+        url: "readonly.mp3",
+      });
+
+      expect(mockAudioInstance.play).not.toHaveBeenCalled();
+      expect(component.isPlaying).toBeFalse();
+    });
+  });
 });
