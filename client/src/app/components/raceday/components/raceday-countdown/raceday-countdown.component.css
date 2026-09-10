@@ -80,9 +80,14 @@
   flex-shrink: 1;
   min-width: 0;
   min-height: 0;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5));
-  opacity: 0.8;
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  filter: none;
+  transform: none;
+  position: relative;
+  z-index: 1;
 }
 
 .countdown-overlay.portrait .start-lamp,
@@ -91,14 +96,26 @@
   height: clamp(60px, 11vh, 120px);
 }
 
-.start-lamp.on {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8));
-  opacity: 1;
+/* Glow Effect Enabled: Red Light illuminated */
+.start-lamp.has-glow.on {
+  transform: scale(1.25);
+  filter: drop-shadow(0 0 16px rgba(255, 30, 30, 0.85))
+    drop-shadow(0 0 30px rgba(255, 0, 0, 0.5));
+  z-index: 2;
 }
 
-.start-lamp.go {
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 25px rgba(0, 255, 0, 1));
-  opacity: 1;
+/* Glow Effect Enabled: Green Lights illuminated */
+.start-lamp.has-glow.go {
+  transform: scale(1.4);
+  filter: drop-shadow(0 0 20px rgba(0, 255, 70, 0.9))
+    drop-shadow(0 0 40px rgba(0, 255, 50, 0.6));
+  z-index: 3;
+}
+
+/* Glow Effect Disabled: Lights appear unmodified */
+.start-lamp:not(.has-glow).on,
+.start-lamp:not(.has-glow).go {
+  transform: none;
+  filter: none;
+  z-index: 1;
 }

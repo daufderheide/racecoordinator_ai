@@ -115,4 +115,10 @@ export class AssetManagerHarnessE2e implements AssetManagerHarnessBase {
   async clickBack(): Promise<void> {
     await this.backButton.click();
   }
+
+  async setLayoutMode(
+    mode: "list" | "small" | "medium" | "large",
+  ): Promise<void> {
+    await this.locator.locator(`.layout-btn-${mode}`).click();
+  }
 }

@@ -8,22 +8,25 @@
     [class.small]="size() === 'small'"
     [class.medium]="size() === 'medium'"
     [class.large]="size() === 'large'"
+    (dragenter)="onDragEnter($event)"
     (drop)="onDrop($event)"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave($event)"
     (click)="openSelector()"
   >
-    @if (imageUrl() || pendingPreview) {
+    @if (effectiveImageUrl() || pendingPreview) {
       <app-asset-preview
         [assetId]="assetId()"
         [type]="assetType()"
-        [imageUrl]="pendingPreview || imageUrl()"
+        [imageUrl]="effectiveImageUrl()"
         [images]="images()"
         [animate]="true"
       >
       </app-asset-preview>
     }
-    @if (imageUrl() && !pendingPreview && !isUploading && !disabled()) {
+    @if (
+      effectiveImageUrl() && !pendingPreview && !isUploading && !disabled()
+    ) {
       <div
         class="remove-button"
         (click)="removeImage($event)"
@@ -32,7 +35,7 @@
         <span class="material-icons" style="font-size: 1.2rem">close</span>
       </div>
     }
-    @if (!imageUrl() && !pendingPreview) {
+    @if (!effectiveImageUrl() && !pendingPreview) {
       <div class="drop-hint">
         {{ "UE_HINT_DRAG_IMAGE" | translate }}
       </div>
@@ -43,14 +46,21 @@
       </div>
     }
   </div>
+  @if (errorMessage) {
+    <div class="image-error-message">
+      {{ errorMessage | translate }}
+    </div>
+  }
 </div>
 
 <app-item-selector
   [visible]="showSelector"
   [title]="'UE_TITLE_SELECT_IMAGE' | translate"
-  [items]="assets()"
+  [items]="allAvailableAssets()"
   [itemType]="assetType()"
+  [allowBrowse]="!disabled()"
   (select)="onAssetSelected($event)"
+  (filePicked)="onFilePicked($event)"
   (close)="closeSelector()"
 >
 </app-item-selector>

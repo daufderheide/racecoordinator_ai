@@ -34,4 +34,5 @@ message AssetMessage {
   repeated AudioSetEntry audio_entries = 7;
   int32 num_lanes = 8;
   repeated CustomRotation custom_rotations = 9;
+  string hash = 10;
 }

@@ -965,6 +965,60 @@ describe("DataService", () => {
       reqUp.flush(uploadProto.slice().buffer);
     });
 
+    it("should compute SHA-256 file hash accurately", async () => {
+      const file = new File(["test data for hash calculation"], "test.png", {
+        type: "image/png",
+      });
+      const hash = await service.computeFileHash(file);
+      expect(hash).toBeTruthy();
+      expect(hash.length).toBe(64);
+      const emptyHash = await service.computeFileHash(null as any);
+      expect(emptyHash).toBe("");
+    });
+
+    it("should register, update, and find assets by hash and type", () => {
+      const asset1 = {
+        model: { entityId: "asset-1" },
+        name: "car.png",
+        type: "image",
+        hash: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      };
+      const asset2 = {
+        model: { entityId: "asset-2" },
+        name: "beep.mp3",
+        type: "audio",
+        hash: "1122334455667788990011223344556677889900112233445566778899001122",
+      };
+
+      service.registerAsset(asset1);
+      service.registerAsset(asset2);
+
+      const foundImage = service.findAssetByHash(
+        "ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890",
+        "image",
+      );
+      expect(foundImage).toBeDefined();
+      expect(foundImage?.name).toBe("car.png");
+
+      const mismatch = service.findAssetByHash(
+        "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+        "audio",
+      );
+      expect(mismatch).toBeUndefined();
+
+      expect(service.findAssetByHash("")).toBeUndefined();
+
+      const updatedAsset1 = {
+        ...asset1,
+        name: "car_updated.png",
+      };
+      service.registerAsset(updatedAsset1);
+      const reFound = service.findAssetByHash(asset1.hash);
+      expect(reFound?.name).toBe("car_updated.png");
+
+      service.registerAsset(null as any);
+    });
+
     it("should handle saveImageSet and saveAudioSet", (done) => {
       const imageSetProto = SaveImageSetResponse.encode({
         success: true,

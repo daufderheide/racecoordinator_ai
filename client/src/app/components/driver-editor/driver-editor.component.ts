@@ -765,6 +765,7 @@ export class DriverEditorComponent
         audio.url = defaultUrl;
       }
       this.captureState();
+      this.cdr.markForCheck();
     }
   }
 
@@ -783,6 +784,7 @@ export class DriverEditorComponent
     if (audio) {
       audio.url = url;
       this.captureState();
+      this.cdr.markForCheck();
     }
   }
 
@@ -801,7 +803,36 @@ export class DriverEditorComponent
     if (audio) {
       audio.text = text;
       this.onInputChange();
+      this.cdr.markForCheck();
     }
+  }
+
+  onAssetSelected(asset: any) {
+    if (!asset) return;
+    const type = normalizeAssetType(asset.type);
+    if (type === AssetType.AUDIO) {
+      const id = asset.model?.entityId || asset.entity_id || asset.id;
+      const exists = this.soundAssets.some(
+        (a) =>
+          (id && (a.model?.entityId || a.entity_id || a.id) === id) ||
+          (asset.url && a.url === asset.url),
+      );
+      if (!exists) {
+        this.soundAssets = [...this.soundAssets, asset];
+      }
+    } else if (type === AssetType.IMAGE) {
+      const id = asset.model?.entityId || asset.entity_id || asset.id;
+      const exists = this.avatarAssets.some(
+        (a) =>
+          (id && (a.model?.entityId || a.entity_id || a.id) === id) ||
+          (asset.url && a.url === asset.url),
+      );
+      if (!exists) {
+        this.avatarAssets = [...this.avatarAssets, asset];
+      }
+    }
+    this.captureState();
+    this.cdr.markForCheck();
   }
 
   selectDriver(driver: Driver) {

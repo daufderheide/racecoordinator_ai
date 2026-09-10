@@ -3980,8 +3980,14 @@ describe("UIEditorComponent", () => {
 
       const options = component.getLayoutAspectRatioOptions(customUi);
       expect(options.some((o) => o.ratio === "16:9")).toBeTrue();
+      expect(options.some((o) => o.ratio === "5:4")).toBeTrue();
 
       spyOn(component, "captureState");
+      component.setLayoutAspectRatio("5:4", customUi);
+      expect(component.getLayoutAspectRatio(customUi)).toBe("5:4");
+      expect(component.parsedLayouts.get("ui_aspect_test")?.aspectRatio).toBe(
+        "5:4",
+      );
       component.setLayoutAspectRatio("9:16", customUi);
       expect(component.getLayoutAspectRatio(customUi)).toBe("9:16");
       expect(component.parsedLayouts.get("ui_aspect_test")?.aspectRatio).toBe(

@@ -567,6 +567,10 @@ export class RacedayLayoutUtils {
             blurAmount: 50,
             lampSizingMode: "custom",
             previewLampCount: 5,
+            glowEffect: true,
+            glowOverlap: 100,
+            glowRedOverlap: 100,
+            glowGreenOverlap: 100,
             ...w.customSettings,
           };
           if (!w.customSettings["lampSizingMode"]) {
@@ -574,6 +578,18 @@ export class RacedayLayoutUtils {
           }
           if (!w.customSettings["previewLampCount"]) {
             w.customSettings["previewLampCount"] = 5;
+          }
+          if (w.customSettings["glowEffect"] === undefined) {
+            w.customSettings["glowEffect"] = true;
+          }
+          if (w.customSettings["glowOverlap"] === undefined) {
+            w.customSettings["glowOverlap"] = 100;
+          }
+          if (w.customSettings["glowRedOverlap"] === undefined) {
+            w.customSettings["glowRedOverlap"] = 100;
+          }
+          if (w.customSettings["glowGreenOverlap"] === undefined) {
+            w.customSettings["glowGreenOverlap"] = 100;
           }
         }
       }
@@ -605,6 +621,10 @@ export class RacedayLayoutUtils {
         blurAmount: 50,
         lampSizingMode: "custom",
         previewLampCount: 5,
+        glowEffect: true,
+        glowOverlap: 100,
+        glowRedOverlap: 100,
+        glowGreenOverlap: 100,
       },
     };
 

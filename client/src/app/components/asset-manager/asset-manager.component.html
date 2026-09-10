@@ -285,6 +285,11 @@
                 {{ "AM_FILTER_CUSTOM_ROTATIONS" | translate }}
               </div>
             </div>
+            <app-asset-layout-switcher
+              id="asset-layout-switcher"
+              [(layout)]="layoutMode"
+              storageKey="am_layout_mode"
+            ></app-asset-layout-switcher>
           </div>
         </div>
 
@@ -309,10 +314,20 @@
         </div>
 
         <!-- Asset Grid -->
-        <div class="asset-grid">
+        <div
+          class="asset-grid"
+          [class.layout-list]="layoutMode === 'list'"
+          [class.layout-small]="layoutMode === 'small'"
+          [class.layout-medium]="layoutMode === 'medium'"
+          [class.layout-large]="layoutMode === 'large'"
+        >
           @for (asset of filteredAssets; track asset) {
             <div
               class="asset-card"
+              [class.layout-list]="layoutMode === 'list'"
+              [class.layout-small]="layoutMode === 'small'"
+              [class.layout-medium]="layoutMode === 'medium'"
+              [class.layout-large]="layoutMode === 'large'"
               [class.selected]="asset.selected"
               [class.playing]="currentlyPlayingAsset?.id === asset.id"
               [draggable]="asset.type === 'image'"

@@ -121,7 +121,8 @@ public class CustomUI extends Model {
             + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
             + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
-            + "\"previewLampCount\":5}}]}";
+            + "\"previewLampCount\":5,\"glowEffect\":true,\"glowOverlap\":100,"
+            + "\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}]}";
     String columnsJson =
         "[\"driver.nickname\",\"lapCount\",\"lastLapTime\",\"averageLapTime\",\"gapLeader\","
             + "\"ghostPacingLeaderAvg\"]";
@@ -156,7 +157,7 @@ public class CustomUI extends Model {
             + "{\"backgroundColor\":\"\",\"fontFamily\":\"\",\"fontSize\":24,\"height\":92,\"id\":\"widget-qr\",\"scaleMode\":\"auto\",\"textColor\":\"\",\"textScaleFactor\":1,\"widgetType\":\"qr\",\"width\":119,\"x\":422,\"y\":42,\"zIndex\":217},"
             + "{\"id\":\"widget-1783269768449\",\"widgetType\":\"flag\",\"x\":541,\"y\":41,\"width\":160,\"height\":93,\"zIndex\":212,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1},"
             + "{\"id\":\"widget-1783269787601\",\"widgetType\":\"lane-view\",\"x\":0,\"y\":124,\"width\":1728,\"height\":775,\"zIndex\":221,\"scaleMode\":\"auto\",\"fontFamily\":\"\",\"textColor\":\"\",\"backgroundColor\":\"\",\"fontSize\":24,\"textScaleFactor\":1,\"customSettings\":{\"isVertical\":true,\"timeDecimalPlaces\":3,\"lapDecimalPlaces\":0,\"columnFontFamily\":\"\",\"columnFontSize\":24,\"columnTextColor\":\"\",\"dataFontFamily\":\"\",\"dataFontSize\":54,\"dataTextColor\":\"\",\"insetTimeDecimalPlaces\":3,\"insetLapDecimalPlaces\":2,\"insetFontFamily\":\"\",\"insetFontSize\":24,\"insetTextColor\":\"\"}},"
-            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":364,\"y\":324,\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5}}],\"baseWidth\":1728,\"baseHeight\":899}";
+            + "{\"id\":\"widget-countdown\",\"widgetType\":\"countdown\",\"x\":364,\"y\":324,\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\",\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\",\"previewLampCount\":5,\"glowEffect\":true,\"glowOverlap\":100,\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}],\"baseWidth\":1728,\"baseHeight\":899}";
     String columnsJson =
         "[\"laneNumber\",\"lastLapTime\",\"bestLapTime\",\"lastLaps\",\"lapCount\"]";
     String columnLayoutsJson =
@@ -215,7 +216,8 @@ public class CustomUI extends Model {
             + "\"width\":1000,\"height\":250,\"zIndex\":2000,\"scaleMode\":\"auto\","
             + "\"customSettings\":{\"orientation\":\"horizontal\",\"lampScale\":1.0,"
             + "\"blurArea\":\"fullscreen\",\"blurAmount\":50,\"lampSizingMode\":\"custom\","
-            + "\"previewLampCount\":5}}]}";
+            + "\"previewLampCount\":5,\"glowEffect\":true,\"glowOverlap\":100,"
+            + "\"glowRedOverlap\":100,\"glowGreenOverlap\":100}}]}";
     String columnsJson =
         "[\"driver.nickname\",\"imageset_fuel-gauge-builtin\",\"lapCount\",\"lastLapTime\","
             + "\"gapLeader\"]";
@@ -299,6 +301,22 @@ public class CustomUI extends Model {
                 cs.put("previewLampCount", 5);
                 modified = true;
               }
+              if (!cs.has("glowEffect")) {
+                cs.put("glowEffect", true);
+                modified = true;
+              }
+              if (!cs.has("glowOverlap")) {
+                cs.put("glowOverlap", 100);
+                modified = true;
+              }
+              if (!cs.has("glowRedOverlap")) {
+                cs.put("glowRedOverlap", 100);
+                modified = true;
+              }
+              if (!cs.has("glowGreenOverlap")) {
+                cs.put("glowGreenOverlap", 100);
+                modified = true;
+              }
             }
             return modified ? mapper.writeValueAsString(rootObj) : layoutJson;
           }
@@ -327,6 +345,10 @@ public class CustomUI extends Model {
         customSettings.put("blurAmount", 50);
         customSettings.put("lampSizingMode", "custom");
         customSettings.put("previewLampCount", 5);
+        customSettings.put("glowEffect", true);
+        customSettings.put("glowOverlap", 100);
+        customSettings.put("glowRedOverlap", 100);
+        customSettings.put("glowGreenOverlap", 100);
         countdownWidget.set("customSettings", customSettings);
 
         widgetsArray.add(countdownWidget);

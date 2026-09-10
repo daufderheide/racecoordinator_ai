@@ -1,7 +1,13 @@
 import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Component, input, output } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
+import { of } from "rxjs";
 import { DataService } from "@app/data.service";
 import { TranslationService } from "@app/services/translation.service";
 
@@ -17,9 +23,13 @@ import { AudioSelectorHarness } from "./testing/audio-selector.harness";
 class MockItemSelectorComponent {
   items = input<any[]>([]);
   visible = input<boolean>(false);
+  title = input<string>("");
   select = output<any>();
   close = output<void>();
+  play = output<any>();
   itemType = input<string>("image");
+  allowBrowse = input<boolean>(true);
+  filePicked = output<File>();
 }
 
 import { Pipe, PipeTransform } from "@angular/core";
@@ -52,7 +62,15 @@ describe("AudioSelectorComponent", () => {
       } as any);
     }
 
-    mockDataService = jasmine.createSpyObj("DataService", ["uploadAsset"]);
+    mockDataService = jasmine.createSpyObj("DataService", [
+      "uploadAsset",
+      "computeFileHash",
+      "findAssetByHash",
+    ]);
+    mockDataService.computeFileHash.and.returnValue(
+      Promise.resolve("audio-hash-1234"),
+    );
+    mockDataService.findAssetByHash.and.returnValue(undefined);
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
@@ -452,5 +470,471 @@ describe("AudioSelectorComponent", () => {
     // Since we can't easily check visibility without adding to harness,
     // we check that clickPlay doesn't throw (meaning the button was found).
     expect(playButton).toBeTrue();
+  });
+
+  it("should handle drag over and drag leave", () => {
+    const event = new DragEvent("dragover");
+    spyOn(event, "preventDefault");
+    spyOn(event, "stopPropagation");
+
+    component.onDragOver(event);
+    expect(component.isDragging).toBeTrue();
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.stopPropagation).toHaveBeenCalled();
+
+    const leaveEvent = new DragEvent("dragleave");
+    spyOn(leaveEvent, "preventDefault");
+    spyOn(leaveEvent, "stopPropagation");
+    component.onDragLeave(leaveEvent);
+    expect(component.isDragging).toBeFalse();
+  });
+
+  it("should deduplicate dropped audio file and reuse existing asset without upload", fakeAsync(() => {
+    const existingAsset = {
+      model: { entityId: "existing-audio-1" },
+      url: "/assets/existing.mp3",
+      hash: "hash-audio-duplicate",
+      name: "Existing Sound",
+      type: "audio",
+    };
+    mockDataService.computeFileHash.and.returnValue(
+      Promise.resolve("hash-audio-duplicate"),
+    );
+    mockDataService.findAssetByHash.and.returnValue(existingAsset);
+
+    const file = new File(["audio-binary-data"], "duplicate.mp3", {
+      type: "audio/mp3",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    let urlEmitted: string | undefined;
+    (component as any).urlChange.subscribe((val: any) => (urlEmitted = val));
+    spyOn(component.assetSelected, "emit");
+
+    component.onDrop(dropEvent);
+    tick();
+
+    expect(mockDataService.computeFileHash).toHaveBeenCalledWith(file);
+    expect(mockDataService.findAssetByHash).toHaveBeenCalledWith(
+      "hash-audio-duplicate",
+      "audio",
+    );
+    expect(mockDataService.uploadAsset).not.toHaveBeenCalled();
+    expect(urlEmitted).toBe(existingAsset.model.entityId);
+    expect(component.assetSelected.emit).toHaveBeenCalledWith(existingAsset);
+  }));
+
+  it("should upload new audio file when dropped and not duplicate", fakeAsync(() => {
+    const file = new File(["new-audio-data"], "new_sound.wav", {
+      type: "audio/wav",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    const newAsset = {
+      model: { entityId: "new-sound-id" },
+      name: "new_sound.wav",
+      type: "audio",
+      url: "/api/assets/download/new-sound-id",
+    };
+    mockDataService.uploadAsset.and.returnValue(of(newAsset));
+
+    spyOn(window as any, "FileReader").and.callFake(function () {
+      return {
+        readAsArrayBuffer: jasmine
+          .createSpy("readAsArrayBuffer")
+          .and.callFake(function (this: any) {
+            setTimeout(() => {
+              if (this.onload)
+                this.onload({ target: { result: new ArrayBuffer(8) } });
+            });
+          }),
+        onload: null,
+      };
+    });
+
+    let urlEmitted: string | undefined;
+    (component as any).urlChange.subscribe((val: any) => (urlEmitted = val));
+
+    component.onDrop(dropEvent);
+    tick();
+
+    expect(mockDataService.uploadAsset).toHaveBeenCalled();
+    expect(urlEmitted).toBe("new-sound-id");
+    expect(component.isUploading).toBeFalse();
+  }));
+
+  it("should reject invalid audio file format with transient error and clear after 4 seconds", fakeAsync(() => {
+    const file = new File(["some document text"], "report.pdf", {
+      type: "application/pdf",
+    });
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+    const dropEvent = new DragEvent("drop", { dataTransfer });
+
+    component.onDrop(dropEvent);
+    tick();
+
+    expect(component.errorMessage).toBe("AS_ERR_INVALID_AUDIO");
+    expect(mockDataService.uploadAsset).not.toHaveBeenCalled();
+
+    tick(4000);
+    expect(component.errorMessage).toBeNull();
+  }));
+
+  it("should handle onFilePicked from open file dialog and immediately update selected sound name", fakeAsync(() => {
+    component.showItemSelector = true;
+    mockTranslationService.translate.and.callFake((k: string) => k);
+    const file = new File(["audio-content"], "picked.wav", {
+      type: "audio/wav",
+    });
+    const mockAsset = {
+      model: { entityId: "picked-id" },
+      name: "Custom Sound Effect",
+      url: "/assets/picked.wav",
+      type: "audio",
+    };
+    mockDataService.uploadAsset.and.returnValue(of(mockAsset));
+
+    spyOn(window as any, "FileReader").and.callFake(function () {
+      return {
+        readAsArrayBuffer: jasmine
+          .createSpy("readAsArrayBuffer")
+          .and.callFake(function (this: any) {
+            setTimeout(() => {
+              if (this.onload)
+                this.onload({ target: { result: new ArrayBuffer(0) } });
+            });
+          }),
+        onload: null,
+      };
+    });
+
+    let emittedUrl: string | undefined;
+    let emittedAsset: any;
+    component.urlChange.subscribe((u) => (emittedUrl = u));
+    component.assetSelected.subscribe((a) => (emittedAsset = a));
+
+    component.onFilePicked(file);
+    expect(component.showItemSelector).toBeFalse();
+    tick();
+
+    expect(mockDataService.uploadAsset).toHaveBeenCalled();
+    expect(emittedUrl).toBe("picked-id");
+    expect(emittedAsset).toEqual(mockAsset);
+    expect(component.selectedAsset()).toEqual(mockAsset);
+    expect(component.selectedAssetName()).toBe("Custom Sound Effect");
+  }));
+
+  describe("Drag and Drop with type switching and dragCounter", () => {
+    it("should switch type from none to preset and configure audio resource when audio file is dropped", fakeAsync(() => {
+      fixture.componentRef.setInput("type", "none");
+      fixture.detectChanges();
+      expect(component.effectiveType()).toBe("none");
+
+      const existingAsset = {
+        model: { entityId: "sound-none-to-preset" },
+        name: "Engine Roar.wav",
+        type: "audio",
+        url: "/assets/engine.wav",
+        hash: "hash-engine-123",
+      };
+      mockDataService.computeFileHash.and.returnValue(
+        Promise.resolve("hash-engine-123"),
+      );
+      mockDataService.findAssetByHash.and.returnValue(existingAsset);
+
+      const file = new File(["audio-raw"], "Engine Roar.wav", {
+        type: "audio/wav",
+      });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      const dropEvent = new DragEvent("drop", { dataTransfer });
+
+      let emittedType: string | undefined;
+      let emittedUrl: string | undefined;
+      let emittedAsset: any;
+      component.typeChange.subscribe((t) => (emittedType = t));
+      component.urlChange.subscribe((u) => (emittedUrl = u));
+      component.assetSelected.subscribe((a) => (emittedAsset = a));
+
+      component.showItemSelector = true;
+      component.onDrop(dropEvent);
+      tick();
+
+      expect(emittedType).toBe("preset");
+      expect(emittedUrl).toBe("sound-none-to-preset");
+      expect(emittedAsset).toEqual(existingAsset);
+      expect(component.effectiveType()).toBe("preset");
+      expect(component.selectedAssetName()).toBe("Engine Roar.wav");
+      expect(component.showItemSelector).toBeFalse();
+    }));
+
+    it("should close the dialog and assume the dropped file as the selection when dropped while dialog is open", fakeAsync(() => {
+      component.openItemSelector();
+      expect(component.showItemSelector).toBeTrue();
+
+      const newAsset = {
+        model: { entityId: "dialog-drop-sound" },
+        name: "Horn Blast.wav",
+        type: "audio",
+        url: "/assets/horn.wav",
+      };
+      mockDataService.uploadAsset.and.returnValue(of(newAsset));
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        return {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function (this: any) {
+              setTimeout(() => {
+                if (this.onload)
+                  this.onload({ target: { result: new ArrayBuffer(4) } });
+              });
+            }),
+          onload: null,
+        };
+      });
+
+      const file = new File(["horn-data"], "Horn Blast.wav", {
+        type: "audio/wav",
+      });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      const dropEvent = new DragEvent("drop", { dataTransfer });
+
+      let emittedUrl: string | undefined;
+      component.urlChange.subscribe((u) => (emittedUrl = u));
+
+      component.onDrop(dropEvent);
+      tick();
+
+      expect(component.showItemSelector).toBeFalse();
+      expect(emittedUrl).toBe("dialog-drop-sound");
+      expect(component.effectiveType()).toBe("preset");
+      expect(component.selectedAssetName()).toBe("Horn Blast.wav");
+    }));
+
+    it("should switch type from tts to preset when audio file is dropped in tts mode", fakeAsync(() => {
+      fixture.componentRef.setInput("type", "tts");
+      fixture.componentRef.setInput("text", "Hello racer");
+      fixture.detectChanges();
+      expect(component.effectiveType()).toBe("tts");
+
+      const newAsset = {
+        model: { entityId: "horn-sound" },
+        name: "Horn.mp3",
+        type: "audio",
+        url: "/assets/horn.mp3",
+      };
+      mockDataService.uploadAsset.and.returnValue(of(newAsset));
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        return {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function (this: any) {
+              setTimeout(() => {
+                if (this.onload)
+                  this.onload({ target: { result: new ArrayBuffer(4) } });
+              });
+            }),
+          onload: null,
+        };
+      });
+
+      const file = new File(["horn-data"], "Horn.mp3", {
+        type: "audio/mp3",
+      });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      const dropEvent = new DragEvent("drop", { dataTransfer });
+
+      let emittedType: string | undefined;
+      let emittedUrl: string | undefined;
+      component.typeChange.subscribe((t) => (emittedType = t));
+      component.urlChange.subscribe((u) => (emittedUrl = u));
+
+      component.onDrop(dropEvent);
+      tick();
+
+      expect(emittedType).toBe("preset");
+      expect(emittedUrl).toBe("horn-sound");
+      expect(component.effectiveType()).toBe("preset");
+    }));
+
+    it("should track dragCounter on dragenter, dragover, and dragleave without child element flickering", () => {
+      const enterEvent1 = new DragEvent("dragenter", { cancelable: true });
+      spyOn(enterEvent1, "preventDefault");
+      spyOn(enterEvent1, "stopPropagation");
+
+      component.onDragEnter(enterEvent1);
+      expect(enterEvent1.preventDefault).toHaveBeenCalled();
+      expect(enterEvent1.stopPropagation).toHaveBeenCalled();
+      expect(component.dragCounter).toBe(1);
+      expect(component.isDragging).toBeTrue();
+
+      // Enter child element
+      const enterEvent2 = new DragEvent("dragenter", { cancelable: true });
+      component.onDragEnter(enterEvent2);
+      expect(component.dragCounter).toBe(2);
+      expect(component.isDragging).toBeTrue();
+
+      // Drag over
+      const overEvent = new DragEvent("dragover", { cancelable: true });
+      spyOn(overEvent, "preventDefault");
+      spyOn(overEvent, "stopPropagation");
+      component.onDragOver(overEvent);
+      expect(overEvent.preventDefault).toHaveBeenCalled();
+      expect(component.isDragging).toBeTrue();
+
+      // Leave child element
+      const leaveEvent1 = new DragEvent("dragleave", { cancelable: true });
+      component.onDragLeave(leaveEvent1);
+      expect(component.dragCounter).toBe(1);
+      expect(component.isDragging).toBeTrue();
+
+      // Leave container
+      const leaveEvent2 = new DragEvent("dragleave", { cancelable: true });
+      component.onDragLeave(leaveEvent2);
+      expect(component.dragCounter).toBe(0);
+      expect(component.isDragging).toBeFalse();
+    });
+  });
+
+  describe("Auto-play on resource selection", () => {
+    it("should auto-play preset audio resource immediately upon selection as if play button was pressed", async () => {
+      mockAudioInstance.play.calls.reset();
+      component.onAssetSelected({
+        model: { entityId: "preview-sound-id" },
+        name: "Engine Sound",
+        type: "audio",
+        url: "/assets/engine.mp3",
+      });
+
+      expect(window.Audio).toHaveBeenCalled();
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+      expect(component.isPlaying).toBeTrue();
+
+      // Simulate sound ended
+      if (mockAudioInstance.onended) {
+        mockAudioInstance.onended();
+      }
+      await Promise.resolve();
+      expect(component.isPlaying).toBeFalse();
+    });
+
+    it("should auto-play audio_set entries sequentially upon selection", async () => {
+      const audioSet = {
+        entity_id: "set-autoplay-1",
+        name: "Countdown Set",
+        type: "audio_set",
+        audioEntries: [
+          { url: "beep1.mp3", timeSeconds: 1 },
+          { url: "beep2.mp3", timeSeconds: 2 },
+        ],
+      };
+      fixture.componentRef.setInput("mode", "set");
+      fixture.detectChanges();
+
+      const audioSpy = (window.Audio as unknown as jasmine.Spy).and.callFake(
+        function (_url: string) {
+          setTimeout(() => {
+            if (mockAudioInstance.onended) mockAudioInstance.onended();
+          }, 0);
+          return mockAudioInstance;
+        },
+      );
+
+      component.onAssetSelected(audioSet);
+      expect(component.isPlaying).toBeTrue();
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(component.isPlaying).toBeFalse();
+      expect(audioSpy).toHaveBeenCalledTimes(2);
+      expect(audioSpy.calls.argsFor(0)[0]).toContain("beep1.mp3");
+      expect(audioSpy.calls.argsFor(1)[0]).toContain("beep2.mp3");
+    });
+
+    it("should stop in-flight playback before auto-playing newly selected resource", () => {
+      spyOn(component, "stop").and.callThrough();
+
+      // Select first sound
+      component.onAssetSelected({
+        entity_id: "sound-1",
+        name: "Sound 1",
+        type: "audio",
+        url: "sound1.mp3",
+      });
+      expect(component.isPlaying).toBeTrue();
+
+      // Select second sound while first is playing
+      component.onAssetSelected({
+        entity_id: "sound-2",
+        name: "Sound 2",
+        type: "audio",
+        url: "sound2.mp3",
+      });
+
+      expect(component.stop).toHaveBeenCalled();
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect(component.isPlaying).toBeTrue();
+    });
+
+    it("should stop active modal preview when newly selecting an asset", () => {
+      const previewItem = {
+        entity_id: "modal-preview-sound",
+        name: "Preview Sound",
+        type: "audio",
+        url: "modal_preview.mp3",
+      };
+      component.onPlayPreview(previewItem);
+
+      // Now select an asset
+      component.onAssetSelected({
+        entity_id: "selected-sound",
+        name: "Selected Sound",
+        type: "audio",
+        url: "selected.mp3",
+      });
+
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should stop active playback when switching type to none", () => {
+      component.onAssetSelected({
+        entity_id: "sound-to-stop",
+        name: "Sound To Stop",
+        type: "audio",
+        url: "sound.mp3",
+      });
+      expect(component.isPlaying).toBeTrue();
+
+      component.onTypeChange("none");
+
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect(component.isPlaying).toBeFalse();
+    });
+
+    it("should not auto-play if component is readonly", () => {
+      fixture.componentRef.setInput("readonly", true);
+      fixture.detectChanges();
+      mockAudioInstance.play.calls.reset();
+
+      (component as any).selectResolvedAsset({
+        entity_id: "readonly-sound",
+        name: "Readonly Sound",
+        type: "audio",
+        url: "readonly.mp3",
+      });
+
+      expect(mockAudioInstance.play).not.toHaveBeenCalled();
+      expect(component.isPlaying).toBeFalse();
+    });
   });
 });

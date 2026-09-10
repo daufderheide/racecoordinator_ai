@@ -281,4 +281,24 @@ describe("AppComponent", () => {
       expect(mockRouter.navigate).not.toHaveBeenCalledWith(["/raceday-setup"]);
     });
   });
+
+  describe("Window Drag and Drop Protection", () => {
+    it("should prevent default browser navigation on window dragover", () => {
+      const event = new DragEvent("dragover", { cancelable: true });
+      spyOn(event, "preventDefault");
+
+      component.onWindowDragOver(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+    });
+
+    it("should prevent default browser navigation on window drop", () => {
+      const event = new DragEvent("drop", { cancelable: true });
+      spyOn(event, "preventDefault");
+
+      component.onWindowDrop(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+    });
+  });
 });

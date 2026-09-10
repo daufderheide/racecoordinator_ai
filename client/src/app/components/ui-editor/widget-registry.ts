@@ -50,6 +50,11 @@ export const WIDGET_REGISTRY: Record<string, WidgetRegistryEntry> = {
       blurCustomHeight: 1080,
       lampSizingMode: "custom",
       previewLampCount: 5,
+      glowEffect: true,
+      glowIntensity: 100,
+      glowOverlap: 100,
+      glowRedOverlap: 100,
+      glowGreenOverlap: 100,
     }),
   },
   image: {

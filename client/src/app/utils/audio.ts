@@ -49,7 +49,7 @@ export function playSound(
   serverUrl: string,
   data?: any,
   logger?: LoggerService,
-): void {
+): HTMLAudioElement | void {
   if (type === "none") return;
   if (type === "preset" && url) {
     const playableUrl = resolveAudioUrl(url, serverUrl);
@@ -58,6 +58,7 @@ export function playSound(
     audio.play().catch((err) => {
       if (logger) logger.error("Error playing sound", err);
     });
+    return audio;
   } else if (type === "tts" && text) {
     let interpolatedText = text;
     if (data) {

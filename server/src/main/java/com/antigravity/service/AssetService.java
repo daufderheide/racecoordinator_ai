@@ -14,11 +14,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -50,6 +54,7 @@ public class AssetService {
         logger.info("Created asset directory: {}", directory.getAbsolutePath());
       }
     }
+    ensureAssetHashes();
   }
 
   public String getAssetDir() {
@@ -97,13 +102,72 @@ public class AssetService {
     return null;
   }
 
+  public static String calculateSha256(byte[] data) {
+    if (data == null) {
+      return "";
+    }
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hashBytes = digest.digest(data);
+      StringBuilder sb = new StringBuilder();
+      for (byte b : hashBytes) {
+        sb.append(String.format("%02x", b));
+      }
+      return sb.toString();
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-256 algorithm not available", e);
+    }
+  }
+
+  public AssetMessage findAssetByHashAndType(String hash, String type) {
+    if (hash == null || hash.trim().isEmpty()) {
+      return null;
+    }
+    String normalizedType = AssetType.normalize(type);
+    databaseContext.ensureTable("assets");
+    String sql = "SELECT json_data FROM assets";
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          JsonNode node = objectMapper.readTree(json);
+          if (!node.has("deleted") || !node.get("deleted").asBoolean()) {
+            if (node.has("hash") && hash.equalsIgnoreCase(node.get("hash").asText())) {
+              String nodeType =
+                  node.has("type") ? AssetType.normalize(node.get("type").asText()) : "";
+              if (nodeType.equalsIgnoreCase(normalizedType)) {
+                return jsonToAsset(node);
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error finding asset by hash and type: hash={}, type={}", hash, type, e);
+    }
+    return null;
+  }
+
   public AssetMessage saveAsset(String name, String type, byte[] data) throws IOException {
     return saveAsset(null, name, type, data);
   }
 
   public AssetMessage saveAsset(String id, String name, String type, byte[] data)
       throws IOException {
-    if (id == null) {
+    String normalizedType = AssetType.normalize(type);
+    String hash = calculateSha256(data);
+
+    // If no explicit ID was requested, check for an existing identical asset to deduplicate
+    if (id == null || id.trim().isEmpty()) {
+      AssetMessage existing = findAssetByHashAndType(hash, normalizedType);
+      if (existing != null) {
+        logger.info(
+            "Deduplication: Asset with identical content already exists as '{}' (id: {}). Reusing.",
+            existing.getName(),
+            existing.getModel().getEntityId());
+        return existing;
+      }
       id = UUID.randomUUID().toString();
     }
     String safeName = name.replaceAll("[^a-zA-Z0-9.-]", "_");
@@ -122,10 +186,11 @@ public class AssetService {
     node.put("_id", id);
     node.put("entity_id", id);
     node.put("name", name);
-    node.put("type", AssetType.normalize(type));
+    node.put("type", normalizedType);
     node.put("size", sizeStr);
     node.put("filename", filename);
     node.put("url", url);
+    node.put("hash", hash);
     if (isDefault) {
       node.put("is_default", true);
     }
@@ -430,6 +495,10 @@ public class AssetService {
             .setSize(node.has("size") ? node.get("size").asText() : "")
             .setUrl(node.has("url") ? node.get("url").asText() : "");
 
+    if (node.has("hash")) {
+      builder.setHash(node.get("hash").asText());
+    }
+
     if (node.has("images") && node.get("images").isArray()) {
       for (JsonNode img : node.get("images")) {
         builder.addImages(
@@ -499,6 +568,69 @@ public class AssetService {
     }
     value *= Long.signum(bytes);
     return String.format("%.1f %ciB", value / 1024.0, ci.current());
+  }
+
+  public void ensureAssetHashes() {
+    databaseContext.ensureTable("assets");
+    String sql = "SELECT entity_id, json_data FROM assets";
+    List<String> idsToUpdate = new ArrayList<>();
+    List<ObjectNode> nodesToUpdate = new ArrayList<>();
+    try (PreparedStatement pstmt = databaseContext.getConnection().prepareStatement(sql);
+        ResultSet rs = pstmt.executeQuery()) {
+      while (rs.next()) {
+        String id = rs.getString("entity_id");
+        String json = rs.getString("json_data");
+        if (json != null && !json.trim().isEmpty()) {
+          JsonNode tree = objectMapper.readTree(json);
+          if (tree.isObject()
+              && (!tree.has("hash") || tree.get("hash").asText().trim().isEmpty())) {
+            ObjectNode objNode = (ObjectNode) tree;
+            String filename = objNode.has("filename") ? objNode.get("filename").asText() : null;
+            byte[] fileBytes = null;
+            if (filename != null) {
+              File physical = new File(assetDir, filename);
+              if (physical.exists() && physical.isFile()) {
+                try {
+                  fileBytes = java.nio.file.Files.readAllBytes(physical.toPath());
+                } catch (Exception ignored) {
+                }
+              }
+              if (fileBytes == null) {
+                String resourcePath = AssetDefaultsInitializer.getDefaultResourcePath(filename);
+                if (resourcePath != null) {
+                  try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
+                    if (is != null) {
+                      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                      byte[] bData = new byte[8192];
+                      int nRead;
+                      while ((nRead = is.read(bData, 0, bData.length)) != -1) {
+                        buffer.write(bData, 0, nRead);
+                      }
+                      fileBytes = buffer.toByteArray();
+                    }
+                  } catch (Exception ignored) {
+                  }
+                }
+              }
+            }
+            if (fileBytes != null && fileBytes.length > 0) {
+              objNode.put("hash", calculateSha256(fileBytes));
+              idsToUpdate.add(id);
+              nodesToUpdate.add(objNode);
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      logger.error("Error scanning assets for missing hashes", e);
+    }
+
+    for (int i = 0; i < idsToUpdate.size(); i++) {
+      saveAssetNode(idsToUpdate.get(i), nodesToUpdate.get(i));
+    }
+    if (!idsToUpdate.isEmpty()) {
+      logger.info("Backfilled SHA-256 hashes for {} assets.", idsToUpdate.size());
+    }
   }
 
   public void backfillDefaults() {
