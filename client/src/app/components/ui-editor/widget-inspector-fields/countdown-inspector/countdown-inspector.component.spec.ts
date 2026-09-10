@@ -122,5 +122,51 @@ describe("CountdownInspectorComponent", () => {
     component.setBlurArea("none");
     expect(component.settings().blurArea).toBe("none");
     expect(component.blurArea).toBe("none");
+
+    component.setGlowEffect(false);
+    expect(component.settings().glowEffect).toBeFalse();
+    expect(component.glowEffect).toBeFalse();
+
+    component.setGlowIntensity(70);
+    expect(component.settings().glowIntensity).toBe(70);
+    expect(component.glowIntensity).toBe(70);
+
+    component.setGlowRedOverlap(40);
+    expect(component.settings().glowRedOverlap).toBe(40);
+    expect(component.glowRedOverlap).toBe(40);
+
+    component.setGlowGreenOverlap(60);
+    expect(component.settings().glowGreenOverlap).toBe(60);
+    expect(component.glowGreenOverlap).toBe(60);
+
+    component.setGlowOverlap(50);
+    expect(component.settings().glowRedOverlap).toBe(50);
+    expect(component.glowOverlap).toBe(50);
+  });
+
+  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 100, and glowGreenOverlap to 100", () => {
+    expect(component.glowEffect).toBeTrue();
+    expect(component.glowIntensity).toBe(100);
+    expect(component.glowRedOverlap).toBe(100);
+    expect(component.glowGreenOverlap).toBe(100);
+    expect(component.glowOverlap).toBe(100);
+    expect(component.settings().glowEffect).toBeTrue();
+    expect(component.settings().glowIntensity).toBe(100);
+    expect(component.settings().glowRedOverlap).toBe(100);
+    expect(component.settings().glowGreenOverlap).toBe(100);
+  });
+
+  it("should show glow intensity and overlap sliders when glowEffect is true and hide when false", () => {
+    component.setGlowEffect(true);
+    fixture.detectChanges();
+    const glowSliders =
+      fixture.nativeElement.querySelectorAll("input[step='5']");
+    expect(glowSliders.length).toBe(3); // intensity, red overlap, and green overlap
+
+    component.setGlowEffect(false);
+    fixture.detectChanges();
+    const hiddenSliders =
+      fixture.nativeElement.querySelectorAll("input[step='5']");
+    expect(hiddenSliders.length).toBe(0);
   });
 });

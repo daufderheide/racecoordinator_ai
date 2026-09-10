@@ -100,6 +100,12 @@ describe("RacedayCountdownComponent", () => {
 
     const lamps = fixture.nativeElement.querySelectorAll(".start-lamp");
     expect(lamps.length).toBe(5);
+    // Half red ('on'), half green ('go')
+    expect(lamps[0].classList.contains("on")).toBeTrue();
+    expect(lamps[1].classList.contains("on")).toBeTrue();
+    expect(lamps[2].classList.contains("on")).toBeTrue();
+    expect(lamps[3].classList.contains("go")).toBeTrue();
+    expect(lamps[4].classList.contains("go")).toBeTrue();
   });
 
   it("should render vertically when orientation is vertical", () => {
@@ -299,5 +305,222 @@ describe("RacedayCountdownComponent", () => {
     const styles = component.startLampStyles;
     expect(styles["width"]).toBeDefined();
     expect(parseInt(styles["width"], 10)).toBeGreaterThan(50);
+  });
+
+  it("should default glowEffect to true, glowIntensity to 100, glowRedOverlap to 100, and glowGreenOverlap to 100", () => {
+    expect(component.glowEffect).toBeTrue();
+    expect(component.glowIntensity).toBe(100);
+    expect(component.glowRedOverlap).toBe(100);
+    expect(component.glowGreenOverlap).toBe(100);
+    expect(component.glowOverlap).toBe(100);
+  });
+
+  it("should respect custom glowEffect, glowIntensity, glowRedOverlap, and glowGreenOverlap settings", () => {
+    const customGlowWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowEffect: false,
+        glowIntensity: 60,
+        glowRedOverlap: 40,
+        glowGreenOverlap: 80,
+      },
+    };
+    fixture.componentRef.setInput("widget", customGlowWidget);
+    fixture.detectChanges();
+
+    expect(component.glowEffect).toBeFalse();
+    expect(component.glowIntensity).toBe(60);
+    expect(component.glowRedOverlap).toBe(40);
+    expect(component.glowGreenOverlap).toBe(80);
+    expect(component.glowOverlap).toBe(40);
+  });
+
+  it("should fallback glowRedOverlap to glowOverlap when glowRedOverlap is omitted", () => {
+    const legacyGlowWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowOverlap: 35,
+      },
+    };
+    fixture.componentRef.setInput("widget", legacyGlowWidget);
+    fixture.detectChanges();
+
+    expect(component.glowRedOverlap).toBe(35);
+    expect(component.glowOverlap).toBe(35);
+  });
+
+  it("should dynamically scale illuminated lamps based on glowRedOverlap and glowGreenOverlap settings independently", () => {
+    const onLamp = { url: "red-on.png", state: "on" };
+    const goLamp = { url: "green.png", state: "go" };
+
+    // Default: red is 1.250 (100%), green is 1.400 (100%)
+    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.250)");
+    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.400)");
+
+    // Independent overlap settings: red = 0, green = 50
+    const independentWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowEffect: true,
+        glowRedOverlap: 0,
+        glowGreenOverlap: 50,
+      },
+    };
+    fixture.componentRef.setInput("widget", independentWidget);
+    fixture.detectChanges();
+    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.000)");
+    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.200)");
+
+    // Independent overlap settings: red = 50, green = 0
+    const reverseWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowEffect: true,
+        glowRedOverlap: 50,
+        glowGreenOverlap: 0,
+      },
+    };
+    fixture.componentRef.setInput("widget", reverseWidget);
+    fixture.detectChanges();
+    expect(component.getLampStyles(onLamp)["transform"]).toBe("scale(1.125)");
+    expect(component.getLampStyles(goLamp)["transform"]).toBe("scale(1.000)");
+  });
+
+  it("should provide consistent gap and glow clearance padding in lampsContainerStyles when glowEffect is true", () => {
+    // Custom mode with glow
+    const containerStylesCustom = component.lampsContainerStyles;
+    expect(containerStylesCustom["gap"]).toBeDefined();
+    expect(parseInt(containerStylesCustom["gap"], 10)).toBeGreaterThan(0);
+    expect(containerStylesCustom["padding"]).toBe("30px"); // 20px glow radius + 10px
+
+    // Fit mode with glow
+    const fitWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        lampSizingMode: "fit",
+        glowEffect: true,
+        glowIntensity: 100,
+      },
+    };
+    fixture.componentRef.setInput("widget", fitWidget);
+    fixture.detectChanges();
+
+    const containerStylesFit = component.lampsContainerStyles;
+    expect(containerStylesFit["gap"]).toBeDefined();
+    expect(parseInt(containerStylesFit["gap"], 10)).toBeGreaterThan(0);
+    expect(containerStylesFit["padding"]).toBeDefined();
+  });
+
+  it("should maintain consistent gap and revert to standard padding when glowEffect is false", () => {
+    // Custom mode with glowEffect disabled
+    const noGlowCustomWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowEffect: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", noGlowCustomWidget);
+    fixture.detectChanges();
+    expect(component.lampsContainerStyles["gap"]).toBeDefined();
+    expect(component.lampsContainerStyles["padding"]).toBe("10px");
+
+    // Fit mode with glowEffect disabled
+    const noGlowFitWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        lampSizingMode: "fit",
+        glowEffect: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", noGlowFitWidget);
+    fixture.detectChanges();
+    const fitStyles = component.lampsContainerStyles;
+    expect(fitStyles["gap"]).toBeDefined();
+    expect(parseInt(fitStyles["gap"], 10)).toBeGreaterThan(0);
+  });
+
+  it("should apply outer glow filter in getLampStyles for on (red) and go (green) lamps when glowEffect is true", () => {
+    const dimLamp = { url: "red-dim.png", state: "dim" };
+    const onLamp = { url: "red-on.png", state: "on" };
+    const goLamp = { url: "green.png", state: "go" };
+
+    // Unilluminated: unmodified, no filter
+    const dimStyles = component.getLampStyles(dimLamp);
+    expect(dimStyles["filter"]).toBeUndefined();
+
+    // Red on: contains red drop shadow
+    const onStyles = component.getLampStyles(onLamp);
+    expect(onStyles["filter"]).toBeDefined();
+    expect(onStyles["filter"]).toContain("rgba(255, 30, 30");
+
+    // Green go: contains green drop shadow
+    const goStyles = component.getLampStyles(goLamp);
+    expect(goStyles["filter"]).toBeDefined();
+    expect(goStyles["filter"]).toContain("rgba(0, 255, 70");
+  });
+
+  it("should NOT apply outer glow filter in getLampStyles when glowEffect is false", () => {
+    const noGlowWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowEffect: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", noGlowWidget);
+    fixture.detectChanges();
+
+    const onLamp = { url: "red-on.png", state: "on" };
+    const goLamp = { url: "green.png", state: "go" };
+
+    expect(component.getLampStyles(onLamp)["filter"]).toBeUndefined();
+    expect(component.getLampStyles(goLamp)["filter"]).toBeUndefined();
+  });
+
+  it("should render DOM elements with has-glow class when glowEffect is true and without when false", () => {
+    const activeParent = {
+      ...mockParent,
+      showCountdownOverlay: true,
+      countdownLamps: [
+        { url: "red-on.png", state: "on" },
+        { url: "green.png", state: "go" },
+        { url: "red-dim.png", state: "dim" },
+      ],
+    };
+    fixture.componentRef.setInput("parent", activeParent);
+    fixture.detectChanges();
+
+    const lamps = fixture.nativeElement.querySelectorAll(".start-lamp");
+    expect(lamps.length).toBe(3);
+    expect(lamps[0].classList.contains("has-glow")).toBeTrue();
+    expect(lamps[0].classList.contains("on")).toBeTrue();
+    expect(lamps[1].classList.contains("has-glow")).toBeTrue();
+    expect(lamps[1].classList.contains("go")).toBeTrue();
+    expect(lamps[2].classList.contains("has-glow")).toBeTrue();
+    expect(lamps[2].classList.contains("on")).toBeFalse();
+    expect(lamps[2].classList.contains("go")).toBeFalse();
+
+    // Disable glowEffect
+    const noGlowWidget: AbsoluteWidgetNode = {
+      ...defaultWidget,
+      customSettings: {
+        ...defaultWidget.customSettings,
+        glowEffect: false,
+      },
+    };
+    fixture.componentRef.setInput("widget", noGlowWidget);
+    fixture.detectChanges();
+
+    const noGlowLamps = fixture.nativeElement.querySelectorAll(".start-lamp");
+    expect(noGlowLamps[0].classList.contains("has-glow")).toBeFalse();
+    expect(noGlowLamps[1].classList.contains("has-glow")).toBeFalse();
+    expect(noGlowLamps[2].classList.contains("has-glow")).toBeFalse();
   });
 });

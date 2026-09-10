@@ -84,6 +84,81 @@
     </div>
   </div>
 
+  <!-- Glow Effect Configuration -->
+  <div class="inspector-geometry-title" style="margin-top: 16px">
+    {{ "UE_INSPECTOR_COUNTDOWN_GLOW" | translate }}
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-checkbox-label">
+      <input
+        type="checkbox"
+        [ngModel]="glowEffect"
+        (ngModelChange)="setGlowEffect($event)"
+      />
+      {{ "UE_INSPECTOR_COUNTDOWN_ENABLE_GLOW" | translate }}
+    </label>
+  </div>
+
+  @if (glowEffect) {
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_COUNTDOWN_GLOW_INTENSITY" | translate
+        }}</label>
+        <span class="inspector-val-badge">{{ glowIntensity }}%</span>
+      </div>
+      <input
+        type="range"
+        min="10"
+        max="100"
+        step="5"
+        [ngModel]="glowIntensity"
+        (input)="setGlowIntensity($any($event.target).value)"
+        (change)="setGlowIntensity($any($event.target).value)"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_COUNTDOWN_GLOW_RED_OVERLAP" | translate
+        }}</label>
+        <span class="inspector-val-badge">{{ glowRedOverlap }}%</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        step="5"
+        [ngModel]="glowRedOverlap"
+        (input)="setGlowRedOverlap($any($event.target).value)"
+        (change)="setGlowRedOverlap($any($event.target).value)"
+        class="inspector-slider"
+      />
+    </div>
+
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_COUNTDOWN_GLOW_GREEN_OVERLAP" | translate
+        }}</label>
+        <span class="inspector-val-badge">{{ glowGreenOverlap }}%</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        step="5"
+        [ngModel]="glowGreenOverlap"
+        (input)="setGlowGreenOverlap($any($event.target).value)"
+        (change)="setGlowGreenOverlap($any($event.target).value)"
+        class="inspector-slider"
+      />
+    </div>
+  }
+
   <!-- Blur Effect Configuration -->
   <div class="inspector-geometry-title" style="margin-top: 16px">
     {{ "UE_INSPECTOR_COUNTDOWN_BLUR" | translate }}

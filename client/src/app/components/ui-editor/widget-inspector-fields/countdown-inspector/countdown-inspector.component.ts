@@ -63,6 +63,26 @@ export class CountdownInspectorComponent {
       s.lampScale = 1.0;
       modified = true;
     }
+    if (s.glowEffect === undefined || s.glowEffect === null) {
+      s.glowEffect = true;
+      modified = true;
+    }
+    if (s.glowIntensity === undefined || s.glowIntensity === null) {
+      s.glowIntensity = 100;
+      modified = true;
+    }
+    if (s.glowOverlap === undefined || s.glowOverlap === null) {
+      s.glowOverlap = 100;
+      modified = true;
+    }
+    if (s.glowRedOverlap === undefined || s.glowRedOverlap === null) {
+      s.glowRedOverlap = s.glowOverlap ?? 100;
+      modified = true;
+    }
+    if (s.glowGreenOverlap === undefined || s.glowGreenOverlap === null) {
+      s.glowGreenOverlap = 100;
+      modified = true;
+    }
     if (modified) {
       this.change.emit();
     }
@@ -97,6 +117,63 @@ export class CountdownInspectorComponent {
   setPreviewLampCount(count: any) {
     if (this.settings()) {
       this.settings().previewLampCount = Number(count) || 5;
+      this.onSettingsChange();
+    }
+  }
+
+  get glowEffect(): boolean {
+    return this.settings()?.glowEffect !== false;
+  }
+
+  setGlowEffect(val: boolean) {
+    if (this.settings()) {
+      this.settings().glowEffect = val;
+      this.onSettingsChange();
+    }
+  }
+
+  get glowIntensity(): number {
+    const val = this.settings()?.glowIntensity;
+    return typeof val === "number" ? Math.max(10, Math.min(100, val)) : 100;
+  }
+
+  setGlowIntensity(val: any) {
+    if (this.settings()) {
+      this.settings().glowIntensity = Number(val) || 100;
+      this.onSettingsChange();
+    }
+  }
+
+  get glowOverlap(): number {
+    return this.glowRedOverlap;
+  }
+
+  setGlowOverlap(val: any) {
+    this.setGlowRedOverlap(val);
+  }
+
+  get glowRedOverlap(): number {
+    const val = this.settings()?.glowRedOverlap ?? this.settings()?.glowOverlap;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+  }
+
+  setGlowRedOverlap(val: any) {
+    if (this.settings()) {
+      const n = Number(val);
+      this.settings().glowRedOverlap = n;
+      this.settings().glowOverlap = n;
+      this.onSettingsChange();
+    }
+  }
+
+  get glowGreenOverlap(): number {
+    const val = this.settings()?.glowGreenOverlap;
+    return typeof val === "number" ? Math.max(0, Math.min(100, val)) : 100;
+  }
+
+  setGlowGreenOverlap(val: any) {
+    if (this.settings()) {
+      this.settings().glowGreenOverlap = Number(val);
       this.onSettingsChange();
     }
   }
