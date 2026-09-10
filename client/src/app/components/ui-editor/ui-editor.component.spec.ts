@@ -4137,5 +4137,16 @@ describe("UIEditorComponent", () => {
       });
       expect(name).toBeTruthy();
     });
+
+    it("should update urgentQueueTtl and calloutSpacing on editingSettings", () => {
+      component.editingSettings.urgentQueueTtl = 5000;
+      component.editingSettings.calloutSpacing = 500;
+
+      component.onUrgentQueueTtlChange(3000);
+      expect(component.editingSettings.urgentQueueTtl).toBe(3000);
+
+      component.onCalloutSpacingChange(1000);
+      expect(component.editingSettings.calloutSpacing).toBe(1000);
+    });
   });
 });

@@ -28,6 +28,8 @@ export function cloneSettings(s: Settings): Settings {
   clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
   clone.highlightPracticeRowOnLap = s.highlightPracticeRowOnLap ?? true;
   clone.pageTransition = s.pageTransition || "slide";
+  clone.urgentQueueTtl = s.urgentQueueTtl ?? 5000;
+  clone.calloutSpacing = s.calloutSpacing ?? 500;
 
   // Theme fields
   clone.activeThemeId = s.activeThemeId;
@@ -98,6 +100,8 @@ export function areSettingsEqual(a: Settings, b: Settings): boolean {
     a.highlightRowOnLap === b.highlightRowOnLap &&
     a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&
     a.pageTransition === b.pageTransition &&
+    (a.urgentQueueTtl ?? 5000) === (b.urgentQueueTtl ?? 5000) &&
+    (a.calloutSpacing ?? 500) === (b.calloutSpacing ?? 500) &&
     a.activeThemeId === b.activeThemeId &&
     a.lampRedOn === b.lampRedOn &&
     a.lampRedDim === b.lampRedDim &&

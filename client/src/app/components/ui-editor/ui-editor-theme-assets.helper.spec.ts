@@ -11,7 +11,9 @@ import {
   getThemeFuelGaugeUrl,
   getThemeLampUrl,
   getThemeUrlForAsset,
+  handleCalloutSpacingChange,
   handleClearCustomTemplate,
+  handleUrgentQueueTtlChange,
 } from "./ui-editor-theme-assets.helper";
 
 describe("ui-editor-theme-assets.helper", () => {
@@ -143,5 +145,25 @@ describe("ui-editor-theme-assets.helper", () => {
     expect(comp.editingSettings.customExportTemplatePath).toBeUndefined();
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should update urgentQueueTtl and capture state", () => {
+    const comp = {
+      editingSettings: { urgentQueueTtl: 5000 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleUrgentQueueTtlChange(comp, 3000);
+    expect(comp.editingSettings.urgentQueueTtl).toBe(3000);
+    expect(comp.captureState).toHaveBeenCalled();
+  });
+
+  it("should update calloutSpacing and capture state", () => {
+    const comp = {
+      editingSettings: { calloutSpacing: 500 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleCalloutSpacingChange(comp, 1000);
+    expect(comp.editingSettings.calloutSpacing).toBe(1000);
+    expect(comp.captureState).toHaveBeenCalled();
   });
 });

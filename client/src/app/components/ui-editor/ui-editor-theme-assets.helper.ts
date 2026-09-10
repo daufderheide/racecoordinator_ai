@@ -223,3 +223,17 @@ export function handlePageTransitionChange(
     comp.captureState();
   }
 }
+
+export function handleUrgentQueueTtlChange(comp: any, ttl: number): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.urgentQueueTtl = ttl;
+    comp.captureState();
+  }
+}
+
+export function handleCalloutSpacingChange(comp: any, spacing: number): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.calloutSpacing = spacing;
+    comp.captureState();
+  }
+}

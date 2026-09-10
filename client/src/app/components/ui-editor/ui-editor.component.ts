@@ -96,6 +96,7 @@ import {
   getThemeAudioUrl,
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
+  handleCalloutSpacingChange,
   handleClearCurrentLayout,
   handleClearCustomTemplate,
   handleClearLayout,
@@ -127,6 +128,7 @@ import {
   handleUiEditorHelpStep,
   handleUiEditorKeyboardShortcut,
   handleUpdateSampleWidgets,
+  handleUrgentQueueTtlChange,
   handleWidgetColorChange,
   handleWidgetInspectorChange,
   handleWidgetSelection,
@@ -878,6 +880,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onPageTransitionChange(transition: string) {
     handlePageTransitionChange(this, transition);
+  }
+
+  onUrgentQueueTtlChange(ttl: number) {
+    handleUrgentQueueTtlChange(this, ttl);
+  }
+
+  onCalloutSpacingChange(spacing: number) {
+    handleCalloutSpacingChange(this, spacing);
   }
 
   async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {

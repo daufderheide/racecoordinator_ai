@@ -115,6 +115,8 @@ export class Settings {
   clientLogLevel: string = "INFO";
   serverLogLevel: string = "INFO";
   exportPdfBackgrounds: boolean = true;
+  urgentQueueTtl: number = 5000;
+  calloutSpacing: number = 500;
 
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;

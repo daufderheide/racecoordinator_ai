@@ -157,6 +157,23 @@ describe("SettingsService", () => {
     service.saveSettings(settings);
   });
 
+  it("should save, retrieve and emit audio callout settings via settings$", (done) => {
+    const settings = Object.assign(new Settings(), {
+      urgentQueueTtl: 10000,
+      calloutSpacing: 1000,
+    });
+    service.settings$.subscribe((emitted) => {
+      if (emitted.urgentQueueTtl === 10000 && emitted.calloutSpacing === 1000) {
+        expect(emitted.urgentQueueTtl).toBe(10000);
+        expect(emitted.calloutSpacing).toBe(1000);
+        expect(service.getSettings().urgentQueueTtl).toBe(10000);
+        expect(service.getSettings().calloutSpacing).toBe(1000);
+        done();
+      }
+    });
+    service.saveSettings(settings);
+  });
+
   it("should backfill custom template filename if base64 template exists without filename", () => {
     const legacySettings = {
       language: "en",

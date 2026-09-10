@@ -377,6 +377,24 @@ export function getCustomUiConfigHelpSteps(
         sectionsExpanded["config"] = true;
       },
     },
+    {
+      selector: "#help-audio-urgent-timeout",
+      title: translationService.translate("UE_LABEL_URGENT_QUEUE_TIMEOUT"),
+      content: translationService.translate("UE_HELP_URGENT_QUEUE_TIMEOUT"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["config"] = true;
+      },
+    },
+    {
+      selector: "#help-audio-callout-spacing",
+      title: translationService.translate("UE_LABEL_CALLOUT_SPACING"),
+      content: translationService.translate("UE_HELP_CALLOUT_SPACING"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["config"] = true;
+      },
+    },
   ];
 }
 
@@ -401,6 +419,10 @@ export function handleUiEditorHelpStep(
     "#help-practice-ui": "practiceRacedayLayout",
     "#help-themes": "themes",
     "#help-custom-ui": "config",
+    "#help-export-template": "config",
+    "#help-page-transition": "config",
+    "#help-audio-urgent-timeout": "config",
+    "#help-audio-callout-spacing": "config",
   };
   for (const [prefix, sec] of Object.entries(expandMap)) {
     if (step.selector.startsWith(prefix) && !sectionsExpanded[sec]) {

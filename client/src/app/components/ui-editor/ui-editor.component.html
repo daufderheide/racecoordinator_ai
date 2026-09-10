@@ -1339,6 +1339,55 @@
                       </app-custom-select>
                     </div>
                   </div>
+                  <div
+                    class="transition-selector"
+                    id="help-audio-urgent-timeout"
+                  >
+                    <label>{{
+                      "UE_LABEL_URGENT_QUEUE_TIMEOUT" | translate
+                    }}</label>
+                    <div class="select-container">
+                      <app-custom-select
+                        [ngModel]="editingSettings.urgentQueueTtl"
+                        (ngModelChange)="onUrgentQueueTtlChange($event)"
+                      >
+                        <app-custom-option [value]="3000">
+                          {{ "UE_OPTION_3_SECONDS" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="5000">
+                          {{ "UE_OPTION_5_SECONDS_DEFAULT" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="10000">
+                          {{ "UE_OPTION_10_SECONDS" | translate }}
+                        </app-custom-option>
+                      </app-custom-select>
+                    </div>
+                  </div>
+                  <div
+                    class="transition-selector"
+                    id="help-audio-callout-spacing"
+                  >
+                    <label>{{ "UE_LABEL_CALLOUT_SPACING" | translate }}</label>
+                    <div class="select-container">
+                      <app-custom-select
+                        [ngModel]="editingSettings.calloutSpacing"
+                        (ngModelChange)="onCalloutSpacingChange($event)"
+                      >
+                        <app-custom-option [value]="0">
+                          {{ "UE_OPTION_SPACING_NONE" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="500">
+                          {{ "UE_OPTION_SPACING_SHORT_DEFAULT" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="1000">
+                          {{ "UE_OPTION_SPACING_NORMAL" | translate }}
+                        </app-custom-option>
+                        <app-custom-option [value]="1500">
+                          {{ "UE_OPTION_SPACING_RELAXED" | translate }}
+                        </app-custom-option>
+                      </app-custom-select>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

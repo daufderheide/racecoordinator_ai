@@ -4729,6 +4729,7 @@ describe("DefaultRacedayComponent", () => {
             audioEntries: [
               { url: "/api/assets/download/240", timeSeconds: 240 },
               { url: "/api/assets/download/60", timeSeconds: 60 },
+              { url: "/api/assets/download/30", timeSeconds: 30 },
             ],
             url: "/api/assets/download/default_seconds_left_set",
           },
@@ -4809,17 +4810,235 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/240`,
       );
+      component["audioService"].stopVoice();
 
       // Crossing halfway (150s for a 5 minute race)
       raceTimeSubject.next({ time: 150.0 });
       expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
       );
+      component["audioService"].stopVoice();
 
       // Crossing 1 minute (60s)
       raceTimeSubject.next({ time: 60.0 });
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/60`,
+      );
+    });
+
+    it("should resolve Halfway vs 30s collision by playing Halfway (NORMAL) and dropping 30s (NORMAL)", () => {
+      (window.Audio as any).calls.reset();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "preset", url: "halfway_sound" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60, // 1 minute race, halfway is at 30 seconds
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+
+      // Crossing 30s threshold: both Halfway (30s) and standard 30s threshold are triggered
+      raceTimeSubject.next({ time: 30.0 });
+
+      // Halfway is NORMAL priority (played first), 30s is NORMAL priority (dropped because channel is busy)
+      // Only halfway_sound should have been played; 30s was dropped!
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/halfway_sound/),
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
+      );
+    });
+
+    it("should resolve Halfway vs 30s collision when Halfway is TTS by playing Halfway TTS (NORMAL) and dropping 30s (NORMAL)", () => {
+      (window.Audio as any).calls.reset();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "tts", text: "Halfway through the heat" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+
+      // Crossing 30s threshold: Halfway (TTS) triggers first with NORMAL priority, occupies voice channel
+      raceTimeSubject.next({ time: 30.0 });
+
+      // Halfway TTS played with normal priority
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Halfway through the heat",
+        }),
+        "normal",
+        undefined,
+        undefined,
+      );
+      // 30s threshold audio was dropped because voice channel was busy with NORMAL priority Halfway!
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
+      );
+    });
+
+    it("should preserve urgent, high, and normal priority levels when sounds are configured as TTS", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        return { type: "tts", text: `TTS for ${key}` };
+      });
+
+      // Yellow flag (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.PAUSED);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.yellowflag",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Heat over (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.HEAT_OVER);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.heat_over",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Race over (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.RACE_OVER);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.race_over",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Penalty (high)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_PENALTY);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.penalty",
+        }),
+        "high",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Halfway (normal)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.seconds_left.halfway",
+        }),
+        "normal",
+        undefined,
+        undefined,
+      );
+    });
+
+    it("should fallback to 30s countdown if Halfway audio is configured to 'none'", () => {
+      (window.Audio as any).calls.reset();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "none" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+
+      // Crossing 30s threshold: Halfway is "none", channel is idle -> 30s plays as fallback
+      raceTimeSubject.next({ time: 30.0 });
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
       );
     });
 
