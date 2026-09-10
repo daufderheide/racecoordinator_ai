@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.0.0-beta.67] - 2026-09-10
+
+### 🚀 New Features
+
+- add asset layout switcher component and implement visual regression tests for asset manager and item selector https://github.com/daufderheide/racecoordinator_ai/issues/805 ([5da7e543](https://github.com/daufderheide/racecoordinator_ai/commit/5da7e543))
+- implement automatic playback of selected audio resources and add playback concurrency management https://github.com/daufderheide/racecoordinator_ai/issues/806 [skip-screendiffs] ([7f93d47e](https://github.com/daufderheide/racecoordinator_ai/commit/7f93d47e))
+- add glow effect settings and rendering support to countdown widget https://github.com/daufderheide/racecoordinator_ai/issues/813 ([777fea2c](https://github.com/daufderheide/racecoordinator_ai/commit/777fea2c))
+- add 5:4 aspect ratio support and implement ui-editor-resolution helper functions https://github.com/daufderheide/racecoordinator_ai/issues/812 [skip-screendiffs] ([b8757cd1](https://github.com/daufderheide/racecoordinator_ai/commit/b8757cd1))
+- implement drag-and-drop file upload functionality for audio and image selectors with localized support. https://github.com/daufderheide/racecoordinator_ai/issues/804 ([fda71ffc](https://github.com/daufderheide/racecoordinator_ai/commit/fda71ffc))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.66...v1.0.0-beta.67">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.66] - 2026-09-09
 
 ### 🚀 New Features
