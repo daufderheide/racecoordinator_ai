@@ -12,11 +12,16 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
+import { AssetLayoutSwitcherComponent } from "@app/components/shared/asset-layout-switcher/asset-layout-switcher.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
 import { ManagerHeaderComponent } from "@app/components/shared/manager-header/manager-header.component";
-import { ManagerHeaderComponent as ManagerHeaderComponent_1 } from "@app/components/shared/manager-header/manager-header.component";
 import { DataService } from "@app/data.service";
-import { AssetType, normalizeAssetType } from "@app/models/asset";
+import {
+  AssetLayoutMode,
+  AssetType,
+  compareAssetsByTypeThenName,
+  normalizeAssetType,
+} from "@app/models/asset";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
   IAssetMessage,
@@ -68,11 +73,12 @@ export interface AssetView {
   templateUrl: "./asset-manager.component.html",
   styleUrls: ["./asset-manager.component.css"],
   imports: [
-    ManagerHeaderComponent_1,
+    ManagerHeaderComponent,
     FormsModule,
     ImageSetEditorComponent,
     AudioSetEditorComponent,
     ConfirmationModalComponent,
+    AssetLayoutSwitcherComponent,
     TranslatePipe,
   ],
 })
@@ -80,6 +86,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   @ViewChild(ManagerHeaderComponent) header!: ManagerHeaderComponent;
   // Data
   assets: AssetView[] = [];
+  layoutMode: AssetLayoutMode = "medium";
   currentlyPlayingAsset: AssetView | null = null;
   private currentAudio: HTMLAudioElement | null = null;
 
@@ -154,6 +161,19 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   /* eslint-disable max-lines-per-function */
   ngOnInit() {
+    try {
+      const saved = localStorage.getItem("am_layout_mode") as AssetLayoutMode;
+      if (
+        saved === "list" ||
+        saved === "small" ||
+        saved === "medium" ||
+        saved === "large"
+      ) {
+        this.layoutMode = saved;
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
@@ -321,34 +341,38 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
   }
 
   get filteredAssets(): AssetView[] {
-    return this.assets.filter((asset) => {
-      const normalizedFilter = normalizeAssetType(this.filterType);
-      const normalizedAsset = normalizeAssetType(asset.type);
+    return this.assets
+      .filter((asset) => {
+        const normalizedFilter = normalizeAssetType(this.filterType);
+        const normalizedAsset = normalizeAssetType(asset.type);
 
-      const typeMatch =
-        this.filterType === "all" ||
-        asset.type === this.filterType ||
-        normalizedAsset === normalizedFilter;
-      const nameMatch =
-        !this.filterName ||
-        asset.name.toLowerCase().includes(this.filterName.toLowerCase());
+        const typeMatch =
+          this.filterType === "all" ||
+          asset.type === this.filterType ||
+          normalizedAsset === normalizedFilter;
+        const nameMatch =
+          !this.filterName ||
+          asset.name.toLowerCase().includes(this.filterName.toLowerCase());
 
-      return typeMatch && nameMatch;
-    });
+        return typeMatch && nameMatch;
+      })
+      .sort(compareAssetsByTypeThenName);
   }
 
   get allImages(): AssetView[] {
-    return this.assets.filter(
-      (a) => a.type === "image" || a.type === "image_set",
-    );
+    return this.assets
+      .filter((a) => a.type === "image" || a.type === "image_set")
+      .sort(compareAssetsByTypeThenName);
   }
 
   get allAudio(): AssetView[] {
-    return this.assets.filter(
-      (a) =>
-        normalizeAssetType(a.type) === AssetType.AUDIO ||
-        a.type === "audio_set",
-    );
+    return this.assets
+      .filter(
+        (a) =>
+          normalizeAssetType(a.type) === AssetType.AUDIO ||
+          a.type === "audio_set",
+      )
+      .sort(compareAssetsByTypeThenName);
   }
 
   get totalSize(): string {
@@ -1043,6 +1067,12 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         content: this.translationService.translate(
           "AM_HELP_FILTER_CUSTOM_ROTATIONS_CONTENT",
         ),
+        position: "bottom",
+      },
+      {
+        selector: "#asset-layout-switcher",
+        title: this.translationService.translate("AM_HELP_LAYOUT_TITLE"),
+        content: this.translationService.translate("AM_HELP_LAYOUT_CONTENT"),
         position: "bottom",
       },
       {

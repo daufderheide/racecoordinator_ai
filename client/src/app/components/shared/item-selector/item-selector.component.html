@@ -51,13 +51,30 @@
               data-form-type="other"
             />
           </div>
+          <app-asset-layout-switcher
+            [(layout)]="layoutMode"
+            storageKey="is_layout_mode"
+          ></app-asset-layout-switcher>
         </div>
       </div>
       <div class="modal-body">
         @if (filteredItems().length > 0 || (allowBrowse() && !searchTerm())) {
-          <div class="item-grid">
+          <div
+            class="item-grid"
+            [class.layout-list]="layoutMode() === 'list'"
+            [class.layout-small]="layoutMode() === 'small'"
+            [class.layout-medium]="layoutMode() === 'medium'"
+            [class.layout-large]="layoutMode() === 'large'"
+          >
             @if (allowBrowse() && !searchTerm()) {
-              <div class="upload-card" (click)="triggerFilePicker()">
+              <div
+                class="upload-card"
+                [class.layout-list]="layoutMode() === 'list'"
+                [class.layout-small]="layoutMode() === 'small'"
+                [class.layout-medium]="layoutMode() === 'medium'"
+                [class.layout-large]="layoutMode() === 'large'"
+                (click)="triggerFilePicker()"
+              >
                 <div class="item-preview upload-preview">
                   <span class="material-icons upload-icon">cloud_upload</span>
                 </div>
@@ -67,7 +84,14 @@
               </div>
             }
             @for (item of filteredItems(); track item) {
-              <div class="item-card" (click)="onSelect(item)">
+              <div
+                class="item-card"
+                [class.layout-list]="layoutMode() === 'list'"
+                [class.layout-small]="layoutMode() === 'small'"
+                [class.layout-medium]="layoutMode() === 'medium'"
+                [class.layout-large]="layoutMode() === 'large'"
+                (click)="onSelect(item)"
+              >
                 <div class="item-preview">
                   <app-asset-preview
                     [type]="item.type || itemType()"

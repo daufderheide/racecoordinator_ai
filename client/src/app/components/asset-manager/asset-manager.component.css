@@ -496,6 +496,226 @@
   color: #cbd5e1;
 }
 
+/* Layout Modes */
+/* Small Thumbnails */
+.asset-grid.layout-small {
+  grid-template-columns: repeat(auto-fill, 92px);
+  gap: 10px;
+}
+
+.asset-card.layout-small {
+  min-height: 105px;
+  border-radius: 8px;
+}
+
+.asset-card.layout-small .asset-preview {
+  height: 55px;
+  min-height: 55px;
+  padding: 4px;
+}
+
+.asset-card.layout-small .preview-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.asset-card.layout-small .rotation-preview i {
+  font-size: 1.1rem;
+}
+
+.asset-card.layout-small .asset-info {
+  padding: 4px 6px;
+}
+
+.asset-card.layout-small .asset-name {
+  font-size: 0.72rem;
+  margin-bottom: 2px;
+}
+
+.asset-card.layout-small .asset-actions {
+  gap: 6px;
+}
+
+.asset-card.layout-small .action-icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* Medium Thumbnails (Default) */
+.asset-grid.layout-medium {
+  grid-template-columns: repeat(auto-fill, 130px);
+  gap: 15px;
+}
+
+/* Large Thumbnails */
+.asset-grid.layout-large {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.asset-card.layout-large {
+  min-height: 220px;
+  border-radius: 12px;
+}
+
+.asset-card.layout-large .asset-preview {
+  height: 150px;
+  min-height: 150px;
+  padding: 12px;
+}
+
+.asset-card.layout-large .preview-icon {
+  width: 56px;
+  height: 56px;
+}
+
+.asset-card.layout-large .rotation-preview i {
+  font-size: 2.2rem;
+}
+
+.asset-card.layout-large .asset-info {
+  padding: 12px;
+}
+
+.asset-card.layout-large .asset-name {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.asset-card.layout-large .asset-actions {
+  gap: 14px;
+}
+
+.asset-card.layout-large .action-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* List View */
+.asset-grid.layout-list {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+
+.asset-card.layout-list {
+  flex-direction: row;
+  align-items: center;
+  min-height: 38px;
+  height: 38px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  gap: 8px;
+}
+
+.asset-card.layout-list:hover {
+  transform: translateY(-1px);
+}
+
+.asset-card.layout-list .asset-preview {
+  width: 26px;
+  height: 26px;
+  min-height: 26px;
+  padding: 2px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.asset-card.layout-list .preview-img {
+  max-width: 22px;
+  max-height: 22px;
+}
+
+.asset-card.layout-list .preview-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.asset-card.layout-list .rotation-preview {
+  gap: 0;
+}
+
+.asset-card.layout-list .rotation-preview i {
+  font-size: 0.9rem;
+}
+
+.asset-card.layout-list .rotation-preview .lane-count {
+  display: none;
+}
+
+.asset-card.layout-list .asset-info {
+  padding: 0;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.asset-card.layout-list .view-mode {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+}
+
+.asset-card.layout-list .asset-name {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+  display: block;
+}
+
+.asset-card.layout-list .asset-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.asset-card.layout-list:hover .asset-actions,
+.asset-card.layout-list.playing .asset-actions {
+  opacity: 1;
+}
+
+.asset-card.layout-list .action-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.asset-card.layout-list .edit-mode {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.asset-card.layout-list .name-input {
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  height: 24px;
+}
+
+.asset-card.layout-list .edit-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.asset-card.layout-list .btn-save,
+.asset-card.layout-list .btn-cancel {
+  padding: 2px 6px;
+  font-size: 0.75rem;
+}
+
 /* Overlays */
 .loading-overlay,
 .loader-overlay,

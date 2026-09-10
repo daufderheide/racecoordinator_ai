@@ -110,8 +110,8 @@ describe("ItemSelectorComponent", () => {
     fixture.componentRef.setInput("itemType", "audio");
     expect(component.filteredItems().length).toBe(2);
     expect(component.filteredItems().map((i) => i.name)).toEqual([
-      "Sound 1",
       "Audio 1",
+      "Sound 1",
     ]);
   });
 
@@ -240,5 +240,85 @@ describe("ItemSelectorComponent", () => {
 
     expect(browseBtn).toBeNull();
     expect(uploadCard).toBeNull();
+  });
+
+  it("should render layout switcher and update layoutMode signal", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.detectChanges();
+
+    const switcher = fixture.nativeElement.querySelector(
+      "app-asset-layout-switcher",
+    );
+    expect(switcher).toBeTruthy();
+    expect(component.layoutMode()).toBe("medium");
+
+    component.layoutMode.set("list");
+    fixture.detectChanges();
+
+    const grid = fixture.nativeElement.querySelector(".item-grid");
+    expect(grid.classList.contains("layout-list")).toBeTrue();
+
+    component.layoutMode.set("small");
+    fixture.detectChanges();
+    expect(grid.classList.contains("layout-small")).toBeTrue();
+
+    component.layoutMode.set("large");
+    fixture.detectChanges();
+    expect(grid.classList.contains("layout-large")).toBeTrue();
+  });
+
+  it("should apply layout classes to item-card and upload-card in list mode", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("allowBrowse", true);
+    fixture.componentRef.setInput("itemType", "audio");
+    fixture.componentRef.setInput("items", [
+      { name: "Audio Item", type: "audio" },
+    ]);
+    component.layoutMode.set("list");
+    fixture.detectChanges();
+
+    const uploadCard = fixture.nativeElement.querySelector(".upload-card");
+    const itemCard = fixture.nativeElement.querySelector(".item-card");
+
+    expect(uploadCard.classList.contains("layout-list")).toBeTrue();
+    expect(itemCard.classList.contains("layout-list")).toBeTrue();
+
+    // Verify selecting still works in list view
+    spyOn(component.select, "emit");
+    itemCard.click();
+    expect(component.select.emit).toHaveBeenCalledWith(
+      jasmine.objectContaining({ name: "Audio Item" }),
+    );
+
+    // Verify play button still works in list view
+    spyOn(component.play, "emit");
+    const playBtn = fixture.nativeElement.querySelector(".play-preview");
+    expect(playBtn).toBeTruthy();
+    playBtn.click();
+    expect(component.play.emit).toHaveBeenCalledWith(
+      jasmine.objectContaining({ name: "Audio Item" }),
+    );
+  });
+
+  it("should sort items first by asset type then by asset name", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("itemType", "all");
+    fixture.componentRef.setInput("items", [
+      { name: "Zebra Image", type: "image" },
+      { name: "Banana Audio", type: "audio" },
+      { name: "Apple Audio", type: "audio" },
+      { name: "Alpha Image Set", type: "image_set" },
+      { name: "Beta Image", type: "image" },
+    ]);
+    fixture.detectChanges();
+
+    const filtered = component.filteredItems();
+    expect(filtered.map((item) => `${item.type}:${item.name}`)).toEqual([
+      "audio:Apple Audio",
+      "audio:Banana Audio",
+      "image:Beta Image",
+      "image:Zebra Image",
+      "image_set:Alpha Image Set",
+    ]);
   });
 });

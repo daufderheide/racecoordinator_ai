@@ -51,6 +51,98 @@ test.describe("Asset Manager Visuals", () => {
     });
   });
 
+  test("should display asset manager in list layout", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".active-db-name").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+    await page.locator(".loading-overlay").waitFor({ state: "hidden" });
+
+    await harness.setLayoutMode("list");
+    await page.locator(".asset-grid.layout-list").waitFor({ state: "visible" });
+
+    await page
+      .locator(".asset-grid")
+      .evaluate((el: any) => (el.scrollTop = 0))
+      .catch(() => null);
+
+    await expect(page).toHaveScreenshot("asset-manager-layout-list.png", {
+      maxDiffPixelRatio: 0.1,
+      threshold: 0.2,
+    });
+  });
+
+  test("should display asset manager in small thumbnails layout", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".active-db-name").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+    await page.locator(".loading-overlay").waitFor({ state: "hidden" });
+
+    await harness.setLayoutMode("small");
+    await page
+      .locator(".asset-grid.layout-small")
+      .waitFor({ state: "visible" });
+
+    await page
+      .locator(".asset-grid")
+      .evaluate((el: any) => (el.scrollTop = 0))
+      .catch(() => null);
+
+    await expect(page).toHaveScreenshot("asset-manager-layout-small.png", {
+      maxDiffPixelRatio: 0.1,
+      threshold: 0.2,
+    });
+  });
+
+  test("should display asset manager in large thumbnails layout", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/asset-manager"),
+    );
+    await page.locator(".active-db-name").waitFor({ state: "visible" });
+
+    const container = page.locator("app-asset-manager");
+    const harness = new AssetManagerHarnessE2e(container);
+
+    await page.locator(".asset-grid").waitFor({ state: "visible" });
+    await page.locator(".loading-overlay").waitFor({ state: "hidden" });
+
+    await harness.setLayoutMode("large");
+    await page
+      .locator(".asset-grid.layout-large")
+      .waitFor({ state: "visible" });
+
+    await page
+      .locator(".asset-grid")
+      .evaluate((el: any) => (el.scrollTop = 0))
+      .catch(() => null);
+
+    await expect(page).toHaveScreenshot("asset-manager-layout-large.png", {
+      maxDiffPixelRatio: 0.1,
+      threshold: 0.2,
+    });
+  });
+
   test("should filter assets visuals", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

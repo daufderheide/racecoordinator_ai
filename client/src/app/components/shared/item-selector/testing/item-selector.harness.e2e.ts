@@ -1,16 +1,26 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { ItemSelectorHarnessBase } from './item-selector.harness.base';
+import { ItemSelectorHarnessBase } from "./item-selector.harness.base";
 
 export class ItemSelectorHarnessE2e implements ItemSelectorHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return ItemSelectorHarnessBase; }
+  private get base() {
+    return ItemSelectorHarnessBase;
+  }
 
-  private get modalContent() { return this.locator.locator(this.base.selectors.content); }
-  private get backdrop() { return this.locator.locator(this.base.selectors.backdrop); }
-  private get items() { return this.locator.locator(this.base.selectors.itemCard); }
-  private get playButtons() { return this.locator.locator(this.base.selectors.playPreview); }
+  private get modalContent() {
+    return this.locator.locator(this.base.selectors.content);
+  }
+  private get backdrop() {
+    return this.locator.locator(this.base.selectors.backdrop);
+  }
+  private get items() {
+    return this.locator.locator(this.base.selectors.itemCard);
+  }
+  private get playButtons() {
+    return this.locator.locator(this.base.selectors.playPreview);
+  }
 
   async isVisible(): Promise<boolean> {
     return await this.modalContent.isVisible();
@@ -48,5 +58,11 @@ export class ItemSelectorHarnessE2e implements ItemSelectorHarnessBase {
 
   async clickClose(): Promise<void> {
     await this.backdrop.click();
+  }
+
+  async setLayoutMode(
+    mode: "list" | "small" | "medium" | "large",
+  ): Promise<void> {
+    await this.locator.locator(`.layout-btn-${mode}`).click();
   }
 }

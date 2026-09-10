@@ -346,20 +346,21 @@ describe("AssetManagerComponent", () => {
 
   it("should select range with Shift key", () => {
     component.assets = deepCopy(MOCK_ASSETS);
+    const displayed = component.filteredAssets;
 
     // First click (single)
     const event1 = new MouseEvent("click");
-    component.toggleSelection(component.assets[0], event1);
-    expect(component.assets[0].selected).toBeTrue();
+    component.toggleSelection(displayed[0], event1);
+    expect(displayed[0].selected).toBeTrue();
     expect(component.lastSelectedIndex).toBe(0);
 
     // Shift click on third item
     const event2 = new MouseEvent("click", { shiftKey: true });
-    component.toggleSelection(component.assets[2], event2);
+    component.toggleSelection(displayed[2], event2);
 
-    expect(component.assets[0].selected).toBeTrue();
-    expect(component.assets[1].selected).toBeTrue();
-    expect(component.assets[2].selected).toBeTrue();
+    expect(displayed[0].selected).toBeTrue();
+    expect(displayed[1].selected).toBeTrue();
+    expect(displayed[2].selected).toBeTrue();
   });
 
   it("should clear selection on single click", () => {
@@ -752,14 +753,189 @@ describe("AssetManagerComponent", () => {
       expect(component.showAudioSetEditor).toBeFalse();
     });
 
-    it("should return guide steps for help walkthrough", () => {
+    it("should return guide steps for help walkthrough including layout switcher", () => {
       const steps = component.getHelpSteps();
       expect(steps.length).toBeGreaterThan(0);
+      const layoutStep = steps.find(
+        (s) => s.selector === "#asset-layout-switcher",
+      );
+      expect(layoutStep).toBeDefined();
+      expect(layoutStep?.title).toBe("AM_HELP_LAYOUT_TITLE");
       for (const step of steps) {
         if (step.onEnter) {
           step.onEnter();
         }
       }
+    });
+
+    it("should default layoutMode to medium and reflect in DOM", () => {
+      expect(component.layoutMode).toBe("medium");
+      fixture.detectChanges();
+      const grid = fixture.nativeElement.querySelector(".asset-grid");
+      expect(grid.classList.contains("layout-medium")).toBeTrue();
+    });
+
+    it("should update asset-grid and asset-card classes when layoutMode changes", () => {
+      component.assets = [
+        {
+          id: "1",
+          name: "Test Asset",
+          type: "image",
+          size: "10KB",
+          url: "test.png",
+        },
+      ];
+      component.layoutMode = "list";
+      fixture.detectChanges();
+
+      const grid = fixture.nativeElement.querySelector(".asset-grid");
+      expect(grid.classList.contains("layout-list")).toBeTrue();
+
+      const card = fixture.nativeElement.querySelector(".asset-card");
+      expect(card.classList.contains("layout-list")).toBeTrue();
+
+      component.layoutMode = "small";
+      fixture.detectChanges();
+      expect(grid.classList.contains("layout-small")).toBeTrue();
+      expect(card.classList.contains("layout-small")).toBeTrue();
+
+      component.layoutMode = "large";
+      fixture.detectChanges();
+      expect(grid.classList.contains("layout-large")).toBeTrue();
+      expect(card.classList.contains("layout-large")).toBeTrue();
+    });
+
+    it("should load layoutMode from localStorage on ngOnInit", () => {
+      localStorage.setItem("am_layout_mode", "small");
+      component.ngOnInit();
+      expect(component.layoutMode).toBe("small");
+      localStorage.removeItem("am_layout_mode");
+    });
+
+    it("should sort filteredAssets first by asset type then by asset name", () => {
+      component.assets = [
+        {
+          id: "1",
+          name: "Zebra Image",
+          type: "image",
+          size: "10KB",
+          url: "z.png",
+        },
+        {
+          id: "2",
+          name: "Banana Audio",
+          type: "audio",
+          size: "10KB",
+          url: "b.mp3",
+        },
+        {
+          id: "3",
+          name: "Apple Sound",
+          type: "sound",
+          size: "10KB",
+          url: "a.wav",
+        },
+        {
+          id: "4",
+          name: "Alpha Image Set",
+          type: "image_set",
+          size: "10KB",
+          url: "",
+        },
+        {
+          id: "5",
+          name: "Beta Image",
+          type: "image",
+          size: "10KB",
+          url: "b.png",
+        },
+        {
+          id: "6",
+          name: "Delta Audio Set",
+          type: "audio_set",
+          size: "10KB",
+          url: "",
+        },
+        {
+          id: "7",
+          name: "Echo Rotation",
+          type: "custom_rotation",
+          size: "10KB",
+          url: "",
+        },
+      ];
+      component.filterType = "all";
+      component.filterName = "";
+
+      const filtered = component.filteredAssets;
+      expect(filtered.map((a) => `${a.type}:${a.name}`)).toEqual([
+        "sound:Apple Sound",
+        "audio:Banana Audio",
+        "audio_set:Delta Audio Set",
+        "custom_rotation:Echo Rotation",
+        "image:Beta Image",
+        "image:Zebra Image",
+        "image_set:Alpha Image Set",
+      ]);
+    });
+
+    it("should sort allImages and allAudio by type then name", () => {
+      component.assets = [
+        {
+          id: "1",
+          name: "Zebra Image",
+          type: "image",
+          size: "10KB",
+          url: "z.png",
+        },
+        {
+          id: "2",
+          name: "Apple Set",
+          type: "image_set",
+          size: "10KB",
+          url: "",
+        },
+        {
+          id: "3",
+          name: "Beta Image",
+          type: "image",
+          size: "10KB",
+          url: "b.png",
+        },
+        {
+          id: "4",
+          name: "Zulu Audio",
+          type: "audio",
+          size: "10KB",
+          url: "z.mp3",
+        },
+        {
+          id: "5",
+          name: "Alpha Sound",
+          type: "sound",
+          size: "10KB",
+          url: "a.wav",
+        },
+        {
+          id: "6",
+          name: "Beta Audio Set",
+          type: "audio_set",
+          size: "10KB",
+          url: "",
+        },
+      ];
+
+      expect(component.allImages.map((a) => `${a.type}:${a.name}`)).toEqual([
+        "image:Beta Image",
+        "image:Zebra Image",
+        "image_set:Apple Set",
+      ]);
+
+      expect(component.allAudio.map((a) => `${a.type}:${a.name}`)).toEqual([
+        "sound:Alpha Sound",
+        "audio:Zulu Audio",
+        "audio_set:Beta Audio Set",
+      ]);
     });
   });
 });

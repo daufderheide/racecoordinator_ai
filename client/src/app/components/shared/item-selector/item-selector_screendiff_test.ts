@@ -40,4 +40,92 @@ test.describe("Item Selector Visuals", () => {
       "item-selector.png",
     );
   });
+
+  test("should display item selector in list layout", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    const avatarPreview = page.locator("app-image-selector .image-preview");
+    await expect(avatarPreview).toBeVisible();
+    await avatarPreview.click();
+
+    const selector = page.locator("app-item-selector");
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    await harness.setLayoutMode("list");
+    await selector
+      .locator(".item-grid.layout-list")
+      .waitFor({ state: "visible" });
+
+    await expect(selector.locator(".modal-content")).toHaveScreenshot(
+      "item-selector-layout-list.png",
+    );
+  });
+
+  test("should display item selector in small thumbnails layout", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    const avatarPreview = page.locator("app-image-selector .image-preview");
+    await expect(avatarPreview).toBeVisible();
+    await avatarPreview.click();
+
+    const selector = page.locator("app-item-selector");
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    await harness.setLayoutMode("small");
+    await selector
+      .locator(".item-grid.layout-small")
+      .waitFor({ state: "visible" });
+
+    await expect(selector.locator(".modal-content")).toHaveScreenshot(
+      "item-selector-layout-small.png",
+    );
+  });
+
+  test("should display item selector in large thumbnails layout", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+
+    const avatarPreview = page.locator("app-image-selector .image-preview");
+    await expect(avatarPreview).toBeVisible();
+    await avatarPreview.click();
+
+    const selector = page.locator("app-item-selector");
+    const harness = new ItemSelectorHarnessE2e(selector);
+    await expect(async () => {
+      expect(await harness.isVisible()).toBe(true);
+    }).toPass({ timeout: 10000 });
+
+    await harness.setLayoutMode("large");
+    await selector
+      .locator(".item-grid.layout-large")
+      .waitFor({ state: "visible" });
+
+    await expect(selector.locator(".modal-content")).toHaveScreenshot(
+      "item-selector-layout-large.png",
+    );
+  });
 });
