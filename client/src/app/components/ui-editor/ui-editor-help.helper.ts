@@ -380,6 +380,95 @@ export function getCustomUiConfigHelpSteps(
   ];
 }
 
+export function getAudioSettingsHelpSteps(
+  ctx: UiEditorHelpContext,
+): GuideStep[] {
+  const { translationService, sectionsExpanded } = ctx;
+  return [
+    {
+      selector: "#help-audio-settings",
+      title: translationService.translate("UE_HEADER_AUDIO_SETTINGS"),
+      content: translationService.translate("UE_HELP_AUDIO_SETTINGS_DESC"),
+      position: "top",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-audio-master-volume",
+      title: translationService.translate("UE_LABEL_MASTER_VOLUME"),
+      content: translationService.translate("UE_HELP_AUDIO_MASTER_VOLUME"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-audio-urgent-timeout",
+      title: translationService.translate("UE_LABEL_URGENT_QUEUE_TIMEOUT"),
+      content: translationService.translate("UE_HELP_URGENT_QUEUE_TIMEOUT"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-audio-callout-spacing",
+      title: translationService.translate("UE_LABEL_CALLOUT_SPACING"),
+      content: translationService.translate("UE_HELP_CALLOUT_SPACING"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-tts-voice",
+      title: translationService.translate("UE_LABEL_TTS_VOICE"),
+      content: translationService.translate("UE_HELP_TTS_VOICE"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-tts-rate",
+      title: translationService.translate("UE_LABEL_TTS_RATE"),
+      content: translationService.translate("UE_HELP_TTS_RATE"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-tts-pitch",
+      title: translationService.translate("UE_LABEL_TTS_PITCH"),
+      content: translationService.translate("UE_HELP_TTS_PITCH"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-tts-volume",
+      title: translationService.translate("UE_LABEL_TTS_VOLUME"),
+      content: translationService.translate("UE_HELP_TTS_VOLUME"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+    {
+      selector: "#help-tts-preview",
+      title: translationService.translate("UE_LABEL_TTS_PREVIEW"),
+      content: translationService.translate("UE_HELP_TTS_PREVIEW"),
+      position: "bottom",
+      onEnter: () => {
+        sectionsExpanded["audioSettings"] = true;
+      },
+    },
+  ];
+}
+
 export function getUiEditorHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
   return [
     ...getGeneralAndCustomUisHelpSteps(ctx),
@@ -387,6 +476,7 @@ export function getUiEditorHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
     ...getThemesHelpSteps(ctx),
     ...getAudioHelpSteps(ctx),
     ...getCustomUiConfigHelpSteps(ctx),
+    ...getAudioSettingsHelpSteps(ctx),
   ];
 }
 
@@ -401,6 +491,12 @@ export function handleUiEditorHelpStep(
     "#help-practice-ui": "practiceRacedayLayout",
     "#help-themes": "themes",
     "#help-custom-ui": "config",
+    "#help-export-template": "config",
+    "#help-page-transition": "config",
+    "#help-audio-settings": "audioSettings",
+    "#help-audio-urgent-timeout": "audioSettings",
+    "#help-audio-callout-spacing": "audioSettings",
+    "#help-tts-": "audioSettings",
   };
   for (const [prefix, sec] of Object.entries(expandMap)) {
     if (step.selector.startsWith(prefix) && !sectionsExpanded[sec]) {

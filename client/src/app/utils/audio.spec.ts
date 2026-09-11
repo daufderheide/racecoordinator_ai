@@ -13,21 +13,24 @@ describe("playSound Utility", () => {
 
   const SERVER_URL = "http://localhost:8080";
   let mockLogger: any;
+  let originalSpeechSynthesisUtterance: any;
 
   beforeAll(() => {
-    // Mock SpeechSynthesisUtterance if it doesn't exist (e.g. in some text environments)
-    if (!window.SpeechSynthesisUtterance) {
-      (window as any).SpeechSynthesisUtterance = class {
-        text: string;
-        constructor(text: string) {
-          this.text = text;
-        }
-      };
-    }
+    originalSpeechSynthesisUtterance = (window as any).SpeechSynthesisUtterance;
+    (window as any).SpeechSynthesisUtterance = class {
+      text: string;
+      voice: any = null;
+      rate = 1;
+      pitch = 1;
+      volume = 1;
+      constructor(text: string) {
+        this.text = text;
+      }
+    };
   });
 
   afterAll(() => {
-    // Cleanup if needed
+    (window as any).SpeechSynthesisUtterance = originalSpeechSynthesisUtterance;
   });
 
   beforeEach(() => {
@@ -42,10 +45,11 @@ describe("playSound Utility", () => {
     mockSpeechSynthesis = jasmine.createSpyObj("SpeechSynthesis", [
       "cancel",
       "speak",
+      "getVoices",
     ]);
-    // Use Object.defineProperty to overwrite read-only property if necessary,
-    // or just direct assignment if allowed in the test env.
-    // Usually safer to use defineProperty for window properties.
+    mockSpeechSynthesis.getVoices.and.returnValue([
+      { name: "Alex", voiceURI: "alex-uri" },
+    ]);
     Object.defineProperty(window, "speechSynthesis", {
       value: mockSpeechSynthesis,
       writable: true,
@@ -171,6 +175,96 @@ describe("playSound Utility", () => {
 
       const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
       expect(callArgs[0].text).toBe("Hello {unknown}");
+    });
+
+    it("should apply PlaySoundOptions when playing TTS", () => {
+      playSound(
+        "tts",
+        undefined,
+        "Test sound",
+        SERVER_URL,
+        undefined,
+        undefined,
+        {
+          masterVolume: 80,
+          ttsVolume: 50,
+          ttsRate: 1.5,
+          ttsPitch: 0.8,
+          ttsVoice: "Alex",
+        },
+      );
+
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].text).toBe("Test sound");
+      expect(callArgs[0].rate).toBe(1.5);
+      expect(callArgs[0].pitch).toBeCloseTo(0.8, 2);
+      expect(callArgs[0].volume).toBeCloseTo(0.4, 2);
+      expect(callArgs[0].voice).toEqual(
+        jasmine.objectContaining({ name: "Alex" }),
+      );
+    });
+
+    it("should set audio.volume with masterVolume for preset sounds", () => {
+      playSound(
+        "preset",
+        "sound.mp3",
+        undefined,
+        SERVER_URL,
+        undefined,
+        undefined,
+        {
+          masterVolume: 35,
+        },
+      );
+
+      expect(mockAudioInstance.volume).toBeCloseTo(0.35, 2);
+    });
+
+    it("should fall back to saved localStorage settings when options are omitted", () => {
+      spyOn(localStorage, "getItem").and.callFake((key: string) => {
+        if (key === "racecoordinator_settings") {
+          return JSON.stringify({
+            masterVolume: 50,
+            ttsVolume: 50,
+            ttsRate: 1.2,
+            ttsPitch: 1.1,
+            ttsVoice: "Alex",
+          });
+        }
+        return null;
+      });
+
+      playSound("tts", undefined, "Saved settings test", SERVER_URL);
+
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].text).toBe("Saved settings test");
+      expect(callArgs[0].rate).toBeCloseTo(1.2, 2);
+      expect(callArgs[0].pitch).toBeCloseTo(1.1, 2);
+      expect(callArgs[0].volume).toBeCloseTo(0.25, 2); // 0.5 * 0.5
+      expect(callArgs[0].voice).toEqual(
+        jasmine.objectContaining({ name: "Alex" }),
+      );
+    });
+
+    it("should match voice case-insensitively and trimmed", () => {
+      playSound(
+        "tts",
+        undefined,
+        "Voice match test",
+        SERVER_URL,
+        undefined,
+        undefined,
+        {
+          ttsVoice: "  alex  ",
+        },
+      );
+
+      const callArgs = mockSpeechSynthesis.speak.calls.mostRecent().args;
+      expect(callArgs[0].voice).toEqual(
+        jasmine.objectContaining({ name: "Alex" }),
+      );
     });
   });
 

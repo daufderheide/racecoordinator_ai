@@ -3,6 +3,7 @@ import { Theme } from "@app/models/theme";
 import { ThemeService } from "@app/services/theme.service";
 
 import {
+  executeTestTtsVoice,
   extractAssetId,
   getThemeAssetForSlot,
   getThemeAudioConfigForSlot,
@@ -11,7 +12,15 @@ import {
   getThemeFuelGaugeUrl,
   getThemeLampUrl,
   getThemeUrlForAsset,
+  handleCalloutSpacingChange,
   handleClearCustomTemplate,
+  handleMasterVolumeChange,
+  handleTtsPitchChange,
+  handleTtsRateChange,
+  handleTtsVoiceChange,
+  handleTtsVolumeChange,
+  handleUrgentQueueTtlChange,
+  initAvailableVoices,
 } from "./ui-editor-theme-assets.helper";
 
 describe("ui-editor-theme-assets.helper", () => {
@@ -143,5 +152,152 @@ describe("ui-editor-theme-assets.helper", () => {
     expect(comp.editingSettings.customExportTemplatePath).toBeUndefined();
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should update urgentQueueTtl and capture state", () => {
+    const comp = {
+      editingSettings: { urgentQueueTtl: 5000 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleUrgentQueueTtlChange(comp, 3000);
+    expect(comp.editingSettings.urgentQueueTtl).toBe(3000);
+    expect(comp.captureState).toHaveBeenCalled();
+  });
+
+  it("should update calloutSpacing and capture state", () => {
+    const comp = {
+      editingSettings: { calloutSpacing: 500 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleCalloutSpacingChange(comp, 1000);
+    expect(comp.editingSettings.calloutSpacing).toBe(1000);
+    expect(comp.captureState).toHaveBeenCalled();
+  });
+
+  it("should update masterVolume and capture state", () => {
+    const comp = {
+      editingSettings: { masterVolume: 100 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleMasterVolumeChange(comp, 75);
+    expect(comp.editingSettings.masterVolume).toBe(75);
+    expect(comp.captureState).toHaveBeenCalled();
+
+    handleMasterVolumeChange(comp, "65");
+    expect(comp.editingSettings.masterVolume).toBe(65);
+  });
+
+  it("should update ttsVoice and capture state", () => {
+    const comp = {
+      editingSettings: { ttsVoice: "" } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleTtsVoiceChange(comp, "Alex");
+    expect(comp.editingSettings.ttsVoice).toBe("Alex");
+    expect(comp.captureState).toHaveBeenCalled();
+  });
+
+  it("should update ttsRate and capture state", () => {
+    const comp = {
+      editingSettings: { ttsRate: 1.0 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleTtsRateChange(comp, 1.25);
+    expect(comp.editingSettings.ttsRate).toBe(1.25);
+    expect(comp.captureState).toHaveBeenCalled();
+
+    handleTtsRateChange(comp, "1.45");
+    expect(comp.editingSettings.ttsRate).toBe(1.45);
+  });
+
+  it("should update ttsPitch and capture state", () => {
+    const comp = {
+      editingSettings: { ttsPitch: 1.0 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleTtsPitchChange(comp, 0.8);
+    expect(comp.editingSettings.ttsPitch).toBe(0.8);
+    expect(comp.captureState).toHaveBeenCalled();
+
+    handleTtsPitchChange(comp, "1.15");
+    expect(comp.editingSettings.ttsPitch).toBe(1.15);
+  });
+
+  it("should update ttsVolume and capture state", () => {
+    const comp = {
+      editingSettings: { ttsVolume: 100 } as any,
+      captureState: jasmine.createSpy("captureState"),
+    };
+    handleTtsVolumeChange(comp, 85);
+    expect(comp.editingSettings.ttsVolume).toBe(85);
+    expect(comp.captureState).toHaveBeenCalled();
+
+    handleTtsVolumeChange(comp, "60");
+    expect(comp.editingSettings.ttsVolume).toBe(60);
+  });
+
+  it("should initialize available voices using speechSynthesis", () => {
+    const mockVoices = [
+      { name: "Samantha", voiceURI: "Samantha", lang: "en-US" },
+      { name: "Alex", voiceURI: "Alex", lang: "en-US" },
+    ];
+    const origSynth = window.speechSynthesis;
+    const mockSynth = {
+      getVoices: jasmine.createSpy("getVoices").and.returnValue(mockVoices),
+      onvoiceschanged: null,
+    };
+    Object.defineProperty(window, "speechSynthesis", {
+      value: mockSynth,
+      configurable: true,
+      writable: true,
+    });
+
+    const comp = {
+      availableVoices: [] as any[],
+      isDestroyed: false,
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    initAvailableVoices(comp);
+    expect(comp.availableVoices.length).toBe(2);
+    expect(comp.availableVoices[0].name).toBe("Alex");
+    expect(comp.availableVoices[1].name).toBe("Samantha");
+    expect(comp.cdr.markForCheck).toHaveBeenCalled();
+
+    Object.defineProperty(window, "speechSynthesis", {
+      value: origSynth,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  it("should execute test TTS voice via audioService if present", () => {
+    const comp = {
+      translationService: {
+        translate: jasmine
+          .createSpy("translate")
+          .and.returnValue("Sample text"),
+      },
+      editingSettings: {
+        masterVolume: 80,
+        ttsVoice: "Alex",
+        ttsRate: 1.2,
+        ttsPitch: 0.9,
+        ttsVolume: 90,
+      },
+      audioService: {
+        previewTTS: jasmine.createSpy("previewTTS"),
+      },
+    };
+
+    executeTestTtsVoice(comp);
+    expect(comp.audioService.previewTTS).toHaveBeenCalledWith(
+      "Sample text",
+      "Alex",
+      1.2,
+      0.9,
+      90,
+      80,
+    );
   });
 });

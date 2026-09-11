@@ -455,88 +455,112 @@ public class AssetDefaultsInitializer {
       SqliteRepository<Theme> themeRepo =
           new SqliteRepository<>(databaseContext, "themes", Theme.class);
       List<Theme> themes = themeRepo.findAll();
-      boolean hasDefault = false;
-      boolean hasPractice = false;
+      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
       for (Theme t : themes) {
-        boolean updated = false;
-        Map<String, String> s = new HashMap<>(t.getSlots());
-        if (migrateThemeSlots(s, t.isDefault())) {
-          updated = true;
-        }
-        if (s.containsKey("audio.countdown")) {
-          s.remove("audio.countdown");
-          updated = true;
-        }
-        if (s.containsKey("audio.seconds_left")) {
-          s.remove("audio.seconds_left");
-          updated = true;
-        }
-
-        Map<String, AudioConfig> as =
-            t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
-        if (populateDefaultAudioSlots(as)) {
-          updated = true;
-        }
-
-        String uiId = t.getUiId();
-        if (Theme.DEFAULT_THEME_ID.equals(t.getEntityId())) {
-          hasDefault = true;
-          if (uiId == null) {
-            uiId = CustomUI.DEFAULT_UI_ID;
-            updated = true;
-          }
-        }
-        if (Theme.PRACTICE_THEME_ID.equals(t.getEntityId())) {
-          hasPractice = true;
-          if (uiId == null) {
-            uiId = CustomUI.PRACTICE_UI_ID;
-            updated = true;
-          }
-        }
-
-        if (updated) {
-          Theme newTheme =
-              new Theme(t.getName(), t.isDefault(), s, as, uiId, t.getEntityId(), t.getId());
-          themeRepo.save(newTheme);
-        }
+        backfillSingleTheme(t, themeRepo, foundFlags);
       }
-      if (!hasDefault) {
-        Map<String, String> slots = createDefaultSlots();
-        Map<String, AudioConfig> audioSlots = new HashMap<>();
-        populateDefaultAudioSlots(audioSlots);
-
-        Theme defaultTheme =
-            new Theme(
-                "RaceCoordinator AI",
-                true,
-                slots,
-                audioSlots,
-                CustomUI.DEFAULT_UI_ID,
-                Theme.DEFAULT_THEME_ID,
-                null);
-        themeRepo.save(defaultTheme);
+      if (!foundFlags[0]) {
+        createAndSaveTheme(
+            themeRepo, Theme.DEFAULT_THEME_ID, Theme.DEFAULT_THEME_NAME, CustomUI.DEFAULT_UI_ID);
         logger.info("Backfilled default theme with ID {}", Theme.DEFAULT_THEME_ID);
       }
-      if (!hasPractice) {
-        Map<String, String> slots = createDefaultSlots();
-        Map<String, AudioConfig> audioSlots = new HashMap<>();
-        populateDefaultAudioSlots(audioSlots);
-
-        Theme practiceTheme =
-            new Theme(
-                "RaceCoordinator AI (Practice)",
-                true,
-                slots,
-                audioSlots,
-                CustomUI.PRACTICE_UI_ID,
-                Theme.PRACTICE_THEME_ID,
-                null);
-        themeRepo.save(practiceTheme);
+      if (!foundFlags[1]) {
+        createAndSaveTheme(
+            themeRepo, Theme.PRACTICE_THEME_ID, Theme.PRACTICE_THEME_NAME, CustomUI.PRACTICE_UI_ID);
         logger.info("Backfilled practice theme with ID {}", Theme.PRACTICE_THEME_ID);
+      }
+      if (!foundFlags[2]) {
+        createAndSaveTheme(
+            themeRepo, Theme.FUEL_THEME_ID, Theme.FUEL_THEME_NAME, CustomUI.FUEL_UI_ID);
+        logger.info("Backfilled fuel theme with ID {}", Theme.FUEL_THEME_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to backfill default theme", e);
     }
+  }
+
+  private void backfillSingleTheme(
+      Theme t, SqliteRepository<Theme> themeRepo, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = t.getEntityId();
+    String name = t.getName();
+    String uiId = t.getUiId();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(name))) {
+      themeRepo.delete("2");
+      entityId = Theme.FUEL_THEME_ID;
+      name = Theme.FUEL_THEME_NAME;
+      uiId = CustomUI.FUEL_UI_ID;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (uiId == null) {
+        uiId = CustomUI.DEFAULT_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyDefaultName(name)) {
+        name = Theme.DEFAULT_THEME_NAME;
+        updated = true;
+      }
+    }
+    if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (uiId == null) {
+        uiId = CustomUI.PRACTICE_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyPracticeName(name)) {
+        name = Theme.PRACTICE_THEME_NAME;
+        updated = true;
+      }
+    }
+    if (Theme.FUEL_THEME_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (uiId == null) {
+        uiId = CustomUI.FUEL_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyFuelName(name)) {
+        name = Theme.FUEL_THEME_NAME;
+        updated = true;
+      }
+    }
+
+    Map<String, String> s = new HashMap<>(t.getSlots());
+    if (migrateThemeSlots(s, t.isDefault())) {
+      updated = true;
+    }
+    if (s.remove("audio.countdown") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.seconds_left") != null) {
+      updated = true;
+    }
+
+    Map<String, AudioConfig> as =
+        t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
+    if (populateDefaultAudioSlots(as)) {
+      updated = true;
+    }
+
+    if (updated) {
+      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
+      themeRepo.save(newTheme);
+    }
+  }
+
+  private void createAndSaveTheme(
+      SqliteRepository<Theme> themeRepo, String entityId, String name, String uiId) {
+    Map<String, String> slots = createDefaultSlots();
+    Map<String, AudioConfig> audioSlots = new HashMap<>();
+    populateDefaultAudioSlots(audioSlots);
+    Theme theme = new Theme(name, true, slots, audioSlots, uiId, entityId, null);
+    themeRepo.save(theme);
   }
 
   private boolean migrateThemeSlots(Map<String, String> s, boolean isDefault) {

@@ -397,6 +397,70 @@ describe("RacedayMenuBarComponent", () => {
       expect(component.isWindowsMenuOpen).toBeFalse();
       expect(component.isThemesOpen).toBeFalse();
     });
+
+    it("should alphabetize themes in natural order and localize default themes when rendered in the menu", () => {
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "UE_LABEL_DEFAULT_THEME") return "RaceCoordinator AI";
+        return key;
+      });
+
+      component.themes = [
+        { entity_id: "t_zeta", name: "Zeta Theme" } as any,
+        {
+          entity_id: "default_classic_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        } as any,
+        { entity_id: "t_alpha", name: "Alpha Theme" } as any,
+        { entity_id: "t_beta_10", name: "Beta 10 Theme" } as any,
+        { entity_id: "t_beta_2", name: "Beta 2 Theme" } as any,
+      ];
+      component.isWindowsMenuOpen = true;
+      component.toggleThemesMenu();
+      fixture.detectChanges();
+
+      const items = Array.from(
+        fixture.nativeElement.querySelectorAll(".theme-option-item"),
+      ).map((el: any) => el.innerText.trim());
+
+      expect(items).toEqual([
+        "Alpha Theme",
+        "Beta 2 Theme",
+        "Beta 10 Theme",
+        "RaceCoordinator AI",
+        "Zeta Theme",
+      ]);
+    });
+
+    it("should alphabetize themes when loadThemes fetches from themeService", async () => {
+      const mockThemeSvc = {
+        getThemes: jasmine
+          .createSpy("getThemes")
+          .and.returnValue([
+            { entity_id: "t_zeta", name: "Zeta" } as any,
+            { entity_id: "t_alpha", name: "Alpha" } as any,
+          ]),
+        initialize: jasmine.createSpy("initialize").and.resolveTo(),
+      };
+      (component as any).themeService = mockThemeSvc;
+      await component.loadThemes();
+      expect(component.themes.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
+    });
+
+    it("should alphabetize themes when loadThemes falls back to dataService", async () => {
+      (component as any).themeService = {
+        getThemes: () => [],
+        initialize: () => Promise.resolve(),
+      };
+      mockDataService.getThemes.and.returnValue(
+        of([
+          { entity_id: "t_zeta", name: "Zeta" } as any,
+          { entity_id: "t_alpha", name: "Alpha" } as any,
+        ]),
+      );
+      await component.loadThemes();
+      expect(component.themes.map((t) => t.name)).toEqual(["Alpha", "Zeta"]);
+    });
   });
 
   describe("Back Menu Option", () => {

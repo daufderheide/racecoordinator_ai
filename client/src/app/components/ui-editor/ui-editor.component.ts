@@ -38,6 +38,7 @@ import {
 } from "@app/models/settings";
 import { Theme } from "@app/models/theme";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AudioService } from "@app/services/audio.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
@@ -77,6 +78,7 @@ import {
   executeAutoSaveState,
   executeConfirmDiscard,
   executeTemplateFileSelected,
+  executeTestTtsVoice,
   extractAssetId,
   fetchUiEditorData,
   findDefaultWidgetId,
@@ -96,6 +98,8 @@ import {
   getThemeAudioUrl,
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
+  getUnsavedReasonsHelper,
+  handleCalloutSpacingChange,
   handleClearCurrentLayout,
   handleClearCustomTemplate,
   handleClearLayout,
@@ -109,12 +113,19 @@ import {
   handleDuplicateTheme,
   handleExportCurrentLayout,
   handleExportLayout,
+  handleExportPracticeRacedayLayout,
+  handleExportRacedayLayout,
   handleImportCurrentLayout,
   handleImportLayout,
+  handleImportPracticeRacedayLayout,
+  handleImportRacedayLayout,
+  handleMasterVolumeChange,
   handlePageTransitionChange,
   handleResetCurrentLayout,
   handleResetDefaultDirectory,
   handleResetLayout,
+  handleResetPracticeRacedayLayout,
+  handleResetRacedayLayout,
   handleResetWidgetDirectory,
   handleSelectDirectory,
   handleSelectWidgetDirectory,
@@ -122,14 +133,20 @@ import {
   handleSetLayoutScaleMode,
   handleThemeAudioChange,
   handleThemeSlotChange,
+  handleTtsPitchChange,
+  handleTtsRateChange,
+  handleTtsVoiceChange,
+  handleTtsVolumeChange,
   handleUiEditorDataLoadError,
   handleUiEditorDestroy,
   handleUiEditorHelpStep,
   handleUiEditorKeyboardShortcut,
   handleUpdateSampleWidgets,
+  handleUrgentQueueTtlChange,
   handleWidgetColorChange,
   handleWidgetInspectorChange,
   handleWidgetSelection,
+  initAvailableVoices,
   isCustomUiDefault,
   isCustomUiNameInvalid,
   isThemeDefault,
@@ -288,8 +305,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   soundAssets: any[] = [];
   previewTTSContext: any = mockTTSContext();
   customWidgetDirectoryName: string | null = null;
+  availableVoices: SpeechSynthesisVoice[] = [];
   private pendingNavigationUrl = "";
   private childWindowManagerService: ChildWindowManagerService;
+  private audioService?: AudioService;
 
   constructor(
     private settingsService: SettingsService,
@@ -307,6 +326,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     private ngZone: NgZone,
     childWindowManagerService?: ChildWindowManagerService,
     public customWidgetService?: CustomWidgetService,
+    audioService?: AudioService,
   ) {
     this.childWindowManagerService =
       childWindowManagerService ?? inject(ChildWindowManagerService);
@@ -314,6 +334,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       customWidgetService ??
       inject(CustomWidgetService, { optional: true }) ??
       undefined;
+    this.audioService =
+      audioService ?? inject(AudioService, { optional: true }) ?? undefined;
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart)
         this.pendingNavigationUrl = event.url;
@@ -334,6 +356,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   ngOnInit() {
+    this.loadAvailableVoices();
     this.sortAvailableColumns();
     this.updateScale();
     this.loadExpanderState();
@@ -359,6 +382,9 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   ngOnDestroy() {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = null;
+    }
     handleUiEditorDestroy(this);
   }
 
@@ -583,56 +609,38 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   resetLayout(ui: CustomUI) {
     handleResetLayout(this, ui);
   }
-
   clearLayout(ui: CustomUI) {
     handleClearLayout(this, ui);
   }
-
   clearCurrentLayout() {
     handleClearCurrentLayout(this);
   }
-
   resetRacedayLayout() {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.resetLayout(u);
+    handleResetRacedayLayout(this);
   }
-
   resetPracticeRacedayLayout() {
-    this.selectedWidgetId = "widget-lane-view";
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.resetLayout(u);
+    handleResetPracticeRacedayLayout(this);
   }
-
   exportLayout(ui: CustomUI) {
     handleExportLayout(this, ui);
   }
-
   downloadJson(data: any, filename: string) {
     downloadJsonFile(data, filename);
   }
-
   exportRacedayLayout() {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.exportLayout(u);
+    handleExportRacedayLayout(this);
   }
-
   exportPracticeRacedayLayout() {
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.exportLayout(u);
+    handleExportPracticeRacedayLayout(this);
   }
-
   onImportLayout(event: Event, ui: CustomUI) {
     handleImportLayout(this, event, ui);
   }
-
   onImportRacedayLayout(event: Event) {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.onImportLayout(event, u);
+    handleImportRacedayLayout(this, event);
   }
-
   onImportPracticeRacedayLayout(event: Event) {
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.onImportLayout(event, u);
+    handleImportPracticeRacedayLayout(this, event);
   }
 
   cloneSettings(s: Settings) {
@@ -656,23 +664,18 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   async selectDirectory() {
     await handleSelectDirectory(this);
   }
-
   async resetDefault() {
     await handleResetDefaultDirectory(this);
   }
-
   async selectWidgetDirectory() {
     await handleSelectWidgetDirectory(this);
   }
-
   async resetWidgetDefault() {
     await handleResetWidgetDirectory(this);
   }
-
   async exportStarterWidgets() {
     await this.updateSampleWidgets();
   }
-
   async updateSampleWidgets() {
     await handleUpdateSampleWidgets(this);
   }
@@ -692,21 +695,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getUnsavedReasons(): string[] {
-    const reasons: string[] = [];
-    if (this.isAnyThemeNameInvalid()) {
-      reasons.push("DISCARD_REASON_THEME_NAME_INVALID");
-    }
-    if (this.isAnyCustomUiNameInvalid()) {
-      reasons.push("DISCARD_REASON_CUSTOM_UI_NAME_INVALID");
-    }
-
-    if (this.isSaving) {
-      reasons.push("DISCARD_REASON_SAVING");
-    } else if (reasons.length === 0 && this.hasChanges()) {
-      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
-    }
-
-    return reasons;
+    return getUnsavedReasonsHelper(this);
   }
 
   get discardMessage(): string {
@@ -880,6 +869,42 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handlePageTransitionChange(this, transition);
   }
 
+  onMasterVolumeChange(volume: number | string) {
+    handleMasterVolumeChange(this, volume);
+  }
+
+  onUrgentQueueTtlChange(ttl: number) {
+    handleUrgentQueueTtlChange(this, ttl);
+  }
+
+  onCalloutSpacingChange(spacing: number) {
+    handleCalloutSpacingChange(this, spacing);
+  }
+
+  loadAvailableVoices(): void {
+    initAvailableVoices(this);
+  }
+
+  onTtsVoiceChange(voice: string) {
+    handleTtsVoiceChange(this, voice);
+  }
+
+  onTtsRateChange(rate: number | string) {
+    handleTtsRateChange(this, rate);
+  }
+
+  onTtsPitchChange(pitch: number | string) {
+    handleTtsPitchChange(this, pitch);
+  }
+
+  onTtsVolumeChange(volume: number | string) {
+    handleTtsVolumeChange(this, volume);
+  }
+
+  testTtsVoice(): void {
+    executeTestTtsVoice(this);
+  }
+
   async onThemeSlotChanged(theme: Theme, slot: string, asset: any) {
     handleThemeSlotChange(this, theme, slot, asset);
   }
@@ -924,7 +949,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   async createNewCustomUi() {
     await handleCreateCustomUi(this);
   }
-
   async onDuplicateCustomUi(ui: CustomUI) {
     await handleDuplicateCustomUi(this, ui);
   }

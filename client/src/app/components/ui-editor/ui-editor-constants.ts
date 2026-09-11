@@ -101,6 +101,7 @@ export const DEFAULT_SECTIONS_EXPANDED: Record<string, boolean> = {
   layout: true,
   themes: true,
   config: true,
+  audioSettings: true,
   flags: true,
   countdown: false,
   fuelGauge: false,

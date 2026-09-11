@@ -29,6 +29,7 @@ export class Driver implements Model {
     lapAudio?: AudioConfig,
     bestLapAudio?: AudioConfig,
     penaltyAudio?: AudioConfig,
+    falseStartAudio?: AudioConfig,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -57,7 +58,18 @@ export class Driver implements Model {
 
     this.lapAudio = sanitizeAudio(lapAudio, "default_beep");
     this.bestLapAudio = sanitizeAudio(bestLapAudio, "default_driveby");
-    this.penaltyAudio = sanitizeAudio(penaltyAudio, "default_penalty");
+    this.penaltyAudio = sanitizeAudio(
+      falseStartAudio || penaltyAudio,
+      "default_penalty",
+    );
+  }
+
+  get falseStartAudio(): AudioConfig {
+    return this.penaltyAudio;
+  }
+
+  set falseStartAudio(val: AudioConfig) {
+    this.penaltyAudio = val;
   }
 
   isEmpty(): boolean {

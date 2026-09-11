@@ -22,12 +22,13 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
+import { AudioService } from "@app/services/audio.service";
 import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
-import { createTTSContext, playSound } from "@app/utils/audio";
+import { createTTSContext } from "@app/utils/audio";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 @Component({
@@ -108,6 +109,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     private raceFlagService: RaceFlagService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
+    private audioService: AudioService = inject(AudioService),
   ) {
     effect(() => {
       const val = this.inputLaneIndex();
@@ -187,21 +189,14 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             const ttsContext = createTTSContext(driver, driverData);
 
             if (lap.type === LapType.FALSE_START) {
+              const audio = driver.falseStartAudio || driver.penaltyAudio;
               if (
-                driver.penaltyAudio?.type &&
-                driver.penaltyAudio.type !== "none" &&
-                (driver.penaltyAudio.url ||
-                  (driver.penaltyAudio.type === "tts" &&
-                    driver.penaltyAudio.text))
+                audio?.type &&
+                audio.type !== "none" &&
+                ((audio.type === "tts" && audio.text?.trim()) ||
+                  (audio.type !== "tts" && audio.url?.trim()))
               ) {
-                playSound(
-                  driver.penaltyAudio.type,
-                  driver.penaltyAudio.url,
-                  driver.penaltyAudio.text,
-                  this.dataService.serverUrl,
-                  ttsContext,
-                  this.logger,
-                );
+                this.audioService.playCallout(audio, "high", ttsContext);
               }
               return;
             }
@@ -212,32 +207,38 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
             if (
               isBestLap &&
-              driver.bestLapAudio?.type !== "none" &&
-              (driver.bestLapAudio?.url ||
-                (driver.bestLapAudio?.type === "tts" &&
-                  driver.bestLapAudio?.text))
+              driver.bestLapAudio?.type &&
+              driver.bestLapAudio.type !== "none" &&
+              ((driver.bestLapAudio.type === "tts" &&
+                driver.bestLapAudio.text?.trim()) ||
+                (driver.bestLapAudio.type !== "tts" &&
+                  driver.bestLapAudio.url?.trim()))
             ) {
-              playSound(
-                driver.bestLapAudio.type,
-                driver.bestLapAudio.url,
-                driver.bestLapAudio.text,
-                this.dataService.serverUrl,
-                ttsContext,
-                this.logger,
-              );
+              if (driver.bestLapAudio.type === "tts") {
+                this.audioService.playCallout(
+                  driver.bestLapAudio,
+                  "normal",
+                  ttsContext,
+                );
+              } else {
+                this.audioService.playSfx(driver.bestLapAudio.url);
+              }
             } else if (
-              driver.lapAudio?.type !== "none" &&
-              (driver.lapAudio?.url ||
-                (driver.lapAudio?.type === "tts" && driver.lapAudio?.text))
+              driver.lapAudio?.type &&
+              driver.lapAudio.type !== "none" &&
+              ((driver.lapAudio.type === "tts" &&
+                driver.lapAudio.text?.trim()) ||
+                (driver.lapAudio.type !== "tts" && driver.lapAudio.url?.trim()))
             ) {
-              playSound(
-                driver.lapAudio.type,
-                driver.lapAudio.url,
-                driver.lapAudio.text,
-                this.dataService.serverUrl,
-                ttsContext,
-                this.logger,
-              );
+              if (driver.lapAudio.type === "tts") {
+                this.audioService.playCallout(
+                  driver.lapAudio,
+                  "low",
+                  ttsContext,
+                );
+              } else {
+                this.audioService.playSfx(driver.lapAudio.url);
+              }
             }
           }
         }

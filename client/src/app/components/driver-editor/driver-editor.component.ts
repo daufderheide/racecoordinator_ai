@@ -737,7 +737,7 @@ export class DriverEditorComponent
   }
 
   onAudioTypeChange(
-    slot: "lap" | "bestLap" | "penalty",
+    slot: "lap" | "bestLap" | "penalty" | "falseStart",
     type: "preset" | "tts" | "none" | "audio_set",
   ) {
     if (!this.editingDriver) return;
@@ -770,7 +770,7 @@ export class DriverEditorComponent
   }
 
   onAudioUrlChange(
-    slot: "lap" | "bestLap" | "penalty",
+    slot: "lap" | "bestLap" | "penalty" | "falseStart",
     url: string | undefined,
   ) {
     if (!this.editingDriver) return;
@@ -789,7 +789,7 @@ export class DriverEditorComponent
   }
 
   onAudioTextChange(
-    slot: "lap" | "bestLap" | "penalty",
+    slot: "lap" | "bestLap" | "penalty" | "falseStart",
     text: string | undefined,
   ) {
     if (!this.editingDriver) return;
@@ -1043,10 +1043,12 @@ export class DriverEditorComponent
         position: "left",
       },
       {
-        selector: "#driver-penalty-audio",
-        title: this.translationService.translate("DE_HELP_PENALTY_SOUND_TITLE"),
+        selector: "#driver-false-start-audio",
+        title: this.translationService.translate(
+          "DE_HELP_FALSE_START_SOUND_TITLE",
+        ),
         content: this.translationService.translate(
-          "DE_HELP_PENALTY_SOUND_CONTENT",
+          "DE_HELP_FALSE_START_SOUND_CONTENT",
         ),
         position: "left",
       },

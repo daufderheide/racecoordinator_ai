@@ -84,6 +84,8 @@ import {
 import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-dialog/race-history-dialog.component";
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { CustomUI } from "@app/models/custom-ui";
+import { AudioConfig } from "@app/models/driver";
+import { AudioPriority, AudioService } from "@app/services/audio.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { HelpService } from "@app/services/help.service";
@@ -94,7 +96,7 @@ import { RaceTimeService } from "@app/services/race-time.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
-import { createTTSContext, playSound } from "@app/utils/audio";
+import { createTTSContext } from "@app/utils/audio";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
@@ -749,6 +751,7 @@ export class DefaultRacedayComponent
   showLoginModal = false;
   private pendingNavigationUrl = "";
 
+  private audioService: AudioService;
   private childWindowManagerService: ChildWindowManagerService;
   private dateTimeFormatService: DateTimeFormatService;
 
@@ -774,7 +777,9 @@ export class DefaultRacedayComponent
     private customWidgetService?: CustomWidgetService,
     private navigationService?: NavigationService,
     dateTimeFormatService?: DateTimeFormatService,
+    audioService?: AudioService,
   ) {
+    this.audioService = audioService ?? inject(AudioService);
     this.childWindowManagerService =
       childWindowManagerService ?? inject(ChildWindowManagerService);
     this.dateTimeFormatService =
@@ -1799,8 +1804,8 @@ export class DefaultRacedayComponent
     const isBestLap = lap.lapTime === lap.bestLapTime;
     const ttsContext = createTTSContext(driver as any, driverData as any);
 
-    this.handleLapAudio(lap, driver, isBestLap, ttsContext);
     this.checkHalfwayPoint(lap, ttsContext);
+    this.handleLapAudio(lap, driver, isBestLap, ttsContext);
     this.handleLapHighlight(lap);
   }
 
@@ -1811,22 +1816,14 @@ export class DefaultRacedayComponent
     ttsContext: any,
   ) {
     if (lap.type === LapType.FALSE_START) {
+      const audio = driver.falseStartAudio || driver.penaltyAudio;
       if (
-        driver.penaltyAudio?.type &&
-        driver.penaltyAudio.type !== "none" &&
-        (driver.penaltyAudio.url ||
-          (driver.penaltyAudio.type === "tts" && driver.penaltyAudio.text))
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
       ) {
-        playSound(
-          driver.penaltyAudio.type,
-          driver.penaltyAudio.url,
-          driver.penaltyAudio.text,
-          this.dataService.serverUrl,
-          ttsContext,
-          this.logger,
-        );
-      } else {
-        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
+        this.audioService.playCallout(audio, "high", ttsContext);
       }
       return;
     }
@@ -1840,33 +1837,34 @@ export class DefaultRacedayComponent
 
     if (
       isBestLap &&
-      driver.bestLapAudio?.type !== "none" &&
-      (driver.bestLapAudio?.url ||
-        (driver.bestLapAudio?.type === "tts" && driver.bestLapAudio?.text))
+      driver.bestLapAudio?.type &&
+      driver.bestLapAudio.type !== "none" &&
+      ((driver.bestLapAudio.type === "tts" &&
+        driver.bestLapAudio.text?.trim()) ||
+        (driver.bestLapAudio.type !== "tts" && driver.bestLapAudio.url?.trim()))
     ) {
-      playSound(
-        driver.bestLapAudio.type,
-        driver.bestLapAudio.url,
-        driver.bestLapAudio.text,
-        this.dataService.serverUrl,
-        ttsContext,
-        this.logger,
-      );
+      if (driver.bestLapAudio.type === "tts") {
+        this.audioService.playCallout(
+          driver.bestLapAudio,
+          "normal",
+          ttsContext,
+        );
+      } else {
+        this.audioService.playSfx(driver.bestLapAudio.url);
+      }
     } else if (lap.isDrift) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
     } else if (
-      driver.lapAudio?.type !== "none" &&
-      (driver.lapAudio?.url ||
-        (driver.lapAudio?.type === "tts" && driver.lapAudio?.text))
+      driver.lapAudio?.type &&
+      driver.lapAudio.type !== "none" &&
+      ((driver.lapAudio.type === "tts" && driver.lapAudio.text?.trim()) ||
+        (driver.lapAudio.type !== "tts" && driver.lapAudio.url?.trim()))
     ) {
-      playSound(
-        driver.lapAudio.type,
-        driver.lapAudio.url,
-        driver.lapAudio.text,
-        this.dataService.serverUrl,
-        ttsContext,
-        this.logger,
-      );
+      if (driver.lapAudio.type === "tts") {
+        this.audioService.playCallout(driver.lapAudio, "low", ttsContext);
+      } else {
+        this.audioService.playSfx(driver.lapAudio.url);
+      }
     }
   }
 
@@ -2350,6 +2348,7 @@ export class DefaultRacedayComponent
   }
 
   ngOnDestroy() {
+    this.audioService.reset();
     if (
       typeof window !== "undefined" &&
       window.visualViewport &&
@@ -2518,7 +2517,20 @@ export class DefaultRacedayComponent
     if (this.forceExit) {
       return true;
     }
-    if (this.raceHasEnded) {
+    if (nextState) {
+      if (
+        this.childWindowManagerService?.isRacePreservingRoute(nextState.url) ||
+        nextState.url.includes("/modify-heats") ||
+        nextState.url.includes("/team-manager") ||
+        nextState.url.includes("/driver-manager") ||
+        nextState.url.includes("/ui-editor") ||
+        nextState.url.includes("/driver-station") ||
+        nextState.url.includes("/driver-view")
+      ) {
+        return true;
+      }
+    }
+    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
       this.showExitConfirmation = false;
       this.showSkipHeatConfirmation = false;
       this.showRestartHeatConfirmation = false;
@@ -2529,18 +2541,6 @@ export class DefaultRacedayComponent
       this.showAckModal = true;
       this.cdr.markForCheck();
       return false;
-    }
-    if (nextState) {
-      if (
-        nextState.url.includes("/modify-heats") ||
-        nextState.url.includes("/team-manager") ||
-        nextState.url.includes("/driver-manager") ||
-        nextState.url.includes("/ui-editor") ||
-        nextState.url.includes("/driver-station") ||
-        nextState.url.includes("/driver-view")
-      ) {
-        return true;
-      }
     }
 
     this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
@@ -5493,14 +5493,29 @@ export class DefaultRacedayComponent
     if (entry) {
       const entryType = entry.type || "preset";
       if (entryType !== "none") {
-        playSound(
-          entryType as any,
-          entry.url ? this.getFullUrl(entry.url) : undefined,
-          entry.text || undefined,
-          this.dataService.serverUrl,
-          undefined,
-          this.logger,
-        );
+        const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
+        if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          if (entryType === "tts") {
+            this.audioService.playCallout(
+              { type: "tts", text: entry.text },
+              "normal",
+            );
+          } else {
+            this.audioService.playSfx(playableUrl);
+          }
+        } else {
+          const entryConfig: AudioConfig = {
+            type: entryType,
+            url: playableUrl,
+            text: entry.text || undefined,
+          };
+          this.audioService.playCallout(
+            entryConfig,
+            "normal",
+            undefined,
+            playableUrl,
+          );
+        }
       }
     }
   }
@@ -5647,40 +5662,52 @@ export class DefaultRacedayComponent
 
   private playThemedSound(slotKey: string, context?: any) {
     const config = this.themeService.resolveAudioConfig(slotKey);
-    if (config && config.type !== "none") {
-      // Resolve URL if it's a preset
-      let playableUrl = config.url;
-      if (config.type === "preset" && playableUrl) {
-        const asset = (this.assets || []).find(
-          (a) =>
-            a.model?.entityId === playableUrl ||
-            a.entity_id === playableUrl ||
-            a._id === playableUrl,
-        );
-        if (asset) {
-          playableUrl = this.getFullUrl(asset.url);
-        }
-      }
+    if (!config || config.type === "none") return;
 
-      playSound(
-        config.type as any,
-        playableUrl,
-        config.text,
-        this.dataService.serverUrl,
-        context,
-        this.logger,
-      );
-    } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {
-      // Global fallback for penalty sound if not in theme
-      playSound(
-        "preset",
-        "/assets/default_penalty_penalty.wav",
-        "",
-        this.dataService.serverUrl,
-        undefined,
-        this.logger,
-      );
+    if (config.type === "tts") {
+      if (!config.text?.trim()) return;
+    } else {
+      if (!config.url?.trim()) return;
     }
+
+    let playableUrl: string | undefined = config.url;
+    if (config.type === "preset" && playableUrl) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === playableUrl ||
+          a.entity_id === playableUrl ||
+          a._id === playableUrl,
+      );
+      if (asset) {
+        playableUrl = this.getFullUrl(asset.url);
+      }
+    }
+
+    // Check if slot is SFX vs Voice Callout
+    if (
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
+    ) {
+      if (config.type === "tts") {
+        this.audioService.playCallout(config, "low", context);
+      } else {
+        this.audioService.playSfx(playableUrl);
+      }
+      return;
+    }
+
+    let priority: AudioPriority = "normal";
+    if (
+      slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER
+    ) {
+      priority = "urgent";
+    } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {
+      priority = "high";
+    }
+
+    this.audioService.playCallout(config, priority, context, playableUrl);
   }
 
   private setAllLampsGo() {

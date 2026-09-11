@@ -29,6 +29,7 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { HeatListComponent } from "@app/components/shared/heat-list/heat-list.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
+import { sortThemesForDisplay } from "@app/components/ui-editor/ui-editor-theme.helper";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
@@ -528,8 +529,38 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ngOnInit() {
     this.updateScale();
     this.loadExpanderState();
+    this.initDriverCount();
+    this.initRouteHandling();
 
-    // Get driver count from query param, then localStorage, then default to 4
+    this.loadTracks();
+    this.loadThemes();
+    this.loadRaces();
+    this.loadCustomRotationAssets();
+
+    this.connectionMonitor.startMonitoring();
+    this.monitorConnection();
+    this.raceConnectionService.connect();
+
+    this.subscriptions.push(
+      this.undoManager.stateCommitted$.subscribe(() => {
+        this.autoSaveRace();
+      }),
+    );
+
+    this.subscriptions.push(
+      this.translationService.getTranslationsLoaded().subscribe((loaded) => {
+        if (loaded && this.themes.length > 0) {
+          this.themes = sortThemesForDisplay(
+            this.themes,
+            this.translationService,
+          );
+          this.cdr.markForCheck();
+        }
+      }),
+    );
+  }
+
+  private initDriverCount() {
     const driverCountParam =
       this.route.snapshot.queryParamMap.get("driverCount");
     if (driverCountParam) {
@@ -543,7 +574,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     } else {
       this.loadDriverCount();
     }
+  }
 
+  private initRouteHandling() {
     if (this.route.queryParamMap) {
       this.subscriptions.push(
         this.route.queryParamMap.subscribe((paramMap) => {
@@ -610,20 +643,6 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.createNewRace();
       }
     }
-    this.loadTracks();
-    this.loadThemes();
-    this.loadRaces();
-    this.loadCustomRotationAssets();
-
-    this.connectionMonitor.startMonitoring();
-    this.monitorConnection();
-    this.raceConnectionService.connect();
-
-    this.subscriptions.push(
-      this.undoManager.stateCommitted$.subscribe(() => {
-        this.autoSaveRace();
-      }),
-    );
   }
 
   ngOnDestroy() {
@@ -849,7 +868,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   loadThemes() {
     this.dataService.getThemes().subscribe({
       next: (themes) => {
-        this.themes = themes || [];
+        this.themes = sortThemesForDisplay(
+          themes || [],
+          this.translationService,
+        );
         if (
           this.editingRace &&
           !this.editingRace.theme_id &&
@@ -1004,7 +1026,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       track_entity_id: this.tracks.length > 0 ? this.tracks[0].entity_id : "",
       theme_id:
         this.themes.length > 0
-          ? this.themes[0].entity_id
+          ? (
+              this.themes.find(
+                (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+              ) || this.themes[0]
+            ).entity_id
           : "default_classic_rc_ai",
       heat_rotation_type: "RoundRobin",
       heat_scoring: {

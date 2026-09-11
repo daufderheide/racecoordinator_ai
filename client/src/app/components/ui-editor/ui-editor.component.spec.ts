@@ -3536,6 +3536,41 @@ describe("UIEditorComponent", () => {
       ).toBeFalse();
     });
 
+    it("should preserve custom theme uiId when theme references custom UI '2'", () => {
+      const customLayout: CustomUI = {
+        entity_id: "2",
+        name: "Custom Leaderboard",
+        is_default: false,
+      };
+      const customTheme: Theme = {
+        entity_id: "3",
+        name: "Custom Leaderboard Theme",
+        is_default: false,
+        uiId: "2",
+        slots: {},
+        audio_slots: {},
+      };
+      component.editingState.customUIs = [
+        ...(component.editingState.customUIs || []),
+        customLayout,
+      ];
+      component.editingState.themes = [
+        ...(component.editingState.themes || []),
+        customTheme,
+      ];
+      component.refreshDisplayProperties();
+
+      expect(
+        component.displayCustomUIs.some(
+          (u) => u.entity_id === "2" && u.name === "Custom Leaderboard",
+        ),
+      ).toBeTrue();
+      const loadedTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "3",
+      );
+      expect(loadedTheme?.uiId).toBe("2");
+    });
+
     it("should not collide when a theme and custom UI layout share the same entity_id", () => {
       const themeWithSameId: Theme = {
         entity_id: "1",
@@ -4136,6 +4171,75 @@ describe("UIEditorComponent", () => {
         zIndex: 100,
       });
       expect(name).toBeTruthy();
+    });
+
+    it("should update urgentQueueTtl and calloutSpacing on editingSettings", () => {
+      component.editingSettings.urgentQueueTtl = 5000;
+      component.editingSettings.calloutSpacing = 500;
+
+      component.onUrgentQueueTtlChange(3000);
+      expect(component.editingSettings.urgentQueueTtl).toBe(3000);
+
+      component.onCalloutSpacingChange(1000);
+      expect(component.editingSettings.calloutSpacing).toBe(1000);
+    });
+
+    it("should update TTS settings on editingSettings", () => {
+      component.editingSettings.masterVolume = 100;
+      component.editingSettings.ttsVoice = "";
+      component.editingSettings.ttsRate = 1.0;
+      component.editingSettings.ttsPitch = 1.0;
+      component.editingSettings.ttsVolume = 100;
+
+      component.onMasterVolumeChange(85);
+      expect(component.editingSettings.masterVolume).toBe(85);
+
+      component.onMasterVolumeChange("60");
+      expect(component.editingSettings.masterVolume).toBe(60);
+
+      component.onTtsVoiceChange("Alex");
+      expect(component.editingSettings.ttsVoice).toBe("Alex");
+
+      component.onTtsRateChange(1.25);
+      expect(component.editingSettings.ttsRate).toBe(1.25);
+
+      component.onTtsRateChange("1.75");
+      expect(component.editingSettings.ttsRate).toBe(1.75);
+
+      component.onTtsPitchChange(0.9);
+      expect(component.editingSettings.ttsPitch).toBe(0.9);
+
+      component.onTtsPitchChange("1.3");
+      expect(component.editingSettings.ttsPitch).toBe(1.3);
+
+      component.onTtsVolumeChange(80);
+      expect(component.editingSettings.ttsVolume).toBe(80);
+
+      component.onTtsVolumeChange("45");
+      expect(component.editingSettings.ttsVolume).toBe(45);
+    });
+
+    it("should call audioService.previewTTS when testTtsVoice is invoked", () => {
+      const mockAudio = {
+        previewTTS: jasmine.createSpy("previewTTS"),
+      };
+      (component as any).audioService = mockAudio;
+      component.editingSettings.masterVolume = 90;
+      component.editingSettings.ttsVoice = "Alex";
+      component.editingSettings.ttsRate = 1.5;
+      component.editingSettings.ttsPitch = 0.8;
+      component.editingSettings.ttsVolume = 75;
+
+      component.testTtsVoice();
+
+      expect(mockAudio.previewTTS).toHaveBeenCalledWith(
+        jasmine.any(String),
+        "Alex",
+        1.5,
+        0.8,
+        75,
+        90,
+      );
     });
   });
 });

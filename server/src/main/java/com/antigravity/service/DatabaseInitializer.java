@@ -539,19 +539,86 @@ public class DatabaseInitializer {
     SqliteRepository<CustomUI> uiRepo =
         new SqliteRepository<>(context, "custom_uis", CustomUI.class);
     List<CustomUI> uis = uiRepo.findAll();
+    boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
     for (CustomUI ui : uis) {
-      String layoutJson = ui.getLayoutJson();
-      if (layoutJson != null && !layoutJson.contains("\"widgetType\":\"countdown\"")) {
-        String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
-        if (!updatedLayoutJson.equals(layoutJson)) {
-          CustomUI updated = ui.withLayoutJson(updatedLayoutJson);
-          uiRepo.save(updated);
-          logger.info(
-              "Backfilled countdown widget into custom UI '{}' ({})",
-              ui.getName(),
-              ui.getEntityId());
-        }
+      backfillSingleCustomUi(ui, uiRepo, foundFlags);
+    }
+    if (!foundFlags[0]) {
+      uiRepo.save(CustomUI.createDefault());
+      logger.info("Backfilled default custom UI with ID {}", CustomUI.DEFAULT_UI_ID);
+    }
+    if (!foundFlags[1]) {
+      uiRepo.save(CustomUI.createPractice());
+      logger.info("Backfilled practice custom UI with ID {}", CustomUI.PRACTICE_UI_ID);
+    }
+    if (!foundFlags[2]) {
+      uiRepo.save(CustomUI.createFuel());
+      logger.info("Backfilled fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
+    }
+  }
+
+  private void backfillSingleCustomUi(
+      CustomUI ui, SqliteRepository<CustomUI> uiRepo, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = ui.getEntityId();
+    String name = ui.getName();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (ui.isDefault() || "Fuel UI".equalsIgnoreCase(name))) {
+      uiRepo.delete("2");
+      entityId = CustomUI.FUEL_UI_ID;
+      name = CustomUI.FUEL_UI_NAME;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    if (CustomUI.DEFAULT_UI_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (CustomUI.isLegacyDefaultName(name)) {
+        name = CustomUI.DEFAULT_UI_NAME;
+        updated = true;
       }
+    }
+    if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (CustomUI.isLegacyPracticeName(name)) {
+        name = CustomUI.PRACTICE_UI_NAME;
+        updated = true;
+      }
+    }
+    if (CustomUI.FUEL_UI_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (CustomUI.isLegacyFuelName(name)) {
+        name = CustomUI.FUEL_UI_NAME;
+        updated = true;
+      }
+    }
+
+    String layoutJson = ui.getLayoutJson();
+    if (layoutJson != null && !layoutJson.contains("\"widgetType\":\"countdown\"")) {
+      String updatedLayoutJson = CustomUI.ensureCountdownWidget(layoutJson);
+      if (!updatedLayoutJson.equals(layoutJson)) {
+        layoutJson = updatedLayoutJson;
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      CustomUI updatedUi =
+          new CustomUI(
+              name,
+              ui.isDefault(),
+              layoutJson,
+              ui.getColumnsJson(),
+              ui.getColumnLayoutsJson(),
+              ui.getColumnVisibilityJson(),
+              ui.getColumnWidthsJson(),
+              ui.getColumnAnchorsJson(),
+              entityId,
+              ui.getId());
+      uiRepo.save(updatedUi);
+      logger.info("Backfilled custom UI '{}' ({})", updatedUi.getName(), updatedUi.getEntityId());
     }
   }
 

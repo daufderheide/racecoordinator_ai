@@ -31,6 +31,7 @@ import {
   ISaveAudioSetEntry,
   ISaveImageSetEntry,
 } from "@app/proto/antigravity";
+import { AudioService } from "@app/services/audio.service";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -122,6 +123,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
 
   scale: number = 1;
   private route = inject(ActivatedRoute);
+  private audioService = inject(AudioService, { optional: true });
   private params = toSignal(this.route.queryParams);
 
   backTargetUrl = computed(() => {
@@ -781,6 +783,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     return new Promise((resolve, reject) => {
       const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
+      const masterVol = this.audioService?.getMasterVolume() ?? 100;
+      audio.volume = Math.max(0, Math.min(1, masterVol / 100));
       this.currentAudio = audio;
       audio.onended = () => {
         this.currentAudio = null;
@@ -804,8 +808,14 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       const playContext = mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      if (this.audioService) {
+        this.audioService.applyTtsSettingsToUtterance(utterance);
+      }
       utterance.onend = () => resolve();
       utterance.onerror = () => resolve();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
       window.speechSynthesis.speak(utterance);
     });
   }

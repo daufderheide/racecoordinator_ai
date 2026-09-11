@@ -2,6 +2,7 @@ package com.antigravity.models;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.RaceFlag;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,6 +19,43 @@ public class Theme extends Model {
   public static final String DEFAULT_THEME_ID = "default_classic_rc_ai";
   public static final String PRACTICE_THEME_ID = "practice_theme_rc_ai";
   public static final String FUEL_THEME_ID = "default_fuel_theme_rc_ai";
+
+  public static final String DEFAULT_THEME_NAME = "RaceCoordinator AI";
+  public static final String PRACTICE_THEME_NAME = "RaceCoordinator AI (Practice)";
+  public static final String FUEL_THEME_NAME = "RaceCoordinator AI (Fuel)";
+
+  // TODO(aufderheide): Remove the legacy name checks after a few versions.
+  public static boolean isLegacyDefaultName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "default".equals(n)
+        || "classic".equals(n)
+        || "classic theme".equals(n)
+        || "default theme".equals(n)
+        || "racecoordinator ai".equals(n)
+        || "racecoordinator ai (default)".equals(n);
+  }
+
+  // TODO(aufderheide): Remove the legacy name checks after a few versions.
+  public static boolean isLegacyPracticeName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "practice".equals(n) || "practice theme".equals(n);
+  }
+
+  // TODO(aufderheide): Remove the legacy name checks after a few versions.
+  public static boolean isLegacyFuelName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "fuel".equals(n) || "fuel theme".equals(n);
+  }
+
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final String name;
@@ -32,7 +70,7 @@ public class Theme extends Model {
       @JsonProperty("is_default") boolean isDefault,
       @JsonProperty("slots") Map<String, String> slots,
       @JsonProperty("audio_slots") Map<String, AudioConfig> audioSlots,
-      @JsonProperty("uiId") String uiId,
+      @JsonProperty("uiId") @JsonAlias({"ui_id", "ui_layout_id", "custom_ui_id"}) String uiId,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -72,6 +110,7 @@ public class Theme extends Model {
   }
 
   @JsonProperty("uiId")
+  @JsonAlias({"ui_id", "ui_layout_id", "custom_ui_id"})
   public String getUiId() {
     return uiId;
   }

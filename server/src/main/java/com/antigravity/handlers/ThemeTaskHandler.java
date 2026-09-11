@@ -64,6 +64,17 @@ public class ThemeTaskHandler {
   private void migrateAndCheckTheme(Theme t, boolean[] foundFlags) {
     boolean updated = false;
     String entityId = t.getEntityId();
+    String name = t.getName();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(name))) {
+      themeRepository.delete("2");
+      entityId = Theme.FUEL_THEME_ID;
+      name = Theme.FUEL_THEME_NAME;
+      foundFlags[2] = true;
+      updated = true;
+    }
 
     if (Theme.DEFAULT_THEME_ID.equals(entityId)) {
       foundFlags[0] = true;
@@ -73,15 +84,6 @@ public class ThemeTaskHandler {
     }
     if (Theme.FUEL_THEME_ID.equals(entityId)) {
       foundFlags[2] = true;
-    }
-
-    if ("2".equals(entityId)
-        && !foundFlags[2]
-        && (t.isDefault() || "Fuel Theme".equalsIgnoreCase(t.getName()))) {
-      themeRepository.delete("2");
-      entityId = Theme.FUEL_THEME_ID;
-      foundFlags[2] = true;
-      updated = true;
     }
 
     Map<String, String> s = new HashMap<>(t.getSlots());
@@ -113,11 +115,19 @@ public class ThemeTaskHandler {
         uiId = CustomUI.DEFAULT_UI_ID;
         updated = true;
       }
+      if (Theme.isLegacyDefaultName(name)) {
+        name = Theme.DEFAULT_THEME_NAME;
+        updated = true;
+      }
     }
     if (Theme.PRACTICE_THEME_ID.equals(entityId)) {
       foundFlags[1] = true;
       if (uiId == null) {
         uiId = CustomUI.PRACTICE_UI_ID;
+        updated = true;
+      }
+      if (Theme.isLegacyPracticeName(name)) {
+        name = Theme.PRACTICE_THEME_NAME;
         updated = true;
       }
     }
@@ -127,6 +137,10 @@ public class ThemeTaskHandler {
         uiId = CustomUI.FUEL_UI_ID;
         updated = true;
       }
+      if (Theme.isLegacyFuelName(name)) {
+        name = Theme.FUEL_THEME_NAME;
+        updated = true;
+      }
     }
     if (uiId == null || uiId.trim().isEmpty()) {
       uiId = CustomUI.DEFAULT_UI_ID;
@@ -134,7 +148,7 @@ public class ThemeTaskHandler {
     }
 
     if (updated) {
-      Theme newTheme = new Theme(t.getName(), t.isDefault(), s, as, uiId, entityId, t.getId());
+      Theme newTheme = new Theme(name, t.isDefault(), s, as, uiId, entityId, t.getId());
       themeRepository.save(newTheme);
     }
   }

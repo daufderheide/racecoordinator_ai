@@ -2926,24 +2926,46 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
     });
 
-    it("should play themed penalty sound when FALSE_START received and no custom audio", () => {
+    it("should not play any sound when FALSE_START received and audio is set to none or not configured correctly (no fallback)", () => {
       spyOn(component as any, "playThemedSound");
+      const playCalloutSpy = spyOn(
+        (component as any).audioService,
+        "playCallout",
+      );
 
+      // 1. type is none
+      mockHd.driver.falseStartAudio = { type: "none" };
       lapsSubject.next({
         objectId: "hd1",
         type: LapType.FALSE_START,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_PENALTY,
-        jasmine.objectContaining({
-          driver: jasmine.objectContaining({ nickname: "Test Driver" }),
-        }),
-      );
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // 2. type is preset but url is empty
+      mockHd.driver.falseStartAudio = { type: "preset", url: "" };
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+      });
+
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // 3. type is tts but text is empty
+      mockHd.driver.falseStartAudio = { type: "tts", text: "   " };
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+      });
+
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
     });
 
-    it("should play custom penalty audio when FALSE_START received", () => {
-      mockHd.driver.penaltyAudio = {
+    it("should play driver false start audio when FALSE_START received and properly configured", () => {
+      mockHd.driver.falseStartAudio = {
         type: "preset",
         url: "custom-penalty.wav",
       };
@@ -3499,6 +3521,22 @@ describe("DefaultRacedayComponent", () => {
       const nextState = { url: "/ui-editor" } as any;
       const result = component.canDeactivate(nextState);
       expect(result).toBeTrue();
+    });
+
+    it("should allow deactivation when navigating to /ui-editor even if raceHasEnded is true", () => {
+      component.raceHasEnded = true;
+      const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should allow deactivation when navigating to /ui-editor even if raceState is RACE_OVER", () => {
+      (component as any).raceState = RaceState.RACE_OVER;
+      const nextState = { url: "/ui-editor" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
     });
 
     it("should allow deactivation when navigating to /modify-heats", () => {
@@ -4729,6 +4767,7 @@ describe("DefaultRacedayComponent", () => {
             audioEntries: [
               { url: "/api/assets/download/240", timeSeconds: 240 },
               { url: "/api/assets/download/60", timeSeconds: 60 },
+              { url: "/api/assets/download/30", timeSeconds: 30 },
             ],
             url: "/api/assets/download/default_seconds_left_set",
           },
@@ -4809,17 +4848,369 @@ describe("DefaultRacedayComponent", () => {
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/240`,
       );
+      component["audioService"].stopVoice();
 
       // Crossing halfway (150s for a 5 minute race)
       raceTimeSubject.next({ time: 150.0 });
       expect(mockThemeService.resolveAudioConfig).toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
       );
+      component["audioService"].stopVoice();
 
       // Crossing 1 minute (60s)
       raceTimeSubject.next({ time: 60.0 });
       expect(window.Audio).toHaveBeenCalledWith(
         `${mockDataService.serverUrl}api/assets/download/60`,
+      );
+    });
+
+    it("should resolve Halfway vs 30s collision by playing Halfway (NORMAL) and dropping 30s (NORMAL)", () => {
+      (window.Audio as any).calls.reset();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "preset", url: "halfway_sound" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60, // 1 minute race, halfway is at 30 seconds
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+
+      // Crossing 30s threshold: both Halfway (30s) and standard 30s threshold are triggered
+      raceTimeSubject.next({ time: 30.0 });
+
+      // Halfway is NORMAL priority (played first), 30s is NORMAL priority (dropped because channel is busy)
+      // Only halfway_sound should have been played; 30s was dropped!
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/halfway_sound/),
+      );
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
+      );
+    });
+
+    it("should resolve Halfway vs 30s collision when Halfway is TTS by playing Halfway TTS (NORMAL) and dropping 30s (NORMAL)", () => {
+      (window.Audio as any).calls.reset();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "tts", text: "Halfway through the heat" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+
+      // Crossing 30s threshold: Halfway (TTS) triggers first with NORMAL priority, occupies voice channel
+      raceTimeSubject.next({ time: 30.0 });
+
+      // Halfway TTS played with normal priority
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Halfway through the heat",
+        }),
+        "normal",
+        undefined,
+        undefined,
+      );
+      // 30s threshold audio was dropped because voice channel was busy with NORMAL priority Halfway!
+      expect(window.Audio).not.toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
+      );
+    });
+
+    it("should preserve urgent, high, and normal priority levels when sounds are configured as TTS", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        return { type: "tts", text: `TTS for ${key}` };
+      });
+
+      // Yellow flag (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.PAUSED);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.yellowflag",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Heat over (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.HEAT_OVER);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.heat_over",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Race over (urgent)
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.RACE_OVER);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.race_over",
+        }),
+        "urgent",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Penalty (high)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_PENALTY);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.penalty",
+        }),
+        "high",
+        undefined,
+        undefined,
+      );
+      playCalloutSpy.calls.reset();
+
+      // Halfway (normal)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY);
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "TTS for audio.seconds_left.halfway",
+        }),
+        "normal",
+        undefined,
+        undefined,
+      );
+    });
+
+    it("should not play themed sound when config is none, missing, or improperly configured (no fallback)", () => {
+      const playCalloutSpy = spyOn(
+        (component as any).audioService,
+        "playCallout",
+      );
+      const playSfxSpy = spyOn((component as any).audioService, "playSfx");
+
+      // 1. Slot not in theme at all
+      mockThemeService.resolveAudioConfig.and.returnValue(null);
+      component["playThemedSound"]("audio.unconfigured");
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 2. Slot is type "none"
+      mockThemeService.resolveAudioConfig.and.returnValue({ type: "none" });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 3. Preset with empty url
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "   ",
+      });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 4. TTS with empty text
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "tts",
+        text: "",
+      });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
+
+    it("should use configured audio settings during race playback for TTS callouts", () => {
+      const originalUtterance = (window as any).SpeechSynthesisUtterance;
+      (window as any).SpeechSynthesisUtterance =
+        class MockSpeechSynthesisUtterance {
+          text: string;
+          voice: any;
+          rate: number = 1.0;
+          pitch: number = 1.0;
+          volume: number = 1.0;
+          onend: any;
+          onerror: any;
+          constructor(text: string) {
+            this.text = text;
+          }
+        };
+
+      const mockVoice = {
+        name: "Samantha",
+        voiceURI: "samantha",
+        lang: "en-US",
+      };
+      const mockSpeech = {
+        speak: jasmine.createSpy("speak"),
+        cancel: jasmine.createSpy("cancel"),
+        pause: jasmine.createSpy("pause"),
+        resume: jasmine.createSpy("resume"),
+        paused: false,
+        getVoices: jasmine.createSpy("getVoices").and.returnValue([mockVoice]),
+      };
+      Object.defineProperty(window, "speechSynthesis", {
+        value: mockSpeech,
+        writable: true,
+        configurable: true,
+      });
+
+      mockSettings.masterVolume = 80;
+      mockSettings.ttsVolume = 50;
+      mockSettings.ttsVoice = "Samantha";
+      mockSettings.ttsRate = 1.25;
+      mockSettings.ttsPitch = 0.9;
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = {
+        type: "tts",
+        text: "{driver.name} completed lap",
+      };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+        bestLapTime: 3.5,
+      });
+
+      expect(mockSpeech.speak).toHaveBeenCalled();
+      const utterance = mockSpeech.speak.calls.mostRecent().args[0];
+      expect(utterance.text).toContain("completed lap");
+      expect(utterance.rate).toBeCloseTo(1.25, 2);
+      expect(utterance.pitch).toBeCloseTo(0.9, 2);
+      expect(utterance.volume).toBeCloseTo(0.4, 2); // 0.8 * 0.5
+      expect(utterance.voice).toEqual(
+        jasmine.objectContaining({ name: "Samantha" }),
+      );
+
+      (window as any).SpeechSynthesisUtterance = originalUtterance;
+      mockSettings.masterVolume = 100;
+      mockSettings.ttsVolume = 100;
+      mockSettings.ttsVoice = "";
+      mockSettings.ttsRate = 1.0;
+      mockSettings.ttsPitch = 1.0;
+    });
+
+    it("should use configured masterVolume during race playback for SFX sounds", () => {
+      (window.Audio as any).calls.reset();
+      mockSettings.masterVolume = 40;
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 4.1,
+        bestLapTime: 3.5,
+      });
+
+      expect(window.Audio).toHaveBeenCalled();
+      const audioInstance = (window.Audio as any).calls.mostRecent()
+        .returnValue;
+      expect(audioInstance.volume).toBeCloseTo(0.4, 2);
+
+      mockSettings.masterVolume = 100;
+    });
+
+    it("should fallback to 30s countdown if Halfway audio is configured to 'none'", () => {
+      (window.Audio as any).calls.reset();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT) {
+          return { type: "audio_set", url: "default_seconds_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "none" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 60,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      // Initial time: 60s
+      raceTimeSubject.next({ time: 60.0 });
+      (window.Audio as any).calls.reset();
+
+      // Crossing 30s threshold: Halfway is "none", channel is idle -> 30s plays as fallback
+      raceTimeSubject.next({ time: 30.0 });
+
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/api\/assets\/download\/30$/),
       );
     });
 
@@ -5351,6 +5742,31 @@ describe("DefaultRacedayComponent", () => {
       component.forceExit = false;
 
       const result = component.canDeactivate();
+      expect(result).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should allow deactivation and not show acknowledgement modal when race has ended and navigating to /ui-editor", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should block deactivation and show acknowledgement modal when race has ended and navigating to /raceday-setup", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const nextState = { url: "/raceday-setup" } as any;
+      const result = component.canDeactivate(nextState);
       expect(result).toBeFalse();
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");

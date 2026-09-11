@@ -3,11 +3,14 @@ import { Theme } from "@app/models/theme";
 import { TranslationService } from "@app/services/translation.service";
 
 import {
+  getAudioHelpSteps,
+  getAudioSettingsHelpSteps,
   getCustomUiConfigHelpSteps,
   getGeneralAndCustomUisHelpSteps,
   getRacedayLayoutHelpSteps,
   getThemesHelpSteps,
   getUiEditorHelpSteps,
+  handleUiEditorHelpStep,
   UiEditorHelpContext,
 } from "./ui-editor-help.helper";
 
@@ -118,7 +121,7 @@ describe("ui-editor-help.helper", () => {
 
   it("should return custom UI config steps", () => {
     const steps = getCustomUiConfigHelpSteps(ctx);
-    expect(steps.length).toBeGreaterThan(3);
+    expect(steps.length).toBe(5);
 
     const widgetDirStep = steps.find(
       (s) => s.selector === "#help-custom-widget-dir",
@@ -128,9 +131,119 @@ describe("ui-editor-help.helper", () => {
     expect(sectionsExpanded["config"]).toBeTrue();
   });
 
+  it("should return audio settings help steps including tts options", () => {
+    const steps = getAudioSettingsHelpSteps(ctx);
+    expect(steps.length).toBe(9);
+
+    const audioSettingsStep = steps.find(
+      (s) => s.selector === "#help-audio-settings",
+    );
+    expect(audioSettingsStep).toBeDefined();
+    audioSettingsStep?.onEnter?.();
+    expect(sectionsExpanded["audioSettings"]).toBeTrue();
+
+    const masterVolumeStep = steps.find(
+      (s) => s.selector === "#help-audio-master-volume",
+    );
+    expect(masterVolumeStep).toBeDefined();
+    expect(masterVolumeStep?.title).toBe("UE_LABEL_MASTER_VOLUME");
+
+    const urgentTimeoutStep = steps.find(
+      (s) => s.selector === "#help-audio-urgent-timeout",
+    );
+    expect(urgentTimeoutStep).toBeDefined();
+    expect(urgentTimeoutStep?.title).toBe("UE_LABEL_URGENT_QUEUE_TIMEOUT");
+
+    const calloutSpacingStep = steps.find(
+      (s) => s.selector === "#help-audio-callout-spacing",
+    );
+    expect(calloutSpacingStep).toBeDefined();
+    expect(calloutSpacingStep?.title).toBe("UE_LABEL_CALLOUT_SPACING");
+
+    const ttsVoiceStep = steps.find((s) => s.selector === "#help-tts-voice");
+    expect(ttsVoiceStep).toBeDefined();
+    expect(ttsVoiceStep?.title).toBe("UE_LABEL_TTS_VOICE");
+
+    const ttsRateStep = steps.find((s) => s.selector === "#help-tts-rate");
+    expect(ttsRateStep).toBeDefined();
+    expect(ttsRateStep?.title).toBe("UE_LABEL_TTS_RATE");
+
+    const ttsPitchStep = steps.find((s) => s.selector === "#help-tts-pitch");
+    expect(ttsPitchStep).toBeDefined();
+    expect(ttsPitchStep?.title).toBe("UE_LABEL_TTS_PITCH");
+
+    const ttsVolumeStep = steps.find((s) => s.selector === "#help-tts-volume");
+    expect(ttsVolumeStep).toBeDefined();
+    expect(ttsVolumeStep?.title).toBe("UE_LABEL_TTS_VOLUME");
+
+    const ttsTestStep = steps.find((s) => s.selector === "#help-tts-preview");
+    expect(ttsTestStep).toBeDefined();
+    expect(ttsTestStep?.title).toBe("UE_LABEL_TTS_PREVIEW");
+  });
+
+  it("should return theme audio help steps", () => {
+    const steps = getAudioHelpSteps(ctx);
+    expect(steps.length).toBeGreaterThan(4);
+
+    const yellowFlagStep = steps.find(
+      (s) => s.selector === "#help-audio-yellowflag",
+    );
+    expect(yellowFlagStep).toBeDefined();
+    expect(yellowFlagStep?.title).toBe("UE_LABEL_YELLOW_FLAG_AUDIO");
+    yellowFlagStep?.onEnter?.();
+    expect(sectionsExpanded["themes"]).toBeTrue();
+    expect(sectionsExpanded["theme_default_classic_rc_ai"]).toBeTrue();
+    expect(sectionsExpanded["audio"]).toBeTrue();
+  });
+
   it("should return all combined steps in correct order", () => {
     const allSteps = getUiEditorHelpSteps(ctx);
     expect(allSteps.length).toBeGreaterThan(20);
     expect(allSteps[0].title).toBe("UE_TITLE");
+  });
+
+  describe("handleUiEditorHelpStep", () => {
+    it("should return false when step is null or has no selector", () => {
+      expect(handleUiEditorHelpStep(null, sectionsExpanded)).toBeFalse();
+      expect(
+        handleUiEditorHelpStep(
+          { selector: "", title: "", content: "" },
+          sectionsExpanded,
+        ),
+      ).toBeFalse();
+    });
+
+    it("should expand sections based on selector prefixes", () => {
+      const step1 = {
+        selector: "#help-audio-urgent-timeout",
+        title: "",
+        content: "",
+      };
+      expect(handleUiEditorHelpStep(step1, sectionsExpanded)).toBeTrue();
+      expect(sectionsExpanded["audioSettings"]).toBeTrue();
+
+      // already expanded
+      expect(handleUiEditorHelpStep(step1, sectionsExpanded)).toBeFalse();
+
+      const stepTts = {
+        selector: "#help-tts-voice",
+        title: "",
+        content: "",
+      };
+      // audioSettings already true
+      expect(handleUiEditorHelpStep(stepTts, sectionsExpanded)).toBeFalse();
+
+      const stepConfig = {
+        selector: "#help-custom-ui-dir",
+        title: "",
+        content: "",
+      };
+      expect(handleUiEditorHelpStep(stepConfig, sectionsExpanded)).toBeTrue();
+      expect(sectionsExpanded["config"]).toBeTrue();
+
+      const step3 = { selector: "#help-themes-list", title: "", content: "" };
+      expect(handleUiEditorHelpStep(step3, sectionsExpanded)).toBeTrue();
+      expect(sectionsExpanded["themes"]).toBeTrue();
+    });
   });
 });

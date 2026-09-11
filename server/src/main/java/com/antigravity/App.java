@@ -216,14 +216,7 @@ public class App {
         logger.info("Migration imports completed.");
       }
 
-      logger.info("Starting database backfill loop...");
-      for (String dbName : databaseContext.listDatabases()) {
-        logger.info("Backfilling default assets for database: {}", dbName);
-        new AssetService(
-                databaseContext, appDataDir + File.separator + dbName + File.separator + "assets")
-            .backfillDefaults();
-        DatabaseService.getInstance().backfillRaces(databaseContext);
-      }
+      runStartupDatabaseBackfills(databaseContext, appDataDir, activeDb);
 
       String[] possiblePaths = {"client/dist/client", "../client/dist/client", "web", "server/web"};
       String resolvedClientPath = null;
@@ -761,5 +754,20 @@ public class App {
       System.err.println("Failed to trigger log rollover: " + e.getMessage());
       e.printStackTrace();
     }
+  }
+
+  private static void runStartupDatabaseBackfills(
+      DatabaseContext databaseContext, String appDataDir, String activeDb) {
+    logger.info("Starting database backfill loop...");
+    for (String dbName : databaseContext.listDatabases()) {
+      logger.info("Backfilling default assets, races, and custom UIs for database: {}", dbName);
+      databaseContext.switchDatabase(dbName);
+      new AssetService(
+              databaseContext, appDataDir + File.separator + dbName + File.separator + "assets")
+          .backfillDefaults();
+      DatabaseService.getInstance().backfillRaces(databaseContext);
+      DatabaseService.getInstance().backfillCustomUIs(databaseContext);
+    }
+    databaseContext.switchDatabase(activeDb);
   }
 }

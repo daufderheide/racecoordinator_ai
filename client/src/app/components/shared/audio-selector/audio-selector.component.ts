@@ -2,6 +2,7 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  inject,
   input,
   OnChanges,
   OnDestroy,
@@ -14,7 +15,9 @@ import { FormsModule } from "@angular/forms";
 import { ItemSelectorComponent } from "@app/components/shared/item-selector/item-selector.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { AudioService } from "@app/services/audio.service";
 import { LoggerService } from "@app/services/logger.service";
+import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
   interpolate,
@@ -51,6 +54,12 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   assets = input<any[]>([]);
 
   context = input<any>();
+
+  ttsVoice = input<string | undefined>();
+  ttsRate = input<number | undefined>();
+  ttsPitch = input<number | undefined>();
+  ttsVolume = input<number | undefined>();
+  masterVolume = input<number | undefined>();
 
   showItemSelector = false;
   isDragging = false;
@@ -173,6 +182,9 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     );
   });
 
+  private audioService = inject(AudioService, { optional: true });
+  private settingsService = inject(SettingsService, { optional: true });
+
   constructor(
     private dataService: DataService,
     private cdr: ChangeDetectorRef,
@@ -279,6 +291,12 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.previewAudio = null;
     }
     const playContext = this.context() || mockTTSContext();
+    const masterVol =
+      this.masterVolume() !== undefined
+        ? this.masterVolume()!
+        : (this.audioService?.getMasterVolume() ??
+          this.settingsService?.getSettings().masterVolume ??
+          100);
     this.previewAudio =
       playSound(
         item.type === "audio_set" ? "audio_set" : "preset",
@@ -287,6 +305,13 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         this.dataService.serverUrl,
         playContext,
         this.logger,
+        {
+          masterVolume: masterVol,
+          ttsVoice: this.ttsVoice(),
+          ttsRate: this.ttsRate(),
+          ttsPitch: this.ttsPitch(),
+          ttsVolume: this.ttsVolume(),
+        },
       ) || null;
   }
 
@@ -332,8 +357,23 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       const playContext = this.context() || mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      if (this.audioService) {
+        this.audioService.applyTtsSettingsToUtterance(
+          utterance,
+          this.ttsVoice(),
+          this.ttsRate(),
+          this.ttsPitch(),
+          this.ttsVolume(),
+          this.masterVolume(),
+        );
+      } else {
+        this.applyFallbackTtsSettings(utterance);
+      }
       utterance.onend = () => resolve();
       utterance.onerror = () => resolve();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
       window.speechSynthesis.speak(utterance);
     });
   }
@@ -396,6 +436,13 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     return new Promise((resolve, reject) => {
       const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
+      const masterVol =
+        this.masterVolume() !== undefined
+          ? this.masterVolume()!
+          : (this.audioService?.getMasterVolume() ??
+            this.settingsService?.getSettings().masterVolume ??
+            100);
+      audio.volume = Math.max(0, Math.min(1, masterVol / 100));
       this.currentAudio = audio;
       audio.onended = () => {
         if (this.currentAudio === audio) {
@@ -432,6 +479,19 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     const interpolatedText = interpolate(text, playContext);
 
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    if (this.audioService) {
+      this.audioService.applyTtsSettingsToUtterance(
+        utterance,
+        this.ttsVoice(),
+        this.ttsRate(),
+        this.ttsPitch(),
+        this.ttsVolume(),
+        this.masterVolume(),
+      );
+    } else {
+      this.applyFallbackTtsSettings(utterance);
+    }
+
     utterance.onend = () => {
       if (this.currentPlaybackId === playbackId) {
         this.isPlaying = false;
@@ -445,7 +505,48 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       }
     };
 
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(utterance);
+  }
+
+  private applyFallbackTtsSettings(utterance: SpeechSynthesisUtterance): void {
+    const settings = this.settingsService?.getSettings();
+    const voiceName = this.ttsVoice() ?? settings?.ttsVoice;
+    const rate = this.ttsRate() ?? settings?.ttsRate ?? 1.0;
+    const pitch = this.ttsPitch() ?? settings?.ttsPitch ?? 1.0;
+    const volume = this.ttsVolume() ?? settings?.ttsVolume ?? 100;
+    const masterVolume = this.masterVolume() ?? settings?.masterVolume ?? 100;
+
+    if (
+      voiceName &&
+      typeof window !== "undefined" &&
+      window.speechSynthesis &&
+      typeof window.speechSynthesis.getVoices === "function"
+    ) {
+      try {
+        const voices = window.speechSynthesis.getVoices() || [];
+        const trimmed = voiceName.trim().toLowerCase();
+        const matched = voices.find(
+          (v) =>
+            v.name === voiceName ||
+            v.voiceURI === voiceName ||
+            (v.name && v.name.trim().toLowerCase() === trimmed) ||
+            (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
+        );
+        if (matched) {
+          utterance.voice = matched;
+        }
+      } catch {
+        // Ignored
+      }
+    }
+    if (rate != null) utterance.rate = Math.max(0.1, Math.min(10, rate));
+    if (pitch != null) utterance.pitch = Math.max(0, Math.min(2, pitch));
+    const masterVol = Math.max(0, Math.min(1, masterVolume / 100));
+    const ttsVol = Math.max(0, Math.min(1, volume / 100));
+    utterance.volume = masterVol * ttsVol;
   }
 
   // Drag & Drop
