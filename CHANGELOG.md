@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.0.0-beta.68] - 2026-09-11
+
+### 🚀 New Features
+
+- implement theme sorting by display name fix: trying to resolve legacy name changes causing selctors and custom ui page to show different theme/layout names https://github.com/daufderheide/racecoordinator_ai/issues/816 [skip-screendiffs] ([59ac394f](https://github.com/daufderheide/racecoordinator_ai/commit/59ac394f))
+- add audio settings including master volume control feat: add text-to-speech configuration settings and preview functionality to the UI editor ([d5496a24](https://github.com/daufderheide/racecoordinator_ai/commit/d5496a24))
+- introduce AudioService for managing polyphonic sound effects and prioritized voice callouts with queueing and preemption support [skip-screendiffs] ([a308417d](https://github.com/daufderheide/racecoordinator_ai/commit/a308417d))
+
+### 🐛 Bug Fixes
+
+- move UI editor layout logic to helpers and allow navigation to UI editor when race has ended ([106ba8e9](https://github.com/daufderheide/racecoordinator_ai/commit/106ba8e9))
+- renamed penalty to  false start audio so later we can add new penalty specific audio ([820bdf3a](https://github.com/daufderheide/racecoordinator_ai/commit/820bdf3a))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.67...v1.0.0-beta.68">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.67] - 2026-09-10
 
 ### 🚀 New Features
