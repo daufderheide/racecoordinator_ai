@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -960,10 +962,14 @@ public final class RaceStatisticsUtils {
 
   private static boolean isHeaderRow(Row row) {
     if (row == null) return true;
+    boolean hasContent = false;
     for (Cell c : row) {
       if (c == null) continue;
       if (c.getCellType() == CellType.STRING) {
         String val = c.getStringCellValue().trim();
+        if (!val.isEmpty()) {
+          hasContent = true;
+        }
         if ("Driver".equalsIgnoreCase(val)
             || "Driver / Team".equalsIgnoreCase(val)
             || "Rank".equalsIgnoreCase(val)
@@ -976,6 +982,10 @@ public final class RaceStatisticsUtils {
             || "Total Time".equalsIgnoreCase(val)) {
           return true;
         }
+      } else if (c.getCellType() == CellType.NUMERIC
+          || c.getCellType() == CellType.BOOLEAN
+          || c.getCellType() == CellType.FORMULA) {
+        hasContent = true;
       }
       CellStyle style = c.getCellStyle();
       if (style != null
@@ -989,92 +999,359 @@ public final class RaceStatisticsUtils {
         }
       }
     }
-    return false;
+    return !hasContent;
   }
 
-  public static void applyPostJxlsLaneColors(
-      org.apache.poi.xssf.usermodel.XSSFWorkbook workbook, Race race) {
+  private static final Pattern LANE_HEADER_PATTERN =
+      Pattern.compile("^Lane\\s+(\\d+)(?:\\s+(?:Laps|Segments?|Seg))?$", Pattern.CASE_INSENSITIVE);
+
+  public static void applyPostJxlsLaneColors(XSSFWorkbook workbook, Race race) {
     if (race == null || race.getTrack() == null || race.getTrack().getLanes() == null) {
       return;
     }
     List<Lane> lanes = race.getTrack().getLanes();
-    java.util.Map<String, CellStyle> styleCache = new java.util.HashMap<>();
+    Map<String, CellStyle> styleCache = new HashMap<>();
 
     for (Sheet sheet : workbook) {
-      java.util.Map<Integer, Integer> columnToLaneIndex = new java.util.HashMap<>();
+      if (sheet == null) {
+        continue;
+      }
+      String sheetName = sheet.getSheetName() != null ? sheet.getSheetName().trim() : "";
+      if (sheetName.equalsIgnoreCase("Lap Data")) {
+        colorLapDataSheet(workbook, sheet, lanes, styleCache);
+      } else if (isHeatSheet(sheet)) {
+        colorHeatSheet(workbook, sheet, lanes, styleCache);
+      } else {
+        colorStandardSheet(workbook, sheet, lanes, styleCache);
+      }
+    }
+  }
 
-      for (int i = 0; i <= 20; i++) {
-        Row row = sheet.getRow(i);
-        if (row == null) continue;
-        for (Cell cell : row) {
-          if (cell.getCellType() == CellType.STRING) {
-            String text = cell.getStringCellValue().trim();
-            if (text.isEmpty()) continue;
+  private static boolean isHeatSheet(Sheet sheet) {
+    if (sheet == null) {
+      return false;
+    }
+    String name = sheet.getSheetName() != null ? sheet.getSheetName().trim().toLowerCase() : "";
+    if (name.startsWith("heat ") || name.equals("heat") || name.equals("heat template")) {
+      return true;
+    }
+    for (int i = 0; i <= Math.min(15, sheet.getLastRowNum()); i++) {
+      Row row = sheet.getRow(i);
+      if (row == null) {
+        continue;
+      }
+      String c0Str = getCellString(row.getCell(0));
+      String c1Str = getCellString(row.getCell(1));
+      if ("Driver".equalsIgnoreCase(c0Str) && "Lane".equalsIgnoreCase(c1Str)) {
+        return true;
+      }
+      if ("Lap Number".equalsIgnoreCase(c0Str)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-            java.util.regex.Matcher m =
-                java.util.regex.Pattern.compile(
-                        "^Lane\\s+(\\d+)(?:\\s+Laps)?$", java.util.regex.Pattern.CASE_INSENSITIVE)
-                    .matcher(text);
-            if (m.matches()) {
-              int laneNum = Integer.parseInt(m.group(1));
-              int laneIdx = laneNum - 1;
-              if (laneIdx >= 0 && laneIdx < lanes.size()) {
-                columnToLaneIndex.put(cell.getColumnIndex(), laneIdx);
-              }
-            } else if ("Lane".equalsIgnoreCase(text)) {
-              columnToLaneIndex.put(cell.getColumnIndex(), -2);
-            }
-          }
+  private static void colorLapDataSheet(
+      XSSFWorkbook workbook, Sheet sheet, List<Lane> lanes, Map<String, CellStyle> styleCache) {
+    int laneColIdx = -1;
+    Row headerRow = sheet.getRow(0);
+    if (headerRow != null) {
+      for (Cell cell : headerRow) {
+        if ("Lane".equalsIgnoreCase(getCellString(cell))) {
+          laneColIdx = cell.getColumnIndex();
+          break;
         }
       }
-
-      if (!columnToLaneIndex.isEmpty()) {
-        for (Row row : sheet) {
-          if (isHeaderRow(row)) continue;
-
-          for (java.util.Map.Entry<Integer, Integer> entry : columnToLaneIndex.entrySet()) {
-            int colIdx = entry.getKey();
-            int laneIdx = entry.getValue();
-
-            if (laneIdx == -2) {
-              Cell laneCell = row.getCell(colIdx);
-              if (laneCell == null) continue;
-              int dynamicLaneIdx = -1;
-              if (laneCell.getCellType() == CellType.NUMERIC) {
-                dynamicLaneIdx = ((int) laneCell.getNumericCellValue()) - 1;
-              } else if (laneCell.getCellType() == CellType.STRING) {
-                try {
-                  dynamicLaneIdx = Integer.parseInt(laneCell.getStringCellValue().trim()) - 1;
-                } catch (NumberFormatException e) {
-                }
-              }
-              if (dynamicLaneIdx >= 0 && dynamicLaneIdx < lanes.size()) {
-                Lane lane = lanes.get(dynamicLaneIdx);
-                for (Cell c : row) {
-                  if (c != null) {
-                    colorCell(workbook, c, lane, false, styleCache);
-                  }
-                }
-              }
-            } else {
-              Cell cell = row.getCell(colIdx);
-              if (cell != null) {
-                colorCell(workbook, cell, lanes.get(laneIdx), false, styleCache);
-              }
-            }
+    }
+    if (laneColIdx < 0) {
+      return;
+    }
+    for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      int dynamicLaneIdx = getLaneIndexFromCell(row.getCell(laneColIdx));
+      if (dynamicLaneIdx >= 0 && dynamicLaneIdx < lanes.size()) {
+        Lane lane = lanes.get(dynamicLaneIdx);
+        for (Cell c : row) {
+          if (c != null) {
+            colorCell(workbook, c, lane, false, false, styleCache);
           }
         }
       }
     }
   }
 
+  private static void colorHeatSheet(
+      XSSFWorkbook workbook, Sheet sheet, List<Lane> lanes, Map<String, CellStyle> styleCache) {
+    colorHeatTable1(workbook, sheet, lanes, styleCache);
+    colorHeatTable2(workbook, sheet, lanes, styleCache);
+  }
+
+  private static void colorHeatTable1(
+      XSSFWorkbook workbook, Sheet sheet, List<Lane> lanes, Map<String, CellStyle> styleCache) {
+    Row table1Header = null;
+    int laneColIdx = -1;
+    for (int r = 0; r <= Math.min(20, sheet.getLastRowNum()); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      if ("Driver".equalsIgnoreCase(getCellString(row.getCell(0)))) {
+        for (Cell cell : row) {
+          if ("Lane".equalsIgnoreCase(getCellString(cell))) {
+            table1Header = row;
+            laneColIdx = cell.getColumnIndex();
+            break;
+          }
+        }
+      }
+      if (table1Header != null) {
+        break;
+      }
+    }
+    if (table1Header == null || laneColIdx < 0) {
+      return;
+    }
+    int maxCol = Math.max(8, table1Header.getLastCellNum() - 1);
+    int startRow = table1Header.getRowNum() + 1;
+    for (int r = startRow; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        break;
+      }
+      String c0Str = getCellString(row.getCell(0));
+      if (c0Str.isEmpty()
+          || c0Str.equalsIgnoreCase("Driver")
+          || c0Str.equalsIgnoreCase("Total Laps")
+          || c0Str.equalsIgnoreCase("Lap Number")) {
+        break;
+      }
+      int dynamicLaneIdx = getLaneIndexFromCell(row.getCell(laneColIdx));
+      if (dynamicLaneIdx >= 0 && dynamicLaneIdx < lanes.size()) {
+        Lane lane = lanes.get(dynamicLaneIdx);
+        for (Cell c : row) {
+          if (c != null && c.getColumnIndex() <= maxCol) {
+            colorCell(workbook, c, lane, false, false, styleCache);
+          }
+        }
+      }
+    }
+  }
+
+  private static void colorHeatTable2(
+      XSSFWorkbook workbook, Sheet sheet, List<Lane> lanes, Map<String, CellStyle> styleCache) {
+    Row headerRow = findTable2HeaderRow(sheet);
+    if (headerRow == null) {
+      return;
+    }
+    Map<Integer, Integer> table2ColToLane = new HashMap<>();
+    buildTable2ColumnMap(headerRow, table2ColToLane, lanes.size());
+    if (table2ColToLane.isEmpty()) {
+      return;
+    }
+
+    for (Row row : sheet) {
+      if (row == null || row.getRowNum() < 2 || isTitleOrSubtitleRow(row)) {
+        continue;
+      }
+      if (row.getRowNum() == headerRow.getRowNum()) {
+        continue;
+      }
+      String c0Str = getCellString(row.getCell(0));
+      boolean isTable2DriverRow =
+          c0Str.equalsIgnoreCase("Driver")
+              && !"Lane".equalsIgnoreCase(getCellString(row.getCell(1)));
+      boolean isTotalLapsRow = c0Str.equalsIgnoreCase("Total Laps");
+
+      if (isTable2DriverRow || isTotalLapsRow) {
+        for (Map.Entry<Integer, Integer> entry : table2ColToLane.entrySet()) {
+          int colIdx = entry.getKey();
+          int laneIdx = entry.getValue();
+          Cell cell = row.getCell(colIdx);
+          if (cell == null) {
+            cell = row.createCell(colIdx);
+          }
+          colorCell(workbook, cell, lanes.get(laneIdx), false, true, styleCache);
+        }
+      } else if (isLapDataRow(row)) {
+        for (Map.Entry<Integer, Integer> entry : table2ColToLane.entrySet()) {
+          int colIdx = entry.getKey();
+          int laneIdx = entry.getValue();
+          Cell cell = row.getCell(colIdx);
+          if (cell != null) {
+            colorCell(workbook, cell, lanes.get(laneIdx), false, false, styleCache);
+          }
+        }
+      }
+    }
+  }
+
+  private static Row findTable2HeaderRow(Sheet sheet) {
+    for (int r = 0; r <= Math.min(25, sheet.getLastRowNum()); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null) {
+        continue;
+      }
+      for (Cell cell : row) {
+        if (LANE_HEADER_PATTERN.matcher(getCellString(cell)).matches()) {
+          return row;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static void buildTable2ColumnMap(
+      Row headerRow, Map<Integer, Integer> colToLane, int maxLanes) {
+    int currentLane = -1;
+    for (Cell cell : headerRow) {
+      int colIdx = cell.getColumnIndex();
+      if (colIdx == 0) {
+        continue;
+      }
+      String text = getCellString(cell);
+      Matcher m = LANE_HEADER_PATTERN.matcher(text);
+      if (m.matches()) {
+        int laneNum = Integer.parseInt(m.group(1));
+        currentLane = laneNum - 1;
+        if (currentLane >= 0 && currentLane < maxLanes) {
+          colToLane.put(colIdx, currentLane);
+        } else {
+          currentLane = -1;
+        }
+      } else if (text.equalsIgnoreCase("Segments")
+          || text.equalsIgnoreCase("Segment")
+          || text.toLowerCase().startsWith("seg")) {
+        if (currentLane >= 0 && currentLane < maxLanes) {
+          colToLane.put(colIdx, currentLane);
+        }
+      }
+    }
+  }
+
+  private static void colorStandardSheet(
+      XSSFWorkbook workbook, Sheet sheet, List<Lane> lanes, Map<String, CellStyle> styleCache) {
+    Row headerRow = null;
+    Map<Integer, Integer> colToLane = new HashMap<>();
+    for (int r = 0; r <= Math.min(10, sheet.getLastRowNum()); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null || isTitleOrSubtitleRow(row)) {
+        continue;
+      }
+      for (Cell cell : row) {
+        Matcher m = LANE_HEADER_PATTERN.matcher(getCellString(cell));
+        if (m.matches()) {
+          int laneNum = Integer.parseInt(m.group(1));
+          int laneIdx = laneNum - 1;
+          if (laneIdx >= 0 && laneIdx < lanes.size()) {
+            colToLane.put(cell.getColumnIndex(), laneIdx);
+          }
+        }
+      }
+      if (!colToLane.isEmpty()) {
+        headerRow = row;
+        break;
+      }
+    }
+
+    if (headerRow == null || colToLane.isEmpty()) {
+      return;
+    }
+
+    for (int r = headerRow.getRowNum() + 1; r <= sheet.getLastRowNum(); r++) {
+      Row row = sheet.getRow(r);
+      if (row == null || isTitleOrSubtitleRow(row)) {
+        continue;
+      }
+      String c0Str = getCellString(row.getCell(0));
+      if (c0Str.isEmpty() || c0Str.startsWith("#")) {
+        continue;
+      }
+      for (Map.Entry<Integer, Integer> entry : colToLane.entrySet()) {
+        Cell cell = row.getCell(entry.getKey());
+        if (cell != null) {
+          colorCell(workbook, cell, lanes.get(entry.getValue()), false, false, styleCache);
+        }
+      }
+    }
+  }
+
+  private static boolean isTitleOrSubtitleRow(Row row) {
+    if (row == null) {
+      return false;
+    }
+    if (row.getRowNum() < 2) {
+      return true;
+    }
+    String c0Str = getCellString(row.getCell(0));
+    return c0Str.startsWith("Source:") || c0Str.startsWith("Calculated from");
+  }
+
+  private static boolean isLapDataRow(Row row) {
+    if (row == null) {
+      return false;
+    }
+    Cell c0 = row.getCell(0);
+    if (c0 == null) {
+      return false;
+    }
+    if (c0.getCellType() == CellType.NUMERIC) {
+      return true;
+    }
+    if (c0.getCellType() == CellType.STRING) {
+      String text = c0.getStringCellValue().trim();
+      if (text.isEmpty()) {
+        return false;
+      }
+      try {
+        Double.parseDouble(text);
+        return true;
+      } catch (NumberFormatException e) {
+        return text.toLowerCase().startsWith("lap ");
+      }
+    }
+    return false;
+  }
+
+  private static String getCellString(Cell cell) {
+    if (cell == null) {
+      return "";
+    }
+    if (cell.getCellType() == CellType.STRING) {
+      return cell.getStringCellValue().trim();
+    }
+    return "";
+  }
+
+  private static int getLaneIndexFromCell(Cell cell) {
+    if (cell == null) {
+      return -1;
+    }
+    if (cell.getCellType() == CellType.NUMERIC) {
+      return ((int) cell.getNumericCellValue()) - 1;
+    } else if (cell.getCellType() == CellType.STRING) {
+      try {
+        return Integer.parseInt(cell.getStringCellValue().trim()) - 1;
+      } catch (NumberFormatException e) {
+        return -1;
+      }
+    }
+    return -1;
+  }
+
   private static void colorCell(
-      org.apache.poi.xssf.usermodel.XSSFWorkbook workbook,
+      XSSFWorkbook workbook,
       Cell cell,
       Lane lane,
       boolean isHeader,
-      java.util.Map<String, CellStyle> styleCache) {
-    if (lane == null || cell == null) return;
+      boolean forceColor,
+      Map<String, CellStyle> styleCache) {
+    if (lane == null || cell == null) {
+      return;
+    }
     String bgColorStr = lane.getBackground_color();
     String fgColorStr = lane.getForeground_color();
     if ((bgColorStr == null || bgColorStr.isEmpty())
@@ -1082,17 +1359,15 @@ public final class RaceStatisticsUtils {
       return;
     }
     CellStyle baseStyle = cell.getCellStyle();
-    if (baseStyle != null) {
-      if (baseStyle.getFillPattern() != org.apache.poi.ss.usermodel.FillPatternType.NO_FILL) {
+    if (baseStyle != null && !forceColor) {
+      if (baseStyle.getFillPattern() != FillPatternType.NO_FILL) {
         org.apache.poi.ss.usermodel.Color color = baseStyle.getFillForegroundColorColor();
-        if (color instanceof org.apache.poi.xssf.usermodel.XSSFColor) {
-          String argb = ((org.apache.poi.xssf.usermodel.XSSFColor) color).getARGBHex();
-          // Default gray header color in template is D0D0D0 (usually 00D0D0D0 or FFD0D0D0)
+        if (color instanceof XSSFColor) {
+          String argb = ((XSSFColor) color).getARGBHex();
           if (argb == null || !argb.toUpperCase().endsWith("D0D0D0")) {
-            return; // User has overridden the template cell color, skip dynamic lane color
+            return;
           }
         } else if (color != null) {
-          // If it has a color but not XSSFColor, assume it's overridden
           return;
         }
       }
