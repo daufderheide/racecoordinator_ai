@@ -224,6 +224,16 @@ export function handlePageTransitionChange(
   }
 }
 
+export function handleMasterVolumeChange(
+  comp: any,
+  volume: number | string,
+): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.masterVolume = Math.round(Number(volume));
+    comp.captureState();
+  }
+}
+
 export function handleUrgentQueueTtlChange(comp: any, ttl: number): void {
   if (comp.editingSettings) {
     comp.editingSettings.urgentQueueTtl = ttl;
@@ -235,5 +245,121 @@ export function handleCalloutSpacingChange(comp: any, spacing: number): void {
   if (comp.editingSettings) {
     comp.editingSettings.calloutSpacing = spacing;
     comp.captureState();
+  }
+}
+
+export function handleTtsVoiceChange(comp: any, voice: string): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.ttsVoice = voice;
+    comp.captureState();
+  }
+}
+
+export function handleTtsRateChange(comp: any, rate: number | string): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.ttsRate = Math.round(Number(rate) * 100) / 100;
+    comp.captureState();
+  }
+}
+
+export function handleTtsPitchChange(comp: any, pitch: number | string): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.ttsPitch = Math.round(Number(pitch) * 100) / 100;
+    comp.captureState();
+  }
+}
+
+export function handleTtsVolumeChange(
+  comp: any,
+  volume: number | string,
+): void {
+  if (comp.editingSettings) {
+    comp.editingSettings.ttsVolume = Math.round(Number(volume));
+    comp.captureState();
+  }
+}
+
+export function initAvailableVoices(comp: any): void {
+  if (
+    typeof window !== "undefined" &&
+    window.speechSynthesis &&
+    typeof window.speechSynthesis.getVoices === "function"
+  ) {
+    const updateVoices = () => {
+      try {
+        const voices =
+          comp.audioService?.getVoices() ||
+          window.speechSynthesis.getVoices() ||
+          [];
+        comp.availableVoices = [...voices].sort((a, b) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+        if (!comp.isDestroyed) {
+          comp.cdr.markForCheck();
+        }
+      } catch {
+        // Ignored if getVoices fails
+      }
+    };
+    updateVoices();
+    if (typeof window.speechSynthesis.addEventListener === "function") {
+      window.speechSynthesis.addEventListener("voiceschanged", updateVoices);
+    } else if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
+  }
+}
+
+export function executeTestTtsVoice(comp: any): void {
+  const text = comp.translationService.translate("UE_TTS_SAMPLE_TEXT");
+  const voice = comp.editingSettings?.ttsVoice;
+  const rate = comp.editingSettings?.ttsRate ?? 1.0;
+  const pitch = comp.editingSettings?.ttsPitch ?? 1.0;
+  const volume = comp.editingSettings?.ttsVolume ?? 100;
+  const masterVolume = comp.editingSettings?.masterVolume ?? 100;
+
+  if (comp.audioService) {
+    comp.audioService.previewTTS(
+      text,
+      voice,
+      rate,
+      pitch,
+      volume,
+      masterVolume,
+    );
+  } else if (typeof window !== "undefined" && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    if (voice && typeof window.speechSynthesis.getVoices === "function") {
+      try {
+        const voices = window.speechSynthesis.getVoices() || [];
+        const trimmed = voice.trim().toLowerCase();
+        const match = voices.find(
+          (v: any) =>
+            v.name === voice ||
+            v.voiceURI === voice ||
+            (v.name && v.name.trim().toLowerCase() === trimmed) ||
+            (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
+        );
+        if (match) {
+          try {
+            utterance.voice = match;
+          } catch {
+            // Ignored if voice conversion fails
+          }
+        }
+      } catch {
+        // Ignored
+      }
+    }
+    utterance.rate = rate;
+    utterance.pitch = pitch;
+    const masterVol = Math.max(0, Math.min(1, masterVolume / 100));
+    const ttsVol = Math.max(0, Math.min(1, volume / 100));
+    utterance.volume = masterVol * ttsVol;
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+    window.speechSynthesis.speak(utterance);
   }
 }

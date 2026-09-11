@@ -1160,6 +1160,11 @@
                                     )
                                   "
                                   [context]="previewTTSContext"
+                                  [ttsVoice]="editingSettings.ttsVoice"
+                                  [ttsRate]="editingSettings.ttsRate"
+                                  [ttsPitch]="editingSettings.ttsPitch"
+                                  [ttsVolume]="editingSettings.ttsVolume"
+                                  [masterVolume]="editingSettings.masterVolume"
                                 >
                                 </app-audio-selector>
                               }
@@ -1178,7 +1183,7 @@
       <!-- Settings Grid Section -->
       <div class="config-row single-column">
         <!-- UI Editor Setting Section -->
-        <div class="config-section">
+        <div class="config-section" data-section="config">
           <div
             class="section-header"
             id="help-custom-ui"
@@ -1339,6 +1344,50 @@
                       </app-custom-select>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Audio Settings Section -->
+        <div class="config-section" data-section="audioSettings">
+          <div
+            class="section-header"
+            id="help-audio-settings"
+            (click)="toggleSection('audioSettings')"
+          >
+            <span
+              class="expander-icon"
+              [class.collapsed]="!sectionsExpanded['audioSettings']"
+              >▼</span
+            >
+            <h1>{{ "UE_HEADER_AUDIO_SETTINGS" | translate }}</h1>
+          </div>
+          @if (sectionsExpanded["audioSettings"]) {
+            <div class="section-content">
+              <div class="panel config-panel">
+                <div class="panel-content">
+                  <div
+                    class="transition-selector"
+                    id="help-audio-master-volume"
+                  >
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_MASTER_VOLUME" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.masterVolume }}%</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.masterVolume"
+                      (ngModelChange)="onMasterVolumeChange($event)"
+                    />
+                  </div>
                   <div
                     class="transition-selector"
                     id="help-audio-urgent-timeout"
@@ -1387,6 +1436,80 @@
                         </app-custom-option>
                       </app-custom-select>
                     </div>
+                  </div>
+                  <div class="transition-selector" id="help-tts-voice">
+                    <label>{{ "UE_LABEL_TTS_VOICE" | translate }}</label>
+                    <div class="select-container">
+                      <app-custom-select
+                        [ngModel]="editingSettings.ttsVoice || ''"
+                        (ngModelChange)="onTtsVoiceChange($event)"
+                      >
+                        <app-custom-option [value]="''">
+                          {{ "UE_OPTION_TTS_VOICE_DEFAULT" | translate }}
+                        </app-custom-option>
+                        @for (voice of availableVoices; track voice.name) {
+                          <app-custom-option [value]="voice.name">
+                            {{ voice.name }} ({{ voice.lang }})
+                          </app-custom-option>
+                        }
+                      </app-custom-select>
+                    </div>
+                  </div>
+                  <div class="transition-selector" id="help-tts-rate">
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_TTS_RATE" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.ttsRate }}x</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="2.0"
+                      step="0.05"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.ttsRate"
+                      (ngModelChange)="onTtsRateChange($event)"
+                    />
+                  </div>
+                  <div class="transition-selector" id="help-tts-pitch">
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_TTS_PITCH" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.ttsPitch }}x</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.05"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.ttsPitch"
+                      (ngModelChange)="onTtsPitchChange($event)"
+                    />
+                  </div>
+                  <div class="transition-selector" id="help-tts-volume">
+                    <div class="slider-label-row">
+                      <label>{{ "UE_LABEL_TTS_VOLUME" | translate }}</label>
+                      <span class="slider-val-badge"
+                        >{{ editingSettings.ttsVolume }}%</span
+                      >
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      class="audio-slider"
+                      [ngModel]="editingSettings.ttsVolume"
+                      (ngModelChange)="onTtsVolumeChange($event)"
+                    />
+                  </div>
+                  <div class="tts-preview-container" id="help-tts-preview">
+                    <button class="btn btn-secondary" (click)="testTtsVoice()">
+                      {{ "UE_BTN_TEST_TTS" | translate }}
+                    </button>
                   </div>
                 </div>
               </div>

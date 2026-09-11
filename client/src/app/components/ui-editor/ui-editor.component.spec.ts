@@ -4148,5 +4148,63 @@ describe("UIEditorComponent", () => {
       component.onCalloutSpacingChange(1000);
       expect(component.editingSettings.calloutSpacing).toBe(1000);
     });
+
+    it("should update TTS settings on editingSettings", () => {
+      component.editingSettings.masterVolume = 100;
+      component.editingSettings.ttsVoice = "";
+      component.editingSettings.ttsRate = 1.0;
+      component.editingSettings.ttsPitch = 1.0;
+      component.editingSettings.ttsVolume = 100;
+
+      component.onMasterVolumeChange(85);
+      expect(component.editingSettings.masterVolume).toBe(85);
+
+      component.onMasterVolumeChange("60");
+      expect(component.editingSettings.masterVolume).toBe(60);
+
+      component.onTtsVoiceChange("Alex");
+      expect(component.editingSettings.ttsVoice).toBe("Alex");
+
+      component.onTtsRateChange(1.25);
+      expect(component.editingSettings.ttsRate).toBe(1.25);
+
+      component.onTtsRateChange("1.75");
+      expect(component.editingSettings.ttsRate).toBe(1.75);
+
+      component.onTtsPitchChange(0.9);
+      expect(component.editingSettings.ttsPitch).toBe(0.9);
+
+      component.onTtsPitchChange("1.3");
+      expect(component.editingSettings.ttsPitch).toBe(1.3);
+
+      component.onTtsVolumeChange(80);
+      expect(component.editingSettings.ttsVolume).toBe(80);
+
+      component.onTtsVolumeChange("45");
+      expect(component.editingSettings.ttsVolume).toBe(45);
+    });
+
+    it("should call audioService.previewTTS when testTtsVoice is invoked", () => {
+      const mockAudio = {
+        previewTTS: jasmine.createSpy("previewTTS"),
+      };
+      (component as any).audioService = mockAudio;
+      component.editingSettings.masterVolume = 90;
+      component.editingSettings.ttsVoice = "Alex";
+      component.editingSettings.ttsRate = 1.5;
+      component.editingSettings.ttsPitch = 0.8;
+      component.editingSettings.ttsVolume = 75;
+
+      component.testTtsVoice();
+
+      expect(mockAudio.previewTTS).toHaveBeenCalledWith(
+        jasmine.any(String),
+        "Alex",
+        1.5,
+        0.8,
+        75,
+        90,
+      );
+    });
   });
 });

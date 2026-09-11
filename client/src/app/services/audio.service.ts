@@ -35,12 +35,15 @@ export class AudioService {
   private urgentQueue: UrgentQueueItem[] = [];
   private isSpacingCoolingDown: boolean = false;
   private spacingTimer: any = null;
+  private cachedVoices: SpeechSynthesisVoice[] = [];
 
   constructor(
     private dataService: DataService,
     private settingsService: SettingsService,
     private logger: LoggerService,
-  ) {}
+  ) {
+    this.initVoices();
+  }
 
   /**
    * Determines whether an audio slot or configuration represents a verbal callout
@@ -71,6 +74,11 @@ export class AudioService {
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     this.logger.debug("Playing SFX from URL:", playableUrl);
     const audio = new Audio(playableUrl);
+    const settings = this.settingsService.getSettings();
+    audio.volume = Math.max(
+      0,
+      Math.min(1, (settings.masterVolume ?? 100) / 100),
+    );
     audio.play().catch((err) => {
       this.logger.error("Error playing SFX", err);
     });
@@ -191,6 +199,11 @@ export class AudioService {
   private playPresetVoice(url: string, priority: AudioPriority): void {
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     const audio = new Audio(playableUrl);
+    const settings = this.settingsService.getSettings();
+    audio.volume = Math.max(
+      0,
+      Math.min(1, (settings.masterVolume ?? 100) / 100),
+    );
     let ended = false;
 
     const cleanup = () => {
@@ -264,6 +277,7 @@ export class AudioService {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    this.applyTtsSettingsToUtterance(utterance);
     let ended = false;
 
     const cleanup = () => {
@@ -304,7 +318,146 @@ export class AudioService {
       }
     };
 
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(utterance);
+  }
+
+  previewTTS(
+    text: string,
+    voiceName?: string,
+    rate?: number,
+    pitch?: number,
+    volume?: number,
+    masterVolume?: number,
+  ): void {
+    if (!text || typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    this.applyTtsSettingsToUtterance(
+      utterance,
+      voiceName,
+      rate,
+      pitch,
+      volume,
+      masterVolume,
+    );
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+    window.speechSynthesis.speak(utterance);
+  }
+
+  getMasterVolume(masterVolumeOverride?: number): number {
+    if (masterVolumeOverride !== undefined) {
+      return masterVolumeOverride;
+    }
+    return this.settingsService.getSettings().masterVolume ?? 100;
+  }
+
+  getVoices(): SpeechSynthesisVoice[] {
+    if (
+      typeof window !== "undefined" &&
+      window.speechSynthesis &&
+      typeof window.speechSynthesis.getVoices === "function"
+    ) {
+      try {
+        const list = window.speechSynthesis.getVoices() || [];
+        if (list.length > 0) {
+          this.cachedVoices = list;
+          return list;
+        }
+      } catch {
+        // Fallback to cached voices
+      }
+    }
+    return this.cachedVoices || [];
+  }
+
+  private initVoices(): void {
+    if (
+      typeof window !== "undefined" &&
+      window.speechSynthesis &&
+      typeof window.speechSynthesis.getVoices === "function"
+    ) {
+      const updateVoices = () => {
+        try {
+          const list = window.speechSynthesis.getVoices() || [];
+          if (list.length > 0) {
+            this.cachedVoices = list;
+          }
+        } catch {
+          // Ignored
+        }
+      };
+      updateVoices();
+      if (typeof window.speechSynthesis.addEventListener === "function") {
+        window.speechSynthesis.addEventListener("voiceschanged", updateVoices);
+      } else if ("onvoiceschanged" in window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = updateVoices;
+      }
+    }
+  }
+
+  applyTtsSettingsToUtterance(
+    utterance: SpeechSynthesisUtterance,
+    voiceNameOverride?: string,
+    rateOverride?: number,
+    pitchOverride?: number,
+    volumeOverride?: number,
+    masterVolumeOverride?: number,
+  ): void {
+    const settings = this.settingsService.getSettings();
+    const voiceName =
+      voiceNameOverride !== undefined ? voiceNameOverride : settings.ttsVoice;
+    const rate =
+      rateOverride !== undefined ? rateOverride : (settings.ttsRate ?? 1.0);
+    const pitch =
+      pitchOverride !== undefined ? pitchOverride : (settings.ttsPitch ?? 1.0);
+    const volume =
+      volumeOverride !== undefined
+        ? volumeOverride
+        : (settings.ttsVolume ?? 100);
+    const masterVolume =
+      masterVolumeOverride !== undefined
+        ? masterVolumeOverride
+        : (settings.masterVolume ?? 100);
+
+    if (
+      voiceName &&
+      typeof window !== "undefined" &&
+      window.speechSynthesis &&
+      typeof window.speechSynthesis.getVoices === "function"
+    ) {
+      const voices = this.getVoices();
+      const trimmed = voiceName.trim().toLowerCase();
+      const matched = voices.find(
+        (v) =>
+          v.name === voiceName ||
+          v.voiceURI === voiceName ||
+          (v.name && v.name.trim().toLowerCase() === trimmed) ||
+          (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
+      );
+      if (matched) {
+        try {
+          utterance.voice = matched;
+        } catch {
+          // Native browser enforces SpeechSynthesisVoice instance; safely ignored if mock
+        }
+      }
+    }
+    if (rate != null) {
+      utterance.rate = Math.max(0.1, Math.min(10, rate));
+    }
+    if (pitch != null) {
+      utterance.pitch = Math.max(0, Math.min(2, pitch));
+    }
+    const masterVol = Math.max(0, Math.min(1, (masterVolume ?? 100) / 100));
+    const ttsVol = Math.max(0, Math.min(1, (volume ?? 100) / 100));
+    utterance.volume = masterVol * ttsVol;
   }
 
   private onVoiceCalloutEnded(): void {

@@ -17,6 +17,7 @@ describe("AudioService", () => {
   let mockAudioInstance: any;
   let originalAudio: any;
   let originalSpeechSynthesis: any;
+  let originalSpeechSynthesisUtterance: any;
   let mockSpeechSynthesis: any;
 
   beforeEach(() => {
@@ -56,9 +57,17 @@ describe("AudioService", () => {
       .and.returnValue(mockAudioInstance);
 
     // Mock SpeechSynthesis
+    const mockVoice = {
+      name: "Alex",
+      voiceURI: "Alex",
+      lang: "en-US",
+      default: true,
+      localService: true,
+    };
     mockSpeechSynthesis = {
       speak: jasmine.createSpy("speak"),
       cancel: jasmine.createSpy("cancel"),
+      getVoices: jasmine.createSpy("getVoices").and.returnValue([mockVoice]),
     };
     originalSpeechSynthesis = window.speechSynthesis;
     Object.defineProperty(window, "speechSynthesis", {
@@ -66,6 +75,21 @@ describe("AudioService", () => {
       configurable: true,
       writable: true,
     });
+
+    originalSpeechSynthesisUtterance = (window as any).SpeechSynthesisUtterance;
+    (window as any).SpeechSynthesisUtterance =
+      class MockSpeechSynthesisUtterance {
+        text: string;
+        voice: any = null;
+        rate = 1;
+        pitch = 1;
+        volume = 1;
+        onend: any = null;
+        onerror: any = null;
+        constructor(text?: string) {
+          this.text = text || "";
+        }
+      };
 
     TestBed.configureTestingModule({
       providers: [
@@ -87,6 +111,7 @@ describe("AudioService", () => {
       configurable: true,
       writable: true,
     });
+    (window as any).SpeechSynthesisUtterance = originalSpeechSynthesisUtterance;
   });
 
   describe("isVoiceCallout", () => {
@@ -144,10 +169,12 @@ describe("AudioService", () => {
     });
 
     it("should play audio immediately and polyphonically without setting activeVoice", () => {
+      mockSettings.masterVolume = 75;
       service.playSfx("default_beep");
       expect((window as any).Audio).toHaveBeenCalledWith(
         "http://localhost:7070/assets/default_beep_Lap_Beep",
       );
+      expect(mockAudioInstance.volume).toBe(0.75);
       expect(mockAudioInstance.play).toHaveBeenCalled();
       expect(service.getActiveVoice()).toBeNull();
     });
@@ -322,6 +349,93 @@ describe("AudioService", () => {
         mockSpeechSynthesis.speak.calls.mostRecent().args[0];
       expect(calledUtterance.text).toBe("Driver Speedy lap 12");
       expect(service.getActiveVoice()?.priority).toBe("low");
+    });
+
+    it("should apply configured TTS settings to utterance", () => {
+      mockSettings.ttsVoice = "Alex";
+      mockSettings.ttsRate = 1.5;
+      mockSettings.ttsPitch = 0.8;
+      mockSettings.ttsVolume = 80;
+
+      const config: AudioConfig = {
+        type: "tts",
+        text: "Green flag",
+      };
+
+      service.playCallout(config, "normal");
+
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const calledUtterance =
+        mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(calledUtterance.text).toBe("Green flag");
+      expect(calledUtterance.rate).toBe(1.5);
+      expect(calledUtterance.pitch).toBe(0.8);
+      expect(calledUtterance.volume).toBe(0.8);
+      expect(calledUtterance.voice).toBeDefined();
+      expect(calledUtterance.voice?.name).toBe("Alex");
+    });
+
+    it("should preview TTS with specified parameters", () => {
+      service.previewTTS("Test message", "Alex", 1.25, 1.2, 50);
+
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect(mockSpeechSynthesis.speak).toHaveBeenCalled();
+      const calledUtterance =
+        mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(calledUtterance.text).toBe("Test message");
+      expect(calledUtterance.rate).toBe(1.25);
+      expect(calledUtterance.pitch).toBe(1.2);
+      expect(calledUtterance.volume).toBe(0.5);
+      expect(calledUtterance.voice).toBeDefined();
+      expect(calledUtterance.voice?.name).toBe("Alex");
+    });
+
+    it("should scale TTS utterance volume by masterVolume and ttsVolume", () => {
+      service.previewTTS("Test message", "Alex", 1.0, 1.0, 50, 80);
+
+      const calledUtterance =
+        mockSpeechSynthesis.speak.calls.mostRecent().args[0];
+      expect(calledUtterance.volume).toBeCloseTo(0.4, 2);
+    });
+
+    it("should return masterVolume setting and respect override", () => {
+      mockSettings.masterVolume = 75;
+      expect(service.getMasterVolume()).toBe(75);
+      expect(service.getMasterVolume(40)).toBe(40);
+    });
+
+    it("should match voices by voiceURI or case-insensitively", () => {
+      const mockVoice1 = {
+        name: "Google US English",
+        voiceURI: "google-us",
+      } as any;
+      mockSpeechSynthesis.getVoices.and.returnValue([mockVoice1]);
+      (service as any).cachedVoices = [mockVoice1];
+
+      const utterance = new SpeechSynthesisUtterance("Hello");
+      service.applyTtsSettingsToUtterance(utterance, "google-us");
+      expect(utterance.voice).toBe(mockVoice1);
+
+      const utterance2 = new SpeechSynthesisUtterance("Hello");
+      service.applyTtsSettingsToUtterance(utterance2, "google us english");
+      expect(utterance2.voice).toBe(mockVoice1);
+    });
+
+    it("should resume speech synthesis if paused before speaking", () => {
+      mockSpeechSynthesis.paused = true;
+      mockSpeechSynthesis.resume = jasmine.createSpy("resume");
+
+      service.previewTTS("Test message");
+      expect(mockSpeechSynthesis.resume).toHaveBeenCalled();
+    });
+
+    it("should return cached voices from getVoices when speechSynthesis has no voices", () => {
+      mockSpeechSynthesis.getVoices.and.returnValue([]);
+      const voices = [{ name: "Samantha", voiceURI: "samantha" }] as any[];
+      (service as any).cachedVoices = voices;
+
+      const result = service.getVoices();
+      expect(result).toEqual(voices);
     });
   });
 

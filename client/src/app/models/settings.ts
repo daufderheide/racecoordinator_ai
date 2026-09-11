@@ -115,8 +115,13 @@ export class Settings {
   clientLogLevel: string = "INFO";
   serverLogLevel: string = "INFO";
   exportPdfBackgrounds: boolean = true;
+  masterVolume: number = 100;
   urgentQueueTtl: number = 5000;
   calloutSpacing: number = 500;
+  ttsVoice: string = "";
+  ttsRate: number = 1.0;
+  ttsPitch: number = 1.0;
+  ttsVolume: number = 100;
 
   racedaySetupWalkthroughSeen: boolean = false;
   trackManagerHelpShown: boolean = false;

@@ -28,8 +28,13 @@ export function cloneSettings(s: Settings): Settings {
   clone.highlightRowOnLap = s.highlightRowOnLap ?? true;
   clone.highlightPracticeRowOnLap = s.highlightPracticeRowOnLap ?? true;
   clone.pageTransition = s.pageTransition || "slide";
+  clone.masterVolume = s.masterVolume ?? 100;
   clone.urgentQueueTtl = s.urgentQueueTtl ?? 5000;
   clone.calloutSpacing = s.calloutSpacing ?? 500;
+  clone.ttsVoice = s.ttsVoice ?? "";
+  clone.ttsRate = s.ttsRate ?? 1.0;
+  clone.ttsPitch = s.ttsPitch ?? 1.0;
+  clone.ttsVolume = s.ttsVolume ?? 100;
 
   // Theme fields
   clone.activeThemeId = s.activeThemeId;
@@ -100,8 +105,13 @@ export function areSettingsEqual(a: Settings, b: Settings): boolean {
     a.highlightRowOnLap === b.highlightRowOnLap &&
     a.highlightPracticeRowOnLap === b.highlightPracticeRowOnLap &&
     a.pageTransition === b.pageTransition &&
+    (a.masterVolume ?? 100) === (b.masterVolume ?? 100) &&
     (a.urgentQueueTtl ?? 5000) === (b.urgentQueueTtl ?? 5000) &&
     (a.calloutSpacing ?? 500) === (b.calloutSpacing ?? 500) &&
+    (a.ttsVoice ?? "") === (b.ttsVoice ?? "") &&
+    (a.ttsRate ?? 1.0) === (b.ttsRate ?? 1.0) &&
+    (a.ttsPitch ?? 1.0) === (b.ttsPitch ?? 1.0) &&
+    (a.ttsVolume ?? 100) === (b.ttsVolume ?? 100) &&
     a.activeThemeId === b.activeThemeId &&
     a.lampRedOn === b.lampRedOn &&
     a.lampRedDim === b.lampRedDim &&

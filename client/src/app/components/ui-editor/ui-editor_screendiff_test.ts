@@ -349,4 +349,65 @@ test.describe("UI Editor Visuals", () => {
       animations: "disabled",
     });
   });
+
+  test("should display customize ui settings expander correctly", async ({
+    page,
+  }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const configSection = page.locator(
+      '.config-section[data-section="config"]',
+    );
+    await configSection.waitFor({ state: "visible" });
+    await page.locator("#help-custom-ui-dir").waitFor({ state: "visible" });
+    await configSection.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await TestSetupHelper.waitForImagesLoaded(configSection);
+    await page.mouse.move(0, 0);
+
+    await expect(configSection).toHaveScreenshot(
+      "ui-editor-customize-ui-settings.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
+
+  test("should display audio settings expander correctly", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/ui-editor"),
+    );
+    await page.locator(".ue-container").waitFor({ state: "visible" });
+
+    const audioSettingsSection = page.locator(
+      '.config-section[data-section="audioSettings"]',
+    );
+    await audioSettingsSection.waitFor({ state: "visible" });
+    await page
+      .locator("#help-audio-master-volume")
+      .waitFor({ state: "visible" });
+    await page.locator("#help-tts-preview").waitFor({ state: "visible" });
+    await audioSettingsSection.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+    await TestSetupHelper.waitForImagesLoaded(audioSettingsSection);
+    await page.mouse.move(0, 0);
+
+    await expect(audioSettingsSection).toHaveScreenshot(
+      "ui-editor-audio-settings.png",
+      {
+        maxDiffPixelRatio: 0.05,
+        maxDiffPixels: 5000,
+        animations: "disabled",
+      },
+    );
+  });
 });

@@ -5003,6 +5003,102 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should use configured audio settings during race playback for TTS callouts", () => {
+      const originalUtterance = (window as any).SpeechSynthesisUtterance;
+      (window as any).SpeechSynthesisUtterance =
+        class MockSpeechSynthesisUtterance {
+          text: string;
+          voice: any;
+          rate: number = 1.0;
+          pitch: number = 1.0;
+          volume: number = 1.0;
+          onend: any;
+          onerror: any;
+          constructor(text: string) {
+            this.text = text;
+          }
+        };
+
+      const mockVoice = {
+        name: "Samantha",
+        voiceURI: "samantha",
+        lang: "en-US",
+      };
+      const mockSpeech = {
+        speak: jasmine.createSpy("speak"),
+        cancel: jasmine.createSpy("cancel"),
+        pause: jasmine.createSpy("pause"),
+        resume: jasmine.createSpy("resume"),
+        paused: false,
+        getVoices: jasmine.createSpy("getVoices").and.returnValue([mockVoice]),
+      };
+      Object.defineProperty(window, "speechSynthesis", {
+        value: mockSpeech,
+        writable: true,
+        configurable: true,
+      });
+
+      mockSettings.masterVolume = 80;
+      mockSettings.ttsVolume = 50;
+      mockSettings.ttsVoice = "Samantha";
+      mockSettings.ttsRate = 1.25;
+      mockSettings.ttsPitch = 0.9;
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = {
+        type: "tts",
+        text: "{driver.name} completed lap",
+      };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+        bestLapTime: 3.5,
+      });
+
+      expect(mockSpeech.speak).toHaveBeenCalled();
+      const utterance = mockSpeech.speak.calls.mostRecent().args[0];
+      expect(utterance.text).toContain("completed lap");
+      expect(utterance.rate).toBeCloseTo(1.25, 2);
+      expect(utterance.pitch).toBeCloseTo(0.9, 2);
+      expect(utterance.volume).toBeCloseTo(0.4, 2); // 0.8 * 0.5
+      expect(utterance.voice).toEqual(
+        jasmine.objectContaining({ name: "Samantha" }),
+      );
+
+      (window as any).SpeechSynthesisUtterance = originalUtterance;
+      mockSettings.masterVolume = 100;
+      mockSettings.ttsVolume = 100;
+      mockSettings.ttsVoice = "";
+      mockSettings.ttsRate = 1.0;
+      mockSettings.ttsPitch = 1.0;
+    });
+
+    it("should use configured masterVolume during race playback for SFX sounds", () => {
+      (window.Audio as any).calls.reset();
+      mockSettings.masterVolume = 40;
+
+      fixture.detectChanges();
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 4.1,
+        bestLapTime: 3.5,
+      });
+
+      expect(window.Audio).toHaveBeenCalled();
+      const audioInstance = (window.Audio as any).calls.mostRecent()
+        .returnValue;
+      expect(audioInstance.volume).toBeCloseTo(0.4, 2);
+
+      mockSettings.masterVolume = 100;
+    });
+
     it("should fallback to 30s countdown if Halfway audio is configured to 'none'", () => {
       (window.Audio as any).calls.reset();
 

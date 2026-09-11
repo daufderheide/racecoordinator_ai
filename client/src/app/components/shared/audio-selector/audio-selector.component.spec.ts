@@ -937,4 +937,75 @@ describe("AudioSelectorComponent", () => {
       expect(component.isPlaying).toBeFalse();
     });
   });
+
+  describe("TTS and Volume Configuration", () => {
+    it("should apply ttsVoice, ttsRate, ttsPitch, ttsVolume, and masterVolume inputs when playing TTS", () => {
+      let createdUtterance: any;
+      (window as any).SpeechSynthesisUtterance =
+        class MockSpeechSynthesisUtterance {
+          text: string;
+          voice: any = null;
+          rate = 1;
+          pitch = 1;
+          volume = 1;
+          onend: any = null;
+          onerror: any = null;
+          constructor(text?: string) {
+            this.text = text || "";
+            createdUtterance = this;
+          }
+        };
+
+      const mockVoice = { name: "Samantha", voiceURI: "samantha" } as any;
+      if (window.speechSynthesis) {
+        if (!(window.speechSynthesis.speak as any).and) {
+          spyOn(window.speechSynthesis, "speak");
+        }
+        if (!(window.speechSynthesis.cancel as any).and) {
+          spyOn(window.speechSynthesis, "cancel");
+        }
+        if (typeof window.speechSynthesis.getVoices === "function") {
+          if (!(window.speechSynthesis.getVoices as any).and) {
+            spyOn(window.speechSynthesis, "getVoices").and.returnValue([
+              mockVoice,
+            ]);
+          } else {
+            (window.speechSynthesis.getVoices as any).and.returnValue([
+              mockVoice,
+            ]);
+          }
+        }
+      }
+
+      fixture.componentRef.setInput("type", "tts");
+      fixture.componentRef.setInput("text", "Yellow Flag");
+      fixture.componentRef.setInput("ttsVoice", "Samantha");
+      fixture.componentRef.setInput("ttsRate", 1.5);
+      fixture.componentRef.setInput("ttsPitch", 0.8);
+      fixture.componentRef.setInput("ttsVolume", 60);
+      fixture.componentRef.setInput("masterVolume", 80);
+      fixture.detectChanges();
+
+      component.play();
+
+      expect(window.speechSynthesis.speak).toHaveBeenCalled();
+      expect(createdUtterance).toBeDefined();
+      expect(createdUtterance.rate).toBe(1.5);
+      expect(createdUtterance.pitch).toBe(0.8);
+      expect(createdUtterance.volume).toBeCloseTo(0.48, 2);
+      expect(createdUtterance.voice?.name).toBe("Samantha");
+    });
+
+    it("should scale audio.volume by masterVolume when playing preset url", () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", "sound.wav");
+      fixture.componentRef.setInput("masterVolume", 45);
+      fixture.detectChanges();
+
+      component.play();
+
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+      expect(mockAudioInstance.volume).toBeCloseTo(0.45, 2);
+    });
+  });
 });
