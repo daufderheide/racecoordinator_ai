@@ -6,6 +6,8 @@ import com.antigravity.util.SeasonPointsCalculator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,6 +19,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Comment;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -513,6 +516,71 @@ public final class RaceStatisticsUtils {
     }
   }
 
+  public static void enforceMaxThreeDecimalPlaces(Workbook workbook) {
+    if (workbook == null) {
+      return;
+    }
+    Map<CellStyle, CellStyle> styleCache = new HashMap<>();
+    for (Sheet sheet : workbook) {
+      for (Row row : sheet) {
+        for (Cell cell : row) {
+          sanitizeCellDecimalPrecision(cell, workbook, styleCache);
+        }
+      }
+    }
+  }
+
+  private static void sanitizeCellDecimalPrecision(
+      Cell cell, Workbook workbook, Map<CellStyle, CellStyle> styleCache) {
+    if (cell == null) {
+      return;
+    }
+    CellType type = cell.getCellType();
+    if (type == CellType.NUMERIC) {
+      if (!DateUtil.isCellDateFormatted(cell)) {
+        double val = cell.getNumericCellValue();
+        if (!Double.isNaN(val) && !Double.isInfinite(val)) {
+          cell.setCellValue(roundToThreeDecimals(val));
+        }
+        sanitizeCellStyleFormat(cell, workbook, styleCache);
+      }
+    } else if (type == CellType.STRING) {
+      String str = cell.getStringCellValue();
+      if (str != null && !str.isEmpty()) {
+        String trimmed = str.trim();
+        if (trimmed.matches("^[+-]?\\d+\\.\\d+$")) {
+          int dotIndex = trimmed.indexOf('.');
+          if (trimmed.length() - dotIndex - 1 > 3) {
+            BigDecimal bd = new BigDecimal(trimmed).setScale(3, RoundingMode.HALF_UP);
+            cell.setCellValue(bd.toPlainString());
+          }
+        }
+      }
+    }
+  }
+
+  private static void sanitizeCellStyleFormat(
+      Cell cell, Workbook workbook, Map<CellStyle, CellStyle> styleCache) {
+    CellStyle style = cell.getCellStyle();
+    if (style == null) {
+      return;
+    }
+    String formatStr = style.getDataFormatString();
+    if (formatStr != null && formatStr.matches(".*\\.[0#?]{4,}.*")) {
+      String newFormatStr = formatStr.replaceAll("\\.([0#?]{3})[0#?]+", ".$1");
+      CellStyle newStyle =
+          styleCache.computeIfAbsent(
+              style,
+              origStyle -> {
+                CellStyle cs = workbook.createCellStyle();
+                cs.cloneStyleFrom(origStyle);
+                cs.setDataFormat(workbook.createDataFormat().getFormat(newFormatStr));
+                return cs;
+              });
+      cell.setCellStyle(newStyle);
+    }
+  }
+
   public static java.awt.Color parseColor(String colorStr) {
     if (colorStr == null || colorStr.trim().isEmpty()) {
       return null;
@@ -616,6 +684,13 @@ public final class RaceStatisticsUtils {
     return result;
   }
 
+  public static double roundToThreeDecimals(double val) {
+    if (Double.isNaN(val) || Double.isInfinite(val)) {
+      return val;
+    }
+    return BigDecimal.valueOf(val).setScale(3, RoundingMode.HALF_UP).doubleValue();
+  }
+
   public static DriverAnalysisSummary.LaneStats calculateLaneStats(
       String laneName, int laneNumber, double totalLaps, List<Double> lapTimes) {
 
@@ -652,18 +727,18 @@ public final class RaceStatisticsUtils {
     return new DriverAnalysisSummary.LaneStats(
         laneName,
         laneNumber,
-        totalLaps,
-        totalTime,
-        avg,
-        med,
-        best,
-        std,
-        cons,
-        top5,
-        top10,
-        top15,
-        top2c,
-        top3c);
+        roundToThreeDecimals(totalLaps),
+        roundToThreeDecimals(totalTime),
+        roundToThreeDecimals(avg),
+        roundToThreeDecimals(med),
+        roundToThreeDecimals(best),
+        roundToThreeDecimals(std),
+        roundToThreeDecimals(cons),
+        roundToThreeDecimals(top5),
+        roundToThreeDecimals(top10),
+        roundToThreeDecimals(top15),
+        roundToThreeDecimals(top2c),
+        roundToThreeDecimals(top3c));
   }
 
   public static double calculateMedian(List<Double> values) {

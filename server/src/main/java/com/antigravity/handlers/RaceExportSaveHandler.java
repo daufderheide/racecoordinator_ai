@@ -94,6 +94,7 @@ public class RaceExportSaveHandler {
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(new ByteArrayInputStream(rawBytes))) {
       RaceStatisticsUtils.applyPostJxlsLaneColors(outputWb, race);
       RaceStatisticsUtils.removeAllCommentsAndVmlDrawings(outputWb);
+      RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(outputWb);
 
       int lapDataIdx = outputWb.getSheetIndex("Lap Data");
       if (lapDataIdx != -1) {
@@ -143,10 +144,10 @@ public class RaceExportSaveHandler {
                   actualDriverName,
                   heatNum,
                   lane + 1,
-                  absoluteHeatLapTime,
-                  currentAbsoluteLapTime,
-                  lap.getLapTime(),
-                  lap.getSegments()));
+                  RaceStatisticsUtils.roundToThreeDecimals(absoluteHeatLapTime),
+                  RaceStatisticsUtils.roundToThreeDecimals(currentAbsoluteLapTime),
+                  RaceStatisticsUtils.roundToThreeDecimals(lap.getLapTime()),
+                  roundSegments(lap.getSegments())));
         }
 
         driverAbsoluteTimes.put(driverId, currentAbsoluteLapTime);
@@ -155,6 +156,17 @@ public class RaceExportSaveHandler {
 
     allLaps.sort(Comparator.comparingDouble(ExportLapData::getAbsoluteLapTime));
     return allLaps;
+  }
+
+  private static List<Double> roundSegments(List<Double> segments) {
+    if (segments == null) {
+      return Collections.emptyList();
+    }
+    List<Double> rounded = new ArrayList<>(segments.size());
+    for (Double seg : segments) {
+      rounded.add(seg != null ? RaceStatisticsUtils.roundToThreeDecimals(seg) : null);
+    }
+    return rounded;
   }
 
   public void exportRaceXls(Context ctx) {

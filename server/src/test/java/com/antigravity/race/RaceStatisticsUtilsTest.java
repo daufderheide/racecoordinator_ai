@@ -22,7 +22,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 public class RaceStatisticsUtilsTest {
@@ -1048,5 +1054,91 @@ public class RaceStatisticsUtilsTest {
     assertNotNull(
         RaceStatisticsUtils.sanitizeWorkbookTemplate(
             new java.io.ByteArrayInputStream(new byte[0])));
+  }
+
+  @Test
+  public void testRoundToThreeDecimals() {
+    assertEquals(0.0, RaceStatisticsUtils.roundToThreeDecimals(0.0), 0.00001);
+    assertEquals(1.0, RaceStatisticsUtils.roundToThreeDecimals(1.0), 0.00001);
+    assertEquals(1.5, RaceStatisticsUtils.roundToThreeDecimals(1.5), 0.00001);
+    assertEquals(1.25, RaceStatisticsUtils.roundToThreeDecimals(1.25), 0.00001);
+    assertEquals(1.123, RaceStatisticsUtils.roundToThreeDecimals(1.123), 0.00001);
+    assertEquals(1.123, RaceStatisticsUtils.roundToThreeDecimals(1.1234), 0.00001);
+    assertEquals(1.124, RaceStatisticsUtils.roundToThreeDecimals(1.1236), 0.00001);
+    assertEquals(1.124, RaceStatisticsUtils.roundToThreeDecimals(1.1235), 0.00001);
+    assertEquals(-2.346, RaceStatisticsUtils.roundToThreeDecimals(-2.3456), 0.00001);
+    assertTrue(Double.isNaN(RaceStatisticsUtils.roundToThreeDecimals(Double.NaN)));
+    assertTrue(
+        Double.isInfinite(RaceStatisticsUtils.roundToThreeDecimals(Double.POSITIVE_INFINITY)));
+    assertTrue(
+        Double.isInfinite(RaceStatisticsUtils.roundToThreeDecimals(Double.NEGATIVE_INFINITY)));
+  }
+
+  @Test
+  public void testCalculateLaneStats_RoundsDecimals() {
+    List<Double> laps = Arrays.asList(3.1111, 3.2222, 3.3333);
+    DriverAnalysisSummary.LaneStats stats =
+        RaceStatisticsUtils.calculateLaneStats("Lane 1", 1, 3.0, laps);
+
+    assertEquals(3.0, stats.getTotalLaps(), 0.00001);
+    assertEquals(9.667, stats.getTotalTime(), 0.00001);
+    assertEquals(3.222, stats.getAverageLapTime(), 0.00001);
+    assertEquals(3.222, stats.getMedianLapTime(), 0.00001);
+    assertEquals(3.111, stats.getBestLapTime(), 0.00001);
+    assertEquals(0.111, stats.getStandardDeviation(), 0.00001);
+    assertEquals(0.966, stats.getConsistencyScore(), 0.00001);
+  }
+
+  @Test
+  public void testEnforceMaxThreeDecimalPlaces_NumericAndStringCells() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook()) {
+      Sheet sheet = wb.createSheet("Test");
+      Row row0 = sheet.createRow(0);
+
+      Cell c0 = row0.createCell(0);
+      c0.setCellValue(12.345678);
+
+      Cell c1 = row0.createCell(1);
+      c1.setCellValue(42.0);
+
+      Cell c2 = row0.createCell(2);
+      c2.setCellValue("98.7654321");
+
+      Cell c3 = row0.createCell(3);
+      c3.setCellValue("Alice");
+
+      Cell c4 = row0.createCell(4);
+      c4.setCellValue("123");
+
+      Cell c5 = row0.createCell(5);
+      c5.setCellValue("2026-09-11");
+
+      Cell c6 = row0.createCell(6);
+      c6.setCellValue(5.12345);
+      CellStyle style4Decimals = wb.createCellStyle();
+      style4Decimals.setDataFormat(wb.createDataFormat().getFormat("0.0000"));
+      c6.setCellStyle(style4Decimals);
+
+      Cell c7 = row0.createCell(7);
+      c7.setCellValue(new Date());
+      CellStyle dateStyle = wb.createCellStyle();
+      dateStyle.setDataFormat(wb.createDataFormat().getFormat("yyyy-mm-dd"));
+      c7.setCellStyle(dateStyle);
+      double origDateValue = c7.getNumericCellValue();
+
+      RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(wb);
+
+      assertEquals(12.346, c0.getNumericCellValue(), 0.00001);
+      assertEquals(42.0, c1.getNumericCellValue(), 0.00001);
+      assertEquals("98.765", c2.getStringCellValue());
+      assertEquals("Alice", c3.getStringCellValue());
+      assertEquals("123", c4.getStringCellValue());
+      assertEquals("2026-09-11", c5.getStringCellValue());
+      assertEquals(5.123, c6.getNumericCellValue(), 0.00001);
+      assertEquals("0.000", c6.getCellStyle().getDataFormatString());
+      assertEquals(origDateValue, c7.getNumericCellValue(), 0.00001);
+    }
+
+    RaceStatisticsUtils.enforceMaxThreeDecimalPlaces(null);
   }
 }
