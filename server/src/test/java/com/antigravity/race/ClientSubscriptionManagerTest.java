@@ -17,7 +17,9 @@ import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.IRaceState;
+import com.antigravity.race.states.Paused;
 import com.antigravity.race.states.RaceOver;
 import io.javalin.websocket.WsContext;
 import java.io.File;
@@ -166,7 +168,8 @@ public class ClientSubscriptionManagerTest {
   public void testDeleteAutoSaveRemovesFile() throws Exception {
     DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
     manager.setDatabaseContext(dc);
-    manager.deleteAutoSave("testRaceId");
+    manager.deleteAutoSave("testRaceId", false);
+    manager.deleteAutoSave("testRaceId", true);
     org.junit.Assert.assertNotNull(dc);
   }
 
@@ -729,5 +732,53 @@ public class ClientSubscriptionManagerTest {
 
     verify(mockRemote, never())
         .sendBytesByFuture(org.mockito.ArgumentMatchers.any(ByteBuffer.class));
+  }
+
+  @Test
+  public void testRaceChangeStateToPausedAndHeatOverAutoSaves() throws Exception {
+    Race mockRace = mock(Race.class);
+    com.antigravity.models.Race realModel =
+        new com.antigravity.models.Race.Builder()
+            .withName("Race")
+            .withEntityId("testRaceId")
+            .build();
+    when(mockRace.getRaceModel()).thenReturn(realModel);
+    when(mockRace.getStatistics()).thenReturn(new RaceStatistics());
+    when(mockRace.getTrack())
+        .thenReturn(
+            new Track.Builder()
+                .name("Track")
+                .lanes(Collections.emptyList())
+                .entityId("track1")
+                .id(null)
+                .build());
+    when(mockRace.getHeats()).thenReturn(Collections.emptyList());
+
+    Paused paused = new Paused();
+    when(mockRace.getState()).thenReturn(paused);
+
+    DatabaseContext dc = new DatabaseContext("test_db", null, System.getProperty("java.io.tmpdir"));
+    manager.setDatabaseContext(dc);
+    manager.setShuttingDown(false);
+
+    manager.autoSave(mockRace);
+
+    RaceSaveData saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_testRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(Paused.class.getName(), saved.getStateClassName());
+
+    HeatOver heatOver = new HeatOver();
+    when(mockRace.getState()).thenReturn(heatOver);
+    manager.autoSave(mockRace);
+
+    saved =
+        com.antigravity.service.DatabaseService.getInstance()
+            .getSavedRace(
+                dc, "autosave_testRaceId.json", com.antigravity.context.RaceScope.PRODUCTION);
+    org.junit.Assert.assertNotNull(saved);
+    org.junit.Assert.assertEquals(HeatOver.class.getName(), saved.getStateClassName());
   }
 }

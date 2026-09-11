@@ -2,6 +2,7 @@ package com.antigravity.race.states;
 
 import com.antigravity.converters.HeatConverter;
 import com.antigravity.proto.RaceData;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.Heat;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
@@ -94,6 +95,7 @@ public class Common {
               .build();
 
       race.broadcast(RaceData.newBuilder().setRace(raceProto).build());
+      ClientSubscriptionManager.getInstance().autoSave(race);
     } else {
       race.changeState(new RaceOver());
     }
