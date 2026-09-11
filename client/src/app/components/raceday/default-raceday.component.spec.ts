@@ -3523,6 +3523,22 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
+    it("should allow deactivation when navigating to /ui-editor even if raceHasEnded is true", () => {
+      component.raceHasEnded = true;
+      const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should allow deactivation when navigating to /ui-editor even if raceState is RACE_OVER", () => {
+      (component as any).raceState = RaceState.RACE_OVER;
+      const nextState = { url: "/ui-editor" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
     it("should allow deactivation when navigating to /modify-heats", () => {
       const nextState = { url: "/modify-heats" } as any;
       const result = component.canDeactivate(nextState);
@@ -5726,6 +5742,31 @@ describe("DefaultRacedayComponent", () => {
       component.forceExit = false;
 
       const result = component.canDeactivate();
+      expect(result).toBeFalse();
+      expect(component.showAckModal).toBeTrue();
+      expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");
+      expect(component.ackModalMessage).toBe("RD_RACE_ENDED_MESSAGE");
+      expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
+    });
+
+    it("should allow deactivation and not show acknowledgement modal when race has ended and navigating to /ui-editor", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const nextState = { url: "/ui-editor?returnUrl=/raceday" } as any;
+      const result = component.canDeactivate(nextState);
+      expect(result).toBeTrue();
+      expect(component.showAckModal).toBeFalse();
+    });
+
+    it("should block deactivation and show acknowledgement modal when race has ended and navigating to /raceday-setup", () => {
+      fixture.detectChanges();
+      component.raceHasEnded = true;
+      component.forceExit = false;
+
+      const nextState = { url: "/raceday-setup" } as any;
+      const result = component.canDeactivate(nextState);
       expect(result).toBeFalse();
       expect(component.showAckModal).toBeTrue();
       expect(component.ackModalTitle).toBe("RD_RACE_ENDED_TITLE");

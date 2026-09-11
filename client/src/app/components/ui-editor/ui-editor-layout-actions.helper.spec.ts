@@ -7,7 +7,13 @@ import {
   executeClearLayout,
   handleClearCurrentLayout,
   handleClearLayout,
+  handleExportPracticeRacedayLayout,
+  handleExportRacedayLayout,
+  handleImportPracticeRacedayLayout,
+  handleImportRacedayLayout,
   handleResetCurrentLayout,
+  handleResetPracticeRacedayLayout,
+  handleResetRacedayLayout,
 } from "./ui-editor-layout-actions.helper";
 
 describe("ui-editor-layout-actions.helper", () => {
@@ -212,6 +218,40 @@ describe("ui-editor-layout-actions.helper", () => {
       handleResetCurrentLayout(mockComp);
 
       expect(mockComp.resetLayout).toHaveBeenCalledWith(customUi);
+    });
+  });
+
+  describe("targeted layout actions", () => {
+    it("should handle reset raceday layout", () => {
+      handleResetRacedayLayout(mockComp);
+      expect(mockComp.getTargetCustomUi).toHaveBeenCalledWith("raceday");
+      expect(mockComp.resetLayout).toHaveBeenCalledWith(ui);
+    });
+
+    it("should handle reset practice raceday layout", () => {
+      handleResetPracticeRacedayLayout(mockComp);
+      expect(mockComp.selectedWidgetId).toBe("widget-lane-view");
+      expect(mockComp.getTargetCustomUi).toHaveBeenCalledWith("practice");
+      expect(mockComp.resetLayout).toHaveBeenCalledWith(ui);
+    });
+
+    it("should handle export raceday and practice layouts", () => {
+      mockComp.exportLayout = jasmine.createSpy("exportLayout");
+      handleExportRacedayLayout(mockComp);
+      expect(mockComp.exportLayout).toHaveBeenCalledWith(ui);
+
+      handleExportPracticeRacedayLayout(mockComp);
+      expect(mockComp.exportLayout).toHaveBeenCalledWith(ui);
+    });
+
+    it("should handle import raceday and practice layouts", () => {
+      mockComp.onImportLayout = jasmine.createSpy("onImportLayout");
+      const event = {} as Event;
+      handleImportRacedayLayout(mockComp, event);
+      expect(mockComp.onImportLayout).toHaveBeenCalledWith(event, ui);
+
+      handleImportPracticeRacedayLayout(mockComp, event);
+      expect(mockComp.onImportLayout).toHaveBeenCalledWith(event, ui);
     });
   });
 });

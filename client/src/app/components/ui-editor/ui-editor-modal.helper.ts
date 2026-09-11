@@ -51,3 +51,21 @@ export function cancelDeleteCustomUiModal(comp: any): void {
   comp.uiToDelete = null;
   comp.cdr.markForCheck();
 }
+
+export function getUnsavedReasonsHelper(comp: any): string[] {
+  const reasons: string[] = [];
+  if (comp.isAnyThemeNameInvalid()) {
+    reasons.push("DISCARD_REASON_THEME_NAME_INVALID");
+  }
+  if (comp.isAnyCustomUiNameInvalid()) {
+    reasons.push("DISCARD_REASON_CUSTOM_UI_NAME_INVALID");
+  }
+
+  if (comp.isSaving) {
+    reasons.push("DISCARD_REASON_SAVING");
+  } else if (reasons.length === 0 && comp.hasChanges()) {
+    reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+  }
+
+  return reasons;
+}

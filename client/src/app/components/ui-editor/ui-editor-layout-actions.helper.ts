@@ -270,3 +270,37 @@ export function handleImportCurrentLayout(comp: any, event: Event): void {
     comp.onImportLayout(event, comp.activeCustomUi);
   }
 }
+
+export function handleResetRacedayLayout(comp: any): void {
+  const u = comp.getTargetCustomUi("raceday");
+  if (u) comp.resetLayout(u);
+}
+
+export function handleResetPracticeRacedayLayout(comp: any): void {
+  comp.selectedWidgetId = "widget-lane-view";
+  const u = comp.getTargetCustomUi("practice");
+  if (u) comp.resetLayout(u);
+}
+
+export function handleExportRacedayLayout(comp: any): void {
+  const u = comp.getTargetCustomUi("raceday");
+  if (u) comp.exportLayout(u);
+}
+
+export function handleExportPracticeRacedayLayout(comp: any): void {
+  const u = comp.getTargetCustomUi("practice");
+  if (u) comp.exportLayout(u);
+}
+
+export function handleImportRacedayLayout(comp: any, event: Event): void {
+  const u = comp.getTargetCustomUi("raceday");
+  if (u) comp.onImportLayout(event, u);
+}
+
+export function handleImportPracticeRacedayLayout(
+  comp: any,
+  event: Event,
+): void {
+  const u = comp.getTargetCustomUi("practice");
+  if (u) comp.onImportLayout(event, u);
+}

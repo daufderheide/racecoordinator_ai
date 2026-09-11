@@ -98,6 +98,7 @@ import {
   getThemeAudioUrl,
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
+  getUnsavedReasonsHelper,
   handleCalloutSpacingChange,
   handleClearCurrentLayout,
   handleClearCustomTemplate,
@@ -112,13 +113,19 @@ import {
   handleDuplicateTheme,
   handleExportCurrentLayout,
   handleExportLayout,
+  handleExportPracticeRacedayLayout,
+  handleExportRacedayLayout,
   handleImportCurrentLayout,
   handleImportLayout,
+  handleImportPracticeRacedayLayout,
+  handleImportRacedayLayout,
   handleMasterVolumeChange,
   handlePageTransitionChange,
   handleResetCurrentLayout,
   handleResetDefaultDirectory,
   handleResetLayout,
+  handleResetPracticeRacedayLayout,
+  handleResetRacedayLayout,
   handleResetWidgetDirectory,
   handleSelectDirectory,
   handleSelectWidgetDirectory,
@@ -609,13 +616,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleClearCurrentLayout(this);
   }
   resetRacedayLayout() {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.resetLayout(u);
+    handleResetRacedayLayout(this);
   }
   resetPracticeRacedayLayout() {
-    this.selectedWidgetId = "widget-lane-view";
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.resetLayout(u);
+    handleResetPracticeRacedayLayout(this);
   }
   exportLayout(ui: CustomUI) {
     handleExportLayout(this, ui);
@@ -624,23 +628,19 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     downloadJsonFile(data, filename);
   }
   exportRacedayLayout() {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.exportLayout(u);
+    handleExportRacedayLayout(this);
   }
   exportPracticeRacedayLayout() {
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.exportLayout(u);
+    handleExportPracticeRacedayLayout(this);
   }
   onImportLayout(event: Event, ui: CustomUI) {
     handleImportLayout(this, event, ui);
   }
   onImportRacedayLayout(event: Event) {
-    const u = this.getTargetCustomUi("raceday");
-    if (u) this.onImportLayout(event, u);
+    handleImportRacedayLayout(this, event);
   }
   onImportPracticeRacedayLayout(event: Event) {
-    const u = this.getTargetCustomUi("practice");
-    if (u) this.onImportLayout(event, u);
+    handleImportPracticeRacedayLayout(this, event);
   }
 
   cloneSettings(s: Settings) {
@@ -695,21 +695,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   getUnsavedReasons(): string[] {
-    const reasons: string[] = [];
-    if (this.isAnyThemeNameInvalid()) {
-      reasons.push("DISCARD_REASON_THEME_NAME_INVALID");
-    }
-    if (this.isAnyCustomUiNameInvalid()) {
-      reasons.push("DISCARD_REASON_CUSTOM_UI_NAME_INVALID");
-    }
-
-    if (this.isSaving) {
-      reasons.push("DISCARD_REASON_SAVING");
-    } else if (reasons.length === 0 && this.hasChanges()) {
-      reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
-    }
-
-    return reasons;
+    return getUnsavedReasonsHelper(this);
   }
 
   get discardMessage(): string {

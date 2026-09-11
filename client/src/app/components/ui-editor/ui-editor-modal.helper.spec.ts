@@ -5,6 +5,7 @@ import {
   acknowledgeSuccessModal,
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
+  getUnsavedReasonsHelper,
   openDeleteCustomUiModal,
   openDeleteThemeModal,
   openSuccessModal,
@@ -99,5 +100,28 @@ describe("ui-editor-modal.helper", () => {
     cancelDeleteCustomUiModal(ctx);
     expect(ctx.showDeleteUiConfirm).toBeFalse();
     expect(ctx.uiToDelete).toBeNull();
+  });
+
+  it("should return unsaved reasons correctly based on component state", () => {
+    const comp: any = {
+      isAnyThemeNameInvalid: () => true,
+      isAnyCustomUiNameInvalid: () => true,
+      isSaving: true,
+      hasChanges: () => true,
+    };
+    let reasons = getUnsavedReasonsHelper(comp);
+    expect(reasons).toContain("DISCARD_REASON_THEME_NAME_INVALID");
+    expect(reasons).toContain("DISCARD_REASON_CUSTOM_UI_NAME_INVALID");
+    expect(reasons).toContain("DISCARD_REASON_SAVING");
+
+    comp.isSaving = false;
+    comp.isAnyThemeNameInvalid = () => false;
+    comp.isAnyCustomUiNameInvalid = () => false;
+    reasons = getUnsavedReasonsHelper(comp);
+    expect(reasons).toEqual(["DISCARD_REASON_EXIT_TOO_QUICKLY"]);
+
+    comp.hasChanges = () => false;
+    reasons = getUnsavedReasonsHelper(comp);
+    expect(reasons).toEqual([]);
   });
 });

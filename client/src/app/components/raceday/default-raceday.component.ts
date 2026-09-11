@@ -2517,7 +2517,20 @@ export class DefaultRacedayComponent
     if (this.forceExit) {
       return true;
     }
-    if (this.raceHasEnded) {
+    if (nextState) {
+      if (
+        this.childWindowManagerService?.isRacePreservingRoute(nextState.url) ||
+        nextState.url.includes("/modify-heats") ||
+        nextState.url.includes("/team-manager") ||
+        nextState.url.includes("/driver-manager") ||
+        nextState.url.includes("/ui-editor") ||
+        nextState.url.includes("/driver-station") ||
+        nextState.url.includes("/driver-view")
+      ) {
+        return true;
+      }
+    }
+    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
       this.showExitConfirmation = false;
       this.showSkipHeatConfirmation = false;
       this.showRestartHeatConfirmation = false;
@@ -2528,18 +2541,6 @@ export class DefaultRacedayComponent
       this.showAckModal = true;
       this.cdr.markForCheck();
       return false;
-    }
-    if (nextState) {
-      if (
-        nextState.url.includes("/modify-heats") ||
-        nextState.url.includes("/team-manager") ||
-        nextState.url.includes("/driver-manager") ||
-        nextState.url.includes("/ui-editor") ||
-        nextState.url.includes("/driver-station") ||
-        nextState.url.includes("/driver-view")
-      ) {
-        return true;
-      }
     }
 
     this.exitModalTitle = "RD_CONFIRM_EXIT_TITLE";
