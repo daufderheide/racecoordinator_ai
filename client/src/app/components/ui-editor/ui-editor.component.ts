@@ -50,7 +50,6 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
-import { deepCopy } from "@app/utils/clone.utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
@@ -66,18 +65,15 @@ import {
   AspectRatioOption,
   AVAILABLE_TRANSITIONS,
   BASE_AVAILABLE_COLUMNS,
-  buildAutoSaveContext,
   buildDisplayColumnSlots,
   buildUiEditorHelpContext,
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
-  cloneSettings,
   cloneUIEditorState,
   DEFAULT_SECTIONS_EXPANDED,
   downloadJsonFile,
   ensureWidgetSelectedHelper,
-  executeAutoSaveState,
-  executeConfirmDiscard,
+  executeCaptureState,
   executeTemplateFileSelected,
   executeTestTtsVoice,
   extractAssetId,
@@ -100,12 +96,14 @@ import {
   getThemeDisplayNameKey,
   getUiEditorHelpSteps,
   getUnsavedReasonsHelper,
+  handleAutoSaveState,
   handleCalloutSpacingChange,
   handleClearCurrentLayout,
   handleClearCustomTemplate,
   handleClearLayout,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
+  handleConfirmDiscard,
   handleCreateCustomUi,
   handleCreateTheme,
   handleCustomUiSelection,
@@ -348,8 +346,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     this.undoManager = new UndoManager<UIEditorState>(
       {
-        clonner: (s) => this.cloneState(s),
-        equalizer: (a, b) => this.areStatesEqual(a, b),
+        clonner: (s) => cloneUIEditorState(s),
+        equalizer: (a, b) => areUIEditorStatesEqual(a, b),
         applier: (s) => {
           syncEditorCoordinates(s.settings, this.editingState?.settings);
           this.editingState = s;
@@ -513,9 +511,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleWidgetColorChange(this, "backgroundColor", event);
   }
 
-  getCurrentFlagUrl() {
-    return "";
-  }
   isCustomUiPractice(ui?: CustomUI) {
     if (!ui) return this.isCurrentLayoutPractice;
     return (
@@ -648,20 +643,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleImportPracticeRacedayLayout(this, event);
   }
 
-  cloneSettings(s: Settings) {
-    return cloneSettings(s);
-  }
-  isColumnSelected(key: string) {
-    return this.editingSettings.racedayColumns.some(
-      (k) => k === key || k.split("_").includes(key),
-    );
-  }
-  cloneState(s: UIEditorState) {
-    return cloneUIEditorState(s);
-  }
-  areStatesEqual(a: UIEditorState, b: UIEditorState) {
-    return areUIEditorStatesEqual(a, b);
-  }
   areSettingsEqual(a: Settings, b: Settings) {
     return areSettingsEqual(a, b);
   }
@@ -696,7 +677,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private autoSaveState(): Promise<void> {
-    return executeAutoSaveState(buildAutoSaveContext(this));
+    return handleAutoSaveState(this);
   }
 
   getUnsavedReasons(): string[] {
@@ -711,23 +692,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   async confirmDiscard(): Promise<boolean> {
-    return new Promise((resolve) => {
-      executeConfirmDiscard({
-        undoManager: this.undoManager,
-        hasChanges: () => this.hasChanges(),
-        isAnyThemeNameInvalid: () => this.isAnyThemeNameInvalid(),
-        isAnyCustomUiNameInvalid: () => this.isAnyCustomUiNameInvalid(),
-        autoSaveState: () => this.autoSaveState(),
-        logger: this.logger,
-        showConfirm: () => {
-          this.showDiscardConfirm = true;
-          this.pendingDeactivate = resolve;
-          this.cdr.markForCheck();
-        },
-      }).then((canDeactivate) => {
-        if (canDeactivate) resolve(true);
-      });
-    });
+    return handleConfirmDiscard(this);
   }
 
   onConfirmDiscard() {
@@ -763,14 +728,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.undoManager.redo();
   }
   captureState() {
-    this.editingState.settings = cloneSettings(this.editingState.settings);
-    if (this.displayCustomUIs?.length) {
-      this.editingState.customUIs = deepCopy(this.displayCustomUIs);
-    }
-    if (this.displayThemes?.length) {
-      this.editingState.themes = deepCopy(this.displayThemes);
-    }
-    this.undoManager.captureState();
+    executeCaptureState(this);
   }
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
@@ -876,10 +834,6 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   downloadTemplate() {
     handleDownloadTemplate(this);
-  }
-
-  downloadDefaultTemplate() {
-    this.downloadTemplate();
   }
 
   testExport() {

@@ -7,7 +7,10 @@ import { CustomUiService } from "@app/services/custom-ui.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 
-import { buildAutoSavePipeline } from "./ui-editor-persistence.helper";
+import {
+  buildAutoSavePipeline,
+  handleAutoSaveState,
+} from "./ui-editor-persistence.helper";
 
 describe("ui-editor-persistence.helper", () => {
   it("should return null if not saveable or no changes", () => {
@@ -91,5 +94,30 @@ describe("ui-editor-persistence.helper", () => {
       expect(dataServiceSpy.updateCustomUI).toHaveBeenCalledWith("ui1", ui);
       done();
     });
+  });
+
+  it("should handleAutoSaveState resolving when no pipeline is generated", async () => {
+    const comp: any = {
+      isLoading: false,
+      isSaving: false,
+      hasChanges: () => false,
+      isAnyThemeNameInvalid: () => false,
+      isAnyCustomUiNameInvalid: () => false,
+      editingSettings: new Settings(),
+      displayThemes: [],
+      displayCustomUIs: [],
+      undoManager: { getInitialState: () => undefined },
+      editingState: {},
+      dataService: {},
+      settingsService: {},
+      themeService: {},
+      customUiService: {},
+      logger: {},
+      translationService: {},
+      getSaveDelay: () => 0,
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    await expectAsync(handleAutoSaveState(comp)).toBeResolved();
   });
 });

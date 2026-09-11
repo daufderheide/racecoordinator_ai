@@ -6,6 +6,7 @@ import {
   areUIEditorStatesEqual,
   cloneSettings,
   cloneUIEditorState,
+  executeCaptureState,
 } from "./ui-editor-state.utils";
 
 describe("ui-editor-state.utils", () => {
@@ -114,5 +115,27 @@ describe("ui-editor-state.utils", () => {
     s2.customExportTemplateName = "";
     s2.customExportTemplatePath = "";
     expect(areSettingsEqual(s1, s2)).toBeTrue();
+  });
+
+  it("should executeCaptureState by cloning settings, themes, customUIs and calling captureState", () => {
+    const comp: any = {
+      editingState: {
+        settings: new Settings(),
+        themes: [],
+        customUIs: [],
+      },
+      displayCustomUIs: [{ entity_id: "ui_1", name: "UI 1" }],
+      displayThemes: [{ entity_id: "th_1", name: "Theme 1" }],
+      undoManager: {
+        captureState: jasmine.createSpy("captureState"),
+      },
+    };
+
+    executeCaptureState(comp);
+    expect(comp.undoManager.captureState).toHaveBeenCalled();
+    expect(comp.editingState.customUIs).toEqual(comp.displayCustomUIs);
+    expect(comp.editingState.customUIs).not.toBe(comp.displayCustomUIs);
+    expect(comp.editingState.themes).toEqual(comp.displayThemes);
+    expect(comp.editingState.themes).not.toBe(comp.displayThemes);
   });
 });

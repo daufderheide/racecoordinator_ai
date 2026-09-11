@@ -11,6 +11,7 @@ import {
   deleteThemeEntity,
   duplicateCustomUiEntity,
   duplicateThemeEntity,
+  handleConfirmDiscard,
   handleOperationError,
 } from "./ui-editor-operations.helper";
 
@@ -175,5 +176,25 @@ describe("ui-editor-operations.helper", () => {
     );
     expect(loggerSpy.error).toHaveBeenCalled();
     expect(window.alert).toHaveBeenCalledWith("UE_ERROR_CREATE_FAILED");
+  });
+
+  it("should handle confirm discard directly when no changes exist", async () => {
+    const comp: any = {
+      undoManager: { commitState: jasmine.createSpy("commitState") },
+      hasChanges: () => false,
+      isAnyThemeNameInvalid: () => false,
+      isAnyCustomUiNameInvalid: () => false,
+      autoSaveState: jasmine
+        .createSpy("autoSaveState")
+        .and.returnValue(Promise.resolve()),
+      logger: loggerSpy,
+      showDiscardConfirm: false,
+      pendingDeactivate: null,
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    const result = await handleConfirmDiscard(comp);
+    expect(result).toBeTrue();
+    expect(comp.undoManager.commitState).toHaveBeenCalled();
   });
 });
