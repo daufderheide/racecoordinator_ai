@@ -32,59 +32,85 @@ public class CustomUITaskHandler {
     try {
       databaseContext.ensureTable("custom_uis");
       List<CustomUI> uis = customUIRepository.findAll();
-      boolean hasDefault = false;
-      boolean hasPractice = false;
-      boolean hasFuel = false;
+      boolean[] foundFlags = new boolean[3]; // [default, practice, fuel]
       for (CustomUI ui : uis) {
-        if (ui.getEntityId() != null && ui.getEntityId().equals(CustomUI.DEFAULT_UI_ID)) {
-          hasDefault = true;
-        }
-        if (ui.getEntityId() != null && ui.getEntityId().equals(CustomUI.PRACTICE_UI_ID)) {
-          hasPractice = true;
-        }
-        if (ui.getEntityId() != null && ui.getEntityId().equals(CustomUI.FUEL_UI_ID)) {
-          hasFuel = true;
-        } else if ("2".equals(ui.getEntityId())
-            && !hasFuel
-            && (ui.isDefault() || "Fuel UI".equalsIgnoreCase(ui.getName()))) {
-          hasFuel = true;
-          customUIRepository.delete("2");
-          CustomUI migrated =
-              new CustomUI(
-                  ui.getName(),
-                  true,
-                  ui.getLayoutJson(),
-                  ui.getColumnsJson(),
-                  ui.getColumnLayoutsJson(),
-                  ui.getColumnVisibilityJson(),
-                  ui.getColumnWidthsJson(),
-                  ui.getColumnAnchorsJson(),
-                  CustomUI.FUEL_UI_ID,
-                  ui.getId());
-          customUIRepository.save(migrated);
-          logger.info("Migrated custom UI '2' to {}", CustomUI.FUEL_UI_ID);
-        }
+        normalizeCustomUi(ui, foundFlags);
       }
 
-      if (!hasDefault) {
+      if (!foundFlags[0]) {
         CustomUI defaultUi = CustomUI.createDefault();
         customUIRepository.save(defaultUi);
         logger.info("Created default custom UI with ID {}", CustomUI.DEFAULT_UI_ID);
       }
 
-      if (!hasPractice) {
+      if (!foundFlags[1]) {
         CustomUI practiceUi = CustomUI.createPractice();
         customUIRepository.save(practiceUi);
         logger.info("Created practice custom UI with ID {}", CustomUI.PRACTICE_UI_ID);
       }
 
-      if (!hasFuel) {
+      if (!foundFlags[2]) {
         CustomUI fuelUi = CustomUI.createFuel();
         customUIRepository.save(fuelUi);
         logger.info("Created fuel custom UI with ID {}", CustomUI.FUEL_UI_ID);
       }
     } catch (Exception e) {
       logger.error("Failed to ensure default custom UIs", e);
+    }
+  }
+
+  private void normalizeCustomUi(CustomUI ui, boolean[] foundFlags) {
+    boolean updated = false;
+    String entityId = ui.getEntityId();
+    String name = ui.getName();
+
+    if ("2".equals(entityId)
+        && !foundFlags[2]
+        && (ui.isDefault() || "Fuel UI".equalsIgnoreCase(name))) {
+      customUIRepository.delete("2");
+      entityId = CustomUI.FUEL_UI_ID;
+      name = CustomUI.FUEL_UI_NAME;
+      foundFlags[2] = true;
+      updated = true;
+    }
+
+    if (CustomUI.DEFAULT_UI_ID.equals(entityId)) {
+      foundFlags[0] = true;
+      if (CustomUI.isLegacyDefaultName(name)) {
+        name = CustomUI.DEFAULT_UI_NAME;
+        updated = true;
+      }
+    }
+    if (CustomUI.PRACTICE_UI_ID.equals(entityId)) {
+      foundFlags[1] = true;
+      if (CustomUI.isLegacyPracticeName(name)) {
+        name = CustomUI.PRACTICE_UI_NAME;
+        updated = true;
+      }
+    }
+    if (CustomUI.FUEL_UI_ID.equals(entityId)) {
+      foundFlags[2] = true;
+      if (CustomUI.isLegacyFuelName(name)) {
+        name = CustomUI.FUEL_UI_NAME;
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      CustomUI migrated =
+          new CustomUI(
+              name,
+              ui.isDefault(),
+              ui.getLayoutJson(),
+              ui.getColumnsJson(),
+              ui.getColumnLayoutsJson(),
+              ui.getColumnVisibilityJson(),
+              ui.getColumnWidthsJson(),
+              ui.getColumnAnchorsJson(),
+              entityId,
+              ui.getId());
+      customUIRepository.save(migrated);
+      logger.info("Normalized custom UI '{}' ({})", migrated.getName(), entityId);
     }
   }
 

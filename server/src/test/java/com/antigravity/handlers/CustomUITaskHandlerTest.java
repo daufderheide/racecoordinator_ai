@@ -306,4 +306,85 @@ public class CustomUITaskHandlerTest {
     assertFalse(retrieved.getLayoutJson().contains("widget-countdown"));
     assertFalse(retrieved.getLayoutJson().contains("\"widgetType\":\"countdown\""));
   }
+
+  @Test
+  public void testEnsureDefaultCustomUIs_RenamesLegacyDefaultNames() {
+    SqliteRepository<CustomUI> repo =
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
+    repo.drop();
+
+    repo.save(
+        new CustomUI(
+            "Default UI Layout",
+            true,
+            "{}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DEFAULT_UI_ID,
+            null));
+    repo.save(
+        new CustomUI(
+            "Default Practice UI Layout",
+            true,
+            "{}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.PRACTICE_UI_ID,
+            null));
+    repo.save(
+        new CustomUI(
+            "Default Fuel UI Layout",
+            true,
+            "{}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.FUEL_UI_ID,
+            null));
+    repo.save(
+        new CustomUI(
+            "My Custom Layout", false, "{}", "[]", "{}", "{}", "{}", "{}", "custom_ui_1", null));
+
+    handler.ensureDefaultCustomUIs();
+
+    CustomUI defaultUi = repo.findByEntityId(CustomUI.DEFAULT_UI_ID);
+    assertNotNull(defaultUi);
+    assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUi.getName());
+
+    CustomUI practiceUi = repo.findByEntityId(CustomUI.PRACTICE_UI_ID);
+    assertNotNull(practiceUi);
+    assertEquals(CustomUI.PRACTICE_UI_NAME, practiceUi.getName());
+
+    CustomUI fuelUi = repo.findByEntityId(CustomUI.FUEL_UI_ID);
+    assertNotNull(fuelUi);
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
+
+    CustomUI customUi = repo.findByEntityId("custom_ui_1");
+    assertNotNull(customUi);
+    assertEquals("My Custom Layout", customUi.getName());
+  }
+
+  @Test
+  public void testEnsureDefaultCustomUIs_MigratesLegacyFuelId2() {
+    SqliteRepository<CustomUI> repo =
+        new SqliteRepository<>(databaseContext, "custom_uis", CustomUI.class);
+    repo.drop();
+
+    repo.save(new CustomUI("Fuel UI", true, "{}", "[]", "{}", "{}", "{}", "{}", "2", null));
+
+    handler.ensureDefaultCustomUIs();
+
+    org.junit.Assert.assertNull(repo.findByEntityId("2"));
+    CustomUI fuelUi = repo.findByEntityId(CustomUI.FUEL_UI_ID);
+    assertNotNull(fuelUi);
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
+  }
 }

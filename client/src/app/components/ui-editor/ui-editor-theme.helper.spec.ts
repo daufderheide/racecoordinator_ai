@@ -121,6 +121,115 @@ describe("ui-editor-theme.helper", () => {
     expect(sorted[2].entity_id).toBe("theme_b");
   });
 
+  it("should alphabetize themes by translated display name when translationService is provided", () => {
+    const mockTranslationService = {
+      translate: jasmine.createSpy("translate").and.callFake((key: string) => {
+        const dict: Record<string, string> = {
+          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
+          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Fuel)",
+          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Practice)",
+        };
+        return dict[key] || key;
+      }),
+    } as any;
+
+    const practice: Theme = {
+      entity_id: "practice_theme_rc_ai",
+      name: "Practice Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const def: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const fuel: Theme = {
+      entity_id: "default_fuel_theme_rc_ai",
+      name: "Fuel Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const zebra: Theme = {
+      entity_id: "theme_z",
+      name: "Zebra Custom",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const alpha: Theme = {
+      entity_id: "theme_a",
+      name: "Alpha Custom",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+
+    const sorted = sortThemesForDisplay(
+      [zebra, practice, def, alpha, fuel],
+      mockTranslationService,
+    );
+
+    expect(sorted.map((t) => t.entity_id)).toEqual([
+      "theme_a",
+      "default_classic_rc_ai",
+      "default_fuel_theme_rc_ai",
+      "practice_theme_rc_ai",
+      "theme_z",
+    ]);
+  });
+
+  it("should alphabetize themes according to localized display names", () => {
+    // In German: Fuel is Kraftstoff (starts with K), Practice is Training (starts with T)
+    const mockTranslationService = {
+      translate: jasmine.createSpy("translate").and.callFake((key: string) => {
+        const dict: Record<string, string> = {
+          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
+          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Kraftstoff)",
+          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Training)",
+        };
+        return dict[key] || key;
+      }),
+    } as any;
+
+    const practice: Theme = {
+      entity_id: "practice_theme_rc_ai",
+      name: "Practice Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const def: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const fuel: Theme = {
+      entity_id: "default_fuel_theme_rc_ai",
+      name: "Fuel Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+
+    const sorted = sortThemesForDisplay(
+      [practice, fuel, def],
+      mockTranslationService,
+    );
+
+    expect(sorted.map((t) => t.entity_id)).toEqual([
+      "default_classic_rc_ai",
+      "default_fuel_theme_rc_ai",
+      "practice_theme_rc_ai",
+    ]);
+  });
+
   it("should apply theme slot update and append asset if new", () => {
     const theme: Theme = {
       entity_id: "t1",

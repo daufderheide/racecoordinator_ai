@@ -168,4 +168,43 @@ public class ThemeTest {
     assertEquals("practice_theme_rc_ai", Theme.PRACTICE_THEME_ID);
     assertEquals("default_fuel_theme_rc_ai", Theme.FUEL_THEME_ID);
   }
+
+  @Test
+  public void testLegacyNames() {
+    assertTrue(Theme.isLegacyDefaultName(null));
+    assertTrue(Theme.isLegacyDefaultName(""));
+    assertTrue(Theme.isLegacyDefaultName("default"));
+    assertTrue(Theme.isLegacyDefaultName("classic"));
+    assertTrue(Theme.isLegacyDefaultName("classic theme"));
+    assertTrue(Theme.isLegacyDefaultName("default theme"));
+    assertTrue(Theme.isLegacyDefaultName("RaceCoordinator AI"));
+    assertTrue(Theme.isLegacyDefaultName("RaceCoordinator AI (Default)"));
+    assertFalse(Theme.isLegacyDefaultName("Custom Leaderboard Theme"));
+
+    assertTrue(Theme.isLegacyPracticeName(null));
+    assertTrue(Theme.isLegacyPracticeName(""));
+    assertTrue(Theme.isLegacyPracticeName("practice"));
+    assertTrue(Theme.isLegacyPracticeName("practice theme"));
+    assertFalse(Theme.isLegacyPracticeName("RaceCoordinator AI (Practice)"));
+    assertFalse(Theme.isLegacyPracticeName("Custom Leaderboard Theme"));
+
+    assertTrue(Theme.isLegacyFuelName(null));
+    assertTrue(Theme.isLegacyFuelName(""));
+    assertTrue(Theme.isLegacyFuelName("fuel"));
+    assertTrue(Theme.isLegacyFuelName("fuel theme"));
+    assertFalse(Theme.isLegacyFuelName("RaceCoordinator AI (Fuel)"));
+    assertFalse(Theme.isLegacyFuelName("Custom Leaderboard Theme"));
+  }
+
+  @Test
+  public void testJacksonAliases() throws Exception {
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    String jsonWithSnakeCase =
+        "{\"@id\":1,\"name\":\"Custom Leaderboard Theme\",\"is_default\":false,\"ui_id\":\"2\",\"entity_id\":\"3\"}";
+    Theme theme = mapper.readValue(jsonWithSnakeCase, Theme.class);
+    assertEquals("Custom Leaderboard Theme", theme.getName());
+    assertEquals("2", theme.getUiId());
+    assertEquals("3", theme.getEntityId());
+  }
 }

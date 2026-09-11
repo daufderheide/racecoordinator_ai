@@ -11,6 +11,45 @@ public class CustomUI extends Model {
   public static final String PRACTICE_UI_ID = "practice_ui_layout_rc_ai";
   public static final String FUEL_UI_ID = "default_fuel_ui_layout_rc_ai";
 
+  public static final String DEFAULT_UI_NAME = "RaceCoordinator AI";
+  public static final String PRACTICE_UI_NAME = "RaceCoordinator AI (Practice)";
+  public static final String FUEL_UI_NAME = "RaceCoordinator AI (Fuel)";
+
+  public static boolean isLegacyDefaultName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "default".equals(n)
+        || "default ui".equals(n)
+        || "default ui layout".equals(n)
+        || "raceday ui layout".equals(n)
+        || "racecoordinator ai".equals(n)
+        || "racecoordinator ai (default)".equals(n);
+  }
+
+  public static boolean isLegacyPracticeName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "practice".equals(n)
+        || "practice ui".equals(n)
+        || "practice ui layout".equals(n)
+        || "default practice ui layout".equals(n);
+  }
+
+  public static boolean isLegacyFuelName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      return true;
+    }
+    String n = name.trim().toLowerCase();
+    return "fuel".equals(n)
+        || "fuel ui".equals(n)
+        || "fuel ui layout".equals(n)
+        || "default fuel ui layout".equals(n);
+  }
+
   private final String name;
   private final boolean isDefault;
   private final String layoutJson;

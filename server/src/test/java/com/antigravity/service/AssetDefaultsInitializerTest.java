@@ -1,14 +1,18 @@
 package com.antigravity.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.CustomUI;
 import com.antigravity.models.Theme;
 import com.antigravity.proto.AssetMessage;
 import com.antigravity.repository.SqliteRepository;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -111,5 +115,97 @@ public class AssetDefaultsInitializerTest {
         new SqliteRepository<>(databaseContext, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();
     assertTrue("Default theme should exist", themes.stream().anyMatch(Theme::isDefault));
+  }
+
+  @Test
+  public void testBackfillDefaultTheme_RenamesLegacyDefaultNames() {
+    SqliteRepository<Theme> themeRepo =
+        new SqliteRepository<>(databaseContext, "themes", Theme.class);
+    themeRepo.drop();
+
+    themeRepo.save(
+        new Theme(
+            "Default Theme",
+            true,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.DEFAULT_THEME_ID,
+            null));
+    themeRepo.save(
+        new Theme(
+            "Practice Theme",
+            true,
+            new HashMap<>(),
+            new HashMap<>(),
+            null,
+            Theme.PRACTICE_THEME_ID,
+            null));
+    themeRepo.save(
+        new Theme(
+            "Fuel Theme", true, new HashMap<>(), new HashMap<>(), null, Theme.FUEL_THEME_ID, null));
+    themeRepo.save(
+        new Theme(
+            "My Custom Theme",
+            false,
+            new HashMap<>(),
+            new HashMap<>(),
+            "custom_ui",
+            "custom_1",
+            null));
+
+    initializer.backfillDefaultTheme();
+
+    Theme defaultTheme = themeRepo.findByEntityId(Theme.DEFAULT_THEME_ID);
+    assertNotNull(defaultTheme);
+    assertEquals(Theme.DEFAULT_THEME_NAME, defaultTheme.getName());
+    assertEquals(CustomUI.DEFAULT_UI_ID, defaultTheme.getUiId());
+
+    Theme practiceTheme = themeRepo.findByEntityId(Theme.PRACTICE_THEME_ID);
+    assertNotNull(practiceTheme);
+    assertEquals(Theme.PRACTICE_THEME_NAME, practiceTheme.getName());
+    assertEquals(CustomUI.PRACTICE_UI_ID, practiceTheme.getUiId());
+
+    Theme fuelTheme = themeRepo.findByEntityId(Theme.FUEL_THEME_ID);
+    assertNotNull(fuelTheme);
+    assertEquals(Theme.FUEL_THEME_NAME, fuelTheme.getName());
+    assertEquals(CustomUI.FUEL_UI_ID, fuelTheme.getUiId());
+
+    Theme customTheme = themeRepo.findByEntityId("custom_1");
+    assertNotNull(customTheme);
+    assertEquals("My Custom Theme", customTheme.getName());
+    assertEquals("custom_ui", customTheme.getUiId());
+  }
+
+  @Test
+  public void testBackfillDefaultTheme_MigratesLegacyFuelId2() {
+    SqliteRepository<Theme> themeRepo =
+        new SqliteRepository<>(databaseContext, "themes", Theme.class);
+    themeRepo.drop();
+
+    themeRepo.save(new Theme("Fuel Theme", true, new HashMap<>(), new HashMap<>(), "2", "2", null));
+
+    initializer.backfillDefaultTheme();
+
+    assertNull(themeRepo.findByEntityId("2"));
+    Theme fuelTheme = themeRepo.findByEntityId(Theme.FUEL_THEME_ID);
+    assertNotNull(fuelTheme);
+    assertEquals(Theme.FUEL_THEME_NAME, fuelTheme.getName());
+    assertEquals(CustomUI.FUEL_UI_ID, fuelTheme.getUiId());
+  }
+
+  @Test
+  public void testBackfillDefaultTheme_CreatesMissingThemes() {
+    SqliteRepository<Theme> themeRepo =
+        new SqliteRepository<>(databaseContext, "themes", Theme.class);
+    themeRepo.drop();
+
+    initializer.backfillDefaultTheme();
+
+    List<Theme> themes = themeRepo.findAll();
+    assertEquals(3, themes.size());
+    assertNotNull(themeRepo.findByEntityId(Theme.DEFAULT_THEME_ID));
+    assertNotNull(themeRepo.findByEntityId(Theme.PRACTICE_THEME_ID));
+    assertNotNull(themeRepo.findByEntityId(Theme.FUEL_THEME_ID));
   }
 }

@@ -2,6 +2,7 @@ package com.antigravity.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
@@ -194,5 +195,112 @@ public class DatabaseInitializerTest {
     assertNotNull(updated);
     assertTrue(updated.getLayoutJson().contains("widget-countdown"));
     assertTrue(updated.getLayoutJson().contains("\"widgetType\":\"countdown\""));
+  }
+
+  @Test
+  public void testBackfillCustomUIs_RenamesLegacyDefaultNames() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            "Default UI Layout",
+            true,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.DEFAULT_UI_ID,
+            null));
+    uiRepo.save(
+        new CustomUI(
+            "Default Practice UI Layout",
+            true,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.PRACTICE_UI_ID,
+            null));
+    uiRepo.save(
+        new CustomUI(
+            "Default Fuel UI Layout",
+            true,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            CustomUI.FUEL_UI_ID,
+            null));
+    uiRepo.save(
+        new CustomUI(
+            "My Custom Layout",
+            false,
+            "{\"widgets\":[]}",
+            "[]",
+            "{}",
+            "{}",
+            "{}",
+            "{}",
+            "custom_ui_1",
+            null));
+
+    initializer.backfillCustomUIs(context);
+
+    CustomUI defaultUi = uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID);
+    assertNotNull(defaultUi);
+    assertEquals(CustomUI.DEFAULT_UI_NAME, defaultUi.getName());
+
+    CustomUI practiceUi = uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID);
+    assertNotNull(practiceUi);
+    assertEquals(CustomUI.PRACTICE_UI_NAME, practiceUi.getName());
+
+    CustomUI fuelUi = uiRepo.findByEntityId(CustomUI.FUEL_UI_ID);
+    assertNotNull(fuelUi);
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
+
+    CustomUI customUi = uiRepo.findByEntityId("custom_ui_1");
+    assertNotNull(customUi);
+    assertEquals("My Custom Layout", customUi.getName());
+  }
+
+  @Test
+  public void testBackfillCustomUIs_MigratesLegacyFuelId2() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    uiRepo.save(
+        new CustomUI(
+            "Fuel UI Layout", true, "{\"widgets\":[]}", "[]", "{}", "{}", "{}", "{}", "2", null));
+
+    initializer.backfillCustomUIs(context);
+
+    assertNull(uiRepo.findByEntityId("2"));
+    CustomUI fuelUi = uiRepo.findByEntityId(CustomUI.FUEL_UI_ID);
+    assertNotNull(fuelUi);
+    assertEquals(CustomUI.FUEL_UI_NAME, fuelUi.getName());
+  }
+
+  @Test
+  public void testBackfillCustomUIs_CreatesMissingDefaultUIs() {
+    SqliteRepository<CustomUI> uiRepo =
+        new SqliteRepository<>(context, "custom_uis", CustomUI.class);
+    uiRepo.drop();
+
+    initializer.backfillCustomUIs(context);
+
+    List<CustomUI> uis = uiRepo.findAll();
+    assertEquals(3, uis.size());
+    assertNotNull(uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID));
+    assertNotNull(uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID));
+    assertNotNull(uiRepo.findByEntityId(CustomUI.FUEL_UI_ID));
   }
 }

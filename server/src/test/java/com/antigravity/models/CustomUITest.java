@@ -124,4 +124,33 @@ public class CustomUITest {
     assertEquals(ui.getName(), updated.getName());
     assertEquals(ui.getEntityId(), updated.getEntityId());
   }
+
+  @Test
+  public void testLegacyNames() {
+    assertTrue(CustomUI.isLegacyDefaultName(null));
+    assertTrue(CustomUI.isLegacyDefaultName(""));
+    assertTrue(CustomUI.isLegacyDefaultName("default"));
+    assertTrue(CustomUI.isLegacyDefaultName("Default UI"));
+    assertTrue(CustomUI.isLegacyDefaultName("default ui layout"));
+    assertTrue(CustomUI.isLegacyDefaultName("raceday ui layout"));
+    assertTrue(CustomUI.isLegacyDefaultName("RaceCoordinator AI"));
+    assertTrue(CustomUI.isLegacyDefaultName("RaceCoordinator AI (Default)"));
+    assertFalse(CustomUI.isLegacyDefaultName("Custom Leaderboard"));
+
+    assertTrue(CustomUI.isLegacyPracticeName(null));
+    assertTrue(CustomUI.isLegacyPracticeName(""));
+    assertTrue(CustomUI.isLegacyPracticeName("practice"));
+    assertTrue(CustomUI.isLegacyPracticeName("Practice UI"));
+    assertTrue(CustomUI.isLegacyPracticeName("Practice UI Layout"));
+    assertTrue(CustomUI.isLegacyPracticeName("default practice ui layout"));
+    assertFalse(CustomUI.isLegacyPracticeName("Custom Leaderboard"));
+
+    assertTrue(CustomUI.isLegacyFuelName(null));
+    assertTrue(CustomUI.isLegacyFuelName(""));
+    assertTrue(CustomUI.isLegacyFuelName("fuel"));
+    assertTrue(CustomUI.isLegacyFuelName("Fuel UI"));
+    assertTrue(CustomUI.isLegacyFuelName("Fuel UI Layout"));
+    assertTrue(CustomUI.isLegacyFuelName("default fuel ui layout"));
+    assertFalse(CustomUI.isLegacyFuelName("Custom Leaderboard"));
+  }
 }

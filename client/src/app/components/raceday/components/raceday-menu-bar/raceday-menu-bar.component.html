@@ -328,7 +328,7 @@
                     onThemeMenuSelect(theme.entity_id); $event.stopPropagation()
                   "
                 >
-                  {{ theme.name }}
+                  {{ getThemeDisplayNameKey(theme) | translate }}
                 </div>
               }
             </div>

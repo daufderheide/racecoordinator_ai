@@ -2,49 +2,81 @@ import { CustomUI } from "@app/models/custom-ui";
 import { Theme } from "@app/models/theme";
 import { TranslationService } from "@app/services/translation.service";
 
-const DEFAULT_RACEDAY_UI_NAMES = new Set([
+export const DEFAULT_RACEDAY_UI_NAMES = new Set([
   "",
+  "default",
+  "default ui",
   "racecoordinator ai",
+  "racecoordinator ai (default)",
   "default ui layout",
   "raceday ui layout",
 ]);
 
-const DEFAULT_PRACTICE_UI_NAMES = new Set([
+export const DEFAULT_PRACTICE_UI_NAMES = new Set([
   "",
+  "practice",
+  "practice ui",
   "racecoordinator ai (practice)",
   "default practice ui layout",
   "practice ui layout",
 ]);
 
-const DEFAULT_FUEL_UI_NAMES = new Set([
+export const DEFAULT_FUEL_UI_NAMES = new Set([
   "",
+  "fuel",
+  "fuel ui",
   "racecoordinator ai (fuel)",
   "default fuel ui layout",
   "fuel ui layout",
 ]);
 
-const DEFAULT_THEME_NAMES = new Set([
+export const DEFAULT_THEME_NAMES = new Set([
   "",
   "default",
   "racecoordinator ai",
+  "racecoordinator ai (default)",
   "classic",
   "classic theme",
   "default theme",
 ]);
 
-const DEFAULT_PRACTICE_THEME_NAMES = new Set([
+export const DEFAULT_PRACTICE_THEME_NAMES = new Set([
   "",
   "racecoordinator ai (practice)",
   "practice",
   "practice theme",
 ]);
 
-const DEFAULT_FUEL_THEME_NAMES = new Set([
+export const DEFAULT_FUEL_THEME_NAMES = new Set([
   "",
   "racecoordinator ai (fuel)",
   "fuel",
   "fuel theme",
 ]);
+
+export function isLegacyRacedayUiName(name?: string): boolean {
+  return DEFAULT_RACEDAY_UI_NAMES.has((name || "").trim().toLowerCase());
+}
+
+export function isLegacyPracticeUiName(name?: string): boolean {
+  return DEFAULT_PRACTICE_UI_NAMES.has((name || "").trim().toLowerCase());
+}
+
+export function isLegacyFuelUiName(name?: string): boolean {
+  return DEFAULT_FUEL_UI_NAMES.has((name || "").trim().toLowerCase());
+}
+
+export function isLegacyDefaultThemeName(name?: string): boolean {
+  return DEFAULT_THEME_NAMES.has((name || "").trim().toLowerCase());
+}
+
+export function isLegacyPracticeThemeName(name?: string): boolean {
+  return DEFAULT_PRACTICE_THEME_NAMES.has((name || "").trim().toLowerCase());
+}
+
+export function isLegacyFuelThemeName(name?: string): boolean {
+  return DEFAULT_FUEL_THEME_NAMES.has((name || "").trim().toLowerCase());
+}
 
 export function getCustomUiDisplayNameKey(
   ui: CustomUI,

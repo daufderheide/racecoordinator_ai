@@ -2520,5 +2520,116 @@ describe("RaceEditorComponent", () => {
       const payload = dataService.updateRace.calls.mostRecent().args[1];
       expect(payload.theme_id).toBe("practice_theme_rc_ai");
     }));
+
+    it("should alphabetize themes on loadThemes and preserve default theme selection", fakeAsync(() => {
+      mockTranslationService.translate.and.callFake((key: string) => {
+        const dict: Record<string, string> = {
+          UE_LABEL_DEFAULT_THEME: "RaceCoordinator AI",
+          UE_LABEL_FUEL_THEME: "RaceCoordinator AI (Fuel)",
+          UE_LABEL_PRACTICE_THEME: "RaceCoordinator AI (Practice)",
+        };
+        return dict[key] || key;
+      });
+
+      const mockThemes: any[] = [
+        {
+          entity_id: "practice_theme_rc_ai",
+          name: "RaceCoordinator AI (Practice)",
+          is_default: true,
+        },
+        { entity_id: "theme_z", name: "Zebra Custom", is_default: false },
+        {
+          entity_id: "default_classic_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        },
+        { entity_id: "theme_a", name: "Alpha Custom", is_default: false },
+        {
+          entity_id: "default_fuel_theme_rc_ai",
+          name: "RaceCoordinator AI (Fuel)",
+          is_default: true,
+        },
+      ];
+      dataService.getThemes.and.returnValue(of(mockThemes));
+
+      component.loadThemes();
+      tick();
+
+      expect(component.themes.map((t) => t.entity_id)).toEqual([
+        "theme_a",
+        "default_classic_rc_ai",
+        "default_fuel_theme_rc_ai",
+        "practice_theme_rc_ai",
+        "theme_z",
+      ]);
+    }));
+
+    it("should select the default theme in createNewRace even when another theme is first alphabetically", () => {
+      component.themes = [
+        {
+          entity_id: "theme_a",
+          name: "Alpha Custom",
+          is_default: false,
+        } as any,
+        {
+          entity_id: "default_classic_rc_ai",
+          name: "RaceCoordinator AI",
+          is_default: true,
+        } as any,
+        {
+          entity_id: "theme_z",
+          name: "Zebra Custom",
+          is_default: false,
+        } as any,
+      ];
+      component.createNewRace();
+      expect(component.editingRace.theme_id).toBe("default_classic_rc_ai");
+    });
+
+    it("should re-sort themes when getTranslationsLoaded emits", fakeAsync(() => {
+      const translationsSubject = new BehaviorSubject<boolean>(false);
+      mockTranslationService.getTranslationsLoaded.and.returnValue(
+        translationsSubject.asObservable(),
+      );
+
+      mockTranslationService.translate.and.callFake((key: string) => key);
+
+      const mockThemes = [
+        {
+          entity_id: "theme_z",
+          name: "Zebra Custom",
+          is_default: false,
+        },
+        {
+          entity_id: "theme_a",
+          name: "Alpha Custom",
+          is_default: false,
+        },
+      ];
+      dataService.getThemes.and.returnValue(of(mockThemes));
+
+      component.ngOnInit();
+      tick();
+
+      expect(component.themes.map((t) => t.entity_id)).toEqual([
+        "theme_a",
+        "theme_z",
+      ]);
+
+      // Change translations so Zebra comes before Alpha
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "Zebra Custom") return "AAA Zebra";
+        if (key === "Alpha Custom") return "ZZZ Alpha";
+        return key;
+      });
+
+      translationsSubject.next(true);
+      tick();
+
+      expect(component.themes.map((t) => t.entity_id)).toEqual([
+        "theme_z",
+        "theme_a",
+      ]);
+    }));
   });
 });

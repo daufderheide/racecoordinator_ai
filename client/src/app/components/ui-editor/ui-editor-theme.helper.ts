@@ -1,21 +1,42 @@
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { AudioConfig } from "@app/models/driver";
 import { Theme } from "@app/models/theme";
+import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { UIEditorState } from "./ui-editor-constants";
-import { isThemeDefault } from "./ui-editor-crud.helper";
+import {
+  getThemeDisplayNameKey,
+  isThemeDefault,
+} from "./ui-editor-crud.helper";
 import { cloneSettings } from "./ui-editor-state.utils";
 import {
   extractAssetId,
   getThemeAudioConfigForSlot,
 } from "./ui-editor-theme-assets.helper";
 
-export function sortThemesForDisplay(themes: Theme[]): Theme[] {
+export function sortThemesForDisplay(
+  themes: Theme[],
+  translationService?: TranslationService,
+): Theme[] {
   const list = [...(themes || [])];
   list.sort((a, b) => {
-    const cmp = naturalSortCompare(a.name || "", b.name || "");
+    const nameA = translationService
+      ? translationService.translate(
+          getThemeDisplayNameKey(a, translationService),
+        ) ||
+        a.name ||
+        ""
+      : a.name || "";
+    const nameB = translationService
+      ? translationService.translate(
+          getThemeDisplayNameKey(b, translationService),
+        ) ||
+        b.name ||
+        ""
+      : b.name || "";
+    const cmp = naturalSortCompare(nameA, nameB);
     if (cmp !== 0) return cmp;
     return (a.entity_id || "").localeCompare(b.entity_id || "");
   });

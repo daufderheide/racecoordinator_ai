@@ -3536,6 +3536,41 @@ describe("UIEditorComponent", () => {
       ).toBeFalse();
     });
 
+    it("should preserve custom theme uiId when theme references custom UI '2'", () => {
+      const customLayout: CustomUI = {
+        entity_id: "2",
+        name: "Custom Leaderboard",
+        is_default: false,
+      };
+      const customTheme: Theme = {
+        entity_id: "3",
+        name: "Custom Leaderboard Theme",
+        is_default: false,
+        uiId: "2",
+        slots: {},
+        audio_slots: {},
+      };
+      component.editingState.customUIs = [
+        ...(component.editingState.customUIs || []),
+        customLayout,
+      ];
+      component.editingState.themes = [
+        ...(component.editingState.themes || []),
+        customTheme,
+      ];
+      component.refreshDisplayProperties();
+
+      expect(
+        component.displayCustomUIs.some(
+          (u) => u.entity_id === "2" && u.name === "Custom Leaderboard",
+        ),
+      ).toBeTrue();
+      const loadedTheme = component.editingState.themes.find(
+        (t) => t.entity_id === "3",
+      );
+      expect(loadedTheme?.uiId).toBe("2");
+    });
+
     it("should not collide when a theme and custom UI layout share the same entity_id", () => {
       const themeWithSameId: Theme = {
         entity_id: "1",
