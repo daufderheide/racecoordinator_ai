@@ -15,6 +15,7 @@ import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
 import com.antigravity.race.RaceSaveData;
 import com.antigravity.race.RaceStatisticsUtils;
+import com.antigravity.race.SampleRaceFactory;
 import com.antigravity.race.SeasonStandingsCalculator;
 import com.antigravity.race.states.Racing;
 import com.antigravity.repository.SqliteRepository;
@@ -182,80 +183,8 @@ public class RaceExportSaveHandler {
         return;
       }
 
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-
-      synchronized (race) {
-        List<RaceParticipant> driversCopy = new ArrayList<>();
-        for (RaceParticipant rp : race.getDrivers()) {
-          if (!rp.isEmptyParticipant()) {
-            driversCopy.add(rp);
-          }
-        }
-        OverallStandings standings =
-            new OverallStandings(
-                race.getRaceModel().getHeatScoring(),
-                race.getRaceModel().getOverallScoring(),
-                race.getRaceModel().getGroupOptions(),
-                race.getRaceModel().isPractice());
-        standings.recalculate(driversCopy, race.getHeats());
-
-        org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
-        jxlsContext.putVar("race", race);
-        jxlsContext.putVar("standings", driversCopy);
-
-        List<Heat> runHeats = new ArrayList<>();
-        List<String> heatSheetNames = new ArrayList<>();
-        for (Heat h : race.getHeats()) {
-          if (h.isStarted()
-              || race.getCurrentHeat() != null
-                  && h.getHeatNumber() <= race.getCurrentHeat().getHeatNumber()) {
-            runHeats.add(h);
-            heatSheetNames.add("Heat " + h.getHeatNumber());
-          }
-        }
-        if (runHeats.isEmpty()) {
-          runHeats.add(new Heat());
-          heatSheetNames.add("Heat 1");
-        }
-        jxlsContext.putVar("heats", runHeats);
-        jxlsContext.putVar(
-            "heatSheetNames", RaceStatisticsUtils.makeSheetNamesUnique(heatSheetNames));
-
-        List<Heat> allHeats =
-            race.getHeats() != null && !race.getHeats().isEmpty()
-                ? new ArrayList<>(race.getHeats())
-                : Collections.singletonList(new Heat());
-        jxlsContext.putVar("allHeats", allHeats);
-
-        List<DriverAnalysisSummary> driverSummaries = new ArrayList<>();
-        List<String> driverSheetNames = new ArrayList<>();
-        RaceStatisticsUtils.prepareExportData(
-            race, driversCopy, runHeats, driverSummaries, driverSheetNames);
-
-        jxlsContext.putVar("driverSummaries", driverSummaries);
-        jxlsContext.putVar("driverSheetNames", driverSheetNames);
-
-        Season season = getSeason(race);
-        List<SeasonStandingItem> seasonStandings =
-            season != null
-                ? SeasonStandingsCalculator.calculateStandings(season)
-                : new ArrayList<>();
-        jxlsContext.putVar("hasSeason", season != null);
-        jxlsContext.putVar("season", season);
-        jxlsContext.putVar("seasonName", season != null ? season.getName() : "");
-        jxlsContext.putVar("seasonStandings", seasonStandings);
-        jxlsContext.putVar("laps", buildExportLapData(runHeats));
-
-        List<Integer> activeLanes = RaceStatisticsUtils.determineActiveLanes(race, runHeats);
-        InputStream sanitizedIs =
-            RaceStatisticsUtils.sanitizeWorkbookTemplate(is, activeLanes, race);
-        org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
-      }
-
-      byte[] rawBytes = os.toByteArray();
-      byte[] resultBytes = postProcessExportWorkbook(rawBytes, race);
-
-      if (resultBytes.length == 0) {
+      byte[] resultBytes = renderXlsExport(race, is);
+      if (resultBytes == null || resultBytes.length == 0) {
         logger.error("Generated Excel workbook output is 0 bytes");
         ctx.status(500).result("Error: Generated Excel file was empty");
         return;
@@ -268,6 +197,134 @@ public class RaceExportSaveHandler {
       logger.error("Error exporting XLS", e);
       ctx.status(500).result("Internal Server Error: " + e.getMessage());
     }
+  }
+
+  public void testExportXls(Context ctx) {
+    try {
+      Race race = ClientSubscriptionManager.getInstance().getRace();
+      if (race == null) {
+        race = SampleRaceFactory.createSampleRace();
+      }
+
+      InputStream is = loadTemplateInputStream(ctx);
+      if (is == null) {
+        return;
+      }
+
+      byte[] resultBytes = renderXlsExport(race, is);
+      if (resultBytes == null || resultBytes.length == 0) {
+        logger.error("Generated test Excel output is empty");
+        ctx.status(500).result("Error: Generated Excel file was empty");
+        return;
+      }
+
+      ctx.contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+          .header("Content-Disposition", "attachment; filename=\"sample_race_export.xlsx\"")
+          .result(resultBytes);
+    } catch (Exception e) {
+      logger.error("Error generating test XLS export", e);
+      ctx.status(500).result("Internal Server Error: " + e.getMessage());
+    }
+  }
+
+  public void getDefaultTemplate(Context ctx) {
+    try {
+      InputStream is = getClass().getResourceAsStream("/race_export_template.xlsx");
+      if (is == null) {
+        is = getClass().getClassLoader().getResourceAsStream("race_export_template.xlsx");
+      }
+      if (is == null) {
+        logger.error("Default template race_export_template.xlsx not found");
+        ctx.status(404).result("Default template not found");
+        return;
+      }
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      byte[] data = new byte[8192];
+      int nRead;
+      while ((nRead = is.read(data, 0, data.length)) != -1) {
+        buffer.write(data, 0, nRead);
+      }
+      buffer.flush();
+      byte[] bytes = buffer.toByteArray();
+      ctx.contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+          .header("Content-Disposition", "attachment; filename=\"race_export_template.xlsx\"")
+          .result(bytes);
+    } catch (Exception e) {
+      logger.error("Error retrieving default export template", e);
+      ctx.status(500).result("Error retrieving default template");
+    }
+  }
+
+  private byte[] renderXlsExport(Race race, InputStream is) throws Exception {
+    ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+    synchronized (race) {
+      List<RaceParticipant> driversCopy = new ArrayList<>();
+      for (RaceParticipant rp : race.getDrivers()) {
+        if (!rp.isEmptyParticipant()) {
+          driversCopy.add(rp);
+        }
+      }
+      OverallStandings standings =
+          new OverallStandings(
+              race.getRaceModel() != null ? race.getRaceModel().getHeatScoring() : null,
+              race.getRaceModel() != null ? race.getRaceModel().getOverallScoring() : null,
+              race.getRaceModel() != null ? race.getRaceModel().getGroupOptions() : null,
+              race.getRaceModel() != null && race.getRaceModel().isPractice());
+      standings.recalculate(driversCopy, race.getHeats());
+
+      org.jxls.common.Context jxlsContext = new org.jxls.common.Context();
+      jxlsContext.putVar("race", race);
+      jxlsContext.putVar("standings", driversCopy);
+
+      List<Heat> runHeats = new ArrayList<>();
+      List<String> heatSheetNames = new ArrayList<>();
+      for (Heat h : race.getHeats()) {
+        if (h.isStarted()
+            || race.getCurrentHeat() != null
+                && h.getHeatNumber() <= race.getCurrentHeat().getHeatNumber()) {
+          runHeats.add(h);
+          heatSheetNames.add("Heat " + h.getHeatNumber());
+        }
+      }
+      if (runHeats.isEmpty()) {
+        runHeats.add(new Heat());
+        heatSheetNames.add("Heat 1");
+      }
+      jxlsContext.putVar("heats", runHeats);
+      jxlsContext.putVar(
+          "heatSheetNames", RaceStatisticsUtils.makeSheetNamesUnique(heatSheetNames));
+
+      List<Heat> allHeats =
+          race.getHeats() != null && !race.getHeats().isEmpty()
+              ? new ArrayList<>(race.getHeats())
+              : Collections.singletonList(new Heat());
+      jxlsContext.putVar("allHeats", allHeats);
+
+      List<DriverAnalysisSummary> driverSummaries = new ArrayList<>();
+      List<String> driverSheetNames = new ArrayList<>();
+      RaceStatisticsUtils.prepareExportData(
+          race, driversCopy, runHeats, driverSummaries, driverSheetNames);
+
+      jxlsContext.putVar("driverSummaries", driverSummaries);
+      jxlsContext.putVar("driverSheetNames", driverSheetNames);
+
+      Season season = getSeason(race);
+      List<SeasonStandingItem> seasonStandings =
+          season != null ? SeasonStandingsCalculator.calculateStandings(season) : new ArrayList<>();
+      jxlsContext.putVar("hasSeason", season != null);
+      jxlsContext.putVar("season", season);
+      jxlsContext.putVar("seasonName", season != null ? season.getName() : "");
+      jxlsContext.putVar("seasonStandings", seasonStandings);
+      jxlsContext.putVar("laps", buildExportLapData(runHeats));
+
+      List<Integer> activeLanes = RaceStatisticsUtils.determineActiveLanes(race, runHeats);
+      InputStream sanitizedIs = RaceStatisticsUtils.sanitizeWorkbookTemplate(is, activeLanes, race);
+      org.jxls.util.JxlsHelper.getInstance().processTemplate(sanitizedIs, os, jxlsContext);
+    }
+
+    byte[] rawBytes = os.toByteArray();
+    return postProcessExportWorkbook(rawBytes, race);
   }
 
   @SuppressWarnings("unchecked")

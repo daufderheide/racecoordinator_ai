@@ -235,6 +235,8 @@ describe("UIEditorComponent", () => {
       "updateCustomUI",
       "duplicateCustomUI",
       "deleteCustomUI",
+      "downloadDefaultExportTemplate",
+      "testExportXls",
     ]);
     mockDataService.socketConnected$ = of(true);
     mockDataService.systemState$ = new BehaviorSubject<any>({});
@@ -248,6 +250,12 @@ describe("UIEditorComponent", () => {
     mockDataService.createCustomUI.and.returnValue(of({}));
     mockDataService.duplicateCustomUI.and.returnValue(of({}));
     mockDataService.deleteCustomUI.and.returnValue(of({}));
+    mockDataService.downloadDefaultExportTemplate.and.returnValue(
+      of(new Blob(["template-data"])),
+    );
+    mockDataService.testExportXls.and.returnValue(
+      of(new Blob(["test-export-data"])),
+    );
     mockDataService.updateRaceSubscription.and.stub();
     mockRouter = jasmine.createSpyObj("Router", [
       "navigate",
@@ -2149,6 +2157,57 @@ describe("UIEditorComponent", () => {
         "custom_export_template.xlsx",
       );
     });
+
+    it("should open template variables modal", () => {
+      component.showTemplateVariablesModal = false;
+      component.openTemplateVariablesModal();
+      expect(component.showTemplateVariablesModal).toBeTrue();
+    });
+
+    it("should download default template when no custom template is selected", fakeAsync(() => {
+      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      component.editingSettings.customExportTemplateBase64 = undefined;
+      component.downloadTemplate();
+      tick();
+      expect(mockDataService.downloadDefaultExportTemplate).toHaveBeenCalled();
+    }));
+
+    it("should download selected custom template directly when custom template is present", fakeAsync(() => {
+      const originalPicker = (window as any).showSaveFilePicker;
+      delete (window as any).showSaveFilePicker;
+      try {
+        const createUrlSpy = spyOn(
+          window.URL,
+          "createObjectURL",
+        ).and.returnValue("blob:mock-url");
+        spyOn(window.URL, "revokeObjectURL").and.stub();
+        mockDataService.downloadDefaultExportTemplate.calls.reset();
+        component.editingSettings.customExportTemplateBase64 =
+          "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
+        component.editingSettings.customExportTemplateName =
+          "my_custom_template.xlsx";
+        component.downloadTemplate();
+        tick();
+        expect(
+          mockDataService.downloadDefaultExportTemplate,
+        ).not.toHaveBeenCalled();
+        expect(createUrlSpy).toHaveBeenCalled();
+      } finally {
+        (window as any).showSaveFilePicker = originalPicker;
+      }
+    }));
+
+    it("should trigger test export with custom template", fakeAsync(() => {
+      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      component.editingSettings.customExportTemplateBase64 = "custom-base64";
+      component.testExport();
+      tick();
+      expect(mockDataService.testExportXls).toHaveBeenCalledWith(
+        "custom-base64",
+      );
+    }));
   });
 
   describe("autoSaveState – Promise-based API", () => {

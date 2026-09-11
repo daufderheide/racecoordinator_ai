@@ -233,3 +233,81 @@ export function executeTemplateFileSelected(
     input.value = "";
   }
 }
+
+export function handleDownloadTemplate(comp: any): void {
+  const customBase64 = comp.editingSettings?.customExportTemplateBase64;
+  if (customBase64) {
+    try {
+      const parts = customBase64.split(",");
+      const base64Data = parts.length > 1 ? parts[1] : parts[0];
+      const mimeMatch = parts.length > 1 ? parts[0].match(/:(.*?);/) : null;
+      const mimeType =
+        mimeMatch && mimeMatch[1]
+          ? mimeMatch[1]
+          : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: mimeType });
+      const rawName =
+        comp.editingSettings?.customExportTemplateName ||
+        (comp.editingSettings?.customExportTemplatePath
+          ? comp.editingSettings.customExportTemplatePath.replace(
+              /^.*[\\/]/,
+              "",
+            )
+          : "custom_export_template.xlsx");
+      const filename = rawName.endsWith(".xlsx") ? rawName : `${rawName}.xlsx`;
+      saveFileAs({
+        suggestedName: filename,
+        data: blob,
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        description: "Excel Export Template",
+        extension: ".xlsx",
+      });
+    } catch (err) {
+      comp.logger.error("Error downloading custom export template", err);
+    }
+  } else {
+    comp.dataService.downloadDefaultExportTemplate().subscribe({
+      next: (blob: Blob) => {
+        saveFileAs({
+          suggestedName: "race_export_template.xlsx",
+          data: blob,
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          description: "Excel Export Template",
+          extension: ".xlsx",
+        });
+      },
+      error: (err: any) => {
+        comp.logger.error("Error downloading default export template", err);
+      },
+    });
+  }
+}
+
+export const handleDownloadDefaultTemplate = handleDownloadTemplate;
+
+export function handleTestExport(comp: any): void {
+  comp.dataService
+    .testExportXls(comp.editingSettings?.customExportTemplateBase64)
+    .subscribe({
+      next: (blob: Blob) => {
+        saveFileAs({
+          suggestedName: "sample_race_export.xlsx",
+          data: blob,
+          mimeType:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          description: "Excel Race Export",
+          extension: ".xlsx",
+        });
+      },
+      error: (err: any) => {
+        comp.logger.error("Error generating test Excel export", err);
+      },
+    });
+}

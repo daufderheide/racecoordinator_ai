@@ -53,6 +53,7 @@ import { mockTTSContext } from "@app/utils/audio";
 import { deepCopy } from "@app/utils/clone.utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
+import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
   ThemeTemplateType,
@@ -109,6 +110,7 @@ import {
   handleCreateTheme,
   handleCustomUiSelection,
   handleDetachTheme,
+  handleDownloadTemplate,
   handleDuplicateCustomUi,
   handleDuplicateTheme,
   handleExportCurrentLayout,
@@ -131,6 +133,7 @@ import {
   handleSelectWidgetDirectory,
   handleSetLayoutAspectRatio,
   handleSetLayoutScaleMode,
+  handleTestExport,
   handleThemeAudioChange,
   handleThemeSlotChange,
   handleTtsPitchChange,
@@ -198,6 +201,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     DefaultRacedayComponent,
     WidgetInspectorFieldsComponent,
     ThemeTemplateModalComponent,
+    TemplateVariablesModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
   ],
@@ -248,6 +252,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   showThemeTemplateModal = false;
+  showTemplateVariablesModal = false;
   displayColumnSlots: any[] = [];
   get isCurrentLayoutPractice() {
     return this.activeCustomUiId === "practice_ui_layout_rc_ai";
@@ -863,6 +868,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   clearCustomTemplate() {
     handleClearCustomTemplate(this);
+  }
+
+  openTemplateVariablesModal() {
+    this.showTemplateVariablesModal = true;
+  }
+
+  downloadTemplate() {
+    handleDownloadTemplate(this);
+  }
+
+  downloadDefaultTemplate() {
+    this.downloadTemplate();
+  }
+
+  testExport() {
+    handleTestExport(this);
   }
 
   onPageTransitionChange(transition: string) {

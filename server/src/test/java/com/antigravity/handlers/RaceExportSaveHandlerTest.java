@@ -592,4 +592,78 @@ public class RaceExportSaveHandlerTest {
       org.junit.Assert.assertTrue("Workbook should contain data cells", cellCount > 0);
     }
   }
+
+  @Test
+  public void testGetDefaultTemplate_Success() {
+    handler.getDefaultTemplate(ctx);
+
+    verify(ctx).contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    verify(ctx).header("Content-Disposition", "attachment; filename=\"race_export_template.xlsx\"");
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx).result(captor.capture());
+    byte[] templateBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(templateBytes);
+    org.junit.Assert.assertTrue(templateBytes.length > 0);
+  }
+
+  @Test
+  public void testTestExportXls_NoActiveRace_UsesSampleRace() {
+    ClientSubscriptionManager.getInstance().setRace(null);
+
+    handler.testExportXls(ctx);
+
+    verify(ctx).contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    verify(ctx).header("Content-Disposition", "attachment; filename=\"sample_race_export.xlsx\"");
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+    org.junit.Assert.assertTrue(exportedBytes.length > 0);
+  }
+
+  @Test
+  public void testTestExportXls_WithActiveRace_UsesActiveRace() {
+    com.antigravity.models.Driver d1 = new com.antigravity.models.Driver("Active Driver", "ad1");
+    com.antigravity.race.RaceParticipant p1 = new com.antigravity.race.RaceParticipant(d1);
+    com.antigravity.models.Lane l1 = new com.antigravity.models.Lane("#EF4444", "white", 100);
+    com.antigravity.models.Track track =
+        new com.antigravity.models.Track.Builder()
+            .name("Test Track")
+            .lanes(java.util.Arrays.asList(l1))
+            .build();
+    com.antigravity.models.Race model = // fqn-collision
+        new com.antigravity.models.Race.Builder()
+            .withName("Active Test Race")
+            .build(); // fqn-collision
+
+    com.antigravity.race.DriverHeatData dhd = new com.antigravity.race.DriverHeatData(p1, d1);
+    dhd.setLane(1);
+    dhd.getLaps()
+        .add(
+            new com.antigravity.race.DriverHeatData.LapData(
+                5.123, "ad1", java.util.Arrays.asList(5.123), false, true));
+    com.antigravity.race.Heat heat =
+        new com.antigravity.race.Heat(1, java.util.Arrays.asList(dhd), false);
+
+    com.antigravity.race.Race activeRace =
+        new com.antigravity.race.Race.Builder()
+            .model(model)
+            .track(track)
+            .drivers(java.util.Arrays.asList(p1))
+            .heats(java.util.Arrays.asList(heat))
+            .skipHardwareInterface(true)
+            .build();
+
+    ClientSubscriptionManager.getInstance().setRace(activeRace);
+
+    handler.testExportXls(ctx);
+
+    verify(ctx).contentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    verify(ctx).header("Content-Disposition", "attachment; filename=\"sample_race_export.xlsx\"");
+    org.mockito.ArgumentCaptor<byte[]> captor = org.mockito.ArgumentCaptor.forClass(byte[].class);
+    verify(ctx).result(captor.capture());
+    byte[] exportedBytes = captor.getValue();
+    org.junit.Assert.assertNotNull(exportedBytes);
+    org.junit.Assert.assertTrue(exportedBytes.length > 0);
+  }
 }

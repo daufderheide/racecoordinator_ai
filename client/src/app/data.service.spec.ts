@@ -622,6 +622,35 @@ describe("DataService", () => {
     req.flush(new Blob(["mock data"]));
   });
 
+  it("should call downloadDefaultExportTemplate endpoint", (done) => {
+    service.downloadDefaultExportTemplate().subscribe((response: any) => {
+      expect(response).toBeTruthy();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/races/export-template/default"),
+    );
+    expect(req.request.method).toBe("GET");
+    expect(req.request.responseType).toBe("blob");
+    req.flush(new Blob(["mock template"]));
+  });
+
+  it("should call testExportXls endpoint with and without template", (done) => {
+    service.testExportXls("base64data").subscribe((response: any) => {
+      expect(response).toBeTruthy();
+      done();
+    });
+
+    const req = httpMock.expectOne((request) =>
+      request.url.endsWith("/api/races/test-export-xls"),
+    );
+    expect(req.request.method).toBe("POST");
+    expect(req.request.body).toEqual({ templateBase64: "base64data" });
+    expect(req.request.responseType).toBe("blob");
+    req.flush(new Blob(["mock export"]));
+  });
+
   it("should call getBleDevices endpoint", (done) => {
     service.getBleDevices().subscribe((devices) => {
       expect(devices).toEqual(["BART_0001", "BART_0002"]);

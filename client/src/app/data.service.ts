@@ -377,6 +377,19 @@ export class DataService {
     );
   }
 
+  downloadDefaultExportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/races/export-template/default`, {
+      responseType: "blob",
+    });
+  }
+
+  testExportXls(base64Template?: string): Observable<Blob> {
+    const body = base64Template ? { templateBase64: base64Template } : {};
+    return this.http.post(`${this.baseUrl}/api/races/test-export-xls`, body, {
+      responseType: "blob",
+    });
+  }
+
   public getDefaultDemoConfig(): IDemoConfig {
     return {
       minLapTimeMs: 3000,
