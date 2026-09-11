@@ -170,18 +170,18 @@
                     </app-audio-selector>
                   }
                 </div>
-                <div class="audio-section" id="driver-penalty-audio">
+                <div class="audio-section" id="driver-false-start-audio">
                   @if (editingDriver.penaltyAudio) {
                     <app-audio-selector
-                      [label]="'DE_LABEL_PENALTY_SOUNDS' | translate"
+                      [label]="'DE_LABEL_FALSE_START_SOUNDS' | translate"
                       [assets]="soundAssets"
                       [type]="editingDriver.penaltyAudio.type"
-                      (typeChange)="onAudioTypeChange('penalty', $event)"
+                      (typeChange)="onAudioTypeChange('falseStart', $event)"
                       [url]="editingDriver.penaltyAudio.url"
-                      (urlChange)="onAudioUrlChange('penalty', $event)"
+                      (urlChange)="onAudioUrlChange('falseStart', $event)"
                       (assetSelected)="onAssetSelected($event)"
                       [text]="editingDriver.penaltyAudio.text"
-                      (textChange)="onAudioTextChange('penalty', $event)"
+                      (textChange)="onAudioTextChange('falseStart', $event)"
                       [context]="ttsContext"
                     >
                     </app-audio-selector>

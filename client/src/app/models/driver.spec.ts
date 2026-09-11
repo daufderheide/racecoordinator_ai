@@ -54,5 +54,43 @@ describe("Driver Model", () => {
     expect(driver.bestLapAudio.url).toBeUndefined();
     expect(driver.penaltyAudio.type).toBe("none");
     expect(driver.penaltyAudio.url).toBeUndefined();
+    expect(driver.falseStartAudio.type).toBe("none");
+    expect(driver.falseStartAudio.url).toBeUndefined();
+  });
+
+  it("should support falseStartAudio getter, setter, and constructor parameter", () => {
+    const driverWithParam = new Driver(
+      "d2",
+      "Bob",
+      "Bob",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { type: "preset", url: "my_false_start.wav" },
+    );
+    expect(driverWithParam.falseStartAudio).toEqual({
+      type: "preset",
+      url: "my_false_start.wav",
+      text: undefined,
+    });
+    expect(driverWithParam.penaltyAudio).toEqual({
+      type: "preset",
+      url: "my_false_start.wav",
+      text: undefined,
+    });
+
+    driverWithParam.falseStartAudio = {
+      type: "tts",
+      text: "False start on {driver.name}",
+    };
+    expect(driverWithParam.penaltyAudio).toEqual({
+      type: "tts",
+      text: "False start on {driver.name}",
+    });
+    expect(driverWithParam.falseStartAudio).toEqual({
+      type: "tts",
+      text: "False start on {driver.name}",
+    });
   });
 });

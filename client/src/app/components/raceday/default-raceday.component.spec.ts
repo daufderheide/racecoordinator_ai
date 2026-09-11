@@ -2926,24 +2926,46 @@ describe("DefaultRacedayComponent", () => {
       fixture.detectChanges();
     });
 
-    it("should play themed penalty sound when FALSE_START received and no custom audio", () => {
+    it("should not play any sound when FALSE_START received and audio is set to none or not configured correctly (no fallback)", () => {
       spyOn(component as any, "playThemedSound");
+      const playCalloutSpy = spyOn(
+        (component as any).audioService,
+        "playCallout",
+      );
 
+      // 1. type is none
+      mockHd.driver.falseStartAudio = { type: "none" };
       lapsSubject.next({
         objectId: "hd1",
         type: LapType.FALSE_START,
       });
 
-      expect((component as any).playThemedSound).toHaveBeenCalledWith(
-        THEME_SLOT_KEYS.AUDIO_PENALTY,
-        jasmine.objectContaining({
-          driver: jasmine.objectContaining({ nickname: "Test Driver" }),
-        }),
-      );
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // 2. type is preset but url is empty
+      mockHd.driver.falseStartAudio = { type: "preset", url: "" };
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+      });
+
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // 3. type is tts but text is empty
+      mockHd.driver.falseStartAudio = { type: "tts", text: "   " };
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.FALSE_START,
+      });
+
+      expect((component as any).playThemedSound).not.toHaveBeenCalled();
+      expect(playCalloutSpy).not.toHaveBeenCalled();
     });
 
-    it("should play custom penalty audio when FALSE_START received", () => {
-      mockHd.driver.penaltyAudio = {
+    it("should play driver false start audio when FALSE_START received and properly configured", () => {
+      mockHd.driver.falseStartAudio = {
         type: "preset",
         url: "custom-penalty.wav",
       };
@@ -5001,6 +5023,44 @@ describe("DefaultRacedayComponent", () => {
         undefined,
         undefined,
       );
+    });
+
+    it("should not play themed sound when config is none, missing, or improperly configured (no fallback)", () => {
+      const playCalloutSpy = spyOn(
+        (component as any).audioService,
+        "playCallout",
+      );
+      const playSfxSpy = spyOn((component as any).audioService, "playSfx");
+
+      // 1. Slot not in theme at all
+      mockThemeService.resolveAudioConfig.and.returnValue(null);
+      component["playThemedSound"]("audio.unconfigured");
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 2. Slot is type "none"
+      mockThemeService.resolveAudioConfig.and.returnValue({ type: "none" });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 3. Preset with empty url
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "   ",
+      });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
+
+      // 4. TTS with empty text
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "tts",
+        text: "",
+      });
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).not.toHaveBeenCalled();
     });
 
     it("should use configured audio settings during race playback for TTS callouts", () => {

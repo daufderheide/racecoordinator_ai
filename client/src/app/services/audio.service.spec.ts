@@ -148,6 +148,9 @@ describe("AudioService", () => {
       expect(
         service.isVoiceCallout("driver.penaltyAudio", presetConfig),
       ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.falseStartAudio", presetConfig),
+      ).toBeTrue();
     });
 
     it("should return false for preset action and effect slots", () => {

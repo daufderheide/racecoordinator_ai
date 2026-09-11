@@ -854,8 +854,8 @@ describe("DriverEditorComponent", () => {
       expect(component.isDirtyState()).toBeFalse();
 
       // 3. Change tts text
-      component.onAudioTypeChange("penalty", "tts");
-      component.onAudioTextChange("penalty", "Stop and Go Penalty");
+      component.onAudioTypeChange("falseStart", "tts");
+      component.onAudioTextChange("falseStart", "Stop and Go Penalty");
       expect(component.editingDriver!.penaltyAudio.text).toBe(
         "Stop and Go Penalty",
       );
@@ -936,7 +936,7 @@ describe("DriverEditorComponent", () => {
         "#driver-audio-section",
         "#driver-lap-audio",
         "#driver-best-lap-audio",
-        "#driver-penalty-audio",
+        "#driver-false-start-audio",
       ]);
 
       const linkStep = steps.find(

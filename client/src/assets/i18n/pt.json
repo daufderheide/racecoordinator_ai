@@ -2478,5 +2478,8 @@
   "UE_BTN_TEST_TTS": "Testar voz",
   "UE_TTS_SAMPLE_TEXT": "Teste de voz do Race Coordinator AI",
   "UE_LABEL_MASTER_VOLUME": "Volume principal",
-  "UE_HELP_AUDIO_MASTER_VOLUME": "Ajuste o volume geral de todos os efeitos sonoros e anúncios de voz."
+  "UE_HELP_AUDIO_MASTER_VOLUME": "Ajuste o volume geral de todos os efeitos sonoros e anúncios de voz.",
+  "DE_LABEL_FALSE_START_SOUNDS": "Sons de Falsa Partida",
+  "DE_HELP_FALSE_START_SOUND_TITLE": "Som de falsa partida",
+  "DE_HELP_FALSE_START_SOUND_CONTENT": "O som de falsa partida é reproduzido quando um piloto comete uma falsa partida no início de uma bateria."
 }

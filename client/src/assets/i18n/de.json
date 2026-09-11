@@ -2478,5 +2478,8 @@
   "UE_BTN_TEST_TTS": "Stimme testen",
   "UE_TTS_SAMPLE_TEXT": "Race Coordinator AI Sprachtest",
   "UE_LABEL_MASTER_VOLUME": "Gesamtlautstärke",
-  "UE_HELP_AUDIO_MASTER_VOLUME": "Gesamtlautstärke für alle Soundeffekte und Sprachansagen anpassen."
+  "UE_HELP_AUDIO_MASTER_VOLUME": "Gesamtlautstärke für alle Soundeffekte und Sprachansagen anpassen.",
+  "DE_LABEL_FALSE_START_SOUNDS": "Fehlstart-Sounds",
+  "DE_HELP_FALSE_START_SOUND_TITLE": "Fehlstart-Ton",
+  "DE_HELP_FALSE_START_SOUND_CONTENT": "Der Fehlstart-Ton wird abgespielt, wenn ein Fahrer zu Beginn eines Laufs einen Fehlstart begeht."
 }

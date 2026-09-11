@@ -2479,5 +2479,8 @@
   "UE_BTN_TEST_TTS": "Test Voice",
   "UE_TTS_SAMPLE_TEXT": "Race Coordinator AI speech test",
   "UE_LABEL_MASTER_VOLUME": "Master Volume",
-  "UE_HELP_AUDIO_MASTER_VOLUME": "Adjust the overall master volume for all sound effects and voice callouts."
+  "UE_HELP_AUDIO_MASTER_VOLUME": "Adjust the overall master volume for all sound effects and voice callouts.",
+  "DE_LABEL_FALSE_START_SOUNDS": "False Start Sounds",
+  "DE_HELP_FALSE_START_SOUND_TITLE": "False Start Sound",
+  "DE_HELP_FALSE_START_SOUND_CONTENT": "False start sound is played when a driver commits a false start at the start of a heat."
 }

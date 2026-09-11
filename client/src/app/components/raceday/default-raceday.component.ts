@@ -1816,15 +1816,14 @@ export class DefaultRacedayComponent
     ttsContext: any,
   ) {
     if (lap.type === LapType.FALSE_START) {
+      const audio = driver.falseStartAudio || driver.penaltyAudio;
       if (
-        driver.penaltyAudio?.type &&
-        driver.penaltyAudio.type !== "none" &&
-        (driver.penaltyAudio.url ||
-          (driver.penaltyAudio.type === "tts" && driver.penaltyAudio.text))
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
       ) {
-        this.audioService.playCallout(driver.penaltyAudio, "high", ttsContext);
-      } else {
-        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_PENALTY, ttsContext);
+        this.audioService.playCallout(audio, "high", ttsContext);
       }
       return;
     }
@@ -1838,9 +1837,11 @@ export class DefaultRacedayComponent
 
     if (
       isBestLap &&
-      driver.bestLapAudio?.type !== "none" &&
-      (driver.bestLapAudio?.url ||
-        (driver.bestLapAudio?.type === "tts" && driver.bestLapAudio?.text))
+      driver.bestLapAudio?.type &&
+      driver.bestLapAudio.type !== "none" &&
+      ((driver.bestLapAudio.type === "tts" &&
+        driver.bestLapAudio.text?.trim()) ||
+        (driver.bestLapAudio.type !== "tts" && driver.bestLapAudio.url?.trim()))
     ) {
       if (driver.bestLapAudio.type === "tts") {
         this.audioService.playCallout(
@@ -1854,9 +1855,10 @@ export class DefaultRacedayComponent
     } else if (lap.isDrift) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
     } else if (
-      driver.lapAudio?.type !== "none" &&
-      (driver.lapAudio?.url ||
-        (driver.lapAudio?.type === "tts" && driver.lapAudio?.text))
+      driver.lapAudio?.type &&
+      driver.lapAudio.type !== "none" &&
+      ((driver.lapAudio.type === "tts" && driver.lapAudio.text?.trim()) ||
+        (driver.lapAudio.type !== "tts" && driver.lapAudio.url?.trim()))
     ) {
       if (driver.lapAudio.type === "tts") {
         this.audioService.playCallout(driver.lapAudio, "low", ttsContext);
@@ -5659,34 +5661,33 @@ export class DefaultRacedayComponent
 
   private playThemedSound(slotKey: string, context?: any) {
     const config = this.themeService.resolveAudioConfig(slotKey);
-    let playableUrl: string | undefined;
+    if (!config || config.type === "none") return;
 
-    if (config && config.type !== "none") {
-      playableUrl = config.url;
-      if (config.type === "preset" && playableUrl) {
-        const asset = (this.assets || []).find(
-          (a) =>
-            a.model?.entityId === playableUrl ||
-            a.entity_id === playableUrl ||
-            a._id === playableUrl,
-        );
-        if (asset) {
-          playableUrl = this.getFullUrl(asset.url);
-        }
-      }
-    } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {
-      playableUrl = "/assets/default_penalty_penalty.wav";
+    if (config.type === "tts") {
+      if (!config.text?.trim()) return;
+    } else {
+      if (!config.url?.trim()) return;
     }
 
-    if (!config && slotKey !== THEME_SLOT_KEYS.AUDIO_PENALTY) return;
-    if (config?.type === "none") return;
+    let playableUrl: string | undefined = config.url;
+    if (config.type === "preset" && playableUrl) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === playableUrl ||
+          a.entity_id === playableUrl ||
+          a._id === playableUrl,
+      );
+      if (asset) {
+        playableUrl = this.getFullUrl(asset.url);
+      }
+    }
 
     // Check if slot is SFX vs Voice Callout
     if (
       slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
       slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
     ) {
-      if (config?.type === "tts") {
+      if (config.type === "tts") {
         this.audioService.playCallout(config, "low", context);
       } else {
         this.audioService.playSfx(playableUrl);
@@ -5705,11 +5706,7 @@ export class DefaultRacedayComponent
       priority = "high";
     }
 
-    const soundConfig: AudioConfig = config || {
-      type: "preset",
-      url: playableUrl,
-    };
-    this.audioService.playCallout(soundConfig, priority, context, playableUrl);
+    this.audioService.playCallout(config, priority, context, playableUrl);
   }
 
   private setAllLampsGo() {

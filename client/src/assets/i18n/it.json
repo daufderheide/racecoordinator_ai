@@ -2478,5 +2478,8 @@
   "UE_BTN_TEST_TTS": "Prova voce",
   "UE_TTS_SAMPLE_TEXT": "Test vocale di Race Coordinator AI",
   "UE_LABEL_MASTER_VOLUME": "Volume principale",
-  "UE_HELP_AUDIO_MASTER_VOLUME": "Regola il volume generale per tutti gli effetti sonori e gli annunci vocali."
+  "UE_HELP_AUDIO_MASTER_VOLUME": "Regola il volume generale per tutti gli effetti sonori e gli annunci vocali.",
+  "DE_LABEL_FALSE_START_SOUNDS": "Suoni di Falsa Partenza",
+  "DE_HELP_FALSE_START_SOUND_TITLE": "Suono di falsa partenza",
+  "DE_HELP_FALSE_START_SOUND_CONTENT": "Il suono di falsa partenza viene riprodotto quando un pilota commette una falsa partenza all'inizio di una manche."
 }

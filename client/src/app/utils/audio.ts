@@ -33,6 +33,7 @@ export function resolveAudioUrl(
     default_chimes: "/assets/default_chimes_Lap_Chimes",
     default_driveby: "/assets/default_driveby_Lap_Driveby",
     default_penalty: "/assets/default_penalty_Penalty",
+    default_false_start: "/assets/default_penalty_Penalty",
     default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
   };
   if (defaultUrls[url]) {

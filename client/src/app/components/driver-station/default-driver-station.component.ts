@@ -189,18 +189,14 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             const ttsContext = createTTSContext(driver, driverData);
 
             if (lap.type === LapType.FALSE_START) {
+              const audio = driver.falseStartAudio || driver.penaltyAudio;
               if (
-                driver.penaltyAudio?.type &&
-                driver.penaltyAudio.type !== "none" &&
-                (driver.penaltyAudio.url ||
-                  (driver.penaltyAudio.type === "tts" &&
-                    driver.penaltyAudio.text))
+                audio?.type &&
+                audio.type !== "none" &&
+                ((audio.type === "tts" && audio.text?.trim()) ||
+                  (audio.type !== "tts" && audio.url?.trim()))
               ) {
-                this.audioService.playCallout(
-                  driver.penaltyAudio,
-                  "high",
-                  ttsContext,
-                );
+                this.audioService.playCallout(audio, "high", ttsContext);
               }
               return;
             }
@@ -211,10 +207,12 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
             if (
               isBestLap &&
-              driver.bestLapAudio?.type !== "none" &&
-              (driver.bestLapAudio?.url ||
-                (driver.bestLapAudio?.type === "tts" &&
-                  driver.bestLapAudio?.text))
+              driver.bestLapAudio?.type &&
+              driver.bestLapAudio.type !== "none" &&
+              ((driver.bestLapAudio.type === "tts" &&
+                driver.bestLapAudio.text?.trim()) ||
+                (driver.bestLapAudio.type !== "tts" &&
+                  driver.bestLapAudio.url?.trim()))
             ) {
               if (driver.bestLapAudio.type === "tts") {
                 this.audioService.playCallout(
@@ -226,9 +224,11 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
                 this.audioService.playSfx(driver.bestLapAudio.url);
               }
             } else if (
-              driver.lapAudio?.type !== "none" &&
-              (driver.lapAudio?.url ||
-                (driver.lapAudio?.type === "tts" && driver.lapAudio?.text))
+              driver.lapAudio?.type &&
+              driver.lapAudio.type !== "none" &&
+              ((driver.lapAudio.type === "tts" &&
+                driver.lapAudio.text?.trim()) ||
+                (driver.lapAudio.type !== "tts" && driver.lapAudio.url?.trim()))
             ) {
               if (driver.lapAudio.type === "tts") {
                 this.audioService.playCallout(

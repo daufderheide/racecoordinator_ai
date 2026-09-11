@@ -60,6 +60,8 @@ export class AudioService {
       "audio.heat_over",
       "audio.race_over",
       "penalty",
+      "falseStart",
+      "false_start",
     ];
 
     return announcementSlots.some((s) => slotOrCategory.includes(s));

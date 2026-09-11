@@ -2479,5 +2479,8 @@
   "UE_BTN_TEST_TTS": "Probar voz",
   "UE_TTS_SAMPLE_TEXT": "Prueba de voz de Race Coordinator AI",
   "UE_LABEL_MASTER_VOLUME": "Volumen principal",
-  "UE_HELP_AUDIO_MASTER_VOLUME": "Ajusta el volumen general de todos los efectos de sonido y avisos de voz."
+  "UE_HELP_AUDIO_MASTER_VOLUME": "Ajusta el volumen general de todos los efectos de sonido y avisos de voz.",
+  "DE_LABEL_FALSE_START_SOUNDS": "Sonidos de Salida en Falso",
+  "DE_HELP_FALSE_START_SOUND_TITLE": "Sonido de salida en falso",
+  "DE_HELP_FALSE_START_SOUND_CONTENT": "El sonido de salida en falso se reproduce cuando un piloto comete una salida en falso al inicio de una manga."
 }

@@ -2478,5 +2478,8 @@
   "UE_BTN_TEST_TTS": "Stem testen",
   "UE_TTS_SAMPLE_TEXT": "Race Coordinator AI spraaktest",
   "UE_LABEL_MASTER_VOLUME": "Hoofdvolume",
-  "UE_HELP_AUDIO_MASTER_VOLUME": "Pas het algehele hoofdvolume aan voor alle geluidseffecten en gesproken meldingen."
+  "UE_HELP_AUDIO_MASTER_VOLUME": "Pas het algehele hoofdvolume aan voor alle geluidseffecten en gesproken meldingen.",
+  "DE_LABEL_FALSE_START_SOUNDS": "Valse Start Geluiden",
+  "DE_HELP_FALSE_START_SOUND_TITLE": "Valse startgeluid",
+  "DE_HELP_FALSE_START_SOUND_CONTENT": "Het valse startgeluid wordt afgespeeld wanneer een coureur een valse start maakt aan het begin van een heat."
 }
