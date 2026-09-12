@@ -1,6 +1,5 @@
 package com.antigravity.util;
 
-import java.awt.GraphicsEnvironment;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -32,26 +31,18 @@ public class NativeDirectoryChooser {
   }
 
   /**
-   * Opens the native OS directory chooser dialog and returns the selected folder path.
+   * Builds the OS-specific command array for displaying a folder selection dialog.
    *
-   * @param title the prompt or title displayed in the dialog
-   * @return the selected path as a String, or null if cancelled, timed out, headless, or failed
+   * @param os the operating system name
+   * @param title dialog prompt or title
+   * @return array of command arguments
    */
-  public static String chooseDirectory(String title) {
-    if (GraphicsEnvironment.isHeadless()) {
-      logger.info("Cannot open native directory chooser in headless environment.");
-      return null;
-    }
-
-    String os = System.getProperty("os.name", "").toLowerCase();
+  static String[] buildCommand(String os, String title) {
     String safeTitle = title != null ? title.replace("\"", "").replace("'", "") : "Select Folder";
-
-    String[] command;
     if (os.contains("mac")) {
-      command =
-          new String[] {
-            "osascript", "-e", "POSIX path of (choose folder with prompt \"" + safeTitle + "\")"
-          };
+      return new String[] {
+        "osascript", "-e", "POSIX path of (choose folder with prompt \"" + safeTitle + "\")"
+      };
     } else if (os.contains("win")) {
       String psScript =
           "$dialog = New-Object System.Windows.Forms.FolderBrowserDialog; "
@@ -61,19 +52,28 @@ public class NativeDirectoryChooser {
               + "$dialog.ShowNewFolderButton = $true; "
               + "if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { "
               + "[Console]::Out.WriteLine($dialog.SelectedPath) }";
-      command =
-          new String[] {
-            "powershell.exe",
-            "-NoProfile",
-            "-NonInteractive",
-            "-Sta",
-            "-Command",
-            "Add-Type -AssemblyName System.Windows.Forms; " + psScript
-          };
+      return new String[] {
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Sta",
+        "-Command",
+        "Add-Type -AssemblyName System.Windows.Forms; " + psScript
+      };
     } else {
-      // Linux: Try zenity first
-      command = new String[] {"zenity", "--file-selection", "--directory", "--title=" + safeTitle};
+      return new String[] {"zenity", "--file-selection", "--directory", "--title=" + safeTitle};
     }
+  }
+
+  /**
+   * Opens the native OS directory chooser dialog and returns the selected folder path.
+   *
+   * @param title the prompt or title displayed in the dialog
+   * @return the selected path as a String, or null if cancelled, timed out, headless, or failed
+   */
+  public static String chooseDirectory(String title) {
+    String os = System.getProperty("os.name", "").toLowerCase();
+    String[] command = buildCommand(os, title);
 
     try {
       String result = commandRunner.runCommand(command, TIMEOUT_SECONDS);
@@ -90,9 +90,18 @@ public class NativeDirectoryChooser {
     return null;
   }
 
-  private static class DefaultCommandRunner implements CommandRunner {
+  static class DefaultCommandRunner implements CommandRunner {
     @Override
     public String runCommand(String[] command, long timeoutSeconds) throws Exception {
+      String os = System.getProperty("os.name", "").toLowerCase();
+      if (os.contains("linux")
+          && System.getenv("DISPLAY") == null
+          && System.getenv("WAYLAND_DISPLAY") == null) {
+        logger.info(
+            "Cannot open native directory chooser: No DISPLAY or WAYLAND_DISPLAY environment variable found.");
+        return null;
+      }
+
       ProcessBuilder pb = new ProcessBuilder(command);
       pb.redirectErrorStream(true);
       Process process = pb.start();

@@ -553,22 +553,7 @@ public class RaceStatisticsUtilsTest {
     try (org.apache.poi.xssf.usermodel.XSSFWorkbook resultWb =
         new org.apache.poi.xssf.usermodel.XSSFWorkbook(
             new java.io.ByteArrayInputStream(outBytes))) {
-      System.out.println("FULL EXPORT RESULT SHEETS: " + resultWb.getNumberOfSheets());
-      for (int i = 0; i < resultWb.getNumberOfSheets(); i++) {
-        org.apache.poi.ss.usermodel.Sheet s = resultWb.getSheetAt(i);
-        System.out.println("Sheet " + i + ": " + s.getSheetName());
-        for (int r = 0; r <= Math.min(s.getLastRowNum(), 10); r++) {
-          org.apache.poi.ss.usermodel.Row row = s.getRow(r);
-          if (row == null) continue;
-          StringBuilder sb = new StringBuilder();
-          sb.append("  Row ").append(r).append(": ");
-          for (int c = 0; c < row.getLastCellNum(); c++) {
-            org.apache.poi.ss.usermodel.Cell cell = row.getCell(c);
-            sb.append("[").append(cell != null ? cell.toString() : "").append("] ");
-          }
-          System.out.println(sb.toString());
-        }
-      }
+      assertEquals(8, resultWb.getNumberOfSheets());
     }
   }
 
