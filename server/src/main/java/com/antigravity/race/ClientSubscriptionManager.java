@@ -481,6 +481,8 @@ public class ClientSubscriptionManager {
       saveData.setCurrentHeatIndex(race.getHeats().indexOf(race.getCurrentHeat()));
       saveData.setDemoMode(race.isDemoMode());
       saveData.setStatistics(race.getStatistics());
+      saveData.setAutoStartFired(race.isAutoStartFired());
+      saveData.setAutoAdvanceFired(race.isAutoAdvanceFired());
 
       saveData.setAutoSave(true);
       String filename = "autosave_" + race.getRaceModel().getEntityId() + ".json";
@@ -512,10 +514,6 @@ public class ClientSubscriptionManager {
         logger.error("Error deleting auto-save", e);
       }
     }
-  }
-
-  public synchronized void deleteAutoSave(String raceId) {
-    deleteAutoSave(raceId, false);
   }
 
   public boolean hasSubscribers() {

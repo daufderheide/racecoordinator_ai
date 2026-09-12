@@ -1204,9 +1204,11 @@
                     <label>{{ "UE_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customDirectoryName) {
-                        <span class="directory-path">{{
-                          customDirectoryName
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="customDirectoryPath || customDirectoryName"
+                          >{{ customDirectoryName }}</span
+                        >
                       }
                       @if (!customDirectoryName) {
                         <span class="directory-path placeholder">{{
@@ -1223,6 +1225,13 @@
                       </button>
 
                       <button
+                        class="btn btn-secondary"
+                        (click)="promptEnterPath('ui')"
+                      >
+                        {{ "UE_BTN_ENTER_PATH" | translate }}
+                      </button>
+
+                      <button
                         class="btn btn-danger"
                         (click)="resetDefault()"
                         [disabled]="!customDirectoryName"
@@ -1235,9 +1244,14 @@
                     <label>{{ "UE_WIDGET_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customWidgetDirectoryName) {
-                        <span class="directory-path">{{
-                          customWidgetDirectoryName
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="
+                            customWidgetDirectoryPath ||
+                            customWidgetDirectoryName
+                          "
+                          >{{ customWidgetDirectoryName }}</span
+                        >
                       }
                       @if (!customWidgetDirectoryName) {
                         <span class="directory-path placeholder">{{
@@ -1251,6 +1265,13 @@
                         (click)="selectWidgetDirectory()"
                       >
                         {{ "UE_BTN_SELECT_WIDGET_DIRECTORY" | translate }}
+                      </button>
+
+                      <button
+                        class="btn btn-secondary"
+                        (click)="promptEnterPath('widgets')"
+                      >
+                        {{ "UE_BTN_ENTER_PATH" | translate }}
                       </button>
 
                       <button
@@ -1321,12 +1342,39 @@
                         {{ "UE_BTN_SELECT_TEMPLATE" | translate }}
                       </button>
                       <button
+                        class="btn btn-secondary"
+                        (click)="downloadTemplate()"
+                        [title]="'UE_BTN_DOWNLOAD_TEMPLATE_TOOLTIP' | translate"
+                      >
+                        {{ "UE_BTN_DOWNLOAD_TEMPLATE" | translate }}
+                      </button>
+                      <button
+                        class="btn btn-secondary"
+                        (click)="testExport()"
+                        [title]="'UE_BTN_TEST_EXPORT_TOOLTIP' | translate"
+                      >
+                        {{ "UE_BTN_TEST_EXPORT" | translate }}
+                      </button>
+                      <button
+                        class="btn btn-secondary"
+                        (click)="openTemplateVariablesModal()"
+                        [title]="
+                          'UE_BTN_TEMPLATE_VARIABLES_TOOLTIP' | translate
+                        "
+                      >
+                        {{ "UE_BTN_TEMPLATE_VARIABLES" | translate }}
+                      </button>
+                      <button
                         class="btn btn-danger"
                         (click)="clearCustomTemplate()"
                         [disabled]="!editingSettings.customExportTemplateBase64"
                       >
                         {{ "UE_BTN_RESET_DEFAULT" | translate }}
                       </button>
+                    </div>
+                    <div class="template-reupload-hint">
+                      <span class="material-icons info-icon">info</span>
+                      <span>{{ "UE_TEMPLATE_REUPLOAD_HINT" | translate }}</span>
                     </div>
                   </div>
                   <div class="transition-selector" id="help-page-transition">
@@ -1575,4 +1623,23 @@
     (confirm)="onConfirmThemeTemplate($event)"
     (cancel)="showThemeTemplateModal = false"
   ></app-theme-template-modal>
+
+  <!-- Export Template Variables Modal -->
+  <app-template-variables-modal
+    [visible]="showTemplateVariablesModal"
+    (close)="showTemplateVariablesModal = false"
+  ></app-template-variables-modal>
+
+  <!-- Enter Path Modal -->
+  <app-enter-path-modal
+    [visible]="showEnterPathModal"
+    [initialPath]="
+      enterPathType === 'ui'
+        ? customDirectoryPath || ''
+        : customWidgetDirectoryPath || ''
+    "
+    [errorMessage]="enterPathError"
+    (confirm)="confirmEnterPath($event)"
+    (cancel)="cancelEnterPathModal()"
+  ></app-enter-path-modal>
 </div>

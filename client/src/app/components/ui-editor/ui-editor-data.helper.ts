@@ -324,7 +324,12 @@ export function applyLoadedUiEditorData(comp: any, res: any): void {
   comp.availableColumns = loaded.availableColumns;
   comp.sortAvailableColumns();
   comp.customDirectoryName = loaded.customDirectoryName;
+  comp.customDirectoryPath =
+    comp.fileSystem?.getServerCustomUiPath?.() || loaded.customDirectoryName;
   comp.customWidgetDirectoryName = loaded.customWidgetDirectoryName;
+  comp.customWidgetDirectoryPath =
+    comp.fileSystem?.getServerCustomWidgetPath?.() ||
+    loaded.customWidgetDirectoryName;
   if (loaded.track) comp.track = loaded.track;
 
   comp.editingState = loaded.initialState;

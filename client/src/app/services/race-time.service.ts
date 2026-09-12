@@ -78,6 +78,21 @@ export class RaceTimeService implements OnDestroy {
             this._time = 0;
             this.previousTime = 0;
             this._timeFormat = "1.0-0";
+          } else if (
+            (race as any)?.state !== undefined &&
+            (race as any)?.state !== null &&
+            (race as any)?.state !== RaceState.UNKNOWN_STATE
+          ) {
+            this._raceState = (race as any).state;
+            if (
+              this._raceState !== RaceState.NOT_STARTED &&
+              this._raceState !== RaceState.STARTING
+            ) {
+              this._autoStartRemaining = 0;
+            }
+            if (this._raceState !== RaceState.HEAT_OVER) {
+              this._autoAdvanceRemaining = 0;
+            }
           }
           this.notifySubscribers();
         }),
@@ -170,22 +185,43 @@ export class RaceTimeService implements OnDestroy {
       return;
     }
 
-    this._autoStartRemaining = raceTime.autoStartRemaining || 0;
+    if (
+      this._raceState === RaceState.NOT_STARTED ||
+      this._raceState === RaceState.UNKNOWN_STATE ||
+      this._raceState === RaceState.STARTING
+    ) {
+      this._autoStartRemaining = raceTime.autoStartRemaining || 0;
+    } else {
+      this._autoStartRemaining = 0;
+    }
+
     const race = this.raceService?.getRace();
-    this._autoAdvanceRemaining =
-      raceTime.autoAdvanceRemaining ||
-      (race as any)?.auto_advance_remaining_seconds ||
-      0;
+    if (
+      this._raceState === RaceState.HEAT_OVER ||
+      this._raceState === RaceState.UNKNOWN_STATE
+    ) {
+      this._autoAdvanceRemaining =
+        raceTime.autoAdvanceRemaining ||
+        (race as any)?.auto_advance_remaining_seconds ||
+        0;
+    } else {
+      this._autoAdvanceRemaining = 0;
+    }
 
     const actualRaceTime = raceTime.time || 0;
     let time = actualRaceTime;
     if (
-      this._raceState !== RaceState.STARTING &&
+      (this._raceState === RaceState.NOT_STARTED ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
       this._autoStartRemaining > 0 &&
       !this._isRestarting
     ) {
       time = this._autoStartRemaining;
-    } else if (this._autoAdvanceRemaining > 0) {
+    } else if (
+      (this._raceState === RaceState.HEAT_OVER ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoAdvanceRemaining > 0
+    ) {
       time = this._autoAdvanceRemaining;
     }
 
@@ -238,6 +274,17 @@ export class RaceTimeService implements OnDestroy {
     }
 
     if (
+      state !== RaceState.NOT_STARTED &&
+      state !== RaceState.UNKNOWN_STATE &&
+      state !== RaceState.STARTING
+    ) {
+      this._autoStartRemaining = 0;
+    }
+    if (state !== RaceState.HEAT_OVER && state !== RaceState.UNKNOWN_STATE) {
+      this._autoAdvanceRemaining = 0;
+    }
+
+    if (
       state === RaceState.NOT_STARTED ||
       state === RaceState.UNKNOWN_STATE ||
       state === RaceState.HEAT_OVER ||
@@ -274,31 +321,57 @@ export class RaceTimeService implements OnDestroy {
   }
 
   get autoStatusLabel(): string {
-    if (this._raceState === RaceState.RACE_OVER) {
+    if (
+      this._raceState === RaceState.RACE_OVER ||
+      this._raceState === RaceState.PAUSED ||
+      this._raceState === RaceState.RACING ||
+      this._raceState === RaceState.STARTING
+    ) {
       return "";
     }
-    if (this._autoStartRemaining > 0) {
+    if (
+      (this._raceState === RaceState.NOT_STARTED ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoStartRemaining > 0
+    ) {
       return "RD_AUTO_STARTING";
     }
-    if (this._autoAdvanceRemaining > 0) {
+    if (
+      this._raceState === RaceState.HEAT_OVER &&
+      this._autoAdvanceRemaining > 0
+    ) {
       return "RD_AUTO_ADVANCING";
     }
     return "";
   }
 
   get isWarmup(): boolean {
-    if (this._raceState === RaceState.RACE_OVER) {
+    if (
+      this._raceState === RaceState.RACE_OVER ||
+      this._raceState === RaceState.PAUSED ||
+      this._raceState === RaceState.RACING ||
+      this._raceState === RaceState.STARTING
+    ) {
       return false;
     }
     const race = this.raceService?.getRace();
-    if (this._autoStartRemaining > 0 && race) {
+    if (
+      (this._raceState === RaceState.NOT_STARTED ||
+        this._raceState === RaceState.UNKNOWN_STATE) &&
+      this._autoStartRemaining > 0 &&
+      race
+    ) {
       const warmupTime = race.auto_start_warmup_time || 0;
       const totalTime = race.auto_start_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
         return totalTime - this._autoStartRemaining < warmupTime;
       }
     }
-    if (this._autoAdvanceRemaining > 0 && race) {
+    if (
+      this._raceState === RaceState.HEAT_OVER &&
+      this._autoAdvanceRemaining > 0 &&
+      race
+    ) {
       const warmupTime = race.auto_advance_warmup_time || 0;
       const totalTime = race.auto_advance_time || 0;
       if (warmupTime > 0 && totalTime > 0) {

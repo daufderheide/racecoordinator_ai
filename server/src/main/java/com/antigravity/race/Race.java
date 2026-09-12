@@ -508,7 +508,10 @@ public class Race implements ProtocolListener {
   }
 
   public double getAutoStartRemaining() {
-    if (state instanceof RaceOver) {
+    if (state instanceof RaceOver
+        || state instanceof Paused
+        || state instanceof Racing
+        || state instanceof HeatOver) {
       return 0.0;
     }
     return autoStartRemaining;
@@ -519,7 +522,11 @@ public class Race implements ProtocolListener {
   }
 
   public double getAutoAdvanceRemaining() {
-    if (state instanceof RaceOver) {
+    if (state instanceof RaceOver || state instanceof Paused || state instanceof Racing) {
+      EventExecutionManager eventMgr = EventExecutionManager.getInstance();
+      if (eventMgr.isEventActive() && eventMgr.getAutoAdvanceRemainingSeconds() > 0) {
+        return eventMgr.getAutoAdvanceRemainingSeconds();
+      }
       return 0.0;
     }
     EventExecutionManager eventMgr = EventExecutionManager.getInstance();
@@ -710,6 +717,8 @@ public class Race implements ProtocolListener {
     this.state.enter(this);
     if (state instanceof RaceOver) {
       ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId(), isDemoMode());
+    } else if (state instanceof Paused || state instanceof HeatOver) {
+      ClientSubscriptionManager.getInstance().autoSave(this);
     }
   }
 
@@ -787,6 +796,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.restartHeat(this);
+    ClientSubscriptionManager.getInstance().autoSave(this);
   }
 
   public void skipHeat() {
@@ -794,6 +804,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.skipHeat(this);
+    ClientSubscriptionManager.getInstance().autoSave(this);
   }
 
   public void skipRace() {
@@ -811,6 +822,7 @@ public class Race implements ProtocolListener {
       return;
     }
     state.deferHeat(this);
+    ClientSubscriptionManager.getInstance().autoSave(this);
   }
 
   public synchronized void stop() {

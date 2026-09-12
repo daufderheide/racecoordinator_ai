@@ -82,26 +82,32 @@ describe("DetailedLeaderboardComponent (sample-detailed-leaderboard)", () => {
 
       // Gap position
       expect(
+        component.formatGap({ gapPosition: 1.2346 }, 1, [{ totalTime: 10 }]),
+      ).toBe("+1.235");
+      expect(
         component.formatGap({ gap_position: 1.2346 }, 1, [{ total_time: 10 }]),
       ).toBe("+1.235");
       expect(
-        component.formatGap({ gap_position: -0.5678 }, 1, [{ total_time: 10 }]),
+        component.formatGap({ gapPosition: -0.5678 }, 1, [{ totalTime: 10 }]),
       ).toBe("-0.568");
 
       // Gap leader fallback
+      expect(
+        component.formatGap({ gapLeader: 2.3456 }, 1, [{ totalTime: 10 }]),
+      ).toBe("+2.346");
       expect(
         component.formatGap({ gap_leader: 2.3456 }, 1, [{ total_time: 10 }]),
       ).toBe("+2.346");
 
       // Total time delta fallback
       expect(
-        component.formatGap({ total_time: 15.6789 }, 1, [
-          { total_time: 10.1234 },
+        component.formatGap({ totalTime: 15.6789 }, 1, [
+          { totalTime: 10.1234 },
         ]),
       ).toBe("+5.556");
 
       // Zero laps or no data
-      expect(component.formatGap({ lapCount: 0, total_laps: 0 }, 1, [{}])).toBe(
+      expect(component.formatGap({ lapCount: 0, totalLaps: 0 }, 1, [{}])).toBe(
         "--",
       );
     });
@@ -210,6 +216,137 @@ describe("DetailedLeaderboardComponent (sample-detailed-leaderboard)", () => {
       expect(component.showAvgLap).toBeTrue();
       expect(component.bestLapColor).toBe("#38bdf8");
       expect(component.avgLapColor).toBe("#f59e0b");
+    });
+  });
+
+  describe("configuredColumns & dynamic column customization", () => {
+    it("should provide default 5 telemetry columns", () => {
+      const cols = component.configuredColumns;
+      expect(cols.length).toBe(5);
+      expect(cols[0].metric).toBe("totalTime");
+      expect(cols[0].header).toBe("Time");
+      expect(cols[1].metric).toBe("totalLaps");
+      expect(cols[1].header).toBe("Laps");
+      expect(cols[2].metric).toBe("gapLeader");
+      expect(cols[2].header).toBe("Gap");
+      expect(cols[3].metric).toBe("bestLapTime");
+      expect(cols[3].header).toBe("Best Lap");
+      expect(cols[4].metric).toBe("averageLapTime");
+      expect(cols[4].header).toBe("Avg Lap");
+    });
+
+    it("should customize columns based on colXMetric settings and hide 'none'", () => {
+      spyOn(component, "getSetting").and.callFake((key: string, def: any) => {
+        if (key === "col3Metric") return "lane";
+        if (key === "col4Metric") return "lastLapTime";
+        if (key === "col5Metric") return "medianLapTime";
+        if (key === "col6Metric") return "gapPosition";
+        if (key === "col7Metric") return "none";
+        return def;
+      });
+
+      const cols = component.configuredColumns;
+      expect(cols.length).toBe(4);
+      expect(cols[0].metric).toBe("lane");
+      expect(cols[0].header).toBe("Lane");
+      expect(cols[0].cssClass).toBe("col-lane");
+
+      expect(cols[1].metric).toBe("lastLapTime");
+      expect(cols[1].header).toBe("Last Lap");
+      expect(cols[1].cssClass).toBe("col-last");
+
+      expect(cols[2].metric).toBe("medianLapTime");
+      expect(cols[2].header).toBe("Median Lap");
+      expect(cols[2].cssClass).toBe("col-median");
+
+      expect(cols[3].metric).toBe("gapPosition");
+      expect(cols[3].header).toBe("Gap Ahead");
+      expect(cols[3].cssClass).toBe("col-gap");
+    });
+
+    it("should assign default colors to configured columns", () => {
+      const cols = component.configuredColumns;
+      expect(cols.length).toBe(5);
+      expect(cols[0].color).toBe("#ffffff");
+      expect(cols[1].color).toBe("#ffffff");
+      expect(cols[2].color).toBe("#ffffff");
+      expect(cols[3].color).toBe("#38bdf8");
+      expect(cols[4].color).toBe("#f59e0b");
+    });
+
+    it("should allow custom colors for each column", () => {
+      spyOn(component, "getSetting").and.callFake((key: string, def: any) => {
+        if (key === "col3Color") return "#10b981";
+        if (key === "col4Color") return "#6366f1";
+        if (key === "col5Color") return "#ec4899";
+        if (key === "col6Color") return "#eab308";
+        if (key === "col7Color") return "#14b8a6";
+        return def;
+      });
+
+      const cols = component.configuredColumns;
+      expect(cols[0].color).toBe("#10b981");
+      expect(cols[1].color).toBe("#6366f1");
+      expect(cols[2].color).toBe("#ec4899");
+      expect(cols[3].color).toBe("#eab308");
+      expect(cols[4].color).toBe("#14b8a6");
+    });
+
+    it("should format all unified metrics in formatMetric and apply columnColor", () => {
+      const mockDriver = {
+        name: "Test",
+        totalTime: 12.345,
+        totalLaps: 4,
+        gapLeader: 0.123,
+        gapPosition: 0.05,
+        bestLapTime: 3.123,
+        lastLapTime: 3.25,
+        averageLapTime: 3.18,
+        medianLapTime: 3.15,
+        lane: 2,
+      };
+
+      expect(
+        component.formatMetric("totalTime", mockDriver, 1, [], "#ffffff").text,
+      ).toBe("12.345");
+      expect(
+        component.formatMetric("totalTime", mockDriver, 1, [], "#ffffff").color,
+      ).toBe("#ffffff");
+      expect(
+        component.formatMetric("totalLaps", mockDriver, 1, [], "#10b981").text,
+      ).toBe("4.00");
+      expect(
+        component.formatMetric("totalLaps", mockDriver, 1, [], "#10b981").color,
+      ).toBe("#10b981");
+      expect(component.formatMetric("gapLeader", mockDriver, 1, []).text).toBe(
+        "+0.123",
+      );
+      expect(
+        component.formatMetric("gapPosition", mockDriver, 1, []).text,
+      ).toBe("+0.050");
+      expect(
+        component.formatMetric("bestLapTime", mockDriver, 1, []).text,
+      ).toBe("3.123");
+      expect(
+        component.formatMetric("bestLapTime", mockDriver, 1, []).color,
+      ).toBe("#38bdf8");
+      expect(
+        component.formatMetric("lastLapTime", mockDriver, 1, []).text,
+      ).toBe("3.250");
+      expect(
+        component.formatMetric("averageLapTime", mockDriver, 1, []).text,
+      ).toBe("3.180");
+      expect(
+        component.formatMetric("averageLapTime", mockDriver, 1, []).color,
+      ).toBe("#f59e0b");
+      expect(
+        component.formatMetric("medianLapTime", mockDriver, 1, []).text,
+      ).toBe("3.150");
+      expect(component.formatMetric("lane", mockDriver, 1, []).text).toBe("2");
+      expect(component.formatMetric("unknown", mockDriver, 1, []).text).toBe(
+        "--",
+      );
+      expect(component.formatMetric("totalTime", null, 0, []).text).toBe("");
     });
   });
 });

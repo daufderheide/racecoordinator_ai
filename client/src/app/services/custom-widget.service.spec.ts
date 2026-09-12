@@ -90,6 +90,14 @@ describe("CustomWidgetService", () => {
         defaultSettings: { showSpeed: true },
         settingsSchema: [
           { key: "threshold", label: "Threshold", type: "number", default: 50 },
+          {
+            key: "col3",
+            label: "Col 3",
+            type: "select",
+            default: "time",
+            colorKey: "col3Color",
+            colorDefault: "#ffffff",
+          },
         ],
       };
 
@@ -126,6 +134,8 @@ describe("CustomWidgetService", () => {
       expect(registryEntry.defaultSettings!()).toEqual({
         showSpeed: true,
         threshold: 50,
+        col3: "time",
+        col3Color: "#ffffff",
       });
     });
 
@@ -212,6 +222,10 @@ describe("CustomWidgetService", () => {
       expect(result.directory).toBe("custom-widgets");
       expect(mockFileSystem.deleteWidgetDirectory).toHaveBeenCalledWith(
         "sample",
+        true,
+      );
+      expect(mockFileSystem.deleteWidgetDirectory).toHaveBeenCalledWith(
+        "sample-detailed-leaderboard",
         true,
       );
       expect(mockFileSystem.writeWidgetFile).toHaveBeenCalledWith(

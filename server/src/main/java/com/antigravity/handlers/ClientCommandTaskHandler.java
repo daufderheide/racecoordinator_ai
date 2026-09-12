@@ -97,6 +97,11 @@ public class ClientCommandTaskHandler implements AnalyticsHelper {
     // Export & Save/Load Endpoints
     app.get("/api/races/current/export-csv", raceExportSaveHandler::exportRaceCsv, Role.VIEWER);
     app.post("/api/races/current/export-xls", raceExportSaveHandler::exportRaceXls, Role.VIEWER);
+    app.get(
+        "/api/races/export-template/default",
+        raceExportSaveHandler::getDefaultTemplate,
+        Role.VIEWER);
+    app.post("/api/races/test-export-xls", raceExportSaveHandler::testExportXls, Role.VIEWER);
     app.post("/api/save-race", raceExportSaveHandler::saveRace, Role.DIRECTOR);
     app.get("/api/saved-races", raceExportSaveHandler::getSavedRaces, Role.VIEWER);
     app.delete(

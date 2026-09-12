@@ -474,13 +474,27 @@ export class DefaultRacedayComponent
   }
 
   protected get autoStatusLabel(): string {
-    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
+    if (
+      this.raceHasEnded ||
+      this.raceState === RaceState.RACE_OVER ||
+      this.raceState === RaceState.PAUSED ||
+      this.raceState === RaceState.RACING ||
+      this.raceState === RaceState.STARTING
+    ) {
       return "";
     }
-    if (this.autoStartRemaining > 0) {
+    if (
+      (this.raceState === RaceState.NOT_STARTED ||
+        this.raceState === RaceState.UNKNOWN_STATE) &&
+      this.autoStartRemaining > 0
+    ) {
       return "RD_AUTO_STARTING";
     }
-    if (this.autoAdvanceRemaining > 0) {
+    if (
+      (this.raceState === RaceState.HEAT_OVER ||
+        this.raceState === RaceState.UNKNOWN_STATE) &&
+      this.autoAdvanceRemaining > 0
+    ) {
       return "RD_AUTO_ADVANCING";
     }
     return "";
@@ -637,10 +651,21 @@ export class DefaultRacedayComponent
   }
 
   protected get isWarmup(): boolean {
-    if (this.raceHasEnded || this.raceState === RaceState.RACE_OVER) {
+    if (
+      this.raceHasEnded ||
+      this.raceState === RaceState.RACE_OVER ||
+      this.raceState === RaceState.PAUSED ||
+      this.raceState === RaceState.RACING ||
+      this.raceState === RaceState.STARTING
+    ) {
       return false;
     }
-    if (this.autoStartRemaining > 0 && this.race) {
+    if (
+      (this.raceState === RaceState.NOT_STARTED ||
+        this.raceState === RaceState.UNKNOWN_STATE) &&
+      this.autoStartRemaining > 0 &&
+      this.race
+    ) {
       const warmupTime = this.race.auto_start_warmup_time || 0;
       const totalTime = this.race.auto_start_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
@@ -649,7 +674,12 @@ export class DefaultRacedayComponent
         return totalTime - this.autoStartRemaining < warmupTime;
       }
     }
-    if (this.autoAdvanceRemaining > 0 && this.race) {
+    if (
+      (this.raceState === RaceState.HEAT_OVER ||
+        this.raceState === RaceState.UNKNOWN_STATE) &&
+      this.autoAdvanceRemaining > 0 &&
+      this.race
+    ) {
       const warmupTime = this.race.auto_advance_warmup_time || 0;
       const totalTime = this.race.auto_advance_time || 0;
       if (warmupTime > 0 && totalTime > 0) {
@@ -1599,21 +1629,42 @@ export class DefaultRacedayComponent
           return;
         }
 
-        this.autoStartRemaining = raceTime.autoStartRemaining || 0;
-        this.autoAdvanceRemaining =
-          raceTime.autoAdvanceRemaining ||
-          (this.race as any)?.auto_advance_remaining_seconds ||
-          0;
+        if (
+          this.raceState === RaceState.NOT_STARTED ||
+          this.raceState === RaceState.UNKNOWN_STATE ||
+          this.raceState === RaceState.STARTING
+        ) {
+          this.autoStartRemaining = raceTime.autoStartRemaining || 0;
+        } else {
+          this.autoStartRemaining = 0;
+        }
+
+        if (
+          this.raceState === RaceState.HEAT_OVER ||
+          this.raceState === RaceState.UNKNOWN_STATE
+        ) {
+          this.autoAdvanceRemaining =
+            raceTime.autoAdvanceRemaining ||
+            (this.race as any)?.auto_advance_remaining_seconds ||
+            0;
+        } else {
+          this.autoAdvanceRemaining = 0;
+        }
 
         const actualRaceTime = raceTime.time || 0;
         let time = actualRaceTime;
         if (
-          this.raceState !== RaceState.STARTING &&
+          (this.raceState === RaceState.NOT_STARTED ||
+            this.raceState === RaceState.UNKNOWN_STATE) &&
           this.autoStartRemaining > 0 &&
           !this.isRestarting
         ) {
           time = this.autoStartRemaining;
-        } else if (this.autoAdvanceRemaining > 0) {
+        } else if (
+          (this.raceState === RaceState.HEAT_OVER ||
+            this.raceState === RaceState.UNKNOWN_STATE) &&
+          this.autoAdvanceRemaining > 0
+        ) {
           time = this.autoAdvanceRemaining;
         }
 
@@ -2721,19 +2772,38 @@ export class DefaultRacedayComponent
         this.playedHalfway = false;
       } else if (isNewRace) {
         // Reset timer state ONLY when advancing to a new race
-        this.autoStartRemaining =
-          (race as any)?.auto_start_remaining_seconds ||
-          (race as any)?.auto_start_remaining ||
-          race.auto_start_time ||
-          0;
-        this.autoAdvanceRemaining =
-          (race as any)?.auto_advance_remaining_seconds ||
-          (race as any)?.auto_advance_remaining ||
-          0;
-        this.time =
-          this.autoStartRemaining > 0
-            ? this.autoStartRemaining
-            : this.autoAdvanceRemaining;
+        const state =
+          (race as any)?.state ?? (race as any)?.raceState ?? this.raceState;
+        const isNotStarted =
+          state === RaceState.NOT_STARTED ||
+          state === RaceState.UNKNOWN_STATE ||
+          state === undefined ||
+          state === null;
+        const isHeatOver = state === RaceState.HEAT_OVER;
+
+        if (isNotStarted) {
+          this.autoStartRemaining =
+            (race as any)?.auto_start_remaining_seconds ||
+            (race as any)?.auto_start_remaining ||
+            race.auto_start_time ||
+            0;
+          this.autoAdvanceRemaining = 0;
+          this.time = this.autoStartRemaining > 0 ? this.autoStartRemaining : 0;
+        } else if (isHeatOver) {
+          this.autoStartRemaining = 0;
+          this.autoAdvanceRemaining =
+            (race as any)?.auto_advance_remaining_seconds ||
+            (race as any)?.auto_advance_remaining ||
+            0;
+          this.time =
+            this.autoAdvanceRemaining > 0 ? this.autoAdvanceRemaining : 0;
+        } else {
+          this.autoStartRemaining = 0;
+          this.autoAdvanceRemaining = 0;
+          if (typeof (race as any)?.accumulated_race_time === "number") {
+            this.time = (race as any).accumulated_race_time;
+          }
+        }
         this.previousTime = this.time;
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
@@ -5331,6 +5401,17 @@ export class DefaultRacedayComponent
       this.time = 0;
       this.previousTime = 0;
       this.timeFormat = "1.0-0";
+    }
+
+    if (
+      state !== RaceState.NOT_STARTED &&
+      state !== RaceState.UNKNOWN_STATE &&
+      state !== RaceState.STARTING
+    ) {
+      this.autoStartRemaining = 0;
+    }
+    if (state !== RaceState.HEAT_OVER) {
+      this.autoAdvanceRemaining = 0;
     }
 
     // Reset overlay if we enter a state that shouldn't show it

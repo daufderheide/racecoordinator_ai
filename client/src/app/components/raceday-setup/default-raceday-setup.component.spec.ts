@@ -476,7 +476,10 @@ describe("DefaultRacedaySetupComponent", () => {
     flush();
 
     expect(component.showAutoSavePrompt).toBeFalse();
-    expect(mockDataService.loadRace).toHaveBeenCalledWith("autosave_r1.json");
+    expect(mockDataService.loadRace).toHaveBeenCalledWith(
+      "autosave_r1.json",
+      false,
+    );
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
     expect(mockDataService.initializeRace).not.toHaveBeenCalled();
   }));
@@ -506,6 +509,68 @@ describe("DefaultRacedaySetupComponent", () => {
     expect(component.showAutoSavePrompt).toBeFalse();
     expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
       "autosave_r1.json",
+      false,
+    );
+    expect(mockDataService.initializeRace).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+  }));
+
+  it("should prompt to load autosave in demo mode and load it if confirmed", fakeAsync(() => {
+    component.selectedRace = component.races.find((r) => r.entity_id === "r1");
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+    mockDataService.getSavedRaces.and.returnValue(
+      of([{ filename: "autosave_r1.json", corrupt: false }]),
+    );
+    mockDataService.loadRace.and.returnValue(of(Race.fromObject({})));
+
+    component.startRace(true);
+    tick();
+
+    expect(mockDataService.getSavedRaces).toHaveBeenCalledWith(true);
+    expect(component.showAutoSavePrompt).toBeTrue();
+    expect(component.autoSaveFileToLoad).toBe("autosave_r1.json");
+    expect(component.pendingIsDemo).toBeTrue();
+
+    component.onConfirmAutoSave();
+    flush();
+
+    expect(component.showAutoSavePrompt).toBeFalse();
+    expect(mockDataService.loadRace).toHaveBeenCalledWith(
+      "autosave_r1.json",
+      true,
+    );
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
+    expect(mockDataService.initializeRace).not.toHaveBeenCalled();
+  }));
+
+  it("should prompt to load autosave in demo mode and delete it if canceled", fakeAsync(() => {
+    component.selectedRace = component.races.find((r) => r.entity_id === "r1");
+    component.selectedParticipants = [component.unselectedParticipants[0]];
+
+    mockDataService.getSavedRaces.and.returnValue(
+      of([{ filename: "autosave_r1.json", corrupt: false }]),
+    );
+    mockDataService.deleteSavedRace.and.returnValue(of("OK"));
+    const response = InitializeRaceResponse.fromObject({
+      success: true,
+    });
+    mockDataService.initializeRace.and.returnValue(of(response));
+
+    component.startRace(true);
+    tick();
+
+    expect(mockDataService.getSavedRaces).toHaveBeenCalledWith(true);
+    expect(component.showAutoSavePrompt).toBeTrue();
+    expect(component.autoSaveFileToLoad).toBe("autosave_r1.json");
+    expect(component.pendingIsDemo).toBeTrue();
+
+    component.onCancelAutoSave();
+    tick();
+
+    expect(component.showAutoSavePrompt).toBeFalse();
+    expect(mockDataService.deleteSavedRace).toHaveBeenCalledWith(
+      "autosave_r1.json",
+      true,
     );
     expect(mockDataService.initializeRace).toHaveBeenCalled();
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday"]);
@@ -1224,7 +1289,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1249,7 +1314,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1272,7 +1337,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1296,7 +1361,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();
@@ -1320,7 +1385,7 @@ describe("DefaultRacedaySetupComponent", () => {
       } as any),
     );
 
-    component.startRace();
+    component.startRace(false);
     flush();
 
     expect(component.showErrorModal).toBeTrue();

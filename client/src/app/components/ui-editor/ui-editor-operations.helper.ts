@@ -119,3 +119,23 @@ export async function executeConfirmDiscard(params: {
   params.showConfirm();
   return false;
 }
+
+export function handleConfirmDiscard(comp: any): Promise<boolean> {
+  return new Promise((resolve) => {
+    executeConfirmDiscard({
+      undoManager: comp.undoManager,
+      hasChanges: () => comp.hasChanges(),
+      isAnyThemeNameInvalid: () => comp.isAnyThemeNameInvalid(),
+      isAnyCustomUiNameInvalid: () => comp.isAnyCustomUiNameInvalid(),
+      autoSaveState: () => comp.autoSaveState(),
+      logger: comp.logger,
+      showConfirm: () => {
+        comp.showDiscardConfirm = true;
+        comp.pendingDeactivate = resolve;
+        comp.cdr.markForCheck();
+      },
+    }).then((canDeactivate) => {
+      if (canDeactivate) resolve(true);
+    });
+  });
+}

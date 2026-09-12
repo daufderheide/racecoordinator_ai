@@ -139,3 +139,14 @@ export function areSettingsEqual(a: Settings, b: Settings): boolean {
       JSON.stringify(b.practiceRacedayLayout)
   );
 }
+
+export function executeCaptureState(comp: any): void {
+  comp.editingState.settings = cloneSettings(comp.editingState.settings);
+  if (comp.displayCustomUIs?.length) {
+    comp.editingState.customUIs = deepCopy(comp.displayCustomUIs);
+  }
+  if (comp.displayThemes?.length) {
+    comp.editingState.themes = deepCopy(comp.displayThemes);
+  }
+  comp.undoManager.captureState();
+}

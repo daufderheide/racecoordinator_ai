@@ -9,33 +9,21 @@
         <tr>
           <th class="col-pos">P</th>
           <th class="col-driver">Driver</th>
-          <th *ngIf="showTime" class="col-time">Time</th>
-          <th class="col-laps">Laps</th>
-          <th *ngIf="showGap" class="col-gap">Gap</th>
-          <th *ngIf="showBestLap" class="col-best">Best Lap</th>
-          <th *ngIf="showAvgLap" class="col-avg">Avg Lap</th>
+          <th *ngFor="let col of configuredColumns" [class]="col.cssClass">
+            {{ col.header }}
+          </th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let row of displayRows" [class.empty-row]="row.isEmpty">
           <td class="col-pos">{{ row.position }}</td>
           <td class="col-driver">{{ row.name }}</td>
-          <td *ngIf="showTime" class="col-time">{{ row.timeFormatted }}</td>
-          <td class="col-laps">{{ row.laps }}</td>
-          <td *ngIf="showGap" class="col-gap">{{ row.gapFormatted }}</td>
           <td
-            *ngIf="showBestLap"
-            class="col-best"
-            [style.color]="row.isEmpty || row.bestLapFormatted === '--' ? 'inherit' : bestLapColor"
+            *ngFor="let cell of row.cells; let idx = index"
+            [class]="configuredColumns[idx]?.cssClass"
+            [style.color]="row.isEmpty || cell.text === '--' || !cell.color ? 'inherit' : cell.color"
           >
-            {{ row.bestLapFormatted }}
-          </td>
-          <td
-            *ngIf="showAvgLap"
-            class="col-avg"
-            [style.color]="row.isEmpty || row.avgLapFormatted === '--' ? 'inherit' : avgLapColor"
-          >
-            {{ row.avgLapFormatted }}
+            {{ cell.text }}
           </td>
         </tr>
       </tbody>

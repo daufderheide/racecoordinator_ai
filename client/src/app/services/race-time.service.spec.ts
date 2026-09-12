@@ -177,13 +177,22 @@ describe("RaceTimeService", () => {
 
   describe("Auto Timers and Warmup", () => {
     it("should update autoStatusLabel correctly", () => {
+      service.raceState = RaceState.NOT_STARTED;
       service.autoStartRemaining = 5;
       expect(service.autoStatusLabel).toBe("RD_AUTO_STARTING");
 
+      service.raceState = RaceState.PAUSED;
+      expect(service.autoStatusLabel).toBe("");
+
+      service.raceState = RaceState.HEAT_OVER;
       service.autoStartRemaining = 0;
       service.autoAdvanceRemaining = 3;
       expect(service.autoStatusLabel).toBe("RD_AUTO_ADVANCING");
 
+      service.raceState = RaceState.RACING;
+      expect(service.autoStatusLabel).toBe("");
+
+      service.raceState = RaceState.HEAT_OVER;
       service.autoAdvanceRemaining = 0;
       expect(service.autoStatusLabel).toBe("");
     });
@@ -196,18 +205,27 @@ describe("RaceTimeService", () => {
         auto_advance_time: 12,
       });
 
+      service.raceState = RaceState.NOT_STARTED;
       service.autoStartRemaining = 8;
       expect(service.isWarmup).toBeTrue();
 
       service.autoStartRemaining = 2;
       expect(service.isWarmup).toBeFalse();
 
+      service.raceState = RaceState.PAUSED;
+      service.autoStartRemaining = 8;
+      expect(service.isWarmup).toBeFalse();
+
+      service.raceState = RaceState.HEAT_OVER;
       service.autoStartRemaining = 0;
       service.autoAdvanceRemaining = 3;
-      service.raceState = RaceState.HEAT_OVER;
       expect(service.isWarmup).toBeTrue();
 
       service.autoAdvanceRemaining = 8;
+      expect(service.isWarmup).toBeFalse();
+
+      service.raceState = RaceState.PAUSED;
+      service.autoAdvanceRemaining = 3;
       expect(service.isWarmup).toBeFalse();
 
       service.autoAdvanceRemaining = 0;

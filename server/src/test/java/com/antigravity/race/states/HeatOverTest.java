@@ -180,4 +180,16 @@ public class HeatOverTest {
 
     assertEquals(RaceFlag.RED, dhd.getFlag());
   }
+
+  @Test
+  public void testPause_CallsAutoSave() {
+    com.antigravity.context.DatabaseContext dc =
+        mock(com.antigravity.context.DatabaseContext.class);
+    com.antigravity.race.ClientSubscriptionManager.getInstance().setDatabaseContext(dc);
+
+    heatOver.pause(race);
+
+    verify(race).setAutoAdvanceFired(true);
+    verify(race).clearAutoTimers();
+  }
 }

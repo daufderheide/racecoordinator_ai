@@ -9,7 +9,7 @@ import {
 } from "@app/models/custom-widget.model";
 
 import { DynamicComponentService } from "./dynamic-component.service";
-import { FileSystemService } from "./file-system.service";
+import { DiscoveredWidgetDir, FileSystemService } from "./file-system.service";
 import { LoggerService } from "./logger.service";
 
 export const STARTER_WIDGET_FOLDERS = [
@@ -101,13 +101,9 @@ export class CustomWidgetService {
     this.customWidgetsSubject.next(Array.from(newDefinitions.values()));
   }
 
-  private async loadSingleWidget(dir: {
-    name: string;
-    relativePath?: string;
-    group?: string;
-    subgroup?: string;
-    handle: FileSystemDirectoryHandle;
-  }): Promise<{ key: string; def: CustomWidgetDefinition } | null> {
+  private async loadSingleWidget(
+    dir: DiscoveredWidgetDir,
+  ): Promise<{ key: string; def: CustomWidgetDefinition } | null> {
     const widgetPath = dir.relativePath || dir.name;
     const hasManifest = await this.fileSystem.hasWidgetFile(
       widgetPath,
@@ -259,6 +255,13 @@ export class CustomWidgetService {
             ) {
               defaults[field.key] = field.default;
             }
+            if (
+              field.colorKey &&
+              defaults[field.colorKey] === undefined &&
+              field.colorDefault !== undefined
+            ) {
+              defaults[field.colorKey] = field.colorDefault;
+            }
           }
         }
         return defaults;
@@ -293,6 +296,11 @@ export class CustomWidgetService {
     try {
       // Delete existing sample folder first to ensure the new ones completely replace the previous ones
       await this.fileSystem.deleteWidgetDirectory("sample", true);
+
+      // Clean up legacy starter widget folders that were exported directly to the root before grouping
+      for (const folder of STARTER_WIDGET_FOLDERS) {
+        await this.fileSystem.deleteWidgetDirectory(folder, true);
+      }
 
       for (const folder of STARTER_WIDGET_FOLDERS) {
         const files = ["widget.json", "widget.html", "widget.css", "widget.ts"];

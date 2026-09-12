@@ -22,6 +22,8 @@ export interface CustomWidgetSettingField {
   step?: number;
   options?: CustomWidgetSelectOption[];
   description?: string;
+  colorKey?: string;
+  colorDefault?: string;
 }
 
 export interface CustomWidgetManifest {

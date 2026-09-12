@@ -479,8 +479,8 @@ public class DatabaseInitializer {
     as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
     as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
     as.put(
-        "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
-    as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+        "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
+    as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
     return as;
   }
 

@@ -136,6 +136,7 @@ public class HeatOver implements IRaceState {
     race.setRaceState(RaceState.HEAT_OVER, flag, 0);
     race.resetRaceTime();
     broadcastTime(race);
+    ClientSubscriptionManager.getInstance().autoSave(race);
   }
 
   @Override

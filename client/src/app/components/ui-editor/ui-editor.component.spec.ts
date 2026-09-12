@@ -207,6 +207,10 @@ describe("UIEditorComponent", () => {
       "getCustomWidgetDirectoryHandle",
       "selectCustomWidgetFolder",
       "clearCustomWidgetFolder",
+      "setCustomFolder",
+      "setCustomWidgetFolder",
+      "getServerCustomUiPath",
+      "getServerCustomWidgetPath",
     ]);
     mockCustomWidgetService = jasmine.createSpyObj("CustomWidgetService", [
       "getCustomWidgets",
@@ -235,6 +239,8 @@ describe("UIEditorComponent", () => {
       "updateCustomUI",
       "duplicateCustomUI",
       "deleteCustomUI",
+      "downloadDefaultExportTemplate",
+      "testExportXls",
     ]);
     mockDataService.socketConnected$ = of(true);
     mockDataService.systemState$ = new BehaviorSubject<any>({});
@@ -248,6 +254,12 @@ describe("UIEditorComponent", () => {
     mockDataService.createCustomUI.and.returnValue(of({}));
     mockDataService.duplicateCustomUI.and.returnValue(of({}));
     mockDataService.deleteCustomUI.and.returnValue(of({}));
+    mockDataService.downloadDefaultExportTemplate.and.returnValue(
+      of(new Blob(["template-data"])),
+    );
+    mockDataService.testExportXls.and.returnValue(
+      of(new Blob(["test-export-data"])),
+    );
     mockDataService.updateRaceSubscription.and.stub();
     mockRouter = jasmine.createSpyObj("Router", [
       "navigate",
@@ -458,6 +470,46 @@ describe("UIEditorComponent", () => {
     expect(component.customWidgetDirectoryName).toBeNull();
     expect(mockCustomWidgetService.reloadCustomWidgets).toHaveBeenCalled();
   });
+
+  it("should handle prompt enter path for UI and widgets", () => {
+    component.customDirectoryPath = "/my/ui/path";
+    component.promptEnterPath("ui");
+    expect(component.showEnterPathModal).toBeTrue();
+    expect(component.enterPathType).toBe("ui");
+    expect(component.manualPathInput).toBe("/my/ui/path");
+
+    component.customWidgetDirectoryPath = "/my/widget/path";
+    component.promptEnterPath("widgets");
+    expect(component.showEnterPathModal).toBeTrue();
+    expect(component.enterPathType).toBe("widgets");
+    expect(component.manualPathInput).toBe("/my/widget/path");
+  });
+
+  it("should handle cancel enter path modal", () => {
+    component.promptEnterPath("ui");
+    component.cancelEnterPathModal();
+    expect(component.showEnterPathModal).toBeFalse();
+    expect(component.enterPathType).toBeNull();
+    expect(component.manualPathInput).toBe("");
+  });
+
+  it("should handle confirm enter path", fakeAsync(() => {
+    mockFileSystem.setCustomFolder.and.returnValue(Promise.resolve(true));
+    mockFileSystem.getCustomDirectoryHandle.and.returnValue(
+      Promise.resolve({ name: "ManualDir" }),
+    );
+    mockFileSystem.getServerCustomUiPath.and.returnValue("/manual/path");
+
+    component.promptEnterPath("ui");
+    component.confirmEnterPath("/manual/path");
+    tick();
+    fixture.detectChanges();
+
+    expect(mockFileSystem.setCustomFolder).toHaveBeenCalledWith("/manual/path");
+    expect(component.customDirectoryName).toBe("ManualDir");
+    expect(component.customDirectoryPath).toBe("/manual/path");
+    expect(component.showEnterPathModal).toBeFalse();
+  }));
 
   it("should handle update sample widgets and show acknowledgement modal", async () => {
     await component.updateSampleWidgets();
@@ -2149,6 +2201,57 @@ describe("UIEditorComponent", () => {
         "custom_export_template.xlsx",
       );
     });
+
+    it("should open template variables modal", () => {
+      component.showTemplateVariablesModal = false;
+      component.openTemplateVariablesModal();
+      expect(component.showTemplateVariablesModal).toBeTrue();
+    });
+
+    it("should download default template when no custom template is selected", fakeAsync(() => {
+      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      component.editingSettings.customExportTemplateBase64 = undefined;
+      component.downloadTemplate();
+      tick();
+      expect(mockDataService.downloadDefaultExportTemplate).toHaveBeenCalled();
+    }));
+
+    it("should download selected custom template directly when custom template is present", fakeAsync(() => {
+      const originalPicker = (window as any).showSaveFilePicker;
+      delete (window as any).showSaveFilePicker;
+      try {
+        const createUrlSpy = spyOn(
+          window.URL,
+          "createObjectURL",
+        ).and.returnValue("blob:mock-url");
+        spyOn(window.URL, "revokeObjectURL").and.stub();
+        mockDataService.downloadDefaultExportTemplate.calls.reset();
+        component.editingSettings.customExportTemplateBase64 =
+          "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
+        component.editingSettings.customExportTemplateName =
+          "my_custom_template.xlsx";
+        component.downloadTemplate();
+        tick();
+        expect(
+          mockDataService.downloadDefaultExportTemplate,
+        ).not.toHaveBeenCalled();
+        expect(createUrlSpy).toHaveBeenCalled();
+      } finally {
+        (window as any).showSaveFilePicker = originalPicker;
+      }
+    }));
+
+    it("should trigger test export with custom template", fakeAsync(() => {
+      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      component.editingSettings.customExportTemplateBase64 = "custom-base64";
+      component.testExport();
+      tick();
+      expect(mockDataService.testExportXls).toHaveBeenCalledWith(
+        "custom-base64",
+      );
+    }));
   });
 
   describe("autoSaveState – Promise-based API", () => {

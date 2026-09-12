@@ -377,6 +377,19 @@ export class DataService {
     );
   }
 
+  downloadDefaultExportTemplate(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/races/export-template/default`, {
+      responseType: "blob",
+    });
+  }
+
+  testExportXls(base64Template?: string): Observable<Blob> {
+    const body = base64Template ? { templateBase64: base64Template } : {};
+    return this.http.post(`${this.baseUrl}/api/races/test-export-xls`, body, {
+      responseType: "blob",
+    });
+  }
+
   public getDefaultDemoConfig(): IDemoConfig {
     return {
       minLapTimeMs: 3000,
@@ -1622,21 +1635,6 @@ export class DataService {
           Reader.create(new Uint8Array(arrayBuffer)),
         );
 
-        if (raceData.raceTime) {
-          this.raceTimeSubject.next(raceData.raceTime);
-        }
-        if (raceData.lap) {
-          this.lapSubject.next(raceData.lap);
-        }
-        if (raceData.standingsUpdate) {
-          this.standingsSubject.next(raceData.standingsUpdate);
-        }
-        if (raceData.overallStandingsUpdate) {
-          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
-        }
-        if (raceData.groupStandingsUpdate) {
-          this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
-        }
         if (raceData.raceState) {
           this.logger.debug("WS: Received RaceState", raceData.raceState);
           this.raceStateSubject.next(raceData.raceState);
@@ -1653,6 +1651,21 @@ export class DataService {
           if (raceData.race.currentHeat) {
             this.heatSubject.next(raceData.race.currentHeat);
           }
+        }
+        if (raceData.raceTime) {
+          this.raceTimeSubject.next(raceData.raceTime);
+        }
+        if (raceData.lap) {
+          this.lapSubject.next(raceData.lap);
+        }
+        if (raceData.standingsUpdate) {
+          this.standingsSubject.next(raceData.standingsUpdate);
+        }
+        if (raceData.overallStandingsUpdate) {
+          this.overallStandingsSubject.next(raceData.overallStandingsUpdate);
+        }
+        if (raceData.groupStandingsUpdate) {
+          this.groupStandingsSubject.next(raceData.groupStandingsUpdate);
         }
         if (raceData.carData) {
           this.carDataSubject.next(raceData.carData);

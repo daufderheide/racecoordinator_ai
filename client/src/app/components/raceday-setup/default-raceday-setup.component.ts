@@ -1260,7 +1260,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
     }
   }
 
-  startRace(isDemo: boolean = false) {
+  startRace(isDemo: boolean) {
     const hasSelection = this.isEventMode
       ? this.selectedEvent && this.selectedParticipants.length > 0
       : this.selectedRace && this.selectedParticipants.length > 0;
@@ -1270,7 +1270,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
         ? this.selectedEvent?.entity_id || ""
         : this.selectedRace!.entity_id;
 
-      this.dataService.getSavedRaces().subscribe({
+      this.dataService.getSavedRaces(isDemo).subscribe({
         next: (races) => {
           const autoSaveFile = races.find(
             (f) => f.filename === `autosave_${raceId}.json`,
@@ -1395,19 +1395,23 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.showAutoSavePrompt = false;
     this.saveSettings(true);
     if (this.autoSaveFileToLoad) {
-      this.dataService.loadRace(this.autoSaveFileToLoad).subscribe({
-        next: () => this.router.navigate(["/raceday"]),
-        error: (err) => this.logger.error("Failed to load auto-save:", err),
-      });
+      this.dataService
+        .loadRace(this.autoSaveFileToLoad, this.pendingIsDemo)
+        .subscribe({
+          next: () => this.router.navigate(["/raceday"]),
+          error: (err) => this.logger.error("Failed to load auto-save:", err),
+        });
     }
   }
 
   onCancelAutoSave() {
     this.showAutoSavePrompt = false;
     if (this.autoSaveFileToLoad) {
-      this.dataService.deleteSavedRace(this.autoSaveFileToLoad).subscribe({
-        error: (err) => this.logger.error("Failed to delete auto-save:", err),
-      });
+      this.dataService
+        .deleteSavedRace(this.autoSaveFileToLoad, this.pendingIsDemo)
+        .subscribe({
+          error: (err) => this.logger.error("Failed to delete auto-save:", err),
+        });
     }
     this.proceedWithStart(this.pendingIsDemo);
   }

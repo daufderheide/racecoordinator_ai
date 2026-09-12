@@ -1,15 +1,40 @@
 import { TestBed } from "@angular/core/testing";
 
 import { FileSystemService } from "./file-system.service";
+import { ServerFileSystemService } from "./server-filesystem.service";
 
 describe("FileSystemService", () => {
   let service: FileSystemService;
+  let mockServerFs: any;
   let mockHandle: any;
   let mockSubfolderHandle: any;
   let mockFileHandle: any;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    mockServerFs = jasmine.createSpyObj("ServerFileSystemService", [
+      "getDirectories",
+      "chooseFolder",
+      "setDirectory",
+      "clearDirectory",
+      "listWidgets",
+      "getWidgetFile",
+      "writeWidgetFile",
+      "deleteWidgetDir",
+      "hasCustomFiles",
+      "getCustomFile",
+      "appendCustomUiFile",
+      "deleteCustomUiFile",
+    ]);
+    mockServerFs.getDirectories.and.returnValue(
+      Promise.resolve({ isLocalhost: false }),
+    );
+
+    TestBed.configureTestingModule({
+      providers: [
+        FileSystemService,
+        { provide: ServerFileSystemService, useValue: mockServerFs },
+      ],
+    });
     service = TestBed.inject(FileSystemService);
 
     mockFileHandle = {
@@ -471,6 +496,137 @@ describe("FileSystemService", () => {
         Promise.resolve(undefined),
       );
       await expectAsync(service.deleteWidgetDirectory("sample")).toBeResolved();
+    });
+  });
+
+  describe("Server-backed directory operations", () => {
+    it("should use chooseFolder when selecting custom folder on localhost", async () => {
+      (service as any).isLocalhost = true;
+      mockServerFs.chooseFolder.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/custom/ui",
+          name: "ui",
+        }),
+      );
+
+      const res = await service.selectCustomFolder();
+      expect(res).toBeTrue();
+      expect(mockServerFs.chooseFolder).toHaveBeenCalledWith("ui");
+      expect(service.getServerCustomUiPath()).toBe("/custom/ui");
+    });
+
+    it("should use chooseFolder when selecting custom widget folder on localhost", async () => {
+      (service as any).isLocalhost = true;
+      mockServerFs.chooseFolder.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/custom/widgets",
+          name: "widgets",
+        }),
+      );
+
+      const res = await service.selectCustomWidgetFolder();
+      expect(res).toBeTrue();
+      expect(mockServerFs.chooseFolder).toHaveBeenCalledWith("widgets");
+      expect(service.getServerCustomWidgetPath()).toBe("/custom/widgets");
+    });
+
+    it("should set custom folder path directly", async () => {
+      mockServerFs.setDirectory.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/pasted/ui",
+          name: "ui",
+        }),
+      );
+
+      const res = await service.setCustomFolder("/pasted/ui");
+      expect(res).toBeTrue();
+      expect(service.getServerCustomUiPath()).toBe("/pasted/ui");
+    });
+
+    it("should set custom widget folder path directly", async () => {
+      mockServerFs.setDirectory.and.returnValue(
+        Promise.resolve({
+          success: true,
+          path: "/pasted/widgets",
+          name: "widgets",
+        }),
+      );
+
+      const res = await service.setCustomWidgetFolder("/pasted/widgets");
+      expect(res).toBeTrue();
+      expect(service.getServerCustomWidgetPath()).toBe("/pasted/widgets");
+    });
+
+    it("should delegate widget operations to ServerFileSystemService when server widget path is set", async () => {
+      (service as any).serverCustomWidgetPath = "/custom/widgets";
+      (service as any).serverCustomWidgetName = "widgets";
+
+      mockServerFs.listWidgets.and.returnValue(
+        Promise.resolve([
+          { name: "w1", relativePath: "sample/w1", group: "sample" },
+        ]),
+      );
+      mockServerFs.getWidgetFile.and.returnValue(
+        Promise.resolve("widget-content"),
+      );
+      mockServerFs.writeWidgetFile.and.returnValue(Promise.resolve(true));
+      mockServerFs.deleteWidgetDir.and.returnValue(Promise.resolve(true));
+
+      const dirs = await service.getCustomWidgetDirectories();
+      expect(dirs.length).toBe(1);
+      expect(dirs[0].name).toBe("w1");
+
+      const file = await service.getWidgetFile("sample/w1", "widget.json");
+      expect(file).toBe("widget-content");
+
+      const exists = await service.hasWidgetFile("sample/w1", "widget.json");
+      expect(exists).toBeTrue();
+
+      await service.writeWidgetFile("sample/w1", "widget.json", "{}");
+      expect(mockServerFs.writeWidgetFile).toHaveBeenCalledWith(
+        "sample/w1",
+        "widget.json",
+        "{}",
+      );
+
+      await service.deleteWidgetDirectory("sample");
+      expect(mockServerFs.deleteWidgetDir).toHaveBeenCalledWith("sample");
+    });
+
+    it("should delegate custom UI operations to ServerFileSystemService when server UI path is set", async () => {
+      (service as any).serverCustomUiPath = "/custom/ui";
+      (service as any).serverCustomUiName = "ui";
+
+      mockServerFs.hasCustomFiles.and.returnValue(
+        Promise.resolve({ exists: true, files: ["raceday.component.html"] }),
+      );
+      mockServerFs.getCustomFile.and.returnValue(
+        Promise.resolve("<div>UI</div>"),
+      );
+      mockServerFs.appendCustomUiFile.and.returnValue(Promise.resolve(true));
+      mockServerFs.deleteCustomUiFile.and.returnValue(Promise.resolve(true));
+
+      const has = await service.hasCustomFiles("raceday.component.html");
+      expect(has).toBeTrue();
+
+      const content = await service.getCustomFile("raceday.component.html");
+      expect(content).toBe("<div>UI</div>");
+
+      await service.appendToFile("raceday.component.html", "more");
+      expect(mockServerFs.appendCustomUiFile).toHaveBeenCalledWith(
+        "raceday.component.html",
+        "more",
+        undefined,
+      );
+
+      await service.deleteFile("raceday.component.html");
+      expect(mockServerFs.deleteCustomUiFile).toHaveBeenCalledWith(
+        "raceday.component.html",
+        undefined,
+      );
     });
   });
 });
