@@ -1,5 +1,31 @@
 # Changelog
 
+## [v1.0.0-beta.69] - 2026-09-12
+
+### 🚀 New Features
+
+- add server-backed filesystem integration and native directory chooser for cross-browser support ([89d4ea3f](https://github.com/daufderheide/racecoordinator_ai/commit/89d4ea3f))
+- add custom widgets support with sample widgets, services, UI inspector components, and documentation ([2d40762d](https://github.com/daufderheide/racecoordinator_ai/commit/2d40762d))
+- add custom XLS export template support with backend handlers, sample race factory, and UI editor integration https://github.com/daufderheide/racecoordinator_ai/issues/810 ([2b9d25f8](https://github.com/daufderheide/racecoordinator_ai/commit/2b9d25f8))
+- updated default xls template to support lap breakdowns on the heat tabs feat: add lap segment support to heat data and excel exports fix: fixed incorrect lane background coloring in cells that should not have it. https://github.com/daufderheide/racecoordinator_ai/issues/810 ([7cc75af0](https://github.com/daufderheide/racecoordinator_ai/commit/7cc75af0))
+- enforce three-decimal precision for all numerical race data and exported XLS cells ([a43a7d45](https://github.com/daufderheide/racecoordinator_ai/commit/a43a7d45))
+
+### 🐛 Bug Fixes
+
+- **test**: handle headless linux in NativeDirectoryChooserTest ([d8532572](https://github.com/daufderheide/racecoordinator_ai/commit/d8532572))
+- **server**: allow native directory chooser in headless CI and remove test debug prints ([0c6df01a](https://github.com/daufderheide/racecoordinator_ai/commit/0c6df01a))
+- fixed demo mode auto save feat: implement state-specific timer logic and expand race autosave functionality [skip-screendiffs] ([33db80a5](https://github.com/daufderheide/racecoordinator_ai/commit/33db80a5))
+
+### ⚡ Improvements & Refactoring
+
+- **ui-editor**: extract helpers and reduce ui-editor.component line count below 1000 [skip-screendiff] ([52851716](https://github.com/daufderheide/racecoordinator_ai/commit/52851716))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.68...v1.0.0-beta.69">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.68] - 2026-09-11
 
 ### 🚀 New Features
