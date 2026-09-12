@@ -90,13 +90,15 @@ public class NativeDirectoryChooser {
     return null;
   }
 
+  static boolean isLinuxGuiAvailable() {
+    return System.getenv("DISPLAY") != null || System.getenv("WAYLAND_DISPLAY") != null;
+  }
+
   static class DefaultCommandRunner implements CommandRunner {
     @Override
     public String runCommand(String[] command, long timeoutSeconds) throws Exception {
       String os = System.getProperty("os.name", "").toLowerCase();
-      if (os.contains("linux")
-          && System.getenv("DISPLAY") == null
-          && System.getenv("WAYLAND_DISPLAY") == null) {
+      if (os.contains("linux") && !isLinuxGuiAvailable()) {
         logger.info(
             "Cannot open native directory chooser: No DISPLAY or WAYLAND_DISPLAY environment variable found.");
         return null;

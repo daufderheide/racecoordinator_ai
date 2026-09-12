@@ -72,12 +72,21 @@ public class NativeDirectoryChooserTest {
   }
 
   @Test
+  public void testIsLinuxGuiAvailable() {
+    boolean expected = System.getenv("DISPLAY") != null || System.getenv("WAYLAND_DISPLAY") != null;
+    assertEquals(expected, NativeDirectoryChooser.isLinuxGuiAvailable());
+  }
+
+  @Test
   public void testDefaultCommandRunner_FailureOrEcho() throws Exception {
     NativeDirectoryChooser.DefaultCommandRunner runner =
         new NativeDirectoryChooser.DefaultCommandRunner();
     String os = System.getProperty("os.name", "").toLowerCase();
-    if (os.contains("mac") || os.contains("linux")) {
+    if (os.contains("linux") && !NativeDirectoryChooser.isLinuxGuiAvailable()) {
+      assertNull(runner.runCommand(new String[] {"echo", "test_path"}, 5));
+    } else if (os.contains("mac") || os.contains("linux")) {
       String out = runner.runCommand(new String[] {"echo", "test_path"}, 5);
+      org.junit.Assert.assertNotNull(out);
       assertEquals("test_path", out.trim());
     }
   }
