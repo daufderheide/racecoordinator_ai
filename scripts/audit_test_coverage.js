@@ -102,9 +102,14 @@ function auditServer() {
     }
   }
 
+  // Permitted cross-system integration or parity tests that don't have a 1:1 source file
+  const allowedParityTests = new Set([
+    'com/antigravity/race/TemplateVariableParityTest.java',
+  ]);
+
   // Find orphaned or scenario test files that don't match standard Foo.java -> FooTest.java
   const orphanedOrScenarioTests = testFiles.filter(
-    t => !matchedTestRelPaths.has(t.relPath)
+    t => !matchedTestRelPaths.has(t.relPath) && !allowedParityTests.has(t.relPath.replace(/\\/g, '/'))
   );
 
   return {

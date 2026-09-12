@@ -972,48 +972,6 @@ public final class RaceStatisticsUtils {
     }
   }
 
-  private static boolean isHeaderRow(Row row) {
-    if (row == null) return true;
-    boolean hasContent = false;
-    for (Cell c : row) {
-      if (c == null) continue;
-      if (c.getCellType() == CellType.STRING) {
-        String val = c.getStringCellValue().trim();
-        if (!val.isEmpty()) {
-          hasContent = true;
-        }
-        if ("Driver".equalsIgnoreCase(val)
-            || "Driver / Team".equalsIgnoreCase(val)
-            || "Rank".equalsIgnoreCase(val)
-            || "Metric".equalsIgnoreCase(val)
-            || "Heat".equalsIgnoreCase(val)
-            || "Field".equalsIgnoreCase(val)
-            || "Actual Driver".equalsIgnoreCase(val)
-            || "Lap Time".equalsIgnoreCase(val)
-            || "Total Laps".equalsIgnoreCase(val)
-            || "Total Time".equalsIgnoreCase(val)) {
-          return true;
-        }
-      } else if (c.getCellType() == CellType.NUMERIC
-          || c.getCellType() == CellType.BOOLEAN
-          || c.getCellType() == CellType.FORMULA) {
-        hasContent = true;
-      }
-      CellStyle style = c.getCellStyle();
-      if (style != null
-          && style.getFillPattern() != org.apache.poi.ss.usermodel.FillPatternType.NO_FILL) {
-        org.apache.poi.ss.usermodel.Color color = style.getFillForegroundColorColor();
-        if (color instanceof org.apache.poi.xssf.usermodel.XSSFColor) {
-          String argb = ((org.apache.poi.xssf.usermodel.XSSFColor) color).getARGBHex();
-          if (argb != null && argb.toUpperCase().endsWith("D0D0D0")) {
-            return true;
-          }
-        }
-      }
-    }
-    return !hasContent;
-  }
-
   private static final Pattern LANE_HEADER_PATTERN =
       Pattern.compile("^Lane\\s+(\\d+)(?:\\s+(?:Laps|Segments?|Seg))?$", Pattern.CASE_INSENSITIVE);
 
