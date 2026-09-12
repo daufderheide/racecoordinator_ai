@@ -1204,9 +1204,11 @@
                     <label>{{ "UE_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customDirectoryName) {
-                        <span class="directory-path">{{
-                          customDirectoryName
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="customDirectoryPath || customDirectoryName"
+                          >{{ customDirectoryName }}</span
+                        >
                       }
                       @if (!customDirectoryName) {
                         <span class="directory-path placeholder">{{
@@ -1223,6 +1225,13 @@
                       </button>
 
                       <button
+                        class="btn btn-secondary"
+                        (click)="promptEnterPath('ui')"
+                      >
+                        {{ "UE_BTN_ENTER_PATH" | translate }}
+                      </button>
+
+                      <button
                         class="btn btn-danger"
                         (click)="resetDefault()"
                         [disabled]="!customDirectoryName"
@@ -1235,9 +1244,14 @@
                     <label>{{ "UE_WIDGET_DIRECTORY_LABEL" | translate }}</label>
                     <div class="directory-info">
                       @if (customWidgetDirectoryName) {
-                        <span class="directory-path">{{
-                          customWidgetDirectoryName
-                        }}</span>
+                        <span
+                          class="directory-path"
+                          [title]="
+                            customWidgetDirectoryPath ||
+                            customWidgetDirectoryName
+                          "
+                          >{{ customWidgetDirectoryName }}</span
+                        >
                       }
                       @if (!customWidgetDirectoryName) {
                         <span class="directory-path placeholder">{{
@@ -1251,6 +1265,13 @@
                         (click)="selectWidgetDirectory()"
                       >
                         {{ "UE_BTN_SELECT_WIDGET_DIRECTORY" | translate }}
+                      </button>
+
+                      <button
+                        class="btn btn-secondary"
+                        (click)="promptEnterPath('widgets')"
+                      >
+                        {{ "UE_BTN_ENTER_PATH" | translate }}
                       </button>
 
                       <button
@@ -1608,4 +1629,17 @@
     [visible]="showTemplateVariablesModal"
     (close)="showTemplateVariablesModal = false"
   ></app-template-variables-modal>
+
+  <!-- Enter Path Modal -->
+  <app-enter-path-modal
+    [visible]="showEnterPathModal"
+    [initialPath]="
+      enterPathType === 'ui'
+        ? customDirectoryPath || ''
+        : customWidgetDirectoryPath || ''
+    "
+    [errorMessage]="enterPathError"
+    (confirm)="confirmEnterPath($event)"
+    (cancel)="cancelEnterPathModal()"
+  ></app-enter-path-modal>
 </div>

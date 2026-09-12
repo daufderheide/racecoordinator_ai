@@ -9,7 +9,7 @@ import {
 } from "@app/models/custom-widget.model";
 
 import { DynamicComponentService } from "./dynamic-component.service";
-import { FileSystemService } from "./file-system.service";
+import { DiscoveredWidgetDir, FileSystemService } from "./file-system.service";
 import { LoggerService } from "./logger.service";
 
 export const STARTER_WIDGET_FOLDERS = [
@@ -101,13 +101,9 @@ export class CustomWidgetService {
     this.customWidgetsSubject.next(Array.from(newDefinitions.values()));
   }
 
-  private async loadSingleWidget(dir: {
-    name: string;
-    relativePath?: string;
-    group?: string;
-    subgroup?: string;
-    handle: FileSystemDirectoryHandle;
-  }): Promise<{ key: string; def: CustomWidgetDefinition } | null> {
+  private async loadSingleWidget(
+    dir: DiscoveredWidgetDir,
+  ): Promise<{ key: string; def: CustomWidgetDefinition } | null> {
     const widgetPath = dir.relativePath || dir.name;
     const hasManifest = await this.fileSystem.hasWidgetFile(
       widgetPath,

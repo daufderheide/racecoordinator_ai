@@ -207,6 +207,10 @@ describe("UIEditorComponent", () => {
       "getCustomWidgetDirectoryHandle",
       "selectCustomWidgetFolder",
       "clearCustomWidgetFolder",
+      "setCustomFolder",
+      "setCustomWidgetFolder",
+      "getServerCustomUiPath",
+      "getServerCustomWidgetPath",
     ]);
     mockCustomWidgetService = jasmine.createSpyObj("CustomWidgetService", [
       "getCustomWidgets",
@@ -466,6 +470,46 @@ describe("UIEditorComponent", () => {
     expect(component.customWidgetDirectoryName).toBeNull();
     expect(mockCustomWidgetService.reloadCustomWidgets).toHaveBeenCalled();
   });
+
+  it("should handle prompt enter path for UI and widgets", () => {
+    component.customDirectoryPath = "/my/ui/path";
+    component.promptEnterPath("ui");
+    expect(component.showEnterPathModal).toBeTrue();
+    expect(component.enterPathType).toBe("ui");
+    expect(component.manualPathInput).toBe("/my/ui/path");
+
+    component.customWidgetDirectoryPath = "/my/widget/path";
+    component.promptEnterPath("widgets");
+    expect(component.showEnterPathModal).toBeTrue();
+    expect(component.enterPathType).toBe("widgets");
+    expect(component.manualPathInput).toBe("/my/widget/path");
+  });
+
+  it("should handle cancel enter path modal", () => {
+    component.promptEnterPath("ui");
+    component.cancelEnterPathModal();
+    expect(component.showEnterPathModal).toBeFalse();
+    expect(component.enterPathType).toBeNull();
+    expect(component.manualPathInput).toBe("");
+  });
+
+  it("should handle confirm enter path", fakeAsync(() => {
+    mockFileSystem.setCustomFolder.and.returnValue(Promise.resolve(true));
+    mockFileSystem.getCustomDirectoryHandle.and.returnValue(
+      Promise.resolve({ name: "ManualDir" }),
+    );
+    mockFileSystem.getServerCustomUiPath.and.returnValue("/manual/path");
+
+    component.promptEnterPath("ui");
+    component.confirmEnterPath("/manual/path");
+    tick();
+    fixture.detectChanges();
+
+    expect(mockFileSystem.setCustomFolder).toHaveBeenCalledWith("/manual/path");
+    expect(component.customDirectoryName).toBe("ManualDir");
+    expect(component.customDirectoryPath).toBe("/manual/path");
+    expect(component.showEnterPathModal).toBeFalse();
+  }));
 
   it("should handle update sample widgets and show acknowledgement modal", async () => {
     await component.updateSampleWidgets();

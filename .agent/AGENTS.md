@@ -36,6 +36,12 @@ Race Coordinator AI uses embedded SQLite (`sqlite-jdbc`) for all persistent data
 - **Implementation**: Always use `<app-custom-select>` and `<app-custom-option>` from `@app/components/shared/custom-select/custom-select.component` for all dropdown controls across the application.
 - **Testing & Harnesses**: When writing E2E or screendiff tests, interact with custom selects via the component test harness (`CustomSelectHarnessE2e`) or by clicking the custom trigger and target options (`.custom-select-option[data-value='...']`) rather than using `page.selectOption()`.
 
+## Cross-Browser Compatibility (Safari, Edge, Chrome, Firefox)
+- **Support all major browsers**: The web client must fully support Safari, Microsoft Edge, Google Chrome, and Mozilla Firefox. Web APIs and UX patterns that are restricted to a single browser engine (such as Chromium-only APIs like `window.showDirectoryPicker()`) must not be relied upon exclusively.
+- **Cross-browser parity or graceful alternatives**: Always provide cross-browser solutions (e.g. server-assisted native desktop dialogs on localhost, file inputs, manual path inputs, or polyfills) so functionality remains accessible across all four supported browsers.
+- **Flag limitations to the developer**: If full cross-browser support for a requested capability is impossible or fundamentally restricted by web standards / browser security models, this limitation MUST be explicitly called out to the developer before proceeding.
+- **User notification of incompatibility**: If an incompatible or browser-restricted feature is implemented anyway, the code MUST detect browser support and proactively notify the user in the UI with a clear, localized explanation of the incompatibility and guidance on supported browsers or alternatives.
+
 ## Git Branching & Release Pipeline Discipline
 - **Develop is the default base**: Standard feature and bugfix work branches from `develop` and merges into `develop`.
 - **Main is the stable trunk**: `main` contains stable, production-ready code and documentation. Pushes/merges to `main` do NOT trigger release builds, allowing docs, READMEs, and maintenance to land cleanly without accidental releases or `[skip ci]`.

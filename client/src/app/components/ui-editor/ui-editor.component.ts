@@ -52,6 +52,7 @@ import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
+import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
@@ -98,12 +99,14 @@ import {
   getUnsavedReasonsHelper,
   handleAutoSaveState,
   handleCalloutSpacingChange,
+  handleCancelEnterPathModal,
   handleClearCurrentLayout,
   handleClearCustomTemplate,
   handleClearLayout,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
   handleConfirmDiscard,
+  handleConfirmEnterPath,
   handleCreateCustomUi,
   handleCreateTheme,
   handleCustomUiSelection,
@@ -121,6 +124,7 @@ import {
   handleImportRacedayLayout,
   handleMasterVolumeChange,
   handlePageTransitionChange,
+  handlePromptEnterPath,
   handleResetCurrentLayout,
   handleResetDefaultDirectory,
   handleResetLayout,
@@ -200,6 +204,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     WidgetInspectorFieldsComponent,
     ThemeTemplateModalComponent,
     TemplateVariablesModalComponent,
+    EnterPathModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
   ],
@@ -270,6 +275,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.editingState?.settings;
   }
   customDirectoryName: string | null = null;
+  customDirectoryPath: string | null = null;
+  customWidgetDirectoryPath: string | null = null;
+  showEnterPathModal = false;
+  enterPathType: "ui" | "widgets" | null = null;
+  manualPathInput = "";
+  enterPathError: string | null = null;
   isNavigationApproved = false;
   get hasLaneViewWidget() {
     return !!this.getLayout(this.activeCustomUi)?.widgets?.some(
@@ -664,6 +675,15 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
   async updateSampleWidgets() {
     await handleUpdateSampleWidgets(this);
+  }
+  promptEnterPath(type: "ui" | "widgets") {
+    handlePromptEnterPath(this, type);
+  }
+  cancelEnterPathModal() {
+    handleCancelEnterPathModal(this);
+  }
+  async confirmEnterPath(path?: string) {
+    await handleConfirmEnterPath(this, path);
   }
 
   save() {

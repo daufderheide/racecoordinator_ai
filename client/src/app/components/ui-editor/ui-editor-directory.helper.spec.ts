@@ -1,4 +1,7 @@
 import {
+  handleCancelEnterPathModal,
+  handleConfirmEnterPath,
+  handlePromptEnterPath,
   handleResetDefaultDirectory,
   handleResetWidgetDirectory,
   handleSelectDirectory,
@@ -101,5 +104,113 @@ describe("ui-editor-directory.helper", () => {
       "Failed to update sample widgets",
       err,
     );
+  });
+
+  describe("Enter Path handlers", () => {
+    it("should prompt enter path for ui", () => {
+      comp.customDirectoryPath = "/custom/ui/path";
+      handlePromptEnterPath(comp, "ui");
+      expect(comp.enterPathType).toBe("ui");
+      expect(comp.manualPathInput).toBe("/custom/ui/path");
+      expect(comp.enterPathError).toBeNull();
+      expect(comp.showEnterPathModal).toBeTrue();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should prompt enter path for widgets", () => {
+      comp.customWidgetDirectoryPath = "/custom/widgets/path";
+      handlePromptEnterPath(comp, "widgets");
+      expect(comp.enterPathType).toBe("widgets");
+      expect(comp.manualPathInput).toBe("/custom/widgets/path");
+      expect(comp.enterPathError).toBeNull();
+      expect(comp.showEnterPathModal).toBeTrue();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should cancel enter path modal", () => {
+      comp.showEnterPathModal = true;
+      comp.enterPathType = "ui";
+      comp.manualPathInput = "/test";
+      comp.enterPathError = "error";
+      handleCancelEnterPathModal(comp);
+      expect(comp.showEnterPathModal).toBeFalse();
+      expect(comp.enterPathType).toBeNull();
+      expect(comp.manualPathInput).toBe("");
+      expect(comp.enterPathError).toBeNull();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should do nothing on confirm if path is empty", async () => {
+      comp.manualPathInput = "   ";
+      await handleConfirmEnterPath(comp);
+      expect(comp.fileSystem.setCustomFolder).not.toBeDefined();
+    });
+
+    it("should confirm enter path for ui successfully", async () => {
+      comp.enterPathType = "ui";
+      comp.manualPathInput = "/new/ui/path";
+      comp.fileSystem.setCustomFolder = jasmine
+        .createSpy("setCustomFolder")
+        .and.resolveTo(true);
+      comp.fileSystem.getServerCustomUiPath = () => "/new/ui/path";
+
+      await handleConfirmEnterPath(comp);
+
+      expect(comp.fileSystem.setCustomFolder).toHaveBeenCalledWith(
+        "/new/ui/path",
+      );
+      expect(comp.customDirectoryName).toBe("new_dir");
+      expect(comp.customDirectoryPath).toBe("/new/ui/path");
+      expect(comp.showEnterPathModal).toBeFalse();
+      expect(comp.enterPathError).toBeNull();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should set error when setCustomFolder fails", async () => {
+      comp.enterPathType = "ui";
+      comp.manualPathInput = "/invalid/path";
+      comp.fileSystem.setCustomFolder = jasmine
+        .createSpy("setCustomFolder")
+        .and.resolveTo(false);
+
+      await handleConfirmEnterPath(comp);
+
+      expect(comp.enterPathError).toBe("UE_ERROR_DIR_NOT_FOUND");
+      expect(comp.showEnterPathModal).toBeUndefined();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should confirm enter path for widgets successfully and reload widgets", async () => {
+      comp.enterPathType = "widgets";
+      comp.fileSystem.setCustomWidgetFolder = jasmine
+        .createSpy("setCustomWidgetFolder")
+        .and.resolveTo(true);
+      comp.fileSystem.getServerCustomWidgetPath = () => "/new/widget/path";
+
+      await handleConfirmEnterPath(comp, "/new/widget/path");
+
+      expect(comp.fileSystem.setCustomWidgetFolder).toHaveBeenCalledWith(
+        "/new/widget/path",
+      );
+      expect(comp.customWidgetDirectoryName).toBe("new_widget_dir");
+      expect(comp.customWidgetDirectoryPath).toBe("/new/widget/path");
+      expect(comp.customWidgetService.reloadCustomWidgets).toHaveBeenCalled();
+      expect(comp.showEnterPathModal).toBeFalse();
+      expect(comp.enterPathError).toBeNull();
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
+
+    it("should set error when setCustomWidgetFolder fails", async () => {
+      comp.enterPathType = "widgets";
+      comp.manualPathInput = "/invalid/widget/path";
+      comp.fileSystem.setCustomWidgetFolder = jasmine
+        .createSpy("setCustomWidgetFolder")
+        .and.resolveTo(false);
+
+      await handleConfirmEnterPath(comp);
+
+      expect(comp.enterPathError).toBe("UE_ERROR_DIR_NOT_FOUND");
+      expect(comp.cdr.markForCheck).toHaveBeenCalled();
+    });
   });
 });

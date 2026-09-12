@@ -61,6 +61,12 @@ public class ServerConfigServiceTest {
     assertEquals(null, service.getSnoozedUpdateVersion());
     assertEquals(0L, service.getSnoozedUpdateUntil());
 
+    service.setCustomUiDirectory("/path/to/custom_ui");
+    assertEquals("/path/to/custom_ui", service.getCustomUiDirectory());
+
+    service.setCustomWidgetDirectory("/path/to/widgets");
+    assertEquals("/path/to/widgets", service.getCustomWidgetDirectory());
+
     assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("0.0.0_dev"));
     assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("1.0.0-alpha.20260819"));
     assertEquals("ALPHA", ServerConfigService.getDefaultUpdateChannel("v0.0.0-alpha.20260815"));

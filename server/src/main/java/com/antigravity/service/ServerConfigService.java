@@ -178,8 +178,28 @@ public class ServerConfigService {
     saveConfig();
   }
 
+  public String getCustomUiDirectory() {
+    return config.customUiDirectory;
+  }
+
+  public void setCustomUiDirectory(String path) {
+    config.customUiDirectory = path;
+    saveConfig();
+  }
+
+  public String getCustomWidgetDirectory() {
+    return config.customWidgetDirectory;
+  }
+
+  public void setCustomWidgetDirectory(String path) {
+    config.customWidgetDirectory = path;
+    saveConfig();
+  }
+
   private static class Config {
 
+    public String customUiDirectory;
+    public String customWidgetDirectory;
     public String lastActiveDatabase;
     public boolean shareAnalytics = true;
     public String analyticsClientId;

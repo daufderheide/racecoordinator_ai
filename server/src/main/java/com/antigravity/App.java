@@ -7,6 +7,7 @@ import com.antigravity.context.DatabaseContext;
 import com.antigravity.handlers.AssetTaskHandler;
 import com.antigravity.handlers.AuthTaskHandler;
 import com.antigravity.handlers.ClientCommandTaskHandler;
+import com.antigravity.handlers.CustomDirectoryTaskHandler;
 import com.antigravity.handlers.CustomUITaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
@@ -384,6 +385,7 @@ public class App {
       new CustomUITaskHandler(databaseContext, app);
       new ThemeTaskHandler(databaseContext, app);
       new SettingsTaskHandler(app, configService);
+      new CustomDirectoryTaskHandler(app, configService);
 
       UpdateService updateService = new UpdateService(SERVER_VERSION, configService);
 
