@@ -91,17 +91,53 @@
             >
               {{ field.label }}
             </label>
-            <div class="select-container select-sm">
-              <app-custom-select
-                [ngModel]="getSettingValue(field.key, field.default ?? '')"
-                (ngModelChange)="onSelectChange(field.key, $event)"
-              >
-                @for (opt of field.options || []; track opt.value) {
-                  <app-custom-option [value]="opt.value">{{
-                    opt.label
-                  }}</app-custom-option>
-                }
-              </app-custom-select>
+            <div class="inspector-control-row">
+              <div class="select-container select-sm">
+                <app-custom-select
+                  [ngModel]="getSettingValue(field.key, field.default ?? '')"
+                  (ngModelChange)="onSelectChange(field.key, $event)"
+                >
+                  @for (opt of field.options || []; track opt.value) {
+                    <app-custom-option [value]="opt.value">{{
+                      opt.label
+                    }}</app-custom-option>
+                  }
+                </app-custom-select>
+              </div>
+              @if (field.colorKey) {
+                <div
+                  class="color-picker-wrapper inline-color-picker"
+                  [class.is-null]="
+                    !getSettingValue(field.colorKey, field.colorDefault ?? '')
+                  "
+                  [title]="field.label + ' Color'"
+                >
+                  <input
+                    type="color"
+                    class="color-picker-input"
+                    [value]="
+                      getSettingValue(
+                        field.colorKey,
+                        field.colorDefault ?? '#ffffff'
+                      )
+                    "
+                    (change)="onColorChange(field.colorKey, $event)"
+                  />
+                  @if (
+                    field.colorDefault &&
+                    getSettingValue(field.colorKey, field.colorDefault) !==
+                      field.colorDefault
+                  ) {
+                    <button
+                      class="color-reset-btn"
+                      (click)="resetColor(field.colorKey, field.colorDefault)"
+                      [title]="'UE_INSPECTOR_COLOR_RESET' | translate"
+                    >
+                      ✕
+                    </button>
+                  }
+                </div>
+              }
             </div>
           }
 

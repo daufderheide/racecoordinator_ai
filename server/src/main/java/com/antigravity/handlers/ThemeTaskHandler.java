@@ -261,14 +261,13 @@ public class ThemeTaskHandler {
         || ("preset".equals(as.get("audio.min_lap_time").getType())
             && "default_beep".equals(as.get("audio.min_lap_time").getUrl()))) {
       as.put(
-          "audio.min_lap_time",
-          new AudioConfig("tts", null, "Min lap time for {{driver.nickname}}"));
+          "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
       updated = true;
     }
     if (!as.containsKey("audio.drift_lap")
         || ("preset".equals(as.get("audio.drift_lap").getType())
             && "default_beep".equals(as.get("audio.drift_lap").getUrl()))) {
-      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {{driver.nickname}}"));
+      as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));
       updated = true;
     }
     return updated;

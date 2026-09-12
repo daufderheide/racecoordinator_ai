@@ -73,8 +73,20 @@ public final class RaceStatisticsUtils {
           for (Cell cell : row) {
             if (cell.getCellType() == CellType.STRING) {
               String strVal = cell.getStringCellValue();
+              if (strVal != null && strVal.contains("{")) {
+                strVal = normalizeTemplateVariables(strVal);
+              }
               cell.setBlank();
               cell.setCellValue(strVal);
+            }
+            Comment comment = cell.getCellComment();
+            if (comment != null && comment.getString() != null) {
+              String commentStr = comment.getString().getString();
+              if (commentStr != null && commentStr.contains("{")) {
+                comment.setString(
+                    new org.apache.poi.xssf.usermodel.XSSFRichTextString(
+                        normalizeTemplateVariables(commentStr)));
+              }
             }
           }
         }
@@ -1382,5 +1394,15 @@ public final class RaceStatisticsUtils {
       styleCache.put(key, style);
     }
     cell.setCellStyle(style);
+  }
+
+  private static final Pattern UNESCAPED_VARIABLE_PATTERN =
+      Pattern.compile("(?<!\\$)\\{+([a-zA-Z0-9_.()\\[\\]]+)\\}+");
+
+  public static String normalizeTemplateVariables(String input) {
+    if (input == null || !input.contains("{")) {
+      return input;
+    }
+    return UNESCAPED_VARIABLE_PATTERN.matcher(input).replaceAll("\\${$1}");
   }
 }

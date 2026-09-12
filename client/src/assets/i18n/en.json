@@ -1979,6 +1979,8 @@
   "UE_VAR_TIP_TITLE": "Important Excel Tip",
   "UE_VAR_TIP_DESC": "In Microsoft Excel, always use legacy Notes (Shift + F2), NOT modern Comments, when writing jx:area and jx:each directives. Also ensure jx:area lastCell covers all added columns and rows.",
   "UE_VAR_TIP_REUPLOAD": "Re-uploading changes: Race Coordinator stores template contents internally. When you edit and save your template in Excel, return here and click 'Select Custom Template' again to load your updates (you do not need to reset to default first).",
+  "UE_VAR_TIP_SYNTAX_TITLE": "Unified Syntax",
+  "UE_VAR_TIP_SYNTAX_DESC": "Both {variable} and ${variable} formats are fully supported across Excel templates, Raceday custom widgets, and Audio TTS callouts.",
   "UE_VAR_COPY": "Copy",
   "UE_VAR_COPIED": "Copied!",
   "UE_VAR_COPY_TOOLTIP": "Copy expression to clipboard",

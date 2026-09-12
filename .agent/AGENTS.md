@@ -128,3 +128,10 @@ Whenever a new configuration setting, property, or field is added, modified, or 
   ```
 - **Automated tests**: Unit tests for forms with text inputs should assert the presence of these ignore attributes (e.g., verifying `data-dashlane-ignore="true"` and `autocomplete="off"`).
 
+## Unified Template Variable & Telemetry Binding Rule
+- **Single Syntax & Naming Standard**: All variable expressions across Excel export templates (Jxls), Raceday UI custom widgets (`CustomWidgetBaseComponent`), and Text-to-Speech (TTS) audio callouts MUST adhere to unified variable naming and syntax.
+- **Support both `{...}` and `${...}`**: Both `{variable.path}` and `${variable.path}` formats MUST be accepted and produce identical output across XLS export, Raceday UI interpolation, and TTS callouts. Users must be able to copy and paste expressions between systems without modification.
+- **CamelCase telemetry fields**: Telemetry bindings must use clean camelCase property names (`totalLaps`, `totalTime`, `bestLapTime`, `lastLapTime`, `averageLapTime`, `medianLapTime`, `gapLeader`, `gapPosition`, `lane`). Do not introduce or maintain snake_case telemetry aliases in client widget code.
+- **No legacy `{{...}}`**: Audio resources, theme sound configurations, and factory defaults must use `{...}` or `${...}` single-brace syntax. Legacy double-curly brace `{{...}}` syntax is deprecated and forbidden in default resources.
+- **Automated Parity Tests**: Whenever adding new telemetry metrics or template variables, update both server (`TemplateVariableParityTest.java`) and client (`template-variables-parity.spec.ts`) automated parity test suites to guarantee cross-system alignment.
+

@@ -142,3 +142,22 @@
   padding-right: 10px !important;
   font-weight: 600;
 }
+
+.col-last {
+  width: 78px;
+  text-align: right !important;
+  padding-right: 10px !important;
+}
+
+.col-median {
+  width: 78px;
+  text-align: right !important;
+  padding-right: 10px !important;
+  font-weight: 600;
+}
+
+.col-lane {
+  width: 48px;
+  text-align: center !important;
+}
+

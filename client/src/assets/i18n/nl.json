@@ -1979,6 +1979,8 @@
   "UE_VAR_TIP_TITLE": "Belangrijke Excel-tip",
   "UE_VAR_TIP_DESC": "Gebruik in Microsoft Excel altijd klassieke Notities (Shift + F2), GEEN moderne Opmerkingen, bij het schrijven van jx:area- en jx:each-instructies. Zorg er ook voor dat jx:area lastCell alle toegevoegde kolommen en rijen omvat.",
   "UE_VAR_TIP_REUPLOAD": "Wijzigingen opnieuw uploaden: Race Coordinator slaat de inhoud van de sjabloon intern op. Wanneer u uw sjabloon in Excel bewerkt en opslaat, keert u hier terug en klikt u nogmaals op 'Aangepaste sjabloon selecteren' om uw updates te laden (u hoeft niet eerst te resetten naar standaard).",
+  "UE_VAR_TIP_SYNTAX_TITLE": "Uniforme syntaxis",
+  "UE_VAR_TIP_SYNTAX_DESC": "Zowel {variable}- als ${variable}-notaties worden volledig ondersteund in Excel-sjablonen, Raceday-aangepaste widgets en Audio-TTS-meldingen.",
   "UE_VAR_COPY": "Kopiëren",
   "UE_VAR_COPIED": "Gekopieerd!",
   "UE_VAR_COPY_TOOLTIP": "Kopieer expressie naar klembord",

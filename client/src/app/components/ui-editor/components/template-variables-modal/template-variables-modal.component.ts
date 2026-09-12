@@ -130,6 +130,10 @@ export { TemplateVariable } from "./template-variables.data";
                 <div style="margin-top: 6px;">
                   {{ "UE_VAR_TIP_REUPLOAD" | translate }}
                 </div>
+                <div style="margin-top: 6px;">
+                  <strong>{{ "UE_VAR_TIP_SYNTAX_TITLE" | translate }}:</strong>
+                  {{ "UE_VAR_TIP_SYNTAX_DESC" | translate }}
+                </div>
               </div>
             </div>
 

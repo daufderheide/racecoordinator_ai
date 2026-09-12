@@ -259,6 +259,13 @@ export class CustomWidgetService {
             ) {
               defaults[field.key] = field.default;
             }
+            if (
+              field.colorKey &&
+              defaults[field.colorKey] === undefined &&
+              field.colorDefault !== undefined
+            ) {
+              defaults[field.colorKey] = field.colorDefault;
+            }
           }
         }
         return defaults;
@@ -293,6 +300,11 @@ export class CustomWidgetService {
     try {
       // Delete existing sample folder first to ensure the new ones completely replace the previous ones
       await this.fileSystem.deleteWidgetDirectory("sample", true);
+
+      // Clean up legacy starter widget folders that were exported directly to the root before grouping
+      for (const folder of STARTER_WIDGET_FOLDERS) {
+        await this.fileSystem.deleteWidgetDirectory(folder, true);
+      }
 
       for (const folder of STARTER_WIDGET_FOLDERS) {
         const files = ["widget.json", "widget.html", "widget.css", "widget.ts"];

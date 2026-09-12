@@ -10,7 +10,7 @@
           <span class="pos-badge">P1</span>
           <span class="driver-name">{{ leader.name }}</span>
         </div>
-        <span class="lap-time">{{ formatTime(leader.best_lap_time) }}</span>
+        <span class="lap-time">{{ formatTime(leader.bestLapTime) }}</span>
       </div>
 
       <div class="delta-gap-row" [style.color]="deltaColor">
@@ -23,7 +23,7 @@
           <span class="pos-badge">P2</span>
           <span class="driver-name">{{ runnerUp.name }}</span>
         </div>
-        <span class="lap-time">{{ formatTime(runnerUp.best_lap_time) }}</span>
+        <span class="lap-time">{{ formatTime(runnerUp.bestLapTime) }}</span>
       </div>
     </ng-container>
 

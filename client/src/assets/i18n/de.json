@@ -1979,6 +1979,8 @@
   "UE_VAR_TIP_TITLE": "Wichtiger Excel-Tipp",
   "UE_VAR_TIP_DESC": "Verwenden Sie in Microsoft Excel immer klassische Notizen (Umschalt + F2), KEINE modernen Kommentare, wenn Sie jx:area- und jx:each-Befehle schreiben. Stellen Sie außerdem sicher, dass jx:area lastCell alle hinzugefügten Spalten und Zeilen abdeckt.",
   "UE_VAR_TIP_REUPLOAD": "Änderungen neu hochladen: Race Coordinator speichert Vorlageninhalte intern. Wenn Sie Ihre Vorlage in Excel bearbeiten und speichern, kehren Sie hierher zurück und klicken Sie erneut auf 'Benutzerdefinierte Vorlage auswählen' (ein Zurücksetzen auf Standard ist nicht erforderlich).",
+  "UE_VAR_TIP_SYNTAX_TITLE": "Einheitliche Syntax",
+  "UE_VAR_TIP_SYNTAX_DESC": "Sowohl {variable}- als auch ${variable}-Formate werden in Excel-Vorlagen, Raceday-Benutzer-Widgets und Audio-TTS-Ansagen vollständig unterstützt.",
   "UE_VAR_COPY": "Kopieren",
   "UE_VAR_COPIED": "Kopiert!",
   "UE_VAR_COPY_TOOLTIP": "Ausdruck in die Zwischenablage kopieren",

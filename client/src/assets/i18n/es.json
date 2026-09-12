@@ -1980,6 +1980,8 @@
   "UE_VAR_TIP_TITLE": "Consejo importante para Excel",
   "UE_VAR_TIP_DESC": "En Microsoft Excel, use siempre Notas clásicas (Mayús + F2), NO Comentarios modernos, para las directivas jx:area y jx:each. Asegúrese también de que lastCell en jx:area cubra todas las columnas y filas agregadas.",
   "UE_VAR_TIP_REUPLOAD": "Volver a cargar cambios: Race Coordinator almacena el contenido de la plantilla internamente. Cuando edite y guarde su plantilla en Excel, regrese aquí y haga clic nuevamente en 'Seleccionar plantilla personalizada' para cargar sus actualizaciones (no necesita restablecer a los valores predeterminados primero).",
+  "UE_VAR_TIP_SYNTAX_TITLE": "Sintaxis unificada",
+  "UE_VAR_TIP_SYNTAX_DESC": "Los formatos {variable} y ${variable} son totalmente compatibles con plantillas de Excel, widgets personalizados de Raceday y avisos TTS de audio.",
   "UE_VAR_COPY": "Copiar",
   "UE_VAR_COPIED": "¡Copiado!",
   "UE_VAR_COPY_TOOLTIP": "Copiar expresión al portapapeles",

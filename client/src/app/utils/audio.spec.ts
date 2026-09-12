@@ -269,20 +269,38 @@ describe("playSound Utility", () => {
   });
 
   describe("TTS Helpers", () => {
-    it("should create a valid TTS context", () => {
+    it("should create a valid TTS context with telemetry and race info", () => {
       const driver = { name: "Alice", nickname: "Ali" };
       const data = {
         lastLapTime: 1.1,
         bestLapTime: 1.0,
         averageLapTime: 1.2,
+        medianLapTime: 1.15,
         lapCount: 5,
+        totalLaps: 5,
+        totalTime: 6.0,
+        gapLeader: 0.5,
+        gapPosition: 0.2,
       };
-      const context = createTTSContext(driver, data);
+      const race = { name: "Friday GP" };
+      const track = { name: "Monaco" };
+      const heat = { number: 2 };
+      const context = createTTSContext(driver, data, race, track, heat);
 
       expect(context.driver.name).toBe("Alice");
       expect(context.driver.nickname).toBe("Ali");
+      expect(context.driver.driver.name).toBe("Alice");
       expect(context.driver.lastLapTime).toBe(1.1);
-      expect(context.driver.lapCount).toBe(5);
+      expect(context.driver.bestLapTime).toBe(1.0);
+      expect(context.driver.averageLapTime).toBe(1.2);
+      expect(context.driver.medianLapTime).toBe(1.15);
+      expect(context.driver.totalLaps).toBe(5);
+      expect(context.driver.totalTime).toBe(6.0);
+      expect(context.driver.gapLeader).toBe(0.5);
+      expect(context.driver.gapPosition).toBe(0.2);
+      expect(context.race?.name).toBe("Friday GP");
+      expect(context.track?.name).toBe("Monaco");
+      expect(context.heat?.number).toBe(2);
     });
 
     it("should use name if nickname is missing", () => {
@@ -306,71 +324,67 @@ describe("playSound Utility", () => {
       expect(context.driver.lapCount).toBe(0);
     });
 
-    it("should create a mock context", () => {
+    it("should create a mock context with rich unified properties", () => {
       const context = mockTTSContext();
       expect(context.driver.name).toBeDefined();
       expect(context.driver.lastLapTime).toBeGreaterThan(0);
+      expect(context.driver.bestLapTime).toBeGreaterThan(0);
+      expect(context.driver.averageLapTime).toBeGreaterThan(0);
+      expect(context.driver.medianLapTime).toBeGreaterThan(0);
+      expect(context.driver.totalLaps).toBeGreaterThan(0);
+      expect(context.driver.driver.name).toBe(context.driver.name);
+      expect(context.race?.name).toBeDefined();
+      expect(context.track?.name).toBeDefined();
     });
   });
 
   describe("interpolate Utility", () => {
-    it("should interpolate simple paths", () => {
-      const text = "Hello {name}";
+    it("should interpolate simple paths with {...} and ${...}", () => {
+      const text = "Hello {name} and ${name}";
       const data = { name: "World" };
-      expect(interpolate(text, data)).toBe("Hello World");
-    });
-
-    it("should interpolate double curly braces paths", () => {
-      const text = "Min lap time for {{driver.nickname}}";
-      const data = { driver: { nickname: "Speedy" } };
-      expect(interpolate(text, data)).toBe("Min lap time for Speedy");
+      expect(interpolate(text, data)).toBe("Hello World and World");
     });
 
     it("should handle whitespace inside braces", () => {
-      const text = "Driver {{ driver.nickname }} on lap { driver.lapCount }";
+      const text = "Driver { driver.nickname } on lap ${ driver.lapCount }";
       const data = { driver: { nickname: "Speedy", lapCount: 5 } };
       expect(interpolate(text, data)).toBe("Driver Speedy on lap 5");
     });
 
-    it("should interpolate nested paths", () => {
-      const text = "{driver.name} has {stats.laps} laps";
+    it("should interpolate nested paths with both {...} and ${...}", () => {
+      const text = "{driver.name} has ${stats.laps} laps on {track.name}";
       const data = {
         driver: { name: "Alice" },
         stats: { laps: 10 },
+        track: { name: "Monaco" },
       };
-      expect(interpolate(text, data)).toBe("Alice has 10 laps");
+      expect(interpolate(text, data)).toBe("Alice has 10 laps on Monaco");
     });
 
-    it("should handle case-insensitivity with double braces", () => {
-      const text = "{{DRIVER.NICKNAME}}";
-      const data = { driver: { nickname: "Bob" } };
-      expect(interpolate(text, data)).toBe("Bob");
-    });
-
-    it("should handle case-insensitivity", () => {
-      const text = "{DRIVER.NAME}";
-      const data = { driver: { name: "Bob" } };
-      expect(interpolate(text, data)).toBe("Bob");
+    it("should handle case-insensitivity with both {...} and ${...}", () => {
+      const text = "{DRIVER.NAME} - ${DRIVER.NICKNAME}";
+      const data = { driver: { name: "Bob", nickname: "Bobby" } };
+      expect(interpolate(text, data)).toBe("Bob - Bobby");
     });
 
     it("should format numbers to 3 decimal places", () => {
-      const text = "Value: {val}";
+      const text = "Value: {val} and ${val}";
       const data = { val: 1.2345678 };
-      expect(interpolate(text, data)).toBe("Value: 1.235");
+      expect(interpolate(text, data)).toBe("Value: 1.235 and 1.235");
     });
 
     it("should leave placeholders if value not found", () => {
-      const text = "Keep {missing} and {{other_missing}}";
+      const text = "Keep {missing} and ${other_missing}";
       const data = {};
       expect(interpolate(text, data)).toBe(
-        "Keep {missing} and {{other_missing}}",
+        "Keep {missing} and ${other_missing}",
       );
     });
 
     it("should leave placeholders if object resolved rather than primitive", () => {
-      const text = "Driver: {driver}";
+      const text = "Driver: {driver} and ${driver}";
       const data = { driver: { name: "Alice" } };
-      expect(interpolate(text, data)).toBe("Driver: {driver}");
+      expect(interpolate(text, data)).toBe("Driver: {driver} and ${driver}");
     });
 
     it("should handle empty or null text and data safely", () => {

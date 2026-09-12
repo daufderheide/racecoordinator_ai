@@ -1980,6 +1980,8 @@
   "UE_VAR_TIP_TITLE": "Conseil Excel important",
   "UE_VAR_TIP_DESC": "Dans Microsoft Excel, utilisez toujours les Notes classiques (Maj + F2), et NON les Commentaires modernes, lors de la rédaction des directives jx:area et jx:each. Veillez aussi à ce que lastCell dans jx:area englobe toutes les colonnes et lignes ajoutées.",
   "UE_VAR_TIP_REUPLOAD": "Rechargement des modifications: Race Coordinator stocke le contenu des modèles en interne. Lorsque vous modifiez et enregistrez votre modèle dans Excel, revenez ici et cliquez à nouveau sur 'Sélectionner un modèle personnalisé' pour charger vos modifications (inutile de réinitialiser par défaut).",
+  "UE_VAR_TIP_SYNTAX_TITLE": "Syntaxe unifiée",
+  "UE_VAR_TIP_SYNTAX_DESC": "Les formats {variable} et ${variable} sont entièrement pris en charge dans les modèles Excel, les widgets personnalisés Raceday et les annonces audio TTS.",
   "UE_VAR_COPY": "Copier",
   "UE_VAR_COPIED": "Copié !",
   "UE_VAR_COPY_TOOLTIP": "Copier l'expression dans le presse-papiers",

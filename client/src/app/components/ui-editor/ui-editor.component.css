@@ -1653,6 +1653,18 @@
   gap: 10px;
 }
 
+.inspector-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.inspector-control-row .select-container {
+  flex: 1;
+  min-width: 0;
+}
+
 .color-picker-wrapper {
   display: flex;
   align-items: center;
@@ -1670,6 +1682,18 @@
 .color-picker-wrapper.is-null {
   background: rgba(15, 23, 42, 0.2);
   border: 1px dashed rgba(148, 163, 184, 0.25);
+}
+
+.color-picker-wrapper.inline-color-picker {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  min-height: 28px;
+  height: 28px;
+}
+
+.color-picker-wrapper.inline-color-picker .color-picker-input {
+  width: 24px;
+  height: 18px;
 }
 
 .color-picker-placeholder {

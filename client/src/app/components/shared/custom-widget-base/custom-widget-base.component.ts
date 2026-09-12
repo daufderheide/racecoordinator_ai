@@ -20,6 +20,7 @@ import { RacePredictionService } from "@app/services/race-prediction.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
+import { interpolate } from "@app/utils/audio";
 
 @Component({
   template: "",
@@ -79,93 +80,110 @@ export class CustomWidgetBaseComponent {
     if (parts && parts.length > 0) {
       return parts
         .filter((p: any) => p && p.driver && !Driver.isEmpty(p.driver))
-        .map((p: any) => {
-          const matchingHd = heatDataList.find(
-            (hd: any) =>
-              hd?.driver?.entity_id === p.driver?.entity_id ||
-              hd?.driver?.name === p.driver?.name ||
-              hd?.participant?.objectId === p.objectId,
-          );
-          const bestLap =
-            p.bestLapTime && p.bestLapTime > 0
-              ? p.bestLapTime
-              : matchingHd?.bestLapTime || 0;
-          const lastLap = matchingHd?.lastLapTime || 0;
-          const laps =
-            p.totalLaps !== undefined && p.totalLaps !== null
-              ? p.totalLaps
-              : matchingHd?.lapCount || 0;
-          const totalTime = p.totalTime || matchingHd?.totalTime || 0;
-          const avgLap =
-            p.averageLapTime && p.averageLapTime > 0
-              ? p.averageLapTime
-              : matchingHd?.averageLapTime ||
-                (laps > 0 && totalTime > 0 ? totalTime / laps : 0);
-          const gapLeader =
-            p.gapLeader !== undefined && p.gapLeader !== 0
-              ? p.gapLeader
-              : matchingHd?.gapLeader || 0;
-          const gapPosition =
-            p.gapPosition !== undefined && p.gapPosition !== 0
-              ? p.gapPosition
-              : matchingHd?.gapPosition || 0;
-
-          return {
-            name:
-              p.team?.name || p.driver?.nickname || p.driver?.name || "Driver",
-            driver: p.driver,
-            rank: p.rank || 0,
-            rankValue: p.rankValue || 0,
-            lapCount: laps,
-            total_laps: laps,
-            total_time: totalTime,
-            best_lap_time: bestLap,
-            last_lap_time: lastLap,
-            avg_lap_time: avgLap,
-            average_lap_time: avgLap,
-            gap_leader: gapLeader,
-            gap_position: gapPosition,
-            participant: p,
-            heatData: matchingHd,
-          };
-        });
+        .map((p: any) => this.mapParticipantStanding(p, heatDataList));
     }
 
     if (heatDataList && heatDataList.length > 0) {
       return heatDataList
         .filter((hd: any) => hd && hd.driver && !Driver.isEmpty(hd.driver))
-        .map((hd: any) => {
-          const laps = hd.lapCount || 0;
-          const totalTime = hd.totalTime || 0;
-          const avgLap =
-            hd.averageLapTime ||
-            (laps > 0 && totalTime > 0 ? totalTime / laps : 0);
-          return {
-            name:
-              hd.participant?.team?.name ||
-              hd.driver?.nickname ||
-              hd.driver?.name ||
-              "Driver",
-            driver: hd.driver,
-            rank: hd.rank || 0,
-            rankValue: hd.lapCount || 0,
-            lapCount: laps,
-            total_laps: laps,
-            total_time: totalTime,
-            best_lap_time: hd.bestLapTime || 0,
-            last_lap_time: hd.lastLapTime || 0,
-            avg_lap_time: avgLap,
-            average_lap_time: avgLap,
-            gap_leader: hd.gapLeader || 0,
-            gap_position: hd.gapPosition || 0,
-            gapLeader: hd.gapLeader || 0,
-            laneIndex: hd.laneIndex,
-            heatData: hd,
-          };
-        });
+        .map((hd: any) => this.mapHeatDriverStanding(hd));
     }
 
     return [];
+  }
+
+  private mapParticipantStanding(p: any, heatDataList: DriverHeatData[]): any {
+    const matchingHd = heatDataList.find(
+      (hd: any) =>
+        hd?.driver?.entity_id === p.driver?.entity_id ||
+        hd?.driver?.name === p.driver?.name ||
+        hd?.participant?.objectId === p.objectId,
+    );
+    const bestLap =
+      p.bestLapTime && p.bestLapTime > 0
+        ? p.bestLapTime
+        : matchingHd?.bestLapTime || 0;
+    const lastLap = matchingHd?.lastLapTime || 0;
+    const laps =
+      p.totalLaps !== undefined && p.totalLaps !== null
+        ? p.totalLaps
+        : matchingHd?.lapCount || 0;
+    const totalTime = p.totalTime || matchingHd?.totalTime || 0;
+    const avgLap =
+      p.averageLapTime && p.averageLapTime > 0
+        ? p.averageLapTime
+        : matchingHd?.averageLapTime ||
+          (laps > 0 && totalTime > 0 ? totalTime / laps : 0);
+    const gapLeader =
+      p.gapLeader !== undefined && p.gapLeader !== 0
+        ? p.gapLeader
+        : matchingHd?.gapLeader || 0;
+    const gapPosition =
+      p.gapPosition !== undefined && p.gapPosition !== 0
+        ? p.gapPosition
+        : matchingHd?.gapPosition || 0;
+    const medianLap =
+      p.medianLapTime && p.medianLapTime > 0
+        ? p.medianLapTime
+        : matchingHd?.medianLapTime || 0;
+
+    return {
+      name: p.team?.name || p.driver?.nickname || p.driver?.name || "Driver",
+      driver: p.driver,
+      rank: p.rank || 0,
+      rankValue: p.rankValue || 0,
+      totalLaps: laps,
+      lapCount: laps,
+      totalTime: totalTime,
+      bestLapTime: bestLap,
+      lastLapTime: lastLap,
+      averageLapTime: avgLap,
+      medianLapTime: medianLap,
+      gapLeader: gapLeader,
+      gapPosition: gapPosition,
+      lane:
+        (matchingHd as any)?.laneIndex !== undefined
+          ? (matchingHd as any).laneIndex + 1
+          : (matchingHd as any)?.lane,
+      laneIndex: (matchingHd as any)?.laneIndex,
+      laneLaps: p.laneLaps || [],
+      positionPoints: p.positionPoints || 0,
+      overallBonusPoints: p.overallBonusPoints || 0,
+      heatPositionPoints: p.heatPositionPoints || 0,
+      heatBonusPoints: p.heatBonusPoints || 0,
+      totalPoints: p.totalPoints || 0,
+      participant: p,
+      heatData: matchingHd,
+    };
+  }
+
+  private mapHeatDriverStanding(hd: any): any {
+    const laps = hd.lapCount || 0;
+    const totalTime = hd.totalTime || 0;
+    const avgLap =
+      hd.averageLapTime || (laps > 0 && totalTime > 0 ? totalTime / laps : 0);
+    return {
+      name:
+        hd.participant?.team?.name ||
+        hd.driver?.nickname ||
+        hd.driver?.name ||
+        "Driver",
+      driver: hd.driver,
+      rank: hd.rank || 0,
+      rankValue: hd.lapCount || 0,
+      totalLaps: laps,
+      lapCount: laps,
+      totalTime: totalTime,
+      bestLapTime: hd.bestLapTime || 0,
+      lastLapTime: hd.lastLapTime || 0,
+      averageLapTime: avgLap,
+      medianLapTime: hd.medianLapTime || 0,
+      gapLeader: hd.gapLeader || 0,
+      gapPosition: hd.gapPosition || 0,
+      lane: (hd.laneIndex ?? 0) + 1,
+      laneIndex: hd.laneIndex,
+      heatData: hd,
+    };
   }
 
   get heatDrivers(): any[] {
@@ -190,18 +208,20 @@ export class CustomWidgetBaseComponent {
             hd.driver?.name ||
             "Driver",
           driver: hd.driver,
+          actualDriver: hd.actualDriver || hd.driver,
+          lane: (hd.laneIndex ?? 0) + 1,
           laneIndex: hd.laneIndex,
           rank: hd.rank || 0,
+          totalLaps: laps,
           lapCount: laps,
-          total_laps: laps,
-          total_time: totalTime,
-          best_lap_time: hd.bestLapTime || 0,
-          last_lap_time: hd.lastLapTime || 0,
-          avg_lap_time: avgLap,
-          average_lap_time: avgLap,
-          gap_leader: hd.gapLeader || 0,
-          gap_position: hd.gapPosition || 0,
+          adjustedLapCount: laps,
+          totalTime: totalTime,
+          bestLapTime: hd.bestLapTime || 0,
+          lastLapTime: hd.lastLapTime || 0,
+          averageLapTime: avgLap,
+          medianLapTime: hd.medianLapTime || 0,
           gapLeader: hd.gapLeader || 0,
+          gapPosition: hd.gapPosition || 0,
           reactionTime: hd.reactionTime || 0,
           heatData: hd,
         };
@@ -256,5 +276,27 @@ export class CustomWidgetBaseComponent {
       return settings[key] as T;
     }
     return defaultValue as T;
+  }
+
+  interpolate(text: string, customContext?: any): string {
+    const leader = this.driverStandings?.[0];
+    const defaultContext = {
+      race: {
+        name: this.raceName,
+        trackName: this.trackName,
+        totalHeats: this.totalHeats,
+        formattedTime: this.formattedTime,
+        status: this.autoStatusLabel,
+      },
+      track: {
+        name: this.trackName,
+      },
+      heat: this.heat,
+      driver: leader,
+      standings: this.driverStandings,
+      heatDrivers: this.heatDrivers,
+      ...customContext,
+    };
+    return interpolate(text, defaultContext);
   }
 }

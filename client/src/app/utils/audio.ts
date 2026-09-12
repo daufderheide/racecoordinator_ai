@@ -6,14 +6,41 @@ export interface TTSDriverData {
 import { LoggerService } from "@app/services/logger.service";
 
 export interface TTSLapData {
-  lastLapTime: number;
-  bestLapTime: number;
-  averageLapTime: number;
-  lapCount: number;
+  lastLapTime?: number;
+  bestLapTime?: number;
+  averageLapTime?: number;
+  medianLapTime?: number;
+  lapCount?: number;
+  totalLaps?: number;
+  totalTime?: number;
+  gapLeader?: number | string;
+  gapPosition?: number | string;
+  rank?: number;
+  lane?: number;
+}
+
+export interface TTSRaceData {
+  name?: string;
+  trackName?: string;
+  totalHeats?: number;
+}
+
+export interface TTSTrackData {
+  name?: string;
+}
+
+export interface TTSHeatData {
+  heatNumber?: number;
+  number?: number;
 }
 
 export interface TTSContext {
-  driver: TTSDriverData & TTSLapData;
+  driver: TTSDriverData &
+    TTSLapData & { driver: { name: string; nickname: string } };
+  race?: TTSRaceData;
+  track?: TTSTrackData;
+  heat?: TTSHeatData;
+  [key: string]: any;
 }
 
 /** Resolves an audio URL or asset ID to a fully qualified URL for playback. */
@@ -166,7 +193,7 @@ export function interpolate(text: string, data: any): string {
   if (!text || !data) {
     return text || "";
   }
-  return text.replace(/\{+([^{}]+)\}+/g, (match, path) => {
+  return text.replace(/\$?\{([^{}]+)\}/g, (match, path) => {
     const cleanPath = path.trim();
     if (!cleanPath) {
       return match;
@@ -201,18 +228,63 @@ export function interpolate(text: string, data: any): string {
 export function createTTSContext(
   driver?: TTSDriverData | null,
   driverData?: TTSLapData | null,
+  race?: TTSRaceData | null,
+  track?: TTSTrackData | null,
+  heat?: TTSHeatData | null,
 ): TTSContext {
   const driverName = driver?.name ?? "";
   const driverNickname = driver?.nickname || driverName;
+  const laps = driverData?.totalLaps ?? driverData?.lapCount ?? 0;
   return {
     driver: {
       name: driverName,
       nickname: driverNickname,
+      driver: {
+        name: driverName,
+        nickname: driverNickname,
+      },
       lastLapTime: driverData?.lastLapTime ?? 0,
       bestLapTime: driverData?.bestLapTime ?? 0,
       averageLapTime: driverData?.averageLapTime ?? 0,
-      lapCount: driverData?.lapCount ?? 0,
+      medianLapTime: driverData?.medianLapTime ?? 0,
+      lapCount: laps,
+      totalLaps: laps,
+      totalTime: driverData?.totalTime ?? 0,
+      gapLeader: driverData?.gapLeader ?? 0,
+      gapPosition: driverData?.gapPosition ?? 0,
+      rank: driverData?.rank ?? 0,
+      lane: driverData?.lane ?? 0,
     },
+    ...(race
+      ? {
+          race: {
+            name: race.name || "",
+            trackName: race.trackName || "",
+            totalHeats: race.totalHeats || 0,
+          },
+        }
+      : {}),
+    ...(track
+      ? {
+          track: {
+            name: track.name || "",
+          },
+        }
+      : race?.trackName
+        ? {
+            track: {
+              name: race.trackName,
+            },
+          }
+        : {}),
+    ...(heat
+      ? {
+          heat: {
+            heatNumber: heat.heatNumber ?? heat.number ?? 0,
+            number: heat.number ?? heat.heatNumber ?? 0,
+          },
+        }
+      : {}),
   };
 }
 
@@ -223,7 +295,26 @@ export function mockTTSContext(): TTSContext {
       lastLapTime: 1.234,
       bestLapTime: 1.234,
       averageLapTime: 1.5,
+      medianLapTime: 1.5,
       lapCount: 10,
+      totalLaps: 10,
+      totalTime: 15.0,
+      gapLeader: "+0.500",
+      gapPosition: "+0.200",
+      rank: 1,
+      lane: 1,
+    },
+    {
+      name: "Grand Prix",
+      trackName: "Speedway",
+      totalHeats: 4,
+    },
+    {
+      name: "Speedway",
+    },
+    {
+      heatNumber: 1,
+      number: 1,
     },
   );
 }

@@ -81,9 +81,9 @@ This tells Jxls to clone the template sheet once per heat, naming the resulting 
 
 ---
 
-## Complete Variable Encyclopedia (`${...}`)
+## Complete Variable Encyclopedia (`${...}` or `{...}`)
 
-All expressions in your cells are enclosed in `${...}`. Property names are case-sensitive (camelCase).
+Expressions in template cells and notes can be enclosed in either `${...}` or `{...}` syntax (e.g. `${driver.bestLapTime}` or `{driver.bestLapTime}`). Race Coordinator AI automatically normalizes both formats, ensuring full interoperability with **Raceday Custom UI Widgets** and **Text-to-Speech (TTS) Audio Callouts** so you can copy and paste expressions between systems seamlessly. Property names use clean camelCase.
 
 ### 1. Overall Standings (`items="standings" var="driver"`)
 

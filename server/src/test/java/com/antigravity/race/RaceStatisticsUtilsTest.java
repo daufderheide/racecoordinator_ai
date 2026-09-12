@@ -1483,4 +1483,56 @@ public class RaceStatisticsUtilsTest {
     }
     return null;
   }
+
+  @Test
+  public void testNormalizeTemplateVariables() {
+    assertEquals(
+        "${driver.totalLaps}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{driver.totalLaps}"));
+    assertEquals(
+        "${driver.totalLaps}",
+        RaceStatisticsUtils.normalizeTemplateVariables("${driver.totalLaps}"));
+    assertEquals(
+        "${driver.laneLaps[0]}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{driver.laneLaps[0]}"));
+    assertEquals(
+        "${heat.getDriverNameOnLane(0)}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{heat.getDriverNameOnLane(0)}"));
+    assertEquals(
+        "${driver.nickname}",
+        RaceStatisticsUtils.normalizeTemplateVariables("{{driver.nickname}}"));
+    assertEquals(
+        "Winner: ${driver.name} with ${driver.totalLaps} laps",
+        RaceStatisticsUtils.normalizeTemplateVariables(
+            "Winner: {driver.name} with {driver.totalLaps} laps"));
+    assertEquals(
+        "Normal text without vars",
+        RaceStatisticsUtils.normalizeTemplateVariables("Normal text without vars"));
+    assertNull(RaceStatisticsUtils.normalizeTemplateVariables(null));
+  }
+
+  @Test
+  public void testSanitizeWorkbookNormalizesUnescapedVariables() throws Exception {
+    try (XSSFWorkbook wb = new XSSFWorkbook();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      Sheet sheet = wb.createSheet("Overall Standings");
+      Row row = sheet.createRow(0);
+      Cell cell = row.createCell(0);
+      cell.setCellValue("{driver.totalLaps}");
+
+      Row row1 = sheet.createRow(1);
+      Cell cell1 = row1.createCell(0);
+      cell1.setCellValue("${driver.bestLapTime}");
+
+      wb.write(baos);
+
+      try (InputStream is = new java.io.ByteArrayInputStream(baos.toByteArray());
+          InputStream sanitized = RaceStatisticsUtils.sanitizeWorkbookTemplate(is);
+          XSSFWorkbook resultWb = new XSSFWorkbook(sanitized)) {
+        Sheet resSheet = resultWb.getSheet("Overall Standings");
+        assertEquals("${driver.totalLaps}", resSheet.getRow(0).getCell(0).getStringCellValue());
+        assertEquals("${driver.bestLapTime}", resSheet.getRow(1).getCell(0).getStringCellValue());
+      }
+    }
+  }
 }
