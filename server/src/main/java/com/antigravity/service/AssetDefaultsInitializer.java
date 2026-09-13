@@ -244,6 +244,35 @@ public class AssetDefaultsInitializer {
         new DefaultAsset("default_heat_over", "audio/english/woman/w_heatover.wav", "Heat Over"));
     DEFAULT_AUDIO_ASSETS.add(
         new DefaultAsset("default_race_over", "audio/english/woman/w_raceover.wav", "Race Over"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_record_lap", "audio/english/woman/w_recordlap.wav", "Overall Record Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_record_lane_lap",
+            "audio/english/woman/w_recordlanelap.wav",
+            "Overall Lane Record Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_best_race_lap", "audio/english/woman/w_bestlap.wav", "Race Best Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_best_race_lane_lap",
+            "audio/english/woman/w_bestlanelap.wav",
+            "Race Lane Best Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_best_heat_lap", "audio/english/woman/w_bestheatlap.wav", "Heat Best Lap"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_new_race_leader",
+            "audio/english/woman/w_newraceleader.wav",
+            "New Race Leader"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_new_heat_leader",
+            "audio/english/woman/w_newheatleader.wav",
+            "New Heat Leader"));
   }
 
   private static final Map<String, String> RESOURCE_MAP = new HashMap<>();
@@ -651,10 +680,6 @@ public class AssetDefaultsInitializer {
     }
     if (!as.containsKey("audio.race_over")) {
       as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
-      updated = true;
-    }
-    if (!as.containsKey("audio.penalty")) {
-      as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
       updated = true;
     }
     if (!as.containsKey("audio.min_lap_time")

@@ -221,24 +221,79 @@ public class DatabaseInitializer {
     if (!helmetAssets.isEmpty()) {
       avatarUrl = helmetAssets.get((index - 1) % helmetAssets.size()).getUrl();
     }
-    return new Driver(
-        name,
-        nickname,
-        avatarUrl,
-        lapAudio,
-        bestLapAudio,
-        penaltyAudio,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        sequenceId,
-        null);
+    return new Driver.Builder()
+        .withName(name)
+        .withNickname(nickname)
+        .withAvatarUrl(avatarUrl)
+        .withLapAudio(lapAudio)
+        .withBestLapAudio(bestLapAudio)
+        .withPenaltyAudio(penaltyAudio)
+        .withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""))
+        .withOverallLaneBestLapAudio(new AudioConfig("preset", "default_record_lane_lap", ""))
+        .withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""))
+        .withRaceLaneBestLapAudio(new AudioConfig("preset", "default_best_race_lane_lap", ""))
+        .withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""))
+        .withEntityId(sequenceId)
+        .build();
+  }
+
+  private boolean isAudioConfigMissing(AudioConfig config) {
+    if (config == null || config.getType() == null || config.getType().trim().isEmpty()) {
+      return true;
+    }
+    String type = config.getType().trim().toLowerCase();
+    if ("none".equals(type) || "tts".equals(type)) {
+      return false;
+    }
+    return config.getUrl() == null || config.getUrl().trim().isEmpty();
+  }
+
+  public void backfillDrivers(DatabaseContext context) {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    List<Driver> drivers = driverRepo.findAll();
+    for (Driver driver : drivers) {
+      boolean needsUpdate = false;
+      Driver.Builder builder = Driver.Builder.from(driver);
+
+      if (isAudioConfigMissing(driver.getOverallBestLapAudio())) {
+        builder.withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getOverallLaneBestLapAudio())) {
+        builder.withOverallLaneBestLapAudio(
+            new AudioConfig("preset", "default_record_lane_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getRaceBestLapAudio())) {
+        builder.withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getRaceLaneBestLapAudio())) {
+        builder.withRaceLaneBestLapAudio(
+            new AudioConfig("preset", "default_best_race_lane_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getHeatBestLapAudio())) {
+        builder.withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getNewRaceLeaderAudio())) {
+        builder.withNewRaceLeaderAudio(new AudioConfig("preset", "default_new_race_leader", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getNewHeatLeaderAudio())) {
+        builder.withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""));
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        driverRepo.replace(driver.getEntityId(), builder.build());
+        logger.info(
+            "Backfilled audio settings for driver '{}' ({})",
+            driver.getName(),
+            driver.getEntityId());
+      }
+    }
   }
 
   public Track resetTracks(DatabaseContext context) {
@@ -477,7 +532,6 @@ public class DatabaseInitializer {
     as.put("audio.seconds_left.halfway", new AudioConfig("preset", "default_heat_half", null));
     as.put("audio.heat_over", new AudioConfig("preset", "default_heat_over", null));
     as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
-    as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
     as.put(
         "audio.min_lap_time", new AudioConfig("tts", null, "Min lap time for {driver.nickname}"));
     as.put("audio.drift_lap", new AudioConfig("tts", null, "Drift lap for {driver.nickname}"));

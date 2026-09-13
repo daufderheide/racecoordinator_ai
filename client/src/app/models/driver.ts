@@ -20,6 +20,13 @@ export class Driver implements Model {
   lapAudio: AudioConfig;
   bestLapAudio: AudioConfig;
   penaltyAudio: AudioConfig;
+  overallBestLapAudio: AudioConfig;
+  overallLaneBestLapAudio: AudioConfig;
+  raceBestLapAudio: AudioConfig;
+  raceLaneBestLapAudio: AudioConfig;
+  heatBestLapAudio: AudioConfig;
+  newRaceLeaderAudio: AudioConfig;
+  newHeatLeaderAudio: AudioConfig;
 
   constructor(
     entity_id: string,
@@ -30,6 +37,13 @@ export class Driver implements Model {
     bestLapAudio?: AudioConfig,
     penaltyAudio?: AudioConfig,
     falseStartAudio?: AudioConfig,
+    overallBestLapAudio?: AudioConfig,
+    overallLaneBestLapAudio?: AudioConfig,
+    raceBestLapAudio?: AudioConfig,
+    raceLaneBestLapAudio?: AudioConfig,
+    heatBestLapAudio?: AudioConfig,
+    newRaceLeaderAudio?: AudioConfig,
+    newHeatLeaderAudio?: AudioConfig,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -61,6 +75,34 @@ export class Driver implements Model {
     this.penaltyAudio = sanitizeAudio(
       falseStartAudio || penaltyAudio,
       "default_penalty",
+    );
+    this.overallBestLapAudio = sanitizeAudio(
+      overallBestLapAudio,
+      "default_record_lap",
+    );
+    this.overallLaneBestLapAudio = sanitizeAudio(
+      overallLaneBestLapAudio,
+      "default_record_lane_lap",
+    );
+    this.raceBestLapAudio = sanitizeAudio(
+      raceBestLapAudio,
+      "default_best_race_lap",
+    );
+    this.raceLaneBestLapAudio = sanitizeAudio(
+      raceLaneBestLapAudio,
+      "default_best_race_lane_lap",
+    );
+    this.heatBestLapAudio = sanitizeAudio(
+      heatBestLapAudio,
+      "default_best_heat_lap",
+    );
+    this.newRaceLeaderAudio = sanitizeAudio(
+      newRaceLeaderAudio,
+      "default_new_race_leader",
+    );
+    this.newHeatLeaderAudio = sanitizeAudio(
+      newHeatLeaderAudio,
+      "default_new_heat_leader",
     );
   }
 

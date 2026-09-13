@@ -36,6 +36,34 @@ describe("Driver Model", () => {
       type: "preset",
       url: "default_penalty",
     });
+    expect(driver.overallBestLapAudio).toEqual({
+      type: "preset",
+      url: "default_record_lap",
+    });
+    expect(driver.overallLaneBestLapAudio).toEqual({
+      type: "preset",
+      url: "default_record_lane_lap",
+    });
+    expect(driver.raceBestLapAudio).toEqual({
+      type: "preset",
+      url: "default_best_race_lap",
+    });
+    expect(driver.raceLaneBestLapAudio).toEqual({
+      type: "preset",
+      url: "default_best_race_lane_lap",
+    });
+    expect(driver.heatBestLapAudio).toEqual({
+      type: "preset",
+      url: "default_best_heat_lap",
+    });
+    expect(driver.newRaceLeaderAudio).toEqual({
+      type: "preset",
+      url: "default_new_race_leader",
+    });
+    expect(driver.newHeatLeaderAudio).toEqual({
+      type: "preset",
+      url: "default_new_heat_leader",
+    });
   });
 
   it("should not set default preset sound urls when type is none", () => {
@@ -44,6 +72,14 @@ describe("Driver Model", () => {
       "Dave",
       "Dave",
       undefined,
+      { type: "none" },
+      { type: "none" },
+      { type: "none" },
+      undefined,
+      { type: "none" },
+      { type: "none" },
+      { type: "none" },
+      { type: "none" },
       { type: "none" },
       { type: "none" },
       { type: "none" },
@@ -56,6 +92,20 @@ describe("Driver Model", () => {
     expect(driver.penaltyAudio.url).toBeUndefined();
     expect(driver.falseStartAudio.type).toBe("none");
     expect(driver.falseStartAudio.url).toBeUndefined();
+    expect(driver.overallBestLapAudio.type).toBe("none");
+    expect(driver.overallBestLapAudio.url).toBeUndefined();
+    expect(driver.overallLaneBestLapAudio.type).toBe("none");
+    expect(driver.overallLaneBestLapAudio.url).toBeUndefined();
+    expect(driver.raceBestLapAudio.type).toBe("none");
+    expect(driver.raceBestLapAudio.url).toBeUndefined();
+    expect(driver.raceLaneBestLapAudio.type).toBe("none");
+    expect(driver.raceLaneBestLapAudio.url).toBeUndefined();
+    expect(driver.heatBestLapAudio.type).toBe("none");
+    expect(driver.heatBestLapAudio.url).toBeUndefined();
+    expect(driver.newRaceLeaderAudio.type).toBe("none");
+    expect(driver.newRaceLeaderAudio.url).toBeUndefined();
+    expect(driver.newHeatLeaderAudio.type).toBe("none");
+    expect(driver.newHeatLeaderAudio.url).toBeUndefined();
   });
 
   it("should support falseStartAudio getter, setter, and constructor parameter", () => {

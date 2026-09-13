@@ -133,25 +133,7 @@ public class DatabaseTaskHandler {
           || driver.getEntityId().isEmpty()
           || "new".equals(driver.getEntityId())) {
         String nextId = getNextSequence("drivers");
-        driver =
-            new Driver(
-                driver.getName(),
-                driver.getNickname(),
-                driver.getAvatarUrl(),
-                driver.getLapAudio(),
-                driver.getBestLapAudio(),
-                driver.getPenaltyAudio(),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                nextId,
-                null);
+        driver = Driver.Builder.from(driver).withEntityId(nextId).build();
       }
       driverRepository.insert(driver);
       ctx.status(201).json(driver);

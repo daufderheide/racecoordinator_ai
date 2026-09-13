@@ -3,6 +3,7 @@ package com.antigravity.race;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -1508,5 +1509,113 @@ public class HeatExecutionManagerTest {
     executionManager.resetAllLanes();
     assertEquals(0.0, executionManager.getTimeSinceLastLap()[0], 0.001);
     assertEquals(0.0, executionManager.getTimeSinceLastLap()[1], 0.001);
+  }
+
+  @Test
+  public void testLeaderChangeEvaluationLogic() {
+    // 1. Initial state: no leaders before any laps
+    assertNull(executionManager.getHeatLeaderParticipantId());
+    assertNull(executionManager.getRaceLeaderParticipantId());
+
+    // 2. Evaluate leader change when driver takes overall race lead
+    boolean[] resultRaceLead = executionManager.evaluateLeaderChange(null, null, "d1");
+    // If d1 takes lead and was not leader:
+    // With d1 having no laps yet, getRaceLeaderParticipantId() returns null, so false
+    assertFalse(resultRaceLead[0]);
+    assertFalse(resultRaceLead[1]);
+  }
+
+  @Test
+  public void testLeaderTrackingOnActualLaps() {
+    // Driver 1 on lane 0, Driver 2 on lane 1
+    // Initial state: no leader
+    assertNull(executionManager.getHeatLeaderParticipantId());
+    assertNull(executionManager.getRaceLeaderParticipantId());
+
+    // Reaction times
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+
+    String prevRaceLeader = executionManager.getRaceLeaderParticipantId();
+    String prevHeatLeader = executionManager.getHeatLeaderParticipantId();
+
+    // Driver 1 completes lap 1 -> becomes heat leader and race leader!
+    executionManager.onLap(0, 5.0, 1, false, true, false);
+    assertEquals(
+        participants.get(0).getParticipantId(), executionManager.getHeatLeaderParticipantId());
+    assertEquals(
+        participants.get(0).getParticipantId(), executionManager.getRaceLeaderParticipantId());
+    boolean[] change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d1");
+    assertTrue("Driver 1 should be new race leader", change[0]);
+    assertFalse("Driver 1 should not be new heat leader if new race leader", change[1]);
+
+    // Driver 2 completes lap 1 -> Driver 1 is still leader
+    prevRaceLeader = executionManager.getRaceLeaderParticipantId();
+    prevHeatLeader = executionManager.getHeatLeaderParticipantId();
+    executionManager.onLap(1, 5.5, 1, false, true, false);
+    assertEquals(
+        participants.get(0).getParticipantId(), executionManager.getHeatLeaderParticipantId());
+    assertEquals(
+        participants.get(0).getParticipantId(), executionManager.getRaceLeaderParticipantId());
+    change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
+    assertFalse("Driver 2 is not race leader", change[0]);
+    assertFalse("Driver 2 is not heat leader", change[1]);
+
+    // Driver 2 completes lap 2 -> Driver 2 now has 2 laps, takes the lead!
+    prevRaceLeader = executionManager.getRaceLeaderParticipantId();
+    prevHeatLeader = executionManager.getHeatLeaderParticipantId();
+    executionManager.onLap(1, 5.0, 1, false, true, false);
+    assertEquals(
+        participants.get(1).getParticipantId(), executionManager.getHeatLeaderParticipantId());
+    assertEquals(
+        participants.get(1).getParticipantId(), executionManager.getRaceLeaderParticipantId());
+    change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
+    assertTrue("Driver 2 should be new race leader", change[0]);
+    assertFalse("Driver 2 should not be marked heat leader if race leader", change[1]);
+  }
+
+  @Test
+  public void testNewHeatLeaderWhenNotRaceLeader() {
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Reaction d1
+    executionManager.onLap(1, 1.0, 1, false, true, false); // Reaction d2
+
+    // d1 completes 3 laps (limit is 3, ends heat)
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    executionManager.onLap(0, 4.0, 1, false, true, false);
+    assertEquals("d1", executionManager.getRaceLeaderParticipantId());
+    assertEquals("d1", executionManager.getHeatLeaderParticipantId());
+
+    // Advance to heat 2
+    race.moveToNextHeat();
+    Heat heat2 = race.getCurrentHeat();
+    assertNotNull(heat2);
+
+    HeatExecutionManager heat2Exec = race.getHeatExecutionManager();
+    // d1 has 3 laps from heat 1, so d1 is overall race leader
+    assertEquals("d1", heat2Exec.getRaceLeaderParticipantId());
+    assertNull(heat2Exec.getHeatLeaderParticipantId());
+
+    // In heat 2, find d2's lane
+    int d2Lane = -1;
+    for (int i = 0; i < heat2.getDrivers().size(); i++) {
+      if ("d2".equals(heat2.getDrivers().get(i).getParticipantId())) {
+        d2Lane = i;
+        break;
+      }
+    }
+    assertTrue("d2 must be in heat 2", d2Lane >= 0);
+
+    heat2Exec.onLap(d2Lane, 1.0, 1, false, true, false); // Reaction
+    String prevRaceLeader = heat2Exec.getRaceLeaderParticipantId(); // "d1"
+    String prevHeatLeader = heat2Exec.getHeatLeaderParticipantId(); // null
+
+    heat2Exec.onLap(d2Lane, 4.0, 1, false, true, false); // 1st lap in heat 2
+    assertEquals("d2", heat2Exec.getHeatLeaderParticipantId());
+    assertEquals("d1", heat2Exec.getRaceLeaderParticipantId());
+
+    boolean[] change = heat2Exec.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
+    assertFalse("d2 should not be race leader because d1 has 3 laps", change[0]);
+    assertTrue("d2 should be new heat leader because d2 leads heat 2", change[1]);
   }
 }

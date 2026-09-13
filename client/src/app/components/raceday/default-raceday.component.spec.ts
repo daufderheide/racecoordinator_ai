@@ -5015,14 +5015,14 @@ describe("DefaultRacedayComponent", () => {
       );
       playCalloutSpy.calls.reset();
 
-      // Penalty (high)
-      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_PENALTY);
+      // Min lap time (urgent)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME);
       expect(playCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
-          text: "TTS for audio.penalty",
+          text: "TTS for audio.min_lap_time",
         }),
-        "high",
+        "urgent",
         undefined,
         undefined,
       );
@@ -5131,7 +5131,7 @@ describe("DefaultRacedayComponent", () => {
         objectId: mockHd.objectId,
         lapNumber: 5,
         lapTime: 3.5,
-        bestLapTime: 3.5,
+        bestLapTime: 3.0,
       });
 
       expect(mockSpeech.speak).toHaveBeenCalled();
@@ -5173,6 +5173,324 @@ describe("DefaultRacedayComponent", () => {
       expect(audioInstance.volume).toBeCloseTo(0.4, 2);
 
       mockSettings.masterVolume = 100;
+    });
+
+    it("should play record tier audio according to tier priority", () => {
+      fixture.detectChanges();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(
+        component["audioService"],
+        "playSfx",
+      ).and.callThrough();
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+      mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
+      mockHd.driver.overallBestLapAudio = {
+        type: "preset",
+        url: "w_recordlap.wav",
+      };
+      mockHd.driver.overallLaneBestLapAudio = {
+        type: "preset",
+        url: "w_recordlanelap.wav",
+      };
+      mockHd.driver.raceBestLapAudio = {
+        type: "preset",
+        url: "w_bestlap.wav",
+      };
+      mockHd.driver.raceLaneBestLapAudio = {
+        type: "preset",
+        url: "w_bestlanelap.wav",
+      };
+      mockHd.driver.heatBestLapAudio = {
+        type: "preset",
+        url: "w_bestheatlap.wav",
+      };
+      mockHd.driver.newRaceLeaderAudio = {
+        type: "preset",
+        url: "w_newraceleader.wav",
+      };
+      mockHd.driver.newHeatLeaderAudio = {
+        type: "preset",
+        url: "w_newheatleader.wav",
+      };
+
+      // Tier 6: Overall Record (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.0,
+        bestLapTime: 3.0,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallBestLapAudio,
+        "high",
+        jasmine.any(Object),
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_recordlap\.wav$/),
+      );
+
+      // Tier 5: Overall Lane Record (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 2,
+        lapTime: 3.1,
+        bestLapTime: 3.0,
+        recordTier: 5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallLaneBestLapAudio,
+        "high",
+        jasmine.any(Object),
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_recordlanelap\.wav$/),
+      );
+
+      // New Race Leader (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 3.15,
+        bestLapTime: 3.0,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+      );
+
+      // Tier 4: Race Best (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 4,
+        lapTime: 3.2,
+        bestLapTime: 3.0,
+        recordTier: 4,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.raceBestLapAudio,
+        "high",
+        jasmine.any(Object),
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestlap\.wav$/),
+      );
+
+      // New Heat Leader (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.25,
+        bestLapTime: 3.0,
+        isNewHeatLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newHeatLeaderAudio,
+        "normal",
+        jasmine.any(Object),
+      );
+
+      // Tier 3: Race Lane Best (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 6,
+        lapTime: 3.3,
+        bestLapTime: 3.0,
+        recordTier: 3,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.raceLaneBestLapAudio,
+        "normal",
+        jasmine.any(Object),
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestlanelap\.wav$/),
+      );
+
+      // Tier 2: Heat Best (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 7,
+        lapTime: 3.4,
+        bestLapTime: 3.0,
+        recordTier: 2,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.heatBestLapAudio,
+        "normal",
+        jasmine.any(Object),
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestheatlap\.wav$/),
+      );
+
+      // Tier 1 / isBestLap: Personal Best preset is non-verbal SFX (calls playSfx, not playCallout)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 8,
+        lapTime: 2.9,
+        bestLapTime: 2.9,
+        recordTier: 1,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).toHaveBeenCalledWith("personal_best.wav");
+
+      // Personal Best TTS is verbal callout with NORMAL priority
+      mockHd.driver.bestLapAudio = {
+        type: "tts",
+        text: "Personal best for {driver.name}",
+      };
+      component["audioService"].reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 9,
+        lapTime: 2.8,
+        bestLapTime: 2.8,
+        recordTier: 1,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.bestLapAudio,
+        "normal",
+        jasmine.any(Object),
+      );
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
+
+    it("should fallback to personal best lap sound or normal lap sound when milestone sound is not played", () => {
+      fixture.detectChanges();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(
+        component["audioService"],
+        "playSfx",
+      ).and.callThrough();
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+      mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
+      mockHd.driver.overallBestLapAudio = { type: "none" };
+
+      // Case 1: Overall Best Lap (Tier 6, isBestLap: true) has overallBestLapAudio = none.
+      // Falls back to personal best lap sound!
+      component["audioService"].reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.0,
+        bestLapTime: 3.0,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).toHaveBeenCalledWith("personal_best.wav");
+
+      // Case 2: Overall Best Lap is dropped by priority (e.g. urgent sound active).
+      // Falls back to personal best lap sound!
+      mockHd.driver.overallBestLapAudio = {
+        type: "preset",
+        url: "w_recordlap.wav",
+      };
+      // Simulate active urgent sound
+      component["audioService"].reset();
+      component["audioService"].playCallout(
+        { type: "preset", url: "yellow.wav" },
+        "urgent",
+      );
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 2,
+        lapTime: 2.9,
+        bestLapTime: 2.9,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallBestLapAudio,
+        "high",
+        jasmine.any(Object),
+      );
+      expect(playSfxSpy).toHaveBeenCalledWith("personal_best.wav");
+
+      // Case 3: New Race Leader (isBestLap: false) is dropped by priority.
+      // Falls back to normal lap sound!
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      mockHd.driver.newRaceLeaderAudio = {
+        type: "preset",
+        url: "w_leader.wav",
+      };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 3.5,
+        bestLapTime: 2.9,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+      );
+      expect(playSfxSpy).toHaveBeenCalledWith("beep.wav");
+
+      // Case 4: If fallback audio is configured as none, no sound plays.
+      mockHd.driver.lapAudio = { type: "none" };
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 4,
+        lapTime: 3.6,
+        bestLapTime: 2.9,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+      );
+      expect(playSfxSpy).not.toHaveBeenCalled();
     });
 
     it("should fallback to 30s countdown if Halfway audio is configured to 'none'", () => {

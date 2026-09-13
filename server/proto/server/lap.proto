@@ -15,6 +15,16 @@ message Lap {
     MIN_LAP_TIME = 3;
   }
 
+  enum RecordTier {
+    RECORD_TIER_NONE = 0;
+    RECORD_TIER_PERSONAL_BEST = 1;
+    RECORD_TIER_HEAT_BEST = 2;
+    RECORD_TIER_RACE_LANE_BEST = 3;
+    RECORD_TIER_RACE_BEST = 4;
+    RECORD_TIER_OVERALL_LANE_BEST = 5;
+    RECORD_TIER_OVERALL_BEST = 6;
+  }
+
   string objectId = 1;
   double lap_time = 2;
   int32 lap_number = 3;
@@ -29,4 +39,7 @@ message Lap {
   LapType type = 12;
   RaceFlag flag = 13;
   bool count_towards_records = 14;
+  RecordTier record_tier = 15;
+  bool is_new_race_leader = 16;
+  bool is_new_heat_leader = 17;
 }

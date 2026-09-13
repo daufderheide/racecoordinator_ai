@@ -37,4 +37,21 @@ public class DriverTest {
     Driver driver = new Driver("Bob");
     assertFalse(driver.isEmpty());
   }
+
+  @Test
+  public void testAudioDefaultsAndBuilder() {
+    Driver driver =
+        new Driver.Builder()
+            .withName("Charlie")
+            .withNewRaceLeaderAudio(new AudioConfig("preset", "custom_race_leader", ""))
+            .withNewHeatLeaderAudio(new AudioConfig("preset", "custom_heat_leader", ""))
+            .build();
+
+    assertEquals("custom_race_leader", driver.getNewRaceLeaderAudio().getUrl());
+    assertEquals("custom_heat_leader", driver.getNewHeatLeaderAudio().getUrl());
+
+    Driver copy = Driver.Builder.from(driver).build();
+    assertEquals("custom_race_leader", copy.getNewRaceLeaderAudio().getUrl());
+    assertEquals("custom_heat_leader", copy.getNewHeatLeaderAudio().getUrl());
+  }
 }

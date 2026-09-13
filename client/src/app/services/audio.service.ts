@@ -59,9 +59,29 @@ export class AudioService {
       "audio.seconds_left.halfway",
       "audio.heat_over",
       "audio.race_over",
+      "audio.min_lap_time",
+      "audio.drift_lap",
       "penalty",
       "falseStart",
       "false_start",
+      "overallBestLap",
+      "overall_best_lap",
+      "overallRecordLap",
+      "overall_record_lap",
+      "overallLaneBestLap",
+      "overall_lane_best_lap",
+      "overallLaneRecordLap",
+      "overall_lane_record_lap",
+      "raceBestLap",
+      "race_best_lap",
+      "raceLaneBestLap",
+      "race_lane_best_lap",
+      "heatBestLap",
+      "heat_best_lap",
+      "newRaceLeader",
+      "new_race_leader",
+      "newHeatLeader",
+      "new_heat_leader",
     ];
 
     return announcementSlots.some((s) => slotOrCategory.includes(s));
@@ -95,13 +115,20 @@ export class AudioService {
     priority: AudioPriority,
     context?: any,
     resolvedUrl?: string,
-  ): void {
-    if (!config || config.type === "none") return;
+  ): boolean {
+    if (!config || config.type === "none") return false;
+
+    if (config.type === "preset" && !(resolvedUrl || config.url?.trim())) {
+      return false;
+    }
+    if (config.type === "tts" && !config.text?.trim()) {
+      return false;
+    }
 
     // Channel IDLE
     if (!this.activeVoice && !this.isSpacingCoolingDown) {
       this.executeVoiceCallout(config, priority, context, resolvedUrl);
-      return;
+      return true;
     }
 
     // Channel BUSY
@@ -109,7 +136,7 @@ export class AudioService {
       if (this.isSpacingCoolingDown) {
         this.clearSpacingTimer();
         this.executeVoiceCallout(config, priority, context, resolvedUrl);
-        return;
+        return true;
       }
 
       if (this.activeVoice) {
@@ -128,14 +155,15 @@ export class AudioService {
             enqueuedAt: Date.now(),
           });
         }
+        return true;
       }
-      return;
+      return false;
     }
 
     // Incoming sound is NOT urgent
     if (this.isSpacingCoolingDown) {
       this.logger.debug("Dropping non-urgent callout during cadence pause");
-      return;
+      return false;
     }
 
     if (this.activeVoice) {
@@ -147,13 +175,17 @@ export class AudioService {
         this.activeVoice.stop();
         this.activeVoice = null;
         this.executeVoiceCallout(config, priority, context, resolvedUrl);
+        return true;
       } else {
         // Drop incoming sound (Play, Preempt, or Drop)
         this.logger.debug(
           "Dropping callout due to equal or higher active priority",
         );
+        return false;
       }
     }
+
+    return false;
   }
 
   getActiveVoice(): ActiveVoiceCallout | null {

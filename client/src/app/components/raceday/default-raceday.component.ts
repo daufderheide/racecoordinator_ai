@@ -96,7 +96,7 @@ import { RaceTimeService } from "@app/services/race-time.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
-import { createTTSContext } from "@app/utils/audio";
+import { createTTSContext, dispatchLapAudio } from "@app/utils/audio";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
@@ -1874,7 +1874,7 @@ export class DefaultRacedayComponent
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
-        this.audioService.playCallout(audio, "high", ttsContext);
+        this.audioService.playCallout(audio, "urgent", ttsContext);
       }
       return;
     }
@@ -1886,37 +1886,20 @@ export class DefaultRacedayComponent
       return;
     }
 
-    if (
-      isBestLap &&
-      driver.bestLapAudio?.type &&
-      driver.bestLapAudio.type !== "none" &&
-      ((driver.bestLapAudio.type === "tts" &&
-        driver.bestLapAudio.text?.trim()) ||
-        (driver.bestLapAudio.type !== "tts" && driver.bestLapAudio.url?.trim()))
-    ) {
-      if (driver.bestLapAudio.type === "tts") {
-        this.audioService.playCallout(
-          driver.bestLapAudio,
-          "normal",
-          ttsContext,
-        );
-      } else {
-        this.audioService.playSfx(driver.bestLapAudio.url);
-      }
-    } else if (lap.isDrift) {
+    if (lap.isDrift) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
-    } else if (
-      driver.lapAudio?.type &&
-      driver.lapAudio.type !== "none" &&
-      ((driver.lapAudio.type === "tts" && driver.lapAudio.text?.trim()) ||
-        (driver.lapAudio.type !== "tts" && driver.lapAudio.url?.trim()))
-    ) {
-      if (driver.lapAudio.type === "tts") {
-        this.audioService.playCallout(driver.lapAudio, "low", ttsContext);
-      } else {
-        this.audioService.playSfx(driver.lapAudio.url);
-      }
+      return;
     }
+
+    dispatchLapAudio(
+      this.audioService,
+      driver,
+      lap.recordTier,
+      isBestLap,
+      lap.isNewRaceLeader,
+      lap.isNewHeatLeader,
+      ttsContext,
+    );
   }
 
   private checkHalfwayPoint(lap: any, ttsContext: any) {
@@ -5764,28 +5747,15 @@ export class DefaultRacedayComponent
       }
     }
 
-    // Check if slot is SFX vs Voice Callout
-    if (
-      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
-    ) {
-      if (config.type === "tts") {
-        this.audioService.playCallout(config, "low", context);
-      } else {
-        this.audioService.playSfx(playableUrl);
-      }
-      return;
-    }
-
     let priority: AudioPriority = "normal";
     if (
       slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
       slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER
+      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
     ) {
       priority = "urgent";
-    } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {
-      priority = "high";
     }
 
     this.audioService.playCallout(config, priority, context, playableUrl);

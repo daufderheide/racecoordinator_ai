@@ -141,3 +141,14 @@ Whenever a new configuration setting, property, or field is added, modified, or 
 - **No legacy `{{...}}`**: Audio resources, theme sound configurations, and factory defaults must use `{...}` or `${...}` single-brace syntax. Legacy double-curly brace `{{...}}` syntax is deprecated and forbidden in default resources.
 - **Automated Parity Tests**: Whenever adding new telemetry metrics or template variables, update both server (`TemplateVariableParityTest.java`) and client (`template-variables-parity.spec.ts`) automated parity test suites to guarantee cross-system alignment.
 
+## Audio Architecture, Priority Tiers & Sound Classification
+- **Explicit Priority Level Required for All Audio**: Whenever new audio slots, events, or callouts are created (theme, driver, or system audio), you MUST decide and configure its priority level (`urgent`, `high`, `normal`, or `low`).
+- **Verbal vs Non-Verbal Classification**:
+  - Only general lap sounds (`driver.lapAudio`) and personal best lap sounds (`driver.bestLapAudio`) are non-verbal SFX (when configured as presets) that can play polyphonically on top of other sounds via `AudioService.playSfx()`.
+  - All other sounds (including false start, track/race/heat record laps, leader changes, time announcements, flags, minimum lap time, drift lap, etc.) are verbal callouts and MUST be routed through `AudioService.playCallout()` with their designated priority level, preemption handling, and cadence spacing so they never clash or talk over other announcements.
+- **Priority Tier Standard**:
+  - `urgent`: Critical safety, race control, and rule infractions (e.g. Yellow Flag, Heat Over, Race Over, False Start, Minimum Lap Time, Drift Lap). Preempts lower priorities immediately and queues behind active urgent callouts.
+  - `high`: Major race milestones (e.g. Overall Record Lap, Overall Lane Record Lap, New Race Leader, Race Best Lap). Preempts normal and low priority callouts.
+  - `normal`: Running race commentary and heat events (e.g. Race Time countdown announcements, Halfway, Heat Best Lap, Race Lane Best Lap, New Heat Leader, Personal Best Lap when configured as TTS).
+  - `low`: Routine cadence events (e.g. Driver Lap Sound when configured as TTS).
+- **Milestone Audio Fallback to Driver Lap SFX**: When a lap occurs, if the milestone sound for that lap is not played (due to priority drop, spacing cooldown, configured as `none`, or missing), playback MUST fall back to the driver's personal best lap sound (`driver.bestLapAudio`) if `isBestLap` is true, or normal lap sound (`driver.lapAudio`) if `isBestLap` is false. If that fallback sound is configured as `none`, no sound plays; otherwise, if configured as a preset SFX, it plays polyphonically via `AudioService.playSfx()`.

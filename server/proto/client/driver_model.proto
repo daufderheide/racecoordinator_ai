@@ -16,4 +16,11 @@ message DriverModel {
   AudioConfig lapAudio = 5;
   AudioConfig bestLapAudio = 6;
   AudioConfig penaltyAudio = 7;
+  AudioConfig overallBestLapAudio = 8;
+  AudioConfig overallLaneBestLapAudio = 9;
+  AudioConfig raceBestLapAudio = 10;
+  AudioConfig raceLaneBestLapAudio = 11;
+  AudioConfig heatBestLapAudio = 12;
+  AudioConfig newRaceLeaderAudio = 13;
+  AudioConfig newHeatLeaderAudio = 14;
 }

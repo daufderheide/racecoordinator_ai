@@ -18,8 +18,21 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { AssetType, normalizeAssetType } from "@app/models/asset";
-import { Driver } from "@app/models/driver";
+import { AudioConfig, Driver } from "@app/models/driver";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+
+export type DriverAudioSlot =
+  | "lap"
+  | "bestLap"
+  | "penalty"
+  | "falseStart"
+  | "overallBestLap"
+  | "overallLaneBestLap"
+  | "raceBestLap"
+  | "raceLaneBestLap"
+  | "heatBestLap"
+  | "newRaceLeader"
+  | "newHeatLeader";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -32,6 +45,8 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
+
+import { buildDriverEditorHelpSteps } from "./driver-editor-help.helper";
 
 @Component({
   standalone: true,
@@ -364,6 +379,20 @@ export class DriverEditorComponent
       driver.lapAudio ? { ...driver.lapAudio } : undefined,
       driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined,
       driver.penaltyAudio ? { ...driver.penaltyAudio } : undefined,
+      undefined,
+      driver.overallBestLapAudio
+        ? { ...driver.overallBestLapAudio }
+        : undefined,
+      driver.overallLaneBestLapAudio
+        ? { ...driver.overallLaneBestLapAudio }
+        : undefined,
+      driver.raceBestLapAudio ? { ...driver.raceBestLapAudio } : undefined,
+      driver.raceLaneBestLapAudio
+        ? { ...driver.raceLaneBestLapAudio }
+        : undefined,
+      driver.heatBestLapAudio ? { ...driver.heatBestLapAudio } : undefined,
+      driver.newRaceLeaderAudio ? { ...driver.newRaceLeaderAudio } : undefined,
+      driver.newHeatLeaderAudio ? { ...driver.newHeatLeaderAudio } : undefined,
     );
   }
 
@@ -405,7 +434,14 @@ export class DriverEditorComponent
       avatarMatch &&
       checkAudio(d1.lapAudio, d2.lapAudio) &&
       checkAudio(d1.bestLapAudio, d2.bestLapAudio) &&
-      checkAudio(d1.penaltyAudio, d2.penaltyAudio)
+      checkAudio(d1.penaltyAudio, d2.penaltyAudio) &&
+      checkAudio(d1.overallBestLapAudio, d2.overallBestLapAudio) &&
+      checkAudio(d1.overallLaneBestLapAudio, d2.overallLaneBestLapAudio) &&
+      checkAudio(d1.raceBestLapAudio, d2.raceBestLapAudio) &&
+      checkAudio(d1.raceLaneBestLapAudio, d2.raceLaneBestLapAudio) &&
+      checkAudio(d1.heatBestLapAudio, d2.heatBestLapAudio) &&
+      checkAudio(d1.newRaceLeaderAudio, d2.newRaceLeaderAudio) &&
+      checkAudio(d1.newHeatLeaderAudio, d2.newHeatLeaderAudio)
     );
   }
 
@@ -636,31 +672,68 @@ export class DriverEditorComponent
     this.saveDriverData(isSaveAsNew, isAutoSave);
   }
 
-  private loadDataInternal(rawDrivers: any[], assets: any[]) {
-    this.allDrivers = rawDrivers.map(
-      (d) =>
-        new Driver(
-          d.entity_id,
-          d.name,
-          d.nickname || "",
-          d.avatarUrl,
-          {
-            type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
-            url: d.lapAudio?.url || d.lapSoundUrl,
-            text: d.lapAudio?.text || d.lapSoundText,
-          },
-          {
-            type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
-            url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-            text: d.bestLapAudio?.text || d.bestLapSoundText,
-          },
-          {
-            type: this.mapSoundType(d.penaltyAudio?.type || d.penaltySoundType),
-            url: d.penaltyAudio?.url || d.penaltySoundUrl,
-            text: d.penaltyAudio?.text || d.penaltySoundText,
-          },
-        ),
+  private toDriver(d: any): Driver {
+    return new Driver(
+      d.entity_id,
+      d.name,
+      d.nickname || "",
+      d.avatarUrl,
+      {
+        type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
+        url: d.lapAudio?.url || d.lapSoundUrl,
+        text: d.lapAudio?.text || d.lapSoundText,
+      },
+      {
+        type: this.mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
+        url: d.bestLapAudio?.url || d.bestLapSoundUrl,
+        text: d.bestLapAudio?.text || d.bestLapSoundText,
+      },
+      {
+        type: this.mapSoundType(d.penaltyAudio?.type || d.penaltySoundType),
+        url: d.penaltyAudio?.url || d.penaltySoundUrl,
+        text: d.penaltyAudio?.text || d.penaltySoundText,
+      },
+      undefined,
+      {
+        type: this.mapSoundType(d.overallBestLapAudio?.type),
+        url: d.overallBestLapAudio?.url,
+        text: d.overallBestLapAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.overallLaneBestLapAudio?.type),
+        url: d.overallLaneBestLapAudio?.url,
+        text: d.overallLaneBestLapAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.raceBestLapAudio?.type),
+        url: d.raceBestLapAudio?.url,
+        text: d.raceBestLapAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.raceLaneBestLapAudio?.type),
+        url: d.raceLaneBestLapAudio?.url,
+        text: d.raceLaneBestLapAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.heatBestLapAudio?.type),
+        url: d.heatBestLapAudio?.url,
+        text: d.heatBestLapAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.newRaceLeaderAudio?.type),
+        url: d.newRaceLeaderAudio?.url,
+        text: d.newRaceLeaderAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.newHeatLeaderAudio?.type),
+        url: d.newHeatLeaderAudio?.url,
+        text: d.newHeatLeaderAudio?.text,
+      },
     );
+  }
+
+  private loadDataInternal(rawDrivers: any[], assets: any[]) {
+    this.allDrivers = rawDrivers.map((d) => this.toDriver(d));
 
     const allAssets = assets || [];
     this.avatarAssets = allAssets.filter((a) => a.type === "image");
@@ -680,6 +753,14 @@ export class DriverEditorComponent
         { type: "preset", url: "default_beep" },
         { type: "preset", url: "default_driveby" },
         { type: "preset", url: "default_penalty" },
+        undefined,
+        { type: "preset", url: "default_record_lap" },
+        { type: "preset", url: "default_record_lane_lap" },
+        { type: "preset", url: "default_best_race_lap" },
+        { type: "preset", url: "default_best_race_lane_lap" },
+        { type: "preset", url: "default_best_heat_lap" },
+        { type: "preset", url: "default_new_race_leader" },
+        { type: "preset", url: "default_new_heat_leader" },
       );
     } else if (idParam) {
       const found = this.allDrivers.find((d) => d.entity_id === idParam);
@@ -736,24 +817,54 @@ export class DriverEditorComponent
     this.cdr.detectChanges();
   }
 
+  private getAudioSlotInfo(slot: DriverAudioSlot): {
+    key: keyof Driver;
+    defaultUrl: string;
+  } {
+    switch (slot) {
+      case "lap":
+        return { key: "lapAudio", defaultUrl: "default_beep" };
+      case "bestLap":
+        return { key: "bestLapAudio", defaultUrl: "default_driveby" };
+      case "penalty":
+      case "falseStart":
+        return { key: "penaltyAudio", defaultUrl: "default_penalty" };
+      case "overallBestLap":
+        return { key: "overallBestLapAudio", defaultUrl: "default_record_lap" };
+      case "overallLaneBestLap":
+        return {
+          key: "overallLaneBestLapAudio",
+          defaultUrl: "default_record_lane_lap",
+        };
+      case "raceBestLap":
+        return { key: "raceBestLapAudio", defaultUrl: "default_best_race_lap" };
+      case "raceLaneBestLap":
+        return {
+          key: "raceLaneBestLapAudio",
+          defaultUrl: "default_best_race_lane_lap",
+        };
+      case "heatBestLap":
+        return { key: "heatBestLapAudio", defaultUrl: "default_best_heat_lap" };
+      case "newRaceLeader":
+        return {
+          key: "newRaceLeaderAudio",
+          defaultUrl: "default_new_race_leader",
+        };
+      case "newHeatLeader":
+        return {
+          key: "newHeatLeaderAudio",
+          defaultUrl: "default_new_heat_leader",
+        };
+    }
+  }
+
   onAudioTypeChange(
-    slot: "lap" | "bestLap" | "penalty" | "falseStart",
+    slot: DriverAudioSlot,
     type: "preset" | "tts" | "none" | "audio_set",
   ) {
     if (!this.editingDriver) return;
-    const audioKey =
-      slot === "lap"
-        ? "lapAudio"
-        : slot === "bestLap"
-          ? "bestLapAudio"
-          : "penaltyAudio";
-    const defaultUrl =
-      slot === "lap"
-        ? "default_beep"
-        : slot === "bestLap"
-          ? "default_driveby"
-          : "default_penalty";
-    const audio = this.editingDriver[audioKey];
+    const { key, defaultUrl } = this.getAudioSlotInfo(slot);
+    const audio = this.editingDriver[key] as AudioConfig | undefined;
     if (audio) {
       audio.type = type;
       if (type === "none") {
@@ -769,18 +880,10 @@ export class DriverEditorComponent
     }
   }
 
-  onAudioUrlChange(
-    slot: "lap" | "bestLap" | "penalty" | "falseStart",
-    url: string | undefined,
-  ) {
+  onAudioUrlChange(slot: DriverAudioSlot, url: string | undefined) {
     if (!this.editingDriver) return;
-    const audioKey =
-      slot === "lap"
-        ? "lapAudio"
-        : slot === "bestLap"
-          ? "bestLapAudio"
-          : "penaltyAudio";
-    const audio = this.editingDriver[audioKey];
+    const { key } = this.getAudioSlotInfo(slot);
+    const audio = this.editingDriver[key] as AudioConfig | undefined;
     if (audio) {
       audio.url = url;
       this.captureState();
@@ -788,18 +891,10 @@ export class DriverEditorComponent
     }
   }
 
-  onAudioTextChange(
-    slot: "lap" | "bestLap" | "penalty" | "falseStart",
-    text: string | undefined,
-  ) {
+  onAudioTextChange(slot: DriverAudioSlot, text: string | undefined) {
     if (!this.editingDriver) return;
-    const audioKey =
-      slot === "lap"
-        ? "lapAudio"
-        : slot === "bestLap"
-          ? "bestLapAudio"
-          : "penaltyAudio";
-    const audio = this.editingDriver[audioKey];
+    const { key } = this.getAudioSlotInfo(slot);
+    const audio = this.editingDriver[key] as AudioConfig | undefined;
     if (audio) {
       audio.text = text;
       this.onInputChange();
@@ -929,34 +1024,7 @@ export class DriverEditorComponent
   private refreshDriverList() {
     this.dataService.getDrivers().subscribe({
       next: (drivers) => {
-        this.allDrivers = drivers.map(
-          (d) =>
-            new Driver(
-              d.entity_id,
-              d.name,
-              d.nickname || "",
-              d.avatarUrl,
-              {
-                type: this.mapSoundType(d.lapAudio?.type || d.lapSoundType),
-                url: d.lapAudio?.url || d.lapSoundUrl,
-                text: d.lapAudio?.text || d.lapSoundText,
-              },
-              {
-                type: this.mapSoundType(
-                  d.bestLapAudio?.type || d.bestLapSoundType,
-                ),
-                url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-                text: d.bestLapAudio?.text || d.bestLapSoundText,
-              },
-              {
-                type: this.mapSoundType(
-                  d.penaltyAudio?.type || d.penaltySoundType,
-                ),
-                url: d.penaltyAudio?.url || d.penaltySoundUrl,
-                text: d.penaltyAudio?.text || d.penaltySoundText,
-              },
-            ),
-        );
+        this.allDrivers = drivers.map((d) => this.toDriver(d));
         this.cdr.detectChanges();
       },
       error: (err) => this.logger.error("Failed to refresh driver list", err),
@@ -988,70 +1056,11 @@ export class DriverEditorComponent
   }
 
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("DE_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("DE_HELP_WELCOME_CONTENT"),
-        position: "center",
+    return buildDriverEditorHelpSteps({
+      translationService: this.translationService,
+      expandAudioSection: () => {
+        this.sectionsExpanded.audio = true;
       },
-      {
-        selector: "#driver-avatar-section",
-        title: this.translationService.translate("DE_HELP_AVATAR_TITLE"),
-        content: this.translationService.translate("DE_HELP_AVATAR_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: "#driver-name-section",
-        title: this.translationService.translate("DE_HELP_NAME_TITLE"),
-        content: this.translationService.translate("DE_HELP_NAME_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#driver-name-nickname-link-section",
-        title: this.translationService.translate("DE_HELP_LINK_TITLE"),
-        content: this.translationService.translate("DE_HELP_LINK_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#driver-nickname-section",
-        title: this.translationService.translate("DE_HELP_NICKNAME_TITLE"),
-        content: this.translationService.translate("DE_HELP_NICKNAME_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: "#driver-audio-section",
-        title: this.translationService.translate("DE_HELP_AUDIO_SECTION_TITLE"),
-        content: this.translationService.translate(
-          "DE_HELP_AUDIO_SECTION_CONTENT",
-        ),
-        position: "left",
-      },
-      {
-        selector: "#driver-lap-audio",
-        title: this.translationService.translate("DE_HELP_LAP_SOUND_TITLE"),
-        content: this.translationService.translate("DE_HELP_LAP_SOUND_CONTENT"),
-        position: "left",
-      },
-      {
-        selector: "#driver-best-lap-audio",
-        title: this.translationService.translate(
-          "DE_HELP_BEST_LAP_SOUND_TITLE",
-        ),
-        content: this.translationService.translate(
-          "DE_HELP_BEST_LAP_SOUND_CONTENT",
-        ),
-        position: "left",
-      },
-      {
-        selector: "#driver-false-start-audio",
-        title: this.translationService.translate(
-          "DE_HELP_FALSE_START_SOUND_TITLE",
-        ),
-        content: this.translationService.translate(
-          "DE_HELP_FALSE_START_SOUND_CONTENT",
-        ),
-        position: "left",
-      },
-    ];
+    });
   }
 }

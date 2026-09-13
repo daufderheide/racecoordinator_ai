@@ -769,6 +769,7 @@ public class App {
           .backfillDefaults();
       DatabaseService.getInstance().backfillRaces(databaseContext);
       DatabaseService.getInstance().backfillCustomUIs(databaseContext);
+      DatabaseService.getInstance().backfillDrivers(databaseContext);
     }
     databaseContext.switchDatabase(activeDb);
   }

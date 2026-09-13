@@ -253,10 +253,6 @@ public class ThemeTaskHandler {
       as.put("audio.race_over", new AudioConfig("preset", "default_race_over", null));
       updated = true;
     }
-    if (!as.containsKey("audio.penalty")) {
-      as.put("audio.penalty", new AudioConfig("preset", "default_penalty", null));
-      updated = true;
-    }
     if (!as.containsKey("audio.min_lap_time")
         || ("preset".equals(as.get("audio.min_lap_time").getType())
             && "default_beep".equals(as.get("audio.min_lap_time").getUrl()))) {

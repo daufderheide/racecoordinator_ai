@@ -21,6 +21,13 @@ describe("DriverConverter", () => {
         url: "penalty_url",
         text: "penalty_text",
       },
+      overallBestLapAudio: { type: "preset", url: "overall_best_url" },
+      overallLaneBestLapAudio: { type: "preset", url: "overall_lane_best_url" },
+      raceBestLapAudio: { type: "preset", url: "race_best_url" },
+      raceLaneBestLapAudio: { type: "preset", url: "race_lane_best_url" },
+      heatBestLapAudio: { type: "preset", url: "heat_best_url" },
+      newRaceLeaderAudio: { type: "preset", url: "new_race_leader_url" },
+      newHeatLeaderAudio: { type: "preset", url: "new_heat_leader_url" },
     };
 
     const driver = DriverConverter.fromProto(proto);
@@ -30,6 +37,13 @@ describe("DriverConverter", () => {
     expect(driver.avatarUrl).toBe("alice_avatar.png");
     expect(driver.lapAudio?.url).toBe("lap_url");
     expect(driver.bestLapAudio?.type).toBe("tts");
+    expect(driver.overallBestLapAudio?.url).toBe("overall_best_url");
+    expect(driver.overallLaneBestLapAudio?.url).toBe("overall_lane_best_url");
+    expect(driver.raceBestLapAudio?.url).toBe("race_best_url");
+    expect(driver.raceLaneBestLapAudio?.url).toBe("race_lane_best_url");
+    expect(driver.heatBestLapAudio?.url).toBe("heat_best_url");
+    expect(driver.newRaceLeaderAudio?.url).toBe("new_race_leader_url");
+    expect(driver.newHeatLeaderAudio?.url).toBe("new_heat_leader_url");
   });
 
   it("should update cached driver in-place during fromProto", () => {
@@ -109,6 +123,11 @@ describe("DriverConverter", () => {
       lapAudio: { type: "none" },
       bestLapAudio: { type: "none" },
       penaltyAudio: { type: "none" },
+      overallBestLapAudio: { type: "none" },
+      overallLaneBestLapAudio: { type: "none" },
+      raceBestLapAudio: { type: "none" },
+      raceLaneBestLapAudio: { type: "none" },
+      heatBestLapAudio: { type: "none" },
     };
 
     const driver = DriverConverter.fromProto(proto);
@@ -118,6 +137,16 @@ describe("DriverConverter", () => {
     expect(driver.bestLapAudio.url).toBeUndefined();
     expect(driver.penaltyAudio.type).toBe("none");
     expect(driver.penaltyAudio.url).toBeUndefined();
+    expect(driver.overallBestLapAudio.type).toBe("none");
+    expect(driver.overallBestLapAudio.url).toBeUndefined();
+    expect(driver.overallLaneBestLapAudio.type).toBe("none");
+    expect(driver.overallLaneBestLapAudio.url).toBeUndefined();
+    expect(driver.raceBestLapAudio.type).toBe("none");
+    expect(driver.raceBestLapAudio.url).toBeUndefined();
+    expect(driver.raceLaneBestLapAudio.type).toBe("none");
+    expect(driver.raceLaneBestLapAudio.url).toBeUndefined();
+    expect(driver.heatBestLapAudio.type).toBe("none");
+    expect(driver.heatBestLapAudio.url).toBeUndefined();
 
     // In-place update
     const updateProto: IDriverModel = {
@@ -126,10 +155,20 @@ describe("DriverConverter", () => {
       lapAudio: { type: "none" },
       bestLapAudio: { type: "none" },
       penaltyAudio: { type: "none" },
+      overallBestLapAudio: { type: "none" },
+      overallLaneBestLapAudio: { type: "none" },
+      raceBestLapAudio: { type: "none" },
+      raceLaneBestLapAudio: { type: "none" },
+      heatBestLapAudio: { type: "none" },
     };
     const updatedDriver = DriverConverter.fromProto(updateProto);
     expect(updatedDriver.lapAudio.type).toBe("none");
     expect(updatedDriver.bestLapAudio.type).toBe("none");
     expect(updatedDriver.penaltyAudio.type).toBe("none");
+    expect(updatedDriver.overallBestLapAudio.type).toBe("none");
+    expect(updatedDriver.overallLaneBestLapAudio.type).toBe("none");
+    expect(updatedDriver.raceBestLapAudio.type).toBe("none");
+    expect(updatedDriver.raceLaneBestLapAudio.type).toBe("none");
+    expect(updatedDriver.heatBestLapAudio.type).toBe("none");
   });
 });

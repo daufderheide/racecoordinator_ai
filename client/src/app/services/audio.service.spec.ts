@@ -146,21 +146,47 @@ describe("AudioService", () => {
         service.isVoiceCallout("audio.race_over", presetConfig),
       ).toBeTrue();
       expect(
+        service.isVoiceCallout("audio.min_lap_time", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("audio.drift_lap", presetConfig),
+      ).toBeTrue();
+      expect(
         service.isVoiceCallout("driver.penaltyAudio", presetConfig),
       ).toBeTrue();
       expect(
         service.isVoiceCallout("driver.falseStartAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.overallBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.overallLaneBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.raceBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.raceLaneBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.heatBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.newRaceLeaderAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.newHeatLeaderAudio", presetConfig),
       ).toBeTrue();
     });
 
     it("should return false for preset action and effect slots", () => {
       const presetLap: AudioConfig = { type: "preset", url: "default_beep" };
       expect(service.isVoiceCallout("driver.lapAudio", presetLap)).toBeFalse();
-      expect(service.isVoiceCallout("audio.countdown", presetLap)).toBeFalse();
       expect(
-        service.isVoiceCallout("audio.min_lap_time", presetLap),
+        service.isVoiceCallout("driver.bestLapAudio", presetLap),
       ).toBeFalse();
-      expect(service.isVoiceCallout("audio.drift_lap", presetLap)).toBeFalse();
+      expect(service.isVoiceCallout("audio.countdown", presetLap)).toBeFalse();
     });
   });
 
@@ -186,21 +212,33 @@ describe("AudioService", () => {
   describe("playCallout - Play, Preempt, or Drop", () => {
     it("should play immediately when channel is idle", () => {
       const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
-      service.playCallout(config, "high");
+      const played = service.playCallout(config, "high");
 
+      expect(played).toBeTrue();
       expect(service.getActiveVoice()).not.toBeNull();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(mockAudioInstance.play).toHaveBeenCalled();
     });
 
+    it("should return false for none or undefined config", () => {
+      expect(service.playCallout({ type: "none" }, "high")).toBeFalse();
+      expect(service.playCallout(undefined, "high")).toBeFalse();
+      expect(
+        service.playCallout({ type: "preset", url: "" }, "high"),
+      ).toBeFalse();
+      expect(
+        service.playCallout({ type: "tts", text: "" }, "high"),
+      ).toBeFalse();
+    });
+
     it("should drop incoming callout if channel is busy with equal or higher priority", () => {
       const highConfig: AudioConfig = { type: "preset", url: "halfway.wav" };
-      service.playCallout(highConfig, "high");
+      expect(service.playCallout(highConfig, "high")).toBeTrue();
       expect(service.getActiveVoice()?.priority).toBe("high");
 
       // Attempt lower priority
       const normalConfig: AudioConfig = { type: "preset", url: "30sec.wav" };
-      service.playCallout(normalConfig, "normal");
+      expect(service.playCallout(normalConfig, "normal")).toBeFalse();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Dropping callout due to equal or higher active priority",
@@ -208,7 +246,7 @@ describe("AudioService", () => {
 
       // Attempt equal priority
       const anotherHigh: AudioConfig = { type: "preset", url: "penalty.wav" };
-      service.playCallout(anotherHigh, "high");
+      expect(service.playCallout(anotherHigh, "high")).toBeFalse();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(service.getUrgentQueue().length).toBe(0);
     });

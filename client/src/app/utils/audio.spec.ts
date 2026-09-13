@@ -1,8 +1,12 @@
 import {
   createTTSContext,
+  dispatchLapAudio,
+  getLapAudioConfig,
   interpolate,
   mockTTSContext,
   playSound,
+  resolveAudioUrl,
+  resolveLapAudio,
 } from "./audio";
 
 describe("playSound Utility", () => {
@@ -391,6 +395,400 @@ describe("playSound Utility", () => {
       expect(interpolate("", {})).toBe("");
       expect(interpolate("Hello", null)).toBe("Hello");
       expect(interpolate("Hello", undefined)).toBe("Hello");
+    });
+  });
+
+  describe("getLapAudioConfig Utility", () => {
+    const driver = {
+      name: "Fast Driver",
+      lapAudio: { type: "preset", url: "lap.wav" },
+      bestLapAudio: { type: "preset", url: "best.wav" },
+      overallBestLapAudio: { type: "preset", url: "overall_best.wav" },
+      overallLaneBestLapAudio: { type: "preset", url: "overall_lane_best.wav" },
+      raceBestLapAudio: { type: "preset", url: "race_best.wav" },
+      raceLaneBestLapAudio: { type: "preset", url: "race_lane_best.wav" },
+      heatBestLapAudio: { type: "preset", url: "heat_best.wav" },
+    };
+
+    it("should return undefined if driver is null or undefined", () => {
+      expect(getLapAudioConfig(null, 6)).toBeUndefined();
+      expect(getLapAudioConfig(undefined, 6)).toBeUndefined();
+    });
+
+    it("should return overallBestLapAudio for tier 6 or RECORD_TIER_OVERALL_BEST", () => {
+      expect(getLapAudioConfig(driver, 6)?.url).toBe("overall_best.wav");
+      expect(getLapAudioConfig(driver, "RECORD_TIER_OVERALL_BEST")?.url).toBe(
+        "overall_best.wav",
+      );
+    });
+
+    it("should return overallLaneBestLapAudio for tier 5 or RECORD_TIER_OVERALL_LANE_BEST", () => {
+      expect(getLapAudioConfig(driver, 5)?.url).toBe("overall_lane_best.wav");
+      expect(
+        getLapAudioConfig(driver, "RECORD_TIER_OVERALL_LANE_BEST")?.url,
+      ).toBe("overall_lane_best.wav");
+    });
+
+    it("should return raceBestLapAudio for tier 4 or RECORD_TIER_RACE_BEST", () => {
+      expect(getLapAudioConfig(driver, 4)?.url).toBe("race_best.wav");
+      expect(getLapAudioConfig(driver, "RECORD_TIER_RACE_BEST")?.url).toBe(
+        "race_best.wav",
+      );
+    });
+
+    it("should return raceLaneBestLapAudio for tier 3 or RECORD_TIER_RACE_LANE_BEST", () => {
+      expect(getLapAudioConfig(driver, 3)?.url).toBe("race_lane_best.wav");
+      expect(getLapAudioConfig(driver, "RECORD_TIER_RACE_LANE_BEST")?.url).toBe(
+        "race_lane_best.wav",
+      );
+    });
+
+    it("should return heatBestLapAudio for tier 2 or RECORD_TIER_HEAT_BEST", () => {
+      expect(getLapAudioConfig(driver, 2)?.url).toBe("heat_best.wav");
+      expect(getLapAudioConfig(driver, "RECORD_TIER_HEAT_BEST")?.url).toBe(
+        "heat_best.wav",
+      );
+    });
+
+    it("should return bestLapAudio for tier 1 or isBestLap", () => {
+      expect(getLapAudioConfig(driver, 1)?.url).toBe("best.wav");
+      expect(getLapAudioConfig(driver, "RECORD_TIER_PERSONAL_BEST")?.url).toBe(
+        "best.wav",
+      );
+      expect(getLapAudioConfig(driver, 0, true)?.url).toBe("best.wav");
+    });
+
+    it("should fallback to bestLapAudio if specific tier audio is not configured", () => {
+      const partialDriver = {
+        name: "Partial Driver",
+        bestLapAudio: { type: "preset", url: "fallback_best.wav" },
+      };
+      expect(getLapAudioConfig(partialDriver, 6)?.url).toBe(
+        "fallback_best.wav",
+      );
+      expect(getLapAudioConfig(partialDriver, 5)?.url).toBe(
+        "fallback_best.wav",
+      );
+      expect(getLapAudioConfig(partialDriver, 4)?.url).toBe(
+        "fallback_best.wav",
+      );
+      expect(getLapAudioConfig(partialDriver, 3)?.url).toBe(
+        "fallback_best.wav",
+      );
+      expect(getLapAudioConfig(partialDriver, 2)?.url).toBe(
+        "fallback_best.wav",
+      );
+    });
+
+    it("should preserve type none configuration for tier audio", () => {
+      const silentTierDriver = {
+        name: "Silent Tier Driver",
+        bestLapAudio: { type: "preset", url: "fallback_best.wav" },
+        overallBestLapAudio: { type: "none" },
+      };
+      const config = getLapAudioConfig(silentTierDriver, 6);
+      expect(config?.type).toBe("none");
+      expect(config?.url).toBeUndefined();
+    });
+
+    it("should return newRaceLeaderAudio when isNewRaceLeader is true", () => {
+      const leaderDriver = {
+        ...driver,
+        newRaceLeaderAudio: { type: "preset", url: "race_leader.wav" },
+        newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+      };
+      expect(getLapAudioConfig(leaderDriver, 0, false, true, false)?.url).toBe(
+        "race_leader.wav",
+      );
+    });
+
+    it("should return newHeatLeaderAudio when isNewHeatLeader is true and not race leader", () => {
+      const leaderDriver = {
+        ...driver,
+        newRaceLeaderAudio: { type: "preset", url: "race_leader.wav" },
+        newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+      };
+      expect(getLapAudioConfig(leaderDriver, 0, false, false, true)?.url).toBe(
+        "heat_leader.wav",
+      );
+    });
+
+    it("should prioritize overall records over leader sounds, and leader sounds over race best sounds", () => {
+      const fullDriver = {
+        ...driver,
+        newRaceLeaderAudio: { type: "preset", url: "race_leader.wav" },
+        newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+      };
+      // Overall best (tier 6) wins over isNewRaceLeader
+      expect(getLapAudioConfig(fullDriver, 6, false, true, false)?.url).toBe(
+        "overall_best.wav",
+      );
+      // Overall lane best (tier 5) wins over isNewRaceLeader
+      expect(getLapAudioConfig(fullDriver, 5, false, true, false)?.url).toBe(
+        "overall_lane_best.wav",
+      );
+      // isNewRaceLeader wins over isNewHeatLeader and race best (tier 4)
+      expect(getLapAudioConfig(fullDriver, 4, false, true, true)?.url).toBe(
+        "race_leader.wav",
+      );
+      // isNewHeatLeader wins over race best (tier 4)
+      expect(getLapAudioConfig(fullDriver, 4, false, false, true)?.url).toBe(
+        "heat_leader.wav",
+      );
+    });
+
+    it("should resolve default_new_race_leader and default_new_heat_leader urls", () => {
+      expect(resolveAudioUrl("default_new_race_leader", "http://server")).toBe(
+        "http://server/assets/default_new_race_leader_New_Race_Leader",
+      );
+      expect(resolveAudioUrl("default_new_heat_leader", "http://server")).toBe(
+        "http://server/assets/default_new_heat_leader_New_Heat_Leader",
+      );
+    });
+
+    it("should return undefined if no special record or best lap is achieved", () => {
+      expect(getLapAudioConfig(driver, 0, false)).toBeUndefined();
+    });
+  });
+
+  describe("resolveLapAudio Utility", () => {
+    const driver = {
+      overallBestLapAudio: { type: "preset", url: "overall_best.wav" },
+      overallLaneBestLapAudio: { type: "preset", url: "overall_lane_best.wav" },
+      raceBestLapAudio: { type: "preset", url: "race_best.wav" },
+      raceLaneBestLapAudio: { type: "preset", url: "race_lane_best.wav" },
+      heatBestLapAudio: { type: "preset", url: "heat_best.wav" },
+      bestLapAudio: { type: "preset", url: "personal_best.wav" },
+      newRaceLeaderAudio: { type: "preset", url: "race_leader.wav" },
+      newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+    };
+
+    it("should return undefined for null or undefined driver", () => {
+      expect(resolveLapAudio(null, 6)).toBeUndefined();
+      expect(resolveLapAudio(undefined, 6)).toBeUndefined();
+    });
+
+    it("should return undefined if no record tier or best lap achieved", () => {
+      expect(resolveLapAudio(driver, 0, false)).toBeUndefined();
+    });
+
+    it("should resolve Tier 6 (Overall Best) as verbal callout with high priority", () => {
+      const result = resolveLapAudio(driver, 6);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("overall_best.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("high");
+    });
+
+    it("should resolve Tier 5 (Overall Lane Best) as verbal callout with high priority", () => {
+      const result = resolveLapAudio(driver, 5);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("overall_lane_best.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("high");
+    });
+
+    it("should resolve New Race Leader as verbal callout with high priority", () => {
+      const result = resolveLapAudio(driver, 0, false, true, false);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("race_leader.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("high");
+    });
+
+    it("should resolve Tier 4 (Race Best) as verbal callout with high priority", () => {
+      const result = resolveLapAudio(driver, 4);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("race_best.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("high");
+    });
+
+    it("should resolve New Heat Leader as verbal callout with normal priority", () => {
+      const result = resolveLapAudio(driver, 0, false, false, true);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("heat_leader.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("normal");
+    });
+
+    it("should resolve Tier 3 (Race Lane Best) as verbal callout with normal priority", () => {
+      const result = resolveLapAudio(driver, 3);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("race_lane_best.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("normal");
+    });
+
+    it("should resolve Tier 2 (Heat Best) as verbal callout with normal priority", () => {
+      const result = resolveLapAudio(driver, 2);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("heat_best.wav");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("normal");
+    });
+
+    it("should resolve Tier 1 (Personal Best) preset as non-verbal SFX (isVoice = false)", () => {
+      const resultTier1 = resolveLapAudio(driver, 1);
+      expect(resultTier1).toBeDefined();
+      expect(resultTier1!.config.url).toBe("personal_best.wav");
+      expect(resultTier1!.isVoice).toBeFalse();
+      expect(resultTier1!.priority).toBe("normal");
+
+      const resultIsBestLap = resolveLapAudio(driver, 0, true);
+      expect(resultIsBestLap).toBeDefined();
+      expect(resultIsBestLap!.config.url).toBe("personal_best.wav");
+      expect(resultIsBestLap!.isVoice).toBeFalse();
+    });
+
+    it("should resolve Tier 1 (Personal Best) TTS as verbal callout with normal priority", () => {
+      const ttsDriver = {
+        ...driver,
+        bestLapAudio: { type: "tts", text: "{driver.name} best lap" },
+      };
+      const result = resolveLapAudio(ttsDriver, 1);
+      expect(result).toBeDefined();
+      expect(result!.config.text).toBe("{driver.name} best lap");
+      expect(result!.isVoice).toBeTrue();
+      expect(result!.priority).toBe("normal");
+    });
+
+    it("should handle fallback when higher tier audio is missing", () => {
+      const partialDriver = {
+        bestLapAudio: { type: "preset", url: "personal_best.wav" },
+      };
+      // When Tier 6 falls back to preset bestLapAudio, isVoice should be false (SFX)
+      const result = resolveLapAudio(partialDriver, 6);
+      expect(result).toBeDefined();
+      expect(result!.config.url).toBe("personal_best.wav");
+      expect(result!.isVoice).toBeFalse();
+      expect(result!.priority).toBe("high");
+
+      // When Tier 6 falls back to TTS bestLapAudio, isVoice should be true
+      const partialTtsDriver = {
+        bestLapAudio: { type: "tts", text: "Nice lap" },
+      };
+      const resultTts = resolveLapAudio(partialTtsDriver, 6);
+      expect(resultTts).toBeDefined();
+      expect(resultTts!.isVoice).toBeTrue();
+      expect(resultTts!.priority).toBe("high");
+    });
+  });
+
+  describe("dispatchLapAudio Utility", () => {
+    let mockPlayer: {
+      playCallout: jasmine.Spy;
+      playSfx: jasmine.Spy;
+    };
+
+    beforeEach(() => {
+      mockPlayer = {
+        playCallout: jasmine.createSpy("playCallout").and.returnValue(true),
+        playSfx: jasmine.createSpy("playSfx"),
+      };
+    });
+
+    const driver = {
+      name: "Racer",
+      lapAudio: { type: "preset", url: "beep.wav" },
+      bestLapAudio: { type: "preset", url: "personal_best.wav" },
+      overallBestLapAudio: { type: "preset", url: "overall_best.wav" },
+      newRaceLeaderAudio: { type: "preset", url: "leader.wav" },
+    };
+
+    it("should play milestone audio when callout succeeds without fallback", () => {
+      mockPlayer.playCallout.and.returnValue(true);
+      dispatchLapAudio(mockPlayer, driver, 6, true, false, false);
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driver.overallBestLapAudio,
+        "high",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should fallback to personal best lap SFX if milestone callout is dropped by priority", () => {
+      mockPlayer.playCallout.and.returnValue(false);
+      dispatchLapAudio(mockPlayer, driver, 6, true, false, false);
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driver.overallBestLapAudio,
+        "high",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("personal_best.wav");
+    });
+
+    it("should fallback to normal lap SFX if leader callout is dropped and isBestLap is false", () => {
+      mockPlayer.playCallout.and.returnValue(false);
+      dispatchLapAudio(mockPlayer, driver, 0, false, true, false);
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driver.newRaceLeaderAudio,
+        "high",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("beep.wav");
+    });
+
+    it("should fallback to personal best lap SFX when milestone audio is configured as none", () => {
+      const driverWithNone = {
+        ...driver,
+        overallBestLapAudio: { type: "none" },
+      };
+      dispatchLapAudio(mockPlayer, driverWithNone, 6, true, false, false);
+
+      expect(mockPlayer.playCallout).not.toHaveBeenCalled();
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("personal_best.wav");
+    });
+
+    it("should not play any sound if fallback audio is configured as none", () => {
+      const driverWithNoneFallback = {
+        ...driver,
+        overallBestLapAudio: { type: "none" },
+        bestLapAudio: { type: "none" },
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driverWithNoneFallback,
+        6,
+        true,
+        false,
+        false,
+      );
+
+      expect(mockPlayer.playCallout).not.toHaveBeenCalled();
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should play personal best lap preset directly as SFX for Tier 1 lap", () => {
+      dispatchLapAudio(mockPlayer, driver, 1, true, false, false);
+
+      expect(mockPlayer.playCallout).not.toHaveBeenCalled();
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("personal_best.wav");
+    });
+
+    it("should play normal lap SFX for standard lap when not best lap", () => {
+      dispatchLapAudio(mockPlayer, driver, 0, false, false, false);
+
+      expect(mockPlayer.playCallout).not.toHaveBeenCalled();
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("beep.wav");
+    });
+
+    it("should call playCallout with low priority if normal lapAudio is configured as TTS", () => {
+      const ttsDriver = {
+        ...driver,
+        lapAudio: { type: "tts", text: "Lap recorded" },
+      };
+      dispatchLapAudio(mockPlayer, ttsDriver, 0, false, false, false);
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        ttsDriver.lapAudio,
+        "low",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
     });
   });
 });

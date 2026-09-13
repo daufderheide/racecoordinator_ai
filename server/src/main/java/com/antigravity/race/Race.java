@@ -424,6 +424,10 @@ public class Race implements ProtocolListener {
     syncRaceState();
   }
 
+  public boolean isPractice() {
+    return model != null && model.isPractice();
+  }
+
   public List<RaceParticipant> getDrivers() {
     return drivers;
   }
@@ -1047,11 +1051,17 @@ public class Race implements ProtocolListener {
     }
   }
 
+  public void recalculateOverallStandings() {
+    if (overallStandings != null) {
+      overallStandings.recalculate(
+          this.drivers,
+          this.heats,
+          this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null);
+    }
+  }
+
   public void updateAndBroadcastOverallStandings() {
-    overallStandings.recalculate(
-        this.drivers,
-        this.heats,
-        this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null);
+    recalculateOverallStandings();
     recordsManager.recalculateScoreRecords();
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
     for (RaceParticipant driver : this.drivers) {

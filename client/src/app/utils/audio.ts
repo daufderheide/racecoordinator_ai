@@ -3,6 +3,8 @@ export interface TTSDriverData {
   nickname: string;
 }
 
+import { AudioConfig } from "@app/models/driver";
+import type { AudioPriority } from "@app/services/audio.service";
 import { LoggerService } from "@app/services/logger.service";
 
 export interface TTSLapData {
@@ -43,6 +45,193 @@ export interface TTSContext {
   [key: string]: any;
 }
 
+export interface LapAudioCalloutInfo {
+  config: AudioConfig;
+  isVoice: boolean;
+  priority: AudioPriority;
+}
+
+/**
+ * Resolves which audio configuration, voice status, and priority should be played for a lap
+ * based on record tiers, leader status, and personal best status.
+ *
+ * All record/leader announcements are verbal callouts with priority:
+ * - Overall records, race records, and race leader are HIGH priority.
+ * - Heat records and heat leader are NORMAL priority.
+ * - Personal best lap is non-verbal SFX (isVoice = false) when preset, or NORMAL voice when TTS.
+ */
+export function resolveLapAudio(
+  driver: any,
+  recordTier?: number | string | null,
+  isBestLap?: boolean | null,
+  isNewRaceLeader?: boolean | null,
+  isNewHeatLeader?: boolean | null,
+): LapAudioCalloutInfo | undefined {
+  if (!driver) return undefined;
+
+  const tier =
+    typeof recordTier === "string"
+      ? parseInt(recordTier, 10)
+      : (recordTier ?? 0);
+
+  if (tier === 6 || recordTier === "RECORD_TIER_OVERALL_BEST") {
+    const config = driver.overallBestLapAudio || driver.bestLapAudio;
+    if (!config) return undefined;
+    const isVoice =
+      config === driver.overallBestLapAudio || config.type === "tts";
+    return { config, isVoice, priority: "high" };
+  }
+  if (tier === 5 || recordTier === "RECORD_TIER_OVERALL_LANE_BEST") {
+    const config = driver.overallLaneBestLapAudio || driver.bestLapAudio;
+    if (!config) return undefined;
+    const isVoice =
+      config === driver.overallLaneBestLapAudio || config.type === "tts";
+    return { config, isVoice, priority: "high" };
+  }
+  if (isNewRaceLeader) {
+    const config = driver.newRaceLeaderAudio;
+    if (!config) return undefined;
+    return { config, isVoice: true, priority: "high" };
+  }
+  if (isNewHeatLeader) {
+    const config = driver.newHeatLeaderAudio;
+    if (!config) return undefined;
+    return { config, isVoice: true, priority: "normal" };
+  }
+  if (tier === 4 || recordTier === "RECORD_TIER_RACE_BEST") {
+    const config = driver.raceBestLapAudio || driver.bestLapAudio;
+    if (!config) return undefined;
+    const isVoice = config === driver.raceBestLapAudio || config.type === "tts";
+    return { config, isVoice, priority: "high" };
+  }
+  if (tier === 3 || recordTier === "RECORD_TIER_RACE_LANE_BEST") {
+    const config = driver.raceLaneBestLapAudio || driver.bestLapAudio;
+    if (!config) return undefined;
+    const isVoice =
+      config === driver.raceLaneBestLapAudio || config.type === "tts";
+    return { config, isVoice, priority: "normal" };
+  }
+  if (tier === 2 || recordTier === "RECORD_TIER_HEAT_BEST") {
+    const config = driver.heatBestLapAudio || driver.bestLapAudio;
+    if (!config) return undefined;
+    const isVoice = config === driver.heatBestLapAudio || config.type === "tts";
+    return { config, isVoice, priority: "normal" };
+  }
+  if (tier === 1 || recordTier === "RECORD_TIER_PERSONAL_BEST" || isBestLap) {
+    const config = driver.bestLapAudio;
+    if (!config) return undefined;
+    const isVoice = config.type === "tts";
+    return { config, isVoice, priority: "normal" };
+  }
+
+  return undefined;
+}
+
+/**
+ * Resolves which audio configuration should be played for a lap based on record tiers
+ * and personal best status.
+ */
+export function getLapAudioConfig(
+  driver: any,
+  recordTier?: number | string | null,
+  isBestLap?: boolean | null,
+  isNewRaceLeader?: boolean | null,
+  isNewHeatLeader?: boolean | null,
+): AudioConfig | undefined {
+  return resolveLapAudio(
+    driver,
+    recordTier,
+    isBestLap,
+    isNewRaceLeader,
+    isNewHeatLeader,
+  )?.config;
+}
+
+export interface AudioPlayer {
+  playCallout(
+    config: AudioConfig | undefined,
+    priority: AudioPriority,
+    context?: any,
+    resolvedUrl?: string,
+  ): boolean;
+  playSfx(url: string | undefined): HTMLAudioElement | void;
+}
+
+/**
+ * Dispatches audio for a lap event according to priority and fallback rules:
+ * 1. Resolves candidate milestone audio (Overall Best, Lane Best, Leader, Race Best, Heat Best).
+ * 2. If milestone audio is configured and not 'none', attempts to play it via playCallout().
+ * 3. If milestone audio wasn't played (due to priority drop, cooldown, set to 'none', or missing),
+ *    falls back to personal best lap sound (if isBestLap) or normal lap sound.
+ * 4. If fallback sound is set to 'none' or missing, no sound plays.
+ * 5. Otherwise, if fallback is a preset SFX, it plays polyphonically via playSfx();
+ *    if configured as TTS, it attempts playCallout().
+ */
+export function dispatchLapAudio(
+  audioPlayer: AudioPlayer,
+  driver: any,
+  recordTier?: number | string | null,
+  isBestLap?: boolean | null,
+  isNewRaceLeader?: boolean | null,
+  isNewHeatLeader?: boolean | null,
+  ttsContext?: any,
+): void {
+  if (!driver) return;
+
+  let played = false;
+  const specialAudio = resolveLapAudio(
+    driver,
+    recordTier,
+    isBestLap,
+    isNewRaceLeader,
+    isNewHeatLeader,
+  );
+
+  if (specialAudio) {
+    const config = specialAudio.config;
+    if (
+      config?.type &&
+      config.type !== "none" &&
+      ((config.type === "tts" && config.text?.trim()) ||
+        (config.type !== "tts" && config.url?.trim()))
+    ) {
+      if (specialAudio.isVoice) {
+        const result = audioPlayer.playCallout(
+          config,
+          specialAudio.priority,
+          ttsContext,
+        );
+        played = result !== false;
+      } else {
+        audioPlayer.playSfx(config.url);
+        played = true;
+      }
+    }
+  }
+
+  // If the sound for that lap wasn't played (either because of priority, set to none, or missing),
+  // fallback to personal best lap sound (if isBestLap) or normal lap sound.
+  const fallbackAudio = isBestLap ? driver.bestLapAudio : driver.lapAudio;
+  if (!played && (!specialAudio || specialAudio.config !== fallbackAudio)) {
+    if (
+      fallbackAudio?.type &&
+      fallbackAudio.type !== "none" &&
+      ((fallbackAudio.type === "tts" && fallbackAudio.text?.trim()) ||
+        (fallbackAudio.type !== "tts" && fallbackAudio.url?.trim()))
+    ) {
+      if (fallbackAudio.type === "tts") {
+        audioPlayer.playCallout(
+          fallbackAudio,
+          isBestLap ? "normal" : "low",
+          ttsContext,
+        );
+      } else {
+        audioPlayer.playSfx(fallbackAudio.url);
+      }
+    }
+  }
+}
+
 /** Resolves an audio URL or asset ID to a fully qualified URL for playback. */
 export function resolveAudioUrl(
   url: string | undefined,
@@ -62,6 +251,15 @@ export function resolveAudioUrl(
     default_penalty: "/assets/default_penalty_Penalty",
     default_false_start: "/assets/default_penalty_Penalty",
     default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
+    default_record_lap: "/assets/default_record_lap_Overall_Record_Lap",
+    default_record_lane_lap:
+      "/assets/default_record_lane_lap_Overall_Lane_Record_Lap",
+    default_best_race_lap: "/assets/default_best_race_lap_Race_Best_Lap",
+    default_best_race_lane_lap:
+      "/assets/default_best_race_lane_lap_Race_Lane_Best_Lap",
+    default_best_heat_lap: "/assets/default_best_heat_lap_Heat_Best_Lap",
+    default_new_race_leader: "/assets/default_new_race_leader_New_Race_Leader",
+    default_new_heat_leader: "/assets/default_new_heat_leader_New_Heat_Leader",
   };
   if (defaultUrls[url]) {
     return `${serverUrl}${defaultUrls[url]}`;
