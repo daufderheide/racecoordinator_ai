@@ -3,12 +3,15 @@ package com.antigravity.converters;
 import static org.junit.Assert.assertEquals;
 
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.DigitalFuelOptions;
+import com.antigravity.models.FuelCurvePoint;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
 import com.antigravity.models.Race;
 import com.antigravity.models.Track;
 import com.antigravity.proto.RaceModel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -507,6 +510,90 @@ public class RaceConverterTest {
     assertNotNull(proto);
     assertEquals(com.antigravity.proto.RaceState.RACE_OVER, proto.getState());
     assertEquals(com.antigravity.proto.RaceFlag.CHECKERED, proto.getFlag());
+  }
+
+  @Test
+  public void testToProto_AnalogFuelOptions_CustomCurve() {
+    List<FuelCurvePoint> curve =
+        Arrays.asList(
+            new FuelCurvePoint(0.0, 4.0),
+            new FuelCurvePoint(0.5, 1.0),
+            new FuelCurvePoint(1.0, 0.0));
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            120.0,
+            com.antigravity.models.FuelOptions.FuelUsageType.CUSTOM_CURVE,
+            5.0,
+            100.0,
+            8.0,
+            3.0,
+            6.0,
+            1.0,
+            1.0,
+            curve);
+    Race race =
+        new Race.Builder()
+            .withName("Custom Analog Fuel Race")
+            .withTrackEntityId("track-1")
+            .withFuelOptions(fuelOptions)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(
+        com.antigravity.proto.FuelUsageType.CUSTOM_CURVE, proto.getFuelOptions().getUsageType());
+    assertEquals(3, proto.getFuelOptions().getCustomCurveCount());
+    assertEquals(0.0, proto.getFuelOptions().getCustomCurve(0).getX(), 0.001);
+    assertEquals(4.0, proto.getFuelOptions().getCustomCurve(0).getY(), 0.001);
+    assertEquals(0.5, proto.getFuelOptions().getCustomCurve(1).getX(), 0.001);
+    assertEquals(1.0, proto.getFuelOptions().getCustomCurve(1).getY(), 0.001);
+    assertEquals(1.0, proto.getFuelOptions().getCustomCurve(2).getX(), 0.001);
+    assertEquals(0.0, proto.getFuelOptions().getCustomCurve(2).getY(), 0.001);
+  }
+
+  @Test
+  public void testToProto_DigitalFuelOptions_CustomCurve() {
+    List<FuelCurvePoint> curve =
+        Arrays.asList(
+            new FuelCurvePoint(0.0, 0.0),
+            new FuelCurvePoint(0.5, 0.4),
+            new FuelCurvePoint(1.0, 1.0));
+    DigitalFuelOptions digitalFuel =
+        new DigitalFuelOptions(
+            true,
+            false,
+            null,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            com.antigravity.models.FuelOptions.FuelUsageType.CUSTOM_CURVE,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            curve);
+    Race race =
+        new Race.Builder()
+            .withName("Custom Digital Fuel Race")
+            .withTrackEntityId("track-1")
+            .withDigitalFuelOptions(digitalFuel)
+            .build();
+    Track track = new Track.Builder().entityId("track-1").name("Track").build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+    assertEquals(
+        com.antigravity.proto.FuelUsageType.CUSTOM_CURVE,
+        proto.getDigitalFuelOptions().getUsageType());
+    assertEquals(3, proto.getDigitalFuelOptions().getCustomCurveCount());
+    assertEquals(0.0, proto.getDigitalFuelOptions().getCustomCurve(0).getX(), 0.001);
+    assertEquals(0.0, proto.getDigitalFuelOptions().getCustomCurve(0).getY(), 0.001);
+    assertEquals(0.5, proto.getDigitalFuelOptions().getCustomCurve(1).getX(), 0.001);
+    assertEquals(0.4, proto.getDigitalFuelOptions().getCustomCurve(1).getY(), 0.001);
+    assertEquals(1.0, proto.getDigitalFuelOptions().getCustomCurve(2).getX(), 0.001);
+    assertEquals(1.0, proto.getDigitalFuelOptions().getCustomCurve(2).getY(), 0.001);
   }
 
   private void assertNotNull(Object obj) {

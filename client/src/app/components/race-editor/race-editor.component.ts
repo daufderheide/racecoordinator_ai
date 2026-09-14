@@ -32,7 +32,11 @@ import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud
 import { sortThemesForDisplay } from "@app/components/ui-editor/ui-editor-theme.helper";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
-import { FuelUsageType, OutOfFuelAction } from "@app/models/fuel_options";
+import {
+  FuelCurvePoint,
+  FuelUsageType,
+  OutOfFuelAction,
+} from "@app/models/fuel_options";
 import { Role } from "@app/models/role";
 import { Theme } from "@app/models/theme";
 import { Track } from "@app/models/track";
@@ -733,31 +737,45 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               rotate_group_heats: false,
               min_advancing: 0,
             },
-            fuel_options: race.fuel_options || {
-              enabled: false,
-              reset_fuel_at_heat_start: false,
-              out_of_fuel_action: "DO_NOT_COUNT_LAPS",
-              capacity: 100,
-              usage_type: "LINEAR",
-              usage_rate: 4.0,
-              start_level: 100,
-              refuel_rate: 10.0,
-              pit_stop_delay: 2.0,
-              reference_time: 6.0,
-              power_stutter_on_time: 1.0,
-              power_stutter_off_time: 1.0,
-            },
-            digital_fuel_options: race.digital_fuel_options || {
-              enabled: false,
-              reset_fuel_at_heat_start: false,
-              out_of_fuel_action: "DO_NOT_COUNT_LAPS",
-              capacity: 100,
-              usage_type: "LINEAR",
-              usage_rate: 4.0,
-              start_level: 100,
-              refuel_rate: 10.0,
-              pit_stop_delay: 2.0,
-            },
+            fuel_options: race.fuel_options
+              ? {
+                  ...race.fuel_options,
+                  custom_curve: race.fuel_options.custom_curve || [],
+                  reference_time:
+                    Number(race.fuel_options.reference_time) || 6.0,
+                }
+              : {
+                  enabled: false,
+                  reset_fuel_at_heat_start: false,
+                  out_of_fuel_action: "DO_NOT_COUNT_LAPS",
+                  capacity: 100,
+                  usage_type: "LINEAR",
+                  usage_rate: 4.0,
+                  start_level: 100,
+                  refuel_rate: 10.0,
+                  pit_stop_delay: 2.0,
+                  reference_time: 6.0,
+                  power_stutter_on_time: 1.0,
+                  power_stutter_off_time: 1.0,
+                  custom_curve: [],
+                },
+            digital_fuel_options: race.digital_fuel_options
+              ? {
+                  ...race.digital_fuel_options,
+                  custom_curve: race.digital_fuel_options.custom_curve || [],
+                }
+              : {
+                  enabled: false,
+                  reset_fuel_at_heat_start: false,
+                  out_of_fuel_action: "DO_NOT_COUNT_LAPS",
+                  capacity: 100,
+                  usage_type: "LINEAR",
+                  usage_rate: 4.0,
+                  start_level: 100,
+                  refuel_rate: 10.0,
+                  pit_stop_delay: 2.0,
+                  custom_curve: [],
+                },
             team_options: race.team_options || {
               heat_lap_limit: 0,
               heat_time_limit: 0.0,
@@ -800,6 +818,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               refuel_rate: 10,
               pit_stop_delay: 2.0,
               reference_time: 6.0,
+              custom_curve: [],
             };
           }
           if (!this.editingRace.team_options) {
@@ -842,6 +861,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             start_level: 100,
             refuel_rate: 10,
             pit_stop_delay: 2.0,
+            custom_curve: [],
           };
         }
         this.enforceFuelRules();
@@ -1060,6 +1080,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         refuel_rate: 10,
         pit_stop_delay: 2.0,
         reference_time: 6.0,
+        custom_curve: [],
       },
       digital_fuel_options: {
         enabled: false,
@@ -1071,6 +1092,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         refuel_rate: 10,
         pit_stop_delay: 2.0,
         capacity: 100,
+        custom_curve: [],
       },
       min_lap_time: 1.5,
       drift_time: 0.5,
@@ -1639,19 +1661,77 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     argsKey: string;
   } | null = null;
 
+  draggingNode: {
+    mode: "analog" | "digital";
+    index: number;
+  } | null = null;
+  private previousAnalogPreset: FuelUsageType | string = FuelUsageType.LINEAR;
+  private previousDigitalPreset: FuelUsageType | string = FuelUsageType.LINEAR;
+
+  getFuelUsageReferenceTime(): number {
+    const ref = Number(this.editingRace?.fuel_options?.reference_time);
+    return !isNaN(ref) && ref > 0 ? ref : 6.0;
+  }
+
+  getFuelUsageMinTime(): number {
+    const ref = this.getFuelUsageReferenceTime();
+    return Math.max(0.2, Number((ref * 0.5).toFixed(2)));
+  }
+
+  getFuelUsageMaxTime(): number {
+    const ref = this.getFuelUsageReferenceTime();
+    return Math.max(
+      this.getFuelUsageMinTime() + 0.1,
+      Number((ref * 1.5).toFixed(2)),
+    );
+  }
+
+  getFuelUsageTimeRange(): string {
+    return `${this.getFuelUsageMinTime()}s - ${this.getFuelUsageMaxTime()}s`;
+  }
+
+  getFuelUsageXLabels(): string[] {
+    const min = this.getFuelUsageMinTime();
+    const max = this.getFuelUsageMaxTime();
+    const step = (max - min) / 4;
+    const labels: string[] = [];
+    for (let i = 0; i <= 4; i++) {
+      const val = min + i * step;
+      labels.push(`${Number(val.toFixed(2))}s`);
+    }
+    return labels;
+  }
+
+  getPitGraphYLabels(): string[] {
+    const min = this.getFuelUsageMinTime();
+    const max = this.getFuelUsageMaxTime();
+    const step = (max - min) / 4;
+    const labels: string[] = [];
+    for (let i = 4; i >= 0; i--) {
+      const val = min + i * step;
+      labels.push(`${Number(val.toFixed(2))}s`);
+    }
+    return labels;
+  }
+
   private getMaxFuelUsage(): number {
     if (!this.editingRace?.fuel_options) return 1;
     const usageRate = this.editingRace.fuel_options.usage_rate || 0;
     const usageType = this.editingRace.fuel_options.usage_type;
-    const minTime = 2;
-    const referenceTime =
-      Number(this.editingRace.fuel_options.reference_time) || 6;
+    if (this.isCustomCurve("analog")) {
+      const maxMult = this.getAnalogCurveMaxMultiplier();
+      const maxFuel = maxMult * usageRate;
+      return maxFuel <= 0 ? 1 : maxFuel;
+    }
+    const minTime = this.getFuelUsageMinTime();
+    const referenceTime = this.getFuelUsageReferenceTime();
 
     let maxFuel = getAnalogFuelUsage(
       usageType,
       usageRate,
       minTime,
       referenceTime,
+      this.editingRace.fuel_options.custom_curve,
     );
 
     if (isNaN(maxFuel) || !isFinite(maxFuel)) maxFuel = 0;
@@ -1662,18 +1742,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.fuel_options) return;
 
     const options = this.editingRace.fuel_options;
-    const key = `${options.usage_type}_${options.usage_rate}_${options.reference_time}`;
+    const referenceTime = this.getFuelUsageReferenceTime();
+    const minTime = this.getFuelUsageMinTime();
+    const maxTime = this.getFuelUsageMaxTime();
+    const curveKey = JSON.stringify(options.custom_curve || []);
+    const key = `${options.usage_type}_${options.usage_rate}_${referenceTime}_${minTime}_${maxTime}_${curveKey}`;
 
     if (this.usageGraphCache && this.usageGraphCache.argsKey === key) return;
 
     const maxFuelValue = this.getMaxFuelUsage();
     const width = 400;
     const height = 150;
-    const minTime = 2;
-    const maxTime = 15;
     const usageRate = options.usage_rate || 0;
     const usageType = options.usage_type;
-    const referenceTime = Number(options.reference_time) || 6;
 
     const points: string[] = [];
     const steps = 50;
@@ -1684,6 +1765,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         usageRate,
         time,
         referenceTime,
+        options.custom_curve,
       );
       const x = (i / steps) * width;
       const yRatio =
@@ -1710,9 +1792,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const usageRate = Number(this.editingRace.fuel_options.usage_rate) || 0;
     const capacity = Number(this.editingRace.fuel_options.capacity) || 100;
     const usageType = this.editingRace.fuel_options.usage_type;
-    const referenceTime =
-      Number(this.editingRace.fuel_options.reference_time) || 6;
-    const maxTime = 15;
+    const referenceTime = this.getFuelUsageReferenceTime();
+    const maxTime = this.getFuelUsageMaxTime();
 
     if (usageRate <= 0) return 3600;
 
@@ -1721,6 +1802,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       usageRate,
       maxTime,
       referenceTime,
+      this.editingRace.fuel_options.custom_curve,
     );
     if (minFuel <= 0) return 3600;
 
@@ -1736,19 +1818,20 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.fuel_options) return;
 
     const options = this.editingRace.fuel_options;
-    const key = `${options.usage_type}_${options.usage_rate}_${options.reference_time}_${options.capacity}`;
+    const referenceTime = this.getFuelUsageReferenceTime();
+    const minLapTime = this.getFuelUsageMinTime();
+    const maxLapTime = this.getFuelUsageMaxTime();
+    const curveKey = JSON.stringify(options.custom_curve || []);
+    const key = `${options.usage_type}_${options.usage_rate}_${referenceTime}_${options.capacity}_${minLapTime}_${maxLapTime}_${curveKey}`;
 
     if (this.pitGraphCache && this.pitGraphCache.argsKey === key) return;
 
     const maxPitTime = this.getMaxPitTime();
     const width = 400;
     const height = 150;
-    const minLapTime = 2;
-    const maxLapTime = 15;
     const capacity = Number(options.capacity) || 100;
     const usageRate = Number(options.usage_rate) || 0;
     const usageType = options.usage_type;
-    const referenceTime = Number(options.reference_time) || 6;
 
     const points: string[] = [];
     const steps = 50;
@@ -1760,6 +1843,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         usageRate,
         lapTime,
         referenceTime,
+        options.custom_curve,
       );
 
       let pitTimeSeconds = 0;
@@ -1769,7 +1853,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         pitTimeSeconds = maxPitTime;
       }
 
-      const y = height - (i / steps) * height; // 2s at bottom, 15s at top
+      const y = height - (i / steps) * height; // minLapTime at bottom, maxLapTime at top
       const xPercent =
         maxPitTime > 0
           ? Math.max(0, Math.min(1, pitTimeSeconds / maxPitTime))
@@ -1802,7 +1886,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private updateDigitalUsageGraphCache() {
     if (!this.editingRace?.digital_fuel_options) return;
     const options = this.editingRace.digital_fuel_options;
-    const key = `${options.usage_type}_${options.usage_rate}`;
+    const curveKey = JSON.stringify(options.custom_curve || []);
+    const key = `${options.usage_type}_${options.usage_rate}_${curveKey}`;
 
     if (
       this.digitalUsageGraphCache &&
@@ -1821,6 +1906,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         options.usage_type,
         options.usage_rate,
         throttle,
+        options.custom_curve,
       );
       const x = (i / steps) * width;
       const yRatio =
@@ -1857,7 +1943,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private updateDigitalPitGraphCache() {
     if (!this.editingRace?.digital_fuel_options) return;
     const options = this.editingRace.digital_fuel_options;
-    const key = `${options.usage_type}_${options.usage_rate}_${options.capacity}`;
+    const curveKey = JSON.stringify(options.custom_curve || []);
+    const key = `${options.usage_type}_${options.usage_rate}_${options.capacity}_${curveKey}`;
 
     if (this.digitalPitGraphCache && this.digitalPitGraphCache.argsKey === key)
       return;
@@ -1871,9 +1958,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     // Let's find a reasonable max X (Time to Empty).
     // Usage at 100% throttle is usageRate. So min time is Capacity/UsageRate.
     // Usage at 10% throttle is much less.
-    const _minTime = capacity / (usageRate || 1);
     const maxTime =
-      capacity / (getDigitalFuelUsage(usageType, usageRate, 10) || 0.001);
+      capacity /
+      (getDigitalFuelUsage(usageType, usageRate, 10, options.custom_curve) ||
+        0.001);
     const safeMaxTime =
       isNaN(maxTime) || !isFinite(maxTime) ? 3600 : Math.min(3600, maxTime);
 
@@ -1883,7 +1971,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const steps = 50;
     for (let i = 0; i <= steps; i++) {
       const throttle = (i / steps) * 100;
-      const fuelPerSec = getDigitalFuelUsage(usageType, usageRate, throttle);
+      const fuelPerSec = getDigitalFuelUsage(
+        usageType,
+        usageRate,
+        throttle,
+        options.custom_curve,
+      );
       let timeToEmpty = fuelPerSec > 0 ? capacity / fuelPerSec : safeMaxTime;
 
       const y = height - (i / steps) * height;
@@ -1947,7 +2040,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       const usageRate =
         Number(this.editingRace.digital_fuel_options.usage_rate) || 0;
       const usageType = this.editingRace.digital_fuel_options.usage_type;
-      const fuel = getDigitalFuelUsage(usageType, usageRate, throttle);
+      const fuel = getDigitalFuelUsage(
+        usageType,
+        usageRate,
+        throttle,
+        this.editingRace.digital_fuel_options.custom_curve,
+      );
 
       this.updateDigitalUsageGraphCache();
       const maxVal = this.digitalUsageGraphCache?.maxVal || 1;
@@ -1972,7 +2070,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       const usageType = this.editingRace.digital_fuel_options.usage_type;
       const capacity =
         Number(this.editingRace.digital_fuel_options.capacity) || 100;
-      const fuelPerSec = getDigitalFuelUsage(usageType, usageRate, throttle);
+      const fuelPerSec = getDigitalFuelUsage(
+        usageType,
+        usageRate,
+        throttle,
+        this.editingRace.digital_fuel_options.custom_curve,
+      );
 
       this.updateDigitalPitGraphCache();
       const maxVal = this.digitalPitGraphCache?.maxVal || 1;
@@ -1989,7 +2092,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         screenY: mouseY || 0,
         type: "digital_pit",
         xLabel: "RE_HOVER_TIME_TO_PIT",
-        xValue: (timeToEmpty || 0).toFixed(2) + "s",
+        xValue: Math.round(timeToEmpty) + "s",
         yLabel: "RE_HOVER_THROTTLE",
         yValue: Math.round(throttle || 0) + "%",
       };
@@ -2036,21 +2139,21 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const width = rect.width;
     const height = rect.height;
 
-    const minTime = 2;
-    const maxTime = 15;
+    const minTime = this.getFuelUsageMinTime();
+    const maxTime = this.getFuelUsageMaxTime();
 
     if (type === "usage") {
       const xPercent = Math.max(0, Math.min(1, mouseX / width));
       const time = minTime + xPercent * (maxTime - minTime);
       const usageRate = this.editingRace.fuel_options.usage_rate || 0;
       const usageType = this.editingRace.fuel_options.usage_type;
-      const referenceTime =
-        Number(this.editingRace.fuel_options.reference_time) || 6;
+      const referenceTime = this.getFuelUsageReferenceTime();
       const fuel = getAnalogFuelUsage(
         usageType,
         usageRate,
         time,
         referenceTime,
+        this.editingRace.fuel_options.custom_curve,
       );
 
       this.updateUsageGraphCache();
@@ -2069,14 +2172,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         yValue: fuel.toFixed(1),
       };
     } else {
-      // Pit Graph: Y is Lap Time (bottom 2, top 15)
+      // Pit Graph: Y is Lap Time (bottom minTime, top maxTime)
       const yPercent = 1 - Math.max(0, Math.min(1, mouseY / height));
       const lapTime = minTime + yPercent * (maxTime - minTime);
 
       const usageRate = this.editingRace.fuel_options.usage_rate || 0;
       const usageType = this.editingRace.fuel_options.usage_type;
-      const referenceTime =
-        Number(this.editingRace.fuel_options.reference_time) || 6;
+      const referenceTime = this.getFuelUsageReferenceTime();
       const capacity = this.editingRace.fuel_options.capacity || 100;
 
       const fuelPerLap = getAnalogFuelUsage(
@@ -2084,6 +2186,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         usageRate,
         lapTime,
         referenceTime,
+        this.editingRace.fuel_options.custom_curve,
       );
       let pitTime = 0;
       if (fuelPerLap > 0) pitTime = (capacity / fuelPerLap) * lapTime;
@@ -2108,6 +2211,359 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onGraphMouseLeave() {
     this.hoveredPoint = null;
+  }
+
+  isCustomCurve(mode: "analog" | "digital"): boolean {
+    if (mode === "analog") {
+      const type = this.editingRace?.fuel_options?.usage_type;
+      return (
+        type === FuelUsageType.CUSTOM_CURVE ||
+        type === "CUSTOM_CURVE" ||
+        type === "CUSTOM"
+      );
+    } else {
+      const type = this.editingRace?.digital_fuel_options?.usage_type;
+      return (
+        type === FuelUsageType.CUSTOM_CURVE ||
+        type === "CUSTOM_CURVE" ||
+        type === "CUSTOM"
+      );
+    }
+  }
+
+  onUsageTypeChange(mode: "analog" | "digital", newType: any) {
+    if (mode === "analog") {
+      if (
+        newType === FuelUsageType.CUSTOM_CURVE ||
+        newType === "CUSTOM_CURVE" ||
+        newType === "CUSTOM"
+      ) {
+        if (
+          !this.editingRace.fuel_options.custom_curve ||
+          this.editingRace.fuel_options.custom_curve.length === 0
+        ) {
+          this.initAnalogCustomCurve(this.previousAnalogPreset);
+        }
+      } else {
+        this.previousAnalogPreset = newType;
+      }
+      this.usageGraphCache = null;
+      this.pitGraphCache = null;
+    } else {
+      if (
+        newType === FuelUsageType.CUSTOM_CURVE ||
+        newType === "CUSTOM_CURVE" ||
+        newType === "CUSTOM"
+      ) {
+        if (
+          !this.editingRace.digital_fuel_options.custom_curve ||
+          this.editingRace.digital_fuel_options.custom_curve.length === 0
+        ) {
+          this.initDigitalCustomCurve(this.previousDigitalPreset);
+        }
+      } else {
+        this.previousDigitalPreset = newType;
+      }
+      this.digitalUsageGraphCache = null;
+      this.digitalPitGraphCache = null;
+    }
+  }
+
+  initAnalogCustomCurve(
+    fromPreset: FuelUsageType | string = FuelUsageType.LINEAR,
+  ) {
+    if (!this.editingRace?.fuel_options) return;
+    const ref = this.getFuelUsageReferenceTime();
+    const minTime = this.getFuelUsageMinTime();
+    const maxTime = this.getFuelUsageMaxTime();
+    const preset =
+      fromPreset === FuelUsageType.CUSTOM_CURVE ||
+      fromPreset === "CUSTOM_CURVE" ||
+      fromPreset === "CUSTOM"
+        ? FuelUsageType.LINEAR
+        : fromPreset;
+    const points: FuelCurvePoint[] = [];
+    const fractions = [0.0, 0.25, 0.5, 0.75, 1.0];
+    for (const frac of fractions) {
+      const time = minTime + frac * (maxTime - minTime);
+      const fuel = getAnalogFuelUsage(preset, 1.0, time, ref);
+      points.push({ x: Number(frac.toFixed(2)), y: Number(fuel.toFixed(3)) });
+    }
+    this.editingRace.fuel_options.custom_curve = points;
+  }
+
+  initDigitalCustomCurve(
+    fromPreset: FuelUsageType | string = FuelUsageType.LINEAR,
+  ) {
+    if (!this.editingRace?.digital_fuel_options) return;
+    const preset =
+      fromPreset === FuelUsageType.CUSTOM_CURVE ||
+      fromPreset === "CUSTOM_CURVE" ||
+      fromPreset === "CUSTOM"
+        ? FuelUsageType.LINEAR
+        : fromPreset;
+    const points: FuelCurvePoint[] = [];
+    const fractions = [0.0, 0.25, 0.5, 0.75, 1.0];
+    for (const frac of fractions) {
+      const throttle = frac * 100;
+      const fuel = getDigitalFuelUsage(preset, 1.0, throttle);
+      points.push({ x: Number(frac.toFixed(2)), y: Number(fuel.toFixed(3)) });
+    }
+    this.editingRace.digital_fuel_options.custom_curve = points;
+  }
+
+  resetCustomCurveToPreset(
+    mode: "analog" | "digital",
+    preset: "LINEAR" | "QUADRATIC" | "CUBIC",
+  ) {
+    if (mode === "analog") {
+      this.initAnalogCustomCurve(preset);
+      this.usageGraphCache = null;
+      this.pitGraphCache = null;
+    } else {
+      this.initDigitalCustomCurve(preset);
+      this.digitalUsageGraphCache = null;
+      this.digitalPitGraphCache = null;
+    }
+    this.captureState();
+  }
+
+  getAnalogCurveMaxMultiplier(): number {
+    const points = this.editingRace?.fuel_options?.custom_curve;
+    let maxP = 2.0;
+    if (points && points.length > 0) {
+      for (const p of points) {
+        if (p.y > maxP) maxP = p.y;
+      }
+    }
+    return Math.max(2.0, Math.ceil(maxP));
+  }
+
+  getAnalogControlNodes(): Array<{
+    svgX: number;
+    svgY: number;
+    x: number;
+    y: number;
+  }> {
+    const points: FuelCurvePoint[] =
+      this.editingRace?.fuel_options?.custom_curve || [];
+    const maxMult = this.getAnalogCurveMaxMultiplier();
+    return points.map((p: FuelCurvePoint) => ({
+      svgX: Number((p.x * 400).toFixed(1)),
+      svgY: Number((150 - (p.y / maxMult) * 150).toFixed(1)),
+      x: p.x,
+      y: p.y,
+    }));
+  }
+
+  getDigitalControlNodes(): Array<{
+    svgX: number;
+    svgY: number;
+    x: number;
+    y: number;
+  }> {
+    const points: FuelCurvePoint[] =
+      this.editingRace?.digital_fuel_options?.custom_curve || [];
+    return points.map((p: FuelCurvePoint) => ({
+      svgX: Number((p.x * 400).toFixed(1)),
+      svgY: Number((150 - p.y * 150).toFixed(1)),
+      x: p.x,
+      y: p.y,
+    }));
+  }
+
+  startDragNode(
+    event: MouseEvent | TouchEvent,
+    mode: "analog" | "digital",
+    index: number,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.draggingNode = { mode, index };
+  }
+
+  @HostListener("window:mousemove", ["$event"])
+  @HostListener("window:touchmove", ["$event"])
+  onWindowMouseMove(event: MouseEvent | TouchEvent) {
+    if (!this.draggingNode || !this.editingRace) return;
+
+    const mode = this.draggingNode.mode;
+    const index = this.draggingNode.index;
+    const svgId =
+      mode === "analog" ? "analog-fuel-usage-svg" : "digital-fuel-usage-svg";
+    const svg = document.getElementById(
+      svgId,
+    ) as unknown as SVGSVGElement | null;
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const clientX =
+      "touches" in event ? event.touches[0].clientX : event.clientX;
+    const clientY =
+      "touches" in event ? event.touches[0].clientY : event.clientY;
+
+    const normX = Math.max(
+      0,
+      Math.min(1, (clientX - rect.left) / (rect.width || 1)),
+    );
+
+    if (mode === "analog") {
+      const points = this.editingRace.fuel_options?.custom_curve;
+      if (!points || index < 0 || index >= points.length) return;
+
+      const maxMult = this.getAnalogCurveMaxMultiplier();
+      const rawY = (1 - (clientY - rect.top) / (rect.height || 1)) * maxMult;
+
+      let newX = normX;
+      if (index === 0) {
+        newX = 0.0;
+      } else if (index === points.length - 1) {
+        newX = 1.0;
+      } else {
+        newX = Math.max(
+          points[index - 1].x + 0.02,
+          Math.min(points[index + 1].x - 0.02, normX),
+        );
+      }
+
+      // Analog faster laps use >= fuel (monotonic non-increasing: y0 >= y1 >= y2 ...)
+      const upperY = index === 0 ? maxMult : points[index - 1].y;
+      const lowerY = index === points.length - 1 ? 0.0 : points[index + 1].y;
+      const newY = Math.max(lowerY, Math.min(upperY, rawY));
+
+      points[index].x = Number(newX.toFixed(3));
+      points[index].y = Number(newY.toFixed(3));
+
+      this.usageGraphCache = null;
+      this.pitGraphCache = null;
+    } else {
+      const points = this.editingRace.digital_fuel_options?.custom_curve;
+      if (!points || index < 0 || index >= points.length) return;
+
+      const rawY = 1 - (clientY - rect.top) / (rect.height || 1);
+
+      let newX = normX;
+      if (index === 0) {
+        newX = 0.0;
+      } else if (index === points.length - 1) {
+        newX = 1.0;
+      } else {
+        newX = Math.max(
+          points[index - 1].x + 0.02,
+          Math.min(points[index + 1].x - 0.02, normX),
+        );
+      }
+
+      // Digital higher throttle uses >= fuel (monotonic non-decreasing: y0 <= y1 <= y2 ...)
+      const lowerY = index === 0 ? 0.0 : points[index - 1].y;
+      const upperY = index === points.length - 1 ? 1.0 : points[index + 1].y;
+      const newY = Math.max(lowerY, Math.min(upperY, rawY));
+
+      points[index].x = Number(newX.toFixed(3));
+      points[index].y = Number(newY.toFixed(3));
+
+      this.digitalUsageGraphCache = null;
+      this.digitalPitGraphCache = null;
+    }
+  }
+
+  @HostListener("window:mouseup")
+  @HostListener("window:touchend")
+  onWindowMouseUp() {
+    if (this.draggingNode) {
+      this.draggingNode = null;
+      this.captureState();
+    }
+  }
+
+  onCurveSvgClick(event: MouseEvent, mode: "analog" | "digital") {
+    if (this.draggingNode) return;
+    const target = event.target as HTMLElement;
+    if (target && target.classList?.contains("curve-handle")) return;
+
+    const svg = event.currentTarget as SVGSVGElement;
+    const rect = svg.getBoundingClientRect();
+    const clickNormX = (event.clientX - rect.left) / (rect.width || 1);
+
+    if (mode === "analog") {
+      if (!this.isCustomCurve("analog")) return;
+      const points = this.editingRace?.fuel_options?.custom_curve;
+      if (!points || points.length < 2) return;
+
+      for (let i = 0; i < points.length - 1; i++) {
+        if (
+          clickNormX >= points[i].x + 0.03 &&
+          clickNormX <= points[i + 1].x - 0.03
+        ) {
+          const interpY = interpolateFuelCurveClient(points, clickNormX);
+          points.splice(i + 1, 0, {
+            x: Number(clickNormX.toFixed(3)),
+            y: Number(interpY.toFixed(3)),
+          });
+          this.usageGraphCache = null;
+          this.pitGraphCache = null;
+          this.captureState();
+          break;
+        }
+      }
+    } else {
+      if (!this.isCustomCurve("digital")) return;
+      const points = this.editingRace?.digital_fuel_options?.custom_curve;
+      if (!points || points.length < 2) return;
+
+      for (let i = 0; i < points.length - 1; i++) {
+        if (
+          clickNormX >= points[i].x + 0.03 &&
+          clickNormX <= points[i + 1].x - 0.03
+        ) {
+          const interpY = interpolateFuelCurveClient(points, clickNormX);
+          points.splice(i + 1, 0, {
+            x: Number(clickNormX.toFixed(3)),
+            y: Number(interpY.toFixed(3)),
+          });
+          this.digitalUsageGraphCache = null;
+          this.digitalPitGraphCache = null;
+          this.captureState();
+          break;
+        }
+      }
+    }
+  }
+
+  deleteControlNode(
+    event: MouseEvent,
+    mode: "analog" | "digital",
+    index: number,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (mode === "analog") {
+      const points = this.editingRace?.fuel_options?.custom_curve;
+      if (
+        !points ||
+        points.length <= 2 ||
+        index <= 0 ||
+        index >= points.length - 1
+      )
+        return;
+      points.splice(index, 1);
+      this.usageGraphCache = null;
+      this.pitGraphCache = null;
+      this.captureState();
+    } else {
+      const points = this.editingRace?.digital_fuel_options?.custom_curve;
+      if (
+        !points ||
+        points.length <= 2 ||
+        index <= 0 ||
+        index >= points.length - 1
+      )
+        return;
+      points.splice(index, 1);
+      this.digitalUsageGraphCache = null;
+      this.digitalPitGraphCache = null;
+      this.captureState();
+    }
   }
 
   private buildRacePayload(race: any): any {
@@ -3388,12 +3844,60 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 }
 
-function getAnalogFuelUsage(
+export function interpolateFuelCurveClient(
+  points?: FuelCurvePoint[],
+  x: number = 0,
+): number {
+  if (!points || points.length === 0) {
+    return 1.0;
+  }
+  if (points.length === 1) {
+    return points[0].y;
+  }
+  if (x <= points[0].x) {
+    return points[0].y;
+  }
+  if (x >= points[points.length - 1].x) {
+    return points[points.length - 1].y;
+  }
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    if (x >= p1.x && x <= p2.x) {
+      const dx = p2.x - p1.x;
+      if (dx <= 0.00001) {
+        return p1.y;
+      }
+      const t = (x - p1.x) / dx;
+      return p1.y + t * (p2.y - p1.y);
+    }
+  }
+  return points[points.length - 1].y;
+}
+
+export function getAnalogFuelUsage(
   usageType: FuelUsageType | string,
   usageRate: number,
   time: number,
   referenceTime: number,
+  customCurve?: FuelCurvePoint[],
 ): number {
+  if (
+    usageType === FuelUsageType.CUSTOM_CURVE ||
+    usageType === "CUSTOM_CURVE" ||
+    usageType === "CUSTOM"
+  ) {
+    const refCustom = Math.max(0.1, referenceTime);
+    const minTime = Math.max(0.2, refCustom * 0.5);
+    const maxTime = Math.max(minTime + 0.1, refCustom * 1.5);
+    let xNorm = (time - minTime) / (maxTime - minTime);
+    xNorm = Math.max(0.0, Math.min(1.0, xNorm));
+    const mult = interpolateFuelCurveClient(customCurve, xNorm);
+    const val = usageRate * mult;
+    return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
+  }
+
   if (usageType === FuelUsageType.LINEAR) {
     const safeRefTime = Math.max(0.1, referenceTime);
     const x1 = safeRefTime * 2;
@@ -3422,10 +3926,11 @@ function getAnalogFuelUsage(
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
 }
 
-function getDigitalFuelUsage(
+export function getDigitalFuelUsage(
   usageType: FuelUsageType | string,
   usageRate: number,
   throttle: number,
+  customCurve?: FuelCurvePoint[],
 ): number {
   const tRatio = throttle / 100;
   let val = usageRate * tRatio;
@@ -3433,6 +3938,12 @@ function getDigitalFuelUsage(
     val *= 1 + (1 - tRatio);
   } else if (usageType === FuelUsageType.CUBIC) {
     val *= 1 + (1 - tRatio) * (1 + (1 - tRatio));
+  } else if (
+    usageType === FuelUsageType.CUSTOM_CURVE ||
+    usageType === "CUSTOM_CURVE" ||
+    usageType === "CUSTOM"
+  ) {
+    val = usageRate * interpolateFuelCurveClient(customCurve, tRatio);
   }
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, Math.min(val, 100));
 }

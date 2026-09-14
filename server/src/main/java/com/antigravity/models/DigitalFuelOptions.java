@@ -9,6 +9,31 @@ public class DigitalFuelOptions extends FuelOptions {
     super();
   }
 
+  public DigitalFuelOptions(
+      boolean enabled,
+      boolean resetFuelAtHeatStart,
+      Boolean endHeatOnOutOfFuel,
+      OutOfFuelAction outOfFuelAction,
+      Double capacity,
+      FuelUsageType usageType,
+      Double usageRate,
+      Double startLevel,
+      Double refuelRate,
+      Double pitStopDelay) {
+    this(
+        enabled,
+        resetFuelAtHeatStart,
+        endHeatOnOutOfFuel,
+        outOfFuelAction,
+        capacity,
+        usageType,
+        usageRate,
+        startLevel,
+        refuelRate,
+        pitStopDelay,
+        null);
+  }
+
   @JsonCreator
   public DigitalFuelOptions(
       @JsonProperty("enabled") boolean enabled,
@@ -20,7 +45,8 @@ public class DigitalFuelOptions extends FuelOptions {
       @JsonProperty("usage_rate") Double usageRate,
       @JsonProperty("start_level") Double startLevel,
       @JsonProperty("refuel_rate") Double refuelRate,
-      @JsonProperty("pit_stop_delay") Double pitStopDelay) {
+      @JsonProperty("pit_stop_delay") Double pitStopDelay,
+      @JsonProperty("custom_curve") java.util.List<FuelCurvePoint> customCurve) {
     super(
         enabled,
         resetFuelAtHeatStart,
@@ -34,6 +60,7 @@ public class DigitalFuelOptions extends FuelOptions {
         usageRate,
         startLevel,
         refuelRate,
-        pitStopDelay);
+        pitStopDelay,
+        customCurve);
   }
 }

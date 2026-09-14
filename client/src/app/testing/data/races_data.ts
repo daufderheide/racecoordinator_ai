@@ -210,6 +210,7 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     fo.start_level,
     fo.refuel_rate,
     fo.pit_stop_delay,
+    fo.reference_time ?? 6.0,
     fo.power_stutter_on_time,
     fo.power_stutter_off_time,
   );

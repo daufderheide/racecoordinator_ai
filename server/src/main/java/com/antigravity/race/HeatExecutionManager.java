@@ -649,6 +649,12 @@ public class HeatExecutionManager {
       case CUBIC:
         val *= (1.0 + (1.0 - tRatio) * (1.0 + (1.0 - tRatio)));
         break;
+      case CUSTOM_CURVE:
+      case CUSTOM:
+        val =
+            usageRate
+                * FuelCalculationUtils.interpolateFuelCurve(fuelOptions.getCustomCurve(), tRatio);
+        break;
       default:
         break;
     }
@@ -1039,6 +1045,17 @@ public class HeatExecutionManager {
         double refC = Math.max(0.1, fuelOptions.getReferenceTime());
         double safeTimeC = Math.max(0.1, racingTime);
         lapFuelUsed = usageRate * (refC * refC * refC) / (safeTimeC * safeTimeC * safeTimeC);
+        break;
+      case CUSTOM_CURVE:
+      case CUSTOM:
+        double refCustom = Math.max(0.1, fuelOptions.getReferenceTime());
+        double minTime = Math.max(0.2, refCustom * 0.5);
+        double maxTime = Math.max(minTime + 0.1, refCustom * 1.5);
+        double xNorm = (racingTime - minTime) / (maxTime - minTime);
+        xNorm = Math.max(0.0, Math.min(1.0, xNorm));
+        double multiplier =
+            FuelCalculationUtils.interpolateFuelCurve(fuelOptions.getCustomCurve(), xNorm);
+        lapFuelUsed = usageRate * multiplier;
         break;
       default:
         break;

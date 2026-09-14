@@ -84,4 +84,37 @@ public class DigitalFuelOptionsTest {
     assertEquals(8.0, options.getRefuelRate(), 0.001);
     assertEquals(1.0, options.getPitStopDelay(), 0.001);
   }
+
+  @Test
+  public void testCustomCurveSerialization() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    java.util.List<FuelCurvePoint> curve =
+        java.util.Arrays.asList(
+            new FuelCurvePoint(0.0, 0.0),
+            new FuelCurvePoint(0.5, 0.3),
+            new FuelCurvePoint(1.0, 1.0));
+    DigitalFuelOptions options =
+        new DigitalFuelOptions(
+            true,
+            false,
+            false,
+            FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            FuelOptions.FuelUsageType.CUSTOM_CURVE,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            curve);
+
+    String json = mapper.writeValueAsString(options);
+    DigitalFuelOptions deserialized = mapper.readValue(json, DigitalFuelOptions.class);
+
+    assertNotNull(deserialized);
+    assertEquals(FuelOptions.FuelUsageType.CUSTOM_CURVE, deserialized.getUsageType());
+    assertNotNull(deserialized.getCustomCurve());
+    assertEquals(3, deserialized.getCustomCurve().size());
+    assertEquals(0.5, deserialized.getCustomCurve().get(1).getX(), 0.001);
+    assertEquals(0.3, deserialized.getCustomCurve().get(1).getY(), 0.001);
+  }
 }

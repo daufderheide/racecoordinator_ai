@@ -7,7 +7,10 @@ public abstract class FuelOptions {
   public enum FuelUsageType {
     LINEAR,
     QUADRATIC,
-    CUBIC
+    CUBIC,
+    CUSTOM_CURVE,
+    @com.fasterxml.jackson.annotation.JsonProperty("CUSTOM")
+    CUSTOM
   }
 
   public enum OutOfFuelAction {
@@ -43,6 +46,9 @@ public abstract class FuelOptions {
   @JsonProperty("pit_stop_delay")
   protected final double pitStopDelay;
 
+  @JsonProperty("custom_curve")
+  protected final java.util.List<FuelCurvePoint> customCurve;
+
   public FuelOptions() {
     this.enabled = false;
     this.resetFuelAtHeatStart = false;
@@ -53,6 +59,7 @@ public abstract class FuelOptions {
     this.startLevel = 100.0;
     this.refuelRate = 10.0;
     this.pitStopDelay = 2.0;
+    this.customCurve = java.util.Collections.emptyList();
   }
 
   public FuelOptions(
@@ -74,7 +81,8 @@ public abstract class FuelOptions {
         Double.valueOf(usageRate),
         Double.valueOf(startLevel),
         Double.valueOf(refuelRate),
-        Double.valueOf(pitStopDelay));
+        Double.valueOf(pitStopDelay),
+        null);
   }
 
   public FuelOptions(
@@ -87,6 +95,30 @@ public abstract class FuelOptions {
       Double startLevel,
       Double refuelRate,
       Double pitStopDelay) {
+    this(
+        enabled,
+        resetFuelAtHeatStart,
+        outOfFuelAction,
+        capacity,
+        usageType,
+        usageRate,
+        startLevel,
+        refuelRate,
+        pitStopDelay,
+        null);
+  }
+
+  public FuelOptions(
+      boolean enabled,
+      boolean resetFuelAtHeatStart,
+      OutOfFuelAction outOfFuelAction,
+      Double capacity,
+      FuelUsageType usageType,
+      Double usageRate,
+      Double startLevel,
+      Double refuelRate,
+      Double pitStopDelay,
+      java.util.List<FuelCurvePoint> customCurve) {
     this.enabled = enabled;
     this.resetFuelAtHeatStart = resetFuelAtHeatStart;
     this.outOfFuelAction = outOfFuelAction;
@@ -96,6 +128,10 @@ public abstract class FuelOptions {
     this.startLevel = startLevel != null ? startLevel : 100.0;
     this.refuelRate = refuelRate != null ? refuelRate : 10.0;
     this.pitStopDelay = pitStopDelay != null ? pitStopDelay : 2.0;
+    this.customCurve =
+        customCurve != null
+            ? java.util.Collections.unmodifiableList(new java.util.ArrayList<>(customCurve))
+            : java.util.Collections.emptyList();
   }
 
   public boolean isEnabled() {
@@ -132,5 +168,9 @@ public abstract class FuelOptions {
 
   public double getPitStopDelay() {
     return pitStopDelay;
+  }
+
+  public java.util.List<FuelCurvePoint> getCustomCurve() {
+    return customCurve;
   }
 }

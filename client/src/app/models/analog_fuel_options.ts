@@ -1,6 +1,12 @@
-import { FuelOptions, FuelUsageType, OutOfFuelAction } from "./fuel_options";
+import {
+  FuelCurvePoint,
+  FuelOptions,
+  FuelUsageType,
+  OutOfFuelAction,
+} from "./fuel_options";
 
 export class AnalogFuelOptions extends FuelOptions {
+  reference_time: number;
   power_stutter_on_time?: number;
   power_stutter_off_time?: number;
 
@@ -14,8 +20,10 @@ export class AnalogFuelOptions extends FuelOptions {
     start_level: number = 100,
     refuel_rate: number = 10,
     pit_stop_delay: number = 2.0,
+    reference_time: number = 6.0,
     power_stutter_on_time: number = 1.0,
     power_stutter_off_time: number = 1.0,
+    custom_curve: FuelCurvePoint[] = [],
   ) {
     super(
       enabled,
@@ -27,7 +35,9 @@ export class AnalogFuelOptions extends FuelOptions {
       start_level,
       refuel_rate,
       pit_stop_delay,
+      custom_curve,
     );
+    this.reference_time = reference_time;
     this.power_stutter_on_time = power_stutter_on_time;
     this.power_stutter_off_time = power_stutter_off_time;
   }

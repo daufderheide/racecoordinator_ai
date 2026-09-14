@@ -79,4 +79,48 @@ describe("AnalogFuelOptionsConverter", () => {
     expect(result.power_stutter_on_time).toBe(0.5);
     expect(result.power_stutter_off_time).toBe(1.5);
   });
+
+  it("should map reference_time from proto and provide default", () => {
+    const defaultResult = AnalogFuelOptionsConverter.fromProto(null);
+    expect(defaultResult.reference_time).toBe(6.0);
+
+    const customProto = { referenceTime: 15.0 };
+    const customResult = AnalogFuelOptionsConverter.fromProto(
+      customProto as any,
+    );
+    expect(customResult.reference_time).toBe(15.0);
+
+    const snakeCaseProto = { reference_time: 12.5 };
+    const snakeCaseResult = AnalogFuelOptionsConverter.fromProto(
+      snakeCaseProto as any,
+    );
+    expect(snakeCaseResult.reference_time).toBe(12.5);
+  });
+
+  it("should map CUSTOM_CURVE usage type and custom_curve points", () => {
+    const mockProto = {
+      usageType: 3, // CUSTOM_CURVE
+      customCurve: [
+        { x: 0, y: 4 },
+        { x: 0.5, y: 1 },
+        { x: 1, y: 0 },
+      ],
+    };
+    const result = AnalogFuelOptionsConverter.fromProto(mockProto as any);
+    expect(result.usage_type).toBe(FuelUsageType.CUSTOM_CURVE);
+    expect(result.custom_curve.length).toBe(3);
+    expect(result.custom_curve[0]).toEqual({ x: 0, y: 4 });
+    expect(result.custom_curve[1]).toEqual({ x: 0.5, y: 1 });
+    expect(result.custom_curve[2]).toEqual({ x: 1, y: 0 });
+  });
+
+  it("should handle snake_case custom_curve and string CUSTOM", () => {
+    const mockProto = {
+      usageType: "CUSTOM",
+      custom_curve: [{ x: 0.2, y: 3.0 }],
+    };
+    const result = AnalogFuelOptionsConverter.fromProto(mockProto as any);
+    expect(result.usage_type).toBe(FuelUsageType.CUSTOM_CURVE);
+    expect(result.custom_curve).toEqual([{ x: 0.2, y: 3.0 }]);
+  });
 });

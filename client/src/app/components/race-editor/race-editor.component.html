@@ -1262,7 +1262,10 @@
                             class="fuel-usage-type-select"
                             data-testid="fuel-usage-type-select"
                             [(ngModel)]="editingRace.fuel_options.usage_type"
-                            (ngModelChange)="captureState()"
+                            (ngModelChange)="
+                              onUsageTypeChange('analog', $event);
+                              captureState()
+                            "
                             [disabled]="
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
@@ -1276,6 +1279,9 @@
                             </app-custom-option>
                             <app-custom-option value="CUBIC">
                               {{ "RE_FUEL_USAGE_CUBIC" | translate }}
+                            </app-custom-option>
+                            <app-custom-option value="CUSTOM_CURVE">
+                              {{ "RE_FUEL_USAGE_CUSTOM" | translate }}
                             </app-custom-option>
                           </app-custom-select>
                         </div>
@@ -1514,9 +1520,47 @@
                         <div class="fuel-graph-section">
                           <div class="graph-header">
                             <span class="graph-title"
-                              >{{ "RE_FUEL_GRAPH_USAGE_TITLE" | translate }} (2s
-                              - 15s)</span
+                              >{{ "RE_FUEL_GRAPH_USAGE_TITLE" | translate }} ({{
+                                getFuelUsageTimeRange()
+                              }})</span
                             >
+                            @if (isCustomCurve("analog")) {
+                              <div class="curve-presets-bar">
+                                <button
+                                  type="button"
+                                  class="btn-curve-preset"
+                                  data-testid="reset-analog-linear-btn"
+                                  (click)="
+                                    resetCustomCurveToPreset('analog', 'LINEAR')
+                                  "
+                                >
+                                  {{ "RE_RESET_CURVE_LINEAR" | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="btn-curve-preset"
+                                  data-testid="reset-analog-quadratic-btn"
+                                  (click)="
+                                    resetCustomCurveToPreset(
+                                      'analog',
+                                      'QUADRATIC'
+                                    )
+                                  "
+                                >
+                                  {{ "RE_RESET_CURVE_QUADRATIC" | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="btn-curve-preset"
+                                  data-testid="reset-analog-cubic-btn"
+                                  (click)="
+                                    resetCustomCurveToPreset('analog', 'CUBIC')
+                                  "
+                                >
+                                  {{ "RE_RESET_CURVE_CUBIC" | translate }}
+                                </button>
+                              </div>
+                            }
                           </div>
                           <div class="graph-body">
                             <div class="y-axis-labels">
@@ -1530,11 +1574,16 @@
                             <div class="y-axis-label">FUEL USED</div>
                             <div class="graph-svg-wrapper">
                               <svg
+                                id="analog-fuel-usage-svg"
                                 viewBox="0 0 400 150"
                                 preserveAspectRatio="none"
                                 class="fuel-graph"
+                                [class.interactive-custom]="
+                                  isCustomCurve('analog')
+                                "
                                 (mousemove)="onGraphMouseMove($event, 'usage')"
                                 (mouseleave)="onGraphMouseLeave()"
+                                (click)="onCurveSvgClick($event, 'analog')"
                               >
                                 <line
                                   x1="0"
@@ -1572,6 +1621,37 @@
                                   [attr.d]="getFuelUsagePath()"
                                   class="usage-path"
                                 />
+                                @if (isCustomCurve("analog")) {
+                                  @for (
+                                    node of getAnalogControlNodes();
+                                    track $index
+                                  ) {
+                                    <circle
+                                      [attr.cx]="node.svgX"
+                                      [attr.cy]="node.svgY"
+                                      r="7"
+                                      class="curve-handle"
+                                      [class.active]="
+                                        draggingNode?.mode === 'analog' &&
+                                        draggingNode?.index === $index
+                                      "
+                                      [attr.data-node-index]="$index"
+                                      (mousedown)="
+                                        startDragNode($event, 'analog', $index)
+                                      "
+                                      (touchstart)="
+                                        startDragNode($event, 'analog', $index)
+                                      "
+                                      (contextmenu)="
+                                        deleteControlNode(
+                                          $event,
+                                          'analog',
+                                          $index
+                                        )
+                                      "
+                                    />
+                                  }
+                                }
                                 @if (
                                   hoveredPoint && hoveredPoint.type === "usage"
                                 ) {
@@ -1625,9 +1705,15 @@
                             </div>
                           </div>
                           <div class="x-axis-labels">
-                            <span>2s</span><span>5.25s</span><span>8.5s</span
-                            ><span>11.75s</span><span>15s</span>
+                            @for (label of getFuelUsageXLabels(); track label) {
+                              <span>{{ label }}</span>
+                            }
                           </div>
+                          @if (isCustomCurve("analog")) {
+                            <div class="curve-drag-hint">
+                              {{ "RE_CURVE_DRAG_HINT" | translate }}
+                            </div>
+                          }
                         </div>
                         <!-- Graph 2: Time to Pit -->
                         <div class="fuel-graph-section">
@@ -1638,9 +1724,12 @@
                           </div>
                           <div class="graph-body">
                             <div class="y-axis-labels">
-                              <span>15s</span><span>11.75s</span
-                              ><span>8.5s</span><span>5.25s</span
-                              ><span>2s</span>
+                              @for (
+                                label of getPitGraphYLabels();
+                                track label
+                              ) {
+                                <span>{{ label }}</span>
+                              }
                             </div>
                             <div class="y-axis-label">
                               {{ "RE_FUEL_GRAPH_LAP_TIME" | translate }}
@@ -1806,7 +1895,10 @@
                             [(ngModel)]="
                               editingRace.digital_fuel_options.usage_type
                             "
-                            (ngModelChange)="captureState()"
+                            (ngModelChange)="
+                              onUsageTypeChange('digital', $event);
+                              captureState()
+                            "
                             [disabled]="
                               !hasDigitalFuel ||
                               !editingRace.digital_fuel_options.enabled
@@ -1820,6 +1912,9 @@
                             </app-custom-option>
                             <app-custom-option value="CUBIC">
                               {{ "RE_FUEL_USAGE_CUBIC" | translate }}
+                            </app-custom-option>
+                            <app-custom-option value="CUSTOM_CURVE">
+                              {{ "RE_FUEL_USAGE_CUSTOM" | translate }}
                             </app-custom-option>
                           </app-custom-select>
                         </div>
@@ -1993,6 +2088,46 @@
                             <span class="graph-title">{{
                               "RE_DIGITAL_FUEL_GRAPH_USAGE_TITLE" | translate
                             }}</span>
+                            @if (isCustomCurve("digital")) {
+                              <div class="curve-presets-bar">
+                                <button
+                                  type="button"
+                                  class="btn-curve-preset"
+                                  data-testid="reset-digital-linear-btn"
+                                  (click)="
+                                    resetCustomCurveToPreset(
+                                      'digital',
+                                      'LINEAR'
+                                    )
+                                  "
+                                >
+                                  {{ "RE_RESET_CURVE_LINEAR" | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="btn-curve-preset"
+                                  data-testid="reset-digital-quadratic-btn"
+                                  (click)="
+                                    resetCustomCurveToPreset(
+                                      'digital',
+                                      'QUADRATIC'
+                                    )
+                                  "
+                                >
+                                  {{ "RE_RESET_CURVE_QUADRATIC" | translate }}
+                                </button>
+                                <button
+                                  type="button"
+                                  class="btn-curve-preset"
+                                  data-testid="reset-digital-cubic-btn"
+                                  (click)="
+                                    resetCustomCurveToPreset('digital', 'CUBIC')
+                                  "
+                                >
+                                  {{ "RE_RESET_CURVE_CUBIC" | translate }}
+                                </button>
+                              </div>
+                            }
                           </div>
                           <div class="graph-body">
                             <div class="y-axis-labels">
@@ -2008,13 +2143,18 @@
                             </div>
                             <div class="graph-svg-wrapper">
                               <svg
+                                id="digital-fuel-usage-svg"
                                 viewBox="0 0 400 150"
                                 preserveAspectRatio="none"
                                 class="fuel-graph"
+                                [class.interactive-custom]="
+                                  isCustomCurve('digital')
+                                "
                                 (mousemove)="
                                   onDigitalGraphMouseMove($event, 'usage')
                                 "
                                 (mouseleave)="onGraphMouseLeave()"
+                                (click)="onCurveSvgClick($event, 'digital')"
                               >
                                 <line
                                   x1="0"
@@ -2052,6 +2192,37 @@
                                   [attr.d]="getDigitalUsagePath()"
                                   class="usage-path"
                                 />
+                                @if (isCustomCurve("digital")) {
+                                  @for (
+                                    node of getDigitalControlNodes();
+                                    track $index
+                                  ) {
+                                    <circle
+                                      [attr.cx]="node.svgX"
+                                      [attr.cy]="node.svgY"
+                                      r="7"
+                                      class="curve-handle"
+                                      [class.active]="
+                                        draggingNode?.mode === 'digital' &&
+                                        draggingNode?.index === $index
+                                      "
+                                      [attr.data-node-index]="$index"
+                                      (mousedown)="
+                                        startDragNode($event, 'digital', $index)
+                                      "
+                                      (touchstart)="
+                                        startDragNode($event, 'digital', $index)
+                                      "
+                                      (contextmenu)="
+                                        deleteControlNode(
+                                          $event,
+                                          'digital',
+                                          $index
+                                        )
+                                      "
+                                    />
+                                  }
+                                }
                                 @if (
                                   hoveredPoint &&
                                   hoveredPoint.type === "digital_usage"
@@ -2110,6 +2281,11 @@
                             <span>0%</span><span>25%</span><span>50%</span
                             ><span>75%</span><span>100%</span>
                           </div>
+                          @if (isCustomCurve("digital")) {
+                            <div class="curve-drag-hint">
+                              {{ "RE_CURVE_DRAG_HINT" | translate }}
+                            </div>
+                          }
                         </div>
                         <!-- Digital Graph 2: Time to Empty -->
                         <div class="fuel-graph-section">
