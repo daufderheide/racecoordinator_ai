@@ -48,4 +48,53 @@ public class AnalogFuelOptionsTest {
     assertEquals(7.5, deserialized.getReferenceTime(), 0.001);
     assertEquals(FuelOptions.OutOfFuelAction.POWER_STUTTER, deserialized.getOutOfFuelAction());
   }
+
+  @Test
+  public void testElevenArgumentConstructor() {
+    AnalogFuelOptions options =
+        new AnalogFuelOptions(
+            true,
+            false,
+            true,
+            FuelOptions.OutOfFuelAction.END_HEAT,
+            110.0,
+            FuelOptions.FuelUsageType.LINEAR,
+            4.5,
+            90.0,
+            12.0,
+            2.5,
+            8.0);
+
+    assertTrue(options.isEnabled());
+    assertFalse(options.isResetFuelAtHeatStart());
+    assertEquals(FuelOptions.OutOfFuelAction.END_HEAT, options.getOutOfFuelAction());
+    assertEquals(110.0, options.getCapacity(), 0.001);
+    assertEquals(FuelOptions.FuelUsageType.LINEAR, options.getUsageType());
+    assertEquals(4.5, options.getUsageRate(), 0.001);
+    assertEquals(90.0, options.getStartLevel(), 0.001);
+    assertEquals(12.0, options.getRefuelRate(), 0.001);
+    assertEquals(2.5, options.getPitStopDelay(), 0.001);
+    assertEquals(8.0, options.getReferenceTime(), 0.001);
+    assertEquals(1.0, options.getPowerStutterOnTime(), 0.001);
+    assertEquals(1.0, options.getPowerStutterOffTime(), 0.001);
+  }
+
+  @Test
+  public void testBoxedDoubleConstructorWithDefaults() {
+    AnalogFuelOptions options =
+        new AnalogFuelOptions(
+            false, false, true, null, null, null, null, null, null, null, null, null, null);
+
+    assertFalse(options.isEnabled());
+    assertEquals(FuelOptions.OutOfFuelAction.END_HEAT, options.getOutOfFuelAction());
+    assertEquals(100.0, options.getCapacity(), 0.001);
+    assertEquals(FuelOptions.FuelUsageType.LINEAR, options.getUsageType());
+    assertEquals(4.0, options.getUsageRate(), 0.001);
+    assertEquals(100.0, options.getStartLevel(), 0.001);
+    assertEquals(10.0, options.getRefuelRate(), 0.001);
+    assertEquals(2.0, options.getPitStopDelay(), 0.001);
+    assertEquals(6.0, options.getReferenceTime(), 0.001);
+    assertEquals(1.0, options.getPowerStutterOnTime(), 0.001);
+    assertEquals(1.0, options.getPowerStutterOffTime(), 0.001);
+  }
 }
