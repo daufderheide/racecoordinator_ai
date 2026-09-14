@@ -542,4 +542,207 @@ describe("AudioService", () => {
       expect((service as any).activeAudioElement).toBeNull();
     }));
   });
+
+  describe("Relevance Filtering and Page Scoping", () => {
+    it("should allow all sounds when relevanceFilter is null", () => {
+      service.setRelevanceFilter(null);
+      expect(service.isSoundRelevant({ widgetType: "countdown" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "timer" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "flag" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "race-state" })).toBeTrue();
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+          driverId: "d1",
+        }),
+      ).toBeTrue();
+      expect(service.isSoundRelevant()).toBeTrue();
+    });
+
+    it("should correctly filter countdown audio", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowCountdown: false,
+      });
+      expect(service.isSoundRelevant({ widgetType: "countdown" })).toBeFalse();
+
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowCountdown: true,
+      });
+      expect(service.isSoundRelevant({ widgetType: "countdown" })).toBeTrue();
+    });
+
+    it("should correctly filter timer audio", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowTimer: false,
+      });
+      expect(service.isSoundRelevant({ widgetType: "timer" })).toBeFalse();
+
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowTimer: true,
+      });
+      expect(service.isSoundRelevant({ widgetType: "timer" })).toBeTrue();
+    });
+
+    it("should correctly filter race state audio", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowRaceState: false,
+      });
+      expect(service.isSoundRelevant({ widgetType: "flag" })).toBeFalse();
+      expect(service.isSoundRelevant({ widgetType: "race-state" })).toBeFalse();
+
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowRaceState: true,
+      });
+      expect(service.isSoundRelevant({ widgetType: "flag" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "race-state" })).toBeTrue();
+    });
+
+    it("should correctly filter driver audio in mode 'none'", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "none",
+        allowCountdown: true,
+        allowTimer: true,
+        allowRaceState: true,
+      });
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+          driverId: "d1",
+        }),
+      ).toBeFalse();
+      expect(service.isSoundRelevant({ laneIndex: 0 })).toBeFalse();
+      expect(service.isSoundRelevant({ driverId: "d1" })).toBeFalse();
+    });
+
+    it("should correctly filter driver audio in mode 'scoped'", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([1]),
+        allowedDriverIds: new Set(["driver-123"]),
+      });
+
+      // Allowed lane
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+          driverId: "other",
+        }),
+      ).toBeTrue();
+
+      // Allowed driver
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 2,
+          driverId: "driver-123",
+        }),
+      ).toBeTrue();
+
+      // Disallowed lane and driver
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+          driverId: "driver-999",
+        }),
+      ).toBeFalse();
+    });
+
+    it("should drop playSfx early when sound is not relevant", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowCountdown: false,
+      });
+
+      const result = service.playSfx("beep.wav", { widgetType: "countdown" });
+      expect(result).toBeUndefined();
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Dropping SFX: not relevant to current UI page",
+        { widgetType: "countdown" },
+      );
+    });
+
+    it("should drop playCallout early when sound is not relevant", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([0]),
+      });
+
+      const config: AudioConfig = { type: "preset", url: "lap.wav" };
+      const result = service.playCallout(config, "high", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 1,
+      });
+
+      expect(result).toBeFalse();
+      expect(service.getActiveVoice()).toBeNull();
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Dropping callout: not relevant to current UI page",
+        { widgetType: "lane-view", laneIndex: 1 },
+      );
+    });
+
+    it("should support independent isolated instances for per-page audio engines", () => {
+      const page1Service = new AudioService(
+        mockDataService,
+        mockSettingsService,
+        mockLogger,
+      );
+      const page2Service = new AudioService(
+        mockDataService,
+        mockSettingsService,
+        mockLogger,
+      );
+
+      page1Service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([0]),
+      });
+      page2Service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([1]),
+      });
+
+      // Page 1 plays lane 0, drops lane 1
+      expect(
+        page1Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+        }),
+      ).toBeTrue();
+      expect(
+        page1Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+        }),
+      ).toBeFalse();
+
+      // Page 2 plays lane 1, drops lane 0
+      expect(
+        page2Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+        }),
+      ).toBeTrue();
+      expect(
+        page2Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+        }),
+      ).toBeFalse();
+
+      page1Service.ngOnDestroy();
+      page2Service.ngOnDestroy();
+    });
+  });
 });

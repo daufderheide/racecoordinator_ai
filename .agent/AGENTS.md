@@ -143,6 +143,13 @@ Whenever a new configuration setting, property, or field is added, modified, or 
 
 ## Audio Architecture, Priority Tiers & Sound Classification
 - **Explicit Priority Level Required for All Audio**: Whenever new audio slots, events, or callouts are created (theme, driver, or system audio), you MUST decide and configure its priority level (`urgent`, `high`, `normal`, or `low`).
+- **Audio Association & UI Page Relevance Required for All Audio**: Whenever new audio slots, events, or callouts are added, you MUST define its audio association (`AudioAssociation`):
+  - Driver & lap audio (lap sounds, personal bests, records, leader changes, false start / penalties, min lap time, drift lap, pit-in, fuel alerts) MUST be associated with `laneIndex`, `driverId`, and `widgetType: 'lane-view'`.
+  - Countdown sounds (sequence beeps, green lamp GO) MUST be associated with `widgetType: 'countdown'`.
+  - Timer sounds (seconds left countdown, halfway callouts) MUST be associated with `widgetType: 'timer'`.
+  - Race state sounds (yellow flag, heat over, race over) MUST be associated with `widgetType: 'flag'`.
+  - Audio dispatches (`playCallout`, `playSfx`, `dispatchLapAudio`) MUST always pass this association so each UI page only plays audio relevant to the widgets and driver/lane actively displayed on that page.
+- **Per-Page Audio Engine Isolation**: Any page or view playing racing audio (e.g. `DefaultRacedayComponent`, `DefaultDriverStationComponent`) MUST declare `providers: [AudioService]` in its `@Component` decorator to ensure a dedicated, isolated audio engine instance per page. Audio on a driver station or secondary monitor must never preempt, block, or be queued behind audio on another page.
 - **Verbal vs Non-Verbal Classification**:
   - Only general lap sounds (`driver.lapAudio`) and personal best lap sounds (`driver.bestLapAudio`) are non-verbal SFX (when configured as presets) that can play polyphonically on top of other sounds via `AudioService.playSfx()`.
   - All other sounds (including false start, track/race/heat record laps, leader changes, time announcements, flags, minimum lap time, drift lap, etc.) are verbal callouts and MUST be routed through `AudioService.playCallout()` with their designated priority level, preemption handling, and cadence spacing so they never clash or talk over other announcements.

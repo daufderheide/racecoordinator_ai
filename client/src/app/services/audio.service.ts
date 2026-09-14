@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable, OnDestroy } from "@angular/core";
 import { DataService } from "@app/data.service";
 import { AudioConfig } from "@app/models/driver";
 import { LoggerService } from "@app/services/logger.service";
@@ -14,12 +14,37 @@ export const AUDIO_PRIORITY_WEIGHT: Record<AudioPriority, number> = {
   urgent: 4,
 };
 
+export interface AudioAssociation {
+  widgetType?: "lane-view" | "timer" | "flag" | "countdown" | string;
+  laneIndex?: number;
+  driverId?: string;
+}
+
+export type DriverAudioMode = "all" | "none" | "scoped";
+
+export interface AudioRelevanceFilter {
+  /** Driver audio mode: 'all' (all lanes), 'none' (no driver audio), 'scoped' (specific lanes/drivers) */
+  driverAudioMode: DriverAudioMode;
+  /** When driverAudioMode is 'scoped', set of allowed 0-indexed lane numbers */
+  allowedLanes?: Set<number>;
+  /** When driverAudioMode is 'scoped', set of allowed driver entity IDs / object IDs */
+  allowedDriverIds?: Set<string>;
+
+  /** Whether countdown audio is allowed */
+  allowCountdown?: boolean;
+  /** Whether timer audio (seconds left, halfway) is allowed */
+  allowTimer?: boolean;
+  /** Whether race state audio (yellow flag, heat over, race over) is allowed */
+  allowRaceState?: boolean;
+}
+
 export interface UrgentQueueItem {
   config: AudioConfig;
   priority: AudioPriority;
   context?: any;
   resolvedUrl?: string;
   enqueuedAt: number;
+  association?: AudioAssociation;
 }
 
 export interface ActiveVoiceCallout {
@@ -30,7 +55,7 @@ export interface ActiveVoiceCallout {
 @Injectable({
   providedIn: "root",
 })
-export class AudioService {
+export class AudioService implements OnDestroy {
   private activeVoice: ActiveVoiceCallout | null = null;
   private urgentQueue: UrgentQueueItem[] = [];
   private isSpacingCoolingDown: boolean = false;
@@ -39,6 +64,7 @@ export class AudioService {
   private activeAudioElement: HTMLAudioElement | null = null;
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private safetyTimeout: any = null;
+  private relevanceFilter: AudioRelevanceFilter | null = null;
 
   constructor(
     private dataService: DataService,
@@ -95,12 +121,93 @@ export class AudioService {
     return announcementSlots.some((s) => slotOrCategory.includes(s));
   }
 
+  setRelevanceFilter(filter: AudioRelevanceFilter | null): void {
+    this.relevanceFilter = filter;
+  }
+
+  getRelevanceFilter(): AudioRelevanceFilter | null {
+    return this.relevanceFilter;
+  }
+
+  resetRelevanceFilter(): void {
+    this.relevanceFilter = null;
+  }
+
+  isSoundRelevant(association?: AudioAssociation): boolean {
+    if (!this.relevanceFilter) {
+      return true;
+    }
+
+    // 1. Countdown audio
+    if (association?.widgetType === "countdown") {
+      return !!this.relevanceFilter.allowCountdown;
+    }
+
+    // 2. Timer audio (seconds left, halfway)
+    if (association?.widgetType === "timer") {
+      return !!this.relevanceFilter.allowTimer;
+    }
+
+    // 3. Race state audio (flag, yellow flag, heat over, race over)
+    if (
+      association?.widgetType === "flag" ||
+      association?.widgetType === "race-state"
+    ) {
+      return !!this.relevanceFilter.allowRaceState;
+    }
+
+    // 4. Driver / Lane audio (lane-view / driver station)
+    if (
+      association?.widgetType === "lane-view" ||
+      association?.widgetType === "driver" ||
+      association?.laneIndex != null ||
+      association?.driverId != null
+    ) {
+      if (this.relevanceFilter.driverAudioMode === "all") {
+        return true;
+      }
+      if (this.relevanceFilter.driverAudioMode === "scoped") {
+        if (
+          association.laneIndex != null &&
+          this.relevanceFilter.allowedLanes?.has(association.laneIndex)
+        ) {
+          return true;
+        }
+        if (
+          association.driverId &&
+          this.relevanceFilter.allowedDriverIds?.has(association.driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }
+      return false;
+    }
+
+    // Unassociated fallback
+    return true;
+  }
+
+  ngOnDestroy(): void {
+    this.reset();
+  }
+
   /**
    * Plays a non-verbal sound effect (SFX) polyphonically.
    * SFX sounds play immediately without blocking or preempting other sounds.
    */
-  playSfx(url: string | undefined): HTMLAudioElement | void {
+  playSfx(
+    url: string | undefined,
+    association?: AudioAssociation,
+  ): HTMLAudioElement | void {
     if (!url) return;
+    if (!this.isSoundRelevant(association)) {
+      this.logger.debug(
+        "Dropping SFX: not relevant to current UI page",
+        association,
+      );
+      return;
+    }
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     this.logger.debug("Playing SFX from URL:", playableUrl);
     const audio = new Audio(playableUrl);
@@ -129,7 +236,16 @@ export class AudioService {
     priority: AudioPriority,
     context?: any,
     resolvedUrl?: string,
+    association?: AudioAssociation,
   ): boolean {
+    if (!this.isSoundRelevant(association)) {
+      this.logger.debug(
+        "Dropping callout: not relevant to current UI page",
+        association,
+      );
+      return false;
+    }
+
     if (!config || config.type === "none") return false;
 
     if (config.type === "preset" && !(resolvedUrl || config.url?.trim())) {
@@ -167,6 +283,7 @@ export class AudioService {
             context,
             resolvedUrl,
             enqueuedAt: Date.now(),
+            association,
           });
         }
         return true;

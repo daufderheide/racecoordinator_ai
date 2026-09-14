@@ -4,7 +4,10 @@ export interface TTSDriverData {
 }
 
 import { AudioConfig } from "@app/models/driver";
-import type { AudioPriority } from "@app/services/audio.service";
+import type {
+  AudioAssociation,
+  AudioPriority,
+} from "@app/services/audio.service";
 import { LoggerService } from "@app/services/logger.service";
 
 export interface TTSLapData {
@@ -153,8 +156,12 @@ export interface AudioPlayer {
     priority: AudioPriority,
     context?: any,
     resolvedUrl?: string,
+    association?: AudioAssociation,
   ): boolean;
-  playSfx(url: string | undefined): HTMLAudioElement | void;
+  playSfx(
+    url: string | undefined,
+    association?: AudioAssociation,
+  ): HTMLAudioElement | void;
 }
 
 /**
@@ -175,6 +182,7 @@ export function dispatchLapAudio(
   isNewRaceLeader?: boolean | null,
   isNewHeatLeader?: boolean | null,
   ttsContext?: any,
+  association?: AudioAssociation,
 ): void {
   if (!driver) return;
 
@@ -196,14 +204,22 @@ export function dispatchLapAudio(
         (config.type !== "tts" && config.url?.trim()))
     ) {
       if (specialAudio.isVoice) {
-        const result = audioPlayer.playCallout(
-          config,
-          specialAudio.priority,
-          ttsContext,
-        );
+        const result = association
+          ? audioPlayer.playCallout(
+              config,
+              specialAudio.priority,
+              ttsContext,
+              undefined,
+              association,
+            )
+          : audioPlayer.playCallout(config, specialAudio.priority, ttsContext);
         played = result !== false;
       } else {
-        audioPlayer.playSfx(config.url);
+        if (association) {
+          audioPlayer.playSfx(config.url, association);
+        } else {
+          audioPlayer.playSfx(config.url);
+        }
         played = true;
       }
     }
@@ -231,13 +247,27 @@ export function dispatchLapAudio(
         (fallbackAudio.type !== "tts" && fallbackAudio.url?.trim()))
     ) {
       if (fallbackAudio.type === "tts") {
-        audioPlayer.playCallout(
-          fallbackAudio,
-          isBestLap ? "normal" : "low",
-          ttsContext,
-        );
+        if (association) {
+          audioPlayer.playCallout(
+            fallbackAudio,
+            isBestLap ? "normal" : "low",
+            ttsContext,
+            undefined,
+            association,
+          );
+        } else {
+          audioPlayer.playCallout(
+            fallbackAudio,
+            isBestLap ? "normal" : "low",
+            ttsContext,
+          );
+        }
       } else {
-        audioPlayer.playSfx(fallbackAudio.url);
+        if (association) {
+          audioPlayer.playSfx(fallbackAudio.url, association);
+        } else {
+          audioPlayer.playSfx(fallbackAudio.url);
+        }
       }
     }
   }

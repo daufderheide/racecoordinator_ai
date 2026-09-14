@@ -802,5 +802,81 @@ describe("playSound Utility", () => {
       );
       expect(mockPlayer.playSfx).not.toHaveBeenCalled();
     });
+
+    it("should forward AudioAssociation to playCallout on milestone audio", () => {
+      const association = {
+        widgetType: "lane-view" as const,
+        laneIndex: 2,
+        driverId: "d2",
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        6,
+        true,
+        false,
+        false,
+        undefined,
+        association,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driver.overallBestLapAudio,
+        "high",
+        undefined,
+        undefined,
+        association,
+      );
+    });
+
+    it("should forward AudioAssociation to playSfx on preset fallback", () => {
+      const association = {
+        widgetType: "lane-view" as const,
+        laneIndex: 1,
+        driverId: "d1",
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        driver,
+        0,
+        false,
+        false,
+        false,
+        undefined,
+        association,
+      );
+
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("beep.wav", association);
+    });
+
+    it("should forward AudioAssociation to playCallout on TTS fallback", () => {
+      const ttsDriver = {
+        ...driver,
+        lapAudio: { type: "tts", text: "Lap recorded" },
+      };
+      const association = {
+        widgetType: "lane-view" as const,
+        laneIndex: 3,
+        driverId: "d3",
+      };
+      dispatchLapAudio(
+        mockPlayer,
+        ttsDriver,
+        0,
+        false,
+        false,
+        false,
+        undefined,
+        association,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        ttsDriver.lapAudio,
+        "low",
+        undefined,
+        undefined,
+        association,
+      );
+    });
   });
 });

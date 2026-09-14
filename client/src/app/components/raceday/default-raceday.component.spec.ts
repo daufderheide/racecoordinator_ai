@@ -24,6 +24,7 @@ import { Settings } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { RaceParticipant } from "@app/race/race_participant";
+import { AudioService } from "@app/services/audio.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
@@ -4961,6 +4962,7 @@ describe("DefaultRacedayComponent", () => {
         "normal",
         undefined,
         undefined,
+        { widgetType: "timer" },
       );
       // 30s threshold audio was dropped because voice channel was busy with NORMAL priority Halfway!
       expect(window.Audio).not.toHaveBeenCalledWith(
@@ -4989,6 +4991,7 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        { widgetType: "flag" },
       );
       playCalloutSpy.calls.reset();
 
@@ -5003,6 +5006,7 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        { widgetType: "flag" },
       );
       playCalloutSpy.calls.reset();
 
@@ -5017,6 +5021,7 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        { widgetType: "flag" },
       );
       playCalloutSpy.calls.reset();
 
@@ -5030,6 +5035,11 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        {
+          widgetType: "lane-view",
+          laneIndex: undefined,
+          driverId: undefined,
+        },
       );
       playCalloutSpy.calls.reset();
 
@@ -5043,6 +5053,7 @@ describe("DefaultRacedayComponent", () => {
         "normal",
         undefined,
         undefined,
+        { widgetType: "timer" },
       );
     });
 
@@ -5246,6 +5257,12 @@ describe("DefaultRacedayComponent", () => {
         url: "w_newheatleader.wav",
       };
 
+      const expectedAssoc = {
+        widgetType: "lane-view" as const,
+        laneIndex: 0,
+        driverId: "d1",
+      };
+
       // Tier 6: Overall Record (HIGH priority)
       component["audioService"].reset();
       (window.Audio as any).calls.reset();
@@ -5261,6 +5278,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.overallBestLapAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching(/w_recordlap\.wav$/),
@@ -5281,6 +5300,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.overallLaneBestLapAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching(/w_recordlanelap\.wav$/),
@@ -5301,6 +5322,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.newRaceLeaderAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
 
       // Tier 4: Race Best (HIGH priority)
@@ -5318,6 +5341,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.raceBestLapAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching(/w_bestlap\.wav$/),
@@ -5338,6 +5363,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.newHeatLeaderAudio,
         "normal",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
 
       // Tier 3: Race Lane Best (NORMAL priority)
@@ -5355,6 +5382,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.raceLaneBestLapAudio,
         "normal",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching(/w_bestlanelap\.wav$/),
@@ -5375,6 +5404,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.heatBestLapAudio,
         "normal",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching(/w_bestheatlap\.wav$/),
@@ -5393,7 +5424,10 @@ describe("DefaultRacedayComponent", () => {
         recordTier: 1,
       });
       expect(playCalloutSpy).not.toHaveBeenCalled();
-      expect(playSfxSpy).toHaveBeenCalledWith("personal_best.wav");
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
 
       // Personal Best TTS is verbal callout with NORMAL priority
       mockHd.driver.bestLapAudio = {
@@ -5414,6 +5448,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.bestLapAudio,
         "normal",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(playSfxSpy).not.toHaveBeenCalled();
     });
@@ -5434,6 +5470,12 @@ describe("DefaultRacedayComponent", () => {
       mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
       mockHd.driver.overallBestLapAudio = { type: "none" };
 
+      const expectedAssoc = {
+        widgetType: "lane-view" as const,
+        laneIndex: 0,
+        driverId: "d1",
+      };
+
       // Case 1: Overall Best Lap (Tier 6, isBestLap: true) has overallBestLapAudio = none.
       // Falls back to personal best lap sound!
       component["audioService"].reset();
@@ -5447,7 +5489,10 @@ describe("DefaultRacedayComponent", () => {
         recordTier: 6,
       });
       expect(playCalloutSpy).not.toHaveBeenCalled();
-      expect(playSfxSpy).toHaveBeenCalledWith("personal_best.wav");
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
 
       // Case 2: Overall Best Lap is dropped by priority (e.g. urgent sound active).
       // Falls back to personal best lap sound!
@@ -5475,8 +5520,13 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.overallBestLapAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
-      expect(playSfxSpy).toHaveBeenCalledWith("personal_best.wav");
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
 
       // Case 3: New Race Leader (isBestLap: false) is dropped by priority.
       // Falls back to normal lap sound!
@@ -5498,8 +5548,10 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.newRaceLeaderAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
-      expect(playSfxSpy).toHaveBeenCalledWith("beep.wav");
+      expect(playSfxSpy).toHaveBeenCalledWith("beep.wav", expectedAssoc);
 
       // Case 4: If fallback audio is configured as none, no sound plays.
       mockHd.driver.lapAudio = { type: "none" };
@@ -5517,6 +5569,8 @@ describe("DefaultRacedayComponent", () => {
         mockHd.driver.newRaceLeaderAudio,
         "high",
         jasmine.any(Object),
+        undefined,
+        expectedAssoc,
       );
       expect(playSfxSpy).not.toHaveBeenCalled();
     });
@@ -8745,6 +8799,248 @@ describe("DefaultRacedayComponent", () => {
       await component.exportToCsv();
 
       expect(clickSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("Audio Relevance Filtering by Layout Widgets", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+    });
+
+    it("should allow all audio when layout contains all standard widgets", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "lane-view" },
+          { widgetType: "countdown" },
+          { widgetType: "timer" },
+          { widgetType: "flag" },
+        ],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("all");
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeTrue();
+      expect(filter?.allowRaceState).toBeTrue();
+    });
+
+    it("should silence all audio when widgets array is empty or undefined", () => {
+      component.layout = { widgets: [] } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      (component as any).layout = undefined;
+      (component as any).updateAudioRelevance();
+      const filter2 = audioService.getRelevanceFilter();
+      expect(filter2?.driverAudioMode).toBe("none");
+      expect(filter2?.allowCountdown).toBeFalse();
+      expect(filter2?.allowTimer).toBeFalse();
+      expect(filter2?.allowRaceState).toBeFalse();
+    });
+
+    it("should require lane-view widget for driver audio", () => {
+      // Without lane-view (e.g. leaderboard or records only), driverAudioMode is 'none'
+      component.layout = {
+        widgets: [{ widgetType: "leaderboard" }, { widgetType: "countdown" }],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      // With lane-view, driverAudioMode is 'all'
+      component.layout = {
+        widgets: [{ widgetType: "lane-view" }, { widgetType: "countdown" }],
+      } as any;
+      (component as any).updateAudioRelevance();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("all");
+    });
+
+    it("should require timer widget for timer audio and flag widget for race state", () => {
+      // menu-bar or heat-list does NOT satisfy timer or flag
+      component.layout = {
+        widgets: [{ widgetType: "menu-bar" }, { widgetType: "heat-list" }],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      // Explicit timer and flag widgets enable timer and race state audio
+      component.layout = {
+        widgets: [{ widgetType: "timer" }, { widgetType: "flag" }],
+      } as any;
+      (component as any).updateAudioRelevance();
+      const filter2 = audioService.getRelevanceFilter();
+      expect(filter2?.allowTimer).toBeTrue();
+      expect(filter2?.allowRaceState).toBeTrue();
+    });
+
+    it("should disable audio when only non-audio widgets are present", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "branding" },
+          { widgetType: "image" },
+          { widgetType: "qr" },
+        ],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+    });
+
+    it("should sync audio relevance on layout modifications", () => {
+      const audioService = (component as any).audioService as AudioService;
+      component.layout = {
+        widgets: [
+          { id: "w-timer", widgetType: "timer" },
+          { id: "w-flag", widgetType: "flag" },
+        ],
+      } as any;
+
+      // Save layout
+      component.saveLayout();
+      expect(audioService.getRelevanceFilter()?.allowTimer).toBeTrue();
+      expect(audioService.getRelevanceFilter()?.allowRaceState).toBeTrue();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("none");
+
+      // Remove widget
+      component.removeWidget("w-timer");
+      expect(audioService.getRelevanceFilter()?.allowTimer).toBeFalse();
+      expect(audioService.getRelevanceFilter()?.allowRaceState).toBeTrue();
+
+      // Reset to defaults
+      component.resetLayoutToDefaults();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("all");
+      expect(audioService.getRelevanceFilter()?.allowCountdown).toBeTrue();
+    });
+
+    it("should attach flag association to race state sounds", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "flag.wav",
+      });
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+    });
+
+    it("should attach timer association to timer sounds", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "timer.wav",
+      });
+
+      (component as any).playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "normal",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should attach lane-view association to lap audio", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const driver = {
+        entity_id: "driver-123",
+        name: "Test Driver",
+        lapAudio: { type: "tts" as const, text: "Lap" },
+      };
+      const driverData = {
+        objectId: "hd-123",
+        laneIndex: 2,
+        driver,
+      };
+      (component as any).heat = {
+        heatDrivers: [driverData],
+      } as any;
+
+      const lap = {
+        objectId: "hd-123",
+        lapTime: 4.5,
+        bestLapTime: 4.0,
+      };
+
+      (component as any).handleLapAudio(lap, driver, false, {});
+
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        driver.lapAudio,
+        "low",
+        jasmine.any(Object),
+        undefined,
+        {
+          widgetType: "lane-view",
+          laneIndex: 2,
+          driverId: "driver-123",
+        },
+      );
     });
   });
 });

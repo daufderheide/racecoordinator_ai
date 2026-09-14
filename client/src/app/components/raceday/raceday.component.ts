@@ -15,14 +15,17 @@ import { Observable } from "rxjs";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { DataService } from "@app/data.service";
 import { CanComponentDeactivate } from "@app/guards/raceday.guard";
+import { AudioService } from "@app/services/audio.service";
 import { AuthService } from "@app/services/auth.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
+import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { DynamicComponentService } from "@app/services/dynamic-component.service";
 import { FileSystemService } from "@app/services/file-system.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { PrintService } from "@app/services/print.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
@@ -58,6 +61,10 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
     @Inject(ChildWindowManagerService)
     childWindowManagerService?: ChildWindowManagerService,
     @Inject(CustomWidgetService) customWidgetService?: CustomWidgetService,
+    @Inject(NavigationService) navigationService?: NavigationService,
+    @Inject(DateTimeFormatService)
+    dateTimeFormatService?: DateTimeFormatService,
+    @Inject(AudioService) audioService?: AudioService,
   ) {
     super(
       el,
@@ -79,6 +86,9 @@ class CustomRacedayBaseComponent extends DefaultRacedayComponent {
       predictionService,
       childWindowManagerService,
       customWidgetService,
+      navigationService,
+      dateTimeFormatService,
+      audioService,
     );
   }
 }

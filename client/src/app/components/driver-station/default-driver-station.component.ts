@@ -15,20 +15,28 @@ import { RacedayFormatUtils } from "@app/components/raceday/utils/raceday-format
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
 import { DataService } from "@app/data.service";
+import { AudioConfig } from "@app/models/driver";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { Race } from "@app/models/race";
+import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
-import { AudioService } from "@app/services/audio.service";
+import {
+  AudioAssociation,
+  AudioPriority,
+  AudioService,
+} from "@app/services/audio.service";
 import { AuthService } from "@app/services/auth.service";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
+import { ThemeService } from "@app/services/theme.service";
 import { createTTSContext, dispatchLapAudio } from "@app/utils/audio";
+import { FuelAudioTracker } from "@app/utils/fuel-audio-tracker";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 @Component({
@@ -36,6 +44,7 @@ import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
   selector: "app-default-driver-station",
   templateUrl: "./default-driver-station.component.html",
   styleUrls: ["./default-driver-station.component.css"],
+  providers: [AudioService],
   imports: [
     DecimalPipe,
     TranslatePipe,
@@ -110,7 +119,11 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
     private audioService: AudioService = inject(AudioService),
+    private themeService: ThemeService = inject(ThemeService),
   ) {
+    this.fuelAudioTracker = new FuelAudioTracker(this.audioService, (urlOrId) =>
+      this.resolveAssetPlayableUrl(urlOrId),
+    );
     effect(() => {
       const val = this.inputLaneIndex();
       if (val !== undefined) {
@@ -130,6 +143,12 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   protected overallPosition: number = 0;
   protected raceState: RaceState = RaceState.UNKNOWN_STATE;
   protected hasRacedInCurrentHeat: boolean = false;
+  private fuelAudioTracker: FuelAudioTracker;
+  private lastPlayedCountdownSecond: number = -1;
+  private playedSecondsLeft = new Set<number>();
+  private playedHalfway = false;
+  private previousRaceState: RaceState = RaceState.UNKNOWN_STATE;
+  private assets: any[] = [];
 
   /* eslint-disable max-lines-per-function */
   ngOnInit() {
@@ -146,6 +165,19 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       },
     );
     this.viewerRaceEndedHandler.startListening();
+
+    this.updateAudioRelevance();
+
+    if (this.dataService.loadedAssets) {
+      this.assets = this.dataService.loadedAssets;
+    }
+    this.subscriptions.push(
+      this.dataService.listAssets().subscribe({
+        next: (assets) => {
+          this.assets = assets || [];
+        },
+      }),
+    );
 
     this.route.params.subscribe((params) => {
       if (this.inputLaneIndex() !== undefined) {
@@ -169,6 +201,27 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.raceConnectionService.raceTime$.subscribe((raceTime) => {
         this.time = raceTime.time || 0;
+        if (this.raceState === RaceState.STARTING) {
+          const currentSecond = Math.ceil(this.time);
+          const r = this.race;
+          const duration = r?.start_time ?? 5.0;
+          const totalLamps = Math.ceil(duration);
+          if (
+            currentSecond <= totalLamps &&
+            currentSecond <= 5 &&
+            currentSecond >= 1 &&
+            currentSecond !== this.lastPlayedCountdownSecond
+          ) {
+            this.lastPlayedCountdownSecond = currentSecond;
+            this.playAudioFromSet(
+              THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+              currentSecond,
+              { widgetType: "countdown" },
+            );
+          }
+        } else if (this.raceState === RaceState.RACING) {
+          this.checkRaceTimeAnnouncements(this.time);
+        }
         this.cdr.detectChanges();
       }),
     );
@@ -187,6 +240,14 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             const driver = driverData.driver;
             const isBestLap = lap.lapTime === lap.bestLapTime;
             const ttsContext = createTTSContext(driver, driverData);
+            const association: AudioAssociation = {
+              widgetType: "lane-view",
+              laneIndex: this.laneIndex,
+              driverId:
+                driver.entity_id ||
+                (driver as any).id ||
+                (driver as any).objectId,
+            };
 
             if (lap.type === LapType.FALSE_START) {
               const audio = driver.falseStartAudio || driver.penaltyAudio;
@@ -196,13 +257,53 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
                 ((audio.type === "tts" && audio.text?.trim()) ||
                   (audio.type !== "tts" && audio.url?.trim()))
               ) {
-                this.audioService.playCallout(audio, "urgent", ttsContext);
+                this.audioService.playCallout(
+                  audio,
+                  "urgent",
+                  ttsContext,
+                  undefined,
+                  association,
+                );
               }
               return;
             }
 
             if (lap.type === LapType.MIN_LAP_TIME) {
+              if ((lap.lapTime ?? 0) > 0.25) {
+                this.playThemedSound(
+                  THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+                  ttsContext,
+                  association,
+                );
+              }
               return;
+            }
+
+            if (lap.isDrift) {
+              this.playThemedSound(
+                THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+                ttsContext,
+                association,
+              );
+              return;
+            }
+
+            // Halfway point check for lap-based races
+            const scoring = this.race?.heat_scoring;
+            if (
+              scoring &&
+              scoring.finishMethod === FinishMethod.Lap &&
+              !this.playedHalfway
+            ) {
+              const halfwayLaps = scoring.finishValue / 2;
+              if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
+                this.playThemedSound(
+                  THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+                  ttsContext,
+                  { widgetType: "timer" },
+                );
+                this.playedHalfway = true;
+              }
             }
 
             dispatchLapAudio(
@@ -213,6 +314,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
               lap.isNewRaceLeader,
               lap.isNewHeatLeader,
               ttsContext,
+              association,
             );
           }
         }
@@ -223,9 +325,59 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.raceConnectionService.raceState$.subscribe((state) => {
         if (state) {
+          const previousState = this.previousRaceState;
+          this.previousRaceState = state;
           this.raceState = state;
+
+          if (
+            state === RaceState.NOT_STARTED ||
+            state === RaceState.HEAT_OVER ||
+            state === RaceState.RACE_OVER
+          ) {
+            this.playedSecondsLeft.clear();
+            this.playedHalfway = false;
+            this.fuelAudioTracker.reset(
+              this.heat,
+              this.hasRacedInCurrentHeat,
+              this.race,
+              this.track,
+            );
+            this.audioService.reset();
+          }
+
+          if (
+            state === RaceState.PAUSED &&
+            previousState === RaceState.RACING
+          ) {
+            this.playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG, undefined, {
+              widgetType: "flag",
+            });
+          }
+
+          if (previousState !== RaceState.UNKNOWN_STATE) {
+            if (state === RaceState.HEAT_OVER) {
+              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER, undefined, {
+                widgetType: "flag",
+              });
+            } else if (state === RaceState.RACE_OVER) {
+              this.playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER, undefined, {
+                widgetType: "flag",
+              });
+            }
+          }
+
+          if (state === RaceState.STARTING) {
+            this.audioService.stopVoice();
+            this.lastPlayedCountdownSecond = -1;
+          }
+
           if (state === RaceState.RACING) {
             this.hasRacedInCurrentHeat = true;
+            if (previousState !== RaceState.UNKNOWN_STATE) {
+              this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0, {
+                widgetType: "countdown",
+              });
+            }
           }
           this.cdr.detectChanges();
         }
@@ -233,7 +385,26 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     );
 
     this.subscriptions.push(
-      this.raceConnectionService.carData$.subscribe((_carData) => {
+      this.raceConnectionService.carData$.subscribe((carData) => {
+        if (carData && carData.lane === this.laneIndex) {
+          const currentFuel =
+            carData.fuelLevel != null ? Number(carData.fuelLevel) : null;
+          const isRefueling = !!carData.isRefueling;
+          const canPlayAudio =
+            this.raceState === RaceState.RACING ||
+            this.raceState === RaceState.PAUSED;
+          this.fuelAudioTracker.updateLaneFuel(
+            this.laneIndex,
+            currentFuel,
+            isRefueling,
+            this.heat,
+            this.hasRacedInCurrentHeat,
+            this.race,
+            this.track,
+            this.assets,
+            canPlayAudio,
+          );
+        }
         this.cdr.detectChanges();
       }),
     );
@@ -318,6 +489,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
         // Calculate overall position immediately if participants available
         this.calculateOverallPosition();
+        this.updateAudioRelevance();
       }
     }
   }
@@ -398,7 +570,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   }
 
   get lane(): import("src/app/models/lane").Lane | undefined {
-    return this.track?.lanes[this.laneIndex];
+    return this.track?.lanes?.[this.laneIndex];
   }
 
   get foregroundColor(): string {
@@ -430,5 +602,214 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       (hd.penaltyLaps !== undefined && hd.penaltyLaps !== 0) ||
       (hd.adjustedLapCount !== undefined && hd.adjustedLapCount !== 0);
     return hasReactionTime || hasRealLap || hasAdjustment;
+  }
+
+  private updateAudioRelevance(): void {
+    const allowedLanes = new Set<number>();
+    if (this.laneIndex != null && this.laneIndex >= 0) {
+      allowedLanes.add(this.laneIndex);
+    }
+    const allowedDriverIds = new Set<string>();
+    const driver =
+      this.driverData?.actualDriver ||
+      this.driverData?.participant?.driver ||
+      (this.driverData?.driver as any)?.driver ||
+      this.driverData?.driver;
+    const driverId =
+      (driver as any)?.entity_id ||
+      (driver as any)?.id ||
+      (driver as any)?.objectId;
+    if (driverId) {
+      allowedDriverIds.add(driverId);
+    }
+
+    this.audioService.setRelevanceFilter({
+      driverAudioMode: "scoped",
+      allowedLanes,
+      allowedDriverIds,
+      allowCountdown: true,
+      allowTimer: true,
+      allowRaceState: true,
+    });
+  }
+
+  private playThemedSound(
+    slotKey: string,
+    context?: any,
+    association?: AudioAssociation,
+  ) {
+    const config = this.themeService.resolveAudioConfig(slotKey);
+    if (!config || config.type === "none") return;
+
+    if (config.type === "tts") {
+      if (!config.text?.trim()) return;
+    } else {
+      if (!config.url?.trim()) return;
+    }
+
+    let playableUrl: string | undefined = config.url;
+    if (config.type === "preset" && playableUrl) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === playableUrl ||
+          a.entity_id === playableUrl ||
+          a._id === playableUrl,
+      );
+      if (asset) {
+        playableUrl = this.getFullUrl(asset.url);
+      }
+    }
+
+    let priority: AudioPriority = "normal";
+    if (
+      slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
+    ) {
+      priority = "urgent";
+    }
+
+    let defaultAssoc = association;
+    if (!defaultAssoc) {
+      if (
+        slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER
+      ) {
+        defaultAssoc = { widgetType: "flag" };
+      } else if (
+        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY
+      ) {
+        defaultAssoc = { widgetType: "timer" };
+      }
+    }
+
+    this.audioService.playCallout(
+      config,
+      priority,
+      context,
+      playableUrl,
+      defaultAssoc,
+    );
+  }
+
+  private playAudioFromSet(
+    slotKey: string,
+    timeSeconds: number,
+    association?: AudioAssociation,
+  ) {
+    const config = this.themeService.resolveAudioConfig(slotKey);
+    if (!config || config.type !== "audio_set") return;
+
+    const assetId = config.url;
+    if (!assetId) return;
+
+    const asset = (this.assets || []).find(
+      (a) =>
+        a.model?.entityId === assetId ||
+        a.entity_id === assetId ||
+        a._id === assetId,
+    );
+    if (!asset || asset.type !== "audio_set") return;
+
+    const defaultAssoc =
+      association ??
+      (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
+        ? { widgetType: "countdown" }
+        : { widgetType: "timer" });
+
+    const entry = asset.audioEntries?.find(
+      (e: any) => Math.abs(e.timeSeconds - timeSeconds) < 0.1,
+    );
+    if (entry) {
+      const entryType = entry.type || "preset";
+      if (entryType !== "none") {
+        const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
+        if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+          if (entryType === "tts") {
+            this.audioService.playCallout(
+              { type: "tts", text: entry.text },
+              "normal",
+              undefined,
+              undefined,
+              defaultAssoc,
+            );
+          } else {
+            this.audioService.playSfx(playableUrl, defaultAssoc);
+          }
+        } else {
+          const entryConfig: AudioConfig = {
+            type: entryType,
+            url: playableUrl,
+            text: entry.text || undefined,
+          };
+          this.audioService.playCallout(
+            entryConfig,
+            "normal",
+            undefined,
+            playableUrl,
+            defaultAssoc,
+          );
+        }
+      }
+    }
+  }
+
+  private checkRaceTimeAnnouncements(currentTime: number) {
+    const scoring = this.race?.heat_scoring;
+    if (!scoring || scoring.finishMethod !== FinishMethod.Timed) return;
+
+    const totalDuration = scoring.finishValue;
+    if (totalDuration <= 0) return;
+
+    const halfwayThreshold = totalDuration / 2;
+    if (currentTime <= halfwayThreshold && !this.playedHalfway) {
+      this.playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        undefined,
+        { widgetType: "timer" },
+      );
+      this.playedHalfway = true;
+    }
+
+    const thresholds = [300, 240, 180, 120, 60, 30, 25, 20, 15, 10, 5];
+    for (const threshold of thresholds) {
+      if (currentTime <= threshold && !this.playedSecondsLeft.has(threshold)) {
+        if (Math.abs(threshold - totalDuration) < 0.1) continue;
+
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT, threshold, {
+          widgetType: "timer",
+        });
+        this.playedSecondsLeft.add(threshold);
+      }
+    }
+  }
+
+  private resolveAssetPlayableUrl(
+    urlOrId: string | undefined,
+  ): string | undefined {
+    if (!urlOrId) return undefined;
+    const asset = (this.assets || []).find(
+      (a: any) =>
+        a.model?.entityId === urlOrId ||
+        a.entity_id === urlOrId ||
+        a._id === urlOrId ||
+        a.name === urlOrId,
+    );
+    if (asset?.url) {
+      return this.getFullUrl(asset.url);
+    }
+    return this.getFullUrl(urlOrId);
+  }
+
+  private getFullUrl(url: string | undefined): string {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    return `${this.dataService.serverUrl}${url.startsWith("/") ? "" : "/"}${url}`;
   }
 }
