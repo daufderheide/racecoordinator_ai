@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.0.0-beta.71] - 2026-09-14
+
+### 🚀 New Features
+
+- add custom fuel curve support with interactive graph editor for race fuel options https://github.com/daufderheide/racecoordinator_ai/issues/822 ([a5d194bb](https://github.com/daufderheide/racecoordinator_ai/commit/a5d194bb))
+
+### 🐛 Bug Fixes
+
+- fix reference time support and dynamically scale analog fuel graph ranges and axes ([db012a40](https://github.com/daufderheide/racecoordinator_ai/commit/db012a40))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.70...v1.0.0-beta.71">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.70] - 2026-09-14
 
 ### 🚀 New Features
