@@ -15,7 +15,7 @@ import { BehaviorSubject, of } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
-import { FuelUsageType } from "@app/models/fuel_options";
+import { FuelCurvePoint, FuelUsageType } from "@app/models/fuel_options";
 import { Race } from "@app/models/race";
 import { Role } from "@app/models/role";
 import { Track } from "@app/models/track";
@@ -42,7 +42,10 @@ import { deepCopy } from "@app/utils/clone.utils";
 
 import { NavigationService } from "../../services/navigation.service";
 import { createRaceManagerDataServiceMock } from "../race-manager/testing/race-manager_helper";
-import { RaceEditorComponent } from "./race-editor.component";
+import {
+  interpolateFuelCurveClient,
+  RaceEditorComponent,
+} from "./race-editor.component";
 import { RaceEditorHarness } from "./testing/race-editor.harness";
 
 describe("RaceEditorComponent", () => {
@@ -676,6 +679,215 @@ describe("RaceEditorComponent", () => {
       expect(component.hoveredPoint).toBeDefined();
       expect(component.hoveredPoint?.type).toBe("digital_usage");
       expect(component.hoveredPoint?.xValue).toBe("50%"); // 50% throttle at middle
+    });
+  });
+
+  describe("Custom Fuel Curve Options", () => {
+    beforeEach(() => {
+      component.editingRace.fuel_options = {
+        enabled: true,
+        usage_type: FuelUsageType.LINEAR,
+        usage_rate: 4.0,
+        capacity: 100,
+        reference_time: 6.0,
+        custom_curve: [],
+      } as any;
+      component.editingRace.digital_fuel_options = {
+        enabled: true,
+        usage_type: FuelUsageType.LINEAR,
+        usage_rate: 4.0,
+        capacity: 100,
+        custom_curve: [],
+      } as any;
+    });
+
+    it("should correctly identify custom curve mode", () => {
+      expect(component.isCustomCurve("analog")).toBeFalse();
+      expect(component.isCustomCurve("digital")).toBeFalse();
+
+      component.editingRace.fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      component.editingRace.digital_fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+
+      expect(component.isCustomCurve("analog")).toBeTrue();
+      expect(component.isCustomCurve("digital")).toBeTrue();
+    });
+
+    it("should initialize 5 points sampled from linear preset when switching to custom curve", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      const points = component.editingRace.fuel_options!.custom_curve;
+
+      expect(points).toBeDefined();
+      expect(points.length).toBe(5);
+      expect(points[0].x).toBe(0.0);
+      expect(points[4].x).toBe(1.0);
+      for (let i = 0; i < points.length - 1; i++) {
+        expect(points[i].y).toBeGreaterThanOrEqual(points[i + 1].y);
+      }
+    });
+
+    it("should preserve existing custom curve when switching to preset and back", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      component.editingRace.fuel_options!.custom_curve[1].y = 2.5;
+
+      component.onUsageTypeChange("analog", FuelUsageType.QUADRATIC);
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+
+      expect(component.editingRace.fuel_options!.custom_curve[1].y).toBe(2.5);
+    });
+
+    it("should reset custom curve to quadratic preset on button click", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      component.resetCustomCurveToPreset("analog", "QUADRATIC");
+
+      const points = component.editingRace.fuel_options!.custom_curve;
+      expect(points.length).toBe(5);
+      expect(points[0].y).toBeCloseTo(4.0, 1);
+      expect(points[2].y).toBeCloseTo(1.0, 1);
+    });
+
+    it("should reset digital custom curve to cubic preset on button click", () => {
+      component.onUsageTypeChange("digital", FuelUsageType.CUSTOM_CURVE);
+      component.resetCustomCurveToPreset("digital", "CUBIC");
+
+      const points = component.editingRace.digital_fuel_options!.custom_curve;
+      expect(points.length).toBe(5);
+      expect(points[0].x).toBe(0.0);
+      expect(points[4].x).toBe(1.0);
+      for (let i = 0; i < points.length - 1; i++) {
+        expect(points[i].y).toBeLessThanOrEqual(points[i + 1].y);
+      }
+    });
+
+    it("should generate control nodes with valid SVG coordinates", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      const analogNodes = component.getAnalogControlNodes();
+      expect(analogNodes.length).toBe(5);
+      expect(analogNodes[0].svgX).toBe(0);
+      expect(analogNodes[4].svgX).toBe(400);
+
+      component.onUsageTypeChange("digital", FuelUsageType.CUSTOM_CURVE);
+      const digitalNodes = component.getDigitalControlNodes();
+      expect(digitalNodes.length).toBe(5);
+      expect(digitalNodes[0].svgX).toBe(0);
+      expect(digitalNodes[4].svgX).toBe(400);
+    });
+
+    it("should clamp node dragging to preserve analog monotonicity (faster laps >= slower laps)", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      const points = component.editingRace.fuel_options!.custom_curve;
+      component.startDragNode(new MouseEvent("mousedown"), "analog", 2);
+
+      const mockSvg = {
+        getBoundingClientRect: () => ({
+          left: 0,
+          top: 0,
+          width: 400,
+          height: 150,
+        }),
+      };
+      spyOn(document, "getElementById").and.returnValue(mockSvg as any);
+
+      component.onWindowMouseMove({ clientX: 200, clientY: 0 } as MouseEvent);
+
+      expect(points[2].y).toBeLessThanOrEqual(points[1].y);
+      expect(points[2].y).toBeGreaterThanOrEqual(points[3].y);
+
+      component.onWindowMouseUp();
+      expect(component.draggingNode).toBeNull();
+    });
+
+    it("should clamp node dragging to preserve digital monotonicity (higher throttle >= lower throttle)", () => {
+      component.onUsageTypeChange("digital", FuelUsageType.CUSTOM_CURVE);
+      const points = component.editingRace.digital_fuel_options!.custom_curve;
+      component.startDragNode(new MouseEvent("mousedown"), "digital", 2);
+
+      const mockSvg = {
+        getBoundingClientRect: () => ({
+          left: 0,
+          top: 0,
+          width: 400,
+          height: 150,
+        }),
+      };
+      spyOn(document, "getElementById").and.returnValue(mockSvg as any);
+
+      component.onWindowMouseMove({ clientX: 200, clientY: 150 } as MouseEvent);
+
+      expect(points[2].y).toBeGreaterThanOrEqual(points[1].y);
+      expect(points[2].y).toBeLessThanOrEqual(points[3].y);
+
+      component.onWindowMouseUp();
+      expect(component.draggingNode).toBeNull();
+    });
+
+    it("should insert a new node when clicking the curve in custom mode", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      component.editingRace.fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      const initialCount =
+        component.editingRace.fuel_options!.custom_curve.length;
+
+      const mockEvent = {
+        currentTarget: {
+          getBoundingClientRect: () => ({
+            left: 0,
+            top: 0,
+            width: 400,
+            height: 150,
+          }),
+        },
+        clientX: 150,
+        clientY: 75,
+        target: { classList: { contains: () => false } },
+      } as any;
+
+      component.onCurveSvgClick(mockEvent, "analog");
+      expect(component.editingRace.fuel_options!.custom_curve.length).toBe(
+        initialCount + 1,
+      );
+      expect(component.editingRace.fuel_options!.custom_curve[2].x).toBeCloseTo(
+        0.375,
+        2,
+      );
+    });
+
+    it("should delete an intermediate control node on right click", () => {
+      component.onUsageTypeChange("analog", FuelUsageType.CUSTOM_CURVE);
+      const initialCount =
+        component.editingRace.fuel_options!.custom_curve.length;
+
+      const mockEvent = new MouseEvent("contextmenu");
+      spyOn(mockEvent, "preventDefault");
+      spyOn(mockEvent, "stopPropagation");
+
+      component.deleteControlNode(mockEvent, "analog", 1);
+      expect(component.editingRace.fuel_options!.custom_curve.length).toBe(
+        initialCount - 1,
+      );
+
+      component.deleteControlNode(mockEvent, "analog", 0);
+      expect(component.editingRace.fuel_options!.custom_curve.length).toBe(
+        initialCount - 1,
+      );
+    });
+
+    it("should accurately interpolate fuel usage via interpolateFuelCurveClient", () => {
+      const testPoints: FuelCurvePoint[] = [
+        { x: 0.0, y: 4.0 },
+        { x: 0.5, y: 2.0 },
+        { x: 1.0, y: 1.0 },
+      ];
+
+      expect(interpolateFuelCurveClient(testPoints, -0.1)).toBe(4.0);
+      expect(interpolateFuelCurveClient(testPoints, 0.0)).toBe(4.0);
+      expect(interpolateFuelCurveClient(testPoints, 0.25)).toBe(3.0);
+      expect(interpolateFuelCurveClient(testPoints, 0.5)).toBe(2.0);
+      expect(interpolateFuelCurveClient(testPoints, 0.75)).toBe(1.5);
+      expect(interpolateFuelCurveClient(testPoints, 1.0)).toBe(1.0);
+      expect(interpolateFuelCurveClient(testPoints, 1.5)).toBe(1.0);
+      expect(interpolateFuelCurveClient([], 0.5)).toBe(1.0);
     });
   });
 

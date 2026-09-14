@@ -136,12 +136,18 @@ enum FuelUsageType {
   LINEAR = 0;
   QUADRATIC = 1;
   CUBIC = 2;
+  CUSTOM_CURVE = 3;
 }
 
 enum OutOfFuelAction {
   DO_NOT_COUNT_LAPS = 0;
   END_HEAT = 1;
   POWER_STUTTER = 2;
+}
+
+message FuelCurvePoint {
+  double x = 1;
+  double y = 2;
 }
 
 message AnalogFuelOptions {
@@ -158,6 +164,7 @@ message AnalogFuelOptions {
   OutOfFuelAction out_of_fuel_action = 11;
   double power_stutter_off_time = 12;
   double power_stutter_on_time = 13;
+  repeated FuelCurvePoint custom_curve = 14;
 }
 
 message DigitalFuelOptions {
@@ -171,5 +178,6 @@ message DigitalFuelOptions {
   double refuel_rate = 8;
   double pit_stop_delay = 9;
   OutOfFuelAction out_of_fuel_action = 10;
+  repeated FuelCurvePoint custom_curve = 11;
 }
 

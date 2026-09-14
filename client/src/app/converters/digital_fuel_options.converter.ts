@@ -16,10 +16,14 @@ export class DigitalFuelOptionsConverter {
         FuelUsageType.LINEAR,
         FuelUsageType.QUADRATIC,
         FuelUsageType.CUBIC,
+        FuelUsageType.CUSTOM_CURVE,
       ];
       usageType = types[p.usageType] || FuelUsageType.LINEAR;
     } else if (typeof p.usageType === "string") {
-      usageType = p.usageType as FuelUsageType;
+      usageType =
+        p.usageType === "CUSTOM"
+          ? FuelUsageType.CUSTOM_CURVE
+          : (p.usageType as FuelUsageType);
     }
 
     let outOfFuelAction = OutOfFuelAction.DO_NOT_COUNT_LAPS;
@@ -45,6 +49,14 @@ export class DigitalFuelOptionsConverter {
       outOfFuelAction = OutOfFuelAction.DO_NOT_COUNT_LAPS;
     }
 
+    const rawCurve = p.customCurve ?? p.custom_curve ?? [];
+    const customCurve = Array.isArray(rawCurve)
+      ? rawCurve.map((pt: any) => ({
+          x: Number(pt.x) || 0,
+          y: Number(pt.y) || 0,
+        }))
+      : [];
+
     return new DigitalFuelOptions(
       p.enabled ?? p.enabled ?? false,
       p.resetFuelAtHeatStart ?? p.reset_fuel_at_heat_start ?? false,
@@ -55,6 +67,7 @@ export class DigitalFuelOptionsConverter {
       p.startLevel ?? p.start_level ?? 100,
       p.refuelRate ?? p.refuel_rate ?? 10,
       p.pitStopDelay ?? p.pit_stop_delay ?? 2.0,
+      customCurve,
     );
   }
 }

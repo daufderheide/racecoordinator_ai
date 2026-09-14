@@ -97,4 +97,40 @@ public class AnalogFuelOptionsTest {
     assertEquals(1.0, options.getPowerStutterOnTime(), 0.001);
     assertEquals(1.0, options.getPowerStutterOffTime(), 0.001);
   }
+
+  @Test
+  public void testCustomCurveSerialization() throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    java.util.List<FuelCurvePoint> curve =
+        java.util.Arrays.asList(
+            new FuelCurvePoint(0.0, 4.0),
+            new FuelCurvePoint(0.5, 1.0),
+            new FuelCurvePoint(1.0, 0.0));
+    AnalogFuelOptions options =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            FuelOptions.FuelUsageType.CUSTOM_CURVE,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0,
+            1.0,
+            1.0,
+            curve);
+
+    String json = mapper.writeValueAsString(options);
+    AnalogFuelOptions deserialized = mapper.readValue(json, AnalogFuelOptions.class);
+
+    assertNotNull(deserialized);
+    assertEquals(FuelOptions.FuelUsageType.CUSTOM_CURVE, deserialized.getUsageType());
+    assertNotNull(deserialized.getCustomCurve());
+    assertEquals(3, deserialized.getCustomCurve().size());
+    assertEquals(0.5, deserialized.getCustomCurve().get(1).getX(), 0.001);
+    assertEquals(1.0, deserialized.getCustomCurve().get(1).getY(), 0.001);
+  }
 }

@@ -1,4 +1,9 @@
-import { FuelOptions, FuelUsageType, OutOfFuelAction } from "./fuel_options";
+import {
+  FuelCurvePoint,
+  FuelOptions,
+  FuelUsageType,
+  OutOfFuelAction,
+} from "./fuel_options";
 
 export class DigitalFuelOptions extends FuelOptions {
   constructor(
@@ -11,6 +16,7 @@ export class DigitalFuelOptions extends FuelOptions {
     start_level: number = 100,
     refuel_rate: number = 10,
     pit_stop_delay: number = 2.0,
+    custom_curve: FuelCurvePoint[] = [],
   ) {
     super(
       enabled,
@@ -22,6 +28,7 @@ export class DigitalFuelOptions extends FuelOptions {
       start_level,
       refuel_rate,
       pit_stop_delay,
+      custom_curve,
     );
   }
 }

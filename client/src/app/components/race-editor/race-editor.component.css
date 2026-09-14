@@ -315,6 +315,67 @@
   pointer-events: none;
 }
 
+.fuel-graph.interactive-custom {
+  cursor: crosshair;
+}
+
+.curve-handle {
+  fill: #f59e0b;
+  stroke: #ffffff;
+  stroke-width: 2.5px;
+  cursor: grab;
+  transition: r 0.1s ease, fill 0.1s ease;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+}
+
+.curve-handle:hover {
+  fill: #fbbf24;
+  r: 9;
+  cursor: grab;
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.9));
+}
+
+.curve-handle.active {
+  fill: #ef4444;
+  cursor: grabbing;
+  r: 10;
+  filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.9));
+}
+
+.curve-presets-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.btn-curve-preset {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-curve-preset:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.curve-drag-hint {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin-top: 4px;
+}
+
 .graph-tooltip {
   position: absolute;
   background: rgba(15, 23, 42, 0.95);

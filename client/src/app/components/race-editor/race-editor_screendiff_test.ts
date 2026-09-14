@@ -243,6 +243,58 @@ test.describe("Race Editor Visuals", () => {
     );
   });
 
+  test("should display analog fuel options with custom curve graph", async ({
+    page,
+  }) => {
+    // Navigate to Race Editor
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+
+    // Verify Editor Form is attached
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+
+    // Ensure Fuel section is expanded
+    await ensureSectionState(page, "Analog Fuel", true);
+
+    // Toggle fuel enabled checkbox by label for reliability
+    const fuelLabel = page
+      .locator('.fuel-config-section label:has-text("Enable Analog Fuel")')
+      .first();
+    await fuelLabel.scrollIntoViewIfNeeded();
+    await fuelLabel.waitFor({ state: "visible", timeout: 5000 });
+    await fuelLabel.click();
+
+    // Select CUSTOM_CURVE in the fuel usage type dropdown
+    const usageSelect = page.locator("#fuel-usage-type-select");
+    await usageSelect.click();
+    await page
+      .locator(".custom-select-option[data-value='CUSTOM_CURVE']")
+      .click();
+
+    // Wait for custom curve handles to be visible
+    const fuelContainer = page.locator(".fuel-graphs-container");
+    await fuelContainer.waitFor({ state: "visible", timeout: 10000 });
+    const curveHandle = page
+      .locator("#analog-fuel-usage-svg .curve-handle")
+      .first();
+    await curveHandle.waitFor({ state: "visible", timeout: 10000 });
+    await fuelContainer.scrollIntoViewIfNeeded();
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the fuel graphs container showing custom curve graph
+    await expect(fuelContainer).toHaveScreenshot(
+      "race-editor-analog-custom-curve.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
   test("should hide fuel graphs when analog fuel is disabled", async ({
     page,
   }) => {
@@ -316,6 +368,65 @@ test.describe("Race Editor Visuals", () => {
     // Screenshot the digital fuel configuration section
     await expect(page.locator("#digital-fuel-section")).toHaveScreenshot(
       "race-editor-digital-fuel-options.png",
+      { timeout: 15000, maxDiffPixelRatio: 0.05 },
+    );
+  });
+
+  test("should display digital fuel options with custom curve graph", async ({
+    page,
+  }) => {
+    // Setup digital track mocks
+    await TestSetupHelper.setupDigitalTrackMocks(page);
+
+    // Navigate to Race Editor for a new race with the digital track
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=new&driverCount=4"),
+    );
+    const harness = new RaceEditorHarnessE2e(page.locator("body"));
+
+    await page.waitForSelector(
+      '#track-select app-custom-option:has-text("Digital Haven")',
+      { state: "attached", timeout: 10000 },
+    );
+
+    // Select the digital track using the harness
+    await harness.setTrack("t_digital");
+
+    // Ensure section is expanded
+    await ensureSectionState(page, "Digital Fuel", true);
+
+    // Scroll down to ensure digital fuel section is visible in the panel
+    await page
+      .locator('.section-header:has-text("Digital Fuel")')
+      .scrollIntoViewIfNeeded();
+
+    // Enable digital fuel - click the label since the native checkbox is hidden (0x0)
+    await page.locator("#digital-fuel-enabled-label").click();
+
+    // Select CUSTOM_CURVE in the digital fuel usage type dropdown
+    const usageSelect = page.locator("#digital-fuel-usage-type-select");
+    await usageSelect.click();
+    await page
+      .locator(".custom-select-option[data-value='CUSTOM_CURVE']")
+      .click();
+
+    // Wait for custom curve handles to be visible
+    const fuelContainer = page.locator(".fuel-graphs-container");
+    await fuelContainer.waitFor({ state: "visible", timeout: 10000 });
+    const curveHandle = page
+      .locator("#digital-fuel-usage-svg .curve-handle")
+      .first();
+    await curveHandle.waitFor({ state: "visible", timeout: 10000 });
+    await fuelContainer.scrollIntoViewIfNeeded();
+
+    // Disable animations
+    await TestSetupHelper.disableAnimations(page);
+
+    // Screenshot the fuel graphs container showing custom curve graph
+    await expect(fuelContainer).toHaveScreenshot(
+      "race-editor-digital-custom-curve.png",
       { timeout: 15000, maxDiffPixelRatio: 0.05 },
     );
   });

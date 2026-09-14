@@ -46,7 +46,39 @@ public class AnalogFuelOptions extends FuelOptions {
         Double.valueOf(pitStopDelay),
         referenceTime,
         Double.valueOf(1.0),
-        Double.valueOf(1.0));
+        Double.valueOf(1.0),
+        null);
+  }
+
+  public AnalogFuelOptions(
+      boolean enabled,
+      boolean resetFuelAtHeatStart,
+      Boolean endHeatOnOutOfFuel,
+      OutOfFuelAction outOfFuelAction,
+      Double capacity,
+      FuelUsageType usageType,
+      Double usageRate,
+      Double startLevel,
+      Double refuelRate,
+      Double pitStopDelay,
+      Double referenceTime,
+      Double powerStutterOnTime,
+      Double powerStutterOffTime) {
+    this(
+        enabled,
+        resetFuelAtHeatStart,
+        endHeatOnOutOfFuel,
+        outOfFuelAction,
+        capacity,
+        usageType,
+        usageRate,
+        startLevel,
+        refuelRate,
+        pitStopDelay,
+        referenceTime,
+        powerStutterOnTime,
+        powerStutterOffTime,
+        null);
   }
 
   @JsonCreator
@@ -63,7 +95,8 @@ public class AnalogFuelOptions extends FuelOptions {
       @JsonProperty("pit_stop_delay") Double pitStopDelay,
       @JsonProperty("reference_time") Double referenceTime,
       @JsonProperty("power_stutter_on_time") Double powerStutterOnTime,
-      @JsonProperty("power_stutter_off_time") Double powerStutterOffTime) {
+      @JsonProperty("power_stutter_off_time") Double powerStutterOffTime,
+      @JsonProperty("custom_curve") java.util.List<FuelCurvePoint> customCurve) {
     super(
         enabled,
         resetFuelAtHeatStart,
@@ -77,7 +110,8 @@ public class AnalogFuelOptions extends FuelOptions {
         usageRate,
         startLevel,
         refuelRate,
-        pitStopDelay);
+        pitStopDelay,
+        customCurve);
     this.referenceTime = referenceTime != null && referenceTime > 0 ? referenceTime : 6.0;
     this.powerStutterOnTime =
         powerStutterOnTime != null && powerStutterOnTime > 0 ? powerStutterOnTime : 1.0;

@@ -16,10 +16,14 @@ export class AnalogFuelOptionsConverter {
         FuelUsageType.LINEAR,
         FuelUsageType.QUADRATIC,
         FuelUsageType.CUBIC,
+        FuelUsageType.CUSTOM_CURVE,
       ];
       usageType = types[p.usageType] || FuelUsageType.LINEAR;
     } else if (typeof p.usageType === "string") {
-      usageType = p.usageType as FuelUsageType;
+      usageType =
+        p.usageType === "CUSTOM"
+          ? FuelUsageType.CUSTOM_CURVE
+          : (p.usageType as FuelUsageType);
     }
 
     let outOfFuelAction = OutOfFuelAction.DO_NOT_COUNT_LAPS;
@@ -41,6 +45,14 @@ export class AnalogFuelOptionsConverter {
           : OutOfFuelAction.DO_NOT_COUNT_LAPS;
     }
 
+    const rawCurve = p.customCurve ?? p.custom_curve ?? [];
+    const customCurve = Array.isArray(rawCurve)
+      ? rawCurve.map((pt: any) => ({
+          x: Number(pt.x) || 0,
+          y: Number(pt.y) || 0,
+        }))
+      : [];
+
     return new AnalogFuelOptions(
       p.enabled ?? p.enabled ?? false,
       p.resetFuelAtHeatStart ?? p.reset_fuel_at_heat_start ?? false,
@@ -54,6 +66,7 @@ export class AnalogFuelOptionsConverter {
       p.referenceTime ?? p.reference_time ?? 6.0,
       p.powerStutterOnTime ?? p.power_stutter_on_time ?? 1.0,
       p.powerStutterOffTime ?? p.power_stutter_off_time ?? 1.0,
+      customCurve,
     );
   }
 }
