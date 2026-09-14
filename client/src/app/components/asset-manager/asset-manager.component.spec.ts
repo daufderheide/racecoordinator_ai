@@ -724,6 +724,216 @@ describe("AssetManagerComponent", () => {
       fixture.detectChanges();
     }));
 
+    it("should automatically play the audio asset when a single audio file is uploaded", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+
+      const uploadedAudio = {
+        model: { entityId: "audio_123" },
+        name: "bell.mp3",
+        type: "audio",
+        size: "15 KB",
+        url: "/assets/audio_123_bell.mp3",
+      };
+      mockDataService.uploadAsset.and.returnValue(of(uploadedAudio));
+      mockDataService.listAssets.and.returnValue(of([uploadedAudio]));
+
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "bell.mp3", { type: "audio/mpeg" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(1);
+      expect(component.playAsset).toHaveBeenCalled();
+      const played = (component.playAsset as jasmine.Spy).calls.mostRecent()
+        .args[0];
+      expect(played.id).toBe("audio_123");
+      expect(played.name).toBe("bell.mp3");
+    }));
+
+    it("should NOT automatically play audio when multiple audio files are uploaded", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [
+        new File([""], "bell1.mp3", { type: "audio/mpeg" }),
+        new File([""], "bell2.mp3", { type: "audio/mpeg" }),
+      ];
+      const fileList = {
+        0: files[0],
+        1: files[1],
+        length: 2,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(2);
+      expect(component.playAsset).not.toHaveBeenCalled();
+    }));
+
+    it("should NOT play audio when a single image file is uploaded", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "avatar.png", { type: "image/png" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(mockDataService.uploadAsset).toHaveBeenCalledTimes(1);
+      expect(component.playAsset).not.toHaveBeenCalled();
+    }));
+
+    it("should fallback to constructed AssetView if single uploaded audio is not in listAssets", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      mockDataService.listAssets.calls.reset();
+      const uploadedAudio = {
+        id: "audio_orphan",
+        name: "engine.wav",
+        type: "audio",
+        size: "20 KB",
+        url: "/assets/engine.wav",
+      };
+      mockDataService.uploadAsset.and.returnValue(of(uploadedAudio));
+      mockDataService.listAssets.and.returnValue(of([]));
+
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "engine.wav", { type: "audio/wav" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      tick();
+      fixture.detectChanges();
+
+      expect(component.playAsset).toHaveBeenCalled();
+      const played = (component.playAsset as jasmine.Spy).calls.mostRecent()
+        .args[0];
+      expect(played.name).toBe("engine.wav");
+    }));
+
+    it("should not play audio if component is destroyed before upload completes", fakeAsync(() => {
+      mockDataService.uploadAsset.calls.reset();
+      spyOn(component, "playAsset");
+
+      spyOn(window as any, "FileReader").and.callFake(function () {
+        const mockReader: any = {
+          readAsArrayBuffer: jasmine
+            .createSpy("readAsArrayBuffer")
+            .and.callFake(function () {
+              setTimeout(() => {
+                if (mockReader.onload) {
+                  mockReader.onload({ target: { result: new ArrayBuffer(0) } });
+                }
+              });
+            }),
+          onload: null,
+        };
+        return mockReader;
+      });
+
+      const files = [new File([""], "horn.mp3", { type: "audio/mpeg" })];
+      const fileList = {
+        0: files[0],
+        length: 1,
+        item: (index: number) => files[index],
+      } as unknown as FileList;
+
+      component.uploadFiles(fileList);
+      component.ngOnDestroy();
+      tick();
+      fixture.detectChanges();
+
+      expect(component.playAsset).not.toHaveBeenCalled();
+    }));
+
     it("should handle custom rotation navigation and saved handlers", () => {
       component.openNewCustomRotationEditor();
       expect(mockRouter.navigate).toHaveBeenCalledWith(

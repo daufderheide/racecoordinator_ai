@@ -43,6 +43,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { interpolate, mockTTSContext, resolveAudioUrl } from "@app/utils/audio";
 
+import { getAssetManagerHelpSteps } from "./asset-manager-help";
 import { AudioSetEditorComponent } from "./audio-set-editor/audio-set-editor.component";
 import { ImageSetEditorComponent } from "./image-set-editor/image-set-editor.component";
 
@@ -281,7 +282,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  loadAssets() {
+  loadAssets(onLoaded?: () => void) {
     this.isLoading = true;
     this.dataService.listAssets().subscribe({
       next: (serverAssets) => {
@@ -322,12 +323,18 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
         }
+        if (onLoaded) {
+          onLoaded();
+        }
       },
       error: (err) => {
         this.logger.error("Failed to list assets", err);
         this.isLoading = false;
         if (!this.isDestroyed) {
           this.cdr.detectChanges(); // Force update
+        }
+        if (onLoaded) {
+          onLoaded();
         }
       },
     });
@@ -645,9 +652,19 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         );
 
         forkJoin(uploadObservables).subscribe({
-          next: () => {
+          next: (results) => {
             this.logger.info("All uploads successful");
-            this.loadAssets();
+            const isSingleAudioUpload =
+              fileDataList.length === 1 &&
+              normalizeAssetType(fileDataList[0].type) === AssetType.AUDIO;
+            const singleResult: any =
+              results && results.length === 1 ? results[0] : null;
+
+            this.loadAssets(() => {
+              if (isSingleAudioUpload && !this.isDestroyed) {
+                this.playSingleUploadedAudio(fileDataList[0], singleResult);
+              }
+            });
             this.isUploading = false;
             this.cdr.detectChanges();
           },
@@ -661,6 +678,40 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     }
   }
 
+  private playSingleUploadedAudio(
+    fileData: { name: string; type: string },
+    uploadedResult: any,
+  ) {
+    if (this.isDestroyed) {
+      return;
+    }
+
+    const uploadedId =
+      uploadedResult?.model?.entityId ||
+      uploadedResult?.entity_id ||
+      uploadedResult?.id;
+
+    let targetAsset = this.assets.find(
+      (a) =>
+        (uploadedId && a.id === uploadedId) ||
+        (uploadedResult?.name && a.name === uploadedResult.name) ||
+        a.name === fileData.name,
+    );
+
+    if (!targetAsset) {
+      const url = uploadedResult?.url ? this.getAssetUrl(uploadedResult) : "";
+      targetAsset = {
+        id: uploadedId || "",
+        name: uploadedResult?.name || fileData.name,
+        type: "audio",
+        size: uploadedResult?.size || "0 B",
+        url,
+      };
+    }
+
+    this.playAsset(targetAsset);
+  }
+
   readFile(
     file: File,
   ): Promise<{ name: string; type: string; data: Uint8Array }> {
@@ -669,7 +720,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       reader.onload = (e: any) => {
         const arrayBuffer = e.target.result;
         const bytes = new Uint8Array(arrayBuffer);
-        const type = file.type.startsWith("image/") ? "image" : "audio";
+        const isImage =
+          (file.type && file.type.startsWith("image/")) ||
+          /\.(png|jpe?g|gif|webp|svg)$/i.test(file.name);
+        const type = isImage ? "image" : "audio";
         resolve({ name: file.name, type, data: bytes });
       };
       reader.onerror = (e) => reject(e);
@@ -981,122 +1035,7 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
-  /* eslint-disable max-lines-per-function */
   getHelpSteps(): GuideStep[] {
-    return [
-      {
-        title: this.translationService.translate("AM_HELP_WELCOME_TITLE"),
-        content: this.translationService.translate("AM_HELP_WELCOME_CONTENT"),
-        position: "center",
-      },
-      {
-        selector: ".stats-content",
-        title: this.translationService.translate("AM_HELP_STATS_TITLE"),
-        content: this.translationService.translate("AM_HELP_STATS_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".upload-zone",
-        title: this.translationService.translate("AM_HELP_UPLOAD_TITLE"),
-        content: this.translationService.translate("AM_HELP_UPLOAD_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".btn-image-set",
-        title: this.translationService.translate("AM_HELP_IMAGE_SET_TITLE"),
-        content: this.translationService.translate("AM_HELP_IMAGE_SET_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".btn-audio-set",
-        title: this.translationService.translate("AM_HELP_AUDIO_SET_TITLE"),
-        content: this.translationService.translate("AM_HELP_AUDIO_SET_CONTENT"),
-        position: "right",
-      },
-      {
-        selector: ".btn-custom-rotation",
-        title: this.translationService.translate(
-          "AM_HELP_CUSTOM_ROTATION_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_CUSTOM_ROTATION_CONTENT",
-        ),
-        position: "right",
-      },
-      {
-        selector: ".library-panel",
-        title: this.translationService.translate("AM_HELP_LIBRARY_TITLE"),
-        content: this.translationService.translate("AM_HELP_LIBRARY_CONTENT"),
-        position: "left",
-      },
-      {
-        selector: ".filter-all",
-        title: this.translationService.translate("AM_HELP_FILTER_ALL_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_ALL_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-images",
-        title: this.translationService.translate("AM_HELP_FILTER_IMAGES_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_IMAGES_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-image-sets",
-        title: this.translationService.translate(
-          "AM_HELP_FILTER_IMAGE_SETS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_IMAGE_SETS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-sounds",
-        title: this.translationService.translate("AM_HELP_FILTER_SOUNDS_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_SOUNDS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-audio-sets",
-        title: this.translationService.translate(
-          "AM_HELP_FILTER_AUDIO_SETS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_AUDIO_SETS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-custom-rotations",
-        title: this.translationService.translate(
-          "AM_HELP_FILTER_CUSTOM_ROTATIONS_TITLE",
-        ),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_CUSTOM_ROTATIONS_CONTENT",
-        ),
-        position: "bottom",
-      },
-      {
-        selector: "#asset-layout-switcher",
-        title: this.translationService.translate("AM_HELP_LAYOUT_TITLE"),
-        content: this.translationService.translate("AM_HELP_LAYOUT_CONTENT"),
-        position: "bottom",
-      },
-      {
-        selector: ".filter-input",
-        title: this.translationService.translate("AM_HELP_FILTER_NAME_TITLE"),
-        content: this.translationService.translate(
-          "AM_HELP_FILTER_NAME_CONTENT",
-        ),
-        position: "bottom",
-      },
-    ];
+    return getAssetManagerHelpSteps(this.translationService);
   }
 }
