@@ -89,6 +89,19 @@ public class DriverConverterTest {
             .setText("new_heat_leader_text")
             .build();
 
+    com.antigravity.proto.AudioConfig pitInAudioProto =
+        com.antigravity.proto.AudioConfig.newBuilder()
+            .setType("preset")
+            .setUrl("pit_in_url")
+            .setText("pit_in_text")
+            .build();
+
+    com.antigravity.proto.AudioConfig fuelAudioProto =
+        com.antigravity.proto.AudioConfig.newBuilder()
+            .setType("audio_set")
+            .setUrl("fuel_set_url")
+            .build();
+
     DriverModel proto =
         DriverModel.newBuilder()
             .setName("Alice")
@@ -104,6 +117,8 @@ public class DriverConverterTest {
             .setHeatBestLapAudio(heatBestLapAudioProto)
             .setNewRaceLeaderAudio(newRaceLeaderAudioProto)
             .setNewHeatLeaderAudio(newHeatLeaderAudioProto)
+            .setPitInAudio(pitInAudioProto)
+            .setFuelAudio(fuelAudioProto)
             .setModel(Model.newBuilder().setEntityId("d1").build())
             .build();
 
@@ -158,6 +173,15 @@ public class DriverConverterTest {
     assertNotNull(driver.getNewHeatLeaderAudio());
     assertEquals("preset", driver.getNewHeatLeaderAudio().getType());
     assertEquals("new_heat_leader_url", driver.getNewHeatLeaderAudio().getUrl());
+
+    assertNotNull(driver.getPitInAudio());
+    assertEquals("preset", driver.getPitInAudio().getType());
+    assertEquals("pit_in_url", driver.getPitInAudio().getUrl());
+    assertEquals("pit_in_text", driver.getPitInAudio().getText());
+
+    assertNotNull(driver.getFuelAudio());
+    assertEquals("audio_set", driver.getFuelAudio().getType());
+    assertEquals("fuel_set_url", driver.getFuelAudio().getUrl());
   }
 
   @Test
@@ -182,6 +206,10 @@ public class DriverConverterTest {
         new com.antigravity.models.AudioConfig("preset", "nrl_url", "nrl_text"); // fqn-collision
     com.antigravity.models.AudioConfig newHeatLeaderAudio =
         new com.antigravity.models.AudioConfig("preset", "nhl_url", "nhl_text"); // fqn-collision
+    com.antigravity.models.AudioConfig pitInAudio =
+        new com.antigravity.models.AudioConfig("preset", "pi_url", "pi_text"); // fqn-collision
+    com.antigravity.models.AudioConfig fuelAudio =
+        new com.antigravity.models.AudioConfig("audio_set", "fl_set", null); // fqn-collision
 
     Driver original =
         new Driver.Builder()
@@ -198,6 +226,8 @@ public class DriverConverterTest {
             .withHeatBestLapAudio(heatBestLapAudio)
             .withNewRaceLeaderAudio(newRaceLeaderAudio)
             .withNewHeatLeaderAudio(newHeatLeaderAudio)
+            .withPitInAudio(pitInAudio)
+            .withFuelAudio(fuelAudio)
             .withEntityId("d2")
             .withId("1")
             .build();
@@ -256,6 +286,12 @@ public class DriverConverterTest {
     assertNotNull(reconstructed.getNewHeatLeaderAudio());
     assertEquals(
         original.getNewHeatLeaderAudio().getUrl(), reconstructed.getNewHeatLeaderAudio().getUrl());
+
+    assertNotNull(reconstructed.getPitInAudio());
+    assertEquals(original.getPitInAudio().getUrl(), reconstructed.getPitInAudio().getUrl());
+
+    assertNotNull(reconstructed.getFuelAudio());
+    assertEquals(original.getFuelAudio().getUrl(), reconstructed.getFuelAudio().getUrl());
   }
 
   @Test
@@ -300,6 +336,14 @@ public class DriverConverterTest {
     assertNotNull(driver.getNewHeatLeaderAudio());
     assertEquals("preset", driver.getNewHeatLeaderAudio().getType());
     assertEquals("default_new_heat_leader", driver.getNewHeatLeaderAudio().getUrl());
+
+    assertNotNull(driver.getPitInAudio());
+    assertEquals("preset", driver.getPitInAudio().getType());
+    assertEquals("default_pit_in", driver.getPitInAudio().getUrl());
+
+    assertNotNull(driver.getFuelAudio());
+    assertEquals("audio_set", driver.getFuelAudio().getType());
+    assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
   }
 
   @Test
@@ -320,5 +364,7 @@ public class DriverConverterTest {
     assertEquals(driver.getHeatBestLapAudio().getUrl(), copy.getHeatBestLapAudio().getUrl());
     assertEquals(driver.getNewRaceLeaderAudio().getUrl(), copy.getNewRaceLeaderAudio().getUrl());
     assertEquals(driver.getNewHeatLeaderAudio().getUrl(), copy.getNewHeatLeaderAudio().getUrl());
+    assertEquals(driver.getPitInAudio().getUrl(), copy.getPitInAudio().getUrl());
+    assertEquals(driver.getFuelAudio().getUrl(), copy.getFuelAudio().getUrl());
   }
 }

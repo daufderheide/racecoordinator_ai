@@ -31,6 +31,8 @@ public class DriverConverter {
             toProtoAudio(driver.getNewRaceLeaderAudio(), "default_new_race_leader"))
         .setNewHeatLeaderAudio(
             toProtoAudio(driver.getNewHeatLeaderAudio(), "default_new_heat_leader"))
+        .setPitInAudio(toProtoAudio(driver.getPitInAudio(), "default_pit_in"))
+        .setFuelAudio(toProtoAudio(driver.getFuelAudio(), "default_fuel_level", "audio_set"))
         .setModel(
             Model.newBuilder()
                 .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
@@ -40,7 +42,17 @@ public class DriverConverter {
 
   private static AudioConfig toProtoAudio(
       com.antigravity.models.AudioConfig config, String defaultUrl) { // fqn-collision
-    String type = config != null && config.getType() != null ? config.getType() : "preset";
+    return toProtoAudio(config, defaultUrl, "preset");
+  }
+
+  private static AudioConfig toProtoAudio(
+      com.antigravity.models.AudioConfig config, // fqn-collision
+      String defaultUrl,
+      String defaultType) {
+    String type = config != null && config.getType() != null ? config.getType() : defaultType;
+    if ("audio_set".equals(defaultType) && "preset".equals(type)) {
+      type = "audio_set";
+    }
     String url =
         config != null && config.getUrl() != null
             ? config.getUrl()
@@ -104,6 +116,12 @@ public class DriverConverter {
     }
     if (proto.hasNewHeatLeaderAudio()) {
       builder.withNewHeatLeaderAudio(fromProtoAudio(proto.getNewHeatLeaderAudio()));
+    }
+    if (proto.hasPitInAudio()) {
+      builder.withPitInAudio(fromProtoAudio(proto.getPitInAudio()));
+    }
+    if (proto.hasFuelAudio()) {
+      builder.withFuelAudio(fromProtoAudio(proto.getFuelAudio()));
     }
 
     return builder.build();

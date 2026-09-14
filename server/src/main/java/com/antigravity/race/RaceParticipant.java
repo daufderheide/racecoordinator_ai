@@ -415,7 +415,10 @@ public class RaceParticipant extends ServerToClientObject
       return driver.getEntityId();
     }
     if (team != null && team.getEntityId() != null && !team.getEntityId().isEmpty()) {
-      return team.getEntityId();
+      return "t_" + team.getEntityId();
+    }
+    if (team != null && team.getName() != null && !team.getName().isEmpty()) {
+      return "t_" + team.getName();
     }
     if (getObjectId() != null) {
       return getObjectId();

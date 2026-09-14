@@ -69,6 +69,22 @@ public class DatabaseInitializerTest {
     SqliteRepository<Theme> themeRepo = new SqliteRepository<>(context, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();
     assertEquals(3, themes.size());
+
+    AssetService assetService = new AssetService(context, context.getDataRoot() + "test_db/assets");
+    assertNotNull(assetService.getAssetById("default_pit_in"));
+    assertNotNull(assetService.getAssetById("default_fuel_empty"));
+    assertNotNull(assetService.getAssetById("default_fuel_low"));
+    assertNotNull(assetService.getAssetById("default_fuel_full"));
+    assertNotNull(assetService.getAssetById("default_fuel_level"));
+
+    for (Driver d : drivers) {
+      assertNotNull("Driver should have pitInAudio", d.getPitInAudio());
+      assertEquals("default_pit_in", d.getPitInAudio().getUrl());
+      assertEquals("preset", d.getPitInAudio().getType());
+      assertNotNull("Driver should have fuelAudio", d.getFuelAudio());
+      assertEquals("default_fuel_level", d.getFuelAudio().getUrl());
+      assertEquals("audio_set", d.getFuelAudio().getType());
+    }
   }
 
   @Test
@@ -302,5 +318,106 @@ public class DatabaseInitializerTest {
     assertNotNull(uiRepo.findByEntityId(CustomUI.DEFAULT_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.PRACTICE_UI_ID));
     assertNotNull(uiRepo.findByEntityId(CustomUI.FUEL_UI_ID));
+  }
+
+  @Test
+  public void testResetDrivers_InitializesPitInAndFuelAudio() {
+    initializer.resetDrivers(context);
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    List<Driver> drivers = driverRepo.findAll();
+    assertTrue("Should have initial drivers", drivers.size() > 0);
+    for (Driver driver : drivers) {
+      assertNotNull("Driver should have pit in audio", driver.getPitInAudio());
+      assertEquals("default_pit_in", driver.getPitInAudio().getUrl());
+      assertNotNull("Driver should have fuel audio", driver.getFuelAudio());
+      assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
+      assertEquals("audio_set", driver.getFuelAudio().getType());
+    }
+  }
+
+  @Test
+  public void testBackfillDrivers_PopulatesMissingPitInAndFuelAudio() {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+
+    Driver legacyDriver =
+        new Driver.Builder()
+            .withName("OldDriver")
+            .withNickname("OldNick")
+            .withEntityId("d_old_1")
+            .withPitInAudio(null)
+            .withFuelAudio(null)
+            .build();
+    driverRepo.save(legacyDriver);
+
+    initializer.backfillDrivers(context);
+
+    Driver updated = driverRepo.findByEntityId("d_old_1");
+    assertNotNull(updated);
+    assertNotNull(updated.getPitInAudio());
+    assertEquals("default_pit_in", updated.getPitInAudio().getUrl());
+    assertNotNull(updated.getFuelAudio());
+    assertEquals("default_fuel_level", updated.getFuelAudio().getUrl());
+    assertEquals("audio_set", updated.getFuelAudio().getType());
+  }
+
+  @Test
+  public void testBackfillDrivers_UpdatesRawLegacyJsonInSqlite() throws Exception {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+
+    String legacyJson =
+        "{\"@id\":1,\"entity_id\":\"d_legacy\",\"name\":\"Legacy\",\"nickname\":\"Leg\"}";
+    try (java.sql.PreparedStatement stmt =
+        context
+            .getConnection()
+            .prepareStatement("INSERT INTO drivers (entity_id, json_data) VALUES (?, ?)")) {
+      stmt.setString(1, "d_legacy");
+      stmt.setString(2, legacyJson);
+      stmt.executeUpdate();
+    }
+
+    initializer.backfillDrivers(context);
+
+    try (java.sql.Statement stmt = context.getConnection().createStatement();
+        java.sql.ResultSet rs =
+            stmt.executeQuery("SELECT json_data FROM drivers WHERE entity_id = 'd_legacy'")) {
+      assertTrue(rs.next());
+      String updatedJson = rs.getString("json_data");
+      assertTrue(updatedJson.contains("pitInAudio"));
+      assertTrue(updatedJson.contains("fuelAudio"));
+      assertTrue(updatedJson.contains("default_pit_in"));
+      assertTrue(updatedJson.contains("default_fuel_level"));
+    }
+  }
+
+  @Test
+  public void testBackfillDrivers_UpdatesFuelAudioPresetToAudioSetInSqlite() throws Exception {
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    driverRepo.drop();
+
+    String corruptedJson =
+        "{\"@id\":1,\"entity_id\":\"d_corrupted\",\"name\":\"Corrupted\",\"nickname\":\"Corr\","
+            + "\"pitInAudio\":{\"type\":\"preset\",\"url\":\"default_pit_in\",\"text\":\"\"},"
+            + "\"overallBestLapAudio\":{\"type\":\"preset\",\"url\":\"default_record_lap\",\"text\":\"\"},"
+            + "\"fuelAudio\":{\"type\":\"preset\",\"url\":\"default_fuel_level\",\"text\":\"\"}}";
+    try (java.sql.PreparedStatement stmt =
+        context
+            .getConnection()
+            .prepareStatement("INSERT INTO drivers (entity_id, json_data) VALUES (?, ?)")) {
+      stmt.setString(1, "d_corrupted");
+      stmt.setString(2, corruptedJson);
+      stmt.executeUpdate();
+    }
+
+    initializer.backfillDrivers(context);
+
+    try (java.sql.Statement stmt = context.getConnection().createStatement();
+        java.sql.ResultSet rs =
+            stmt.executeQuery("SELECT json_data FROM drivers WHERE entity_id = 'd_corrupted'")) {
+      assertTrue(rs.next());
+      String updatedJson = rs.getString("json_data");
+      assertTrue(updatedJson.contains("\"fuelAudio\":{\"type\":\"audio_set\""));
+    }
   }
 }

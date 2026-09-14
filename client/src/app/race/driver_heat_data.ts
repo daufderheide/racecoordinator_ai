@@ -47,6 +47,7 @@ export class DriverHeatData {
   public lapsLed: number = 0;
   public isFinished: boolean = false;
   public trackCalls: number = 0;
+  public initialFuelLevel: number = 0;
 
   constructor(
     objectId: string,

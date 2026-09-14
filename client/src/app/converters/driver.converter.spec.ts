@@ -28,6 +28,8 @@ describe("DriverConverter", () => {
       heatBestLapAudio: { type: "preset", url: "heat_best_url" },
       newRaceLeaderAudio: { type: "preset", url: "new_race_leader_url" },
       newHeatLeaderAudio: { type: "preset", url: "new_heat_leader_url" },
+      pitInAudio: { type: "preset", url: "pit_in_url" },
+      fuelAudio: { type: "audio_set", url: "default_fuel_level" },
     };
 
     const driver = DriverConverter.fromProto(proto);
@@ -44,6 +46,8 @@ describe("DriverConverter", () => {
     expect(driver.heatBestLapAudio?.url).toBe("heat_best_url");
     expect(driver.newRaceLeaderAudio?.url).toBe("new_race_leader_url");
     expect(driver.newHeatLeaderAudio?.url).toBe("new_heat_leader_url");
+    expect(driver.pitInAudio?.url).toBe("pit_in_url");
+    expect(driver.fuelAudio?.url).toBe("default_fuel_level");
   });
 
   it("should update cached driver in-place during fromProto", () => {
@@ -128,6 +132,8 @@ describe("DriverConverter", () => {
       raceBestLapAudio: { type: "none" },
       raceLaneBestLapAudio: { type: "none" },
       heatBestLapAudio: { type: "none" },
+      pitInAudio: { type: "none" },
+      fuelAudio: { type: "none" },
     };
 
     const driver = DriverConverter.fromProto(proto);
@@ -147,6 +153,10 @@ describe("DriverConverter", () => {
     expect(driver.raceLaneBestLapAudio.url).toBeUndefined();
     expect(driver.heatBestLapAudio.type).toBe("none");
     expect(driver.heatBestLapAudio.url).toBeUndefined();
+    expect(driver.pitInAudio.type).toBe("none");
+    expect(driver.pitInAudio.url).toBeUndefined();
+    expect(driver.fuelAudio.type).toBe("none");
+    expect(driver.fuelAudio.url).toBeUndefined();
 
     // In-place update
     const updateProto: IDriverModel = {
@@ -160,6 +170,8 @@ describe("DriverConverter", () => {
       raceBestLapAudio: { type: "none" },
       raceLaneBestLapAudio: { type: "none" },
       heatBestLapAudio: { type: "none" },
+      pitInAudio: { type: "none" },
+      fuelAudio: { type: "none" },
     };
     const updatedDriver = DriverConverter.fromProto(updateProto);
     expect(updatedDriver.lapAudio.type).toBe("none");
@@ -170,5 +182,31 @@ describe("DriverConverter", () => {
     expect(updatedDriver.raceBestLapAudio.type).toBe("none");
     expect(updatedDriver.raceLaneBestLapAudio.type).toBe("none");
     expect(updatedDriver.heatBestLapAudio.type).toBe("none");
+    expect(updatedDriver.pitInAudio.type).toBe("none");
+    expect(updatedDriver.fuelAudio.type).toBe("none");
+  });
+
+  it("should coerce fuelAudio preset type to audio_set in fromProto and fromJSON", () => {
+    const proto: IDriverModel = {
+      model: { entityId: "d_legacy_fuel" },
+      name: "Legacy Fuel Driver",
+      fuelAudio: { type: "preset", url: "default_fuel_level" },
+    };
+
+    const driverFromProto = DriverConverter.fromProto(proto);
+    expect(driverFromProto.fuelAudio.type).toBe("audio_set");
+    expect(driverFromProto.fuelAudio.url).toBe("default_fuel_level");
+
+    DriverConverter.clearCache();
+
+    const json = {
+      entity_id: "d_legacy_json_fuel",
+      name: "Legacy JSON Fuel Driver",
+      fuelAudio: { type: "preset", url: "default_fuel_level" },
+    };
+
+    const driverFromJSON = DriverConverter.fromJSON(json);
+    expect(driverFromJSON.fuelAudio.type).toBe("audio_set");
+    expect(driverFromJSON.fuelAudio.url).toBe("default_fuel_level");
   });
 });

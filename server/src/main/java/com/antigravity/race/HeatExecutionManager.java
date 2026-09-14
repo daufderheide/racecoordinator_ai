@@ -22,6 +22,7 @@ import com.antigravity.race.states.HeatOver;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.RacePredictionService;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -233,6 +234,7 @@ public class HeatExecutionManager {
                 .setInterfaceId(interfaceId)
                 .setType(Lap.LapType.MIN_LAP_TIME)
                 .setFlag(race.getState().getLaneFlagType(race, lane))
+                .setFuelLevel(driverData.getDriver().getFuelLevel())
                 .build();
         driverData.setFlag(minLapMsg.getFlag());
         race.broadcast(RaceData.newBuilder().setLap(minLapMsg).build());
@@ -803,6 +805,7 @@ public class HeatExecutionManager {
               .setInterfaceId(interfaceId)
               .setType(Lap.LapType.REACTION_TIME)
               .setFlag(race.getState().getLaneFlagType(race, lane))
+              .setFuelLevel(driverData.getDriver().getFuelLevel())
               .build();
       driverData.setFlag(rtMsg.getFlag());
 
@@ -987,8 +990,10 @@ public class HeatExecutionManager {
     if (race == null || race.getDrivers() == null) {
       return null;
     }
-    for (RaceParticipant participant : race.getDrivers()) {
-      if (participant.getRank() == 1
+    List<RaceParticipant> participants = new ArrayList<>(race.getDrivers());
+    participants.sort(Comparator.comparingInt(RaceParticipant::getRank));
+    for (RaceParticipant participant : participants) {
+      if (participant.getRank() < 99
           && !participant.isEmptyParticipant()
           && (participant.getTotalLaps() > 0
               || (participant.getAllScoringLaps() != null

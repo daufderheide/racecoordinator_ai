@@ -20,6 +20,8 @@ public class Driver extends Model {
   private final AudioConfig heatBestLapAudio;
   private final AudioConfig newRaceLeaderAudio;
   private final AudioConfig newHeatLeaderAudio;
+  private final AudioConfig pitInAudio;
+  private final AudioConfig fuelAudio;
 
   public Driver(
       @JsonProperty("name") String name,
@@ -42,6 +44,8 @@ public class Driver extends Model {
           AudioConfig newRaceLeaderAudio,
       @JsonProperty("newHeatLeaderAudio") @JsonAlias("new_heat_leader_audio")
           AudioConfig newHeatLeaderAudio,
+      @JsonProperty("pitInAudio") @JsonAlias("pit_in_audio") AudioConfig pitInAudio,
+      @JsonProperty("fuelAudio") @JsonAlias("fuel_audio") AudioConfig fuelAudio,
       @JsonProperty("lapSoundUrl") String lapSoundUrl,
       @JsonProperty("bestLapSoundUrl") String bestLapSoundUrl,
       @JsonProperty("penaltySoundUrl") String penaltySoundUrl,
@@ -57,64 +61,70 @@ public class Driver extends Model {
     this.name = name;
     this.nickname = nickname;
     this.avatarUrl = avatarUrl;
-
-    if (lapAudio != null) {
-      this.lapAudio = lapAudio;
-    } else if (lapSoundUrl != null || lapSoundType != null || lapSoundText != null) {
-      this.lapAudio = new AudioConfig(lapSoundType, lapSoundUrl, lapSoundText);
-    } else {
-      this.lapAudio = new AudioConfig("preset", "default_beep", "");
-    }
-
-    if (bestLapAudio != null) {
-      this.bestLapAudio = bestLapAudio;
-    } else if (bestLapSoundUrl != null || bestLapSoundType != null || bestLapSoundText != null) {
-      this.bestLapAudio = new AudioConfig(bestLapSoundType, bestLapSoundUrl, bestLapSoundText);
-    } else {
-      this.bestLapAudio = new AudioConfig("preset", "default_driveby", "");
-    }
-
-    if (penaltyAudio != null) {
-      this.penaltyAudio = penaltyAudio;
-    } else if (penaltySoundUrl != null || penaltySoundType != null || penaltySoundText != null) {
-      String actualUrl = penaltySoundUrl;
-      if ("default_penalty".equals(actualUrl)
-          || "/assets/default_penalty_penalty.wav".equals(actualUrl)) {
-        actualUrl = "default_penalty";
-      }
-      this.penaltyAudio = new AudioConfig(penaltySoundType, actualUrl, penaltySoundText);
-    } else {
-      this.penaltyAudio = new AudioConfig("preset", "default_penalty", "");
-    }
-
-    this.overallBestLapAudio =
-        overallBestLapAudio != null
-            ? overallBestLapAudio
-            : new AudioConfig("preset", "default_record_lap", "");
+    this.lapAudio = resolveAudio(lapAudio, lapSoundUrl, lapSoundType, lapSoundText, "default_beep");
+    this.bestLapAudio =
+        resolveAudio(
+            bestLapAudio, bestLapSoundUrl, bestLapSoundType, bestLapSoundText, "default_driveby");
+    this.penaltyAudio =
+        resolvePenaltyAudio(penaltyAudio, penaltySoundUrl, penaltySoundType, penaltySoundText);
+    this.overallBestLapAudio = defaultPresetAudio(overallBestLapAudio, "default_record_lap");
     this.overallLaneBestLapAudio =
-        overallLaneBestLapAudio != null
-            ? overallLaneBestLapAudio
-            : new AudioConfig("preset", "default_record_lane_lap", "");
-    this.raceBestLapAudio =
-        raceBestLapAudio != null
-            ? raceBestLapAudio
-            : new AudioConfig("preset", "default_best_race_lap", "");
+        defaultPresetAudio(overallLaneBestLapAudio, "default_record_lane_lap");
+    this.raceBestLapAudio = defaultPresetAudio(raceBestLapAudio, "default_best_race_lap");
     this.raceLaneBestLapAudio =
-        raceLaneBestLapAudio != null
-            ? raceLaneBestLapAudio
-            : new AudioConfig("preset", "default_best_race_lane_lap", "");
-    this.heatBestLapAudio =
-        heatBestLapAudio != null
-            ? heatBestLapAudio
-            : new AudioConfig("preset", "default_best_heat_lap", "");
-    this.newRaceLeaderAudio =
-        newRaceLeaderAudio != null
-            ? newRaceLeaderAudio
-            : new AudioConfig("preset", "default_new_race_leader", "");
-    this.newHeatLeaderAudio =
-        newHeatLeaderAudio != null
-            ? newHeatLeaderAudio
-            : new AudioConfig("preset", "default_new_heat_leader", "");
+        defaultPresetAudio(raceLaneBestLapAudio, "default_best_race_lane_lap");
+    this.heatBestLapAudio = defaultPresetAudio(heatBestLapAudio, "default_best_heat_lap");
+    this.newRaceLeaderAudio = defaultPresetAudio(newRaceLeaderAudio, "default_new_race_leader");
+    this.newHeatLeaderAudio = defaultPresetAudio(newHeatLeaderAudio, "default_new_heat_leader");
+    this.pitInAudio = defaultPresetAudio(pitInAudio, "default_pit_in");
+    this.fuelAudio = defaultSetAudio(fuelAudio, "default_fuel_level");
+  }
+
+  private static AudioConfig defaultPresetAudio(AudioConfig config, String defaultPreset) {
+    return config != null ? config : new AudioConfig("preset", defaultPreset, "");
+  }
+
+  private static AudioConfig defaultSetAudio(AudioConfig config, String defaultSet) {
+    if (config != null) {
+      if ("preset".equalsIgnoreCase(config.getType())
+          || config.getType() == null
+          || config.getType().trim().isEmpty()) {
+        return new AudioConfig(
+            "audio_set",
+            config.getUrl() != null && !config.getUrl().trim().isEmpty()
+                ? config.getUrl()
+                : defaultSet,
+            config.getText());
+      }
+      return config;
+    }
+    return new AudioConfig("audio_set", defaultSet, "");
+  }
+
+  private static AudioConfig resolveAudio(
+      AudioConfig config, String url, String type, String text, String defaultPreset) {
+    if (config != null) {
+      return config;
+    }
+    if (url != null || type != null || text != null) {
+      return new AudioConfig(type, url, text);
+    }
+    return new AudioConfig("preset", defaultPreset, "");
+  }
+
+  private static AudioConfig resolvePenaltyAudio(
+      AudioConfig config, String url, String type, String text) {
+    if (config != null) {
+      return config;
+    }
+    if (url != null || type != null || text != null) {
+      String actualUrl =
+          "default_penalty".equals(url) || "/assets/default_penalty_penalty.wav".equals(url)
+              ? "default_penalty"
+              : url;
+      return new AudioConfig(type, actualUrl, text);
+    }
+    return new AudioConfig("preset", "default_penalty", "");
   }
 
   public Driver(
@@ -142,6 +152,8 @@ public class Driver extends Model {
         lapAudio,
         bestLapAudio,
         penaltyAudio,
+        null,
+        null,
         null,
         null,
         null,
@@ -199,7 +211,7 @@ public class Driver extends Model {
   public Driver(String name, String nickname, String entityId, String id) {
     this(
         name, nickname, null, null, null, null, null, null, null, null, null, null, null, null,
-        null, null, null, null, null, null, null, null, entityId, id);
+        null, null, null, null, null, null, null, null, null, null, entityId, id);
   }
 
   public Driver(String name) {
@@ -269,6 +281,14 @@ public class Driver extends Model {
     return newHeatLeaderAudio;
   }
 
+  public AudioConfig getPitInAudio() {
+    return pitInAudio;
+  }
+
+  public AudioConfig getFuelAudio() {
+    return fuelAudio;
+  }
+
   public static boolean isEmptyId(String id) {
     return id == null || id.isEmpty() || EMPTY_DRIVER_ID.equals(id);
   }
@@ -301,6 +321,8 @@ public class Driver extends Model {
         new AudioConfig("preset", "default_new_race_leader", "");
     private AudioConfig newHeatLeaderAudio =
         new AudioConfig("preset", "default_new_heat_leader", "");
+    private AudioConfig pitInAudio = new AudioConfig("preset", "default_pit_in", "");
+    private AudioConfig fuelAudio = new AudioConfig("audio_set", "default_fuel_level", "");
 
     public Builder() {}
 
@@ -322,6 +344,8 @@ public class Driver extends Model {
         b.heatBestLapAudio = other.getHeatBestLapAudio();
         b.newRaceLeaderAudio = other.getNewRaceLeaderAudio();
         b.newHeatLeaderAudio = other.getNewHeatLeaderAudio();
+        b.pitInAudio = other.getPitInAudio();
+        b.fuelAudio = other.getFuelAudio();
       }
       return b;
     }
@@ -401,6 +425,16 @@ public class Driver extends Model {
       return this;
     }
 
+    public Builder withPitInAudio(AudioConfig pitInAudio) {
+      this.pitInAudio = pitInAudio;
+      return this;
+    }
+
+    public Builder withFuelAudio(AudioConfig fuelAudio) {
+      this.fuelAudio = fuelAudio;
+      return this;
+    }
+
     public Driver build() {
       return new Driver(
           name,
@@ -416,6 +450,8 @@ public class Driver extends Model {
           heatBestLapAudio,
           newRaceLeaderAudio,
           newHeatLeaderAudio,
+          pitInAudio,
+          fuelAudio,
           null,
           null,
           null,

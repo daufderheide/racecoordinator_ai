@@ -65,15 +65,37 @@ public abstract class FuelOptions {
       double startLevel,
       double refuelRate,
       double pitStopDelay) {
+    this(
+        enabled,
+        resetFuelAtHeatStart,
+        outOfFuelAction,
+        Double.valueOf(capacity),
+        usageType,
+        Double.valueOf(usageRate),
+        Double.valueOf(startLevel),
+        Double.valueOf(refuelRate),
+        Double.valueOf(pitStopDelay));
+  }
+
+  public FuelOptions(
+      boolean enabled,
+      boolean resetFuelAtHeatStart,
+      OutOfFuelAction outOfFuelAction,
+      Double capacity,
+      FuelUsageType usageType,
+      Double usageRate,
+      Double startLevel,
+      Double refuelRate,
+      Double pitStopDelay) {
     this.enabled = enabled;
     this.resetFuelAtHeatStart = resetFuelAtHeatStart;
     this.outOfFuelAction = outOfFuelAction;
-    this.capacity = capacity;
+    this.capacity = capacity != null ? capacity : 100.0;
     this.usageType = usageType != null ? usageType : FuelUsageType.LINEAR;
-    this.usageRate = usageRate;
-    this.startLevel = startLevel;
-    this.refuelRate = refuelRate;
-    this.pitStopDelay = pitStopDelay;
+    this.usageRate = usageRate != null ? usageRate : 4.0;
+    this.startLevel = startLevel != null ? startLevel : 100.0;
+    this.refuelRate = refuelRate != null ? refuelRate : 10.0;
+    this.pitStopDelay = pitStopDelay != null ? pitStopDelay : 2.0;
   }
 
   public boolean isEnabled() {

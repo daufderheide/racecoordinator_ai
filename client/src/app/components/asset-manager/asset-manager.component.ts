@@ -942,6 +942,10 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
       data: new Uint8Array(),
       type: entry.type || "preset",
       text: entry.text || "",
+      percentage:
+        (entry as any).percentage != null
+          ? (entry as any).percentage
+          : Math.round(entry.timeSeconds || 0),
     }));
     this.showAudioSetEditor = true;
     this.cdr.detectChanges();

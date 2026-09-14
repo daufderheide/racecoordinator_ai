@@ -62,6 +62,14 @@ public class AssetDefaultsInitializerTest {
     AssetMessage fuelGauge = assetService.getAssetById("default_fuel_gauge");
     assertNotNull("Default fuel gauge image set should be backfilled", fuelGauge);
 
+    AssetMessage pitIn = assetService.getAssetById("default_pit_in");
+    assertNotNull("Default pit in audio asset should be backfilled", pitIn);
+
+    AssetMessage fuelLevel = assetService.getAssetById("default_fuel_level");
+    assertNotNull("Default fuel level audio set should be backfilled", fuelLevel);
+    assertEquals("audio_set", fuelLevel.getType());
+    assertEquals(3, fuelLevel.getAudioEntriesCount());
+
     SqliteRepository<Theme> themeRepo =
         new SqliteRepository<>(databaseContext, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();

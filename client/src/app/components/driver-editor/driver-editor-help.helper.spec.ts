@@ -1,7 +1,7 @@
 import { buildDriverEditorHelpSteps } from "./driver-editor-help.helper";
 
 describe("DriverEditorHelpHelper", () => {
-  it("should generate all 14 help steps in the expected order with onEnter callbacks", () => {
+  it("should generate all 18 help steps in the expected order with onEnter callbacks", () => {
     let audioExpanded = false;
     const mockTranslationService = {
       translate: (key: string) => `translated_${key}`,
@@ -14,7 +14,7 @@ describe("DriverEditorHelpHelper", () => {
       },
     });
 
-    expect(steps.length).toBe(16);
+    expect(steps.length).toBe(18);
     expect(steps[0].title).toBe("translated_DE_HELP_WELCOME_TITLE");
     expect(steps[0].position).toBe("center");
 
@@ -34,6 +34,8 @@ describe("DriverEditorHelpHelper", () => {
       "#driver-new-heat-leader-audio",
       "#driver-overall-best-lap-audio",
       "#driver-overall-lane-best-lap-audio",
+      "#driver-pit-in-audio",
+      "#driver-fuel-audio",
       "#driver-false-start-audio",
     ]);
 

@@ -27,6 +27,8 @@ export class Driver implements Model {
   heatBestLapAudio: AudioConfig;
   newRaceLeaderAudio: AudioConfig;
   newHeatLeaderAudio: AudioConfig;
+  pitInAudio: AudioConfig;
+  fuelAudio: AudioConfig;
 
   constructor(
     entity_id: string,
@@ -44,6 +46,8 @@ export class Driver implements Model {
     heatBestLapAudio?: AudioConfig,
     newRaceLeaderAudio?: AudioConfig,
     newHeatLeaderAudio?: AudioConfig,
+    pitInAudio?: AudioConfig,
+    fuelAudio?: AudioConfig,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -53,18 +57,23 @@ export class Driver implements Model {
     const sanitizeAudio = (
       audio?: AudioConfig,
       defaultUrl: string = "default_beep",
+      defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
     ): AudioConfig => {
       if (!audio || !audio.type) {
-        return { type: "preset", url: defaultUrl };
+        return { type: defaultType, url: defaultUrl };
       }
-      if (audio.type === "none") {
+      let type = audio.type;
+      if (defaultType === "audio_set" && type === "preset") {
+        type = "audio_set";
+      }
+      if (type === "none") {
         return { type: "none", url: undefined, text: undefined };
       }
-      if (audio.type === "tts") {
+      if (type === "tts") {
         return { type: "tts", url: undefined, text: audio.text || "" };
       }
       return {
-        type: audio.type,
+        type,
         url: audio.url || defaultUrl,
         text: undefined,
       };
@@ -103,6 +112,12 @@ export class Driver implements Model {
     this.newHeatLeaderAudio = sanitizeAudio(
       newHeatLeaderAudio,
       "default_new_heat_leader",
+    );
+    this.pitInAudio = sanitizeAudio(pitInAudio, "default_pit_in");
+    this.fuelAudio = sanitizeAudio(
+      fuelAudio,
+      "default_fuel_level",
+      "audio_set",
     );
   }
 

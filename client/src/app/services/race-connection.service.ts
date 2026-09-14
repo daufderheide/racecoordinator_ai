@@ -280,6 +280,9 @@ export class RaceConnectionService implements OnDestroy {
             lap,
           );
           if (driverData) {
+            if (lap.fuelLevel != null && driverData.participant) {
+              driverData.participant.fuelLevel = Number(lap.fuelLevel);
+            }
             if (lap.type === LapType.REACTION_TIME) {
               driverData.reactionTime = lap.lapTime!;
               this.reactionTimeSubject.next({
@@ -346,6 +349,9 @@ export class RaceConnectionService implements OnDestroy {
                     if (lap.flag !== undefined && lap.flag !== null) {
                       targetHd.flag = lap.flag;
                     }
+                    if (lap.fuelLevel != null && targetHd.participant) {
+                      targetHd.participant.fuelLevel = Number(lap.fuelLevel);
+                    }
                   }
                 }
                 this.raceService.setHeats([...allHeats]);
@@ -363,10 +369,21 @@ export class RaceConnectionService implements OnDestroy {
       this.dataService.getCarData().subscribe((carData) => {
         const heat = this.raceService.getCurrentHeat();
         if (heat && heat.heatDrivers && carData && carData.lane != null) {
-          const driverData = heat.heatDrivers[carData.lane];
+          console.log(
+            `DEBUG FUEL (CarData Received): lane=${carData.lane} fuelLevel=${carData.fuelLevel}`,
+          );
+          const driverData =
+            heat.heatDrivers.find((d) => d.laneIndex === carData.lane) ||
+            heat.heatDrivers[carData.lane];
           if (driverData) {
             if (carData.fuelLevel != null) {
               driverData.participant.fuelLevel = carData.fuelLevel as number;
+            }
+            if (
+              carData.isRefueling !== undefined &&
+              carData.isRefueling !== null
+            ) {
+              driverData.isRefueling = !!carData.isRefueling;
             }
             if (carData.flag !== undefined && carData.flag !== null) {
               driverData.flag = carData.flag;
@@ -408,6 +425,21 @@ export class RaceConnectionService implements OnDestroy {
             RaceParticipantConverter.fromProto(p),
           );
           this.raceService.setParticipants(participants);
+          const heat = this.raceService.getCurrentHeat();
+          if (heat && heat.heatDrivers) {
+            heat.heatDrivers.forEach((hd) => {
+              const d = hd.actualDriver || hd.driver;
+              const driverId = d?.entity_id || d?.name;
+              const match = participants.find(
+                (p) =>
+                  p.driver?.entity_id === driverId ||
+                  p.driver?.name === driverId,
+              );
+              if (match && match.fuelLevel != null && hd.participant) {
+                hd.participant.fuelLevel = match.fuelLevel;
+              }
+            });
+          }
           this.overallStandingsSubject.next(update);
         }
       }),
@@ -466,6 +498,12 @@ export class RaceConnectionService implements OnDestroy {
     this.subscriptions.push(
       this.dataService.getHeats().subscribe((heatProto) => {
         const heat = HeatConverter.fromProto(heatProto);
+        console.log(`DEBUG FUEL (Heat Received): Started=${heat.started}`);
+        heat.heatDrivers?.forEach((hd: any) => {
+          console.log(
+            `  DEBUG FUEL: Lane ${hd.laneIndex} - Fuel: ${hd.participant?.fuelLevel}`,
+          );
+        });
         if (heat.standings && heat.standings.length > 0) {
           heat.standings.forEach((sid, index) => {
             this.driverRankings.set(sid, index + 1);

@@ -53,7 +53,12 @@ public class ClientSubscriptionManager {
   private boolean hasEverHadClient = false;
   private ScheduledFuture<?> autoShutdownFuture;
   private int autoShutdownDelaySeconds = 5;
-  private Runnable autoShutdownAction = () -> System.exit(0);
+  private Runnable autoShutdownAction =
+      () -> {
+        if (!Boolean.getBoolean("skip.jni.load")) {
+          System.exit(0);
+        }
+      };
   private volatile boolean lastDirectorExplicitlyUnsubscribed = false;
 
   void setAutoShutdownAction(Runnable action) {

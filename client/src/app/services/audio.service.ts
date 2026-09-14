@@ -36,6 +36,9 @@ export class AudioService {
   private isSpacingCoolingDown: boolean = false;
   private spacingTimer: any = null;
   private cachedVoices: SpeechSynthesisVoice[] = [];
+  private activeAudioElement: HTMLAudioElement | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private safetyTimeout: any = null;
 
   constructor(
     private dataService: DataService,
@@ -82,6 +85,11 @@ export class AudioService {
       "new_race_leader",
       "newHeatLeader",
       "new_heat_leader",
+      "pitIn",
+      "pit_in",
+      "fuel",
+      "fuel_level",
+      "fuelLevel",
     ];
 
     return announcementSlots.some((s) => slotOrCategory.includes(s));
@@ -97,10 +105,16 @@ export class AudioService {
     this.logger.debug("Playing SFX from URL:", playableUrl);
     const audio = new Audio(playableUrl);
     const settings = this.settingsService.getSettings();
-    audio.volume = Math.max(
+    let finalVolume = Math.max(
       0,
       Math.min(1, (settings.masterVolume ?? 100) / 100),
     );
+    // Duck SFX volume to 20% if a voice callout is actively playing
+    if (this.activeVoice) {
+      finalVolume *= 0.2;
+    }
+
+    audio.volume = finalVolume;
     audio.play().catch((err) => {
       this.logger.error("Error playing SFX", err);
     });
@@ -202,9 +216,36 @@ export class AudioService {
 
   /** Stops any currently playing verbal callout and clears cooldown. */
   stopVoice(): void {
+    if (this.safetyTimeout) {
+      clearTimeout(this.safetyTimeout);
+      this.safetyTimeout = null;
+    }
     if (this.activeVoice) {
       this.activeVoice.stop();
       this.activeVoice = null;
+    }
+    if (this.activeAudioElement) {
+      try {
+        this.activeAudioElement.pause();
+        this.activeAudioElement.currentTime = 0;
+        this.activeAudioElement.onended = null;
+        this.activeAudioElement.onerror = null;
+      } catch {
+        // ignore
+      }
+      this.activeAudioElement = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      this.activeUtterance = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
     }
     this.clearSpacingTimer();
   }
@@ -233,6 +274,7 @@ export class AudioService {
   private playPresetVoice(url: string, priority: AudioPriority): void {
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     const audio = new Audio(playableUrl);
+    this.activeAudioElement = audio;
     const settings = this.settingsService.getSettings();
     audio.volume = Math.max(
       0,
@@ -245,24 +287,57 @@ export class AudioService {
       ended = true;
       audio.onended = null;
       audio.onerror = null;
-      clearTimeout(safetyTimeout);
+      audio.onloadedmetadata = null;
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
+        this.safetyTimeout = null;
+      }
+      if (this.activeAudioElement === audio) {
+        this.activeAudioElement = null;
+      }
     };
 
     const stop = () => {
       cleanup();
-      audio.pause();
-      audio.currentTime = 0;
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
     };
 
     this.activeVoice = { priority, stop };
 
-    // Safety watchdog timeout (15s) in case audio element stalls
-    const safetyTimeout = setTimeout(() => {
-      cleanup();
-      if (this.activeVoice?.stop === stop) {
-        this.onVoiceCalloutEnded();
+    const startWatchdog = (timeoutMs: number) => {
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
       }
-    }, 15000);
+      this.safetyTimeout = setTimeout(() => {
+        cleanup();
+        if (this.activeVoice?.stop === stop) {
+          this.onVoiceCalloutEnded();
+        }
+      }, timeoutMs);
+    };
+
+    // Initial fallback watchdog (10s) if metadata has not loaded yet
+    startWatchdog(10000);
+
+    audio.onloadedmetadata = () => {
+      if (
+        !ended &&
+        audio.duration &&
+        !isNaN(audio.duration) &&
+        isFinite(audio.duration)
+      ) {
+        const dynamicTimeout = Math.max(
+          3000,
+          Math.min(10000, Math.ceil(audio.duration * 1000) + 1500),
+        );
+        startWatchdog(dynamicTimeout);
+      }
+    };
 
     audio.onended = () => {
       cleanup();
@@ -311,6 +386,7 @@ export class AudioService {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    this.activeUtterance = utterance;
     this.applyTtsSettingsToUtterance(utterance);
     let ended = false;
 
@@ -319,23 +395,38 @@ export class AudioService {
       ended = true;
       utterance.onend = null;
       utterance.onerror = null;
-      clearTimeout(safetyTimeout);
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
+        this.safetyTimeout = null;
+      }
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
     };
 
     const stop = () => {
       cleanup();
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
     };
 
     this.activeVoice = { priority, stop };
 
-    // Safety watchdog timeout (15s)
-    const safetyTimeout = setTimeout(() => {
+    const wordCount = interpolatedText.trim().split(/\s+/).length;
+    const dynamicTimeout = Math.max(
+      3000,
+      Math.min(10000, wordCount * 500 + 2000),
+    );
+
+    this.safetyTimeout = setTimeout(() => {
       cleanup();
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
-    }, 15000);
+    }, dynamicTimeout);
 
     utterance.onend = () => {
       cleanup();

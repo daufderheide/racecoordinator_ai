@@ -116,6 +116,20 @@ function buildAudioHelpSteps(ctx: DriverEditorHelpContext): GuideStep[] {
       onEnter,
     },
     {
+      selector: "#driver-pit-in-audio",
+      title: t.translate("DE_HELP_PIT_IN_SOUND_TITLE"),
+      content: t.translate("DE_HELP_PIT_IN_SOUND_CONTENT"),
+      position: "left",
+      onEnter,
+    },
+    {
+      selector: "#driver-fuel-audio",
+      title: t.translate("DE_HELP_FUEL_SOUND_TITLE"),
+      content: t.translate("DE_HELP_FUEL_SOUND_CONTENT"),
+      position: "left",
+      onEnter,
+    },
+    {
       selector: "#driver-false-start-audio",
       title: t.translate("DE_HELP_FALSE_START_SOUND_TITLE"),
       content: t.translate("DE_HELP_FALSE_START_SOUND_CONTENT"),

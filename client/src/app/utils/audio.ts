@@ -211,7 +211,18 @@ export function dispatchLapAudio(
 
   // If the sound for that lap wasn't played (either because of priority, set to none, or missing),
   // fallback to personal best lap sound (if isBestLap) or normal lap sound.
-  const fallbackAudio = isBestLap ? driver.bestLapAudio : driver.lapAudio;
+  let fallbackAudio = isBestLap ? driver.bestLapAudio : driver.lapAudio;
+
+  // If the special audio that failed WAS the bestLapAudio, we should fallback to the normal lapAudio instead
+  if (
+    specialAudio &&
+    specialAudio.config === fallbackAudio &&
+    fallbackAudio === driver.bestLapAudio
+  ) {
+    fallbackAudio = driver.lapAudio;
+  }
+
+  // Make sure we don't try to fallback to the exact same audio that just got dropped
   if (!played && (!specialAudio || specialAudio.config !== fallbackAudio)) {
     if (
       fallbackAudio?.type &&
@@ -260,6 +271,10 @@ export function resolveAudioUrl(
     default_best_heat_lap: "/assets/default_best_heat_lap_Heat_Best_Lap",
     default_new_race_leader: "/assets/default_new_race_leader_New_Race_Leader",
     default_new_heat_leader: "/assets/default_new_heat_leader_New_Heat_Leader",
+    default_pit_in: "/assets/default_pit_in_Pit_In",
+    default_fuel_empty: "/assets/default_fuel_empty_Fuel_Empty",
+    default_fuel_low: "/assets/default_fuel_low_Fuel_Low",
+    default_fuel_full: "/assets/default_fuel_full_Fuel_Full",
   };
   if (defaultUrls[url]) {
     return `${serverUrl}${defaultUrls[url]}`;
@@ -434,6 +449,8 @@ export function createTTSContext(
   const driverNickname = driver?.nickname || driverName;
   const laps = driverData?.totalLaps ?? driverData?.lapCount ?? 0;
   return {
+    name: driverName,
+    nickname: driverNickname,
     driver: {
       name: driverName,
       nickname: driverNickname,

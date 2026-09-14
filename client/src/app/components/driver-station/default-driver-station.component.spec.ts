@@ -197,6 +197,35 @@ describe("DefaultDriverStationComponent", () => {
     expect(component.hasLapData).toBeFalse();
   });
 
+  it("should return fuel percentage from participant, keep 0 on out of fuel, or fallback to initialFuelLevel when missing", () => {
+    const driverData = {
+      driver: { entity_id: "d1", isEmpty: () => false },
+      participant: { fuelLevel: 75 },
+      initialFuelLevel: 100,
+    } as any;
+    component["driverData"] = driverData;
+    expect(component.fuelPercentage).toBe(75);
+
+    driverData.participant.fuelLevel = 0;
+    expect(component.fuelPercentage).toBe(0);
+
+    delete driverData.participant.fuelLevel;
+    expect(component.fuelPercentage).toBe(100);
+  });
+
+  it("should find driverData by laneIndex when heatDrivers order does not match laneIndex", () => {
+    const heat = {
+      heatDrivers: [
+        { laneIndex: 1, driver: { entity_id: "d2", isEmpty: () => false } },
+        { laneIndex: 0, driver: { entity_id: "d1", isEmpty: () => false } },
+      ],
+    } as any;
+    (component as any).laneIndex = 0;
+    mockRaceService.getCurrentHeat.and.returnValue(heat);
+    (component as any).loadRaceData();
+    expect(component["driverData"]?.laneIndex).toBe(0);
+  });
+
   it("should display team name and use team rankings when driver is in a team", () => {
     const team = { entity_id: "t1", name: "Team Extreme" };
     const participant = {

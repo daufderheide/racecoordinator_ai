@@ -351,6 +351,41 @@
                   <h2>{{ "DE_GROUP_EVENT_SOUNDS" | translate }}</h2>
                 </div>
                 <div class="audio-grid">
+                  <div class="audio-section" id="driver-pit-in-audio">
+                    @if (editingDriver.pitInAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_PIT_IN_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.pitInAudio.type"
+                        (typeChange)="onAudioTypeChange('pitIn', $event)"
+                        [url]="editingDriver.pitInAudio.url"
+                        (urlChange)="onAudioUrlChange('pitIn', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.pitInAudio.text"
+                        (textChange)="onAudioTextChange('pitIn', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-fuel-audio">
+                    @if (editingDriver.fuelAudio) {
+                      <app-audio-selector
+                        mode="set"
+                        [label]="'DE_LABEL_FUEL_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.fuelAudio.type"
+                        (typeChange)="onAudioTypeChange('fuel', $event)"
+                        [url]="editingDriver.fuelAudio.url"
+                        (urlChange)="onAudioUrlChange('fuel', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.fuelAudio.text"
+                        (textChange)="onAudioTextChange('fuel', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
                   <div class="audio-section" id="driver-false-start-audio">
                     @if (editingDriver.penaltyAudio) {
                       <app-audio-selector

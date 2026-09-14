@@ -845,6 +845,16 @@ export class DefaultRacedayComponent
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
   private carLocations = new Map<number, number>();
+  private laneFuelAudioStates = new Map<
+    number,
+    {
+      lastFuelLevel: number;
+      isRefueling: boolean;
+      refuelStartFuelLevel: number | null;
+      hasPlayedPitInThisRefuel: boolean;
+      playedThresholds: Set<number>;
+    }
+  >();
 
   private dropdownIconCache = new Map<string, string>();
   private deactivateSubject = new Subject<boolean>();
@@ -1510,8 +1520,22 @@ export class DefaultRacedayComponent
               (p) =>
                 p.driver?.entity_id === driverId || p.driver?.name === driverId,
             );
-            if (match && match.rank) {
-              (hd as any).overallRank = match.rank;
+            if (match) {
+              if (match.rank) {
+                (hd as any).overallRank = match.rank;
+              }
+              if (match.fuelLevel != null) {
+                if (hd.participant) {
+                  hd.participant.fuelLevel = match.fuelLevel;
+                }
+                if (hd.laneIndex != null) {
+                  this.updateLaneFuel(
+                    hd.laneIndex,
+                    match.fuelLevel,
+                    !!hd.isRefueling,
+                  );
+                }
+              }
             }
           });
         }
@@ -1839,6 +1863,19 @@ export class DefaultRacedayComponent
                 }
               }
             }
+            if (lap.fuelLevel != null) {
+              if (driverData.participant) {
+                driverData.participant.fuelLevel = Number(lap.fuelLevel);
+              }
+              const lane = driverData.laneIndex;
+              if (lane != null) {
+                this.updateLaneFuel(
+                  lane,
+                  Number(lap.fuelLevel),
+                  !!driverData.isRefueling,
+                );
+              }
+            }
             this.handleLapEvent(lap, driverData);
           }
         }
@@ -1946,6 +1983,315 @@ export class DefaultRacedayComponent
     }
   }
 
+  private getFuelCapacity(): number {
+    const race = this.raceService.getRace();
+    const isDigital =
+      typeof this.track?.hasDigitalFuel === "function" &&
+      this.track.hasDigitalFuel();
+    const capacity = isDigital
+      ? race?.digital_fuel_options?.capacity
+      : race?.fuel_options?.capacity;
+    return capacity && capacity > 0 ? capacity : 100;
+  }
+
+  private resetFuelAudioTracking() {
+    this.laneFuelAudioStates.clear();
+    const capacity = this.getFuelCapacity();
+    if (this.heat?.heatDrivers) {
+      this.heat.heatDrivers.forEach((hd, index) => {
+        const lane = hd.laneIndex ?? index;
+        const hasStarted = !!this.heat?.started || this.hasRacedInCurrentHeat;
+        const initialFuel =
+          hd.participant?.fuelLevel != null &&
+          (hd.participant.fuelLevel > 0 || hasStarted)
+            ? hd.participant.fuelLevel
+            : hd.initialFuelLevel != null && hd.initialFuelLevel > 0
+              ? hd.initialFuelLevel
+              : (hd.participant?.fuelLevel ?? capacity);
+        this.laneFuelAudioStates.set(lane, {
+          lastFuelLevel: initialFuel,
+          isRefueling: false,
+          refuelStartFuelLevel: null,
+          hasPlayedPitInThisRefuel: false,
+          playedThresholds: new Set<number>(),
+        });
+      });
+    }
+  }
+
+  private resolveAssetPlayableUrl(
+    urlOrId: string | undefined,
+  ): string | undefined {
+    if (!urlOrId) return undefined;
+    const asset = (this.assets || []).find(
+      (a: any) =>
+        a.model?.entityId === urlOrId ||
+        a.entity_id === urlOrId ||
+        a._id === urlOrId ||
+        a.name === urlOrId,
+    );
+    if (asset?.url) {
+      return this.getFullUrl(asset.url);
+    }
+    return this.getFullUrl(urlOrId);
+  }
+
+  private playDriverPitInAudio(driver: any, hd: any) {
+    const config = driver?.pitInAudio;
+    if (!config || config.type === "none") return;
+    if (config.type === "tts" && !config.text?.trim()) return;
+    if (config.type !== "tts" && !config.url?.trim()) return;
+
+    const ttsContext = createTTSContext(driver, hd);
+    const playableUrl = this.resolveAssetPlayableUrl(config.url);
+    this.audioService.playCallout(config, "high", ttsContext, playableUrl);
+  }
+
+  private playFuelThresholdAudio(entry: any, driver: any, hd: any) {
+    if (!entry) return;
+    const type = entry.type || "preset";
+    if (type === "none") return;
+    if (type === "tts" && !entry.text?.trim()) return;
+    if (type !== "tts" && !entry.url?.trim()) return;
+
+    const config: AudioConfig = {
+      type,
+      url: entry.url,
+      text: entry.text || undefined,
+    };
+    const ttsContext = createTTSContext(
+      driver,
+      hd,
+      this.race as any,
+      this.track as any,
+      this.heat as any,
+    );
+    const playableUrl = this.resolveAssetPlayableUrl(entry.url);
+    this.audioService.playCallout(config, "urgent", ttsContext, playableUrl);
+  }
+
+  private checkFuelLevelAudioSet(
+    driver: any,
+    hd: any,
+    previousFuel: number,
+    currentFuel: number,
+    isRefueling: boolean,
+    state: {
+      lastFuelLevel: number;
+      isRefueling: boolean;
+      refuelStartFuelLevel: number | null;
+      hasPlayedPitInThisRefuel: boolean;
+      playedThresholds: Set<number>;
+    },
+  ) {
+    const fuelAudio = driver?.fuelAudio;
+    if (!fuelAudio || fuelAudio.type === "none") return;
+
+    const capacity = this.getFuelCapacity();
+    const currentFuelPct =
+      capacity > 0 ? (currentFuel / capacity) * 100 : currentFuel;
+    const previousFuelPct =
+      capacity > 0 ? (previousFuel / capacity) * 100 : previousFuel;
+
+    if (fuelAudio.type === "audio_set") {
+      const assetId = fuelAudio.url;
+      const asset = (this.assets || []).find(
+        (a: any) =>
+          a.model?.entityId === assetId ||
+          a.entity_id === assetId ||
+          a._id === assetId,
+      );
+      if (!asset || asset.type !== "audio_set" || !asset.audioEntries) return;
+
+      for (const entry of asset.audioEntries) {
+        const rawPct =
+          entry.percentage != null && entry.percentage > 0
+            ? entry.percentage
+            : entry.timeSeconds != null && entry.timeSeconds > 0
+              ? entry.timeSeconds
+              : (entry.percentage ?? entry.timeSeconds ?? 0);
+        const pct = Number(rawPct ?? 0);
+        if (pct >= 99.9) {
+          if (isRefueling && currentFuelPct >= 99.9 && previousFuelPct < 99.9) {
+            if (!state.playedThresholds.has(100)) {
+              state.playedThresholds.add(100);
+              this.playFuelThresholdAudio(entry, driver, hd);
+            }
+          } else if (currentFuelPct < 99.9) {
+            state.playedThresholds.delete(100);
+          }
+        } else if (pct <= 0.1) {
+          if (currentFuelPct <= 0.01 && previousFuelPct > 0.01) {
+            if (!state.playedThresholds.has(0)) {
+              state.playedThresholds.add(0);
+              this.playFuelThresholdAudio(entry, driver, hd);
+            }
+          } else if (currentFuelPct > 0.01) {
+            state.playedThresholds.delete(0);
+          }
+        } else {
+          if (
+            currentFuelPct <= pct &&
+            previousFuelPct > pct &&
+            currentFuelPct > 0.01
+          ) {
+            if (!state.playedThresholds.has(pct)) {
+              state.playedThresholds.add(pct);
+              this.playFuelThresholdAudio(entry, driver, hd);
+            }
+          } else if (currentFuelPct > pct + 0.01) {
+            state.playedThresholds.delete(pct);
+          }
+        }
+      }
+    } else if (fuelAudio.type === "tts" && fuelAudio.text?.trim()) {
+      if (currentFuelPct <= 0.01 && previousFuelPct > 0.01) {
+        if (!state.playedThresholds.has(0)) {
+          state.playedThresholds.add(0);
+          const ttsContext = createTTSContext(
+            driver,
+            hd,
+            this.race as any,
+            this.track as any,
+            this.heat as any,
+          );
+          this.audioService.playCallout(fuelAudio, "urgent", ttsContext);
+        }
+      } else if (currentFuelPct > 0.01) {
+        state.playedThresholds.delete(0);
+      }
+    } else if (
+      (fuelAudio.type === "preset" ||
+        fuelAudio.type === "sound" ||
+        fuelAudio.type === "file") &&
+      fuelAudio.url?.trim()
+    ) {
+      if (currentFuelPct <= 0.01 && previousFuelPct > 0.01) {
+        if (!state.playedThresholds.has(0)) {
+          state.playedThresholds.add(0);
+          const ttsContext = createTTSContext(
+            driver,
+            hd,
+            this.race as any,
+            this.track as any,
+            this.heat as any,
+          );
+          const playableUrl = this.resolveAssetPlayableUrl(fuelAudio.url);
+          this.audioService.playCallout(
+            fuelAudio,
+            "urgent",
+            ttsContext,
+            playableUrl,
+          );
+        }
+      } else if (currentFuelPct > 0.01) {
+        state.playedThresholds.delete(0);
+      }
+    }
+  }
+
+  private updateLaneFuel(
+    lane: number,
+    currentFuel: number | null,
+    isRefueling: boolean,
+  ) {
+    if (lane == null) return;
+    const hd =
+      this.heat?.heatDrivers?.find((d) => d.laneIndex === lane) ||
+      (this.heat?.heatDrivers && lane < this.heat.heatDrivers.length
+        ? this.heat.heatDrivers[lane]
+        : undefined);
+    const driver =
+      hd?.actualDriver ||
+      hd?.participant?.driver ||
+      (hd?.driver as any)?.driver ||
+      hd?.driver;
+    if (!driver) return;
+
+    let state = this.laneFuelAudioStates.get(lane);
+    if (!state) {
+      const capacity = this.getFuelCapacity();
+      const hasStarted = !!this.heat?.started || this.hasRacedInCurrentHeat;
+      const initialFuel =
+        hd?.participant?.fuelLevel != null &&
+        (hd.participant.fuelLevel > 0 || hasStarted)
+          ? hd.participant.fuelLevel
+          : hd?.initialFuelLevel != null && hd.initialFuelLevel > 0
+            ? hd.initialFuelLevel
+            : (hd?.participant?.fuelLevel ?? capacity);
+      state = {
+        lastFuelLevel: initialFuel,
+        isRefueling: false,
+        refuelStartFuelLevel: null,
+        hasPlayedPitInThisRefuel: false,
+        playedThresholds: new Set<number>(),
+      };
+      this.laneFuelAudioStates.set(lane, state);
+    }
+
+    const previousFuel = state.lastFuelLevel;
+    const wasRefueling = state.isRefueling;
+    state.isRefueling = isRefueling;
+
+    const canPlayAudio =
+      this.raceState === RaceState.RACING ||
+      this.raceState === RaceState.PAUSED;
+
+    if (isRefueling) {
+      if (!wasRefueling) {
+        state.refuelStartFuelLevel = currentFuel ?? previousFuel;
+        state.hasPlayedPitInThisRefuel = false;
+      }
+
+      if (
+        !state.hasPlayedPitInThisRefuel &&
+        currentFuel != null &&
+        state.refuelStartFuelLevel != null
+      ) {
+        const fuelGained = currentFuel - state.refuelStartFuelLevel;
+        if (fuelGained >= 0.099) {
+          state.hasPlayedPitInThisRefuel = true;
+          if (canPlayAudio) {
+            this.playDriverPitInAudio(driver, hd);
+          }
+        }
+      }
+    } else {
+      state.refuelStartFuelLevel = null;
+      state.hasPlayedPitInThisRefuel = false;
+    }
+
+    if (currentFuel != null) {
+      if (canPlayAudio) {
+        this.checkFuelLevelAudioSet(
+          driver,
+          hd,
+          previousFuel,
+          currentFuel,
+          isRefueling,
+          state,
+        );
+      }
+      state.lastFuelLevel = currentFuel;
+    }
+  }
+
+  private handleCarFuelAudio(carData: any) {
+    if (!carData || carData.lane == null) return;
+    const currentFuel =
+      carData.fuelLevel != null ? Number(carData.fuelLevel) : null;
+    const isRefueling = !!carData.isRefueling;
+    if (this.heat?.heatDrivers) {
+      const driverData =
+        this.heat.heatDrivers.find((d) => d.laneIndex === carData.lane) ||
+        this.heat.heatDrivers[carData.lane];
+      if (driverData?.participant && currentFuel != null) {
+        driverData.participant.fuelLevel = currentFuel;
+      }
+    }
+    this.updateLaneFuel(carData.lane, currentFuel, isRefueling);
+  }
+
   private subscribeToLiveUpdates() {
     this.subscriptions.push(
       this.raceConnectionService.carData$.subscribe((carData) => {
@@ -1953,6 +2299,7 @@ export class DefaultRacedayComponent
           if (carData.location != null) {
             this.carLocations.set(carData.lane, carData.location);
           }
+          this.handleCarFuelAudio(carData);
           this.cdr.markForCheck();
         }
       }),
@@ -2503,6 +2850,7 @@ export class DefaultRacedayComponent
 
   onRestartHeatConfirm() {
     this.showRestartHeatConfirmation = false;
+    this.audioService.reset();
     this.dataService.restartHeat().subscribe(
       (success) => {
         if (success) {
@@ -2753,6 +3101,7 @@ export class DefaultRacedayComponent
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
+        this.resetFuelAudioTracking();
       } else if (isNewRace) {
         // Reset timer state ONLY when advancing to a new race
         const state =
@@ -2791,6 +3140,7 @@ export class DefaultRacedayComponent
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
+        this.resetFuelAudioTracking();
       } else {
         const remaining = (race as any)?.auto_advance_remaining_seconds;
         if (remaining !== undefined && remaining !== null) {
@@ -2879,6 +3229,25 @@ export class DefaultRacedayComponent
       }
 
       this.sortHeatDrivers();
+      if (this.heat?.heatDrivers) {
+        const hasStarted = !!this.heat?.started || this.hasRacedInCurrentHeat;
+        this.heat.heatDrivers.forEach((hd, index) => {
+          const lane = hd.laneIndex ?? index;
+          const fuel =
+            hd.participant?.fuelLevel != null &&
+            (hd.participant.fuelLevel > 0 || hasStarted)
+              ? hd.participant.fuelLevel
+              : hd.initialFuelLevel != null && hd.initialFuelLevel > 0
+                ? hd.initialFuelLevel
+                : (hd.participant?.fuelLevel ?? null);
+          if (fuel != null) {
+            if (hd.participant) {
+              hd.participant.fuelLevel = fuel;
+            }
+            this.updateLaneFuel(lane, fuel, !!hd.isRefueling);
+          }
+        });
+      }
       this.cdr.markForCheck();
     } else {
       // No heats available
@@ -5413,6 +5782,8 @@ export class DefaultRacedayComponent
       ) {
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
+        this.resetFuelAudioTracking();
+        this.audioService.reset();
       }
     }
 
@@ -5431,6 +5802,7 @@ export class DefaultRacedayComponent
 
     // Show overlay for STARTING or RESTARTING
     if (state === RaceState.STARTING) {
+      this.audioService.stopVoice();
       this.showCountdownOverlay = true;
       this.lastPlayedCountdownSecond = -1;
 

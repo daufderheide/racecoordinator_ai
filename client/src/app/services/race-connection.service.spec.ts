@@ -759,5 +759,31 @@ describe("RaceConnectionService", () => {
       });
       expect((service as any).pendingUpdate).toBeNull();
     }));
+
+    it("should update driver participant fuelLevel using laneIndex when carData is received", () => {
+      const carDataSubject = new Subject<any>();
+      mockDataService.getCarData.and.returnValue(carDataSubject.asObservable());
+
+      const mockHeat = {
+        heatDrivers: [
+          {
+            laneIndex: 2,
+            participant: { fuelLevel: 100 },
+          },
+        ],
+      } as any;
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+
+      service.connect();
+
+      carDataSubject.next({
+        lane: 2,
+        fuelLevel: 45.5,
+        isRefueling: true,
+      });
+
+      expect(mockHeat.heatDrivers[0].participant.fuelLevel).toBe(45.5);
+      expect(mockHeat.heatDrivers[0].isRefueling).toBeTrue();
+    });
   });
 });

@@ -1618,4 +1618,94 @@ public class HeatExecutionManagerTest {
     assertFalse("d2 should not be race leader because d1 has 3 laps", change[0]);
     assertTrue("d2 should be new heat leader because d2 leads heat 2", change[1]);
   }
+
+  @Test
+  public void testTeamParticipantLeaderChangeInHeatOne() {
+    Team team =
+        new Team("The Girls", null, java.util.Arrays.asList("TD1", "TD2"), "team_the_girls", null);
+    RaceParticipant teamParticipant = new RaceParticipant(team);
+    Driver maya =
+        new Driver(
+            "Maya",
+            "TD1",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "driver_maya",
+            null);
+    teamParticipant.setTeamDrivers(java.util.Collections.singletonList(maya));
+
+    Driver soloDriver =
+        new Driver(
+            "Solo Dave",
+            "SD",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "driver_dave",
+            null);
+    RaceParticipant soloParticipant = new RaceParticipant(soloDriver, "p_solo");
+
+    assertEquals("t_team_the_girls", teamParticipant.getParticipantId());
+    assertEquals("driver_dave", soloParticipant.getParticipantId());
+
+    List<RaceParticipant> testDrivers = new ArrayList<>();
+    testDrivers.add(teamParticipant);
+    testDrivers.add(soloParticipant);
+
+    Race teamRaceModel =
+        new Race.Builder()
+            .withName("Team Race")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(
+                new OverallScoring(
+                    0,
+                    OverallScoring.OverallRanking.LAP_COUNT,
+                    OverallScoring.OverallRankingTiebreaker.FASTEST_LAP_TIME))
+            .withEntityId("race_team")
+            .withId("2")
+            .build();
+
+    com.antigravity.race.Race teamRace =
+        new com.antigravity.race.Race.Builder()
+            .model(teamRaceModel)
+            .drivers(testDrivers)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+
+    HeatExecutionManager teamExec = teamRace.getHeatExecutionManager();
+    teamExec.initialize(track.getLanes().size());
+
+    DriverHeatData dhd0 = teamRace.getCurrentHeat().getDrivers().get(0);
+    // dhd0 represents teamParticipant, driven by maya
+    dhd0.setActualDriver(maya);
+    assertEquals("t_team_the_girls", dhd0.getParticipantId());
+
+    // Reaction time
+    teamExec.onLap(0, 1.0, 1, false, true, false);
+    // Complete 1 lap
+    teamExec.onLap(0, 4.0, 1, false, true, false);
+
+    assertEquals("t_team_the_girls", teamExec.getHeatLeaderParticipantId());
+    assertEquals("t_team_the_girls", teamExec.getRaceLeaderParticipantId());
+
+    boolean[] change = teamExec.evaluateLeaderChange(null, null, dhd0.getParticipantId());
+    assertTrue("Team participant taking the lead must be recognized as new race leader", change[0]);
+    assertFalse("Must not be flagged as new heat leader when it is new race leader", change[1]);
+  }
 }

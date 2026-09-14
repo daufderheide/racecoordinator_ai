@@ -32,7 +32,9 @@ export type DriverAudioSlot =
   | "raceLaneBestLap"
   | "heatBestLap"
   | "newRaceLeader"
-  | "newHeatLeader";
+  | "newHeatLeader"
+  | "pitIn"
+  | "fuel";
 import {
   ConnectionMonitorService,
   ConnectionState,
@@ -393,6 +395,8 @@ export class DriverEditorComponent
       driver.heatBestLapAudio ? { ...driver.heatBestLapAudio } : undefined,
       driver.newRaceLeaderAudio ? { ...driver.newRaceLeaderAudio } : undefined,
       driver.newHeatLeaderAudio ? { ...driver.newHeatLeaderAudio } : undefined,
+      driver.pitInAudio ? { ...driver.pitInAudio } : undefined,
+      driver.fuelAudio ? { ...driver.fuelAudio } : undefined,
     );
   }
 
@@ -441,7 +445,9 @@ export class DriverEditorComponent
       checkAudio(d1.raceLaneBestLapAudio, d2.raceLaneBestLapAudio) &&
       checkAudio(d1.heatBestLapAudio, d2.heatBestLapAudio) &&
       checkAudio(d1.newRaceLeaderAudio, d2.newRaceLeaderAudio) &&
-      checkAudio(d1.newHeatLeaderAudio, d2.newHeatLeaderAudio)
+      checkAudio(d1.newHeatLeaderAudio, d2.newHeatLeaderAudio) &&
+      checkAudio(d1.pitInAudio, d2.pitInAudio) &&
+      checkAudio(d1.fuelAudio, d2.fuelAudio)
     );
   }
 
@@ -469,10 +475,17 @@ export class DriverEditorComponent
     );
   }
 
-  private mapSoundType(type: string | undefined): "preset" | "tts" | "none" {
+  private mapSoundType(
+    type: string | undefined,
+    defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
+  ): "preset" | "tts" | "none" | "audio_set" {
+    if (defaultType === "audio_set" && (type === "preset" || !type)) {
+      return "audio_set";
+    }
+    if (type === "audio_set") return "audio_set";
     if (type === "tts") return "tts";
     if (type === "none") return "none";
-    return "preset";
+    return defaultType;
   }
 
   monitorConnection() {
@@ -729,6 +742,16 @@ export class DriverEditorComponent
         url: d.newHeatLeaderAudio?.url,
         text: d.newHeatLeaderAudio?.text,
       },
+      {
+        type: this.mapSoundType(d.pitInAudio?.type),
+        url: d.pitInAudio?.url,
+        text: d.pitInAudio?.text,
+      },
+      {
+        type: this.mapSoundType(d.fuelAudio?.type, "audio_set"),
+        url: d.fuelAudio?.url || "default_fuel_level",
+        text: d.fuelAudio?.text,
+      },
     );
   }
 
@@ -761,6 +784,8 @@ export class DriverEditorComponent
         { type: "preset", url: "default_best_heat_lap" },
         { type: "preset", url: "default_new_race_leader" },
         { type: "preset", url: "default_new_heat_leader" },
+        { type: "preset", url: "default_pit_in" },
+        { type: "audio_set", url: "default_fuel_level" },
       );
     } else if (idParam) {
       const found = this.allDrivers.find((d) => d.entity_id === idParam);
@@ -854,6 +879,16 @@ export class DriverEditorComponent
         return {
           key: "newHeatLeaderAudio",
           defaultUrl: "default_new_heat_leader",
+        };
+      case "pitIn":
+        return {
+          key: "pitInAudio",
+          defaultUrl: "default_pit_in",
+        };
+      case "fuel":
+        return {
+          key: "fuelAudio",
+          defaultUrl: "default_fuel_level",
         };
     }
   }

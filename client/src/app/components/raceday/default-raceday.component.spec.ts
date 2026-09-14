@@ -86,6 +86,7 @@ class DefaultRacedayMockConfirmationModalComponent {
 }
 
 import {
+  ICarData,
   IInterfaceEvent,
   ILap,
   IRaceTime,
@@ -298,6 +299,7 @@ describe("DefaultRacedayComponent", () => {
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
+  let carDataSubject: BehaviorSubject<ICarData>;
   let mockLogger: any;
 
   let raceStateSubject: Subject<RaceState>;
@@ -330,6 +332,7 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+    carDataSubject = mocks.carDataSubject;
 
     mockAuthService = {
       currentRoleSubject: new BehaviorSubject<Role>(Role.DIRECTOR),
@@ -1333,12 +1336,14 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should call restartHeat on confirm and hide dialog", () => {
+      const resetSpy = spyOn((component as any).audioService, "reset");
       fixture.detectChanges();
       component.showRestartHeatConfirmation = true;
 
       component.onRestartHeatConfirm();
 
       expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect(resetSpy).toHaveBeenCalled();
       expect(mockDataService.restartHeat).toHaveBeenCalled();
     });
 
@@ -5041,6 +5046,29 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should stop active voice when transitioning to STARTING to un-duck audio", () => {
+      const stopVoiceSpy = spyOn((component as any).audioService, "stopVoice");
+      component["raceState"] = RaceState.PAUSED;
+      component["handleRaceStateChange"](RaceState.STARTING);
+      expect(stopVoiceSpy).toHaveBeenCalled();
+    });
+
+    it("should reset audio service when entering NOT_STARTED, HEAT_OVER, or RACE_OVER", () => {
+      const resetSpy = spyOn((component as any).audioService, "reset");
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.HEAT_OVER);
+      expect(resetSpy).toHaveBeenCalled();
+
+      resetSpy.calls.reset();
+      component["handleRaceStateChange"](RaceState.NOT_STARTED);
+      expect(resetSpy).toHaveBeenCalled();
+
+      resetSpy.calls.reset();
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.RACE_OVER);
+      expect(resetSpy).toHaveBeenCalled();
+    });
+
     it("should not play themed sound when config is none, missing, or improperly configured (no fallback)", () => {
       const playCalloutSpy = spyOn(
         (component as any).audioService,
@@ -5667,6 +5695,315 @@ describe("DefaultRacedayComponent", () => {
       (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 99);
 
       expect(window.Audio).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Fuel Audio (Pit In & Fuel Level Audio Set)", () => {
+    let playCalloutSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      fixture.detectChanges();
+
+      component["assets"] = [
+        {
+          entity_id: "default_fuel_level",
+          type: "audio_set",
+          audioEntries: [
+            {
+              percentage: 0,
+              url: "/assets/w_fuel_empty.wav",
+              name: "Fuel Empty",
+              type: "preset",
+            },
+            {
+              percentage: 10,
+              url: "/assets/w_fuel_low.wav",
+              name: "Fuel Low",
+              type: "preset",
+            },
+            {
+              percentage: 100,
+              url: "/assets/w_fuel_full.wav",
+              name: "Fuel Full",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.pitInAudio = { type: "preset", url: "default_pit_in" };
+      mockHd.driver.fuelAudio = {
+        type: "audio_set",
+        url: "default_fuel_level",
+      };
+      component["raceState"] = RaceState.RACING;
+      (component as any).resetFuelAudioTracking();
+    });
+
+    describe("Pit In Audio", () => {
+      it("should play w_pitin at HIGH priority when driver gains >= 0.1 fuel while refueling", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.5, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "default_pit_in",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("high");
+      });
+
+      it("should not play pit in audio more than once during the same refuel session", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 30.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 31.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 35.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 40.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should play pit in audio again after refueling stops and starts anew", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: false });
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 22.2, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "default_pit_in",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("high");
+      });
+
+      it("should not play pit in audio if pitInAudio is configured as 'none'", () => {
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.pitInAudio = { type: "none" };
+        mockHd.driver.fuelAudio = { type: "none" };
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 52.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("Fuel Level Audio Set", () => {
+      it("should play w_fuel_low at URGENT priority when fuel drops to 10%", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should play w_fuel_empty at URGENT priority when fuel drops to 0%", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 5.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_empty.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should play TTS audio set entry for out of fuel with driver nickname", () => {
+        component["assets"] = [
+          {
+            entity_id: "tts_fuel_set",
+            type: "audio_set",
+            audioEntries: [
+              {
+                percentage: 0,
+                timeSeconds: 0,
+                type: "tts",
+                text: "{driver.nickname} out of fuel",
+                name: "Out of Fuel TTS",
+              },
+            ],
+          },
+        ];
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.fuelAudio = {
+          type: "audio_set",
+          url: "tts_fuel_set",
+        };
+        (component as any).resetFuelAudioTracking();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        const callArgs = playCalloutSpy.calls.mostRecent().args;
+        expect(callArgs[0].type).toBe("tts");
+        expect(callArgs[0].text).toBe("{driver.nickname} out of fuel");
+        expect(callArgs[1]).toBe("urgent");
+        expect(callArgs[2].driver.nickname).toBe(
+          mockHd.driver.nickname || mockHd.driver.name,
+        );
+      });
+
+      it("should fall back to timeSeconds when entry.percentage is missing or 0", () => {
+        component["assets"] = [
+          {
+            entity_id: "legacy_fuel_set",
+            type: "audio_set",
+            audioEntries: [
+              {
+                percentage: 0,
+                timeSeconds: 100,
+                url: "/assets/full.wav",
+                type: "preset",
+              },
+              {
+                percentage: 0,
+                timeSeconds: 10,
+                url: "/assets/low.wav",
+                type: "preset",
+              },
+              {
+                percentage: 0,
+                timeSeconds: 0,
+                url: "/assets/empty.wav",
+                type: "preset",
+              },
+            ],
+          },
+        ];
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.fuelAudio = {
+          type: "audio_set",
+          url: "legacy_fuel_set",
+        };
+        (component as any).resetFuelAudioTracking();
+
+        // Drops to 10: should play low.wav (timeSeconds: 10), NOT empty.wav
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/low.wav",
+        );
+
+        // Drops to 0: should play empty.wav (timeSeconds: 0)
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/empty.wav",
+        );
+      });
+
+      it("should play w_fuel_full at URGENT priority when refueled to 100%", () => {
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.pitInAudio = { type: "none" };
+
+        carDataSubject.next({ lane: 0, fuelLevel: 90.0, isRefueling: true });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_full.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should not play w_fuel_full if 100% is received without isRefueling: true", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 95.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should re-trigger threshold after fuel level rises above threshold and drops again", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 15.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 9.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: false });
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+    });
+
+    describe("resetFuelAudioTracking", () => {
+      it("should clear fuel audio tracking states", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        (component as any).resetFuelAudioTracking();
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should hydrate lane fuel from participant fuelLevel or initialFuelLevel when heat is initialized", () => {
+        const mockHeat: any = {
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              objectId: "hd0",
+              initialFuelLevel: 80,
+              participant: { fuelLevel: 80, driver: { name: "Driver 1" } },
+            },
+            {
+              laneIndex: 1,
+              objectId: "hd1",
+              initialFuelLevel: 90,
+              participant: { fuelLevel: 0, driver: { name: "Driver 2" } },
+            },
+          ],
+        };
+
+        mockRaceService.getHeats.and.returnValue([mockHeat]);
+        mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+        (component as any).initializeHeat();
+
+        expect(mockHeat.heatDrivers[0].participant.fuelLevel).toBe(80);
+        expect(mockHeat.heatDrivers[1].participant.fuelLevel).toBe(90);
+        expect(
+          (component as any).laneFuelAudioStates.get(0)?.lastFuelLevel,
+        ).toBe(80);
+        expect(
+          (component as any).laneFuelAudioStates.get(1)?.lastFuelLevel,
+        ).toBe(90);
+      });
     });
   });
 

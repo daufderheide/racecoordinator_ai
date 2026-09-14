@@ -293,7 +293,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       this.track = this.race.track;
       this.heat = this.raceService.getCurrentHeat();
       if (this.heat) {
-        this.driverData = this.heat.heatDrivers[this.laneIndex];
+        this.driverData =
+          this.heat.heatDrivers.find((d) => d.laneIndex === this.laneIndex) ||
+          this.heat.heatDrivers[this.laneIndex];
 
         if (this.isEmptyDriver) {
           this.standingsPosition = 0;
@@ -384,7 +386,15 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
   get fuelPercentage(): number {
     if (this.isEmptyDriver) return 0;
-    return this.driverData?.participant?.fuelLevel || 0;
+    const fuel = this.driverData?.participant?.fuelLevel;
+    if (fuel !== null && fuel !== undefined) return fuel;
+    if (
+      this.driverData?.initialFuelLevel != null &&
+      this.driverData.initialFuelLevel > 0
+    ) {
+      return this.driverData.initialFuelLevel;
+    }
+    return 0;
   }
 
   get lane(): import("src/app/models/lane").Lane | undefined {

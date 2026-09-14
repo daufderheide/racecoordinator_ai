@@ -178,6 +178,12 @@ describe("AudioService", () => {
       expect(
         service.isVoiceCallout("driver.newHeatLeaderAudio", presetConfig),
       ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.pitInAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.fuelAudio", presetConfig),
+      ).toBeTrue();
     });
 
     it("should return false for preset action and effect slots", () => {
@@ -496,5 +502,44 @@ describe("AudioService", () => {
       expect(service.getUrgentQueue().length).toBe(0);
       expect(service.isCoolingDown()).toBeFalse();
     });
+
+    it("should pause and clear activeAudioElement on stopVoice()", () => {
+      const urgent: AudioConfig = { type: "preset", url: "yellow.wav" };
+      service.playCallout(urgent, "urgent");
+      expect((service as any).activeAudioElement).toBe(mockAudioInstance);
+
+      service.stopVoice();
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect((service as any).activeAudioElement).toBeNull();
+      expect(service.getActiveVoice()).toBeNull();
+    });
+
+    it("should cancel activeUtterance and speech synthesis on stopVoice()", () => {
+      const tts: AudioConfig = { type: "tts", text: "Caution on track" };
+      service.playCallout(tts, "urgent");
+      expect((service as any).activeUtterance).not.toBeNull();
+
+      service.stopVoice();
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect((service as any).activeUtterance).toBeNull();
+      expect(service.getActiveVoice()).toBeNull();
+    });
+
+    it("should release activeVoice when dynamic watchdog trips on stalled audio", fakeAsync(() => {
+      const urgent: AudioConfig = { type: "preset", url: "yellow.wav" };
+      service.playCallout(urgent, "urgent");
+      expect(service.getActiveVoice()).not.toBeNull();
+
+      mockAudioInstance.duration = 2.0;
+      if (mockAudioInstance.onloadedmetadata) {
+        mockAudioInstance.onloadedmetadata();
+      }
+
+      // Fast forward past dynamic watchdog (2.0 * 1000 + 1500 = 3500ms)
+      tick(4000);
+
+      expect(service.getActiveVoice()).toBeNull();
+      expect((service as any).activeAudioElement).toBeNull();
+    }));
   });
 });

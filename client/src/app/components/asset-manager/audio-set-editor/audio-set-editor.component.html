@@ -100,6 +100,7 @@
               <input
                 type="number"
                 [(ngModel)]="entry.timeSeconds"
+                (ngModelChange)="entry.percentage = $event"
                 min="0"
                 class="time-input"
               />

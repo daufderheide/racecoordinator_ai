@@ -22,6 +22,7 @@ message AudioSetEntry {
   string size = 4;
   string type = 5;
   string text = 6;
+  int32 percentage = 7;
 }
 
 message AssetMessage {

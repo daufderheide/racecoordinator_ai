@@ -273,6 +273,15 @@ public class AssetDefaultsInitializer {
             "default_new_heat_leader",
             "audio/english/woman/w_newheatleader.wav",
             "New Heat Leader"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_pit_in", "audio/english/woman/w_pitin.wav", "Pit In"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset(
+            "default_fuel_empty", "audio/english/woman/w_fuel_empty.wav", "Fuel Empty"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_fuel_low", "audio/english/woman/w_fuel_low.wav", "Fuel Low"));
+    DEFAULT_AUDIO_ASSETS.add(
+        new DefaultAsset("default_fuel_full", "audio/english/woman/w_fuel_full.wav", "Fuel Full"));
   }
 
   private static final Map<String, String> RESOURCE_MAP = new HashMap<>();
@@ -437,6 +446,38 @@ public class AssetDefaultsInitializer {
         logger.info("Backfilled default seconds left audio set with ID default_seconds_left");
       } catch (Exception e) {
         logger.error("Failed to backfill default seconds left audio set", e);
+      }
+    }
+
+    backfillFuelLevelAudioSetDefaults(audioUrls);
+  }
+
+  private void backfillFuelLevelAudioSetDefaults(Map<String, String> audioUrls) {
+    String[][] fuelSpec = {
+      {"0.0", "Fuel Empty", "default_fuel_empty", "0"},
+      {"10.0", "Fuel Low", "default_fuel_low", "10"},
+      {"100.0", "Fuel Full", "default_fuel_full", "100"}
+    };
+    List<SaveAudioSetEntry> fuelEntries = new ArrayList<>();
+    for (String[] spec : fuelSpec) {
+      String url = audioUrls.get(spec[2]);
+      if (url != null) {
+        fuelEntries.add(
+            SaveAudioSetEntry.newBuilder()
+                .setTimeSeconds(Float.parseFloat(spec[0]))
+                .setName(spec[1])
+                .setUrl(url)
+                .setType("preset")
+                .setPercentage(Integer.parseInt(spec[3]))
+                .build());
+      }
+    }
+    if (assetService.getAssetById("default_fuel_level") == null && !fuelEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_fuel_level", "Default Fuel Level", fuelEntries);
+        logger.info("Backfilled default fuel level audio set with ID default_fuel_level");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default fuel level audio set", e);
       }
     }
   }

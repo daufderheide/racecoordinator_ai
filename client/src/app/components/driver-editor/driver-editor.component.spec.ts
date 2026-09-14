@@ -885,6 +885,25 @@ describe("DriverEditorComponent", () => {
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
 
+      // 5. Change pitIn and fuel audio
+      component.onAudioTypeChange("pitIn", "preset");
+      component.onAudioUrlChange("pitIn", "custom_pit_in_url");
+      expect(component.editingDriver!.pitInAudio.url).toBe("custom_pit_in_url");
+
+      tick(200);
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+
+      component.onAudioTypeChange("fuel", "audio_set");
+      component.onAudioUrlChange("fuel", "custom_fuel_level_set");
+      expect(component.editingDriver!.fuelAudio.url).toBe(
+        "custom_fuel_level_set",
+      );
+
+      tick(200);
+      expect(component.isSaving).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+
       discardPeriodicTasks();
     }));
 
@@ -936,6 +955,25 @@ describe("DriverEditorComponent", () => {
       expect((component as any).areDriversEqual(d1, d2)).toBeFalse();
     });
 
+    it("should map fuelAudio with preset type to audio_set when toDriver is invoked", () => {
+      const raw = {
+        entity_id: "d_legacy",
+        name: "Legacy Driver",
+        fuelAudio: { type: "preset", url: "default_fuel_level" },
+      };
+      const driver = (component as any).toDriver(raw);
+      expect(driver.fuelAudio.type).toBe("audio_set");
+      expect(driver.fuelAudio.url).toBe("default_fuel_level");
+
+      const rawNone = {
+        entity_id: "d_none",
+        name: "None Driver",
+        fuelAudio: { type: "none" },
+      };
+      const driverNone = (component as any).toDriver(rawNone);
+      expect(driverNone.fuelAudio.type).toBe("none");
+    });
+
     it("should render audio groups and audio selectors with updated singular labels", () => {
       const driver = new Driver("d1", "TestDriver", "TestNick");
       setupDriver(driver);
@@ -979,7 +1017,7 @@ describe("DriverEditorComponent", () => {
       const audioSelectors = fixture.debugElement.queryAll(
         By.css("app-audio-selector"),
       );
-      expect(audioSelectors.length).toBe(10);
+      expect(audioSelectors.length).toBe(12);
       expect(audioSelectors[0].componentInstance.label()).toBe(
         "DE_LABEL_LAP_SOUND",
       );
@@ -1008,6 +1046,12 @@ describe("DriverEditorComponent", () => {
         "DE_LABEL_OVERALL_LANE_BEST_LAP_SOUND",
       );
       expect(audioSelectors[9].componentInstance.label()).toBe(
+        "DE_LABEL_PIT_IN_SOUND",
+      );
+      expect(audioSelectors[10].componentInstance.label()).toBe(
+        "DE_LABEL_FUEL_SOUND",
+      );
+      expect(audioSelectors[11].componentInstance.label()).toBe(
         "DE_LABEL_FALSE_START_SOUND",
       );
     });
@@ -1034,7 +1078,7 @@ describe("DriverEditorComponent", () => {
 
     it("should provide all guide steps including the name and nickname link step in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(16);
+      expect(steps.length).toBe(18);
 
       const selectors = steps.map((s) => s.selector).filter(Boolean);
       expect(selectors).toEqual([
@@ -1052,6 +1096,8 @@ describe("DriverEditorComponent", () => {
         "#driver-new-heat-leader-audio",
         "#driver-overall-best-lap-audio",
         "#driver-overall-lane-best-lap-audio",
+        "#driver-pit-in-audio",
+        "#driver-fuel-audio",
         "#driver-false-start-audio",
       ]);
 

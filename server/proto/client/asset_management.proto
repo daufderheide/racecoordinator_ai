@@ -53,6 +53,7 @@ message SaveAudioSetEntry {
   bytes data = 4;  // Used if uploading a new sound as part of the set
   string type = 5;
   string text = 6;
+  int32 percentage = 7;
 }
 
 

@@ -175,4 +175,40 @@ public class DriverHeatDataTest {
     assertEquals(initialMed, dhd.getMedianLapTime(), 0.001);
     assertEquals(initialTotal, dhd.getTotalTime(), 0.001);
   }
+
+  @Test
+  public void testParticipantIdDelegationForSoloAndTeam() {
+    // 1. Solo participant
+    Driver soloDriver =
+        new Driver(
+            "Solo Driver",
+            "SD",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "driver_123",
+            null);
+    RaceParticipant soloRp = new RaceParticipant(soloDriver);
+    DriverHeatData soloDhd = new DriverHeatData(soloRp);
+    assertEquals("driver_123", soloDhd.getParticipantId());
+
+    // 2. Team participant with actualDriver in heat
+    com.antigravity.models.Team team =
+        new com.antigravity.models.Team(
+            "The Girls", null, java.util.Collections.emptyList(), "team_girls", null);
+    RaceParticipant teamRp = new RaceParticipant(team);
+    Driver heatDriver =
+        new Driver(
+            "Maya", "M", null, null, null, null, null, null, null, null, null, "driver_maya", null);
+    DriverHeatData teamDhd = new DriverHeatData(teamRp, heatDriver);
+
+    assertEquals("t_team_girls", teamRp.getParticipantId());
+    assertEquals("t_team_girls", teamDhd.getParticipantId());
+  }
 }

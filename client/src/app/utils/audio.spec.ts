@@ -544,6 +544,18 @@ describe("playSound Utility", () => {
       expect(resolveAudioUrl("default_new_heat_leader", "http://server")).toBe(
         "http://server/assets/default_new_heat_leader_New_Heat_Leader",
       );
+      expect(resolveAudioUrl("default_pit_in", "http://server")).toBe(
+        "http://server/assets/default_pit_in_Pit_In",
+      );
+      expect(resolveAudioUrl("default_fuel_empty", "http://server")).toBe(
+        "http://server/assets/default_fuel_empty_Fuel_Empty",
+      );
+      expect(resolveAudioUrl("default_fuel_low", "http://server")).toBe(
+        "http://server/assets/default_fuel_low_Fuel_Low",
+      );
+      expect(resolveAudioUrl("default_fuel_full", "http://server")).toBe(
+        "http://server/assets/default_fuel_full_Fuel_Full",
+      );
     });
 
     it("should return undefined if no special record or best lap is achieved", () => {

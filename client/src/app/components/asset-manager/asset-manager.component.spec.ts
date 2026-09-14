@@ -937,5 +937,33 @@ describe("AssetManagerComponent", () => {
         "audio_set:Beta Audio Set",
       ]);
     });
+
+    it("should preserve percentage when opening audio set editor", () => {
+      const asset: any = {
+        id: "set-1",
+        name: "Fuel Set",
+        audioEntries: [
+          { timeSeconds: 10, percentage: 10, url: "low.wav", name: "Low" },
+          {
+            timeSeconds: 0,
+            percentage: 0,
+            text: "{driver.nickname} out of fuel",
+            type: "tts",
+            name: "Empty",
+          },
+        ],
+      };
+      component.openEditAudioSetEditor(asset);
+      expect(component.showAudioSetEditor).toBeTrue();
+      expect(component.editingAudioAssetId).toBe("set-1");
+      expect(component.editingAudioAssetName).toBe("Fuel Set");
+      expect((component.editingAudioAssetEntries[0] as any).percentage).toBe(
+        10,
+      );
+      expect((component.editingAudioAssetEntries[1] as any).percentage).toBe(0);
+      expect(component.editingAudioAssetEntries[1].text).toBe(
+        "{driver.nickname} out of fuel",
+      );
+    });
   });
 });
