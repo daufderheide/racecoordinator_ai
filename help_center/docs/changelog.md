@@ -1,5 +1,24 @@
 # Changelog
 
+## [v1.0.0-beta.70] - 2026-09-14
+
+### 🚀 New Features
+
+- add auto-playback for single uploaded audio files and extract help steps https://github.com/daufderheide/racecoordinator_ai/issues/820 [skip-screendiffs] ([23276590](https://github.com/daufderheide/racecoordinator_ai/commit/23276590))
+- add AudioAssociation support, layout-based audio filtering, and FuelAudioTracker utility [skip-screendiffs] ([7ddb5731](https://github.com/daufderheide/racecoordinator_ai/commit/7ddb5731))
+- add driver pit-in and fuel audio configuration options and fallback handling fix: fixed issues with fuel information data transmission ([c9f8cfa8](https://github.com/daufderheide/racecoordinator_ai/commit/c9f8cfa8))
+- add detailed audio configuration options and localization for driver events and lap sounds https://github.com/daufderheide/racecoordinator_ai/issues/803 ([48edc65b](https://github.com/daufderheide/racecoordinator_ai/commit/48edc65b))
+
+### ⚡ Improvements & Refactoring
+
+- box primitive arguments in AnalogFuelOptions and add constructor unit tests ([c9f4306f](https://github.com/daufderheide/racecoordinator_ai/commit/c9f4306f))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.69...v1.0.0-beta.70">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.69] - 2026-09-12
 
 ### 🚀 New Features
