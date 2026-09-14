@@ -79,4 +79,21 @@ describe("AnalogFuelOptionsConverter", () => {
     expect(result.power_stutter_on_time).toBe(0.5);
     expect(result.power_stutter_off_time).toBe(1.5);
   });
+
+  it("should map reference_time from proto and provide default", () => {
+    const defaultResult = AnalogFuelOptionsConverter.fromProto(null);
+    expect(defaultResult.reference_time).toBe(6.0);
+
+    const customProto = { referenceTime: 15.0 };
+    const customResult = AnalogFuelOptionsConverter.fromProto(
+      customProto as any,
+    );
+    expect(customResult.reference_time).toBe(15.0);
+
+    const snakeCaseProto = { reference_time: 12.5 };
+    const snakeCaseResult = AnalogFuelOptionsConverter.fromProto(
+      snakeCaseProto as any,
+    );
+    expect(snakeCaseResult.reference_time).toBe(12.5);
+  });
 });

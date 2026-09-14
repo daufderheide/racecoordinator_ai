@@ -733,20 +733,26 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               rotate_group_heats: false,
               min_advancing: 0,
             },
-            fuel_options: race.fuel_options || {
-              enabled: false,
-              reset_fuel_at_heat_start: false,
-              out_of_fuel_action: "DO_NOT_COUNT_LAPS",
-              capacity: 100,
-              usage_type: "LINEAR",
-              usage_rate: 4.0,
-              start_level: 100,
-              refuel_rate: 10.0,
-              pit_stop_delay: 2.0,
-              reference_time: 6.0,
-              power_stutter_on_time: 1.0,
-              power_stutter_off_time: 1.0,
-            },
+            fuel_options: race.fuel_options
+              ? {
+                  ...race.fuel_options,
+                  reference_time:
+                    Number(race.fuel_options.reference_time) || 6.0,
+                }
+              : {
+                  enabled: false,
+                  reset_fuel_at_heat_start: false,
+                  out_of_fuel_action: "DO_NOT_COUNT_LAPS",
+                  capacity: 100,
+                  usage_type: "LINEAR",
+                  usage_rate: 4.0,
+                  start_level: 100,
+                  refuel_rate: 10.0,
+                  pit_stop_delay: 2.0,
+                  reference_time: 6.0,
+                  power_stutter_on_time: 1.0,
+                  power_stutter_off_time: 1.0,
+                },
             digital_fuel_options: race.digital_fuel_options || {
               enabled: false,
               reset_fuel_at_heat_start: false,
@@ -1639,13 +1645,58 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     argsKey: string;
   } | null = null;
 
+  getFuelUsageReferenceTime(): number {
+    const ref = Number(this.editingRace?.fuel_options?.reference_time);
+    return !isNaN(ref) && ref > 0 ? ref : 6.0;
+  }
+
+  getFuelUsageMinTime(): number {
+    const ref = this.getFuelUsageReferenceTime();
+    return Math.max(0.2, Number((ref * 0.5).toFixed(2)));
+  }
+
+  getFuelUsageMaxTime(): number {
+    const ref = this.getFuelUsageReferenceTime();
+    return Math.max(
+      this.getFuelUsageMinTime() + 0.1,
+      Number((ref * 1.5).toFixed(2)),
+    );
+  }
+
+  getFuelUsageTimeRange(): string {
+    return `${this.getFuelUsageMinTime()}s - ${this.getFuelUsageMaxTime()}s`;
+  }
+
+  getFuelUsageXLabels(): string[] {
+    const min = this.getFuelUsageMinTime();
+    const max = this.getFuelUsageMaxTime();
+    const step = (max - min) / 4;
+    const labels: string[] = [];
+    for (let i = 0; i <= 4; i++) {
+      const val = min + i * step;
+      labels.push(`${Number(val.toFixed(2))}s`);
+    }
+    return labels;
+  }
+
+  getPitGraphYLabels(): string[] {
+    const min = this.getFuelUsageMinTime();
+    const max = this.getFuelUsageMaxTime();
+    const step = (max - min) / 4;
+    const labels: string[] = [];
+    for (let i = 4; i >= 0; i--) {
+      const val = min + i * step;
+      labels.push(`${Number(val.toFixed(2))}s`);
+    }
+    return labels;
+  }
+
   private getMaxFuelUsage(): number {
     if (!this.editingRace?.fuel_options) return 1;
     const usageRate = this.editingRace.fuel_options.usage_rate || 0;
     const usageType = this.editingRace.fuel_options.usage_type;
-    const minTime = 2;
-    const referenceTime =
-      Number(this.editingRace.fuel_options.reference_time) || 6;
+    const minTime = this.getFuelUsageMinTime();
+    const referenceTime = this.getFuelUsageReferenceTime();
 
     let maxFuel = getAnalogFuelUsage(
       usageType,
@@ -1662,18 +1713,18 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.fuel_options) return;
 
     const options = this.editingRace.fuel_options;
-    const key = `${options.usage_type}_${options.usage_rate}_${options.reference_time}`;
+    const referenceTime = this.getFuelUsageReferenceTime();
+    const minTime = this.getFuelUsageMinTime();
+    const maxTime = this.getFuelUsageMaxTime();
+    const key = `${options.usage_type}_${options.usage_rate}_${referenceTime}_${minTime}_${maxTime}`;
 
     if (this.usageGraphCache && this.usageGraphCache.argsKey === key) return;
 
     const maxFuelValue = this.getMaxFuelUsage();
     const width = 400;
     const height = 150;
-    const minTime = 2;
-    const maxTime = 15;
     const usageRate = options.usage_rate || 0;
     const usageType = options.usage_type;
-    const referenceTime = Number(options.reference_time) || 6;
 
     const points: string[] = [];
     const steps = 50;
@@ -1710,9 +1761,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const usageRate = Number(this.editingRace.fuel_options.usage_rate) || 0;
     const capacity = Number(this.editingRace.fuel_options.capacity) || 100;
     const usageType = this.editingRace.fuel_options.usage_type;
-    const referenceTime =
-      Number(this.editingRace.fuel_options.reference_time) || 6;
-    const maxTime = 15;
+    const referenceTime = this.getFuelUsageReferenceTime();
+    const maxTime = this.getFuelUsageMaxTime();
 
     if (usageRate <= 0) return 3600;
 
@@ -1736,19 +1786,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.fuel_options) return;
 
     const options = this.editingRace.fuel_options;
-    const key = `${options.usage_type}_${options.usage_rate}_${options.reference_time}_${options.capacity}`;
+    const referenceTime = this.getFuelUsageReferenceTime();
+    const minLapTime = this.getFuelUsageMinTime();
+    const maxLapTime = this.getFuelUsageMaxTime();
+    const key = `${options.usage_type}_${options.usage_rate}_${referenceTime}_${options.capacity}_${minLapTime}_${maxLapTime}`;
 
     if (this.pitGraphCache && this.pitGraphCache.argsKey === key) return;
 
     const maxPitTime = this.getMaxPitTime();
     const width = 400;
     const height = 150;
-    const minLapTime = 2;
-    const maxLapTime = 15;
     const capacity = Number(options.capacity) || 100;
     const usageRate = Number(options.usage_rate) || 0;
     const usageType = options.usage_type;
-    const referenceTime = Number(options.reference_time) || 6;
 
     const points: string[] = [];
     const steps = 50;
@@ -1769,7 +1819,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         pitTimeSeconds = maxPitTime;
       }
 
-      const y = height - (i / steps) * height; // 2s at bottom, 15s at top
+      const y = height - (i / steps) * height; // minLapTime at bottom, maxLapTime at top
       const xPercent =
         maxPitTime > 0
           ? Math.max(0, Math.min(1, pitTimeSeconds / maxPitTime))
@@ -2036,16 +2086,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const width = rect.width;
     const height = rect.height;
 
-    const minTime = 2;
-    const maxTime = 15;
+    const minTime = this.getFuelUsageMinTime();
+    const maxTime = this.getFuelUsageMaxTime();
 
     if (type === "usage") {
       const xPercent = Math.max(0, Math.min(1, mouseX / width));
       const time = minTime + xPercent * (maxTime - minTime);
       const usageRate = this.editingRace.fuel_options.usage_rate || 0;
       const usageType = this.editingRace.fuel_options.usage_type;
-      const referenceTime =
-        Number(this.editingRace.fuel_options.reference_time) || 6;
+      const referenceTime = this.getFuelUsageReferenceTime();
       const fuel = getAnalogFuelUsage(
         usageType,
         usageRate,
@@ -2069,14 +2118,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         yValue: fuel.toFixed(1),
       };
     } else {
-      // Pit Graph: Y is Lap Time (bottom 2, top 15)
+      // Pit Graph: Y is Lap Time (bottom minTime, top maxTime)
       const yPercent = 1 - Math.max(0, Math.min(1, mouseY / height));
       const lapTime = minTime + yPercent * (maxTime - minTime);
 
       const usageRate = this.editingRace.fuel_options.usage_rate || 0;
       const usageType = this.editingRace.fuel_options.usage_type;
-      const referenceTime =
-        Number(this.editingRace.fuel_options.reference_time) || 6;
+      const referenceTime = this.getFuelUsageReferenceTime();
       const capacity = this.editingRace.fuel_options.capacity || 100;
 
       const fuelPerLap = getAnalogFuelUsage(

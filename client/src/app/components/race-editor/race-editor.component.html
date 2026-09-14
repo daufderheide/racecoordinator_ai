@@ -1514,8 +1514,9 @@
                         <div class="fuel-graph-section">
                           <div class="graph-header">
                             <span class="graph-title"
-                              >{{ "RE_FUEL_GRAPH_USAGE_TITLE" | translate }} (2s
-                              - 15s)</span
+                              >{{ "RE_FUEL_GRAPH_USAGE_TITLE" | translate }} ({{
+                                getFuelUsageTimeRange()
+                              }})</span
                             >
                           </div>
                           <div class="graph-body">
@@ -1625,8 +1626,9 @@
                             </div>
                           </div>
                           <div class="x-axis-labels">
-                            <span>2s</span><span>5.25s</span><span>8.5s</span
-                            ><span>11.75s</span><span>15s</span>
+                            @for (label of getFuelUsageXLabels(); track label) {
+                              <span>{{ label }}</span>
+                            }
                           </div>
                         </div>
                         <!-- Graph 2: Time to Pit -->
@@ -1638,9 +1640,12 @@
                           </div>
                           <div class="graph-body">
                             <div class="y-axis-labels">
-                              <span>15s</span><span>11.75s</span
-                              ><span>8.5s</span><span>5.25s</span
-                              ><span>2s</span>
+                              @for (
+                                label of getPitGraphYLabels();
+                                track label
+                              ) {
+                                <span>{{ label }}</span>
+                              }
                             </div>
                             <div class="y-axis-label">
                               {{ "RE_FUEL_GRAPH_LAP_TIME" | translate }}

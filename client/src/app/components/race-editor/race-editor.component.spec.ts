@@ -2241,11 +2241,64 @@ describe("RaceEditorComponent", () => {
       const yLabels = component.getFuelUsageYLabels();
       expect(yLabels.length).toBe(5);
 
-      const pitPath = component.getPitGraphPath();
-      expect(pitPath).toContain("M ");
-
       const xLabels = component.getPitGraphXLabels();
       expect(xLabels.length).toBe(5);
+
+      const usageXLabels = component.getFuelUsageXLabels();
+      expect(usageXLabels.length).toBe(5);
+      expect(usageXLabels).toEqual(["3s", "4.5s", "6s", "7.5s", "9s"]);
+
+      const pitYLabels = component.getPitGraphYLabels();
+      expect(pitYLabels.length).toBe(5);
+      expect(pitYLabels).toEqual(["9s", "7.5s", "6s", "4.5s", "3s"]);
+
+      expect(component.getFuelUsageTimeRange()).toBe("3s - 9s");
+    });
+
+    it("should dynamically scale lap time ranges based on reference_time", () => {
+      component.editingRace.fuel_options!.reference_time = 15.0;
+      component.editingRace.fuel_options!.usage_rate = 10.0;
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.QUADRATIC;
+
+      expect(component.getFuelUsageReferenceTime()).toBe(15.0);
+      expect(component.getFuelUsageMinTime()).toBe(7.5);
+      expect(component.getFuelUsageMaxTime()).toBe(22.5);
+      expect(component.getFuelUsageTimeRange()).toBe("7.5s - 22.5s");
+
+      const usageXLabels = component.getFuelUsageXLabels();
+      expect(usageXLabels).toEqual([
+        "7.5s",
+        "11.25s",
+        "15s",
+        "18.75s",
+        "22.5s",
+      ]);
+
+      const pitYLabels = component.getPitGraphYLabels();
+      expect(pitYLabels).toEqual(["22.5s", "18.75s", "15s", "11.25s", "7.5s"]);
+
+      const usagePath = component.getFuelUsagePath();
+      expect(usagePath).toContain("M ");
+
+      // Test hover at center (50% width) corresponds to reference time 15s
+      const mockSvg = {
+        getBoundingClientRect: () => ({
+          left: 0,
+          top: 0,
+          width: 400,
+          height: 150,
+        }),
+      };
+      const centerEvent = {
+        currentTarget: mockSvg,
+        clientX: 200,
+        clientY: 75,
+      } as any;
+
+      component.onGraphMouseMove(centerEvent, "usage");
+      expect(component.hoveredPoint).toBeTruthy();
+      expect(component.hoveredPoint?.xValue).toBe("15.00s");
+      expect(component.hoveredPoint?.yValue).toBe("10.0");
     });
 
     it("should compute and cache digital fuel usage and pit graph paths", () => {

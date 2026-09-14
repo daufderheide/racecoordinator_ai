@@ -51,6 +51,7 @@ export class AnalogFuelOptionsConverter {
       p.startLevel ?? p.start_level ?? 100,
       p.refuelRate ?? p.refuel_rate ?? 10,
       p.pitStopDelay ?? p.pit_stop_delay ?? 2.0,
+      p.referenceTime ?? p.reference_time ?? 6.0,
       p.powerStutterOnTime ?? p.power_stutter_on_time ?? 1.0,
       p.powerStutterOffTime ?? p.power_stutter_off_time ?? 1.0,
     );
