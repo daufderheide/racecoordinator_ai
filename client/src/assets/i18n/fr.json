@@ -2595,7 +2595,7 @@
   "DLR_SELECT_DATE": "Date",
   "DLR_ALL_DATES": "Toutes les dates",
   "UE_HEADER_AUDIO_SETTINGS": "Paramètres audio",
-  "UE_HELP_AUDIO_SETTINGS_DESC": "Configurez les paramètres généraux du gestionnaire audio et les paramètres vocaux de synthèse vocale (TTS).",
+  "UE_HELP_AUDIO_SETTINGS_DESC": "Configurez les paramètres généraux du gestionnaire audio et les paramètres vocaux de synthèse vocale (TTS).<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-audio\">En savoir plus sur le Système Audio</a>",
   "UE_LABEL_TTS_VOICE": "Voix de synthèse vocale",
   "UE_HELP_TTS_VOICE": "Sélectionnez la voix utilisée pour les annonces vocales ou utilisez la voix par défaut du système.",
   "UE_OPTION_TTS_VOICE_DEFAULT": "-- Système par défaut --",

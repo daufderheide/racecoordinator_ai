@@ -2594,7 +2594,7 @@
   "DLR_SELECT_DATE": "Datum",
   "DLR_ALL_DATES": "Alle datums",
   "UE_HEADER_AUDIO_SETTINGS": "Audio-instellingen",
-  "UE_HELP_AUDIO_SETTINGS_DESC": "Configureer algemene audio-dispatcherinstellingen en Text-to-Speech (TTS) spraakparameters.",
+  "UE_HELP_AUDIO_SETTINGS_DESC": "Configureer algemene audio-dispatcherinstellingen en Text-to-Speech (TTS) spraakparameters.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-audio\">Meer informatie over het Audiosysteem</a>",
   "UE_LABEL_TTS_VOICE": "Text-to-Speech stem",
   "UE_HELP_TTS_VOICE": "Selecteer de stem die wordt gebruikt voor gesproken Text-to-Speech-aankondigingen, of gebruik de systeemstandaard.",
   "UE_OPTION_TTS_VOICE_DEFAULT": "-- Systeemstandaard --",

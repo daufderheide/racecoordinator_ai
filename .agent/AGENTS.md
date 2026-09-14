@@ -116,6 +116,12 @@ Whenever a new configuration setting, property, or field is added, modified, or 
      - `*.converter.spec.ts`: Test `fromProto()` maps the new field into the client model.
      - `*-editor.component.spec.ts`: Test UI selection updates dirty tracking, `update<Entity>` sends the field in the payload, and `getHelpSteps()` asserts the new step selector/order.
 
+9. **Help Center Documentation Synchronization Across All 7 Languages (`help_center/docs/`)**:
+   - Whenever adding a new resource (audio slot, theme setting, configuration property, UI option) or modifying an existing one:
+     - Update the corresponding Help Center article (e.g., `audio.md`, `themes.md`, `tts.md`, `driver-editor.md`, etc.) with its purpose, configuration options, priority tier, and relevance.
+     - Synchronize the update across all 7 supported language files (`en`, `de`, `es`, `fr`, `it`, `nl`, `pt`).
+     - Verify the build with `python3 -m mkdocs build --config-file help_center/mkdocs.yml` to guarantee zero errors or unmapped page warnings.
+
 ## Entity Identity & No String/Regex Heuristics
 - **No string/regex heuristics for domain identity**: Never use string parsing, regex matching, or name heuristic patterns (e.g. checking for "Empty", "Lane X", "rd_empty_lane", or case-insensitive name matching) to determine domain entity identity, active status, or emptiness.
 - **Use clean identifiers**: All domain entity relationships, driver matching, team resolution, and lane status must be determined cleanly through explicit IDs (`entity_id`, `objectId`, `id`, `driverId`, `teamId`) or standard model flags.
@@ -159,3 +165,5 @@ Whenever a new configuration setting, property, or field is added, modified, or 
   - `normal`: Running race commentary and heat events (e.g. Race Time countdown announcements, Halfway, Heat Best Lap, Race Lane Best Lap, New Heat Leader, Personal Best Lap when configured as TTS).
   - `low`: Routine cadence events (e.g. Driver Lap Sound when configured as TTS).
 - **Milestone Audio Fallback to Driver Lap SFX**: When a lap occurs, if the milestone sound for that lap is not played (due to priority drop, spacing cooldown, configured as `none`, or missing), playback MUST fall back to the driver's personal best lap sound (`driver.bestLapAudio`) if `isBestLap` is true, or normal lap sound (`driver.lapAudio`) if `isBestLap` is false. If that fallback sound is configured as `none`, no sound plays; otherwise, if configured as a preset SFX, it plays polyphonically via `AudioService.playSfx()`.
+- **Documentation Synchronization for Audio Resources**: Whenever a new audio slot or resource is added, removed, or has its priority, classification, or relevance modified, the Help Center Audio System documentation (`help_center/docs/audio.md` and all 6 localized variants `audio.{de,es,fr,it,nl,pt}.md`) MUST be updated immediately to reflect the sound type, priority tier, audio association, and display relevance.
+

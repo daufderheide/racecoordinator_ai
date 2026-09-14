@@ -79,6 +79,7 @@ nav:
     - Custom Rotations: custom-rotations.md
     - Custom Raceday: custom-raceday.md
     - Custom XLS Export: custom-xls-export.md
+    - Audio System: audio.md
     - Text-to-Speech (TTS): tts.md
   - Data Management:
     - Database Manager: database-manager.md

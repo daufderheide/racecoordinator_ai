@@ -2594,7 +2594,7 @@
   "DLR_SELECT_DATE": "Data",
   "DLR_ALL_DATES": "Tutte le date",
   "UE_HEADER_AUDIO_SETTINGS": "Impostazioni audio",
-  "UE_HELP_AUDIO_SETTINGS_DESC": "Configura le impostazioni globali del gestore audio e i parametri vocali di sintesi vocale (TTS).",
+  "UE_HELP_AUDIO_SETTINGS_DESC": "Configura le impostazioni globali del gestore audio e i parametri vocali di sintesi vocale (TTS).<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-audio\">Maggiori informazioni sul Sistema Audio</a>",
   "UE_LABEL_TTS_VOICE": "Voce di sintesi vocale",
   "UE_HELP_TTS_VOICE": "Seleziona la voce utilizzata per gli annunci vocali di sintesi vocale o usa l'impostazione predefinita del sistema.",
   "UE_OPTION_TTS_VOICE_DEFAULT": "-- Predefinito di sistema --",

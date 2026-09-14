@@ -2595,7 +2595,7 @@
   "DLR_SELECT_DATE": "Date",
   "DLR_ALL_DATES": "All Dates",
   "UE_HEADER_AUDIO_SETTINGS": "Audio Settings",
-  "UE_HELP_AUDIO_SETTINGS_DESC": "Configure global audio dispatcher settings and Text-to-Speech (TTS) voice parameters.",
+  "UE_HELP_AUDIO_SETTINGS_DESC": "Configure global audio dispatcher settings and Text-to-Speech (TTS) voice parameters.<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-audio\">Learn more about the Audio System</a>",
   "UE_LABEL_TTS_VOICE": "Text-to-Speech Voice",
   "UE_HELP_TTS_VOICE": "Select the voice used for spoken Text-to-Speech announcements, or use the system default.",
   "UE_OPTION_TTS_VOICE_DEFAULT": "-- System Default --",

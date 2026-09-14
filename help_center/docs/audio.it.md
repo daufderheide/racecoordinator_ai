@@ -1,0 +1,191 @@
+# Sistema Audio
+
+Race Coordinator AI include un motore audio avanzato a doppio canale, progettato per offrire effetti sonori coinvolgenti, commenti vocali dinamici e annunci di direzione gara essenziali, senza sovrapposizioni caotiche né segnali persi.
+
+---
+
+## Architettura Audio a Doppio Canale
+
+Il motore audio suddivide i suoni in due canali distinti:
+
+```
+                      ┌────────────────────────────────────────┐
+                      │          Dispatcher Audio              │
+                      └───────────────────┬────────────────────┘
+                                          │
+                  ┌───────────────────────┴───────────────────────┐
+                  ▼                                               ▼
+     ┌────────────────────────┐                      ┌────────────────────────┐
+     │   Effetti Sonori (SFX) │                      │     Annunci Vocali     │
+     │     (Toni Brevi)       │                      │   (TTS e Commenti)     │
+     └────────────┬───────────┘                      └────────────┬───────────┘
+                  │                                               │
+                  ▼                                               ▼
+         Riproduzione Polifonica                       Voce Singola Prioritaria
+       (Suoni simultanei permessi)                   ("Riproduci, Sostituisci,
+                  │                                         Scarta")          
+                  │◄────────── Attenuazione Automatica (Ducking) ─┤
+                  │ (I suoni SFX scendono automaticamente al 20%  │
+                  │   del volume mentre la voce sta parlando)     │
+```
+
+### 1. Effetti Sonori (SFX)
+- **Cosa comprende:** Segnali acustici non verbali come bip di passaggio traguardo (`default_beep`), effetti sfrecciata (`default_driveby`) o rintocchi.
+- **Riproduzione Polifonica:** Vengono riprodotti all'istante tramite elementi audio HTML5. Se più veicoli tagliano il traguardo nello stesso momento, ciascun tono suona contemporaneamente senza interruzioni.
+- **Attenuazione Automatica (Audio Ducking):** Durante la riproduzione di un messaggio vocale, il volume degli effetti sonori simultanei viene automaticamente abbassato al **20%**. Al termine del messaggio, gli effetti tornano subito al 100% del volume.
+
+### 2. Annunci Vocali Parlati
+- **Cosa comprende:** Sintesi vocale (TTS) e registrazioni vocali (commenti, sirene di bandiera gialla, avvisi di ingresso ai box e conti alla rovescia).
+- **Motore a Voce Singola:** Gestito tramite la regola **"Riproduci, Sostituisci o Scarta"**, impedendo che più voci parlino contemporaneamente.
+
+---
+
+## Il Sistema di Priorità
+
+Per gestire i numerosi eventi di gara simultanei, Race Coordinator AI adotta una scala di 4 livelli di priorità:
+
+### Livelli di Priorità
+
+| Livello | Peso | Eventi Tipici | Comportamento in Caso di Conflitto |
+| :--- | :---: | :--- | :--- |
+| **`urgent`** (Urgente) | 4 | Bandiera gialla, manche terminata, gara conclusa, falsa partenza, tempo minimo sul giro, giro di drift, sosta ai box, avvisi carburante (avviso, critico, esaurito). | **Interrompe** subito qualsiasi voce di priorità inferiore. Se un altro messaggio urgente è già attivo, i nuovi annunci urgenti vengono messi nella **Coda Urgente**. Ignora la pausa di cadenza. |
+| **`high`** (Alta) | 3 | Record assoluto della pista, record assoluto di corsia, nuovo leader di gara, miglior giro di gara. | **Interrompe** annunci di priorità `normal` o `low`. Viene **scartato** se è attivo un messaggio `urgent` o di priorità pari/superiore. |
+| **`normal`** (Normale) | 2 | Annunci di tempo (es. "30 secondi rimanenti"), metà manche, miglior giro di manche, miglior giro di corsia di gara, nuovo leader di manche, record personale del pilota (se configurato come TTS). | **Interrompe** annunci `low`. Viene **scartato** se è attivo un messaggio `urgent`, `high` o un altro annuncio `normal`. |
+| **`low`** (Bassa) | 1 | Suono di passaggio giro standard del pilota (se configurato come TTS). | Viene riprodotto solo se il canale vocale è completamente libero. Viene **scartato** se un altro annuncio è in corso. |
+
+### Regole sui Conflitti
+
+1. **Sostituzione (Preemption):** Se arriva un evento con priorità più alta del messaggio in corso, la voce attuale si interrompe all'istante per far parlare la nuova priorità.
+2. **Scarto (Dropping):** Se un evento in arrivo ha priorità pari o inferiore a quello attuale, viene ignorato per non sovrapporre le voci.
+3. **Coda Urgente (Urgent Queueing):** Gli avvisi urgenti riguardano la sicurezza di gara. Se un avviso urgente arriva mentre un altro sta parlando, viene accodato e riprodotto non appena il precedente finisce.
+4. **Pausa di Cadenza (Callout Spacing):** Al termine di ogni annuncio vocale, viene rispettato un breve intervallo di silenzio prima di avviare il messaggio successivo, evitando discorsi concitati.
+
+### Ripristino di Riserva (Milestone Fallback)
+
+Quando un pilota realizza un giro da record o un cambio leader:
+1. Il sistema prova a pronunciare l'annuncio vocale corrispondente in base alla sua priorità.
+2. Se l'annuncio viene **scartato** (ad esempio per una bandiera gialla o per la pausa di cadenza), il sistema passa al suono di **record personale** o al **suono di giro standard**.
+3. Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
+
+---
+
+## Impostazioni di Configurazione Audio
+
+Le opzioni globali sono accessibili nell'**Editor dell'Interfaccia**, sezione **Impostazioni Audio**:
+
+### Volume Principale (Master Volume)
+- **Intervallo:** Da 0% a 100% (Predefinito: `100%`)
+- **Descrizione:** Regola il limite di volume generale per l'intera applicazione, applicato sia agli effetti sonori che alla sintesi vocale.
+
+### Timeout Coda Urgente (TTL)
+- **Opzioni:** `3 secondi`, `5 secondi (Predefinito)`, `10 secondi`
+- **Descrizione:** Durata massima di permanenza di un messaggio nella coda urgente. I messaggi scaduti vengono scartati per non segnalare situazioni ormai superate.
+
+### Spaziatura Annunci (Pausa di Cadenza)
+- **Opzioni:** `Nessuno (0s)`, `Breve (500ms - Predefinito)`, `Normale (1000ms)`, `Rilassata (1500ms)`
+- **Descrizione:** Silenzio minimo tra due annunci vocali consecutivi. Gli avvisi urgenti ignorano all'istante questa pausa.
+
+---
+
+## Configurazione Sintesi Vocale (TTS)
+
+Race Coordinator AI si appoggia all'API Web Speech nativa del browser web, garantendo sintesi vocale istantanea senza dipendere da servizi cloud esterni né da una connessione internet attiva.
+
+### Parametri Vocali TTS
+
+| Impostazione | Opzioni / Intervallo | Valore Predefinito | Descrizione |
+| :--- | :--- | :---: | :--- |
+| **Voce TTS** | Voci del browser / SO | `-- Predefinito di sistema --` | Seleziona la voce desiderata (con codice lingua come `it-IT`, `en-US`). |
+| **Velocità (Rate)** | Da `0.1x` a `2.0x` | `1.0x` | Velocità della voce. Valori più rapidi (`1.1x`–`1.3x`) sono ideali per tracciati con tempi sul giro molto brevi. |
+| **Tonalità (Pitch)** | Da `0.0x` a `2.0x` | `1.0x` | Modifica l'intonazione vocale. |
+| **Volume TTS** | Da `0%` a `100%` | `100%` | Volume della voce prima della moltiplicazione con il Volume Principale (`masterVolume * ttsVolume`). |
+| **Pulsante Prova Voce** | Pulsante | — | Riproduce una frase dimostrativa con le impostazioni correnti. |
+
+### Variabili Dinamiche TTS
+
+I testi TTS consentono l'inserimento di variabili tra parentesi graffe `{...}` o `${...}`:
+- `{driver.name}`, `{driver.nickname}`: Nome e soprannome del pilota.
+- `{driver.lastLapTime}`, `{driver.bestLapTime}`: Tempi sul giro (arrotondati in automatico a 3 decimali).
+- `{driver.totalLaps}` / `{driver.lapCount}`: Giri completati.
+- `{driver.gapLeader}`, `{driver.gapPosition}`: Distacchi dal leader o dal pilota che precede.
+- `{race.name}`, `{track.name}`, `{heat.number}`: Dettagli della gara.
+
+Consultare la [Guida Text-to-Speech (TTS)](tts.md) per l'elenco completo.
+
+---
+
+## Rilevanza Audio e Filtraggio Multischermo
+
+Nelle configurazioni con più monitor (schermo principale, postazioni pilota, monitor box), la **Rilevanza Audio** garantisce che ciascun monitor riproduca solo i suoni attinenti a ciò che vi è visualizzato.
+
+### 1. Associazioni Audio (Audio Associations)
+Ogni suono include metadati identificativi:
+- **`widgetType`**: Area funzionale (`'lane-view'`, `'countdown'`, `'timer'`, `'flag'`).
+- **`laneIndex`**: Indice della corsia (partendo da 0).
+- **`driverId`**: ID univoco del pilota.
+
+### 2. Filtraggio in Base al Layout sullo Schermo Principale
+- **Corsie (`lane-view`):** Se il layout non contiene alcun riquadro di corsia, i suoni di giro dei piloti vengono silenziati.
+- **Conto alla Rovescia (`countdown`):** In assenza del widget del conto alla rovescia, i bip di partenza vengono disattivati.
+- **Cronometro (`timer`):** Senza widget del timer, non vengono annunciati i tempi intermedi o finali.
+- **Bandiere (`flag`):** Senza widget bandiera, i suoni di bandiera gialla o fine gara vengono disattivati.
+
+### 3. Postazioni Pilota Isolate (`scoped`)
+Sullo schermo di una postazione pilota (`/driver-station/:lane`):
+- Il filtro lavora in modalità delimitata (**`scoped`**).
+- Vengono riprodotti solo i suoni, record e allarmi carburante del **pilota di quella specifica corsia**.
+- I suoni degli altri piloti vengono scartati per non deconcentrare chi guida.
+- Gli avvisi globali (partenza, bandiera gialla, fine manche) rimangono regolarmente attivi.
+
+### 4. Motori Audio Indipendenti per Finestra
+Ciascuna schermata esegue un'istanza separata di `AudioService` (`providers: [AudioService]`). I suoni di una postazione pilota non ostacolano mai la postazione del direttore di gara.
+
+---
+
+---
+
+## Catalogo Completo delle Risorse Audio
+
+Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coordinator AI, il rispettivo tipo di suono (SFX non verbale vs. annuncio vocale verbale), il livello di priorità e la portata di rilevanza a schermo.
+
+### Eventi Audio del Pilota (Configurati nell'Editor Piloti)
+
+| Slot Audio | File / Risorsa Predefinita | Tipo di Suono | Livello di Priorità | Rilevanza e Schermata |
+| :--- | :--- | :--- | :---: | :--- |
+| **Suono Giro** (`lapAudio`) | `default_beep` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `low` (Peso 1 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
+| **Record Personale** (`bestLapAudio`) | `default_driveby` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `normal` (Peso 2 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
+| **Miglior Giro di Manche** (`heatBestLapAudio`) | `default_best_heat_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Miglior Giro di Corsia di Gara** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Nuovo Leader di Manche** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Miglior Giro di Gara** (`raceBestLapAudio`) | `default_best_race_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Record di Corsia di Gara** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Record Assoluto di Pista** (`overallBestLapAudio`) | `default_record_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Nuovo Leader di Gara** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Falsa Partenza / Penalità** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Ingresso Box** (`pitInAudio`) | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Avvisi Carburante** (`fuelAudio`: Avviso, Critico, Esaurito) | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+
+### Eventi Audio dei Temi (Configurati nell'Editor Temi)
+
+| Slot Audio | Chiave Predefinita | Tipo di Suono | Livello di Priorità | Rilevanza e Schermata |
+| :--- | :--- | :--- | :---: | :--- |
+| **Conto alla Rovescia di Partenza** | `audio.countdown` | **Annuncio Vocale** / Set Audio | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
+| **Luce Verde / VIA** | `audio.countdown.green` | **Annuncio Vocale** / Tono Predefinito | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
+| **Bandiera Gialla** | `audio.yellowflag` | **Annuncio Vocale** (Sirena di Avviso) | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Secondi Rimanenti** | `audio.seconds_left` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
+| **Metà Manche** | `audio.seconds_left.halfway` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
+| **Manche Terminata** | `audio.heat_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Gara Conclusa** | `audio.race_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Tempo Minimo sul Giro** | `audio.min_lap_time` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Giro Drift** | `audio.drift_lap` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+
+---
+
+## Riepilogo Configurazione Audio
+
+| Sezione | Cosa è possibile configurare |
+| :--- | :--- |
+| **Editor Interfaccia -> Impostazioni Audio** | Volume principale, tempo di attesa coda urgente, spaziatura annunci, voce TTS, velocità, tonalità, volume voce e test audio. |
+| **Editor Temi** | Suoni di sistema: conto alla rovescia, luce verde, sirena bandiera gialla, tempo residuo, metà manche, fine manche, fine gara, tempo minimo e giro drift. |
+| **Editor Piloti** | Suoni specifici del pilota: suono giro, record personale, miglior giro di manche, miglior giro di corsia, miglior giro di gara, record di pista, cambio leader, falsa partenza, ingresso box e carburante. |
+| **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG con ascolto rapido dell'anteprima. |

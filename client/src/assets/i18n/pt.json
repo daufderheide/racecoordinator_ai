@@ -2594,7 +2594,7 @@
   "DLR_SELECT_DATE": "Data",
   "DLR_ALL_DATES": "Todas as datas",
   "UE_HEADER_AUDIO_SETTINGS": "Configurações de áudio",
-  "UE_HELP_AUDIO_SETTINGS_DESC": "Configure as definições globais do despachante de áudio e os parâmetros de voz de conversão de texto em voz (TTS).",
+  "UE_HELP_AUDIO_SETTINGS_DESC": "Configure as definições globais do despachante de áudio e os parâmetros de voz de conversão de texto em voz (TTS).<br><br><a href=\"javascript:void(0)\" class=\"help-link help-article-audio\">Saiba mais sobre o Sistema de Áudio</a>",
   "UE_LABEL_TTS_VOICE": "Voz de texto para fala",
   "UE_HELP_TTS_VOICE": "Selecione a voz usada para anúncios falados de texto para fala ou use o padrão do sistema.",
   "UE_OPTION_TTS_VOICE_DEFAULT": "-- Padrão do sistema --",
