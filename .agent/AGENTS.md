@@ -116,6 +116,12 @@ Whenever a new configuration setting, property, or field is added, modified, or 
      - `*.converter.spec.ts`: Test `fromProto()` maps the new field into the client model.
      - `*-editor.component.spec.ts`: Test UI selection updates dirty tracking, `update<Entity>` sends the field in the payload, and `getHelpSteps()` asserts the new step selector/order.
 
+9. **Help Center Documentation Synchronization Across All 7 Languages (`help_center/docs/`)**:
+   - Whenever adding a new resource (audio slot, theme setting, configuration property, UI option) or modifying an existing one:
+     - Update the corresponding Help Center article (e.g., `audio.md`, `themes.md`, `tts.md`, `driver-editor.md`, etc.) with its purpose, configuration options, priority tier, and relevance.
+     - Synchronize the update across all 7 supported language files (`en`, `de`, `es`, `fr`, `it`, `nl`, `pt`).
+     - Verify the build with `python3 -m mkdocs build --config-file help_center/mkdocs.yml` to guarantee zero errors or unmapped page warnings.
+
 ## Entity Identity & No String/Regex Heuristics
 - **No string/regex heuristics for domain identity**: Never use string parsing, regex matching, or name heuristic patterns (e.g. checking for "Empty", "Lane X", "rd_empty_lane", or case-insensitive name matching) to determine domain entity identity, active status, or emptiness.
 - **Use clean identifiers**: All domain entity relationships, driver matching, team resolution, and lane status must be determined cleanly through explicit IDs (`entity_id`, `objectId`, `id`, `driverId`, `teamId`) or standard model flags.
@@ -140,4 +146,24 @@ Whenever a new configuration setting, property, or field is added, modified, or 
 - **CamelCase telemetry fields**: Telemetry bindings must use clean camelCase property names (`totalLaps`, `totalTime`, `bestLapTime`, `lastLapTime`, `averageLapTime`, `medianLapTime`, `gapLeader`, `gapPosition`, `lane`). Do not introduce or maintain snake_case telemetry aliases in client widget code.
 - **No legacy `{{...}}`**: Audio resources, theme sound configurations, and factory defaults must use `{...}` or `${...}` single-brace syntax. Legacy double-curly brace `{{...}}` syntax is deprecated and forbidden in default resources.
 - **Automated Parity Tests**: Whenever adding new telemetry metrics or template variables, update both server (`TemplateVariableParityTest.java`) and client (`template-variables-parity.spec.ts`) automated parity test suites to guarantee cross-system alignment.
+
+## Audio Architecture, Priority Tiers & Sound Classification
+- **Explicit Priority Level Required for All Audio**: Whenever new audio slots, events, or callouts are created (theme, driver, or system audio), you MUST decide and configure its priority level (`urgent`, `high`, `normal`, or `low`).
+- **Audio Association & UI Page Relevance Required for All Audio**: Whenever new audio slots, events, or callouts are added, you MUST define its audio association (`AudioAssociation`):
+  - Driver & lap audio (lap sounds, personal bests, records, leader changes, false start / penalties, min lap time, drift lap, pit-in, fuel alerts) MUST be associated with `laneIndex`, `driverId`, and `widgetType: 'lane-view'`.
+  - Countdown sounds (sequence beeps, green lamp GO) MUST be associated with `widgetType: 'countdown'`.
+  - Timer sounds (seconds left countdown, halfway callouts) MUST be associated with `widgetType: 'timer'`.
+  - Race state sounds (yellow flag, heat over, race over) MUST be associated with `widgetType: 'flag'`.
+  - Audio dispatches (`playCallout`, `playSfx`, `dispatchLapAudio`) MUST always pass this association so each UI page only plays audio relevant to the widgets and driver/lane actively displayed on that page.
+- **Per-Page Audio Engine Isolation**: Any page or view playing racing audio (e.g. `DefaultRacedayComponent`, `DefaultDriverStationComponent`) MUST declare `providers: [AudioService]` in its `@Component` decorator to ensure a dedicated, isolated audio engine instance per page. Audio on a driver station or secondary monitor must never preempt, block, or be queued behind audio on another page.
+- **Verbal vs Non-Verbal Classification**:
+  - Only general lap sounds (`driver.lapAudio`) and personal best lap sounds (`driver.bestLapAudio`) are non-verbal SFX (when configured as presets) that can play polyphonically on top of other sounds via `AudioService.playSfx()`.
+  - All other sounds (including false start, track/race/heat record laps, leader changes, time announcements, flags, minimum lap time, drift lap, etc.) are verbal callouts and MUST be routed through `AudioService.playCallout()` with their designated priority level, preemption handling, and cadence spacing so they never clash or talk over other announcements.
+- **Priority Tier Standard**:
+  - `urgent`: Critical safety, race control, and rule infractions (e.g. Yellow Flag, Heat Over, Race Over, False Start, Minimum Lap Time, Drift Lap). Preempts lower priorities immediately and queues behind active urgent callouts.
+  - `high`: Major race milestones (e.g. Overall Record Lap, Overall Lane Record Lap, New Race Leader, Race Best Lap). Preempts normal and low priority callouts.
+  - `normal`: Running race commentary and heat events (e.g. Race Time countdown announcements, Halfway, Heat Best Lap, Race Lane Best Lap, New Heat Leader, Personal Best Lap when configured as TTS).
+  - `low`: Routine cadence events (e.g. Driver Lap Sound when configured as TTS).
+- **Milestone Audio Fallback to Driver Lap SFX**: When a lap occurs, if the milestone sound for that lap is not played (due to priority drop, spacing cooldown, configured as `none`, or missing), playback MUST fall back to the driver's personal best lap sound (`driver.bestLapAudio`) if `isBestLap` is true, or normal lap sound (`driver.lapAudio`) if `isBestLap` is false. If that fallback sound is configured as `none`, no sound plays; otherwise, if configured as a preset SFX, it plays polyphonically via `AudioService.playSfx()`.
+- **Documentation Synchronization for Audio Resources**: Whenever a new audio slot or resource is added, removed, or has its priority, classification, or relevance modified, the Help Center Audio System documentation (`help_center/docs/audio.md` and all 6 localized variants `audio.{de,es,fr,it,nl,pt}.md`) MUST be updated immediately to reflect the sound type, priority tier, audio association, and display relevance.
 

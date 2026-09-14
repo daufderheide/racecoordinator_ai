@@ -543,16 +543,13 @@ public class DriverHeatData extends ServerToClientObject
   @Override
   @com.fasterxml.jackson.annotation.JsonIgnore
   public String getParticipantId() {
+    if (driver != null) {
+      return driver.getParticipantId();
+    }
     if (actualDriver != null
         && actualDriver.getEntityId() != null
         && !actualDriver.getEntityId().isEmpty()) {
       return actualDriver.getEntityId();
-    }
-    if (driver != null
-        && driver.getDriver() != null
-        && driver.getDriver().getEntityId() != null
-        && !driver.getDriver().getEntityId().isEmpty()) {
-      return driver.getDriver().getEntityId();
     }
     if (getObjectId() != null) {
       return getObjectId();

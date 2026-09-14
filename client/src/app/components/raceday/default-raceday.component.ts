@@ -85,7 +85,11 @@ import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-
 import { WIDGET_REGISTRY } from "@app/components/ui-editor/widget-registry";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
-import { AudioPriority, AudioService } from "@app/services/audio.service";
+import {
+  AudioAssociation,
+  AudioPriority,
+  AudioService,
+} from "@app/services/audio.service";
 import { CustomUiService } from "@app/services/custom-ui.service";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
 import { HelpService } from "@app/services/help.service";
@@ -96,8 +100,9 @@ import { RaceTimeService } from "@app/services/race-time.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
-import { createTTSContext } from "@app/utils/audio";
+import { createTTSContext, dispatchLapAudio } from "@app/utils/audio";
 import { saveFileAs } from "@app/utils/file-download.utils";
+import { FuelAudioTracker } from "@app/utils/fuel-audio-tracker";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 import { AnchorPoint, ColumnDefinition } from "./column_definition";
@@ -125,6 +130,7 @@ import {
   templateUrl: "./default-raceday.component.html",
   styleUrls: ["./default-raceday.component.css"],
   encapsulation: ViewEncapsulation.None,
+  providers: [AudioService],
   imports: [
     RacedayModalsComponent,
     FormsModule,
@@ -810,6 +816,9 @@ export class DefaultRacedayComponent
     audioService?: AudioService,
   ) {
     this.audioService = audioService ?? inject(AudioService);
+    this.fuelAudioTracker = new FuelAudioTracker(this.audioService, (urlOrId) =>
+      this.resolveAssetPlayableUrl(urlOrId),
+    );
     this.childWindowManagerService =
       childWindowManagerService ?? inject(ChildWindowManagerService);
     this.dateTimeFormatService =
@@ -845,6 +854,10 @@ export class DefaultRacedayComponent
   protected hasRacedInCurrentHeat: boolean = false;
   protected highlightedDrivers: Set<string> = new Set();
   private carLocations = new Map<number, number>();
+  private fuelAudioTracker: FuelAudioTracker;
+  private get laneFuelAudioStates(): Map<number, any> {
+    return this.fuelAudioTracker.getStates();
+  }
 
   private dropdownIconCache = new Map<string, string>();
   private deactivateSubject = new Subject<boolean>();
@@ -1510,8 +1523,22 @@ export class DefaultRacedayComponent
               (p) =>
                 p.driver?.entity_id === driverId || p.driver?.name === driverId,
             );
-            if (match && match.rank) {
-              (hd as any).overallRank = match.rank;
+            if (match) {
+              if (match.rank) {
+                (hd as any).overallRank = match.rank;
+              }
+              if (match.fuelLevel != null) {
+                if (hd.participant) {
+                  hd.participant.fuelLevel = match.fuelLevel;
+                }
+                if (hd.laneIndex != null) {
+                  this.updateLaneFuel(
+                    hd.laneIndex,
+                    match.fuelLevel,
+                    !!hd.isRefueling,
+                  );
+                }
+              }
             }
           });
         }
@@ -1839,6 +1866,19 @@ export class DefaultRacedayComponent
                 }
               }
             }
+            if (lap.fuelLevel != null) {
+              if (driverData.participant) {
+                driverData.participant.fuelLevel = Number(lap.fuelLevel);
+              }
+              const lane = driverData.laneIndex;
+              if (lane != null) {
+                this.updateLaneFuel(
+                  lane,
+                  Number(lap.fuelLevel),
+                  !!driverData.isRefueling,
+                );
+              }
+            }
             this.handleLapEvent(lap, driverData);
           }
         }
@@ -1856,25 +1896,54 @@ export class DefaultRacedayComponent
     const ttsContext = createTTSContext(driver as any, driverData as any);
 
     this.checkHalfwayPoint(lap, ttsContext);
-    this.handleLapAudio(lap, driver, isBestLap, ttsContext);
+    this.handleLapAudio(lap, driver, isBestLap, ttsContext, driverData);
     this.handleLapHighlight(lap);
   }
 
   private handleLapAudio(
     lap: any,
-    driver: any,
+    driverOrData: any,
     isBestLap: boolean,
     ttsContext: any,
+    explicitDriverData?: DriverHeatData,
   ) {
+    const isDriverHeatData =
+      driverOrData &&
+      typeof driverOrData === "object" &&
+      "laneIndex" in driverOrData;
+    const driverData =
+      explicitDriverData || (isDriverHeatData ? driverOrData : undefined);
+    const driver = isDriverHeatData ? driverOrData.driver : driverOrData;
+    const hd =
+      driverData ||
+      this.heat?.heatDrivers?.find(
+        (d) =>
+          d.objectId === lap.objectId ||
+          d.driver?.entity_id === driver?.entity_id ||
+          d.laneIndex === lap.lane,
+      );
+    const association: AudioAssociation = {
+      widgetType: "lane-view",
+      laneIndex: hd?.laneIndex,
+      driverId:
+        driver?.entity_id || (driver as any)?.id || (driver as any)?.objectId,
+    };
+
     if (lap.type === LapType.FALSE_START) {
-      const audio = driver.falseStartAudio || driver.penaltyAudio;
+      const audio = driver?.falseStartAudio || driver?.penaltyAudio;
       if (
         audio?.type &&
         audio.type !== "none" &&
         ((audio.type === "tts" && audio.text?.trim()) ||
           (audio.type !== "tts" && audio.url?.trim()))
       ) {
-        this.audioService.playCallout(audio, "high", ttsContext);
+        this.audioService.playCallout(
+          audio,
+          "urgent",
+          ttsContext,
+          undefined,
+          association,
+        );
       }
       return;
     }
@@ -1886,36 +1955,22 @@ export class DefaultRacedayComponent
       return;
     }
 
-    if (
-      isBestLap &&
-      driver.bestLapAudio?.type &&
-      driver.bestLapAudio.type !== "none" &&
-      ((driver.bestLapAudio.type === "tts" &&
-        driver.bestLapAudio.text?.trim()) ||
-        (driver.bestLapAudio.type !== "tts" && driver.bestLapAudio.url?.trim()))
-    ) {
-      if (driver.bestLapAudio.type === "tts") {
-        this.audioService.playCallout(
-          driver.bestLapAudio,
-          "normal",
-          ttsContext,
-        );
-      } else {
-        this.audioService.playSfx(driver.bestLapAudio.url);
-      }
-    } else if (lap.isDrift) {
+    if (lap.isDrift) {
       this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
-    } else if (
-      driver.lapAudio?.type &&
-      driver.lapAudio.type !== "none" &&
-      ((driver.lapAudio.type === "tts" && driver.lapAudio.text?.trim()) ||
-        (driver.lapAudio.type !== "tts" && driver.lapAudio.url?.trim()))
-    ) {
-      if (driver.lapAudio.type === "tts") {
-        this.audioService.playCallout(driver.lapAudio, "low", ttsContext);
-      } else {
-        this.audioService.playSfx(driver.lapAudio.url);
-      }
+      return;
+    }
+
+    if (driver) {
+      dispatchLapAudio(
+        this.audioService,
+        driver,
+        lap.recordTier,
+        isBestLap,
+        lap.isNewRaceLeader,
+        lap.isNewHeatLeader,
+        ttsContext,
+        association,
+      );
     }
   }
 
@@ -1931,6 +1986,7 @@ export class DefaultRacedayComponent
         this.playThemedSound(
           THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
           ttsContext,
+          { widgetType: "timer" },
         );
         this.playedHalfway = true;
       }
@@ -1963,6 +2019,80 @@ export class DefaultRacedayComponent
     }
   }
 
+  private getFuelCapacity(): number {
+    const race = this.raceService.getRace();
+    const isDigital =
+      typeof this.track?.hasDigitalFuel === "function" &&
+      this.track.hasDigitalFuel();
+    const capacity = isDigital
+      ? race?.digital_fuel_options?.capacity
+      : race?.fuel_options?.capacity;
+    return capacity && capacity > 0 ? capacity : 100;
+  }
+
+  private resetFuelAudioTracking() {
+    this.fuelAudioTracker.reset(
+      this.heat,
+      this.hasRacedInCurrentHeat,
+      this.race,
+      this.track,
+    );
+  }
+
+  private resolveAssetPlayableUrl(
+    urlOrId: string | undefined,
+  ): string | undefined {
+    if (!urlOrId) return undefined;
+    const asset = (this.assets || []).find(
+      (a: any) =>
+        a.model?.entityId === urlOrId ||
+        a.entity_id === urlOrId ||
+        a._id === urlOrId ||
+        a.name === urlOrId,
+    );
+    if (asset?.url) {
+      return this.getFullUrl(asset.url);
+    }
+    return this.getFullUrl(urlOrId);
+  }
+
+  private updateLaneFuel(
+    lane: number,
+    currentFuel: number | null,
+    isRefueling: boolean,
+  ) {
+    const canPlayAudio =
+      this.raceState === RaceState.RACING ||
+      this.raceState === RaceState.PAUSED;
+    this.fuelAudioTracker.updateLaneFuel(
+      lane,
+      currentFuel,
+      isRefueling,
+      this.heat,
+      this.hasRacedInCurrentHeat,
+      this.race,
+      this.track,
+      this.assets,
+      canPlayAudio,
+    );
+  }
+
+  private handleCarFuelAudio(carData: any) {
+    if (!carData || carData.lane == null) return;
+    const currentFuel =
+      carData.fuelLevel != null ? Number(carData.fuelLevel) : null;
+    const isRefueling = !!carData.isRefueling;
+    if (this.heat?.heatDrivers) {
+      const driverData =
+        this.heat.heatDrivers.find((d) => d.laneIndex === carData.lane) ||
+        this.heat.heatDrivers[carData.lane];
+      if (driverData?.participant && currentFuel != null) {
+        driverData.participant.fuelLevel = currentFuel;
+      }
+    }
+    this.updateLaneFuel(carData.lane, currentFuel, isRefueling);
+  }
+
   private subscribeToLiveUpdates() {
     this.subscriptions.push(
       this.raceConnectionService.carData$.subscribe((carData) => {
@@ -1970,6 +2100,7 @@ export class DefaultRacedayComponent
           if (carData.location != null) {
             this.carLocations.set(carData.lane, carData.location);
           }
+          this.handleCarFuelAudio(carData);
           this.cdr.markForCheck();
         }
       }),
@@ -2072,6 +2203,7 @@ export class DefaultRacedayComponent
     }
     this.updateScale();
     this.loadColumns();
+    this.updateAudioRelevance();
     this.cdr.markForCheck();
   }
 
@@ -2520,6 +2652,7 @@ export class DefaultRacedayComponent
 
   onRestartHeatConfirm() {
     this.showRestartHeatConfirmation = false;
+    this.audioService.reset();
     this.dataService.restartHeat().subscribe(
       (success) => {
         if (success) {
@@ -2770,6 +2903,7 @@ export class DefaultRacedayComponent
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
+        this.resetFuelAudioTracking();
       } else if (isNewRace) {
         // Reset timer state ONLY when advancing to a new race
         const state =
@@ -2808,6 +2942,7 @@ export class DefaultRacedayComponent
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
+        this.resetFuelAudioTracking();
       } else {
         const remaining = (race as any)?.auto_advance_remaining_seconds;
         if (remaining !== undefined && remaining !== null) {
@@ -2896,6 +3031,25 @@ export class DefaultRacedayComponent
       }
 
       this.sortHeatDrivers();
+      if (this.heat?.heatDrivers) {
+        const hasStarted = !!this.heat?.started || this.hasRacedInCurrentHeat;
+        this.heat.heatDrivers.forEach((hd, index) => {
+          const lane = hd.laneIndex ?? index;
+          const fuel =
+            hd.participant?.fuelLevel != null &&
+            (hd.participant.fuelLevel > 0 || hasStarted)
+              ? hd.participant.fuelLevel
+              : hd.initialFuelLevel != null && hd.initialFuelLevel > 0
+                ? hd.initialFuelLevel
+                : (hd.participant?.fuelLevel ?? null);
+          if (fuel != null) {
+            if (hd.participant) {
+              hd.participant.fuelLevel = fuel;
+            }
+            this.updateLaneFuel(lane, fuel, !!hd.isRefueling);
+          }
+        });
+      }
       this.cdr.markForCheck();
     } else {
       // No heats available
@@ -4837,6 +4991,19 @@ export class DefaultRacedayComponent
       }
 
       const finalLayout = this.reindexColumnLayout(layout);
+      if (layout[AnchorPoint.CenterCenter] === "customImage") {
+        return new ColumnDefinition(
+          labelKey,
+          key,
+          width,
+          true,
+          "start",
+          30,
+          anchor,
+          renderer as any,
+          finalLayout,
+        );
+      }
       if (isResizing) {
         return new ColumnDefinition(
           labelKey,
@@ -4862,6 +5029,8 @@ export class DefaultRacedayComponent
         finalLayout,
       );
     });
+
+    this.updateAudioRelevance();
   }
 
   private resolveColumnLayout(
@@ -5430,6 +5599,8 @@ export class DefaultRacedayComponent
       ) {
         this.playedSecondsLeft.clear();
         this.playedHalfway = false;
+        this.resetFuelAudioTracking();
+        this.audioService.reset();
       }
     }
 
@@ -5448,6 +5619,7 @@ export class DefaultRacedayComponent
 
     // Show overlay for STARTING or RESTARTING
     if (state === RaceState.STARTING) {
+      this.audioService.stopVoice();
       this.showCountdownOverlay = true;
       this.lastPlayedCountdownSecond = -1;
 
@@ -5486,7 +5658,9 @@ export class DefaultRacedayComponent
       this.isRestarting = false;
 
       if (previousState !== RaceState.UNKNOWN_STATE) {
-        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0);
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 0, {
+          widgetType: "countdown",
+        });
       }
       // Hide overlay after 1 second of green lamps
       setTimeout(() => {
@@ -5549,11 +5723,17 @@ export class DefaultRacedayComponent
       currentSecond !== this.lastPlayedCountdownSecond
     ) {
       this.lastPlayedCountdownSecond = currentSecond;
-      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, currentSecond);
+      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, currentSecond, {
+        widgetType: "countdown",
+      });
     }
   }
 
-  private playAudioFromSet(slotKey: string, timeSeconds: number) {
+  private playAudioFromSet(
+    slotKey: string,
+    timeSeconds: number,
+    association?: AudioAssociation,
+  ) {
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (!config || config.type !== "audio_set") return;
 
@@ -5568,6 +5748,12 @@ export class DefaultRacedayComponent
     );
     if (!asset || asset.type !== "audio_set") return;
 
+    const defaultAssoc =
+      association ??
+      (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
+        ? { widgetType: "countdown" }
+        : { widgetType: "timer" });
+
     const entry = asset.audioEntries?.find(
       (e: any) => Math.abs(e.timeSeconds - timeSeconds) < 0.1,
     );
@@ -5580,9 +5766,12 @@ export class DefaultRacedayComponent
             this.audioService.playCallout(
               { type: "tts", text: entry.text },
               "normal",
+              undefined,
+              undefined,
+              defaultAssoc,
             );
           } else {
-            this.audioService.playSfx(playableUrl);
+            this.audioService.playSfx(playableUrl, defaultAssoc);
           }
         } else {
           const entryConfig: AudioConfig = {
@@ -5595,6 +5784,7 @@ export class DefaultRacedayComponent
             "normal",
             undefined,
             playableUrl,
+            defaultAssoc,
           );
         }
       }
@@ -5721,7 +5911,11 @@ export class DefaultRacedayComponent
       currentTime <= halfwayThreshold &&
       !this.playedHalfway
     ) {
-      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY);
+      this.playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        undefined,
+        { widgetType: "timer" },
+      );
       this.playedHalfway = true;
     }
 
@@ -5735,13 +5929,19 @@ export class DefaultRacedayComponent
         // Rule: Don't play if it's the start time of the heat
         if (Math.abs(threshold - totalDuration) < 0.1) continue;
 
-        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT, threshold);
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT, threshold, {
+          widgetType: "timer",
+        });
         this.playedSecondsLeft.add(threshold);
       }
     }
   }
 
-  private playThemedSound(slotKey: string, context?: any) {
+  private playThemedSound(
+    slotKey: string,
+    context?: any,
+    association?: AudioAssociation,
+  ) {
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (!config || config.type === "none") return;
 
@@ -5764,31 +5964,79 @@ export class DefaultRacedayComponent
       }
     }
 
-    // Check if slot is SFX vs Voice Callout
-    if (
-      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
-    ) {
-      if (config.type === "tts") {
-        this.audioService.playCallout(config, "low", context);
-      } else {
-        this.audioService.playSfx(playableUrl);
-      }
-      return;
-    }
-
     let priority: AudioPriority = "normal";
     if (
       slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
       slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
-      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER
+      slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
+      slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
     ) {
       priority = "urgent";
-    } else if (slotKey === THEME_SLOT_KEYS.AUDIO_PENALTY) {
-      priority = "high";
     }
 
-    this.audioService.playCallout(config, priority, context, playableUrl);
+    let defaultAssoc = association;
+    if (!defaultAssoc) {
+      if (
+        slotKey === THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_HEAT_OVER ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_RACE_OVER
+      ) {
+        defaultAssoc = { widgetType: "flag" };
+      } else if (
+        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY
+      ) {
+        defaultAssoc = { widgetType: "timer" };
+      } else if (
+        slotKey === THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_DRIFT_LAP
+      ) {
+        defaultAssoc = {
+          widgetType: "lane-view",
+          laneIndex: context?.driver?.lane,
+          driverId: context?.driver?.driverId,
+        };
+      }
+    }
+
+    if (defaultAssoc) {
+      this.audioService.playCallout(
+        config,
+        priority,
+        context,
+        playableUrl,
+        defaultAssoc,
+      );
+    } else {
+      this.audioService.playCallout(config, priority, context, playableUrl);
+    }
+  }
+
+  private updateAudioRelevance(): void {
+    const layout = this.layout || this.currentRacedayLayout;
+    const widgets = layout?.widgets;
+    if (!widgets || widgets.length === 0) {
+      this.audioService.setRelevanceFilter({
+        driverAudioMode: "none",
+        allowCountdown: false,
+        allowTimer: false,
+        allowRaceState: false,
+      });
+      return;
+    }
+
+    const hasLaneView = widgets.some((w: any) => w.widgetType === "lane-view");
+    const hasCountdown = widgets.some((w: any) => w.widgetType === "countdown");
+    const hasTimer = widgets.some((w: any) => w.widgetType === "timer");
+    const hasFlag = widgets.some((w: any) => w.widgetType === "flag");
+
+    this.audioService.setRelevanceFilter({
+      driverAudioMode: hasLaneView ? "all" : "none",
+      allowCountdown: hasCountdown,
+      allowTimer: hasTimer,
+      allowRaceState: hasFlag,
+    });
   }
 
   private setAllLampsGo() {
@@ -5866,6 +6114,7 @@ export class DefaultRacedayComponent
     }
     this.settingsService.saveSettings(settings);
     this.isLayoutCustomizing = false;
+    this.updateAudioRelevance();
     this.cdr.detectChanges();
   }
 
@@ -5877,6 +6126,7 @@ export class DefaultRacedayComponent
     }
     this.updateScale();
     this.isLayoutCustomizing = false;
+    this.updateAudioRelevance();
     this.cdr.detectChanges();
   }
 
@@ -5887,6 +6137,7 @@ export class DefaultRacedayComponent
     this.settingsService.saveSettings(settings);
     this.updateScale();
     this.isLayoutCustomizing = false;
+    this.updateAudioRelevance();
     this.cdr.detectChanges();
   }
 
@@ -6223,6 +6474,7 @@ export class DefaultRacedayComponent
     this.draggedWidgetType = null;
     this.layoutChanged.emit(this.layout);
     this.widgetSelected.emit(newWidget.id);
+    this.updateAudioRelevance();
     this.cdr.markForCheck();
   }
 
@@ -6317,6 +6569,7 @@ export class DefaultRacedayComponent
       const nextWidget = laneView || this.layout.widgets[0];
       this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
     }
+    this.updateAudioRelevance();
   }
 
   snapToEdges(

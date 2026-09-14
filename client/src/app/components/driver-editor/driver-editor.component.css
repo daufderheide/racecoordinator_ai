@@ -352,6 +352,31 @@
   width: auto;
 }
 
+.audio-group {
+  margin-bottom: 24px;
+}
+
+.audio-group:last-child {
+  margin-bottom: 0;
+}
+
+.audio-group-header {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+.audio-group-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .audio-grid {
   display: flex;
   flex-wrap: wrap;

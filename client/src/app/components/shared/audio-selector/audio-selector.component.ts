@@ -77,6 +77,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   localType = signal<"preset" | "tts" | "none" | "audio_set" | undefined>(
     undefined,
   );
+  localText = signal<string | undefined>(undefined);
 
   effectiveUrl = computed(() => {
     return this.localUrl() ?? this.url();
@@ -84,6 +85,10 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
 
   effectiveType = computed(() => {
     return this.localType() ?? this.type();
+  });
+
+  effectiveText = computed(() => {
+    return this.localText() ?? this.text();
   });
 
   allAvailableAssets = computed(() => {
@@ -196,6 +201,9 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     if (changes["type"]) {
       this.localType.set(undefined);
     }
+    if (changes["text"]) {
+      this.localText.set(undefined);
+    }
     if (changes["url"] || changes["assetId"]) {
       const currentUrlVal = this.url();
       const currentAssetIdVal = this.assetId();
@@ -242,6 +250,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   onTextChange(newText: string) {
+    this.localText.set(newText);
     this.textChange.emit(newText);
   }
 
@@ -289,6 +298,14 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     if (this.previewAudio) {
       this.previewAudio.pause();
       this.previewAudio = null;
+    }
+    if (
+      item.type === "audio_set" &&
+      item.audioEntries &&
+      item.audioEntries.length > 0
+    ) {
+      this.playAudioSetEntries(item.audioEntries);
+      return;
     }
     const playContext = this.context() || mockTTSContext();
     const masterVol =
@@ -383,12 +400,15 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     if (!asset || !asset.audioEntries || asset.audioEntries.length === 0) {
       return;
     }
+    await this.playAudioSetEntries(asset.audioEntries);
+  }
 
+  private async playAudioSetEntries(entries: any[]) {
     const playbackId = ++this.currentPlaybackId;
     this.isPlaying = true;
     this.cdr.detectChanges();
 
-    for (const entry of asset.audioEntries) {
+    for (const entry of entries) {
       if (!this.isPlaying || this.currentPlaybackId !== playbackId) break;
       try {
         const entryType = entry.type || "preset";
@@ -427,7 +447,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
           }
         });
     } else if (this.effectiveType() === "tts") {
-      this.playTTS(this.text());
+      this.playTTS(this.effectiveText());
     }
   }
 

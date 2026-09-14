@@ -24,6 +24,7 @@ import { Settings } from "@app/models/settings";
 import { DriverHeatData } from "@app/race/driver_heat_data";
 import { Heat } from "@app/race/heat";
 import { RaceParticipant } from "@app/race/race_participant";
+import { AudioService } from "@app/services/audio.service";
 import { ChildWindowManagerService } from "@app/services/child-window-manager.service";
 import { DateTimeFormatService } from "@app/services/date-time-format.service";
 import { HelpLinkService } from "@app/services/help-link.service";
@@ -86,6 +87,7 @@ class DefaultRacedayMockConfirmationModalComponent {
 }
 
 import {
+  ICarData,
   IInterfaceEvent,
   ILap,
   IRaceTime,
@@ -298,6 +300,7 @@ describe("DefaultRacedayComponent", () => {
   let mockAudioInstance: any;
   let recordDataSubject: Subject<IRecordData>;
   let participantsSubject: Subject<any[]>;
+  let carDataSubject: BehaviorSubject<ICarData>;
   let mockLogger: any;
 
   let raceStateSubject: Subject<RaceState>;
@@ -330,6 +333,7 @@ describe("DefaultRacedayComponent", () => {
     standingsUpdateSubject = mocks.standingsUpdateSubject;
     recordDataSubject = mocks.recordDataSubject;
     participantsSubject = mocks.participantsSubject;
+    carDataSubject = mocks.carDataSubject;
 
     mockAuthService = {
       currentRoleSubject: new BehaviorSubject<Role>(Role.DIRECTOR),
@@ -1333,12 +1337,14 @@ describe("DefaultRacedayComponent", () => {
     });
 
     it("should call restartHeat on confirm and hide dialog", () => {
+      const resetSpy = spyOn((component as any).audioService, "reset");
       fixture.detectChanges();
       component.showRestartHeatConfirmation = true;
 
       component.onRestartHeatConfirm();
 
       expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect(resetSpy).toHaveBeenCalled();
       expect(mockDataService.restartHeat).toHaveBeenCalled();
     });
 
@@ -4956,6 +4962,7 @@ describe("DefaultRacedayComponent", () => {
         "normal",
         undefined,
         undefined,
+        { widgetType: "timer" },
       );
       // 30s threshold audio was dropped because voice channel was busy with NORMAL priority Halfway!
       expect(window.Audio).not.toHaveBeenCalledWith(
@@ -4984,6 +4991,7 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        { widgetType: "flag" },
       );
       playCalloutSpy.calls.reset();
 
@@ -4998,6 +5006,7 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        { widgetType: "flag" },
       );
       playCalloutSpy.calls.reset();
 
@@ -5012,19 +5021,25 @@ describe("DefaultRacedayComponent", () => {
         "urgent",
         undefined,
         undefined,
+        { widgetType: "flag" },
       );
       playCalloutSpy.calls.reset();
 
-      // Penalty (high)
-      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_PENALTY);
+      // Min lap time (urgent)
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME);
       expect(playCalloutSpy).toHaveBeenCalledWith(
         jasmine.objectContaining({
           type: "tts",
-          text: "TTS for audio.penalty",
+          text: "TTS for audio.min_lap_time",
         }),
-        "high",
+        "urgent",
         undefined,
         undefined,
+        {
+          widgetType: "lane-view",
+          laneIndex: undefined,
+          driverId: undefined,
+        },
       );
       playCalloutSpy.calls.reset();
 
@@ -5038,7 +5053,31 @@ describe("DefaultRacedayComponent", () => {
         "normal",
         undefined,
         undefined,
+        { widgetType: "timer" },
       );
+    });
+
+    it("should stop active voice when transitioning to STARTING to un-duck audio", () => {
+      const stopVoiceSpy = spyOn((component as any).audioService, "stopVoice");
+      component["raceState"] = RaceState.PAUSED;
+      component["handleRaceStateChange"](RaceState.STARTING);
+      expect(stopVoiceSpy).toHaveBeenCalled();
+    });
+
+    it("should reset audio service when entering NOT_STARTED, HEAT_OVER, or RACE_OVER", () => {
+      const resetSpy = spyOn((component as any).audioService, "reset");
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.HEAT_OVER);
+      expect(resetSpy).toHaveBeenCalled();
+
+      resetSpy.calls.reset();
+      component["handleRaceStateChange"](RaceState.NOT_STARTED);
+      expect(resetSpy).toHaveBeenCalled();
+
+      resetSpy.calls.reset();
+      component["raceState"] = RaceState.RACING;
+      component["handleRaceStateChange"](RaceState.RACE_OVER);
+      expect(resetSpy).toHaveBeenCalled();
     });
 
     it("should not play themed sound when config is none, missing, or improperly configured (no fallback)", () => {
@@ -5131,7 +5170,7 @@ describe("DefaultRacedayComponent", () => {
         objectId: mockHd.objectId,
         lapNumber: 5,
         lapTime: 3.5,
-        bestLapTime: 3.5,
+        bestLapTime: 3.0,
       });
 
       expect(mockSpeech.speak).toHaveBeenCalled();
@@ -5173,6 +5212,367 @@ describe("DefaultRacedayComponent", () => {
       expect(audioInstance.volume).toBeCloseTo(0.4, 2);
 
       mockSettings.masterVolume = 100;
+    });
+
+    it("should play record tier audio according to tier priority", () => {
+      fixture.detectChanges();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(
+        component["audioService"],
+        "playSfx",
+      ).and.callThrough();
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+      mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
+      mockHd.driver.overallBestLapAudio = {
+        type: "preset",
+        url: "w_recordlap.wav",
+      };
+      mockHd.driver.overallLaneBestLapAudio = {
+        type: "preset",
+        url: "w_recordlanelap.wav",
+      };
+      mockHd.driver.raceBestLapAudio = {
+        type: "preset",
+        url: "w_bestlap.wav",
+      };
+      mockHd.driver.raceLaneBestLapAudio = {
+        type: "preset",
+        url: "w_bestlanelap.wav",
+      };
+      mockHd.driver.heatBestLapAudio = {
+        type: "preset",
+        url: "w_bestheatlap.wav",
+      };
+      mockHd.driver.newRaceLeaderAudio = {
+        type: "preset",
+        url: "w_newraceleader.wav",
+      };
+      mockHd.driver.newHeatLeaderAudio = {
+        type: "preset",
+        url: "w_newheatleader.wav",
+      };
+
+      const expectedAssoc = {
+        widgetType: "lane-view" as const,
+        laneIndex: 0,
+        driverId: "d1",
+      };
+
+      // Tier 6: Overall Record (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.0,
+        bestLapTime: 3.0,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_recordlap\.wav$/),
+      );
+
+      // Tier 5: Overall Lane Record (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 2,
+        lapTime: 3.1,
+        bestLapTime: 3.0,
+        recordTier: 5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallLaneBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_recordlanelap\.wav$/),
+      );
+
+      // New Race Leader (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 3.15,
+        bestLapTime: 3.0,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+
+      // Tier 4: Race Best (HIGH priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 4,
+        lapTime: 3.2,
+        bestLapTime: 3.0,
+        recordTier: 4,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.raceBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestlap\.wav$/),
+      );
+
+      // New Heat Leader (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.25,
+        bestLapTime: 3.0,
+        isNewHeatLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newHeatLeaderAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+
+      // Tier 3: Race Lane Best (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 6,
+        lapTime: 3.3,
+        bestLapTime: 3.0,
+        recordTier: 3,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.raceLaneBestLapAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestlanelap\.wav$/),
+      );
+
+      // Tier 2: Heat Best (NORMAL priority)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 7,
+        lapTime: 3.4,
+        bestLapTime: 3.0,
+        recordTier: 2,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.heatBestLapAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(window.Audio).toHaveBeenCalledWith(
+        jasmine.stringMatching(/w_bestheatlap\.wav$/),
+      );
+
+      // Tier 1 / isBestLap: Personal Best preset is non-verbal SFX (calls playSfx, not playCallout)
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 8,
+        lapTime: 2.9,
+        bestLapTime: 2.9,
+        recordTier: 1,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
+
+      // Personal Best TTS is verbal callout with NORMAL priority
+      mockHd.driver.bestLapAudio = {
+        type: "tts",
+        text: "Personal best for {driver.name}",
+      };
+      component["audioService"].reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 9,
+        lapTime: 2.8,
+        bestLapTime: 2.8,
+        recordTier: 1,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.bestLapAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).not.toHaveBeenCalled();
+    });
+
+    it("should fallback to personal best lap sound or normal lap sound when milestone sound is not played", () => {
+      fixture.detectChanges();
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+      const playSfxSpy = spyOn(
+        component["audioService"],
+        "playSfx",
+      ).and.callThrough();
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.lapAudio = { type: "preset", url: "beep.wav" };
+      mockHd.driver.bestLapAudio = { type: "preset", url: "personal_best.wav" };
+      mockHd.driver.overallBestLapAudio = { type: "none" };
+
+      const expectedAssoc = {
+        widgetType: "lane-view" as const,
+        laneIndex: 0,
+        driverId: "d1",
+      };
+
+      // Case 1: Overall Best Lap (Tier 6, isBestLap: true) has overallBestLapAudio = none.
+      // Falls back to personal best lap sound!
+      component["audioService"].reset();
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.0,
+        bestLapTime: 3.0,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
+
+      // Case 2: Overall Best Lap is dropped by priority (e.g. urgent sound active).
+      // Falls back to personal best lap sound!
+      mockHd.driver.overallBestLapAudio = {
+        type: "preset",
+        url: "w_recordlap.wav",
+      };
+      // Simulate active urgent sound
+      component["audioService"].reset();
+      component["audioService"].playCallout(
+        { type: "preset", url: "yellow.wav" },
+        "urgent",
+      );
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 2,
+        lapTime: 2.9,
+        bestLapTime: 2.9,
+        recordTier: 6,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.overallBestLapAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).toHaveBeenCalledWith(
+        "personal_best.wav",
+        expectedAssoc,
+      );
+
+      // Case 3: New Race Leader (isBestLap: false) is dropped by priority.
+      // Falls back to normal lap sound!
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+      mockHd.driver.newRaceLeaderAudio = {
+        type: "preset",
+        url: "w_leader.wav",
+      };
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 3,
+        lapTime: 3.5,
+        bestLapTime: 2.9,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).toHaveBeenCalledWith("beep.wav", expectedAssoc);
+
+      // Case 4: If fallback audio is configured as none, no sound plays.
+      mockHd.driver.lapAudio = { type: "none" };
+      playCalloutSpy.calls.reset();
+      playSfxSpy.calls.reset();
+
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 4,
+        lapTime: 3.6,
+        bestLapTime: 2.9,
+        isNewRaceLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newRaceLeaderAudio,
+        "high",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      expect(playSfxSpy).not.toHaveBeenCalled();
     });
 
     it("should fallback to 30s countdown if Halfway audio is configured to 'none'", () => {
@@ -5349,6 +5749,315 @@ describe("DefaultRacedayComponent", () => {
       (component as any).playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, 99);
 
       expect(window.Audio).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Fuel Audio (Pit In & Fuel Level Audio Set)", () => {
+    let playCalloutSpy: jasmine.Spy;
+
+    beforeEach(() => {
+      playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      fixture.detectChanges();
+
+      component["assets"] = [
+        {
+          entity_id: "default_fuel_level",
+          type: "audio_set",
+          audioEntries: [
+            {
+              percentage: 0,
+              url: "/assets/w_fuel_empty.wav",
+              name: "Fuel Empty",
+              type: "preset",
+            },
+            {
+              percentage: 10,
+              url: "/assets/w_fuel_low.wav",
+              name: "Fuel Low",
+              type: "preset",
+            },
+            {
+              percentage: 100,
+              url: "/assets/w_fuel_full.wav",
+              name: "Fuel Full",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      const mockHd = component["heat"]!.heatDrivers[0];
+      mockHd.driver.pitInAudio = { type: "preset", url: "default_pit_in" };
+      mockHd.driver.fuelAudio = {
+        type: "audio_set",
+        url: "default_fuel_level",
+      };
+      component["raceState"] = RaceState.RACING;
+      (component as any).resetFuelAudioTracking();
+    });
+
+    describe("Pit In Audio", () => {
+      it("should play w_pitin at HIGH priority when driver gains >= 0.1 fuel while refueling", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.5, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "default_pit_in",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("high");
+      });
+
+      it("should not play pit in audio more than once during the same refuel session", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 30.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 31.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 35.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 40.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should play pit in audio again after refueling stops and starts anew", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: false });
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 22.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 22.2, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "default_pit_in",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("high");
+      });
+
+      it("should not play pit in audio if pitInAudio is configured as 'none'", () => {
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.pitInAudio = { type: "none" };
+        mockHd.driver.fuelAudio = { type: "none" };
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 52.0, isRefueling: true });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("Fuel Level Audio Set", () => {
+      it("should play w_fuel_low at URGENT priority when fuel drops to 10%", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should play w_fuel_empty at URGENT priority when fuel drops to 0%", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 5.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_empty.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should play TTS audio set entry for out of fuel with driver nickname", () => {
+        component["assets"] = [
+          {
+            entity_id: "tts_fuel_set",
+            type: "audio_set",
+            audioEntries: [
+              {
+                percentage: 0,
+                timeSeconds: 0,
+                type: "tts",
+                text: "{driver.nickname} out of fuel",
+                name: "Out of Fuel TTS",
+              },
+            ],
+          },
+        ];
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.fuelAudio = {
+          type: "audio_set",
+          url: "tts_fuel_set",
+        };
+        (component as any).resetFuelAudioTracking();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        const callArgs = playCalloutSpy.calls.mostRecent().args;
+        expect(callArgs[0].type).toBe("tts");
+        expect(callArgs[0].text).toBe("{driver.nickname} out of fuel");
+        expect(callArgs[1]).toBe("urgent");
+        expect(callArgs[2].driver.nickname).toBe(
+          mockHd.driver.nickname || mockHd.driver.name,
+        );
+      });
+
+      it("should fall back to timeSeconds when entry.percentage is missing or 0", () => {
+        component["assets"] = [
+          {
+            entity_id: "legacy_fuel_set",
+            type: "audio_set",
+            audioEntries: [
+              {
+                percentage: 0,
+                timeSeconds: 100,
+                url: "/assets/full.wav",
+                type: "preset",
+              },
+              {
+                percentage: 0,
+                timeSeconds: 10,
+                url: "/assets/low.wav",
+                type: "preset",
+              },
+              {
+                percentage: 0,
+                timeSeconds: 0,
+                url: "/assets/empty.wav",
+                type: "preset",
+              },
+            ],
+          },
+        ];
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.fuelAudio = {
+          type: "audio_set",
+          url: "legacy_fuel_set",
+        };
+        (component as any).resetFuelAudioTracking();
+
+        // Drops to 10: should play low.wav (timeSeconds: 10), NOT empty.wav
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/low.wav",
+        );
+
+        // Drops to 0: should play empty.wav (timeSeconds: 0)
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/empty.wav",
+        );
+      });
+
+      it("should play w_fuel_full at URGENT priority when refueled to 100%", () => {
+        const mockHd = component["heat"]!.heatDrivers[0];
+        mockHd.driver.pitInAudio = { type: "none" };
+
+        carDataSubject.next({ lane: 0, fuelLevel: 90.0, isRefueling: true });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: true });
+        expect(playCalloutSpy).toHaveBeenCalled();
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_full.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should not play w_fuel_full if 100% is received without isRefueling: true", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 95.0, isRefueling: false });
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should re-trigger threshold after fuel level rises above threshold and drops again", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 15.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        playCalloutSpy.calls.reset();
+        carDataSubject.next({ lane: 0, fuelLevel: 9.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: false });
+
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+    });
+
+    describe("resetFuelAudioTracking", () => {
+      it("should clear fuel audio tracking states", () => {
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+
+        (component as any).resetFuelAudioTracking();
+        playCalloutSpy.calls.reset();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 20.0, isRefueling: false });
+        carDataSubject.next({ lane: 0, fuelLevel: 10.0, isRefueling: false });
+        expect(playCalloutSpy).toHaveBeenCalledTimes(1);
+        expect(playCalloutSpy.calls.mostRecent().args[0].url).toBe(
+          "/assets/w_fuel_low.wav",
+        );
+        expect(playCalloutSpy.calls.mostRecent().args[1]).toBe("urgent");
+      });
+
+      it("should hydrate lane fuel from participant fuelLevel or initialFuelLevel when heat is initialized", () => {
+        const mockHeat: any = {
+          heatNumber: 1,
+          heatDrivers: [
+            {
+              laneIndex: 0,
+              objectId: "hd0",
+              initialFuelLevel: 80,
+              participant: { fuelLevel: 80, driver: { name: "Driver 1" } },
+            },
+            {
+              laneIndex: 1,
+              objectId: "hd1",
+              initialFuelLevel: 90,
+              participant: { fuelLevel: 0, driver: { name: "Driver 2" } },
+            },
+          ],
+        };
+
+        mockRaceService.getHeats.and.returnValue([mockHeat]);
+        mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+        (component as any).initializeHeat();
+
+        expect(mockHeat.heatDrivers[0].participant.fuelLevel).toBe(80);
+        expect(mockHeat.heatDrivers[1].participant.fuelLevel).toBe(90);
+        expect(
+          (component as any).laneFuelAudioStates.get(0)?.lastFuelLevel,
+        ).toBe(80);
+        expect(
+          (component as any).laneFuelAudioStates.get(1)?.lastFuelLevel,
+        ).toBe(90);
+      });
     });
   });
 
@@ -8090,6 +8799,248 @@ describe("DefaultRacedayComponent", () => {
       await component.exportToCsv();
 
       expect(clickSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("Audio Relevance Filtering by Layout Widgets", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+    });
+
+    it("should allow all audio when layout contains all standard widgets", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "lane-view" },
+          { widgetType: "countdown" },
+          { widgetType: "timer" },
+          { widgetType: "flag" },
+        ],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("all");
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeTrue();
+      expect(filter?.allowRaceState).toBeTrue();
+    });
+
+    it("should silence all audio when widgets array is empty or undefined", () => {
+      component.layout = { widgets: [] } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      (component as any).layout = undefined;
+      (component as any).updateAudioRelevance();
+      const filter2 = audioService.getRelevanceFilter();
+      expect(filter2?.driverAudioMode).toBe("none");
+      expect(filter2?.allowCountdown).toBeFalse();
+      expect(filter2?.allowTimer).toBeFalse();
+      expect(filter2?.allowRaceState).toBeFalse();
+    });
+
+    it("should require lane-view widget for driver audio", () => {
+      // Without lane-view (e.g. leaderboard or records only), driverAudioMode is 'none'
+      component.layout = {
+        widgets: [{ widgetType: "leaderboard" }, { widgetType: "countdown" }],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      // With lane-view, driverAudioMode is 'all'
+      component.layout = {
+        widgets: [{ widgetType: "lane-view" }, { widgetType: "countdown" }],
+      } as any;
+      (component as any).updateAudioRelevance();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("all");
+    });
+
+    it("should require timer widget for timer audio and flag widget for race state", () => {
+      // menu-bar or heat-list does NOT satisfy timer or flag
+      component.layout = {
+        widgets: [{ widgetType: "menu-bar" }, { widgetType: "heat-list" }],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+
+      // Explicit timer and flag widgets enable timer and race state audio
+      component.layout = {
+        widgets: [{ widgetType: "timer" }, { widgetType: "flag" }],
+      } as any;
+      (component as any).updateAudioRelevance();
+      const filter2 = audioService.getRelevanceFilter();
+      expect(filter2?.allowTimer).toBeTrue();
+      expect(filter2?.allowRaceState).toBeTrue();
+    });
+
+    it("should disable audio when only non-audio widgets are present", () => {
+      component.layout = {
+        widgets: [
+          { widgetType: "branding" },
+          { widgetType: "image" },
+          { widgetType: "qr" },
+        ],
+      } as any;
+
+      (component as any).updateAudioRelevance();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("none");
+      expect(filter?.allowCountdown).toBeFalse();
+      expect(filter?.allowTimer).toBeFalse();
+      expect(filter?.allowRaceState).toBeFalse();
+    });
+
+    it("should sync audio relevance on layout modifications", () => {
+      const audioService = (component as any).audioService as AudioService;
+      component.layout = {
+        widgets: [
+          { id: "w-timer", widgetType: "timer" },
+          { id: "w-flag", widgetType: "flag" },
+        ],
+      } as any;
+
+      // Save layout
+      component.saveLayout();
+      expect(audioService.getRelevanceFilter()?.allowTimer).toBeTrue();
+      expect(audioService.getRelevanceFilter()?.allowRaceState).toBeTrue();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("none");
+
+      // Remove widget
+      component.removeWidget("w-timer");
+      expect(audioService.getRelevanceFilter()?.allowTimer).toBeFalse();
+      expect(audioService.getRelevanceFilter()?.allowRaceState).toBeTrue();
+
+      // Reset to defaults
+      component.resetLayoutToDefaults();
+      expect(audioService.getRelevanceFilter()?.driverAudioMode).toBe("all");
+      expect(audioService.getRelevanceFilter()?.allowCountdown).toBeTrue();
+    });
+
+    it("should attach flag association to race state sounds", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "flag.wav",
+      });
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_HEAT_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      (component as any).playThemedSound(THEME_SLOT_KEYS.AUDIO_RACE_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+    });
+
+    it("should attach timer association to timer sounds", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "timer.wav",
+      });
+
+      (component as any).playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "normal",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should attach lane-view association to lap audio", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const driver = {
+        entity_id: "driver-123",
+        name: "Test Driver",
+        lapAudio: { type: "tts" as const, text: "Lap" },
+      };
+      const driverData = {
+        objectId: "hd-123",
+        laneIndex: 2,
+        driver,
+      };
+      (component as any).heat = {
+        heatDrivers: [driverData],
+      } as any;
+
+      const lap = {
+        objectId: "hd-123",
+        lapTime: 4.5,
+        bestLapTime: 4.0,
+      };
+
+      (component as any).handleLapAudio(lap, driver, false, {});
+
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        driver.lapAudio,
+        "low",
+        jasmine.any(Object),
+        undefined,
+        {
+          widgetType: "lane-view",
+          laneIndex: 2,
+          driverId: "driver-123",
+        },
+      );
     });
   });
 });

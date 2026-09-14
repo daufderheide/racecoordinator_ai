@@ -338,4 +338,78 @@ describe("HeatConverter", () => {
     HeatConverter.clearCache();
     expect(true).toBeTrue();
   });
+
+  it("should map initialFuelLevel and initialize participant fuelLevel if missing", () => {
+    const proto: IHeat = {
+      objectId: "heat_fuel",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_fuel_1",
+          driver: {
+            objectId: "p_fuel_1",
+            driver: { name: "Fuel Driver" },
+          },
+          initialFuelLevel: 85.5,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.initialFuelLevel).toBe(85.5);
+    expect(driverData.participant.fuelLevel).toBe(85.5);
+  });
+
+  it("should preserve participant fuelLevel when it is 0 (out of fuel)", () => {
+    const proto: IHeat = {
+      objectId: "heat_fuel_zero",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_fuel_zero_1",
+          driver: {
+            objectId: "p_fuel_zero_1",
+            driver: { name: "Out of Fuel Driver" },
+            fuelLevel: 0,
+          },
+          initialFuelLevel: 100.0,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.initialFuelLevel).toBe(100.0);
+    expect(driverData.participant.fuelLevel).toBe(0);
+  });
+
+  it("should preserve participant fuelLevel when already greater than 0", () => {
+    const proto: IHeat = {
+      objectId: "heat_fuel_preserve",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_fuel_2",
+          driver: {
+            objectId: "p_fuel_2",
+            driver: { name: "Fuel Driver 2" },
+            fuelLevel: 42.0,
+          },
+          initialFuelLevel: 100.0,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.initialFuelLevel).toBe(100.0);
+    expect(driverData.participant.fuelLevel).toBe(42.0);
+  });
 });

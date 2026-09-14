@@ -47,3 +47,12 @@ Numerical values (such as lap times and gaps) are automatically formatted for sp
 ## Implementation Details
 
 The interpolation logic is handled on the client side using the browser's Web Speech API (`speechSynthesis`). Both `{...}` and `${...}` syntax are normalized and evaluated seamlessly. Unresolved placeholders are left untouched in the text.
+
+## Audio System Integration
+
+Text-to-Speech callouts are managed by Race Coordinator AI's centralized [Audio System](audio.md):
+
+*   **Voice, Speed & Pitch**: Configure your preferred browser speech voice, playback rate (`0.1x`–`2.0x`), pitch, and volume in the **UI Editor -> Audio Settings** panel.
+*   **Priority Tiers**: Spoken callouts are prioritized so that urgent safety alerts (e.g. Yellow Flags, Heat Over) preempt routine commentary, while simultaneous announcements never talk over each other.
+*   **Audio Relevance**: In multi-screen and driver station setups, TTS announcements are automatically filtered so drivers only hear commentary relevant to their assigned car and lane.
+

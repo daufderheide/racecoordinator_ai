@@ -146,21 +146,53 @@ describe("AudioService", () => {
         service.isVoiceCallout("audio.race_over", presetConfig),
       ).toBeTrue();
       expect(
+        service.isVoiceCallout("audio.min_lap_time", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("audio.drift_lap", presetConfig),
+      ).toBeTrue();
+      expect(
         service.isVoiceCallout("driver.penaltyAudio", presetConfig),
       ).toBeTrue();
       expect(
         service.isVoiceCallout("driver.falseStartAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.overallBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.overallLaneBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.raceBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.raceLaneBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.heatBestLapAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.newRaceLeaderAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.newHeatLeaderAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.pitInAudio", presetConfig),
+      ).toBeTrue();
+      expect(
+        service.isVoiceCallout("driver.fuelAudio", presetConfig),
       ).toBeTrue();
     });
 
     it("should return false for preset action and effect slots", () => {
       const presetLap: AudioConfig = { type: "preset", url: "default_beep" };
       expect(service.isVoiceCallout("driver.lapAudio", presetLap)).toBeFalse();
-      expect(service.isVoiceCallout("audio.countdown", presetLap)).toBeFalse();
       expect(
-        service.isVoiceCallout("audio.min_lap_time", presetLap),
+        service.isVoiceCallout("driver.bestLapAudio", presetLap),
       ).toBeFalse();
-      expect(service.isVoiceCallout("audio.drift_lap", presetLap)).toBeFalse();
+      expect(service.isVoiceCallout("audio.countdown", presetLap)).toBeFalse();
     });
   });
 
@@ -186,21 +218,33 @@ describe("AudioService", () => {
   describe("playCallout - Play, Preempt, or Drop", () => {
     it("should play immediately when channel is idle", () => {
       const config: AudioConfig = { type: "preset", url: "w_heat_half.wav" };
-      service.playCallout(config, "high");
+      const played = service.playCallout(config, "high");
 
+      expect(played).toBeTrue();
       expect(service.getActiveVoice()).not.toBeNull();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(mockAudioInstance.play).toHaveBeenCalled();
     });
 
+    it("should return false for none or undefined config", () => {
+      expect(service.playCallout({ type: "none" }, "high")).toBeFalse();
+      expect(service.playCallout(undefined, "high")).toBeFalse();
+      expect(
+        service.playCallout({ type: "preset", url: "" }, "high"),
+      ).toBeFalse();
+      expect(
+        service.playCallout({ type: "tts", text: "" }, "high"),
+      ).toBeFalse();
+    });
+
     it("should drop incoming callout if channel is busy with equal or higher priority", () => {
       const highConfig: AudioConfig = { type: "preset", url: "halfway.wav" };
-      service.playCallout(highConfig, "high");
+      expect(service.playCallout(highConfig, "high")).toBeTrue();
       expect(service.getActiveVoice()?.priority).toBe("high");
 
       // Attempt lower priority
       const normalConfig: AudioConfig = { type: "preset", url: "30sec.wav" };
-      service.playCallout(normalConfig, "normal");
+      expect(service.playCallout(normalConfig, "normal")).toBeFalse();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(mockLogger.debug).toHaveBeenCalledWith(
         "Dropping callout due to equal or higher active priority",
@@ -208,7 +252,7 @@ describe("AudioService", () => {
 
       // Attempt equal priority
       const anotherHigh: AudioConfig = { type: "preset", url: "penalty.wav" };
-      service.playCallout(anotherHigh, "high");
+      expect(service.playCallout(anotherHigh, "high")).toBeFalse();
       expect(service.getActiveVoice()?.priority).toBe("high");
       expect(service.getUrgentQueue().length).toBe(0);
     });
@@ -457,6 +501,248 @@ describe("AudioService", () => {
       expect(service.getActiveVoice()).toBeNull();
       expect(service.getUrgentQueue().length).toBe(0);
       expect(service.isCoolingDown()).toBeFalse();
+    });
+
+    it("should pause and clear activeAudioElement on stopVoice()", () => {
+      const urgent: AudioConfig = { type: "preset", url: "yellow.wav" };
+      service.playCallout(urgent, "urgent");
+      expect((service as any).activeAudioElement).toBe(mockAudioInstance);
+
+      service.stopVoice();
+      expect(mockAudioInstance.pause).toHaveBeenCalled();
+      expect((service as any).activeAudioElement).toBeNull();
+      expect(service.getActiveVoice()).toBeNull();
+    });
+
+    it("should cancel activeUtterance and speech synthesis on stopVoice()", () => {
+      const tts: AudioConfig = { type: "tts", text: "Caution on track" };
+      service.playCallout(tts, "urgent");
+      expect((service as any).activeUtterance).not.toBeNull();
+
+      service.stopVoice();
+      expect(mockSpeechSynthesis.cancel).toHaveBeenCalled();
+      expect((service as any).activeUtterance).toBeNull();
+      expect(service.getActiveVoice()).toBeNull();
+    });
+
+    it("should release activeVoice when dynamic watchdog trips on stalled audio", fakeAsync(() => {
+      const urgent: AudioConfig = { type: "preset", url: "yellow.wav" };
+      service.playCallout(urgent, "urgent");
+      expect(service.getActiveVoice()).not.toBeNull();
+
+      mockAudioInstance.duration = 2.0;
+      if (mockAudioInstance.onloadedmetadata) {
+        mockAudioInstance.onloadedmetadata();
+      }
+
+      // Fast forward past dynamic watchdog (2.0 * 1000 + 1500 = 3500ms)
+      tick(4000);
+
+      expect(service.getActiveVoice()).toBeNull();
+      expect((service as any).activeAudioElement).toBeNull();
+    }));
+  });
+
+  describe("Relevance Filtering and Page Scoping", () => {
+    it("should allow all sounds when relevanceFilter is null", () => {
+      service.setRelevanceFilter(null);
+      expect(service.isSoundRelevant({ widgetType: "countdown" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "timer" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "flag" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "race-state" })).toBeTrue();
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+          driverId: "d1",
+        }),
+      ).toBeTrue();
+      expect(service.isSoundRelevant()).toBeTrue();
+    });
+
+    it("should correctly filter countdown audio", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowCountdown: false,
+      });
+      expect(service.isSoundRelevant({ widgetType: "countdown" })).toBeFalse();
+
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowCountdown: true,
+      });
+      expect(service.isSoundRelevant({ widgetType: "countdown" })).toBeTrue();
+    });
+
+    it("should correctly filter timer audio", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowTimer: false,
+      });
+      expect(service.isSoundRelevant({ widgetType: "timer" })).toBeFalse();
+
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowTimer: true,
+      });
+      expect(service.isSoundRelevant({ widgetType: "timer" })).toBeTrue();
+    });
+
+    it("should correctly filter race state audio", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowRaceState: false,
+      });
+      expect(service.isSoundRelevant({ widgetType: "flag" })).toBeFalse();
+      expect(service.isSoundRelevant({ widgetType: "race-state" })).toBeFalse();
+
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowRaceState: true,
+      });
+      expect(service.isSoundRelevant({ widgetType: "flag" })).toBeTrue();
+      expect(service.isSoundRelevant({ widgetType: "race-state" })).toBeTrue();
+    });
+
+    it("should correctly filter driver audio in mode 'none'", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "none",
+        allowCountdown: true,
+        allowTimer: true,
+        allowRaceState: true,
+      });
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+          driverId: "d1",
+        }),
+      ).toBeFalse();
+      expect(service.isSoundRelevant({ laneIndex: 0 })).toBeFalse();
+      expect(service.isSoundRelevant({ driverId: "d1" })).toBeFalse();
+    });
+
+    it("should correctly filter driver audio in mode 'scoped'", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([1]),
+        allowedDriverIds: new Set(["driver-123"]),
+      });
+
+      // Allowed lane
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+          driverId: "other",
+        }),
+      ).toBeTrue();
+
+      // Allowed driver
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 2,
+          driverId: "driver-123",
+        }),
+      ).toBeTrue();
+
+      // Disallowed lane and driver
+      expect(
+        service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+          driverId: "driver-999",
+        }),
+      ).toBeFalse();
+    });
+
+    it("should drop playSfx early when sound is not relevant", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "all",
+        allowCountdown: false,
+      });
+
+      const result = service.playSfx("beep.wav", { widgetType: "countdown" });
+      expect(result).toBeUndefined();
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Dropping SFX: not relevant to current UI page",
+        { widgetType: "countdown" },
+      );
+    });
+
+    it("should drop playCallout early when sound is not relevant", () => {
+      service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([0]),
+      });
+
+      const config: AudioConfig = { type: "preset", url: "lap.wav" };
+      const result = service.playCallout(config, "high", undefined, undefined, {
+        widgetType: "lane-view",
+        laneIndex: 1,
+      });
+
+      expect(result).toBeFalse();
+      expect(service.getActiveVoice()).toBeNull();
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        "Dropping callout: not relevant to current UI page",
+        { widgetType: "lane-view", laneIndex: 1 },
+      );
+    });
+
+    it("should support independent isolated instances for per-page audio engines", () => {
+      const page1Service = new AudioService(
+        mockDataService,
+        mockSettingsService,
+        mockLogger,
+      );
+      const page2Service = new AudioService(
+        mockDataService,
+        mockSettingsService,
+        mockLogger,
+      );
+
+      page1Service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([0]),
+      });
+      page2Service.setRelevanceFilter({
+        driverAudioMode: "scoped",
+        allowedLanes: new Set([1]),
+      });
+
+      // Page 1 plays lane 0, drops lane 1
+      expect(
+        page1Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+        }),
+      ).toBeTrue();
+      expect(
+        page1Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+        }),
+      ).toBeFalse();
+
+      // Page 2 plays lane 1, drops lane 0
+      expect(
+        page2Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+        }),
+      ).toBeTrue();
+      expect(
+        page2Service.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+        }),
+      ).toBeFalse();
+
+      page1Service.ngOnDestroy();
+      page2Service.ngOnDestroy();
     });
   });
 });

@@ -305,6 +305,8 @@ public class DatabaseContext {
         logger.info("Restoring database '{}' from factory_default.zip resource", dbName);
         importDatabase(dbName, is);
         new AssetService(this, dataRoot + dbName + "/assets").backfillDefaults();
+        DatabaseService.getInstance().backfillDrivers(this);
+        DatabaseService.getInstance().backfillCustomUIs(this);
         return;
       }
     } catch (Exception e) {

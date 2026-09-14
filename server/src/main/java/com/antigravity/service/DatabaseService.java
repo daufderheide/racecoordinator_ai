@@ -81,6 +81,10 @@ public class DatabaseService {
     databaseInitializer.backfillCustomUIs(context);
   }
 
+  public void backfillDrivers(DatabaseContext context) {
+    databaseInitializer.backfillDrivers(context);
+  }
+
   public Track getFactoryTrack() {
     return databaseInitializer.getFactoryTrack();
   }

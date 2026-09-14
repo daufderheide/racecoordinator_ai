@@ -1007,5 +1007,62 @@ describe("AudioSelectorComponent", () => {
       expect(mockAudioInstance.play).toHaveBeenCalled();
       expect(mockAudioInstance.volume).toBeCloseTo(0.45, 2);
     });
+
+    it("should preview typed TTS text when play is clicked", () => {
+      let spokenText = "";
+      spyOn(window, "SpeechSynthesisUtterance").and.callFake(function (
+        this: any,
+        text?: string,
+      ) {
+        spokenText = text || "";
+        return {} as any;
+      } as any);
+
+      if (window.speechSynthesis) {
+        if (!(window.speechSynthesis.speak as any).and) {
+          spyOn(window.speechSynthesis, "speak");
+        }
+        if (!(window.speechSynthesis.cancel as any).and) {
+          spyOn(window.speechSynthesis, "cancel");
+        }
+      } else {
+        (window as any).speechSynthesis = jasmine.createSpyObj(
+          "SpeechSynthesis",
+          ["speak", "cancel"],
+        );
+      }
+
+      fixture.componentRef.setInput("type", "tts");
+      fixture.componentRef.setInput("text", undefined);
+      fixture.detectChanges();
+
+      // User types TTS text into the input
+      component.onTextChange("{driver.nickname} out of fuel");
+      expect(component.effectiveText()).toBe("{driver.nickname} out of fuel");
+
+      component.play();
+
+      expect(window.speechSynthesis.speak).toHaveBeenCalled();
+      // Should interpolate with mock context where driver nickname is Dave
+      expect(spokenText).toBe("Dave out of fuel");
+    });
+
+    it("should reset localText when parent text input changes", () => {
+      component.onTextChange("Typed text");
+      expect(component.effectiveText()).toBe("Typed text");
+
+      fixture.componentRef.setInput("text", "Server updated text");
+      fixture.detectChanges();
+      component.ngOnChanges({
+        text: {
+          currentValue: "Server updated text",
+          previousValue: undefined,
+          firstChange: false,
+          isFirstChange: () => false,
+        },
+      });
+
+      expect(component.effectiveText()).toBe("Server updated text");
+    });
   });
 });

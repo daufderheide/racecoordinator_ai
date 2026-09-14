@@ -135,57 +135,274 @@
           </div>
           @if (sectionsExpanded.audio) {
             <div class="section-content">
-              <div class="audio-grid">
-                <div class="audio-section" id="driver-lap-audio">
-                  @if (editingDriver.lapAudio) {
-                    <app-audio-selector
-                      [label]="'DE_LABEL_LAP_SOUNDS' | translate"
-                      [assets]="soundAssets"
-                      [type]="editingDriver.lapAudio.type"
-                      (typeChange)="onAudioTypeChange('lap', $event)"
-                      [url]="editingDriver.lapAudio.url"
-                      (urlChange)="onAudioUrlChange('lap', $event)"
-                      (assetSelected)="onAssetSelected($event)"
-                      [text]="editingDriver.lapAudio.text"
-                      (textChange)="onAudioTextChange('lap', $event)"
-                      [context]="ttsContext"
-                    >
-                    </app-audio-selector>
-                  }
+              <div class="audio-group" id="driver-personal-lap-group">
+                <div class="audio-group-header">
+                  <h2>{{ "DE_GROUP_PERSONAL_LAP_SOUNDS" | translate }}</h2>
                 </div>
-                <div class="audio-section" id="driver-best-lap-audio">
-                  @if (editingDriver.bestLapAudio) {
-                    <app-audio-selector
-                      [label]="'DE_LABEL_BEST_LAP_SOUNDS' | translate"
-                      [assets]="soundAssets"
-                      [type]="editingDriver.bestLapAudio.type"
-                      (typeChange)="onAudioTypeChange('bestLap', $event)"
-                      [url]="editingDriver.bestLapAudio.url"
-                      (urlChange)="onAudioUrlChange('bestLap', $event)"
-                      (assetSelected)="onAssetSelected($event)"
-                      [text]="editingDriver.bestLapAudio.text"
-                      (textChange)="onAudioTextChange('bestLap', $event)"
-                      [context]="ttsContext"
-                    >
-                    </app-audio-selector>
-                  }
+                <div class="audio-grid">
+                  <div class="audio-section" id="driver-lap-audio">
+                    @if (editingDriver.lapAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_LAP_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.lapAudio.type"
+                        (typeChange)="onAudioTypeChange('lap', $event)"
+                        [url]="editingDriver.lapAudio.url"
+                        (urlChange)="onAudioUrlChange('lap', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.lapAudio.text"
+                        (textChange)="onAudioTextChange('lap', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-best-lap-audio">
+                    @if (editingDriver.bestLapAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_PERSONAL_BEST_LAP_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.bestLapAudio.type"
+                        (typeChange)="onAudioTypeChange('bestLap', $event)"
+                        [url]="editingDriver.bestLapAudio.url"
+                        (urlChange)="onAudioUrlChange('bestLap', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.bestLapAudio.text"
+                        (textChange)="onAudioTextChange('bestLap', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
                 </div>
-                <div class="audio-section" id="driver-false-start-audio">
-                  @if (editingDriver.penaltyAudio) {
-                    <app-audio-selector
-                      [label]="'DE_LABEL_FALSE_START_SOUNDS' | translate"
-                      [assets]="soundAssets"
-                      [type]="editingDriver.penaltyAudio.type"
-                      (typeChange)="onAudioTypeChange('falseStart', $event)"
-                      [url]="editingDriver.penaltyAudio.url"
-                      (urlChange)="onAudioUrlChange('falseStart', $event)"
-                      (assetSelected)="onAssetSelected($event)"
-                      [text]="editingDriver.penaltyAudio.text"
-                      (textChange)="onAudioTextChange('falseStart', $event)"
-                      [context]="ttsContext"
-                    >
-                    </app-audio-selector>
-                  }
+              </div>
+
+              <div class="audio-group" id="driver-race-best-lap-group">
+                <div class="audio-group-header">
+                  <h2>{{ "DE_GROUP_RACE_LAP_SOUNDS" | translate }}</h2>
+                </div>
+                <div class="audio-grid">
+                  <div class="audio-section" id="driver-race-best-lap-audio">
+                    @if (editingDriver.raceBestLapAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_RACE_BEST_LAP_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.raceBestLapAudio.type"
+                        (typeChange)="onAudioTypeChange('raceBestLap', $event)"
+                        [url]="editingDriver.raceBestLapAudio.url"
+                        (urlChange)="onAudioUrlChange('raceBestLap', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.raceBestLapAudio.text"
+                        (textChange)="onAudioTextChange('raceBestLap', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div
+                    class="audio-section"
+                    id="driver-race-lane-best-lap-audio"
+                  >
+                    @if (editingDriver.raceLaneBestLapAudio) {
+                      <app-audio-selector
+                        [label]="
+                          'DE_LABEL_RACE_LANE_BEST_LAP_SOUND' | translate
+                        "
+                        [assets]="soundAssets"
+                        [type]="editingDriver.raceLaneBestLapAudio.type"
+                        (typeChange)="
+                          onAudioTypeChange('raceLaneBestLap', $event)
+                        "
+                        [url]="editingDriver.raceLaneBestLapAudio.url"
+                        (urlChange)="
+                          onAudioUrlChange('raceLaneBestLap', $event)
+                        "
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.raceLaneBestLapAudio.text"
+                        (textChange)="
+                          onAudioTextChange('raceLaneBestLap', $event)
+                        "
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-heat-best-lap-audio">
+                    @if (editingDriver.heatBestLapAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_HEAT_BEST_LAP_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.heatBestLapAudio.type"
+                        (typeChange)="onAudioTypeChange('heatBestLap', $event)"
+                        [url]="editingDriver.heatBestLapAudio.url"
+                        (urlChange)="onAudioUrlChange('heatBestLap', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.heatBestLapAudio.text"
+                        (textChange)="onAudioTextChange('heatBestLap', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-new-race-leader-audio">
+                    @if (editingDriver.newRaceLeaderAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_NEW_RACE_LEADER_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.newRaceLeaderAudio.type"
+                        (typeChange)="
+                          onAudioTypeChange('newRaceLeader', $event)
+                        "
+                        [url]="editingDriver.newRaceLeaderAudio.url"
+                        (urlChange)="onAudioUrlChange('newRaceLeader', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.newRaceLeaderAudio.text"
+                        (textChange)="
+                          onAudioTextChange('newRaceLeader', $event)
+                        "
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-new-heat-leader-audio">
+                    @if (editingDriver.newHeatLeaderAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_NEW_HEAT_LEADER_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.newHeatLeaderAudio.type"
+                        (typeChange)="
+                          onAudioTypeChange('newHeatLeader', $event)
+                        "
+                        [url]="editingDriver.newHeatLeaderAudio.url"
+                        (urlChange)="onAudioUrlChange('newHeatLeader', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.newHeatLeaderAudio.text"
+                        (textChange)="
+                          onAudioTextChange('newHeatLeader', $event)
+                        "
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="audio-group" id="driver-overall-best-lap-group">
+                <div class="audio-group-header">
+                  <h2>{{ "DE_GROUP_OVERALL_BEST_LAP_SOUNDS" | translate }}</h2>
+                </div>
+                <div class="audio-grid">
+                  <div class="audio-section" id="driver-overall-best-lap-audio">
+                    @if (editingDriver.overallBestLapAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_OVERALL_BEST_LAP_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.overallBestLapAudio.type"
+                        (typeChange)="
+                          onAudioTypeChange('overallBestLap', $event)
+                        "
+                        [url]="editingDriver.overallBestLapAudio.url"
+                        (urlChange)="onAudioUrlChange('overallBestLap', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.overallBestLapAudio.text"
+                        (textChange)="
+                          onAudioTextChange('overallBestLap', $event)
+                        "
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div
+                    class="audio-section"
+                    id="driver-overall-lane-best-lap-audio"
+                  >
+                    @if (editingDriver.overallLaneBestLapAudio) {
+                      <app-audio-selector
+                        [label]="
+                          'DE_LABEL_OVERALL_LANE_BEST_LAP_SOUND' | translate
+                        "
+                        [assets]="soundAssets"
+                        [type]="editingDriver.overallLaneBestLapAudio.type"
+                        (typeChange)="
+                          onAudioTypeChange('overallLaneBestLap', $event)
+                        "
+                        [url]="editingDriver.overallLaneBestLapAudio.url"
+                        (urlChange)="
+                          onAudioUrlChange('overallLaneBestLap', $event)
+                        "
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.overallLaneBestLapAudio.text"
+                        (textChange)="
+                          onAudioTextChange('overallLaneBestLap', $event)
+                        "
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="audio-group" id="driver-event-sounds-group">
+                <div class="audio-group-header">
+                  <h2>{{ "DE_GROUP_EVENT_SOUNDS" | translate }}</h2>
+                </div>
+                <div class="audio-grid">
+                  <div class="audio-section" id="driver-pit-in-audio">
+                    @if (editingDriver.pitInAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_PIT_IN_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.pitInAudio.type"
+                        (typeChange)="onAudioTypeChange('pitIn', $event)"
+                        [url]="editingDriver.pitInAudio.url"
+                        (urlChange)="onAudioUrlChange('pitIn', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.pitInAudio.text"
+                        (textChange)="onAudioTextChange('pitIn', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-fuel-audio">
+                    @if (editingDriver.fuelAudio) {
+                      <app-audio-selector
+                        mode="set"
+                        [label]="'DE_LABEL_FUEL_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.fuelAudio.type"
+                        (typeChange)="onAudioTypeChange('fuel', $event)"
+                        [url]="editingDriver.fuelAudio.url"
+                        (urlChange)="onAudioUrlChange('fuel', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.fuelAudio.text"
+                        (textChange)="onAudioTextChange('fuel', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
+                  <div class="audio-section" id="driver-false-start-audio">
+                    @if (editingDriver.penaltyAudio) {
+                      <app-audio-selector
+                        [label]="'DE_LABEL_FALSE_START_SOUND' | translate"
+                        [assets]="soundAssets"
+                        [type]="editingDriver.penaltyAudio.type"
+                        (typeChange)="onAudioTypeChange('falseStart', $event)"
+                        [url]="editingDriver.penaltyAudio.url"
+                        (urlChange)="onAudioUrlChange('falseStart', $event)"
+                        (assetSelected)="onAssetSelected($event)"
+                        [text]="editingDriver.penaltyAudio.text"
+                        (textChange)="onAudioTextChange('falseStart', $event)"
+                        [context]="ttsContext"
+                      >
+                      </app-audio-selector>
+                    }
+                  </div>
                 </div>
               </div>
             </div>

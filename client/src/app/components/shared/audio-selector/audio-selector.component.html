@@ -108,7 +108,7 @@
     <div class="audio-controls">
       <input
         type="text"
-        [ngModel]="text()"
+        [ngModel]="effectiveText()"
         (ngModelChange)="onTextChange($event)"
         class="dm-input"
         [placeholder]="'AS_PLACEHOLDER_TEXT' | translate"
@@ -137,7 +137,7 @@
         {{
           effectiveType() === "preset" || effectiveType() === "audio_set"
             ? selectedAssetName()
-            : text() || "---"
+            : effectiveText() || "---"
         }}
       </div>
       <button class="btn-play" (click)="play()">

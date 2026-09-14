@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core";
+import { Injectable, OnDestroy } from "@angular/core";
 import { DataService } from "@app/data.service";
 import { AudioConfig } from "@app/models/driver";
 import { LoggerService } from "@app/services/logger.service";
@@ -14,12 +14,37 @@ export const AUDIO_PRIORITY_WEIGHT: Record<AudioPriority, number> = {
   urgent: 4,
 };
 
+export interface AudioAssociation {
+  widgetType?: "lane-view" | "timer" | "flag" | "countdown" | string;
+  laneIndex?: number;
+  driverId?: string;
+}
+
+export type DriverAudioMode = "all" | "none" | "scoped";
+
+export interface AudioRelevanceFilter {
+  /** Driver audio mode: 'all' (all lanes), 'none' (no driver audio), 'scoped' (specific lanes/drivers) */
+  driverAudioMode: DriverAudioMode;
+  /** When driverAudioMode is 'scoped', set of allowed 0-indexed lane numbers */
+  allowedLanes?: Set<number>;
+  /** When driverAudioMode is 'scoped', set of allowed driver entity IDs / object IDs */
+  allowedDriverIds?: Set<string>;
+
+  /** Whether countdown audio is allowed */
+  allowCountdown?: boolean;
+  /** Whether timer audio (seconds left, halfway) is allowed */
+  allowTimer?: boolean;
+  /** Whether race state audio (yellow flag, heat over, race over) is allowed */
+  allowRaceState?: boolean;
+}
+
 export interface UrgentQueueItem {
   config: AudioConfig;
   priority: AudioPriority;
   context?: any;
   resolvedUrl?: string;
   enqueuedAt: number;
+  association?: AudioAssociation;
 }
 
 export interface ActiveVoiceCallout {
@@ -30,12 +55,16 @@ export interface ActiveVoiceCallout {
 @Injectable({
   providedIn: "root",
 })
-export class AudioService {
+export class AudioService implements OnDestroy {
   private activeVoice: ActiveVoiceCallout | null = null;
   private urgentQueue: UrgentQueueItem[] = [];
   private isSpacingCoolingDown: boolean = false;
   private spacingTimer: any = null;
   private cachedVoices: SpeechSynthesisVoice[] = [];
+  private activeAudioElement: HTMLAudioElement | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private safetyTimeout: any = null;
+  private relevanceFilter: AudioRelevanceFilter | null = null;
 
   constructor(
     private dataService: DataService,
@@ -59,28 +88,140 @@ export class AudioService {
       "audio.seconds_left.halfway",
       "audio.heat_over",
       "audio.race_over",
+      "audio.min_lap_time",
+      "audio.drift_lap",
       "penalty",
       "falseStart",
       "false_start",
+      "overallBestLap",
+      "overall_best_lap",
+      "overallRecordLap",
+      "overall_record_lap",
+      "overallLaneBestLap",
+      "overall_lane_best_lap",
+      "overallLaneRecordLap",
+      "overall_lane_record_lap",
+      "raceBestLap",
+      "race_best_lap",
+      "raceLaneBestLap",
+      "race_lane_best_lap",
+      "heatBestLap",
+      "heat_best_lap",
+      "newRaceLeader",
+      "new_race_leader",
+      "newHeatLeader",
+      "new_heat_leader",
+      "pitIn",
+      "pit_in",
+      "fuel",
+      "fuel_level",
+      "fuelLevel",
     ];
 
     return announcementSlots.some((s) => slotOrCategory.includes(s));
+  }
+
+  setRelevanceFilter(filter: AudioRelevanceFilter | null): void {
+    this.relevanceFilter = filter;
+  }
+
+  getRelevanceFilter(): AudioRelevanceFilter | null {
+    return this.relevanceFilter;
+  }
+
+  resetRelevanceFilter(): void {
+    this.relevanceFilter = null;
+  }
+
+  isSoundRelevant(association?: AudioAssociation): boolean {
+    if (!this.relevanceFilter) {
+      return true;
+    }
+
+    // 1. Countdown audio
+    if (association?.widgetType === "countdown") {
+      return !!this.relevanceFilter.allowCountdown;
+    }
+
+    // 2. Timer audio (seconds left, halfway)
+    if (association?.widgetType === "timer") {
+      return !!this.relevanceFilter.allowTimer;
+    }
+
+    // 3. Race state audio (flag, yellow flag, heat over, race over)
+    if (
+      association?.widgetType === "flag" ||
+      association?.widgetType === "race-state"
+    ) {
+      return !!this.relevanceFilter.allowRaceState;
+    }
+
+    // 4. Driver / Lane audio (lane-view / driver station)
+    if (
+      association?.widgetType === "lane-view" ||
+      association?.widgetType === "driver" ||
+      association?.laneIndex != null ||
+      association?.driverId != null
+    ) {
+      if (this.relevanceFilter.driverAudioMode === "all") {
+        return true;
+      }
+      if (this.relevanceFilter.driverAudioMode === "scoped") {
+        if (
+          association.laneIndex != null &&
+          this.relevanceFilter.allowedLanes?.has(association.laneIndex)
+        ) {
+          return true;
+        }
+        if (
+          association.driverId &&
+          this.relevanceFilter.allowedDriverIds?.has(association.driverId)
+        ) {
+          return true;
+        }
+        return false;
+      }
+      return false;
+    }
+
+    // Unassociated fallback
+    return true;
+  }
+
+  ngOnDestroy(): void {
+    this.reset();
   }
 
   /**
    * Plays a non-verbal sound effect (SFX) polyphonically.
    * SFX sounds play immediately without blocking or preempting other sounds.
    */
-  playSfx(url: string | undefined): HTMLAudioElement | void {
+  playSfx(
+    url: string | undefined,
+    association?: AudioAssociation,
+  ): HTMLAudioElement | void {
     if (!url) return;
+    if (!this.isSoundRelevant(association)) {
+      this.logger.debug(
+        "Dropping SFX: not relevant to current UI page",
+        association,
+      );
+      return;
+    }
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     this.logger.debug("Playing SFX from URL:", playableUrl);
     const audio = new Audio(playableUrl);
     const settings = this.settingsService.getSettings();
-    audio.volume = Math.max(
+    let finalVolume = Math.max(
       0,
       Math.min(1, (settings.masterVolume ?? 100) / 100),
     );
+    // Duck SFX volume to 20% if a voice callout is actively playing
+    if (this.activeVoice) {
+      finalVolume *= 0.2;
+    }
+
+    audio.volume = finalVolume;
     audio.play().catch((err) => {
       this.logger.error("Error playing SFX", err);
     });
@@ -95,13 +236,29 @@ export class AudioService {
     priority: AudioPriority,
     context?: any,
     resolvedUrl?: string,
-  ): void {
-    if (!config || config.type === "none") return;
+    association?: AudioAssociation,
+  ): boolean {
+    if (!this.isSoundRelevant(association)) {
+      this.logger.debug(
+        "Dropping callout: not relevant to current UI page",
+        association,
+      );
+      return false;
+    }
+
+    if (!config || config.type === "none") return false;
+
+    if (config.type === "preset" && !(resolvedUrl || config.url?.trim())) {
+      return false;
+    }
+    if (config.type === "tts" && !config.text?.trim()) {
+      return false;
+    }
 
     // Channel IDLE
     if (!this.activeVoice && !this.isSpacingCoolingDown) {
       this.executeVoiceCallout(config, priority, context, resolvedUrl);
-      return;
+      return true;
     }
 
     // Channel BUSY
@@ -109,7 +266,7 @@ export class AudioService {
       if (this.isSpacingCoolingDown) {
         this.clearSpacingTimer();
         this.executeVoiceCallout(config, priority, context, resolvedUrl);
-        return;
+        return true;
       }
 
       if (this.activeVoice) {
@@ -126,16 +283,18 @@ export class AudioService {
             context,
             resolvedUrl,
             enqueuedAt: Date.now(),
+            association,
           });
         }
+        return true;
       }
-      return;
+      return false;
     }
 
     // Incoming sound is NOT urgent
     if (this.isSpacingCoolingDown) {
       this.logger.debug("Dropping non-urgent callout during cadence pause");
-      return;
+      return false;
     }
 
     if (this.activeVoice) {
@@ -147,13 +306,17 @@ export class AudioService {
         this.activeVoice.stop();
         this.activeVoice = null;
         this.executeVoiceCallout(config, priority, context, resolvedUrl);
+        return true;
       } else {
         // Drop incoming sound (Play, Preempt, or Drop)
         this.logger.debug(
           "Dropping callout due to equal or higher active priority",
         );
+        return false;
       }
     }
+
+    return false;
   }
 
   getActiveVoice(): ActiveVoiceCallout | null {
@@ -170,9 +333,36 @@ export class AudioService {
 
   /** Stops any currently playing verbal callout and clears cooldown. */
   stopVoice(): void {
+    if (this.safetyTimeout) {
+      clearTimeout(this.safetyTimeout);
+      this.safetyTimeout = null;
+    }
     if (this.activeVoice) {
       this.activeVoice.stop();
       this.activeVoice = null;
+    }
+    if (this.activeAudioElement) {
+      try {
+        this.activeAudioElement.pause();
+        this.activeAudioElement.currentTime = 0;
+        this.activeAudioElement.onended = null;
+        this.activeAudioElement.onerror = null;
+      } catch {
+        // ignore
+      }
+      this.activeAudioElement = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      this.activeUtterance = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
     }
     this.clearSpacingTimer();
   }
@@ -201,6 +391,7 @@ export class AudioService {
   private playPresetVoice(url: string, priority: AudioPriority): void {
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     const audio = new Audio(playableUrl);
+    this.activeAudioElement = audio;
     const settings = this.settingsService.getSettings();
     audio.volume = Math.max(
       0,
@@ -213,24 +404,57 @@ export class AudioService {
       ended = true;
       audio.onended = null;
       audio.onerror = null;
-      clearTimeout(safetyTimeout);
+      audio.onloadedmetadata = null;
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
+        this.safetyTimeout = null;
+      }
+      if (this.activeAudioElement === audio) {
+        this.activeAudioElement = null;
+      }
     };
 
     const stop = () => {
       cleanup();
-      audio.pause();
-      audio.currentTime = 0;
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
     };
 
     this.activeVoice = { priority, stop };
 
-    // Safety watchdog timeout (15s) in case audio element stalls
-    const safetyTimeout = setTimeout(() => {
-      cleanup();
-      if (this.activeVoice?.stop === stop) {
-        this.onVoiceCalloutEnded();
+    const startWatchdog = (timeoutMs: number) => {
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
       }
-    }, 15000);
+      this.safetyTimeout = setTimeout(() => {
+        cleanup();
+        if (this.activeVoice?.stop === stop) {
+          this.onVoiceCalloutEnded();
+        }
+      }, timeoutMs);
+    };
+
+    // Initial fallback watchdog (10s) if metadata has not loaded yet
+    startWatchdog(10000);
+
+    audio.onloadedmetadata = () => {
+      if (
+        !ended &&
+        audio.duration &&
+        !isNaN(audio.duration) &&
+        isFinite(audio.duration)
+      ) {
+        const dynamicTimeout = Math.max(
+          3000,
+          Math.min(10000, Math.ceil(audio.duration * 1000) + 1500),
+        );
+        startWatchdog(dynamicTimeout);
+      }
+    };
 
     audio.onended = () => {
       cleanup();
@@ -279,6 +503,7 @@ export class AudioService {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    this.activeUtterance = utterance;
     this.applyTtsSettingsToUtterance(utterance);
     let ended = false;
 
@@ -287,23 +512,38 @@ export class AudioService {
       ended = true;
       utterance.onend = null;
       utterance.onerror = null;
-      clearTimeout(safetyTimeout);
+      if (this.safetyTimeout) {
+        clearTimeout(this.safetyTimeout);
+        this.safetyTimeout = null;
+      }
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
     };
 
     const stop = () => {
       cleanup();
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
     };
 
     this.activeVoice = { priority, stop };
 
-    // Safety watchdog timeout (15s)
-    const safetyTimeout = setTimeout(() => {
+    const wordCount = interpolatedText.trim().split(/\s+/).length;
+    const dynamicTimeout = Math.max(
+      3000,
+      Math.min(10000, wordCount * 500 + 2000),
+    );
+
+    this.safetyTimeout = setTimeout(() => {
       cleanup();
       if (this.activeVoice?.stop === stop) {
         this.onVoiceCalloutEnded();
       }
-    }, 15000);
+    }, dynamicTimeout);
 
     utterance.onend = () => {
       cleanup();

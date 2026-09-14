@@ -84,6 +84,10 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
         data: e.data,
         type: e.type || "preset",
         text: e.text || "",
+        percentage:
+          (e as any).percentage != null
+            ? (e as any).percentage
+            : Math.round(e.timeSeconds || 0),
       }));
     } else {
       this.entries = [];
@@ -189,6 +193,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
 
     this.entries.push({
       timeSeconds: 0,
+      percentage: 0,
       url: url,
       name: entryName,
       data: new Uint8Array(),
@@ -238,6 +243,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
 
         newEntries[index] = {
           timeSeconds: 0,
+          percentage: 0,
           url: existingAsset ? existingAsset.url : previewUrl,
           name: file.name,
           data: existingAsset ? new Uint8Array() : bytes,
@@ -279,6 +285,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
       const num = extractNumber(entry.name || "");
       if (num !== null) {
         entry.timeSeconds = num;
+        entry.percentage = num;
       }
     });
 
@@ -290,6 +297,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
   addEntry() {
     this.entries.push({
       timeSeconds: 0,
+      percentage: 0,
       url: "",
       name: "",
       data: new Uint8Array(),
@@ -324,11 +332,20 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
 
-    // Sanitize entries to remove blob URLs before sending to server
-    const sanitizedEntries = this.entries.map((e) => ({
-      ...e,
-      url: e.url?.startsWith("blob:") ? "" : e.url,
-    }));
+    // Sanitize entries to remove blob URLs and ensure time/percentage are synchronized
+    const sanitizedEntries = this.entries.map((e) => {
+      const timeVal = Number(e.timeSeconds || 0);
+      const pct =
+        e.percentage != null ? Number(e.percentage) : Math.round(timeVal);
+      const name = e.name || (e.type === "tts" ? e.text : e.url) || "Entry";
+      return {
+        ...e,
+        name,
+        url: e.url?.startsWith("blob:") ? "" : e.url,
+        timeSeconds: timeVal,
+        percentage: pct,
+      };
+    });
 
     this.dataService
       .saveAudioSet(this.name, sanitizedEntries, this.assetId())

@@ -7,11 +7,14 @@ import { Subject } from "rxjs";
 import { DataService } from "@app/data.service";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { Role } from "@app/models/role";
-import { RaceFlag, RaceState } from "@app/proto/antigravity";
+import { THEME_SLOT_KEYS } from "@app/models/theme";
+import { LapType, RaceFlag, RaceState } from "@app/proto/antigravity";
+import { AudioService } from "@app/services/audio.service";
 import { AuthService } from "@app/services/auth.service";
 import { RaceService } from "@app/services/race.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { RaceFlagService } from "@app/services/race-flag.service";
+import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { DefaultDriverStationComponent } from "./default-driver-station.component";
@@ -29,6 +32,7 @@ describe("DefaultDriverStationComponent", () => {
   let mockDataService: any;
   let mockRaceService: any;
   let mockRaceConnectionService: any;
+  let mockThemeService: any;
   let mockRouter: any;
 
   beforeEach(async () => {
@@ -47,6 +51,7 @@ describe("DefaultDriverStationComponent", () => {
       "disconnectFromInterfaceDataSocket",
       "getRaceFlag",
       "getSystemState",
+      "listAssets",
     ]);
     mockDataService.getSystemState.and.returnValue(of(null));
     mockDataService.getRaceUpdate.and.returnValue(of({}));
@@ -55,7 +60,14 @@ describe("DefaultDriverStationComponent", () => {
     mockDataService.getCarData.and.returnValue(of({}));
     mockDataService.getStandingsUpdate.and.returnValue(of({}));
     mockDataService.getRaceFlag.and.returnValue(of(RaceFlag.RED));
+    mockDataService.listAssets.and.returnValue(of([]));
+    mockDataService.loadedAssets = [];
     mockDataService.serverUrl = "http://localhost";
+
+    mockThemeService = jasmine.createSpyObj("ThemeService", [
+      "resolveAudioConfig",
+    ]);
+    mockThemeService.resolveAudioConfig.and.returnValue(null);
 
     mockRaceService = jasmine.createSpyObj("RaceService", [
       "getRace",
@@ -126,6 +138,7 @@ describe("DefaultDriverStationComponent", () => {
         { provide: RaceFlagService, useValue: mockRaceFlagService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: ThemeService, useValue: mockThemeService },
         { provide: AuthService, useValue: { currentRole: Role.VIEWER } },
         { provide: Router, useValue: mockRouter },
         ChangeDetectorRef,
@@ -195,6 +208,35 @@ describe("DefaultDriverStationComponent", () => {
     expect(component.progressPercentage).toBe(0);
     expect(component.fuelPercentage).toBe(0);
     expect(component.hasLapData).toBeFalse();
+  });
+
+  it("should return fuel percentage from participant, keep 0 on out of fuel, or fallback to initialFuelLevel when missing", () => {
+    const driverData = {
+      driver: { entity_id: "d1", isEmpty: () => false },
+      participant: { fuelLevel: 75 },
+      initialFuelLevel: 100,
+    } as any;
+    component["driverData"] = driverData;
+    expect(component.fuelPercentage).toBe(75);
+
+    driverData.participant.fuelLevel = 0;
+    expect(component.fuelPercentage).toBe(0);
+
+    delete driverData.participant.fuelLevel;
+    expect(component.fuelPercentage).toBe(100);
+  });
+
+  it("should find driverData by laneIndex when heatDrivers order does not match laneIndex", () => {
+    const heat = {
+      heatDrivers: [
+        { laneIndex: 1, driver: { entity_id: "d2", isEmpty: () => false } },
+        { laneIndex: 0, driver: { entity_id: "d1", isEmpty: () => false } },
+      ],
+    } as any;
+    (component as any).laneIndex = 0;
+    mockRaceService.getCurrentHeat.and.returnValue(heat);
+    (component as any).loadRaceData();
+    expect(component["driverData"]?.laneIndex).toBe(0);
   });
 
   it("should display team name and use team rankings when driver is in a team", () => {
@@ -402,6 +444,186 @@ describe("DefaultDriverStationComponent", () => {
 
       // Verification: with type: "none", no audio is played and no errors thrown
       expect(true).toBeTrue();
+    });
+
+    it("should configure audio relevance filter scoped to its lane and allow general audio", () => {
+      component["laneIndex"] = 1;
+      component["driverData"] = {
+        objectId: "hd1",
+        driver: { entity_id: "driver-lane-1", name: "Driver 1" },
+      } as any;
+
+      component["updateAudioRelevance"]();
+
+      const audioService = (component as any).audioService as AudioService;
+      const filter = audioService.getRelevanceFilter();
+
+      expect(filter?.driverAudioMode).toBe("scoped");
+      expect(filter?.allowedLanes?.has(1)).toBeTrue();
+      expect(filter?.allowedDriverIds?.has("driver-lane-1")).toBeTrue();
+      expect(filter?.allowCountdown).toBeTrue();
+      expect(filter?.allowTimer).toBeTrue();
+      expect(filter?.allowRaceState).toBeTrue();
+
+      // General sounds are allowed
+      expect(
+        audioService.isSoundRelevant({ widgetType: "countdown" }),
+      ).toBeTrue();
+      expect(audioService.isSoundRelevant({ widgetType: "timer" })).toBeTrue();
+      expect(audioService.isSoundRelevant({ widgetType: "flag" })).toBeTrue();
+
+      // Sounds for this station's lane are allowed
+      expect(
+        audioService.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 1,
+        }),
+      ).toBeTrue();
+
+      // Sounds for another lane are dropped
+      expect(
+        audioService.isSoundRelevant({
+          widgetType: "lane-view",
+          laneIndex: 0,
+        }),
+      ).toBeFalse();
+    });
+
+    it("should attach flag association to race state audio", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "preset",
+        url: "flag.wav",
+      });
+
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_YELLOW_FLAG);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+
+      component["playThemedSound"](THEME_SLOT_KEYS.AUDIO_HEAT_OVER);
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({ type: "preset" }),
+        "urgent",
+        undefined,
+        jasmine.any(String),
+        { widgetType: "flag" },
+      );
+    });
+
+    it("should trigger min lap time and drift lap with driver lane association", () => {
+      spyOn(component as any, "playThemedSound");
+      const lapsSubject = new Subject<any>();
+      mockRaceConnectionService.laps$ = lapsSubject.asObservable();
+
+      const mockDriver = {
+        entity_id: "d1",
+        name: "Test Driver",
+      };
+      const driverData = {
+        objectId: "hd1",
+        laneIndex: 1,
+        driver: mockDriver,
+      } as any;
+      mockRaceService.getRace.and.returnValue({
+        track: {
+          lanes: [
+            { background_color: "#ff0000", foreground_color: "#ffffff" },
+            { background_color: "#00ff00", foreground_color: "#000000" },
+          ],
+        },
+        heat_scoring: {},
+      } as any);
+      mockRaceService.getCurrentHeat.and.returnValue({
+        objectId: "h1",
+        heatDrivers: [driverData],
+      } as any);
+
+      component["laneIndex"] = 1;
+      component["driverData"] = driverData;
+      component["heat"] = {
+        objectId: "h1",
+        heatDrivers: [driverData],
+      } as any;
+
+      fixture.detectChanges();
+      component.ngOnInit();
+
+      // Min lap time
+      lapsSubject.next({
+        objectId: "hd1",
+        type: LapType.MIN_LAP_TIME,
+        lapTime: 0.5,
+      });
+
+      expect((component as any).playThemedSound).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME,
+        jasmine.any(Object),
+        {
+          widgetType: "lane-view",
+          laneIndex: 1,
+          driverId: "d1",
+        },
+      );
+
+      // Drift lap
+      lapsSubject.next({
+        objectId: "hd1",
+        isDrift: true,
+        lapTime: 3.5,
+      });
+
+      expect((component as any).playThemedSound).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_DRIFT_LAP,
+        jasmine.any(Object),
+        {
+          widgetType: "lane-view",
+          laneIndex: 1,
+          driverId: "d1",
+        },
+      );
+    });
+
+    it("should update fuel audio only for its own lane", () => {
+      const fuelTracker = (component as any).fuelAudioTracker;
+      spyOn(fuelTracker, "updateLaneFuel");
+      const carDataSubject = new Subject<any>();
+      mockRaceConnectionService.carData$ = carDataSubject.asObservable();
+
+      component["laneIndex"] = 1;
+      fixture.detectChanges();
+      component.ngOnInit();
+
+      // Car data for lane 0 (ignored)
+      carDataSubject.next({
+        lane: 0,
+        fuelLevel: 80,
+        isRefueling: false,
+      });
+      expect(fuelTracker.updateLaneFuel).not.toHaveBeenCalled();
+
+      // Car data for lane 1 (processed)
+      carDataSubject.next({
+        lane: 1,
+        fuelLevel: 75,
+        isRefueling: false,
+      });
+      expect(fuelTracker.updateLaneFuel).toHaveBeenCalledWith(
+        1,
+        75,
+        false,
+        undefined,
+        false,
+        jasmine.any(Object),
+        jasmine.any(Object),
+        jasmine.any(Array),
+        false,
+      );
     });
   });
 });

@@ -207,6 +207,7 @@ public class Starting implements IRaceState {
             .setInterfaceId(interfaceId)
             .setType(Lap.LapType.FALSE_START)
             .setFlag(getLaneFlagType(race, lane))
+            .setFuelLevel(dhd.getDriver().getFuelLevel())
             .build();
     dhd.setFlag(falseStartMsg.getFlag());
 

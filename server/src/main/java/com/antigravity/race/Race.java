@@ -424,6 +424,10 @@ public class Race implements ProtocolListener {
     syncRaceState();
   }
 
+  public boolean isPractice() {
+    return model != null && model.isPractice();
+  }
+
   public List<RaceParticipant> getDrivers() {
     return drivers;
   }
@@ -665,6 +669,37 @@ public class Race implements ProtocolListener {
     ClientSubscriptionManager.getInstance().broadcast(message);
   }
 
+  public synchronized void broadcastFuelLevels() {
+    if (currentHeat == null || currentHeat.getDrivers() == null) return;
+    FuelOptions analogFuel = getFuelOptions();
+    FuelOptions digitalFuel =
+        getRaceModel() != null ? getRaceModel().getDigitalFuelOptions() : null;
+
+    if ((analogFuel == null || !analogFuel.isEnabled())
+        && (digitalFuel == null || !digitalFuel.isEnabled())) {
+      return;
+    }
+
+    for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+      DriverHeatData driverData = currentHeat.getDrivers().get(i);
+      if (driverData != null && driverData.getDriver() != null) {
+        RaceParticipant participant = driverData.getDriver();
+        RaceFlag laneFlag = state != null ? state.getLaneFlagType(this, i) : RaceFlag.UNKNOWN_FLAG;
+        driverData.setFlag(laneFlag);
+
+        com.antigravity.proto.CarData carData = // fqn-collision
+            com.antigravity.proto.CarData.newBuilder() // fqn-collision
+                .setLane(i)
+                .setFuelLevel(participant.getFuelLevel())
+                .setIsRefueling(driverData.isRefueling())
+                .setFlag(laneFlag)
+                .build();
+
+        broadcast(RaceData.newBuilder().setCarData(carData).build());
+      }
+    }
+  }
+
   public void syncRaceState() {
     RaceState protoState = getProtoState(state);
     RaceFlag protoFlag = state.getFlagType(this);
@@ -683,6 +718,8 @@ public class Race implements ProtocolListener {
       this.state.exit(this);
     }
     this.state = newState;
+    this.state.enter(this);
+
     RaceState protoState = getProtoState(state);
     RaceFlag protoFlag = state.getFlagType(this);
 
@@ -714,7 +751,6 @@ public class Race implements ProtocolListener {
     }
     updatePowerForFlag(protoFlag);
 
-    this.state.enter(this);
     if (state instanceof RaceOver) {
       ClientSubscriptionManager.getInstance().deleteAutoSave(model.getEntityId(), isDemoMode());
     } else if (state instanceof Paused || state instanceof HeatOver) {
@@ -965,15 +1001,27 @@ public class Race implements ProtocolListener {
     if (fuelOptions == null || !fuelOptions.isEnabled()) return;
     boolean resetAtStart = fuelOptions.isResetFuelAtHeatStart();
     double startLevel = (fuelOptions.getCapacity() * fuelOptions.getStartLevel()) / 100.0;
-    for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
-      DriverHeatData heatData = currentHeat.getDrivers().get(i);
-      RaceParticipant participant = heatData.getDriver();
-      if (participant == null || participant.getDriver() == null) continue;
-      if (resetAtStart) {
-        participant.setFuelLevel(startLevel);
-        setFuelLevel(i, startLevel, fuelOptions.getCapacity());
+
+    if (currentHeat != null && currentHeat.getDrivers() != null) {
+      for (int i = 0; i < currentHeat.getDrivers().size(); i++) {
+        DriverHeatData heatData = currentHeat.getDrivers().get(i);
+        RaceParticipant participant = heatData.getDriver();
+        if (participant == null || participant.getDriver() == null) continue;
+        if (resetAtStart) {
+          participant.setFuelLevel(startLevel);
+          setFuelLevel(i, startLevel, fuelOptions.getCapacity());
+        }
+        heatData.setInitialFuelLevel(participant.getFuelLevel());
       }
-      heatData.setInitialFuelLevel(participant.getFuelLevel());
+
+      broadcastFuelLevels();
+      updateAndBroadcastOverallStandings();
+      broadcast(
+          RaceData.newBuilder()
+              .setHeat(
+                  com.antigravity.converters.HeatConverter.toProto( // fqn-collision
+                      currentHeat, new java.util.HashSet<>()))
+              .build());
     }
     setLanePower(true, -1);
   }
@@ -1003,6 +1051,8 @@ public class Race implements ProtocolListener {
                       .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
                       .build())
               .build());
+      broadcastFuelLevels();
+      updateAndBroadcastOverallStandings();
       resetHeatRecords();
       broadcastRecords();
       broadcastTime();
@@ -1037,6 +1087,7 @@ public class Race implements ProtocolListener {
                       .setCurrentHeat(HeatConverter.toProto(currentHeat, new HashSet<>()))
                       .build())
               .build());
+      broadcastFuelLevels();
       resetHeatRecords();
       broadcastRecords();
       broadcastTime();
@@ -1047,11 +1098,17 @@ public class Race implements ProtocolListener {
     }
   }
 
+  public void recalculateOverallStandings() {
+    if (overallStandings != null) {
+      overallStandings.recalculate(
+          this.drivers,
+          this.heats,
+          this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null);
+    }
+  }
+
   public void updateAndBroadcastOverallStandings() {
-    overallStandings.recalculate(
-        this.drivers,
-        this.heats,
-        this.getRaceModel() != null ? this.getRaceModel().getHeatRotationType() : null);
+    recalculateOverallStandings();
     recordsManager.recalculateScoreRecords();
     List<com.antigravity.proto.RaceParticipant> participants = new ArrayList<>(); // fqn-collision
     for (RaceParticipant driver : this.drivers) {

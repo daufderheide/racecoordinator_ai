@@ -20,6 +20,15 @@ export class Driver implements Model {
   lapAudio: AudioConfig;
   bestLapAudio: AudioConfig;
   penaltyAudio: AudioConfig;
+  overallBestLapAudio: AudioConfig;
+  overallLaneBestLapAudio: AudioConfig;
+  raceBestLapAudio: AudioConfig;
+  raceLaneBestLapAudio: AudioConfig;
+  heatBestLapAudio: AudioConfig;
+  newRaceLeaderAudio: AudioConfig;
+  newHeatLeaderAudio: AudioConfig;
+  pitInAudio: AudioConfig;
+  fuelAudio: AudioConfig;
 
   constructor(
     entity_id: string,
@@ -30,6 +39,15 @@ export class Driver implements Model {
     bestLapAudio?: AudioConfig,
     penaltyAudio?: AudioConfig,
     falseStartAudio?: AudioConfig,
+    overallBestLapAudio?: AudioConfig,
+    overallLaneBestLapAudio?: AudioConfig,
+    raceBestLapAudio?: AudioConfig,
+    raceLaneBestLapAudio?: AudioConfig,
+    heatBestLapAudio?: AudioConfig,
+    newRaceLeaderAudio?: AudioConfig,
+    newHeatLeaderAudio?: AudioConfig,
+    pitInAudio?: AudioConfig,
+    fuelAudio?: AudioConfig,
   ) {
     this.entity_id = entity_id;
     this.name = name;
@@ -39,18 +57,23 @@ export class Driver implements Model {
     const sanitizeAudio = (
       audio?: AudioConfig,
       defaultUrl: string = "default_beep",
+      defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
     ): AudioConfig => {
       if (!audio || !audio.type) {
-        return { type: "preset", url: defaultUrl };
+        return { type: defaultType, url: defaultUrl };
       }
-      if (audio.type === "none") {
+      let type = audio.type;
+      if (defaultType === "audio_set" && type === "preset") {
+        type = "audio_set";
+      }
+      if (type === "none") {
         return { type: "none", url: undefined, text: undefined };
       }
-      if (audio.type === "tts") {
+      if (type === "tts") {
         return { type: "tts", url: undefined, text: audio.text || "" };
       }
       return {
-        type: audio.type,
+        type,
         url: audio.url || defaultUrl,
         text: undefined,
       };
@@ -61,6 +84,40 @@ export class Driver implements Model {
     this.penaltyAudio = sanitizeAudio(
       falseStartAudio || penaltyAudio,
       "default_penalty",
+    );
+    this.overallBestLapAudio = sanitizeAudio(
+      overallBestLapAudio,
+      "default_record_lap",
+    );
+    this.overallLaneBestLapAudio = sanitizeAudio(
+      overallLaneBestLapAudio,
+      "default_record_lane_lap",
+    );
+    this.raceBestLapAudio = sanitizeAudio(
+      raceBestLapAudio,
+      "default_best_race_lap",
+    );
+    this.raceLaneBestLapAudio = sanitizeAudio(
+      raceLaneBestLapAudio,
+      "default_best_race_lane_lap",
+    );
+    this.heatBestLapAudio = sanitizeAudio(
+      heatBestLapAudio,
+      "default_best_heat_lap",
+    );
+    this.newRaceLeaderAudio = sanitizeAudio(
+      newRaceLeaderAudio,
+      "default_new_race_leader",
+    );
+    this.newHeatLeaderAudio = sanitizeAudio(
+      newHeatLeaderAudio,
+      "default_new_heat_leader",
+    );
+    this.pitInAudio = sanitizeAudio(pitInAudio, "default_pit_in");
+    this.fuelAudio = sanitizeAudio(
+      fuelAudio,
+      "default_fuel_level",
+      "audio_set",
     );
   }
 

@@ -51,6 +51,12 @@ public class Heat extends ServerToClientObject {
     this.heatNumber = heatNumber;
     this.drivers = drivers != null ? drivers : new ArrayList<>();
     if (this.drivers != null) {
+      for (int i = 0; i < this.drivers.size(); i++) {
+        DriverHeatData dhd = this.drivers.get(i);
+        if (dhd != null && dhd.getLane() < 0) {
+          dhd.setLane(i);
+        }
+      }
       HeatScoring safeScoring = scoring != null ? scoring : new HeatScoring();
       this.heatStandings = new HeatStandings(this.drivers, safeScoring, practice);
     }

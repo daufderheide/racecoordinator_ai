@@ -70,6 +70,16 @@ export class HeatConverter {
     hd.lapsLed = dProto.lapsLed || 0;
     hd.isFinished = !!(dProto.isFinished ?? (dProto as any).is_finished);
     hd.trackCalls = dProto.trackCalls ?? (dProto as any).track_calls ?? 0;
+    hd.initialFuelLevel =
+      dProto.initialFuelLevel ?? (dProto as any).initial_fuel_level ?? 0;
+    if (
+      hd.participant &&
+      (hd.participant.fuelLevel == null ||
+        hd.participant.fuelLevel === undefined) &&
+      hd.initialFuelLevel > 0
+    ) {
+      hd.participant.fuelLevel = hd.initialFuelLevel;
+    }
     if (dProto.laps) {
       dProto.laps.forEach((lap: any, i: number) => {
         const time =

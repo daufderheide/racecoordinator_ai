@@ -12,54 +12,27 @@ public class DriverConverter {
     if (driver == null) {
       return null;
     }
-    AudioConfig lapAudio =
-        AudioConfig.newBuilder()
-            .setType(driver.getLapAudio() != null ? driver.getLapAudio().getType() : "preset")
-            .setUrl(
-                driver.getLapAudio() != null && driver.getLapAudio().getUrl() != null
-                    ? driver.getLapAudio().getUrl()
-                    : "")
-            .setText(
-                driver.getLapAudio() != null && driver.getLapAudio().getText() != null
-                    ? driver.getLapAudio().getText()
-                    : "")
-            .build();
-
-    AudioConfig bestLapAudio =
-        AudioConfig.newBuilder()
-            .setType(
-                driver.getBestLapAudio() != null ? driver.getBestLapAudio().getType() : "preset")
-            .setUrl(
-                driver.getBestLapAudio() != null && driver.getBestLapAudio().getUrl() != null
-                    ? driver.getBestLapAudio().getUrl()
-                    : "")
-            .setText(
-                driver.getBestLapAudio() != null && driver.getBestLapAudio().getText() != null
-                    ? driver.getBestLapAudio().getText()
-                    : "")
-            .build();
-
-    AudioConfig penaltyAudio =
-        AudioConfig.newBuilder()
-            .setType(
-                driver.getPenaltyAudio() != null ? driver.getPenaltyAudio().getType() : "preset")
-            .setUrl(
-                driver.getPenaltyAudio() != null && driver.getPenaltyAudio().getUrl() != null
-                    ? driver.getPenaltyAudio().getUrl()
-                    : "")
-            .setText(
-                driver.getPenaltyAudio() != null && driver.getPenaltyAudio().getText() != null
-                    ? driver.getPenaltyAudio().getText()
-                    : "")
-            .build();
 
     return DriverModel.newBuilder()
-        .setName(driver.getName())
+        .setName(driver.getName() != null ? driver.getName() : "")
         .setNickname(driver.getNickname() != null ? driver.getNickname() : "")
         .setAvatarUrl(driver.getAvatarUrl() != null ? driver.getAvatarUrl() : "")
-        .setLapAudio(lapAudio)
-        .setBestLapAudio(bestLapAudio)
-        .setPenaltyAudio(penaltyAudio)
+        .setLapAudio(toProtoAudio(driver.getLapAudio(), "default_beep"))
+        .setBestLapAudio(toProtoAudio(driver.getBestLapAudio(), "default_driveby"))
+        .setPenaltyAudio(toProtoAudio(driver.getPenaltyAudio(), "default_penalty"))
+        .setOverallBestLapAudio(toProtoAudio(driver.getOverallBestLapAudio(), "default_record_lap"))
+        .setOverallLaneBestLapAudio(
+            toProtoAudio(driver.getOverallLaneBestLapAudio(), "default_record_lane_lap"))
+        .setRaceBestLapAudio(toProtoAudio(driver.getRaceBestLapAudio(), "default_best_race_lap"))
+        .setRaceLaneBestLapAudio(
+            toProtoAudio(driver.getRaceLaneBestLapAudio(), "default_best_race_lane_lap"))
+        .setHeatBestLapAudio(toProtoAudio(driver.getHeatBestLapAudio(), "default_best_heat_lap"))
+        .setNewRaceLeaderAudio(
+            toProtoAudio(driver.getNewRaceLeaderAudio(), "default_new_race_leader"))
+        .setNewHeatLeaderAudio(
+            toProtoAudio(driver.getNewHeatLeaderAudio(), "default_new_heat_leader"))
+        .setPitInAudio(toProtoAudio(driver.getPitInAudio(), "default_pit_in"))
+        .setFuelAudio(toProtoAudio(driver.getFuelAudio(), "default_fuel_level", "audio_set"))
         .setModel(
             Model.newBuilder()
                 .setEntityId(driver.getEntityId() != null ? driver.getEntityId() : "")
@@ -67,36 +40,39 @@ public class DriverConverter {
         .build();
   }
 
-  public static Driver fromProto(DriverModel proto) {
+  private static AudioConfig toProtoAudio(
+      com.antigravity.models.AudioConfig config, String defaultUrl) { // fqn-collision
+    return toProtoAudio(config, defaultUrl, "preset");
+  }
+
+  private static AudioConfig toProtoAudio(
+      com.antigravity.models.AudioConfig config, // fqn-collision
+      String defaultUrl,
+      String defaultType) {
+    String type = config != null && config.getType() != null ? config.getType() : defaultType;
+    if ("audio_set".equals(defaultType) && "preset".equals(type)) {
+      type = "audio_set";
+    }
+    String url =
+        config != null && config.getUrl() != null
+            ? config.getUrl()
+            : (defaultUrl != null ? defaultUrl : "");
+    String text = config != null && config.getText() != null ? config.getText() : "";
+    return AudioConfig.newBuilder().setType(type).setUrl(url).setText(text).build();
+  }
+
+  private static com.antigravity.models.AudioConfig fromProtoAudio( // fqn-collision
+      AudioConfig proto) {
     if (proto == null) {
       return null;
     }
+    return new com.antigravity.models.AudioConfig( // fqn-collision
+        proto.getType(), proto.getUrl(), proto.getText());
+  }
 
-    com.antigravity.models.AudioConfig lapAudio = null; // fqn-collision
-    if (proto.hasLapAudio()) {
-      lapAudio =
-          new com.antigravity.models.AudioConfig( // fqn-collision
-              proto.getLapAudio().getType(),
-              proto.getLapAudio().getUrl(),
-              proto.getLapAudio().getText());
-    }
-
-    com.antigravity.models.AudioConfig bestLapAudio = null; // fqn-collision
-    if (proto.hasBestLapAudio()) {
-      bestLapAudio =
-          new com.antigravity.models.AudioConfig( // fqn-collision
-              proto.getBestLapAudio().getType(),
-              proto.getBestLapAudio().getUrl(),
-              proto.getBestLapAudio().getText());
-    }
-
-    com.antigravity.models.AudioConfig penaltyAudio = null; // fqn-collision
-    if (proto.hasPenaltyAudio()) {
-      penaltyAudio =
-          new com.antigravity.models.AudioConfig( // fqn-collision
-              proto.getPenaltyAudio().getType(),
-              proto.getPenaltyAudio().getUrl(),
-              proto.getPenaltyAudio().getText());
+  public static Driver fromProto(DriverModel proto) {
+    if (proto == null) {
+      return null;
     }
 
     String avatarUrl = proto.getAvatarUrl();
@@ -104,23 +80,50 @@ public class DriverConverter {
       avatarUrl = null;
     }
 
-    return new Driver(
-        proto.getName(),
-        proto.getNickname(),
-        avatarUrl,
-        lapAudio,
-        bestLapAudio,
-        penaltyAudio,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        proto.getModel().getEntityId(),
-        null);
+    Driver.Builder builder =
+        new Driver.Builder()
+            .withName(proto.getName())
+            .withNickname(proto.getNickname())
+            .withAvatarUrl(avatarUrl)
+            .withEntityId(proto.getModel() != null ? proto.getModel().getEntityId() : null);
+
+    if (proto.hasLapAudio()) {
+      builder.withLapAudio(fromProtoAudio(proto.getLapAudio()));
+    }
+    if (proto.hasBestLapAudio()) {
+      builder.withBestLapAudio(fromProtoAudio(proto.getBestLapAudio()));
+    }
+    if (proto.hasPenaltyAudio()) {
+      builder.withPenaltyAudio(fromProtoAudio(proto.getPenaltyAudio()));
+    }
+    if (proto.hasOverallBestLapAudio()) {
+      builder.withOverallBestLapAudio(fromProtoAudio(proto.getOverallBestLapAudio()));
+    }
+    if (proto.hasOverallLaneBestLapAudio()) {
+      builder.withOverallLaneBestLapAudio(fromProtoAudio(proto.getOverallLaneBestLapAudio()));
+    }
+    if (proto.hasRaceBestLapAudio()) {
+      builder.withRaceBestLapAudio(fromProtoAudio(proto.getRaceBestLapAudio()));
+    }
+    if (proto.hasRaceLaneBestLapAudio()) {
+      builder.withRaceLaneBestLapAudio(fromProtoAudio(proto.getRaceLaneBestLapAudio()));
+    }
+    if (proto.hasHeatBestLapAudio()) {
+      builder.withHeatBestLapAudio(fromProtoAudio(proto.getHeatBestLapAudio()));
+    }
+    if (proto.hasNewRaceLeaderAudio()) {
+      builder.withNewRaceLeaderAudio(fromProtoAudio(proto.getNewRaceLeaderAudio()));
+    }
+    if (proto.hasNewHeatLeaderAudio()) {
+      builder.withNewHeatLeaderAudio(fromProtoAudio(proto.getNewHeatLeaderAudio()));
+    }
+    if (proto.hasPitInAudio()) {
+      builder.withPitInAudio(fromProtoAudio(proto.getPitInAudio()));
+    }
+    if (proto.hasFuelAudio()) {
+      builder.withFuelAudio(fromProtoAudio(proto.getFuelAudio()));
+    }
+
+    return builder.build();
   }
 }

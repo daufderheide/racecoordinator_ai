@@ -26,6 +26,31 @@ export class DriverConverter {
     );
   }
 
+  private static mapAudio(
+    protoAudio?: any,
+    defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
+  ): {
+    type: "preset" | "tts" | "none" | "audio_set";
+    url?: string;
+    text?: string;
+  } {
+    let type = protoAudio?.type as any;
+
+    // Fix incorrectly backfilled drivers that saved fuel audio as 'preset'
+    if (defaultType === "audio_set" && (type === "preset" || !type)) {
+      type = "audio_set";
+    }
+    if (type === "preset" && protoAudio?.url === "default_fuel_level") {
+      type = "audio_set";
+    }
+
+    return {
+      type: type || defaultType,
+      url: protoAudio?.url || undefined,
+      text: protoAudio?.text || undefined,
+    };
+  }
+
   static fromProto(proto: IDriverModel): Driver {
     if (!proto) {
       return this.getEmptyDriver();
@@ -55,21 +80,20 @@ export class DriverConverter {
           proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown");
         cached.nickname = proto.nickname || "";
         cached.avatarUrl = proto.avatarUrl || undefined;
-        cached.lapAudio = {
-          type: (proto.lapAudio?.type as any) || "preset",
-          url: proto.lapAudio?.url || undefined,
-          text: proto.lapAudio?.text || undefined,
-        };
-        cached.bestLapAudio = {
-          type: (proto.bestLapAudio?.type as any) || "preset",
-          url: proto.bestLapAudio?.url || undefined,
-          text: proto.bestLapAudio?.text || undefined,
-        };
-        cached.penaltyAudio = {
-          type: (proto.penaltyAudio?.type as any) || "preset",
-          url: proto.penaltyAudio?.url || undefined,
-          text: proto.penaltyAudio?.text || undefined,
-        };
+        cached.lapAudio = this.mapAudio(proto.lapAudio);
+        cached.bestLapAudio = this.mapAudio(proto.bestLapAudio);
+        cached.penaltyAudio = this.mapAudio(proto.penaltyAudio);
+        cached.overallBestLapAudio = this.mapAudio(proto.overallBestLapAudio);
+        cached.overallLaneBestLapAudio = this.mapAudio(
+          proto.overallLaneBestLapAudio,
+        );
+        cached.raceBestLapAudio = this.mapAudio(proto.raceBestLapAudio);
+        cached.raceLaneBestLapAudio = this.mapAudio(proto.raceLaneBestLapAudio);
+        cached.heatBestLapAudio = this.mapAudio(proto.heatBestLapAudio);
+        cached.newRaceLeaderAudio = this.mapAudio(proto.newRaceLeaderAudio);
+        cached.newHeatLeaderAudio = this.mapAudio(proto.newHeatLeaderAudio);
+        cached.pitInAudio = this.mapAudio(proto.pitInAudio);
+        cached.fuelAudio = this.mapAudio(proto.fuelAudio, "audio_set");
         return cached;
       }
     }
@@ -80,21 +104,19 @@ export class DriverConverter {
         proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown"),
         proto.nickname || "",
         proto.avatarUrl || undefined,
-        {
-          type: (proto.lapAudio?.type as any) || "preset",
-          url: proto.lapAudio?.url || undefined,
-          text: proto.lapAudio?.text || undefined,
-        },
-        {
-          type: (proto.bestLapAudio?.type as any) || "preset",
-          url: proto.bestLapAudio?.url || undefined,
-          text: proto.bestLapAudio?.text || undefined,
-        },
-        {
-          type: (proto.penaltyAudio?.type as any) || "preset",
-          url: proto.penaltyAudio?.url || undefined,
-          text: proto.penaltyAudio?.text || undefined,
-        },
+        this.mapAudio(proto.lapAudio),
+        this.mapAudio(proto.bestLapAudio),
+        this.mapAudio(proto.penaltyAudio),
+        undefined,
+        this.mapAudio(proto.overallBestLapAudio),
+        this.mapAudio(proto.overallLaneBestLapAudio),
+        this.mapAudio(proto.raceBestLapAudio),
+        this.mapAudio(proto.raceLaneBestLapAudio),
+        this.mapAudio(proto.heatBestLapAudio),
+        this.mapAudio(proto.newRaceLeaderAudio),
+        this.mapAudio(proto.newHeatLeaderAudio),
+        this.mapAudio(proto.pitInAudio),
+        this.mapAudio(proto.fuelAudio, "audio_set"),
       );
     });
   }
@@ -106,9 +128,20 @@ export class DriverConverter {
       cached.name = json.name || "";
       cached.nickname = json.nickname || "";
       cached.avatarUrl = json.avatarUrl;
-      cached.lapAudio = json.lapAudio;
-      cached.bestLapAudio = json.bestLapAudio;
-      cached.penaltyAudio = json.penaltyAudio;
+      cached.lapAudio = this.mapAudio(json.lapAudio);
+      cached.bestLapAudio = this.mapAudio(json.bestLapAudio);
+      cached.penaltyAudio = this.mapAudio(json.penaltyAudio);
+      cached.overallBestLapAudio = this.mapAudio(json.overallBestLapAudio);
+      cached.overallLaneBestLapAudio = this.mapAudio(
+        json.overallLaneBestLapAudio,
+      );
+      cached.raceBestLapAudio = this.mapAudio(json.raceBestLapAudio);
+      cached.raceLaneBestLapAudio = this.mapAudio(json.raceLaneBestLapAudio);
+      cached.heatBestLapAudio = this.mapAudio(json.heatBestLapAudio);
+      cached.newRaceLeaderAudio = this.mapAudio(json.newRaceLeaderAudio);
+      cached.newHeatLeaderAudio = this.mapAudio(json.newHeatLeaderAudio);
+      cached.pitInAudio = this.mapAudio(json.pitInAudio);
+      cached.fuelAudio = this.mapAudio(json.fuelAudio, "audio_set");
       return cached;
     }
     const d = new Driver(
@@ -116,9 +149,19 @@ export class DriverConverter {
       json.name || "",
       json.nickname || "",
       json.avatarUrl,
-      json.lapAudio,
-      json.bestLapAudio,
-      json.penaltyAudio,
+      this.mapAudio(json.lapAudio),
+      this.mapAudio(json.bestLapAudio),
+      this.mapAudio(json.penaltyAudio),
+      undefined,
+      this.mapAudio(json.overallBestLapAudio),
+      this.mapAudio(json.overallLaneBestLapAudio),
+      this.mapAudio(json.raceBestLapAudio),
+      this.mapAudio(json.raceLaneBestLapAudio),
+      this.mapAudio(json.heatBestLapAudio),
+      this.mapAudio(json.newRaceLeaderAudio),
+      this.mapAudio(json.newHeatLeaderAudio),
+      this.mapAudio(json.pitInAudio),
+      this.mapAudio(json.fuelAudio, "audio_set"),
     );
     this.cache.process(id, false, () => d);
     return d;
@@ -136,6 +179,13 @@ export class DriverConverter {
       existing.lapAudio = driver.lapAudio;
       existing.bestLapAudio = driver.bestLapAudio;
       existing.penaltyAudio = driver.penaltyAudio;
+      existing.overallBestLapAudio = driver.overallBestLapAudio;
+      existing.overallLaneBestLapAudio = driver.overallLaneBestLapAudio;
+      existing.raceBestLapAudio = driver.raceBestLapAudio;
+      existing.raceLaneBestLapAudio = driver.raceLaneBestLapAudio;
+      existing.heatBestLapAudio = driver.heatBestLapAudio;
+      existing.newRaceLeaderAudio = driver.newRaceLeaderAudio;
+      existing.newHeatLeaderAudio = driver.newHeatLeaderAudio;
     } else {
       // Manually populate cache using process to ensure valid state
       // access private cache if possible, or use a workaround.

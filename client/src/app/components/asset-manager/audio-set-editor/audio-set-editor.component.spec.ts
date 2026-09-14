@@ -268,5 +268,64 @@ describe("AudioSetEditorComponent", () => {
       expect(component.getEntryType({ type: "tts" } as any)).toBe("tts");
       expect(component.getEntryType({} as any)).toBe("preset");
     });
+
+    it("should preserve percentage when mapping initialEntries in resetForm", () => {
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Low Fuel",
+          timeSeconds: 10,
+          percentage: 10,
+          url: "low.wav",
+          data: new Uint8Array(),
+        } as any,
+        {
+          name: "Empty Fuel",
+          timeSeconds: 0,
+          percentage: 0,
+          type: "tts",
+          text: "{driver.nickname} out of fuel",
+          data: new Uint8Array(),
+        } as any,
+      ]);
+      fixture.detectChanges();
+      component.resetForm();
+
+      expect((component.entries[0] as any).percentage).toBe(10);
+      expect((component.entries[1] as any).percentage).toBe(0);
+      expect(component.entries[1].text).toBe("{driver.nickname} out of fuel");
+    });
+
+    it("should include synchronized percentage and name for TTS entries in onSave", () => {
+      component.name = "Fuel Audio Set";
+      component.entries = [
+        {
+          timeSeconds: 10,
+          percentage: 10,
+          url: "low.wav",
+          data: new Uint8Array(),
+          type: "preset",
+        } as any,
+        {
+          timeSeconds: 0,
+          percentage: 0,
+          type: "tts",
+          text: "{driver.nickname} out of fuel",
+          data: new Uint8Array(),
+        } as any,
+      ];
+      mockDataService.saveAudioSet.and.returnValue(of({ id: "set1" }));
+
+      component.onSave();
+
+      const savedEntries =
+        mockDataService.saveAudioSet.calls.mostRecent().args[1];
+      expect(savedEntries[0].percentage).toBe(10);
+      expect(savedEntries[0].timeSeconds).toBe(10);
+      expect(savedEntries[1].percentage).toBe(0);
+      expect(savedEntries[1].timeSeconds).toBe(0);
+      expect(savedEntries[1].type).toBe("tts");
+      expect(savedEntries[1].text).toBe("{driver.nickname} out of fuel");
+      expect(savedEntries[1].name).toBe("{driver.nickname} out of fuel");
+    });
   });
 });

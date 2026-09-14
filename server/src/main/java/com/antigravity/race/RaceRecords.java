@@ -4,6 +4,7 @@ import com.antigravity.models.Driver;
 import com.antigravity.models.GlobalStatistics;
 import com.antigravity.models.OverallScoring.OverallRanking;
 import com.antigravity.proto.CurrentRecords;
+import com.antigravity.proto.Lap.RecordTier;
 import com.antigravity.proto.OverallRecords;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RecordData;
@@ -950,6 +951,97 @@ public class RaceRecords {
 
   public GlobalStatistics getBaseStatistics() {
     return baseStatistics;
+  }
+
+  public double getOverallFastestLap() {
+    return overallFastestLap;
+  }
+
+  public double getOverallLaneFastestLap(int lane) {
+    if (lane >= 0 && lane < overallLaneFastestLapTimes.size()) {
+      return overallLaneFastestLapTimes.get(lane);
+    }
+    return Double.MAX_VALUE;
+  }
+
+  public double getRaceFastestLap() {
+    return raceFastestLap;
+  }
+
+  public double getRaceLaneFastestLap(int lane) {
+    if (lane >= 0 && lane < raceLaneFastestLapTimes.size()) {
+      return raceLaneFastestLapTimes.get(lane);
+    }
+    return Double.MAX_VALUE;
+  }
+
+  public double getHeatFastestLap() {
+    return heatFastestLap;
+  }
+
+  public RecordTier determineRecordTier(
+      DriverHeatData driverData,
+      double lapTime,
+      int lane,
+      boolean countTowardsRecords,
+      double previousDriverBestLap) {
+    if (!countTowardsRecords || lapTime <= 0) {
+      return RecordTier.RECORD_TIER_NONE;
+    }
+
+    // 1. Overall / Track Best (fastest lap for all races run)
+    boolean isOverallBest =
+        (overallFastestLap == Double.MAX_VALUE || overallFastestLap == 0.0)
+            || lapTime < overallFastestLap;
+    if (isOverallBest) {
+      return RecordTier.RECORD_TIER_OVERALL_BEST;
+    }
+
+    // 2. Overall Lane Best (fastest lap for all races run in specific lane, but not overall)
+    double overallLaneBest =
+        (lane >= 0 && lane < overallLaneFastestLapTimes.size())
+            ? overallLaneFastestLapTimes.get(lane)
+            : Double.MAX_VALUE;
+    boolean isOverallLaneBest =
+        (overallLaneBest == Double.MAX_VALUE || overallLaneBest == 0.0)
+            || lapTime < overallLaneBest;
+    if (isOverallLaneBest) {
+      return RecordTier.RECORD_TIER_OVERALL_LANE_BEST;
+    }
+
+    // 3. Race Best (fastest lap for this race, but not overall)
+    boolean isRaceBest =
+        (raceFastestLap == Double.MAX_VALUE || raceFastestLap == 0.0) || lapTime < raceFastestLap;
+    if (isRaceBest) {
+      return RecordTier.RECORD_TIER_RACE_BEST;
+    }
+
+    // 4. Race Lane Best (fastest lap for this race in this lane, but not race best or overall lane
+    // best)
+    double raceLaneBest =
+        (lane >= 0 && lane < raceLaneFastestLapTimes.size())
+            ? raceLaneFastestLapTimes.get(lane)
+            : Double.MAX_VALUE;
+    boolean isRaceLaneBest =
+        (raceLaneBest == Double.MAX_VALUE || raceLaneBest == 0.0) || lapTime < raceLaneBest;
+    if (isRaceLaneBest) {
+      return RecordTier.RECORD_TIER_RACE_LANE_BEST;
+    }
+
+    // 5. Heat Best (fastest lap in current heat, but none of the above)
+    boolean isHeatBest =
+        (heatFastestLap == Double.MAX_VALUE || heatFastestLap == 0.0) || lapTime < heatFastestLap;
+    if (isHeatBest) {
+      return RecordTier.RECORD_TIER_HEAT_BEST;
+    }
+
+    // 6. Personal Best (driver's best lap, but none of the above)
+    boolean isPersonalBest = previousDriverBestLap <= 0.0 || lapTime < previousDriverBestLap;
+    if (isPersonalBest) {
+      return RecordTier.RECORD_TIER_PERSONAL_BEST;
+    }
+
+    return RecordTier.RECORD_TIER_NONE;
   }
 
   private String nonNull(String s) {

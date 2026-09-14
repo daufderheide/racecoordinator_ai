@@ -128,6 +128,7 @@ public class Racing implements IRaceState {
                   com.antigravity.converters.HeatConverter.toProto( // fqn-collision
                       race.getCurrentHeat(), new java.util.HashSet<>()))
               .build());
+      race.broadcastFuelLevels();
     }
 
     race.setHasRacedInCurrentHeat(true);
@@ -464,11 +465,14 @@ public class Racing implements IRaceState {
         List<DriverHeatData> drivers = race.getCurrentHeat().getDrivers();
         if (drivers != null) {
           for (int i = 0; i < Math.min(drivers.size(), previousFuelLevels.length); i++) {
-            double currentFuel = drivers.get(i).getDriver().getFuelLevel();
+            DriverHeatData driverData = drivers.get(i);
+            int lane = driverData.getLane() >= 0 ? driverData.getLane() : i;
+            if (lane < 0 || lane >= previousFuelLevels.length) continue;
+            double currentFuel = driverData.getDriver().getFuelLevel();
             int currentPct = (int) ((currentFuel / capacity) * 100.0);
-            if (currentPct != previousFuelLevels[i]) {
-              race.setFuelLevel(i, currentFuel, capacity);
-              previousFuelLevels[i] = currentPct;
+            if (currentPct != previousFuelLevels[lane]) {
+              race.setFuelLevel(lane, currentFuel, capacity);
+              previousFuelLevels[lane] = currentPct;
             }
           }
         }
