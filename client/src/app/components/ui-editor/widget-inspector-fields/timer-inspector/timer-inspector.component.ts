@@ -7,6 +7,7 @@ import {
 } from "@app/components/shared/custom-select/custom-select.component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
+import { formatTimerDisplay } from "@app/utils/timer-format.utils";
 
 @Component({
   standalone: true,
@@ -44,5 +45,16 @@ export class TimerInspectorComponent {
       this.settings()[field] = "";
       this.change.emit();
     }
+  }
+
+  getPreview(seconds: number): string {
+    const s = this.settings();
+    if (!s) return "";
+    return formatTimerDisplay(seconds, {
+      format: s.timeDisplayFormat || "dynamic",
+      subsecondMode: s.timeSubsecondMode || "threshold",
+      subsecondThreshold: s.timeSubsecondThreshold ?? 10,
+      subsecondDecimals: s.timeSubsecondDecimals ?? 2,
+    });
   }
 }

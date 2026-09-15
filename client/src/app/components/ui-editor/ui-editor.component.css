@@ -1872,3 +1872,38 @@
 .inspector-column-item .delete-btn .material-icons {
   font-size: 18px;
 }
+
+.timer-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--bg-level-3, rgba(255, 255, 255, 0.4));
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.15));
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.timer-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-level-2, rgba(255, 255, 255, 0.6));
+  border-radius: 4px;
+  padding: 4px 6px;
+}
+
+.timer-preview-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(0, 0, 0, 0.6));
+  margin-bottom: 2px;
+}
+
+.timer-preview-val {
+  font-size: 13px;
+  font-weight: bold;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  color: var(--text-color, #000);
+}

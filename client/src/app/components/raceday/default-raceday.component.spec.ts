@@ -2797,6 +2797,97 @@ describe("DefaultRacedayComponent", () => {
       component["time"] = -1;
       expect(component["formattedTime"]).toBe("0");
     });
+
+    it("should format as mm_ss when layout specifies mm_ss", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "mm_ss" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("01:23");
+      component["time"] = 45;
+      expect(component["formattedTime"]).toBe("00:45");
+    });
+
+    it("should format as m_ss when layout specifies m_ss", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "m_ss" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("1:23");
+      component["time"] = 45;
+      expect(component["formattedTime"]).toBe("0:45");
+    });
+
+    it("should format as hh_mm_ss when layout specifies hh_mm_ss", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "hh_mm_ss" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("00:01:23");
+    });
+
+    it("should format as seconds when layout specifies seconds", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: { timeDisplayFormat: "seconds" },
+          },
+        ],
+      } as any;
+      component["time"] = 83;
+      expect(component["formattedTime"]).toBe("83");
+    });
+
+    it("should support always showing subseconds from layout configuration", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "mm_ss",
+              timeSubsecondMode: "always",
+              timeSubsecondDecimals: 2,
+            },
+          },
+        ],
+      } as any;
+      component["time"] = 75.42;
+      expect(component["formattedTime"]).toBe("01:15.42");
+    });
+
+    it("should support never showing subseconds from layout configuration", () => {
+      component["layout"] = {
+        widgets: [
+          {
+            widgetType: "timer",
+            customSettings: {
+              timeDisplayFormat: "dynamic",
+              timeSubsecondMode: "never",
+              timeSubsecondThreshold: 10,
+              timeSubsecondDecimals: 2,
+            },
+          },
+        ],
+      } as any;
+      component["time"] = 9.5;
+      expect(component["formattedTime"]).toBe("9");
+    });
   });
 
   describe("Lap Highlighting", () => {
