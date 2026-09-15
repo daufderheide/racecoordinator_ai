@@ -149,20 +149,20 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 
 ### Eventos de Audio del Piloto (Configurados en el Editor de Pilotos)
 
-| Ranura de Audio | Archivo / Activo Predeterminado | Tipo de Sonido | Nivel de Prioridad | Relevancia y Pantalla |
-| :--- | :--- | :--- | :---: | :--- |
-| **Sonido de Vuelta** (`lapAudio`) | `default_beep` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `low` (Peso 1 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta Personal** (`bestLapAudio`) | `default_driveby` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `normal` (Peso 2 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta de Manga** (`heatBestLapAudio`) | `default_best_heat_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta de Carril de Carrera** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Nuevo Líder de Manga** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta de Carrera** (`raceBestLapAudio`) | `default_best_race_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Récord de Carril de Carrera** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Récord Absoluto de Pista** (`overallBestLapAudio`) | `default_record_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Nuevo Líder de Carrera** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Salida en Falso / Penalización** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Entrada a Boxes** (`pitInAudio`) | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Alertas de Combustible** (`fuelAudio`: Aviso, Crítico, Vacío) | `default_fuel_level` (Conjunto de Audio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| Evento de Audio del Piloto | Cuándo se reproduce | Archivo / Activo Predeterminado | Tipo de Sonido | Nivel de Prioridad | Relevancia y Pantalla |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Sonido de Vuelta** | Se reproduce en cada vuelta regular completada (o como respaldo si el sonido de hito se descarta o no está disponible). | `default_beep` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `low` (Peso 1 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta Personal** | Se reproduce cuando el piloto logra su tiempo de vuelta más rápido de la manga o sesión actual. | `default_driveby` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `normal` (Peso 2 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta de Carrera** | Se reproduce al marcar la vuelta más rápida de toda la carrera entre todas las mangas y carriles. | `default_best_race_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta de Carril de Carrera** | Se reproduce al lograr la vuelta más rápida en ese carril específico durante la carrera actual. | `default_best_race_lane_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta de Manga** | Se reproduce cuando el piloto logra la vuelta más rápida entre todos los participantes de la manga activa. | `default_best_heat_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de nuevo líder de carrera** | Se reproduce cuando un piloto pasa al primer puesto de la clasificación general de la carrera. | `default_new_race_leader` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de nuevo líder de manga** | Se reproduce cuando un piloto toma el liderato en la manga activa. | `default_new_heat_leader` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Récord de Vuelta General** | Se reproduce cuando se bate el récord histórico de pista entre todos los carriles y carreras anteriores. | `default_record_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Récord de Vuelta de Carril General** | Se reproduce cuando se bate el récord histórico de pista en ese carril específico. | `default_record_lane_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Entrada a Boxes** | Se reproduce cuando el coche entra en el carril de boxes o zona de repostaje. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonidos de Nivel de Combustible** | Se reproduce cuando el nivel de combustible baja al umbral de advertencia, crítico o vacío. | `default_fuel_level` (Conjunto de Audio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Salida en Falso** | Se reproduce cuando se detecta una salida en falso o infracción en la línea de salida. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 
 ### Eventos de Audio de Tema (Configurados en el Gestor de Temas)
 
@@ -186,5 +186,5 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | :--- | :--- |
 | **Editor de Interfaz -> Ajustes de Audio** | Volumen maestro, tiempo límite de cola urgente, espaciado de avisos, voz TTS, velocidad, tono, volumen TTS y botón de prueba. |
 | **Editor de Temas** | Sonidos globales: cuenta atrás, semáforo verde, bandera amarilla, tiempo restante, mitad de manga, fin de manga, fin de carrera, tiempo mínimo y vuelta de drift. |
-| **Editor de Pilotos** | Sonidos individuales de cada piloto: vuelta normal, mejor vuelta personal, mejor vuelta de manga, mejor vuelta de carrera, récords de carril y pista, cambios de líder, salida en falso, entrada a boxes y combustible. |
+| **Editor de Pilotos** | Sonidos específicos del piloto: Sonido de Vuelta, Sonido de Mejor Vuelta Personal, Sonido de Mejor Vuelta de Carrera, Sonido de Mejor Vuelta de Carril de Carrera, Sonido de Mejor Vuelta de Manga, Sonido de nuevo líder de carrera, Sonido de nuevo líder de manga, Sonido de Récord de Vuelta General, Sonido de Récord de Vuelta de Carril General, Sonido de Entrada a Boxes, Sonidos de Nivel de Combustible y Sonido de Salida en Falso. |
 | **Gestor de Activos** | Subida y administración de archivos WAV, MP3 y OGG con previsualización inmediata. |

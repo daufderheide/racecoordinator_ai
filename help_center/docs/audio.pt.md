@@ -150,20 +150,20 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 
 ### Eventos de Áudio do Piloto (Configurados no Editor de Pilotos)
 
-| Ranhura de Áudio | Ficheiro / Recurso Padrão | Tipo de Som | Nível de Prioridade | Relevância e Ecrã |
-| :--- | :--- | :--- | :---: | :--- |
-| **Som de Volta** (`lapAudio`) | `default_beep` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `low` (Peso 1 em TTS; Polifónico em SFX) | `lane-view`: Toca no Ecrã Principal (se houver widget de calha) e no Posto de Piloto dessa calha/piloto. |
-| **Recorde Pessoal** (`bestLapAudio`) | `default_driveby` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `normal` (Peso 2 em TTS; Polifónico em SFX) | `lane-view`: Toca no Ecrã Principal (se houver widget de calha) e no Posto de Piloto dessa calha/piloto. |
-| **Melhor Volta da Manga** (`heatBestLapAudio`) | `default_best_heat_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Melhor Volta da Calha na Corrida** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Novo Líder da Manga** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Melhor Volta da Corrida** (`raceBestLapAudio`) | `default_best_race_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Recorde da Calha na Corrida** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Recorde Absoluto da Pista** (`overallBestLapAudio`) | `default_record_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Novo Líder da Corrida** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Falsa Partida / Penalização** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Entrada nas Boxes** (`pitInAudio`) | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
-| **Alertas de Combustível** (`fuelAudio`: Aviso, Crítico, Vazio) | `default_fuel_level` (Conjunto de Áudio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| Evento de Áudio do Piloto | Quando é reproduzido | Ficheiro / Recurso Padrão | Tipo de Som | Nível de Prioridade | Relevância e Ecrã |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Som de Volta** | Tocado a cada volta regular completada (ou como reserva caso um som de marco seja descartado ou não esteja disponível). | `default_beep` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `low` (Peso 1 em TTS; Polifónico em SFX) | `lane-view`: Toca no Ecrã Principal (se houver widget de calha) e no Posto de Piloto dessa calha/piloto. |
+| **Som de Melhor Volta Pessoal** | Tocado quando o piloto faz a sua volta mais rápida na bateria ou sessão atual. | `default_driveby` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `normal` (Peso 2 em TTS; Polifónico em SFX) | `lane-view`: Toca no Ecrã Principal (se houver widget de calha) e no Posto de Piloto dessa calha/piloto. |
+| **Som de Melhor Volta da Corrida** | Tocado ao cravar a melhor volta de toda a corrida entre todas as baterias e raias. | `default_best_race_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de Melhor Volta de Raia da Corrida** | Tocado ao cravar a volta mais rápida naquela raia específica durante a corrida atual. | `default_best_race_lane_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de Melhor Volta da Bateria** | Tocado ao fazer a volta mais rápida entre todos os pilotos na bateria ativa. | `default_best_heat_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de novo líder da corrida** | Tocado quando um piloto assume a liderança geral da classificação da corrida. | `default_new_race_leader` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de novo líder da bateria** | Tocado quando um piloto assume a liderança na bateria ativa. | `default_new_heat_leader` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de Recorde de Volta Geral** | Tocado quando o recorde histórico absoluto da pista em qualquer raia é quebrado. | `default_record_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de Recorde de Volta de Raia Geral** | Tocado quando o recorde histórico da pista naquela raia específica é quebrado. | `default_record_lane_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de Entrada nos Boxes** | Tocado quando o carro entra na faixa de boxes ou área de reabastecimento. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Sons de Nível de Combustível** | Tocado quando o nível de combustível atinge os limites de aviso, crítico ou vazio. | `default_fuel_level` (Conjunto de Áudio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
+| **Som de Queima de Largada** | Tocado quando uma queima de largada ou infração de partida é detectada. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 
 ### Eventos de Áudio de Temas (Configurados no Editor de Temas)
 
@@ -187,5 +187,5 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | :--- | :--- |
 | **Editor de Interface -> Definições de Áudio** | Volume principal, tempo de espera urgente, espaçamento de avisos, voz TTS, velocidade, tom, volume TTS e teste de fala. |
 | **Editor de Temas** | Sons de sistema: contagem decrescente, luz verde, sirene de bandeira amarela, tempo restante, meio da manga, fim da manga, fim da corrida, tempo mínimo e volta de drift. |
-| **Editor de Pilotos** | Sons de cada piloto: volta padrão, recorde pessoal, melhor volta da manga, melhor volta da calha, melhor volta da corrida, recordes da pista, mudanças de líder, falsa partida, entrada nas boxes e combustível. |
+| **Editor de Pilotos** | Sons específicos do piloto: Som de Volta, Som de Melhor Volta Pessoal, Som de Melhor Volta da Corrida, Som de Melhor Volta de Raia da Corrida, Som de Melhor Volta da Bateria, Som de novo líder da corrida, Som de novo líder da bateria, Som de Recorde de Volta Geral, Som de Recorde de Volta de Raia Geral, Som de Entrada nos Boxes, Sons de Nível de Combustível e Som de Queima de Largada. |
 | **Gestor de Ativos** | Envio e gestão de ficheiros WAV, MP3 e OGG com pré-escuta imediata. |
