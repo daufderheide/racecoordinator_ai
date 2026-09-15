@@ -150,20 +150,20 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 
 ### Fahrer-Audioereignisse (Konfiguration im Fahrer-Editor)
 
-| Audio-Slot | Standard-Datei / Asset | Soundtyp | Prioritätsstufe | Relevanz & Bildschirmanzeige |
-| :--- | :--- | :--- | :---: | :--- |
-| **Rundenton** (`lapAudio`) | `default_beep` | **SFX** (Preset) / **Sprachansage** (TTS) | `low` (Gewicht 1 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Persönliche Bestzeit** (`bestLapAudio`) | `default_driveby` | **SFX** (Preset) / **Sprachansage** (TTS) | `normal` (Gewicht 2 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Durchgangsbestzeit** (`heatBestLapAudio`) | `default_best_heat_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Renn-Spurbestzeit** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Neuer Durchgangsführender** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Beste Rennrunde** (`raceBestLapAudio`) | `default_best_race_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Spur-Streckenrekord** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Gesamter Streckenrekord** (`overallBestLapAudio`) | `default_record_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Neuer Rennführender** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Fehlstart / Strafe** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Boxeneinfahrt** (`pitInAudio`) | `default_pit_in` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Kraftstoff-Warnungen** (`fuelAudio`: Warnung, Kritisch, Leer) | `default_fuel_level` (Audioset) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| Fahrer-Audioereignis | Wann abgespielt | Standard-Datei / Asset | Soundtyp | Prioritätsstufe | Relevanz & Bildschirmanzeige |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Runden-Sound** | Wird bei jeder regulären Rundenüberfahrt abgespielt (oder als Ausweichsound, wenn ein Meilenstein-Sound verworfen oder nicht verfügbar ist). | `default_beep` | **SFX** (Preset) / **Sprachansage** (TTS) | `low` (Gewicht 1 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Persönlicher Bester Runden-Sound** | Wird abgespielt, wenn der Fahrer seine persönliche Bestzeit im aktuellen Durchgang oder der Sitzung erzielt. | `default_driveby` | **SFX** (Preset) / **Sprachansage** (TTS) | `normal` (Gewicht 2 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Rennen-Beste-Runde-Sound** | Wird abgespielt, wenn die schnellste Rundenzeit über alle Spuren und Durchgänge des aktuellen Rennens aufgestellt wird. | `default_best_race_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Rennspur-Beste-Runde-Sound** | Wird abgespielt, wenn die schnellste Rundenzeit auf dieser spezifischen Spur im aktuellen Rennen erzielt wird. | `default_best_race_lane_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Lauf-Beste-Runde-Sound** | Wird abgespielt, wenn die schnellste Rundenzeit unter allen Fahrern im aktuellen Durchgang erzielt wird. | `default_best_heat_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Neuer Rennführender-Sound** | Wird abgespielt, wenn ein Fahrer die Führung im Gesamtklassement des Rennens übernimmt. | `default_new_race_leader` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Neuer Lauf-Führender-Sound** | Wird abgespielt, wenn ein Fahrer die Führung im aktiven Durchgang übernimmt. | `default_new_heat_leader` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Gesamtrekord-Rundensound** | Wird abgespielt, wenn der absolute Streckenrekord über alle Spuren und bisherigen Rennen gebrochen wird. | `default_record_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Spur-Gesamtrekord-Rundensound** | Wird abgespielt, wenn der allzeitige Streckenrekord für diese spezifische Spur gebrochen wird. | `default_record_lane_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Boxenstopp-Sound** | Wird abgespielt, wenn das Fahrzeug in die Boxengasse oder den Tankbereich einfährt. | `default_pit_in` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Kraftstoffstand-Sounds** | Wird abgespielt, wenn der Tankfüllstand Warnung, kritisch oder leer erreicht. | `default_fuel_level` (Audioset) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Fehlstart-Sound** | Wird abgespielt, wenn ein Frühstart oder Verstoß beim Start erkannt wird. | `default_penalty` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 
 ### Design-Audioereignisse (Konfiguration im Design-Editor / Themes)
 
@@ -187,5 +187,5 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | :--- | :--- |
 | **UI-Editor -> Audio-Einstellungen** | Gesamtlautstärke, Dringlichkeits-Timeout, Ansagen-Abstand, TTS-Stimme, Geschwindigkeit, Tonhöhe, TTS-Lautstärke, Hörprobe. |
 | **Design-Editor (Themes)** | Systemweite Ereignisse: Start-Countdown, Grüne Lampe GO, Gelbe Flagge, Restzeit, Halbzeit, Durchgangsende, Rennende, Mindestrundenzeit, Driftrunde. |
-| **Fahrer-Editor** | Fahrerspezifische Töne: Runden-Sound, persönliche Bestzeit, Durchgangsbestzeit, Renn-Spurbestzeit, Rennbestzeit, Spur-Rekord, Streckenrekord, Führungswechsel, Fehlstart, Boxenstopp, Kraftstoffstand. |
+| **Fahrer-Editor** | Fahrerspezifische Sounds: Runden-Sound, Persönlicher Bester Runden-Sound, Rennen-Beste-Runde-Sound, Rennspur-Beste-Runde-Sound, Lauf-Beste-Runde-Sound, Neuer Rennführender-Sound, Neuer Lauf-Führender-Sound, Gesamtrekord-Rundensound, Spur-Gesamtrekord-Rundensound, Boxenstopp-Sound, Kraftstoffstand-Sounds und Fehlstart-Sound. |
 | **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien mit Sofort-Hörprobe. |

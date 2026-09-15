@@ -150,20 +150,20 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 
 ### Eventi Audio del Pilota (Configurati nell'Editor Piloti)
 
-| Slot Audio | File / Risorsa Predefinita | Tipo di Suono | Livello di Priorità | Rilevanza e Schermata |
-| :--- | :--- | :--- | :---: | :--- |
-| **Suono Giro** (`lapAudio`) | `default_beep` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `low` (Peso 1 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
-| **Record Personale** (`bestLapAudio`) | `default_driveby` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `normal` (Peso 2 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
-| **Miglior Giro di Manche** (`heatBestLapAudio`) | `default_best_heat_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Miglior Giro di Corsia di Gara** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Nuovo Leader di Manche** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Miglior Giro di Gara** (`raceBestLapAudio`) | `default_best_race_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Record di Corsia di Gara** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Record Assoluto di Pista** (`overallBestLapAudio`) | `default_record_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Nuovo Leader di Gara** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Falsa Partenza / Penalità** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Ingresso Box** (`pitInAudio`) | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Avvisi Carburante** (`fuelAudio`: Avviso, Critico, Esaurito) | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| Evento Audio del Pilota | Quando viene riprodotto | File / Risorsa Predefinita | Tipo di Suono | Livello di Priorità | Rilevanza e Schermata |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Suono Giro** | Riprodotto a ogni giro standard completato (o come fallback se l'annuncio di record viene scartato o non è configurato). | `default_beep` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `low` (Peso 1 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro Personale** | Riprodotto quando il pilota ottiene il proprio miglior tempo sul giro della manche o sessione corrente. | `default_driveby` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `normal` (Peso 2 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro della Gara** | Riprodotto quando si registra il giro più veloce dell'intera gara tra tutte le manche e corsie. | `default_best_race_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro di Corsia della Gara** | Riprodotto quando si ottiene il miglior tempo su quella specifica corsia durante la gara in corso. | `default_best_race_lane_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro della Manche** | Riprodotto quando si ottiene il giro più veloce tra tutti i piloti nella manche attiva. | `default_best_heat_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono nuovo leader della gara** | Riprodotto quando un pilota conquista il primo posto nella classifica generale della gara. | `default_new_race_leader` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono nuovo leader di manche** | Riprodotto quando un pilota passa in testa alla classifica della manche attiva. | `default_new_heat_leader` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Record Assoluto del Giro** | Riprodotto quando viene battuto il record storico assoluto della pista su qualsiasi corsia. | `default_record_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Record di Corsia Assoluto del Giro** | Riprodotto quando viene battuto il record storico della pista su quella specifica corsia. | `default_record_lane_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Entrata ai Box** | Riprodotto quando l'auto entra nella corsia dei box o nell'area di rifornimento. | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suoni Livello Carburante** | Riprodotti quando il livello di carburante scende alle soglie di avviso, critico o riserva/vuoto. | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono di Falsa Partenza** | Riprodotto quando viene rilevata una falsa partenza o infrazione al via. | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 
 ### Eventi Audio dei Temi (Configurati nell'Editor Temi)
 
@@ -187,5 +187,5 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | :--- | :--- |
 | **Editor Interfaccia -> Impostazioni Audio** | Volume principale, tempo di attesa coda urgente, spaziatura annunci, voce TTS, velocità, tonalità, volume voce e test audio. |
 | **Editor Temi** | Suoni di sistema: conto alla rovescia, luce verde, sirena bandiera gialla, tempo residuo, metà manche, fine manche, fine gara, tempo minimo e giro drift. |
-| **Editor Piloti** | Suoni specifici del pilota: suono giro, record personale, miglior giro di manche, miglior giro di corsia, miglior giro di gara, record di pista, cambio leader, falsa partenza, ingresso box e carburante. |
+| **Editor Piloti** | Suoni specifici del pilota: Suono Giro, Suono Miglior Giro Personale, Suono Miglior Giro della Gara, Suono Miglior Giro di Corsia della Gara, Suono Miglior Giro della Manche, Suono nuovo leader della gara, Suono nuovo leader di manche, Suono Record Assoluto del Giro, Suono Record di Corsia Assoluto del Giro, Suono Entrata ai Box, Suoni Livello Carburante e Suono di Falsa Partenza. |
 | **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG con ascolto rapido dell'anteprima. |

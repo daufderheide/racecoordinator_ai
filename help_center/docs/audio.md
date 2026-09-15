@@ -185,20 +185,20 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 
 ### Driver Audio Events (Configured in Driver Editor)
 
-| Audio Slot | Default File / Asset | Sound Type | Priority Tier | Relevance & Display Scope |
-| :--- | :--- | :--- | :---: | :--- |
-| **Lap Sound** (`lapAudio`) | `default_beep` | **SFX** (preset) / **Voice Callout** (TTS) | `low` (Weight 1 when TTS; Polyphonic when preset SFX) | `lane-view`: Plays on Main Raceday (if Lane View widget is present) and on Driver Station for that specific lane/driver. |
-| **Personal Best Lap** (`bestLapAudio`) | `default_driveby` | **SFX** (preset) / **Voice Callout** (TTS) | `normal` (Weight 2 when TTS; Polyphonic when preset SFX) | `lane-view`: Plays on Main Raceday (if Lane View widget is present) and on Driver Station for that specific lane/driver. |
-| **Heat Best Lap** (`heatBestLapAudio`) | `default_best_heat_lap` | **Voice Callout** | `normal` (Weight 2) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Race Lane Best Lap** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Voice Callout** | `normal` (Weight 2) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **New Heat Leader** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Voice Callout** | `normal` (Weight 2) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Race Best Lap** (`raceBestLapAudio`) | `default_best_race_lap` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Overall Lane Record** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Overall Track Record** (`overallBestLapAudio`) | `default_record_lap` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **New Race Leader** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **False Start / Penalty** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Pit-In** (`pitInAudio`) | `default_pit_in` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
-| **Fuel Alerts** (`fuelAudio`: Warning, Critical, Empty) | `default_fuel_level` (Audio Set) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| Driver Audio Event | When Played | Default File / Asset | Sound Type | Priority Tier | Relevance & Display Scope |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Lap Sound** | Played on every standard lap completion (or as fallback if a milestone sound is dropped or unavailable). | `default_beep` | **SFX** (preset) / **Voice Callout** (TTS) | `low` (Weight 1 when TTS; Polyphonic when preset SFX) | `lane-view`: Plays on Main Raceday (if Lane View widget is present) and on Driver Station for that specific lane/driver. |
+| **Personal Best Lap Sound** | Played when the driver achieves their fastest lap time of the current heat or session. | `default_driveby` | **SFX** (preset) / **Voice Callout** (TTS) | `normal` (Weight 2 when TTS; Polyphonic when preset SFX) | `lane-view`: Plays on Main Raceday (if Lane View widget is present) and on Driver Station for that specific lane/driver. |
+| **Race Best Lap Sound** | Played when setting the fastest lap time across all heats and lanes in the current race. | `default_best_race_lap` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Race Lane Best Lap Sound** | Played when setting the fastest lap time on that specific lane during the current race. | `default_best_race_lane_lap` | **Voice Callout** | `normal` (Weight 2) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Heat Best Lap Sound** | Played when setting the fastest lap time among all drivers in the active heat. | `default_best_heat_lap` | **Voice Callout** | `normal` (Weight 2) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **New Race Leader Sound** | Played when a driver takes first place in the overall race standings. | `default_new_race_leader` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **New Heat Leader Sound** | Played when a driver takes the lead in the active heat. | `default_new_heat_leader` | **Voice Callout** | `normal` (Weight 2) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Overall Record Lap Sound** | Played when breaking the all-time track record across all lanes and historical races. | `default_record_lap` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Overall Lane Record Lap Sound** | Played when breaking the all-time track record for that specific lane. | `default_record_lane_lap` | **Voice Callout** | `high` (Weight 3) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Pit In Sound** | Played when the car enters the pit lane or refueling area. | `default_pit_in` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **Fuel Level Sounds** | Played when fuel drops into warning, critical, or empty thresholds. | `default_fuel_level` (Audio Set) | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
+| **False Start Sound** | Played when a false start or start-line infraction is detected. | `default_penalty` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 
 ### Theme Audio Events (Configured in Theme Manager / Editor)
 
@@ -224,5 +224,5 @@ Here is a quick summary of where different audio features are configured across 
 | :--- | :--- |
 | **UI Editor -> Audio Settings** | Master volume, Urgent queue timeout (TTL), Callout spacing cadence pause, TTS voice selection, speech speed (rate), speech pitch, TTS volume, and voice preview test. |
 | **Theme Editor** | System-wide event sounds: start countdown sequence beeps, green lamp GO tone, yellow flag caution sirens, halfway callout, remaining seconds callout, heat finished sound, race finished sound, minimum lap time violation sound, and drift lap violation sound. |
-| **Driver Editor** | Driver-specific sounds: standard lap sound, personal best lap, heat best lap, race lane best lap, race best lap, overall lane record lap, overall record lap, new heat leader, new race leader, false start tone, pit-in sound, and fuel level audio (sound sets or empty/critical alerts). |
+| **Driver Editor** | Driver-specific sounds: lap sound, personal best lap sound, race best lap sound, race lane best lap sound, heat best lap sound, new race leader sound, new heat leader sound, overall record lap sound, overall lane record lap sound, pit in sound, fuel level sounds, and false start sound. |
 | **Asset Manager** | Uploading and organizing custom WAV, MP3, and OGG audio files. Clicking an uploaded audio file instantly plays a preview. |
