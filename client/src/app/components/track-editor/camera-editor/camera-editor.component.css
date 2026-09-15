@@ -1,0 +1,419 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@import '../shared-interface-config.css';
+
+.arduino-config-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 0 10px 5px 10px;
+  box-sizing: border-box;
+  color: #ffffff;
+  position: relative;
+}
+
+.sections-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 0;
+  user-select: none;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.section-header:hover {
+  background: rgba(148, 163, 184, 0.05);
+}
+
+.expander-icon {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  transition: transform 0.2s;
+  width: 14px;
+  text-align: center;
+  display: inline-block;
+}
+
+.expander-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.config-section {
+  margin-bottom: 10px;
+}
+
+.section-content {
+  padding: 10px 0 10px 0;
+}
+
+.section-header h4 {
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  margin: 0;
+  border-left: 3px solid #38bdf8;
+  padding-left: 10px;
+}
+
+.section-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #ffffff;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.action-btn {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  background: #475569;
+  color: white;
+}
+
+.action-btn:hover {
+  background: #64748b;
+}
+
+.action-btn.small {
+  padding: 5px 12px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.action-btn.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+.action-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+.editor-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.pairing-card {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-color: #38bdf8;
+}
+
+.card-header {
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-header.space-between {
+  justify-content: space-between;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.card-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.form-control {
+  height: 38px;
+  padding: 0 12px;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-text {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+/* Pairing Card */
+.badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.badge-info {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.pairing-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.pairing-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Table */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.gates-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.gates-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid #334155;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.gates-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #334155;
+  vertical-align: middle;
+}
+
+.font-bold {
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.table-input {
+  width: 70px;
+  height: 32px;
+  text-align: center;
+}
+
+.gate-slider {
+  width: 110px;
+  accent-color: #38bdf8;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.btn-primary:hover {
+  background: #7dd3fc;
+}
+
+.btn-secondary {
+  background: #334155;
+  color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background: #475569;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+.btn-outline-warning {
+  background: transparent;
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+}
+
+.btn-outline-warning:hover {
+  background: rgba(245, 158, 11, 0.15);
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+/* QR Modal Backdrop & Card */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.qr-modal-card {
+  width: 100%;
+  max-width: 360px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #ffffff;
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.qr-image {
+  width: 220px;
+  height: 220px;
+  display: block;
+}
+
+.qr-instruction {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.copy-link-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.link-input {
+  flex: 1;
+  font-size: 0.8rem;
+}

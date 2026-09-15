@@ -964,19 +964,22 @@ describe("TrackEditorComponent", () => {
       const interfaceHeaders = fixture.nativeElement.querySelectorAll(
         ".config-section .section-content .editor-section .section-header",
       );
-      expect(interfaceHeaders.length).toBe(3);
+      expect(interfaceHeaders.length).toBe(4);
 
       const names = Array.from(interfaceHeaders).map((header: any) =>
         header.querySelector("span")?.textContent?.trim(),
       );
-      expect(names).toEqual(["Arduino", "Phidget", "Trackmate"]);
+      expect(names).toEqual(["Arduino", "Camera", "Phidget", "Trackmate"]);
+
+      const cameraBadge = interfaceHeaders[1].querySelector(".interface-badge");
+      expect(cameraBadge).toBeNull();
 
       const phidgetBadge =
-        interfaceHeaders[1].querySelector(".interface-badge");
+        interfaceHeaders[2].querySelector(".interface-badge");
       expect(phidgetBadge).toBeNull();
 
       const trakmateBadge =
-        interfaceHeaders[2].querySelector(".interface-badge");
+        interfaceHeaders[3].querySelector(".interface-badge");
       expect(trakmateBadge).toBeNull();
     }));
   });
@@ -1154,6 +1157,7 @@ describe("TrackEditorComponent", () => {
         trackmate_configs: [{ name: "TM1", digitalIds: [2] }],
         phidget_configs: [{ name: "PH1", serialNumber: 999 }],
         bart_configs: [{ name: "B1", comPort: "COM1" }],
+        camera_configs: [{ name: "CAM1", interfaceIndex: 0 }],
       };
       dataService.createTrack.and.returnValue(of(mockSavedTrack as any));
       dataService.getTracks.and.returnValue(of([mockSavedTrack as any]));
@@ -1176,6 +1180,7 @@ describe("TrackEditorComponent", () => {
       expect(component.trackmateConfigs.length).toBe(1);
       expect(component.phidgetConfigs.length).toBe(1);
       expect(component.bartConfigs.length).toBe(1);
+      expect(component.cameraConfigs.length).toBe(1);
     }));
 
     it("should toggle sections correctly", () => {
@@ -1190,6 +1195,7 @@ describe("TrackEditorComponent", () => {
       component.trackmateConfigs = [];
       component.bartConfigs = [];
       component.phidgetConfigs = [];
+      component.cameraConfigs = [];
 
       component.addLane();
       expect(component.lanes.length).toBe(1);
@@ -1213,6 +1219,14 @@ describe("TrackEditorComponent", () => {
       expect(component.phidgetConfigs.length).toBe(1);
       component.removePhidgetConfig(0);
       expect(component.phidgetConfigs.length).toBe(0);
+
+      component.addCameraConfig();
+      expect(component.cameraConfigs.length).toBe(1);
+      expect(component.cameraConfigs[0].gates.length).toBe(
+        component.lanes.length,
+      );
+      component.removeCameraConfig(0);
+      expect(component.cameraConfigs.length).toBe(0);
     });
 
     it("should handle onPhidgetConfigChange without calling initializeInterfaces", () => {
@@ -1227,6 +1241,48 @@ describe("TrackEditorComponent", () => {
 
       expect((component as any).captureState).toHaveBeenCalled();
       expect(initSpy).not.toHaveBeenCalled();
+    });
+
+    it("should handle onCameraConfigChange without calling initializeInterfaces", () => {
+      const initSpy = spyOn<any>(component, "initializeInterfaces");
+      spyOn<any>(component, "captureState");
+
+      component.addCameraConfig();
+      expect(initSpy).not.toHaveBeenCalled();
+
+      component.onCameraConfigChange();
+
+      expect((component as any).captureState).toHaveBeenCalled();
+      expect(initSpy).not.toHaveBeenCalled();
+    });
+
+    it("should display LHS interface buttons in alphabetical order", () => {
+      fixture.detectChanges();
+      const compiled = fixture.nativeElement as HTMLElement;
+      const addBtns = compiled.querySelectorAll(
+        ".editor-section button.add-list-btn",
+      );
+      const btnIds = Array.from(addBtns).map((btn) => btn.id);
+      expect(btnIds).toEqual([
+        "add-interface-btn",
+        "add-camera-btn",
+        "add-phidget-btn",
+        "add-trakmate-btn",
+      ]);
+    });
+
+    it("should expand camera interface on scrollToAndExpandInterface", () => {
+      const mockCameraEditor = jasmine.createSpyObj("CameraEditorComponent", [
+        "ensureSectionsExpanded",
+      ]);
+      component.cameraEditors = {
+        get: jasmine.createSpy("get").and.returnValue(mockCameraEditor),
+      } as any;
+
+      component.scrollToAndExpandInterface("interface-camera-0");
+
+      expect(component.cameraEditors.get).toHaveBeenCalledWith(0);
+      expect(mockCameraEditor.ensureSectionsExpanded).toHaveBeenCalled();
     });
 
     describe("Track Scale and Decimal Lane Length", () => {

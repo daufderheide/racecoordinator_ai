@@ -44,6 +44,10 @@ public class TrackConverter {
               track.getBartConfigs().stream()
                   .map(BartConfigConverter::toProto)
                   .collect(Collectors.toList()))
+          .addAllCameraConfigs(
+              track.getCameraConfigs().stream()
+                  .map(CameraConfigConverter::toProto)
+                  .collect(Collectors.toList()))
           .build();
     }
   }

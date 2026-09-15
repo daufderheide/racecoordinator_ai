@@ -1,0 +1,315 @@
+@if (config()) {
+  <div
+    class="arduino-config-container"
+    [id]="'camera-editor-' + interfaceIndex()"
+  >
+    <div class="config-section">
+      <div
+        class="section-header camera-section-header"
+        (click)="toggleSection('camera')"
+      >
+        <span class="expander-icon" [class.collapsed]="!sectionsExpanded.camera"
+          >▼</span
+        >
+        <h1>
+          {{ "CAMERA_HEADER" | translate }}
+        </h1>
+        <div class="spacer"></div>
+        <button
+          class="action-btn danger small"
+          (click)="$event.stopPropagation(); onRemove()"
+          title="{{ 'CAMERA_EDITOR_REMOVE' | translate }}"
+        >
+          X
+        </button>
+      </div>
+
+      @if (sectionsExpanded.camera) {
+        <div class="section-content camera-section-content">
+          <div class="sections-wrapper">
+            <!-- General Configuration Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('main')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.main"
+                  >▼</span
+                >
+                <h4>{{ "CAMERA_EDITOR_GENERAL_SETTINGS" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.main) {
+                <div class="section-content">
+                  <div class="editor-card">
+                    <div class="card-body">
+                      <div class="form-row">
+                        <label class="form-label" for="targetFps">{{
+                          "CAMERA_EDITOR_TARGET_FPS" | translate
+                        }}</label>
+                        <select
+                          id="targetFps"
+                          class="form-control"
+                          [(ngModel)]="config().targetFps"
+                          (ngModelChange)="onConfigChange()"
+                        >
+                          <option [ngValue]="30">30 FPS</option>
+                          <option [ngValue]="60">
+                            60 FPS ({{
+                              "CAMERA_EDITOR_RECOMMENDED" | translate
+                            }})
+                          </option>
+                        </select>
+                      </div>
+
+                      <div class="form-row checkbox-row">
+                        <label class="checkbox-label">
+                          <input
+                            type="checkbox"
+                            [(ngModel)]="config().autoDetectLanes"
+                            (ngModelChange)="onConfigChange()"
+                          />
+                          <span class="checkbox-text">{{
+                            "CAMERA_EDITOR_AUTO_DETECT" | translate
+                          }}</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Mobile Pairing Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('pairing')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.pairing"
+                  >▼</span
+                >
+                <h4>{{ "CAMERA_EDITOR_PAIRING_TITLE" | translate }}</h4>
+              </div>
+
+              @if (sectionsExpanded.pairing) {
+                <div class="section-content">
+                  <div class="editor-card pairing-card">
+                    <div class="card-body">
+                      <p class="pairing-desc">
+                        {{ "CAMERA_EDITOR_PAIRING_DESC" | translate }}
+                      </p>
+
+                      <div class="pairing-actions">
+                        <button
+                          class="btn btn-primary"
+                          (click)="openQrModal()"
+                          id="pairCameraBtn"
+                        >
+                          📱 {{ "CAMERA_EDITOR_SHOW_QR" | translate }}
+                        </button>
+
+                        <button
+                          class="btn btn-secondary"
+                          (click)="openLocalInterface()"
+                          id="testCameraBtn"
+                        >
+                          💻 {{ "CAMERA_EDITOR_TEST_LOCAL" | translate }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Detection Gates Configuration Section -->
+            <div class="config-section">
+              <div class="section-header" (click)="toggleSection('gates')">
+                <span
+                  class="expander-icon"
+                  [class.collapsed]="!sectionsExpanded.gates"
+                  >▼</span
+                >
+                <h4>{{ "CAMERA_EDITOR_GATES_TITLE" | translate }}</h4>
+                <div class="spacer"></div>
+                <button
+                  class="btn btn-sm btn-outline-warning"
+                  (click)="$event.stopPropagation(); resetGatesToDefault()"
+                >
+                  {{ "CAMERA_RESET_GATES" | translate }}
+                </button>
+              </div>
+
+              @if (sectionsExpanded.gates) {
+                <div class="section-content">
+                  <div class="editor-card">
+                    <div class="card-body">
+                      <div class="table-responsive">
+                        <table class="gates-table">
+                          <thead>
+                            <tr>
+                              <th>{{ "CAMERA_EDITOR_LANE" | translate }}</th>
+                              <th>X (%)</th>
+                              <th>Y (%)</th>
+                              <th>
+                                {{ "CAMERA_EDITOR_WIDTH" | translate }} (%)
+                              </th>
+                              <th>
+                                {{ "CAMERA_EDITOR_HEIGHT" | translate }} (%)
+                              </th>
+                              <th>{{ "CAMERA_SENSITIVITY" | translate }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (
+                              gate of config().gates;
+                              track gate.laneIndex
+                            ) {
+                              <tr>
+                                <td class="font-bold">
+                                  {{ "CAMERA_EDITOR_LANE" | translate }}
+                                  {{ gate.laneIndex + 1 }}
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    class="form-control table-input"
+                                    [ngModel]="
+                                      gate.xPct * 100 | number: '1.0-0'
+                                    "
+                                    (ngModelChange)="
+                                      gate.xPct = $event / 100; onConfigChange()
+                                    "
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    class="form-control table-input"
+                                    [ngModel]="
+                                      gate.yPct * 100 | number: '1.0-0'
+                                    "
+                                    (ngModelChange)="
+                                      gate.yPct = $event / 100; onConfigChange()
+                                    "
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    min="5"
+                                    max="100"
+                                    class="form-control table-input"
+                                    [ngModel]="
+                                      gate.widthPct * 100 | number: '1.0-0'
+                                    "
+                                    (ngModelChange)="
+                                      gate.widthPct = $event / 100;
+                                      onConfigChange()
+                                    "
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    min="5"
+                                    max="100"
+                                    class="form-control table-input"
+                                    [ngModel]="
+                                      gate.heightPct * 100 | number: '1.0-0'
+                                    "
+                                    (ngModelChange)="
+                                      gate.heightPct = $event / 100;
+                                      onConfigChange()
+                                    "
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="range"
+                                    min="0.1"
+                                    max="0.9"
+                                    step="0.05"
+                                    class="gate-slider"
+                                    [(ngModel)]="gate.sensitivity"
+                                    (ngModelChange)="onConfigChange()"
+                                  />
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- QR Code Pairing Modal -->
+    @if (showQrModal()) {
+      <div class="modal-backdrop" (click)="closeQrModal()">
+        <div class="qr-modal-card" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h3 class="modal-title">
+              {{ "CAMERA_EDITOR_PAIRING_TITLE" | translate }}
+            </h3>
+            <button
+              class="close-btn"
+              (click)="closeQrModal()"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="modal-body">
+            @if (qrCodeDataUrl()) {
+              <div class="qr-container">
+                <img
+                  [src]="qrCodeDataUrl()"
+                  alt="Pairing QR Code"
+                  class="qr-image"
+                />
+              </div>
+            }
+
+            <p class="qr-instruction">
+              {{ "CAMERA_EDITOR_QR_INSTRUCTION" | translate }}
+            </p>
+
+            <div class="copy-link-container">
+              <input
+                type="text"
+                readonly
+                [value]="pairingUrl()"
+                class="form-control link-input"
+              />
+              <button class="btn btn-secondary" (click)="copyPairingUrl()">
+                {{
+                  (copySuccess()
+                    ? "CAMERA_EDITOR_COPIED"
+                    : "CAMERA_EDITOR_COPY"
+                  ) | translate
+                }}
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-primary full-width" (click)="closeQrModal()">
+              {{ "CAMERA_DONE" | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

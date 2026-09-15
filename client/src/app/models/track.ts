@@ -1,8 +1,10 @@
 import { BartConfig } from "./bart_config";
+import { CameraConfig } from "./camera_config";
 import { Lane } from "./lane";
 import { Model } from "./model";
 
 export { BartConfig } from "./bart_config";
+export { CameraConfig, LaneDetectionGate } from "./camera_config";
 
 export const MAX_DIGITAL_PINS = 60;
 export const MAX_ANALOG_PINS = 16;
@@ -27,6 +29,7 @@ export interface TrackParams {
   phidget_configs?: PhidgetConfig[];
   trackmate_configs?: TrackmateConfig[];
   bart_configs?: BartConfig[];
+  camera_configs?: CameraConfig[];
 }
 
 export class Track implements Model {
@@ -42,6 +45,7 @@ export class Track implements Model {
   readonly phidget_configs!: PhidgetConfig[];
   readonly trackmate_configs!: TrackmateConfig[];
   readonly bart_configs!: BartConfig[];
+  readonly camera_configs!: CameraConfig[];
 
   constructor(params: TrackParams) {
     Object.assign(this, params);
@@ -61,6 +65,7 @@ export class Track implements Model {
     this.phidget_configs ??= [];
     this.trackmate_configs ??= [];
     this.bart_configs ??= [];
+    this.camera_configs ??= [];
   }
 
   get objectId(): string {

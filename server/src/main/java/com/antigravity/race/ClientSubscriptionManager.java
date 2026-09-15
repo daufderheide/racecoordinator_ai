@@ -2,15 +2,23 @@ package com.antigravity.race;
 
 import com.antigravity.auth.AuthService;
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.proto.CallbuttonEvent;
+import com.antigravity.proto.CameraHeartbeatEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
 import com.antigravity.proto.InterfaceStatusEvent;
+import com.antigravity.proto.LapEvent;
+import com.antigravity.proto.PitInEvent;
+import com.antigravity.proto.PitOutEvent;
 import com.antigravity.proto.RaceData;
 import com.antigravity.proto.RaceSubscriptionRequest;
+import com.antigravity.proto.SegmentEvent;
 import com.antigravity.proto.SystemState;
+import com.antigravity.proto.TimeSyncPong;
 import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
+import com.antigravity.protocols.camera.CameraWebSocketProtocol;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.LogReplayService;
@@ -19,6 +27,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -41,6 +50,7 @@ public class ClientSubscriptionManager {
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Set<WsContext> interfaceSubscribers =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private final Map<Integer, CameraWebSocketProtocol> cameraProtocols = new ConcurrentHashMap<>();
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(
           r -> {
@@ -630,6 +640,117 @@ public class ClientSubscriptionManager {
       } catch (Exception e) {
         // Ignore or log
       }
+    }
+  }
+
+  public void registerCameraProtocol(CameraWebSocketProtocol protocol) {
+    if (protocol != null) {
+      cameraProtocols.put(protocol.getInterfaceIndex(), protocol);
+    }
+  }
+
+  public void unregisterCameraProtocol(CameraWebSocketProtocol protocol) {
+    if (protocol != null) {
+      cameraProtocols.remove(protocol.getInterfaceIndex());
+    }
+  }
+
+  public CameraWebSocketProtocol getCameraProtocol(int interfaceIndex) {
+    return cameraProtocols.get(interfaceIndex);
+  }
+
+  public void handleIncomingInterfaceEvent(WsContext ctx, InterfaceEvent event) {
+    if (event == null) {
+      return;
+    }
+
+    if (event.hasTimeSyncPing()) {
+      handleTimeSyncPing(ctx, event.getTimeSyncPing().getClientSendTime());
+      return;
+    }
+
+    if (event.hasCameraHeartbeat()) {
+      handleCameraHeartbeat(event.getCameraHeartbeat());
+    } else if (event.hasLap()) {
+      handleLapEvent(event.getLap());
+    } else if (event.hasSegment()) {
+      handleSegmentEvent(event.getSegment());
+    } else if (event.hasCallbutton()) {
+      handleCallbuttonEvent(event.getCallbutton());
+    } else if (event.hasPitIn()) {
+      handlePitInEvent(event.getPitIn());
+    } else if (event.hasPitOut()) {
+      handlePitOutEvent(event.getPitOut());
+    }
+
+    broadcastInterfaceEvent(event);
+  }
+
+  private void handleTimeSyncPing(WsContext ctx, double clientSendTime) {
+    double nowSec = System.currentTimeMillis() / 1000.0;
+    InterfaceEvent pong =
+        InterfaceEvent.newBuilder()
+            .setTimeSyncPong(
+                TimeSyncPong.newBuilder()
+                    .setClientSendTime(clientSendTime)
+                    .setServerRecvTime(nowSec)
+                    .setServerSendTime(nowSec)
+                    .build())
+            .build();
+    try {
+      ctx.send(ByteBuffer.wrap(pong.toByteArray()));
+    } catch (Exception e) {
+      logger.warn("Failed to send TimeSyncPong: {}", e.getMessage());
+    }
+  }
+
+  private void handleCameraHeartbeat(CameraHeartbeatEvent hb) {
+    CameraWebSocketProtocol proto = cameraProtocols.get(hb.getInterfaceIndex());
+    if (proto != null) {
+      proto.onIncomingHeartbeat(hb.getCurrentFps(), hb.getBatteryLevel(), hb.getClientTimestamp());
+    }
+  }
+
+  private void handleLapEvent(LapEvent lap) {
+    CameraWebSocketProtocol proto = cameraProtocols.get(lap.getInterfaceIndex());
+    if (proto != null) {
+      proto.onIncomingLap(lap.getLane(), lap.getLapTime(), lap.getInterfaceId());
+    } else if (currentRace != null) {
+      currentRace.onLap(
+          lap.getLane(), lap.getLapTime(), lap.getInterfaceId(), lap.getInterfaceIndex());
+    }
+  }
+
+  private void handleSegmentEvent(SegmentEvent seg) {
+    CameraWebSocketProtocol proto = cameraProtocols.get(seg.getInterfaceIndex());
+    if (proto != null) {
+      proto.onIncomingSegment(seg.getLane(), seg.getSegmentTime(), seg.getInterfaceId());
+    } else if (currentRace != null) {
+      currentRace.onSegment(
+          seg.getLane(), seg.getSegmentTime(), seg.getInterfaceId(), seg.getInterfaceIndex());
+    }
+  }
+
+  private void handleCallbuttonEvent(CallbuttonEvent cb) {
+    CameraWebSocketProtocol proto = cameraProtocols.get(cb.getInterfaceIndex());
+    if (proto != null) {
+      proto.onIncomingCallbutton(cb.getLane());
+    } else if (currentRace != null) {
+      currentRace.onCallbutton(cb.getLane(), cb.getInterfaceIndex());
+    }
+  }
+
+  private void handlePitInEvent(PitInEvent pitIn) {
+    CameraWebSocketProtocol proto = cameraProtocols.get(pitIn.getInterfaceIndex());
+    if (proto != null) {
+      proto.onIncomingPitIn(pitIn.getLane());
+    }
+  }
+
+  private void handlePitOutEvent(PitOutEvent pitOut) {
+    CameraWebSocketProtocol proto = cameraProtocols.get(pitOut.getInterfaceIndex());
+    if (proto != null) {
+      proto.onIncomingPitOut(pitOut.getLane());
     }
   }
 }

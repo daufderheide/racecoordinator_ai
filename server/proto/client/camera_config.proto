@@ -1,0 +1,24 @@
+syntax = "proto3";
+package com.antigravity;
+
+option java_package = "com.antigravity.proto";
+option java_multiple_files = true;
+option java_outer_classname = "CameraConfigProto";
+
+message LaneDetectionGate {
+  int32 lane_index = 1;
+  float x_pct = 2;                 // Normalized horizontal coordinate (0.0 - 1.0)
+  float y_pct = 3;                 // Normalized vertical coordinate (0.0 - 1.0)
+  float width_pct = 4;             // Normalized gate width (0.0 - 1.0)
+  float height_pct = 5;            // Normalized gate height (0.0 - 1.0)
+  int32 gate_type = 6;             // 0 = LAP/FINISH, 1 = SECTOR, 2 = PIT_IN, 3 = PIT_OUT
+  float sensitivity = 7;           // Motion sensitivity threshold (0.0 - 1.0)
+}
+
+message CameraInterfaceConfig {
+  string name = 1;
+  int32 interface_index = 2;
+  int32 target_fps = 3;             // Default: 60
+  bool auto_detect_lanes = 4;
+  repeated LaneDetectionGate gates = 5;
+}

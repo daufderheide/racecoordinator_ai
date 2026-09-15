@@ -35,10 +35,12 @@ import { InputDialogComponent } from "@app/components/shared/input-dialog/input-
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { ArduinoEditorComponent } from "@app/components/track-editor/arduino-editor/arduino-editor.component";
 import { BartEditorComponent } from "@app/components/track-editor/bart-editor/bart-editor.component";
+import { CameraEditorComponent } from "@app/components/track-editor/camera-editor/camera-editor.component";
 import { PhidgetEditorComponent } from "@app/components/track-editor/phidget-editor/phidget-editor.component";
 import { TrakmateEditorComponent } from "@app/components/track-editor/trakmate-editor/trakmate-editor.component";
 import { DataService } from "@app/data.service";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
+import { CameraConfig } from "@app/models/camera_config";
 import { Lane } from "@app/models/lane";
 import {
   ArduinoConfig,
@@ -83,6 +85,7 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
     TrakmateEditorComponent,
     PhidgetEditorComponent,
     BartEditorComponent,
+    CameraEditorComponent,
     InputDialogComponent,
     TranslatePipe,
     ConfirmationModalComponent,
@@ -116,6 +119,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   trackmateConfigs: TrackmateConfig[] = [];
   phidgetConfigs: PhidgetConfig[] = [];
   bartConfigs: BartConfig[] = [];
+  cameraConfigs: CameraConfig[] = [];
   helpSteps: GuideStep[] = [];
   driverMissingError = false;
 
@@ -136,6 +140,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   phidgetEditors!: QueryList<PhidgetEditorComponent>;
   @ViewChildren(TrakmateEditorComponent)
   trakmateEditors!: QueryList<TrakmateEditorComponent>;
+  @ViewChildren(CameraEditorComponent)
+  cameraEditors!: QueryList<CameraEditorComponent>;
   sectionsExpanded = {
     general: true,
     interfaces: true,
@@ -176,12 +182,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       tabs.push({ id: `interface-bart-${i}`, label: `BART ${i + 1}` });
     });
 
+    this.cameraConfigs.forEach((_, i) => {
+      tabs.push({ id: `interface-camera-${i}`, label: `Camera ${i + 1}` });
+    });
+
     return tabs;
   }
 
   scrollToAndExpandInterface(tabId: string) {
     const match = tabId.match(
-      /interface-(arduino|trackmate|phidget|bart)-(\d+)/,
+      /interface-(arduino|trackmate|phidget|bart|camera)-(\d+)/,
     );
     if (!match) return;
 
@@ -200,6 +210,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         break;
       case "bart":
         this.bartEditors.get(index)?.ensureSectionsExpanded();
+        break;
+      case "camera":
+        this.cameraEditors.get(index)?.ensureSectionsExpanded();
         break;
     }
 
@@ -285,6 +298,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               );
             } else {
               this.phidgetConfigs = [];
+            }
+            // Restore Camera Configs
+            if (
+              this.editingTrack.camera_configs &&
+              this.editingTrack.camera_configs.length > 0
+            ) {
+              this.cameraConfigs = JSON.parse(
+                JSON.stringify(this.editingTrack.camera_configs),
+              );
+            } else {
+              this.cameraConfigs = [];
             }
             this.cdr.detectChanges();
           }
@@ -642,6 +666,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         this.bartConfigs = [];
       }
 
+      if (
+        this.editingTrack.camera_configs &&
+        this.editingTrack.camera_configs.length > 0
+      ) {
+        this.cameraConfigs = JSON.parse(
+          JSON.stringify(this.editingTrack.camera_configs),
+        );
+      } else {
+        this.cameraConfigs = [];
+      }
+
       this.trackName = this.editingTrack.name;
       this.numTrackSections = this.editingTrack.num_track_sections;
       this.trackScale = this.normalizeTrackScale(this.editingTrack.track_scale);
@@ -663,6 +698,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.trackmateConfigs = [];
       this.phidgetConfigs = [];
       this.bartConfigs = [];
+      this.cameraConfigs = [];
     }
 
     this.isLoading = false;
@@ -737,6 +773,9 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const bartCopy = track.bart_configs
       ? JSON.parse(JSON.stringify(track.bart_configs))
       : [];
+    const cameraCopy = track.camera_configs
+      ? JSON.parse(JSON.stringify(track.camera_configs))
+      : [];
     return new Track({
       entity_id: track.entity_id,
       name: track.name,
@@ -750,6 +789,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       trackmate_configs: trackmateCopy,
       phidget_configs: phidgetCopy,
       bart_configs: bartCopy,
+      camera_configs: cameraCopy,
     });
   }
 
@@ -770,6 +810,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       : [];
     const phConfigs = this.phidgetConfigs ? deepCopy(this.phidgetConfigs) : [];
     const bConfigs = this.bartConfigs ? deepCopy(this.bartConfigs) : [];
+    const camConfigs = this.cameraConfigs ? deepCopy(this.cameraConfigs) : [];
     return new Track({
       entity_id: this.editingTrack.entity_id,
       name: this.trackName,
@@ -791,6 +832,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       trackmate_configs: tmConfigs,
       phidget_configs: phConfigs,
       bart_configs: bConfigs,
+      camera_configs: camConfigs,
     });
   }
 
@@ -842,6 +884,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (
       JSON.stringify(t1.bart_configs || []) !==
       JSON.stringify(t2.bart_configs || [])
+    ) {
+      return false;
+    }
+
+    // Check Camera Configs equality
+    if (
+      JSON.stringify(t1.camera_configs || []) !==
+      JSON.stringify(t2.camera_configs || [])
     ) {
       return false;
     }
@@ -1874,6 +1924,63 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.initializeInterfaces();
   }
 
+  // --- Camera Configuration ---
+
+  private createDefaultCameraGates(laneCount: number) {
+    const gateWidth = 0.8 / laneCount;
+    const gateHeight = 0.25;
+    const y = 0.38;
+    const gates = [];
+    for (let i = 0; i < laneCount; i++) {
+      gates.push({
+        laneIndex: i,
+        gateType: 0,
+        xPct: 0.1 + i * gateWidth,
+        yPct: y,
+        widthPct: gateWidth * 0.9,
+        heightPct: gateHeight,
+        sensitivity: 0.5,
+      });
+    }
+    return gates;
+  }
+
+  addCameraConfig() {
+    this.cameraConfigs.push({
+      name: `Camera ${this.cameraConfigs.length + 1}`,
+      interfaceIndex: this.cameraConfigs.length,
+      targetFps: 60,
+      autoDetectLanes: false,
+      gates: this.createDefaultCameraGates(this.lanes.length),
+    });
+    this.cameraConfigs = [...this.cameraConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  removeCameraConfig(index: number) {
+    this.cameraConfigs.splice(index, 1);
+    this.cameraConfigs = [...this.cameraConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  onCameraConfigChange() {
+    this.cameraConfigs = [...this.cameraConfigs];
+    this.captureState();
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+  }
+
+  trackByCameraConfig(index: number, _config: any): number {
+    return index;
+  }
+
   onBartConfigChange() {
     this.bartConfigs = [...this.bartConfigs];
     this.captureState();
@@ -2022,6 +2129,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             trackmate_configs: result.trackmate_configs,
             phidget_configs: result.phidget_configs,
             bart_configs: result.bart_configs,
+            camera_configs: result.camera_configs,
           });
 
           // Update allTracks cache to ensure name uniqueness checks stay in sync
@@ -2113,6 +2221,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           } else {
             if (this.bartConfigs.length > 0) {
               this.bartConfigs = [];
+            }
+          }
+
+          if (
+            this.editingTrack.camera_configs &&
+            this.editingTrack.camera_configs.length > 0
+          ) {
+            const newCamConfigsJson = JSON.stringify(
+              this.editingTrack.camera_configs,
+            );
+            if (newCamConfigsJson !== JSON.stringify(this.cameraConfigs)) {
+              this.cameraConfigs = JSON.parse(newCamConfigsJson);
+            }
+          } else {
+            if (this.cameraConfigs.length > 0) {
+              this.cameraConfigs = [];
             }
           }
 

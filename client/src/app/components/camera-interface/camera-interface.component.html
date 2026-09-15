@@ -1,0 +1,287 @@
+<div class="camera-viewport">
+  <!-- Live Camera Video Stream -->
+  <video #videoElement class="video-feed" autoplay playsinline muted></video>
+
+  <!-- Offscreen Processing Canvas -->
+  <canvas #analysisCanvas class="analysis-canvas"></canvas>
+
+  <!-- Interactive SVG Detection Gate Overlay -->
+  <svg
+    #overlaySvg
+    class="gate-overlay"
+    viewBox="0 0 1000 1000"
+    preserveAspectRatio="none"
+  >
+    @for (gate of gates(); track gate.laneIndex; let i = $index) {
+      <g
+        class="gate-group"
+        [class.active]="lastTriggeredLane() === gate.laneIndex"
+        [class.selected]="selectedGateIndex() === i"
+      >
+        <!-- Gate Area Box -->
+        <rect
+          [attr.x]="gate.xPct * 1000"
+          [attr.y]="gate.yPct * 1000"
+          [attr.width]="gate.widthPct * 1000"
+          [attr.height]="gate.heightPct * 1000"
+          class="gate-rect"
+          (mousedown)="onGatePointerDown(i, $event)"
+          (touchstart)="onGatePointerDown(i, $event)"
+        />
+
+        <!-- Gate Label Plate -->
+        <rect
+          [attr.x]="gate.xPct * 1000"
+          [attr.y]="gate.yPct * 1000 - 28"
+          width="90"
+          height="24"
+          rx="4"
+          class="label-plate"
+        />
+
+        <!-- Gate Label Text -->
+        <text
+          [attr.x]="gate.xPct * 1000 + 45"
+          [attr.y]="gate.yPct * 1000 - 12"
+          text-anchor="middle"
+          class="gate-label"
+        >
+          {{ "CAMERA_EDITOR_LANE" | translate }} {{ gate.laneIndex + 1 }}
+        </text>
+
+        <!-- Resize Handle (bottom-right corner) -->
+        @if (selectedGateIndex() === i) {
+          <circle
+            [attr.cx]="(gate.xPct + gate.widthPct) * 1000"
+            [attr.cy]="(gate.yPct + gate.heightPct) * 1000"
+            r="16"
+            class="resize-handle"
+            (mousedown)="onResizePointerDown(i, $event)"
+            (touchstart)="onResizePointerDown(i, $event)"
+          />
+        }
+      </g>
+    }
+  </svg>
+
+  <!-- Top Glassmorphism HUD Bar -->
+  <header class="hud-top-bar">
+    <div class="hud-left">
+      <button
+        class="hud-btn back-btn"
+        (click)="goBack()"
+        [title]="'CAMERA_BACK' | translate"
+        aria-label="Back"
+      >
+        <span class="btn-icon">‹</span>
+      </button>
+
+      <div class="status-pill" [class.online]="isConnected()">
+        <span class="status-dot"></span>
+        <span class="status-text">
+          {{
+            isConnected()
+              ? ("CAMERA_CONNECTED" | translate)
+              : ("CAMERA_CONNECTING" | translate)
+          }}
+        </span>
+      </div>
+    </div>
+
+    <div class="hud-center">
+      <span class="metric-pill">{{ fps() }} FPS</span>
+      <span class="metric-pill"
+        >🔋 {{ batteryLevel() * 100 | number: "1.0-0" }}%</span
+      >
+    </div>
+
+    <div class="hud-right">
+      <button
+        class="hud-btn action-pill"
+        (click)="startAutoSnap()"
+        [title]="'CAMERA_AUTO_SNAP' | translate"
+      >
+        <span class="btn-icon">⚡</span>
+        <span class="btn-label">{{ "CAMERA_AUTO_SNAP" | translate }}</span>
+      </button>
+
+      <button
+        class="hud-btn icon-only-btn"
+        (click)="toggleCamera()"
+        [title]="'CAMERA_FLIP' | translate"
+        aria-label="Flip Camera"
+      >
+        🔄
+      </button>
+
+      <button
+        class="hud-btn icon-only-btn"
+        (click)="showSettings.set(true)"
+        [title]="'CAMERA_SETTINGS' | translate"
+        aria-label="Settings"
+      >
+        ⚙️
+      </button>
+    </div>
+  </header>
+
+  <!-- Auto-Snap Wizard Modal Overlay -->
+  @if (isAutoSnapping()) {
+    <div class="modal-backdrop">
+      <div class="auto-snap-card">
+        <div class="card-header">
+          <span class="wizard-step-tag">
+            {{
+              "CAMERA_AUTO_SNAP_STEP"
+                | translate: { step: autoSnapLane() + 1, total: numLanes }
+            }}
+          </span>
+          <h3>{{ "CAMERA_AUTO_SNAP_TITLE" | translate }}</h3>
+        </div>
+
+        <p class="wizard-instruction">
+          {{
+            "CAMERA_AUTO_SNAP_INSTRUCTION"
+              | translate: { lane: autoSnapLane() + 1 }
+          }}
+        </p>
+
+        <!-- Motion Activity Gauge -->
+        <div class="progress-track">
+          <div
+            class="progress-fill"
+            [style.width.%]="(autoSnapFrames() / 15) * 100"
+          ></div>
+        </div>
+        <div class="progress-label">
+          {{ "CAMERA_CALIBRATING" | translate }} ({{ autoSnapFrames() }}/15)
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-secondary" (click)="cancelAutoSnap()">
+            {{ "CAMERA_CANCEL" | translate }}
+          </button>
+          <button class="btn btn-primary" (click)="skipAutoSnapLane()">
+            {{ "CAMERA_SKIP_LANE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Settings Drawer / Modal Overlay -->
+  @if (showSettings()) {
+    <div class="modal-backdrop" (click)="showSettings.set(false)">
+      <div class="settings-card" (click)="$event.stopPropagation()">
+        <div class="card-header">
+          <h3>{{ "CAMERA_SETTINGS_TITLE" | translate }}</h3>
+          <button
+            class="close-btn"
+            (click)="showSettings.set(false)"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="settings-body">
+          <!-- Audio Feedback Toggle -->
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-title">{{
+                "CAMERA_AUDIO_FEEDBACK" | translate
+              }}</span>
+              <span class="setting-desc">{{
+                "CAMERA_AUDIO_FEEDBACK_DESC" | translate
+              }}</span>
+            </div>
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="soundEnabled()"
+                (change)="toggleSound()"
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Haptic Feedback Toggle -->
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-title">{{
+                "CAMERA_HAPTIC_FEEDBACK" | translate
+              }}</span>
+              <span class="setting-desc">{{
+                "CAMERA_HAPTIC_FEEDBACK_DESC" | translate
+              }}</span>
+            </div>
+            <label class="toggle-switch">
+              <input
+                type="checkbox"
+                [checked]="hapticEnabled()"
+                (change)="toggleHaptic()"
+              />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Sensitivity Slider -->
+          <div class="setting-row-vertical">
+            <div class="setting-header-flex">
+              <span class="setting-title">{{
+                "CAMERA_SENSITIVITY" | translate
+              }}</span>
+              <span class="setting-value"
+                >{{ globalSensitivity() * 100 | number: "1.0-0" }}%</span
+              >
+            </div>
+            <input
+              type="range"
+              min="0.1"
+              max="0.9"
+              step="0.05"
+              [ngModel]="globalSensitivity()"
+              (ngModelChange)="onSensitivityChange($event)"
+              class="range-slider"
+            />
+          </div>
+
+          <!-- Server Connection URL -->
+          <div class="setting-row-vertical">
+            <span class="setting-title">{{
+              "CAMERA_SERVER_URL" | translate
+            }}</span>
+            <div class="input-with-button">
+              <input type="text" [(ngModel)]="serverUrl" class="text-input" />
+              <button
+                class="btn btn-sm btn-primary"
+                (click)="connectToServer()"
+              >
+                {{ "CAMERA_RECONNECT" | translate }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Reset Gates Button -->
+          <div class="setting-actions">
+            <button
+              class="btn btn-outline-warning"
+              (click)="resetGatesToDefault()"
+            >
+              {{ "CAMERA_RESET_GATES" | translate }}
+            </button>
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <button
+            class="btn btn-primary full-width"
+            (click)="showSettings.set(false)"
+          >
+            {{ "CAMERA_DONE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

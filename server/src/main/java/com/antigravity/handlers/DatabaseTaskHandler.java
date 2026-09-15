@@ -351,6 +351,7 @@ public class DatabaseTaskHandler {
                 .trackmateConfigs(track.getTrackmateConfigs())
                 .phidgetConfigs(track.getPhidgetConfigs())
                 .bartConfigs(track.getBartConfigs())
+                .cameraConfigs(track.getCameraConfigs())
                 .entityId(nextId)
                 .id(null)
                 .build();
@@ -393,6 +394,7 @@ public class DatabaseTaskHandler {
               .trackmateConfigs(track.getTrackmateConfigs())
               .phidgetConfigs(track.getPhidgetConfigs())
               .bartConfigs(track.getBartConfigs())
+              .cameraConfigs(track.getCameraConfigs())
               .entityId(id)
               .id((String) null)
               .build();

@@ -5,6 +5,7 @@ import com.antigravity.proto.RgbLedBehavior;
 import com.antigravity.protocols.arduino.ArduinoConfig;
 import com.antigravity.protocols.arduino.LedString;
 import com.antigravity.protocols.bart.BartConfig;
+import com.antigravity.protocols.camera.CameraConfig;
 import com.antigravity.protocols.phidget.PhidgetConfig;
 import com.antigravity.protocols.trackmate.TrackmateConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -26,6 +27,7 @@ public class Track extends Model {
   private final List<TrackmateConfig> trackmateConfigs;
   private final List<PhidgetConfig> phidgetConfigs;
   private final List<BartConfig> bartConfigs;
+  private final List<CameraConfig> cameraConfigs;
 
   @JsonCreator
   public Track(
@@ -37,6 +39,7 @@ public class Track extends Model {
       @JsonProperty("trackmate_configs") List<TrackmateConfig> trackmateConfigs,
       @JsonProperty("phidget_configs") List<PhidgetConfig> phidgetConfigs,
       @JsonProperty("bart_configs") List<BartConfig> bartConfigs,
+      @JsonProperty("camera_configs") List<CameraConfig> cameraConfigs,
       @JsonProperty("entity_id") String entityId,
       @JsonProperty("_id") String id) {
     super(id, entityId);
@@ -59,6 +62,10 @@ public class Track extends Model {
             : Collections.emptyList();
     this.bartConfigs =
         bartConfigs != null ? Collections.unmodifiableList(bartConfigs) : Collections.emptyList();
+    this.cameraConfigs =
+        cameraConfigs != null
+            ? Collections.unmodifiableList(cameraConfigs)
+            : Collections.emptyList();
   }
 
   public Track(
@@ -80,6 +87,7 @@ public class Track extends Model {
         trackmateConfigs,
         phidgetConfigs,
         bartConfigs,
+        null,
         entityId,
         id);
   }
@@ -93,6 +101,7 @@ public class Track extends Model {
     private List<TrackmateConfig> trackmateConfigs = new ArrayList<>();
     private List<PhidgetConfig> phidgetConfigs = new ArrayList<>();
     private List<BartConfig> bartConfigs = new ArrayList<>();
+    private List<CameraConfig> cameraConfigs = new ArrayList<>();
     private String entityId;
     private String id;
 
@@ -136,6 +145,11 @@ public class Track extends Model {
       return this;
     }
 
+    public Builder cameraConfigs(List<CameraConfig> cameraConfigs) {
+      this.cameraConfigs = cameraConfigs;
+      return this;
+    }
+
     public Builder entityId(String entityId) {
       this.entityId = entityId;
       return this;
@@ -156,6 +170,7 @@ public class Track extends Model {
           trackmateConfigs,
           phidgetConfigs,
           bartConfigs,
+          cameraConfigs,
           entityId,
           id);
     }
@@ -332,6 +347,11 @@ public class Track extends Model {
     return bartConfigs;
   }
 
+  @JsonProperty("camera_configs")
+  public List<CameraConfig> getCameraConfigs() {
+    return cameraConfigs;
+  }
+
   /**
    * Synchronizes all Arduino configurations with the current lane model. This heals color mappings,
    * removes stale behaviors, and ensures array lengths match.
@@ -418,6 +438,7 @@ public class Track extends Model {
         .trackmateConfigs(this.trackmateConfigs)
         .phidgetConfigs(this.phidgetConfigs)
         .bartConfigs(this.bartConfigs)
+        .cameraConfigs(this.cameraConfigs)
         .entityId(this.getEntityId())
         .id(this.getId())
         .build();

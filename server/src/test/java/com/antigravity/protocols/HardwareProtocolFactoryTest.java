@@ -188,4 +188,28 @@ public class HardwareProtocolFactoryTest {
     assertEquals(0, protocols.get(0).getInterfaceIndex());
     assertEquals(1, protocols.get(1).getInterfaceIndex());
   }
+
+  @Test
+  public void testCreateProtocolsForTrack_WithCameraConfig() {
+    List<Lane> lanes = new ArrayList<>();
+    lanes.add(new Lane("Lane 1", "#FF0000", 0));
+    lanes.add(new Lane("Lane 2", "#00FF00", 1));
+
+    com.antigravity.protocols.camera.CameraConfig cam =
+        new com.antigravity.protocols.camera.CameraConfig();
+    cam.name = "Phone Cam";
+
+    Track track =
+        new Track.Builder()
+            .name("Webcam Track")
+            .lanes(lanes)
+            .cameraConfigs(java.util.Collections.singletonList(cam))
+            .build();
+
+    List<IProtocol> protocols = HardwareProtocolFactory.createProtocolsForTrack(track, null);
+    assertEquals(1, protocols.size());
+    assertTrue(
+        protocols.get(0) instanceof com.antigravity.protocols.camera.CameraWebSocketProtocol);
+    assertEquals(0, protocols.get(0).getInterfaceIndex());
+  }
 }

@@ -54,6 +54,7 @@ const protoFiles = [
   "../server/proto/client/trackmate_config.proto",
   "../server/proto/client/phidget_config.proto",
   "../server/proto/client/bart_config.proto",
+  "../server/proto/client/camera_config.proto",
   "../server/proto/client/get_phidget_devices.proto",
   "../server/proto/client/lane_model.proto",
   "../server/proto/client/track_model.proto",

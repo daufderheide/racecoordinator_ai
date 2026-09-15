@@ -1,6 +1,7 @@
 import { Routes } from "@angular/router";
 import { AssetManagerComponent } from "@app/components/asset-manager/asset-manager.component";
 import { CustomRotationEditorComponent } from "@app/components/asset-manager/custom-rotation-editor/custom-rotation-editor.component";
+import { CameraInterfaceComponent } from "@app/components/camera-interface/camera-interface.component";
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
@@ -186,6 +187,12 @@ export const routes: Routes = [
     runGuardsAndResolvers: "always",
     title: "UI Editor",
     data: { animation: "UIEditorPage", requiredRole: Role.VIEWER },
+  },
+  {
+    path: "camera-interface",
+    component: CameraInterfaceComponent,
+    title: "Camera Interface",
+    data: { animation: "CameraInterfacePage" },
   },
   {
     path: "driver-station/:lane",

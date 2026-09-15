@@ -12,6 +12,7 @@ import com.antigravity.handlers.CustomUITaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
+import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.service.AssetService;
@@ -375,6 +376,16 @@ public class App {
             ws.onClose(
                 ctx -> {
                   ClientSubscriptionManager.getInstance().removeInterfaceSession(ctx);
+                });
+            ws.onBinaryMessage(
+                ctx -> {
+                  try {
+                    InterfaceEvent event = InterfaceEvent.parseFrom(ctx.data());
+                    ClientSubscriptionManager.getInstance()
+                        .handleIncomingInterfaceEvent(ctx, event);
+                  } catch (Exception e) {
+                    logger.error("Failed to parse incoming interface event over WebSocket", e);
+                  }
                 });
           });
 

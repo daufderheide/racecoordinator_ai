@@ -71,4 +71,28 @@ public class TrackConverterTest {
     assertEquals("Scale Track", proto.getName());
     assertEquals(0.03125, proto.getTrackScale(), 0.0001);
   }
+
+  @Test
+  public void testToProto_WithCameraConfig() {
+    com.antigravity.protocols.camera.CameraConfig cam =
+        new com.antigravity.protocols.camera.CameraConfig();
+    cam.name = "My Webcam";
+    cam.targetFps = 60;
+    cam.interfaceIndex = 3;
+
+    Track track =
+        new Track.Builder()
+            .name("Cam Track")
+            .lanes(new ArrayList<>())
+            .cameraConfigs(Collections.singletonList(cam))
+            .entityId("t4")
+            .build();
+
+    TrackModel proto = TrackConverter.toProto(track, new HashSet<>());
+    assertEquals("Cam Track", proto.getName());
+    assertEquals(1, proto.getCameraConfigsCount());
+    assertEquals("My Webcam", proto.getCameraConfigs(0).getName());
+    assertEquals(60, proto.getCameraConfigs(0).getTargetFps());
+    assertEquals(3, proto.getCameraConfigs(0).getInterfaceIndex());
+  }
 }

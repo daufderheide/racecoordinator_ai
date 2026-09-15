@@ -1,6 +1,8 @@
 package com.antigravity.handlers;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -541,6 +543,63 @@ public class DatabaseTaskHandlerTest {
       when(ctxDelete.status(anyInt())).thenReturn(ctxDelete);
       invoke(handler, "deleteTrack", ctxDelete);
       org.mockito.Mockito.verify(ctxDelete).status(204);
+    } finally {
+      if (dbCtx.getConnection() != null) {
+        dbCtx.getConnection().close();
+      }
+    }
+  }
+
+  @Test
+  public void testTrackCrudHandlers_WithCameraConfigs() throws Exception {
+    String rootDir =
+        tempFolder.newFolder("db_root_track_cam").getAbsolutePath() + java.io.File.separator;
+    DatabaseContext dbCtx = new DatabaseContext("test_db", null, rootDir);
+    Javalin mockJavalin = mock(Javalin.class);
+    DatabaseTaskHandler handler = new DatabaseTaskHandler(dbCtx, mockJavalin);
+
+    try {
+      // 1. Create Track with Camera Config
+      io.javalin.http.Context ctxCreate = mock(io.javalin.http.Context.class);
+      when(ctxCreate.body())
+          .thenReturn(
+              "{\"name\":\"Camera Track\",\"num_track_sections\":4,\"lanes\":[],"
+                  + "\"camera_configs\":[{\"name\":\"Cam 1\",\"target_fps\":60,\"gates\":[]}],"
+                  + "\"entity_id\":\"new\"}");
+      when(ctxCreate.status(anyInt())).thenReturn(ctxCreate);
+      invoke(handler, "createTrack", ctxCreate);
+      org.mockito.Mockito.verify(ctxCreate).status(201);
+
+      org.mockito.ArgumentCaptor<Track> createdCaptor =
+          org.mockito.ArgumentCaptor.forClass(Track.class);
+      org.mockito.Mockito.verify(ctxCreate).json(createdCaptor.capture());
+      Track created = createdCaptor.getValue();
+      assertEquals("Camera Track", created.getName());
+      assertNotNull(created.getCameraConfigs());
+      assertEquals(1, created.getCameraConfigs().size());
+      assertEquals("Cam 1", created.getCameraConfigs().get(0).name);
+
+      // 2. Update Track with updated Camera Config
+      io.javalin.http.Context ctxUpdate = mock(io.javalin.http.Context.class);
+      when(ctxUpdate.pathParam("id")).thenReturn(created.getEntityId());
+      when(ctxUpdate.body())
+          .thenReturn(
+              "{\"name\":\"Camera Track Updated\",\"num_track_sections\":4,\"lanes\":[],"
+                  + "\"camera_configs\":[{\"name\":\"Cam 1 Updated\",\"targetFps\":30,\"gates\":[]}],"
+                  + "\"entity_id\":\""
+                  + created.getEntityId()
+                  + "\"}");
+      invoke(handler, "updateTrack", ctxUpdate);
+
+      org.mockito.ArgumentCaptor<Track> updatedCaptor =
+          org.mockito.ArgumentCaptor.forClass(Track.class);
+      org.mockito.Mockito.verify(ctxUpdate).json(updatedCaptor.capture());
+      Track updated = updatedCaptor.getValue();
+      assertEquals("Camera Track Updated", updated.getName());
+      assertNotNull(updated.getCameraConfigs());
+      assertEquals(1, updated.getCameraConfigs().size());
+      assertEquals("Cam 1 Updated", updated.getCameraConfigs().get(0).name);
+      assertEquals(30, updated.getCameraConfigs().get(0).targetFps);
     } finally {
       if (dbCtx.getConnection() != null) {
         dbCtx.getConnection().close();

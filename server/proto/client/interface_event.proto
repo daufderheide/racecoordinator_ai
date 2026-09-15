@@ -19,7 +19,39 @@ message InterfaceEvent {
     CallbuttonEvent callbutton = 4;
     InterfaceAnalogDataEvent analogData = 5;
     InterfaceDigitalPinEvent digitalPin = 6;
+    PitInEvent pit_in = 7;
+    PitOutEvent pit_out = 8;
+    CameraHeartbeatEvent camera_heartbeat = 9;
+    TimeSyncPing time_sync_ping = 10;
+    TimeSyncPong time_sync_pong = 11;
   }
+}
+
+message PitInEvent {
+  int32 lane = 1;
+  int32 interface_index = 2;
+}
+
+message PitOutEvent {
+  int32 lane = 1;
+  int32 interface_index = 2;
+}
+
+message CameraHeartbeatEvent {
+  int32 interface_index = 1;
+  int32 current_fps = 2;
+  float battery_level = 3;
+  double client_timestamp = 4;
+}
+
+message TimeSyncPing {
+  double client_send_time = 1;
+}
+
+message TimeSyncPong {
+  double client_send_time = 1;
+  double server_recv_time = 2;
+  double server_send_time = 3;
 }
 
 message InterfaceDigitalPinEvent {
