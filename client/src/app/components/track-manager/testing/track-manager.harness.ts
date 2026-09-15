@@ -1,6 +1,7 @@
 import { ComponentHarness } from "@angular/cdk/testing";
 
 import { ArduinoSummaryHarness } from "..//arduino-summary/testing/arduino-summary.harness";
+import { CameraSummaryHarness } from "../camera-summary/testing/camera-summary.harness";
 import { TrackManagerHarnessBase } from "./track-manager.harness.base";
 
 export class TrackManagerHarness
@@ -22,6 +23,7 @@ export class TrackManagerHarness
     TrackManagerHarnessBase.selectors.detailHeader,
   );
   protected getArduinoSummaries = this.locatorForAll(ArduinoSummaryHarness);
+  protected getCameraSummaries = this.locatorForAll(CameraSummaryHarness);
   protected getLaneExpanderHeader = this.locatorFor(
     TrackManagerHarnessBase.selectors.laneExpanderHeader,
   );
@@ -58,6 +60,10 @@ export class TrackManagerHarness
 
   async getArduinoSummaryHarnesses(): Promise<ArduinoSummaryHarness[]> {
     return await this.getArduinoSummaries();
+  }
+
+  async getCameraSummaryHarnesses(): Promise<CameraSummaryHarness[]> {
+    return await this.getCameraSummaries();
   }
 
   async isLaneSummaryExpanded(): Promise<boolean> {

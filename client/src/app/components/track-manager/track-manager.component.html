@@ -190,6 +190,38 @@
                 }
               </div>
             }
+            @if (
+              selectedTrack.camera_configs &&
+              selectedTrack.camera_configs.length > 0
+            ) {
+              <div
+                class="arduino-summary-container"
+                style="
+                  padding: 0;
+                  border: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 15px;
+                "
+              >
+                @for (
+                  config of selectedTrack.camera_configs;
+                  track config;
+                  let i = $index
+                ) {
+                  <app-camera-summary
+                    [id]="'summary-camera-' + i"
+                    [config]="config"
+                    [index]="
+                      selectedTrack.camera_configs.length > 1
+                        ? i + 1
+                        : undefined
+                    "
+                  >
+                  </app-camera-summary>
+                }
+              </div>
+            }
             <div id="summary-lanes" class="lane-viz-container">
               <div
                 class="section-header"

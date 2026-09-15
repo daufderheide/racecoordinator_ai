@@ -38,6 +38,7 @@ import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import { ArduinoSummaryComponent } from "./arduino-summary/arduino-summary.component";
 import { BartSummaryComponent } from "./bart-summary/bart-summary.component";
+import { CameraSummaryComponent } from "./camera-summary/camera-summary.component";
 import { PhidgetSummaryComponent } from "./phidget-summary/phidget-summary.component";
 import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.component";
 
@@ -52,6 +53,7 @@ import { TrakmateSummaryComponent } from "./trakmate-summary/trakmate-summary.co
     ManagerHeaderComponent_1,
     ArduinoSummaryComponent,
     BartSummaryComponent,
+    CameraSummaryComponent,
     PhidgetSummaryComponent,
     TrakmateSummaryComponent,
     TranslatePipe,
@@ -68,6 +70,8 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
   phidgetSummaries!: QueryList<PhidgetSummaryComponent>;
   @ViewChildren(BartSummaryComponent)
   bartSummaries!: QueryList<BartSummaryComponent>;
+  @ViewChildren(CameraSummaryComponent)
+  cameraSummaries!: QueryList<CameraSummaryComponent>;
   tracks: Track[] = [];
   selectedTrack?: Track;
   scale: number = 1;
@@ -201,6 +205,7 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
                 trackmate_configs: t.trackmate_configs,
                 phidget_configs: t.phidget_configs,
                 bart_configs: t.bart_configs,
+                camera_configs: t.camera_configs,
               }),
           )
           .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""));
@@ -505,6 +510,19 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
       });
     }
 
+    if (
+      this.selectedTrack.camera_configs &&
+      this.selectedTrack.camera_configs.length > 0
+    ) {
+      this.selectedTrack.camera_configs.forEach((_, i) => {
+        tabs.push({
+          id: `summary-camera-${i}`,
+          label:
+            `Camera ${this.selectedTrack!.camera_configs.length > 1 ? i + 1 : ""}`.trim(),
+        });
+      });
+    }
+
     if (this.selectedTrack.lanes && this.selectedTrack.lanes.length > 0) {
       tabs.push({
         id: "summary-lanes",
@@ -520,7 +538,7 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
       this.isLaneSummaryExpanded = true;
     } else {
       const match = tabId.match(
-        /summary-(arduino|trackmate|phidget|bart)-(\d+)/,
+        /summary-(arduino|trackmate|phidget|bart|camera)-(\d+)/,
       );
       if (match) {
         const type = match[1];
@@ -543,6 +561,11 @@ export class TrackManagerComponent implements OnInit, OnDestroy {
           }
           case "bart": {
             const summary = this.bartSummaries?.get(index);
+            if (summary) summary.isExpanded = true;
+            break;
+          }
+          case "camera": {
+            const summary = this.cameraSummaries?.get(index);
             if (summary) summary.isExpanded = true;
             break;
           }

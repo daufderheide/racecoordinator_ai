@@ -467,16 +467,18 @@ describe("TrackManagerComponent", () => {
         trackmate_configs: [{ id: "tm1" }] as any,
         phidget_configs: [{ id: "ph1" }] as any,
         bart_configs: [{ id: "b1" }] as any,
+        camera_configs: [{ id: "c1" }] as any,
       } as any;
 
       const tabs = component.detailTabs;
-      expect(tabs.length).toBe(6);
+      expect(tabs.length).toBe(7);
       expect(tabs[0]).toEqual({ id: "summary-arduino-0", label: "Arduino 1" });
       expect(tabs[1]).toEqual({ id: "summary-arduino-1", label: "Arduino 2" });
       expect(tabs[2]).toEqual({ id: "summary-trackmate-0", label: "Trakmate" });
       expect(tabs[3]).toEqual({ id: "summary-phidget-0", label: "Phidget" });
       expect(tabs[4]).toEqual({ id: "summary-bart-0", label: "BART" });
-      expect(tabs[5].id).toBe("summary-lanes");
+      expect(tabs[5]).toEqual({ id: "summary-camera-0", label: "Camera" });
+      expect(tabs[6].id).toBe("summary-lanes");
     });
 
     it("should expand lanes summary on scrollToSection with summary-lanes", fakeAsync(() => {
@@ -491,6 +493,7 @@ describe("TrackManagerComponent", () => {
       const mockTrakmate = { isExpanded: false } as any;
       const mockPhidget = { isExpanded: false } as any;
       const mockBart = { isExpanded: false } as any;
+      const mockCamera = { isExpanded: false } as any;
 
       component.arduinoSummaries = {
         get: (i: number) => (i === 0 ? mockArduino : undefined),
@@ -504,6 +507,9 @@ describe("TrackManagerComponent", () => {
       component.bartSummaries = {
         get: (i: number) => (i === 0 ? mockBart : undefined),
       } as any;
+      component.cameraSummaries = {
+        get: (i: number) => (i === 0 ? mockCamera : undefined),
+      } as any;
 
       component.scrollToSection("summary-arduino-0");
       expect(mockArduino.isExpanded).toBeTrue();
@@ -516,6 +522,9 @@ describe("TrackManagerComponent", () => {
 
       component.scrollToSection("summary-bart-0");
       expect(mockBart.isExpanded).toBeTrue();
+
+      component.scrollToSection("summary-camera-0");
+      expect(mockCamera.isExpanded).toBeTrue();
 
       tick(50);
     }));

@@ -1,25 +1,48 @@
-import { Locator } from '@playwright/test';
+import { Locator } from "@playwright/test";
 
-import { ArduinoSummaryHarnessE2e } from '..//arduino-summary/testing/arduino-summary.harness.e2e';
-import { TrackManagerHarnessBase } from './track-manager.harness.base';
+import { ArduinoSummaryHarnessE2e } from "..//arduino-summary/testing/arduino-summary.harness.e2e";
+import { CameraSummaryHarnessE2e } from "../camera-summary/testing/camera-summary.harness.e2e";
+import { TrackManagerHarnessBase } from "./track-manager.harness.base";
 
 export class TrackManagerHarnessE2e implements TrackManagerHarnessBase {
   constructor(private locator: Locator) {}
 
-  private get base() { return TrackManagerHarnessBase; }
+  private get base() {
+    return TrackManagerHarnessBase;
+  }
 
-  private get trackItems() { return this.locator.locator(this.base.selectors.trackItem); }
-  private get createButton() { return this.locator.locator(this.base.selectors.createButton); }
-  private get detailHeader() { return this.locator.locator(this.base.selectors.detailHeader); }
-  private get arduinoSummaries() { return this.locator.locator('app-arduino-summary'); }
-  private get laneExpanderHeader() { return this.locator.locator(this.base.selectors.laneExpanderHeader); }
-  private get laneExpanderContent() { return this.locator.locator(this.base.selectors.laneExpanderContent); }
+  private get trackItems() {
+    return this.locator.locator(this.base.selectors.trackItem);
+  }
+  private get createButton() {
+    return this.locator.locator(this.base.selectors.createButton);
+  }
+  private get detailHeader() {
+    return this.locator.locator(this.base.selectors.detailHeader);
+  }
+  private get arduinoSummaries() {
+    return this.locator.locator("app-arduino-summary");
+  }
+  private get cameraSummaries() {
+    return this.locator.locator("app-camera-summary");
+  }
+  private get laneExpanderHeader() {
+    return this.locator.locator(this.base.selectors.laneExpanderHeader);
+  }
+  private get laneExpanderContent() {
+    return this.locator.locator(this.base.selectors.laneExpanderContent);
+  }
 
   async getTrackNames(): Promise<string[]> {
     const count = await this.trackItems.count();
     const names: string[] = [];
     for (let i = 0; i < count; i++) {
-      names.push(await this.trackItems.nth(i).locator(this.base.selectors.itemName).innerText());
+      names.push(
+        await this.trackItems
+          .nth(i)
+          .locator(this.base.selectors.itemName)
+          .innerText(),
+      );
     }
     return names;
   }
@@ -43,7 +66,18 @@ export class TrackManagerHarnessE2e implements TrackManagerHarnessBase {
     const count = await this.arduinoSummaries.count();
     const harnesses: ArduinoSummaryHarnessE2e[] = [];
     for (let i = 0; i < count; i++) {
-      harnesses.push(new ArduinoSummaryHarnessE2e(this.arduinoSummaries.nth(i)));
+      harnesses.push(
+        new ArduinoSummaryHarnessE2e(this.arduinoSummaries.nth(i)),
+      );
+    }
+    return harnesses;
+  }
+
+  async getCameraSummaryHarnesses(): Promise<CameraSummaryHarnessE2e[]> {
+    const count = await this.cameraSummaries.count();
+    const harnesses: CameraSummaryHarnessE2e[] = [];
+    for (let i = 0; i < count; i++) {
+      harnesses.push(new CameraSummaryHarnessE2e(this.cameraSummaries.nth(i)));
     }
     return harnesses;
   }

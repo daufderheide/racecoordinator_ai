@@ -215,6 +215,7 @@ export const MOCK_TRACK_INSTANCES = MOCK_TRACKS.map(
       trackmate_configs: t.trackmate_configs,
       phidget_configs: t.phidget_configs,
       bart_configs: t.bart_configs,
+      camera_configs: t.camera_configs,
     }),
 );
 
