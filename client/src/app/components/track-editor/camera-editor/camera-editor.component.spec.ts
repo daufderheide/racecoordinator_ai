@@ -164,4 +164,25 @@ describe("CameraEditorComponent", () => {
     expect(component.config().gates.length).toBe(4);
     expect(component.change.emit).not.toHaveBeenCalled();
   });
+
+  it("should render gate type custom select controls and update gateType", () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const gateTypeSelects = compiled.querySelectorAll(
+      ".gate-type-cell app-custom-select",
+    );
+    expect(gateTypeSelects.length).toBe(4);
+
+    // Initial default gateType is 0 (LAP)
+    expect(component.config().gates[0].gateType).toBe(0);
+
+    // Update gateType
+    spyOn(component.change, "emit");
+    component.config().gates[0].gateType = 2; // PIT_IN
+    component.onConfigChange();
+    fixture.detectChanges();
+
+    expect(component.config().gates[0].gateType).toBe(2);
+    expect(component.change.emit).toHaveBeenCalled();
+  });
 });

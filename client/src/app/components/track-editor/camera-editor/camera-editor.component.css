@@ -4,7 +4,7 @@
   height: 100%;
 }
 
-@import '../shared-interface-config.css';
+@import "../shared-interface-config.css";
 
 .arduino-config-container {
   display: flex;
@@ -269,6 +269,14 @@
 .gate-slider {
   width: 110px;
   accent-color: #38bdf8;
+}
+
+.gate-type-cell {
+  min-width: 140px;
+}
+
+.gate-type-cell app-custom-select {
+  width: 100%;
 }
 
 /* Buttons */

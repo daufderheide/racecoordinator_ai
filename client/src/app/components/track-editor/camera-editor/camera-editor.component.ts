@@ -10,6 +10,10 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import * as QRCode from "qrcode";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { CameraConfig } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 
@@ -18,7 +22,13 @@ import { TranslatePipe } from "@app/pipes/translate.pipe";
   templateUrl: "./camera-editor.component.html",
   styleUrls: ["./camera-editor.component.css"],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class CameraEditorComponent implements OnInit {
   config = model.required<CameraConfig>();

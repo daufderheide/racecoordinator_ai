@@ -46,19 +46,20 @@
                         <label class="form-label" for="targetFps">{{
                           "CAMERA_EDITOR_TARGET_FPS" | translate
                         }}</label>
-                        <select
-                          id="targetFps"
-                          class="form-control"
+                        <app-custom-select
+                          [id]="'targetFps-' + interfaceIndex()"
                           [(ngModel)]="config().targetFps"
                           (ngModelChange)="onConfigChange()"
                         >
-                          <option [ngValue]="30">30 FPS</option>
-                          <option [ngValue]="60">
+                          <app-custom-option [value]="30"
+                            >30 FPS</app-custom-option
+                          >
+                          <app-custom-option [value]="60">
                             60 FPS ({{
                               "CAMERA_EDITOR_RECOMMENDED" | translate
                             }})
-                          </option>
-                        </select>
+                          </app-custom-option>
+                        </app-custom-select>
                       </div>
 
                       <div class="form-row checkbox-row">
@@ -148,6 +149,9 @@
                           <thead>
                             <tr>
                               <th>{{ "CAMERA_EDITOR_LANE" | translate }}</th>
+                              <th>
+                                {{ "CAMERA_EDITOR_GATE_TYPE" | translate }}
+                              </th>
                               <th>X (%)</th>
                               <th>Y (%)</th>
                               <th>
@@ -168,6 +172,31 @@
                                 <td class="font-bold">
                                   {{ "CAMERA_EDITOR_LANE" | translate }}
                                   {{ gate.laneIndex + 1 }}
+                                </td>
+                                <td class="gate-type-cell">
+                                  <app-custom-select
+                                    [id]="
+                                      'gate-type-' +
+                                      interfaceIndex() +
+                                      '-' +
+                                      gate.laneIndex
+                                    "
+                                    [(ngModel)]="gate.gateType"
+                                    (ngModelChange)="onConfigChange()"
+                                  >
+                                    <app-custom-option [value]="0">
+                                      {{ "CAMERA_GATE_LAP" | translate }}
+                                    </app-custom-option>
+                                    <app-custom-option [value]="1">
+                                      {{ "CAMERA_GATE_SEGMENT" | translate }}
+                                    </app-custom-option>
+                                    <app-custom-option [value]="2">
+                                      {{ "CAMERA_GATE_PIT_IN" | translate }}
+                                    </app-custom-option>
+                                    <app-custom-option [value]="3">
+                                      {{ "CAMERA_GATE_PIT_OUT" | translate }}
+                                    </app-custom-option>
+                                  </app-custom-select>
                                 </td>
                                 <td>
                                   <input
