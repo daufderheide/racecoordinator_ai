@@ -209,6 +209,7 @@ describe("TrackManagerComponent", () => {
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
       queryParams: {
         id: "t-new-id",
+        isNew: "true",
         from: null,
         returnUrl: null,
       },
@@ -232,6 +233,7 @@ describe("TrackManagerComponent", () => {
     expect(router.navigate).toHaveBeenCalledWith(["/track-editor"], {
       queryParams: {
         id: "t-new-id",
+        isNew: "true",
         from: "modify-heats",
         returnUrl: "/default-raceday",
       },

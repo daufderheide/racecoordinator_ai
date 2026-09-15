@@ -22,6 +22,7 @@ import {
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Event, EventRaceItem } from "@app/models/event";
 import { Race } from "@app/models/race";
@@ -39,6 +40,7 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   templateUrl: "./event-editor.component.html",
   styleUrls: ["./event-editor.component.css"],
   imports: [
+    AutoSelectDefaultDirective,
     EditorTitleComponent,
     TranslatePipe,
     FormsModule,
@@ -66,6 +68,17 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   isLoading = true;
   isSaving = false;
   scale = 1;
+  defaultEventName = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById("event-name") as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
   showAddRaceModal = false;
   selectedRaceToAddId = "";
 
@@ -212,6 +225,17 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
         this.undoManager.initialize(this.editingEvent);
         this.isLoading = false;
+
+        const isNew =
+          this.route.snapshot.queryParamMap?.get?.("isNew") === "true" ||
+          this.route.snapshot.queryParams?.["isNew"] === "true" ||
+          !eventId ||
+          eventId === "new";
+        if (isNew && this.editingEvent) {
+          this.defaultEventName = this.editingEvent.name;
+          this.focusNameInput();
+        }
+
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -391,6 +415,8 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           this.existingEvents.push(saved);
         }
         this.undoManager.resetTracking(this.editingEvent);
+        this.defaultEventName = saved.name;
+        this.focusNameInput();
         if (saved?.entity_id) {
           this.navigationService.setLastEditedId("event", saved.entity_id);
         }

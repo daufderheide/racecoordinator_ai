@@ -31,6 +31,7 @@
           id="track-name-input"
           type="text"
           [(ngModel)]="trackName"
+          [appAutoSelectDefault]="defaultTrackName"
           (focus)="onInputFocus()"
           (blur)="onInputBlur()"
           (ngModelChange)="onInputChange()"

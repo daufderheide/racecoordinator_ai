@@ -1296,5 +1296,31 @@ describe("TrackEditorComponent", () => {
         expect(scaleStep.content).toBe("TE_HELP_TRACK_SCALE_CONTENT");
       });
     });
+
+    describe("default name auto-select and focus", () => {
+      it("should set defaultTrackName and focus name input when isNew is true", fakeAsync(() => {
+        const route = TestBed.inject(ActivatedRoute) as any;
+        route.setQueryParams({ id: "t1", isNew: "true" });
+        spyOn(component, "focusNameInput").and.callThrough();
+
+        component.loadData();
+        tick();
+
+        expect(component.defaultTrackName).toBe("Classic Circuit");
+        expect(component.focusNameInput).toHaveBeenCalled();
+      }));
+
+      it("should update defaultTrackName and focus name input on saveAsNew", fakeAsync(() => {
+        spyOn(component, "focusNameInput").and.callThrough();
+        spyOn(component, "updateTrack").and.stub();
+        component.trackName = "Classic Circuit";
+
+        component.saveAsNew();
+        tick(200);
+
+        expect(component.defaultTrackName).toBe("Classic Circuit_1");
+        expect(component.focusNameInput).toHaveBeenCalled();
+      }));
+    });
   });
 });

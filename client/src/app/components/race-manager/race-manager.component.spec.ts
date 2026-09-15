@@ -319,6 +319,7 @@ describe("RaceManagerComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: {
           id: "r-new",
+          isNew: "true",
           driverCount: component.driverCount,
           from: null,
           returnUrl: null,
@@ -341,6 +342,7 @@ describe("RaceManagerComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: {
           id: "r-new",
+          isNew: "true",
           driverCount: component.driverCount,
           from: "modify-heats",
           returnUrl: "/default-raceday",

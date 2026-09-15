@@ -45,6 +45,7 @@
                   id="team-name-input"
                   type="text"
                   [(ngModel)]="editingTeam.name"
+                  [appAutoSelectDefault]="defaultTeamName"
                   (ngModelChange)="onInputChange()"
                   class="dm-input"
                   (focus)="onInputFocus()"

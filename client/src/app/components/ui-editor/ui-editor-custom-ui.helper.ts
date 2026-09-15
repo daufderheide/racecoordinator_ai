@@ -149,9 +149,13 @@ export async function handleCreateCustomUi(comp: any): Promise<void> {
     logger: comp.logger,
   });
   if (created) {
+    if (comp.defaultUiNames) {
+      comp.defaultUiNames[created.entity_id] = created.name;
+    }
     comp.refreshDisplayProperties();
     comp.undoManager.captureState();
     comp.toggleUiSection(created.entity_id);
+    comp.focusUiNameInput?.(created.entity_id);
     comp.cdr.markForCheck();
   }
 }
@@ -168,9 +172,13 @@ export async function handleDuplicateCustomUi(
     logger: comp.logger,
   });
   if (created) {
+    if (comp.defaultUiNames) {
+      comp.defaultUiNames[created.entity_id] = created.name;
+    }
     comp.refreshDisplayProperties();
     comp.undoManager.captureState();
     comp.toggleUiSection(created.entity_id);
+    comp.focusUiNameInput?.(created.entity_id);
     comp.cdr.markForCheck();
   }
 }

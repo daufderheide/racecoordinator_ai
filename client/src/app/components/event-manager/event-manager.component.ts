@@ -171,7 +171,7 @@ export class EventManagerComponent implements OnInit, OnDestroy {
 
   createNewEvent(): void {
     this.router.navigate(["/event-editor"], {
-      queryParams: { id: "new" },
+      queryParams: { id: "new", isNew: "true" },
     });
   }
 

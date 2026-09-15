@@ -306,6 +306,7 @@ export class TeamManagerComponent implements OnInit, OnDestroy {
         this.router.navigate(["/team-editor"], {
           queryParams: {
             id: createdTeam.entity_id,
+            isNew: "true",
             from: this.route.snapshot.queryParamMap.get("from"),
             returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
           },

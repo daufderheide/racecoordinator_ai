@@ -4,6 +4,8 @@ import { Theme } from "@app/models/theme";
 import {
   applyAudioConfigUpdate,
   applyThemeSlotUpdate,
+  handleCreateTheme,
+  handleDuplicateTheme,
   removeThemeFromUndoHistory,
   sortThemesForDisplay,
 } from "./ui-editor-theme.helper";
@@ -295,5 +297,78 @@ describe("ui-editor-theme.helper", () => {
       current.themes.some((t: any) => t.entity_id === "theme_1"),
     ).toBeFalse();
     expect(current.settings.activeThemeId).toBe("default_classic_rc_ai");
+  });
+
+  it("should track defaultThemeNames and open success modal with focusThemeId on create", async () => {
+    const defaultTheme: Theme = {
+      entity_id: "default_classic_rc_ai",
+      name: "Default Theme",
+      is_default: true,
+      slots: {},
+      audio_slots: {},
+    };
+    const comp: any = {
+      displayThemes: [defaultTheme],
+      editingState: { themes: [defaultTheme] },
+      defaultThemeNames: {},
+      translationService: { translate: (k: string) => k },
+      themeService: {
+        duplicateTheme: jasmine.createSpy("duplicateTheme").and.resolveTo({
+          entity_id: "new_theme_1",
+          name: "New Theme",
+        }),
+      },
+      logger: { error: jasmine.createSpy("error") },
+      refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+      toggleThemeSection: jasmine.createSpy("toggleThemeSection"),
+      captureState: jasmine.createSpy("captureState"),
+      openSuccessModal: jasmine.createSpy("openSuccessModal"),
+    };
+
+    await handleCreateTheme(comp);
+
+    expect(comp.defaultThemeNames["new_theme_1"]).toBe("New Theme");
+    expect(comp.openSuccessModal).toHaveBeenCalledWith(
+      jasmine.any(Object),
+      "default_classic_rc_ai",
+      "new_theme_1",
+    );
+  });
+
+  it("should track defaultThemeNames and open success modal with focusThemeId on duplicate", async () => {
+    const existingTheme: Theme = {
+      entity_id: "theme_1",
+      name: "My Theme",
+      is_default: false,
+      slots: {},
+      audio_slots: {},
+    };
+    const comp: any = {
+      editingState: { themes: [existingTheme] },
+      editingSettings: { activeThemeId: "theme_1" },
+      sectionsExpanded: {},
+      defaultThemeNames: {},
+      translationService: { translate: (k: string) => k },
+      themeService: {
+        duplicateTheme: jasmine.createSpy("duplicateTheme").and.resolveTo({
+          entity_id: "theme_1_copy",
+          name: "My Theme (1)",
+        }),
+      },
+      logger: { error: jasmine.createSpy("error") },
+      saveExpanderState: jasmine.createSpy("saveExpanderState"),
+      refreshDisplayProperties: jasmine.createSpy("refreshDisplayProperties"),
+      captureState: jasmine.createSpy("captureState"),
+      openSuccessModal: jasmine.createSpy("openSuccessModal"),
+    };
+
+    await handleDuplicateTheme(comp, existingTheme);
+
+    expect(comp.defaultThemeNames["theme_1_copy"]).toBe("My Theme (1)");
+    expect(comp.openSuccessModal).toHaveBeenCalledWith(
+      jasmine.any(Object),
+      "theme_1",
+      "theme_1_copy",
+    );
   });
 });

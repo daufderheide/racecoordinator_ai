@@ -164,7 +164,7 @@ describe("EventManagerComponent", () => {
   it("should navigate to event editor on createNewEvent", () => {
     component.createNewEvent();
     expect(mockRouter.navigate).toHaveBeenCalledWith(["/event-editor"], {
-      queryParams: { id: "new" },
+      queryParams: { id: "new", isNew: "true" },
     });
   });
 

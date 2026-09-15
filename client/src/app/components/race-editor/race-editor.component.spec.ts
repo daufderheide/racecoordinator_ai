@@ -2896,5 +2896,39 @@ describe("RaceEditorComponent", () => {
         "theme_a",
       ]);
     }));
+
+    it("should set defaultRaceName and focus name input when isNew is true", fakeAsync(() => {
+      activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "id") return "r1";
+        if (key === "isNew") return "true";
+        return null;
+      });
+      dataService.getRaces.and.returnValue(of(MOCK_RACE_INSTANCES));
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.loadRace("r1");
+      tick(200);
+
+      expect(component.defaultRaceName).toBe(MOCK_RACE_INSTANCES[0].name);
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultRaceName and focus name input on saveAsNew", fakeAsync(() => {
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingRace = { ...MOCK_RACE_INSTANCES[0] };
+      dataService.createRace.and.returnValue(
+        of({
+          ...MOCK_RACE_INSTANCES[0],
+          entity_id: "new_race_id",
+          name: "Race 1_1",
+        }),
+      );
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.defaultRaceName).toBe("Race 1_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
   });
 });

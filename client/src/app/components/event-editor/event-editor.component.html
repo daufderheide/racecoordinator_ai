@@ -27,6 +27,7 @@
             id="event-name"
             type="text"
             [(ngModel)]="editingEvent.name"
+            [appAutoSelectDefault]="defaultEventName"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"

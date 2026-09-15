@@ -260,7 +260,9 @@ describe("SeasonManagerComponent", () => {
       component.selectedSeason = { entity_id: "s1", name: "Season 1" } as any;
 
       component.onNew();
-      expect(router.navigate).toHaveBeenCalledWith(["/season-editor"]);
+      expect(router.navigate).toHaveBeenCalledWith(["/season-editor"], {
+        queryParams: { isNew: "true" },
+      });
 
       component.onEdit();
       expect(router.navigate).toHaveBeenCalledWith(["/season-editor"], {

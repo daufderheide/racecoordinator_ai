@@ -6,7 +6,7 @@ import {
   fakeAsync,
   flush,
   TestBed,
-  tick as _tick,
+  tick,
 } from "@angular/core/testing";
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
@@ -498,5 +498,40 @@ describe("TeamEditorComponent", () => {
 
     // Formatted discard message
     expect(component.discardMessage).toContain("•");
+  });
+
+  describe("default name auto-select and focus", () => {
+    it("should set defaultTeamName and focus name input when isNew is true", fakeAsync(() => {
+      const team = new Team("t1", "Team Red");
+      component.allTeams = [team];
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (key: string) => {
+          if (key === "id") return "t1";
+          if (key === "isNew") return "true";
+          return null;
+        },
+      );
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      (component as any).loadDataInternal([]);
+      tick(200);
+
+      expect(component.defaultTeamName).toBe("Team Red");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultTeamName and focus name input on saveAsNew", fakeAsync(() => {
+      const team = new Team("t1", "Team Red");
+      component.editingTeam = team;
+      component.allTeams = [team];
+      spyOn(component, "focusNameInput").and.callThrough();
+      spyOn(component, "updateTeam").and.stub();
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.defaultTeamName).toBe("Team Red_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
   });
 });

@@ -21,6 +21,7 @@ import { EditorTitleComponent } from "@app/components/shared/editor-title/editor
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Driver } from "@app/models/driver";
 import { Team } from "@app/models/team";
@@ -44,6 +45,7 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   templateUrl: "./team-editor.component.html",
   styleUrls: ["./team-editor.component.css"],
   imports: [
+    AutoSelectDefaultDirective,
     EditorTitleComponent,
     ImageSelectorComponent,
     FormsModule,
@@ -70,6 +72,17 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   isUploading: boolean = false;
   scale: number = 1;
   public navigateBackOnSave = false;
+  defaultTeamName: string = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById("team-name-input") as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
 
   // Undo Manager
   undoManager!: UndoManager<Team>;
@@ -358,6 +371,12 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (this.editingTeam) {
       this.originalTeam = this.cloneTeam(this.editingTeam);
       this.undoManager.initialize(this.editingTeam);
+
+      const isNew = this.route.snapshot.queryParamMap.get("isNew") === "true";
+      if (isNew || idParam === "new") {
+        this.defaultTeamName = this.editingTeam.name;
+        this.focusNameInput();
+      }
     }
   }
 
@@ -661,6 +680,8 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     // so we call saveTeamData directly or reset isSaving.
     // Let's reset isSaving so updateTeam(true) can handle it normally,
     // but the gap is too small for autoSaveTeam to slip in.
+    this.defaultTeamName = this.editingTeam.name;
+    this.focusNameInput();
     this.isSaving = false;
     this.updateTeam(true);
   }
