@@ -427,6 +427,33 @@ describe("FuelGraphHelper", () => {
       expect(linearCp.value).toBe("4.0");
       expect(linearCp.labelKey).toBe(FUEL_CURVE_LABELS[FuelUsageType.LINEAR]);
     });
+
+    it("should place hover dots on curves in SVG coordinates regardless of screen dimensions", () => {
+      // Screen width 600px, mouse at 300px (50%)
+      const hover = calculateAnalogUsageHover(
+        300,
+        100,
+        600,
+        3.0,
+        5.0,
+        9.0,
+        3.0,
+        FuelUsageType.LINEAR,
+        undefined,
+        16.0,
+        new Set<string>(),
+      );
+
+      // SVG viewBox width is 400 -> 50% = 200
+      expect(hover.svgX).toBe(200);
+      const linearCp = hover.curvePoints.find(
+        (cp) => cp.type === FuelUsageType.LINEAR,
+      )!;
+      expect(linearCp.svgX).toBe(200);
+      // Midpoint fuel is 4.0, max is 16.0 -> yRatio = 0.25 -> svgY = 150 - 0.25 * 150 = 112.5
+      expect(linearCp.svgY).toBe(112.5);
+      expect(hover.svgY).toBe(112.5);
+    });
   });
 
   describe("calculateAnalogPitHover", () => {
@@ -453,6 +480,34 @@ describe("FuelGraphHelper", () => {
       )!;
       expect(quadCp.isSelected).toBeTrue();
     });
+
+    it("should place hover dots on curves in SVG coordinates regardless of screen dimensions", () => {
+      // Screen height 225px, mouse at 112.5px (50%)
+      const hover = calculateAnalogPitHover(
+        300,
+        112.5,
+        225,
+        3.0,
+        16.0,
+        9.0,
+        1.78,
+        FuelUsageType.LINEAR,
+        100,
+        undefined,
+        500,
+        new Set<string>(),
+      );
+
+      expect(hover.svgY).toBe(75);
+      const linearCp = hover.curvePoints.find(
+        (cp) => cp.type === FuelUsageType.LINEAR,
+      )!;
+      expect(linearCp.svgY).toBe(75);
+      // svgX must be in SVG viewBox range [0, 400]
+      expect(linearCp.svgX).toBeGreaterThan(50);
+      expect(linearCp.svgX).toBeLessThan(60);
+      expect(hover.svgX).toBe(linearCp.svgX);
+    });
   });
 
   describe("calculateDigitalUsageHover & calculateDigitalPitHover", () => {
@@ -473,6 +528,29 @@ describe("FuelGraphHelper", () => {
       expect(hover.curvePoints.length).toBe(3);
     });
 
+    it("should return digital usage hover points aligned with SVG coordinates", () => {
+      // Screen width 600px, mouse at 300px (50% throttle)
+      const hover = calculateDigitalUsageHover(
+        300,
+        80,
+        600,
+        FuelUsageType.LINEAR,
+        5.0,
+        undefined,
+        5.0,
+        new Set<string>(),
+      );
+
+      expect(hover.svgX).toBe(200);
+      const linearCp = hover.curvePoints.find(
+        (cp) => cp.type === FuelUsageType.LINEAR,
+      )!;
+      expect(linearCp.svgX).toBe(200);
+      // Linear fuel at 50% throttle = 2.5. maxFuelValue = 5.0 -> yRatio = 0.5 -> svgY = 75
+      expect(linearCp.svgY).toBe(75);
+      expect(hover.svgY).toBe(75);
+    });
+
     it("should return digital pit hover info", () => {
       const hover = calculateDigitalPitHover(
         150,
@@ -489,6 +567,31 @@ describe("FuelGraphHelper", () => {
       expect(hover.type).toBe("digital_pit");
       expect(hover.xLabel).toBe("RE_HOVER_TIME_TO_PIT");
       expect(hover.curvePoints.length).toBe(3);
+    });
+
+    it("should return digital pit hover points aligned with SVG coordinates", () => {
+      // Screen height 225px, mouse at 112.5px (50% throttle)
+      const hover = calculateDigitalPitHover(
+        250,
+        112.5,
+        225,
+        FuelUsageType.LINEAR,
+        5.0,
+        100,
+        undefined,
+        300,
+        new Set<string>(),
+      );
+
+      expect(hover.svgY).toBe(75);
+      const linearCp = hover.curvePoints.find(
+        (cp) => cp.type === FuelUsageType.LINEAR,
+      )!;
+      expect(linearCp.svgY).toBe(75);
+      // Linear fuel at 50% = 2.5. capacity 100 -> time = 40s.
+      // xPercent = 40 / 300 = 0.1333 -> svgX = 0.1333 * 400 = 53.33
+      expect(linearCp.svgX).toBeCloseTo(53.33, 1);
+      expect(hover.svgX).toBe(linearCp.svgX);
     });
   });
 });

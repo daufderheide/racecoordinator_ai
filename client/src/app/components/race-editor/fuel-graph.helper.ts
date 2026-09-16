@@ -526,7 +526,6 @@ export function calculateAnalogUsageHover(
   customCurve: FuelCurvePoint[] | undefined,
   maxFuelValue: number,
   hiddenTypes: Set<string>,
-  height: number = 150,
 ): FuelGraphHoverPoint {
   const xPercent = Math.max(0, Math.min(1, mouseX / width));
   const time = fastestTime + xPercent * (slowestTime - fastestTime);
@@ -556,7 +555,7 @@ export function calculateAnalogUsageHover(
     );
     const yRatio =
       maxFuelValue > 0 ? Math.max(0, Math.min(1.5, fuel / maxFuelValue)) : 0;
-    const svgY = Number((height - yRatio * height).toFixed(2));
+    const svgY = Number((150 - yRatio * 150).toFixed(2));
     const fuelStr = fuel.toFixed(1);
 
     if (isSelected || curvePoints.length === 0) {
@@ -602,7 +601,6 @@ export function calculateAnalogPitHover(
   customCurve: FuelCurvePoint[] | undefined,
   maxPitTime: number,
   hiddenTypes: Set<string>,
-  width: number = 400,
 ): FuelGraphHoverPoint {
   const yPercent = 1 - Math.max(0, Math.min(1, mouseY / height));
   const lapTime = fastestTime + yPercent * (slowestTime - fastestTime);
@@ -635,7 +633,7 @@ export function calculateAnalogPitHover(
 
     const xPercent =
       maxPitTime > 0 ? Math.max(0, Math.min(1.5, pitTime / maxPitTime)) : 1;
-    const svgX = Number((xPercent * width).toFixed(2));
+    const svgX = Number((xPercent * 400).toFixed(2));
     const pitStr = pitTime.toFixed(2) + "s";
 
     if (isSelected || curvePoints.length === 0) {
@@ -677,7 +675,6 @@ export function calculateDigitalUsageHover(
   customCurve: FuelCurvePoint[] | undefined,
   maxFuelValue: number,
   hiddenTypes: Set<string>,
-  height: number = 150,
 ): FuelGraphHoverPoint {
   const xPercent = Math.max(0, Math.min(1, mouseX / width));
   const throttle = xPercent * 100;
@@ -701,7 +698,7 @@ export function calculateDigitalUsageHover(
       maxFuelValue > 0
         ? Math.max(0, Math.min(1.5, fuel / Math.max(0.001, maxFuelValue)))
         : 0;
-    const svgY = Number((height - yRatio * height).toFixed(2));
+    const svgY = Number((150 - yRatio * 150).toFixed(2));
     const fuelStr = fuel.toFixed(1);
 
     if (isSelected || curvePoints.length === 0) {
@@ -744,7 +741,6 @@ export function calculateDigitalPitHover(
   customCurve: FuelCurvePoint[] | undefined,
   safeMaxTime: number,
   hiddenTypes: Set<string>,
-  width: number = 400,
 ): FuelGraphHoverPoint {
   const yPercent = 1 - Math.max(0, Math.min(1, mouseY / height));
   const throttle = yPercent * 100;
@@ -775,7 +771,7 @@ export function calculateDigitalPitHover(
       safeMaxTime > 0
         ? Math.max(0, Math.min(1.5, timeToEmpty / Math.max(0.001, safeMaxTime)))
         : 1;
-    const svgX = Number(((xPercent || 0) * width).toFixed(2));
+    const svgX = Number(((xPercent || 0) * 400).toFixed(2));
     const timeStr = Math.round(timeToEmpty) + "s";
 
     if (isSelected || curvePoints.length === 0) {
@@ -790,7 +786,7 @@ export function calculateDigitalPitHover(
       isSelected,
       value: timeStr,
       svgX,
-      svgY: Number(((1 - (yPercent || 0)) * 150).toFixed(2)),
+      svgY: Number(((1 - yPercent) * 150).toFixed(2)),
     });
   }
 

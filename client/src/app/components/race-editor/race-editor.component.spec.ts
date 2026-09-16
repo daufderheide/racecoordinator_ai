@@ -794,6 +794,9 @@ describe("RaceEditorComponent", () => {
       expect(analogNodes.length).toBe(5);
       expect(analogNodes[0].svgX).toBe(0);
       expect(analogNodes[4].svgX).toBe(400);
+      // Node 0 (fastest lap) has higher fuel usage than Node 4 (slowest lap), so svgY is lower (higher up on graph)
+      expect(analogNodes[0].svgY).toBeLessThan(analogNodes[4].svgY);
+      expect(analogNodes[4].svgY).toBeLessThanOrEqual(150);
 
       component.onUsageTypeChange("digital", FuelUsageType.CUSTOM_CURVE);
       const digitalNodes = component.getDigitalControlNodes();
