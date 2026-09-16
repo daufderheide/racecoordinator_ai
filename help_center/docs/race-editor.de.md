@@ -25,11 +25,11 @@ Analoger Kraftstoff simuliert den Verbrauch auf **Rundenbasis**. Da analoge Stre
     - **Quadratisch**: Der Verbrauch skaliert mit dem inversen Quadrat der Rundenzeit, wodurch sehr schnelle Runden stark bestraft werden.
     - **Kubisch**: Der Verbrauch steigt bei schnellen Runden steil an und bestraft aggressive Rekordjagden überproportional.
     - **Benutzerdefinierte Kurve**: Ermöglicht eine punktgenaue, interaktive Formung der Verbrauchskurve direkt auf dem SVG-Graphen.
-- **Verbrauchsrate**: Die Grundmenge an Kraftstoffeinheiten, die pro Runde verbraucht wird, wenn der Fahrer genau die **Referenzzeit** fährt.
-- **Referenzzeit (s)**: Die Basis-Richtzeit für Strecke und Fahrzeugklasse (in Sekunden).
-    - Schnellere Runden (unter der Referenzzeit) verbrauchen mehr Kraftstoff.
-    - Langsamere Runden (über der Referenzzeit) verbrauchen weniger Kraftstoff.
-    - Der aktive Berechnungsbereich erstreckt sich von $0,5 \times \text{Referenzzeit}$ bis $1,5 \times \text{Referenzzeit}$.
+- **Schnellste Zeit (s)**: Die schnellste erwartete Rundenzeit für Strecke und Fahrzeugklasse (in Sekunden).
+- **Max. Verbrauch**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder schneller als die **Schnellste Zeit**.
+- **Langsamste Zeit (s)**: Die langsamste Rundenzeit (in Sekunden) für minimalen Kraftstoffverbrauch.
+- **Min. Verbrauch**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder langsamer als die **Langsamste Zeit**.
+    - Für Rundenzeiten zwischen schnellster und langsamster Zeit geht der Kraftstoffverbrauch entsprechend dem gewählten **Verbrauchstyp** (Linear, Quadratisch, Kubisch oder Benutzerdefinierte Kurve) fließend über.
 - **Kapazität**: Das Gesamtvolumen des Kraftstofftanks in beliebigen Einheiten (z. B. 100).
 - **Startlevel (%)**: Der prozentuale Füllstand des Tanks zu Beginn eines Laufs (z. B. 100 % für vollen Tank oder weniger bei Sprint-/Handicap-Läufen).
 - **Auftankrate (%/s)**: Die Geschwindigkeit des Nachtankens während eines Boxenstopps, gemessen in Prozent der Gesamttankkapazität pro Sekunde.
@@ -54,7 +54,7 @@ $$\text{Reine Rennzeit} = \text{Rundenzeit} - \text{Aufgelaufene Auftankzeit}$$
 #### Diagrammvorschau (Analog)
 
 - **Gleichzeitiger Modellvergleich**: Alle 3 voreingestellten mathematischen Modelle (**Linear**, **Quadratisch** und **Kubisch**) werden gleichzeitig in beiden Diagrammen dargestellt. Der aktuell ausgewählte Typ ist fett mit einem Leuchten hervorgehoben, während die übrigen Modelle als gedämpfte Referenzlinien (~40 % Deckkraft) sichtbar bleiben.
-- **Kraftstoffverbrauch pro Runde**: Zeigt den exakten Verbrauch über das gesamte Rundenzeitspektrum ($0,5 \times \text{Ref}$ bis $1,5 \times \text{Ref}$) an. Im Modus Benutzerdefinierte Kurve ermöglichen Griffe und Zurücksetzen-Schaltflächen sofortige Anpassungen, während die 3 Basismodelle zum Vergleich sichtbar bleiben.
+- **Kraftstoffverbrauch pro Runde**: Zeigt den exakten Verbrauch über das gesamte Rundenzeitspektrum (von Schnellste Zeit bis Langsamste Zeit) an. Im Modus Benutzerdefinierte Kurve ermöglichen Griffe und Zurücksetzen-Schaltflächen sofortige Anpassungen, während die 3 Basismodelle zum Vergleich sichtbar bleiben.
 - **Zeit bis Boxenstopp**: Zeigt die geschätzte Gesamtreisezeit (oder Runden) bis zum leeren Tank in Abhängigkeit von konstanten Rundenzeiten für alle Modelle.
 - **Interaktive Legende und Sichtbarkeit**: Klicken Sie mit der linken Maustaste auf eine Kurve in der Legende, um sie ein- oder auszublenden. Das Ausblenden skaliert die Diagrammachsen dynamisch neu, um verbleibende Kurven genauer betrachten zu können.
 - **Vergleichende Hover-Karten**: Beim Überfahren der Diagramme mit der Maus werden Vergleichswerte aller sichtbaren Kurven am aktuellen Messpunkt mit Farbfeldern, Werten und einer `(Aktiv)`-Kennzeichnung angezeigt.

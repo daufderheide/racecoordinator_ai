@@ -50,57 +50,121 @@ describe("FuelGraphHelper", () => {
   });
 
   describe("getAnalogFuelUsage", () => {
-    it("should calculate Linear fuel usage correctly", () => {
-      const ref = 6.0;
-      const rate = 4.0;
-      // At ref time, linear usage should equal usageRate
+    it("should calculate Linear fuel usage correctly with clamping", () => {
+      const fast = 3.0;
+      const maxU = 6.0;
+      const slow = 9.0;
+      const minU = 2.0;
+
+      // Faster than or equal to fastest time should clamp to maxUsage
       expect(
-        getAnalogFuelUsage(FuelUsageType.LINEAR, rate, ref, ref),
+        getAnalogFuelUsage(FuelUsageType.LINEAR, fast, maxU, slow, minU, 2.0),
+      ).toBeCloseTo(6.0);
+      expect(
+        getAnalogFuelUsage(FuelUsageType.LINEAR, fast, maxU, slow, minU, 3.0),
+      ).toBeCloseTo(6.0);
+
+      // Halfway between 3.0 and 9.0 (6.0s) should linearly interpolate to 4.0
+      expect(
+        getAnalogFuelUsage(FuelUsageType.LINEAR, fast, maxU, slow, minU, 6.0),
       ).toBeCloseTo(4.0);
-      // Slower lap (2 * ref = 12s) should consume half (2.0)
+
+      // Slower than or equal to slowest time should clamp to minUsage
       expect(
-        getAnalogFuelUsage(FuelUsageType.LINEAR, rate, 12.0, ref),
+        getAnalogFuelUsage(FuelUsageType.LINEAR, fast, maxU, slow, minU, 9.0),
+      ).toBeCloseTo(2.0);
+      expect(
+        getAnalogFuelUsage(FuelUsageType.LINEAR, fast, maxU, slow, minU, 12.0),
       ).toBeCloseTo(2.0);
     });
 
     it("should calculate Quadratic fuel usage correctly", () => {
-      const ref = 6.0;
-      const rate = 4.0;
+      const fast = 3.0;
+      const maxU = 16.0;
+      const slow = 9.0;
+      const minU = 1.778;
+
       expect(
-        getAnalogFuelUsage(FuelUsageType.QUADRATIC, rate, ref, ref),
-      ).toBeCloseTo(4.0);
-      // Half time (3s) -> (ref/time)^2 = 4 -> 4 * rate = 16.0
-      expect(
-        getAnalogFuelUsage(FuelUsageType.QUADRATIC, rate, 3.0, ref),
+        getAnalogFuelUsage(
+          FuelUsageType.QUADRATIC,
+          fast,
+          maxU,
+          slow,
+          minU,
+          2.5,
+        ),
       ).toBeCloseTo(16.0);
+      expect(
+        getAnalogFuelUsage(
+          FuelUsageType.QUADRATIC,
+          fast,
+          maxU,
+          slow,
+          minU,
+          9.5,
+        ),
+      ).toBeCloseTo(1.778);
     });
 
     it("should calculate Cubic fuel usage correctly", () => {
-      const ref = 6.0;
-      const rate = 4.0;
+      const fast = 3.0;
+      const maxU = 32.0;
+      const slow = 9.0;
+      const minU = 1.185;
+
       expect(
-        getAnalogFuelUsage(FuelUsageType.CUBIC, rate, ref, ref),
-      ).toBeCloseTo(4.0);
-      // Half time (3s) -> (ref/time)^3 = 8 -> 8 * rate = 32.0
-      expect(
-        getAnalogFuelUsage(FuelUsageType.CUBIC, rate, 3.0, ref),
+        getAnalogFuelUsage(FuelUsageType.CUBIC, fast, maxU, slow, minU, 2.0),
       ).toBeCloseTo(32.0);
+      expect(
+        getAnalogFuelUsage(FuelUsageType.CUBIC, fast, maxU, slow, minU, 10.0),
+      ).toBeCloseTo(1.185);
     });
 
     it("should calculate Custom curve fuel usage correctly", () => {
-      const ref = 6.0;
-      const rate = 4.0;
+      const fast = 3.0;
+      const maxU = 6.0;
+      const slow = 9.0;
+      const minU = 2.0;
       const curve: FuelCurvePoint[] = [
-        { x: 0.0, y: 2.0 },
-        { x: 1.0, y: 0.5 },
+        { x: 0.0, y: 1.0 },
+        { x: 0.5, y: 0.5 },
+        { x: 1.0, y: 0.0 },
       ];
-      // At min time (3.0s -> xNorm = 0), mult = 2.0 -> 8.0
+      // At fastest time (3.0s -> xNorm = 0), mult = 1.0 -> 2 + 1.0 * 4 = 6.0
       expect(
-        getAnalogFuelUsage(FuelUsageType.CUSTOM_CURVE, rate, 3.0, ref, curve),
-      ).toBeCloseTo(8.0);
-      // At max time (9.0s -> xNorm = 1), mult = 0.5 -> 2.0
+        getAnalogFuelUsage(
+          FuelUsageType.CUSTOM_CURVE,
+          fast,
+          maxU,
+          slow,
+          minU,
+          3.0,
+          curve,
+        ),
+      ).toBeCloseTo(6.0);
+      // At midpoint (6.0s -> xNorm = 0.5), mult = 0.5 -> 2 + 0.5 * 4 = 4.0
       expect(
-        getAnalogFuelUsage(FuelUsageType.CUSTOM_CURVE, rate, 9.0, ref, curve),
+        getAnalogFuelUsage(
+          FuelUsageType.CUSTOM_CURVE,
+          fast,
+          maxU,
+          slow,
+          minU,
+          6.0,
+          curve,
+        ),
+      ).toBeCloseTo(4.0);
+      // At slowest time (9.0s -> xNorm = 1), mult = 0.0 -> 2 + 0.0 * 4 = 2.0
+      expect(
+        getAnalogFuelUsage(
+          FuelUsageType.CUSTOM_CURVE,
+          fast,
+          maxU,
+          slow,
+          minU,
+          9.0,
+          curve,
+        ),
       ).toBeCloseTo(2.0);
     });
   });
@@ -166,10 +230,10 @@ describe("FuelGraphHelper", () => {
     it("should show all 3 standard plots when Linear is selected", () => {
       const result = computeAnalogUsagePlots(
         FuelUsageType.LINEAR,
-        4.0,
-        6.0,
         3.0,
+        5.0,
         9.0,
+        3.0,
         undefined,
         1.0,
         new Set<string>(),
@@ -203,10 +267,10 @@ describe("FuelGraphHelper", () => {
     it("should show 4 plots with Custom highlighted when custom is active", () => {
       const result = computeAnalogUsagePlots(
         FuelUsageType.CUSTOM_CURVE,
-        4.0,
-        6.0,
         3.0,
+        5.0,
         9.0,
+        3.0,
         undefined,
         1.5,
         new Set<string>(),
@@ -229,10 +293,10 @@ describe("FuelGraphHelper", () => {
       const hidden = new Set<string>([FuelUsageType.CUBIC]);
       const result = computeAnalogUsagePlots(
         FuelUsageType.LINEAR,
-        4.0,
-        6.0,
         3.0,
+        5.0,
         9.0,
+        3.0,
         undefined,
         1.0,
         hidden,
@@ -244,8 +308,7 @@ describe("FuelGraphHelper", () => {
       expect(cubicPlot.isVisible).toBeFalse();
       expect(cubicPlot.path).toBe("");
 
-      // With Cubic hidden, max should be Quadratic at minTime (16.0) instead of Cubic (32.0)
-      expect(result.maxFuelValue).toBeCloseTo(16.0);
+      expect(result.maxFuelValue).toBeCloseTo(5.0);
     });
   });
 
@@ -253,11 +316,11 @@ describe("FuelGraphHelper", () => {
     it("should compute pit time plots for all candidates", () => {
       const result = computeAnalogPitPlots(
         FuelUsageType.QUADRATIC,
-        4.0,
-        100,
-        6.0,
         3.0,
+        16.0,
         9.0,
+        1.78,
+        100,
         undefined,
         new Set<string>(),
       );
@@ -268,7 +331,32 @@ describe("FuelGraphHelper", () => {
       )!;
       expect(quadPlot.isSelected).toBeTrue();
       expect(result.labels.length).toBe(5);
+      expect(result.maxPitTime).toBeCloseTo(505.62, 0);
+      expect(quadPlot.path).toContain("M ");
+      expect(quadPlot.path).toContain(" L ");
+      // Verify the plot spans from a low x value at fastest time to 400 at slowest time
+      expect(quadPlot.path).toMatch(/^M\s+[\d.]+,150\.0/);
+    });
+
+    it("should handle minUsage = 0 gracefully without crashing", () => {
+      const result = computeAnalogPitPlots(
+        FuelUsageType.LINEAR,
+        3.0,
+        10.0,
+        8.0,
+        0,
+        100,
+        undefined,
+        new Set<string>(),
+      );
+
+      expect(result.plots.length).toBe(3);
       expect(result.maxPitTime).toBeGreaterThan(0);
+      expect(result.labels.length).toBe(5);
+      const linearPlot = result.plots.find(
+        (p) => p.type === FuelUsageType.LINEAR,
+      )!;
+      expect(linearPlot.path).toContain("M ");
     });
   });
 
@@ -309,14 +397,14 @@ describe("FuelGraphHelper", () => {
     it("should return multi-curve hover data and exclude hidden curves", () => {
       const hidden = new Set<string>([FuelUsageType.CUBIC]);
       const hover = calculateAnalogUsageHover(
-        200, // middle (50%) -> time = 6.0s (ref time)
+        200, // middle (50%) -> time = 6.0s (midpoint)
         50,
         400,
         3.0,
+        5.0,
         9.0,
+        3.0,
         FuelUsageType.LINEAR,
-        4.0,
-        6.0,
         undefined,
         16.0,
         hidden,
@@ -348,11 +436,11 @@ describe("FuelGraphHelper", () => {
         75,
         150,
         3.0,
+        16.0,
         9.0,
+        1.78,
         FuelUsageType.QUADRATIC,
-        4.0,
         100,
-        6.0,
         undefined,
         500,
         new Set<string>(),

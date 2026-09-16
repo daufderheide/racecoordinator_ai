@@ -417,6 +417,68 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testFuelConsumption_FourParameters_ClampingAndInterpolation() {
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0,
+            1.0,
+            1.0,
+            null,
+            3.0,
+            6.0,
+            9.0,
+            2.0);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race 4 Params")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withFuelOptions(fuelOptions)
+            .withEntityId("race4p")
+            .build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    // Reaction lap
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+
+    // Lap at 2.0s (faster than fastest_time 3.0s) -> clamped to max_usage (6.0)
+    executionManager.onLap(0, 2.0, 1, false, true, false);
+    assertEquals(94.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+
+    // Lap at 6.0s (halfway between 3.0s and 9.0s) -> 6.0 - 0.5 * (6.0 - 2.0) = 4.0 usage
+    executionManager.onLap(0, 6.0, 1, false, true, false);
+    assertEquals(90.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+
+    // Lap at 10.0s (slower than slowest_time 9.0s) -> clamped to min_usage (2.0)
+    executionManager.onLap(0, 10.0, 1, false, true, false);
+    assertEquals(88.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
   public void testFuelConsumption_SubsequentLaps() {
     AnalogFuelOptions fuelOptions =
         new AnalogFuelOptions(

@@ -771,8 +771,60 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               ? {
                   ...race.fuel_options,
                   custom_curve: race.fuel_options.custom_curve || [],
-                  reference_time:
-                    Number(race.fuel_options.reference_time) || 6.0,
+                  fastest_time:
+                    Number(race.fuel_options.fastest_time) ||
+                    Number(
+                      (
+                        Number(race.fuel_options.reference_time || 6.0) * 0.5
+                      ).toFixed(2),
+                    ),
+                  max_usage:
+                    Number(race.fuel_options.max_usage) ||
+                    (race.fuel_options.usage_type === "QUADRATIC"
+                      ? Number(
+                          (
+                            Number(race.fuel_options.usage_rate || 4.0) * 4.0
+                          ).toFixed(2),
+                        )
+                      : race.fuel_options.usage_type === "CUBIC"
+                        ? Number(
+                            (
+                              Number(race.fuel_options.usage_rate || 4.0) * 8.0
+                            ).toFixed(2),
+                          )
+                        : Number(
+                            (
+                              Number(race.fuel_options.usage_rate || 4.0) * 1.25
+                            ).toFixed(2),
+                          )),
+                  slowest_time:
+                    Number(race.fuel_options.slowest_time) ||
+                    Number(
+                      (
+                        Number(race.fuel_options.reference_time || 6.0) * 1.5
+                      ).toFixed(2),
+                    ),
+                  min_usage:
+                    Number(race.fuel_options.min_usage) ||
+                    (race.fuel_options.usage_type === "QUADRATIC"
+                      ? Number(
+                          (
+                            Number(race.fuel_options.usage_rate || 4.0) *
+                            (4.0 / 9.0)
+                          ).toFixed(2),
+                        )
+                      : race.fuel_options.usage_type === "CUBIC"
+                        ? Number(
+                            (
+                              Number(race.fuel_options.usage_rate || 4.0) *
+                              (8.0 / 27.0)
+                            ).toFixed(2),
+                          )
+                        : Number(
+                            (
+                              Number(race.fuel_options.usage_rate || 4.0) * 0.75
+                            ).toFixed(2),
+                          )),
                 }
               : {
                   enabled: false,
@@ -780,11 +832,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
                   out_of_fuel_action: "DO_NOT_COUNT_LAPS",
                   capacity: 100,
                   usage_type: "LINEAR",
-                  usage_rate: 4.0,
+                  fastest_time: 3.0,
+                  max_usage: 5.0,
+                  slowest_time: 9.0,
+                  min_usage: 3.0,
                   start_level: 100,
                   refuel_rate: 10.0,
                   pit_stop_delay: 2.0,
-                  reference_time: 6.0,
                   power_stutter_on_time: 1.0,
                   power_stutter_off_time: 1.0,
                   custom_curve: [],
@@ -843,11 +897,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
               out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
               capacity: 100,
               usage_type: FuelUsageType.LINEAR,
-              usage_rate: 4.0,
+              fastest_time: 3.0,
+              max_usage: 5.0,
+              slowest_time: 9.0,
+              min_usage: 3.0,
               start_level: 100,
               refuel_rate: 10,
               pit_stop_delay: 2.0,
-              reference_time: 6.0,
               custom_curve: [],
             };
           }
@@ -1112,11 +1168,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
         custom_curve: [],
       },
       digital_fuel_options: {
@@ -1741,21 +1799,63 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return this.hiddenPlots[graphId].has(type);
   }
 
+  getFuelUsageFastestTime(): number {
+    const val = Number(this.editingRace?.fuel_options?.fastest_time);
+    if (!isNaN(val) && val > 0) return val;
+    const ref = Number(this.editingRace?.fuel_options?.reference_time);
+    return !isNaN(ref) && ref > 0
+      ? Math.max(0.1, Number((ref * 0.5).toFixed(2)))
+      : 3.0;
+  }
+
+  getFuelUsageMaxUsage(): number {
+    const val = Number(this.editingRace?.fuel_options?.max_usage);
+    if (!isNaN(val) && val >= 0) return val;
+    const rate = Number(this.editingRace?.fuel_options?.usage_rate) || 4.0;
+    const type = this.editingRace?.fuel_options?.usage_type;
+    if (type === "QUADRATIC") return Number((rate * 4.0).toFixed(2));
+    if (type === "CUBIC") return Number((rate * 8.0).toFixed(2));
+    return Number((rate * 1.25).toFixed(2));
+  }
+
+  getFuelUsageSlowestTime(): number {
+    const val = Number(this.editingRace?.fuel_options?.slowest_time);
+    if (!isNaN(val) && val > 0) return val;
+    const ref = Number(this.editingRace?.fuel_options?.reference_time);
+    return !isNaN(ref) && ref > 0
+      ? Math.max(0.2, Number((ref * 1.5).toFixed(2)))
+      : 9.0;
+  }
+
+  getFuelUsageMinUsage(): number {
+    const val = Number(this.editingRace?.fuel_options?.min_usage);
+    if (!isNaN(val) && val >= 0) return val;
+    const rate = Number(this.editingRace?.fuel_options?.usage_rate) || 4.0;
+    const type = this.editingRace?.fuel_options?.usage_type;
+    if (type === "QUADRATIC") return Number((rate * (4.0 / 9.0)).toFixed(2));
+    if (type === "CUBIC") return Number((rate * (8.0 / 27.0)).toFixed(2));
+    return Number((rate * 0.75).toFixed(2));
+  }
+
   getFuelUsageReferenceTime(): number {
     const ref = Number(this.editingRace?.fuel_options?.reference_time);
-    return !isNaN(ref) && ref > 0 ? ref : 6.0;
+    if (!isNaN(ref) && ref > 0) return ref;
+    return Number(
+      (
+        (this.getFuelUsageFastestTime() + this.getFuelUsageSlowestTime()) /
+        2
+      ).toFixed(2),
+    );
   }
 
   getFuelUsageMinTime(): number {
-    const ref = this.getFuelUsageReferenceTime();
-    return Math.max(0.2, Number((ref * 0.5).toFixed(2)));
+    return this.getFuelUsageFastestTime();
   }
 
   getFuelUsageMaxTime(): number {
-    const ref = this.getFuelUsageReferenceTime();
     return Math.max(
       this.getFuelUsageMinTime() + 0.1,
-      Number((ref * 1.5).toFixed(2)),
+      this.getFuelUsageSlowestTime(),
     );
   }
 
@@ -1791,26 +1891,26 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.fuel_options) return;
 
     const options = this.editingRace.fuel_options;
-    const referenceTime = this.getFuelUsageReferenceTime();
-    const minTime = this.getFuelUsageMinTime();
-    const maxTime = this.getFuelUsageMaxTime();
+    const fastestTime = this.getFuelUsageFastestTime();
+    const maxUsage = this.getFuelUsageMaxUsage();
+    const slowestTime = this.getFuelUsageSlowestTime();
+    const minUsage = this.getFuelUsageMinUsage();
     const curveKey = JSON.stringify(options.custom_curve || []);
     const hiddenKey = Array.from(this.hiddenPlots.analog_usage)
       .sort()
       .join(",");
-    const key = `${options.usage_type}_${options.usage_rate}_${referenceTime}_${minTime}_${maxTime}_${curveKey}_${hiddenKey}`;
+    const key = `${options.usage_type}_${fastestTime}_${maxUsage}_${slowestTime}_${minUsage}_${curveKey}_${hiddenKey}`;
 
     if (this.usageGraphCache && this.usageGraphCache.argsKey === key) return;
 
     const customMaxMult = this.getAnalogCurveMaxMultiplier();
-    const usageRate = Number(options.usage_rate) || 0;
 
     const result = computeAnalogUsagePlots(
       options.usage_type,
-      usageRate,
-      referenceTime,
-      minTime,
-      maxTime,
+      fastestTime,
+      maxUsage,
+      slowestTime,
+      minUsage,
       options.custom_curve,
       customMaxMult,
       this.hiddenPlots.analog_usage,
@@ -1852,25 +1952,24 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.fuel_options) return;
 
     const options = this.editingRace.fuel_options;
-    const referenceTime = this.getFuelUsageReferenceTime();
-    const minLapTime = this.getFuelUsageMinTime();
-    const maxLapTime = this.getFuelUsageMaxTime();
+    const fastestTime = this.getFuelUsageFastestTime();
+    const maxUsage = this.getFuelUsageMaxUsage();
+    const slowestTime = this.getFuelUsageSlowestTime();
+    const minUsage = this.getFuelUsageMinUsage();
+    const capacity = Number(options.capacity) || 100;
     const curveKey = JSON.stringify(options.custom_curve || []);
     const hiddenKey = Array.from(this.hiddenPlots.analog_pit).sort().join(",");
-    const key = `${options.usage_type}_${options.usage_rate}_${referenceTime}_${options.capacity}_${minLapTime}_${maxLapTime}_${curveKey}_${hiddenKey}`;
+    const key = `${options.usage_type}_${fastestTime}_${maxUsage}_${slowestTime}_${minUsage}_${capacity}_${curveKey}_${hiddenKey}`;
 
     if (this.pitGraphCache && this.pitGraphCache.argsKey === key) return;
 
-    const capacity = Number(options.capacity) || 100;
-    const usageRate = Number(options.usage_rate) || 0;
-
     const result = computeAnalogPitPlots(
       options.usage_type,
-      usageRate,
+      fastestTime,
+      maxUsage,
+      slowestTime,
+      minUsage,
       capacity,
-      referenceTime,
-      minLapTime,
-      maxLapTime,
       options.custom_curve,
       this.hiddenPlots.analog_pit,
     );
@@ -2023,10 +2122,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const height = rect.height || 150;
 
     const options = this.editingRace.fuel_options;
-    const minTime = this.getFuelUsageMinTime();
-    const maxTime = this.getFuelUsageMaxTime();
-    const usageRate = Number(options.usage_rate) || 0;
-    const referenceTime = this.getFuelUsageReferenceTime();
+    const fastestTime = this.getFuelUsageFastestTime();
+    const maxUsage = this.getFuelUsageMaxUsage();
+    const slowestTime = this.getFuelUsageSlowestTime();
+    const minUsage = this.getFuelUsageMinUsage();
 
     if (type === "usage") {
       this.updateUsageGraphCache();
@@ -2035,11 +2134,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         mouseX,
         mouseY,
         width,
-        minTime,
-        maxTime,
+        fastestTime,
+        maxUsage,
+        slowestTime,
+        minUsage,
         options.usage_type,
-        usageRate,
-        referenceTime,
         options.custom_curve,
         maxVal,
         this.hiddenPlots.analog_usage,
@@ -2053,12 +2152,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         mouseX,
         mouseY,
         height,
-        minTime,
-        maxTime,
+        fastestTime,
+        maxUsage,
+        slowestTime,
+        minUsage,
         options.usage_type,
-        usageRate,
         capacity,
-        referenceTime,
         options.custom_curve,
         maxVal,
         this.hiddenPlots.analog_pit,
@@ -2165,9 +2264,10 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     fromPreset: FuelUsageType | string = FuelUsageType.LINEAR,
   ) {
     if (!this.editingRace?.fuel_options) return;
-    const ref = this.getFuelUsageReferenceTime();
-    const minTime = this.getFuelUsageMinTime();
-    const maxTime = this.getFuelUsageMaxTime();
+    const fastestTime = this.getFuelUsageFastestTime();
+    const slowestTime = this.getFuelUsageSlowestTime();
+    const maxUsage = this.getFuelUsageMaxUsage();
+    const minUsage = this.getFuelUsageMinUsage();
     const preset =
       fromPreset === FuelUsageType.CUSTOM_CURVE ||
       fromPreset === "CUSTOM_CURVE" ||
@@ -2176,10 +2276,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         : fromPreset;
     const points: FuelCurvePoint[] = [];
     const fractions = [0.0, 0.25, 0.5, 0.75, 1.0];
+    const range = maxUsage - minUsage;
     for (const frac of fractions) {
-      const time = minTime + frac * (maxTime - minTime);
-      const fuel = getAnalogFuelUsage(preset, 1.0, time, ref);
-      points.push({ x: Number(frac.toFixed(2)), y: Number(fuel.toFixed(3)) });
+      const time = fastestTime + frac * (slowestTime - fastestTime);
+      const fuel = getAnalogFuelUsage(
+        preset,
+        fastestTime,
+        maxUsage,
+        slowestTime,
+        minUsage,
+        time,
+      );
+      const normY = range > 1e-6 ? (fuel - minUsage) / range : 1.0 - frac;
+      points.push({ x: Number(frac.toFixed(2)), y: Number(normY.toFixed(3)) });
     }
     this.editingRace.fuel_options.custom_curve = points;
   }
@@ -2222,13 +2331,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   getAnalogCurveMaxMultiplier(): number {
     const points = this.editingRace?.fuel_options?.custom_curve;
-    let maxP = 2.0;
+    let maxP = 1.0;
     if (points && points.length > 0) {
       for (const p of points) {
         if (p.y > maxP) maxP = p.y;
       }
     }
-    return Math.max(2.0, Math.ceil(maxP));
+    return Math.max(1.0, maxP);
   }
 
   getDigitalCurveMaxMultiplier(): number {
@@ -3329,12 +3438,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         },
       },
       {
-        selector: "#fuel-usage-rate-input",
+        selector: "#fuel-fastest-time-input",
         title: this.translationService.translate(
-          "RE_HELP_FUEL_USAGE_RATE_TITLE",
+          "RE_HELP_FUEL_FASTEST_TIME_TITLE",
         ),
         content: this.translationService.translate(
-          "RE_HELP_FUEL_USAGE_RATE_CONTENT",
+          "RE_HELP_FUEL_FASTEST_TIME_CONTENT",
         ),
         position: "bottom",
         onEnter: () => {
@@ -3344,12 +3453,42 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         },
       },
       {
-        selector: "#fuel-reference-time-input",
+        selector: "#fuel-max-usage-input",
         title: this.translationService.translate(
-          "RE_HELP_FUEL_REFERENCE_TIME_TITLE",
+          "RE_HELP_FUEL_MAX_USAGE_TITLE",
         ),
         content: this.translationService.translate(
-          "RE_HELP_FUEL_REFERENCE_TIME_CONTENT",
+          "RE_HELP_FUEL_MAX_USAGE_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-slowest-time-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_SLOWEST_TIME_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_SLOWEST_TIME_CONTENT",
+        ),
+        position: "bottom",
+        onEnter: () => {
+          if (!this.sectionsExpanded.fuel_analog) {
+            this.sectionsExpanded.fuel_analog = true;
+          }
+        },
+      },
+      {
+        selector: "#fuel-min-usage-input",
+        title: this.translationService.translate(
+          "RE_HELP_FUEL_MIN_USAGE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "RE_HELP_FUEL_MIN_USAGE_CONTENT",
         ),
         position: "bottom",
         onEnter: () => {

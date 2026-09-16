@@ -165,6 +165,10 @@ message AnalogFuelOptions {
   double power_stutter_off_time = 12;
   double power_stutter_on_time = 13;
   repeated FuelCurvePoint custom_curve = 14;
+  double fastest_time = 15;
+  double max_usage = 16;
+  double slowest_time = 17;
+  double min_usage = 18;
 }
 
 message DigitalFuelOptions {

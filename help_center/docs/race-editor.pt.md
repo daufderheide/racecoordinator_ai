@@ -25,11 +25,11 @@ O combustível analógico simula o consumo **por volta**. Como as pistas analóg
     - **Quadrático**: O consumo varia com o inverso do quadrado do tempo de volta, penalizando fortemente voltas muito rápidas.
     - **Cúbico**: O consumo sobe abruptamente em voltas rápidas, penalizando severamente os pilotos que arriscam à procura de voltas recorde.
     - **Curva personalizada**: Permite modelar interativamente a curva ponto a ponto diretamente no gráfico SVG.
-- **Taxa de consumo**: Quantidade base de unidades de combustível consumidas por volta quando um piloto atinge o **Tempo de referência**.
-- **Tempo de referência (s)**: O tempo de volta de referência base para a pista e categoria de carros (em segundos).
-    - Voltas mais rápidas (abaixo do tempo de referência) queimam mais combustível.
-    - Voltas mais lentas (acima do tempo de referência) queimam menos combustível.
-    - O intervalo ativo de cálculo estende-se de $0,5 \times \text{Tempo de referência}$ a $1,5 \times \text{Tempo de referência}$.
+- **Tempo mais rápido (s)**: O tempo de volta mais rápido esperado para a pista e categoria de carros (em segundos).
+- **Consumo máx.**: Unidades de combustível consumidas por volta ao conduzir no **Tempo mais rápido** ou mais rápido.
+- **Tempo mais lento (s)**: O tempo de volta mais lento (em segundos) para o consumo mínimo de combustível.
+- **Consumo mín.**: Unidades de combustível consumidas por volta ao conduzir no **Tempo mais lento** ou mais lento.
+    - Para tempos de volta entre o tempo mais rápido e o tempo mais lento, o consumo varia de forma suave de acordo com o **Tipo de consumo** selecionado (Linear, Quadrático, Cúbico ou Curva personalizada).
 - **Capacidade**: O volume total do depósito de combustível em unidades arbitrárias (por exemplo, 100).
 - **Nível inicial (%)**: Percentagem de capacidade disponível no depósito no início de uma manga (por exemplo, 100% para depósito cheio, ou menos para mangas de sprint ou handicap).
 - **Taxa de reabastecimento (%/s)**: Velocidade a que o combustível é reposto durante uma paragem nas boxes, expressa em percentagem da capacidade total do depósito reposta por segundo.
@@ -54,7 +54,7 @@ $$\text{Tempo de corrida} = \text{Tempo de volta} - \text{Tempo acumulado de rea
 #### Pré-visualizações gráficas (Analógico)
 
 - **Comparação simultânea multimodelo**: Todos os 3 modelos matemáticos predefinidos (**Linear**, **Quadrático** e **Cúbico**) são traçados simultaneamente em ambos os gráficos. O tipo selecionado é destacado a negrito com um brilho vibrante, enquanto os modelos restantes servem de linhas de referência atenuadas (~40% de opacidade).
-- **Consumo de combustível por volta**: Exibe as unidades exatas consumidas ao longo do espetro de tempos de volta ($0,5 \times \text{ref}$ a $1,5 \times \text{ref}$). No modo Curva personalizada, os pontos de controlo e botões de reposição permitem remodelar a curva instantaneamente enquanto os 3 modelos base continuam visíveis para referência.
+- **Consumo de combustível por volta**: Exibe as unidades exatas consumidas ao longo do espetro de tempos de volta (do Tempo mais rápido ao Tempo mais lento). No modo Curva personalizada, os pontos de controlo e botões de reposição permitem remodelar a curva instantaneamente enquanto os 3 modelos base continuam visíveis para referência.
 - **Tempo até paragem nas boxes**: Estima o tempo total de corrida (ou número de voltas) até esgotar o depósito a um ritmo constante em todos os modelos.
 - **Legenda interativa e visibilidade**: Clique com o botão esquerdo em qualquer curva da legenda para a ativar ou desativar. Ocultar uma curva redimensiona dinamicamente as escalas dos eixos, permitindo inspecionar as restantes em maior detalhe.
 - **Cartões flutuantes comparativos**: Passar o cursor pelos gráficos apresenta a telemetria comparativa de todas as curvas visíveis no ponto analisado, com amostras de cor, valores e o indicador `(Ativo)` no modelo selecionado.

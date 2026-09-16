@@ -25,11 +25,11 @@ Le carburant analogique simule la consommation **au tour**. Les pistes analogiqu
     - **Quadratique** : La consommation augmente avec l'inverse du carré du temps au tour, pénalisant fortement les tours très rapides.
     - **Cubique** : La consommation grimpe en flèche pour les tours ultra-rapides, sanctionnant sévèrement la recherche effrénée de records au tour.
     - **Courbe personnalisée** : Permet de modeler interactivement la courbe point par point directement sur le graphique SVG.
-- **Taux d'utilisation** : Quantité de base d'unités de carburant consommées par tour lorsqu'un pilote égale le **Temps de référence**.
-- **Temps de référence (s)** : Temps au tour de référence pour la piste et la catégorie de voiture (en secondes).
-    - Les tours plus rapides (inférieurs au temps de référence) brûlent plus de carburant.
-    - Les tours plus lents (supérieurs au temps de référence) brûlent moins de carburant.
-    - La plage de calcul active s'étend de $0,5 \times \text{Temps de référence}$ à $1,5 \times \text{Temps de référence}$.
+- **Temps le plus rapide (s)** : Temps au tour le plus rapide attendu pour la piste et la catégorie de voiture (en secondes).
+- **Consommation max.** : Unités de carburant consommées par tour lors d'un tour égal ou plus rapide que le **Temps le plus rapide**.
+- **Temps le plus lent (s)** : Temps au tour le plus lent (en secondes) pour la consommation minimale de carburant.
+- **Consommation min.** : Unités de carburant consommées par tour lors d'un tour égal ou plus lent que le **Temps le plus lent**.
+    - Pour les temps au tour compris entre le temps le plus rapide et le plus lent, la consommation évolue de manière fluide selon le **Type d'utilisation** sélectionné (Linéaire, Quadratique, Cubique ou Courbe personnalisée).
 - **Capacité** : Volume total du réservoir de carburant en unités arbitraires (par exemple, 100).
 - **Niveau initial (%)** : Pourcentage de capacité de carburant disponible au début d'une manche (par exemple, 100 % pour un plein complet, ou moins pour les manches sprint/handicap).
 - **Taux de ravitaillement (%/s)** : Vitesse de remplissage lors d'un arrêt aux stands, exprimée en pourcentage de la capacité totale du réservoir rechargé par seconde.
@@ -54,7 +54,7 @@ $$\text{Temps de course} = \text{Temps au tour} - \text{Temps de ravitaillement 
 #### Aperçus graphiques (Analogique)
 
 - **Comparaison multi-modèles simultanée** : Les 3 modèles mathématiques prédéfinis (**Linéaire**, **Quadratique** et **Cubique**) sont tracés simultanément sur les deux graphiques. Le modèle sélectionné est mis en valeur en gras avec une lueur distinctive, tandis que les autres modèles restent visibles sous forme de courbes de référence atténuées (~40 % d'opacité).
-- **Utilisation de carburant par tour** : Affiche les unités exactes consommées sur le spectre des temps au tour ($0,5 \times \text{ref}$ à $1,5 \times \text{ref}$). En mode Courbe personnalisée, les poignées déplaçables et les boutons de réinitialisation permettent un remodelage instantané pendant que les 3 modèles de base restent visibles comme repères.
+- **Utilisation de carburant par tour** : Affiche les unités exactes consommées sur le spectre des temps au tour (du Temps le plus rapide au Temps le plus lent). En mode Courbe personnalisée, les poignées déplaçables et les boutons de réinitialisation permettent un remodelage instantané pendant que les 3 modèles de base restent visibles comme repères.
 - **Temps avant arrêt au stand** : Estime le temps total de course (ou nombre de tours) avant la panne sèche à un rythme de tour régulier pour tous les modèles.
 - **Légende interactive et visibilité** : Cliquez avec le bouton gauche sur n'importe quelle courbe dans la légende pour l'activer ou la masquer. Masquer une courbe réajuste automatiquement l'échelle des axes pour inspecter plus précisément les courbes restantes.
 - **Cartes de survol comparatives** : Le survol de chaque graphique affiche la télémétrie comparative de toutes les courbes visibles au point pointé par le curseur, avec pastilles colorées, valeurs et indicateur `(Actif)` sur le modèle sélectionné.

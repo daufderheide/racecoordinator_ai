@@ -436,13 +436,16 @@ public class DatabaseInitializer {
             FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             FuelOptions.FuelUsageType.QUADRATIC,
-            4.0,
             100.0,
             10.0,
             2.0,
-            6.0,
+            3.0,
+            16.0,
+            9.0,
+            16.0 / 9.0,
             1.0,
-            1.0);
+            1.0,
+            null);
     TeamOptions teamOptions = new TeamOptions(25, 0.0, 50, 0.0, false);
     return new Race.Builder()
         .withName("Fuel Race")
@@ -588,6 +591,8 @@ public class DatabaseInitializer {
       if ("Fuel Race".equals(race.getName())) {
         hasFuelRace = true;
       }
+      boolean modified = false;
+      Race.Builder raceBuilder = new Race.Builder().from(race);
       if (race.getThemeId() == null || race.getThemeId().trim().isEmpty()) {
         String themeId = Theme.DEFAULT_THEME_ID;
         if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
@@ -596,13 +601,20 @@ public class DatabaseInitializer {
             || "Fuel Race".equalsIgnoreCase(race.getName())) {
           themeId = Theme.FUEL_THEME_ID;
         }
-        Race updated = new Race.Builder().from(race).withThemeId(themeId).build();
-        raceRepo.save(updated);
+        raceBuilder.withThemeId(themeId);
+        modified = true;
         logger.info(
             "Backfilled themeId '{}' for race '{}' ({})",
             themeId,
             race.getName(),
             race.getEntityId());
+      }
+      if (race.getFuelOptions() != null) {
+        raceBuilder.withFuelOptions(race.getFuelOptions());
+        modified = true;
+      }
+      if (modified) {
+        raceRepo.save(raceBuilder.build());
       }
     }
 

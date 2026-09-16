@@ -1286,14 +1286,47 @@
                             </app-custom-option>
                           </app-custom-select>
                         </div>
+                      </div>
+                      <div class="config-row">
                         <div class="config-section">
-                          <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
+                          <label>{{
+                            "RE_FUEL_FASTEST_TIME" | translate
+                          }}</label>
                           <input
-                            id="fuel-usage-rate-input"
-                            class="fuel-usage-rate-input"
-                            data-testid="fuel-usage-rate-input"
+                            id="fuel-fastest-time-input"
+                            class="fuel-fastest-time-input"
+                            data-testid="fuel-fastest-time-input"
                             type="number"
-                            [(ngModel)]="editingRace.fuel_options.usage_rate"
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.fastest_time"
+                            (ngModelChange)="captureState()"
+                            min="0.1"
+                            step="0.1"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
+                          />
+                        </div>
+                        <div class="config-section">
+                          <label>{{ "RE_FUEL_MAX_USAGE" | translate }}</label>
+                          <input
+                            id="fuel-max-usage-input"
+                            class="fuel-max-usage-input"
+                            data-testid="fuel-max-usage-input"
+                            type="number"
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.max_usage"
                             (ngModelChange)="captureState()"
                             min="0"
                             step="0.1"
@@ -1303,21 +1336,50 @@
                             "
                           />
                         </div>
+                      </div>
+                      <div class="config-row">
                         <div class="config-section">
                           <label>{{
-                            "RE_FUEL_REFERENCE_TIME" | translate
+                            "RE_FUEL_SLOWEST_TIME" | translate
                           }}</label>
                           <input
-                            id="fuel-reference-time-input"
-                            class="fuel-reference-time-input"
-                            data-testid="fuel-reference-time-input"
+                            id="fuel-slowest-time-input"
+                            class="fuel-slowest-time-input"
+                            data-testid="fuel-slowest-time-input"
                             type="number"
-                            [(ngModel)]="
-                              editingRace.fuel_options.reference_time
-                            "
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.slowest_time"
                             (ngModelChange)="captureState()"
-                            step="1"
-                            min="1"
+                            min="0.1"
+                            step="0.1"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
+                          />
+                        </div>
+                        <div class="config-section">
+                          <label>{{ "RE_FUEL_MIN_USAGE" | translate }}</label>
+                          <input
+                            id="fuel-min-usage-input"
+                            class="fuel-min-usage-input"
+                            data-testid="fuel-min-usage-input"
+                            type="number"
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.min_usage"
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            step="0.1"
                             [disabled]="
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
@@ -1607,7 +1669,9 @@
                                 <span>{{ label }}</span>
                               }
                             </div>
-                            <div class="y-axis-label">FUEL USED</div>
+                            <div class="y-axis-label">
+                              {{ "RE_FUEL_GRAPH_FUEL" | translate }}
+                            </div>
                             <div class="graph-svg-wrapper">
                               <svg
                                 id="analog-fuel-usage-svg"
@@ -1878,6 +1942,7 @@
                             </div>
                             <div class="graph-svg-wrapper">
                               <svg
+                                id="analog-fuel-pit-svg"
                                 viewBox="0 0 400 150"
                                 preserveAspectRatio="none"
                                 class="fuel-graph"
@@ -2662,6 +2727,7 @@
                             </div>
                             <div class="graph-svg-wrapper">
                               <svg
+                                id="digital-fuel-pit-svg"
                                 viewBox="0 0 400 150"
                                 preserveAspectRatio="none"
                                 class="fuel-graph"

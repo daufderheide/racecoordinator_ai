@@ -108,7 +108,11 @@ public class RaceConverter {
                 .setPitStopDelay(fuel.getPitStopDelay())
                 .setReferenceTime(fuel.getReferenceTime())
                 .setPowerStutterOnTime(fuel.getPowerStutterOnTime())
-                .setPowerStutterOffTime(fuel.getPowerStutterOffTime());
+                .setPowerStutterOffTime(fuel.getPowerStutterOffTime())
+                .setFastestTime(fuel.getFastestTime())
+                .setMaxUsage(fuel.getMaxUsage())
+                .setSlowestTime(fuel.getSlowestTime())
+                .setMinUsage(fuel.getMinUsage());
         if (fuel.getCustomCurve() != null) {
           fuel.getCustomCurve()
               .forEach(

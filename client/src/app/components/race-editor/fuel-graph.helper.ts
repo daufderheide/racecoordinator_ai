@@ -97,45 +97,48 @@ export function interpolateFuelCurveClient(
 
 export function getAnalogFuelUsage(
   usageType: FuelUsageType | string,
-  usageRate: number,
+  fastestTime: number,
+  maxUsage: number,
+  slowestTime: number,
+  minUsage: number,
   time: number,
-  referenceTime: number,
   customCurve?: FuelCurvePoint[],
 ): number {
-  if (isCustomCurveType(usageType)) {
-    const refCustom = Math.max(0.1, referenceTime);
-    const minTime = Math.max(0.2, refCustom * 0.5);
-    const maxTime = Math.max(minTime + 0.1, refCustom * 1.5);
-    let xNorm = (time - minTime) / (maxTime - minTime);
-    xNorm = Math.max(0.0, Math.min(1.0, xNorm));
-    const mult = interpolateFuelCurveClient(customCurve, xNorm);
-    const val = usageRate * mult;
-    return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
+  const safeFast = Math.max(0.1, fastestTime);
+  const safeSlow = Math.max(safeFast + 0.001, slowestTime);
+  const safeMax = Math.max(0, maxUsage);
+  const safeMin = Math.max(0, minUsage);
+
+  if (time <= safeFast) {
+    return safeMax;
+  }
+  if (time >= safeSlow) {
+    return safeMin;
   }
 
+  let val = safeMin;
   if (usageType === FuelUsageType.LINEAR) {
-    const safeRefTime = Math.max(0.1, referenceTime);
-    const x1 = safeRefTime * 2;
-    const y1 = usageRate / 2;
-    const x2 = safeRefTime;
-    const y2 = usageRate;
-
-    const m = (y2 - y1) / (x2 - x1);
-    const b = y1 - m * x1;
-
-    const val = m * time + b;
-    return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
-  }
-
-  const safeTime = Math.max(0.1, time);
-  const safeRefTime = Math.max(0.1, referenceTime);
-  let val = 0;
-  if (usageType === FuelUsageType.QUADRATIC) {
-    val = (usageRate * (safeRefTime * safeRefTime)) / (safeTime * safeTime);
+    const progress = (time - safeFast) / (safeSlow - safeFast);
+    val = safeMax - progress * (safeMax - safeMin);
+  } else if (usageType === FuelUsageType.QUADRATIC) {
+    const invT2 = 1.0 / (time * time);
+    const invFast2 = 1.0 / (safeFast * safeFast);
+    const invSlow2 = 1.0 / (safeSlow * safeSlow);
+    const progress = (invT2 - invSlow2) / (invFast2 - invSlow2);
+    val = safeMin + progress * (safeMax - safeMin);
   } else if (usageType === FuelUsageType.CUBIC) {
-    val =
-      (usageRate * (safeRefTime * safeRefTime * safeRefTime)) /
-      (safeTime * safeTime * safeTime);
+    const invT3 = 1.0 / (time * time * time);
+    const invFast3 = 1.0 / (safeFast * safeFast * safeFast);
+    const invSlow3 = 1.0 / (safeSlow * safeSlow * safeSlow);
+    const progress = (invT3 - invSlow3) / (invFast3 - invSlow3);
+    val = safeMin + progress * (safeMax - safeMin);
+  } else if (isCustomCurveType(usageType)) {
+    const xNorm = Math.max(
+      0.0,
+      Math.min(1.0, (time - safeFast) / (safeSlow - safeFast)),
+    );
+    const mult = interpolateFuelCurveClient(customCurve, xNorm);
+    val = safeMin + mult * (safeMax - safeMin);
   }
 
   return isNaN(val) || !isFinite(val) ? 0 : Math.max(0, val);
@@ -170,10 +173,10 @@ export function getCandidateUsageTypes(
 
 export function computeAnalogUsagePlots(
   activeType: FuelUsageType | string | undefined,
-  usageRate: number,
-  referenceTime: number,
-  minTime: number,
-  maxTime: number,
+  fastestTime: number,
+  maxUsage: number,
+  slowestTime: number,
+  minUsage: number,
   customCurve: FuelCurvePoint[] | undefined,
   customMaxMultiplier: number,
   hiddenTypes: Set<string>,
@@ -188,14 +191,28 @@ export function computeAnalogUsagePlots(
   const curveMaxes: number[] = [];
   for (const t of visibleTypes) {
     if (t === FuelUsageType.CUSTOM_CURVE) {
-      curveMaxes.push(customMaxMultiplier * usageRate);
+      curveMaxes.push(
+        Math.max(
+          maxUsage,
+          minUsage + customMaxMultiplier * (maxUsage - minUsage),
+        ),
+      );
     } else {
-      curveMaxes.push(getAnalogFuelUsage(t, usageRate, minTime, referenceTime));
+      curveMaxes.push(
+        getAnalogFuelUsage(
+          t,
+          fastestTime,
+          maxUsage,
+          slowestTime,
+          minUsage,
+          fastestTime,
+        ),
+      );
     }
   }
 
   const maxFuelValue =
-    curveMaxes.length > 0 ? Math.max(1, ...curveMaxes) : Math.max(1, usageRate);
+    curveMaxes.length > 0 ? Math.max(1, ...curveMaxes) : Math.max(1, maxUsage);
 
   const steps = 50;
   const plots: FuelGraphPlot[] = [];
@@ -210,12 +227,14 @@ export function computeAnalogUsagePlots(
     if (isVisible) {
       const points: string[] = [];
       for (let i = 0; i <= steps; i++) {
-        const time = minTime + (i / steps) * (maxTime - minTime);
+        const time = fastestTime + (i / steps) * (slowestTime - fastestTime);
         const fuel = getAnalogFuelUsage(
           type,
-          usageRate,
+          fastestTime,
+          maxUsage,
+          slowestTime,
+          minUsage,
           time,
-          referenceTime,
           customCurve,
         );
         const x = (i / steps) * width;
@@ -249,11 +268,11 @@ export function computeAnalogUsagePlots(
 
 export function computeAnalogPitPlots(
   activeType: FuelUsageType | string | undefined,
-  usageRate: number,
+  fastestTime: number,
+  maxUsage: number,
+  slowestTime: number,
+  minUsage: number,
   capacity: number,
-  referenceTime: number,
-  minLapTime: number,
-  maxLapTime: number,
   customCurve: FuelCurvePoint[] | undefined,
   hiddenTypes: Set<string>,
   width: number = 400,
@@ -266,15 +285,21 @@ export function computeAnalogPitPlots(
 
   const pitTimes: number[] = [];
   for (const t of visibleTypes) {
+    const testTime =
+      minUsage > 0
+        ? slowestTime
+        : fastestTime + 0.9 * (slowestTime - fastestTime);
     const minFuel = getAnalogFuelUsage(
       t,
-      usageRate,
-      maxLapTime,
-      referenceTime,
+      fastestTime,
+      maxUsage,
+      slowestTime,
+      minUsage,
+      testTime,
       customCurve,
     );
-    if (minFuel > 0 && usageRate > 0) {
-      const pTime = (capacity / minFuel) * maxLapTime;
+    if (minFuel > 0 && maxUsage > 0) {
+      const pTime = (capacity / minFuel) * testTime;
       if (!isNaN(pTime) && isFinite(pTime)) {
         pitTimes.push(Math.min(3600, pTime));
       }
@@ -296,12 +321,14 @@ export function computeAnalogPitPlots(
     if (isVisible) {
       const points: string[] = [];
       for (let i = 0; i <= steps; i++) {
-        const lapTime = minLapTime + (i / steps) * (maxLapTime - minLapTime);
+        const lapTime = fastestTime + (i / steps) * (slowestTime - fastestTime);
         const fuelPerLap = getAnalogFuelUsage(
           type,
-          usageRate,
+          fastestTime,
+          maxUsage,
+          slowestTime,
+          minUsage,
           lapTime,
-          referenceTime,
           customCurve,
         );
 
@@ -491,18 +518,18 @@ export function calculateAnalogUsageHover(
   mouseX: number,
   mouseY: number,
   width: number,
-  minTime: number,
-  maxTime: number,
+  fastestTime: number,
+  maxUsage: number,
+  slowestTime: number,
+  minUsage: number,
   activeType: FuelUsageType | string | undefined,
-  usageRate: number,
-  referenceTime: number,
   customCurve: FuelCurvePoint[] | undefined,
   maxFuelValue: number,
   hiddenTypes: Set<string>,
   height: number = 150,
 ): FuelGraphHoverPoint {
   const xPercent = Math.max(0, Math.min(1, mouseX / width));
-  const time = minTime + xPercent * (maxTime - minTime);
+  const time = fastestTime + xPercent * (slowestTime - fastestTime);
   const candidateTypes = getCandidateUsageTypes(activeType);
   const isCustomActive = isCustomCurveType(activeType);
 
@@ -520,9 +547,11 @@ export function calculateAnalogUsageHover(
 
     const fuel = getAnalogFuelUsage(
       type,
-      usageRate,
+      fastestTime,
+      maxUsage,
+      slowestTime,
+      minUsage,
       time,
-      referenceTime,
       customCurve,
     );
     const yRatio =
@@ -564,19 +593,19 @@ export function calculateAnalogPitHover(
   mouseX: number,
   mouseY: number,
   height: number,
-  minTime: number,
-  maxTime: number,
+  fastestTime: number,
+  maxUsage: number,
+  slowestTime: number,
+  minUsage: number,
   activeType: FuelUsageType | string | undefined,
-  usageRate: number,
   capacity: number,
-  referenceTime: number,
   customCurve: FuelCurvePoint[] | undefined,
   maxPitTime: number,
   hiddenTypes: Set<string>,
   width: number = 400,
 ): FuelGraphHoverPoint {
   const yPercent = 1 - Math.max(0, Math.min(1, mouseY / height));
-  const lapTime = minTime + yPercent * (maxTime - minTime);
+  const lapTime = fastestTime + yPercent * (slowestTime - fastestTime);
   const candidateTypes = getCandidateUsageTypes(activeType);
   const isCustomActive = isCustomCurveType(activeType);
 
@@ -594,9 +623,11 @@ export function calculateAnalogPitHover(
 
     const fuelPerLap = getAnalogFuelUsage(
       type,
-      usageRate,
+      fastestTime,
+      maxUsage,
+      slowestTime,
+      minUsage,
       lapTime,
-      referenceTime,
       customCurve,
     );
     let pitTime = 0;

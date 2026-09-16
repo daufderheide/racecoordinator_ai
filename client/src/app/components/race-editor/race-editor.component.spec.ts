@@ -363,11 +363,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -426,11 +428,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -506,11 +510,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -567,7 +573,10 @@ describe("RaceEditorComponent", () => {
       expect(component.editingRace.fuel_options?.enabled).toBeFalse();
       expect(component.editingRace.fuel_options?.capacity).toBe(100);
       expect(component.editingRace.fuel_options?.usage_type).toBe("LINEAR");
-      expect(component.editingRace.fuel_options?.usage_rate).toBe(4.0);
+      expect(component.editingRace.fuel_options?.fastest_time).toBe(3.0);
+      expect(component.editingRace.fuel_options?.max_usage).toBe(5.0);
+      expect(component.editingRace.fuel_options?.slowest_time).toBe(9.0);
+      expect(component.editingRace.fuel_options?.min_usage).toBe(3.0);
     }));
 
     it("should detect changes when fuel settings modify", () => {
@@ -577,6 +586,22 @@ describe("RaceEditorComponent", () => {
       component.editingRace.fuel_options!.enabled = false;
       expect(component.isDirtyState()).toBeFalse();
 
+      component.editingRace.fuel_options!.fastest_time = 2.5;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.fastest_time = 3.0;
+      component.editingRace.fuel_options!.max_usage = 6.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.max_usage = 5.0;
+      component.editingRace.fuel_options!.slowest_time = 10.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.slowest_time = 9.0;
+      component.editingRace.fuel_options!.min_usage = 2.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.min_usage = 3.0;
       component.editingRace.fuel_options!.capacity = 200;
       expect(component.isDirtyState()).toBeTrue();
     });
@@ -687,9 +712,11 @@ describe("RaceEditorComponent", () => {
       component.editingRace.fuel_options = {
         enabled: true,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         capacity: 100,
-        reference_time: 6.0,
         custom_curve: [],
       } as any;
       component.editingRace.digital_fuel_options = {
@@ -743,8 +770,9 @@ describe("RaceEditorComponent", () => {
 
       const points = component.editingRace.fuel_options!.custom_curve;
       expect(points.length).toBe(5);
-      expect(points[0].y).toBeCloseTo(4.0, 1);
-      expect(points[2].y).toBeCloseTo(1.0, 1);
+      expect(points[0].y).toBeCloseTo(1.0, 1);
+      expect(points[2].y).toBeCloseTo(0.156, 2);
+      expect(points[4].y).toBeCloseTo(0.0, 1);
     });
 
     it("should reset digital custom curve to cubic preset on button click", () => {
@@ -1160,11 +1188,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -1212,11 +1242,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
       }),
     );
@@ -1449,11 +1481,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1503,11 +1537,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1554,11 +1590,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1600,11 +1638,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -2097,7 +2137,7 @@ describe("RaceEditorComponent", () => {
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(80);
+      expect(steps.length).toBe(82);
       expect(steps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(steps[1].selector).toBe("#race-name-input");
       expect(steps[2].selector).toBe("#heat-rotation-select");
@@ -2148,38 +2188,40 @@ describe("RaceEditorComponent", () => {
       expect(steps[47].selector).toBe("#team-overall-time-limit-input");
       expect(steps[48].selector).toBe("#fuel-enabled-input");
       expect(steps[49].selector).toBe("#fuel-usage-type-select");
-      expect(steps[50].selector).toBe("#fuel-usage-rate-input");
-      expect(steps[51].selector).toBe("#fuel-reference-time-input");
-      expect(steps[52].selector).toBe("#fuel-capacity-input");
-      expect(steps[53].selector).toBe("#fuel-start-level-input");
-      expect(steps[54].selector).toBe("#fuel-refuel-rate-input");
-      expect(steps[55].selector).toBe("#fuel-pit-delay-input");
-      expect(steps[56].selector).toBe("#fuel-reset-at-start-input");
-      expect(steps[57].selector).toBe("#fuel-out-of-fuel-action-select");
-      expect(steps[58].selector).toBe("#digital-fuel-enabled-input");
-      expect(steps[59].selector).toBe("#digital-fuel-usage-type-select");
-      expect(steps[60].selector).toBe("#digital-fuel-usage-rate-input");
-      expect(steps[61].selector).toBe("#digital-fuel-capacity-input");
-      expect(steps[62].selector).toBe("#digital-fuel-start-level-input");
-      expect(steps[63].selector).toBe("#digital-fuel-refuel-rate-input");
-      expect(steps[64].selector).toBe("#digital-fuel-pit-delay-input");
-      expect(steps[65].selector).toBe("#digital-fuel-reset-at-start-input");
-      expect(steps[66].selector).toBe(
+      expect(steps[50].selector).toBe("#fuel-fastest-time-input");
+      expect(steps[51].selector).toBe("#fuel-max-usage-input");
+      expect(steps[52].selector).toBe("#fuel-slowest-time-input");
+      expect(steps[53].selector).toBe("#fuel-min-usage-input");
+      expect(steps[54].selector).toBe("#fuel-capacity-input");
+      expect(steps[55].selector).toBe("#fuel-start-level-input");
+      expect(steps[56].selector).toBe("#fuel-refuel-rate-input");
+      expect(steps[57].selector).toBe("#fuel-pit-delay-input");
+      expect(steps[58].selector).toBe("#fuel-reset-at-start-input");
+      expect(steps[59].selector).toBe("#fuel-out-of-fuel-action-select");
+      expect(steps[60].selector).toBe("#digital-fuel-enabled-input");
+      expect(steps[61].selector).toBe("#digital-fuel-usage-type-select");
+      expect(steps[62].selector).toBe("#digital-fuel-usage-rate-input");
+      expect(steps[63].selector).toBe("#digital-fuel-capacity-input");
+      expect(steps[64].selector).toBe("#digital-fuel-start-level-input");
+      expect(steps[65].selector).toBe("#digital-fuel-refuel-rate-input");
+      expect(steps[66].selector).toBe("#digital-fuel-pit-delay-input");
+      expect(steps[67].selector).toBe("#digital-fuel-reset-at-start-input");
+      expect(steps[68].selector).toBe(
         "#digital-fuel-out-of-fuel-action-select",
       );
-      expect(steps[67].selector).toBe("#season-position-points-section");
-      expect(steps[68].selector).toBe("#season-heat-position-points-section");
-      expect(steps[69].selector).toBe("#season-overall-carry-over-input");
-      expect(steps[70].selector).toBe("#season-overall-fastest-lap-input");
-      expect(steps[71].selector).toBe("#season-overall-fastest-lap-lane-input");
-      expect(steps[72].selector).toBe("#season-overall-most-laps-led-input");
-      expect(steps[73].selector).toBe("#season-overall-led-lap-input");
-      expect(steps[74].selector).toBe("#season-overall-one-bonus-input");
-      expect(steps[75].selector).toBe("#season-heat-carry-over-input");
-      expect(steps[76].selector).toBe("#season-heat-fastest-lap-input");
-      expect(steps[77].selector).toBe("#season-heat-most-laps-led-input");
-      expect(steps[78].selector).toBe("#season-heat-led-lap-input");
-      expect(steps[79].selector).toBe("#season-heat-one-bonus-input");
+      expect(steps[69].selector).toBe("#season-position-points-section");
+      expect(steps[70].selector).toBe("#season-heat-position-points-section");
+      expect(steps[71].selector).toBe("#season-overall-carry-over-input");
+      expect(steps[72].selector).toBe("#season-overall-fastest-lap-input");
+      expect(steps[73].selector).toBe("#season-overall-fastest-lap-lane-input");
+      expect(steps[74].selector).toBe("#season-overall-most-laps-led-input");
+      expect(steps[75].selector).toBe("#season-overall-led-lap-input");
+      expect(steps[76].selector).toBe("#season-overall-one-bonus-input");
+      expect(steps[77].selector).toBe("#season-heat-carry-over-input");
+      expect(steps[78].selector).toBe("#season-heat-fastest-lap-input");
+      expect(steps[79].selector).toBe("#season-heat-most-laps-led-input");
+      expect(steps[80].selector).toBe("#season-heat-led-lap-input");
+      expect(steps[81].selector).toBe("#season-heat-one-bonus-input");
     });
 
     it("should expand corresponding sections when executing onEnter hooks", () => {
@@ -2218,13 +2260,13 @@ describe("RaceEditorComponent", () => {
       steps[48].onEnter!();
       expect(component.sectionsExpanded.fuel_analog).toBeTrue();
 
-      steps[58].onEnter!();
+      steps[60].onEnter!();
       expect(component.sectionsExpanded.fuel_digital).toBeTrue();
 
-      steps[67].onEnter!();
+      steps[69].onEnter!();
       expect(component.sectionsExpanded.season_points).toBeTrue();
 
-      steps[69].onEnter!();
+      steps[71].onEnter!();
       expect(component.sectionsExpanded.season_points).toBeTrue();
     });
 
@@ -2235,7 +2277,7 @@ describe("RaceEditorComponent", () => {
       const calledSteps = (
         helpService.startGuide as jasmine.Spy
       ).calls.mostRecent().args[0];
-      expect(calledSteps.length).toBe(80);
+      expect(calledSteps.length).toBe(82);
       expect(calledSteps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(calledSteps[6].selector).toBe("#theme-select");
       expect(calledSteps[11].selector).toBe("#auto-advance-time-input");
@@ -2246,9 +2288,9 @@ describe("RaceEditorComponent", () => {
         "#team-pit-stop-change-driver-input",
       );
       expect(calledSteps[48].selector).toBe("#fuel-enabled-input");
-      expect(calledSteps[58].selector).toBe("#digital-fuel-enabled-input");
-      expect(calledSteps[67].selector).toBe("#season-position-points-section");
-      expect(calledSteps[69].selector).toBe("#season-overall-carry-over-input");
+      expect(calledSteps[60].selector).toBe("#digital-fuel-enabled-input");
+      expect(calledSteps[69].selector).toBe("#season-position-points-section");
+      expect(calledSteps[71].selector).toBe("#season-overall-carry-over-input");
     });
   });
 
@@ -2432,8 +2474,10 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: true,
           usage_type: FuelUsageType.LINEAR,
-          usage_rate: 5,
-          reference_time: 6,
+          fastest_time: 3.0,
+          max_usage: 6.25,
+          slowest_time: 9.0,
+          min_usage: 3.75,
           capacity: 100,
         },
         digital_fuel_options: {
@@ -2467,11 +2511,15 @@ describe("RaceEditorComponent", () => {
       expect(component.getFuelUsageTimeRange()).toBe("3s - 9s");
     });
 
-    it("should dynamically scale lap time ranges based on reference_time", () => {
-      component.editingRace.fuel_options!.reference_time = 15.0;
-      component.editingRace.fuel_options!.usage_rate = 10.0;
+    it("should dynamically scale lap time ranges based on fastest_time and slowest_time", () => {
+      component.editingRace.fuel_options!.fastest_time = 7.5;
+      component.editingRace.fuel_options!.max_usage = 40.0;
+      component.editingRace.fuel_options!.slowest_time = 22.5;
+      component.editingRace.fuel_options!.min_usage = 4.444444444444445;
       component.editingRace.fuel_options!.usage_type = FuelUsageType.QUADRATIC;
 
+      expect(component.getFuelUsageFastestTime()).toBe(7.5);
+      expect(component.getFuelUsageSlowestTime()).toBe(22.5);
       expect(component.getFuelUsageReferenceTime()).toBe(15.0);
       expect(component.getFuelUsageMinTime()).toBe(7.5);
       expect(component.getFuelUsageMaxTime()).toBe(22.5);
@@ -2635,6 +2683,10 @@ describe("RaceEditorComponent", () => {
       expect(
         pitPlots.find((p) => p.type === "QUADRATIC")?.isSelected,
       ).toBeFalse();
+      expect(component.getPitGraphPath()).toContain("M ");
+      expect(component.getPitGraphPath()).toContain(" L ");
+      expect(pitPlots[0].path).not.toBe("");
+      expect(pitPlots[0].path).toMatch(/^M\s+[\d.]+,150\.0/);
     });
 
     it("should display custom curve only when custom curve usage type is selected", () => {
@@ -2693,25 +2745,47 @@ describe("RaceEditorComponent", () => {
     });
 
     it("should toggle curve visibility and dynamically rescale axes", () => {
-      expect(component.isPlotHidden("analog_usage", "CUBIC")).toBeFalse();
+      component.editingRace.fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      component.editingRace.fuel_options!.custom_curve = [
+        { x: 0, y: 2.0 },
+        { x: 1, y: 0.0 },
+      ];
+
+      expect(
+        component.isPlotHidden("analog_usage", FuelUsageType.CUSTOM_CURVE),
+      ).toBeFalse();
 
       const initialYLabels = component.getFuelUsageYLabels();
 
-      component.togglePlotVisibility("analog_usage", "CUBIC");
-      expect(component.isPlotHidden("analog_usage", "CUBIC")).toBeTrue();
+      component.togglePlotVisibility(
+        "analog_usage",
+        FuelUsageType.CUSTOM_CURVE,
+      );
+      expect(
+        component.isPlotHidden("analog_usage", FuelUsageType.CUSTOM_CURVE),
+      ).toBeTrue();
 
       const plotsAfterHide = component.getFuelUsagePlots();
-      const cubicPlot = plotsAfterHide.find((p) => p.type === "CUBIC");
-      expect(cubicPlot?.isVisible).toBeFalse();
+      const customPlot = plotsAfterHide.find(
+        (p) => p.type === FuelUsageType.CUSTOM_CURVE,
+      );
+      expect(customPlot?.isVisible).toBeFalse();
 
       const yLabelsAfterHide = component.getFuelUsageYLabels();
       expect(yLabelsAfterHide).not.toEqual(initialYLabels);
 
-      component.togglePlotVisibility("analog_usage", "CUBIC");
-      expect(component.isPlotHidden("analog_usage", "CUBIC")).toBeFalse();
+      component.togglePlotVisibility(
+        "analog_usage",
+        FuelUsageType.CUSTOM_CURVE,
+      );
       expect(
-        component.getFuelUsagePlots().find((p) => p.type === "CUBIC")
-          ?.isVisible,
+        component.isPlotHidden("analog_usage", FuelUsageType.CUSTOM_CURVE),
+      ).toBeFalse();
+      expect(
+        component
+          .getFuelUsagePlots()
+          .find((p) => p.type === FuelUsageType.CUSTOM_CURVE)?.isVisible,
       ).toBeTrue();
     });
 

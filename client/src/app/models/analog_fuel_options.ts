@@ -9,6 +9,10 @@ export class AnalogFuelOptions extends FuelOptions {
   reference_time: number;
   power_stutter_on_time?: number;
   power_stutter_off_time?: number;
+  fastest_time: number;
+  max_usage: number;
+  slowest_time: number;
+  min_usage: number;
 
   constructor(
     enabled: boolean = false,
@@ -24,6 +28,10 @@ export class AnalogFuelOptions extends FuelOptions {
     power_stutter_on_time: number = 1.0,
     power_stutter_off_time: number = 1.0,
     custom_curve: FuelCurvePoint[] = [],
+    fastest_time: number = 3.0,
+    max_usage: number = 5.0,
+    slowest_time: number = 9.0,
+    min_usage: number = 3.0,
   ) {
     super(
       enabled,
@@ -40,5 +48,9 @@ export class AnalogFuelOptions extends FuelOptions {
     this.reference_time = reference_time;
     this.power_stutter_on_time = power_stutter_on_time;
     this.power_stutter_off_time = power_stutter_off_time;
+    this.fastest_time = fastest_time;
+    this.max_usage = max_usage;
+    this.slowest_time = slowest_time;
+    this.min_usage = min_usage;
   }
 }
