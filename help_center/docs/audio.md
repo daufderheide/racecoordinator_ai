@@ -207,10 +207,12 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 | **Start Countdown** | `audio.countdown` | **Voice Callout** / Audio Set | `urgent` | `countdown`: Plays on Main Raceday (if Countdown widget is present) and on all Driver Stations. |
 | **Green Lamp / GO** | `audio.countdown.green` | **Voice Callout** / Preset Tone | `urgent` | `countdown`: Plays on Main Raceday (if Countdown widget is present) and on all Driver Stations. |
 | **Yellow Flag** | `audio.yellowflag` | **Voice Callout** (Warning Siren) | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
+| **Auto-Start Seconds Left** | `audio.auto_start` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Remaining Seconds** | `audio.seconds_left` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Laps Left** | `audio.laps_left` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Halfway** | `audio.seconds_left.halfway` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations when reaching halfway in timed races or when the leader reaches half the lap count in lap-based races. |
 | **Heat Finished** | `audio.heat_over` | **Voice Callout** | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
+| **Auto-Advance Seconds Left** | `audio.auto_advance` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Race Finished** | `audio.race_over` | **Voice Callout** | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
 | **Minimum Lap Time** | `audio.min_lap_time` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 | **Drift Lap** | `audio.drift_lap` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |

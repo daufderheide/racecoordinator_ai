@@ -147,6 +147,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private lastPlayedCountdownSecond: number = -1;
   private playedSecondsLeft = new Set<number>();
   private playedLapsLeft = new Set<number>();
+  private playedAutoStart = new Set<number>();
+  private playedAutoAdvance = new Set<number>();
+  private previousAutoStartRemaining = 0;
+  private previousAutoAdvanceRemaining = 0;
   private leaderLaps = 0;
   private playedHalfway = false;
   private previousRaceState: RaceState = RaceState.UNKNOWN_STATE;
@@ -203,6 +207,37 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.raceConnectionService.raceTime$.subscribe((raceTime) => {
         this.time = raceTime.time || 0;
+        const autoStart = raceTime.autoStartRemaining || 0;
+        if (
+          (this.raceState === RaceState.NOT_STARTED ||
+            this.raceState === RaceState.UNKNOWN_STATE ||
+            this.raceState === RaceState.STARTING) &&
+          autoStart > 0
+        ) {
+          this.checkAutoStartAnnouncements(
+            autoStart,
+            this.previousAutoStartRemaining,
+          );
+        } else if (autoStart <= 0) {
+          this.playedAutoStart.clear();
+        }
+        this.previousAutoStartRemaining = autoStart;
+
+        const autoAdvance = raceTime.autoAdvanceRemaining || 0;
+        if (
+          (this.raceState === RaceState.HEAT_OVER ||
+            this.raceState === RaceState.UNKNOWN_STATE) &&
+          autoAdvance > 0
+        ) {
+          this.checkAutoAdvanceAnnouncements(
+            autoAdvance,
+            this.previousAutoAdvanceRemaining,
+          );
+        } else if (autoAdvance <= 0) {
+          this.playedAutoAdvance.clear();
+        }
+        this.previousAutoAdvanceRemaining = autoAdvance;
+
         if (this.raceState === RaceState.STARTING) {
           const currentSecond = Math.ceil(this.time);
           const r = this.race;
@@ -324,6 +359,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
           ) {
             this.playedSecondsLeft.clear();
             this.playedLapsLeft.clear();
+            this.playedAutoStart.clear();
+            this.playedAutoAdvance.clear();
+            this.previousAutoStartRemaining = 0;
+            this.previousAutoAdvanceRemaining = 0;
             this.leaderLaps = 0;
             this.playedHalfway = false;
             this.fuelAudioTracker.reset(
@@ -672,7 +711,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       } else if (
         slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT ||
         slotKey === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT ||
-        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY
+        slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_START ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE
       ) {
         defaultAssoc = { widgetType: "timer" };
       }
@@ -831,6 +872,101 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
           widgetType: "timer",
         });
         this.playedLapsLeft.add(threshold);
+      }
+    }
+  }
+
+  private getAutoStartThresholds(): number[] {
+    const config = this.themeService.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_AUTO_START,
+    );
+    if (config?.url) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === config.url ||
+          a.entity_id === config.url ||
+          a._id === config.url,
+      );
+      if (asset?.audioEntries && asset.audioEntries.length > 0) {
+        return asset.audioEntries
+          .map((e: any) => Math.round(e.timeSeconds))
+          .filter((t: number) => t > 0)
+          .sort((a: number, b: number) => b - a);
+      }
+    }
+    return [600, 300, 180, 60, 30, 10];
+  }
+
+  private checkAutoStartAnnouncements(
+    currentTime: number,
+    previousTime: number,
+  ) {
+    if (previousTime <= 0) return;
+    const totalDuration = this.race?.auto_start_time ?? 0;
+    const thresholds = this.getAutoStartThresholds();
+    for (const threshold of thresholds) {
+      if (
+        previousTime > threshold &&
+        currentTime <= threshold &&
+        !this.playedAutoStart.has(threshold)
+      ) {
+        if (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1) {
+          continue;
+        }
+
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_AUTO_START, threshold, {
+          widgetType: "timer",
+        });
+        this.playedAutoStart.add(threshold);
+      }
+    }
+  }
+
+  private getAutoAdvanceThresholds(): number[] {
+    const config = this.themeService.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
+    );
+    if (config?.url) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === config.url ||
+          a.entity_id === config.url ||
+          a._id === config.url,
+      );
+      if (asset?.audioEntries && asset.audioEntries.length > 0) {
+        return asset.audioEntries
+          .map((e: any) => Math.round(e.timeSeconds))
+          .filter((t: number) => t > 0)
+          .sort((a: number, b: number) => b - a);
+      }
+    }
+    return [600, 300, 180, 60, 30, 10];
+  }
+
+  private checkAutoAdvanceAnnouncements(
+    currentTime: number,
+    previousTime: number,
+  ) {
+    if (previousTime <= 0) return;
+    const totalDuration =
+      (this.race as any)?.auto_advance_time ??
+      (this.race as any)?.auto_advance_remaining_seconds ??
+      0;
+    const thresholds = this.getAutoAdvanceThresholds();
+    for (const threshold of thresholds) {
+      if (
+        previousTime > threshold &&
+        currentTime <= threshold &&
+        !this.playedAutoAdvance.has(threshold)
+      ) {
+        if (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1) {
+          continue;
+        }
+
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE, threshold, {
+          widgetType: "timer",
+        });
+        this.playedAutoAdvance.add(threshold);
       }
     }
   }

@@ -139,6 +139,18 @@ export const MAIN_AUDIO_SLOTS: {
     helpId: "help-audio-laps-left",
   },
   {
+    key: "audio.auto_start",
+    label: "UE_LABEL_AUTO_START_AUDIO",
+    mode: "set",
+    helpId: "help-audio-auto-start",
+  },
+  {
+    key: "audio.auto_advance",
+    label: "UE_LABEL_AUTO_ADVANCE_AUDIO",
+    mode: "set",
+    helpId: "help-audio-auto-advance",
+  },
+  {
     key: "audio.seconds_left.halfway",
     label: "UE_LABEL_SECONDS_LEFT_HALFWAY",
     mode: "single",

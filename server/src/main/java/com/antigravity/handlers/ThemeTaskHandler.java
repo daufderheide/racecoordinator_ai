@@ -99,6 +99,12 @@ public class ThemeTaskHandler {
     if (s.remove("audio.laps_left") != null) {
       updated = true;
     }
+    if (s.remove("audio.auto_start") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_advance") != null) {
+      updated = true;
+    }
 
     Map<String, AudioConfig> as =
         t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
@@ -242,6 +248,14 @@ public class ThemeTaskHandler {
     }
     if (!as.containsKey("audio.laps_left")) {
       as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_start")) {
+      as.put("audio.auto_start", new AudioConfig("audio_set", "default_auto_start", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_advance")) {
+      as.put("audio.auto_advance", new AudioConfig("audio_set", "default_auto_advance", null));
       updated = true;
     }
     if (!as.containsKey("audio.yellowflag")) {

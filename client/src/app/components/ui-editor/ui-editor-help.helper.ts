@@ -297,6 +297,20 @@ export function getAudioHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
       onEnter: () => expandThemeSection(ctx, "audio"),
     },
     {
+      selector: "#help-audio-auto-start",
+      title: translationService.translate("UE_LABEL_AUTO_START_AUDIO"),
+      content: translationService.translate("UE_HELP_AUDIO_AUTO_START"),
+      position: "bottom",
+      onEnter: () => expandThemeSection(ctx, "audio"),
+    },
+    {
+      selector: "#help-audio-auto-advance",
+      title: translationService.translate("UE_LABEL_AUTO_ADVANCE_AUDIO"),
+      content: translationService.translate("UE_HELP_AUDIO_AUTO_ADVANCE"),
+      position: "bottom",
+      onEnter: () => expandThemeSection(ctx, "audio"),
+    },
+    {
       selector: "#help-audio-halfway",
       title: translationService.translate("UE_LABEL_SECONDS_LEFT_HALFWAY"),
       content: translationService.translate("UE_HELP_AUDIO_HALFWAY"),

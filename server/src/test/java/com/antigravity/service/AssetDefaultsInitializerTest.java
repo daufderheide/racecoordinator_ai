@@ -79,6 +79,24 @@ public class AssetDefaultsInitializerTest {
     assertEquals("Final Lap", lapsLeft.getAudioEntries(3).getName());
     assertEquals("tts", lapsLeft.getAudioEntries(3).getType());
 
+    AssetMessage autoStart = assetService.getAssetById("default_auto_start");
+    assertNotNull("Default auto start audio set should be backfilled", autoStart);
+    assertEquals("audio_set", autoStart.getType());
+    assertEquals(6, autoStart.getAudioEntriesCount());
+    assertEquals("Heat starts in 10 minutes", autoStart.getAudioEntries(0).getName());
+    assertEquals("tts", autoStart.getAudioEntries(0).getType());
+    assertEquals("Heat Starts in 10 seconds", autoStart.getAudioEntries(5).getName());
+    assertEquals("tts", autoStart.getAudioEntries(5).getType());
+
+    AssetMessage autoAdvance = assetService.getAssetById("default_auto_advance");
+    assertNotNull("Default auto advance audio set should be backfilled", autoAdvance);
+    assertEquals("audio_set", autoAdvance.getType());
+    assertEquals(6, autoAdvance.getAudioEntriesCount());
+    assertEquals("Heat advances in 10 minutes", autoAdvance.getAudioEntries(0).getName());
+    assertEquals("tts", autoAdvance.getAudioEntries(0).getType());
+    assertEquals("Heat advances in 10 seconds", autoAdvance.getAudioEntries(5).getName());
+    assertEquals("tts", autoAdvance.getAudioEntries(5).getType());
+
     SqliteRepository<Theme> themeRepo =
         new SqliteRepository<>(databaseContext, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();
@@ -87,6 +105,16 @@ public class AssetDefaultsInitializerTest {
       assertNotNull("Theme should have audio.laps_left", t.getAudioSlots().get("audio.laps_left"));
       assertEquals("default_laps_left", t.getAudioSlots().get("audio.laps_left").getUrl());
       assertEquals("audio_set", t.getAudioSlots().get("audio.laps_left").getType());
+
+      assertNotNull(
+          "Theme should have audio.auto_start", t.getAudioSlots().get("audio.auto_start"));
+      assertEquals("default_auto_start", t.getAudioSlots().get("audio.auto_start").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.auto_start").getType());
+
+      assertNotNull(
+          "Theme should have audio.auto_advance", t.getAudioSlots().get("audio.auto_advance"));
+      assertEquals("default_auto_advance", t.getAudioSlots().get("audio.auto_advance").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.auto_advance").getType());
     }
   }
 

@@ -337,5 +337,23 @@ describe("ThemeService", () => {
         url: "default_laps_left",
       });
     });
+
+    it("should resolve AUDIO_AUTO_START with default_auto_start fallback", async () => {
+      await service.initialize();
+      const config = service.resolveAudioConfig("audio.auto_start");
+      expect(config).toEqual({
+        type: "audio_set",
+        url: "default_auto_start",
+      });
+    });
+
+    it("should resolve AUDIO_AUTO_ADVANCE with default_auto_advance fallback", async () => {
+      await service.initialize();
+      const config = service.resolveAudioConfig("audio.auto_advance");
+      expect(config).toEqual({
+        type: "audio_set",
+        url: "default_auto_advance",
+      });
+    });
   });
 });

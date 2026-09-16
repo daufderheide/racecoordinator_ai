@@ -173,10 +173,12 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | **Contagem de Partida** | `audio.countdown` | **Aviso de Voz** / Conjunto de Áudio | `urgent` | `countdown`: Toca no Ecrã Principal (se houver widget de contagem) e em todos os Postos de Piloto. |
 | **Luz Verde / PARTIDA** | `audio.countdown.green` | **Aviso de Voz** / Toque Predefinido | `urgent` | `countdown`: Toca no Ecrã Principal (se houver widget de contagem) e em todos os Postos de Piloto. |
 | **Bandeira Amarela** | `audio.yellowflag` | **Aviso de Voz** (Sirene de Aviso) | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
+| **Segundos Restantes para Início Automático** | `audio.auto_start` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Voltas Restantes** | `audio.laps_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Metade da Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto ao atingir a metade da bateria (por tempo ou quando o líder completa metade das voltas). |
 | **Manga Terminada** | `audio.heat_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
+| **Segundos Restantes para Avanço Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Corrida Terminada** | `audio.race_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
 | **Tempo Mínimo por Volta** | `audio.min_lap_time` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 | **Volta de Drift** | `audio.drift_lap` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |

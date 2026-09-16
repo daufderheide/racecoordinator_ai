@@ -4899,6 +4899,56 @@ describe("DefaultRacedayComponent", () => {
             ],
             url: "/api/assets/download/default_laps_left_set",
           },
+          {
+            model: { entityId: "default_auto_start" },
+            type: "audio_set",
+            audioEntries: [
+              {
+                timeSeconds: 60,
+                name: "1 minute",
+                type: "tts",
+                text: "Heat Starts in 1 minute",
+              },
+              {
+                timeSeconds: 30,
+                name: "30 seconds",
+                type: "tts",
+                text: "Heat Starts in 30 seconds",
+              },
+              {
+                timeSeconds: 10,
+                name: "10 seconds",
+                type: "tts",
+                text: "Heat Starts in 10 seconds",
+              },
+            ],
+            url: "/api/assets/download/default_auto_start",
+          },
+          {
+            model: { entityId: "default_auto_advance" },
+            type: "audio_set",
+            audioEntries: [
+              {
+                timeSeconds: 60,
+                name: "1 minute",
+                type: "tts",
+                text: "Heat advances in 1 minute",
+              },
+              {
+                timeSeconds: 30,
+                name: "30 seconds",
+                type: "tts",
+                text: "Heat advances in 30 seconds",
+              },
+              {
+                timeSeconds: 10,
+                name: "10 seconds",
+                type: "tts",
+                text: "Heat advances in 10 seconds",
+              },
+            ],
+            url: "/api/assets/download/default_auto_advance",
+          },
         ]),
       );
     });
@@ -5353,6 +5403,220 @@ describe("DefaultRacedayComponent", () => {
         jasmine.anything(),
         jasmine.anything(),
         jasmine.anything(),
+      );
+    });
+
+    it("should play auto-start audio set at configured thresholds during NOT_STARTED countdown", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_START) {
+          return { type: "audio_set", url: "default_auto_start" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_start_time: 120,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.NOT_STARTED;
+
+      // Initial tick (establishing previous remaining time)
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 70 });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // Crossing 60s threshold
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 60 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat Starts in 1 minute",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Crossing 30s threshold
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 30 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat Starts in 30 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // Subsequent tick within 30s does not trigger duplicate
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 29 });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+    });
+
+    it("should NOT play auto-start announcement at start if threshold equals total auto_start_time", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_START) {
+          return { type: "audio_set", url: "default_auto_start" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_start_time: 60,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.NOT_STARTED;
+
+      // Start countdown at 60s
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 65 });
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 60 });
+
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat Starts in 1 minute" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // But 30s should play normally
+      raceTimeSubject.next({ time: 0, autoStartRemaining: 30 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat Starts in 30 seconds" }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should play auto-advance audio set at configured thresholds during HEAT_OVER countdown", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE) {
+          return { type: "audio_set", url: "default_auto_advance" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_advance_time: 120,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.HEAT_OVER;
+
+      // Initial tick
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 40 });
+      expect(playCalloutSpy).not.toHaveBeenCalled();
+
+      // Crossing 30s threshold
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 30 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat advances in 30 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Crossing 10s threshold
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 10 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat advances in 10 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // Countdown reaching 0 clears tracking
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 0 });
+      expect(component["playedAutoAdvance"].size).toBe(0);
+    });
+
+    it("should NOT play auto-advance announcement at start if threshold equals total auto_advance_time", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE) {
+          return { type: "audio_set", url: "default_auto_advance" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        auto_advance_time: 30,
+        track: component["track"],
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.HEAT_OVER;
+
+      // Start countdown at 30s
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 35 });
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 30 });
+
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat advances in 30 seconds" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // But 10s should play normally
+      raceTimeSubject.next({ time: 0, autoAdvanceRemaining: 10 });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat advances in 10 seconds" }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
       );
     });
 

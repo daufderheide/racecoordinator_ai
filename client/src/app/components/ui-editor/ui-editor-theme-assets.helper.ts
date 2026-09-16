@@ -115,13 +115,19 @@ export function getThemeAudioConfigForSlot(
   const isSet =
     slot === "audio.countdown" ||
     slot === "audio.seconds_left" ||
-    slot === "audio.laps_left";
+    slot === "audio.laps_left" ||
+    slot === "audio.auto_start" ||
+    slot === "audio.auto_advance";
   const defaultAssetId = isSet
     ? slot === "audio.countdown"
       ? "default_countdown"
       : slot === "audio.seconds_left"
         ? "default_seconds_left"
-        : "default_laps_left"
+        : slot === "audio.laps_left"
+          ? "default_laps_left"
+          : slot === "audio.auto_start"
+            ? "default_auto_start"
+            : "default_auto_advance"
     : undefined;
 
   const fallbackConfig: AudioConfig = {

@@ -60,6 +60,7 @@ module.exports = function (config) {
     "--no-pings",
     "--disable-extensions",
     "--disable-features=Translate,PasswordImport,AutofillServerCommunication,Dial",
+    "--js-flags=--max-old-space-size=4096",
   ];
 
   config.set({
@@ -116,10 +117,10 @@ module.exports = function (config) {
         flags: chromeFlags,
       },
     },
-    captureTimeout: 60000,
+    captureTimeout: 240000,
     browserDisconnectTolerance: 3,
-    browserDisconnectTimeout: 60000,
-    browserNoActivityTimeout: 60000,
+    browserDisconnectTimeout: 240000,
+    browserNoActivityTimeout: 240000,
     singleRun: true,
     restartOnFileChange: true,
   });
