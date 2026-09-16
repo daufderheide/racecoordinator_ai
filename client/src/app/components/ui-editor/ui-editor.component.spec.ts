@@ -4344,5 +4344,28 @@ describe("UIEditorComponent", () => {
         90,
       );
     });
+
+    it("should focus custom UI and theme name inputs", (done) => {
+      const uiInput = document.createElement("input");
+      uiInput.id = "custom-ui-name-input-ui_123";
+      document.body.appendChild(uiInput);
+      spyOn(uiInput, "focus");
+
+      const themeInput = document.createElement("input");
+      themeInput.id = "theme-name-input-theme_456";
+      document.body.appendChild(themeInput);
+      spyOn(themeInput, "focus");
+
+      component.focusUiNameInput("ui_123");
+      component.focusThemeNameInput("theme_456");
+
+      setTimeout(() => {
+        expect(uiInput.focus).toHaveBeenCalled();
+        expect(themeInput.focus).toHaveBeenCalled();
+        document.body.removeChild(uiInput);
+        document.body.removeChild(themeInput);
+        done();
+      }, 200);
+    });
   });
 });

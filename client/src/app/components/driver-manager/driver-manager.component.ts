@@ -366,6 +366,7 @@ export class DriverManagerComponent implements OnInit, OnDestroy {
         this.router.navigate(["/driver-editor"], {
           queryParams: {
             id: createdDriver.entity_id,
+            isNew: "true",
             from: this.route.snapshot.queryParamMap.get("from"),
             returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
           },

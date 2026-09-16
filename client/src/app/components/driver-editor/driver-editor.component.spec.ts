@@ -1341,4 +1341,40 @@ describe("DriverEditorComponent", () => {
       expect(component.avatarAssets.length).toBe(2);
     });
   });
+
+  describe("default name auto-select and focus", () => {
+    it("should set defaultDriverName and defaultDriverNickname and focus name input when isNew is true", fakeAsync(() => {
+      const driver = new Driver("d1", "Driver_1", "Racer_1");
+      setupDriver(driver);
+      mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+        (key: string) => {
+          if (key === "id") return "d1";
+          if (key === "isNew") return "true";
+          return null;
+        },
+      );
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      (component as any).loadDataInternal([driver], []);
+      tick(200);
+
+      expect(component.defaultDriverName).toBe("Driver_1");
+      expect(component.defaultDriverNickname).toBe("Racer_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultDriverName and defaultDriverNickname and focus name input on saveAsNew", fakeAsync(() => {
+      const driver = new Driver("d1", "Driver_1", "Racer_1");
+      setupDriver(driver);
+      spyOn(component, "focusNameInput").and.callThrough();
+      spyOn(component, "updateDriver").and.stub();
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.defaultDriverName).toBe("Driver_2");
+      expect(component.defaultDriverNickname).toBe("Racer_2");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+  });
 });

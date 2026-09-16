@@ -27,6 +27,7 @@ import {
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import {
@@ -74,6 +75,7 @@ import { parseAndValidateImportFile } from "./rotation-import.utils";
     ConfirmationModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
+    AutoSelectDefaultDirective,
   ],
 })
 export class CustomRotationEditorComponent
@@ -107,6 +109,19 @@ export class CustomRotationEditorComponent
 
   readonly saved = output<IAssetMessage>();
   readonly cancelled = output<void>();
+  defaultRotationName: string = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById(
+        "custom-rotation-name-input",
+      ) as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
 
   savingCount = 0;
   private pendingSave = false;
@@ -330,6 +345,14 @@ export class CustomRotationEditorComponent
         }
         this.isLoading = false;
         this.initEditorState();
+        const isNew =
+          this.route.snapshot.queryParamMap?.get("isNew") === "true" ||
+          !idParam ||
+          idParam === "new";
+        if (isNew) {
+          this.defaultRotationName = this.internalAssetName;
+          this.focusNameInput();
+        }
       },
       error: (err) => {
         this.logger.error("Failed to load custom rotation asset", err);
@@ -351,9 +374,11 @@ export class CustomRotationEditorComponent
     }));
   }
 
-  generateUniqueName(): string {
+  generateUniqueName(baseName: string = "New Custom Rotation"): string {
+    const pattern = /(_\d+|\s+\d+)$/;
+    const base = baseName.replace(pattern, "");
     let index = 1;
-    let candidate = `New Custom Rotation ${index}`;
+    let candidate = `${base} ${index}`;
     while (
       this.allAssets.some(
         (a) =>
@@ -363,9 +388,19 @@ export class CustomRotationEditorComponent
       )
     ) {
       index++;
-      candidate = `New Custom Rotation ${index}`;
+      candidate = `${base} ${index}`;
     }
     return candidate;
+  }
+
+  saveAsNew() {
+    const base = this.internalAssetName || "New Custom Rotation";
+    const newName = this.generateUniqueName(base);
+    this.internalAssetId = undefined;
+    this.internalAssetName = newName;
+    this.defaultRotationName = newName;
+    this.save();
+    this.focusNameInput();
   }
 
   isNameUnique(): boolean {

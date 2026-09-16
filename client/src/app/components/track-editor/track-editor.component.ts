@@ -38,6 +38,7 @@ import { BartEditorComponent } from "@app/components/track-editor/bart-editor/ba
 import { PhidgetEditorComponent } from "@app/components/track-editor/phidget-editor/phidget-editor.component";
 import { TrakmateEditorComponent } from "@app/components/track-editor/trakmate-editor/trakmate-editor.component";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { Lane } from "@app/models/lane";
 import {
@@ -72,6 +73,7 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   templateUrl: "./track-editor.component.html",
   styleUrls: ["./track-editor.component.css"],
   imports: [
+    AutoSelectDefaultDirective,
     EditorTitleComponent,
     FormsModule,
     CdkDropList,
@@ -100,6 +102,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private isDestroyed = false;
   private subscriptions: Subscription[] = [];
   trackName: string = "";
+  defaultTrackName: string = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById(
+        "track-name-input",
+      ) as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
   numTrackSections: number = 100;
   trackScale: number = 1.0;
   readonly trackScaleOptions = [
@@ -673,6 +688,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     // Now initialize tracking with a fully populated and normalized snapshot
     this.undoManager.initialize(this.createSnapshot());
+
+    const isNew =
+      this.route.snapshot.queryParamMap.get("isNew") === "true" ||
+      this.route.snapshot.queryParamMap.get("id") === "new";
+    if (isNew && this.editingTrack) {
+      this.defaultTrackName = this.editingTrack.name;
+      this.focusNameInput();
+    }
 
     // Initialize all interfaces on the server
     this.initializeInterfaces();
@@ -1936,6 +1959,8 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   saveAsNew() {
     this.trackName = this.generateUniqueName(this.trackName);
+    this.defaultTrackName = this.trackName;
+    this.focusNameInput();
     this.updateTrack(true);
   }
 

@@ -218,12 +218,16 @@ export async function handleCreateTheme(comp: any): Promise<void> {
     logger: comp.logger,
   });
   if (res.created) {
+    if (comp.defaultThemeNames) {
+      comp.defaultThemeNames[res.created.entity_id] = res.created.name;
+    }
     comp.refreshDisplayProperties();
     comp.toggleThemeSection(res.created.entity_id, false);
     comp.captureState();
     comp.openSuccessModal(
       res.successModalParams,
       res.defaultTheme?.entity_id || null,
+      res.created.entity_id,
     );
   }
 }
@@ -243,9 +247,16 @@ export async function handleDuplicateTheme(
     saveExpanderState: () => comp.saveExpanderState(),
   });
   if (res.created) {
+    if (comp.defaultThemeNames) {
+      comp.defaultThemeNames[res.created.entity_id] = res.created.name;
+    }
     comp.refreshDisplayProperties();
     comp.captureState();
-    comp.openSuccessModal(res.successModalParams, theme.entity_id);
+    comp.openSuccessModal(
+      res.successModalParams,
+      theme.entity_id,
+      res.created.entity_id,
+    );
   }
 }
 

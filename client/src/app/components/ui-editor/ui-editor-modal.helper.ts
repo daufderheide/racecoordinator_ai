@@ -5,8 +5,10 @@ export function openSuccessModal(
   comp: any,
   params?: { title?: string; message?: string; params?: any },
   collapseThemeId: string | null = null,
+  focusThemeId: string | null = null,
 ): void {
   comp.themeToCollapseAfterSuccess = collapseThemeId;
+  comp.themeToFocusAfterSuccess = focusThemeId;
   comp.successModalTitle = params?.title || "";
   comp.successModalMessage = params?.message || "";
   comp.successModalParams = params?.params || {};
@@ -22,6 +24,11 @@ export function acknowledgeSuccessModal(comp: any): void {
   comp.editingState.themes.forEach((t: Theme) => {
     comp.sectionsExpanded[`theme_${t.entity_id}`] = false;
   });
+  const focusThemeId = comp.themeToFocusAfterSuccess;
+  comp.themeToFocusAfterSuccess = null;
+  if (focusThemeId) {
+    comp.focusThemeNameInput?.(focusThemeId);
+  }
   comp.saveExpanderState();
   comp.cdr.markForCheck();
 }
@@ -68,4 +75,11 @@ export function getUnsavedReasonsHelper(comp: any): string[] {
   }
 
   return reasons;
+}
+
+export function focusUiEditorElement(id: string): void {
+  setTimeout(() => {
+    const el = document.getElementById(id);
+    if (el) (el as HTMLInputElement).focus();
+  }, 150);
 }

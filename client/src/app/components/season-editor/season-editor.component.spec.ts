@@ -1296,4 +1296,42 @@ describe("SeasonEditorComponent", () => {
       expect(steps[4].position).toBe("bottom");
     });
   });
+
+  describe("default name auto-select and focus", () => {
+    it("should set defaultSeasonName and focus name input when isNew is true", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "getSeasons").and.returnValue(
+        of([{ entity_id: "s1", name: "Season 1", drops: 0, races: [] }]),
+      );
+      const route = TestBed.inject(ActivatedRoute);
+      (route.snapshot.queryParams as any) = { id: "s1", isNew: "true" };
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.loadData("s1");
+      tick(200);
+
+      expect(component.defaultSeasonName).toBe("Season 1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultSeasonName and focus name input on saveAsNew", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      spyOn(dataService, "createSeason").and.returnValue(
+        of({ entity_id: "s_new", name: "Season 1_1", drops: 0, races: [] }),
+      );
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingSeason = {
+        entity_id: "s1",
+        name: "Season 1",
+        drops: 0,
+        races: [],
+      };
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.defaultSeasonName).toBe("Season 1_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+  });
 });

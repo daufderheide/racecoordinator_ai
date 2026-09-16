@@ -363,3 +363,48 @@ export function getComponentPreviewContainerHeight(
     (comp.getLayout(ui)?.baseHeight || 1080) * comp.getPreviewScaleNumber(ui)
   );
 }
+
+export class LayoutZoomController {
+  layoutZoomMap = new Map<string, number>();
+
+  constructor(private comp: any) {}
+
+  getZoom(ui?: CustomUI): number {
+    return getLayoutZoomHelper(
+      this.layoutZoomMap,
+      ui?.entity_id || this.comp.activeCustomUiId || "default",
+    );
+  }
+
+  setZoom(zoom: number, ui?: CustomUI): void {
+    setLayoutZoomHelper(
+      this.layoutZoomMap,
+      ui?.entity_id || this.comp.activeCustomUiId || "default",
+      zoom,
+    );
+    if (!this.comp.isDestroyed) this.comp.cdr.markForCheck();
+  }
+
+  step(delta: number, ui?: CustomUI): void {
+    this.setZoom(this.getZoom(ui) + delta, ui);
+  }
+
+  reset(ui?: CustomUI): void {
+    this.setZoom(100, ui);
+  }
+
+  onInput(event: Event, ui?: CustomUI): void {
+    this.setZoom(Number((event.target as HTMLInputElement).value), ui);
+  }
+
+  getInspectorHeight(ui?: CustomUI): number {
+    return getInspectorHeightHelper(
+      this.comp.getPreviewContainerHeight(ui),
+      getCanvasViewportMaxHeightHelper(),
+    );
+  }
+
+  getPreviewScale(ui?: CustomUI): string {
+    return `scale(${getComponentPreviewScaleNumber(this.comp, ui)})`;
+  }
+}

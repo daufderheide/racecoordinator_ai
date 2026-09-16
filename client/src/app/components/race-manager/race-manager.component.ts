@@ -410,6 +410,7 @@ export class RaceManagerComponent implements OnInit, OnDestroy {
         this.router.navigate(["/race-editor"], {
           queryParams: {
             id: (createdRace as any).entity_id,
+            isNew: "true",
             driverCount: this.driverCount,
             from: this.route.snapshot.queryParamMap.get("from"),
             returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),

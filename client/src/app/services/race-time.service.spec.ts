@@ -120,6 +120,89 @@ describe("RaceTimeService", () => {
     });
   });
 
+  describe("Timer Formatting Presets and Subsecond Modes", () => {
+    beforeEach(() => {
+      service.raceState = RaceState.RACING;
+    });
+
+    it("should format as mm_ss when configured", () => {
+      service.setTimerFormatOptions({ format: "mm_ss" });
+      service.time = 83;
+      expect(service.formattedTime).toBe("01:23");
+
+      service.time = 45;
+      expect(service.formattedTime).toBe("00:45");
+    });
+
+    it("should format as m_ss when configured", () => {
+      service.setTimerFormatOptions({ format: "m_ss" });
+      service.time = 83;
+      expect(service.formattedTime).toBe("1:23");
+
+      service.time = 45;
+      expect(service.formattedTime).toBe("0:45");
+    });
+
+    it("should format as hh_mm_ss when configured", () => {
+      service.setTimerFormatOptions({ format: "hh_mm_ss" });
+      service.time = 83;
+      expect(service.formattedTime).toBe("00:01:23");
+    });
+
+    it("should format as seconds when configured", () => {
+      service.setTimerFormatOptions({ format: "seconds" });
+      service.time = 83;
+      expect(service.formattedTime).toBe("83");
+    });
+
+    it("should support always showing subseconds", () => {
+      service.setTimerFormatOptions({
+        format: "mm_ss",
+        subsecondMode: "always",
+        subsecondDecimals: 2,
+      });
+      service.time = 75.42;
+      expect(service.formattedTime).toBe("01:15.42");
+    });
+
+    it("should support never showing subseconds", () => {
+      service.setTimerFormatOptions({
+        format: "dynamic",
+        subsecondMode: "never",
+        subsecondThreshold: 10,
+        subsecondDecimals: 2,
+      });
+      service.time = 9.5;
+      expect(service.formattedTime).toBe("9");
+    });
+
+    it("should update timeFormat to decimals during handleRaceTimeUpdate when subsecondMode is always", () => {
+      service.setTimerFormatOptions({
+        subsecondMode: "always",
+        subsecondDecimals: 2,
+      });
+      service.handleRaceTimeUpdate({
+        time: 75.42,
+        autoStartRemaining: 0,
+        autoAdvanceRemaining: 0,
+      });
+      expect(service.timeFormat).toBe("1.2-2");
+    });
+
+    it("should update timeFormat to 1.0-0 during handleRaceTimeUpdate when subsecondMode is never", () => {
+      service.setTimerFormatOptions({
+        subsecondMode: "never",
+        subsecondDecimals: 2,
+      });
+      service.handleRaceTimeUpdate({
+        time: 5,
+        autoStartRemaining: 0,
+        autoAdvanceRemaining: 0,
+      });
+      expect(service.timeFormat).toBe("1.0-0");
+    });
+  });
+
   describe("FinishMethod and State Display", () => {
     it("should display '--' when NOT_STARTED and finishMethod is not Timed", () => {
       selectedRaceSubject.next({

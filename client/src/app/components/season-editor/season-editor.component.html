@@ -30,6 +30,7 @@
               isNameDuplicate || (!editingSeason.name && isDirty)
             "
             [(ngModel)]="editingSeason.name"
+            [appAutoSelectDefault]="defaultSeasonName"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"

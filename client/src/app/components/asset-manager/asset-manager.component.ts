@@ -1010,11 +1010,11 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
-  // Custom Rotation Editor Methods
   openNewCustomRotationEditor() {
     this.router.navigate(["/custom-rotation-editor"], {
       queryParams: {
         id: "new",
+        isNew: "true",
         from: this.route.snapshot.queryParamMap.get("from"),
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },

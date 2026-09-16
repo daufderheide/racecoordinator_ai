@@ -31,6 +31,7 @@ import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-mana
 import { getThemeDisplayNameKey } from "@app/components/ui-editor/ui-editor-crud.helper";
 import { sortThemesForDisplay } from "@app/components/ui-editor/ui-editor-theme.helper";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import {
   FuelCurvePoint,
@@ -62,6 +63,7 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   styleUrls: ["./race-editor.component.css"],
   imports: [
     AcknowledgementModalComponent,
+    AutoSelectDefaultDirective,
     EditorTabsComponent,
     EditorTitleComponent,
     FormsModule,
@@ -88,6 +90,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   tracks: Track[] = [];
   themes: Theme[] = [];
   races: any[] = [];
+  defaultRaceName: string = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById("race-name-input") as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
   driverCount: number = 4;
   generatedHeats: any[] = [];
   customRotationAssets: any[] = [];
@@ -875,6 +888,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         }
         this.syncSequenceTextFromModel();
         this.isLoading = false;
+        const isNew = this.route.snapshot.queryParamMap.get("isNew") === "true";
+        if (isNew) {
+          this.defaultRaceName = this.editingRace.name;
+          this.focusNameInput();
+        }
         // Safe to call here - triggered by async data load, not user input
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
@@ -1040,6 +1058,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   createNewRace() {
     this.isNavigationApproved = false;
+    this.defaultRaceName = "";
+    this.focusNameInput();
     this.editingRace = {
       entity_id: "new",
       name: "",
@@ -1491,6 +1511,8 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         // Update the current race to the newly created one
         this.editingRace = created;
         this.originalRace = deepCopy(created);
+        this.defaultRaceName = created.name;
+        this.focusNameInput();
         // Reset tracking point but keep history
         this.undoManager.resetTracking(this.editingRace);
         // Reload heats for the new race

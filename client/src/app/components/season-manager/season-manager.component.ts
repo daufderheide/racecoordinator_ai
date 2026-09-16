@@ -250,7 +250,9 @@ export class SeasonManagerComponent implements OnInit, OnDestroy {
   }
 
   onNew(): void {
-    this.router.navigate(["/season-editor"]);
+    this.router.navigate(["/season-editor"], {
+      queryParams: { isNew: "true" },
+    });
   }
 
   onEdit(): void {

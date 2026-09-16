@@ -15,6 +15,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import {
   Season,
@@ -43,6 +44,7 @@ import {
   templateUrl: "./season-editor.component.html",
   styleUrls: ["./season-editor.component.css"],
   imports: [
+    AutoSelectDefaultDirective,
     EditorTitleComponent,
     TranslatePipe,
     LocalDatePipe,
@@ -76,6 +78,17 @@ export class SeasonEditorComponent
   isLoading = true;
   isSaving = false;
   scale = 1;
+  defaultSeasonName = "";
+
+  focusNameInput() {
+    setTimeout(() => {
+      const el = document.getElementById("season-name") as HTMLInputElement;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 0);
+  }
 
   undoManager: UndoManager<Season>;
   private subscriptions: Subscription[] = [];
@@ -208,6 +221,70 @@ export class SeasonEditorComponent
     }
   }
 
+  private extractDemoHistorySet(history: any[]): Set<string> {
+    const demoHistorySet = new Set<string>();
+    if (!Array.isArray(history)) return demoHistorySet;
+
+    for (const item of history) {
+      const isDemo = Boolean(
+        item.is_demo ||
+        item.isDemo ||
+        item.demo ||
+        item.isDemoMode ||
+        (item.model && (item.model.demoMode || item.model.isDemoMode)),
+      );
+      if (isDemo) {
+        const raceId =
+          item.original_entity_id || item.model?.entity_id || item._id;
+        const timestamp =
+          item.statistics?.startMillis ||
+          item.timestamp ||
+          (item.id?.timestamp ? item.id.timestamp * 1000 : 0);
+        if (raceId) demoHistorySet.add(String(raceId));
+        if (timestamp) demoHistorySet.add(String(timestamp));
+        if (raceId && timestamp) demoHistorySet.add(`${raceId}_${timestamp}`);
+      }
+    }
+    return demoHistorySet;
+  }
+
+  private tagSeasonRaces(s: Season, demoHistorySet: Set<string>): void {
+    if (!s || !s.races) return;
+    for (const r of s.races) {
+      const raceId = r.race_id;
+      const timestamp = r.timestamp;
+      const isDemo = Boolean(
+        r.is_demo ||
+        demoHistorySet.has(String(raceId)) ||
+        demoHistorySet.has(String(timestamp)) ||
+        demoHistorySet.has(`${raceId}_${timestamp}`) ||
+        String(raceId).startsWith("demo_"),
+      );
+      r.is_demo = isDemo;
+    }
+  }
+
+  private initEditingSeason(
+    seasonId: string | null | undefined,
+    seasons: Season[],
+  ): void {
+    if (seasonId && seasonId !== "new") {
+      const target = seasons.find((s) => s.entity_id === seasonId);
+      if (target) {
+        this.editingSeason = this.cloneSeason(target);
+        if (target.entity_id) {
+          this.navigationService.setLastEditedId("season", target.entity_id);
+        }
+        return;
+      }
+    }
+    this.editingSeason = {
+      name: this.generateUniqueName("New Season"),
+      drops: 0,
+      races: [],
+    };
+  }
+
   loadData(seasonId?: string | null): void {
     this.isLoading = true;
     this.isNavigationApproved = false;
@@ -220,79 +297,28 @@ export class SeasonEditorComponent
     ]).subscribe({
       next: ([seasons, history]) => {
         this.existingSeasons = seasons || [];
-        const demoHistorySet = new Set<string>();
+        const demoHistorySet = this.extractDemoHistorySet(history);
+        this.initEditingSeason(seasonId, this.existingSeasons);
 
-        if (Array.isArray(history)) {
-          for (const item of history) {
-            const isDemo = Boolean(
-              item.is_demo ||
-              item.isDemo ||
-              item.demo ||
-              item.isDemoMode ||
-              (item.model && (item.model.demoMode || item.model.isDemoMode)),
-            );
-            if (isDemo) {
-              const raceId =
-                item.original_entity_id || item.model?.entity_id || item._id;
-              const timestamp =
-                item.statistics?.startMillis ||
-                item.timestamp ||
-                (item.id?.timestamp ? item.id.timestamp * 1000 : 0);
-              if (raceId) demoHistorySet.add(String(raceId));
-              if (timestamp) demoHistorySet.add(String(timestamp));
-              if (raceId && timestamp)
-                demoHistorySet.add(`${raceId}_${timestamp}`);
-            }
-          }
-        }
-
-        if (seasonId && seasonId !== "new") {
-          const target = seasons.find((s) => s.entity_id === seasonId);
-          if (target) {
-            this.editingSeason = this.cloneSeason(target);
-            if (target.entity_id) {
-              this.navigationService.setLastEditedId(
-                "season",
-                target.entity_id,
-              );
-            }
-          } else {
-            this.editingSeason = {
-              name: this.generateUniqueName("New Season"),
-              drops: 0,
-              races: [],
-            };
-          }
-        } else {
-          this.editingSeason = {
-            name: this.generateUniqueName("New Season"),
-            drops: 0,
-            races: [],
-          };
-        }
-
-        const tagSeasonRaces = (s: Season) => {
-          if (!s || !s.races) return;
-          for (const r of s.races) {
-            const raceId = r.race_id;
-            const timestamp = r.timestamp;
-            const isDemo = Boolean(
-              r.is_demo ||
-              demoHistorySet.has(String(raceId)) ||
-              demoHistorySet.has(String(timestamp)) ||
-              demoHistorySet.has(`${raceId}_${timestamp}`) ||
-              String(raceId).startsWith("demo_"),
-            );
-            r.is_demo = isDemo;
-          }
-        };
-
-        tagSeasonRaces(this.editingSeason);
-        this.existingSeasons.forEach((s) => tagSeasonRaces(s));
+        this.tagSeasonRaces(this.editingSeason, demoHistorySet);
+        this.existingSeasons.forEach((s) =>
+          this.tagSeasonRaces(s, demoHistorySet),
+        );
 
         this.calculateStandings();
         this.undoManager.initialize(this.cloneSeason(this.editingSeason));
         this.isLoading = false;
+
+        const isNew =
+          this.route.snapshot.queryParamMap?.get?.("isNew") === "true" ||
+          this.route.snapshot.queryParams?.["isNew"] === "true" ||
+          !seasonId ||
+          seasonId === "new";
+        if (isNew && this.editingSeason) {
+          this.defaultSeasonName = this.editingSeason.name;
+          this.focusNameInput();
+        }
+
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -973,6 +999,8 @@ export class SeasonEditorComponent
         }
         this.calculateStandings();
         this.undoManager.resetTracking(this.editingSeason);
+        this.defaultSeasonName = saved.name;
+        this.focusNameInput();
         if (saved?.entity_id) {
           this.navigationService.setLastEditedId("season", saved.entity_id);
         }

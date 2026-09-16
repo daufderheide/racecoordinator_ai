@@ -274,6 +274,18 @@ describe("DriverManagerComponent", () => {
       });
     });
 
+    it("should navigate to driver editor with isNew: true on createNewDriver", () => {
+      component.createNewDriver();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+        queryParams: {
+          id: jasmine.any(String),
+          isNew: "true",
+          from: null,
+          returnUrl: null,
+        },
+      });
+    });
+
     it("should compute correct backTargetUrl when from is 'modify-heats'", () => {
       mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
         (key: string) => {

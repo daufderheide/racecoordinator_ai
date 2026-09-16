@@ -70,6 +70,10 @@ import {
   RacePredictionService,
 } from "@app/services/race-prediction.service";
 import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
+import {
+  formatTimerDisplay,
+  TimerFormatOptions,
+} from "@app/utils/timer-format.utils";
 
 export interface LapDisplayInfo {
   lapTime: string;
@@ -512,8 +516,24 @@ export class DefaultRacedayComponent
     );
   }
 
+  protected getTimerFormatOptions(): TimerFormatOptions {
+    const timerWidget = this.layout?.widgets?.find(
+      (w) => w.widgetType === "timer",
+    );
+    return {
+      format: timerWidget?.customSettings?.["timeDisplayFormat"] ?? "dynamic",
+      subsecondMode:
+        timerWidget?.customSettings?.["timeSubsecondMode"] ?? "threshold",
+      subsecondThreshold:
+        timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10,
+      subsecondDecimals:
+        timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2,
+    };
+  }
+
   protected get formattedTime(): string {
     const s = this.raceState;
+    const timerOpts = this.getTimerFormatOptions();
 
     const showDurationOnly =
       this.race?.heat_scoring?.finishMethod === FinishMethod.Timed &&
@@ -526,20 +546,10 @@ export class DefaultRacedayComponent
 
     if (showDurationOnly) {
       const duration = this.race?.heat_scoring?.finishValue || 0;
-
-      const hoursD = Math.floor(duration / 3600);
-      const minutesD = Math.floor((duration % 3600) / 60);
-      const secondsD = Math.floor(duration % 60);
-
-      if (hoursD > 0) {
-        return `${hoursD}:${minutesD.toString().padStart(2, "0")}:${secondsD
-          .toString()
-          .padStart(2, "0")}`;
-      }
-      if (minutesD > 0) {
-        return `${minutesD}:${secondsD.toString().padStart(2, "0")}`;
-      }
-      return `${secondsD}`;
+      return formatTimerDisplay(duration, {
+        ...timerOpts,
+        subsecondMode: "never",
+      });
     }
 
     if (
@@ -558,19 +568,11 @@ export class DefaultRacedayComponent
         this.raceHasEnded) &&
       time <= 0
     ) {
-      return "0";
-    }
-    const hours = Math.floor(time / 3600);
-    const minutes = Math.floor((time % 3600) / 60);
-    const seconds = Math.floor(time % 60);
-
-    let base = "";
-    if (hours > 0) {
-      base = `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    } else if (minutes > 0) {
-      base = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    } else {
-      base = `${seconds}`;
+      return formatTimerDisplay(0, {
+        ...timerOpts,
+        subsecondMode:
+          timerOpts.subsecondMode === "always" ? "always" : "never",
+      });
     }
 
     // High precision countdown logic (only when we have a decimal format > 0)
@@ -578,12 +580,23 @@ export class DefaultRacedayComponent
     const fractionDigits =
       parts.length > 1 ? Number(parts[1].split("-")[1]) : 0;
 
-    if (hours === 0 && minutes === 0 && fractionDigits > 0) {
-      const formatted = time.toFixed(fractionDigits);
-      return formatted;
+    const effOptions: TimerFormatOptions = { ...timerOpts };
+    if (fractionDigits > 0 && effOptions.subsecondMode !== "never") {
+      effOptions.subsecondDecimals = fractionDigits;
+      if (
+        effOptions.subsecondMode === "threshold" &&
+        time > (effOptions.subsecondThreshold ?? 10)
+      ) {
+        effOptions.subsecondMode = "always";
+      }
+    } else if (
+      fractionDigits === 0 &&
+      effOptions.subsecondMode === "threshold"
+    ) {
+      effOptions.subsecondDecimals = 0;
     }
 
-    return base;
+    return formatTimerDisplay(time, effOptions);
   }
 
   protected get gridTemplateColumns(): string {
@@ -1700,21 +1713,22 @@ export class DefaultRacedayComponent
           this.updateCountdownLamps(this.autoStartRemaining);
         }
 
-        if (time > this.previousTime) {
+        const timerOpts = this.getTimerFormatOptions();
+        this.raceTimeService?.setTimerFormatOptions(timerOpts);
+
+        if (timerOpts.subsecondMode === "always") {
+          const decimals = timerOpts.subsecondDecimals ?? 2;
+          this.timeFormat = `1.${decimals}-${decimals}`;
+        } else if (timerOpts.subsecondMode === "never") {
+          this.timeFormat = "1.0-0";
+        } else if (time > this.previousTime) {
           this.timeFormat = "1.0-0";
         } else if (time < this.previousTime) {
           if (this.raceState === RaceState.STARTING) {
             this.timeFormat = "1.0-0";
           } else {
-            const timerWidget = this.layout?.widgets?.find(
-              (w) => w.widgetType === "timer",
-            );
-            const threshold =
-              timerWidget?.customSettings?.["timeSubsecondThreshold"] ?? 10;
-            const decimals =
-              timerWidget?.customSettings?.["timeSubsecondDecimals"] ?? 2;
-            this.raceTimeService?.setSubsecondSettings(threshold, decimals);
-
+            const threshold = timerOpts.subsecondThreshold ?? 10;
+            const decimals = timerOpts.subsecondDecimals ?? 2;
             if (time < threshold && decimals > 0) {
               this.timeFormat = `1.${decimals}-${decimals}`;
             } else {

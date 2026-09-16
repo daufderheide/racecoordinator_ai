@@ -331,6 +331,8 @@ export class Settings {
           timeFontFamily: "",
           timeFontSize: 100,
           timeTextColor: "",
+          timeDisplayFormat: "dynamic",
+          timeSubsecondMode: "threshold",
           timeSubsecondThreshold: 10,
           timeSubsecondDecimals: 2,
         },

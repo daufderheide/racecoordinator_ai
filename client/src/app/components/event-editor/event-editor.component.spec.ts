@@ -398,4 +398,39 @@ describe("EventEditorComponent", () => {
       expect(steps[5].position).toBe("left");
     });
   });
+
+  describe("default name auto-select and focus", () => {
+    it("should set defaultEventName and focus name input when isNew is true", fakeAsync(() => {
+      const route = TestBed.inject(ActivatedRoute);
+      spyOn(route.snapshot.queryParamMap, "get").and.callFake((key: string) => {
+        if (key === "id") return "evt_1";
+        if (key === "isNew") return "true";
+        return null;
+      });
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.loadData();
+      tick(200);
+
+      expect(component.defaultEventName).toBe("Existing Event");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultEventName and focus name input on saveAsNew", fakeAsync(() => {
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingEvent = {
+        entity_id: "evt_1",
+        name: "Existing Event",
+        description: "",
+        auto_advance_time: 0,
+        races: [{ raceId: "r1", maxDrivers: 0 }],
+      };
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.defaultEventName).toBe("Existing Event_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+  });
 });

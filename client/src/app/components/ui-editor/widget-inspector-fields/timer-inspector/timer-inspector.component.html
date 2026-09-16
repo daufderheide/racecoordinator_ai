@@ -76,52 +76,142 @@
     </div>
   </div>
 
-  <!-- Subsecond Settings -->
+  <!-- Format Preset Dropdown -->
   <div class="inspector-section">
     <label class="inspector-label">{{
-      "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+      "UE_INSPECTOR_TIMER_DISPLAY_FORMAT" | translate
     }}</label>
-    <div style="display: flex; gap: 8px; align-items: center">
-      <input
-        type="number"
-        min="0"
-        step="1"
-        [ngModel]="settings().timeSubsecondThreshold ?? 10"
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="settings().timeDisplayFormat || 'dynamic'"
         (ngModelChange)="
-          settings().timeSubsecondThreshold = $event; onSettingsChange()
+          settings().timeDisplayFormat = $event; onSettingsChange()
         "
-        style="
-          flex: 1;
-          padding: 4px;
-          background: var(--bg-level-3);
-          border: 1px solid var(--border-color);
-          color: var(--text-color);
-          border-radius: 4px;
-        "
-      />
-      <span class="inspector-label" style="margin-bottom: 0">sec</span>
+      >
+        <app-custom-option value="dynamic">
+          {{ "UE_INSPECTOR_TIMER_FORMAT_DYNAMIC" | translate }}
+        </app-custom-option>
+        <app-custom-option value="mm_ss">
+          {{ "UE_INSPECTOR_TIMER_FORMAT_MM_SS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="m_ss">
+          {{ "UE_INSPECTOR_TIMER_FORMAT_M_SS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="hh_mm_ss">
+          {{ "UE_INSPECTOR_TIMER_FORMAT_HH_MM_SS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="seconds">
+          {{ "UE_INSPECTOR_TIMER_FORMAT_SECONDS" | translate }}
+        </app-custom-option>
+      </app-custom-select>
     </div>
   </div>
 
+  <!-- Subsecond Settings -->
   <div class="inspector-section">
-    <div class="inspector-label-row">
-      <label class="inspector-label">{{
-        "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
-      }}</label>
-      <span class="inspector-val-badge">{{
-        settings().timeSubsecondDecimals ?? 2
-      }}</span>
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TIMER_SUBSECOND_MODE" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="settings().timeSubsecondMode || 'threshold'"
+        (ngModelChange)="
+          settings().timeSubsecondMode = $event; onSettingsChange()
+        "
+      >
+        <app-custom-option value="threshold">
+          {{ "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD_MODE" | translate }}
+        </app-custom-option>
+        <app-custom-option value="always">
+          {{ "UE_INSPECTOR_TIMER_SUBSECOND_ALWAYS" | translate }}
+        </app-custom-option>
+        <app-custom-option value="never">
+          {{ "UE_INSPECTOR_TIMER_SUBSECOND_NEVER" | translate }}
+        </app-custom-option>
+      </app-custom-select>
     </div>
-    <input
-      type="range"
-      min="0"
-      max="3"
-      step="1"
-      [ngModel]="settings().timeSubsecondDecimals ?? 2"
-      (ngModelChange)="
-        settings().timeSubsecondDecimals = $event; onSettingsChange()
-      "
-      class="inspector-slider"
-    />
+  </div>
+
+  @if ((settings().timeSubsecondMode || "threshold") === "threshold") {
+    <div class="inspector-section">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_TIMER_SUBSECOND_THRESHOLD" | translate
+      }}</label>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <input
+          type="number"
+          min="0"
+          step="1"
+          autocomplete="off"
+          data-dashlane-ignore="true"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          [ngModel]="settings().timeSubsecondThreshold ?? 10"
+          (ngModelChange)="
+            settings().timeSubsecondThreshold = $event; onSettingsChange()
+          "
+          style="
+            flex: 1;
+            padding: 4px;
+            background: var(--bg-level-3);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+          "
+        />
+        <span class="inspector-label" style="margin-bottom: 0">sec</span>
+      </div>
+    </div>
+  }
+
+  @if ((settings().timeSubsecondMode || "threshold") !== "never") {
+    <div class="inspector-section">
+      <div class="inspector-label-row">
+        <label class="inspector-label">{{
+          "UE_INSPECTOR_TIMER_SUBSECOND_DECIMALS" | translate
+        }}</label>
+        <span class="inspector-val-badge">{{
+          settings().timeSubsecondDecimals ?? 2
+        }}</span>
+      </div>
+      <input
+        type="range"
+        min="0"
+        max="3"
+        step="1"
+        [ngModel]="settings().timeSubsecondDecimals ?? 2"
+        (ngModelChange)="
+          settings().timeSubsecondDecimals = $event; onSettingsChange()
+        "
+        class="inspector-slider"
+      />
+    </div>
+  }
+
+  <!-- Live Preview Section -->
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TIMER_PREVIEW" | translate
+    }}</label>
+    <div class="timer-preview-grid">
+      <div class="timer-preview-item">
+        <span class="timer-preview-label">> 1 hr</span>
+        <span class="timer-preview-val">{{ getPreview(3665) }}</span>
+      </div>
+      <div class="timer-preview-item">
+        <span class="timer-preview-label">> 1 min</span>
+        <span class="timer-preview-val">{{ getPreview(75) }}</span>
+      </div>
+      <div class="timer-preview-item">
+        <span class="timer-preview-label">< 1 min</span>
+        <span class="timer-preview-val">{{ getPreview(45) }}</span>
+      </div>
+      <div class="timer-preview-item">
+        <span class="timer-preview-label">< 10s</span>
+        <span class="timer-preview-val">{{ getPreview(8.45) }}</span>
+      </div>
+    </div>
   </div>
 }

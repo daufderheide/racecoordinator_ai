@@ -235,7 +235,12 @@ describe("TeamManagerComponent", () => {
         }),
       );
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"], {
-        queryParams: { id: "t-new", from: null, returnUrl: null },
+        queryParams: {
+          id: "t-new",
+          isNew: "true",
+          from: null,
+          returnUrl: null,
+        },
       });
     });
 

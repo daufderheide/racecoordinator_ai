@@ -5,6 +5,7 @@ import {
   acknowledgeSuccessModal,
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
+  focusUiEditorElement,
   getUnsavedReasonsHelper,
   openDeleteCustomUiModal,
   openDeleteThemeModal,
@@ -56,26 +57,46 @@ describe("ui-editor-modal.helper", () => {
     };
   });
 
-  it("should open success modal with parameters", () => {
+  it("should open success modal with parameters and focus theme ID", () => {
     openSuccessModal(
       ctx,
       { title: "Success", message: "Saved successfully", params: { x: 1 } },
       "t1",
+      "t2",
     );
     expect(ctx.showSuccessModal).toBeTrue();
     expect(ctx.successModalTitle).toBe("Success");
     expect(ctx.successModalMessage).toBe("Saved successfully");
     expect(ctx.successModalParams).toEqual({ x: 1 });
     expect(ctx.themeToCollapseAfterSuccess).toBe("t1");
+    expect(ctx.themeToFocusAfterSuccess).toBe("t2");
   });
 
-  it("should acknowledge success modal and collapse theme", () => {
+  it("should acknowledge success modal, collapse themes and focus target theme", () => {
     ctx.showSuccessModal = true;
+    ctx.themeToFocusAfterSuccess = "t2";
+    ctx.focusThemeNameInput = jasmine.createSpy("focusThemeNameInput");
     acknowledgeSuccessModal(ctx);
     expect(ctx.showSuccessModal).toBeFalse();
     expect(ctx.sectionsExpanded["theme_t1"]).toBeFalse();
+    expect(ctx.focusThemeNameInput).toHaveBeenCalledWith("t2");
     expect(ctx.saveExpanderState).toHaveBeenCalled();
     expect(ctx.cdr.markForCheck).toHaveBeenCalled();
+  });
+
+  it("should focus element by id using focusUiEditorElement", (done) => {
+    const input = document.createElement("input");
+    input.id = "test-focus-element-id";
+    document.body.appendChild(input);
+    spyOn(input, "focus");
+
+    focusUiEditorElement("test-focus-element-id");
+
+    setTimeout(() => {
+      expect(input.focus).toHaveBeenCalled();
+      document.body.removeChild(input);
+      done();
+    }, 200);
   });
 
   it("should open and cancel delete theme modal", () => {
