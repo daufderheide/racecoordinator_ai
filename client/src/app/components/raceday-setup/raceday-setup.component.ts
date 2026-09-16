@@ -14,7 +14,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { DomSanitizer } from "@angular/platform-browser";
 import { ActivatedRoute, Router } from "@angular/router";
-import { interval, of, Subscription } from "rxjs";
+import { interval, of, Subscription, timer } from "rxjs";
 import { filter, take } from "rxjs/operators";
 import { AboutDialogComponent } from "@app/components/shared/about-dialog/about-dialog.component";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
@@ -136,6 +136,13 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   public updateProgress: UpdateProgress | null = null;
   public showUpToDateModal = false;
   private progressSubscription: Subscription | null = null;
+  public restartPollSubscription: Subscription | null = null;
+
+  public reloadApp: () => void = () => {
+    if (typeof window !== "undefined" && window.location) {
+      window.location.reload();
+    }
+  };
 
   public get updateVersionHtml(): string {
     if (!this.updateResult) return "";
@@ -401,6 +408,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     if (this.progressSubscription) {
       this.progressSubscription.unsubscribe();
     }
+    if (this.restartPollSubscription) {
+      this.restartPollSubscription.unsubscribe();
+    }
   }
 
   private activeChildComponentRef: any = null;
@@ -492,7 +502,16 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
               ) {
                 if (this.progressSubscription) {
                   this.progressSubscription.unsubscribe();
+                  this.progressSubscription = null;
                 }
+                this.updateProgress = {
+                  progress: 100,
+                  status: "RDS_UPDATE_STATUS_RESTARTING",
+                };
+                this.syncChildComponentState();
+                this.cdr.detectChanges();
+                this.waitForServerRestartAndReload();
+                return;
               } else if (prog.status === "RDS_UPDATE_STATUS_CANCELLED") {
                 if (this.progressSubscription) {
                   this.progressSubscription.unsubscribe();
@@ -540,6 +559,38 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.logger.error("Failed to cancel update", err);
       },
+    });
+  }
+
+  public waitForServerRestartAndReload(
+    pollIntervalMs = 1000,
+    initialDelayMs = 2000,
+  ): void {
+    if (this.restartPollSubscription) {
+      this.restartPollSubscription.unsubscribe();
+    }
+
+    this.restartPollSubscription = timer(
+      initialDelayMs,
+      pollIntervalMs,
+    ).subscribe(() => {
+      this.dataService.getServerVersion().subscribe({
+        next: (version) => {
+          if (version) {
+            this.logger.info(
+              "Updated server is online. Reloading application...",
+            );
+            if (this.restartPollSubscription) {
+              this.restartPollSubscription.unsubscribe();
+              this.restartPollSubscription = null;
+            }
+            this.reloadApp();
+          }
+        },
+        error: () => {
+          this.logger.debug("Waiting for server to restart after update...");
+        },
+      });
     });
   }
 

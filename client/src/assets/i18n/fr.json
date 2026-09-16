@@ -983,6 +983,7 @@
   "RDS_UPDATE_STATUS_CONNECTING": "Connexion...",
   "RDS_UPDATE_STATUS_DOWNLOADING": "Téléchargement...",
   "RDS_UPDATE_STATUS_LAUNCHING": "Lancement de l'installateur...",
+  "RDS_UPDATE_STATUS_RESTARTING": "Redémarrage de l'application...",
   "RDS_UPDATE_UP_TO_DATE_MESSAGE": "Vous utilisez la dernière version en fonction de votre configuration de mise à jour.",
   "RDS_UPDATE_UP_TO_DATE_TITLE": "Vérifier les mises à jour",
   "RD_ADD_HEAT": "Ajouter une série",

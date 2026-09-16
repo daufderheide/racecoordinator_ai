@@ -3260,6 +3260,111 @@ describe("DefaultRacedayComponent", () => {
     }));
   });
 
+  describe("Heat and Driver Sorting Resiliency", () => {
+    it("should re-sort heat drivers when updateRacedayLayout is invoked with an active heat", () => {
+      fixture.detectChanges();
+      mockSettings.sortByStandings = true;
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: ["hd2", "hd1"],
+      };
+      (component as any).heat = mockHeat;
+      (component as any).driverRankings.set("hd1", 2);
+      (component as any).driverRankings.set("hd2", 1);
+      // Disrupt lane order to verify updateRacedayLayout restores lane order and calculates visual positions
+      component["sortedHeatDrivers"] = [
+        mockHeat.heatDrivers[1],
+        mockHeat.heatDrivers[0],
+      ] as any;
+
+      (component as any).updateRacedayLayout();
+
+      expect(component["sortedHeatDrivers"][0].objectId).toBe("hd1");
+      expect(component["sortedHeatDrivers"][1].objectId).toBe("hd2");
+      expect(
+        (component as any).getDriverVisualPosition(mockHeat.heatDrivers[1]),
+      ).toBe(0);
+      expect(
+        (component as any).getDriverVisualPosition(mockHeat.heatDrivers[0]),
+      ).toBe(1);
+    });
+
+    it("should sort heat drivers when currentHeat$ emits a new heat", () => {
+      const currentHeatSubject = new Subject<any>();
+      mockRaceService.currentHeat$ = currentHeatSubject.asObservable();
+      fixture.detectChanges();
+
+      mockSettings.sortByStandings = false;
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+
+      currentHeatSubject.next(mockHeat);
+
+      expect((component as any).heat).toBe(mockHeat);
+      expect(component["sortedHeatDrivers"].length).toBe(2);
+      expect(component["sortedHeatDrivers"][0].objectId).toBe("hd1");
+      expect(component["sortedHeatDrivers"][1].objectId).toBe("hd2");
+    });
+
+    it("should initialize heat and sort drivers when heats$ emits if sortedHeatDrivers is empty", () => {
+      const heatsSubject = new Subject<any[]>();
+      mockRaceService.heats$ = heatsSubject.asObservable();
+      fixture.detectChanges();
+
+      component["sortedHeatDrivers"] = [];
+      (component as any).heat = null;
+
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      mockRaceService.getHeats.and.returnValue([mockHeat]);
+
+      heatsSubject.next([mockHeat]);
+
+      expect(component["sortedHeatDrivers"].length).toBe(2);
+      expect((component as any).heat).toBe(mockHeat);
+    });
+
+    it("should populate rankings and sort drivers in initializeHeat even when getHeats returns empty array", () => {
+      fixture.detectChanges();
+      mockRaceService.getHeats.and.returnValue([]);
+      const mockHeat = {
+        heatDrivers: [
+          { objectId: "hd1", laneIndex: 0, participant: {} },
+          { objectId: "hd2", laneIndex: 1, participant: {} },
+        ],
+        heatNumber: 1,
+        standings: [],
+      };
+      mockRaceService.getCurrentHeat.and.returnValue(mockHeat);
+      (component as any).heat = null;
+      component["sortedHeatDrivers"] = [];
+
+      (component as any).initializeHeat();
+
+      expect((component as any).heat).toBe(mockHeat);
+      expect((component as any).driverRankings.size).toBe(2);
+      expect(component["sortedHeatDrivers"].length).toBe(2);
+    });
+  });
+
   describe("onFileMenuSelect and onOptionsSelect", () => {
     it("should trigger CSV export when EXPORT_CSV is selected", fakeAsync(() => {
       const printService = TestBed.inject(

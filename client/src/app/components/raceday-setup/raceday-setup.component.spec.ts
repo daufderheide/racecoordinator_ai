@@ -146,8 +146,12 @@ describe("RacedaySetupComponent", () => {
       "skipUpdate",
       "cancelUpdate",
       "snoozeUpdate",
+      "getUpdateProgress",
     ]);
     mockUpdateService.snoozeUpdate.and.returnValue(of("OK"));
+    mockUpdateService.getUpdateProgress.and.returnValue(
+      of({ progress: 0, status: "" }),
+    );
     mockUpdateService.checkForUpdates.and.returnValue(
       of({
         updateAvailable: false,
@@ -771,6 +775,61 @@ describe("RacedaySetupComponent", () => {
       );
       expect(component.isUpdating).toBeTrue();
     });
+
+    it("should transition to RDS_UPDATE_STATUS_RESTARTING and trigger reload when update completes", fakeAsync(() => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      const reloadSpy = jasmine.createSpy("reloadApp");
+      component.reloadApp = reloadSpy;
+
+      mockUpdateService.installUpdate.and.returnValue(of(true));
+      mockUpdateService.getUpdateProgress.and.returnValue(
+        of({ progress: 100, status: "RDS_UPDATE_STATUS_LAUNCHING" }),
+      );
+      mockDataService.getServerVersion.and.returnValue(of("v1.2.3"));
+
+      component.installUpdate();
+      tick(100);
+
+      expect(component.updateProgress?.status).toBe(
+        "RDS_UPDATE_STATUS_RESTARTING",
+      );
+      expect(component.updateProgress?.progress).toBe(100);
+
+      tick(3000);
+
+      expect(mockDataService.getServerVersion).toHaveBeenCalled();
+      expect(reloadSpy).toHaveBeenCalled();
+    }));
+
+    it("should retry polling if server returns error during restart", fakeAsync(() => {
+      const reloadSpy = jasmine.createSpy("reloadApp");
+      component.reloadApp = reloadSpy;
+
+      let callCount = 0;
+      mockDataService.getServerVersion.and.callFake(() => {
+        callCount++;
+        if (callCount === 1) {
+          return throwError(() => new Error("Server offline"));
+        }
+        return of("v1.2.3");
+      });
+
+      component.waitForServerRestartAndReload(1000, 1000);
+
+      tick(1000);
+      expect(reloadSpy).not.toHaveBeenCalled();
+
+      tick(1000);
+      expect(reloadSpy).toHaveBeenCalled();
+    }));
 
     it("should call updateService.skipUpdate and clear result when skipVersion is called", () => {
       component.updateResult = {
