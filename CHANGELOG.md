@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.72] - 2026-09-16
+
+### 🚀 New Features
+
+- add auto-select default directive, team-manager component, and driver-editor helper https://github.com/daufderheide/racecoordinator_ai/issues/824 ([5e46c342](https://github.com/daufderheide/racecoordinator_ai/commit/5e46c342))
+- add timer widget inspector and custom formatting options https://github.com/daufderheide/racecoordinator_ai/issues/825 ([aee70520](https://github.com/daufderheide/racecoordinator_ai/commit/aee70520))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.71...v1.0.0-beta.72">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.71] - 2026-09-14
 
 ### 🚀 New Features
