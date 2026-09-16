@@ -6,6 +6,7 @@ import {
 } from "./fuel_options";
 
 export class AnalogFuelOptions extends FuelOptions {
+  /** @deprecated Use fastest_time and slowest_time instead. */
   reference_time: number;
   power_stutter_on_time?: number;
   power_stutter_off_time?: number;
@@ -20,10 +21,12 @@ export class AnalogFuelOptions extends FuelOptions {
     out_of_fuel_action: OutOfFuelAction = OutOfFuelAction.END_HEAT,
     capacity: number = 100,
     usage_type: FuelUsageType = FuelUsageType.LINEAR,
+    /** @deprecated Use max_usage and min_usage instead. */
     usage_rate: number = 4.0,
     start_level: number = 100,
     refuel_rate: number = 10,
     pit_stop_delay: number = 2.0,
+    /** @deprecated Use fastest_time and slowest_time instead. */
     reference_time: number = 6.0,
     power_stutter_on_time: number = 1.0,
     power_stutter_off_time: number = 1.0,

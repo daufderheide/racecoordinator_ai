@@ -47,6 +47,10 @@ public class AnalogFuelOptions extends FuelOptions {
     this.minUsage = 3.0;
   }
 
+  /**
+   * @deprecated Use constructor with fastestTime, maxUsage, slowestTime, minUsage instead.
+   */
+  @Deprecated
   public AnalogFuelOptions(
       boolean enabled,
       boolean resetFuelAtHeatStart,
@@ -80,6 +84,10 @@ public class AnalogFuelOptions extends FuelOptions {
         null);
   }
 
+  /**
+   * @deprecated Use constructor with fastestTime, maxUsage, slowestTime, minUsage instead.
+   */
+  @Deprecated
   public AnalogFuelOptions(
       boolean enabled,
       boolean resetFuelAtHeatStart,
@@ -115,6 +123,10 @@ public class AnalogFuelOptions extends FuelOptions {
         null);
   }
 
+  /**
+   * @deprecated Use constructor with fastestTime, maxUsage, slowestTime, minUsage instead.
+   */
+  @Deprecated
   public AnalogFuelOptions(
       boolean enabled,
       boolean resetFuelAtHeatStart,
@@ -280,8 +292,21 @@ public class AnalogFuelOptions extends FuelOptions {
     }
   }
 
+  /**
+   * @deprecated Use {@link #getFastestTime()} and {@link #getSlowestTime()} instead.
+   */
+  @Deprecated
   public double getReferenceTime() {
     return referenceTime;
+  }
+
+  /**
+   * @deprecated Use {@link #getMaxUsage()} and {@link #getMinUsage()} instead.
+   */
+  @Deprecated
+  @Override
+  public double getUsageRate() {
+    return super.getUsageRate();
   }
 
   public double getPowerStutterOnTime() {

@@ -156,11 +156,11 @@ message AnalogFuelOptions {
   bool end_heat_on_out_of_fuel = 3;
   double capacity = 4;
   FuelUsageType usage_type = 5;
-  double usage_rate = 6;
+  double usage_rate = 6 [deprecated = true];
   double start_level = 7;
   double refuel_rate = 8;
   double pit_stop_delay = 9;
-  double reference_time = 10;
+  double reference_time = 10 [deprecated = true];
   OutOfFuelAction out_of_fuel_action = 11;
   double power_stutter_off_time = 12;
   double power_stutter_on_time = 13;
