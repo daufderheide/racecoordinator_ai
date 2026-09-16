@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.73] - 2026-09-16
+
+### 🚀 New Features
+
+- add configurable debounce handling for call button triggers ([17e487e3](https://github.com/daufderheide/racecoordinator_ai/commit/17e487e3))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.72...v1.0.0-beta.73">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.72] - 2026-09-16
 
 ### 🚀 New Features
