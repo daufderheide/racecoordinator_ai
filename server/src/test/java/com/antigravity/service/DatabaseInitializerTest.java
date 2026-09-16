@@ -76,6 +76,13 @@ public class DatabaseInitializerTest {
     assertNotNull(assetService.getAssetById("default_fuel_low"));
     assertNotNull(assetService.getAssetById("default_fuel_full"));
     assertNotNull(assetService.getAssetById("default_fuel_level"));
+    assertNotNull(assetService.getAssetById("default_laps_left"));
+
+    for (Theme t : themes) {
+      assertNotNull("Theme should have audio.laps_left", t.getAudioSlots().get("audio.laps_left"));
+      assertEquals("default_laps_left", t.getAudioSlots().get("audio.laps_left").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.laps_left").getType());
+    }
 
     for (Driver d : drivers) {
       assertNotNull("Driver should have pitInAudio", d.getPitInAudio());

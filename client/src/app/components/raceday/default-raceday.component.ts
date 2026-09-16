@@ -711,6 +711,8 @@ export class DefaultRacedayComponent
 
   private previousTime: number = 0;
   private playedSecondsLeft = new Set<number>();
+  private playedLapsLeft = new Set<number>();
+  private leaderLaps = 0;
   private playedHalfway = false;
 
   // Exit Confirmation Modal State
@@ -1909,7 +1911,8 @@ export class DefaultRacedayComponent
     const isBestLap = lap.lapTime === lap.bestLapTime;
     const ttsContext = createTTSContext(driver as any, driverData as any);
 
-    this.checkHalfwayPoint(lap, ttsContext);
+    this.checkHalfwayPoint(lap, driverData, ttsContext);
+    this.checkLapsLeftCallouts(lap, driverData);
     this.handleLapAudio(lap, driver, isBestLap, ttsContext, driverData);
     this.handleLapHighlight(lap);
   }
@@ -1988,21 +1991,85 @@ export class DefaultRacedayComponent
     }
   }
 
-  private checkHalfwayPoint(lap: any, ttsContext: any) {
+  private checkHalfwayPoint(
+    lap: any,
+    driverData?: DriverHeatData,
+    ttsContext?: any,
+  ) {
     const scoring = this.race?.heat_scoring;
-    if (
-      scoring &&
-      scoring.finishMethod === FinishMethod.Lap &&
-      !this.playedHalfway
-    ) {
-      const halfwayLaps = scoring.finishValue / 2;
-      if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
-        this.playThemedSound(
-          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
-          ttsContext,
-          { widgetType: "timer" },
-        );
-        this.playedHalfway = true;
+    const fm: any = scoring?.finishMethod ?? (scoring as any)?.finish_method;
+    const isLap = fm === FinishMethod.Lap || fm === "Lap" || fm === 1;
+    if (!scoring || !isLap || this.playedHalfway) {
+      return;
+    }
+
+    const totalLaps = scoring.finishValue;
+    if (!totalLaps || totalLaps <= 1) return;
+
+    const halfwayLaps = totalLaps / 2;
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum > this.leaderLaps && lapNum >= halfwayLaps) {
+      this.playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        ttsContext,
+        { widgetType: "timer" },
+      );
+      this.playedHalfway = true;
+    }
+  }
+
+  private getLapsLeftThresholds(): number[] {
+    const config = this.themeService.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_LAPS_LEFT,
+    );
+    if (config?.url) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === config.url ||
+          a.entity_id === config.url ||
+          a._id === config.url,
+      );
+      if (asset?.audioEntries && asset.audioEntries.length > 0) {
+        return asset.audioEntries
+          .map((e: any) => Math.round(e.timeSeconds))
+          .filter((t: number) => t > 0)
+          .sort((a: number, b: number) => b - a);
+      }
+    }
+    return [20, 10, 5, 1];
+  }
+
+  private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
+    const scoring = this.race?.heat_scoring;
+    if (!scoring || scoring.finishMethod !== FinishMethod.Lap) return;
+
+    const totalLaps = scoring.finishValue;
+    if (!totalLaps || totalLaps <= 0) return;
+
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum <= this.leaderLaps) {
+      return;
+    }
+
+    const previousLeaderLaps = this.leaderLaps;
+    this.leaderLaps = lapNum;
+
+    const previousLapsLeft = totalLaps - previousLeaderLaps;
+    const currentLapsLeft = totalLaps - this.leaderLaps;
+
+    const thresholds = this.getLapsLeftThresholds();
+    for (const threshold of thresholds) {
+      if (
+        previousLapsLeft > threshold &&
+        currentLapsLeft <= threshold &&
+        !this.playedLapsLeft.has(threshold)
+      ) {
+        if (Math.abs(threshold - totalLaps) < 0.1) continue;
+
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_LAPS_LEFT, threshold, {
+          widgetType: "timer",
+        });
+        this.playedLapsLeft.add(threshold);
       }
     }
   }
@@ -2916,6 +2983,8 @@ export class DefaultRacedayComponent
         this.previousTime = 0;
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
+        this.playedLapsLeft.clear();
+        this.leaderLaps = 0;
         this.playedHalfway = false;
         this.resetFuelAudioTracking();
       } else if (isNewRace) {
@@ -2955,6 +3024,8 @@ export class DefaultRacedayComponent
         this.previousTime = this.time;
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
+        this.playedLapsLeft.clear();
+        this.leaderLaps = 0;
         this.playedHalfway = false;
         this.resetFuelAudioTracking();
       } else {
@@ -5612,6 +5683,8 @@ export class DefaultRacedayComponent
         state === RaceState.RACE_OVER
       ) {
         this.playedSecondsLeft.clear();
+        this.playedLapsLeft.clear();
+        this.leaderLaps = 0;
         this.playedHalfway = false;
         this.resetFuelAudioTracking();
         this.audioService.reset();
@@ -5999,6 +6072,7 @@ export class DefaultRacedayComponent
         defaultAssoc = { widgetType: "flag" };
       } else if (
         slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT ||
         slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY
       ) {
         defaultAssoc = { widgetType: "timer" };

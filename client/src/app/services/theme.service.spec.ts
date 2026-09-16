@@ -328,5 +328,14 @@ describe("ThemeService", () => {
       expect(service.isThemeActive()).toBeFalse();
       expect(settingsServiceSpy.saveSettings).toHaveBeenCalled();
     });
+
+    it("should resolve AUDIO_LAPS_LEFT with default_laps_left fallback", async () => {
+      await service.initialize();
+      const config = service.resolveAudioConfig("audio.laps_left");
+      expect(config).toEqual({
+        type: "audio_set",
+        url: "default_laps_left",
+      });
+    });
   });
 });

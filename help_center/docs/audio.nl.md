@@ -174,7 +174,8 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Groen Licht / START** | `audio.countdown.green` | **Spraakbericht** / Signaaltoon | `urgent` | `countdown`: Klinkt op het Hoofdscherm (indien Aftel-widget aanwezig) en op alle Rijdersstations. |
 | **Gele Vlag** | `audio.yellowflag` | **Spraakbericht** (Waarschuwingssirene) | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Resterende Seconden** | `audio.seconds_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
-| **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Ronden** | `audio.laps_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
+| **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations bij het bereiken van de helft van de heat (op basis van tijd of wanneer de leider de helft van het aantal ronden heeft voltooid). |
 | **Heat Beëindigd** | `audio.heat_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Race Beëindigd** | `audio.race_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Minimale Rondetijd** | `audio.min_lap_time` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |

@@ -449,7 +449,36 @@ public class AssetDefaultsInitializer {
       }
     }
 
+    backfillLapsLeftAudioSetDefaults();
     backfillFuelLevelAudioSetDefaults(audioUrls);
+  }
+
+  private void backfillLapsLeftAudioSetDefaults() {
+    String[][] lapsSpec = {
+      {"20.0", "20 laps to go", "20 laps to go", "20"},
+      {"10.0", "10 laps to go", "10 laps to go", "10"},
+      {"5.0", "5 laps to go", "5 laps to go", "5"},
+      {"1.0", "Final Lap", "Final Lap", "1"}
+    };
+    List<SaveAudioSetEntry> lapsLeftEntries = new ArrayList<>();
+    for (String[] spec : lapsSpec) {
+      lapsLeftEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .build());
+    }
+    if (assetService.getAssetById("default_laps_left") == null && !lapsLeftEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_laps_left", "Default Laps Left", lapsLeftEntries);
+        logger.info("Backfilled default laps left audio set with ID default_laps_left");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default laps left audio set", e);
+      }
+    }
   }
 
   private void backfillFuelLevelAudioSetDefaults(Map<String, String> audioUrls) {
@@ -611,6 +640,9 @@ public class AssetDefaultsInitializer {
     if (s.remove("audio.seconds_left") != null) {
       updated = true;
     }
+    if (s.remove("audio.laps_left") != null) {
+      updated = true;
+    }
 
     Map<String, AudioConfig> as =
         t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
@@ -705,6 +737,10 @@ public class AssetDefaultsInitializer {
     }
     if (!as.containsKey("audio.seconds_left")) {
       as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.laps_left")) {
+      as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
       updated = true;
     }
     if (!as.containsKey("audio.yellowflag")) {

@@ -31,7 +31,8 @@ Themes allow you to customize system-wide sound effects and voice callouts for r
 - **Green Lamp / GO:** Tone played when the starting lights turn green (`audio.countdown.green`).
 - **Yellow Flag:** Warning sirens or horns triggered during a caution period (`audio.yellowflag`).
 - **Seconds Left:** Countdown announcements for remaining heat time (`audio.seconds_left`).
-- **Halfway:** Notification when reaching the halfway mark of a heat (`audio.seconds_left.halfway`).
+- **Laps Left:** Announcements for remaining laps for the heat leader (`audio.laps_left`).
+- **Halfway:** Notification when reaching the halfway mark of a heat — for both timed races (half the duration elapsed) and lap-based races (when the heat leader completes half the required laps) (`audio.seconds_left.halfway`).
 - **Heat Finished & Race Finished:** Sound cues signaling the conclusion of a heat (`audio.heat_over`) or the entire race (`audio.race_over`).
 - **Infraction Alerts:** Tones for minimum lap time violations (`audio.min_lap_time`) and drift lap violations (`audio.drift_lap`).
 

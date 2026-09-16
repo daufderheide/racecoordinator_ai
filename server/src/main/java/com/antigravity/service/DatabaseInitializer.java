@@ -563,6 +563,7 @@ public class DatabaseInitializer {
     Map<String, AudioConfig> as = new HashMap<>();
     as.put("audio.countdown", new AudioConfig("audio_set", "default_countdown", null));
     as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+    as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
     as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
     as.put("audio.seconds_left.halfway", new AudioConfig("preset", "default_heat_half", null));
     as.put("audio.heat_over", new AudioConfig("preset", "default_heat_over", null));

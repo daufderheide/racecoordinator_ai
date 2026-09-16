@@ -4868,6 +4868,37 @@ describe("DefaultRacedayComponent", () => {
             ],
             url: "/api/assets/download/default_seconds_left_set",
           },
+          {
+            model: { entityId: "default_laps_left_set" },
+            type: "audio_set",
+            audioEntries: [
+              {
+                timeSeconds: 20,
+                name: "20 laps to go",
+                type: "tts",
+                text: "20 laps to go",
+              },
+              {
+                timeSeconds: 10,
+                name: "10 laps to go",
+                type: "tts",
+                text: "10 laps to go",
+              },
+              {
+                timeSeconds: 5,
+                name: "5 laps to go",
+                type: "tts",
+                text: "5 laps to go",
+              },
+              {
+                timeSeconds: 1,
+                name: "Final Lap",
+                type: "tts",
+                text: "Final Lap",
+              },
+            ],
+            url: "/api/assets/download/default_laps_left_set",
+          },
         ]),
       );
     });
@@ -5145,6 +5176,183 @@ describe("DefaultRacedayComponent", () => {
         undefined,
         undefined,
         { widgetType: "timer" },
+      );
+    });
+
+    it("should play laps left audio set at thresholds (20, 10, 5, 1) when heat leader completes laps", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 25,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+      const secondHd = component["heat"]!.heatDrivers[1];
+
+      // Lap 1: 24 laps left -> no threshold
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "20 laps to go" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // Leader reaches lap 5: 20 laps left -> "20 laps to go"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "20 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Second driver reaches lap 5: already played for leader -> should NOT play again
+      lapsSubject.next({
+        objectId: secondHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.8,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "20 laps to go" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      // Leader reaches lap 15: 10 laps left -> "10 laps to go"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 15,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "10 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 20: 5 laps left -> "5 laps to go"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 20,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "5 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 24: 1 lap left -> "Final Lap"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 24,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Final Lap",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should NOT play laps left at heat start if threshold equals total laps", () => {
+      const playCalloutSpy = spyOn(
+        component["audioService"],
+        "playCallout",
+      ).and.callThrough();
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        return { type: "preset", url: `url_${key}` };
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 20, // 20 laps total, threshold is 20
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+
+      // Lap 1: 19 laps left (crossing from 20 to 19, threshold 20 must NOT play)
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "20 laps to go" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
       );
     });
 
@@ -5785,6 +5993,20 @@ describe("DefaultRacedayComponent", () => {
       expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
         THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
       );
+
+      // Another driver reaching lap 5 later should also not re-trigger halfway
+      const mockHd2 = component["heat"]!.heatDrivers[1];
+      if (mockHd2) {
+        lapsSubject.next({
+          objectId: mockHd2.objectId,
+          lapNumber: 5,
+          lapTime: 1.3,
+          bestLapTime: 1.1,
+        });
+        expect(mockThemeService.resolveAudioConfig).not.toHaveBeenCalledWith(
+          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        );
+      }
     });
   });
 

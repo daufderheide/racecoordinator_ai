@@ -625,5 +625,80 @@ describe("DefaultDriverStationComponent", () => {
         false,
       );
     });
+
+    it("should play halfway sound when heat leader reaches half the lap count in lap-based races", () => {
+      spyOn(component as any, "playThemedSound");
+      const lapsSubject = new Subject<any>();
+      mockRaceConnectionService.laps$ = lapsSubject.asObservable();
+      const race = {
+        track: { lanes: [{}, {}] },
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 10,
+        },
+      } as any;
+      const driverData = {
+        objectId: "hd1",
+        laneIndex: 1,
+        driver: { entity_id: "d1", name: "Driver 1" },
+      } as any;
+      const heat = {
+        objectId: "h1",
+        heatDrivers: [
+          driverData,
+          {
+            objectId: "hd2",
+            laneIndex: 0,
+            driver: { entity_id: "d2", name: "Driver 2" },
+            lapCount: 0,
+          },
+        ],
+      } as any;
+
+      mockRaceService.getRace.and.returnValue(race);
+      mockRaceService.getCurrentHeat.and.returnValue(heat);
+      component["laneIndex"] = 1;
+
+      fixture.detectChanges();
+      component.ngOnInit();
+
+      // Driver 2 (heat leader) completes lap 4: not halfway yet (10 / 2 = 5)
+      lapsSubject.next({
+        objectId: "hd2",
+        lapNumber: 4,
+        lapTime: 2.0,
+      });
+      expect((component as any).playThemedSound).not.toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        jasmine.any(Object),
+        { widgetType: "timer" },
+      );
+
+      // Driver 2 (heat leader) completes lap 5: halfway reached!
+      lapsSubject.next({
+        objectId: "hd2",
+        lapNumber: 5,
+        lapTime: 2.0,
+      });
+      expect((component as any).playThemedSound).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        jasmine.any(Object),
+        { widgetType: "timer" },
+      );
+
+      (component as any).playThemedSound.calls.reset();
+
+      // Driver 1 (station's own driver) completes lap 5 later: should not play again
+      lapsSubject.next({
+        objectId: "hd1",
+        lapNumber: 5,
+        lapTime: 2.1,
+      });
+      expect((component as any).playThemedSound).not.toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        jasmine.any(Object),
+        { widgetType: "timer" },
+      );
+    });
   });
 });

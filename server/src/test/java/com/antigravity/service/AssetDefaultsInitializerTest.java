@@ -70,10 +70,24 @@ public class AssetDefaultsInitializerTest {
     assertEquals("audio_set", fuelLevel.getType());
     assertEquals(3, fuelLevel.getAudioEntriesCount());
 
+    AssetMessage lapsLeft = assetService.getAssetById("default_laps_left");
+    assertNotNull("Default laps left audio set should be backfilled", lapsLeft);
+    assertEquals("audio_set", lapsLeft.getType());
+    assertEquals(4, lapsLeft.getAudioEntriesCount());
+    assertEquals("20 laps to go", lapsLeft.getAudioEntries(0).getName());
+    assertEquals("tts", lapsLeft.getAudioEntries(0).getType());
+    assertEquals("Final Lap", lapsLeft.getAudioEntries(3).getName());
+    assertEquals("tts", lapsLeft.getAudioEntries(3).getType());
+
     SqliteRepository<Theme> themeRepo =
         new SqliteRepository<>(databaseContext, "themes", Theme.class);
     List<Theme> themes = themeRepo.findAll();
     assertTrue("Default theme should be created", themes.stream().anyMatch(Theme::isDefault));
+    for (Theme t : themes) {
+      assertNotNull("Theme should have audio.laps_left", t.getAudioSlots().get("audio.laps_left"));
+      assertEquals("default_laps_left", t.getAudioSlots().get("audio.laps_left").getUrl());
+      assertEquals("audio_set", t.getAudioSlots().get("audio.laps_left").getType());
+    }
   }
 
   @Test

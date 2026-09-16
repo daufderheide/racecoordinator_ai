@@ -290,6 +290,13 @@ export function getAudioHelpSteps(ctx: UiEditorHelpContext): GuideStep[] {
       onEnter: () => expandThemeSection(ctx, "audio"),
     },
     {
+      selector: "#help-audio-laps-left",
+      title: translationService.translate("UE_LABEL_LAPS_LEFT_AUDIO"),
+      content: translationService.translate("UE_HELP_AUDIO_LAPS_LEFT"),
+      position: "bottom",
+      onEnter: () => expandThemeSection(ctx, "audio"),
+    },
+    {
       selector: "#help-audio-halfway",
       title: translationService.translate("UE_LABEL_SECONDS_LEFT_HALFWAY"),
       content: translationService.translate("UE_HELP_AUDIO_HALFWAY"),

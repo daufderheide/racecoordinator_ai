@@ -146,6 +146,8 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private fuelAudioTracker: FuelAudioTracker;
   private lastPlayedCountdownSecond: number = -1;
   private playedSecondsLeft = new Set<number>();
+  private playedLapsLeft = new Set<number>();
+  private leaderLaps = 0;
   private playedHalfway = false;
   private previousRaceState: RaceState = RaceState.UNKNOWN_STATE;
   private assets: any[] = [];
@@ -232,6 +234,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
           const driverData = this.heat.heatDrivers.find(
             (d) => d.objectId === lap.objectId,
           );
+          if (driverData) {
+            this.checkHalfwayPoint(lap, driverData);
+            this.checkLapsLeftCallouts(lap, driverData);
+          }
           if (
             driverData &&
             this.driverData &&
@@ -288,24 +294,6 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
               return;
             }
 
-            // Halfway point check for lap-based races
-            const scoring = this.race?.heat_scoring;
-            if (
-              scoring &&
-              scoring.finishMethod === FinishMethod.Lap &&
-              !this.playedHalfway
-            ) {
-              const halfwayLaps = scoring.finishValue / 2;
-              if (lap.lapNumber != null && lap.lapNumber >= halfwayLaps) {
-                this.playThemedSound(
-                  THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
-                  ttsContext,
-                  { widgetType: "timer" },
-                );
-                this.playedHalfway = true;
-              }
-            }
-
             dispatchLapAudio(
               this.audioService,
               driver,
@@ -335,6 +323,8 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             state === RaceState.RACE_OVER
           ) {
             this.playedSecondsLeft.clear();
+            this.playedLapsLeft.clear();
+            this.leaderLaps = 0;
             this.playedHalfway = false;
             this.fuelAudioTracker.reset(
               this.heat,
@@ -681,6 +671,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         defaultAssoc = { widgetType: "flag" };
       } else if (
         slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT ||
+        slotKey === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT ||
         slotKey === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY
       ) {
         defaultAssoc = { widgetType: "timer" };
@@ -785,6 +776,86 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         });
         this.playedSecondsLeft.add(threshold);
       }
+    }
+  }
+
+  private getLapsLeftThresholds(): number[] {
+    const config = this.themeService.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_LAPS_LEFT,
+    );
+    if (config?.url) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === config.url ||
+          a.entity_id === config.url ||
+          a._id === config.url,
+      );
+      if (asset?.audioEntries && asset.audioEntries.length > 0) {
+        return asset.audioEntries
+          .map((e: any) => Math.round(e.timeSeconds))
+          .filter((t: number) => t > 0)
+          .sort((a: number, b: number) => b - a);
+      }
+    }
+    return [20, 10, 5, 1];
+  }
+
+  private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
+    const scoring = this.race?.heat_scoring;
+    if (!scoring || scoring.finishMethod !== FinishMethod.Lap) return;
+
+    const totalLaps = scoring.finishValue;
+    if (!totalLaps || totalLaps <= 0) return;
+
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum <= this.leaderLaps) {
+      return;
+    }
+
+    const previousLeaderLaps = this.leaderLaps;
+    this.leaderLaps = lapNum;
+
+    const previousLapsLeft = totalLaps - previousLeaderLaps;
+    const currentLapsLeft = totalLaps - this.leaderLaps;
+
+    const thresholds = this.getLapsLeftThresholds();
+    for (const threshold of thresholds) {
+      if (
+        previousLapsLeft > threshold &&
+        currentLapsLeft <= threshold &&
+        !this.playedLapsLeft.has(threshold)
+      ) {
+        if (Math.abs(threshold - totalLaps) < 0.1) continue;
+
+        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_LAPS_LEFT, threshold, {
+          widgetType: "timer",
+        });
+        this.playedLapsLeft.add(threshold);
+      }
+    }
+  }
+
+  private checkHalfwayPoint(lap: any, driverData: DriverHeatData) {
+    const scoring = this.race?.heat_scoring;
+    const fm: any = scoring?.finishMethod ?? (scoring as any)?.finish_method;
+    const isLap = fm === FinishMethod.Lap || fm === "Lap" || fm === 1;
+    if (!scoring || !isLap || this.playedHalfway) {
+      return;
+    }
+
+    const totalLaps = scoring.finishValue;
+    if (!totalLaps || totalLaps <= 1) return;
+
+    const halfwayLaps = totalLaps / 2;
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum > this.leaderLaps && lapNum >= halfwayLaps) {
+      const ttsContext = createTTSContext(driverData.driver, driverData);
+      this.playThemedSound(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        ttsContext,
+        { widgetType: "timer" },
+      );
+      this.playedHalfway = true;
     }
   }
 

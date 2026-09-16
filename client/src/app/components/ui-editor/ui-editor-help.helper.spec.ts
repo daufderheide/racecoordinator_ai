@@ -194,6 +194,12 @@ describe("ui-editor-help.helper", () => {
     expect(sectionsExpanded["themes"]).toBeTrue();
     expect(sectionsExpanded["theme_default_classic_rc_ai"]).toBeTrue();
     expect(sectionsExpanded["audio"]).toBeTrue();
+
+    const lapsLeftStep = steps.find(
+      (s) => s.selector === "#help-audio-laps-left",
+    );
+    expect(lapsLeftStep).toBeDefined();
+    expect(lapsLeftStep?.title).toBe("UE_LABEL_LAPS_LEFT_AUDIO");
   });
 
   it("should return all combined steps in correct order", () => {

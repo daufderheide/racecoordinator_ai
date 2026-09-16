@@ -173,7 +173,8 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Grüne Lampe / START** | `audio.countdown.green` | **Sprachansage** / Signalton | `urgent` | `countdown`: Spielt auf der Hauptanzeige (wenn Countdown-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Gelbe Flagge** | `audio.yellowflag` | **Sprachansage** (Warnsirene) | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Verbleibende Sekunden** | `audio.seconds_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
-| **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Verbleibende Runden** | `audio.laps_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen beim Erreichen der Rennhälfte (nach Zeit oder wenn der Führende die halbe Rundenanzahl absolviert hat). |
 | **Durchgang beendet** | `audio.heat_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Rennen beendet** | `audio.race_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Mindestrundenzeit** | `audio.min_lap_time` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |

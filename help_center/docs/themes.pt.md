@@ -11,7 +11,8 @@ Os temas permitem personalizar efeitos sonoros globais e avisos de voz para even
 - **Luz verde / PARTIDA:** Som emitido quando as luzes passam a verde (`audio.countdown.green`).
 - **Bandeira amarela:** Sirenes de aviso durante uma fase de bandeira amarela (`audio.yellowflag`).
 - **Segundos restantes:** Avisos com o tempo restante da manga (`audio.seconds_left`).
-- **Metade da manga:** Notificação ao atingir o ponto médio da manga (`audio.seconds_left.halfway`).
+- **Voltas restantes:** Avisos com as voltas restantes do líder da manga (`audio.laps_left`).
+- **Metade da manga:** Notificação ao atingir o ponto médio de uma bateria — tanto para corridas por tempo (metade da duração decorrida) quanto para corridas por voltas (quando o líder completa metade das voltas necessárias) (`audio.seconds_left.halfway`).
 - **Manga e corrida terminadas:** Sinais acústicos de fim de manga (`audio.heat_over`) ou fim de corrida (`audio.race_over`).
 - **Alertas de infração:** Sons para violação do tempo mínimo por volta (`audio.min_lap_time`) ou volta de drift (`audio.drift_lap`).
 
