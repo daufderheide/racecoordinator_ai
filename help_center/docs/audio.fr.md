@@ -60,12 +60,13 @@ Face à la multiplicité des événements de course simultanés, Race Coordinato
 3. **Mise en File d'Attente Urgente (Urgent Queueing) :** Les alertes urgentes touchent à la sécurité de course. Si une alerte urgente survient pendant qu'une autre est jouée, elle est mise en file d'attente et se déclenche dès la fin de la précédente.
 4. **Pause de Cadence (Callout Spacing) :** À la fin de chaque annonce parlée, un court silence est intercalé avant d'autoriser la prochaine annonce non urgente, assurant une élocution aérée et intelligible.
 
-### Repli Automatique sur les Paliers (Milestone Fallback)
+### Priorité des Paliers & Repli Automatique (Milestone Priority & Fallback)
 
-Lorsqu'un pilote réalise un tour marquant :
-1. Le système tente de diffuser l'annonce vocale correspondante selon son niveau de priorité.
-2. Si l'annonce est **ignorée** (par exemple en raison d'un drapeau jaune ou d'une pause de cadence), le système bascule sur le son de **meilleur tour personnel** ou le son de **tour standard**.
-3. Si ce son de secours est un effet sonore (SFX), il est joué de manière polyphonique, garantissant au pilote un retour acoustique immédiat à chaque passage de ligne.
+Lorsqu'un pilote réalise un tour déclenchant un ou plusieurs paliers (record de piste, meilleur tour de manche ou changement de leader) :
+
+1. **Cascade de priorité lors d'événements simultanés :** Les annonces candidates sont évaluées selon un ordre de priorité strict (Record général -> Record général de voie -> Nouveau leader de course -> Nouveau leader de manche -> Meilleur tour de course -> Meilleur tour de voie de course -> Meilleur tour de manche -> Meilleur tour personnel). Si le son de plus haute priorité est réglé sur `none` (ou non configuré), le système passe au son suivant le plus prioritaire déclenché lors de ce tour et le joue s'il est configuré.
+2. **Annonces ignorées si canal occupé :** Si une annonce vocale sélectionnée est **ignorée** parce qu'une annonce de priorité supérieure est en cours (ou pendant une pause de cadence), aucune autre annonce vocale ne sera tentée sur ce tour. Le système bascule directement sur le son de **meilleur tour personnel** (si tour PB) ou le son de **tour standard**.
+3. **Repli polyphonique SFX :** Si ce son de secours est un effet sonore (SFX), il est joué de manière polyphonique, garantissant au pilote un retour acoustique immédiat à chaque passage de ligne.
 
 ---
 
@@ -172,9 +173,12 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Compte à Rebours de Départ** | `audio.countdown` | **Annonce Vocale** / Ensemble Audio | `urgent` | `countdown`: Joué sur l'Écran Principal (si widget compte à rebours présent) et sur tous les Postes Pilote. |
 | **Feu Vert / PARTEZ** | `audio.countdown.green` | **Annonce Vocale** / Bip Prédéfini | `urgent` | `countdown`: Joué sur l'Écran Principal (si widget compte à rebours présent) et sur tous les Postes Pilote. |
 | **Drapeau Jaune** | `audio.yellowflag` | **Annonce Vocale** (Sirène d'Alerte) | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
+| **Secondes Restantes avant Démarrage Automatique** | `audio.auto_start` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
 | **Secondes Restantes** | `audio.seconds_left` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
-| **Mi-Manche** | `audio.seconds_left.halfway` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
+| **Tours Restants** | `audio.laps_left` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
+| **Mi-Manche** | `audio.seconds_left.halfway` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote à la mi-course (au temps écoulé ou lorsque le meneur franchit la moitié des tours). |
 | **Manche Terminée** | `audio.heat_over` | **Annonce Vocale** | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
+| **Secondes Restantes avant Passage Automatique** | `audio.auto_advance` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
 | **Course Terminée** | `audio.race_over` | **Annonce Vocale** | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
 | **Temps au Tour Minimum** | `audio.min_lap_time` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 | **Tour de Drift** | `audio.drift_lap` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |

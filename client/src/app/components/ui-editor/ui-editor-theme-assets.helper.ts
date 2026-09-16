@@ -112,11 +112,22 @@ export function getThemeAudioConfigForSlot(
 
   // Fallback: If it's in the old slots map or missing, convert/default on the fly
   const legacyAssetId = theme.slots?.[slot];
-  const isSet = slot === "audio.countdown" || slot === "audio.seconds_left";
+  const isSet =
+    slot === "audio.countdown" ||
+    slot === "audio.seconds_left" ||
+    slot === "audio.laps_left" ||
+    slot === "audio.auto_start" ||
+    slot === "audio.auto_advance";
   const defaultAssetId = isSet
     ? slot === "audio.countdown"
       ? "default_countdown"
-      : "default_seconds_left"
+      : slot === "audio.seconds_left"
+        ? "default_seconds_left"
+        : slot === "audio.laps_left"
+          ? "default_laps_left"
+          : slot === "audio.auto_start"
+            ? "default_auto_start"
+            : "default_auto_advance"
     : undefined;
 
   const fallbackConfig: AudioConfig = {

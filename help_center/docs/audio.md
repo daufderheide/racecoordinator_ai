@@ -60,13 +60,13 @@ Because races generate numerous simultaneous events (multiple cars finishing lap
 3. **Urgent Queueing:** Unlike lower tiers, `urgent` events are safety and race control critical. If an `urgent` callout arrives while another `urgent` callout is speaking, it enters the **Urgent Callout Queue** and plays as soon as the active urgent message finishes.
 4. **Cadence Pause (Callout Spacing):** After any verbal callout finishes, a brief silent pause is injected before the next non-urgent callout may begin. This spacing prevents speech from sounding rushed or unintelligible. `urgent` alerts bypass this pause immediately.
 
-### Milestone Audio Fallback
+### Milestone Audio Priority & Fallback
 
-When a driver completes a lap that triggers a milestone (such as a track record, heat best lap, or leader change):
+When a driver completes a lap that triggers one or more milestones (such as track records, heat best lap, or leader change):
 
-1. The system attempts to play the milestone voice announcement according to its priority tier.
-2. If the milestone announcement is **dropped** (e.g. because an urgent safety callout is active or during a cadence pause), configured as `none`, or missing, the system **falls back** to the driver's Personal Best sound (if it was a personal best lap) or standard Lap Sound.
-3. If the fallback sound is a preset sound effect (SFX), it plays polyphonically via the SFX channel. This guarantees that drivers always receive immediate acoustic feedback when crossing the line, even in the middle of live race commentary.
+1. **Priority Cascade for Simultaneous Events:** Candidate milestone sounds are evaluated in strict priority order (Overall Best -> Overall Lane Best -> New Race Leader -> New Heat Leader -> Race Best -> Race Lane Best -> Heat Best -> Personal Best). If the highest-priority sound is configured as `none` (or unconfigured), playback cascades to the next highest-priority sound triggered on that lap, continuing down the chain until a configured sound is found.
+2. **Channel Busy Dropped Callouts:** If a selected verbal milestone announcement is **dropped** because a higher-priority callout is currently speaking (or during callout cadence spacing), no further verbal announcements will play on that lap. Instead, playback falls back directly to the driver's Personal Best sound (if it was a personal best lap) or standard Lap Sound.
+3. **Polyphonic SFX Fallback:** If the fallback sound is a preset sound effect (SFX), it plays polyphonically via the SFX channel. This guarantees that drivers always receive immediate acoustic feedback when crossing the line, even in the middle of live race commentary.
 
 ---
 
@@ -207,9 +207,12 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 | **Start Countdown** | `audio.countdown` | **Voice Callout** / Audio Set | `urgent` | `countdown`: Plays on Main Raceday (if Countdown widget is present) and on all Driver Stations. |
 | **Green Lamp / GO** | `audio.countdown.green` | **Voice Callout** / Preset Tone | `urgent` | `countdown`: Plays on Main Raceday (if Countdown widget is present) and on all Driver Stations. |
 | **Yellow Flag** | `audio.yellowflag` | **Voice Callout** (Warning Siren) | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
+| **Auto-Start Seconds Left** | `audio.auto_start` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Remaining Seconds** | `audio.seconds_left` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
-| **Halfway** | `audio.seconds_left.halfway` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
+| **Laps Left** | `audio.laps_left` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
+| **Halfway** | `audio.seconds_left.halfway` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations when reaching halfway in timed races or when the leader reaches half the lap count in lap-based races. |
 | **Heat Finished** | `audio.heat_over` | **Voice Callout** | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
+| **Auto-Advance Seconds Left** | `audio.auto_advance` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
 | **Race Finished** | `audio.race_over` | **Voice Callout** | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
 | **Minimum Lap Time** | `audio.min_lap_time` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |
 | **Drift Lap** | `audio.drift_lap` | **Voice Callout** | `urgent` (Weight 4) | `lane-view`: Plays on Main Raceday and Driver Station for that specific lane/driver. |

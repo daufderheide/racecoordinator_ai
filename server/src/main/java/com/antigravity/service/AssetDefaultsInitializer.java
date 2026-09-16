@@ -449,7 +449,100 @@ public class AssetDefaultsInitializer {
       }
     }
 
+    backfillLapsLeftAudioSetDefaults();
+    backfillAutoStartAudioSetDefaults();
+    backfillAutoAdvanceAudioSetDefaults();
     backfillFuelLevelAudioSetDefaults(audioUrls);
+  }
+
+  private void backfillAutoStartAudioSetDefaults() {
+    String[][] autoStartSpec = {
+      {"600.0", "Heat starts in 10 minutes", "Heat starts in 10 minutes", "600"},
+      {"300.0", "Heat starts in 5 minutes", "Heat starts in 5 minutes", "300"},
+      {"180.0", "Heat starts in 3 minutes", "Heat starts in 3 minutes", "180"},
+      {"60.0", "Heat Starts in 1 minute", "Heat Starts in 1 minute", "60"},
+      {"30.0", "Heat Starts in 30 seconds", "Heat Starts in 30 seconds", "30"},
+      {"10.0", "Heat Starts in 10 seconds", "Heat Starts in 10 seconds", "10"}
+    };
+    List<SaveAudioSetEntry> autoStartEntries = new ArrayList<>();
+    for (String[] spec : autoStartSpec) {
+      autoStartEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .build());
+    }
+    if (assetService.getAssetById("default_auto_start") == null && !autoStartEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_auto_start", "Default Auto Start", autoStartEntries);
+        logger.info("Backfilled default auto start audio set with ID default_auto_start");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default auto start audio set", e);
+      }
+    }
+  }
+
+  private void backfillAutoAdvanceAudioSetDefaults() {
+    String[][] autoAdvanceSpec = {
+      {"600.0", "Heat advances in 10 minutes", "Heat advances in 10 minutes", "600"},
+      {"300.0", "Heat advances in 5 minutes", "Heat advances in 5 minutes", "300"},
+      {"180.0", "Heat advances in 3 minutes", "Heat advances in 3 minutes", "180"},
+      {"60.0", "Heat advances in 1 minute", "Heat advances in 1 minute", "60"},
+      {"30.0", "Heat advances in 30 seconds", "Heat advances in 30 seconds", "30"},
+      {"10.0", "Heat advances in 10 seconds", "Heat advances in 10 seconds", "10"}
+    };
+    List<SaveAudioSetEntry> autoAdvanceEntries = new ArrayList<>();
+    for (String[] spec : autoAdvanceSpec) {
+      autoAdvanceEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .build());
+    }
+    if (assetService.getAssetById("default_auto_advance") == null
+        && !autoAdvanceEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet(
+            "default_auto_advance", "Default Auto Advance", autoAdvanceEntries);
+        logger.info("Backfilled default auto advance audio set with ID default_auto_advance");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default auto advance audio set", e);
+      }
+    }
+  }
+
+  private void backfillLapsLeftAudioSetDefaults() {
+    String[][] lapsSpec = {
+      {"20.0", "20 laps to go", "20 laps to go", "20"},
+      {"10.0", "10 laps to go", "10 laps to go", "10"},
+      {"5.0", "5 laps to go", "5 laps to go", "5"},
+      {"1.0", "Final Lap", "Final Lap", "1"}
+    };
+    List<SaveAudioSetEntry> lapsLeftEntries = new ArrayList<>();
+    for (String[] spec : lapsSpec) {
+      lapsLeftEntries.add(
+          SaveAudioSetEntry.newBuilder()
+              .setTimeSeconds(Float.parseFloat(spec[0]))
+              .setName(spec[1])
+              .setType("tts")
+              .setText(spec[2])
+              .setPercentage(Integer.parseInt(spec[3]))
+              .build());
+    }
+    if (assetService.getAssetById("default_laps_left") == null && !lapsLeftEntries.isEmpty()) {
+      try {
+        assetService.saveAudioSet("default_laps_left", "Default Laps Left", lapsLeftEntries);
+        logger.info("Backfilled default laps left audio set with ID default_laps_left");
+      } catch (Exception e) {
+        logger.error("Failed to backfill default laps left audio set", e);
+      }
+    }
   }
 
   private void backfillFuelLevelAudioSetDefaults(Map<String, String> audioUrls) {
@@ -611,6 +704,15 @@ public class AssetDefaultsInitializer {
     if (s.remove("audio.seconds_left") != null) {
       updated = true;
     }
+    if (s.remove("audio.laps_left") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_start") != null) {
+      updated = true;
+    }
+    if (s.remove("audio.auto_advance") != null) {
+      updated = true;
+    }
 
     Map<String, AudioConfig> as =
         t.getAudioSlots() != null ? new HashMap<>(t.getAudioSlots()) : new HashMap<>();
@@ -705,6 +807,18 @@ public class AssetDefaultsInitializer {
     }
     if (!as.containsKey("audio.seconds_left")) {
       as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.laps_left")) {
+      as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_start")) {
+      as.put("audio.auto_start", new AudioConfig("audio_set", "default_auto_start", null));
+      updated = true;
+    }
+    if (!as.containsKey("audio.auto_advance")) {
+      as.put("audio.auto_advance", new AudioConfig("audio_set", "default_auto_advance", null));
       updated = true;
     }
     if (!as.containsKey("audio.yellowflag")) {

@@ -1547,7 +1547,7 @@ public class HeatExecutionManagerTest {
         participants.get(0).getParticipantId(), executionManager.getRaceLeaderParticipantId());
     boolean[] change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d1");
     assertTrue("Driver 1 should be new race leader", change[0]);
-    assertFalse("Driver 1 should not be new heat leader if new race leader", change[1]);
+    assertTrue("Driver 1 should also be new heat leader when taking heat lead", change[1]);
 
     // Driver 2 completes lap 1 -> Driver 1 is still leader
     prevRaceLeader = executionManager.getRaceLeaderParticipantId();
@@ -1571,7 +1571,7 @@ public class HeatExecutionManagerTest {
         participants.get(1).getParticipantId(), executionManager.getRaceLeaderParticipantId());
     change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
     assertTrue("Driver 2 should be new race leader", change[0]);
-    assertFalse("Driver 2 should not be marked heat leader if race leader", change[1]);
+    assertTrue("Driver 2 should also be new heat leader when taking heat lead", change[1]);
   }
 
   @Test
@@ -1617,6 +1617,19 @@ public class HeatExecutionManagerTest {
     boolean[] change = heat2Exec.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
     assertFalse("d2 should not be race leader because d1 has 3 laps", change[0]);
     assertTrue("d2 should be new heat leader because d2 leads heat 2", change[1]);
+  }
+
+  @Test
+  public void testSimultaneousRaceAndHeatLeaderChange() {
+    // Both previous leaders are null (start of race/heat)
+    executionManager.onLap(0, 1.0, 1, false, true, false); // reaction d1
+    executionManager.onLap(0, 5.0, 1, false, true, false); // lap 1 d1
+    assertEquals("d1", executionManager.getRaceLeaderParticipantId());
+    assertEquals("d1", executionManager.getHeatLeaderParticipantId());
+
+    boolean[] change = executionManager.evaluateLeaderChange(null, null, "d1");
+    assertTrue("Should be new race leader", change[0]);
+    assertTrue("Should also be new heat leader for audio cascading", change[1]);
   }
 
   @Test
@@ -1706,6 +1719,6 @@ public class HeatExecutionManagerTest {
 
     boolean[] change = teamExec.evaluateLeaderChange(null, null, dhd0.getParticipantId());
     assertTrue("Team participant taking the lead must be recognized as new race leader", change[0]);
-    assertFalse("Must not be flagged as new heat leader when it is new race leader", change[1]);
+    assertTrue("Team participant taking the lead should also be new heat leader", change[1]);
   }
 }

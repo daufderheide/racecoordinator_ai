@@ -60,12 +60,13 @@ Para lidar com eventos simultâneos, o Race Coordinator AI utiliza uma hierarqui
 3. **Fila Urgente (Urgent Queueing):** Os alertas urgentes envolvem segurança e regras de corrida. Se um alerta urgente surgir enquanto outro fala, fica na fila e é reproduzido logo a seguir.
 4. **Pausa de Cadência (Callout Spacing):** Após o término de cada mensagem falada, existe um curto silêncio antes de autorizar o próximo aviso não urgente, garantindo boa clareza auditiva.
 
-### Reserva de Conquistas (Milestone Fallback)
+### Prioridade de Conquistas e Reserva (Milestone Priority & Fallback)
 
-Quando um piloto faz uma volta comemorativa:
-1. O sistema tenta reproduzir a mensagem de voz correspondente à conquista.
-2. Se a mensagem for **descartada** (por exemplo, devido a uma bandeira amarela ou pausa de cadência), o sistema recorre ao som de **recorde pessoal** ou ao som de **volta padrão**.
-3. Se o som de recurso for um efeito sonoro (SFX), toca de forma polifónica, garantindo ao piloto feedback sonoro imediato ao passar na meta.
+Quando um piloto completa uma volta que ativa uma ou mais conquistas (como recorde de pista, melhor volta da manga ou mudança de líder):
+
+1. **Cascata de prioridade para eventos simultâneos:** Os sons de conquista candidatos são avaliados por ordem rigorosa de prioridade (Recorde absoluto -> Recorde absoluto de calha -> Novo líder de corrida -> Novo líder de manga -> Melhor volta de corrida -> Melhor volta de calha de corrida -> Melhor volta de manga -> Recorde pessoal). Se o som de maior prioridade estiver configurado como `none` (ou não configurado), o sistema passa para o som seguinte de maior prioridade ativado nessa volta e reproduz-o se estiver configurado.
+2. **Avisos descartados por canal ocupado:** Se uma mensagem de voz selecionada for **descartada** porque outro aviso de prioridade mais alta está a falar (ou durante uma pausa de cadência), nenhuma outra mensagem de voz será tentada nessa volta. O sistema recorre diretamente ao som de **recorde pessoal** (se foi volta PB) ou ao som de **volta padrão**.
+3. **Recurso polifónico SFX:** Se o som de recurso for um efeito sonoro (SFX), toca de forma polifónica, garantindo ao piloto feedback sonoro imediato ao passar na meta.
 
 ---
 
@@ -172,9 +173,12 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 | **Contagem de Partida** | `audio.countdown` | **Aviso de Voz** / Conjunto de Áudio | `urgent` | `countdown`: Toca no Ecrã Principal (se houver widget de contagem) e em todos os Postos de Piloto. |
 | **Luz Verde / PARTIDA** | `audio.countdown.green` | **Aviso de Voz** / Toque Predefinido | `urgent` | `countdown`: Toca no Ecrã Principal (se houver widget de contagem) e em todos os Postos de Piloto. |
 | **Bandeira Amarela** | `audio.yellowflag` | **Aviso de Voz** (Sirene de Aviso) | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
+| **Segundos Restantes para Início Automático** | `audio.auto_start` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
-| **Metade da Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
+| **Voltas Restantes** | `audio.laps_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
+| **Metade da Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto ao atingir a metade da bateria (por tempo ou quando o líder completa metade das voltas). |
 | **Manga Terminada** | `audio.heat_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
+| **Segundos Restantes para Avanço Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Áudio (Padrão: TTS) | `normal` (Peso 2) | `timer`: Toca no Ecrã Principal (se houver widget de cronómetro) e em todos os Postos de Piloto. |
 | **Corrida Terminada** | `audio.race_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Toca no Ecrã Principal (se houver widget de bandeira) e em todos os Postos de Piloto. |
 | **Tempo Mínimo por Volta** | `audio.min_lap_time` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |
 | **Volta de Drift** | `audio.drift_lap` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Toca no Ecrã Principal e no Posto de Piloto dessa calha/piloto. |

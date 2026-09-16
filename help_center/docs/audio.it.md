@@ -60,12 +60,13 @@ Per gestire i numerosi eventi di gara simultanei, Race Coordinator AI adotta una
 3. **Coda Urgente (Urgent Queueing):** Gli avvisi urgenti riguardano la sicurezza di gara. Se un avviso urgente arriva mentre un altro sta parlando, viene accodato e riprodotto non appena il precedente finisce.
 4. **Pausa di Cadenza (Callout Spacing):** Al termine di ogni annuncio vocale, viene rispettato un breve intervallo di silenzio prima di avviare il messaggio successivo, evitando discorsi concitati.
 
-### Ripristino di Riserva (Milestone Fallback)
+### Priorità dei Traguardi e Ripristino di Riserva (Milestone Priority & Fallback)
 
-Quando un pilota realizza un giro da record o un cambio leader:
-1. Il sistema prova a pronunciare l'annuncio vocale corrispondente in base alla sua priorità.
-2. Se l'annuncio viene **scartato** (ad esempio per una bandiera gialla o per la pausa di cadenza), il sistema passa al suono di **record personale** o al **suono di giro standard**.
-3. Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
+Quando un pilota completa un giro che attiva uno o più traguardi (record di pista, miglior giro di manche o cambio leader):
+
+1. **Cascata di priorità per eventi simultanei:** I suoni dei traguardi candidati vengono valutati in stretto ordine di priorità (Record assoluto -> Record assoluto di corsia -> Nuovo leader di gara -> Nuovo leader di manche -> Miglior giro di gara -> Miglior giro di corsia di gara -> Miglior giro di manche -> Record personale). Se il suono a priorità più alta è impostato su `none` (o non configurato), il sistema passa al suono successivo a priorità più alta attivato in quel giro e lo riproduce se configurato.
+2. **Annunci scartati per canale occupato:** Se un annuncio vocale selezionato viene **scartato** perché un annuncio a priorità più alta sta parlando (o durante una pausa di cadenza), non verrà tentato nessun altro annuncio vocale per quel giro. Il sistema passa direttamente al suono di **record personale** (se giro PB) o al **suono di giro standard**.
+3. **Ripristino polifonico SFX:** Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
 
 ---
 
@@ -172,9 +173,12 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Conto alla Rovescia di Partenza** | `audio.countdown` | **Annuncio Vocale** / Set Audio | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
 | **Luce Verde / VIA** | `audio.countdown.green` | **Annuncio Vocale** / Tono Predefinito | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
 | **Bandiera Gialla** | `audio.yellowflag` | **Annuncio Vocale** (Sirena di Avviso) | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Secondi Rimanenti Avvio Automatico** | `audio.auto_start` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
 | **Secondi Rimanenti** | `audio.seconds_left` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
-| **Metà Manche** | `audio.seconds_left.halfway` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
+| **Giri Rimanenti** | `audio.laps_left` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
+| **Metà Manche** | `audio.seconds_left.halfway` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota al raggiungimento della metà manche (per tempo o quando il leader completa la metà dei giri). |
 | **Manche Terminata** | `audio.heat_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Secondi Rimanenti Avanzamento Automatico** | `audio.auto_advance` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
 | **Gara Conclusa** | `audio.race_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
 | **Tempo Minimo sul Giro** | `audio.min_lap_time` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 | **Giro Drift** | `audio.drift_lap` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |

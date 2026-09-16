@@ -55,13 +55,34 @@ export interface LapAudioCalloutInfo {
 }
 
 /**
+ * Checks whether an audio configuration is defined, not set to 'none',
+ * and contains playable content (non-empty URL or non-empty TTS text).
+ */
+export function isAudioConfigured(config?: AudioConfig | null): boolean {
+  if (!config) return false;
+  if (config.type === "none") return false;
+  if (config.type === "tts") {
+    return !!config.text && config.text.trim().length > 0;
+  }
+  return !!config.url && config.url.trim().length > 0;
+}
+
+/**
  * Resolves which audio configuration, voice status, and priority should be played for a lap
  * based on record tiers, leader status, and personal best status.
  *
- * All record/leader announcements are verbal callouts with priority:
- * - Overall records, race records, and race leader are HIGH priority.
- * - Heat records and heat leader are NORMAL priority.
- * - Personal best lap is non-verbal SFX (isVoice = false) when preset, or NORMAL voice when TTS.
+ * All candidate milestone events are evaluated in descending priority order:
+ * 1. Overall Best (Tier 6) - high
+ * 2. Overall Lane Best (Tier 5 or 6) - high
+ * 3. New Race Leader - high
+ * 4. New Heat Leader - normal
+ * 5. Race Best (Tier 4 or 6) - high
+ * 6. Race Lane Best (Tier 3, 4, 5, or 6) - normal
+ * 7. Heat Best (Tier 2, 4, or 6) - normal
+ * 8. Personal Best (Tier 1..6 or isBestLap) - normal/high (SFX if preset, Voice if TTS)
+ *
+ * If the highest priority sound is configured as 'none' (or unconfigured), the system
+ * cascades to the next highest priority sound triggered by that lap, and so on.
  */
 export function resolveLapAudio(
   driver: any,
@@ -77,54 +98,95 @@ export function resolveLapAudio(
       ? parseInt(recordTier, 10)
       : (recordTier ?? 0);
 
-  if (tier === 6 || recordTier === "RECORD_TIER_OVERALL_BEST") {
-    const config = driver.overallBestLapAudio || driver.bestLapAudio;
-    if (!config) return undefined;
-    const isVoice =
-      config === driver.overallBestLapAudio || config.type === "tts";
-    return { config, isVoice, priority: "high" };
+  const isTier6 = tier === 6 || recordTier === "RECORD_TIER_OVERALL_BEST";
+  const isTier5 = tier === 5 || recordTier === "RECORD_TIER_OVERALL_LANE_BEST";
+  const isTier4 = tier === 4 || recordTier === "RECORD_TIER_RACE_BEST";
+  const isTier3 = tier === 3 || recordTier === "RECORD_TIER_RACE_LANE_BEST";
+  const isTier2 = tier === 2 || recordTier === "RECORD_TIER_HEAT_BEST";
+  const isTier1 =
+    tier === 1 || recordTier === "RECORD_TIER_PERSONAL_BEST" || !!isBestLap;
+
+  // 1. Overall Best (Tier 6)
+  if (isTier6 && isAudioConfigured(driver.overallBestLapAudio)) {
+    return {
+      config: driver.overallBestLapAudio,
+      isVoice: true,
+      priority: "high",
+    };
   }
-  if (tier === 5 || recordTier === "RECORD_TIER_OVERALL_LANE_BEST") {
-    const config = driver.overallLaneBestLapAudio || driver.bestLapAudio;
-    if (!config) return undefined;
-    const isVoice =
-      config === driver.overallLaneBestLapAudio || config.type === "tts";
-    return { config, isVoice, priority: "high" };
+
+  // 2. Overall Lane Best (Tier 5 or Tier 6)
+  if (
+    (isTier5 || isTier6) &&
+    isAudioConfigured(driver.overallLaneBestLapAudio)
+  ) {
+    return {
+      config: driver.overallLaneBestLapAudio,
+      isVoice: true,
+      priority: "high",
+    };
   }
-  if (isNewRaceLeader) {
-    const config = driver.newRaceLeaderAudio;
-    if (!config) return undefined;
-    return { config, isVoice: true, priority: "high" };
+
+  // 3. New Race Leader
+  if (isNewRaceLeader && isAudioConfigured(driver.newRaceLeaderAudio)) {
+    return {
+      config: driver.newRaceLeaderAudio,
+      isVoice: true,
+      priority: "high",
+    };
   }
-  if (isNewHeatLeader) {
-    const config = driver.newHeatLeaderAudio;
-    if (!config) return undefined;
-    return { config, isVoice: true, priority: "normal" };
+
+  // 4. New Heat Leader
+  if (isNewHeatLeader && isAudioConfigured(driver.newHeatLeaderAudio)) {
+    return {
+      config: driver.newHeatLeaderAudio,
+      isVoice: true,
+      priority: "normal",
+    };
   }
-  if (tier === 4 || recordTier === "RECORD_TIER_RACE_BEST") {
-    const config = driver.raceBestLapAudio || driver.bestLapAudio;
-    if (!config) return undefined;
-    const isVoice = config === driver.raceBestLapAudio || config.type === "tts";
-    return { config, isVoice, priority: "high" };
+
+  // 5. Race Best (Tier 4 or Tier 6)
+  if ((isTier4 || isTier6) && isAudioConfigured(driver.raceBestLapAudio)) {
+    return {
+      config: driver.raceBestLapAudio,
+      isVoice: true,
+      priority: "high",
+    };
   }
-  if (tier === 3 || recordTier === "RECORD_TIER_RACE_LANE_BEST") {
-    const config = driver.raceLaneBestLapAudio || driver.bestLapAudio;
-    if (!config) return undefined;
-    const isVoice =
-      config === driver.raceLaneBestLapAudio || config.type === "tts";
-    return { config, isVoice, priority: "normal" };
+
+  // 6. Race Lane Best (Tier 3, 4, 5, or 6)
+  if (
+    (isTier3 || isTier4 || isTier5 || isTier6) &&
+    isAudioConfigured(driver.raceLaneBestLapAudio)
+  ) {
+    return {
+      config: driver.raceLaneBestLapAudio,
+      isVoice: true,
+      priority: "normal",
+    };
   }
-  if (tier === 2 || recordTier === "RECORD_TIER_HEAT_BEST") {
-    const config = driver.heatBestLapAudio || driver.bestLapAudio;
-    if (!config) return undefined;
-    const isVoice = config === driver.heatBestLapAudio || config.type === "tts";
-    return { config, isVoice, priority: "normal" };
+
+  // 7. Heat Best (Tier 2, 4, or 6)
+  if (
+    (isTier2 || isTier4 || isTier6) &&
+    isAudioConfigured(driver.heatBestLapAudio)
+  ) {
+    return {
+      config: driver.heatBestLapAudio,
+      isVoice: true,
+      priority: "normal",
+    };
   }
-  if (tier === 1 || recordTier === "RECORD_TIER_PERSONAL_BEST" || isBestLap) {
+
+  // 8. Personal Best (Tier 1..6 or isBestLap)
+  if (
+    (isTier1 || isTier2 || isTier3 || isTier4 || isTier5 || isTier6) &&
+    isAudioConfigured(driver.bestLapAudio)
+  ) {
     const config = driver.bestLapAudio;
-    if (!config) return undefined;
     const isVoice = config.type === "tts";
-    return { config, isVoice, priority: "normal" };
+    const priority = isTier6 || isTier5 || isTier4 ? "high" : "normal";
+    return { config, isVoice, priority };
   }
 
   return undefined;
@@ -195,33 +257,26 @@ export function dispatchLapAudio(
     isNewHeatLeader,
   );
 
-  if (specialAudio) {
+  if (specialAudio && isAudioConfigured(specialAudio.config)) {
     const config = specialAudio.config;
-    if (
-      config?.type &&
-      config.type !== "none" &&
-      ((config.type === "tts" && config.text?.trim()) ||
-        (config.type !== "tts" && config.url?.trim()))
-    ) {
-      if (specialAudio.isVoice) {
-        const result = association
-          ? audioPlayer.playCallout(
-              config,
-              specialAudio.priority,
-              ttsContext,
-              undefined,
-              association,
-            )
-          : audioPlayer.playCallout(config, specialAudio.priority, ttsContext);
-        played = result !== false;
+    if (specialAudio.isVoice) {
+      const result = association
+        ? audioPlayer.playCallout(
+            config,
+            specialAudio.priority,
+            ttsContext,
+            undefined,
+            association,
+          )
+        : audioPlayer.playCallout(config, specialAudio.priority, ttsContext);
+      played = result !== false;
+    } else {
+      if (association) {
+        audioPlayer.playSfx(config.url, association);
       } else {
-        if (association) {
-          audioPlayer.playSfx(config.url, association);
-        } else {
-          audioPlayer.playSfx(config.url);
-        }
-        played = true;
+        audioPlayer.playSfx(config.url);
       }
+      played = true;
     }
   }
 
@@ -240,12 +295,7 @@ export function dispatchLapAudio(
 
   // Make sure we don't try to fallback to the exact same audio that just got dropped
   if (!played && (!specialAudio || specialAudio.config !== fallbackAudio)) {
-    if (
-      fallbackAudio?.type &&
-      fallbackAudio.type !== "none" &&
-      ((fallbackAudio.type === "tts" && fallbackAudio.text?.trim()) ||
-        (fallbackAudio.type !== "tts" && fallbackAudio.url?.trim()))
-    ) {
+    if (isAudioConfigured(fallbackAudio)) {
       if (fallbackAudio.type === "tts") {
         if (association) {
           audioPlayer.playCallout(

@@ -955,7 +955,8 @@ public class HeatExecutionManager {
       if (myParticipantId.equals(newRaceLeaderId)
           && !myParticipantId.equals(previousRaceLeaderId)) {
         isNewRaceLeader = true;
-      } else if (myParticipantId.equals(newHeatLeaderId)
+      }
+      if (myParticipantId.equals(newHeatLeaderId)
           && !myParticipantId.equals(previousHeatLeaderId)) {
         isNewHeatLeader = true;
       }

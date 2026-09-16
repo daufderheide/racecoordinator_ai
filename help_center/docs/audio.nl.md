@@ -60,12 +60,13 @@ Tijdens een race gebeuren er veel dingen gelijktijdig. Race Coordinator AI hante
 3. **Urgente Wachtrij (Urgent Queueing):** Urgente meldingen zijn van vitaal belang voor de raceveiligheid. Als er een urgente melding binnenkomt terwijl een andere klinkt, wacht deze in de wachtrij en speelt direct daarna af.
 4. **Pauze tussen Berichten (Callout Spacing):** Na elk gesproken bericht wordt een korte stilte ingelast voordat een volgend niet-urgent bericht mag starten.
 
-### Terugvaloptie bij Mijlpalen (Milestone Fallback)
+### Prioriteit en Terugvaloptie bij Mijlpalen (Milestone Priority & Fallback)
 
-Rijdt een deelnemer een mijlpaalronde (zoals een baanrecord of leiderswissel):
-1. Het systeem probeert de bijbehorende spraakmelding af te spelen.
-2. Wordt deze melding **genegeerd** (door een gele vlag of spraakpauze), dan valt het systeem terug op het **persoonlijk recordgeluid** of het **standaard rondesignaal**.
-3. Is dit reservegeluid een geluidseffect (SFX), dan speelt dit polyfoon af, zodat de rijder altijd direct akoestische bevestiging krijgt bij de finishlijn.
+Rijdt een deelnemer een ronde die een of meer mijlpalen activeert (zoals een baanrecord, beste ronde in de heat of leiderswissel):
+
+1. **Prioriteitscascade bij gelijktijdige gebeurtenissen:** Mijlpaalgeluiden worden beoordeeld in strikte prioriteitsvolgorde (Baanrecord -> Baanrecord per spoor -> Nieuwe raceleider -> Nieuwe heatleider -> Snelste raceronde -> Snelste raceronde per spoor -> Snelste heatronde -> Persoonlijk record). Als het geluid met de hoogste prioriteit is ingesteld op `none` (of niet geconfigureerd), gaat het systeem naar het volgende geluid met de hoogste prioriteit dat tijdens die ronde is getriggerd en speelt dat af indien geconfigureerd.
+2. **Genegeerde meldingen bij bezet spraakkanaal:** Wordt een geselecteerde spraakmelding **genegeerd** omdat een melding met hogere prioriteit klinkt (of tijdens een spraakpauze), dan worden er voor die ronde geen verdere spraakmeldingen geprobeerd. In plaats daarvan valt het systeem direct terug op het **persoonlijk recordgeluid** (indien PR-ronde) of het **standaard rondesignaal**.
+3. **Polyfone SFX-terugval:** Is dit reservegeluid een geluidseffect (SFX), dan speelt dit polyfoon af, zodat de rijder altijd direct akoestische bevestiging krijgt bij de finishlijn.
 
 ---
 
@@ -172,9 +173,12 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Startaftelling** | `audio.countdown` | **Spraakbericht** / Audioset | `urgent` | `countdown`: Klinkt op het Hoofdscherm (indien Aftel-widget aanwezig) en op alle Rijdersstations. |
 | **Groen Licht / START** | `audio.countdown.green` | **Spraakbericht** / Signaaltoon | `urgent` | `countdown`: Klinkt op het Hoofdscherm (indien Aftel-widget aanwezig) en op alle Rijdersstations. |
 | **Gele Vlag** | `audio.yellowflag` | **Spraakbericht** (Waarschuwingssirene) | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Seconden Automatische Start** | `audio.auto_start` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
 | **Resterende Seconden** | `audio.seconds_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
-| **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Ronden** | `audio.laps_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
+| **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations bij het bereiken van de helft van de heat (op basis van tijd of wanneer de leider de helft van het aantal ronden heeft voltooid). |
 | **Heat Beëindigd** | `audio.heat_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Seconden Automatische Doorgang** | `audio.auto_advance` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
 | **Race Beëindigd** | `audio.race_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Minimale Rondetijd** | `audio.min_lap_time` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 | **Drift-ronde** | `audio.drift_lap` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |

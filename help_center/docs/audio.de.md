@@ -60,13 +60,13 @@ Da bei Rennen viele Ereignisse gleichzeitig eintreten (mehrere Zieldurchfahrten,
 3. **Dringlichkeits-Warteschlange (Urgent Queueing):** Dringende Ansagen (`urgent`) sind sicherheits- und rennleitungsrelevant. Läuft bereits eine dringende Ansage, wird eine neue dringende Ansage in die Warteschlange eingereiht und abgespielt, sobald die vorherige Ansage endet.
 4. **Kadenzpause (Callout Spacing):** Nach jeder beendeten Sprachansage wird eine kurze Pause eingelegt, bevor die nächste nicht-dringende Ansage beginnen darf. Dringende Alarme umgehen diese Pause sofort.
 
-### Meilenstein-Audio-Fallback
+### Meilenstein-Audio-Priorität & Fallback
 
-Wenn ein Fahrer eine Meilenstein-Runde fährt (z. B. Streckenrekord, beste Durchgangsrunde oder Führungswechsel):
+Wenn ein Fahrer eine Runde fährt, die einen oder mehrere Meilensteine auslöst (z. B. Streckenrekord, beste Durchgangsrunde oder Führungswechsel):
 
-1. Das System versucht, die Meilenstein-Sprachansage gemäß ihrer Priorität abzuspielen.
-2. Wird die Meilenstein-Ansage **verworfen** (z. B. wegen einer aktiven Sicherheitsmeldung oder Kadenzpause), ist auf `none` gestellt oder nicht vorhanden, greift das System auf die **persönliche Bestzeit-Audiodatei** (falls PB-Runde) oder den **regulären Rundenton** zurück.
-3. Ist der Fallback-Ton ein Soundeffekt (SFX), wird er polyphon über den SFX-Kanal abgespielt. So erhalten Fahrer selbst während laufender Kommentare immer eine akustische Bestätigung beim Überqueren der Ziellinie.
+1. **Prioritätskaskade bei gleichzeitigen Ereignissen:** Kandidaten-Meilensteintöne werden in strikter Prioritätsreihenfolge ausgewertet (Gesamtrekord -> Gesamt-Spurrekord -> Neuer Rennleiter -> Neuer Durchgangsleiter -> Renn-Bestzeit -> Renn-Spurbestzeit -> Durchgangs-Bestzeit -> Persönliche Bestzeit). Ist der höchstpriorisierte Ton auf `none` gestellt (oder nicht konfiguriert), geht das System zum nächsthöheren ausgelösten Ton über und spielt diesen ab, sofern konfiguriert.
+2. **Verworfene Ansagen bei belegtem Sprachkanal:** Wird eine ausgewählte Meilenstein-Sprachansage **verworfen** (z. B. weil eine höher priorisierte Ansage spricht oder während einer Kadenzpause), werden für diese Runde keine weiteren Sprachansagen versucht. Stattdessen greift das System direkt auf die **persönliche Bestzeit-Audiodatei** (falls PB-Runde) oder den **regulären Rundenton** zurück.
+3. **Polyphoner SFX-Fallback:** Ist der Fallback-Ton ein Soundeffekt (SFX), wird er polyphon über den SFX-Kanal abgespielt. So erhalten Fahrer selbst während laufender Kommentare immer eine akustische Bestätigung beim Überqueren der Ziellinie.
 
 ---
 
@@ -172,9 +172,12 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Start-Countdown** | `audio.countdown` | **Sprachansage** / Audioset | `urgent` | `countdown`: Spielt auf der Hauptanzeige (wenn Countdown-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Grüne Lampe / START** | `audio.countdown.green` | **Sprachansage** / Signalton | `urgent` | `countdown`: Spielt auf der Hauptanzeige (wenn Countdown-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Gelbe Flagge** | `audio.yellowflag` | **Sprachansage** (Warnsirene) | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Automatischer Start verbleibende Sekunden** | `audio.auto_start` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Verbleibende Sekunden** | `audio.seconds_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
-| **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Verbleibende Runden** | `audio.laps_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen beim Erreichen der Rennhälfte (nach Zeit oder wenn der Führende die halbe Rundenanzahl absolviert hat). |
 | **Durchgang beendet** | `audio.heat_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Automatisches Weiterschalten verbleibende Sekunden** | `audio.auto_advance` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Rennen beendet** | `audio.race_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Mindestrundenzeit** | `audio.min_lap_time` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 | **Driftrunde** | `audio.drift_lap` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |

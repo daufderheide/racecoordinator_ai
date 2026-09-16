@@ -60,12 +60,13 @@ Para gestionar eventos simultáneos (pasos por vuelta, cambios de líder, bander
 3. **Cola Urgente (Urgent Queueing):** Las alertas urgentes son críticas para el control de carrera. Si llega una alerta urgente mientras otra está hablando, se encola y suena tan pronto como termine la actual.
 4. **Pausa de Cadencia (Callout Spacing):** Tras terminar un aviso hablado, se inserta una breve pausa de silencio antes de permitir el siguiente aviso no urgente, asegurando una escucha clara.
 
-### Respaldo de Hitos (Milestone Fallback)
+### Prioridad de Hitos y Respaldo (Milestone Priority & Fallback)
 
-Cuando un piloto completa una vuelta destacada:
-1. El sistema intenta reproducir la locución de voz del hito según su prioridad.
-2. Si la locución se **descarta** (por ejemplo, por una bandera amarilla activa o una pausa de cadencia), el sistema recurre al sonido de **mejor vuelta personal** o al **tono de vuelta estándar**.
-3. Si el sonido de respaldo es un efecto de sonido (SFX), suena polifónicamente, garantizando que el piloto reciba confirmación auditiva inmediata al cruzar la línea de meta.
+Cuando un piloto completa una vuelta que activa uno o más hitos (como récords de pista, mejor vuelta de manga o cambio de líder):
+
+1. **Cascada de prioridad para eventos simultáneos:** Los sonidos candidatos de hitos se evalúan en estricto orden de prioridad (Récord general -> Récord general de carril -> Nuevo líder de carrera -> Nuevo líder de manga -> Mejor vuelta de carrera -> Mejor vuelta de carril de carrera -> Mejor vuelta de manga -> Mejor vuelta personal). Si el sonido de mayor prioridad está configurado como `none` (o no configurado), el sistema pasa al siguiente sonido de mayor prioridad activado en esa vuelta y lo reproduce si está configurado.
+2. **Avisos descartados por canal ocupado:** Si una locución verbal seleccionada se **descarta** porque otra de mayor prioridad está sonando (o durante una pausa de cadencia), no se reproducirá ningún otro aviso verbal en esa vuelta. En su lugar, el sistema recurre directamente al sonido de **mejor vuelta personal** (si fue PB) o al **tono de vuelta estándar**.
+3. **Respaldo polifónico SFX:** Si el sonido de respaldo es un efecto de sonido (SFX), suena polifónicamente, garantizando que el piloto reciba confirmación auditiva inmediata al cruzar la línea de meta.
 
 ---
 
@@ -171,9 +172,12 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Cuenta Atrás de Salida** | `audio.countdown` | **Aviso de Voz** / Conjunto de Audio | `urgent` | `countdown`: Suena en Pantalla Principal (si hay widget de cuenta atrás) y en todos los Puestos de Piloto. |
 | **Semáforo Verde / SALIDA** | `audio.countdown.green` | **Aviso de Voz** / Tono Predefinido | `urgent` | `countdown`: Suena en Pantalla Principal (si hay widget de cuenta atrás) y en todos los Puestos de Piloto. |
 | **Bandera Amarilla** | `audio.yellowflag` | **Aviso de Voz** (Sirena de Aviso) | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
+| **Segundos Restantes de Inicio Automático** | `audio.auto_start` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
 | **Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
-| **Mitad de Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
+| **Vueltas Restantes** | `audio.laps_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
+| **Mitad de Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto al alcanzar la mitad de la serie (por tiempo o cuando el líder completa la mitad de las vueltas). |
 | **Manga Terminada** | `audio.heat_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
+| **Segundos Restantes de Avance Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
 | **Carrera Terminada** | `audio.race_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
 | **Tiempo Mínimo de Vuelta** | `audio.min_lap_time` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 | **Vuelta de Drift** | `audio.drift_lap` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |

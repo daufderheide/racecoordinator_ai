@@ -44,6 +44,9 @@ export const THEME_SLOT_KEYS = {
   // Audio Sets
   AUDIO_COUNTDOWN: "audio.countdown",
   AUDIO_SECONDS_LEFT: "audio.seconds_left",
+  AUDIO_LAPS_LEFT: "audio.laps_left",
+  AUDIO_AUTO_START: "audio.auto_start",
+  AUDIO_AUTO_ADVANCE: "audio.auto_advance",
 
   // Audio (these keys map to audio_slots)
   AUDIO_YELLOW_FLAG: "audio.yellowflag",

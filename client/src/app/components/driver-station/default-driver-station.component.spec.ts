@@ -625,5 +625,358 @@ describe("DefaultDriverStationComponent", () => {
         false,
       );
     });
+
+    it("should play halfway sound when heat leader reaches half the lap count in lap-based races", () => {
+      spyOn(component as any, "playThemedSound");
+      const lapsSubject = new Subject<any>();
+      mockRaceConnectionService.laps$ = lapsSubject.asObservable();
+      const race = {
+        track: { lanes: [{}, {}] },
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 10,
+        },
+      } as any;
+      const driverData = {
+        objectId: "hd1",
+        laneIndex: 1,
+        driver: { entity_id: "d1", name: "Driver 1" },
+      } as any;
+      const heat = {
+        objectId: "h1",
+        heatDrivers: [
+          driverData,
+          {
+            objectId: "hd2",
+            laneIndex: 0,
+            driver: { entity_id: "d2", name: "Driver 2" },
+            lapCount: 0,
+          },
+        ],
+      } as any;
+
+      mockRaceService.getRace.and.returnValue(race);
+      mockRaceService.getCurrentHeat.and.returnValue(heat);
+      component["laneIndex"] = 1;
+
+      fixture.detectChanges();
+      component.ngOnInit();
+
+      // Driver 2 (heat leader) completes lap 4: not halfway yet (10 / 2 = 5)
+      lapsSubject.next({
+        objectId: "hd2",
+        lapNumber: 4,
+        lapTime: 2.0,
+      });
+      expect((component as any).playThemedSound).not.toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        jasmine.any(Object),
+        { widgetType: "timer" },
+      );
+
+      // Driver 2 (heat leader) completes lap 5: halfway reached!
+      lapsSubject.next({
+        objectId: "hd2",
+        lapNumber: 5,
+        lapTime: 2.0,
+      });
+      expect((component as any).playThemedSound).toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        jasmine.any(Object),
+        { widgetType: "timer" },
+      );
+
+      (component as any).playThemedSound.calls.reset();
+
+      // Driver 1 (station's own driver) completes lap 5 later: should not play again
+      lapsSubject.next({
+        objectId: "hd1",
+        lapNumber: 5,
+        lapTime: 2.1,
+      });
+      expect((component as any).playThemedSound).not.toHaveBeenCalledWith(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+        jasmine.any(Object),
+        { widgetType: "timer" },
+      );
+    });
+
+    it("should play auto-start announcements at thresholds during NOT_STARTED countdown", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+
+      const mockAssets = [
+        {
+          model: { entityId: "default_auto_start" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 60,
+              name: "1 minute",
+              type: "tts",
+              text: "Heat Starts in 1 minute",
+            },
+            {
+              timeSeconds: 30,
+              name: "30 seconds",
+              type: "tts",
+              text: "Heat Starts in 30 seconds",
+            },
+          ],
+          url: "/api/assets/download/default_auto_start",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_START) {
+          return { type: "audio_set", url: "default_auto_start" };
+        }
+        return null;
+      });
+
+      component["race"] = {
+        name: "Test Race",
+        auto_start_time: 120,
+        track: { lanes: [{ objectId: "l1" }] },
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.NOT_STARTED;
+
+      // Initial tick
+      raceTimeSubject.next({ autoStartRemaining: 70 });
+      expect(audioService.playCallout).not.toHaveBeenCalled();
+
+      // Threshold tick at 60s
+      raceTimeSubject.next({ autoStartRemaining: 60 });
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat Starts in 1 minute",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      (audioService.playCallout as jasmine.Spy).calls.reset();
+
+      // Threshold tick at 30s
+      raceTimeSubject.next({ autoStartRemaining: 30 });
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat Starts in 30 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      (audioService.playCallout as jasmine.Spy).calls.reset();
+
+      // Duplicate tick does not trigger
+      raceTimeSubject.next({ autoStartRemaining: 29 });
+      expect(audioService.playCallout).not.toHaveBeenCalled();
+    });
+
+    it("should NOT play auto-start announcement on driver station if threshold equals auto_start_time", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+
+      const mockAssets = [
+        {
+          model: { entityId: "default_auto_start" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 60,
+              name: "1 minute",
+              type: "tts",
+              text: "Heat Starts in 1 minute",
+            },
+          ],
+          url: "/api/assets/download/default_auto_start",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_START) {
+          return { type: "audio_set", url: "default_auto_start" };
+        }
+        return null;
+      });
+
+      component["race"] = {
+        name: "Test Race",
+        auto_start_time: 60,
+        track: { lanes: [{ objectId: "l1" }] },
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.NOT_STARTED;
+
+      raceTimeSubject.next({ autoStartRemaining: 65 });
+      raceTimeSubject.next({ autoStartRemaining: 60 });
+
+      expect(audioService.playCallout).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat Starts in 1 minute" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+    });
+
+    it("should play auto-advance announcements at thresholds during HEAT_OVER countdown", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+
+      const mockAssets = [
+        {
+          model: { entityId: "default_auto_advance" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 30,
+              name: "30 seconds",
+              type: "tts",
+              text: "Heat advances in 30 seconds",
+            },
+            {
+              timeSeconds: 10,
+              name: "10 seconds",
+              type: "tts",
+              text: "Heat advances in 10 seconds",
+            },
+          ],
+          url: "/api/assets/download/default_auto_advance",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE) {
+          return { type: "audio_set", url: "default_auto_advance" };
+        }
+        return null;
+      });
+
+      component["race"] = {
+        name: "Test Race",
+        auto_advance_time: 60,
+        track: { lanes: [{ objectId: "l1" }] },
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.HEAT_OVER;
+
+      // Initial tick
+      raceTimeSubject.next({ autoAdvanceRemaining: 40 });
+      expect(audioService.playCallout).not.toHaveBeenCalled();
+
+      // Threshold tick at 30s
+      raceTimeSubject.next({ autoAdvanceRemaining: 30 });
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat advances in 30 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      (audioService.playCallout as jasmine.Spy).calls.reset();
+
+      // Threshold tick at 10s
+      raceTimeSubject.next({ autoAdvanceRemaining: 10 });
+      expect(audioService.playCallout).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Heat advances in 10 seconds",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      (audioService.playCallout as jasmine.Spy).calls.reset();
+
+      // Countdown reaching 0 clears tracking
+      raceTimeSubject.next({ autoAdvanceRemaining: 0 });
+      expect(component["playedAutoAdvance"].size).toBe(0);
+    });
+
+    it("should NOT play auto-advance announcement on driver station if threshold equals auto_advance_time", () => {
+      const audioService = (component as any).audioService as AudioService;
+      spyOn(audioService, "playCallout");
+
+      const raceTimeSubject = new Subject<any>();
+      mockRaceConnectionService.raceTime$ = raceTimeSubject.asObservable();
+
+      const mockAssets = [
+        {
+          model: { entityId: "default_auto_advance" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 30,
+              name: "30 seconds",
+              type: "tts",
+              text: "Heat advances in 30 seconds",
+            },
+          ],
+          url: "/api/assets/download/default_auto_advance",
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE) {
+          return { type: "audio_set", url: "default_auto_advance" };
+        }
+        return null;
+      });
+
+      component["race"] = {
+        name: "Test Race",
+        auto_advance_time: 30,
+        track: { lanes: [{ objectId: "l1" }] },
+      } as any;
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.HEAT_OVER;
+
+      raceTimeSubject.next({ autoAdvanceRemaining: 35 });
+      raceTimeSubject.next({ autoAdvanceRemaining: 30 });
+
+      expect(audioService.playCallout).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Heat advances in 30 seconds" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+    });
   });
 });
