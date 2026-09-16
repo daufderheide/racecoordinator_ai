@@ -480,15 +480,72 @@ describe("playSound Utility", () => {
       );
     });
 
-    it("should preserve type none configuration for tier audio", () => {
+    it("should cascade to next highest priority sound when tier audio is configured as none", () => {
       const silentTierDriver = {
         name: "Silent Tier Driver",
         bestLapAudio: { type: "preset", url: "fallback_best.wav" },
         overallBestLapAudio: { type: "none" },
       };
       const config = getLapAudioConfig(silentTierDriver, 6);
-      expect(config?.type).toBe("none");
-      expect(config?.url).toBeUndefined();
+      expect(config?.type).toBe("preset");
+      expect(config?.url).toBe("fallback_best.wav");
+    });
+
+    it("should return undefined if all candidate sounds are configured as none", () => {
+      const allNoneDriver = {
+        name: "All None Driver",
+        overallBestLapAudio: { type: "none" },
+        overallLaneBestLapAudio: { type: "none" },
+        newRaceLeaderAudio: { type: "none" },
+        newHeatLeaderAudio: { type: "none" },
+        raceBestLapAudio: { type: "none" },
+        raceLaneBestLapAudio: { type: "none" },
+        heatBestLapAudio: { type: "none" },
+        bestLapAudio: { type: "none" },
+      };
+      expect(
+        getLapAudioConfig(allNoneDriver, 6, true, true, true),
+      ).toBeUndefined();
+    });
+
+    it("should cascade from race leader to heat leader when race leader is configured as none", () => {
+      const leaderDriver = {
+        ...driver,
+        newRaceLeaderAudio: { type: "none" },
+        newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+      };
+      // Lap causes both race leader and heat leader
+      expect(getLapAudioConfig(leaderDriver, 0, false, true, true)?.url).toBe(
+        "heat_leader.wav",
+      );
+    });
+
+    it("should cascade through multiple levels when highest and 2nd highest are configured as none", () => {
+      const multiCascadeDriver = {
+        overallBestLapAudio: { type: "none" },
+        overallLaneBestLapAudio: { type: "none" },
+        newRaceLeaderAudio: { type: "none" },
+        newHeatLeaderAudio: { type: "none" },
+        raceBestLapAudio: { type: "preset", url: "race_best.wav" },
+        bestLapAudio: { type: "preset", url: "personal_best.wav" },
+      };
+      // Lap has tier 6 and isNewRaceLeader and isNewHeatLeader
+      // Overall best (none) -> Overall lane best (none) -> Race leader (none) -> Heat leader (none) -> Race best (set)
+      expect(
+        getLapAudioConfig(multiCascadeDriver, 6, true, true, true)?.url,
+      ).toBe("race_best.wav");
+    });
+
+    it("should cascade from heat leader to race best when heat leader is configured as none", () => {
+      const cascadeDriver = {
+        ...driver,
+        newHeatLeaderAudio: { type: "none" },
+        raceBestLapAudio: { type: "preset", url: "race_best.wav" },
+      };
+      // Lap is tier 4 (race best) and isNewHeatLeader
+      expect(getLapAudioConfig(cascadeDriver, 4, false, false, true)?.url).toBe(
+        "race_best.wav",
+      );
     });
 
     it("should return newRaceLeaderAudio when isNewRaceLeader is true", () => {
@@ -753,6 +810,90 @@ describe("playSound Utility", () => {
 
       expect(mockPlayer.playCallout).not.toHaveBeenCalled();
       expect(mockPlayer.playSfx).toHaveBeenCalledWith("personal_best.wav");
+    });
+
+    it("should play heat leader audio when race leader is configured as none on a lap that triggered both", () => {
+      const driverLeaderCascade = {
+        ...driver,
+        newRaceLeaderAudio: { type: "none" },
+        newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+      };
+      dispatchLapAudio(mockPlayer, driverLeaderCascade, 0, false, true, true);
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driverLeaderCascade.newHeatLeaderAudio,
+        "normal",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should not play heat leader if race leader callout is dropped by priority and fallback to lap SFX", () => {
+      mockPlayer.playCallout.and.returnValue(false);
+      const driverBothLeaders = {
+        ...driver,
+        newRaceLeaderAudio: { type: "preset", url: "race_leader.wav" },
+        newHeatLeaderAudio: { type: "preset", url: "heat_leader.wav" },
+      };
+      // Both leaders triggered, raceLeader is set (not none)
+      dispatchLapAudio(mockPlayer, driverBothLeaders, 0, false, true, true);
+
+      // playCallout called for race leader and returned false (dropped by priority/busy channel)
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        driverBothLeaders.newRaceLeaderAudio,
+        "high",
+        undefined,
+      );
+      // It should NOT call playCallout for heat leader
+      expect(mockPlayer.playCallout).not.toHaveBeenCalledWith(
+        driverBothLeaders.newHeatLeaderAudio,
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+      // It should fall back directly to routine lap SFX
+      expect(mockPlayer.playSfx).toHaveBeenCalledWith("beep.wav");
+    });
+
+    it("should cascade from tier 6 to tier 4 when tier 6 and tier 5 are none", () => {
+      const tieredDriver = {
+        ...driver,
+        overallBestLapAudio: { type: "none" },
+        overallLaneBestLapAudio: { type: "none" },
+        raceBestLapAudio: { type: "preset", url: "race_best.wav" },
+      };
+      dispatchLapAudio(mockPlayer, tieredDriver, 6, true, false, false);
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        tieredDriver.raceBestLapAudio,
+        "high",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
+    });
+
+    it("should cascade down to race best when race leader and heat leader are configured as none", () => {
+      const cascadeLeaderToBestDriver = {
+        ...driver,
+        newRaceLeaderAudio: { type: "none" },
+        newHeatLeaderAudio: { type: "none" },
+        raceBestLapAudio: { type: "preset", url: "race_best.wav" },
+      };
+      // Lap is tier 4 and triggered both leaders
+      dispatchLapAudio(
+        mockPlayer,
+        cascadeLeaderToBestDriver,
+        4,
+        true,
+        true,
+        true,
+      );
+
+      expect(mockPlayer.playCallout).toHaveBeenCalledWith(
+        cascadeLeaderToBestDriver.raceBestLapAudio,
+        "high",
+        undefined,
+      );
+      expect(mockPlayer.playSfx).not.toHaveBeenCalled();
     });
 
     it("should not play any sound if fallback audio is configured as none", () => {

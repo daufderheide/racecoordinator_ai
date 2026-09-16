@@ -5458,6 +5458,29 @@ describe("DefaultRacedayComponent", () => {
         expectedAssoc,
       );
 
+      // Both isNewRaceLeader and isNewHeatLeader set, but newRaceLeaderAudio is 'none' -> cascades to newHeatLeaderAudio
+      component["audioService"].reset();
+      (window.Audio as any).calls.reset();
+      playCalloutSpy.calls.reset();
+      const savedRaceLeader = mockHd.driver.newRaceLeaderAudio;
+      mockHd.driver.newRaceLeaderAudio = { type: "none" };
+      lapsSubject.next({
+        objectId: mockHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.25,
+        bestLapTime: 3.0,
+        isNewRaceLeader: true,
+        isNewHeatLeader: true,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        mockHd.driver.newHeatLeaderAudio,
+        "normal",
+        jasmine.any(Object),
+        undefined,
+        expectedAssoc,
+      );
+      mockHd.driver.newRaceLeaderAudio = savedRaceLeader;
+
       // Tier 3: Race Lane Best (NORMAL priority)
       component["audioService"].reset();
       (window.Audio as any).calls.reset();

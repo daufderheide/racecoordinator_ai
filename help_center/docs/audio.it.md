@@ -60,12 +60,13 @@ Per gestire i numerosi eventi di gara simultanei, Race Coordinator AI adotta una
 3. **Coda Urgente (Urgent Queueing):** Gli avvisi urgenti riguardano la sicurezza di gara. Se un avviso urgente arriva mentre un altro sta parlando, viene accodato e riprodotto non appena il precedente finisce.
 4. **Pausa di Cadenza (Callout Spacing):** Al termine di ogni annuncio vocale, viene rispettato un breve intervallo di silenzio prima di avviare il messaggio successivo, evitando discorsi concitati.
 
-### Ripristino di Riserva (Milestone Fallback)
+### Priorità dei Traguardi e Ripristino di Riserva (Milestone Priority & Fallback)
 
-Quando un pilota realizza un giro da record o un cambio leader:
-1. Il sistema prova a pronunciare l'annuncio vocale corrispondente in base alla sua priorità.
-2. Se l'annuncio viene **scartato** (ad esempio per una bandiera gialla o per la pausa di cadenza), il sistema passa al suono di **record personale** o al **suono di giro standard**.
-3. Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
+Quando un pilota completa un giro che attiva uno o più traguardi (record di pista, miglior giro di manche o cambio leader):
+
+1. **Cascata di priorità per eventi simultanei:** I suoni dei traguardi candidati vengono valutati in stretto ordine di priorità (Record assoluto -> Record assoluto di corsia -> Nuovo leader di gara -> Nuovo leader di manche -> Miglior giro di gara -> Miglior giro di corsia di gara -> Miglior giro di manche -> Record personale). Se il suono a priorità più alta è impostato su `none` (o non configurato), il sistema passa al suono successivo a priorità più alta attivato in quel giro e lo riproduce se configurato.
+2. **Annunci scartati per canale occupato:** Se un annuncio vocale selezionato viene **scartato** perché un annuncio a priorità più alta sta parlando (o durante una pausa di cadenza), non verrà tentato nessun altro annuncio vocale per quel giro. Il sistema passa direttamente al suono di **record personale** (se giro PB) o al **suono di giro standard**.
+3. **Ripristino polifonico SFX:** Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
 
 ---
 

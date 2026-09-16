@@ -60,12 +60,13 @@ Tijdens een race gebeuren er veel dingen gelijktijdig. Race Coordinator AI hante
 3. **Urgente Wachtrij (Urgent Queueing):** Urgente meldingen zijn van vitaal belang voor de raceveiligheid. Als er een urgente melding binnenkomt terwijl een andere klinkt, wacht deze in de wachtrij en speelt direct daarna af.
 4. **Pauze tussen Berichten (Callout Spacing):** Na elk gesproken bericht wordt een korte stilte ingelast voordat een volgend niet-urgent bericht mag starten.
 
-### Terugvaloptie bij Mijlpalen (Milestone Fallback)
+### Prioriteit en Terugvaloptie bij Mijlpalen (Milestone Priority & Fallback)
 
-Rijdt een deelnemer een mijlpaalronde (zoals een baanrecord of leiderswissel):
-1. Het systeem probeert de bijbehorende spraakmelding af te spelen.
-2. Wordt deze melding **genegeerd** (door een gele vlag of spraakpauze), dan valt het systeem terug op het **persoonlijk recordgeluid** of het **standaard rondesignaal**.
-3. Is dit reservegeluid een geluidseffect (SFX), dan speelt dit polyfoon af, zodat de rijder altijd direct akoestische bevestiging krijgt bij de finishlijn.
+Rijdt een deelnemer een ronde die een of meer mijlpalen activeert (zoals een baanrecord, beste ronde in de heat of leiderswissel):
+
+1. **Prioriteitscascade bij gelijktijdige gebeurtenissen:** Mijlpaalgeluiden worden beoordeeld in strikte prioriteitsvolgorde (Baanrecord -> Baanrecord per spoor -> Nieuwe raceleider -> Nieuwe heatleider -> Snelste raceronde -> Snelste raceronde per spoor -> Snelste heatronde -> Persoonlijk record). Als het geluid met de hoogste prioriteit is ingesteld op `none` (of niet geconfigureerd), gaat het systeem naar het volgende geluid met de hoogste prioriteit dat tijdens die ronde is getriggerd en speelt dat af indien geconfigureerd.
+2. **Genegeerde meldingen bij bezet spraakkanaal:** Wordt een geselecteerde spraakmelding **genegeerd** omdat een melding met hogere prioriteit klinkt (of tijdens een spraakpauze), dan worden er voor die ronde geen verdere spraakmeldingen geprobeerd. In plaats daarvan valt het systeem direct terug op het **persoonlijk recordgeluid** (indien PR-ronde) of het **standaard rondesignaal**.
+3. **Polyfone SFX-terugval:** Is dit reservegeluid een geluidseffect (SFX), dan speelt dit polyfoon af, zodat de rijder altijd direct akoestische bevestiging krijgt bij de finishlijn.
 
 ---
 

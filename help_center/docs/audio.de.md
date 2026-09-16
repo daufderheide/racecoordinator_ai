@@ -60,13 +60,13 @@ Da bei Rennen viele Ereignisse gleichzeitig eintreten (mehrere Zieldurchfahrten,
 3. **Dringlichkeits-Warteschlange (Urgent Queueing):** Dringende Ansagen (`urgent`) sind sicherheits- und rennleitungsrelevant. Läuft bereits eine dringende Ansage, wird eine neue dringende Ansage in die Warteschlange eingereiht und abgespielt, sobald die vorherige Ansage endet.
 4. **Kadenzpause (Callout Spacing):** Nach jeder beendeten Sprachansage wird eine kurze Pause eingelegt, bevor die nächste nicht-dringende Ansage beginnen darf. Dringende Alarme umgehen diese Pause sofort.
 
-### Meilenstein-Audio-Fallback
+### Meilenstein-Audio-Priorität & Fallback
 
-Wenn ein Fahrer eine Meilenstein-Runde fährt (z. B. Streckenrekord, beste Durchgangsrunde oder Führungswechsel):
+Wenn ein Fahrer eine Runde fährt, die einen oder mehrere Meilensteine auslöst (z. B. Streckenrekord, beste Durchgangsrunde oder Führungswechsel):
 
-1. Das System versucht, die Meilenstein-Sprachansage gemäß ihrer Priorität abzuspielen.
-2. Wird die Meilenstein-Ansage **verworfen** (z. B. wegen einer aktiven Sicherheitsmeldung oder Kadenzpause), ist auf `none` gestellt oder nicht vorhanden, greift das System auf die **persönliche Bestzeit-Audiodatei** (falls PB-Runde) oder den **regulären Rundenton** zurück.
-3. Ist der Fallback-Ton ein Soundeffekt (SFX), wird er polyphon über den SFX-Kanal abgespielt. So erhalten Fahrer selbst während laufender Kommentare immer eine akustische Bestätigung beim Überqueren der Ziellinie.
+1. **Prioritätskaskade bei gleichzeitigen Ereignissen:** Kandidaten-Meilensteintöne werden in strikter Prioritätsreihenfolge ausgewertet (Gesamtrekord -> Gesamt-Spurrekord -> Neuer Rennleiter -> Neuer Durchgangsleiter -> Renn-Bestzeit -> Renn-Spurbestzeit -> Durchgangs-Bestzeit -> Persönliche Bestzeit). Ist der höchstpriorisierte Ton auf `none` gestellt (oder nicht konfiguriert), geht das System zum nächsthöheren ausgelösten Ton über und spielt diesen ab, sofern konfiguriert.
+2. **Verworfene Ansagen bei belegtem Sprachkanal:** Wird eine ausgewählte Meilenstein-Sprachansage **verworfen** (z. B. weil eine höher priorisierte Ansage spricht oder während einer Kadenzpause), werden für diese Runde keine weiteren Sprachansagen versucht. Stattdessen greift das System direkt auf die **persönliche Bestzeit-Audiodatei** (falls PB-Runde) oder den **regulären Rundenton** zurück.
+3. **Polyphoner SFX-Fallback:** Ist der Fallback-Ton ein Soundeffekt (SFX), wird er polyphon über den SFX-Kanal abgespielt. So erhalten Fahrer selbst während laufender Kommentare immer eine akustische Bestätigung beim Überqueren der Ziellinie.
 
 ---
 

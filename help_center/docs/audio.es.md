@@ -60,12 +60,13 @@ Para gestionar eventos simultáneos (pasos por vuelta, cambios de líder, bander
 3. **Cola Urgente (Urgent Queueing):** Las alertas urgentes son críticas para el control de carrera. Si llega una alerta urgente mientras otra está hablando, se encola y suena tan pronto como termine la actual.
 4. **Pausa de Cadencia (Callout Spacing):** Tras terminar un aviso hablado, se inserta una breve pausa de silencio antes de permitir el siguiente aviso no urgente, asegurando una escucha clara.
 
-### Respaldo de Hitos (Milestone Fallback)
+### Prioridad de Hitos y Respaldo (Milestone Priority & Fallback)
 
-Cuando un piloto completa una vuelta destacada:
-1. El sistema intenta reproducir la locución de voz del hito según su prioridad.
-2. Si la locución se **descarta** (por ejemplo, por una bandera amarilla activa o una pausa de cadencia), el sistema recurre al sonido de **mejor vuelta personal** o al **tono de vuelta estándar**.
-3. Si el sonido de respaldo es un efecto de sonido (SFX), suena polifónicamente, garantizando que el piloto reciba confirmación auditiva inmediata al cruzar la línea de meta.
+Cuando un piloto completa una vuelta que activa uno o más hitos (como récords de pista, mejor vuelta de manga o cambio de líder):
+
+1. **Cascada de prioridad para eventos simultáneos:** Los sonidos candidatos de hitos se evalúan en estricto orden de prioridad (Récord general -> Récord general de carril -> Nuevo líder de carrera -> Nuevo líder de manga -> Mejor vuelta de carrera -> Mejor vuelta de carril de carrera -> Mejor vuelta de manga -> Mejor vuelta personal). Si el sonido de mayor prioridad está configurado como `none` (o no configurado), el sistema pasa al siguiente sonido de mayor prioridad activado en esa vuelta y lo reproduce si está configurado.
+2. **Avisos descartados por canal ocupado:** Si una locución verbal seleccionada se **descarta** porque otra de mayor prioridad está sonando (o durante una pausa de cadencia), no se reproducirá ningún otro aviso verbal en esa vuelta. En su lugar, el sistema recurre directamente al sonido de **mejor vuelta personal** (si fue PB) o al **tono de vuelta estándar**.
+3. **Respaldo polifónico SFX:** Si el sonido de respaldo es un efecto de sonido (SFX), suena polifónicamente, garantizando que el piloto reciba confirmación auditiva inmediata al cruzar la línea de meta.
 
 ---
 
