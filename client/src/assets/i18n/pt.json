@@ -1266,6 +1266,8 @@
   "RE_FUEL_USAGE_QUADRATIC": "Quadrático",
   "RE_FUEL_USAGE_RATE": "Taxa de uso",
   "RE_FUEL_USAGE_TYPE": "Tipo de uso",
+  "RE_GRAPH_ACTIVE": "Ativo",
+  "RE_GRAPH_TOGGLE_HINT": "Clique para alternar visibilidade",
   "RE_GENERAL_HEADER": "Geral",
   "RE_GROUPS_ALLOW_EMPTY": "Permitir Faixas Vazias",
   "RE_GROUPS_BALANCE": "Equilibrar Sementes",

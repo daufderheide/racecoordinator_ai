@@ -53,8 +53,11 @@ $$\text{Reine Rennzeit} = \text{Rundenzeit} - \text{Aufgelaufene Auftankzeit}$$
 
 #### Diagrammvorschau (Analog)
 
-- **Kraftstoffverbrauch pro Runde**: Zeigt den exakten Verbrauch über das gesamte Rundenzeitspektrum ($0,5 \times \text{Ref}$ bis $1,5 \times \text{Ref}$) an. Im Modus Benutzerdefinierte Kurve ermöglichen Griffe und Zurücksetzen-Schaltflächen sofortige Anpassungen.
-- **Zeit bis Boxenstopp**: Zeigt die geschätzte Gesamtreisezeit (oder Runden) bis zum leeren Tank in Abhängigkeit von konstanten Rundenzeiten.
+- **Gleichzeitiger Modellvergleich**: Alle 3 voreingestellten mathematischen Modelle (**Linear**, **Quadratisch** und **Kubisch**) werden gleichzeitig in beiden Diagrammen dargestellt. Der aktuell ausgewählte Typ ist fett mit einem Leuchten hervorgehoben, während die übrigen Modelle als gedämpfte Referenzlinien (~40 % Deckkraft) sichtbar bleiben.
+- **Kraftstoffverbrauch pro Runde**: Zeigt den exakten Verbrauch über das gesamte Rundenzeitspektrum ($0,5 \times \text{Ref}$ bis $1,5 \times \text{Ref}$) an. Im Modus Benutzerdefinierte Kurve ermöglichen Griffe und Zurücksetzen-Schaltflächen sofortige Anpassungen, während die 3 Basismodelle zum Vergleich sichtbar bleiben.
+- **Zeit bis Boxenstopp**: Zeigt die geschätzte Gesamtreisezeit (oder Runden) bis zum leeren Tank in Abhängigkeit von konstanten Rundenzeiten für alle Modelle.
+- **Interaktive Legende und Sichtbarkeit**: Klicken Sie mit der linken Maustaste auf eine Kurve in der Legende, um sie ein- oder auszublenden. Das Ausblenden skaliert die Diagrammachsen dynamisch neu, um verbleibende Kurven genauer betrachten zu können.
+- **Vergleichende Hover-Karten**: Beim Überfahren der Diagramme mit der Maus werden Vergleichswerte aller sichtbaren Kurven am aktuellen Messpunkt mit Farbfeldern, Werten und einer `(Aktiv)`-Kennzeichnung angezeigt.
 
 ---
 
@@ -86,8 +89,11 @@ Fahrer, die gleichmäßig fahren oder vor Kurven vom Gas gehen, verbrauchen deut
 
 #### Diagrammvorschau (Digital)
 
-- **Digitaler Kraftstoffverbrauch**: Trägt die Gasstellung ($0\,\%$ bis $100\,\%$) gegen den Verbrauch pro Sekunde auf.
+- **Gleichzeitiger Modellvergleich**: Stellt lineare, quadratische und kubische Reaktionskurven gleichzeitig dar, wobei das ausgewählte Modell hervorgehoben wird und die anderen Modelle als Hintergrundreferenzen dienen.
+- **Digitaler Kraftstoffverbrauch**: Trägt die Gasstellung ($0\,\%$ bis $100\,\%$) gegen den Verbrauch pro Sekunde für alle Modelle auf.
 - **Zeit bis Tank leer**: Trägt die Gasstellung gegen die verbleibenden Fahrsekunden bis zum leeren Tank auf.
+- **Interaktive Legende und Skalierung**: Kurven lassen sich über die Legende ein- und ausschalten, wodurch die Achsen automatisch neu skaliert werden.
+- **Vergleichende Hover-Karten**: Zeigt beim Überstreichen des Diagramms die Echtzeit-Messwerte aller sichtbaren Kurven bei der jeweiligen Gasstellung an.
 
 ---
 

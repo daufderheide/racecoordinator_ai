@@ -1266,6 +1266,8 @@
   "RE_FUEL_USAGE_QUADRATIC": "Kwadratisch",
   "RE_FUEL_USAGE_RATE": "Verbruikssnelheid",
   "RE_FUEL_USAGE_TYPE": "Verbruikstype",
+  "RE_GRAPH_ACTIVE": "Actief",
+  "RE_GRAPH_TOGGLE_HINT": "Klik om zichtbaarheid in/uit te schakelen",
   "RE_GENERAL_HEADER": "Algemeen",
   "RE_GROUPS_ALLOW_EMPTY": "Leere banen toestaan",
   "RE_GROUPS_BALANCE": "Seeds balanceren",

@@ -1266,6 +1266,8 @@
   "RE_FUEL_USAGE_QUADRATIC": "Quadratique",
   "RE_FUEL_USAGE_RATE": "Taux d'utilisation",
   "RE_FUEL_USAGE_TYPE": "Type d'utilisation",
+  "RE_GRAPH_ACTIVE": "Actif",
+  "RE_GRAPH_TOGGLE_HINT": "Cliquer pour afficher/masquer",
   "RE_GENERAL_HEADER": "Général",
   "RE_GROUPS_ALLOW_EMPTY": "Autoriser les Voies Vides",
   "RE_GROUPS_BALANCE": "Équilibrer les Têtes de Série",

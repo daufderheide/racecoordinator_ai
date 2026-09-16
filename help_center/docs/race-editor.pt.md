@@ -53,8 +53,11 @@ $$\text{Tempo de corrida} = \text{Tempo de volta} - \text{Tempo acumulado de rea
 
 #### Pré-visualizações gráficas (Analógico)
 
-- **Consumo de combustível por volta**: Exibe as unidades exatas consumidas ao longo do espetro de tempos de volta ($0,5 \times \text{ref}$ a $1,5 \times \text{ref}$). No modo Curva personalizada, os pontos de controlo e botões de reposição permitem remodelar a curva instantaneamente.
-- **Tempo até paragem nas boxes**: Estima o tempo total de corrida (ou número de voltas) até esgotar o depósito a um ritmo constante.
+- **Comparação simultânea multimodelo**: Todos os 3 modelos matemáticos predefinidos (**Linear**, **Quadrático** e **Cúbico**) são traçados simultaneamente em ambos os gráficos. O tipo selecionado é destacado a negrito com um brilho vibrante, enquanto os modelos restantes servem de linhas de referência atenuadas (~40% de opacidade).
+- **Consumo de combustível por volta**: Exibe as unidades exatas consumidas ao longo do espetro de tempos de volta ($0,5 \times \text{ref}$ a $1,5 \times \text{ref}$). No modo Curva personalizada, os pontos de controlo e botões de reposição permitem remodelar a curva instantaneamente enquanto os 3 modelos base continuam visíveis para referência.
+- **Tempo até paragem nas boxes**: Estima o tempo total de corrida (ou número de voltas) até esgotar o depósito a um ritmo constante em todos os modelos.
+- **Legenda interativa e visibilidade**: Clique com o botão esquerdo em qualquer curva da legenda para a ativar ou desativar. Ocultar uma curva redimensiona dinamicamente as escalas dos eixos, permitindo inspecionar as restantes em maior detalhe.
+- **Cartões flutuantes comparativos**: Passar o cursor pelos gráficos apresenta a telemetria comparativa de todas as curvas visíveis no ponto analisado, com amostras de cor, valores e o indicador `(Ativo)` no modelo selecionado.
 
 ---
 
@@ -86,8 +89,11 @@ Pilotos com condução suave que desaceleram nas curvas consomem consideravelmen
 
 #### Pré-visualizações gráficas (Digital)
 
-- **Consumo de combustível digital**: Representa a percentagem de aceleração ($0\,\%$ a $100\,\%$) em relação ao consumo por segundo.
+- **Comparação simultânea multimodelo**: Traça em simultâneo as curvas de resposta linear, quadrática e cúbica com o modelo selecionado em destaque e os restantes modelos visíveis em segundo plano.
+- **Consumo de combustível digital**: Representa a percentagem de aceleração ($0\,\%$ a $100\,\%$) em relação ao consumo por segundo para todos os modelos.
 - **Tempo até esgotar**: Representa a percentagem de aceleração em relação aos segundos contínuos de condução até esvaziar totalmente o depósito.
+- **Legenda interativa e escala dinâmica**: Ative ou desative curvas clicando na legenda, recalculando automaticamente a escala dos eixos.
+- **Cartões flutuantes comparativos**: Percorrer o gráfico exibe os valores em tempo real de cada curva visível para essa percentagem de acelerador.
 
 ---
 

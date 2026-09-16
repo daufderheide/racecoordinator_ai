@@ -1266,6 +1266,8 @@
   "RE_FUEL_USAGE_QUADRATIC": "Quadratisch",
   "RE_FUEL_USAGE_RATE": "Verbrauchsrate",
   "RE_FUEL_USAGE_TYPE": "Verbrauchstyp",
+  "RE_GRAPH_ACTIVE": "Aktiv",
+  "RE_GRAPH_TOGGLE_HINT": "Klicken zum Ein-/Ausblenden",
   "RE_GENERAL_HEADER": "Allgemein",
   "RE_GROUPS_ALLOW_EMPTY": "Leere Spuren zulassen",
   "RE_GROUPS_BALANCE": "Setzliste ausgleichen",

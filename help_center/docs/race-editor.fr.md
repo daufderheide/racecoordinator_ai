@@ -53,8 +53,11 @@ $$\text{Temps de course} = \text{Temps au tour} - \text{Temps de ravitaillement 
 
 #### Aperçus graphiques (Analogique)
 
-- **Utilisation de carburant par tour** : Affiche les unités exactes consommées sur le spectre des temps au tour ($0,5 \times \text{ref}$ à $1,5 \times \text{ref}$). En mode Courbe personnalisée, les poignées déplaçables et les boutons de réinitialisation permettent un remodelage instantané.
-- **Temps avant arrêt au stand** : Estime le temps total de course (ou nombre de tours) avant la panne sèche à un rythme de tour régulier.
+- **Comparaison multi-modèles simultanée** : Les 3 modèles mathématiques prédéfinis (**Linéaire**, **Quadratique** et **Cubique**) sont tracés simultanément sur les deux graphiques. Le modèle sélectionné est mis en valeur en gras avec une lueur distinctive, tandis que les autres modèles restent visibles sous forme de courbes de référence atténuées (~40 % d'opacité).
+- **Utilisation de carburant par tour** : Affiche les unités exactes consommées sur le spectre des temps au tour ($0,5 \times \text{ref}$ à $1,5 \times \text{ref}$). En mode Courbe personnalisée, les poignées déplaçables et les boutons de réinitialisation permettent un remodelage instantané pendant que les 3 modèles de base restent visibles comme repères.
+- **Temps avant arrêt au stand** : Estime le temps total de course (ou nombre de tours) avant la panne sèche à un rythme de tour régulier pour tous les modèles.
+- **Légende interactive et visibilité** : Cliquez avec le bouton gauche sur n'importe quelle courbe dans la légende pour l'activer ou la masquer. Masquer une courbe réajuste automatiquement l'échelle des axes pour inspecter plus précisément les courbes restantes.
+- **Cartes de survol comparatives** : Le survol de chaque graphique affiche la télémétrie comparative de toutes les courbes visibles au point pointé par le curseur, avec pastilles colorées, valeurs et indicateur `(Actif)` sur le modèle sélectionné.
 
 ---
 
@@ -86,8 +89,11 @@ Les pilotes souples qui relâchent l'accélérateur en virage consomment netteme
 
 #### Aperçus graphiques (Numérique)
 
-- **Utilisation du carburant numérique** : Graphique reliant le pourcentage d'accélérateur ($0\,\%$ à $100\,\%$) à la consommation par seconde.
+- **Comparaison multi-modèles simultanée** : Trace simultanément les courbes de réponse linéaire, quadratique et cubique, avec le modèle actif mis en évidence et les autres modèles visibles en arrière-plan.
+- **Utilisation du carburant numérique** : Graphique reliant le pourcentage d'accélérateur ($0\,\%$ à $100\,\%$) à la consommation par seconde pour tous les modèles.
 - **Temps jusqu'à épuisement** : Graphique reliant le pourcentage d'accélérateur aux secondes de pilotage continu avant la panne sèche.
+- **Légende interactive et mise à l'échelle dynamique** : Activez ou masquez les courbes en cliquant sur la légende pour adapter automatiquement l'échelle des axes.
+- **Cartes de survol comparatives** : Balayer le graphique affiche les valeurs en temps réel de chaque courbe visible pour ce pourcentage d'accélération.
 
 ---
 

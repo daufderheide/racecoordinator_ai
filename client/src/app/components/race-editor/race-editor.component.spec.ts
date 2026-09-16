@@ -2608,6 +2608,154 @@ describe("RaceEditorComponent", () => {
       expect(component.getDigitalUsagePath()).toContain("M ");
     });
 
+    it("should render all 3 standard models on analog fuel graphs simultaneously, highlighting the active type", () => {
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.LINEAR;
+      const usagePlots = component.getFuelUsagePlots();
+      expect(usagePlots.length).toBe(3);
+
+      const linearPlot = usagePlots.find((p) => p.type === "LINEAR");
+      const quadPlot = usagePlots.find((p) => p.type === "QUADRATIC");
+      const cubicPlot = usagePlots.find((p) => p.type === "CUBIC");
+
+      expect(linearPlot).toBeDefined();
+      expect(linearPlot?.isSelected).toBeTrue();
+      expect(linearPlot?.isVisible).toBeTrue();
+
+      expect(quadPlot).toBeDefined();
+      expect(quadPlot?.isSelected).toBeFalse();
+      expect(quadPlot?.isVisible).toBeTrue();
+
+      expect(cubicPlot).toBeDefined();
+      expect(cubicPlot?.isSelected).toBeFalse();
+      expect(cubicPlot?.isVisible).toBeTrue();
+
+      const pitPlots = component.getPitGraphPlots();
+      expect(pitPlots.length).toBe(3);
+      expect(pitPlots.find((p) => p.type === "LINEAR")?.isSelected).toBeTrue();
+      expect(
+        pitPlots.find((p) => p.type === "QUADRATIC")?.isSelected,
+      ).toBeFalse();
+    });
+
+    it("should display custom curve only when custom curve usage type is selected", () => {
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.LINEAR;
+      let usagePlots = component.getFuelUsagePlots();
+      expect(usagePlots.some((p) => p.type === "CUSTOM_CURVE")).toBeFalse();
+
+      component.editingRace.fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      usagePlots = component.getFuelUsagePlots();
+      expect(usagePlots.length).toBe(4);
+
+      const customPlot = usagePlots.find((p) => p.type === "CUSTOM_CURVE");
+      expect(customPlot).toBeDefined();
+      expect(customPlot?.isSelected).toBeTrue();
+      expect(customPlot?.isVisible).toBeTrue();
+
+      const linearPlot = usagePlots.find((p) => p.type === "LINEAR");
+      expect(linearPlot?.isSelected).toBeFalse();
+      expect(linearPlot?.isVisible).toBeTrue();
+
+      const pitPlots = component.getPitGraphPlots();
+      expect(pitPlots.length).toBe(4);
+      expect(
+        pitPlots.find((p) => p.type === "CUSTOM_CURVE")?.isSelected,
+      ).toBeTrue();
+    });
+
+    it("should support digital multi-curve fuel plots and highlighting", () => {
+      component.editingRace.digital_fuel_options!.usage_type =
+        FuelUsageType.QUADRATIC;
+
+      const dUsagePlots = component.getDigitalUsagePlots();
+      expect(dUsagePlots.length).toBe(3);
+      expect(
+        dUsagePlots.find((p) => p.type === "QUADRATIC")?.isSelected,
+      ).toBeTrue();
+      expect(
+        dUsagePlots.find((p) => p.type === "LINEAR")?.isSelected,
+      ).toBeFalse();
+      expect(dUsagePlots.some((p) => p.type === "CUSTOM_CURVE")).toBeFalse();
+
+      const dPitPlots = component.getDigitalPitPlots();
+      expect(dPitPlots.length).toBe(3);
+      expect(
+        dPitPlots.find((p) => p.type === "QUADRATIC")?.isSelected,
+      ).toBeTrue();
+
+      component.editingRace.digital_fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      const dCustomPlots = component.getDigitalUsagePlots();
+      expect(dCustomPlots.length).toBe(4);
+      expect(
+        dCustomPlots.find((p) => p.type === "CUSTOM_CURVE")?.isSelected,
+      ).toBeTrue();
+    });
+
+    it("should toggle curve visibility and dynamically rescale axes", () => {
+      expect(component.isPlotHidden("analog_usage", "CUBIC")).toBeFalse();
+
+      const initialYLabels = component.getFuelUsageYLabels();
+
+      component.togglePlotVisibility("analog_usage", "CUBIC");
+      expect(component.isPlotHidden("analog_usage", "CUBIC")).toBeTrue();
+
+      const plotsAfterHide = component.getFuelUsagePlots();
+      const cubicPlot = plotsAfterHide.find((p) => p.type === "CUBIC");
+      expect(cubicPlot?.isVisible).toBeFalse();
+
+      const yLabelsAfterHide = component.getFuelUsageYLabels();
+      expect(yLabelsAfterHide).not.toEqual(initialYLabels);
+
+      component.togglePlotVisibility("analog_usage", "CUBIC");
+      expect(component.isPlotHidden("analog_usage", "CUBIC")).toBeFalse();
+      expect(
+        component.getFuelUsagePlots().find((p) => p.type === "CUBIC")
+          ?.isVisible,
+      ).toBeTrue();
+    });
+
+    it("should automatically unhide curve when user selects that usage type", () => {
+      component.togglePlotVisibility("analog_usage", "QUADRATIC");
+      expect(component.isPlotHidden("analog_usage", "QUADRATIC")).toBeTrue();
+
+      component.onUsageTypeChange("analog", FuelUsageType.QUADRATIC);
+      expect(component.isPlotHidden("analog_usage", "QUADRATIC")).toBeFalse();
+    });
+
+    it("should populate comparative multi-curve hover points for analog and digital graphs", () => {
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.LINEAR;
+
+      const mockSvg = {
+        getBoundingClientRect: () => ({
+          left: 0,
+          top: 0,
+          width: 400,
+          height: 150,
+        }),
+      };
+      const mouseEvent = {
+        currentTarget: mockSvg,
+        clientX: 200,
+        clientY: 75,
+      } as any;
+
+      component.onGraphMouseMove(mouseEvent, "usage");
+      expect(component.hoveredPoint).toBeTruthy();
+      expect(component.hoveredPoint?.curvePoints).toBeDefined();
+      expect(component.hoveredPoint?.curvePoints?.length).toBe(3);
+
+      const activePoint = component.hoveredPoint?.curvePoints?.find(
+        (cp) => cp.isSelected,
+      );
+      expect(activePoint).toBeDefined();
+      expect(activePoint?.type).toBe(FuelUsageType.LINEAR);
+
+      component.onDigitalGraphMouseMove(mouseEvent, "usage");
+      expect(component.hoveredPoint).toBeTruthy();
+      expect(component.hoveredPoint?.curvePoints?.length).toBe(3);
+    });
+
     it("should validate CustomRoundRobin and Custom rotation configs", () => {
       component.tracks = [
         {
