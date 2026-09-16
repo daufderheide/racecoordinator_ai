@@ -1,5 +1,19 @@
 # Changelog
 
+## [v1.0.0-beta.74] - 2026-09-16
+
+### 🚀 New Features
+
+- add default auto-start and auto-advance audio announcements with translations and documentation https://github.com/daufderheide/racecoordinator_ai/issues/832 [skip-screendiffs] ([694f263b](https://github.com/daufderheide/racecoordinator_ai/commit/694f263b))
+- Added laps left audio callouts for lap based races https://github.com/daufderheide/racecoordinator_ai/issues/831 [skip-screendiffs] ([221cdeff](https://github.com/daufderheide/racecoordinator_ai/commit/221cdeff))
+- implement milestone audio priority cascade fallback and HeatExecutionManager backend logic ([96726ed9](https://github.com/daufderheide/racecoordinator_ai/commit/96726ed9))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.73...v1.0.0-beta.74">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.73] - 2026-09-16
 
 ### 🚀 New Features
