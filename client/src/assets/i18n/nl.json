@@ -1735,6 +1735,7 @@
   "TE_BACKGROUND_COLOR": "Achtergrond",
   "TE_CONFIRM_DISCARD_MESSAGE": "U heeft niet-opgeslagen wijzigingen. Weet u zeker dat u deze wilt negeren?",
   "TE_CONFIRM_DISCARD_TITLE": "Niet-opgeslagen Wijzigingen",
+  "TE_CONFIRM_DELETE": "Weet u zeker dat u deze baan wilt verwijderen?",
   "TE_DUPLICATE": "DUPLICEREN",
   "TE_ERROR_NAME_EXISTS": "Baan naam bestaat al",
   "TE_ERROR_NAME_REQUIRED": "Baan naam is vereist",

@@ -2251,7 +2251,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
       (component as any).isRaceRunning = false;
       component.openTrackManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
       (component as any).isRaceRunning = true;
       component.openTrackManager();
@@ -2261,7 +2261,7 @@ describe("DefaultRacedaySetupComponent", () => {
         .createSpy("endRace")
         .and.returnValue(of(true));
       component.onConfirmTrackEditor();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
       component.onCancelTrackEditor();
       expect(component.showTrackEditorPrompt).toBeFalse();

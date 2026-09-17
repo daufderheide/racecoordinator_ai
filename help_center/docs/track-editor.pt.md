@@ -8,9 +8,18 @@ O Race Coordinator AI integra uma avançada arquitetura multi-interface que perm
 
 ## Visão Geral & Gravação Automática
 
-O Editor de Pistas está dividido em duas áreas de trabalho sincronizadas:
+O Editor de Pistas disponibiliza uma interface unificada para selecionar, visualizar, configurar e testar as suas pistas de slot car:
 
-- **Painel Esquerdo (Propriedades Gerais & Calhas)**: Configure o nome da pista, número de setores, escala física e as propriedades individuais de cada calha (comprimento, ordenação e cores). Adicione novas interfaces de hardware na parte inferior deste painel.
+- **Seletor de Pista**: Localizado no cabeçalho superior junto ao título da página, este menu suspenso lista todas as pistas configuradas e permite alternar rapidamente entre elas.
+- **Modo Somente Leitura**: Por padrão, ao abrir o editor, as propriedades da pista, a disposição das calhas e as interfaces de hardware são exibidas no modo somente leitura. Os campos de formulário, a gestão de calhas e as ações de interface estão bloqueados para evitar alterações acidentais.
+- **Modo de Edição**: Clicar no ícone **Editar** (lápis) na barra de ferramentas desbloqueia todos os controlos de configuração, reordenação de calhas e configuração de hardware. No modo de edição, o seletor de pistas permanece bloqueado para evitar sair acidentalmente de alterações não gravadas.
+- **Gravação Automática Contínua**: À medida que faz alterações (renomear, ajustar dimensões de calhas, reordenar calhas ou alterar atribuições de pinos), as edições são automaticamente gravadas em segundo plano no servidor sem sair do modo de edição.
+- **Concluir Edição**: Clicar no ícone **Concluir Edição** (marca de verificação) valida as alterações, assegura a sua persistência no servidor e regressa ao modo somente leitura.
+- **Descartar Alterações**: Se tentar sair do editor com alterações não gravadas ou inválidas, uma caixa de diálogo solicita confirmação. O descarte reverte todas as modificações para a última versão gravada e restaura o modo somente leitura.
+
+A área de trabalho está dividida em duas áreas sincronizadas:
+
+- **Painel Esquerdo (Propriedades Gerais & Calhas)**: Configure o nome da pista, número de setores, escala física e as propriedades individuais de cada calha (comprimento, ordenação e cores). Adicione novas interfaces de hardware na parte inferior deste panel.
 - **Painel Direito (Interfaces de Hardware & Testes Interativos)**: Configure os controladores de hardware ligados, mapeie pinos e canais às funções da pista, configure tiras LED RGB endereçáveis e teste sensores e relés em tempo real.
 
 Todas as alterações efetuadas no Editor de Pistas são **automaticamente validadas e gravadas em tempo real**. Se for detetada uma configuração inválida (como um nome em branco ou duplicado, ou um pino obrigatório por atribuir), a gravação é temporariamente suspensa e avisos visuais destacam os campos que necessitam de correção.
@@ -232,9 +241,15 @@ Permite testar formatos de prova, rotações, temas visuais, mensagens de voz e 
 
 ## Operações do Editor & Barra de Ferramentas
 
+A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas essenciais de gestão:
+
+- **Voltar**: Regressa à vista anterior ou à Configuração do Dia de Corrida.
+- **Adicionar Pista (+)**: Cria um novo modelo de pista e entra no modo de edição.
+- **Duplicar Pista**: Cria uma cópia exata com outro nome único, ideal para testar configurações sem alterar a original.
+- **Editar / Concluir Edição**: Alterna entre o modo somente leitura e o modo de edição. Ao sair do modo de edição, as alterações são validadas e gravadas.
+- **Eliminar Pista**: Elimina a pista selecionada após confirmação.
 - **Anular (`Ctrl+Z`) / Refazer (`Ctrl+Y`)**: Reversão imediata de qualquer alteração nas calhas, cores ou pinos.
-- **Guardar como Novo (Duplicar Pista)**: Cria uma cópia exata com outro nome, ideal para testar configurações sem alterar o original.
-- **Visita Guiada**: O botão de ajuda (**`?`**) inicia uma visita guiada no ecrã demonstrando todos os comandos.
+- **Ajuda (`?`)**: Inicia uma visita guiada interativa no ecrã demonstrando todos os comandos.
 
 ---
 

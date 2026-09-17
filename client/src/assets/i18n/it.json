@@ -1735,6 +1735,7 @@
   "TE_BACKGROUND_COLOR": "Sfondo",
   "TE_CONFIRM_DISCARD_MESSAGE": "Hai delle modifiche non salvate. Sei sicuro di volerle scartare?",
   "TE_CONFIRM_DISCARD_TITLE": "Modifiche non salvate",
+  "TE_CONFIRM_DELETE": "Sei sicuro di voler eliminare questa pista?",
   "TE_DUPLICATE": "DUPLICA",
   "TE_ERROR_NAME_EXISTS": "Il nome della pista esiste già",
   "TE_ERROR_NAME_REQUIRED": "Il nome della pista è obbligatorio",

@@ -1735,6 +1735,7 @@
   "TE_BACKGROUND_COLOR": "Hintergrund",
   "TE_CONFIRM_DISCARD_MESSAGE": "Sie haben ungespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?",
   "TE_CONFIRM_DISCARD_TITLE": "Ungespeicherte Änderungen",
+  "TE_CONFIRM_DELETE": "Sind Sie sicher, dass Sie diese Strecke löschen möchten?",
   "TE_DUPLICATE": "DUPLIZIEREN",
   "TE_ERROR_NAME_EXISTS": "Streckenname existiert bereits",
   "TE_ERROR_NAME_REQUIRED": "Streckenname ist erforderlich",

@@ -8,7 +8,16 @@ Race Coordinator AI incorpora una avanzada arquitectura multi-interfaz que permi
 
 ## Descripción General y Guardado Automático
 
-El Editor de Pistas se divide en dos áreas de trabajo sincronizadas:
+El Editor de Pistas proporciona una interfaz unificada para seleccionar, visualizar, configurar y probar sus pistas de slot car:
+
+- **Selector de Pistas**: Ubicado en el encabezado superior junto al título de la página, este menú desplegable lista todas las pistas configuradas y le permite alternar rápidamente entre ellas.
+- **Modo Solo Lectura**: De forma predeterminada, al abrir el editor se muestran las propiedades de la pista, la disposición de carriles y las interfaces de hardware en modo solo lectura. Los campos de formulario, la gestión de carriles y las acciones de interfaz están bloqueados para evitar modificaciones accidentales.
+- **Modo Edición**: Al hacer clic en el icono de **Editar** (lápiz) de la barra de herramientas, se desbloquean los controles de configuración, la reordenación de carriles y las interfaces de hardware. En el modo de edición, el desplegable de pistas permanece bloqueado para evitar salir accidentalmente de los cambios sin guardar.
+- **Guardado Automático Continuo**: A medida que realiza modificaciones (renombrar, cambiar dimensiones de carriles, reordenar carriles o ajustar pines), sus cambios se guardan automáticamente en segundo plano en el servidor sin salir del modo de edición.
+- **Finalizar Edición**: Al hacer clic en el icono **Finalizar Edición** (marca de verificación), se validan los cambios, se asegura su persistencia en el servidor y se regresa al modo solo lectura.
+- **Descartar Cambios**: Si intenta salir del editor con cambios no guardados o no válidos, un cuadro de diálogo solicitará confirmación. Al descartar, se revierten todas las modificaciones a la última versión guardada y se restaura el modo solo lectura.
+
+El área de trabajo se divide en dos paneles sincronizados:
 
 - **Panel Izquierdo (Propiedades Generales de la Pista y Carriles)**: Configure el nombre de la pista, cantidad de secciones, escala física y propiedades de cada carril (dimensiones, orden y colores). Añada nuevas interfaces de hardware en la parte inferior de este panel.
 - **Panel Derecho (Interfaces de Hardware y Pruebas Interactivas)**: Configure los controladores conectados, asigne pines y canales a las funciones de la pista, configure tiras LED RGB direccionables y pruebe sensores y relés en tiempo real.
@@ -232,9 +241,15 @@ Permite probar formatos de carrera, rotaciones, temas, anuncios de audio y marca
 
 ## Operaciones del Editor y Barra de Herramientas
 
+La barra de herramientas superior del Editor de Pistas proporciona herramientas esenciales de gestión:
+
+- **Volver**: Regresa a la vista anterior o a la Configuración del Día de Carrera.
+- **Añadir Pista (+)**: Crea una nueva plantilla de pista y activa el modo de edición.
+- **Duplicar Pista**: Crea una copia exacta bajo otro nombre único, ideal para probar configuraciones distintas sin rehacer el trazado.
+- **Editar / Finalizar Edición**: Alterna entre el modo solo lectura y el modo de edición. Al salir del modo de edición, los cambios se validan y se guardan.
+- **Eliminar Pista**: Elimina la pista seleccionada tras confirmar la acción.
 - **Deshacer (`Ctrl+Z`) / Rehacer (`Ctrl+Y`)**: Reversión instantánea de cambios en dimensiones, colores o pines.
-- **Guardar como Nuevo (Duplicar Pista)**: Crea una copia exacta bajo otro nombre, ideal para probar configuraciones distintas sin rehacer el trazado.
-- **Guía Interactiva**: El botón de ayuda (**`?`**) inicia un recorrido visual paso a paso por todos los controles de la pantalla.
+- **Ayuda (`?`)**: Inicia un recorrido visual guiado paso a paso por todos los controles de la pantalla.
 
 ---
 

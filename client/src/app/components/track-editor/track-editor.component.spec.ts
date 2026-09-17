@@ -38,7 +38,7 @@ import {
   resetMocks,
 } from "@app/testing/unit-test-mocks";
 
-import { createTrackManagerDataServiceMock } from "../track-manager/testing/track-manager_helper";
+import { createTrackEditorDataServiceMock } from "./testing/track-editor_helper";
 
 @Component({
   selector: "app-editor-title",
@@ -49,6 +49,11 @@ import { createTrackManagerDataServiceMock } from "../track-manager/testing/trac
 class MockEditorTitleComponent {
   titleKey = input<string>("");
   itemName = input<string | undefined>(undefined);
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input<boolean>(false);
+  showEdit = input<boolean>(false);
+  disabledEdit = input<boolean>(false);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backQueryParams = input<any>({});
@@ -59,8 +64,11 @@ class MockEditorTitleComponent {
   showRedo = input<boolean>(true);
   showHelp = input<boolean>(true);
   showCopy = input<boolean>(false);
+  disabledCopy = input<boolean>(false);
+  copyDisabledTooltipKey = input<string>("");
   showAdd = input<boolean>(false);
   showDelete = input<boolean>(false);
+  disabledDelete = input<boolean>(false);
   isSaving = input<boolean>(false);
   helpSteps = input<any[]>([]);
   helpTitle = input<string>("");
@@ -70,6 +78,8 @@ class MockEditorTitleComponent {
   copy = output<void>();
   add = output<void>();
   delete = output<void>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
 }
 
 import { deepCopy } from "@app/utils/clone.utils";
@@ -139,7 +149,7 @@ describe("TrackEditorComponent", () => {
       ],
       schemas: [NO_ERRORS_SCHEMA],
       providers: [
-        { provide: DataService, useValue: createTrackManagerDataServiceMock() },
+        { provide: DataService, useValue: createTrackEditorDataServiceMock() },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
@@ -181,9 +191,9 @@ describe("TrackEditorComponent", () => {
       return t;
     });
     fixture.detectChanges();
-    // After detectChanges (ngOnInit -> loadData), the component has a fresh model from the mock.
-    // We MUST use the model the component is actually using for the UndoManager baseline.
-    component.undoManager.initialize(component.editingTrack!);
+    component.isDirty = false;
+    component.originalTrack = deepCopy((component as any).createSnapshot());
+    component.undoManager.initialize((component as any).createSnapshot());
   });
 
   afterEach(() => {
@@ -200,17 +210,18 @@ describe("TrackEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should configure editor title with track name and update reactively", () => {
+  it("should configure editor title with track selector and items", () => {
+    component.selectedTrackId = "t1";
+    component.updateTrackSelectItems();
+    fixture.detectChanges();
+
     const editorTitle = fixture.debugElement.query(
       By.directive(EditorTitleComponent),
     );
     expect(editorTitle).toBeTruthy();
     expect(editorTitle.componentInstance.titleKey()).toBe("TE_TITLE");
-    expect(editorTitle.componentInstance.itemName()).toBe("Classic Circuit");
-
-    component.trackName = "Daytona Tri-Oval";
-    fixture.detectChanges();
-    expect(editorTitle.componentInstance.itemName()).toBe("Daytona Tri-Oval");
+    expect(editorTitle.componentInstance.selectedId()).toBe("t1");
+    expect(component.trackSelectItems.length).toBeGreaterThan(0);
   });
 
   it("should have password manager ignore attributes on track name input field", () => {
@@ -386,15 +397,9 @@ describe("TrackEditorComponent", () => {
     });
   });
 
-  it("should navigate back to manager with selectedId", () => {
+  it("should navigate back to raceday-setup when onBack is called with no returnUrl", () => {
     component.onBack();
-    expect(router.navigate).toHaveBeenCalledWith(["/track-manager"], {
-      queryParams: {
-        selectedId: "t1",
-        from: null,
-        returnUrl: null,
-      },
-    });
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
   });
 
   it("should set lastEditedId in NavigationService when loading track id", () => {
@@ -417,13 +422,7 @@ describe("TrackEditorComponent", () => {
     });
 
     component.onBack();
-    expect(router.navigate).toHaveBeenCalledWith(["/track-manager"], {
-      queryParams: {
-        selectedId: "t1",
-        from: "modify-heats",
-        returnUrl: "/default-raceday",
-      },
-    });
+    expect(router.navigateByUrl).toHaveBeenCalledWith("/default-raceday");
   });
 
   it("should stay on page and keep original ID when save as new fails", () => {
@@ -448,6 +447,7 @@ describe("TrackEditorComponent", () => {
       throwError(() => ({ status: 500 })),
     );
 
+    component.isDirty = true;
     component.updateTrack();
 
     expect(window.alert).toHaveBeenCalledWith("TE_ERROR_SAVE_FAILED");
@@ -779,10 +779,7 @@ describe("TrackEditorComponent", () => {
 
       expect(dataService.updateTrack).not.toHaveBeenCalled();
       expect(component.showDiscardConfirm).toBeFalse();
-      expect(router.navigate).toHaveBeenCalledWith(
-        ["/track-manager"],
-        jasmine.any(Object),
-      );
+      expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
     });
   });
 
@@ -1321,6 +1318,142 @@ describe("TrackEditorComponent", () => {
         expect(component.defaultTrackName).toBe("Classic Circuit_1");
         expect(component.focusNameInput).toHaveBeenCalled();
       }));
+    });
+  });
+
+  describe("Unified Editor & Selector Functionality", () => {
+    it("should populate and naturally sort trackSelectItems", () => {
+      component.allTracks = [
+        new Track({ entity_id: "t10", name: "Track 10", lanes: [] }),
+        new Track({ entity_id: "t2", name: "Track 2", lanes: [] }),
+        new Track({ entity_id: "t1", name: "Track 1", lanes: [] }),
+      ];
+      component.updateTrackSelectItems();
+
+      expect(component.trackSelectItems).toEqual([
+        { id: "t1", name: "Track 1" },
+        { id: "t2", name: "Track 2" },
+        { id: "t10", name: "Track 10" },
+      ]);
+    });
+
+    it("should switch selected track via onSelectTrackById when not in edit mode", () => {
+      const track1 = new Track({ entity_id: "t1", name: "Track 1", lanes: [] });
+      const track2 = new Track({ entity_id: "t2", name: "Track 2", lanes: [] });
+      component.allTracks = [track1, track2];
+      component.isEditMode = false;
+      component.selectedTrackId = "t1";
+
+      component.onSelectTrackById("t2");
+
+      expect(component.selectedTrackId).toBe("t2");
+      expect(component.editingTrack?.entity_id).toBe("t2");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: jasmine.any(Object),
+        queryParams: { id: "t2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    });
+
+    it("should ignore onSelectTrackById when in edit mode", () => {
+      const track1 = new Track({ entity_id: "t1", name: "Track 1", lanes: [] });
+      const track2 = new Track({ entity_id: "t2", name: "Track 2", lanes: [] });
+      component.allTracks = [track1, track2];
+      component.isEditMode = true;
+      component.selectedTrackId = "t1";
+
+      component.onSelectTrackById("t2");
+
+      expect(component.selectedTrackId).toBe("t1");
+      expect(component.editingTrack?.entity_id).toBe("t1");
+    });
+
+    it("should toggle edit mode via onToggleEditMode", () => {
+      component.isEditMode = false;
+      spyOn(component, "focusNameInput");
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+
+      spyOn(component, "isDirtyState").and.returnValue(false);
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
+    });
+
+    it("should save changes when toggling off edit mode while dirty", () => {
+      component.isEditMode = true;
+      spyOn(component, "isDirtyState").and.returnValue(true);
+      spyOn(component, "isConfigValid").and.returnValue(true);
+      spyOn(component, "updateTrack");
+
+      component.onToggleEditMode();
+      expect(component.updateTrack).toHaveBeenCalledWith(false, false);
+    });
+
+    it("should start new track and set edit mode on onAddNewTrack", () => {
+      spyOn(component, "startNewTrack").and.callThrough();
+      component.isEditMode = false;
+
+      component.onAddNewTrack();
+      expect(component.startNewTrack).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
+      expect(component.editingTrack?.entity_id).toBe("new");
+    });
+
+    it("should delete track and select next available track", () => {
+      const track1 = new Track({ entity_id: "t1", name: "Track 1", lanes: [] });
+      const track2 = new Track({ entity_id: "t2", name: "Track 2", lanes: [] });
+      component.allTracks = [track1, track2];
+      component.editingTrack = track1;
+      spyOn(window, "confirm").and.returnValue(true);
+      dataService.deleteTrack.and.returnValue(of(true));
+
+      component.deleteTrack();
+
+      expect(dataService.deleteTrack).toHaveBeenCalledWith("t1");
+      expect(component.allTracks.length).toBe(1);
+      expect(component.selectedTrackId).toBe("t2");
+      expect(component.isEditMode).toBeFalse();
+    });
+
+    it("should stay in edit mode during continuous auto-save", fakeAsync(() => {
+      component.isEditMode = true;
+      component.trackName = "Auto Saved Track";
+      component.isDirty = true;
+      dataService.updateTrack.and.returnValue(
+        of(new Track({ entity_id: "t1", name: "Auto Saved Track", lanes: [] })),
+      );
+
+      component.updateTrack(false, true);
+      tick();
+
+      expect(component.isSaving).toBeFalse();
+      expect(component.isAutoSaving).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should revert changes on confirm discard", () => {
+      const originalTrack = new Track({
+        entity_id: "t1",
+        name: "Original Track",
+        lanes: [],
+      });
+      component.originalTrack = originalTrack;
+      component.editingTrack = new Track({
+        entity_id: "t1",
+        name: "Modified Track",
+        lanes: [],
+      });
+      component.trackName = "Modified Track";
+      component.isEditMode = true;
+
+      component.onConfirmDiscard();
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.showDiscardConfirm).toBeFalse();
+      expect(component.editingTrack.name).toBe("Original Track");
     });
   });
 });

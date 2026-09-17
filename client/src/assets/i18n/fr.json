@@ -1736,6 +1736,7 @@
   "TE_BACKGROUND_COLOR": "Fond",
   "TE_CONFIRM_DISCARD_MESSAGE": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les abandonner ?",
   "TE_CONFIRM_DISCARD_TITLE": "Modifications non enregistrées",
+  "TE_CONFIRM_DELETE": "Êtes-vous sûr de vouloir supprimer cette piste ?",
   "TE_DUPLICATE": "ENREGISTRER COMME NOUVEAU",
   "TE_ERROR_NAME_EXISTS": "Le nom de la piste existe déjà",
   "TE_ERROR_NAME_REQUIRED": "Le nom de la piste est requis",

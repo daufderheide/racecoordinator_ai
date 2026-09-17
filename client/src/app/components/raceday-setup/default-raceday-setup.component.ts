@@ -1949,7 +1949,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.showTrackEditorPrompt = true;
       this.cdr.detectChanges();
     } else {
-      this.router.navigate(["/track-manager"]);
+      this.router.navigate(["/track-editor"]);
     }
   }
 
@@ -1961,7 +1961,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           this.logger.info(
             "Race ended successfully, navigating to track manager",
           );
-          this.router.navigate(["/track-manager"]);
+          this.router.navigate(["/track-editor"]);
         } else {
           this.logger.warn("Failed to end race");
         }

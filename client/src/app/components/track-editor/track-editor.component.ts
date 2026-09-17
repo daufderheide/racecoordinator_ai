@@ -65,6 +65,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { naturalSortCompare } from "@app/utils/sorting.utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
@@ -79,7 +80,6 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
     CdkDropList,
     CdkDrag,
     CdkDragHandle,
-    EditorTitleComponent,
     EditorTabsComponent,
     ArduinoEditorComponent,
     TrakmateEditorComponent,
@@ -127,6 +127,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ];
   lanes: Lane[] = [];
   editingTrack?: Track;
+  selectedTrack?: Track;
+  selectedTrackId?: string;
+  trackSelectItems: { id: string; name: string }[] = [];
+  isEditMode: boolean = false;
+  originalTrack: Track | null = null;
+  transitionToReadOnlyOnSave: boolean = false;
   arduinoConfigs: ArduinoConfig[] = [];
   trackmateConfigs: TrackmateConfig[] = [];
   phidgetConfigs: PhidgetConfig[] = [];
@@ -137,6 +143,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   scale: number = 1;
   isLoading: boolean = true;
   isSaving: boolean = false;
+  isDirty: boolean = false;
   isAutoSaving: boolean = false;
   public navigateBackOnSave = false;
 
@@ -504,82 +511,59 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   loadData() {
     this.isNavigationApproved = false;
-    const idParam = this.route.snapshot.queryParamMap.get("id");
-    if (!idParam) {
-      this.router.navigate(["/track-manager"]);
-      return;
-    }
-
     this.isLoading = true;
     this.subscriptions.push(
       this.dataService.getTracks().subscribe({
         next: (tracks) => {
           this.allTracks = tracks;
+          this.updateTrackSelectItems();
 
+          const idParam = this.route.snapshot.queryParamMap.get("id");
           if (idParam === "new") {
-            // Fetch factory settings from server
-            this.subscriptions.push(
-              this.dataService.getTrackFactorySettings().subscribe({
-                next: (factoryTrack) => {
-                  this.editingTrack = new Track({
-                    entity_id: "new",
-                    name: this.translationService.translate(
-                      "TM_DEFAULT_TRACK_NAME",
-                    ),
-                    num_track_sections: factoryTrack.num_track_sections || 100,
-                    track_scale: factoryTrack.track_scale ?? 1.0,
-                    lanes: factoryTrack.lanes.map(
-                      (l: any) =>
-                        new Lane(
-                          this.generateId(),
-                          l.foreground_color,
-                          l.background_color,
-                          l.length,
-                        ),
-                    ),
-                    has_digital_fuel: false,
-                    arduino_configs: factoryTrack.arduino_configs,
-                    has_per_lane_relays:
-                      factoryTrack.has_per_lane_relays || false,
-                    has_main_relay: factoryTrack.has_main_relay || false,
-                    trackmate_configs: factoryTrack.trackmate_configs,
-                    phidget_configs: factoryTrack.phidget_configs,
-                    bart_configs: factoryTrack.bart_configs,
-                  });
-                  this.initializeEditingState();
-                },
-                error: (err) => {
-                  this.logger.error("Failed to load factory settings", err);
-                  // Fallback default
-                  this.editingTrack = new Track({
-                    entity_id: "new",
-                    name: "",
-                    num_track_sections: 100,
-                    track_scale: 1.0,
-                    lanes: [
-                      new Lane(this.generateId(), "#ef4444", "black", 100),
-                      new Lane(this.generateId(), "#ffffff", "black", 100),
-                    ],
-                    has_digital_fuel: false,
-                  });
-                  this.initializeEditingState();
-                },
-              }),
-            );
-            return; // Wait for factory settings
-          } else {
-            const found = tracks.find((t) => t.entity_id === idParam);
+            this.startNewTrack();
+            return;
+          } else if (idParam) {
+            const found = this.allTracks.find((t) => t.entity_id === idParam);
             if (found) {
-              // Deep copy for editing
-              this.editingTrack = this.cloneTrack(found);
+              this.selectTrack(found);
+              this.isEditMode = false;
+            } else if (this.allTracks.length > 0) {
+              this.selectTrack(this.allTracks[0]);
+              this.isEditMode = false;
             } else {
-              this.logger.error("Track not found");
-              this.router.navigate(["/track-manager"]);
+              this.startNewTrack();
+              return;
+            }
+          } else {
+            const lastEdited = this.navigationService.getLastEditedId("track");
+            const found = lastEdited
+              ? this.allTracks.find((t) => t.entity_id === lastEdited)
+              : undefined;
+            if (found) {
+              this.selectTrack(found);
+              this.isEditMode = false;
+            } else if (this.allTracks.length > 0) {
+              this.selectTrack(this.allTracks[0]);
+              this.isEditMode = false;
+            } else {
+              this.startNewTrack();
               return;
             }
           }
 
-          this.initializeEditingState();
+          const isNew =
+            this.route.snapshot.queryParamMap.get("isNew") === "true";
+          if (isNew && this.editingTrack) {
+            this.isEditMode = true;
+            this.defaultTrackName = this.editingTrack.name;
+            this.focusNameInput();
+          }
+
+          this.isLoading = false;
+          this.updateHelpSteps();
+          if (!this.isDestroyed) {
+            this.cdr.detectChanges();
+          }
         },
         error: (err) => {
           this.logger.error("Failed to load tracks", err);
@@ -592,113 +576,245 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  private initializeEditingState() {
-    if (this.editingTrack) {
-      // Restore Arduino Config
-      if (
-        this.editingTrack.arduino_configs &&
-        this.editingTrack.arduino_configs.length > 0
-      ) {
-        this.arduinoConfigs = JSON.parse(
-          JSON.stringify(this.editingTrack.arduino_configs),
-        );
-        // Ensure arrays exist
-        for (let config of this.arduinoConfigs) {
-          if (!config.digitalIds)
-            config.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
-          if (!config.analogIds)
-            config.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
-          if (!config.ledStrings) config.ledStrings = [];
-          if (!config.voltageConfigs) config.voltageConfigs = {};
+  updateTrackSelectItems() {
+    this.trackSelectItems = this.allTracks
+      .slice()
+      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
+      .map((t) => ({
+        id: t.entity_id,
+        name: t.name,
+      }));
+  }
 
-          // Ensure LedString sub-properties exist
-          for (let ls of config.ledStrings) {
-            if (!ls.leds) ls.leds = [];
-            if (!ls.ledLaneColorOverrides) ls.ledLaneColorOverrides = [];
-          }
-        }
-      } else {
-        this.arduinoConfigs = [];
-      }
+  selectTrack(track: Track) {
+    this.selectedTrack = track;
+    this.editingTrack = this.cloneTrack(track);
+    this.originalTrack = this.cloneTrack(track);
+    this.selectedTrackId = track.entity_id;
+    this.applyTrackToState(this.editingTrack);
+  }
 
-      // Restore Trakmate Config
-      if (
-        this.editingTrack.trackmate_configs &&
-        this.editingTrack.trackmate_configs.length > 0
-      ) {
-        this.trackmateConfigs = JSON.parse(
-          JSON.stringify(this.editingTrack.trackmate_configs),
-        );
-      } else {
-        this.trackmateConfigs = [];
-      }
+  startNewTrack() {
+    this.selectedTrack = undefined;
+    this.originalTrack = null;
+    this.selectedTrackId = undefined;
+    this.isEditMode = true;
+    this.defaultTrackName = this.translationService.translate(
+      "TM_DEFAULT_TRACK_NAME",
+    );
+    this.isLoading = true;
 
-      // Restore Phidget Config
-      if (
-        this.editingTrack.phidget_configs &&
-        this.editingTrack.phidget_configs.length > 0
-      ) {
-        this.phidgetConfigs = JSON.parse(
-          JSON.stringify(this.editingTrack.phidget_configs),
-        );
-      } else {
-        this.phidgetConfigs = [];
-      }
+    this.subscriptions.push(
+      this.dataService.getTrackFactorySettings().subscribe({
+        next: (factoryTrack) => {
+          this.isLoading = false;
+          this.editingTrack = new Track({
+            entity_id: "new",
+            name: this.defaultTrackName,
+            num_track_sections: factoryTrack.num_track_sections || 100,
+            track_scale: factoryTrack.track_scale ?? 1.0,
+            lanes: (factoryTrack.lanes || []).map(
+              (l: any) =>
+                new Lane(
+                  this.generateId(),
+                  l.foreground_color,
+                  l.background_color,
+                  l.length,
+                ),
+            ),
+            has_digital_fuel: false,
+            arduino_configs: factoryTrack.arduino_configs,
+            has_per_lane_relays: factoryTrack.has_per_lane_relays || false,
+            has_main_relay: factoryTrack.has_main_relay || false,
+            trackmate_configs: factoryTrack.trackmate_configs,
+            phidget_configs: factoryTrack.phidget_configs,
+            bart_configs: factoryTrack.bart_configs,
+          });
+          this.applyTrackToState(this.editingTrack);
+          this.focusNameInput();
+        },
+        error: (err) => {
+          this.logger.error("Failed to load factory settings", err);
+          this.isLoading = false;
+          this.editingTrack = new Track({
+            entity_id: "new",
+            name: this.defaultTrackName,
+            num_track_sections: 100,
+            track_scale: 1.0,
+            lanes: [
+              new Lane(this.generateId(), "#ef4444", "black", 100),
+              new Lane(this.generateId(), "#ffffff", "black", 100),
+            ],
+            has_digital_fuel: false,
+          });
+          this.applyTrackToState(this.editingTrack);
+          this.focusNameInput();
+        },
+      }),
+    );
+  }
 
-      // Restore BART Config
-      if (
-        this.editingTrack.bart_configs &&
-        this.editingTrack.bart_configs.length > 0
-      ) {
-        this.bartConfigs = JSON.parse(
-          JSON.stringify(this.editingTrack.bart_configs),
-        );
-      } else {
-        this.bartConfigs = [];
-      }
-
-      this.trackName = this.editingTrack.name;
-      this.numTrackSections = this.editingTrack.num_track_sections;
-      this.trackScale = this.normalizeTrackScale(this.editingTrack.track_scale);
-      this.lanes = [...this.editingTrack.lanes];
-    } else {
-      this.editingTrack = new Track({
-        entity_id: "new",
-        name: "",
-        num_track_sections: 100,
-        track_scale: 1.0,
-        lanes: [],
-        has_digital_fuel: false,
-      });
-      this.trackName = "";
-      this.numTrackSections = 100;
-      this.trackScale = 1.0;
-      this.lanes = [];
-      this.arduinoConfigs = [];
-      this.trackmateConfigs = [];
-      this.phidgetConfigs = [];
-      this.bartConfigs = [];
-    }
-
-    this.isLoading = false;
+  private applyTrackToState(track: Track) {
+    this.trackName = track.name;
+    this.numTrackSections = track.num_track_sections;
+    this.trackScale = this.normalizeTrackScale(track.track_scale);
+    this.lanes = track.lanes.map(
+      (l) =>
+        new Lane(l.entity_id, l.foreground_color, l.background_color, l.length),
+    );
+    this.syncInterfaceConfigsFromTrack(track);
+    this.ensureInterfaceConfigsValid();
+    this.undoManager.initialize(this.createSnapshot());
+    this.initializeInterfaces();
     this.updateHelpSteps();
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
     }
+  }
 
-    // Now initialize tracking with a fully populated and normalized snapshot
-    this.undoManager.initialize(this.createSnapshot());
-
-    const isNew =
-      this.route.snapshot.queryParamMap.get("isNew") === "true" ||
-      this.route.snapshot.queryParamMap.get("id") === "new";
-    if (isNew && this.editingTrack) {
-      this.defaultTrackName = this.editingTrack.name;
-      this.focusNameInput();
+  private syncInterfaceConfigsFromTrack(track: Track) {
+    if (track.arduino_configs && track.arduino_configs.length > 0) {
+      const newConfigsJson = JSON.stringify(track.arduino_configs);
+      if (newConfigsJson !== JSON.stringify(this.arduinoConfigs)) {
+        this.arduinoConfigs = JSON.parse(newConfigsJson);
+      }
+    } else if (this.arduinoConfigs.length > 0) {
+      this.arduinoConfigs = [];
     }
 
-    // Initialize all interfaces on the server
-    this.initializeInterfaces();
+    if (track.trackmate_configs && track.trackmate_configs.length > 0) {
+      const newTmConfigsJson = JSON.stringify(track.trackmate_configs);
+      if (newTmConfigsJson !== JSON.stringify(this.trackmateConfigs)) {
+        this.trackmateConfigs = JSON.parse(newTmConfigsJson);
+      }
+    } else if (this.trackmateConfigs.length > 0) {
+      this.trackmateConfigs = [];
+    }
+
+    if (track.phidget_configs && track.phidget_configs.length > 0) {
+      const newPhConfigsJson = JSON.stringify(track.phidget_configs);
+      if (newPhConfigsJson !== JSON.stringify(this.phidgetConfigs)) {
+        this.phidgetConfigs = JSON.parse(newPhConfigsJson);
+      }
+    } else if (this.phidgetConfigs.length > 0) {
+      this.phidgetConfigs = [];
+    }
+
+    if (track.bart_configs && track.bart_configs.length > 0) {
+      const newBartConfigsJson = JSON.stringify(track.bart_configs);
+      if (newBartConfigsJson !== JSON.stringify(this.bartConfigs)) {
+        this.bartConfigs = JSON.parse(newBartConfigsJson);
+      }
+    } else if (this.bartConfigs.length > 0) {
+      this.bartConfigs = [];
+    }
+  }
+
+  private ensureInterfaceConfigsValid() {
+    for (const config of this.arduinoConfigs) {
+      if (!config.digitalIds) {
+        config.digitalIds = new Array(MAX_DIGITAL_PINS).fill(-1);
+      }
+      if (!config.analogIds) {
+        config.analogIds = new Array(MAX_ANALOG_PINS).fill(-1);
+      }
+      if (!config.ledStrings) config.ledStrings = [];
+      if (!config.voltageConfigs) config.voltageConfigs = {};
+
+      for (const ls of config.ledStrings) {
+        if (!ls.leds) ls.leds = [];
+        if (!ls.ledLaneColorOverrides) ls.ledLaneColorOverrides = [];
+      }
+    }
+  }
+
+  onSelectTrackById(id: string) {
+    if (this.isEditMode) return;
+    if (this.selectedTrackId === id) return;
+    const found = this.allTracks.find((t) => t.entity_id === id);
+    if (found) {
+      this.selectTrack(found);
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: found.entity_id },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    }
+  }
+
+  onToggleEditMode() {
+    if (!this.isEditMode) {
+      this.isEditMode = true;
+      this.focusNameInput();
+      return;
+    }
+
+    if (this.isSaving) {
+      this.transitionToReadOnlyOnSave = true;
+      return;
+    }
+
+    if (this.isDirtyState()) {
+      if (!this.isConfigValid()) {
+        alert(this.translationService.translate("TE_ERROR_NAME_EXISTS"));
+        return;
+      }
+      this.updateTrack(false, false);
+    } else {
+      this.isEditMode = false;
+    }
+  }
+
+  onAddNewTrack() {
+    if (this.isEditMode && this.isDirtyState()) {
+      this.confirmDiscard().then((confirmed) => {
+        if (confirmed) {
+          this.startNewTrack();
+        }
+      });
+    } else {
+      this.startNewTrack();
+    }
+  }
+
+  onDeleteTrack() {
+    this.deleteTrack();
+  }
+
+  deleteTrack() {
+    if (!this.editingTrack || this.editingTrack.entity_id === "new") return;
+    if (confirm(this.translationService.translate("TE_CONFIRM_DELETE"))) {
+      this.isSaving = true;
+      const idToDelete = this.editingTrack.entity_id;
+      this.dataService.deleteTrack(idToDelete).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.isEditMode = false;
+          this.allTracks = this.allTracks.filter(
+            (t) => t.entity_id !== idToDelete,
+          );
+          this.updateTrackSelectItems();
+          if (this.allTracks.length > 0) {
+            this.selectTrack(this.allTracks[0]);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: this.allTracks[0].entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewTrack();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to delete track", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      });
+    }
   }
 
   private initializeInterfaces() {
@@ -1057,7 +1173,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   isDirtyState(): boolean {
-    return this.undoManager?.hasChanges() || false;
+    if (!this.undoManager) return false;
+    const umChanges = this.undoManager.hasChanges();
+    if (!this.editingTrack || !this.originalTrack) return umChanges;
+    const manualChanges = !this.areTracksEqual(
+      this.createSnapshot(),
+      this.originalTrack,
+    );
+    return this.isDirty || umChanges || manualChanges;
   }
 
   hasChanges(): boolean {
@@ -1102,11 +1225,18 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onConfirmDiscard() {
     this.showDiscardConfirm = false;
+    if (this.originalTrack) {
+      this.selectTrack(this.originalTrack);
+    } else if (this.allTracks.length > 0) {
+      this.selectTrack(this.allTracks[0]);
+    }
+    this.isEditMode = false;
     this.isNavigationApproved = true;
     if (this.pendingDeactivate) {
       this.pendingDeactivate(true);
       this.pendingDeactivate = null;
     }
+    this.cdr.detectChanges();
   }
 
   onCancelDiscard() {
@@ -1334,13 +1464,16 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.undoManager.onInputFocus();
   }
   onInputChange() {
+    this.isDirty = true;
     this.undoManager.onInputChange();
+    this.cdr.detectChanges();
   }
   onInputBlur() {
     this.undoManager.onInputBlur();
     this.cdr.detectChanges();
   }
   captureState() {
+    this.isDirty = true;
     this.undoManager.captureState();
     this.cdr.detectChanges();
   }
@@ -1958,6 +2091,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   saveAsNew() {
+    this.isEditMode = true;
     this.trackName = this.generateUniqueName(this.trackName);
     this.defaultTrackName = this.trackName;
     this.focusNameInput();
@@ -1988,29 +2122,43 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   private autoSaveTrack() {
-    if (!this.editingTrack) return;
-    if (!this.trackName.trim() || !this.isNameUnique(true)) return;
-    if (this.isSaving) return;
+    this.logger.debug("autoSaveTrack triggered");
+    if (!this.editingTrack) {
+      this.logger.debug("autoSaveTrack: no editingTrack");
+      return;
+    }
+    if (!this.trackName.trim() || !this.isNameUnique(true)) {
+      this.logger.debug("autoSaveTrack: name invalid");
+      return;
+    }
+    if (this.isSaving) {
+      this.logger.debug("autoSaveTrack: isSaving is true");
+      return;
+    }
+    this.logger.debug("autoSaveTrack: triggering updateTrack");
     this.updateTrack(false, true);
   }
 
-  /* eslint-disable max-lines-per-function */
   updateTrack(isSaveAsNew: boolean = false, isAutoSave: boolean = false) {
-    if (!this.editingTrack) return;
+    if (!this.editingTrack || this.isSaving) return;
+    const wasNew = isSaveAsNew || this.editingTrack.entity_id === "new";
+    if (!wasNew && !this.isDirtyState()) return;
 
     // Validate
     if (!this.trackName.trim()) {
-      if (!isAutoSave)
+      if (!isAutoSave) {
         alert(this.translationService.translate("TE_ERROR_NAME_REQUIRED"));
+      }
       return;
     }
 
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
+    this.saveTrackData(isSaveAsNew, isAutoSave);
+  }
 
-    // Construct payload
+  private saveTrackData(isSaveAsNew: boolean, isAutoSave: boolean) {
     const finalTrack = this.createSnapshot();
-
     const wasNew = isSaveAsNew || finalTrack.entity_id === "new";
 
     // Inject @id for Jackson identity resolution
@@ -2029,187 +2177,138 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     this.subscriptions.push(
       obs.subscribe({
-        next: (result) => {
-          this.isSaving = false;
-          this.isAutoSaving = false;
-          this.navigationService.setLastEditedId("track", result.entity_id);
-          // Update local state with result (especially ID)
-          this.editingTrack = new Track({
-            entity_id: result.entity_id,
-            name: result.name,
-            num_track_sections: result.num_track_sections ?? 100,
-            track_scale: result.track_scale ?? 1.0,
-            lanes: result.lanes,
-            has_digital_fuel: result.has_digital_fuel ?? false,
-            arduino_configs: result.arduino_configs,
-            has_per_lane_relays: result.has_per_lane_relays ?? false,
-            has_main_relay: result.has_main_relay ?? false,
-            trackmate_configs: result.trackmate_configs,
-            phidget_configs: result.phidget_configs,
-            bart_configs: result.bart_configs,
-          });
-
-          // Update allTracks cache to ensure name uniqueness checks stay in sync
-          const idx = this.allTracks.findIndex(
-            (t) => t.entity_id === result.entity_id,
-          );
-          if (idx >= 0) {
-            this.allTracks[idx] = this.editingTrack;
-          } else {
-            this.allTracks.push(this.editingTrack);
-          }
-
-          // Sync local UI state with server result to ensure clean state matches
-          if (!isAutoSave) {
-            this.trackName = this.editingTrack.name;
-          }
-          // Only update lanes if they changed, to avoid triggering child effects unnecessarily
-          const newLanesJson = JSON.stringify(this.editingTrack.lanes);
-          if (newLanesJson !== JSON.stringify(this.lanes)) {
-            this.lanes = this.editingTrack.lanes.map(
-              (l) =>
-                new Lane(
-                  l.entity_id,
-                  l.foreground_color,
-                  l.background_color,
-                  l.length,
-                ),
-            );
-          }
-
-          if (
-            this.editingTrack.arduino_configs &&
-            this.editingTrack.arduino_configs.length > 0
-          ) {
-            const newConfigsJson = JSON.stringify(
-              this.editingTrack.arduino_configs,
-            );
-            if (newConfigsJson !== JSON.stringify(this.arduinoConfigs)) {
-              this.arduinoConfigs = JSON.parse(newConfigsJson);
-            }
-          } else {
-            if (this.arduinoConfigs.length > 0) {
-              this.arduinoConfigs = [];
-            }
-          }
-
-          if (
-            this.editingTrack.trackmate_configs &&
-            this.editingTrack.trackmate_configs.length > 0
-          ) {
-            const newTmConfigsJson = JSON.stringify(
-              this.editingTrack.trackmate_configs,
-            );
-            if (newTmConfigsJson !== JSON.stringify(this.trackmateConfigs)) {
-              this.trackmateConfigs = JSON.parse(newTmConfigsJson);
-            }
-          } else {
-            if (this.trackmateConfigs.length > 0) {
-              this.trackmateConfigs = [];
-            }
-          }
-
-          if (
-            this.editingTrack.phidget_configs &&
-            this.editingTrack.phidget_configs.length > 0
-          ) {
-            const newPhConfigsJson = JSON.stringify(
-              this.editingTrack.phidget_configs,
-            );
-            if (newPhConfigsJson !== JSON.stringify(this.phidgetConfigs)) {
-              this.phidgetConfigs = JSON.parse(newPhConfigsJson);
-            }
-          } else {
-            if (this.phidgetConfigs.length > 0) {
-              this.phidgetConfigs = [];
-            }
-          }
-
-          if (
-            this.editingTrack.bart_configs &&
-            this.editingTrack.bart_configs.length > 0
-          ) {
-            const newBartConfigsJson = JSON.stringify(
-              this.editingTrack.bart_configs,
-            );
-            if (newBartConfigsJson !== JSON.stringify(this.bartConfigs)) {
-              this.bartConfigs = JSON.parse(newBartConfigsJson);
-            }
-          } else {
-            if (this.bartConfigs.length > 0) {
-              this.bartConfigs = [];
-            }
-          }
-
-          if (wasNew) {
-            // Re-base the entire undo history onto the new track identity (ID and Name)
-            // so that undoing doesn't take us back to the old ID or Name.
-            this.undoManager.updateHistory((t) => {
-              (t as any).entity_id = result.entity_id;
-              (t as any).name = result.name;
-              return t;
-            });
-          }
-
-          if (this.editingTrack) {
-            this.undoManager.resetTracking(this.createSnapshot());
-          }
-
-          // Force sync with UI and children (especially back-button confirm input)
-          if (!this.isDestroyed) {
-            this.cdr.detectChanges();
-          }
-
-          if (this.navigateBackOnSave) {
-            this.onBack();
-          } else if (wasNew) {
-            if (isAutoSave) {
-              const url = this.router.serializeUrl(
-                this.router.createUrlTree(["/track-editor"], {
-                  queryParams: {
-                    id: result.entity_id,
-                    from: this.route.snapshot.queryParamMap.get("from"),
-                    returnUrl:
-                      this.route.snapshot.queryParamMap.get("returnUrl"),
-                  },
-                }),
-              );
-              this.location.replaceState(url);
-            } else {
-              this.router.navigate(["/track-editor"], {
-                queryParams: {
-                  id: result.entity_id,
-                  from: this.route.snapshot.queryParamMap.get("from"),
-                  returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-                },
-                replaceUrl: true,
-              });
-            }
-          } else {
-            // If not wasNew, we still check navigateBackOnSave (which we did above)
-            // The old code had no specific else for wasNew
-          }
-        },
-        error: (err) => {
-          this.logger.error("Failed to save track", err);
-          if (!this.isDestroyed) {
-            if (err.status === 409) {
-              if (!isAutoSave)
-                alert(
-                  this.translationService.translate("TE_ERROR_NAME_EXISTS"),
-                );
-            } else {
-              if (!isAutoSave)
-                alert(
-                  this.translationService.translate("TE_ERROR_SAVE_FAILED"),
-                );
-            }
-          }
-          this.isSaving = false;
-          this.isAutoSaving = false;
-        },
+        next: (result) => this.handleSaveSuccess(result, wasNew, isAutoSave),
+        error: (err) => this.handleSaveError(err, isAutoSave),
       }),
     );
+  }
+
+  private handleSaveSuccess(result: any, wasNew: boolean, isAutoSave: boolean) {
+    this.isSaving = false;
+    this.isAutoSaving = false;
+    if (!isAutoSave || this.transitionToReadOnlyOnSave) {
+      this.isEditMode = false;
+      this.transitionToReadOnlyOnSave = false;
+    }
+    this.navigationService.setLastEditedId("track", result.entity_id);
+
+    this.editingTrack = new Track({
+      entity_id: result.entity_id,
+      name: result.name,
+      num_track_sections: result.num_track_sections ?? 100,
+      track_scale: result.track_scale ?? 1.0,
+      lanes: result.lanes,
+      has_digital_fuel: result.has_digital_fuel ?? false,
+      arduino_configs: result.arduino_configs,
+      has_per_lane_relays: result.has_per_lane_relays ?? false,
+      has_main_relay: result.has_main_relay ?? false,
+      trackmate_configs: result.trackmate_configs,
+      phidget_configs: result.phidget_configs,
+      bart_configs: result.bart_configs,
+    });
+
+    this.selectedTrack = this.cloneTrack(this.editingTrack);
+    this.originalTrack = this.cloneTrack(this.editingTrack);
+    this.selectedTrackId = this.editingTrack.entity_id;
+    this.isDirty = false;
+
+    // Update allTracks cache to ensure name uniqueness checks stay in sync
+    const idx = this.allTracks.findIndex(
+      (t) => t.entity_id === result.entity_id,
+    );
+    if (idx >= 0) {
+      this.allTracks[idx] = this.cloneTrack(this.editingTrack);
+    } else {
+      this.allTracks.push(this.cloneTrack(this.editingTrack));
+    }
+    this.updateTrackSelectItems();
+
+    if (!isAutoSave) {
+      this.trackName = this.editingTrack.name;
+    }
+    this.syncSavedConfigsWithState();
+
+    if (wasNew) {
+      // Re-base the entire undo history onto the new track identity (ID and Name)
+      this.undoManager.updateHistory((t) => {
+        (t as any).entity_id = result.entity_id;
+        (t as any).name = result.name;
+        return t;
+      });
+    }
+
+    if (this.editingTrack) {
+      this.undoManager.resetTracking(this.createSnapshot());
+    }
+
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
+
+    if (this.navigateBackOnSave) {
+      this.navigateBackOnSave = false;
+      this.onBack();
+    } else if (wasNew) {
+      this.handleNewTrackNavigation(result.entity_id, isAutoSave);
+    }
+
+    if (this.isDirtyState()) {
+      this.autoSaveTrack();
+    }
+  }
+
+  private syncSavedConfigsWithState() {
+    if (!this.editingTrack) return;
+    const newLanesJson = JSON.stringify(this.editingTrack.lanes);
+    if (newLanesJson !== JSON.stringify(this.lanes)) {
+      this.lanes = this.editingTrack.lanes.map(
+        (l) =>
+          new Lane(
+            l.entity_id,
+            l.foreground_color,
+            l.background_color,
+            l.length,
+          ),
+      );
+    }
+    this.syncInterfaceConfigsFromTrack(this.editingTrack);
+  }
+
+  private handleSaveError(err: any, isAutoSave: boolean) {
+    this.logger.error("Failed to save track", err);
+    if (!this.isDestroyed && !isAutoSave) {
+      if (err?.status === 409) {
+        alert(this.translationService.translate("TE_ERROR_NAME_EXISTS"));
+      } else {
+        alert(this.translationService.translate("TE_ERROR_SAVE_FAILED"));
+      }
+    }
+    this.isSaving = false;
+    this.isAutoSaving = false;
+  }
+
+  private handleNewTrackNavigation(newId: string, isAutoSave: boolean) {
+    if (isAutoSave) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree(["/track-editor"], {
+          queryParams: {
+            id: newId,
+            from: this.route.snapshot.queryParamMap.get("from"),
+            returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+          },
+        }),
+      );
+      this.location.replaceState(url);
+    } else {
+      this.router.navigate(["/track-editor"], {
+        queryParams: {
+          id: newId,
+          from: this.route.snapshot.queryParamMap.get("from"),
+          returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+        },
+        replaceUrl: true,
+      });
+    }
   }
 
   get isNameInvalid(): boolean {
@@ -2234,13 +2333,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onBack() {
     this.isNavigationApproved = true;
-    this.router.navigate(["/track-manager"], {
-      queryParams: {
-        selectedId: this.editingTrack?.entity_id,
-        from: this.route.snapshot.queryParamMap.get("from"),
-        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-      },
-    });
+    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
+    const from = this.route.snapshot.queryParamMap.get("from");
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+    } else if (from === "modify-heats") {
+      this.router.navigate(["/default-raceday"], {
+        queryParams: { modifyHeats: "true" },
+      });
+    } else {
+      this.router.navigate(["/raceday-setup"]);
+    }
   }
 
   trackByLane(index: number, lane: Lane): string {

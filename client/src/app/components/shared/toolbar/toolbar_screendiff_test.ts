@@ -14,7 +14,7 @@ test.describe("Toolbar Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/track-manager"),
+      page.goto("/race-manager"),
     );
 
     // Wait for the toolbar to be visible
@@ -43,7 +43,7 @@ test.describe("Toolbar Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/track-manager"),
+      page.goto("/race-manager"),
     );
 
     const toolbar = page.locator("app-toolbar");
@@ -58,7 +58,7 @@ test.describe("Toolbar Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/track-manager"),
+      page.goto("/race-manager"),
     );
 
     const toolbar = page.locator("app-toolbar");

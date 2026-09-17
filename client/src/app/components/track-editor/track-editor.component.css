@@ -214,6 +214,12 @@
   cursor: grabbing;
 }
 
+.lane-drag-handle.disabled {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 6px;
@@ -408,6 +414,11 @@
   padding: 24px 0 0 24px;
   transform: translateZ(0);
   will-change: transform;
+}
+
+.preview-panel.read-only .interface-container {
+  pointer-events: none;
+  opacity: 0.85;
 }
 
 /* Custom Scrollbar for Preview Panel */

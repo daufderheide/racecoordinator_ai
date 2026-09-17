@@ -8,7 +8,16 @@ Race Coordinator AI propose une architecture multi-interface avancée permettant
 
 ## Vue d'Ensemble & Sauvegarde Automatique
 
-L'Éditeur de Circuits est divisé en deux zones de travail synchronisées :
+L'Éditeur de Circuits propose une interface unifiée pour sélectionner, afficher, configurer et tester vos circuits de slot car :
+
+- **Sélecteur de Circuit** : Situé dans l'en-tête supérieur à côté du titre de la page, ce menu déroulant répertorie tous les circuits configurés et permet de basculer rapidement entre eux.
+- **Mode Lecture Seule** : Par défaut, à l'ouverture de l'éditeur, les propriétés du circuit, la disposition des voies et les interfaces matérielles s'affichent en lecture seule. Les champs de formulaire, la gestion des voies et les actions d'interface sont verrouillés afin d'éviter toute modification accidentelle.
+- **Mode Édition** : Cliquez sur l'icône **Modifier** (crayon) de la barre d'outils pour déverrouiller tous les contrôles de configuration, la réorganisation des voies et le paramétrage matériel. En mode édition, le sélecteur de circuit est verrouillé pour éviter de quitter la page avec des modifications non enregistrées.
+- **Sauvegarde Automatique Continue** : À mesure que vous apportez des modifications (renommage, dimensions des voies, réorganisation ou ajustement des broches), vos changements sont automatiquement enregistrés en arrière-plan sur le serveur sans quitter le mode édition.
+- **Terminer l'Édition** : Cliquez sur l'icône **Terminer l'édition** (coche) pour valider vos modifications, garantir leur persistance sur le serveur et revenir au mode lecture seule.
+- **Abandonner les Modifications** : Si vous tentez de quitter l'éditeur avec des modifications non enregistrées ou invalides, une boîte de dialogue vous demande confirmation. L'abandon rétablit la dernière version enregistrée et restaure le mode lecture seule.
+
+L'espace de travail est divisé en deux panneaux synchronisés :
 
 - **Panneau de Gauche (Propriétés Générales & Voies)** : Configurez l'identification du circuit, le nombre de sections, l'échelle physique et les caractéristiques de chaque voie (dimensions, ordre et couleurs). Ajoutez de nouvelles interfaces matérielles au bas de ce panneau.
 - **Panneau de Droite (Interfaces Matérielles & Tests Interactifs)** : Configurez les contrôleurs connectés, associez les broches et canaux aux fonctions de la piste, paramétrez les bandeaux LED RGB adressables et testez capteurs et relais en temps réel.
@@ -232,9 +241,15 @@ Permet de tester vos formats de course, rotations, thèmes visuels, annonces voc
 
 ## Utilisation de l'Éditeur & Barre d'Outils
 
+La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de gestion essentiels :
+
+- **Retour** : Retourne à la vue précédente ou à la Configuration du Jour de Course.
+- **Ajouter un Circuit (+)** : Crée un nouveau modèle de circuit et active le mode édition.
+- **Dupliquer le Circuit** : Crée une copie conforme sous un nouveau nom unique, idéal pour tester des variantes sans altérer le circuit principal.
+- **Modifier / Terminer l'Édition** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
+- **Supprimer le Circuit** : Supprime le circuit sélectionné après confirmation.
 - **Annuler (`Ctrl+Z`) / Rétablir (`Ctrl+Y`)** : Historique complet pour rétablir facilement tout changement.
-- **Enregistrer sous (Dupliquer le Circuit)** : Crée une copie conforme sous un nouveau nom, idéal pour tester des variantes sans altérer le circuit principal.
-- **Visite Guidée** : Cliquez sur le bouton d'aide (**`?`**) pour lancer une visite interactive de chaque élément à l'écran.
+- **Aide (`?`)** : Lance une visite interactive guidée de chaque élément à l'écran.
 
 ---
 

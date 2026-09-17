@@ -8,7 +8,16 @@ Race Coordinator AI verfügt über eine fortschrittliche Multi-Interface-Archite
 
 ## Übersicht & Automatisches Speichern
 
-Der Strecken-Editor ist in zwei synchronisierte Arbeitsbereiche unterteilt:
+Der Strecken-Editor bietet eine einheitliche Oberfläche zum Auswählen, Anzeigen, Konfigurieren und Testen Ihrer Slotcar-Rennstrecken:
+
+- **Streckenauswahl**: Dieses Dropdown-Menü in der oberen Kopfzeile neben dem Seitentitel listet alle vorhandenen Strecken auf und ermöglicht den schnellen Wechsel zwischen ihnen.
+- **Schreibgeschützter Modus**: Standardmäßig werden beim Öffnen des Editors die Streckeneigenschaften, Spurlayouts und Hardware-Schnittstellen im schreibgeschützten Modus angezeigt. Formularfelder, Spureinstellungen und Schnittstellenaktionen sind gesperrt, um versehentliche Änderungen zu verhindern.
+- **Bearbeitungsmodus**: Ein Klick auf das **Bearbeiten**-Symbol (Stift) in der Symbolleiste entsperrt alle Konfigurationselemente, Spuranpassungen und Hardware-Einstellungen. Im Bearbeitungsmodus ist das Auswahl-Dropdown gesperrt, um ein versehentliches Verlassen ungespeicherter Änderungen zu verhindern.
+- **Kontinuierliches automatisches Speichern**: Während Sie Änderungen vornehmen (Umbenennen, Anpassen von Spurlängen, Neuanordnen von Spuren, Ändern von Pin-Zuweisungen), werden Ihre Änderungen automatisch im Hintergrund auf dem Server gespeichert, ohne den Bearbeitungsmodus zu verlassen.
+- **Bearbeitung abschließen**: Ein Klick auf das Symbol **Bearbeitung abschließen** (Häkchen) validiert Ihre Änderungen, stellt die dauerhafte Speicherung sicher und kehrt in den schreibgeschützten Modus zurück.
+- **Änderungen verwerfen**: Wenn Sie versuchen, den Editor mit ungespeicherten oder ungültigen Änderungen zu verlassen, fordert Sie der Bestätigungsdialog auf. Beim Verwerfen werden alle Änderungen auf den zuletzt gespeicherten Stand zurückgesetzt und der schreibgeschützte Modus wiederhergestellt.
+
+Der Arbeitsbereich ist in zwei synchronisierte Bereiche unterteilt:
 
 - **Linkes Panel (Allgemeine Strecken- & Spureigenschaften)**: Konfigurieren Sie Streckenbezeichnung, Sektorenanzahl, Maßstab sowie individuelle Spureigenschaften (Abmessungen, Reihenfolge und Farben). Am unteren Rand dieses Panels können neue Hardware-Schnittstellen hinzugefügt werden.
 - **Rechtes Panel (Hardware-Schnittstellen & Interaktive Tests)**: Konfigurieren Sie angeschlossene Hardware-Controller, weisen Sie physische Pins und Kanäle den Streckenfunktionen zu, richten Sie adressierbare RGB-LED-Streifen ein und testen Sie Sensoren sowie Relais in Echtzeit.
@@ -236,9 +245,15 @@ Für Tests von Rennformaten, Rotationen, Themes, Audioansagen und Leaderboards o
 
 ## Editor-Bedienung & Symbolleiste
 
+Die obere Symbolleiste des Strecken-Editors bietet wichtige Steuerungsfunktionen:
+
+- **Zurück**: Kehrt zur vorherigen Ansicht oder zum Raceday-Setup zurück.
+- **Strecke hinzufügen (+)**: Erstellt eine neue Streckenvorlage und öffnet den Bearbeitungsmodus.
+- **Strecke duplizieren**: Erstellt eine exakte Kopie der aktuellen Strecke unter einem neuen Namen, ideal zum Testen alternativer Einstellungen.
+- **Bearbeiten / Bearbeitung abschließen**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um. Beim Verlassen des Bearbeitungsmodus werden Änderungen validiert und gespeichert.
+- **Strecke löschen**: Löscht die ausgewählte Strecke nach Sicherheitsbestätigung.
 - **Rückgängig (`Ctrl+Z`) / Wiederholen (`Ctrl+Y`)**: Schritthafte Wiederherstellung aller Spur-, Farb- und Pin-Änderungen.
-- **Als Neu speichern (Strecke duplizieren)**: Erstellt eine Kopie der aktuellen Strecke unter neuem Namen, ideal zum Testen alternativer Einstellungen.
-- **Geführte Tour**: Klick auf das Fragezeichen (**`?`**) startet einen interaktiven Rundgang über alle Elemente der Seite.
+- **Hilfe (`?`)**: Startet einen interaktiven geführten Rundgang über alle Elemente der Seite.
 
 ---
 
