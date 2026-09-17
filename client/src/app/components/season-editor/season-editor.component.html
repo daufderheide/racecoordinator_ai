@@ -3,11 +3,23 @@
     titleKey="SE_TITLE"
     [itemName]="editingSeason.name"
     [undoManager]="undoManager"
+    [items]="seasonSelectItems"
+    [selectedId]="selectedSeasonId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
+    [showDelete]="existingSeasons.length > 1"
     [disabledCopy]="!isFormValid || isSaving"
+    [disabledDelete]="!editingSeason || isSaving || existingSeasons.length <= 1"
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
+    (selectedIdChange)="onSelectSeasonById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewSeason()"
     (copy)="saveAsNew()"
+    (delete)="onDeleteSeason()"
+    (back)="onBack()"
   ></app-editor-title>
 
   @if (!isLoading) {
@@ -26,6 +38,8 @@
             id="season-name"
             name="season-name"
             type="text"
+            [disabled]="!isEditMode"
+            [attr.disabled]="!isEditMode ? '' : null"
             [class.invalid]="
               isNameDuplicate || (!editingSeason.name && isDirty)
             "
@@ -60,6 +74,8 @@
             min="0"
             max="50"
             step="1"
+            [disabled]="!isEditMode"
+            [attr.disabled]="!isEditMode ? '' : null"
             [(ngModel)]="editingSeason.drops"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
@@ -96,13 +112,15 @@
               }
             </div>
           </div>
-          <button
-            id="btn-add-race"
-            class="btn-add-race"
-            (click)="openAddRaceModal()"
-          >
-            + {{ "SE_BTN_ADD_RACE" | translate }}
-          </button>
+          @if (isEditMode) {
+            <button
+              id="btn-add-race"
+              class="btn-add-race"
+              (click)="openAddRaceModal()"
+            >
+              + {{ "SE_BTN_ADD_RACE" | translate }}
+            </button>
+          }
         </div>
 
         <div class="editor-scroll-content">
@@ -211,13 +229,15 @@
                           >
                         }
                       </div>
-                      <button
-                        class="btn-remove-race"
-                        (click)="removeRaceFromSeason(idx, $event)"
-                        title="Remove Race"
-                      >
-                        {{ "SE_REMOVE_RACE" | translate }}
-                      </button>
+                      @if (isEditMode) {
+                        <button
+                          class="btn-remove-race"
+                          (click)="removeRaceFromSeason(idx, $event)"
+                          title="Remove Race"
+                        >
+                          {{ "SE_REMOVE_RACE" | translate }}
+                        </button>
+                      }
                     </div>
                     @if (isRaceExpanded(race, idx)) {
                       <div class="expander-body">

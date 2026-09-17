@@ -2017,7 +2017,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ? { id: this.selectedEvent.entity_id }
       : {};
     this.closeConfigDropdown();
-    this.router.navigate(["/event-manager"], { queryParams });
+    this.router.navigate(["/event-editor"], { queryParams });
   }
 
   onSeasonChange() {
@@ -2072,7 +2072,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ? { id: this.selectedSeason.entity_id }
       : {};
     this.closeConfigDropdown();
-    this.router.navigate(["/season-manager"], { queryParams });
+    this.router.navigate(["/season-editor"], { queryParams });
   }
 
   toggleConfigDropdown(event: Event) {

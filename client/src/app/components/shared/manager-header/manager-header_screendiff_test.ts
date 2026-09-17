@@ -11,7 +11,7 @@ test.describe("Manager Header Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/event-manager"),
+      page.goto("/asset-manager"),
     );
 
     const header = page.locator("app-manager-header");
@@ -27,7 +27,7 @@ test.describe("Manager Header Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/event-manager"),
+      page.goto("/asset-manager"),
     );
 
     const header = page.locator("app-manager-header");
@@ -43,7 +43,7 @@ test.describe("Manager Header Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/event-manager"),
+      page.goto("/asset-manager"),
     );
 
     await page.evaluate(() => {

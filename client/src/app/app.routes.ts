@@ -7,7 +7,6 @@ import { DriverEditorComponent } from "@app/components/driver-editor/driver-edit
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { EventEditorComponent } from "@app/components/event-editor/event-editor.component";
-import { EventManagerComponent } from "@app/components/event-manager/event-manager.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
 import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
@@ -17,7 +16,6 @@ import { ModifyHeatsModalComponent } from "@app/components/raceday/modify-heats-
 import { RacedayComponent } from "@app/components/raceday/raceday.component";
 import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-setup.component";
 import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
-import { SeasonManagerComponent } from "@app/components/season-manager/season-manager.component";
 import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
@@ -122,10 +120,8 @@ export const routes: Routes = [
   },
   {
     path: "event-manager",
-    component: EventManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Event Manager",
-    data: { animation: "EventManagerPage" },
+    redirectTo: "event-editor",
+    pathMatch: "full",
   },
   {
     path: "event-editor",
@@ -138,10 +134,8 @@ export const routes: Routes = [
   },
   {
     path: "season-manager",
-    component: SeasonManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Season Manager",
-    data: { animation: "SeasonManagerPage" },
+    redirectTo: "season-editor",
+    pathMatch: "full",
   },
   {
     path: "season-editor",

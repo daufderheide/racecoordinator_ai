@@ -1603,10 +1603,10 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(selector).toBeTruthy();
     });
 
-    it("should navigate to event manager on openEventManager", () => {
+    it("should navigate to event editor on openEventManager", () => {
       component.openEventManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/event-manager"],
+        ["/event-editor"],
         jasmine.any(Object),
       );
     });
@@ -2328,7 +2328,7 @@ describe("DefaultRacedaySetupComponent", () => {
       component.selectedEvent = { entity_id: "e1" } as any;
       component.openEventManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/event-manager"],
+        ["/event-editor"],
         jasmine.any(Object),
       );
 
@@ -2342,7 +2342,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
       component.openSeasonManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/season-manager"],
+        ["/season-editor"],
         jasmine.any(Object),
       );
     });
