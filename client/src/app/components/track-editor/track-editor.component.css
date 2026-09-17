@@ -453,8 +453,10 @@
   cursor: not-allowed !important;
 }
 
-.preview-panel.read-only ::ng-deep .section-header button {
-  pointer-events: none !important;
+.preview-panel.read-only ::ng-deep .section-header button,
+.preview-panel.read-only ::ng-deep .led-string-header button,
+.preview-panel.read-only ::ng-deep .led-string-header .clickable-link-icon {
+  pointer-events: auto !important;
   opacity: 0.5;
   cursor: not-allowed !important;
 }
@@ -462,7 +464,8 @@
 .section-header,
 .preview-panel .section-header,
 .interface-container .section-header,
-.preview-panel.read-only ::ng-deep .section-header {
+.preview-panel.read-only ::ng-deep .section-header,
+.preview-panel.read-only ::ng-deep .led-string-header {
   pointer-events: auto !important;
   cursor: pointer !important;
 }

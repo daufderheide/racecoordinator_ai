@@ -85,6 +85,7 @@ class MockEditorTitleComponent {
 import { deepCopy } from "@app/utils/clone.utils";
 
 import { NavigationService } from "../../services/navigation.service";
+import { ArduinoEditorComponent } from "./arduino-editor/arduino-editor.component";
 import { TrackEditorComponent } from "./track-editor.component";
 
 describe("TrackEditorComponent", () => {
@@ -1189,6 +1190,71 @@ describe("TrackEditorComponent", () => {
       expect(component.sectionsExpanded["lanes"]).toBeFalse();
       component.toggleSection("lanes");
       expect(component.sectionsExpanded["lanes"]).toBeTrue();
+    });
+
+    it("should allow toggling arduino led string expander when in read-only mode", () => {
+      component.isEditMode = false;
+      const ls: any = {
+        pin: 2,
+        leds: [0, 0, 0],
+        numUsedLeds: 0,
+        addressableLeds: 3,
+        brightness: 32,
+        ledType: 1,
+        colorOrder: 0,
+        flagFlashRate: 2,
+        ledLaneColorOverrides: ["#ffffff"],
+      };
+      component.arduinoConfigs = [
+        {
+          name: "A1",
+          commPort: "COM1",
+          baudRate: 115200,
+          debounceUs: 1000,
+          hardwareType: 0,
+          digitalIds: new Array(14).fill(0),
+          analogIds: new Array(6).fill(0),
+          normallyClosedLaneSensors: false,
+          normallyClosedRelays: true,
+          globalInvertLights: 0,
+          usePitsAsLaps: false,
+          useLapsForSegments: true,
+          ledStrings: [ls],
+          voltageConfigs: {},
+          lapPinPitBehavior: 3,
+        } as any,
+      ];
+      fixture.detectChanges();
+
+      const arduinoEditor =
+        fixture.debugElement.nativeElement.querySelector("app-arduino-editor");
+      expect(arduinoEditor).toBeTruthy();
+
+      const arduinoComponent = fixture.debugElement.query(
+        By.directive(ArduinoEditorComponent),
+      ).componentInstance;
+      arduinoComponent.sectionsExpanded.arduino = true;
+      arduinoComponent.sectionsExpanded.leds = true;
+      arduinoComponent.ledStringExpanded = [false];
+      fixture.detectChanges();
+
+      const header: HTMLElement = arduinoEditor.querySelector(
+        "#arduino-led-string-header-0-0",
+      );
+      expect(header).toBeTruthy();
+
+      // Click to expand
+      header.click();
+      fixture.detectChanges();
+
+      expect(arduinoComponent.ledStringExpanded[0]).toBeTrue();
+      const details = arduinoEditor.querySelector(".led-string-details");
+      expect(details).toBeTruthy();
+
+      // Click again to collapse
+      header.click();
+      fixture.detectChanges();
+      expect(arduinoComponent.ledStringExpanded[0]).toBeFalse();
     });
 
     it("should add and remove hardware configurations and lanes", () => {

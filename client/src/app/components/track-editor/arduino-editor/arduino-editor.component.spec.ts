@@ -1696,5 +1696,90 @@ describe("ArduinoEditorComponent", () => {
       component.setVoltageMax(0, 500);
       expect(component.config()?.voltageConfigs?.[0]).toBeUndefined();
     });
+
+    it("should allow toggling sections when in read-only mode", () => {
+      component.sectionsExpanded.leds = true;
+      component.toggleSection("leds");
+      expect(component.sectionsExpanded.leds).toBeFalse();
+
+      component.toggleSection("leds");
+      expect(component.sectionsExpanded.leds).toBeTrue();
+    });
+
+    it("should allow toggling led string expanders when in read-only mode", () => {
+      const ls: any = {
+        pin: 2,
+        leds: [0, 0, 0],
+        numUsedLeds: 0,
+        addressableLeds: 3,
+        brightness: 32,
+        ledType: 1,
+        colorOrder: 0,
+        flagFlashRate: 2,
+        ledLaneColorOverrides: ["#ffffff"],
+      };
+      component.config()!.ledStrings = [ls];
+      component.ledStringExpanded = [false];
+
+      component.toggleLedString(0);
+      expect(component.ledStringExpanded[0]).toBeTrue();
+
+      component.toggleLedString(0);
+      expect(component.ledStringExpanded[0]).toBeFalse();
+    });
+
+    it("should toggle led string expander upon clicking header in read-only mode without deleting or toggling link", () => {
+      component.sectionsExpanded.leds = true;
+      const ls: any = {
+        pin: 2,
+        leds: [0, 0, 0],
+        numUsedLeds: 0,
+        addressableLeds: 3,
+        brightness: 32,
+        ledType: 1,
+        colorOrder: 0,
+        flagFlashRate: 2,
+        ledLaneColorOverrides: ["#ffffff"],
+      };
+      component.config()!.ledStrings = [ls];
+      component.ledStringExpanded = [false];
+      fixture.detectChanges();
+
+      const header: HTMLElement = fixture.nativeElement.querySelector(
+        "#arduino-led-string-header-0-0",
+      );
+      expect(header).toBeTruthy();
+      header.click();
+      fixture.detectChanges();
+
+      expect(component.ledStringExpanded[0]).toBeTrue();
+
+      // Click delete button inside header - should not delete and should not collapse
+      const deleteBtn: HTMLButtonElement =
+        header.querySelector("button.delete")!;
+      expect(deleteBtn).toBeTruthy();
+      deleteBtn.click();
+      fixture.detectChanges();
+
+      expect(component.config()!.ledStrings.length).toBe(1);
+      expect(component.ledStringExpanded[0]).toBeTrue();
+
+      // Click link icon inside header - should not mutate link state and should not collapse
+      const initialLinked = component.isLedStringsLinked;
+      const linkIcon: HTMLElement = header.querySelector(
+        ".clickable-link-icon",
+      )!;
+      expect(linkIcon).toBeTruthy();
+      linkIcon.click();
+      fixture.detectChanges();
+
+      expect(component.isLedStringsLinked).toBe(initialLinked);
+      expect(component.ledStringExpanded[0]).toBeTrue();
+
+      // Click header again to collapse
+      header.click();
+      fixture.detectChanges();
+      expect(component.ledStringExpanded[0]).toBeFalse();
+    });
   });
 });
