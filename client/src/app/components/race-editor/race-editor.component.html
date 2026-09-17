@@ -316,13 +316,18 @@
                   </div>
                   <div class="config-row">
                     <div class="config-section checkbox-section">
-                      <label id="practice-input" class="checkbox-container">
+                      <label
+                        id="practice-input"
+                        class="checkbox-container"
+                        [class.disabled]="!isEditMode"
+                      >
                         <input
                           type="checkbox"
                           [(ngModel)]="editingRace.practice"
                           (ngModelChange)="captureState()"
                           class="practice-input"
                           data-testid="practice-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -334,6 +339,7 @@
                       <label
                         id="adjust-drift-laps-input"
                         class="checkbox-container"
+                        [class.disabled]="!isEditMode"
                       >
                         <input
                           type="checkbox"
@@ -341,6 +347,7 @@
                           (ngModelChange)="captureState()"
                           class="adjust-drift-laps-input"
                           data-testid="adjust-drift-laps-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -448,6 +455,7 @@
                       <label
                         id="reverse-heats-input"
                         class="checkbox-container"
+                        [class.disabled]="!isEditMode"
                       >
                         <input
                           id="reverse-heats-checkbox"
@@ -456,6 +464,7 @@
                           (ngModelChange)="captureState()"
                           class="reverse-heats-input"
                           data-testid="reverse-heats-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -704,6 +713,7 @@
                       <label
                         id="groups-enabled-input"
                         class="checkbox-container"
+                        [class.disabled]="!isEditMode"
                       >
                         <input
                           type="checkbox"
@@ -711,6 +721,7 @@
                           (ngModelChange)="captureState()"
                           class="groups-enabled-input"
                           data-testid="groups-enabled-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -744,6 +755,7 @@
                           min="1"
                           max="100"
                           [disabled]="
+                            !isEditMode ||
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
                           "
@@ -754,6 +766,7 @@
                           id="groups-balance-input"
                           class="checkbox-container"
                           [class.disabled]="
+                            !isEditMode ||
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
                           "
@@ -765,6 +778,7 @@
                             class="groups-balance-input"
                             data-testid="groups-balance-input"
                             [disabled]="
+                              !isEditMode ||
                               !editingRace.group_options.enabled ||
                               editingRace?.heat_rotation_type === 'Custom'
                             "
@@ -782,6 +796,7 @@
                           id="groups-allow-empty-input"
                           class="checkbox-container"
                           [class.disabled]="
+                            !isEditMode ||
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
                           "
@@ -795,6 +810,7 @@
                             class="groups-allow-empty-input"
                             data-testid="groups-allow-empty-input"
                             [disabled]="
+                              !isEditMode ||
                               !editingRace.group_options.enabled ||
                               editingRace?.heat_rotation_type === 'Custom'
                             "
@@ -810,6 +826,7 @@
                           id="groups-force-multiple-input"
                           class="checkbox-container"
                           [class.disabled]="
+                            !isEditMode ||
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
                           "
@@ -823,6 +840,7 @@
                             class="groups-force-multiple-input"
                             data-testid="groups-force-multiple-input"
                             [disabled]="
+                              !isEditMode ||
                               !editingRace.group_options.enabled ||
                               editingRace?.heat_rotation_type === 'Custom'
                             "
@@ -840,6 +858,7 @@
                           id="groups-rotate-heats-input"
                           class="checkbox-container"
                           [class.disabled]="
+                            !isEditMode ||
                             !editingRace.group_options.enabled ||
                             editingRace?.heat_rotation_type === 'Custom'
                           "
@@ -853,6 +872,7 @@
                             class="groups-rotate-heats-input"
                             data-testid="groups-rotate-heats-input"
                             [disabled]="
+                              !isEditMode ||
                               !editingRace.group_options.enabled ||
                               editingRace?.heat_rotation_type === 'Custom'
                             "
@@ -1020,6 +1040,7 @@
                       <label
                         id="start-behind-sensor-input"
                         class="checkbox-container"
+                        [class.disabled]="!isEditMode"
                       >
                         <input
                           type="checkbox"
@@ -1027,6 +1048,7 @@
                           (ngModelChange)="captureState()"
                           class="start-behind-sensor-input"
                           data-testid="start-behind-sensor-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -1038,6 +1060,7 @@
                       <label
                         id="start-at-current-input"
                         class="checkbox-container"
+                        [class.disabled]="!isEditMode"
                       >
                         <input
                           type="checkbox"
@@ -1045,6 +1068,7 @@
                           (ngModelChange)="captureState()"
                           class="start-at-current-input"
                           data-testid="start-at-current-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -1055,13 +1079,18 @@
                   </div>
                   <div class="config-row">
                     <div class="config-section checkbox-section">
-                      <label id="hot-start-input" class="checkbox-container">
+                      <label
+                        id="hot-start-input"
+                        class="checkbox-container"
+                        [class.disabled]="!isEditMode"
+                      >
                         <input
                           type="checkbox"
                           [(ngModel)]="editingRace.hot_start"
                           (ngModelChange)="captureState()"
                           class="hot-start-input"
                           data-testid="hot-start-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -1073,6 +1102,7 @@
                       <label
                         id="restart-on-false-start-input"
                         class="checkbox-container"
+                        [class.disabled]="!isEditMode"
                       >
                         <input
                           type="checkbox"
@@ -1080,6 +1110,7 @@
                           (ngModelChange)="captureState()"
                           class="restart-on-false-start-input"
                           data-testid="restart-on-false-start-input"
+                          [disabled]="!isEditMode"
                         />
                         <span class="checkmark"></span>
                         <span class="checkbox-label">
@@ -1147,6 +1178,7 @@
                         <label
                           id="team-pit-stop-change-driver-input"
                           class="checkbox-container"
+                          [class.disabled]="!isEditMode"
                         >
                           <input
                             type="checkbox"
@@ -1157,6 +1189,7 @@
                             (ngModelChange)="captureState()"
                             class="team-pit-stop-change-driver-input"
                             data-testid="team-pit-stop-change-driver-input"
+                            [disabled]="!isEditMode"
                           />
                           <span class="checkmark"></span>
                           <span class="checkbox-label">{{
@@ -1263,7 +1296,7 @@
                         <label
                           id="fuel-enabled-input"
                           class="checkbox-container"
-                          [class.disabled]="hasDigitalFuel"
+                          [class.disabled]="!isEditMode || hasDigitalFuel"
                         >
                           <input
                             type="checkbox"
@@ -1271,7 +1304,7 @@
                             (ngModelChange)="captureState()"
                             class="fuel-enabled-input"
                             data-testid="fuel-enabled-input"
-                            [disabled]="hasDigitalFuel"
+                            [disabled]="!isEditMode || hasDigitalFuel"
                           />
                           <span class="checkmark"></span>
                           <span class="checkbox-label">{{
@@ -1500,6 +1533,7 @@
                             id="fuel-reset-at-start-input"
                             class="checkbox-container"
                             [class.disabled]="
+                              !isEditMode ||
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
                             "
@@ -1514,6 +1548,7 @@
                               class="fuel-reset-at-start-input"
                               data-testid="fuel-reset-at-start-input"
                               [disabled]="
+                                !isEditMode ||
                                 hasDigitalFuel ||
                                 !editingRace.fuel_options.enabled
                               "
@@ -2172,7 +2207,7 @@
                         <label
                           id="digital-fuel-enabled-input"
                           class="checkbox-container"
-                          [class.disabled]="!hasDigitalFuel"
+                          [class.disabled]="!isEditMode || !hasDigitalFuel"
                         >
                           <input
                             type="checkbox"
@@ -2182,7 +2217,7 @@
                             (ngModelChange)="captureState()"
                             class="digital-fuel-enabled-input"
                             data-testid="digital-fuel-enabled-input"
-                            [disabled]="!hasDigitalFuel"
+                            [disabled]="!isEditMode || !hasDigitalFuel"
                           />
                           <span class="checkmark"></span>
                           <span
@@ -2339,6 +2374,7 @@
                             id="digital-fuel-reset-at-start-input"
                             class="checkbox-container"
                             [class.disabled]="
+                              !isEditMode ||
                               !hasDigitalFuel ||
                               !editingRace.digital_fuel_options.enabled
                             "
@@ -2353,6 +2389,7 @@
                               class="digital-fuel-reset-at-start-input"
                               data-testid="digital-fuel-reset-at-start-input"
                               [disabled]="
+                                !isEditMode ||
                                 !hasDigitalFuel ||
                                 !editingRace.digital_fuel_options.enabled
                               "
@@ -3165,6 +3202,7 @@
                           <label
                             id="season-overall-one-bonus-input"
                             class="checkbox-container"
+                            [class.disabled]="!isEditMode"
                           >
                             <input
                               type="checkbox"
@@ -3176,6 +3214,7 @@
                               (ngModelChange)="captureState()"
                               class="season-overall-one-bonus-input"
                               data-testid="season-overall-one-bonus-input"
+                              [disabled]="!isEditMode"
                             />
                             <span class="checkmark"></span>
                             <span class="checkbox-label">{{
@@ -3264,6 +3303,7 @@
                           <label
                             id="season-heat-one-bonus-input"
                             class="checkbox-container"
+                            [class.disabled]="!isEditMode"
                           >
                             <input
                               type="checkbox"
@@ -3275,6 +3315,7 @@
                               (ngModelChange)="captureState()"
                               class="season-heat-one-bonus-input"
                               data-testid="season-heat-one-bonus-input"
+                              [disabled]="!isEditMode"
                             />
                             <span class="checkmark"></span>
                             <span class="checkbox-label">{{

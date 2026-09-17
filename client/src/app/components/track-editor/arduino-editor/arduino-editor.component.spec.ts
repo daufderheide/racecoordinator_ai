@@ -1658,4 +1658,43 @@ describe("ArduinoEditorComponent", () => {
       expect(component.pinState["D2"]).toBeFalse();
     });
   });
+
+  describe("Read-Only Mode", () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput("isEditMode", false);
+      fixture.detectChanges();
+    });
+
+    it("should not open pin dropdown when in read-only mode", () => {
+      component.togglePinDropdown("digital-2", new MouseEvent("click"));
+      expect(component.openPinDropdown).toBeNull();
+    });
+
+    it("should not select pin action when in read-only mode", () => {
+      component.selectPinAction(true, 2, "master_call");
+      expect(component.config()?.digitalIds[2]).toBe(
+        PinBehavior.BEHAVIOR_UNUSED,
+      );
+    });
+
+    it("should not toggle pin state when in read-only mode", () => {
+      component.togglePinState(true, 2);
+      expect(component.pinState["D2"]).toBeFalsy();
+    });
+
+    it("should not mutate hardwareType or update config when in read-only mode", () => {
+      component.onHardwareTypeChange(1);
+      expect(component.config()?.hardwareType).toBe(0);
+    });
+
+    it("should not add or remove LED strings in read-only mode", () => {
+      component.addLedString(10);
+      expect(component.config()?.ledStrings?.length || 0).toBe(0);
+    });
+
+    it("should not update voltage max or reset max seen in read-only mode", () => {
+      component.setVoltageMax(0, 500);
+      expect(component.config()?.voltageConfigs?.[0]).toBeUndefined();
+    });
+  });
 });

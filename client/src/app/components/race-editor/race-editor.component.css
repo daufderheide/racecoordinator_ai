@@ -634,9 +634,15 @@
 .preview-panel.read-only select,
 .preview-panel.read-only app-custom-select,
 .preview-panel.read-only button,
+.preview-panel.read-only .checkbox-container,
+.preview-panel.read-only .checkmark,
+.preview-panel.read-only label.checkbox-container,
 .editor-panel.read-only input:not(.driver-count-input),
 .editor-panel.read-only select,
-.editor-panel.read-only app-custom-select {
+.editor-panel.read-only app-custom-select,
+.editor-panel.read-only .checkbox-container,
+.editor-panel.read-only .checkmark,
+.editor-panel.read-only label.checkbox-container {
   pointer-events: none !important;
   opacity: 0.75;
   cursor: not-allowed !important;
@@ -1204,9 +1210,13 @@
   text-transform: uppercase;
 }
 
-.disabled {
+.disabled,
+.checkbox-container.disabled,
+.checkbox-container input:disabled ~ .checkmark,
+.checkbox-container input:disabled ~ .checkbox-label {
   opacity: 0.4;
-  pointer-events: none;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 .graph-hover-card {

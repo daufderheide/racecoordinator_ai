@@ -376,6 +376,7 @@
               <app-arduino-editor
                 [config]="config"
                 [lanes]="lanes"
+                [isEditMode]="isEditMode"
                 (configChange)="onArduinoConfigChange()"
                 [index]="i"
                 [count]="arduinoConfigs.length"
@@ -395,6 +396,7 @@
               <app-trakmate-editor
                 [config]="config"
                 [lanes]="lanes.length"
+                [isEditMode]="isEditMode"
                 [interfaceIndex]="i + arduinoConfigs.length"
                 (change)="onTrackmateConfigChange()"
                 (remove)="removeTrackmateConfig(i)"
@@ -413,6 +415,7 @@
                 [config]="config"
                 [allPhidgetConfigs]="phidgetConfigs"
                 [lanes]="lanes.length"
+                [isEditMode]="isEditMode"
                 [interfaceIndex]="
                   i + arduinoConfigs.length + trackmateConfigs.length
                 "
@@ -433,6 +436,7 @@
               <app-bart-editor
                 [config]="config"
                 [lanes]="lanes.length"
+                [isEditMode]="isEditMode"
                 [interfaceIndex]="
                   i +
                   arduinoConfigs.length +

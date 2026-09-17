@@ -420,6 +420,26 @@
   opacity: 0.95;
 }
 
+.preview-panel.read-only ::ng-deep .section-content {
+  pointer-events: none !important;
+  opacity: 0.85;
+}
+
+.preview-panel.read-only ::ng-deep input,
+.preview-panel.read-only ::ng-deep select,
+.preview-panel.read-only ::ng-deep app-custom-select,
+.preview-panel.read-only ::ng-deep button,
+.preview-panel.read-only ::ng-deep .custom-dropdown-container,
+.preview-panel.read-only ::ng-deep .dropdown-trigger,
+.preview-panel.read-only ::ng-deep .dropdown-menu,
+.preview-panel.read-only ::ng-deep .pin-selector,
+.preview-panel.read-only ::ng-deep .status-badge,
+.preview-panel.read-only ::ng-deep .checkbox-label,
+.preview-panel.read-only ::ng-deep .checkbox-container,
+.preview-panel.read-only ::ng-deep .pin-action-btn,
+.preview-panel.read-only ::ng-deep .led-strip-action-btn,
+.preview-panel.read-only ::ng-deep .test-controls,
+.preview-panel.read-only ::ng-deep .custom-pin-select,
 .preview-panel.read-only input:not([type="button"]):not([type="submit"]),
 .preview-panel.read-only select,
 .preview-panel.read-only app-custom-select,
@@ -433,9 +453,16 @@
   cursor: not-allowed !important;
 }
 
+.preview-panel.read-only ::ng-deep .section-header button {
+  pointer-events: none !important;
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
 .section-header,
 .preview-panel .section-header,
-.interface-container .section-header {
+.interface-container .section-header,
+.preview-panel.read-only ::ng-deep .section-header {
   pointer-events: auto !important;
   cursor: pointer !important;
 }

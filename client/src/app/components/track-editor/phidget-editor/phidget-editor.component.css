@@ -351,6 +351,12 @@
   background: rgba(30, 41, 59, 0.9);
 }
 
+.dropdown-trigger.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
 .selected-value {
   white-space: nowrap;
   overflow: hidden;

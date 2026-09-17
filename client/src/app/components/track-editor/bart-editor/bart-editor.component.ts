@@ -40,6 +40,7 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
   config = input.required<BartConfig>();
   lanes = input.required<number>();
   interfaceIndex = input.required<number>();
+  isEditMode = input<boolean>(true);
 
   change = output<void>();
   remove = output<void>();
@@ -241,15 +242,24 @@ export class BartEditorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
   onDeviceSelect(newDevice: string): void {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.config().deviceName = newDevice;
     this.onConfigChange();
   }
 
   onConfigChange(): void {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.change.emit();
   }
 
   onRemove(): void {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.remove.emit();
   }
 

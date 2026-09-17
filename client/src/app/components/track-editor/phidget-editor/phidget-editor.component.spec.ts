@@ -739,4 +739,47 @@ describe("PhidgetEditorComponent", () => {
       );
     });
   });
+
+  describe("Read-Only Mode", () => {
+    beforeEach(() => {
+      componentRef.setInput("isEditMode", false);
+      fixture.detectChanges();
+    });
+
+    it("should not select pin action in read-only mode", () => {
+      spyOn(component, "onConfigChange");
+      const initialVal = component.config()?.digitalInIds?.[0];
+      component.selectPinAction("in", 0, "call_0");
+      expect(component.onConfigChange).not.toHaveBeenCalled();
+      expect(component.config()?.digitalInIds?.[0]).toBe(initialVal);
+    });
+
+    it("should not toggle pin state in read-only mode", () => {
+      component.togglePinState("out", 0);
+      expect(mockDataService.setInterfacePinState).not.toHaveBeenCalled();
+    });
+
+    it("should not open pin dropdown in read-only mode", () => {
+      component.togglePinDropdown("out-0", new MouseEvent("click"));
+      expect(component.openPinDropdown).toBeNull();
+    });
+
+    it("should not change device in read-only mode", () => {
+      const origSerial = component.config()?.serialNumber;
+      component.onDeviceSelectChange("device-key");
+      expect(component.config()?.serialNumber).toBe(origSerial);
+    });
+
+    it("should not emit change on onConfigChange in read-only mode", () => {
+      spyOn(component.change, "emit");
+      component.onConfigChange();
+      expect(component.change.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not emit remove on onRemove in read-only mode", () => {
+      spyOn(component.remove, "emit");
+      component.onRemove();
+      expect(component.remove.emit).not.toHaveBeenCalled();
+    });
+  });
 });

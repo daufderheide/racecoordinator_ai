@@ -1464,5 +1464,45 @@ describe("TrackEditorComponent", () => {
       expect(component.showDiscardConfirm).toBeFalse();
       expect(component.editingTrack.name).toBe("Original Track");
     });
+
+    it("should disable track name, sections, scale, and lane inputs in read-only mode", () => {
+      const track1 = new Track({
+        entity_id: "t1",
+        name: "Track 1",
+        lanes: [
+          {
+            background_color: "#ff0000",
+            foreground_color: "#ffffff",
+            length: 50,
+          } as any,
+        ],
+      });
+      component.allTracks = [track1];
+      component.editingTrack = track1;
+      component.isEditMode = false;
+      component.sectionsExpanded.lanes = true;
+      fixture.detectChanges();
+
+      const nameInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#track-name-input");
+      const sectionsInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#num-track-sections-input");
+      const addLaneBtn: HTMLButtonElement = fixture.nativeElement.querySelector(
+        "#lane-editor-section .add-list-btn",
+      );
+      const laneLengthInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#lane-length-0");
+      const laneBgInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#lane-bg-0");
+      const laneFgInput: HTMLInputElement =
+        fixture.nativeElement.querySelector("#lane-fg-0");
+
+      expect(nameInput?.disabled).toBeTrue();
+      expect(sectionsInput?.disabled).toBeTrue();
+      expect(addLaneBtn?.disabled).toBeTrue();
+      expect(laneLengthInput?.disabled).toBeTrue();
+      expect(laneBgInput?.disabled).toBeTrue();
+      expect(laneFgInput?.disabled).toBeTrue();
+    });
   });
 });

@@ -1831,7 +1831,7 @@ describe("RaceEditorComponent", () => {
       dataService.getRaces.and.returnValue(of(deepCopy(MOCK_RACES)));
       dataService.getTracks.and.returnValue(of(deepCopy(MOCK_TRACKS)));
       dataService.previewHeats.and.returnValue(of({ heats: [] }));
-      component.ngOnInit();
+      fixture.detectChanges();
       tick();
       component.isEditMode = true;
       fixture.detectChanges();
@@ -3293,6 +3293,55 @@ describe("RaceEditorComponent", () => {
         expect(component.isEditMode).toBeTrue();
         expect(component.createNewRace).toHaveBeenCalled();
       });
+
+      it("should have all checkbox inputs disabled in read-only mode", fakeAsync(() => {
+        component.isEditMode = false;
+        Object.keys(component.sectionsExpanded).forEach((k) => {
+          (component.sectionsExpanded as any)[k] = true;
+        });
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        const checkboxes = fixture.nativeElement.querySelectorAll(
+          'input[type="checkbox"]',
+        );
+        expect(checkboxes.length).toBeGreaterThan(0);
+        checkboxes.forEach((cb: HTMLInputElement) => {
+          expect(cb.disabled).withContext(cb.outerHTML).toBeTrue();
+        });
+      }));
+
+      it("should have checkbox inputs enabled in edit mode", fakeAsync(() => {
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        component.isEditMode = true;
+        Object.keys(component.sectionsExpanded).forEach((k) => {
+          (component.sectionsExpanded as any)[k] = true;
+        });
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        expect(component.isEditMode).toBeTrue();
+        const practiceCb = fixture.nativeElement.querySelector(
+          "input.practice-input",
+        ) as HTMLInputElement;
+        const driftCb = fixture.nativeElement.querySelector(
+          "input.adjust-drift-laps-input",
+        ) as HTMLInputElement;
+        const reverseCb = fixture.nativeElement.querySelector(
+          "input.reverse-heats-input",
+        ) as HTMLInputElement;
+        expect(practiceCb).toBeTruthy();
+        expect(practiceCb.disabled).toBeFalse();
+        expect(driftCb).toBeTruthy();
+        expect(driftCb.disabled).toBeFalse();
+        expect(reverseCb).toBeTruthy();
+        expect(reverseCb.disabled).toBeFalse();
+      }));
     });
   });
 });
