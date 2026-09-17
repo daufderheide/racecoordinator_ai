@@ -29,7 +29,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
@@ -239,13 +239,7 @@ export class SeasonEditorComponent
   }
 
   updateSeasonSelectItems(): void {
-    this.seasonSelectItems = this.existingSeasons
-      .slice()
-      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
-      .map((s) => ({
-        id: s.entity_id || "",
-        name: s.name || "",
-      }));
+    this.seasonSelectItems = mapToSelectItems(this.existingSeasons);
   }
 
   selectSeason(season: Season): void {
@@ -586,12 +580,11 @@ export class SeasonEditorComponent
   }
 
   get isNameDuplicate(): boolean {
-    if (!this.editingSeason || !this.editingSeason.name) return false;
-    const currentName = this.editingSeason.name.trim().toLowerCase();
-    return this.existingSeasons.some(
-      (s) =>
-        s.name.trim().toLowerCase() === currentName &&
-        s.entity_id !== this.editingSeason.entity_id,
+    if (!this.editingSeason?.name?.trim()) return false;
+    return !isEntityNameUnique(
+      this.editingSeason.name,
+      this.editingSeason.entity_id,
+      this.existingSeasons,
     );
   }
 

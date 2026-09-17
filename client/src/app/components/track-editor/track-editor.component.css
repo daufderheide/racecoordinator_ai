@@ -27,21 +27,7 @@
   overflow: hidden;
 }
 
-/* Header style moved to app-editor-title */
-
-/* Content */
-.content-split {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  margin: 0;
-  padding: 0 30px 24px 30px;
-  transform: translateZ(0);
-  will-change: transform;
-  border-top: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
-}
+@import '../shared/shared-editor-layout.css';
 
 /* Editor Panel */
 .editor-panel {
@@ -470,25 +456,6 @@
   cursor: pointer !important;
 }
 
-/* Custom Scrollbar for Preview Panel */
-.preview-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.preview-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.preview-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.preview-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
 
 .interface-container {
   margin-bottom: 5px;
@@ -614,78 +581,6 @@
   margin: 0;
 }
 
-/* Expander Sections added for General Section */
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 10px 30px 10px 0;
-  user-select: none;
-  transition: background-color 0.2s;
-  border-radius: 4px;
-}
-
-.section-header:hover {
-  background: rgba(148, 163, 184, 0.05);
-}
-
-.expander-icon {
-  font-size: 0.8rem;
-  color: #38bdf8;
-  transition: transform 0.2s;
-  width: 14px;
-  text-align: center;
-  display: inline-block;
-}
-
-.expander-icon.collapsed {
-  transform: rotate(-90deg);
-}
-
-.config-section {
-  margin-bottom: 10px;
-}
-
-.sections-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden !important;
-  padding-right: 5px;
-  margin-right: 5px;
-}
-
-/* Custom Scrollbar for Sections Wrapper */
-.sections-wrapper::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sections-wrapper::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
-
-.section-content {
-  padding: 10px 0 10px 0;
-}
-
-.section-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: #ffffff;
-  font-weight: 300;
-  letter-spacing: 1px;
-}
 
 /* Interface Badges */
 .interface-badge {

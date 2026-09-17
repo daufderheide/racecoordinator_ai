@@ -36,6 +36,7 @@ import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
@@ -310,18 +311,21 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   get isNameInvalid(): boolean {
     if (this.isLoading || !this.editingTeam) return false;
-    return !this.editingTeam.name.trim() || !this.isNameUnique(true);
+    return !isEntityNameUnique(
+      this.editingTeam.name,
+      this.editingTeam.entity_id,
+      this.allTeams,
+      true,
+    );
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
     if (!this.editingTeam) return true;
-    const name = this.editingTeam.name.trim().toLowerCase();
-    if (!name) return false;
-
-    return !this.allTeams.some(
-      (t) =>
-        (excludeSelf ? t.entity_id !== this.editingTeam!.entity_id : true) &&
-        t.name.toLowerCase() === name,
+    return isEntityNameUnique(
+      this.editingTeam.name,
+      this.editingTeam.entity_id,
+      this.allTeams,
+      excludeSelf,
     );
   }
 
@@ -403,13 +407,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   updateTeamSelectItems() {
-    this.teamSelectItems = this.allTeams
-      .slice()
-      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
-      .map((t) => ({
-        id: t.entity_id,
-        name: t.name,
-      }));
+    this.teamSelectItems = mapToSelectItems(this.allTeams);
   }
 
   onSelectTeamById(id: string) {

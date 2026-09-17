@@ -26,6 +26,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import {
   EditorTab,
   EditorTabsComponent,
@@ -65,7 +66,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
-import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
@@ -76,6 +77,7 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   imports: [
     AutoSelectDefaultDirective,
     EditorTitleComponent,
+    EditorSectionComponent,
     FormsModule,
     CdkDropList,
     CdkDrag,
@@ -582,13 +584,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   updateTrackSelectItems() {
-    this.trackSelectItems = this.allTracks
-      .slice()
-      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
-      .map((t) => ({
-        id: t.entity_id,
-        name: t.name,
-      }));
+    this.trackSelectItems = mapToSelectItems(this.allTracks);
   }
 
   selectTrack(track: Track) {
@@ -2364,22 +2360,21 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   get isNameInvalid(): boolean {
     if (this.isLoading) return false;
-    return !this.trackName.trim() || !this.isNameUnique(true);
+    return !isEntityNameUnique(
+      this.trackName,
+      this.editingTrack?.entity_id,
+      this.allTracks,
+      true,
+    );
   }
 
   isNameUnique(excludeSelf: boolean = true): boolean {
-    if (!this.trackName) return false;
-    const name = this.trackName.trim().toLowerCase();
-    return !this.allTracks.some((t) => {
-      if (
-        excludeSelf &&
-        this.editingTrack &&
-        t.entity_id === this.editingTrack.entity_id
-      ) {
-        return false;
-      }
-      return t.name && t.name.toLowerCase() === name;
-    });
+    return isEntityNameUnique(
+      this.trackName,
+      this.editingTrack?.entity_id,
+      this.allTracks,
+      excludeSelf,
+    );
   }
 
   onBack() {

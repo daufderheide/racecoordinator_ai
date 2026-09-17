@@ -32,7 +32,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { mapToSelectItems } from "@app/utils/editor-utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
@@ -194,13 +194,7 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   updateEventSelectItems(): void {
-    this.eventSelectItems = this.existingEvents
-      .slice()
-      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
-      .map((e) => ({
-        id: e.entity_id || "",
-        name: e.name || "",
-      }));
+    this.eventSelectItems = mapToSelectItems(this.existingEvents);
   }
 
   selectEvent(event: Event): void {

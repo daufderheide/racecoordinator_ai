@@ -12,6 +12,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { forkJoin, Subscription } from "rxjs";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
+import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
@@ -65,6 +66,7 @@ export { DriverAudioSlot } from "./driver-editor.helper";
   imports: [
     AutoSelectDefaultDirective,
     EditorTitleComponent,
+    EditorSectionComponent,
     ImageSelectorComponent,
     FormsModule,
     AudioSelectorComponent,

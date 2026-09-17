@@ -21,6 +21,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import {
   EditorTab,
   EditorTabsComponent,
@@ -54,7 +55,7 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
-import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
 import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
@@ -82,6 +83,7 @@ import {
   imports: [
     AcknowledgementModalComponent,
     AutoSelectDefaultDirective,
+    EditorSectionComponent,
     EditorTabsComponent,
     EditorTitleComponent,
     FormsModule,
@@ -599,8 +601,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     });
   }
 
-  toggleSection(section: keyof typeof this.sectionsExpanded) {
-    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  toggleSection(
+    section: keyof typeof this.sectionsExpanded,
+    forcedState?: boolean,
+  ) {
+    this.sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !this.sectionsExpanded[section];
     try {
       localStorage.setItem(
         "race_editor_expanders",
@@ -1822,13 +1830,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   updateRaceSelectItems() {
-    this.raceSelectItems = (this.allRaces || [])
-      .slice()
-      .sort((a, b) => naturalSortCompare(a.name || "", b.name || ""))
-      .map((r) => ({
-        id: r.entity_id,
-        name: r.name,
-      }));
+    this.raceSelectItems = mapToSelectItems(this.allRaces);
   }
 
   loadRaces() {
@@ -1861,12 +1863,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.name) {
       return false;
     }
-
-    const trimmedName = this.editingRace.name.trim().toLowerCase();
-    return this.races.some(
-      (race) =>
-        race.entity_id !== this.editingRace.entity_id &&
-        race.name.trim().toLowerCase() === trimmedName,
+    return !isEntityNameUnique(
+      this.editingRace.name,
+      this.editingRace.entity_id,
+      this.races,
+      true,
     );
   }
 

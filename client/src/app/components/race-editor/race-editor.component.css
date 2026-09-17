@@ -27,21 +27,7 @@
   overflow: hidden;
 }
 
-/* Header style moved to app-editor-title */
-
-/* Content */
-.content-split {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  margin: 0;
-  padding: 0 30px 24px 30px;
-  transform: translateZ(0);
-  will-change: transform;
-  border-top: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
-}
+@import '../shared/shared-editor-layout.css';
 
 /* Editor Panel (Left) */
 .editor-panel {
@@ -592,25 +578,6 @@
   will-change: transform;
 }
 
-/* Custom Scrollbar for Preview Panel */
-.preview-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.preview-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.preview-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.preview-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
 
 .sections-wrapper {
   flex: 1;
@@ -655,20 +622,6 @@
   cursor: pointer !important;
 }
 
-.sections-wrapper::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
 
 .section-header {
   display: flex;

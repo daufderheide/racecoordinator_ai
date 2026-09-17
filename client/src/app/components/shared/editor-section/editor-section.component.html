@@ -1,0 +1,49 @@
+<div
+  class="config-section"
+  [id]="sectionId() || null"
+  [ngClass]="customClass() || ''"
+>
+  <div
+    class="section-header"
+    [id]="headerId() || null"
+    [class.collapsible]="collapsible()"
+    [class.bordered]="bordered()"
+    [attr.role]="collapsible() ? 'button' : null"
+    [attr.tabindex]="collapsible() ? 0 : null"
+    [attr.aria-expanded]="
+      collapsible() ? (expanded() ? 'true' : 'false') : null
+    "
+    (click)="onHeaderClick($event)"
+    (keydown.enter)="onKeydown($event)"
+    (keydown.space)="onKeydown($event)"
+  >
+    @if (collapsible()) {
+      <span class="expander-icon" [class.collapsed]="!expanded()">▼</span>
+    }
+
+    @switch (headingLevel()) {
+      @case ("h4") {
+        <h4>{{ titleKey() ? (titleKey()! | translate) : titleText() }}</h4>
+      }
+      @case ("h3") {
+        <h3>{{ titleKey() ? (titleKey()! | translate) : titleText() }}</h3>
+      }
+      @case ("h2") {
+        <h2>{{ titleKey() ? (titleKey()! | translate) : titleText() }}</h2>
+      }
+      @default {
+        <h1>{{ titleKey() ? (titleKey()! | translate) : titleText() }}</h1>
+      }
+    }
+
+    <ng-content select="[header-badge]"></ng-content>
+    <div class="header-spacer"></div>
+    <ng-content select="[header-actions]"></ng-content>
+  </div>
+
+  @if (expanded()) {
+    <div class="section-content">
+      <ng-content></ng-content>
+    </div>
+  }
+</div>

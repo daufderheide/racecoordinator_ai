@@ -1,3 +1,14 @@
+@import '../shared/shared-editor-layout.css';
+
+.pins-config h4,
+.section-header h4 {
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  margin: 0;
+  border-left: 3px solid #38bdf8;
+  padding-left: 10px;
+}
+
 .config-top-section {
   display: flex;
   justify-content: space-between;

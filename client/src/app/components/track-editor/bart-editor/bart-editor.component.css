@@ -102,64 +102,7 @@
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
 }
 
-.sections-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 15px;
-}
 
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 10px 0;
-  user-select: none;
-  transition: background-color 0.2s;
-  border-radius: 4px;
-}
-
-.section-header:hover {
-  background: rgba(148, 163, 184, 0.05);
-}
-
-.expander-icon {
-  font-size: 0.8rem;
-  color: #38bdf8;
-  transition: transform 0.2s;
-  width: 14px;
-  text-align: center;
-  display: inline-block;
-}
-
-.expander-icon.collapsed {
-  transform: rotate(-90deg);
-}
-
-.config-section {
-  margin-bottom: 10px;
-}
-
-.section-content {
-  padding: 10px 0 10px 0;
-}
-
-.pins-config h4,
-.section-header h4 {
-  color: #e2e8f0;
-  font-size: 1.1rem;
-  margin: 0;
-  border-left: 3px solid #38bdf8;
-  padding-left: 10px;
-}
-
-.section-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: #ffffff;
-  font-weight: 300;
-  letter-spacing: 1px;
-}
 
 .pin-grid {
   display: grid;

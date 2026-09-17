@@ -167,67 +167,6 @@
   padding-top: 20px;
 }
 
-.sections-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 15px;
-}
-
-.sections-wrapper::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sections-wrapper::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 10px 0;
-  user-select: none;
-  transition: background-color 0.2s;
-  border-radius: 4px;
-}
-
-.section-header:hover {
-  background: rgba(148, 163, 184, 0.05);
-}
-
-.expander-icon {
-  font-size: 0.8rem;
-  color: #38bdf8;
-  transition: transform 0.2s;
-  width: 14px;
-  text-align: center;
-  display: inline-block;
-}
-
-.expander-icon.collapsed {
-  transform: rotate(-90deg);
-}
-
-.config-section {
-  margin-bottom: 10px;
-}
-
-.section-content {
-  padding: 10px 0 10px 0;
-}
-
 .pins-section::-webkit-scrollbar {
   width: 8px;
 }
@@ -245,23 +184,6 @@
 
 .pins-section::-webkit-scrollbar-thumb:hover {
   background: rgba(56, 189, 248, 0.8);
-}
-
-.pins-config h4,
-.section-header h4 {
-  color: #e2e8f0;
-  font-size: 1.1rem;
-  margin: 0;
-  border-left: 3px solid #38bdf8;
-  padding-left: 10px;
-}
-
-.section-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: #ffffff;
-  font-weight: 300;
-  letter-spacing: 1px;
 }
 
 .pin-grid {
