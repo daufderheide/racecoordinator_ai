@@ -4,10 +4,10 @@ import { MOCK_TEAMS } from "@app/testing/data/teams_data";
 import { deepCopy } from "@app/utils/clone.utils";
 
 /**
- * Shared test helper for TeamManager and TeamEditor.
+ * Shared test helper for TeamEditor.
  * Handles both Jasmine mocks for unit tests and Playwright route mocking for screendiff tests.
  */
-export class TeamManagerHelper {
+export class TeamEditorHelper {
   /**
    * Creates a Jasmine spy object for the DataService with team-related methods.
    */
@@ -93,6 +93,10 @@ export class TeamManagerHelper {
   }
 }
 
-// Export factory function for consistency with other helpers
+// Export factory functions
+export const createTeamEditorDataServiceMock =
+  TeamEditorHelper.createDataServiceMock;
+
+// Alias for legacy test callers
 export const createTeamManagerDataServiceMock =
-  TeamManagerHelper.createDataServiceMock;
+  TeamEditorHelper.createDataServiceMock;

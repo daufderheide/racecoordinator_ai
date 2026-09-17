@@ -2247,7 +2247,7 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"]);
 
       component.openTeamManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"]);
 
       (component as any).isRaceRunning = false;
       component.openTrackManager();

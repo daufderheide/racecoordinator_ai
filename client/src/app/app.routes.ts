@@ -21,7 +21,6 @@ import { SeasonEditorComponent } from "@app/components/season-editor/season-edit
 import { SeasonManagerComponent } from "@app/components/season-manager/season-manager.component";
 import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
-import { TeamManagerComponent } from "@app/components/team-manager/team-manager.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
 import { TrackManagerComponent } from "@app/components/track-manager/track-manager.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
@@ -90,10 +89,8 @@ export const routes: Routes = [
   },
   {
     path: "team-manager",
-    component: TeamManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Team Manager",
-    data: { animation: "TeamManagerPage" },
+    redirectTo: "team-editor",
+    pathMatch: "full",
   },
   {
     path: "team-editor",

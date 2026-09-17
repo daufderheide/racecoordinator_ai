@@ -304,3 +304,14 @@
 .cdk-drag-placeholder {
   opacity: 0.3;
 }
+
+.dm-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-color: rgba(148, 163, 184, 0.15);
+}
+
+.driver-item.disabled {
+  opacity: 0.8;
+  cursor: default;
+}

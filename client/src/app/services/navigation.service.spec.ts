@@ -93,23 +93,23 @@ describe("NavigationService", () => {
       expect(service.canGoBack()).toBeFalse();
       expect(service.canGoForward()).toBeFalse();
 
-      routerEvents.next(new NavigationEnd(2, "/team-manager", "/team-manager"));
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
       expect(service.canGoBack()).toBeTrue();
       expect(service.canGoForward()).toBeFalse();
     });
 
     it("should allow going forward after navigating back", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(new NavigationEnd(2, "/team-manager", "/team-manager"));
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
       routerEvents.next(
         new NavigationEnd(3, "/driver-editor", "/driver-editor"),
       );
 
-      // Simulate back to /team-manager
+      // Simulate back to /team-editor
       window.dispatchEvent(
         new PopStateEvent("popstate", { state: { appHistoryIndex: 1 } }),
       );
-      routerEvents.next(new NavigationEnd(4, "/team-manager", "/team-manager"));
+      routerEvents.next(new NavigationEnd(4, "/team-editor", "/team-editor"));
 
       expect(service.canGoBack()).toBeTrue();
       expect(service.canGoForward()).toBeTrue();
@@ -117,7 +117,7 @@ describe("NavigationService", () => {
 
     it("should disable canGoBack when back at initial entry (index 0)", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(new NavigationEnd(2, "/team-manager", "/team-manager"));
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
 
       // Back to home
       window.dispatchEvent(
@@ -131,7 +131,7 @@ describe("NavigationService", () => {
 
     it("should call window.history.back when goBack is invoked", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(new NavigationEnd(2, "/team-manager", "/team-manager"));
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
 
       spyOn(window.history, "back");
       service.goBack();
@@ -147,7 +147,7 @@ describe("NavigationService", () => {
 
     it("should call window.history.forward when goForward is invoked", () => {
       routerEvents.next(new NavigationEnd(1, "/home", "/home"));
-      routerEvents.next(new NavigationEnd(2, "/team-manager", "/team-manager"));
+      routerEvents.next(new NavigationEnd(2, "/team-editor", "/team-editor"));
 
       window.dispatchEvent(
         new PopStateEvent("popstate", { state: { appHistoryIndex: 0 } }),

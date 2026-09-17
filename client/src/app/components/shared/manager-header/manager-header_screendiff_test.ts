@@ -27,7 +27,7 @@ test.describe("Manager Header Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/team-manager"),
+      page.goto("/race-manager"),
     );
 
     const header = page.locator("app-manager-header");

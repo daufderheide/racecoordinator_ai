@@ -167,6 +167,7 @@ export class ChildWindowManagerService {
       cleanUrl.startsWith("/modify-heats") ||
       cleanUrl.startsWith("/driver-station") ||
       cleanUrl.startsWith("/driver-view") ||
+      cleanUrl.startsWith("/team-editor") ||
       cleanUrl.startsWith("/team-manager") ||
       cleanUrl.startsWith("/driver-editor") ||
       cleanUrl.startsWith("/driver-manager")

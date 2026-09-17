@@ -1940,7 +1940,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   openTeamManager() {
     this.closeConfigDropdown();
-    this.router.navigate(["/team-manager"]);
+    this.router.navigate(["/team-editor"]);
   }
 
   openTrackManager() {
