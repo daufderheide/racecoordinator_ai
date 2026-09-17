@@ -17,8 +17,8 @@ import { ConnectionMonitorService } from "@app/services/connection-monitor.servi
 import { HelpService } from "@app/services/help.service";
 import { TranslationService } from "@app/services/translation.service";
 
-import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
 import { DriverEditorComponent } from "./driver-editor.component";
+import { createDriverManagerDataServiceMock } from "./testing/driver-editor_helper";
 
 @Component({
   selector: "app-audio-selector",
@@ -82,6 +82,11 @@ class MockItemSelectorComponent {
 class MockEditorTitleComponent {
   titleKey = input<string>("");
   itemName = input<string | undefined>(undefined);
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input<boolean>(false);
+  showEdit = input<boolean>(false);
+  disabledEdit = input<boolean>(false);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backQueryParams = input<any>({});
@@ -92,8 +97,11 @@ class MockEditorTitleComponent {
   showRedo = input<boolean>(true);
   showHelp = input<boolean>(true);
   showCopy = input<boolean>(false);
+  disabledCopy = input<boolean>(false);
+  copyDisabledTooltipKey = input<string>("");
   showAdd = input<boolean>(false);
   showDelete = input<boolean>(false);
+  disabledDelete = input<boolean>(false);
   isSaving = input<boolean>(false);
   helpSteps = input<any[]>([]);
   helpTitle = input<string>("");
@@ -103,6 +111,8 @@ class MockEditorTitleComponent {
   copy = output<void>();
   add = output<void>();
   delete = output<void>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
 }
 
 @Component({
@@ -232,7 +242,7 @@ describe("DriverEditorComponent Reproduction", () => {
     }
   });
 
-  it("should correctly maintain clean state after duplicate + rename + auto-save + blur", fakeAsync(() => {
+  it("should correctly maintain clean state after duplicate + rename + save + blur", fakeAsync(() => {
     // 1. Load initial driver
     component.loadData();
     tick();
@@ -246,19 +256,21 @@ describe("DriverEditorComponent Reproduction", () => {
     expect(component.editingDriver?.entity_id).toBe("d2");
     expect(component.isDirtyState()).toBeFalse();
 
-    // 3. Change name (triggers auto-save)
+    // 3. Change name and save via onToggleEditMode
+    component.isEditMode = true;
     component.onInputFocus();
     component.editingDriver!.name = "New Name";
     component.onInputChange();
-    tick(200); // Trigger undoManager debounce
+    component.onToggleEditMode();
+    tick(200);
 
     expect(mockDataService.updateDriver).toHaveBeenCalled();
-    expect(component.isDirtyState()).toBeFalse(); // Should be clean after auto-save
+    expect(component.isDirtyState()).toBeFalse();
 
     // 4. Simulate blur (as if clicking Back)
     component.onInputBlur();
 
-    // Verify that the state remains clean (FIXED behavior)
+    // Verify that the state remains clean
     expect(component.isDirtyState()).toBeFalse();
 
     discardPeriodicTasks();
@@ -270,13 +282,17 @@ describe("DriverEditorComponent Reproduction", () => {
     tick();
     expect(component.isDirtyState()).toBeFalse();
 
-    // Change sound type to 'none' as done via template:
+    // Change sound type to 'none' in edit mode:
+    component.isEditMode = true;
     component.onAudioTypeChange("lap", "none");
-    tick(200);
-
     expect(mockDataService.updateDriver).toHaveBeenCalled();
     expect(component.isSaving).toBeFalse();
     expect(component.isDirtyState()).toBeFalse();
+    expect(component.isEditMode).toBeTrue();
+    component.onToggleEditMode();
+    tick(200);
+
+    expect(component.isEditMode).toBeFalse();
     expect(component.getUnsavedReasons()).not.toContain(
       "DISCARD_REASON_SAVING",
     );
@@ -291,13 +307,18 @@ describe("DriverEditorComponent Reproduction", () => {
     tick();
     expect(component.isDirtyState()).toBeFalse();
 
-    // Change sound url as done via template:
+    // Change sound url in edit mode:
+    component.isEditMode = true;
+    mockDataService.updateDriver.calls.reset();
     component.onAudioUrlChange("lap", "new_sound_url");
-    tick(200);
-
     expect(mockDataService.updateDriver).toHaveBeenCalled();
     expect(component.isSaving).toBeFalse();
     expect(component.isDirtyState()).toBeFalse();
+    expect(component.isEditMode).toBeTrue();
+    component.onToggleEditMode();
+    tick(200);
+
+    expect(component.isEditMode).toBeFalse();
     expect(component.getUnsavedReasons()).not.toContain(
       "DISCARD_REASON_SAVING",
     );
@@ -312,10 +333,12 @@ describe("DriverEditorComponent Reproduction", () => {
     tick();
     expect(component.isDirtyState()).toBeFalse();
 
-    // Switch to TTS and set text
+    // Switch to TTS and set text in edit mode
+    component.isEditMode = true;
     component.onAudioTypeChange("lap", "tts");
-    tick(200);
     component.onAudioTextChange("lap", "Great Lap!");
+    expect(component.isDirtyState()).toBeTrue();
+    component.onToggleEditMode();
     tick(200);
 
     expect(mockDataService.updateDriver).toHaveBeenCalled();

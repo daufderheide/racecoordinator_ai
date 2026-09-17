@@ -196,6 +196,7 @@ describe("ChildWindowManagerService", () => {
         service.isRacePreservingRoute("/driver-view/driver-123"),
       ).toBeTrue();
       expect(service.isRacePreservingRoute("/team-manager")).toBeTrue();
+      expect(service.isRacePreservingRoute("/driver-editor")).toBeTrue();
       expect(service.isRacePreservingRoute("/driver-manager")).toBeTrue();
     });
   });

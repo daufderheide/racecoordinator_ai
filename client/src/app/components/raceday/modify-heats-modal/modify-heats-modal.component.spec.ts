@@ -1515,7 +1515,7 @@ describe("ModifyHeatsModalComponent", () => {
 
       component.onManageDrivers();
       expect(router.navigate).toHaveBeenCalledWith(
-        ["/driver-manager"],
+        ["/driver-editor"],
         jasmine.any(Object),
       );
     });

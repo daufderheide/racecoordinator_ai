@@ -4,7 +4,6 @@ import { CustomRotationEditorComponent } from "@app/components/asset-manager/cus
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
-import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { EventEditorComponent } from "@app/components/event-editor/event-editor.component";
@@ -86,10 +85,8 @@ export const routes: Routes = [
   },
   {
     path: "driver-manager",
-    component: DriverManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Driver Manager",
-    data: { animation: "DriverManagerPage" },
+    redirectTo: "driver-editor",
+    pathMatch: "full",
   },
   {
     path: "team-manager",

@@ -4,15 +4,25 @@
 >
   <app-editor-title
     titleKey="DE_TITLE"
-    [itemName]="editingDriver?.nickname"
-    [undoManager]="undoManager"
+    [items]="driverSelectItems"
+    [selectedId]="selectedDriverId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
-    [disabledCopy]="!isConfigValid()"
+    [showDelete]="true"
+    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledDelete]="!selectedDriver || isSaving"
     [copyDisabledTooltipKey]="'DE_TOOLTIP_COPY_DISABLED'"
     [isSaving]="isSaving"
+    [undoManager]="undoManager"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'driverEditorHelpShown'"
-    (copy)="saveAsNew()"
+    (selectedIdChange)="onSelectDriverById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewDriver()"
+    (copy)="onCopyDriver()"
+    (delete)="onDeleteDriver()"
   >
   </app-editor-title>
 
@@ -28,6 +38,7 @@
             (assetSelected)="onAssetSelected($event)"
             [assets]="avatarAssets"
             [size]="'large'"
+            [disabled]="!isEditMode"
           >
           </app-image-selector>
         </div>
@@ -43,6 +54,7 @@
           <input
             id="driver-name-input"
             type="text"
+            [disabled]="!isEditMode"
             [ngModel]="editingDriver.name"
             [appAutoSelectDefault]="defaultDriverName"
             (ngModelChange)="onNameChange($event)"
@@ -69,6 +81,7 @@
             type="button"
             id="driver-link-toggle-btn"
             class="driver-link-btn"
+            [disabled]="!isEditMode"
             [class.linked]="isNameNicknameLinked"
             (click)="toggleNameNicknameLink()"
             [title]="
@@ -105,6 +118,7 @@
           <input
             id="driver-nickname-input"
             type="text"
+            [disabled]="!isEditMode"
             [ngModel]="editingDriver.nickname"
             [appAutoSelectDefault]="defaultDriverNickname"
             (ngModelChange)="onNicknameChange($event)"
@@ -145,6 +159,7 @@
                   <div class="audio-section" id="driver-lap-audio">
                     @if (editingDriver.lapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_LAP_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.lapAudio.type"
@@ -162,6 +177,7 @@
                   <div class="audio-section" id="driver-best-lap-audio">
                     @if (editingDriver.bestLapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_PERSONAL_BEST_LAP_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.bestLapAudio.type"
@@ -187,6 +203,7 @@
                   <div class="audio-section" id="driver-race-best-lap-audio">
                     @if (editingDriver.raceBestLapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_RACE_BEST_LAP_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.raceBestLapAudio.type"
@@ -207,6 +224,7 @@
                   >
                     @if (editingDriver.raceLaneBestLapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="
                           'DE_LABEL_RACE_LANE_BEST_LAP_SOUND' | translate
                         "
@@ -232,6 +250,7 @@
                   <div class="audio-section" id="driver-heat-best-lap-audio">
                     @if (editingDriver.heatBestLapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_HEAT_BEST_LAP_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.heatBestLapAudio.type"
@@ -249,6 +268,7 @@
                   <div class="audio-section" id="driver-new-race-leader-audio">
                     @if (editingDriver.newRaceLeaderAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_NEW_RACE_LEADER_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.newRaceLeaderAudio.type"
@@ -270,6 +290,7 @@
                   <div class="audio-section" id="driver-new-heat-leader-audio">
                     @if (editingDriver.newHeatLeaderAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_NEW_HEAT_LEADER_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.newHeatLeaderAudio.type"
@@ -299,6 +320,7 @@
                   <div class="audio-section" id="driver-overall-best-lap-audio">
                     @if (editingDriver.overallBestLapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_OVERALL_BEST_LAP_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.overallBestLapAudio.type"
@@ -323,6 +345,7 @@
                   >
                     @if (editingDriver.overallLaneBestLapAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="
                           'DE_LABEL_OVERALL_LANE_BEST_LAP_SOUND' | translate
                         "
@@ -356,6 +379,7 @@
                   <div class="audio-section" id="driver-pit-in-audio">
                     @if (editingDriver.pitInAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_PIT_IN_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.pitInAudio.type"
@@ -374,6 +398,7 @@
                     @if (editingDriver.fuelAudio) {
                       <app-audio-selector
                         mode="set"
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_FUEL_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.fuelAudio.type"
@@ -391,6 +416,7 @@
                   <div class="audio-section" id="driver-false-start-audio">
                     @if (editingDriver.penaltyAudio) {
                       <app-audio-selector
+                        [readonly]="!isEditMode"
                         [label]="'DE_LABEL_FALSE_START_SOUND' | translate"
                         [assets]="soundAssets"
                         [type]="editingDriver.penaltyAudio.type"

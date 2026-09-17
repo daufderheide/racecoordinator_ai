@@ -27,7 +27,7 @@ test.describe("Manager Header Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/driver-manager"),
+      page.goto("/team-manager"),
     );
 
     const header = page.locator("app-manager-header");
@@ -43,7 +43,7 @@ test.describe("Manager Header Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/driver-manager"),
+      page.goto("/track-manager"),
     );
 
     await page.evaluate(() => {

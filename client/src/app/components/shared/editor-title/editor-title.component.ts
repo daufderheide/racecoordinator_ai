@@ -8,6 +8,10 @@ import {
   ViewChild,
 } from "@angular/core";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
@@ -19,7 +23,13 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-editor-title",
   templateUrl: "./editor-title.component.html",
   styleUrls: ["./editor-title.component.css"],
-  imports: [ToolbarComponent, TranslatePipe, BrowserNavigationComponent],
+  imports: [
+    ToolbarComponent,
+    TranslatePipe,
+    BrowserNavigationComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
@@ -29,6 +39,11 @@ export class EditorTitleComponent implements AfterViewChecked {
     const name = this.itemName();
     return name && name.trim() ? name.trim() : "";
   });
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input(false);
+  showEdit = input(false);
+  disabledEdit = input(false);
   undoManager = input<UndoManager<any>>();
   showUndo = input(true);
   showRedo = input(true);
@@ -38,6 +53,7 @@ export class EditorTitleComponent implements AfterViewChecked {
   copyDisabledTooltipKey = input("");
   showAdd = input(false);
   showDelete = input(false);
+  disabledDelete = input(false);
   showRegenerate = input(false);
   disabledRegenerate = input(false);
   showLaneCheck = input(false);
@@ -74,12 +90,22 @@ export class EditorTitleComponent implements AfterViewChecked {
   importRc1 = output<void>();
   export = output<void>();
   zoomLevelChange = output<number>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
 
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewChecked() {
     // This can help with NG0100 when translations load late
     this.cdr.detectChanges();
+  }
+
+  onEdit() {
+    this.edit.emit();
+  }
+
+  onSelectionChange(id: string) {
+    this.selectedIdChange.emit(id);
   }
 
   onHelp() {

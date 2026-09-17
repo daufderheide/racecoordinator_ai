@@ -3,10 +3,10 @@ import { MOCK_DRIVERS } from "@app/testing/data/drivers_data";
 import { deepCopy } from "@app/utils/clone.utils";
 
 /**
- * Shared test helper for DriverManager and DriverEditor.
+ * Shared test helper for DriverEditor.
  * Handles both Jasmine mocks for unit tests and Playwright route mocking for screendiff tests.
  */
-export class DriverManagerHelper {
+export class DriverEditorHelper {
   /**
    * Creates a Jasmine spy object for the DataService with driver-related methods.
    */
@@ -116,5 +116,7 @@ export class DriverManagerHelper {
 }
 
 // Export factory function for consistency with other helpers
+export const createDriverEditorDataServiceMock =
+  DriverEditorHelper.createDataServiceMock;
 export const createDriverManagerDataServiceMock =
-  DriverManagerHelper.createDataServiceMock;
+  DriverEditorHelper.createDataServiceMock;

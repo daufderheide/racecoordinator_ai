@@ -29,6 +29,7 @@ import { TranslationService } from "@app/services/translation.service";
 export class ToolbarComponent implements OnInit {
   showAdd = input(false);
   showEdit = input(false);
+  isEditMode = input(false);
   showHelp = input(false);
   showDelete = input(false);
   showCopy = input(false);

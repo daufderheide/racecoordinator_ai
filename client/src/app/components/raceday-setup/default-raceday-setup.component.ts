@@ -1935,7 +1935,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   openDriverManager() {
     this.closeConfigDropdown();
-    this.router.navigate(["/driver-manager"]);
+    this.router.navigate(["/driver-editor"]);
   }
 
   openTeamManager() {

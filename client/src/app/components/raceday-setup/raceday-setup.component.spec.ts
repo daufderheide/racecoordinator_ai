@@ -261,7 +261,7 @@ describe("RacedaySetupComponent", () => {
     });
 
     it("should bypass splash screen if returning from a non-race screen", fakeAsync(() => {
-      mockNavigationService.getPreviousUrl.and.returnValue("/driver-manager");
+      mockNavigationService.getPreviousUrl.and.returnValue("/driver-editor");
       component.ngOnInit();
       tick(100);
       expect(component.showSplash).toBeFalse();

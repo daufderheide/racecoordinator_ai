@@ -923,7 +923,7 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
     const returnUrl =
       this.route.snapshot.queryParamMap.get("returnUrl") ||
       this.router.url.split("?")[0];
-    this.router.navigate(["/driver-manager"], {
+    this.router.navigate(["/driver-editor"], {
       queryParams: { from: "modify-heats", returnUrl },
     });
   }

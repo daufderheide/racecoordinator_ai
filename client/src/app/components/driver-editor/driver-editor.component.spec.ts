@@ -9,7 +9,7 @@ import {
 import { FormsModule } from "@angular/forms";
 import { By } from "@angular/platform-browser";
 import { ActivatedRoute, convertToParamMap, Router } from "@angular/router";
-import { BehaviorSubject, of, throwError } from "rxjs";
+import { BehaviorSubject, of, Subject, throwError } from "rxjs";
 import { AnalyticsService } from "@app/analytics.service";
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { DataService } from "@app/data.service";
@@ -81,6 +81,11 @@ class MockItemSelectorComponent {
 class MockEditorTitleComponent {
   titleKey = input<string>("");
   itemName = input<string | undefined>(undefined);
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input<boolean>(false);
+  showEdit = input<boolean>(false);
+  disabledEdit = input<boolean>(false);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
   backQueryParams = input<any>({});
@@ -91,8 +96,11 @@ class MockEditorTitleComponent {
   showRedo = input<boolean>(true);
   showHelp = input<boolean>(true);
   showCopy = input<boolean>(false);
+  disabledCopy = input<boolean>(false);
+  copyDisabledTooltipKey = input<string>("");
   showAdd = input<boolean>(false);
   showDelete = input<boolean>(false);
+  disabledDelete = input<boolean>(false);
   isSaving = input<boolean>(false);
   helpSteps = input<any[]>([]);
   helpTitle = input<string>("");
@@ -102,6 +110,8 @@ class MockEditorTitleComponent {
   copy = output<void>();
   add = output<void>();
   delete = output<void>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
 }
 
 @Component({
@@ -130,8 +140,8 @@ import {
 } from "@app/testing/unit-test-mocks";
 
 import { NavigationService } from "../../services/navigation.service";
-import { createDriverManagerDataServiceMock } from "../driver-manager/testing/driver-manager_helper";
 import { DriverEditorComponent } from "./driver-editor.component";
+import { createDriverManagerDataServiceMock } from "./testing/driver-editor_helper";
 
 @Pipe({ name: "translate" })
 class MockTranslatePipe implements PipeTransform {
@@ -244,7 +254,7 @@ describe("DriverEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should configure editor title with driver nickname and update reactively", () => {
+  it("should configure editor title with driver selector items and selectedId", () => {
     const mockDriver: Driver = {
       entity_id: "d1",
       name: "John Doe",
@@ -252,6 +262,7 @@ describe("DriverEditorComponent", () => {
       avatarUrl: "",
     } as any;
     setupDriver(mockDriver);
+    component.updateDriverSelectItems();
     fixture.detectChanges();
 
     const editorTitle = fixture.debugElement.query(
@@ -259,11 +270,10 @@ describe("DriverEditorComponent", () => {
     );
     expect(editorTitle).toBeTruthy();
     expect(editorTitle.componentInstance.titleKey()).toBe("DE_TITLE");
-    expect(editorTitle.componentInstance.itemName()).toBe("Speedy");
-
-    component.onNicknameChange("Lightning");
-    fixture.detectChanges();
-    expect(editorTitle.componentInstance.itemName()).toBe("Lightning");
+    expect(editorTitle.componentInstance.selectedId()).toBe("d1");
+    expect(component.driverSelectItems).toEqual([
+      { id: "d1", name: "John Doe" },
+    ]);
   });
 
   it("should have password manager ignore attributes on driver name and nickname input fields", () => {
@@ -288,11 +298,11 @@ describe("DriverEditorComponent", () => {
     expect(nicknameEl.getAttribute("autocomplete")).toBe("off");
   });
 
-  it("should throw error when no ID provided", () => {
+  it("should select first or last-edited driver when no ID provided", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
-    expect(() => component.loadData()).toThrowError(
-      "Driver Editor: No entity ID provided.",
-    );
+    component.loadData();
+    expect(component.editingDriver).toBeDefined();
+    expect(component.isEditMode).toBeFalse();
   });
 
   it('should initialize with new driver when "new" ID provided', () => {
@@ -392,39 +402,51 @@ describe("DriverEditorComponent", () => {
     spyOn(window, "confirm").and.returnValue(true);
     const driver = new Driver("d1", "Driver to Delete", "");
     setupDriver(driver);
+    component.allDrivers = [driver, new Driver("d2", "Next Driver", "")];
 
     dataService.deleteDriver.and.returnValue(of({}));
 
     component.deleteDriver();
 
     expect(dataService.deleteDriver).toHaveBeenCalledWith("d1");
-    expect(router.navigate).toHaveBeenCalledWith(["/driver-manager"], {
-      queryParams: { id: "d1", from: null, returnUrl: null },
-    });
+    expect(component.selectedDriverId).toBe("d2");
+    expect(component.editingDriver?.name).toBe("Next Driver");
   });
 
-  it("should propagate 'from' and 'returnUrl' when navigating back", () => {
+  it("should propagate 'returnUrl' when navigating back", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
       (key: string) => {
-        if (key === "from") return "modify-heats";
         if (key === "returnUrl") return "/default-raceday";
-        if (key === "id") return "d1";
         return null;
       },
     );
 
-    const driver = new Driver("d1", "Test", "");
-    setupDriver(driver);
+    component.onBack();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith("/default-raceday");
+  });
+
+  it("should propagate 'from' when navigating back without returnUrl", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+      (key: string) => {
+        if (key === "from") return "modify-heats";
+        return null;
+      },
+    );
 
     component.onBack();
 
-    expect(router.navigate).toHaveBeenCalledWith(["/driver-manager"], {
-      queryParams: {
-        id: "d1",
-        from: "modify-heats",
-        returnUrl: "/default-raceday",
-      },
+    expect(router.navigate).toHaveBeenCalledWith(["/default-raceday"], {
+      queryParams: { modifyHeats: "true" },
     });
+  });
+
+  it("should navigate to /raceday-setup when onBack has no query params", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+
+    component.onBack();
+
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
   });
 
   it("should set lastEditedId in NavigationService when loading driver id", () => {
@@ -602,33 +624,45 @@ describe("DriverEditorComponent", () => {
     expect(component.undoManager.redoStackItems.length).toBe(0);
   });
 
-  describe("Auto-save on name/nickname change", () => {
-    it("should auto-save when name changes to a valid unique value", fakeAsync(() => {
+  describe("Edit mode and saving on name/nickname change", () => {
+    it("should auto-save when name changes to a valid unique value and transition to read-only upon toggling edit mode", fakeAsync(() => {
       const driver = new Driver("d1", "OriginalName", "Nick");
       setupDriver(driver);
+      component.isEditMode = true;
 
       component.onInputFocus();
       component.editingDriver!.name = "NewUniqueName";
       component.onInputBlur();
-      tick(200);
 
       expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.editingDriver?.name).toBe("NewUniqueName");
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      tick(200);
+
+      expect(component.isEditMode).toBeFalse();
     }));
 
-    it("should auto-save when nickname changes to a valid unique value", fakeAsync(() => {
+    it("should auto-save when nickname changes to a valid unique value and transition to read-only upon toggling edit mode", fakeAsync(() => {
       const driver = new Driver("d1", "SomeName", "OrigNick");
       setupDriver(driver);
+      component.isEditMode = true;
 
       component.onInputFocus();
       component.editingDriver!.nickname = "NewUniqueNick";
       component.onInputBlur();
-      tick(200);
 
       expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.editingDriver?.nickname).toBe("NewUniqueNick");
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      tick(200);
+
+      expect(component.isEditMode).toBeFalse();
     }));
 
     it("should not auto-save when name is set to a duplicate", fakeAsync(() => {
@@ -704,17 +738,19 @@ describe("DriverEditorComponent", () => {
       expect(component.isNicknameInvalid).toBeTrue();
     }));
 
-    it("should not show back confirmation when config is valid after name change", fakeAsync(() => {
+    it("should clear dirty state when config is saved after name change", fakeAsync(() => {
       const driver = new Driver("d1", "OriginalName", "OrigNick");
       setupDriver(driver);
+      component.isEditMode = true;
 
-      // Change name to valid unique value and allow auto-save to complete
+      // Change name to valid unique value and save via onToggleEditMode
       component.onInputFocus();
       component.editingDriver!.name = "ValidNewName";
       component.onInputBlur();
+      component.onToggleEditMode();
       tick(200);
 
-      // Config is valid and dirty state should be cleared by auto-save
+      // Config is valid and dirty state should be cleared
       expect(component.isConfigValid()).toBeTrue();
       expect(component.isDirtyState()).toBeFalse();
     }));
@@ -829,82 +865,115 @@ describe("DriverEditorComponent", () => {
       );
 
       // 1. Change type to none
+      component.isEditMode = true;
       component.onAudioTypeChange("lap", "none");
       expect(component.editingDriver!.lapAudio.type).toBe("none");
       expect(component.editingDriver!.lapAudio.url).toBeUndefined();
       expect(component.editingDriver!.lapAudio.text).toBeUndefined();
-
-      tick(200);
       expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
       expect(component.getUnsavedReasons()).not.toContain(
         "DISCARD_REASON_SAVING",
       );
 
       // 2. Change url
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
       component.onAudioTypeChange("bestLap", "preset");
       component.onAudioUrlChange("bestLap", "custom_best_lap_url");
       expect(component.editingDriver!.bestLapAudio.url).toBe(
         "custom_best_lap_url",
       );
-
-      tick(200);
+      expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
 
       // 3. Change tts text
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
       component.onAudioTypeChange("falseStart", "tts");
       component.onAudioTextChange("falseStart", "Stop and Go Penalty");
       expect(component.editingDriver!.penaltyAudio.text).toBe(
         "Stop and Go Penalty",
       );
-
-      tick(200);
+      tick(150);
+      expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
 
       // 4. Change newRaceLeader and newHeatLeader audio
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
       component.onAudioTypeChange("newRaceLeader", "preset");
       component.onAudioUrlChange("newRaceLeader", "custom_race_leader_url");
       expect(component.editingDriver!.newRaceLeaderAudio.url).toBe(
         "custom_race_leader_url",
       );
-
-      tick(200);
+      expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
 
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
+
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
       component.onAudioTypeChange("newHeatLeader", "tts");
       component.onAudioTextChange("newHeatLeader", "New Heat Leader!");
       expect(component.editingDriver!.newHeatLeaderAudio.text).toBe(
         "New Heat Leader!",
       );
-
-      tick(200);
+      tick(150);
+      expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
 
       // 5. Change pitIn and fuel audio
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
       component.onAudioTypeChange("pitIn", "preset");
       component.onAudioUrlChange("pitIn", "custom_pit_in_url");
       expect(component.editingDriver!.pitInAudio.url).toBe("custom_pit_in_url");
-
-      tick(200);
+      expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
 
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
+
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
       component.onAudioTypeChange("fuel", "audio_set");
       component.onAudioUrlChange("fuel", "custom_fuel_level_set");
       expect(component.editingDriver!.fuelAudio.url).toBe(
         "custom_fuel_level_set",
       );
-
-      tick(200);
+      expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
 
-      discardPeriodicTasks();
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
     }));
 
     it("should consider drivers equal when audio is none regardless of url, and when tts matches text", () => {
@@ -1078,10 +1147,11 @@ describe("DriverEditorComponent", () => {
 
     it("should provide all guide steps including the name and nickname link step in correct order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(18);
+      expect(steps.length).toBe(19);
 
       const selectors = steps.map((s) => s.selector).filter(Boolean);
       expect(selectors).toEqual([
+        "#editor-object-selector",
         "#driver-avatar-section",
         "#driver-name-section",
         "#driver-name-nickname-link-section",
@@ -1375,6 +1445,215 @@ describe("DriverEditorComponent", () => {
       expect(component.defaultDriverName).toBe("Driver_2");
       expect(component.defaultDriverNickname).toBe("Racer_2");
       expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+  });
+
+  describe("Unified Editor Mode & Selector Lifecycle", () => {
+    it("should initialize in read-only mode with populated driver selector items", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+      const d1 = new Driver("d1", "Alice", "Ali");
+      const d2 = new Driver("d2", "Bob", "Bobby");
+      (component as any).loadDataInternal([d1, d2], []);
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.driverSelectItems.length).toBe(2);
+      expect(component.driverSelectItems[0]).toEqual({
+        id: "d1",
+        name: "Alice",
+      });
+      expect(component.driverSelectItems[1]).toEqual({
+        id: "d2",
+        name: "Bob",
+      });
+      expect(component.selectedDriverId).toBe("d1");
+      expect(component.editingDriver?.name).toBe("Alice");
+    });
+
+    it("should select another driver via onSelectDriverById without entering edit mode", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+      const d1 = new Driver("d1", "Alice", "Ali");
+      const d2 = new Driver("d2", "Bob", "Bobby");
+      (component as any).loadDataInternal([d1, d2], []);
+
+      component.onSelectDriverById("d2");
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.selectedDriverId).toBe("d2");
+      expect(component.editingDriver?.name).toBe("Bob");
+    });
+
+    it("should toggle into edit mode when onToggleEditMode is called in read-only mode", () => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = false;
+
+      component.onToggleEditMode();
+
+      expect(component.isEditMode).toBeTrue();
+    });
+
+    it("should exit edit mode without updating if there are no dirty changes", () => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+      spyOn(component, "updateDriver");
+
+      component.onToggleEditMode();
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.updateDriver).not.toHaveBeenCalled();
+    });
+
+    it("should save changes and exit edit mode when onToggleEditMode is called with valid changes", () => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+      component.editingDriver!.name = "Alice Modified";
+      dataService.updateDriver.and.returnValue(of(component.editingDriver!));
+
+      component.onToggleEditMode();
+
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.isEditMode).toBeFalse();
+    });
+
+    it("should alert and stay in edit mode when onToggleEditMode is called with invalid changes", () => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+      component.editingDriver!.name = "";
+      spyOn(window, "alert");
+      spyOn(component, "updateDriver");
+
+      component.onToggleEditMode();
+
+      expect(window.alert).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
+      expect(component.updateDriver).not.toHaveBeenCalled();
+    });
+
+    it("should enter edit mode when onAddNewDriver is called", () => {
+      component.allDrivers = [new Driver("d1", "Alice", "Ali")];
+      component.onAddNewDriver();
+
+      expect(component.isEditMode).toBeTrue();
+      expect(component.editingDriver?.entity_id).toBe("new");
+      expect(component.selectedDriverId).toBeUndefined();
+    });
+
+    it("should duplicate driver via saveAsNew when onCopyDriver is called", () => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.allDrivers = [d1];
+      dataService.createDriver.and.returnValue(
+        of({ ...d1, entity_id: "d-copied-id", name: "Alice_1" }),
+      );
+
+      component.onCopyDriver();
+
+      expect(dataService.createDriver).toHaveBeenCalled();
+      expect(component.editingDriver?.entity_id).toBe("d-copied-id");
+      expect(component.editingDriver?.name).toBe("Alice_1");
+    });
+
+    it("should revert changes back to originalDriver on onConfirmDiscard", () => {
+      const d1 = new Driver("d1", "Original Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+      component.editingDriver!.name = "Modified Alice";
+      expect(component.hasChanges()).toBeTrue();
+
+      component.onConfirmDiscard();
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.editingDriver?.name).toBe("Original Alice");
+      expect(component.hasChanges()).toBeFalse();
+      expect(component.isNavigationApproved).toBeTrue();
+    });
+
+    it("should keep pending changes on onCancelDiscard", fakeAsync(() => {
+      const d1 = new Driver("d1", "Original Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+      component.editingDriver!.name = "Modified Alice";
+
+      let deactivateResult: boolean | undefined;
+      component.confirmDiscard().then((val) => (deactivateResult = val));
+
+      component.onCancelDiscard();
+      tick();
+
+      expect(component.isEditMode).toBeTrue();
+      expect(component.editingDriver?.name).toBe("Modified Alice");
+      expect(deactivateResult).toBeFalse();
+    }));
+
+    it("should auto-save on debounced input change while remaining in edit mode", fakeAsync(() => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+      dataService.updateDriver.calls.reset();
+
+      component.onNameChange("Alice Updated");
+      tick(150);
+
+      expect(dataService.updateDriver).toHaveBeenCalled();
+      expect(component.editingDriver?.name).toBe("Alice Updated");
+      expect(component.isEditMode).toBeTrue();
+      expect(component.isDirtyState()).toBeFalse();
+    }));
+
+    it("should transition to read-only mode after save finishes when transitionToReadOnlyOnSave was requested", fakeAsync(() => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+
+      const saveSubject = new Subject<any>();
+      dataService.updateDriver.and.returnValue(saveSubject.asObservable());
+
+      // Trigger auto-save
+      component.onAudioTypeChange("lap", "none");
+      expect(component.isSaving).toBeTrue();
+      expect(component.isEditMode).toBeTrue();
+
+      // User clicks Done Editing while save is in flight
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeTrue();
+
+      // Save completes
+      saveSubject.next(component.editingDriver);
+      saveSubject.complete();
+      tick();
+
+      expect(component.isSaving).toBeFalse();
+      expect(component.isEditMode).toBeFalse();
+    }));
+
+    it("should trigger auto-save again if concurrent edits occurred while saving", fakeAsync(() => {
+      const d1 = new Driver("d1", "Alice", "Ali");
+      setupDriver(d1);
+      component.isEditMode = true;
+
+      const saveSubject = new Subject<any>();
+      dataService.updateDriver.and.returnValue(saveSubject.asObservable());
+
+      // Initial auto-save triggered
+      component.onAudioTypeChange("lap", "none");
+      expect(component.isSaving).toBeTrue();
+
+      // Another change occurs while save is in flight
+      component.editingDriver!.name = "Alice Even Newer";
+      const autoSaveSpy = spyOn<any>(
+        component,
+        "autoSaveDriver",
+      ).and.callThrough();
+
+      // First save completes
+      saveSubject.next(component.editingDriver);
+      saveSubject.complete();
+      tick();
+
+      expect(autoSaveSpy).toHaveBeenCalled();
     }));
   });
 });

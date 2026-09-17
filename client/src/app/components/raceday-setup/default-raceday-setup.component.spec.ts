@@ -2244,7 +2244,7 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/asset-manager"]);
 
       component.openDriverManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"]);
 
       component.openTeamManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"]);

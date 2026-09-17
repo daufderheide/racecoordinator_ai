@@ -58,7 +58,6 @@ nav:
     - Arduino UNO Q Setup: arduino-uno-q.md
   - Configuration:
     - Race Day Setup: raceday-setup.md
-    - Driver Manager: driver-manager.md
     - Driver Editor: driver-editor.md
     - Team Manager: team-manager.md
     - Team Editor: team-editor.md
