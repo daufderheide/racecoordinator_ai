@@ -33,8 +33,8 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
   areDriversEqual,
@@ -77,9 +77,29 @@ export { DriverAudioSlot } from "./driver-editor.helper";
 export class DriverEditorComponent
   implements OnInit, OnDestroy, DirtyComponent
 {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  // Discard Changes Confirmation Modal
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
   private isReverting = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
@@ -225,6 +245,11 @@ export class DriverEditorComponent
       },
       () => this.editingDriver, // snapshotGetter
     );
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
@@ -484,44 +509,27 @@ export class DriverEditorComponent
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.originalDriver) {
-      this.editingDriver = cloneDriver(this.originalDriver);
-      this.undoManager.resetTracking(this.editingDriver);
-    } else if (this.allDrivers.length > 0) {
-      this.selectDriver(this.allDrivers[0]);
-    }
-    this.isEditMode = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
-    this.cdr.detectChanges();
+    this.lifecycle.onConfirmDiscard(() => {
+      if (this.originalDriver) {
+        this.editingDriver = cloneDriver(this.originalDriver);
+        this.undoManager.resetTracking(this.editingDriver);
+      } else if (this.allDrivers.length > 0) {
+        this.selectDriver(this.allDrivers[0]);
+      }
+      this.isEditMode = false;
+    });
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   saveAsNew() {

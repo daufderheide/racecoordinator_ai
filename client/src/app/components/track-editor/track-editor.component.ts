@@ -66,8 +66,8 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 @Component({
   standalone: true,
@@ -96,9 +96,28 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   ],
 })
 export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
   private isReverting = false;
   @ViewChild(EditorTitleComponent) titleComponent!: EditorTitleComponent;
   private isDestroyed = false;
@@ -317,6 +336,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       },
       () => this.createSnapshot(),
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
@@ -1240,43 +1265,26 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.originalTrack) {
-      this.selectTrack(this.originalTrack);
-    } else if (this.allTracks.length > 0) {
-      this.selectTrack(this.allTracks[0]);
-    }
-    this.isEditMode = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
-    this.cdr.detectChanges();
+    this.lifecycle.onConfirmDiscard(() => {
+      if (this.originalTrack) {
+        this.selectTrack(this.originalTrack);
+      } else if (this.allTracks.length > 0) {
+        this.selectTrack(this.allTracks[0]);
+      }
+      this.isEditMode = false;
+    });
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   onBackClicked() {

@@ -29,8 +29,8 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
 
 import {
   areSeasonsEqual,
@@ -62,9 +62,28 @@ import {
 export class SeasonEditorComponent
   implements OnInit, OnDestroy, DirtyComponent
 {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((confirm: boolean) => void) | null = null;
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
   private isReverting = false;
 
   isEditMode = false;
@@ -144,6 +163,12 @@ export class SeasonEditorComponent
         this.cdr.markForCheck();
       }),
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   get isDirty(): boolean {
@@ -186,36 +211,19 @@ export class SeasonEditorComponent
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard(): void {
-    this.showDiscardConfirm = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard();
   }
 
   onCancelDiscard(): void {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   ngOnInit(): void {
