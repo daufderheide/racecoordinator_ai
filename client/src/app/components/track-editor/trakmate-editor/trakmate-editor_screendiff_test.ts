@@ -50,6 +50,15 @@ test.describe("Trakmate Editor Component Visuals", () => {
     });
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display trakmate editor with main config and pins", async ({
     page,
   }) => {
@@ -61,6 +70,8 @@ test.describe("Trakmate Editor Component Visuals", () => {
 
     const editor = page.locator("app-trakmate-editor");
     await expect(editor).toBeVisible();
+
+    await enterEditMode(page);
 
     // Ensure the image loads properly
     const boardImg = editor.locator(".trakmate-logo");
@@ -92,6 +103,8 @@ test.describe("Trakmate Editor Component Visuals", () => {
 
     const editor = page.locator("app-trakmate-editor");
     await expect(editor).toBeVisible();
+
+    await enterEditMode(page);
 
     // click on the main config header
     const mainHeader = editor.locator(".section-header").nth(0);

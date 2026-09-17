@@ -27,6 +27,15 @@ async function waitForBoardImage(page: any, root: any) {
   }
 }
 
+async function enterEditMode(page: any) {
+  await page.locator(".page-container").waitFor();
+  await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+  await page.locator("#edit-track-btn").click();
+  await expect(page.locator("#track-name-input")).toBeEnabled();
+  await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+  await TestSetupHelper.disableAnimations(page);
+}
+
 test.describe("Arduino Editor Component Visuals", () => {
   test.beforeEach(async ({ page }) => {
     await TestSetupHelper.setupStandardMocks(page);
@@ -46,6 +55,7 @@ test.describe("Arduino Editor Component Visuals", () => {
     const _harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
+    await enterEditMode(page);
 
     // Wait for board image to be loaded to avoid blank white sections
     await waitForBoardImage(page, editor);
@@ -113,6 +123,7 @@ test.describe("Arduino Editor Component Visuals", () => {
     const _harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
+    await enterEditMode(page);
 
     // Pin actions checked visually
 
@@ -204,6 +215,7 @@ test.describe("Arduino Editor Voltage Divider Config Visuals", () => {
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
+    await enterEditMode(page);
 
     if (!(await harness.isSectionExpanded("voltage"))) {
       await harness.toggleSection("voltage");
@@ -229,6 +241,7 @@ test.describe("Arduino Editor Voltage Divider Config Visuals", () => {
     const harness = new ArduinoEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
+    await enterEditMode(page);
 
     if (!(await harness.isSectionExpanded("voltage"))) {
       await harness.toggleSection("voltage");
@@ -258,6 +271,7 @@ test.describe("Arduino Editor Section Expander States", () => {
     const editor = page.locator("app-arduino-editor");
     await expect(editor).toBeVisible();
     await waitForBoardImage(page, editor);
+    await enterEditMode(page);
     return editor;
   }
 
@@ -350,6 +364,7 @@ test.describe("Arduino Editor Pin Behavior Dropdown Visuals", () => {
     const editor = page.locator("app-arduino-editor");
     await expect(editor).toBeVisible();
     await waitForBoardImage(page, editor);
+    await enterEditMode(page);
     return editor;
   }
 

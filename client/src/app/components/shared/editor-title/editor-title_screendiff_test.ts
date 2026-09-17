@@ -11,6 +11,24 @@ test.describe("Editor Title Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterDriverEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#driver-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
+  async function enterTrackEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display editor title in driver editor", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -18,6 +36,8 @@ test.describe("Editor Title Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterDriverEditMode(page);
 
     const _titleHarness = new EditorTitleHarnessE2e(
       page.locator("app-editor-title"),
@@ -39,6 +59,8 @@ test.describe("Editor Title Visuals", () => {
     // Wait for content that appears in track editor
     await page.locator(".page-container").waitFor();
 
+    await enterTrackEditMode(page);
+
     const _titleHarness = new EditorTitleHarnessE2e(
       page.locator("app-editor-title"),
     );
@@ -59,6 +81,8 @@ test.describe("Editor Title Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterDriverEditMode(page);
 
     await page.evaluate(() => {
       (window as any).fullscreenService?.setFullscreenOverride(true);

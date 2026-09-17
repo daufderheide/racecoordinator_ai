@@ -9,6 +9,15 @@ test.describe("BART Editor Component Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display bart editor with main config and channel sensors", async ({
     page,
   }) => {
@@ -20,6 +29,8 @@ test.describe("BART Editor Component Visuals", () => {
 
     const editor = page.locator("app-bart-editor");
     await expect(editor).toBeVisible();
+
+    await enterEditMode(page);
 
     const harness = new BartEditorHarnessE2e(editor);
     expect(await harness.getDeviceName()).toBe("BART_0001");
@@ -39,6 +50,8 @@ test.describe("BART Editor Component Visuals", () => {
 
     const editor = page.locator("app-bart-editor");
     await expect(editor).toBeVisible();
+
+    await enterEditMode(page);
 
     const harness = new BartEditorHarnessE2e(editor);
     await harness.toggleSection("main");

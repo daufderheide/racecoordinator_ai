@@ -11,6 +11,15 @@ test.describe("Item Selector Visuals", () => {
     await TestSetupHelper.setupAssetMocks(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#driver-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display item selector", async ({ page }) => {
     // Navigate to Driver Editor with an ID to ensure it loads
     await TestSetupHelper.waitForLocalization(
@@ -19,6 +28,8 @@ test.describe("Item Selector Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     // Wait for the avatar preview to be visible (clickable)
     const avatarPreview = page.locator("app-image-selector .image-preview");
@@ -48,6 +59,8 @@ test.describe("Item Selector Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     const avatarPreview = page.locator("app-image-selector .image-preview");
     await expect(avatarPreview).toBeVisible();
@@ -79,6 +92,8 @@ test.describe("Item Selector Visuals", () => {
     );
     await page.locator(".page-container").waitFor();
 
+    await enterEditMode(page);
+
     const avatarPreview = page.locator("app-image-selector .image-preview");
     await expect(avatarPreview).toBeVisible();
     await avatarPreview.click();
@@ -108,6 +123,8 @@ test.describe("Item Selector Visuals", () => {
       page.goto("/driver-editor?id=d1"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     const avatarPreview = page.locator("app-image-selector .image-preview");
     await expect(avatarPreview).toBeVisible();

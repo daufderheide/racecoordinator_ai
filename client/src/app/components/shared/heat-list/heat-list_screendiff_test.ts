@@ -12,52 +12,70 @@ test.describe("Heat List Visuals", () => {
     await TestSetupHelper.setupRaceWebSocketMocks(page);
     await TestSetupHelper.disableAnimations(page);
 
+    const heatsPayload = {
+      heats: [
+        {
+          heatNumber: 1,
+          lanes: [
+            {
+              laneNumber: 1,
+              driverNumber: 1,
+              backgroundColor: "#ff0000",
+              foregroundColor: "#ffffff",
+            },
+            {
+              laneNumber: 2,
+              driverNumber: 2,
+              backgroundColor: "#00ff00",
+              foregroundColor: "#000000",
+            },
+          ],
+        },
+        {
+          heatNumber: 2,
+          lanes: [
+            {
+              laneNumber: 1,
+              driverNumber: 3,
+              backgroundColor: "#0000ff",
+              foregroundColor: "#ffffff",
+            },
+            {
+              laneNumber: 2,
+              driverNumber: 4,
+              backgroundColor: "#ffff00",
+              foregroundColor: "#000000",
+            },
+          ],
+        },
+      ],
+    };
+
     // Mock Heat Generation API
     await page.route("**/api/races/*/generate-heats", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          heats: [
-            {
-              heatNumber: 1,
-              lanes: [
-                {
-                  laneNumber: 1,
-                  driverNumber: 1,
-                  backgroundColor: "#ff0000",
-                  foregroundColor: "#ffffff",
-                },
-                {
-                  laneNumber: 2,
-                  driverNumber: 2,
-                  backgroundColor: "#00ff00",
-                  foregroundColor: "#000000",
-                },
-              ],
-            },
-            {
-              heatNumber: 2,
-              lanes: [
-                {
-                  laneNumber: 1,
-                  driverNumber: 3,
-                  backgroundColor: "#0000ff",
-                  foregroundColor: "#ffffff",
-                },
-                {
-                  laneNumber: 2,
-                  driverNumber: 4,
-                  backgroundColor: "#ffff00",
-                  foregroundColor: "#000000",
-                },
-              ],
-            },
-          ],
-        }),
+        body: JSON.stringify(heatsPayload),
+      });
+    });
+
+    // Mock Heat Preview API
+    await page.route("**/api/heats/preview*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(heatsPayload),
       });
     });
   });
+
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#race-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
 
   test("should display heat list correctly", async ({ page }) => {
     // Navigate to Race Editor which uses Heat List
@@ -66,6 +84,14 @@ test.describe("Heat List Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
+
+    await expect(page.locator(".editor-panel")).toBeAttached({
+      timeout: 10000,
+    });
+    const minLapInput = page.locator(".min-lap-time-input");
+    await minLapInput.waitFor({ state: "visible", timeout: 10000 });
+
+    await enterEditMode(page);
 
     // Wait for Heat List to be visible
     const heatListHost = page.locator(HeatListHarnessBase.hostSelector);

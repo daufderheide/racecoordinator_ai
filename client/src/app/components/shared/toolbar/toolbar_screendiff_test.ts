@@ -9,21 +9,14 @@ test.describe("Toolbar Component Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test("should display track manager style toolbar", async ({ page }) => {
-    // We'll use the track manager page as a host since it uses the toolbar
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/asset-manager"),
-    );
-
-    // Wait for the toolbar to be visible
-    const toolbar = page.locator("app-toolbar");
-    await expect(toolbar).toBeVisible();
-
-    await TestSetupHelper.waitForImagesLoaded(toolbar);
-    await expect(toolbar).toHaveScreenshot("toolbar-track-manager-style.png");
-  });
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
 
   test("should display track editor style toolbar", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
@@ -31,6 +24,8 @@ test.describe("Toolbar Component Visuals", () => {
       "en",
       page.goto("/track-editor?id=t1"),
     );
+
+    await enterEditMode(page);
 
     const toolbar = page.locator(".header-right app-toolbar");
     await expect(toolbar).toBeVisible();
@@ -43,10 +38,12 @@ test.describe("Toolbar Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/asset-manager"),
+      page.goto("/track-editor?id=t1"),
     );
 
-    const toolbar = page.locator("app-toolbar");
+    await enterEditMode(page);
+
+    const toolbar = page.locator(".header-right app-toolbar");
     const harness = new ToolbarHarnessE2e(toolbar);
 
     await harness.hoverHelp();
@@ -58,10 +55,12 @@ test.describe("Toolbar Component Visuals", () => {
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/asset-manager"),
+      page.goto("/track-editor?id=t1"),
     );
 
-    const toolbar = page.locator("app-toolbar");
+    await enterEditMode(page);
+
+    const toolbar = page.locator(".header-right app-toolbar");
     const harness = new ToolbarHarnessE2e(toolbar);
 
     await harness.hoverDelete();
@@ -76,6 +75,8 @@ test.describe("Toolbar Component Visuals", () => {
       "en",
       page.goto("/track-editor?id=t1"),
     );
+
+    await enterEditMode(page);
 
     const toolbar = page.locator(".header-right app-toolbar");
     await TestSetupHelper.waitForImagesLoaded(toolbar);

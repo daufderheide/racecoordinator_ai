@@ -17,6 +17,13 @@ test.describe("Track Editor Visuals", () => {
     });
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display track editor for existing track", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -28,6 +35,8 @@ test.describe("Track Editor Visuals", () => {
     const _harness = new TrackEditorHarnessE2e(editor);
 
     await expect(editor).toBeVisible();
+
+    await enterEditMode(page);
 
     // Track name and lane count checked visually
 
@@ -70,6 +79,9 @@ test.describe("Track Editor Visuals", () => {
     );
 
     const editor = page.locator("app-track-editor");
+
+    await enterEditMode(page);
+
     const arEditors = await new TrackEditorHarnessE2e(
       editor,
     ).getArduinoEditorHarnesses();
@@ -100,6 +112,8 @@ test.describe("Track Editor Visuals", () => {
 
     const editor = page.locator("app-track-editor");
     const harness = new TrackEditorHarnessE2e(editor);
+
+    await enterEditMode(page);
 
     await harness.setTrackName("Speedway");
 

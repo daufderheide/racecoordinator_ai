@@ -16,6 +16,13 @@ test.describe("Driver Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#driver-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display driver editor with driver loaded", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -24,6 +31,8 @@ test.describe("Driver Editor Visuals", () => {
     );
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     const container = page.locator(".page-container");
     const _harness = new DriverEditorHarnessE2e(container);
@@ -44,6 +53,8 @@ test.describe("Driver Editor Visuals", () => {
     );
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
@@ -88,6 +99,8 @@ test.describe("Driver Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
+    await enterEditMode(page);
+
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
 
@@ -109,6 +122,8 @@ test.describe("Driver Editor Visuals", () => {
     );
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
@@ -144,6 +159,8 @@ test.describe("Driver Editor Visuals", () => {
     );
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     const container = page.locator(".page-container");
     const harness = new DriverEditorHarnessE2e(container);
