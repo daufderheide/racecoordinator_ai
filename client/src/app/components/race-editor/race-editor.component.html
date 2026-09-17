@@ -31,21 +31,33 @@
   <app-editor-title
     titleKey="RE_TITLE"
     [itemName]="editingRace?.name"
-    [undoManager]="undoManager"
+    [items]="raceSelectItems"
+    [selectedId]="selectedRaceId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
-    [disabledCopy]="!isConfigValid()"
+    [showDelete]="true"
+    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledDelete]="!selectedRace || isSaving"
     [copyDisabledTooltipKey]="'RE_TOOLTIP_COPY_DISABLED'"
-    [isSaving]="isSaving"
+    [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'raceEditorHelpShown'"
+    [isSaving]="isSaving"
+    [undoManager]="undoManager"
+    (selectedIdChange)="onSelectRaceById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewRace()"
     (copy)="saveAsNew()"
+    (delete)="onDeleteRace()"
   >
   </app-editor-title>
 
   @if (!isLoading) {
     <div class="content-split">
       <!-- Editor Panel (Left) -->
-      <div class="editor-panel">
+      <div class="editor-panel" [class.read-only]="!isEditMode">
         <div
           id="race-name-section"
           class="editor-section fixed-header"
@@ -55,6 +67,7 @@
           <input
             id="race-name-input"
             type="text"
+            [disabled]="!isEditMode"
             [(ngModel)]="editingRace.name"
             [appAutoSelectDefault]="defaultRaceName"
             (ngModelChange)="onInputChange()"
@@ -72,6 +85,7 @@
           <label>{{ "RM_LABEL_HEAT_ROTATION" | translate }}</label>
           <app-custom-select
             id="heat-rotation-select"
+            [disabled]="!isEditMode"
             [(ngModel)]="editingRace.heat_rotation_type"
             (ngModelChange)="onRotationTypeChange()"
           >
@@ -110,6 +124,7 @@
           <div class="editor-section" [class.invalid]="isRotationInvalid">
             <label>{{ "RE_CUSTOM_ROTATION_ASSET_LABEL" | translate }}</label>
             <app-custom-select
+              [disabled]="!isEditMode"
               [(ngModel)]="selectedCustomRotationAssetId"
               (ngModelChange)="onCustomRotationAssetChange()"
             >
@@ -140,6 +155,7 @@
             <input
               id="custom-sequence-input"
               type="text"
+              [disabled]="!isEditMode"
               [(ngModel)]="customSequenceText"
               (ngModelChange)="onCustomSequenceChange()"
               (focus)="onInputFocus()"
@@ -168,6 +184,7 @@
               </label>
               <input
                 type="number"
+                class="driver-count-input"
                 [(ngModel)]="driverCount"
                 (ngModelChange)="onDriverCountChange()"
                 min="1"
@@ -184,8 +201,9 @@
             [showGroups]="editingRace.group_options.enabled"
             [groupNames]="editingRace.group_options.names || []"
             [canDragLanes]="
-              editingRace?.heat_rotation_type === 'SingleHeatSolo' ||
-              editingRace?.heat_rotation_type === 'SingleHeat'
+              isEditMode &&
+              (editingRace?.heat_rotation_type === 'SingleHeatSolo' ||
+                editingRace?.heat_rotation_type === 'SingleHeat')
             "
             (laneSelected)="onLaneSelected($event)"
           ></app-heat-list>
@@ -200,7 +218,7 @@
           [tabs]="raceTabs"
           (tabClicked)="scrollToAndExpandSection($event)"
         ></app-editor-tabs>
-        <div class="preview-panel">
+        <div class="preview-panel" [class.read-only]="!isEditMode">
           <div class="sections-wrapper">
             <!-- General Section -->
             <div id="general-section" class="config-section">
@@ -216,7 +234,12 @@
                   class="section-action-btn danger"
                   type="button"
                   (click)="onResetRecords($event)"
-                  [disabled]="isSaving || !isAdmin() || !editingRace?.entity_id"
+                  [disabled]="
+                    isSaving ||
+                    !isAdmin() ||
+                    !editingRace?.entity_id ||
+                    !isEditMode
+                  "
                   [title]="getResetTooltip()"
                 >
                   <span class="material-icons">restart_alt</span>
@@ -229,6 +252,7 @@
                       <label>{{ "RM_LABEL_TRACK" | translate }}</label>
                       <app-custom-select
                         id="track-select"
+                        [disabled]="!isEditMode"
                         [(ngModel)]="editingRace.track_entity_id"
                         (ngModelChange)="captureState()"
                       >
@@ -246,6 +270,7 @@
                       <label>{{ "RM_LABEL_THEME" | translate }}</label>
                       <app-custom-select
                         id="theme-select"
+                        [disabled]="!isEditMode"
                         [(ngModel)]="editingRace.theme_id"
                         (ngModelChange)="captureState()"
                       >
@@ -467,6 +492,7 @@
                           id="heat-ranking-select"
                           class="heat-ranking-select"
                           data-testid="heat-ranking-select"
+                          [disabled]="!isEditMode"
                           [(ngModel)]="editingRace.heat_scoring.heat_ranking"
                           (ngModelChange)="captureState()"
                         >
@@ -487,6 +513,7 @@
                           id="heat-tiebreaker-select"
                           class="heat-tiebreaker-select"
                           data-testid="heat-tiebreaker-select"
+                          [disabled]="!isEditMode"
                           [(ngModel)]="
                             editingRace.heat_scoring.heat_ranking_tiebreaker
                           "
@@ -510,6 +537,7 @@
                             id="finish-method-select"
                             class="finish-method-select"
                             data-testid="finish-method-select"
+                            [disabled]="!isEditMode"
                             [(ngModel)]="editingRace.heat_scoring.finish_method"
                             (ngModelChange)="captureState()"
                           >
@@ -564,6 +592,7 @@
                           id="allow-finish-select"
                           class="allow-finish-select"
                           data-testid="allow-finish-select"
+                          [disabled]="!isEditMode"
                           [(ngModel)]="editingRace.heat_scoring.allow_finish"
                           (ngModelChange)="captureState()"
                         >
@@ -593,6 +622,7 @@
                           id="overall-ranking-select"
                           class="overall-ranking-select"
                           data-testid="overall-ranking-select"
+                          [disabled]="!isEditMode"
                           [(ngModel)]="
                             editingRace.overall_scoring.ranking_method
                           "
@@ -618,6 +648,7 @@
                           id="overall-tiebreaker-select"
                           class="overall-tiebreaker-select"
                           data-testid="overall-tiebreaker-select"
+                          [disabled]="!isEditMode"
                           [(ngModel)]="editingRace.overall_scoring.tiebreaker"
                           (ngModelChange)="captureState()"
                         >
@@ -1268,6 +1299,7 @@
                               captureState()
                             "
                             [disabled]="
+                              !isEditMode ||
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
                             "
@@ -1505,6 +1537,7 @@
                             "
                             (ngModelChange)="captureState()"
                             [disabled]="
+                              !isEditMode ||
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
                             "
@@ -2182,6 +2215,7 @@
                               captureState()
                             "
                             [disabled]="
+                              !isEditMode ||
                               !hasDigitalFuel ||
                               !editingRace.digital_fuel_options.enabled
                             "
@@ -2343,6 +2377,7 @@
                             "
                             (ngModelChange)="captureState()"
                             [disabled]="
+                              !isEditMode ||
                               !hasDigitalFuel ||
                               !editingRace.digital_fuel_options.enabled
                             "

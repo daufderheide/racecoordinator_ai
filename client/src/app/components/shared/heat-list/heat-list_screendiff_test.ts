@@ -60,15 +60,12 @@ test.describe("Heat List Visuals", () => {
   });
 
   test("should display heat list correctly", async ({ page }) => {
-    // Navigate to Race Manager which uses Heat List
+    // Navigate to Race Editor which uses Heat List
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/race-manager?driverCount=4"),
+      page.goto("/race-editor?id=r1&driverCount=4"),
     );
-
-    // Select the first race to trigger heat generation
-    await page.click(".list-container .list-item:first-child");
 
     // Wait for Heat List to be visible
     const heatListHost = page.locator(HeatListHarnessBase.hostSelector);

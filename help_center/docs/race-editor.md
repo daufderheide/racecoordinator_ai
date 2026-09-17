@@ -1,27 +1,49 @@
 # Race Editor
 
-!!! note "Content Coming Soon"
-    This article is under development. Check back soon for detailed documentation.
+The **Race Editor** is the comprehensive configuration interface for designing, configuring, and testing your slot car racing formats, scoring rules, heat rotations, fuel simulations, and timer setups.
 
-## Overview
+---
 
-*Content coming soon.*
+## Overview & Auto-Saving
 
-## Race Name and Type
+The Race Editor provides a unified interface for selecting, viewing, configuring, and testing your slot car race formats:
 
-*Content coming soon.*
+- **Race Selector**: Located in the top header next to the page title, this dropdown lists all configured races and allows you to quickly switch between races.
+- **Read-Only Mode**: By default, opening the editor displays race properties, scoring rules, rotation settings, and fuel configuration in read-only mode. Form inputs, options, and settings are locked to prevent accidental modifications, while accordion sections and heat previews remain fully expandable and interactive.
+- **Edit Mode**: Clicking the **Edit** (pencil) icon on the toolbar unlocks all configuration controls, scoring methods, and fuel settings. While in Edit Mode, the race selector dropdown is locked to prevent accidental navigation away from unsaved edits.
+- **Continuous Auto-Save**: As you make changes (renaming, adjusting heat durations, changing scoring methods, modifying fuel curves), your edits are automatically saved to the server in the background without dropping out of Edit Mode.
+- **Exiting Edit Mode**: Clicking the **Done Editing** (checkmark) icon validates your changes, ensures all edits are persisted, and returns the editor to Read-Only Mode.
+- **Discarding Changes**: If you attempt to leave the editor or click Discard, the unsaved changes dialog prompts you to confirm. Discarding changes reverts all edits back to the last-saved version and restores Read-Only Mode.
 
-## Heat Rotation Format
+The editor workspace is split into two synchronized working panels:
 
-*Content coming soon.*
+- **Left Panel (Race Configuration)**: Configure general race properties, race format, scoring methods, rotation type, team settings, group options, and analog/digital fuel simulations.
+- **Right Panel (Live Heat Preview)**: Dynamically generates and displays the complete list of heats based on the active rotation type, driver count, and lane assignments, updating in real time as you adjust settings.
 
-## Scoring Options
+---
 
-*Content coming soon.*
+## Race Configuration & Options
 
-## Timer Settings
+### Race Name & Track Association
+- **Race Name**: Unique name identifying the race format.
+- **Track**: The physical track associated with this race. The selected track determines whether Analog Fuel or Digital Fuel simulation is available.
+- **Theme**: Visual UI theme applied to the race display during raceday.
 
-*Content coming soon.*
+### Heat Rotation Format
+- **Rotation Type**: Choose between standard rotations (**Round Robin**, **Ladder**, **Tournament**) or custom defined sequences.
+- **Heat Times Through**: Specifies how many times each driver cycles through the complete heat rotation.
+- **Reverse Heats**: Inverts the rotation order so drivers run heats in reverse sequence.
+
+### Scoring Options
+- **Heat Scoring**: Configure heat completion by lap count or elapsed time limit, heat ranking method (laps or lap times), and tiebreakers.
+- **Overall Scoring**: Configure overall race standings ranking method, tiebreaker rules, and dropped heats.
+- **Season Scoring**: Assign points distribution per position for season-long championships.
+
+### Timer Settings
+- **Start / Restart Delay**: Countdown lead-in seconds before race starts or restarts after a yellow flag.
+- **Minimum Lap Time**: Minimum allowable lap time (in seconds) to filter out false or glitch sensor triggers.
+- **Drift Time**: Maximum sensor trigger window to handle car drift or sliding over the finish line.
+- **Start Behind Sensor**: Enforces cars starting behind the finish sensor on lap zero.
 
 ## Fuel Settings
 

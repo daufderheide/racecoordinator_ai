@@ -1,5 +1,50 @@
 # Rennen-Editor
 
+Der **Rennen-Editor** ist die zentrale Konfigurationsoberfläche zum Entwerfen, Konfigurieren und Testen Ihrer Slotcar-Rennformate, Wertungsregeln, Laufläufe, Kraftstoffsimulationen und Zeiteinstellungen.
+
+---
+
+## Übersicht & Automatisches Speichern
+
+Der Rennen-Editor bietet eine einheitliche Oberfläche zur Auswahl, Anzeige, Konfiguration und zum Testen Ihrer Rennformate:
+
+- **Rennenauswahl**: In der oberen Leiste neben dem Seitentitel listet dieses Dropdown-Menü alle konfigurierten Rennen auf und ermöglicht ein schnelles Wechseln.
+- **Schreibgeschützter Modus**: Standardmäßig zeigt der Editor Renneigenschaften, Wertungsregeln und Einstellungen im schreibgeschützten Modus an. Formularfelder sind gesperrt, während Akkordeonbereiche und Laufvorschauen interaktiv bleiben.
+- **Bearbeitungsmodus**: Ein Klick auf das **Bearbeiten**-Symbol (Stift) schaltet alle Eingabesteuerelemente frei. Während der Bearbeitung ist die Rennenauswahl gesperrt.
+- **Kontinuierliche automatische Speicherung**: Alle Änderungen werden automatisch im Hintergrund auf dem Server gespeichert, ohne den Bearbeitungsmodus zu verlassen.
+- **Bearbeitungsmodus beenden**: Ein Klick auf das **Fertig**-Symbol (Häkchen) validiert alle Änderungen und kehrt in den schreibgeschützten Modus zurück.
+- **Änderungen verwerfen**: Ein Klick auf Verwerfen stellt die zuletzt gespeicherte Version wieder her und verlässt den Bearbeitungsmodus.
+
+Der Arbeitsbereich ist in zwei synchronisierte Bereiche unterteilt:
+
+- **Linkes Bedienfeld (Rennenkonfiguration)**: Allgemeine Renneigenschaften, Format, Wertungsmethoden, Rotationstyp, Gruppeneinstellungen und analoge/digitale Kraftstoffsimulation.
+- **Rechtes Bedienfeld (Live-Laufvorschau)**: Generiert dynamisch die vollständige Liste der Läufe basierend auf dem aktiven Rotationstyp und der Fahreranzahl.
+
+---
+
+## Rennenkonfiguration & Optionen
+
+### Rennenname & Streckenzuordnung
+- **Rennenname**: Eindeutiger Name für das Rennformat.
+- **Strecke**: Die zugeordnete Strecke bestimmt die Verfügbarkeit von analogem oder digitalem Kraftstoff.
+- **Design**: Visuelles UI-Design für die Anzeige am Renntag.
+
+### Lauflauf-Format
+- **Rotationstyp**: Standard-Rotationen (**Round Robin**, **Leiter**, **Turnier**) oder benutzerdefinierte Sequenzen.
+- **Laufdurchläufe**: Wie oft jeder Fahrer die komplette Laufrotation durchläuft.
+- **Umgekehrte Läufe**: Dreht die Laufreihenfolge um.
+
+### Wertungsoptionen
+- **Laufwertung**: Abschluss nach Runden oder Zeit, Platzierungsmethode und Tiebreaker.
+- **Gesamtwertung**: Ranglistenmethode, Tiebreaker-Regeln und Streichergebnisse.
+- **Saisonwertung**: Punkteverteilung pro Position für Meisterschaften.
+
+### Zeiteinstellungen
+- **Start- / Neustartverzögerung**: Countdown-Vorlaufzeit in Sekunden.
+- **Minimale Rundenzeit**: Mindestrundenzeit zur Filterung von Fehlauslösungen.
+- **Driftzeit**: Sensor-Auslösefenster für driftende Fahrzeuge über die Ziellinie.
+- **Hinter Sensor starten**: Erzwingt den Start hinter dem Zielsensor in Runde null.
+
 ## Kraftstoffeinstellungen
 
 Race Coordinator AI unterstützt umfassende Kraftstoffsimulationen für analoge und digitale Strecken, einschließlich anpassbarer Tankkapazität, Startlevel, Boxenstoppverzögerungen, Auftankraten, Strafaktionen bei leerem Tank und Kraftstoffverbrauchsmodellen.

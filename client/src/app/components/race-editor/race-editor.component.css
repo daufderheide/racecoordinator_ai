@@ -623,6 +623,32 @@
   width: 8px;
 }
 
+.editor-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.preview-panel.read-only input:not([type="button"]):not([type="submit"]),
+.preview-panel.read-only select,
+.preview-panel.read-only app-custom-select,
+.preview-panel.read-only button,
+.editor-panel.read-only input:not(.driver-count-input),
+.editor-panel.read-only select,
+.editor-panel.read-only app-custom-select {
+  pointer-events: none !important;
+  opacity: 0.75;
+  cursor: not-allowed !important;
+}
+
+.section-header,
+.preview-panel .section-header,
+.editor-panel .section-header {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 .sections-wrapper::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.4);
   border-radius: 4px;

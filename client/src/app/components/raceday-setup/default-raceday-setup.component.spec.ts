@@ -2269,13 +2269,13 @@ describe("DefaultRacedaySetupComponent", () => {
       component.selectedRace = { entity_id: "r1" } as any;
       component.selectedParticipants = [{} as any];
       component.openRaceManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: { id: "r1", driverCount: 1 },
       });
 
       component.selectedParticipants = [];
       component.openRaceManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: { id: "r1" },
       });
 

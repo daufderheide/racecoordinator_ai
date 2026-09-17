@@ -102,7 +102,7 @@ export class ToolbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.queryParams.subscribe((params) => {
+    this.route?.queryParams?.subscribe((params) => {
       const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       const helpRecName = this.helpRecordName();

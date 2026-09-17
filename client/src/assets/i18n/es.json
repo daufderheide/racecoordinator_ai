@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Mangas Descartadas",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "Terminar manga al quedarse sin combustible",
   "RE_ERROR_NAME_EXISTS": "El nombre de la carrera ya existe",
+  "RE_ERROR_NAME_REQUIRED": "El nombre de la carrera es obligatorio",
   "RE_ERROR_NO_ROTATION_SELECTED": "Seleccione un archivo de rotación personalizada.",
   "RE_ERROR_SAVE_FAILED": "Error al guardar la carrera: ",
   "RE_FALSE_START_LAP_PENALTY": "Penalización de Vuelta por Salida Falsa",

@@ -1,4 +1,49 @@
-# Editor de Corrida
+# Editor de Corridas
+
+O **Editor de Corridas** é a interface completa de configuração para desenhar, configurar e testar formatos de corrida de slot cars, regras de pontuação, rotações de baterias, simulações de combustível e configurações de temporizador.
+
+---
+
+## Visão Geral e Salvamento Automático
+
+O Editor de Corridas oferece uma interface unificada para selecionar, visualizar, configurar e testar seus formatos de corrida:
+
+- **Seletor de Corrida**: Localizado no cabeçalho superior ao lado do título da página, este menu suspenso lista todas as corridas configuradas e permite alternar rapidamente entre elas.
+- **Modo Somente Leitura**: Por padrão, ao abrir o editor são exibidas as propriedades da corrida, regras de pontuação e opções em modo somente leitura. Os campos do formulário ficam bloqueados para evitar alterações acidentais, enquanto os acordeões e pré-visualizações de baterias permanecem interativos.
+- **Modo de Edição**: Clicar no ícone **Editar** (lápis) na barra de ferramentas desbloqueia todos os controles. Durante a edição, o seletor de corrida fica bloqueado.
+- **Salvamento Automático Contínuo**: Todas as alterações são salvas automaticamente em segundo plano no servidor sem sair do modo de edição.
+- **Sair do Modo de Edição**: Clicar no ícone **Concluído** (marca de seleção) valida as alterações e retorna ao modo somente leitura.
+- **Descartar Alterações**: Clicar em Descartar restaura todas as alterações para a última versão salva e sai do modo de edição.
+
+O espaço de trabalho é dividido em dois painéis sincronizados:
+
+- **Painel Esquerdo (Configuração da Corrida)**: Propriedades gerais, formato da corrida, métodos de pontuação, tipo de rotação, opções de grupo e simulação de combustível analógico/digital.
+- **Painel Direito (Pré-visualização de Baterias ao Vivo)**: Gera dinamicamente a lista completa de baterias com base na rotação ativa e no número de pilotos.
+
+---
+
+## Configuração da Corrida & Opções
+
+### Nome da Corrida & Associação de Pista
+- **Nome da Corrida**: Nome exclusivo que identifica o formato de corrida.
+- **Pista**: A pista física associada determina se a simulação de combustível analógica ou digital está disponível.
+- **Tema**: Tema visual de interface aplicado durante o dia de corrida.
+
+### Formato de Rotação de Baterias
+- **Tipo de Rotação**: Rotações padrão (**Round Robin**, **Escada**, **Torneio**) ou sequências personalizadas.
+- **Ciclos de Baterias**: Quantidade de vezes que cada piloto completa a rotação inteira de baterias.
+- **Baterias Invertidas**: Inverte a ordem da sequência de baterias.
+
+### Opções de Pontuação
+- **Pontuação da Bateria**: Conclusão por voltas ou tempo limite, método de classificação e desempates.
+- **Pontuação Geral**: Método de classificação geral, regras de desempate e baterias descartadas.
+- **Pontuação da Temporada**: Distribuição de pontos por posição para campeonatos.
+
+### Configurações de Temporizador
+- **Atraso de Início / Reinício**: Segundos de contagem regressiva prévia.
+- **Tempo Mínimo de Volta**: Tempo mínimo permitido para filtrar acionamentos falsos de sensores.
+- **Tempo de Drift**: Janela de detecção para deslizamento de carros sobre a linha de chegada.
+- **Iniciar Atrás do Sensor**: Exige que os carros comecem atrás do sensor na volta zero.
 
 ## Configurações de combustível
 

@@ -2009,7 +2009,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       queryParams.driverCount = this.selectedParticipants.length;
     }
     this.closeConfigDropdown();
-    this.router.navigate(["/race-manager"], { queryParams });
+    this.router.navigate(["/race-editor"], { queryParams });
   }
 
   openEventManager() {

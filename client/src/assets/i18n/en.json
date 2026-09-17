@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Dropped Heats",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "End Heat on Out of Fuel",
   "RE_ERROR_NAME_EXISTS": "Race name already exists",
+  "RE_ERROR_NAME_REQUIRED": "Race name is required",
   "RE_ERROR_NO_ROTATION_SELECTED": "Please select a custom rotation asset.",
   "RE_ERROR_SAVE_FAILED": "Failed to save race: ",
   "RE_FALSE_START_LAP_PENALTY": "False Start Lap Penalty",

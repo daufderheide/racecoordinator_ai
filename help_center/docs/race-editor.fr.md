@@ -1,5 +1,50 @@
 # Éditeur de Course
 
+L'**Éditeur de Course** est l'interface complète de configuration pour concevoir, configurer et tester vos formats de course de slot cars, règles de score, rotations de manches, simulations de carburant et paramètres de chronométrage.
+
+---
+
+## Vue d'Ensemble & Sauvegarde Automatique
+
+L'Éditeur de Course propose une interface unifiée pour sélectionner, afficher, configurer et tester vos formats de course :
+
+- **Sélecteur de Course** : Situé dans l'en-tête supérieur à côté du titre de la page, ce menu déroulant liste toutes les courses configurées et vous permet de passer rapidement de l'une à l'autre.
+- **Mode Lecture Seule** : Par défaut, l'éditeur affiche les propriétés de la course, les règles de score et la configuration en mode lecture seule. Les champs de saisie sont verrouillés pour éviter toute modification accidentelle, tandis que les sections accordéon et aperçus de manches restent interactifs.
+- **Mode Édition** : Cliquer sur l'icône **Éditer** (crayon) de la barre d'outils déverrouille tous les contrôles. Durant l'édition, le sélecteur de course est verrouillé.
+- **Sauvegarde Automatique Continue** : Toutes vos modifications sont enregistrées automatiquement en arrière-plan sur le serveur sans quitter le mode édition.
+- **Quitter le Mode Édition** : Cliquer sur l'icône **Terminé** (coche) valide vos modifications et revient en mode lecture seule.
+- **Abandonner les Modifications** : Cliquer sur Abandonner rétablit la dernière version enregistrée et quitte le mode édition.
+
+L'espace de travail est divisé en deux panneaux synchronisés :
+
+- **Panneau Gauche (Configuration de la Course)** : Propriétés générales, format de course, méthodes de score, type de rotation, options de groupe et simulation de carburant analogique/numérique.
+- **Panneau Droit (Aperçu des Manches en Direct)** : Génère dynamiquement la liste complète des manches selon le type de rotation actif et le nombre de pilotes.
+
+---
+
+## Configuration de la Course & Options
+
+### Nom de Course & Association de Piste
+- **Nom de Course** : Nom unique identifiant le format de course.
+- **Piste** : La piste physique associée détermine la disponibilité de la simulation de carburant analogique ou numérique.
+- **Thème** : Thème visuel d'interface appliqué pendant la course.
+
+### Format de Rotation des Manches
+- **Type de Rotation** : Rotations standards (**Round Robin**, **Échelle**, **Tournoi**) ou séquences personnalisées.
+- **Passages de Manches** : Nombre de fois que chaque pilote effectue la rotation complète des manches.
+- **Manches Inversées** : Inverse l'ordre de la séquence des manches.
+
+### Options de Score
+- **Score de Manche** : Fin par nombre de tours ou durée limite, méthode de classement et départages.
+- **Score Général** : Méthode de classement général, règles de départage et manches retirées.
+- **Score de Saison** : Distribution des points par position pour les championnats.
+
+### Paramètres de Chronométrage
+- **Délai de Départ / Reprise** : Compte à rebours avant le départ ou la reprise.
+- **Temps de Tour Minimum** : Temps minimum de tour pour filtrer les faux déclenchements de capteurs.
+- **Temps de Dérive** : Fenêtre de déclenchement pour les voitures en glisse sur la ligne d'arrivée.
+- **Démarrer Derrière le Capteur** : Impose le départ des voitures derrière le capteur au tour zéro.
+
 ## Paramètres de carburant
 
 Race Coordinator AI prend en charge une simulation complète du carburant pour les pistes analogiques et numériques, comprenant la capacité du réservoir, le niveau initial, les délais d'arrêt aux stands, les taux de ravitaillement, les pénalités de panne sèche et les modèles d'utilisation du carburant.

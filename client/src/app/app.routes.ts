@@ -11,7 +11,6 @@ import { EventManagerComponent } from "@app/components/event-manager/event-manag
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
 import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
-import { RaceManagerComponent } from "@app/components/race-manager/race-manager.component";
 import { RaceResultsComponent } from "@app/components/race-results/race-results.component";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { ModifyHeatsModalComponent } from "@app/components/raceday/modify-heats-modal/modify-heats-modal.component";
@@ -155,10 +154,8 @@ export const routes: Routes = [
   },
   {
     path: "race-manager",
-    component: RaceManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Race Manager",
-    data: { animation: "RaceManagerPage" },
+    redirectTo: "race-editor",
+    pathMatch: "full",
   },
   {
     path: "race-editor",

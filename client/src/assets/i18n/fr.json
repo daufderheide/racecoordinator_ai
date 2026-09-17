@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Manches Retirées",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "Terminer la manche si panne de carburant",
   "RE_ERROR_NAME_EXISTS": "Le nom de la course existe déjà",
+  "RE_ERROR_NAME_REQUIRED": "Le nom de la course est requis",
   "RE_ERROR_NO_ROTATION_SELECTED": "Veuillez sélectionner un asset de rotation personnalisé.",
   "RE_ERROR_SAVE_FAILED": "Échec de l'enregistrement de la course: ",
   "RE_FALSE_START_LAP_PENALTY": "Pénalité de Tour pour Faux Départ",

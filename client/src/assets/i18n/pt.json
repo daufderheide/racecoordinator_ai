@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Baterias Descartadas",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "Terminar bateria ao ficar sem combustível",
   "RE_ERROR_NAME_EXISTS": "O nome da corrida já existe",
+  "RE_ERROR_NAME_REQUIRED": "O nome da corrida é obrigatório",
   "RE_ERROR_NO_ROTATION_SELECTED": "Selecione um arquivo de rotação personalizada.",
   "RE_ERROR_SAVE_FAILED": "Falha ao guardar a corrida: ",
   "RE_FALSE_START_LAP_PENALTY": "Penalidade de Volta por Falsa Partida",

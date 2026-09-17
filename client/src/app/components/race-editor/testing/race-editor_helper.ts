@@ -4,10 +4,10 @@ import { MOCK_TRACKS } from "@app/testing/data/tracks_data";
 import { deepCopy } from "@app/utils/clone.utils";
 
 /**
- * RaceManagerHelper centralizes mock data and service behaviors for race-related components.
- * This ensures consistency across unit and screendiff tests for RaceManager and RaceEditor.
+ * RaceEditorHelper centralizes mock data and service behaviors for race-related components.
+ * This ensures consistency across unit and screendiff tests for RaceEditor.
  */
-export class RaceManagerHelper {
+export class RaceEditorHelper {
   /**
    * Configures Playwright routes for race-related data.
    * Used in screendiff tests to ensure consistent UI state across environments.
@@ -43,7 +43,7 @@ export class RaceManagerHelper {
  * Factory function to create a mocked DataService for race components.
  * This provides standard return values from races_data, track_data, and default heat previews.
  */
-export function createRaceManagerDataServiceMock(): any {
+export function createRaceEditorDataServiceMock(): any {
   const mock = jasmine.createSpyObj("DataService", [
     "getRaces",
     "getTracks",
@@ -53,7 +53,7 @@ export function createRaceManagerDataServiceMock(): any {
     "deleteRace",
     "generateHeats",
     "previewHeats",
-    "listAssets", // Added for image set editing
+    "listAssets",
     "updateRaceSubscription",
     "connectToInterfaceDataSocket",
     "disconnectFromInterfaceDataSocket",

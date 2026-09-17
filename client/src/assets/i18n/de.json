@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Streichresultate",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "Rennen bei leerem Tank beenden",
   "RE_ERROR_NAME_EXISTS": "Rennname existiert bereits",
+  "RE_ERROR_NAME_REQUIRED": "Rennname ist erforderlich",
   "RE_ERROR_NO_ROTATION_SELECTED": "Bitte wählen Sie eine benutzerdefinierte Rotation aus.",
   "RE_ERROR_SAVE_FAILED": "Rennen konnte nicht gespeichert werden: ",
   "RE_FALSE_START_LAP_PENALTY": "Fehlstart-Rundenstrafe",

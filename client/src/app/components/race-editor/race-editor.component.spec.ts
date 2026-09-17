@@ -41,12 +41,12 @@ import {
 import { deepCopy } from "@app/utils/clone.utils";
 
 import { NavigationService } from "../../services/navigation.service";
-import { createRaceManagerDataServiceMock } from "../race-manager/testing/race-manager_helper";
 import {
   interpolateFuelCurveClient,
   RaceEditorComponent,
 } from "./race-editor.component";
 import { RaceEditorHarness } from "./testing/race-editor.harness";
+import { createRaceEditorDataServiceMock } from "./testing/race-editor_helper";
 
 describe("RaceEditorComponent", () => {
   let component: RaceEditorComponent;
@@ -59,34 +59,41 @@ describe("RaceEditorComponent", () => {
   let roleSubject: BehaviorSubject<Role>;
   let mockAuthService: any;
 
-  beforeEach(() => {
-    mockTranslationService.translate.and.callFake((key: string) => key);
+  const mockConnectionMonitor = {
+    startMonitoring: jasmine.createSpy("startMonitoring"),
+    stopMonitoring: jasmine.createSpy("stopMonitoring"),
+    connectionState$: of("CONNECTED"),
+  };
+
+  beforeEach(async () => {
+    resetMocks();
 
     roleSubject = new BehaviorSubject<Role>(Role.ADMIN);
     mockAuthService = {
-      currentRole: Role.ADMIN,
       currentRole$: roleSubject.asObservable(),
+      get currentRole() {
+        return roleSubject.value;
+      },
+    };
+
+    const mockQueryParamMap = {
+      get: jasmine.createSpy("get").and.callFake((key: string) => {
+        if (key === "id") return "r1";
+        return null;
+      }),
+      has: (key: string) => key === "id",
+      getAll: (key: string) => (key === "id" ? ["r1"] : []),
+      keys: ["id"],
     };
 
     const mockActivatedRoute = {
       snapshot: {
-        queryParamMap: {
-          get: jasmine.createSpy("get").and.callFake((key: string) => {
-            if (key === "driverCount") return null;
-            if (key === "id") return "r1";
-            return null;
-          }),
-        },
+        queryParamMap: mockQueryParamMap,
+        queryParams: { id: "r1" },
       },
-      queryParams: of({ help: "false" }),
-      queryParamMap: of(convertToParamMap({ id: "r1" })),
+      queryParamMap: of(mockQueryParamMap as any),
+      queryParams: of({ id: "r1" }),
     };
-
-    const mockConnectionMonitor = jasmine.createSpyObj(
-      "ConnectionMonitorService",
-      ["startMonitoring", "stopMonitoring"],
-      { connectionState$: of() },
-    );
 
     const mockRaceConnectionService = jasmine.createSpyObj(
       "RaceConnectionService",
@@ -96,7 +103,7 @@ describe("RaceEditorComponent", () => {
     TestBed.configureTestingModule({
       imports: [FormsModule, RaceEditorComponent, TranslatePipe],
       providers: [
-        { provide: DataService, useValue: createRaceManagerDataServiceMock() },
+        { provide: DataService, useValue: createRaceEditorDataServiceMock() },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -1075,7 +1082,7 @@ describe("RaceEditorComponent", () => {
     expect(component.isSaving).toBeFalse();
   }));
 
-  it("should propagate 'from' and 'returnUrl' when navigating back", fakeAsync(() => {
+  it("should navigate to returnUrl when navigating back", fakeAsync(() => {
     activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
       if (key === "from") return "modify-heats";
       if (key === "returnUrl") return "/default-raceday";
@@ -1089,21 +1096,13 @@ describe("RaceEditorComponent", () => {
     component.onBackClicked();
     tick();
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
-      queryParams: {
-        id: "r1",
-        driverCount: 12,
-        from: "modify-heats",
-        returnUrl: "/default-raceday",
-      },
-    });
+    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith("/default-raceday");
   }));
 
   it("should navigate to /raceday-setup with skipIntro when navigating back from raceday-setup", fakeAsync(() => {
     sessionStorage.clear();
     activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
       if (key === "from") return "raceday-setup";
-      if (key === "returnUrl") return "/raceday-setup";
       if (key === "id") return "r1";
       return null;
     });
@@ -1262,8 +1261,11 @@ describe("RaceEditorComponent", () => {
     tick(); // Handles setTimeout in loadRaces()
 
     expect(dataService.createRace).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
-      queryParams: { id: "2", driverCount: 10, from: null, returnUrl: null },
+    expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+      relativeTo: activatedRoute,
+      queryParams: { id: "2", driverCount: 10 },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
     });
   }));
 
@@ -1826,11 +1828,12 @@ describe("RaceEditorComponent", () => {
 
   describe("Heat Times Through and Reverse Heats", () => {
     beforeEach(fakeAsync(() => {
-      dataService.getRaces.and.returnValue(of(MOCK_RACES));
-      dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+      dataService.getRaces.and.returnValue(of(deepCopy(MOCK_RACES)));
+      dataService.getTracks.and.returnValue(of(deepCopy(MOCK_TRACKS)));
       dataService.previewHeats.and.returnValue(of({ heats: [] }));
       component.ngOnInit();
       tick();
+      component.isEditMode = true;
       fixture.detectChanges();
     }));
 
@@ -3155,5 +3158,141 @@ describe("RaceEditorComponent", () => {
       expect(component.defaultRaceName).toBe("Race 1_1");
       expect(component.focusNameInput).toHaveBeenCalled();
     }));
+
+    describe("Unified Editor & Read-Only Expander tests", () => {
+      it("should sort and populate raceSelectItems via updateRaceSelectItems", () => {
+        component.allRaces = [
+          { entity_id: "r2", name: "Race 10" },
+          { entity_id: "r1", name: "Race 2" },
+          { entity_id: "r3", name: "Race 1" },
+        ];
+        component.updateRaceSelectItems();
+        expect(component.raceSelectItems).toEqual([
+          { id: "r3", name: "Race 1" },
+          { id: "r1", name: "Race 2" },
+          { id: "r2", name: "Race 10" },
+        ]);
+      });
+
+      it("should switch race on onSelectRaceById when not in edit mode", fakeAsync(() => {
+        component.allRaces = [
+          { entity_id: "r1", name: "Race 1" },
+          { entity_id: "r2", name: "Race 2" },
+        ];
+        component.isEditMode = false;
+        spyOn(component, "selectRace").and.callThrough();
+        dataService.getRaces.and.returnValue(of(component.allRaces));
+
+        component.onSelectRaceById("r2");
+        tick();
+
+        expect(component.selectRace).toHaveBeenCalledWith(
+          component.allRaces[1],
+        );
+        expect(mockRouter.navigate).toHaveBeenCalledWith(
+          [],
+          jasmine.objectContaining({
+            queryParams: { id: "r2" },
+          }),
+        );
+      }));
+
+      it("should ignore onSelectRaceById when in edit mode", () => {
+        component.allRaces = [
+          { entity_id: "r1", name: "Race 1" },
+          { entity_id: "r2", name: "Race 2" },
+        ];
+        component.isEditMode = true;
+        spyOn(component, "selectRace");
+
+        component.onSelectRaceById("r2");
+        expect(component.selectRace).not.toHaveBeenCalled();
+      });
+
+      it("should toggle edit mode and focus name input when entering edit mode", () => {
+        component.isEditMode = false;
+        spyOn(component, "focusNameInput");
+
+        component.onToggleEditMode();
+        expect(component.isEditMode).toBeTrue();
+        expect(component.focusNameInput).toHaveBeenCalled();
+      });
+
+      it("should exit edit mode without updating if not dirty", () => {
+        component.isEditMode = true;
+        spyOn(component, "isDirtyState").and.returnValue(false);
+        spyOn(component, "updateRace");
+
+        component.onToggleEditMode();
+        expect(component.isEditMode).toBeFalse();
+        expect(component.updateRace).not.toHaveBeenCalled();
+      });
+
+      it("should call updateRace when toggling edit mode off while dirty", () => {
+        component.isEditMode = true;
+        spyOn(component, "isDirtyState").and.returnValue(true);
+        spyOn(component, "isConfigValid").and.returnValue(true);
+        spyOn(component, "updateRace");
+
+        component.onToggleEditMode();
+        expect(component.updateRace).toHaveBeenCalledWith(false);
+      });
+
+      it("should revert to original race and exit edit mode on confirm discard", () => {
+        const orig = { entity_id: "r1", name: "Original Race" };
+        component.originalRace = orig;
+        component.editingRace = { entity_id: "r1", name: "Modified Race" };
+        component.isEditMode = true;
+        spyOn(component, "selectRace").and.callThrough();
+
+        component.onConfirmDiscard();
+        expect(component.showDiscardConfirm).toBeFalse();
+        expect(component.selectRace).toHaveBeenCalledWith(orig);
+        expect(component.isEditMode).toBeFalse();
+      });
+
+      it("should delete race when confirmed and select remaining race", fakeAsync(() => {
+        component.allRaces = [
+          { entity_id: "r1", name: "Race 1" },
+          { entity_id: "r2", name: "Race 2" },
+        ];
+        component.editingRace = { ...component.allRaces[0] };
+        spyOn(window, "confirm").and.returnValue(true);
+        dataService.deleteRace.and.returnValue(of(null));
+        spyOn(component, "selectRace").and.callThrough();
+
+        component.onDeleteRace();
+        tick();
+
+        expect(dataService.deleteRace).toHaveBeenCalledWith("r1");
+        expect(component.allRaces.length).toBe(1);
+        expect(component.selectRace).toHaveBeenCalledWith(
+          jasmine.objectContaining({ entity_id: "r2" }),
+        );
+        expect(component.isEditMode).toBeFalse();
+      }));
+
+      it("should allow expanders to toggle in read-only mode", () => {
+        component.isEditMode = false;
+        component.sectionsExpanded.general = true;
+
+        component.toggleSection("general");
+        expect(component.sectionsExpanded.general).toBeFalse();
+
+        component.toggleSection("general");
+        expect(component.sectionsExpanded.general).toBeTrue();
+      });
+
+      it("should start new race when onAddNewRace is called", () => {
+        component.isEditMode = false;
+        spyOn(component, "startNewRace").and.callThrough();
+        spyOn(component, "createNewRace");
+
+        component.onAddNewRace();
+        expect(component.startNewRace).toHaveBeenCalled();
+        expect(component.isEditMode).toBeTrue();
+        expect(component.createNewRace).toHaveBeenCalled();
+      });
+    });
   });
 });

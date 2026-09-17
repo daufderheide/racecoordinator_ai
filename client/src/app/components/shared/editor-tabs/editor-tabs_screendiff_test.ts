@@ -7,18 +7,6 @@ test.describe("Editor Tabs Component Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
-  test("should display editor tabs in race manager", async ({ page }) => {
-    await TestSetupHelper.waitForLocalization(
-      page,
-      "en",
-      page.goto("/race-manager"),
-    );
-
-    const tabs = page.locator("app-editor-tabs");
-    await tabs.waitFor({ state: "visible" });
-    await expect(tabs).toHaveScreenshot("editor-tabs-race-manager.png");
-  });
-
   test("should display editor tabs in track editor", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

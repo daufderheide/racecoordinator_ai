@@ -1,5 +1,50 @@
 # Race-editor
 
+De **Race-editor** is de centrale configuratie-interface voor het ontwerpen, configureren en testen van uw slotcar-raceformaten, scoreregels, heat-rotaties, brandstofsimulaties en timerinstellingen.
+
+---
+
+## Overzicht & Automatisch opslaan
+
+De Race-editor biedt een geïntegreerde interface voor het selecteren, bekijken, configureren en testen van uw raceformaten:
+
+- **Raceselector**: Deze dropdown bovenaan naast de paginatitel toont alle geconfigureerde races en maakt snel wisselen mogelijk.
+- **Alleen-lezenmodus**: Standaard toont de editor race-eigenschappen, scoreregels en instellingen in alleen-lezenmodus. Formuliervelden zijn vergrendeld om onbedoelde wijzigingen te voorkomen, terwijl accordeons en heat-voorbeelden interactief blijven.
+- **Bewerkingsmodus**: Door op het **Bewerken**-icoon (potlood) op de werkbalk te klikken worden alle invoervelden ontgrendeld. Tijdens het bewerken is de raceselector vergrendeld.
+- **Continu automatisch opslaan**: Alle wijzigingen worden automatisch op de achtergrond op de server opgeslagen zonder de bewerkingsmodus te verlaten.
+- **Bewerkingsmodus verlaten**: Door op het **Klaar**-icoon (vinkje) te klikken worden wijzigingen gevalideerd en keert u terug naar de alleen-lezenmodus.
+- **Wijzigingen verwerpen**: Door op Verwerpen te klikken worden alle wijzigingen hersteld naar de laatst opgeslagen versie en verlaat u de bewerkingsmodus.
+
+De werkruimte is verdeeld in twee gesynchroniseerde panelen:
+
+- **Linkerpaneel (Raceconfiguratie)**: Algemene race-eigenschappen, formaat, scoremethoden, rotatietype, groepsopties en analoge/digitale brandstofsimulatie.
+- **Rechterpaneel (Live heat-voorbeeld)**: Genereert dynamisch de volledige lijst met heats op basis van het actieve rotatietype en het aantal rijders.
+
+---
+
+## Raceconfiguratie & Opties
+
+### Racenaam & Baankoppeling
+- **Racenaam**: Unieke naam die het raceformaat identificeert.
+- **Baan**: De gekoppelde fysieke baan bepaalt of analoge of digitale brandstofsimulatie beschikbaar is.
+- **Thema**: Visueel UI-thema voor weergave op de racedag.
+
+### Heat-rotatieformaat
+- **Rotatietype**: Standaard rotaties (**Round Robin**, **Ladder**, **Toernooi**) of aangepaste reeksen.
+- **Aantal heat-cycli**: Hoe vaak elke rijder de volledige heat-rotatie doorloopt.
+- **Omgekeerde heats**: Draait de volgorde van de heats om.
+
+### Score-opties
+- **Heat-score**: Voltooiing op ronden of tijdslimiet, rangschikkingsmethode en tiebreakers.
+- **Algemene score**: Algemene rangschikkingsmethode, tiebreaker-regels en schrapresultaten.
+- **Seizoensscore**: Puntenverdeling per positie voor kampioenschappen.
+
+### Timerinstellingen
+- **Start- / Herstartvertraging**: Afteltijd in seconden voor de start.
+- **Minimale rondetijd**: Minimale tijd om valse sensortriggers te filteren.
+- **Drifttijd**: Detectievenster voor driftende auto's over de finishlijn.
+- **Starten achter sensor**: Verplicht starten achter de finishsensor in ronde nul.
+
 ## Brandstofinstellingen
 
 Race Coordinator AI ondersteunt een uitgebreide brandstofsimulatie voor zowel analoge als digitale banen, inclusief aanpasbare brandstoftankcapaciteit, startniveau, pitstopvertragingen, tanksnelheden, strafmaatregelen bij een lege tank en brandstofverbruiksmodellen.

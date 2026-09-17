@@ -1181,6 +1181,15 @@ describe("TrackEditorComponent", () => {
       expect(component.sectionsExpanded["lanes"]).toBeFalse();
     });
 
+    it("should allow toggling sections when in read-only mode", () => {
+      component.isEditMode = false;
+      component.sectionsExpanded["lanes"] = true;
+      component.toggleSection("lanes");
+      expect(component.sectionsExpanded["lanes"]).toBeFalse();
+      component.toggleSection("lanes");
+      expect(component.sectionsExpanded["lanes"]).toBeTrue();
+    });
+
     it("should add and remove hardware configurations and lanes", () => {
       component.lanes = [];
       component.arduinoConfigs = [];

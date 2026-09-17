@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Batterie Scartate",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "Termina Manche se Senza Carburante",
   "RE_ERROR_NAME_EXISTS": "Il nome della gara esiste già",
+  "RE_ERROR_NAME_REQUIRED": "Il nome della gara è obbligatorio",
   "RE_ERROR_NO_ROTATION_SELECTED": "Selezionare un file di rotazione personalizzata.",
   "RE_ERROR_SAVE_FAILED": "Impossibile salvare la gara: ",
   "RE_FALSE_START_LAP_PENALTY": "Penalità Giro per Falsa Partenza",

@@ -417,8 +417,27 @@
 }
 
 .preview-panel.read-only .interface-container {
-  pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.95;
+}
+
+.preview-panel.read-only input:not([type="button"]):not([type="submit"]),
+.preview-panel.read-only select,
+.preview-panel.read-only app-custom-select,
+.preview-panel.read-only button,
+.preview-panel.read-only .custom-pin-select,
+.preview-panel.read-only .pin-action-btn,
+.preview-panel.read-only .led-strip-action-btn,
+.preview-panel.read-only .test-controls {
+  pointer-events: none !important;
+  opacity: 0.75;
+  cursor: not-allowed !important;
+}
+
+.section-header,
+.preview-panel .section-header,
+.interface-container .section-header {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
 /* Custom Scrollbar for Preview Panel */

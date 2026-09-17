@@ -1249,6 +1249,7 @@
   "RE_DROPPED_HEATS": "Vervallen Heats",
   "RE_END_HEAT_ON_OUT_OF_FUEL": "Heat beëindigen bij geen brandstof",
   "RE_ERROR_NAME_EXISTS": "Naam van race bestaat al",
+  "RE_ERROR_NAME_REQUIRED": "Naam van race is vereist",
   "RE_ERROR_NO_ROTATION_SELECTED": "Selecteer een aangepaste rotatie.",
   "RE_ERROR_SAVE_FAILED": "Opslaan van race mislukt: ",
   "RE_FALSE_START_LAP_PENALTY": "Valsestart Rondenstraf",
