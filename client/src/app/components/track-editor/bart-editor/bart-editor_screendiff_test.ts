@@ -41,6 +41,26 @@ test.describe("BART Editor Component Visuals", () => {
     });
   });
 
+  test("should display bart editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t4"),
+    );
+
+    const editor = page.locator("app-bart-editor");
+    await expect(editor).toBeVisible();
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(editor).toHaveScreenshot("bart-editor-read-only.png", {
+      maxDiffPixels: 200,
+      threshold: 0.2,
+    });
+  });
+
   test("should toggle sections correctly", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

@@ -34,6 +34,22 @@ test.describe("Toolbar Component Visuals", () => {
     await expect(toolbar).toHaveScreenshot("toolbar-track-editor-style.png");
   });
 
+  test("should display toolbar in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const toolbar = page.locator(".header-right app-toolbar");
+    await expect(toolbar).toBeVisible();
+
+    await TestSetupHelper.waitForImagesLoaded(toolbar);
+    await expect(toolbar).toHaveScreenshot("toolbar-read-only.png");
+  });
+
   test("should show help button hover state", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

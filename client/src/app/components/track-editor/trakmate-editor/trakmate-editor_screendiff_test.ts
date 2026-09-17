@@ -94,6 +94,40 @@ test.describe("Trakmate Editor Component Visuals", () => {
     });
   });
 
+  test("should display trakmate editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+
+    const editor = page.locator("app-trakmate-editor");
+    await expect(editor).toBeVisible();
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const boardImg = editor.locator(".trakmate-logo");
+    if ((await boardImg.count()) > 0) {
+      await boardImg.evaluate((img: any) => {
+        return new Promise((resolve) => {
+          if (img.complete) {
+            resolve(true);
+          } else {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+          }
+        });
+      });
+    }
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(editor).toHaveScreenshot("trakmate-editor-read-only.png", {
+      maxDiffPixels: 200,
+      threshold: 0.2,
+    });
+  });
+
   test("should toggle sections correctly", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

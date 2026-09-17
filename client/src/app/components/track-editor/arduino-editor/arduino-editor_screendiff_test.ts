@@ -68,6 +68,27 @@ test.describe("Arduino Editor Component Visuals", () => {
     });
   });
 
+  test("should display arduino editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+
+    const editor = page.locator("app-arduino-editor");
+    await expect(editor).toBeVisible();
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await waitForBoardImage(page, editor);
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(editor).toHaveScreenshot("arduino-editor-read-only.png", {
+      maxDiffPixels: 200,
+      threshold: 0.2,
+    });
+  });
+
   test("should display reserved and unused pins correctly", async ({
     page,
   }) => {

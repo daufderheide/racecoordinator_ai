@@ -42,6 +42,24 @@ test.describe("Season Editor Visuals", () => {
     });
   });
 
+  test("should display season editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/season-editor?id=s_empty"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("season-editor-read-only.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should display season editor with demo and non-demo races run in season", async ({
     page,
   }) => {

@@ -36,6 +36,24 @@ test.describe("Team Editor Visuals", () => {
     });
   });
 
+  test("should display team editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/team-editor?id=t1"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("team-editor-read-only.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should allow editing team name", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

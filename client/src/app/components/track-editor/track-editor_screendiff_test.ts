@@ -49,6 +49,26 @@ test.describe("Track Editor Visuals", () => {
     });
   });
 
+  test("should display track editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+
+    const editor = page.locator("app-track-editor");
+    await expect(editor).toBeVisible();
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("track-editor-read-only.png", {
+      maxDiffPixelRatio: 0.1,
+      animations: "disabled",
+    });
+  });
+
   test("should display track editor for new track", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

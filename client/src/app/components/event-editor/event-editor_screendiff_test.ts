@@ -37,6 +37,24 @@ test.describe("Event Editor Visuals", () => {
     });
   });
 
+  test("should display event editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/event-editor?id=evt_1&driverCount=4"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("event-editor-read-only.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should display add race modal in event editor", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

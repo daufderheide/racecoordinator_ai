@@ -107,6 +107,23 @@ test.describe("Race Editor Visuals", () => {
     });
   });
 
+  test("should display race editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("race-editor-read-only.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should display validation error for duplicate name", async ({
     page,
   }) => {

@@ -72,6 +72,21 @@ test.describe("Editor Title Visuals", () => {
     );
   });
 
+  test("should display editor title in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    const title = page.locator("app-editor-title");
+    await expect(title).toBeVisible();
+
+    await expect(title).toHaveScreenshot("editor-title-read-only.png");
+  });
+
   test("should display editor title in fullscreen mode with navigation buttons", async ({
     page,
   }) => {

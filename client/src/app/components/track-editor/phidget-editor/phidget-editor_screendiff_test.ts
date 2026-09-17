@@ -62,6 +62,27 @@ test.describe("Phidget Editor Component Visuals", () => {
     });
   });
 
+  test("should display phidget editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t5"),
+    );
+
+    const editor = page.locator("app-phidget-editor");
+    await editor.waitFor({ state: "visible" });
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await waitForBoardImage(editor);
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(editor).toHaveScreenshot("phidget-editor-read-only.png", {
+      maxDiffPixels: 200,
+      threshold: 0.2,
+    });
+  });
+
   test("should display phidget editor with main config collapsed", async ({
     page,
   }) => {
