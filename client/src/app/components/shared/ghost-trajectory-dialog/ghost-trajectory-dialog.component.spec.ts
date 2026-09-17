@@ -1,3 +1,4 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { GhostPacingService } from "@app/services/ghost-pacing.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -6,6 +7,7 @@ import {
   GhostTrajectoryDialogComponent,
   TrajectoryReferenceOption,
 } from "./ghost-trajectory-dialog.component";
+import { GhostTrajectoryDialogHarness } from "./testing/ghost-trajectory-dialog.harness";
 
 describe("GhostTrajectoryDialogComponent", () => {
   let component: GhostTrajectoryDialogComponent;
@@ -106,6 +108,28 @@ describe("GhostTrajectoryDialogComponent", () => {
     const closeSpy = jasmine.createSpy("close");
     component.close.subscribe(closeSpy);
     component.onDismiss();
+    expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it("should interact correctly via GhostTrajectoryDialogHarness", async () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("driverAName", "Speedy");
+    fixture.componentRef.setInput("driverALapTimes", [5.1, 5.0]);
+    fixture.componentRef.setInput("benchmarkLapTime", 5.0);
+    fixture.detectChanges();
+
+    const harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      GhostTrajectoryDialogHarness,
+    );
+
+    expect(await harness.isVisible()).toBeTrue();
+    expect(await harness.getDriverAName()).toBe("Speedy");
+    expect(await harness.getMetricCardCount()).toBeGreaterThan(0);
+
+    const closeSpy = jasmine.createSpy("close");
+    component.close.subscribe(closeSpy);
+    await harness.dismiss();
     expect(closeSpy).toHaveBeenCalled();
   });
 });
