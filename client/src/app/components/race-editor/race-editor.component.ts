@@ -103,6 +103,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   selectedRaceId?: string;
   raceSelectItems: { id: string; name: string }[] = [];
   isEditMode: boolean = false;
+  private isPreservingEditModeOnNavigation: boolean = false;
   transitionToReadOnlyOnSave: boolean = false;
   isLoading: boolean = true;
   isSaving: boolean = false;
@@ -378,11 +379,67 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   startNewRace() {
-    this.selectedRace = undefined;
-    this.selectedRaceId = undefined;
-    this.originalRace = null;
-    this.isEditMode = true;
-    this.createNewRace();
+    this.isSaving = true;
+    const trackId = this.tracks.length > 0 ? this.tracks[0].entity_id : "";
+    const themeId = this.getDefaultThemeId();
+    const payload = this.createDefaultRaceTemplate(trackId, themeId);
+    const defaultName =
+      this.translationService.translate("RM_DEFAULT_RACE_NAME") || "New Race";
+    payload.name = this.generateUniqueName(defaultName, false);
+    delete payload.entity_id;
+    delete payload.id;
+    delete payload._id;
+
+    this.subscriptions.push(
+      this.dataService.createRace(payload).subscribe({
+        next: (created) => {
+          this.isSaving = false;
+          this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
+          const savedRace = {
+            ...payload,
+            ...created,
+            entity_id: created?.entity_id || payload?.entity_id,
+          };
+          this.navigationService.setLastEditedId("race", savedRace.entity_id);
+          this.editingRace = savedRace;
+          this.originalRace = deepCopy(savedRace);
+          this.selectedRace = savedRace;
+          this.selectedRaceId = savedRace.entity_id;
+          this.defaultRaceName = savedRace.name;
+          this.undoManager.resetTracking(this.editingRace);
+          this.syncSelectedCustomRotationAsset();
+          this.syncSequenceTextFromModel();
+          this.loadHeats();
+
+          const idx = this.allRaces.findIndex(
+            (r) => r.entity_id === created.entity_id,
+          );
+          if (idx >= 0) {
+            this.allRaces[idx] = deepCopy(created);
+          } else {
+            this.allRaces.push(deepCopy(created));
+          }
+          this.updateRaceSelectItems();
+          this.cdr.detectChanges();
+          this.focusNameInput();
+
+          this.router.navigate([], {
+            queryParams: {
+              id: created.entity_id,
+              driverCount: this.driverCount,
+            },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        },
+        error: (error: any) => {
+          this.logger.error("Failed to create new race", error);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   onDeleteRace() {
@@ -1019,7 +1076,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       this.loadHeats();
     }
     this.syncSequenceTextFromModel();
-    this.isEditMode = false;
+    if (this.isPreservingEditModeOnNavigation) {
+      this.isPreservingEditModeOnNavigation = false;
+      this.isEditMode = true;
+      this.defaultRaceName = this.editingRace.name;
+      this.focusNameInput();
+    } else {
+      this.isEditMode = false;
+    }
     this.cdr.detectChanges();
   }
 
@@ -1607,15 +1671,20 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private handleSaveSuccess(result: any, wasNew: boolean, isAutoSave: boolean) {
     this.isSaving = false;
     this.isAutoSaving = false;
-    if (!isAutoSave || this.transitionToReadOnlyOnSave) {
-      this.isEditMode = false;
-      this.transitionToReadOnlyOnSave = false;
-    }
     const savedEntityId = result?.entity_id || this.editingRace.entity_id;
     this.navigationService.setLastEditedId("race", savedEntityId);
 
     if (wasNew && result?.entity_id) {
       this.editingRace.entity_id = result.entity_id;
+    }
+
+    if (wasNew) {
+      this.isEditMode = true;
+      this.isPreservingEditModeOnNavigation = true;
+      this.defaultRaceName = this.editingRace.name;
+    } else if (!isAutoSave || this.transitionToReadOnlyOnSave) {
+      this.isEditMode = false;
+      this.transitionToReadOnlyOnSave = false;
     }
 
     this.originalRace = deepCopy(this.editingRace);
@@ -1633,6 +1702,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
     this.updateRaceSelectItems();
     this.cdr.detectChanges();
+    if (wasNew) {
+      this.focusNameInput();
+    }
 
     if (this.navigateBackOnSave) {
       this.onBack();
@@ -1682,25 +1754,28 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace || !this.canSaveAsNew()) return;
 
     this.isSaving = true;
-    const newName = this.generateUniqueName(this.editingRace.name);
+    const newName = this.generateUniqueName(this.editingRace.name, true);
     const payload = this.buildRacePayload(this.editingRace);
     payload.name = newName;
     delete payload.entity_id;
     delete payload.id;
     delete payload._id;
 
+    this.defaultRaceName = newName;
+    this.focusNameInput();
+
     this.subscriptions.push(
       this.dataService.createRace(payload).subscribe({
         next: (created) => {
           this.isSaving = false;
           this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
           this.navigationService.setLastEditedId("race", created.entity_id);
           this.editingRace = created;
           this.originalRace = deepCopy(created);
           this.selectedRace = created;
           this.selectedRaceId = created.entity_id;
           this.defaultRaceName = created.name;
-          this.focusNameInput();
           this.undoManager.resetTracking(this.editingRace);
           this.loadHeats();
           const idx = this.allRaces.findIndex(
@@ -1713,6 +1788,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
           this.updateRaceSelectItems();
           this.cdr.detectChanges();
+          this.focusNameInput();
           this.router.navigate([], {
             queryParams: {
               id: created.entity_id,
@@ -1794,18 +1870,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  private generateUniqueName(baseName: string): string {
-    let counter = 1;
+  generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, "");
+    const base = (baseName || "").replace(pattern, "").trim();
 
+    let counter = forceSuffix ? 1 : 0;
     while (true) {
-      const candidate = `${base}_${counter}`;
-      if (
-        !this.races.some(
-          (r) => r.name.toLowerCase() === candidate.toLowerCase(),
-        )
-      ) {
+      const candidate = counter === 0 ? base : `${base}_${counter}`;
+      const exists = this.allRaces.some(
+        (r) =>
+          (r.name || "").trim().toLowerCase() ===
+          candidate.trim().toLowerCase(),
+      );
+      if (!exists && candidate.trim() !== "") {
         return candidate;
       }
       counter++;

@@ -69,6 +69,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   selectedTeamId?: string;
   teamSelectItems: { id: string; name: string }[] = [];
   isEditMode: boolean = false;
+  private isPreservingEditModeOnNavigation: boolean = false;
   isLoading: boolean = true;
   isSaving: boolean = false;
   isDirty: boolean = false;
@@ -385,9 +386,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
 
     const isNew = this.route.snapshot.queryParamMap.get("isNew") === "true";
-    if (isNew && this.editingTeam) {
+    if (this.isPreservingEditModeOnNavigation || (isNew && this.editingTeam)) {
+      this.isPreservingEditModeOnNavigation = false;
       this.isEditMode = true;
-      this.defaultTeamName = this.editingTeam.name;
+      this.defaultTeamName = this.editingTeam?.name || "";
       this.focusNameInput();
     }
   }
@@ -461,14 +463,60 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   startNewTeam() {
-    this.selectedTeam = undefined;
-    this.editingTeam = new Team("new", "", undefined, []);
-    this.originalTeam = null;
-    this.selectedTeamId = undefined;
-    this.undoManager.initialize(this.editingTeam);
-    this.isEditMode = true;
-    this.defaultTeamName = "";
-    this.focusNameInput();
+    this.isSaving = true;
+    const defaultName =
+      this.translationService.translate("TMM_DEFAULT_TEAM_NAME") || "New Team";
+    const uniqueName = this.generateUniqueName(defaultName, false);
+    const newTeam = new Team("new", uniqueName, undefined, []);
+
+    this.subscriptions.push(
+      this.dataService.createTeam(newTeam).subscribe({
+        next: (result) => {
+          this.isSaving = false;
+          this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
+          this.navigationService.setLastEditedId("team", result.entity_id);
+
+          const savedTeam = new Team(
+            result.entity_id,
+            uniqueName,
+            undefined,
+            [],
+          );
+
+          this.editingTeam = this.cloneTeam(savedTeam);
+          this.selectedTeam = this.cloneTeam(savedTeam);
+          this.originalTeam = this.cloneTeam(savedTeam);
+          this.selectedTeamId = savedTeam.entity_id;
+          this.undoManager.resetTracking(savedTeam);
+          this.defaultTeamName = savedTeam.name;
+
+          const idx = this.allTeams.findIndex(
+            (t) => t.entity_id === result.entity_id,
+          );
+          if (idx >= 0) {
+            this.allTeams[idx] = this.cloneTeam(this.editingTeam);
+          } else {
+            this.allTeams.push(this.cloneTeam(this.editingTeam));
+          }
+          this.updateTeamSelectItems();
+
+          this.cdr.detectChanges();
+          this.focusNameInput();
+
+          this.router.navigate([], {
+            queryParams: { id: result.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        },
+        error: (err) => {
+          this.logger.error("Failed to create team", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   onCopyTeam() {
@@ -712,10 +760,6 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   ) {
     this.isSaving = false;
     this.isAutoSaving = false;
-    if (!isAutoSave || this.transitionToReadOnlyOnSave) {
-      this.isEditMode = false;
-      this.transitionToReadOnlyOnSave = false;
-    }
     this.navigationService.setLastEditedId("team", result.entity_id);
 
     const savedTeam = new Team(
@@ -724,6 +768,15 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       teamToSend.avatarUrl,
       [...teamToSend.driverIds],
     );
+
+    if (wasNew) {
+      this.isEditMode = true;
+      this.isPreservingEditModeOnNavigation = true;
+      this.defaultTeamName = savedTeam.name;
+    } else if (!isAutoSave || this.transitionToReadOnlyOnSave) {
+      this.isEditMode = false;
+      this.transitionToReadOnlyOnSave = false;
+    }
 
     if (this.editingTeam) {
       this.editingTeam.entity_id = savedTeam.entity_id;
@@ -745,6 +798,9 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.updateTeamSelectItems();
 
     this.cdr.detectChanges();
+    if (wasNew) {
+      this.focusNameInput();
+    }
 
     if (wasNew) {
       this.handleNewTeamNavigation(
@@ -879,22 +935,25 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingTeam || this.isSaving) return;
 
     this.isSaving = true;
-    this.editingTeam.name = this.generateUniqueName(this.editingTeam.name);
-    this.undoManager.commitState();
-
+    this.editingTeam.name = this.generateUniqueName(
+      this.editingTeam.name,
+      true,
+    );
+    this.isEditMode = true;
+    this.isPreservingEditModeOnNavigation = true;
     this.defaultTeamName = this.editingTeam.name;
     this.focusNameInput();
     this.isSaving = false;
     this.updateTeam(true);
   }
 
-  private generateUniqueName(baseName: string): string {
-    let counter = 1;
+  generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
+    let counter = forceSuffix ? 1 : 0;
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, "").trim();
+    const base = (baseName || "").replace(pattern, "").trim();
 
     while (true) {
-      const candidate = `${base}_${counter}`;
+      const candidate = counter === 0 ? base : `${base}_${counter}`;
       if (
         !this.allTeams.some(
           (t) => t.name.toLowerCase() === candidate.toLowerCase(),

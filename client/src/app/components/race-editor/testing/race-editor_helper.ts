@@ -89,7 +89,9 @@ export function createRaceEditorDataServiceMock(): any {
 
   mock.getRaces.and.callFake(() => of(deepCopy(MOCK_RACES)));
   mock.getTracks.and.callFake(() => of(deepCopy(MOCK_TRACKS)));
-  mock.createRace.and.returnValue(of({ entity_id: "r-new" }));
+  mock.createRace.and.callFake((payload: any) =>
+    of({ ...payload, entity_id: payload?.entity_id || "r-new" }),
+  );
   mock.updateRace.and.returnValue(of({ entity_id: "r1" }));
   mock.deleteRace.and.returnValue(of({}));
   mock.resetRaceRecords.and.returnValue(of(undefined));

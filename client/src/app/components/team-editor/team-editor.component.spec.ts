@@ -281,7 +281,7 @@ describe("TeamEditorComponent", () => {
     component.loadData();
     component.isDirty = false;
     component.undoManager.initialize(component.editingTeam!);
-    expect(component.editingTeam?.entity_id).toBe("new");
+    expect(component.editingTeam?.entity_id).toBe("t-new-id");
     expect(component.isEditMode).toBeTrue();
     expect(component.isDirtyState()).toBeFalse();
   });
@@ -528,6 +528,7 @@ describe("TeamEditorComponent", () => {
       component.saveAsNew();
       tick(200);
 
+      expect(component.isEditMode).toBeTrue();
       expect(component.defaultTeamName).toBe("Team Red_1");
       expect(component.focusNameInput).toHaveBeenCalled();
     }));
@@ -624,6 +625,7 @@ describe("TeamEditorComponent", () => {
     });
 
     it("should ignore onSelectTeamById when in edit mode", () => {
+      router.navigate.calls.reset();
       component.isEditMode = true;
       component.selectedTeamId = "t1";
       component.allTeams = [
@@ -638,13 +640,22 @@ describe("TeamEditorComponent", () => {
     });
 
     it("should start a new team on onAddNewTeam and enter edit mode", () => {
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "TMM_DEFAULT_TEAM_NAME") return "New Team";
+        return key;
+      });
+      dataService.createTeam.and.returnValue(
+        of(new Team("new-team-id", "New Team", undefined, [])),
+      );
       component.isEditMode = false;
       component.onAddNewTeam();
 
+      expect(dataService.createTeam).toHaveBeenCalled();
       expect(component.isEditMode).toBeTrue();
-      expect(component.editingTeam?.entity_id).toBe("new");
-      expect(component.editingTeam?.name).toBe("");
-      expect(component.selectedTeamId).toBeUndefined();
+      expect(component.editingTeam?.entity_id).toBe("new-team-id");
+      expect(component.editingTeam?.name).toBe("New Team");
+      expect(component.defaultTeamName).toBe("New Team");
+      expect(component.selectedTeamId).toBe("new-team-id");
     });
 
     it("should delete team and select remaining team", fakeAsync(() => {

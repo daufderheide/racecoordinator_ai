@@ -263,9 +263,10 @@ describe("TrackEditorComponent", () => {
     fixture.detectChanges();
 
     expect(dataService.getTrackFactorySettings).toHaveBeenCalled();
+    expect(dataService.createTrack).toHaveBeenCalled();
     expect(component.trackName).toBe("TM_DEFAULT_TRACK_NAME");
     expect(component.lanes.length).toBe(4);
-    expect(component.editingTrack?.entity_id).toBe("new");
+    expect(component.editingTrack?.entity_id).toBe("t-new-id");
   }));
 
   it("should handle lane management", () => {
@@ -1324,6 +1325,7 @@ describe("TrackEditorComponent", () => {
         component.saveAsNew();
         tick(200);
 
+        expect(component.isEditMode).toBeTrue();
         expect(component.defaultTrackName).toBe("Classic Circuit_1");
         expect(component.focusNameInput).toHaveBeenCalled();
       }));
@@ -1407,8 +1409,10 @@ describe("TrackEditorComponent", () => {
 
       component.onAddNewTrack();
       expect(component.startNewTrack).toHaveBeenCalled();
+      expect(dataService.createTrack).toHaveBeenCalled();
       expect(component.isEditMode).toBeTrue();
-      expect(component.editingTrack?.entity_id).toBe("new");
+      expect(component.editingTrack?.entity_id).toBe("t-new-id");
+      expect(component.defaultTrackName).toBe("TM_DEFAULT_TRACK_NAME");
     });
 
     it("should delete track and select next available track", () => {

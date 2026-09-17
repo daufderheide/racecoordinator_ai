@@ -131,6 +131,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   selectedTrackId?: string;
   trackSelectItems: { id: string; name: string }[] = [];
   isEditMode: boolean = false;
+  private isPreservingEditModeOnNavigation: boolean = false;
   originalTrack: Track | null = null;
   transitionToReadOnlyOnSave: boolean = false;
   arduinoConfigs: ArduinoConfig[] = [];
@@ -337,7 +338,6 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.isReverting = false;
             return;
           }
-          console.log("DEBUG track-editor router.url:", this.router?.url);
           const isEditorRoute =
             !this.router.url ||
             this.router.url === "/" ||
@@ -553,9 +553,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
           const isNew =
             this.route.snapshot.queryParamMap.get("isNew") === "true";
-          if (isNew && this.editingTrack) {
+          if (
+            this.isPreservingEditModeOnNavigation ||
+            (isNew && this.editingTrack)
+          ) {
+            this.isPreservingEditModeOnNavigation = false;
             this.isEditMode = true;
-            this.defaultTrackName = this.editingTrack.name;
+            this.defaultTrackName = this.editingTrack?.name || "";
+            this.trackName = this.editingTrack?.name || "";
             this.focusNameInput();
           }
 
@@ -599,18 +604,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.originalTrack = null;
     this.selectedTrackId = undefined;
     this.isEditMode = true;
-    this.defaultTrackName = this.translationService.translate(
-      "TM_DEFAULT_TRACK_NAME",
-    );
+    this.isPreservingEditModeOnNavigation = true;
+    const defaultName =
+      this.translationService.translate("TM_DEFAULT_TRACK_NAME") || "New Track";
+    this.trackName = this.generateUniqueName(defaultName, false);
+    this.defaultTrackName = this.trackName;
     this.isLoading = true;
 
     this.subscriptions.push(
       this.dataService.getTrackFactorySettings().subscribe({
         next: (factoryTrack) => {
-          this.isLoading = false;
-          this.editingTrack = new Track({
+          const trackToCreate = new Track({
             entity_id: "new",
-            name: this.defaultTrackName,
+            name: this.trackName,
             num_track_sections: factoryTrack.num_track_sections || 100,
             track_scale: factoryTrack.track_scale ?? 1.0,
             lanes: (factoryTrack.lanes || []).map(
@@ -630,15 +636,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             phidget_configs: factoryTrack.phidget_configs,
             bart_configs: factoryTrack.bart_configs,
           });
-          this.applyTrackToState(this.editingTrack);
-          this.focusNameInput();
+          this.persistNewTrack(trackToCreate);
         },
         error: (err) => {
           this.logger.error("Failed to load factory settings", err);
-          this.isLoading = false;
-          this.editingTrack = new Track({
+          const fallbackTrack = new Track({
             entity_id: "new",
-            name: this.defaultTrackName,
+            name: this.trackName,
             num_track_sections: 100,
             track_scale: 1.0,
             lanes: [
@@ -647,11 +651,43 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             ],
             has_digital_fuel: false,
           });
-          this.applyTrackToState(this.editingTrack);
-          this.focusNameInput();
+          this.persistNewTrack(fallbackTrack);
         },
       }),
     );
+  }
+
+  private persistNewTrack(trackToCreate: Track) {
+    const payload: any = {
+      ...trackToCreate,
+      "@id": 1,
+      lanes: trackToCreate.lanes.map((l, i) => ({
+        ...l,
+        "@id": i + 2,
+      })),
+    };
+
+    this.dataService.createTrack(payload).subscribe({
+      next: (created) => {
+        this.isLoading = false;
+        const merged = {
+          ...payload,
+          ...created,
+          entity_id: created?.entity_id || payload?.entity_id,
+        };
+        this.handleSaveSuccess(merged, true, false);
+      },
+      error: (err) => {
+        this.logger.error("Failed to create track", err);
+        this.isLoading = false;
+        this.editingTrack = trackToCreate;
+        this.applyTrackToState(trackToCreate);
+        if (!this.isDestroyed) {
+          this.cdr.detectChanges();
+        }
+        this.focusNameInput();
+      },
+    });
   }
 
   private applyTrackToState(track: Track) {
@@ -2092,27 +2128,26 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   saveAsNew() {
     this.isEditMode = true;
-    this.trackName = this.generateUniqueName(this.trackName);
+    this.isPreservingEditModeOnNavigation = true;
+    this.trackName = this.generateUniqueName(this.trackName, true);
     this.defaultTrackName = this.trackName;
+    if (!this.isDestroyed) {
+      this.cdr.detectChanges();
+    }
     this.focusNameInput();
     this.updateTrack(true);
   }
 
-  private generateUniqueName(baseName: string): string {
-    let _name = baseName;
-    let counter = 1;
-
-    // We always want to append at least _1 if we are saving as new to avoid collision with self
-    // and to follow the requirement "generate based on the old name with an _# at the end"
+  generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
+    let counter = forceSuffix ? 1 : 0;
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, "");
+    const base = (baseName || "").replace(pattern, "").trim();
 
-    // Try appending _1, _2, etc.
     while (true) {
-      const candidate = `${base}_${counter}`;
+      const candidate = counter === 0 ? base : `${base}_${counter}`;
       if (
         !this.allTracks.some(
-          (t) => t.name.toLowerCase() === candidate.toLowerCase(),
+          (t) => t.name && t.name.toLowerCase() === candidate.toLowerCase(),
         )
       ) {
         return candidate;
@@ -2177,7 +2212,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     this.subscriptions.push(
       obs.subscribe({
-        next: (result) => this.handleSaveSuccess(result, wasNew, isAutoSave),
+        next: (result) => {
+          const merged = {
+            ...payload,
+            ...result,
+            entity_id: result?.entity_id || payload?.entity_id,
+          };
+          this.handleSaveSuccess(merged, wasNew, isAutoSave);
+        },
         error: (err) => this.handleSaveError(err, isAutoSave),
       }),
     );
@@ -2186,7 +2228,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private handleSaveSuccess(result: any, wasNew: boolean, isAutoSave: boolean) {
     this.isSaving = false;
     this.isAutoSaving = false;
-    if (!isAutoSave || this.transitionToReadOnlyOnSave) {
+    if (wasNew) {
+      this.isEditMode = true;
+      this.isPreservingEditModeOnNavigation = true;
+      this.defaultTrackName = result.name;
+      this.trackName = result.name;
+    } else if (!isAutoSave || this.transitionToReadOnlyOnSave) {
       this.isEditMode = false;
       this.transitionToReadOnlyOnSave = false;
     }
@@ -2243,6 +2290,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     if (!this.isDestroyed) {
       this.cdr.detectChanges();
+    }
+
+    if (wasNew) {
+      this.focusNameInput();
     }
 
     if (this.navigateBackOnSave) {

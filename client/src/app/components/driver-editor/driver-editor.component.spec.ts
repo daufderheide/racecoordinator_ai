@@ -309,8 +309,7 @@ describe("DriverEditorComponent", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("new");
     component.loadData();
     expect(component.editingDriver).toBeDefined();
-    expect(component.editingDriver?.entity_id).toBe("new");
-    // element implicitly has 'any' type error on private access, so skipping explicit initialState check if not needed
+    expect(component.editingDriver?.entity_id).toBe("d-new-id");
     // verify hasChanges is false
     expect(component.isDirtyState()).toBeFalse();
   });
@@ -1532,13 +1531,28 @@ describe("DriverEditorComponent", () => {
       expect(component.updateDriver).not.toHaveBeenCalled();
     });
 
-    it("should enter edit mode when onAddNewDriver is called", () => {
+    it("should enter edit mode and create new driver when onAddNewDriver is called", () => {
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "DM_DEFAULT_DRIVER_NAME") return "New Driver";
+        if (key === "DM_DEFAULT_DRIVER_NICKNAME") return "New Driver Nickname";
+        return key;
+      });
       component.allDrivers = [new Driver("d1", "Alice", "Ali")];
+      dataService.createDriver.and.returnValue(
+        of({
+          entity_id: "new-driver-id",
+          name: "New Driver",
+          nickname: "New Driver Nickname",
+        }),
+      );
       component.onAddNewDriver();
 
+      expect(dataService.createDriver).toHaveBeenCalled();
       expect(component.isEditMode).toBeTrue();
-      expect(component.editingDriver?.entity_id).toBe("new");
-      expect(component.selectedDriverId).toBeUndefined();
+      expect(component.editingDriver?.entity_id).toBe("new-driver-id");
+      expect(component.editingDriver?.name).toBe("New Driver");
+      expect(component.defaultDriverName).toBe("New Driver");
+      expect(component.selectedDriverId).toBe("new-driver-id");
     });
 
     it("should duplicate driver via saveAsNew when onCopyDriver is called", () => {
@@ -1552,8 +1566,10 @@ describe("DriverEditorComponent", () => {
       component.onCopyDriver();
 
       expect(dataService.createDriver).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
       expect(component.editingDriver?.entity_id).toBe("d-copied-id");
       expect(component.editingDriver?.name).toBe("Alice_1");
+      expect(component.defaultDriverName).toBe("Alice_1");
     });
 
     it("should revert changes back to originalDriver on onConfirmDiscard", () => {

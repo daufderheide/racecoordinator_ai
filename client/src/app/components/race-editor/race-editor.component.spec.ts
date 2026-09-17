@@ -3155,6 +3155,7 @@ describe("RaceEditorComponent", () => {
       component.saveAsNew();
       tick(200);
 
+      expect(component.isEditMode).toBeTrue();
       expect(component.defaultRaceName).toBe("Race 1_1");
       expect(component.focusNameInput).toHaveBeenCalled();
     }));
@@ -3283,15 +3284,27 @@ describe("RaceEditorComponent", () => {
         expect(component.sectionsExpanded.general).toBeTrue();
       });
 
-      it("should start new race when onAddNewRace is called", () => {
+      it("should start new race and create via dataService when onAddNewRace is called", () => {
+        mockTranslationService.translate.and.callFake((key: string) => {
+          if (key === "RM_DEFAULT_RACE_NAME") return "New Race";
+          return key;
+        });
         component.isEditMode = false;
         spyOn(component, "startNewRace").and.callThrough();
-        spyOn(component, "createNewRace");
+        dataService.createRace.and.returnValue(
+          of({
+            entity_id: "new-race-id",
+            name: "New Race",
+            theme_id: "theme1",
+          }),
+        );
 
         component.onAddNewRace();
         expect(component.startNewRace).toHaveBeenCalled();
+        expect(dataService.createRace).toHaveBeenCalled();
         expect(component.isEditMode).toBeTrue();
-        expect(component.createNewRace).toHaveBeenCalled();
+        expect(component.editingRace?.entity_id).toBe("new-race-id");
+        expect(component.defaultRaceName).toBe("New Race");
       });
 
       it("should have all checkbox inputs disabled in read-only mode", fakeAsync(() => {
