@@ -1018,48 +1018,49 @@ public class HeatExecutionManager {
 
     AnalogFuelOptions fuelOptions = this.race.getRaceModel().getFuelOptions();
     double lapFuelUsed = 0.0;
-    double usageRate = fuelOptions.getUsageRate();
+    double fastestTime = Math.max(0.1, fuelOptions.getFastestTime());
+    double slowestTime = Math.max(fastestTime + 0.001, fuelOptions.getSlowestTime());
+    double maxUsage = Math.max(0.0, fuelOptions.getMaxUsage());
+    double minUsage = Math.max(0.0, fuelOptions.getMinUsage());
 
     double racingTime = Math.max(0.1, lapTime - accumulatedRefuelTime[lane]);
     accumulatedRefuelTime[lane] = 0.0; // reset for next lap
 
-    // Fuel usage is proportional to the lap time. Faster laps use more
-    // fuel than slower laps. And quadratic and cubic usage use more
-    // the faster the lap is.
-    switch (fuelOptions.getUsageType()) {
-      case LINEAR:
-        double refL = Math.max(0.1, fuelOptions.getReferenceTime());
-        double x1 = refL * 2.0;
-        double y1 = usageRate / 2.0;
-        double x2 = refL;
-        double y2 = usageRate;
-        double m = (y2 - y1) / (x2 - x1);
-        double b = y1 - m * x1;
-        lapFuelUsed = m * racingTime + b;
-        break;
-      case QUADRATIC:
-        double refQ = Math.max(0.1, fuelOptions.getReferenceTime());
-        double safeTimeQ = Math.max(0.1, racingTime);
-        lapFuelUsed = usageRate * (refQ * refQ) / (safeTimeQ * safeTimeQ);
-        break;
-      case CUBIC:
-        double refC = Math.max(0.1, fuelOptions.getReferenceTime());
-        double safeTimeC = Math.max(0.1, racingTime);
-        lapFuelUsed = usageRate * (refC * refC * refC) / (safeTimeC * safeTimeC * safeTimeC);
-        break;
-      case CUSTOM_CURVE:
-      case CUSTOM:
-        double refCustom = Math.max(0.1, fuelOptions.getReferenceTime());
-        double minTime = Math.max(0.2, refCustom * 0.5);
-        double maxTime = Math.max(minTime + 0.1, refCustom * 1.5);
-        double xNorm = (racingTime - minTime) / (maxTime - minTime);
-        xNorm = Math.max(0.0, Math.min(1.0, xNorm));
-        double multiplier =
-            FuelCalculationUtils.interpolateFuelCurve(fuelOptions.getCustomCurve(), xNorm);
-        lapFuelUsed = usageRate * multiplier;
-        break;
-      default:
-        break;
+    if (racingTime <= fastestTime) {
+      lapFuelUsed = maxUsage;
+    } else if (racingTime >= slowestTime) {
+      lapFuelUsed = minUsage;
+    } else {
+      switch (fuelOptions.getUsageType()) {
+        case LINEAR:
+          double progressL = (racingTime - fastestTime) / (slowestTime - fastestTime);
+          lapFuelUsed = maxUsage - progressL * (maxUsage - minUsage);
+          break;
+        case QUADRATIC:
+          double invT2 = 1.0 / (racingTime * racingTime);
+          double invFast2 = 1.0 / (fastestTime * fastestTime);
+          double invSlow2 = 1.0 / (slowestTime * slowestTime);
+          double progressQ = (invT2 - invSlow2) / (invFast2 - invSlow2);
+          lapFuelUsed = minUsage + progressQ * (maxUsage - minUsage);
+          break;
+        case CUBIC:
+          double invT3 = 1.0 / (racingTime * racingTime * racingTime);
+          double invFast3 = 1.0 / (fastestTime * fastestTime * fastestTime);
+          double invSlow3 = 1.0 / (slowestTime * slowestTime * slowestTime);
+          double progressC = (invT3 - invSlow3) / (invFast3 - invSlow3);
+          lapFuelUsed = minUsage + progressC * (maxUsage - minUsage);
+          break;
+        case CUSTOM_CURVE:
+        case CUSTOM:
+          double xNorm = (racingTime - fastestTime) / (slowestTime - fastestTime);
+          xNorm = Math.max(0.0, Math.min(1.0, xNorm));
+          double mult =
+              FuelCalculationUtils.interpolateFuelCurve(fuelOptions.getCustomCurve(), xNorm);
+          lapFuelUsed = minUsage + mult * (maxUsage - minUsage);
+          break;
+        default:
+          break;
+      }
     }
 
     if (Double.isNaN(lapFuelUsed) || Double.isInfinite(lapFuelUsed)) {

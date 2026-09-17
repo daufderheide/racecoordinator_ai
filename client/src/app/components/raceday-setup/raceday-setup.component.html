@@ -32,9 +32,14 @@
                   [style.width.%]="updateProgress?.progress || 0"
                 ></div>
               </div>
-              <button (click)="cancelUpdate()" class="update-btn-secondary">
-                {{ "RDS_UPDATE_BTN_CANCEL" | translate }}
-              </button>
+              @if (
+                updateProgress?.status !== "RDS_UPDATE_STATUS_LAUNCHING" &&
+                updateProgress?.status !== "RDS_UPDATE_STATUS_RESTARTING"
+              ) {
+                <button (click)="cancelUpdate()" class="update-btn-secondary">
+                  {{ "RDS_UPDATE_BTN_CANCEL" | translate }}
+                </button>
+              }
             </div>
           }
         }

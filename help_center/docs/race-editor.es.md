@@ -25,11 +25,11 @@ El combustible analógico simula el consumo **por vuelta**. Dado que las pistas 
     - **Cuadrático**: El consumo escala con el inverso del cuadrado del tiempo de vuelta, penalizando intensamente las vueltas muy rápidas.
     - **Cúbico**: El consumo aumenta vertiginosamente en vueltas rápidas, castigando drásticamente a los pilotos que arriesgan en busca de vueltas récord.
     - **Curva personalizada**: Permite moldear de forma interactiva y punto a punto la curva de consumo directamente en el gráfico SVG.
-- **Tasa de consumo**: Unidades base de combustible consumidas por vuelta cuando un piloto iguala el **Tiempo de referencia**.
-- **Tiempo de referencia (s)**: El tiempo de vuelta de referencia base para la pista y categoría del coche (en segundos).
-    - Las vueltas más rápidas (por debajo del tiempo de referencia) queman más combustible.
-    - Las vueltas más lentas (por encima del tiempo de referencia) queman menos combustible.
-    - El rango activo de cálculo abarca desde $0,5 \times \text{Tiempo de referencia}$ hasta $1,5 \times \text{Tiempo de referencia}$.
+- **Tiempo más rápido (s)**: El tiempo de vuelta más rápido esperado para la pista y categoría del coche (en segundos).
+- **Consumo máx.**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más rápido** o más veloz.
+- **Tiempo más lento (s)**: El tiempo de vuelta más lento (en segundos) para el consumo mínimo de combustible.
+- **Consumo mín.**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más lento** o más lento.
+    - Para tiempos de vuelta entre el tiempo más rápido y el más lento, el consumo transiciona suavemente según el **Tipo de consumo** seleccionado (Lineal, Cuadrático, Cúbico o Curva personalizada).
 - **Capacidad**: El volumen total del depósito de combustible en unidades arbitrarias (por ejemplo, 100).
 - **Nivel inicial (%)**: Porcentaje de capacidad disponible en el depósito al comenzar una tanda (por ejemplo, 100 % para depósito lleno, o menos en tandas de sprint o hándicap).
 - **Tasa de repostaje (%/s)**: Velocidad de repostaje durante una parada en boxes, expresada como el porcentaje de la capacidad total del depósito repuesto por segundo.
@@ -53,8 +53,11 @@ $$\text{Tiempo de carrera} = \text{Tiempo de vuelta} - \text{Tiempo acumulado de
 
 #### Vistas previas gráficas (Analógico)
 
-- **Consumo de combustible por vuelta**: Muestra las unidades exactas consumidas en el espectro de tiempos de vuelta ($0,5 \times \text{ref}$ a $1,5 \times \text{ref}$). En modo Curva personalizada, los nodos interactivos y botones de restablecimiento permiten moldear la curva al instante.
-- **Tiempo hasta parada en boxes**: Estima el tiempo total de carrera (o vueltas) antes de vaciar el depósito a un ritmo de vuelta constante.
+- **Comparación simultánea multimodelo**: Los 3 modelos matemáticos predefinidos (**Lineal**, **Cuadrático** y **Cúbico**) se representan simultáneamente en ambos gráficos. El tipo seleccionado se resalta en negrita con un brillo distintivo, mientras que los otros modelos permanecen visibles como líneas de referencia atenuadas (~40 % de opacidad).
+- **Consumo de combustible por vuelta**: Muestra las unidades exactas consumidas en el espectro de tiempos de vuelta (desde Tiempo más rápido hasta Tiempo más lento). En modo Curva personalizada, los nodos interactivos y botones de restablecimiento permiten moldear la curva al instante mientras los 3 modelos base continúan visibles para referencia.
+- **Tiempo hasta parada en boxes**: Estima el tiempo total de carrera (o vueltas) antes de vaciar el depósito a un ritmo de vuelta constante en todos los modelos.
+- **Leyenda interactiva y visibilidad**: Haga clic izquierdo en cualquier curva de la leyenda para activarla o desactivarla. Al ocultar una curva se reajustan dinámicamente las escalas de los ejes para examinar con mayor detalle las curvas restantes.
+- **Tarjetas flotantes comparativas**: Al pasar el ratón por los gráficos se muestra la telemetría comparativa de todas las curvas visibles en el punto examinado, con muestras de color, valores y el indicador `(Activo)` en el modelo seleccionado.
 
 ---
 
@@ -86,8 +89,11 @@ Los pilotos que conducen con suavidad o levantan el gatillo en curvas consumen m
 
 #### Vistas previas gráficas (Digital)
 
-- **Consumo de combustible digital**: Traza el porcentaje de acelerador ($0\,\%$ a $100\,\%$) frente al consumo por segundo.
+- **Comparación simultánea multimodelo**: Representa simultáneamente las curvas de respuesta lineal, cuadrática y cúbica con el modelo seleccionado resaltado y los otros modelos visibles como referencia de fondo.
+- **Consumo de combustible digital**: Traza el porcentaje de acelerador ($0\,\%$ a $100\,\%$) frente al consumo por segundo para todos los modelos.
 - **Tiempo hasta vaciar**: Traza el porcentaje de acelerador frente a los segundos continuos de conducción hasta agotar el depósito por completo.
+- **Leyenda interactiva y escala dinámica**: Active o desactive curvas individuales haciendo clic en la leyenda, ajustando automáticamente la escala de los ejes.
+- **Tarjetas flotantes comparativas**: Al recorrer el gráfico con el cursor se muestran los valores en tiempo real de cada curva visible para esa posición del acelerador.
 
 ---
 

@@ -21,6 +21,7 @@ import com.antigravity.service.UpdateService;
 import com.antigravity.util.NetworkUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 import io.javalin.plugin.json.JavalinJackson;
 import java.awt.Color;
@@ -327,6 +328,14 @@ public class App {
             ctx.status(500).result("Internal Server Error: " + e.getMessage());
           });
 
+      app.after(
+          ctx -> {
+            String path = ctx.path();
+            if (path.equals("/") || path.endsWith("/index.html") || path.endsWith("index.html")) {
+              applyNoCacheHeaders(ctx);
+            }
+          });
+
       app.error(
           404,
           ctx -> {
@@ -334,6 +343,7 @@ public class App {
             if (accept != null && accept.contains("text/html")) {
               Path indexPath = Paths.get(staticFilePath, "index.html");
               if (Files.exists(indexPath)) {
+                applyNoCacheHeaders(ctx);
                 ctx.contentType("text/html");
                 ctx.result(new String(Files.readAllBytes(indexPath)));
               } else {
@@ -772,5 +782,11 @@ public class App {
       DatabaseService.getInstance().backfillDrivers(databaseContext);
     }
     databaseContext.switchDatabase(activeDb);
+  }
+
+  static void applyNoCacheHeaders(Context ctx) {
+    ctx.header("Cache-Control", "no-cache, no-store, must-revalidate");
+    ctx.header("Pragma", "no-cache");
+    ctx.header("Expires", "0");
   }
 }

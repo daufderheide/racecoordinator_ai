@@ -1590,6 +1590,9 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceService.heats$.subscribe((heats) => {
         this.heats = heats || [];
+        if (this.sortedHeatDrivers.length === 0 || !this.heat) {
+          this.initializeHeat();
+        }
         if (!this.isDestroyed) {
           this.cdr.markForCheck();
         }
@@ -1600,6 +1603,7 @@ export class DefaultRacedayComponent
       this.raceService.currentHeat$.subscribe((heat) => {
         if (heat) {
           this.heat = heat;
+          this.sortHeatDrivers();
           if (!this.isDestroyed) {
             this.cdr.markForCheck();
           }
@@ -2405,6 +2409,9 @@ export class DefaultRacedayComponent
     }
     this.updateScale();
     this.loadColumns();
+    if (this.heat) {
+      this.sortHeatDrivers();
+    }
     this.updateAudioRelevance();
     this.cdr.markForCheck();
   }
@@ -3218,8 +3225,12 @@ export class DefaultRacedayComponent
     const heats = this.raceService.getHeats();
     if (heats && heats.length > 0) {
       this.totalHeats = heats.length;
+    }
+
+    const currentHeat = this.raceService.getCurrentHeat() || this.heat;
+    if (currentHeat) {
       const prevHeatNumber = this.heat?.heatNumber;
-      this.heat = this.raceService.getCurrentHeat();
+      this.heat = currentHeat;
 
       if (this.heat && this.heat.heatNumber !== prevHeatNumber) {
         this.hasRacedInCurrentHeat = false;
@@ -3236,7 +3247,7 @@ export class DefaultRacedayComponent
           this.heat.standings.forEach((sid, index) =>
             this.driverRankings.set(sid, index + 1),
           );
-        } else {
+        } else if (this.heat.heatDrivers) {
           // Default to initial order if no standings yet
           this.heat.heatDrivers.forEach((hd, index) =>
             this.driverRankings.set(hd.objectId, index + 1),

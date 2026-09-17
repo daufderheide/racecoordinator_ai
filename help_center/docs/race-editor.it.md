@@ -25,11 +25,11 @@ Il carburante analogico simula il consumo **su base giro**. Poiché le piste ana
     - **Quadratico**: Il consumo scala con l'inverso del quadrato del tempo sul giro, penalizzando pesantemente i giri molto veloci.
     - **Cubico**: Il consumo cresce vertiginosamente nei giri veloci, penalizzando drasticamente chi spinge per tempi record.
     - **Curva personalizzata**: Consente di modellare interattivamente la curva punto per punto direttamente sul grafico SVG.
-- **Velocità di consumo**: Unità base di carburante consumate per giro quando un pilota eguaglia il **Tempo di riferimento**.
-- **Tempo di riferimento (s)**: Il tempo sul giro di riferimento base per la pista e la categoria di vetture (in secondi).
-    - Giri più veloci (inferiori al tempo di riferimento) consumano più carburante.
-    - Giri più lenti (superiori al tempo di riferimento) consumano meno carburante.
-    - L'intervallo di calcolo attivo spazia da $0,5 \times \text{Tempo di riferimento}$ a $1,5 \times \text{Tempo di riferimento}$.
+- **Tempo più rapido (s)**: Il tempo sul giro più rapido previsto per la pista e la categoria di vetture (in secondi).
+- **Consumo max**: Unità di carburante consumate per giro quando si guida al **Tempo più rapido** o più veloce.
+- **Tempo più lento (s)**: Il tempo sul giro più lento (in secondi) per il consumo minimo di carburante.
+- **Consumo min**: Unità di carburante consumate per giro quando si guida al **Tempo più lento** o più lento.
+    - Per tempi sul giro compresi tra il tempo più rapido e quello più lento, il consumo varia gradualmente in base al **Tipo di consumo** selezionato (Lineare, Quadratico, Cubico o Curva personalizzata).
 - **Capacità**: Il volume totale del serbatoio in unità arbitrarie (ad es. 100).
 - **Livello iniziale (%)**: Percentuale di carburante disponibile nel serbatoio all'inizio di una manche (ad es. 100% per serbatoio pieno, o meno per gare sprint o con handicap).
 - **Velocità di rifornimento (%/s)**: Velocità di immissione del carburante durante una sosta ai box, espressa in percentuale della capacità totale ripristinata al secondo.
@@ -53,8 +53,11 @@ $$\text{Tempo di gara} = \text{Tempo sul giro} - \text{Tempo di rifornimento acc
 
 #### Anteprime grafiche (Analogico)
 
-- **Consumo carburante per giro**: Mostra le unità esatte consumate nello spettro dei tempi sul giro ($0,5 \times \text{ref}$ a $1,5 \times \text{ref}$). In modalità Curva personalizzata, maniglie trascinabili e pulsanti di ripristino consentono modifiche istantanee.
-- **Tempo prima della sosta**: Stima il tempo totale di gara (o giri) prima dell'esaurimento del carburante a un ritmo costante.
+- **Confronto multimodello simultaneo**: Tutti e 3 i modelli matematici predefiniti (**Lineare**, **Quadratico** e **Cubico**) vengono tracciati contemporaneamente su entrambi i grafici. Il modello selezionato è evidenziato in grassetto con un bagliore brillante, mentre gli altri modelli rimangono visibili come linee di riferimento attenuate (~40% di opacità).
+- **Consumo carburante per giro**: Mostra le unità esatte consumate nello spettro dei tempi sul giro (dal Tempo più rapido al Tempo più lento). In modalità Curva personalizzata, maniglie trascinabili e pulsanti di ripristino consentono modifiche istantanee mentre i 3 modelli base rimangono visibili per il confronto.
+- **Tempo prima della sosta**: Stima il tempo totale di gara (o giri) prima dell'esaurimento del carburante a un ritmo costante su tutti i modelli.
+- **Legenda interattiva e visibilità**: Fai clic con il tasto sinistro su qualsiasi curva nella legenda per attivarla o disattivarla. Nascondere una curva ricalcola dinamicamente la scala degli assi per esaminare più da vicino le curve rimanenti.
+- **Schede comparative al passaggio del mouse**: Il passaggio del mouse su ciascun grafico mostra la telemetria comparativa di tutte le curve visibili nel punto esaminato, con campioni di colore, valori e l'indicatore `(Attivo)` sul modello selezionato.
 
 ---
 
@@ -86,8 +89,11 @@ I piloti con guida fluida che rilasciano in curva consumano molto meno rispetto 
 
 #### Anteprime grafiche (Digitale)
 
-- **Consumo carburante digitale**: Traccia la percentuale di acceleratore ($0\,\%$ a $100\,\%$) rispetto al consumo al secondo.
+- **Confronto multimodello simultaneo**: Traccia contemporaneamente le curve di risposta lineare, quadratica e cubica, evidenziando il modello selezionato e mostrando gli altri come riferimento di sfondo.
+- **Consumo carburante digitale**: Traccia la percentuale di acceleratore ($0\,\%$ a $100\,\%$) rispetto al consumo al secondo per tutti i modelli.
 - **Tempo prima dell'esaurimento**: Traccia la percentuale di acceleratore rispetto ai secondi continui di guida prima che il serbatoio si svuoti completamente.
+- **Legenda interattiva e ridimensionamento dinamico**: Attiva o disattiva le curve facendo clic nella legenda, riadattando automaticamente la scala degli assi.
+- **Schede comparative al passaggio del mouse**: Lo scorrimento del mouse visualizza i valori in tempo reale per ciascuna curva visibile a quella percentuale di acceleratore.
 
 ---
 

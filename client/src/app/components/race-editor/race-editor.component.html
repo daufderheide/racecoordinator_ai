@@ -1286,14 +1286,47 @@
                             </app-custom-option>
                           </app-custom-select>
                         </div>
+                      </div>
+                      <div class="config-row">
                         <div class="config-section">
-                          <label>{{ "RE_FUEL_USAGE_RATE" | translate }}</label>
+                          <label>{{
+                            "RE_FUEL_FASTEST_TIME" | translate
+                          }}</label>
                           <input
-                            id="fuel-usage-rate-input"
-                            class="fuel-usage-rate-input"
-                            data-testid="fuel-usage-rate-input"
+                            id="fuel-fastest-time-input"
+                            class="fuel-fastest-time-input"
+                            data-testid="fuel-fastest-time-input"
                             type="number"
-                            [(ngModel)]="editingRace.fuel_options.usage_rate"
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.fastest_time"
+                            (ngModelChange)="captureState()"
+                            min="0.1"
+                            step="0.1"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
+                          />
+                        </div>
+                        <div class="config-section">
+                          <label>{{ "RE_FUEL_MAX_USAGE" | translate }}</label>
+                          <input
+                            id="fuel-max-usage-input"
+                            class="fuel-max-usage-input"
+                            data-testid="fuel-max-usage-input"
+                            type="number"
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.max_usage"
                             (ngModelChange)="captureState()"
                             min="0"
                             step="0.1"
@@ -1303,21 +1336,50 @@
                             "
                           />
                         </div>
+                      </div>
+                      <div class="config-row">
                         <div class="config-section">
                           <label>{{
-                            "RE_FUEL_REFERENCE_TIME" | translate
+                            "RE_FUEL_SLOWEST_TIME" | translate
                           }}</label>
                           <input
-                            id="fuel-reference-time-input"
-                            class="fuel-reference-time-input"
-                            data-testid="fuel-reference-time-input"
+                            id="fuel-slowest-time-input"
+                            class="fuel-slowest-time-input"
+                            data-testid="fuel-slowest-time-input"
                             type="number"
-                            [(ngModel)]="
-                              editingRace.fuel_options.reference_time
-                            "
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.slowest_time"
                             (ngModelChange)="captureState()"
-                            step="1"
-                            min="1"
+                            min="0.1"
+                            step="0.1"
+                            [disabled]="
+                              hasDigitalFuel ||
+                              !editingRace.fuel_options.enabled
+                            "
+                          />
+                        </div>
+                        <div class="config-section">
+                          <label>{{ "RE_FUEL_MIN_USAGE" | translate }}</label>
+                          <input
+                            id="fuel-min-usage-input"
+                            class="fuel-min-usage-input"
+                            data-testid="fuel-min-usage-input"
+                            type="number"
+                            autocomplete="off"
+                            data-dashlane-ignore="true"
+                            data-1p-ignore="true"
+                            data-lpignore="true"
+                            data-bwignore="true"
+                            data-form-type="other"
+                            [(ngModel)]="editingRace.fuel_options.min_usage"
+                            (ngModelChange)="captureState()"
+                            min="0"
+                            step="0.1"
                             [disabled]="
                               hasDigitalFuel ||
                               !editingRace.fuel_options.enabled
@@ -1525,6 +1587,41 @@
                                 getFuelUsageTimeRange()
                               }})</span
                             >
+                            <div class="graph-legend">
+                              @for (
+                                plot of getFuelUsagePlots();
+                                track plot.type
+                              ) {
+                                <button
+                                  type="button"
+                                  class="legend-item"
+                                  [class.active-selection]="plot.isSelected"
+                                  [class.hidden-curve]="!plot.isVisible"
+                                  (click)="
+                                    togglePlotVisibility(
+                                      'analog_usage',
+                                      plot.type
+                                    )
+                                  "
+                                  [title]="'RE_GRAPH_TOGGLE_HINT' | translate"
+                                >
+                                  <span
+                                    class="legend-swatch"
+                                    [style.background-color]="plot.color"
+                                  ></span>
+                                  <span class="legend-label">{{
+                                    plot.labelKey | translate
+                                  }}</span>
+                                  @if (plot.isSelected) {
+                                    <span class="legend-selected-indicator"
+                                      >({{
+                                        "RE_GRAPH_ACTIVE" | translate
+                                      }})</span
+                                    >
+                                  }
+                                </button>
+                              }
+                            </div>
                             @if (isCustomCurve("analog")) {
                               <div class="curve-presets-bar">
                                 <button
@@ -1572,7 +1669,9 @@
                                 <span>{{ label }}</span>
                               }
                             </div>
-                            <div class="y-axis-label">FUEL USED</div>
+                            <div class="y-axis-label">
+                              {{ "RE_FUEL_GRAPH_FUEL" | translate }}
+                            </div>
                             <div class="graph-svg-wrapper">
                               <svg
                                 id="analog-fuel-usage-svg"
@@ -1618,11 +1717,34 @@
                                     class="grid"
                                   />
                                 }
-                                <path
-                                  [attr.d]="getFuelUsagePath()"
-                                  class="usage-path"
-                                />
-                                @if (isCustomCurve("analog")) {
+                                @for (
+                                  plot of getFuelUsagePlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && !plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path background-curve"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
+                                @for (
+                                  plot of getFuelUsagePlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path selected-curve usage-path"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
+                                @if (
+                                  isCustomCurve("analog") &&
+                                  !isPlotHidden("analog_usage", "CUSTOM_CURVE")
+                                ) {
                                   @for (
                                     node of getAnalogControlNodes();
                                     track $index
@@ -1664,12 +1786,22 @@
                                       y2="150"
                                       class="hover-line"
                                     />
-                                    <circle
-                                      [attr.cx]="hoveredPoint.svgX"
-                                      [attr.cy]="hoveredPoint.svgY"
-                                      r="6"
-                                      class="hover-point"
-                                    />
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <circle
+                                        [attr.cx]="cp.svgX"
+                                        [attr.cy]="cp.svgY"
+                                        [attr.r]="cp.isSelected ? 5.5 : 3.5"
+                                        class="hover-point"
+                                        [class.hover-point-selected]="
+                                          cp.isSelected
+                                        "
+                                        [class.hover-point-sub]="!cp.isSelected"
+                                        [style.fill]="cp.color"
+                                      />
+                                    }
                                   </g>
                                 }
                               </svg>
@@ -1681,7 +1813,7 @@
                                   [style.left.px]="hoveredPoint.screenX"
                                   [style.top.px]="hoveredPoint.screenY"
                                 >
-                                  <div class="hover-row">
+                                  <div class="hover-header">
                                     <span class="hover-label"
                                       >{{
                                         hoveredPoint.xLabel | translate
@@ -1691,16 +1823,54 @@
                                       hoveredPoint.xValue
                                     }}</span>
                                   </div>
-                                  <div class="hover-row">
-                                    <span class="hover-label"
-                                      >{{
-                                        hoveredPoint.yLabel | translate
-                                      }}:</span
-                                    >
-                                    <span class="hover-value">{{
-                                      hoveredPoint.yValue
-                                    }}</span>
-                                  </div>
+                                  @if (
+                                    hoveredPoint.curvePoints &&
+                                    hoveredPoint.curvePoints.length > 0
+                                  ) {
+                                    <div class="hover-divider"></div>
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <div
+                                        class="hover-row"
+                                        [class.hover-row-selected]="
+                                          cp.isSelected
+                                        "
+                                      >
+                                        <div class="hover-curve-identity">
+                                          <span
+                                            class="hover-swatch"
+                                            [style.background-color]="cp.color"
+                                          ></span>
+                                          <span class="hover-label">{{
+                                            cp.labelKey | translate
+                                          }}</span>
+                                          @if (cp.isSelected) {
+                                            <span class="hover-active-tag"
+                                              >({{
+                                                "RE_GRAPH_ACTIVE" | translate
+                                              }})</span
+                                            >
+                                          }
+                                        </div>
+                                        <span class="hover-value">{{
+                                          cp.value
+                                        }}</span>
+                                      </div>
+                                    }
+                                  } @else {
+                                    <div class="hover-row">
+                                      <span class="hover-label"
+                                        >{{
+                                          hoveredPoint.yLabel | translate
+                                        }}:</span
+                                      >
+                                      <span class="hover-value">{{
+                                        hoveredPoint.yValue
+                                      }}</span>
+                                    </div>
+                                  }
                                 </div>
                               }
                             </div>
@@ -1722,6 +1892,41 @@
                             <span class="graph-title">{{
                               "RE_FUEL_GRAPH_PIT_TITLE" | translate
                             }}</span>
+                            <div class="graph-legend">
+                              @for (
+                                plot of getPitGraphPlots();
+                                track plot.type
+                              ) {
+                                <button
+                                  type="button"
+                                  class="legend-item"
+                                  [class.active-selection]="plot.isSelected"
+                                  [class.hidden-curve]="!plot.isVisible"
+                                  (click)="
+                                    togglePlotVisibility(
+                                      'analog_pit',
+                                      plot.type
+                                    )
+                                  "
+                                  [title]="'RE_GRAPH_TOGGLE_HINT' | translate"
+                                >
+                                  <span
+                                    class="legend-swatch"
+                                    [style.background-color]="plot.color"
+                                  ></span>
+                                  <span class="legend-label">{{
+                                    plot.labelKey | translate
+                                  }}</span>
+                                  @if (plot.isSelected) {
+                                    <span class="legend-selected-indicator"
+                                      >({{
+                                        "RE_GRAPH_ACTIVE" | translate
+                                      }})</span
+                                    >
+                                  }
+                                </button>
+                              }
+                            </div>
                           </div>
                           <div class="graph-body">
                             <div class="y-axis-labels">
@@ -1737,6 +1942,7 @@
                             </div>
                             <div class="graph-svg-wrapper">
                               <svg
+                                id="analog-fuel-pit-svg"
                                 viewBox="0 0 400 150"
                                 preserveAspectRatio="none"
                                 class="fuel-graph"
@@ -1775,20 +1981,57 @@
                                     class="grid"
                                   />
                                 }
-                                <path
-                                  [attr.d]="getPitGraphPath()"
-                                  class="usage-path"
-                                />
+                                @for (
+                                  plot of getPitGraphPlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && !plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path background-curve"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
+                                @for (
+                                  plot of getPitGraphPlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path selected-curve usage-path"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
                                 @if (
                                   hoveredPoint && hoveredPoint.type === "pit"
                                 ) {
                                   <g>
-                                    <circle
-                                      [attr.cx]="hoveredPoint.svgX"
-                                      [attr.cy]="hoveredPoint.svgY"
-                                      r="6"
-                                      class="hover-point"
+                                    <line
+                                      x1="0"
+                                      [attr.y1]="hoveredPoint.svgY"
+                                      x2="400"
+                                      [attr.y2]="hoveredPoint.svgY"
+                                      class="hover-line"
                                     />
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <circle
+                                        [attr.cx]="cp.svgX"
+                                        [attr.cy]="cp.svgY"
+                                        [attr.r]="cp.isSelected ? 5.5 : 3.5"
+                                        class="hover-point"
+                                        [class.hover-point-selected]="
+                                          cp.isSelected
+                                        "
+                                        [class.hover-point-sub]="!cp.isSelected"
+                                        [style.fill]="cp.color"
+                                      />
+                                    }
                                   </g>
                                 }
                               </svg>
@@ -1800,17 +2043,7 @@
                                   [style.left.px]="hoveredPoint.screenX"
                                   [style.top.px]="hoveredPoint.screenY"
                                 >
-                                  <div class="hover-row">
-                                    <span class="hover-label"
-                                      >{{
-                                        hoveredPoint.xLabel | translate
-                                      }}:</span
-                                    >
-                                    <span class="hover-value">{{
-                                      hoveredPoint.xValue
-                                    }}</span>
-                                  </div>
-                                  <div class="hover-row">
+                                  <div class="hover-header">
                                     <span class="hover-label"
                                       >{{
                                         hoveredPoint.yLabel | translate
@@ -1820,6 +2053,54 @@
                                       hoveredPoint.yValue
                                     }}</span>
                                   </div>
+                                  @if (
+                                    hoveredPoint.curvePoints &&
+                                    hoveredPoint.curvePoints.length > 0
+                                  ) {
+                                    <div class="hover-divider"></div>
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <div
+                                        class="hover-row"
+                                        [class.hover-row-selected]="
+                                          cp.isSelected
+                                        "
+                                      >
+                                        <div class="hover-curve-identity">
+                                          <span
+                                            class="hover-swatch"
+                                            [style.background-color]="cp.color"
+                                          ></span>
+                                          <span class="hover-label">{{
+                                            cp.labelKey | translate
+                                          }}</span>
+                                          @if (cp.isSelected) {
+                                            <span class="hover-active-tag"
+                                              >({{
+                                                "RE_GRAPH_ACTIVE" | translate
+                                              }})</span
+                                            >
+                                          }
+                                        </div>
+                                        <span class="hover-value">{{
+                                          cp.value
+                                        }}</span>
+                                      </div>
+                                    }
+                                  } @else {
+                                    <div class="hover-row">
+                                      <span class="hover-label"
+                                        >{{
+                                          hoveredPoint.xLabel | translate
+                                        }}:</span
+                                      >
+                                      <span class="hover-value">{{
+                                        hoveredPoint.xValue
+                                      }}</span>
+                                    </div>
+                                  }
                                 </div>
                               }
                             </div>
@@ -2089,6 +2370,41 @@
                             <span class="graph-title">{{
                               "RE_DIGITAL_FUEL_GRAPH_USAGE_TITLE" | translate
                             }}</span>
+                            <div class="graph-legend">
+                              @for (
+                                plot of getDigitalUsagePlots();
+                                track plot.type
+                              ) {
+                                <button
+                                  type="button"
+                                  class="legend-item"
+                                  [class.active-selection]="plot.isSelected"
+                                  [class.hidden-curve]="!plot.isVisible"
+                                  (click)="
+                                    togglePlotVisibility(
+                                      'digital_usage',
+                                      plot.type
+                                    )
+                                  "
+                                  [title]="'RE_GRAPH_TOGGLE_HINT' | translate"
+                                >
+                                  <span
+                                    class="legend-swatch"
+                                    [style.background-color]="plot.color"
+                                  ></span>
+                                  <span class="legend-label">{{
+                                    plot.labelKey | translate
+                                  }}</span>
+                                  @if (plot.isSelected) {
+                                    <span class="legend-selected-indicator"
+                                      >({{
+                                        "RE_GRAPH_ACTIVE" | translate
+                                      }})</span
+                                    >
+                                  }
+                                </button>
+                              }
+                            </div>
                             @if (isCustomCurve("digital")) {
                               <div class="curve-presets-bar">
                                 <button
@@ -2189,11 +2505,34 @@
                                     class="grid"
                                   />
                                 }
-                                <path
-                                  [attr.d]="getDigitalUsagePath()"
-                                  class="usage-path"
-                                />
-                                @if (isCustomCurve("digital")) {
+                                @for (
+                                  plot of getDigitalUsagePlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && !plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path background-curve"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
+                                @for (
+                                  plot of getDigitalUsagePlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path selected-curve usage-path"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
+                                @if (
+                                  isCustomCurve("digital") &&
+                                  !isPlotHidden("digital_usage", "CUSTOM_CURVE")
+                                ) {
                                   @for (
                                     node of getDigitalControlNodes();
                                     track $index
@@ -2236,12 +2575,22 @@
                                       y2="150"
                                       class="hover-line"
                                     />
-                                    <circle
-                                      [attr.cx]="hoveredPoint.svgX"
-                                      [attr.cy]="hoveredPoint.svgY"
-                                      r="6"
-                                      class="hover-point"
-                                    />
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <circle
+                                        [attr.cx]="cp.svgX"
+                                        [attr.cy]="cp.svgY"
+                                        [attr.r]="cp.isSelected ? 5.5 : 3.5"
+                                        class="hover-point"
+                                        [class.hover-point-selected]="
+                                          cp.isSelected
+                                        "
+                                        [class.hover-point-sub]="!cp.isSelected"
+                                        [style.fill]="cp.color"
+                                      />
+                                    }
                                   </g>
                                 }
                               </svg>
@@ -2254,7 +2603,7 @@
                                   [style.left.px]="hoveredPoint.screenX"
                                   [style.top.px]="hoveredPoint.screenY"
                                 >
-                                  <div class="hover-row">
+                                  <div class="hover-header">
                                     <span class="hover-label"
                                       >{{
                                         hoveredPoint.xLabel | translate
@@ -2264,16 +2613,54 @@
                                       hoveredPoint.xValue
                                     }}</span>
                                   </div>
-                                  <div class="hover-row">
-                                    <span class="hover-label"
-                                      >{{
-                                        hoveredPoint.yLabel | translate
-                                      }}:</span
-                                    >
-                                    <span class="hover-value">{{
-                                      hoveredPoint.yValue
-                                    }}</span>
-                                  </div>
+                                  @if (
+                                    hoveredPoint.curvePoints &&
+                                    hoveredPoint.curvePoints.length > 0
+                                  ) {
+                                    <div class="hover-divider"></div>
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <div
+                                        class="hover-row"
+                                        [class.hover-row-selected]="
+                                          cp.isSelected
+                                        "
+                                      >
+                                        <div class="hover-curve-identity">
+                                          <span
+                                            class="hover-swatch"
+                                            [style.background-color]="cp.color"
+                                          ></span>
+                                          <span class="hover-label">{{
+                                            cp.labelKey | translate
+                                          }}</span>
+                                          @if (cp.isSelected) {
+                                            <span class="hover-active-tag"
+                                              >({{
+                                                "RE_GRAPH_ACTIVE" | translate
+                                              }})</span
+                                            >
+                                          }
+                                        </div>
+                                        <span class="hover-value">{{
+                                          cp.value
+                                        }}</span>
+                                      </div>
+                                    }
+                                  } @else {
+                                    <div class="hover-row">
+                                      <span class="hover-label"
+                                        >{{
+                                          hoveredPoint.yLabel | translate
+                                        }}:</span
+                                      >
+                                      <span class="hover-value">{{
+                                        hoveredPoint.yValue
+                                      }}</span>
+                                    </div>
+                                  }
                                 </div>
                               }
                             </div>
@@ -2294,6 +2681,41 @@
                             <span class="graph-title">{{
                               "RE_DIGITAL_FUEL_GRAPH_PIT_TITLE" | translate
                             }}</span>
+                            <div class="graph-legend">
+                              @for (
+                                plot of getDigitalPitPlots();
+                                track plot.type
+                              ) {
+                                <button
+                                  type="button"
+                                  class="legend-item"
+                                  [class.active-selection]="plot.isSelected"
+                                  [class.hidden-curve]="!plot.isVisible"
+                                  (click)="
+                                    togglePlotVisibility(
+                                      'digital_pit',
+                                      plot.type
+                                    )
+                                  "
+                                  [title]="'RE_GRAPH_TOGGLE_HINT' | translate"
+                                >
+                                  <span
+                                    class="legend-swatch"
+                                    [style.background-color]="plot.color"
+                                  ></span>
+                                  <span class="legend-label">{{
+                                    plot.labelKey | translate
+                                  }}</span>
+                                  @if (plot.isSelected) {
+                                    <span class="legend-selected-indicator"
+                                      >({{
+                                        "RE_GRAPH_ACTIVE" | translate
+                                      }})</span
+                                    >
+                                  }
+                                </button>
+                              }
+                            </div>
                           </div>
                           <div class="graph-body">
                             <div class="y-axis-labels">
@@ -2305,6 +2727,7 @@
                             </div>
                             <div class="graph-svg-wrapper">
                               <svg
+                                id="digital-fuel-pit-svg"
                                 viewBox="0 0 400 150"
                                 preserveAspectRatio="none"
                                 class="fuel-graph"
@@ -2345,21 +2768,58 @@
                                     class="grid"
                                   />
                                 }
-                                <path
-                                  [attr.d]="getDigitalPitPath()"
-                                  class="usage-path"
-                                />
+                                @for (
+                                  plot of getDigitalPitPlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && !plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path background-curve"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
+                                @for (
+                                  plot of getDigitalPitPlots();
+                                  track plot.type
+                                ) {
+                                  @if (plot.isVisible && plot.isSelected) {
+                                    <path
+                                      [attr.d]="plot.path"
+                                      class="curve-path selected-curve usage-path"
+                                      [style.stroke]="plot.color"
+                                    />
+                                  }
+                                }
                                 @if (
                                   hoveredPoint &&
                                   hoveredPoint.type === "digital_pit"
                                 ) {
                                   <g>
-                                    <circle
-                                      [attr.cx]="hoveredPoint.svgX"
-                                      [attr.cy]="hoveredPoint.svgY"
-                                      r="6"
-                                      class="hover-point"
+                                    <line
+                                      x1="0"
+                                      [attr.y1]="hoveredPoint.svgY"
+                                      x2="400"
+                                      [attr.y2]="hoveredPoint.svgY"
+                                      class="hover-line"
                                     />
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <circle
+                                        [attr.cx]="cp.svgX"
+                                        [attr.cy]="cp.svgY"
+                                        [attr.r]="cp.isSelected ? 5.5 : 3.5"
+                                        class="hover-point"
+                                        [class.hover-point-selected]="
+                                          cp.isSelected
+                                        "
+                                        [class.hover-point-sub]="!cp.isSelected"
+                                        [style.fill]="cp.color"
+                                      />
+                                    }
                                   </g>
                                 }
                               </svg>
@@ -2372,17 +2832,7 @@
                                   [style.left.px]="hoveredPoint.screenX"
                                   [style.top.px]="hoveredPoint.screenY"
                                 >
-                                  <div class="hover-row">
-                                    <span class="hover-label"
-                                      >{{
-                                        hoveredPoint.xLabel | translate
-                                      }}:</span
-                                    >
-                                    <span class="hover-value">{{
-                                      hoveredPoint.xValue
-                                    }}</span>
-                                  </div>
-                                  <div class="hover-row">
+                                  <div class="hover-header">
                                     <span class="hover-label"
                                       >{{
                                         hoveredPoint.yLabel | translate
@@ -2392,6 +2842,54 @@
                                       hoveredPoint.yValue
                                     }}</span>
                                   </div>
+                                  @if (
+                                    hoveredPoint.curvePoints &&
+                                    hoveredPoint.curvePoints.length > 0
+                                  ) {
+                                    <div class="hover-divider"></div>
+                                    @for (
+                                      cp of hoveredPoint.curvePoints;
+                                      track cp.type
+                                    ) {
+                                      <div
+                                        class="hover-row"
+                                        [class.hover-row-selected]="
+                                          cp.isSelected
+                                        "
+                                      >
+                                        <div class="hover-curve-identity">
+                                          <span
+                                            class="hover-swatch"
+                                            [style.background-color]="cp.color"
+                                          ></span>
+                                          <span class="hover-label">{{
+                                            cp.labelKey | translate
+                                          }}</span>
+                                          @if (cp.isSelected) {
+                                            <span class="hover-active-tag"
+                                              >({{
+                                                "RE_GRAPH_ACTIVE" | translate
+                                              }})</span
+                                            >
+                                          }
+                                        </div>
+                                        <span class="hover-value">{{
+                                          cp.value
+                                        }}</span>
+                                      </div>
+                                    }
+                                  } @else {
+                                    <div class="hover-row">
+                                      <span class="hover-label"
+                                        >{{
+                                          hoveredPoint.xLabel | translate
+                                        }}:</span
+                                      >
+                                      <span class="hover-value">{{
+                                        hoveredPoint.xValue
+                                      }}</span>
+                                    </div>
+                                  }
                                 </div>
                               }
                             </div>

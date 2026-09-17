@@ -48,11 +48,11 @@ Analog fuel simulates fuel consumption on a **per-lap basis**. Because analog tr
     - **Quadratic**: Fuel consumption scales with the inverse square of lap time, heavily penalizing very fast laps.
     - **Cubic**: Fuel consumption increases steeply for fast laps, aggressively penalizing drivers pushing for record lap times.
     - **Custom Curve**: Allows interactive, point-by-point shaping of the fuel curve directly on the SVG graph.
-- **Usage Rate**: The base fuel units consumed per lap when a driver matches the **Reference Time**.
-- **Reference Time (s)**: The baseline benchmark lap time for the track and car class (in seconds).
-    - Faster laps (below the reference time) burn more fuel.
-    - Slower laps (above the reference time) burn less fuel.
-    - The active calculation range spans from $0.5 \times \text{Reference Time}$ to $1.5 \times \text{Reference Time}$.
+- **Fastest Time (s)**: The fastest expected lap time for the track and car class (in seconds).
+- **Max Usage**: The fuel units consumed per lap when driving at or faster than the **Fastest Time**.
+- **Slowest Time (s)**: The slowest lap time (in seconds) for minimum fuel consumption.
+- **Min Usage**: The fuel units consumed per lap when driving at or slower than the **Slowest Time**.
+    - For lap times between the Fastest Time and Slowest Time, fuel consumption transitions smoothly according to the selected **Fuel Usage Type** (Linear, Quadratic, Cubic, or Custom Curve).
 - **Capacity**: The total volume of the fuel tank in arbitrary fuel units (e.g., 100).
 - **Start Level (%)**: The percentage of maximum fuel capacity in the tank when a heat starts (e.g., 100% for a full tank, or less for sprint/handicap heats).
 - **Refuel Rate (%/s)**: The speed at which fuel is added during a pit stop, measured as a percentage of total tank capacity replenished per second.
@@ -76,8 +76,11 @@ $$\text{Racing Time} = \text{Lap Time} - \text{Accumulated Refuel Time}$$
 
 #### Visual Graph Previews (Analog)
 
-- **Fuel Usage per Lap**: Displays the exact fuel units consumed across the lap time spectrum ($0.5 \times \text{ref}$ to $1.5 \times \text{ref}$). In Custom Curve mode, draggable control nodes and preset reset buttons allow instant reshaping.
-- **Time to Pit**: Displays estimated total race time (or laps) before running out of fuel as a function of consistent lap times.
+- **Simultaneous Multi-Model Comparison**: All 3 preset mathematical models (**Linear**, **Quadratic**, and **Cubic**) are plotted simultaneously on both graphs. The currently selected type is highlighted in bold with a vibrant glow, while the remaining models serve as muted reference baselines (~40% opacity).
+- **Fuel Usage per Lap**: Displays the exact fuel units consumed across the lap time spectrum (from Fastest Time to Slowest Time). In Custom Curve mode, draggable control nodes and preset reset buttons allow instant reshaping while the 3 baseline models remain visible for benchmarking.
+- **Time to Pit**: Displays estimated total race time (or laps) before running out of fuel as a function of consistent lap times across all models.
+- **Interactive Legend & Visibility Toggle**: Left-click any curve in the legend to toggle its visibility on or off. Hiding a curve dynamically rescales the graph axes, allowing closer inspection of the remaining curves.
+- **Comparative Multi-Curve Hovercards**: Hovering over either graph displays comparative telemetry at the cursor's scrubbed point across all visible curves, with color-coded swatches, values, and an `(Active)` indicator for the selected model.
 
 ---
 
@@ -113,8 +116,11 @@ Drivers who drive smoothly or lift in corners consume significantly less fuel th
 
 #### Visual Graph Previews (Digital)
 
-- **Digital Fuel Usage**: Plots throttle percentage ($0\%$ to $100\%$) against fuel consumed per second.
+- **Simultaneous Multi-Model Comparison**: Plots Linear, Quadratic, and Cubic response curves simultaneously with the selected model highlighted and non-selected models visible as background baselines.
+- **Digital Fuel Usage**: Plots throttle percentage ($0\%$ to $100\%$) against fuel consumed per second across all models.
 - **Time to Empty**: Plots throttle percentage against total continuous driving seconds until the fuel tank runs completely dry.
+- **Interactive Legend & Dynamic Scaling**: Toggle individual curves on/off by clicking their legend entries, automatically rescaling graph axes.
+- **Comparative Multi-Curve Hovercards**: Scrubbing across the graph displays real-time values for each visible curve at that throttle percentage.
 
 ---
 

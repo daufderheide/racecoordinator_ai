@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.antigravity.context.DatabaseContext;
+import com.antigravity.models.AnalogFuelOptions;
 import com.antigravity.models.CustomUI;
 import com.antigravity.models.Driver;
 import com.antigravity.models.Race;
@@ -176,6 +177,37 @@ public class DatabaseInitializerTest {
     Race backfilledLegacy = raceRepo.findByEntityId("legacy_r1");
     assertNotNull(backfilledLegacy);
     assertEquals(com.antigravity.models.Theme.DEFAULT_THEME_ID, backfilledLegacy.getThemeId());
+
+    // Test backfilling existing custom race with legacy fuel options
+    AnalogFuelOptions legacyFuel =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0);
+    Race legacyFuelRace =
+        new Race.Builder()
+            .withName("Custom Legacy Fuel Race")
+            .withEntityId("legacy_fuel_r1")
+            .withFuelOptions(legacyFuel)
+            .build();
+    raceRepo.save(legacyFuelRace);
+
+    initializer.backfillRaces(context);
+    Race backfilledFuelRace = raceRepo.findByEntityId("legacy_fuel_r1");
+    assertNotNull(backfilledFuelRace);
+    assertNotNull(backfilledFuelRace.getFuelOptions());
+    assertEquals(3.0, backfilledFuelRace.getFuelOptions().getFastestTime(), 0.001);
+    assertEquals(5.0, backfilledFuelRace.getFuelOptions().getMaxUsage(), 0.001);
+    assertEquals(9.0, backfilledFuelRace.getFuelOptions().getSlowestTime(), 0.001);
+    assertEquals(3.0, backfilledFuelRace.getFuelOptions().getMinUsage(), 0.001);
   }
 
   @Test

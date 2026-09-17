@@ -25,11 +25,11 @@ Analoge brandstof simuleert het verbruik **per ronde**. Omdat analoge banen auto
     - **Kwadratisch**: Het verbruik schaalt met het omgekeerde kwadraat van de rondetijd, wat zeer snelle ronden zwaar bestraft.
     - **Kubisch**: Het verbruik stijgt steil bij snelle ronden en straft coureurs die jagen op ronderecords agressief af.
     - **Aangepaste curve**: Maakt het mogelijk de verbruikscurve punt voor punt interactief vorm te geven op de SVG-grafiek.
-- **Verbruikssnelheid**: De basisbrandstofeenheden die per ronde worden verbruikt wanneer een coureur exact de **Referentietijd** rijdt.
-- **Referentietijd (s)**: De referentietijd per ronde voor de baan en autoklasse (in seconden).
-    - Snellere ronden (onder de referentietijd) verbruiken meer brandstof.
-    - Langzamere ronden (boven de referentietijd) verbruiken minder brandstof.
-    - Het actieve berekeningsbereik loopt van $0,5 \times \text{Referentietijd}$ tot $1,5 \times \text{Referentietijd}$.
+- **Snelste tijd (s)**: De snelste verwachte rondetijd voor de baan en autoklasse (in seconden).
+- **Max. verbruik**: De brandstofeenheden die per ronde worden verbruikt bij het rijden op of sneller dan de **Snelste tijd**.
+- **Langzaamste tijd (s)**: De langzaamste rondetijd (in seconden) voor minimaal brandstofverbruik.
+- **Min. verbruik**: De brandstofeenheden die per ronde worden verbruikt bij het rijden op of langzamer dan de **Langzaamste tijd**.
+    - Voor rondetijden tussen de snelste en langzaamste tijd verloopt het verbruik vloeiend volgens het geselecteerde **Verbruikstype** (Lineair, Kwadratisch, Kubisch of Aangepaste curve).
 - **Capaciteit**: Het totale volume van de brandstoftank in willekeurige eenheden (bijv. 100).
 - **Startniveau (%)**: Het percentage van de maximale brandstofcapaciteit bij de start van een heat (bijv. 100% voor een volle tank, of minder voor sprint-/handicap-heats).
 - **Tanksnelheid (%/s)**: De snelheid waarmee brandstof wordt bijgetankt tijdens een pitstop, uitgedrukt als percentage van de totale capaciteit per seconde.
@@ -53,8 +53,11 @@ $$\text{Racetijd} = \text{Rondetijd} - \text{Opgebouwde tanktijd}$$
 
 #### Grafische voorbeelden (Analoog)
 
-- **Brandstofverbruik per ronde**: Toont het exacte verbruik over het hele rondetijdspectrum ($0,5 \times \text{ref}$ tot $1,5 \times \text{ref}$). In de modus Aangepaste curve maken handgrepen en herstelknoppen directe aanpassingen mogelijk.
-- **Tijd tot pitstop**: Schat de totale racetijd (of aantal ronden) tot de tank leeg is bij een constant rondetempo.
+- **Gelijktijdige modelvergelijking**: Alle 3 vooraf ingestelde wiskundige modellen (**Lineair**, **Kwadratisch** en **Kubisch**) worden gelijktijdig op beide grafieken weergegeven. Het geselecteerde type is vet gemarkeerd met een opvallende gloed, terwijl de overige modellen zichtbaar blijven als gedempte referentielijnen (~40% dekking).
+- **Brandstofverbruik per ronde**: Toont het exacte verbruik over het hele rondetijdspectrum (van Snelste tijd tot Langzaamste tijd). In de modus Aangepaste curve maken handgrepen en herstelknoppen directe aanpassingen mogelijk terwijl de 3 basismodellen zichtbaar blijven ter referentie.
+- **Tijd tot pitstop**: Schat de totale racetijd (of aantal ronden) tot de tank leeg is bij een constant rondetempo voor alle modellen.
+- **Interactieve legenda en zichtbaarheid**: Klik met de linkermuisknop op een curve in de legenda om deze in of uit te schakelen. Het verbergen van een curve schaalt de grafiekassen dynamisch opnieuw, zodat u resterende curven gedetailleerder kunt inspecteren.
+- **Vergelijkende hover-kaarten**: Beweeg over de grafieken om vergelijkende telemetrie te zien voor alle zichtbare curven op het aangewezen punt, compleet met kleurmarkeringen, waarden en een `(Actief)`-indicator op het geselecteerde model.
 
 ---
 
@@ -86,8 +89,11 @@ Coureurs die vloeiend rijden of gas terugnemen in bochten verbruiken aanzienlijk
 
 #### Grafische voorbeelden (Digitaal)
 
-- **Digitaal brandstofverbruik**: Zet het gaspercentage ($0\,\%$ tot $100\,\%$) uit tegen het verbruik per seconde.
+- **Gelijktijdige modelvergelijking**: Toont gelijktijdig lineaire, kwadratische en kubische responscurven met het actieve model gemarkeerd en de overige modellen als achtergrondreferentie.
+- **Digitaal brandstofverbruik**: Zet het gaspercentage ($0\,\%$ tot $100\,\%$) uit tegen het verbruik per seconde voor alle modellen.
 - **Tijd tot leeg**: Zet het gaspercentage uit tegen het aantal seconden continu rijden tot de tank volledig leeg is.
+- **Interactieve legenda en dynamische schaling**: Schakel afzonderlijke curven in/uit via de legenda, waardoor de assen automatisch opnieuw worden geschaald.
+- **Vergelijkende hover-kaarten**: Bij het bewegen over de grafiek worden de realtime meetwaarden van alle zichtbare curven bij dat specifieke gaspercentage getoond.
 
 ---
 

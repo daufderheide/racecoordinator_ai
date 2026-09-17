@@ -157,6 +157,66 @@ public class RaceConverterTest {
     assertEquals(true, proto.getFuelOptions().getEnabled());
     assertEquals(120.0, proto.getFuelOptions().getCapacity(), 0.001);
     assertEquals(5.0, proto.getFuelOptions().getUsageRate(), 0.001);
+    assertEquals(2.5, proto.getFuelOptions().getFastestTime(), 0.001);
+    assertEquals(6.25, proto.getFuelOptions().getMaxUsage(), 0.001);
+    assertEquals(7.5, proto.getFuelOptions().getSlowestTime(), 0.001);
+    assertEquals(3.75, proto.getFuelOptions().getMinUsage(), 0.001);
+  }
+
+  @Test
+  public void testToProto_AnalogFuelOptions_FourParameters() {
+    HeatScoring heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            15,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.None);
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            120.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            5.0,
+            100.0,
+            8.0,
+            3.0,
+            5.0,
+            1.0,
+            1.0,
+            null,
+            2.0,
+            8.0,
+            6.0,
+            2.0);
+    Race race =
+        new Race.Builder()
+            .withName("Test Race")
+            .withTrackEntityId("track-id")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(heatScoring)
+            .withMinLapTime(0.0)
+            .withFuelOptions(fuelOptions)
+            .build();
+    Track track =
+        new Track.Builder()
+            .name("Test Track")
+            .lanes(new ArrayList<>())
+            .arduinoConfigs(null)
+            .entityId("track-id")
+            .id(null)
+            .build();
+
+    RaceModel proto = RaceConverter.toProto(race, track, new HashSet<>());
+
+    assertEquals(true, proto.getFuelOptions().getEnabled());
+    assertEquals(2.0, proto.getFuelOptions().getFastestTime(), 0.001);
+    assertEquals(8.0, proto.getFuelOptions().getMaxUsage(), 0.001);
+    assertEquals(6.0, proto.getFuelOptions().getSlowestTime(), 0.001);
+    assertEquals(2.0, proto.getFuelOptions().getMinUsage(), 0.001);
   }
 
   @Test
