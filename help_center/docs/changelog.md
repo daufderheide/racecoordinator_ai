@@ -1,5 +1,27 @@
 # Changelog
 
+## [v1.0.0-beta.75] - 2026-09-17
+
+### 🚀 New Features
+
+- add fastest/slowest lap times and min/max limits to analog fuel usage calculations https://github.com/daufderheide/racecoordinator_ai/issues/833 ([40476045](https://github.com/daufderheide/racecoordinator_ai/commit/40476045))
+- implement race editor fuel simulation, interactive graphs, documentation, and internationalization https://github.com/daufderheide/racecoordinator_ai/issues/833 ([43b472f4](https://github.com/daufderheide/racecoordinator_ai/commit/43b472f4))
+
+### 🐛 Bug Fixes
+
+- use fixed SVG dimensions in fuel graph helpers and update curve calculations ([fb31c2ad](https://github.com/daufderheide/racecoordinator_ai/commit/fb31c2ad))
+- fixed <hopefully> issues with doing an auto update and the lane-view widget not showing up until a full restart and/or client browser refresh [skip-screendiffs] ([ebac93ee](https://github.com/daufderheide/racecoordinator_ai/commit/ebac93ee))
+
+### ⚡ Improvements & Refactoring
+
+- deprecate legacy fields and constructors in AnalogFuelOptions ([34b9a0b2](https://github.com/daufderheide/racecoordinator_ai/commit/34b9a0b2))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.74...v1.0.0-beta.75">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.74] - 2026-09-16
 
 ### 🚀 New Features
