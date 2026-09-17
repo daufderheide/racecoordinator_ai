@@ -9,6 +9,13 @@ test.describe("Event Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#event-name")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display event editor for existing event", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -20,9 +27,29 @@ test.describe("Event Editor Visuals", () => {
     await expect(page.locator(".editor-panel-left")).toBeVisible();
     await expect(page.locator(".editor-panel-right")).toBeVisible();
 
+    await enterEditMode(page);
+
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page).toHaveScreenshot("event-editor.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display event editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/event-editor?id=evt_1&driverCount=4"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("event-editor-read-only.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
     });
@@ -37,6 +64,8 @@ test.describe("Event Editor Visuals", () => {
 
     await page.locator(".page-container").waitFor();
     await expect(page.locator(".editor-panel-right")).toBeVisible();
+
+    await enterEditMode(page);
 
     // Click + Add Race button
     const addRaceBtn = page.locator(".btn-add-race");

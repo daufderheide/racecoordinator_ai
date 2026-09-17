@@ -278,4 +278,35 @@ describe("TrakmateEditorComponent", () => {
     steps[8].onEnter!();
     expect(component.sectionsExpanded.rw).toBeTrue();
   });
+
+  describe("Read-Only Mode", () => {
+    beforeEach(() => {
+      fixture.componentRef.setInput("isEditMode", false);
+      fixture.detectChanges();
+    });
+
+    it("should not toggle master relay in read-only mode", () => {
+      component.toggleMasterRelay();
+      expect(mockDataService.setMainPower).not.toHaveBeenCalled();
+      expect(component.mainRelayStatus).toBeFalse();
+    });
+
+    it("should not toggle lane relay in read-only mode", () => {
+      component.toggleLaneRelay(0);
+      expect(mockDataService.setLanePower).not.toHaveBeenCalled();
+      expect(component.relayStatuses[0]).toBeFalse();
+    });
+
+    it("should not emit change on onConfigChange in read-only mode", () => {
+      spyOn(component.change, "emit");
+      component.onConfigChange();
+      expect(component.change.emit).not.toHaveBeenCalled();
+    });
+
+    it("should not emit remove on onRemove in read-only mode", () => {
+      spyOn(component.remove, "emit");
+      component.onRemove();
+      expect(component.remove.emit).not.toHaveBeenCalled();
+    });
+  });
 });

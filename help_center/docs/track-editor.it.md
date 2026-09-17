@@ -8,7 +8,16 @@ Race Coordinator AI include un'architettura multi-interfaccia avanzata che conse
 
 ## Panoramica e Salvataggio Automatico
 
-L'Editor dei Tracciati è suddiviso in due aree di lavoro sincronizzate:
+L'Editor dei Tracciati fornisce un'interfaccia unificata per selezionare, visualizzare, configurare e testare i tracciati delle piste per slot car:
+
+- **Selettore Tracciato**: Situato nell'intestazione superiore accanto al titolo della pagina, questo menu a discesa elenca tutti i tracciati configurati e consente di passare rapidamente da uno all'altro.
+- **Modalità Sola Lettura**: Per impostazione predefinita, all'apertura dell'editor vengono visualizzate le proprietà del tracciato, la disposizione delle corsie e le interfacce hardware in modalità sola lettura. I campi di input, la gestione delle corsie e le azioni sull'interfaccia sono bloccati per evitare modifiche accidentali.
+- **Modalità Modifica**: Facendo clic sull'icona **Modifica** (matita) sulla barra degli strumenti, si sbloccano tutti i controlli di configurazione, il riordino delle corsie e l'impostazione dell'hardware. In modalità modifica, il selettore del tracciato rimane bloccato per evitare di abbandonare modifiche non salvate.
+- **Salvataggio Automatico Continuo**: Man mano che apporti modifiche (rinomina, lunghezza corsie, riordino o assegnazione pin), le modifiche vengono salvate automaticamente in background sul server senza uscire dalla modalità modifica.
+- **Fine Modifica**: Facendo clic sull'icona **Fine Modifica** (segno di spunta), le modifiche vengono convalidate, rese persistenti sul server e l'editor torna in modalità sola lettura.
+- **Annulla Modifiche**: Se si tenta di uscire dall'editor con modifiche non salvate o non valide, una finestra di dialogo richiede conferma. L'annullamento ripristina tutte le modifiche all'ultima versione salvata e ripristina la modalità sola lettura.
+
+L'area di lavoro è suddivisa in due pannelli sincronizzati:
 
 - **Pannello Sinistro (Proprietà Generali e Corsie)**: Configura il nome della pista, il numero di sezioni, la scala fisica e le caratteristiche di ciascuna corsia (dimensioni, ordinamento e colori). Aggiungi nuove interfacce hardware nella parte inferiore di questo pannello.
 - **Pannello Destro (Interfacce Hardware e Test Interattivi)**: Configura i controller hardware collegati, assegna pin e canali alle funzioni di pista, imposta le strisce LED RGB indirizzabili e testa sensori e relè in tempo reale.
@@ -232,9 +241,15 @@ Ideale per collaudare formati di gara, rotazioni, temi, annunci audio e tabellon
 
 ## Strumenti e Barra Superiore dell'Editor
 
+La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti essenziali di gestione:
+
+- **Indietro**: Ritorna alla vista precedente o alla Configurazione del Giorno di Gara.
+- **Aggiungi Tracciato (+)**: Crea un nuovo modello di tracciato ed entra in modalità modifica.
+- **Duplica Tracciato**: Crea una copia esatta con un nuovo nome univoco, perfetta per testare configurazioni alternative senza ripartire da zero.
+- **Modifica / Fine Modifica**: Passa dalla modalità sola lettura alla modalità modifica e viceversa. Uscendo dalla modalità modifica, le modifiche vengono convalidate e salvate.
+- **Elimina Tracciato**: Elimina il tracciato selezionato previa conferma.
 - **Annulla (`Ctrl+Z`) / Ripristina (`Ctrl+Y`)**: Ripristina con facilità qualsiasi modifica a corsie, colori o pin.
-- **Salva come Nuovo (Duplica Tracciato)**: Crea una copia identica con un nuovo nome, perfetta per testare configurazioni alternative.
-- **Guida Interattiva**: Il pulsante con punto interrogativo (**`?`**) avvia un tour guidato a video su tutti i comandi.
+- **Guida (`?`)**: Avvia un tour guidato interattivo a video su tutti i comandi.
 
 ---
 

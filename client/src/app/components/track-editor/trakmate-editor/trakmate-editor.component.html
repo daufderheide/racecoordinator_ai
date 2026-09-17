@@ -16,6 +16,7 @@
         <div class="spacer"></div>
         <button
           class="action-btn danger small"
+          [disabled]="!isEditMode()"
           (click)="onRemove()"
           title="{{ 'TME_REMOVE_INTERFACE' | translate }}"
         >
@@ -47,6 +48,7 @@
                           <div class="com-port-row">
                             <app-custom-select
                               [id]="'commPort-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config().commPort"
                               (change)="onPortChange()"
                             >
@@ -75,6 +77,7 @@
                           <label>{{ "TME_DEBOUNCE" | translate }}</label>
                           <app-custom-select
                             [id]="'debounce-' + interfaceIndex()"
+                            [disabled]="!isEditMode()"
                             [(ngModel)]="config().debounce"
                             (change)="onConfigChange()"
                           >
@@ -92,6 +95,7 @@
                           <div class="com-port-row">
                             <app-custom-select
                               [id]="'lapPinPitBehavior-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
                               [(ngModel)]="config().lapPinPitBehavior"
                               (change)="onConfigChange()"
                             >
@@ -117,6 +121,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="'trakmate-nc-sensors-' + interfaceIndex()"
                               [(ngModel)]="config().normallyClosedLaneSensors"
                               (change)="onConfigChange()"
@@ -129,6 +134,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="'trakmate-nc-relays-' + interfaceIndex()"
                               [(ngModel)]="config().normallyClosedRelays"
                               (change)="onConfigChange()"
@@ -141,6 +147,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="
                                 'trakmate-per-lane-relays-' + interfaceIndex()
                               "
@@ -219,6 +226,7 @@
                                   '-' +
                                   interfaceIndex()
                                 "
+                                [disabled]="!isEditMode()"
                                 [(ngModel)]="config().lapPinBehaviors![$index]"
                                 (change)="onConfigChange()"
                               >
@@ -251,6 +259,7 @@
                                   type="button"
                                   class="status-badge small"
                                   [class.connected]="relayStatuses[$index]"
+                                  [disabled]="!isEditMode()"
                                   (click)="toggleLaneRelay($index)"
                                   style="cursor: pointer"
                                   aria-label="Toggle Relay"
@@ -306,6 +315,7 @@
                             [id]="'trakmate-master-relay-' + interfaceIndex()"
                             class="status-badge"
                             [class.connected]="mainRelayStatus"
+                            [disabled]="!isEditMode()"
                             (click)="toggleMasterRelay()"
                             style="cursor: pointer"
                           >

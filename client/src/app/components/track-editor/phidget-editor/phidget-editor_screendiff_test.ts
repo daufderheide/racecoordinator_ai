@@ -32,6 +32,15 @@ test.describe("Phidget Editor Component Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display phidget editor with main config and pins", async ({
     page,
   }) => {
@@ -45,7 +54,30 @@ test.describe("Phidget Editor Component Visuals", () => {
     await editor.waitFor({ state: "visible" });
     await waitForBoardImage(editor);
 
+    await enterEditMode(page);
+
     await expect(editor).toHaveScreenshot("phidget-editor-all-opened.png", {
+      maxDiffPixels: 200,
+      threshold: 0.2,
+    });
+  });
+
+  test("should display phidget editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/track-editor?id=t5"),
+    );
+
+    const editor = page.locator("app-phidget-editor");
+    await editor.waitFor({ state: "visible" });
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await waitForBoardImage(editor);
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(editor).toHaveScreenshot("phidget-editor-read-only.png", {
       maxDiffPixels: 200,
       threshold: 0.2,
     });
@@ -63,6 +95,8 @@ test.describe("Phidget Editor Component Visuals", () => {
     const editor = page.locator("app-phidget-editor");
     await editor.waitFor({ state: "visible" });
     await waitForBoardImage(editor);
+
+    await enterEditMode(page);
 
     const harness = new PhidgetEditorHarnessE2e(editor);
     await harness.toggleSection("main");
@@ -88,6 +122,8 @@ test.describe("Phidget Editor Component Visuals", () => {
     const editor = page.locator("app-phidget-editor");
     await editor.waitFor({ state: "visible" });
     await waitForBoardImage(editor);
+
+    await enterEditMode(page);
 
     const harness = new PhidgetEditorHarnessE2e(editor);
     await harness.toggleSection("digitalIn");

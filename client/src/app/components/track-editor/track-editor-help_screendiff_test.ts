@@ -14,17 +14,30 @@ test.describe("Track Editor Guided Help Visuals", () => {
     await harness.waitForStable();
   }
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#track-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   async function navigateToStep(
     page: Page,
     harness: HelpOverlayHarnessE2e,
     targetStep: number,
   ) {
-    // Navigate with help=true query param to test that entry path
     await TestSetupHelper.waitForLocalization(
       page,
       "en",
-      page.goto("/track-editor?id=t1&help=true"),
+      page.goto("/track-editor?id=t1"),
     );
+
+    await enterEditMode(page);
+
+    await page.locator("#help-track-btn").click();
+    await waitForPopoverStable(harness);
 
     // Step 1 is the initial state after navigation, so we click Next (targetStep - 1) times
     for (let i = 1; i < targetStep; i++) {

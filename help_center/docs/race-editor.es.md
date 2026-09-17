@@ -1,5 +1,50 @@
 # Editor de Carreras
 
+El **Editor de Carreras** es la interfaz de configuración completa para diseñar, configurar y probar sus formatos de carreras de slot cars, reglas de puntuación, rotaciones de mangas, simulaciones de combustible y ajustes de temporizador.
+
+---
+
+## Descripción General y Autoguardado
+
+El Editor de Carreras ofrece una interfaz unificada para seleccionar, visualizar, configurar y probar sus formatos de carrera:
+
+- **Selector de Carrera**: Ubicado en el encabezado superior junto al título de la página, este menú desplegable enumera todas las carreras configuradas y le permite cambiar rápidamente entre ellas.
+- **Modo de Solo Lectura**: De forma predeterminada, al abrir el editor se muestran las propiedades de la carrera, reglas de puntuación y opciones de configuración en modo de solo lectura. Los campos de formulario están bloqueados para evitar cambios accidentales, mientras que los acordeones y vistas previas de mangas permanecen interactivos.
+- **Modo de Edición**: Al hacer clic en el icono **Editar** (lápiz) de la barra de herramientas se desbloquean todos los controles. Durante la edición, el selector de carrera está bloqueado.
+- **Autoguardado Continuo**: Todas las modificaciones se guardan automáticamente en segundo plano en el servidor sin salir del modo de edición.
+- **Salir del Modo de Edición**: Al hacer clic en el icono **Listo** (marca de verificación) se validan los cambios y se regresa al modo de solo lectura.
+- **Descartar Cambios**: Al hacer clic en Descartar se revierten todos los cambios a la última versión guardada y se sale del modo de edición.
+
+El espacio de trabajo se divide en dos paneles sincronizados:
+
+- **Panel Izquierdo (Configuración de Carrera)**: Propiedades generales, formato de carrera, métodos de puntuación, tipo de rotación, opciones de grupo y simulación de combustible analógico/digital.
+- **Panel Derecho (Vista Previa de Mangas en Vivo)**: Genera dinámicamente la lista completa de mangas según la rotación activa y el número de pilotos.
+
+---
+
+## Configuración de Carrera y Opciones
+
+### Nombre de Carrera y Asociación de Pista
+- **Nombre de Carrera**: Nombre único que identifica el formato de carrera.
+- **Pista**: La pista física asociada determina si está disponible la simulación de combustible analógica o digital.
+- **Tema**: Tema visual de interfaz aplicado a la pantalla de carrera.
+
+### Formato de Rotación de Mangas
+- **Tipo de Rotación**: Rotaciones estándar (**Round Robin**, **Escalera**, **Torneo**) o secuencias personalizadas.
+- **Ciclos de Mangas**: Cantidad de veces que cada piloto completa la rotación entera de mangas.
+- **Mangas Invertidas**: Invierte el orden de la secuencia de mangas.
+
+### Opciones de Puntuación
+- **Puntuación de Mangas**: Finalización por vueltas o tiempo límite, método de clasificación y desempates.
+- **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
+- **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
+
+### Ajustes de Temporizador
+- **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.
+- **Tiempo Mínimo de Vuelta**: Tiempo mínimo permitido para filtrar falsos disparos de sensores.
+- **Tiempo de Drift**: Ventana de detección para deslizamientos sobre la línea de meta.
+- **Iniciar Detrás del Sensor**: Exige que los coches comiencen detrás del sensor en la vuelta cero.
+
 ## Ajustes de combustible
 
 Race Coordinator AI admite simulaciones integrales de combustible para pistas analógicas y digitales, incluyendo capacidad de combustible personalizable, nivel inicial, demoras en paradas en boxes, tasas de repostaje, penalizaciones por quedarse sin combustible y modelos de consumo de combustible.

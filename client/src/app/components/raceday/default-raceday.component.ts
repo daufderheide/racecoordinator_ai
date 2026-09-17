@@ -2914,7 +2914,9 @@ export class DefaultRacedayComponent
       if (
         this.childWindowManagerService?.isRacePreservingRoute(nextState.url) ||
         nextState.url.includes("/modify-heats") ||
+        nextState.url.includes("/team-editor") ||
         nextState.url.includes("/team-manager") ||
+        nextState.url.includes("/driver-editor") ||
         nextState.url.includes("/driver-manager") ||
         nextState.url.includes("/ui-editor") ||
         nextState.url.includes("/driver-station") ||

@@ -1,6 +1,7 @@
 import { CustomUI } from "@app/models/custom-ui";
 import { Theme } from "@app/models/theme";
 import { TranslationService } from "@app/services/translation.service";
+import { isEntityNameUnique } from "@app/utils/editor-utils";
 
 export const DEFAULT_RACEDAY_UI_NAMES = new Set([
   "",
@@ -207,13 +208,8 @@ export function isThemeNameDuplicate(
   theme: Theme,
   allThemes: Theme[],
 ): boolean {
-  if (!theme.name) return false;
-  const name = theme.name.trim().toLowerCase();
-  return allThemes.some(
-    (t) =>
-      t.entity_id !== theme.entity_id &&
-      (t.name || "").trim().toLowerCase() === name,
-  );
+  if (!theme.name?.trim()) return false;
+  return !isEntityNameUnique(theme.name, theme.entity_id, allThemes);
 }
 
 export function isThemeNameInvalid(theme: Theme, allThemes: Theme[]): boolean {

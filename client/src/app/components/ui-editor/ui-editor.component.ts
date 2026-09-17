@@ -51,7 +51,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
@@ -295,8 +295,21 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   deleteUiParams: any = {};
   defaultThemeNames: { [id: string]: string } = {};
   defaultUiNames: { [id: string]: string } = {};
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((result: boolean) => void) | null = null;
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get pendingDeactivate(): ((result: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((result: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
 
   layoutAspectRatioOptions: AspectRatioOption[] =
     getDefaultAspectRatioOptions();
@@ -363,6 +376,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       },
       () => this.editingState,
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
@@ -688,10 +707,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   async confirmDiscard(): Promise<boolean> {
@@ -699,19 +715,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard();
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   onBack() {

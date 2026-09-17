@@ -66,6 +66,7 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   count = input(1);
   lanes = input<Lane[]>([]);
   index = input(0);
+  isEditMode = input<boolean>(true);
 
   availablePorts: string[] = [];
   interfaceStatus: number = 1; // 0=Connected, 1=Disconnected, 2=NoData
@@ -99,6 +100,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   private colorDebounceTimer: any = null;
 
   resetMaxSeenAll() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.maxVoltagesSeen = {};
     this.cdr.detectChanges();
   }
@@ -341,6 +345,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onHardwareTypeChange(newType: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config) return;
 
@@ -372,6 +379,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   updateArduinoConfig() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.configChange.emit();
 
     const config = this.config();
@@ -573,6 +583,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onDebounceChange(value: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.debounceUpdateSubject.next(value);
   }
 
@@ -619,6 +632,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   pinState: { [key: string]: boolean } = {};
 
   togglePinState(isDigital: boolean, pin: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const behavior = this.getPinBehavior(isDigital, pin);
     // Check if it is a Write pin (Relay)
     // BEHAVIOR_RELAY = 3; BEHAVIOR_RELAY_BASE = 4000;
@@ -1066,10 +1082,16 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onCreateLedString() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.requestLedStringDialog.emit();
   }
 
   addLedString(numLeds: number, pin: number = 0) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config) return;
     if (!config.ledStrings) config.ledStrings = [];
@@ -1124,6 +1146,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   removeLedStringByPin(pin: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config || !config.ledStrings) return;
     const index = config.ledStrings.findIndex((s) => s.pin === pin);
@@ -1137,6 +1162,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   removeLedString(index: number, event: Event) {
     event.stopPropagation();
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config || !config.ledStrings) return;
 
@@ -1160,6 +1188,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   updateLedBehavior(stringIndex: number, ledIndex: number, behavior: any) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config || !config.ledStrings) return;
     const val = parseInt(behavior, 10);
@@ -1201,6 +1232,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   toggleVoltageLink() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.isVoltageLinked = !this.isVoltageLinked;
     localStorage.setItem(
       `rc.arduino-editor.voltage-linked.${this.index()}`,
@@ -1209,6 +1243,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   toggleLedStringsLink() {
+    if (!this.isEditMode()) {
+      return;
+    }
     this.isLedStringsLinked = !this.isLedStringsLinked;
     localStorage.setItem(
       `rc.arduino-editor.led-strings-linked.${this.index()}`,
@@ -1217,6 +1254,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onLedStringBrightnessChange(stringIdx: number, val: any) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config?.ledStrings) return;
     const brightness = parseInt(val, 10);
@@ -1231,6 +1271,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onLedStringCountChange(stringIdx: number, val: any) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config?.ledStrings) return;
     const count = parseInt(val, 10);
@@ -1285,6 +1328,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onLedStringLedTypeChange(stringIdx: number, val: any) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config?.ledStrings) return;
     const ledType = parseInt(val, 10);
@@ -1313,6 +1359,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onLedStringColorOrderChange(stringIdx: number, val: any) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config?.ledStrings) return;
     const colorOrder = parseInt(val, 10);
@@ -1327,6 +1376,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   onLedStringFlashRateChange(stringIdx: number, val: any) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config?.ledStrings) return;
     const rate = parseFloat(val);
@@ -1345,6 +1397,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     laneIdx: number,
     color: string,
   ) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const config = this.config();
     if (!config?.ledStrings) return;
     const sourceString = config.ledStrings[stringIdx];
@@ -1870,6 +1925,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   setVoltageMax(lane: number, value: string | number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     if (!this.config()) return;
 
     let val: number;
@@ -1899,6 +1957,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   setMaxToSeen(lane: number) {
+    if (!this.isEditMode()) {
+      return;
+    }
     if (this.isVoltageLinked) {
       let globalMax = 0;
       for (const l of this.getVoltageLanes()) {
@@ -1941,6 +2002,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   togglePinDropdown(pinKey: string, event: Event) {
     event.stopPropagation();
+    if (!this.isEditMode()) {
+      return;
+    }
     if (this.openPinDropdown === pinKey) {
       this.openPinDropdown = null;
     } else {
@@ -1984,6 +2048,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
   }
 
   selectPinAction(isDigital: boolean, pin: number, actionValue: string) {
+    if (!this.isEditMode()) {
+      return;
+    }
     const groups = this.getFilteredActions(isDigital, pin);
     for (const group of groups) {
       const action = group.actions.find((a) => a.value === actionValue);
@@ -2324,6 +2391,9 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
   removeInterface(event: Event) {
     event.stopPropagation();
+    if (!this.isEditMode()) {
+      return;
+    }
     this.remove.emit();
   }
 

@@ -237,3 +237,199 @@ export function areDriversEqual(d1: Driver, d2: Driver): boolean {
     checkAudio(d1.fuelAudio, d2.fuelAudio)
   );
 }
+
+export function generateUniqueDriverName(
+  allDrivers: Driver[],
+  baseName: string,
+  forceSuffix: boolean = false,
+): string {
+  const pattern = /(_\d+)$/;
+  const base = (baseName || "").replace(pattern, "").trim();
+
+  let counter = forceSuffix ? 1 : 0;
+  while (true) {
+    const candidate = counter === 0 ? base : `${base}_${counter}`;
+    const exists = (allDrivers || []).some(
+      (d) =>
+        (d.name || "").trim().toLowerCase() === candidate.trim().toLowerCase(),
+    );
+    if (!exists && candidate.trim() !== "") {
+      return candidate;
+    }
+    counter++;
+  }
+}
+
+export function generateUniqueDriverNickname(
+  allDrivers: Driver[],
+  baseNickname: string,
+  forceSuffix: boolean = false,
+): string {
+  const pattern = /(_\d+)$/;
+  const base = (baseNickname || "").replace(pattern, "").trim();
+
+  let counter = forceSuffix ? 1 : 0;
+  while (true) {
+    const candidate = counter === 0 ? base : `${base}_${counter}`;
+    const exists = (allDrivers || []).some(
+      (d) =>
+        (d.nickname || "").trim().toLowerCase() ===
+        candidate.trim().toLowerCase(),
+    );
+    if (!exists && candidate.trim() !== "") {
+      return candidate;
+    }
+    counter++;
+  }
+}
+
+export function mergeDriverAsset(assets: any[], asset: any): any[] {
+  if (!asset) return assets;
+  const id = asset.model?.entityId || asset.entity_id || asset.id;
+  const exists = (assets || []).some(
+    (a) =>
+      (id && (a.model?.entityId || a.entity_id || a.id) === id) ||
+      (asset.url && a.url === asset.url),
+  );
+  return exists ? assets : [...assets, asset];
+}
+
+export function loadDriverStorageJson<T>(
+  key: string,
+  fallback: T,
+  logger?: { error: (msg: string, err: any) => void },
+  errorMsg?: string,
+): T {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved !== null ? JSON.parse(saved) : fallback;
+  } catch (e) {
+    if (logger && errorMsg) {
+      logger.error(errorMsg, e);
+    }
+    return fallback;
+  }
+}
+
+export function saveDriverStorageJson(
+  key: string,
+  value: any,
+  logger?: { error: (msg: string, err: any) => void },
+  errorMsg?: string,
+): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    if (logger && errorMsg) {
+      logger.error(errorMsg, e);
+    }
+  }
+}
+
+export function updateDriverAudioType(
+  driver: Driver | undefined,
+  slot: DriverAudioSlot,
+  type: "preset" | "tts" | "none" | "audio_set",
+): void {
+  if (!driver) return;
+  const { key, defaultUrl } = getAudioSlotInfo(slot);
+  const audio = driver[key] as any;
+  if (audio) {
+    audio.type = type;
+    if (type === "none") {
+      audio.url = undefined;
+      audio.text = undefined;
+    } else if (type === "tts") {
+      audio.url = undefined;
+    } else if (!audio.url) {
+      audio.url = defaultUrl;
+    }
+  }
+}
+
+export function updateDriverAudioUrl(
+  driver: Driver | undefined,
+  slot: DriverAudioSlot,
+  url: string | undefined,
+): void {
+  if (!driver) return;
+  const { key } = getAudioSlotInfo(slot);
+  const audio = driver[key] as any;
+  if (audio) {
+    audio.url = url;
+  }
+}
+
+export function updateDriverAudioText(
+  driver: Driver | undefined,
+  slot: DriverAudioSlot,
+  text: string | undefined,
+): void {
+  if (!driver) return;
+  const { key } = getAudioSlotInfo(slot);
+  const audio = driver[key] as any;
+  if (audio) {
+    audio.text = text;
+  }
+}
+
+export function getDriverUnsavedReasons(
+  driver: Driver | undefined,
+  isNameUnique: boolean,
+  isNicknameUnique: boolean,
+  isSaving: boolean,
+  isDirty: boolean,
+): string[] {
+  const reasons: string[] = [];
+  if (!driver) return reasons;
+
+  const nameTrimmed = driver.name?.trim() || "";
+  if (!nameTrimmed) {
+    reasons.push("DISCARD_REASON_DRIVER_NAME_EMPTY");
+  } else if (!isNameUnique) {
+    reasons.push("DISCARD_REASON_DRIVER_NAME_DUPLICATE");
+  }
+
+  const nickTrimmed = driver.nickname?.trim() || "";
+  if (!nickTrimmed) {
+    reasons.push("DISCARD_REASON_DRIVER_NICKNAME_EMPTY");
+  } else if (!isNicknameUnique) {
+    reasons.push("DISCARD_REASON_DRIVER_NICKNAME_DUPLICATE");
+  }
+
+  if (isSaving) {
+    reasons.push("DISCARD_REASON_SAVING");
+  } else if (reasons.length === 0 && isDirty) {
+    reasons.push("DISCARD_REASON_EXIT_TOO_QUICKLY");
+  }
+
+  return reasons;
+}
+
+export function isDriverNameUnique(
+  allDrivers: Driver[],
+  name: string | undefined,
+  currentDriverId?: string,
+): boolean {
+  const trimmed = name?.trim().toLowerCase();
+  if (!trimmed) return false;
+  return !(allDrivers || []).some(
+    (d) =>
+      (currentDriverId ? d.entity_id !== currentDriverId : true) &&
+      (d.name || "").trim().toLowerCase() === trimmed,
+  );
+}
+
+export function isDriverNicknameUnique(
+  allDrivers: Driver[],
+  nickname: string | undefined,
+  currentDriverId?: string,
+): boolean {
+  const trimmed = nickname?.trim().toLowerCase();
+  if (!trimmed) return false;
+  return !(allDrivers || []).some(
+    (d) =>
+      (currentDriverId ? d.entity_id !== currentDriverId : true) &&
+      (d.nickname || "").trim().toLowerCase() === trimmed,
+  );
+}

@@ -8,7 +8,25 @@
     <app-browser-navigation></app-browser-navigation>
     <h1 class="page-title">
       <span class="title-main">{{ titleKey() | translate }}</span>
-      @if (trimmedItemName()) {
+      @if (items().length > 0) {
+        <span class="item-separator">-</span>
+        <app-custom-select
+          id="editor-object-selector"
+          class="editor-title-select"
+          [value]="selectedId()"
+          [disabled]="isEditMode()"
+          (change)="onSelectionChange($event)"
+          [title]="
+            (isEditMode() ? 'EDITOR_LOCKED_SELECTOR_TOOLTIP' : '') | translate
+          "
+        >
+          @for (item of items(); track item.id) {
+            <app-custom-option [value]="item.id">{{
+              item.name
+            }}</app-custom-option>
+          }
+        </app-custom-select>
+      } @else if (trimmedItemName()) {
         <span class="item-separator">-</span>
         <span class="item-name" [title]="trimmedItemName()">{{
           trimmedItemName()
@@ -18,11 +36,15 @@
   </div>
   <div class="header-right">
     <app-toolbar
+      [showEdit]="showEdit()"
+      [disabledEdit]="disabledEdit()"
+      [isEditMode]="isEditMode()"
       [showUndo]="showUndo()"
       [showRedo]="showRedo()"
       [showHelp]="showHelp()"
       [showAdd]="showAdd()"
       [showDelete]="showDelete()"
+      [disabledDelete]="disabledDelete()"
       [showCopy]="showCopy()"
       [disabledCopy]="disabledCopy()"
       [copyDisabledTooltipKey]="copyDisabledTooltipKey()"
@@ -49,6 +71,7 @@
       [helpSteps]="helpSteps()"
       [helpTitle]="helpTitle()"
       [helpRecordName]="helpRecordName()"
+      (edit)="onEdit()"
       (help)="onHelp()"
       (copy)="onCopy()"
       (add)="onAdd()"

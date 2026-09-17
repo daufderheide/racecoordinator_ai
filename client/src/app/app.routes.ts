@@ -4,27 +4,21 @@ import { CustomRotationEditorComponent } from "@app/components/asset-manager/cus
 import { DatabaseManagerComponent } from "@app/components/database-manager/database-manager.component";
 import { DisplayClient } from "@app/components/display-client/display-client";
 import { DriverEditorComponent } from "@app/components/driver-editor/driver-editor.component";
-import { DriverManagerComponent } from "@app/components/driver-manager/driver-manager.component";
 import { DriverResultsComponent } from "@app/components/driver-results/driver-results.component";
 import { DriverStationComponent } from "@app/components/driver-station/driver-station.component";
 import { EventEditorComponent } from "@app/components/event-editor/event-editor.component";
-import { EventManagerComponent } from "@app/components/event-manager/event-manager.component";
 import { HeatResultsComponent } from "@app/components/heat-results/heat-results.component";
 import { PredictionResultsComponent } from "@app/components/prediction-results/prediction-results.component";
 import { RaceEditorComponent } from "@app/components/race-editor/race-editor.component";
-import { RaceManagerComponent } from "@app/components/race-manager/race-manager.component";
 import { RaceResultsComponent } from "@app/components/race-results/race-results.component";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
 import { ModifyHeatsModalComponent } from "@app/components/raceday/modify-heats-modal/modify-heats-modal.component";
 import { RacedayComponent } from "@app/components/raceday/raceday.component";
 import { RacedaySetupComponent } from "@app/components/raceday-setup/raceday-setup.component";
 import { SeasonEditorComponent } from "@app/components/season-editor/season-editor.component";
-import { SeasonManagerComponent } from "@app/components/season-manager/season-manager.component";
 import { SeasonResultsComponent } from "@app/components/season-results/season-results.component";
 import { TeamEditorComponent } from "@app/components/team-editor/team-editor.component";
-import { TeamManagerComponent } from "@app/components/team-manager/team-manager.component";
 import { TrackEditorComponent } from "@app/components/track-editor/track-editor.component";
-import { TrackManagerComponent } from "@app/components/track-manager/track-manager.component";
 import { UIEditorComponent } from "@app/components/ui-editor/ui-editor.component";
 import { AuthGuard } from "@app/guards/auth.guard";
 import { DirtyCheckGuard } from "@app/guards/dirty-check.guard";
@@ -86,17 +80,13 @@ export const routes: Routes = [
   },
   {
     path: "driver-manager",
-    component: DriverManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Driver Manager",
-    data: { animation: "DriverManagerPage" },
+    redirectTo: "driver-editor",
+    pathMatch: "full",
   },
   {
     path: "team-manager",
-    component: TeamManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Team Manager",
-    data: { animation: "TeamManagerPage" },
+    redirectTo: "team-editor",
+    pathMatch: "full",
   },
   {
     path: "team-editor",
@@ -109,10 +99,8 @@ export const routes: Routes = [
   },
   {
     path: "track-manager",
-    component: TrackManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Track Manager",
-    data: { animation: "TrackManagerPage" },
+    redirectTo: "track-editor",
+    pathMatch: "full",
   },
   {
     path: "track-editor",
@@ -132,10 +120,8 @@ export const routes: Routes = [
   },
   {
     path: "event-manager",
-    component: EventManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Event Manager",
-    data: { animation: "EventManagerPage" },
+    redirectTo: "event-editor",
+    pathMatch: "full",
   },
   {
     path: "event-editor",
@@ -148,10 +134,8 @@ export const routes: Routes = [
   },
   {
     path: "season-manager",
-    component: SeasonManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Season Manager",
-    data: { animation: "SeasonManagerPage" },
+    redirectTo: "season-editor",
+    pathMatch: "full",
   },
   {
     path: "season-editor",
@@ -164,10 +148,8 @@ export const routes: Routes = [
   },
   {
     path: "race-manager",
-    component: RaceManagerComponent,
-    canActivate: [AuthGuard],
-    title: "Race Manager",
-    data: { animation: "RaceManagerPage" },
+    redirectTo: "race-editor",
+    pathMatch: "full",
   },
   {
     path: "race-editor",

@@ -21,6 +21,7 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { EditorSectionComponent } from "@app/components/shared/editor-section/editor-section.component";
 import {
   EditorTab,
   EditorTabsComponent,
@@ -54,7 +55,8 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
+import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
 
 import {
   calculateAnalogPitHover,
@@ -81,6 +83,7 @@ import {
   imports: [
     AcknowledgementModalComponent,
     AutoSelectDefaultDirective,
+    EditorSectionComponent,
     EditorTabsComponent,
     EditorTitleComponent,
     FormsModule,
@@ -92,12 +95,37 @@ import {
   ],
 })
 export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((value: boolean) => void) | null = null;
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
   private isReverting = false;
   editingRace: any;
   originalRace: any;
+  selectedRace: any;
+  selectedRaceId?: string;
+  raceSelectItems: { id: string; name: string }[] = [];
+  isEditMode: boolean = false;
+  private isPreservingEditModeOnNavigation: boolean = false;
+  transitionToReadOnlyOnSave: boolean = false;
   isLoading: boolean = true;
   isSaving: boolean = false;
   isAutoSaving: boolean = false;
@@ -106,7 +134,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   undoManager: UndoManager<any>;
   tracks: Track[] = [];
   themes: Theme[] = [];
-  races: any[] = [];
+  allRaces: any[] = [];
+  get races(): any[] {
+    return this.allRaces;
+  }
+  set races(val: any[]) {
+    this.allRaces = val;
+  }
   defaultRaceName: string = "";
 
   focusNameInput() {
@@ -272,35 +306,182 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard(() => {
+      if (this.originalRace) {
+        this.selectRace(this.originalRace);
+      } else if (this.allRaces.length > 0) {
+        this.selectRace(this.allRaces[0]);
+      }
+      this.isEditMode = false;
+    });
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
+    this.lifecycle.onCancelDiscard();
+  }
+
+  onSelectRaceById(id: string) {
+    if (this.isEditMode) return;
+    if (this.selectedRaceId === id) return;
+    const found = this.allRaces.find((r) => r.entity_id === id);
+    if (found) {
+      this.selectRace(found);
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: found.entity_id },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    }
+  }
+
+  onToggleEditMode() {
+    if (!this.isEditMode) {
+      this.isEditMode = true;
+      this.focusNameInput();
+      return;
+    }
+
+    if (this.isSaving) {
+      this.transitionToReadOnlyOnSave = true;
+      return;
+    }
+
+    if (this.isDirtyState()) {
+      if (!this.isConfigValid()) {
+        if (this.isNameDuplicate()) {
+          alert(this.translationService.translate("RE_ERROR_NAME_EXISTS"));
+        } else {
+          alert(this.translationService.translate("RE_ERROR_NAME_REQUIRED"));
+        }
+        return;
+      }
+      this.updateRace(false);
+    } else {
+      this.isEditMode = false;
+    }
+  }
+
+  onAddNewRace() {
+    if (this.isEditMode && this.isDirtyState()) {
+      this.confirmDiscard().then((confirmed) => {
+        if (confirmed) {
+          this.startNewRace();
+        }
+      });
+    } else {
+      this.startNewRace();
+    }
+  }
+
+  startNewRace() {
+    this.isSaving = true;
+    const trackId = this.tracks.length > 0 ? this.tracks[0].entity_id : "";
+    const themeId = this.getDefaultThemeId();
+    const payload = this.createDefaultRaceTemplate(trackId, themeId);
+    const defaultName =
+      this.translationService.translate("RM_DEFAULT_RACE_NAME") || "New Race";
+    payload.name = this.generateUniqueName(defaultName, false);
+    delete payload.entity_id;
+    delete payload.id;
+    delete payload._id;
+
+    this.subscriptions.push(
+      this.dataService.createRace(payload).subscribe({
+        next: (created) => {
+          this.isSaving = false;
+          this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
+          const savedRace = {
+            ...payload,
+            ...created,
+            entity_id: created?.entity_id || payload?.entity_id,
+          };
+          this.navigationService.setLastEditedId("race", savedRace.entity_id);
+          this.editingRace = savedRace;
+          this.originalRace = deepCopy(savedRace);
+          this.selectedRace = savedRace;
+          this.selectedRaceId = savedRace.entity_id;
+          this.defaultRaceName = savedRace.name;
+          this.undoManager.resetTracking(this.editingRace);
+          this.syncSelectedCustomRotationAsset();
+          this.syncSequenceTextFromModel();
+          this.loadHeats();
+
+          const idx = this.allRaces.findIndex(
+            (r) => r.entity_id === created.entity_id,
+          );
+          if (idx >= 0) {
+            this.allRaces[idx] = deepCopy(created);
+          } else {
+            this.allRaces.push(deepCopy(created));
+          }
+          this.updateRaceSelectItems();
+          this.cdr.detectChanges();
+          this.focusNameInput();
+
+          this.router.navigate([], {
+            queryParams: {
+              id: created.entity_id,
+              driverCount: this.driverCount,
+            },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        },
+        error: (error: any) => {
+          this.logger.error("Failed to create new race", error);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
+  }
+
+  onDeleteRace() {
+    this.deleteRace();
+  }
+
+  deleteRace() {
+    if (!this.editingRace || this.editingRace.entity_id === "new") return;
+    if (confirm(this.translationService.translate("RE_CONFIRM_DELETE"))) {
+      this.isSaving = true;
+      const idToDelete = this.editingRace.entity_id;
+      this.dataService.deleteRace(idToDelete).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.isEditMode = false;
+          this.allRaces = this.allRaces.filter(
+            (r) => r.entity_id !== idToDelete,
+          );
+          this.updateRaceSelectItems();
+          if (this.allRaces.length > 0) {
+            this.selectRace(this.allRaces[0]);
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: { id: this.allRaces[0].entity_id },
+              queryParamsHandling: "merge",
+              replaceUrl: true,
+            });
+          } else {
+            this.startNewRace();
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to delete race", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      });
     }
   }
 
@@ -322,20 +503,17 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     sessionStorage.setItem("skipIntro", "true");
     const from = this.route.snapshot.queryParamMap.get("from");
     const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
-    if (from === "raceday-setup" || returnUrl === "/raceday-setup") {
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+      return;
+    }
+    if (from === "raceday-setup" || from === "raceday") {
       this.router.navigate(["/raceday-setup"], {
         queryParams: { skipIntro: "true" },
       });
       return;
     }
-    this.router.navigate(["/race-manager"], {
-      queryParams: {
-        id: this.editingRace?.entity_id,
-        driverCount: this.driverCount,
-        from,
-        returnUrl,
-      },
-    });
+    this.router.navigate(["/raceday-setup"]);
   }
 
   get raceTabs(): EditorTab[] {
@@ -425,8 +603,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     });
   }
 
-  toggleSection(section: keyof typeof this.sectionsExpanded) {
-    this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+  toggleSection(
+    section: keyof typeof this.sectionsExpanded,
+    forcedState?: boolean,
+  ) {
+    this.sectionsExpanded[section] =
+      typeof forcedState === "boolean"
+        ? forcedState
+        : !this.sectionsExpanded[section];
     try {
       localStorage.setItem(
         "race_editor_expanders",
@@ -558,6 +742,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       },
       () => this.editingRace,
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
@@ -576,8 +766,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.raceConnectionService.connect();
 
     this.subscriptions.push(
-      this.undoManager.stateCommitted$.subscribe(() => {
-        this.autoSaveRace();
+      this.undoManager.stateCommitted$.subscribe((event) => {
+        if (
+          event.type === "push" ||
+          event.type === "undo" ||
+          event.type === "redo"
+        ) {
+          this.autoSaveRace();
+        }
       }),
     );
 
@@ -640,10 +836,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             this.confirmDiscard().then((confirmed) => {
               if (confirmed) {
                 const id = this.route.snapshot.queryParamMap.get("id");
-                if (id && id !== "new") {
+                if (id === "new") {
+                  this.startNewRace();
+                } else if (id) {
                   this.loadRace(id);
                 } else {
-                  this.createNewRace();
+                  this.loadDefaultRace();
                 }
               } else {
                 this.isReverting = true;
@@ -661,21 +859,34 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
             });
           } else {
             const id = paramMap.get("id");
-            if (id && id !== "new") {
+            if (id === "new") {
+              this.startNewRace();
+            } else if (id) {
               this.loadRace(id);
             } else {
-              this.createNewRace();
+              this.loadDefaultRace();
             }
           }
         }),
       );
     } else {
       const id = this.route.snapshot.queryParamMap.get("id");
-      if (id && id !== "new") {
+      if (id === "new") {
+        this.startNewRace();
+      } else if (id) {
         this.loadRace(id);
       } else {
-        this.createNewRace();
+        this.loadDefaultRace();
       }
+    }
+  }
+
+  private loadDefaultRace() {
+    const lastEdited = this.navigationService.getLastEditedId("race");
+    if (lastEdited) {
+      this.loadRace(lastEdited);
+    } else {
+      this.loadRace("");
     }
   }
 
@@ -747,231 +958,180 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }, 1000);
   }
 
-  /* eslint-disable max-lines-per-function */
+  private normalizeFuelOptions(fuel: any): any {
+    if (!fuel) {
+      return {
+        enabled: false,
+        reset_fuel_at_heat_start: false,
+        out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
+        capacity: 100,
+        usage_type: FuelUsageType.LINEAR,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
+        start_level: 100,
+        refuel_rate: 10,
+        pit_stop_delay: 2.0,
+        power_stutter_on_time: 1.0,
+        power_stutter_off_time: 1.0,
+        custom_curve: [],
+      };
+    }
+    return {
+      ...fuel,
+      custom_curve: fuel.custom_curve || [],
+      fastest_time:
+        Number(fuel.fastest_time) ||
+        Number((Number(fuel.reference_time || 6.0) * 0.5).toFixed(2)),
+      max_usage:
+        Number(fuel.max_usage) ||
+        (fuel.usage_type === "QUADRATIC"
+          ? Number((Number(fuel.usage_rate || 4.0) * 4.0).toFixed(2))
+          : fuel.usage_type === "CUBIC"
+            ? Number((Number(fuel.usage_rate || 4.0) * 8.0).toFixed(2))
+            : Number((Number(fuel.usage_rate || 4.0) * 1.25).toFixed(2))),
+      slowest_time:
+        Number(fuel.slowest_time) ||
+        Number((Number(fuel.reference_time || 6.0) * 1.5).toFixed(2)),
+      min_usage:
+        Number(fuel.min_usage) ||
+        (fuel.usage_type === "QUADRATIC"
+          ? Number((Number(fuel.usage_rate || 4.0) * (4.0 / 9.0)).toFixed(2))
+          : fuel.usage_type === "CUBIC"
+            ? Number((Number(fuel.usage_rate || 4.0) * (8.0 / 27.0)).toFixed(2))
+            : Number((Number(fuel.usage_rate || 4.0) * 0.75).toFixed(2))),
+    };
+  }
+
+  private normalizeDigitalFuelOptions(digitalFuel: any): any {
+    if (!digitalFuel) {
+      return {
+        enabled: false,
+        reset_fuel_at_heat_start: false,
+        out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
+        capacity: 100,
+        usage_type: FuelUsageType.LINEAR,
+        usage_rate: 4.0,
+        start_level: 100,
+        refuel_rate: 10,
+        pit_stop_delay: 2.0,
+        custom_curve: [],
+      };
+    }
+    return {
+      ...digitalFuel,
+      custom_curve: digitalFuel.custom_curve || [],
+    };
+  }
+
+  private normalizeRace(race: any): any {
+    const normalized = {
+      ...deepCopy(race),
+      group_options: race.group_options || {
+        enabled: false,
+        max_groups: 2,
+        balance: true,
+        allow_empty_lanes: false,
+        force_multiple_of_max: false,
+        rotate_group_heats: false,
+        min_advancing: 0,
+      },
+      fuel_options: this.normalizeFuelOptions(race.fuel_options),
+      digital_fuel_options: this.normalizeDigitalFuelOptions(
+        race.digital_fuel_options,
+      ),
+      team_options: race.team_options || {
+        heat_lap_limit: 0,
+        heat_time_limit: 0.0,
+        overall_lap_limit: 0,
+        overall_time_limit: 0.0,
+        require_pit_stop_change_driver: false,
+      },
+      heat_scoring: race.heat_scoring || {
+        finish_method: "Lap",
+        finish_value: 10,
+        heat_ranking: "LAP_COUNT",
+        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+        allow_finish: "None",
+      },
+      overall_scoring: race.overall_scoring || {
+        dropped_heats: 0,
+        ranking_method: "LAP_COUNT",
+        tiebreaker: "FASTEST_LAP_TIME",
+      },
+      season_scoring: race.season_scoring || {
+        position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        heat_position_points: [3, 2, 1, 0],
+      },
+      custom_rotation_sequence: race.custom_rotation_sequence || [],
+      custom_rotations: race.custom_rotations || [],
+    };
+
+    if (!normalized.theme_id && this.themes.length > 0) {
+      const defaultTheme =
+        this.themes.find(
+          (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+        ) || this.themes[0];
+      normalized.theme_id = defaultTheme.entity_id;
+    }
+
+    return normalized;
+  }
+
+  selectRace(race: any) {
+    this.selectedRace = race;
+    this.selectedRaceId = race.entity_id;
+    this.editingRace = this.normalizeRace(race);
+    this.originalRace = deepCopy(this.editingRace);
+    this.undoManager.initialize(this.editingRace);
+    this.enforceFuelRules();
+    this.syncHeatPositionPoints();
+    this.syncSelectedCustomRotationAsset();
+    if (this.driverCount > 0) {
+      this.loadHeats();
+    }
+    this.syncSequenceTextFromModel();
+    if (this.isPreservingEditModeOnNavigation) {
+      this.isPreservingEditModeOnNavigation = false;
+      this.isEditMode = true;
+      this.defaultRaceName = this.editingRace.name;
+      this.focusNameInput();
+    } else {
+      this.isEditMode = false;
+    }
+    this.cdr.detectChanges();
+  }
+
   loadRace(id: string) {
     this.isNavigationApproved = false;
     this.isLoading = true;
     this.dataService.getRaces().subscribe({
       next: (races) => {
+        this.allRaces = deepCopy(races || []);
+        this.updateRaceSelectItems();
         const race = races.find((r) => r.entity_id === id);
         if (race) {
-          this.editingRace = {
-            ...deepCopy(race),
-            // Fallback for nested objects to prevent null access errors in templates
-            group_options: race.group_options || {
-              enabled: false,
-              max_groups: 2,
-              balance: true,
-              allow_empty_lanes: false,
-              force_multiple_of_max: false,
-              rotate_group_heats: false,
-              min_advancing: 0,
-            },
-            fuel_options: race.fuel_options
-              ? {
-                  ...race.fuel_options,
-                  custom_curve: race.fuel_options.custom_curve || [],
-                  fastest_time:
-                    Number(race.fuel_options.fastest_time) ||
-                    Number(
-                      (
-                        Number(race.fuel_options.reference_time || 6.0) * 0.5
-                      ).toFixed(2),
-                    ),
-                  max_usage:
-                    Number(race.fuel_options.max_usage) ||
-                    (race.fuel_options.usage_type === "QUADRATIC"
-                      ? Number(
-                          (
-                            Number(race.fuel_options.usage_rate || 4.0) * 4.0
-                          ).toFixed(2),
-                        )
-                      : race.fuel_options.usage_type === "CUBIC"
-                        ? Number(
-                            (
-                              Number(race.fuel_options.usage_rate || 4.0) * 8.0
-                            ).toFixed(2),
-                          )
-                        : Number(
-                            (
-                              Number(race.fuel_options.usage_rate || 4.0) * 1.25
-                            ).toFixed(2),
-                          )),
-                  slowest_time:
-                    Number(race.fuel_options.slowest_time) ||
-                    Number(
-                      (
-                        Number(race.fuel_options.reference_time || 6.0) * 1.5
-                      ).toFixed(2),
-                    ),
-                  min_usage:
-                    Number(race.fuel_options.min_usage) ||
-                    (race.fuel_options.usage_type === "QUADRATIC"
-                      ? Number(
-                          (
-                            Number(race.fuel_options.usage_rate || 4.0) *
-                            (4.0 / 9.0)
-                          ).toFixed(2),
-                        )
-                      : race.fuel_options.usage_type === "CUBIC"
-                        ? Number(
-                            (
-                              Number(race.fuel_options.usage_rate || 4.0) *
-                              (8.0 / 27.0)
-                            ).toFixed(2),
-                          )
-                        : Number(
-                            (
-                              Number(race.fuel_options.usage_rate || 4.0) * 0.75
-                            ).toFixed(2),
-                          )),
-                }
-              : {
-                  enabled: false,
-                  reset_fuel_at_heat_start: false,
-                  out_of_fuel_action: "DO_NOT_COUNT_LAPS",
-                  capacity: 100,
-                  usage_type: "LINEAR",
-                  fastest_time: 3.0,
-                  max_usage: 5.0,
-                  slowest_time: 9.0,
-                  min_usage: 3.0,
-                  start_level: 100,
-                  refuel_rate: 10.0,
-                  pit_stop_delay: 2.0,
-                  power_stutter_on_time: 1.0,
-                  power_stutter_off_time: 1.0,
-                  custom_curve: [],
-                },
-            digital_fuel_options: race.digital_fuel_options
-              ? {
-                  ...race.digital_fuel_options,
-                  custom_curve: race.digital_fuel_options.custom_curve || [],
-                }
-              : {
-                  enabled: false,
-                  reset_fuel_at_heat_start: false,
-                  out_of_fuel_action: "DO_NOT_COUNT_LAPS",
-                  capacity: 100,
-                  usage_type: "LINEAR",
-                  usage_rate: 4.0,
-                  start_level: 100,
-                  refuel_rate: 10.0,
-                  pit_stop_delay: 2.0,
-                  custom_curve: [],
-                },
-            team_options: race.team_options || {
-              heat_lap_limit: 0,
-              heat_time_limit: 0.0,
-              overall_lap_limit: 0,
-              overall_time_limit: 0.0,
-              require_pit_stop_change_driver: false,
-            },
-          };
-          if (!this.editingRace.heat_scoring) {
-            this.editingRace.heat_scoring = {
-              finish_method: "Lap",
-              finish_value: 10,
-              heat_ranking: "LAP_COUNT",
-              heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-              allow_finish: "None",
-            };
-          }
-          if (!this.editingRace.overall_scoring) {
-            this.editingRace.overall_scoring = {
-              dropped_heats: 0,
-              ranking_method: "LAP_COUNT",
-              tiebreaker: "FASTEST_LAP_TIME",
-            };
-          }
-          if (!this.editingRace.season_scoring) {
-            this.editingRace.season_scoring = {
-              position_points: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
-              heat_position_points: [3, 2, 1, 0],
-            };
-          }
-          if (!this.editingRace.fuel_options) {
-            this.editingRace.fuel_options = {
-              enabled: false,
-              reset_fuel_at_heat_start: false,
-              out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
-              capacity: 100,
-              usage_type: FuelUsageType.LINEAR,
-              fastest_time: 3.0,
-              max_usage: 5.0,
-              slowest_time: 9.0,
-              min_usage: 3.0,
-              start_level: 100,
-              refuel_rate: 10,
-              pit_stop_delay: 2.0,
-              custom_curve: [],
-            };
-          }
-          if (!this.editingRace.team_options) {
-            this.editingRace.team_options = {
-              heat_lap_limit: 0,
-              heat_time_limit: 0,
-              overall_lap_limit: 0,
-              overall_time_limit: 0,
-              require_pit_stop_change_driver: false,
-            };
-          }
-          if (!this.editingRace.custom_rotation_sequence) {
-            this.editingRace.custom_rotation_sequence = [];
-          }
-          if (!this.editingRace.custom_rotations) {
-            this.editingRace.custom_rotations = [];
-          }
+          this.selectRace(race);
+        } else if (races.length > 0) {
+          this.selectRace(races[0]);
         } else {
-          this.createNewRace();
+          this.startNewRace();
+          return;
         }
-        if (
-          this.editingRace &&
-          !this.editingRace.theme_id &&
-          this.themes.length > 0
-        ) {
-          const defaultTheme =
-            this.themes.find(
-              (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
-            ) || this.themes[0];
-          this.editingRace.theme_id = defaultTheme.entity_id;
-        }
-        if (!this.editingRace.digital_fuel_options) {
-          this.editingRace.digital_fuel_options = {
-            enabled: false,
-            reset_fuel_at_heat_start: false,
-            out_of_fuel_action: OutOfFuelAction.DO_NOT_COUNT_LAPS,
-            capacity: 100,
-            usage_type: FuelUsageType.LINEAR,
-            usage_rate: 4.0,
-            start_level: 100,
-            refuel_rate: 10,
-            pit_stop_delay: 2.0,
-            custom_curve: [],
-          };
-        }
-        this.enforceFuelRules();
-        this.syncHeatPositionPoints();
-        this.originalRace = deepCopy(this.editingRace);
-        this.undoManager.initialize(this.editingRace);
-        this.syncSelectedCustomRotationAsset();
-        // Load heats if we have a valid race
-        if (this.driverCount > 0) {
-          this.loadHeats();
-        }
-        this.syncSequenceTextFromModel();
-        this.isLoading = false;
         const isNew = this.route.snapshot.queryParamMap.get("isNew") === "true";
         if (isNew) {
+          this.isEditMode = true;
           this.defaultRaceName = this.editingRace.name;
           this.focusNameInput();
         }
-        // Safe to call here - triggered by async data load, not user input
+        this.isLoading = false;
         setTimeout(() => this.cdr.detectChanges(), 0);
       },
       error: (error: any) => {
         this.logger.error("Failed to load race", error);
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -1129,22 +1289,22 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
-  createNewRace() {
-    this.isNavigationApproved = false;
-    this.defaultRaceName = "";
-    this.focusNameInput();
-    this.editingRace = {
+  getDefaultThemeId(): string {
+    if (this.themes.length === 0) {
+      return "default_classic_rc_ai";
+    }
+    const defaultTheme = this.themes.find(
+      (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
+    );
+    return (defaultTheme || this.themes[0]).entity_id;
+  }
+
+  createDefaultRaceTemplate(trackId: string, themeId: string): any {
+    return {
       entity_id: "new",
       name: "",
-      track_entity_id: this.tracks.length > 0 ? this.tracks[0].entity_id : "",
-      theme_id:
-        this.themes.length > 0
-          ? (
-              this.themes.find(
-                (t) => t.is_default || t.entity_id === "default_classic_rc_ai",
-              ) || this.themes[0]
-            ).entity_id
-          : "default_classic_rc_ai",
+      track_entity_id: trackId,
+      theme_id: themeId,
       heat_rotation_type: "RoundRobin",
       heat_scoring: {
         finish_method: "Lap",
@@ -1228,6 +1388,15 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         heat_position_points: [3, 2, 1, 0],
       },
     };
+  }
+
+  createNewRace() {
+    this.isNavigationApproved = false;
+    this.defaultRaceName = "";
+    this.focusNameInput();
+    const trackId = this.tracks.length > 0 ? this.tracks[0].entity_id : "";
+    const themeId = this.getDefaultThemeId();
+    this.editingRace = this.createDefaultRaceTemplate(trackId, themeId);
     this.syncHeatPositionPoints();
     this.originalRace = deepCopy(this.editingRace);
     this.undoManager.initialize(this.editingRace);
@@ -1477,145 +1646,186 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   updateRace(isAutoSave: boolean = false) {
-    if (!this.editingRace || !this.isDirtyState()) {
+    if (!this.editingRace || this.isSaving) return;
+    const wasNew = this.editingRace.entity_id === "new";
+    if (!wasNew && !this.isDirtyState()) return;
+
+    if (!this.editingRace.name?.trim()) {
+      if (!isAutoSave) {
+        alert(this.translationService.translate("RE_ERROR_NAME_REQUIRED"));
+      }
+      return;
+    }
+    if (this.isNameDuplicate()) {
+      if (!isAutoSave) {
+        alert(this.translationService.translate("RE_ERROR_NAME_EXISTS"));
+      }
       return;
     }
 
     this.isSaving = true;
     this.isAutoSaving = isAutoSave;
+    this.saveRaceData(wasNew, isAutoSave);
+  }
+
+  private saveRaceData(wasNew: boolean, isAutoSave: boolean) {
     const payload = this.buildRacePayload(this.editingRace);
     this.logger.debug("Updating race with payload:", payload);
 
-    if (this.editingRace.entity_id === "new") {
-      this.dataService.createRace(payload).subscribe({
-        next: (created) => {
-          this.isSaving = false;
-          this.isAutoSaving = false;
-          this.navigationService.setLastEditedId("race", created.entity_id);
-          // Update the current race to the newly created one
-          this.editingRace.entity_id = created.entity_id;
-          this.originalRace = deepCopy(this.editingRace);
-          this.undoManager.resetTracking(this.editingRace);
-          this.loadRaces(); // Reload races to update duplicate detection
-          this.cdr.detectChanges(); // Ensure spinner clears
+    const obs = wasNew
+      ? this.dataService.createRace(payload)
+      : this.dataService.updateRace(this.editingRace.entity_id, payload);
 
-          if (this.navigateBackOnSave) {
-            this.onBack();
-          } else if (isAutoSave) {
-            const url = this.router.serializeUrl(
-              this.router.createUrlTree([], {
-                queryParams: {
-                  id: created.entity_id,
-                  driverCount: this.driverCount,
-                  from: this.route.snapshot.queryParamMap.get("from"),
-                  returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-                },
-              }),
-            );
-            this.location.replaceState(url);
-          } else {
-            this.onBack();
-          }
-        },
-        error: (error: any) => {
-          this.logger.error("Failed to create race", error);
-          if (!isAutoSave)
-            this.showError(
-              "Error Creating Race",
-              error.error || error.message || "Unknown error",
-            );
-          this.isSaving = false;
-          this.isAutoSaving = false;
-          this.loadRaces(); // Reload races after error
-          this.cdr.detectChanges(); // Ensure spinner clears
-        },
-      });
-    } else {
-      this.dataService
-        .updateRace(this.editingRace.entity_id, payload)
-        .subscribe({
-          next: () => {
-            this.isSaving = false;
-            this.isAutoSaving = false;
-            this.navigationService.setLastEditedId(
-              "race",
-              this.editingRace.entity_id,
-            );
-            // Sync originalRace with editingRace so isDirtyState() returns false
-            this.originalRace = deepCopy(this.editingRace);
-            // Reset tracking point but keep history
-            this.undoManager.resetTracking(this.editingRace);
-            this.loadRaces(); // Reload races to update duplicate detection
-            this.cdr.detectChanges(); // Force change detection to hide spinner
+    this.subscriptions.push(
+      obs.subscribe({
+        next: (result) => this.handleSaveSuccess(result, wasNew, isAutoSave),
+        error: (err) => this.handleSaveError(err, isAutoSave),
+      }),
+    );
+  }
 
-            if (this.navigateBackOnSave) {
-              this.onBack();
-            }
-          },
-          error: (error: any) => {
-            this.logger.error("Failed to update race", error);
-            if (!isAutoSave)
-              this.showError(
-                "Error Updating Race",
-                error.error || error.message || "Unknown error",
-              );
-            this.isSaving = false;
-            this.isAutoSaving = false;
-            this.loadRaces(); // Reload races after error
-            this.cdr.detectChanges(); // Force change detection to hide spinner
-          },
-        });
+  private handleSaveSuccess(result: any, wasNew: boolean, isAutoSave: boolean) {
+    this.isSaving = false;
+    this.isAutoSaving = false;
+    const savedEntityId = result?.entity_id || this.editingRace.entity_id;
+    this.navigationService.setLastEditedId("race", savedEntityId);
+
+    if (wasNew && result?.entity_id) {
+      this.editingRace.entity_id = result.entity_id;
     }
+
+    if (wasNew) {
+      this.isEditMode = true;
+      this.isPreservingEditModeOnNavigation = true;
+      this.defaultRaceName = this.editingRace.name;
+    } else if (!isAutoSave || this.transitionToReadOnlyOnSave) {
+      this.isEditMode = false;
+      this.transitionToReadOnlyOnSave = false;
+    }
+
+    this.originalRace = deepCopy(this.editingRace);
+    this.undoManager.resetTracking(this.editingRace);
+    this.selectedRace = deepCopy(this.editingRace);
+    this.selectedRaceId = this.editingRace.entity_id;
+
+    const idx = this.allRaces.findIndex(
+      (r) => r.entity_id === this.editingRace.entity_id,
+    );
+    if (idx >= 0) {
+      this.allRaces[idx] = deepCopy(this.editingRace);
+    } else {
+      this.allRaces.push(deepCopy(this.editingRace));
+    }
+    this.updateRaceSelectItems();
+    this.cdr.detectChanges();
+    if (wasNew) {
+      this.focusNameInput();
+    }
+
+    if (this.navigateBackOnSave) {
+      this.onBack();
+    } else if (wasNew) {
+      this.handleNewRaceNavigation(savedEntityId, isAutoSave);
+    }
+  }
+
+  private handleNewRaceNavigation(entityId: string, isAutoSave: boolean) {
+    if (isAutoSave) {
+      const url = this.router.serializeUrl(
+        this.router.createUrlTree([], {
+          queryParams: {
+            id: entityId,
+            driverCount: this.driverCount,
+            from: this.route.snapshot.queryParamMap.get("from"),
+            returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
+          },
+        }),
+      );
+      this.location.replaceState(url);
+    } else {
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: entityId, driverCount: this.driverCount },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    }
+  }
+
+  private handleSaveError(error: any, isAutoSave: boolean) {
+    this.logger.error("Failed to save race", error);
+    if (!isAutoSave) {
+      this.showError(
+        "Error Saving Race",
+        error.error || error.message || "Unknown error",
+      );
+    }
+    this.isSaving = false;
+    this.isAutoSaving = false;
+    this.loadRaces();
+    this.cdr.detectChanges();
   }
 
   saveAsNew() {
     if (!this.editingRace || !this.canSaveAsNew()) return;
 
     this.isSaving = true;
-    const newName = this.generateUniqueName(this.editingRace.name);
+    const newName = this.generateUniqueName(this.editingRace.name, true);
     const payload = this.buildRacePayload(this.editingRace);
     payload.name = newName;
     delete payload.entity_id;
     delete payload.id;
     delete payload._id;
 
-    this.dataService.createRace(payload).subscribe({
-      next: (created) => {
-        this.isSaving = false;
-        this.navigationService.setLastEditedId("race", created.entity_id);
-        // Update the current race to the newly created one
-        this.editingRace = created;
-        this.originalRace = deepCopy(created);
-        this.defaultRaceName = created.name;
-        this.focusNameInput();
-        // Reset tracking point but keep history
-        this.undoManager.resetTracking(this.editingRace);
-        // Reload heats for the new race
-        this.loadHeats();
-        // Reload races to update duplicate detection
-        this.loadRaces();
-        // Force change detection
-        this.cdr.detectChanges();
-        // Update URL without navigation
-        this.router.navigate([], {
-          queryParams: { id: created.entity_id, driverCount: this.driverCount },
-          queryParamsHandling: "merge",
-          replaceUrl: true,
-        });
-      },
-      error: (error: any) => {
-        this.logger.error("Failed to save as new race", error);
-        this.showError(
-          "Error Saving Race",
-          error.error || error.message || "Unknown error",
-        );
-        this.isSaving = false;
-        // Reload races to update duplicate detection
-        this.loadRaces();
-        // Force change detection for modal visibility
-        this.cdr.detectChanges();
-      },
-    });
+    this.defaultRaceName = newName;
+    this.focusNameInput();
+
+    this.subscriptions.push(
+      this.dataService.createRace(payload).subscribe({
+        next: (created) => {
+          this.isSaving = false;
+          this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
+          this.navigationService.setLastEditedId("race", created.entity_id);
+          this.editingRace = created;
+          this.originalRace = deepCopy(created);
+          this.selectedRace = created;
+          this.selectedRaceId = created.entity_id;
+          this.defaultRaceName = created.name;
+          this.undoManager.resetTracking(this.editingRace);
+          this.loadHeats();
+          const idx = this.allRaces.findIndex(
+            (r) => r.entity_id === created.entity_id,
+          );
+          if (idx >= 0) {
+            this.allRaces[idx] = deepCopy(created);
+          } else {
+            this.allRaces.push(deepCopy(created));
+          }
+          this.updateRaceSelectItems();
+          this.cdr.detectChanges();
+          this.focusNameInput();
+          this.router.navigate([], {
+            queryParams: {
+              id: created.entity_id,
+              driverCount: this.driverCount,
+            },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        },
+        error: (error: any) => {
+          this.logger.error("Failed to save as new race", error);
+          this.showError(
+            "Error Saving Race",
+            error.error || error.message || "Unknown error",
+          );
+          this.isSaving = false;
+          this.loadRaces();
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   private transformCustomRotationsToSnakeCase(rotations: any[]): any[] {
@@ -1627,14 +1837,32 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }));
   }
 
+  updateRaceSelectItems() {
+    this.raceSelectItems = mapToSelectItems(this.allRaces);
+  }
+
   loadRaces() {
     this.dataService.getRaces().subscribe({
       next: (races) => {
-        this.races = races;
+        this.allRaces = deepCopy(races || []);
+        this.updateRaceSelectItems();
+        if (
+          this.editingRace?.entity_id &&
+          this.editingRace.entity_id !== "new"
+        ) {
+          const found = this.allRaces.find(
+            (r) => r.entity_id === this.editingRace.entity_id,
+          );
+          if (found) {
+            this.selectedRace = found;
+            this.selectedRaceId = found.entity_id;
+          }
+        }
       },
       error: (error: any) => {
         this.logger.error("Failed to load races", error);
-        this.races = [];
+        this.allRaces = [];
+        this.updateRaceSelectItems();
       },
     });
   }
@@ -1643,27 +1871,27 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (!this.editingRace?.name) {
       return false;
     }
-
-    const trimmedName = this.editingRace.name.trim().toLowerCase();
-    return this.races.some(
-      (race) =>
-        race.entity_id !== this.editingRace.entity_id &&
-        race.name.trim().toLowerCase() === trimmedName,
+    return !isEntityNameUnique(
+      this.editingRace.name,
+      this.editingRace.entity_id,
+      this.races,
+      true,
     );
   }
 
-  private generateUniqueName(baseName: string): string {
-    let counter = 1;
+  generateUniqueName(baseName: string, forceSuffix: boolean = false): string {
     const pattern = /(_\d+)$/;
-    const base = baseName.replace(pattern, "");
+    const base = (baseName || "").replace(pattern, "").trim();
 
+    let counter = forceSuffix ? 1 : 0;
     while (true) {
-      const candidate = `${base}_${counter}`;
-      if (
-        !this.races.some(
-          (r) => r.name.toLowerCase() === candidate.toLowerCase(),
-        )
-      ) {
+      const candidate = counter === 0 ? base : `${base}_${counter}`;
+      const exists = this.allRaces.some(
+        (r) =>
+          (r.name || "").trim().toLowerCase() ===
+          candidate.trim().toLowerCase(),
+      );
+      if (!exists && candidate.trim() !== "") {
         return candidate;
       }
       counter++;
@@ -2613,7 +2841,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getGeneralHelpSteps(): GuideStep[] {
+  private getGeneralBasicHelpSteps(): GuideStep[] {
     return [
       {
         title: this.translationService.translate("RE_HELP_WELCOME_TITLE"),
@@ -2679,6 +2907,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getGeneralAdvancedHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#theme-select",
         title: this.translationService.translate("RM_LABEL_THEME"),
@@ -2745,7 +2978,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getStartMethodHelpSteps(): GuideStep[] {
+  private getGeneralHelpSteps(): GuideStep[] {
+    return [
+      ...this.getGeneralBasicHelpSteps(),
+      ...this.getGeneralAdvancedHelpSteps(),
+    ];
+  }
+
+  private getStartMethodTimingHelpSteps(): GuideStep[] {
     return [
       {
         selector: "#start-time-input",
@@ -2818,6 +3058,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getStartMethodPenaltyHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#start-at-current-input",
         title: this.translationService.translate(
@@ -2892,7 +3137,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getScoringHelpSteps(): GuideStep[] {
+  private getStartMethodHelpSteps(): GuideStep[] {
+    return [
+      ...this.getStartMethodTimingHelpSteps(),
+      ...this.getStartMethodPenaltyHelpSteps(),
+    ];
+  }
+
+  private getHeatScoringHelpSteps(): GuideStep[] {
     return [
       {
         selector: "#heat-ranking-select",
@@ -2961,6 +3213,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getOverallScoringHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#overall-ranking-select",
         title: this.translationService.translate(
@@ -3007,7 +3264,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getSeasonPointsHelpSteps(): GuideStep[] {
+  private getScoringHelpSteps(): GuideStep[] {
+    return [
+      ...this.getHeatScoringHelpSteps(),
+      ...this.getOverallScoringHelpSteps(),
+    ];
+  }
+
+  private getSeasonPointsPrimaryHelpSteps(): GuideStep[] {
     return [
       {
         selector: "#season-position-points-section",
@@ -3069,6 +3333,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getSeasonPointsSecondaryHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#season-overall-fastest-lap-lane-input",
         title: this.translationService.translate(
@@ -3114,6 +3383,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getSeasonPointsBonusHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#season-overall-one-bonus-input",
         title: this.translationService.translate(
@@ -3204,6 +3478,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getSeasonPointsHelpSteps(): GuideStep[] {
+    return [
+      ...this.getSeasonPointsPrimaryHelpSteps(),
+      ...this.getSeasonPointsSecondaryHelpSteps(),
+      ...this.getSeasonPointsBonusHelpSteps(),
     ];
   }
 
@@ -3300,7 +3582,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getGroupsHelpSteps(): GuideStep[] {
+  private getGroupsBasicHelpSteps(): GuideStep[] {
     return [
       {
         selector: "#groups-enabled-input",
@@ -3360,6 +3642,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getGroupsAdvancingHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#groups-force-multiple-input",
         title: this.translationService.translate(
@@ -3421,7 +3708,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getAnalogFuelHelpSteps(): GuideStep[] {
+  private getGroupsHelpSteps(): GuideStep[] {
+    return [
+      ...this.getGroupsBasicHelpSteps(),
+      ...this.getGroupsAdvancingHelpSteps(),
+    ];
+  }
+
+  private getAnalogFuelRateHelpSteps(): GuideStep[] {
     return [
       {
         selector: "#fuel-enabled-input",
@@ -3511,6 +3805,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getAnalogFuelTankHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#fuel-capacity-input",
         title: this.translationService.translate("RE_HELP_FUEL_CAPACITY_TITLE"),
@@ -3602,7 +3901,14 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     ];
   }
 
-  private getDigitalFuelHelpSteps(): GuideStep[] {
+  private getAnalogFuelHelpSteps(): GuideStep[] {
+    return [
+      ...this.getAnalogFuelRateHelpSteps(),
+      ...this.getAnalogFuelTankHelpSteps(),
+    ];
+  }
+
+  private getDigitalFuelRateHelpSteps(): GuideStep[] {
     return [
       {
         selector: "#digital-fuel-enabled-input",
@@ -3664,6 +3970,11 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getDigitalFuelTankHelpSteps(): GuideStep[] {
+    return [
       {
         selector: "#digital-fuel-start-level-input",
         title: this.translationService.translate(
@@ -3739,6 +4050,13 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
         },
       },
+    ];
+  }
+
+  private getDigitalFuelHelpSteps(): GuideStep[] {
+    return [
+      ...this.getDigitalFuelRateHelpSteps(),
+      ...this.getDigitalFuelTankHelpSteps(),
     ];
   }
 

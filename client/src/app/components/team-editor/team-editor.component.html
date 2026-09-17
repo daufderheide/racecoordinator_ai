@@ -4,16 +4,26 @@
 >
   <app-editor-title
     titleKey="TEM_TITLE"
-    [itemName]="editingTeam?.name"
-    [undoManager]="undoManager"
+    [items]="teamSelectItems"
+    [selectedId]="selectedTeamId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
-    [disabledCopy]="!isConfigValid()"
+    [showDelete]="true"
+    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledDelete]="!selectedTeam || isSaving"
     [copyDisabledTooltipKey]="'TEM_TOOLTIP_COPY_DISABLED'"
     [showHelp]="true"
     [helpSteps]="getHelpSteps()"
     [helpRecordName]="'teamEditorHelpShown'"
     [isSaving]="isSaving"
-    (copy)="saveAsNew()"
+    [undoManager]="undoManager"
+    (selectedIdChange)="onSelectTeamById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewTeam()"
+    (copy)="onCopyTeam()"
+    (delete)="onDeleteTeam()"
   >
   </app-editor-title>
 
@@ -33,6 +43,7 @@
                   [(imageUrl)]="editingTeam.avatarUrl"
                   (imageUrlChange)="captureState()"
                   [assets]="avatarAssets"
+                  [disabled]="!isEditMode"
                 >
                 </app-image-selector>
               </div>
@@ -44,6 +55,7 @@
                 <input
                   id="team-name-input"
                   type="text"
+                  [disabled]="!isEditMode"
                   [(ngModel)]="editingTeam.name"
                   [appAutoSelectDefault]="defaultTeamName"
                   (ngModelChange)="onInputChange()"
@@ -81,6 +93,7 @@
               id="assigned-drivers-list"
               class="driver-list assigned-list"
               cdkDropList
+              [cdkDropListDisabled]="!isEditMode"
               (cdkDropListDropped)="onDriverDrop($any($event))"
             >
               @if (assignedDrivers.length === 0) {
@@ -89,8 +102,16 @@
                 </div>
               }
               @for (driver of assignedDrivers; track driver) {
-                <div class="driver-item draggable" cdkDrag>
-                  <div class="drag-handle">☰</div>
+                <div
+                  class="driver-item"
+                  [class.draggable]="isEditMode"
+                  [class.disabled]="!isEditMode"
+                  cdkDrag
+                  [cdkDragDisabled]="!isEditMode"
+                >
+                  @if (isEditMode) {
+                    <div class="drag-handle">☰</div>
+                  }
                   <div class="driver-avatar-mini">
                     <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
                   </div>
@@ -109,12 +130,14 @@
                     }
                   </div>
                   <div class="spacer"></div>
-                  <button
-                    class="action-btn danger small"
-                    (click)="removeDriver(driver)"
-                  >
-                    X
-                  </button>
+                  @if (isEditMode) {
+                    <button
+                      class="action-btn danger small"
+                      (click)="removeDriver(driver)"
+                    >
+                      X
+                    </button>
+                  }
                 </div>
               }
             </div>
@@ -133,8 +156,10 @@
             <div id="available-drivers-list" class="driver-grid">
               @for (driver of availableDrivers; track driver) {
                 <div
-                  class="driver-item click-assign"
-                  (click)="addDriver(driver)"
+                  class="driver-item"
+                  [class.click-assign]="isEditMode"
+                  [class.disabled]="!isEditMode"
+                  (click)="isEditMode && addDriver(driver)"
                 >
                   <div class="driver-avatar-mini">
                     <img [src]="getAvatarUrl(driver.avatarUrl)" alt="Avatar" />
@@ -154,7 +179,9 @@
                     }
                   </div>
                   <div class="spacer"></div>
-                  <button class="action-btn small add-list-btn">+</button>
+                  @if (isEditMode) {
+                    <button class="action-btn small add-list-btn">+</button>
+                  }
                 </div>
               }
             </div>

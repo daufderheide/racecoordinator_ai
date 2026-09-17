@@ -168,6 +168,7 @@ export const mockTranslationService = {
 
 export const mockRouter = {
   navigate: jasmine.createSpy("navigate"),
+  navigateByUrl: jasmine.createSpy("navigateByUrl"),
   events: new Subject().asObservable(),
   serializeUrl: jasmine.createSpy("serializeUrl").and.returnValue("mock-url"),
   createUrlTree: jasmine.createSpy("createUrlTree").and.returnValue({}),
@@ -300,6 +301,7 @@ export function resetMocks() {
 
   // Restore default behaviors for mockRouter
   mockRouter.navigate.and.stub();
+  mockRouter.navigateByUrl.and.stub();
   (mockRouter as any).events = new Subject().asObservable();
   mockRouter.serializeUrl.and.returnValue("mock-url");
   mockRouter.createUrlTree.and.returnValue({});

@@ -8,7 +8,16 @@ Race Coordinator AI beschikt over een geavanceerde multi-interface-architectuur 
 
 ## Overzicht & Automatisch Opslaan
 
-De Baan-Editor is opgedeeld in twee gesynchroniseerde werkpanelen:
+De Baan-Editor biedt een uniforme interface voor het selecteren, bekijken, configureren en testen van uw slotcar-banen:
+
+- **Baankiezer**: Dit vervolgkeuzemenu in de bovenste koptekst naast de paginatitel toont alle geconfigureerde banen en stelt u in staat snel tussen banen te schakelen.
+- **Alleen-lezen Modus**: Standaard worden bij het openen van de editor de baaneigenschappen, spoorindelingen en hardware-interfaces in de alleen-lezen modus weergegeven. Formuliervelden, spoorbeheer en interface-acties zijn vergrendeld om onbedoelde wijzigingen te voorkomen.
+- **Bewerkingsmodus**: Als u op het pictogram **Bewerken** (potlood) op de werkbalk klikt, worden alle configuratieknoppen, spoorvolgordes en hardware-instellingen ontgrendeld. In de bewerkingsmodus blijft de baankiezer vergrendeld om te voorkomen dat u niet-opgeslagen wijzigingen per ongeluk verlaat.
+- **Continu Automatisch Opslaan**: Terwijl u wijzigingen aanbrengt (hernoemen, spoorlengtes aanpassen, sporen herschikken of pintoewijzingen wijzigen), worden uw bewerkingen automatisch op de achtergrond op de server opgeslagen zonder de bewerkingsmodus te verlaten.
+- **Bewerken Voltooien**: Als u op het pictogram **Bewerken voltooien** (vinkje) klikt, worden uw wijzigingen gevalideerd, definitief opgeslagen op de server en keert de editor terug naar de alleen-lezen modus.
+- **Wijzigingen Verwerpen**: Als u probeert de editor te verlaten met niet-opgeslagen of ongeldige wijzigingen, vraagt een dialoogvenster om bevestiging. Bij verwerpen worden alle bewerkingen teruggedraaid naar de laatst opgeslagen versie en wordt de alleen-lezen modus hersteld.
+
+Het werkgebied is opgedeeld in twee gesynchroniseerde werkpanelen:
 
 - **Linkerpaneel (Algemene Baan- & Spooreigenschappen)**: Configureer baannaam, aantal baansekties, schaal en individuele spooreigenschappen (lengte, volgorde en kleuren). Onderaan dit paneel voegt u nieuwe hardware-interfaces toe.
 - **Rechterpaneel (Hardware-Interfaces & Interactief Testen)**: Configureer aangesloten hardware, wijs pinnen en kanalen toe aan baanfuncties, stel adresseerbare RGB-LED-strips in en test sensoren en relais direct in real-time.
@@ -232,9 +241,15 @@ Ideaal om raceformats, rotaties, thema's, audio-oproepen en schermen te testen z
 
 ## Bediening & Werkbalk
 
+De bovenste werkbalk van de Baan-Editor biedt essentiële beheertools:
+
+- **Terug**: Keert terug naar het vorige scherm of de Racedag Setup.
+- **Baan toevoegen (+)**: Maakt een nieuw baansjabloon aan en activeert de bewerkingsmodus.
+- **Baan dupliceren**: Maakt een identieke kopie onder een unieke naam om variaties te testen zonder vanaf nul te beginnen.
+- **Bewerken / Bewerken voltooien**: Schakelt tussen alleen-lezen modus en bewerkingsmodus. Bij het verlaten van de bewerkingsmodus worden wijzigingen gevalideerd en opgeslagen.
+- **Baan verwijderen**: Verwijdert de geselecteerde baan na bevestiging.
 - **Ongedaan Maken (`Ctrl+Z`) / Opnieuw (`Ctrl+Y`)**: Eenvoudig herstellen van afmetingen, kleuren of pinnen.
-- **Opslaan als Nieuw (Baan Dupliceren)**: Maakt een identieke kopie onder een andere naam om variaties te testen.
-- **Interactieve Rondleiding**: Klik op het vraagteken (**`?`**) voor een rondleiding langs alle bedieningselementen op het scherm.
+- **Help (`?`)**: Start een interactieve rondleiding langs alle bedieningselementen op het scherm.
 
 ---
 

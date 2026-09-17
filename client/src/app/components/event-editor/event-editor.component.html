@@ -5,12 +5,23 @@
   <app-editor-title
     titleKey="EE_TITLE"
     [itemName]="editingEvent.name"
-    [undoManager]="undoManager"
+    [items]="eventSelectItems"
+    [selectedId]="selectedEventId"
+    [isEditMode]="isEditMode"
+    [showEdit]="true"
+    [showAdd]="true"
     [showCopy]="true"
-    [disabledCopy]="!isConfigValid()"
+    [showDelete]="existingEvents.length > 1"
+    [disabledCopy]="!isConfigValid() || isSaving"
+    [disabledDelete]="!editingEvent || isSaving || existingEvents.length <= 1"
+    [undoManager]="undoManager"
     [isSaving]="isSaving"
     [helpSteps]="getHelpSteps()"
+    (selectedIdChange)="onSelectEventById($event)"
+    (edit)="onToggleEditMode()"
+    (add)="onAddNewEvent()"
     (copy)="saveAsNew()"
+    (delete)="onDeleteEvent()"
   >
   </app-editor-title>
 
@@ -26,6 +37,8 @@
           <input
             id="event-name"
             type="text"
+            [disabled]="!isEditMode"
+            [attr.disabled]="!isEditMode ? '' : null"
             [(ngModel)]="editingEvent.name"
             [appAutoSelectDefault]="defaultEventName"
             (ngModelChange)="onInputChange()"
@@ -52,6 +65,7 @@
           <textarea
             id="event-description"
             rows="7"
+            [disabled]="!isEditMode"
             [(ngModel)]="editingEvent.description"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
@@ -69,6 +83,7 @@
             type="number"
             min="0"
             step="1"
+            [disabled]="!isEditMode"
             [(ngModel)]="editingEvent.auto_advance_time"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
@@ -87,13 +102,15 @@
       <div class="editor-panel-right">
         <div class="panel-header">
           <h3>{{ "EE_LABEL_RACES" | translate }}</h3>
-          <button
-            id="btn-add-race"
-            class="btn-add-race"
-            (click)="openAddRaceModal()"
-          >
-            + {{ "EE_BTN_ADD_RACE" | translate }}
-          </button>
+          @if (isEditMode) {
+            <button
+              id="btn-add-race"
+              class="btn-add-race"
+              (click)="openAddRaceModal()"
+            >
+              + {{ "EE_BTN_ADD_RACE" | translate }}
+            </button>
+          }
         </div>
 
         <div id="event-race-list" class="race-list-container">
@@ -105,13 +122,16 @@
             <div
               class="race-list"
               cdkDropList
+              [cdkDropListDisabled]="!isEditMode"
               (cdkDropListDropped)="dropRace($event)"
             >
               @for (item of editingEvent.races; track idx; let idx = $index) {
                 <div class="race-card" cdkDrag>
-                  <div class="drag-handle" title="Drag to reorder">
-                    <span class="material-icons">drag_indicator</span>
-                  </div>
+                  @if (isEditMode) {
+                    <div class="drag-handle" title="Drag to reorder">
+                      <span class="material-icons">drag_indicator</span>
+                    </div>
+                  }
 
                   <div class="race-info">
                     <span class="race-step-number">#{{ idx + 1 }}</span>
@@ -127,6 +147,7 @@
                         <input
                           type="checkbox"
                           [name]="'unlimited_' + idx"
+                          [disabled]="!isEditMode"
                           [checked]="getItemMaxDrivers(item) === 0"
                           (change)="toggleUnlimited(item)"
                         />
@@ -136,6 +157,7 @@
                         <input
                           type="number"
                           min="1"
+                          [disabled]="!isEditMode"
                           [name]="'maxDrivers_' + idx"
                           [ngModel]="getItemMaxDrivers(item)"
                           (ngModelChange)="setMaxDrivers(item, $event)"
@@ -145,9 +167,11 @@
                     </div>
                   </div>
 
-                  <button class="btn-remove" (click)="removeRace(idx)">
-                    {{ "EE_BTN_REMOVE_RACE" | translate }}
-                  </button>
+                  @if (isEditMode) {
+                    <button class="btn-remove" (click)="removeRace(idx)">
+                      {{ "EE_BTN_REMOVE_RACE" | translate }}
+                    </button>
+                  }
                 </div>
               }
             </div>

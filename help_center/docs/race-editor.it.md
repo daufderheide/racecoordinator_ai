@@ -1,4 +1,49 @@
-# Editor Gara
+# Editor di Gara
+
+L'**Editor di Gara** è l'interfaccia di configurazione completa per progettare, configurare e testare i formati di gara delle slot car, le regole di punteggio, le rotazioni delle manche, le simulazioni del carburante e le impostazioni del timer.
+
+---
+
+## Panoramica e Salvataggio Automatico
+
+L'Editor di Gara offre un'interfaccia unificata per selezionare, visualizzare, configurare e testare i formati di gara:
+
+- **Selettore di Gara**: Situato nell'intestazione superiore accanto al titolo della pagina, questo menu a discesa elenca tutte le gare configurate e consente di passare rapidamente da una all'altra.
+- **Modalità di Sola Lettura**: Per impostazione predefinita, all'apertura dell'editor vengono visualizzate le proprietà della gara, le regole di punteggio e le impostazioni in modalità di sola lettura. I campi modulo sono bloccati per prevenire modifiche accidentali, mentre le sezioni a soffietto e le anteprime delle manche rimangono interattive.
+- **Modalità di Modifica**: Facendo clic sull'icona **Modifica** (matita) sulla barra degli strumenti si sbloccano tutti i controlli. Durante la modifica, il selettore di gara è bloccato.
+- **Salvataggio Automatico Continuo**: Tutte le modifiche vengono salvate automaticamente in background sul server senza uscire dalla modalità di modifica.
+- **Uscita dalla Modalità di Modifica**: Facendo clic sull'icona **Fine** (segno di spunta) vengono convalidate le modifiche e si torna alla modalità di sola lettura.
+- **Annullamento Modifiche**: Facendo clic su Annulla vengono ripristinate tutte le modifiche all'ultima versione salvata e si esce dalla modalità di modifica.
+
+Lo spazio di lavoro è suddiviso in due pannelli sincronizzati:
+
+- **Pannello Sinistro (Configurazione Gara)**: Proprietà generali, formato di gara, metodi di punteggio, tipo di rotazione, opzioni di gruppo e simulazione carburante analogico/digitale.
+- **Pannello Destro (Anteprima Manche dal Vivo)**: Genera dinamicamente l'elenco completo delle manche in base al tipo di rotazione attivo e al numero di piloti.
+
+---
+
+## Configurazione Gara e Opzioni
+
+### Nome Gara e Associazione Pista
+- **Nome Gara**: Nome univoco che identifica il formato di gara.
+- **Pista**: La pista fisica associata determina se è disponibile la simulazione carburante analogica o digitale.
+- **Tema**: Tema grafico applicato durante la gara.
+
+### Formato di Rotazione Manche
+- **Tipo di Rotazione**: Rotazioni standard (**Round Robin**, **Scala**, **Torneo**) o sequenze personalizzate.
+- **Passaggi Manche**: Numero di volte in cui ciascun pilota ripete l'intera rotazione delle manche.
+- **Manche Inverse**: Inverte l'ordine della sequenza delle manche.
+
+### Opzioni di Punteggio
+- **Punteggio Manche**: Fine per giri o tempo limite, metodo di classifica e spareggi.
+- **Punteggio Generale**: Metodo di classifica generale, regole di spareggio e manche scartate.
+- **Punteggio Stagionale**: Distribuzione punti per posizione nei campionati.
+
+### Impostazioni Timer
+- **Ritardo Partenza / Riavvio**: Secondi di conto alla rovescia prima del via.
+- **Tempo Minimo sul Giro**: Tempo minimo consentito per filtrare letture errate dei sensori.
+- **Tempo di Deriva**: Finestra di rilevamento per le auto in sbandata sul traguardo.
+- **Partenza Dietro il Sensore**: Impone la partenza dietro il sensore al giro zero.
 
 ## Impostazioni carburante
 

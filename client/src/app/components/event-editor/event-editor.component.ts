@@ -32,7 +32,8 @@ import { LoggerService } from "@app/services/logger.service";
 import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
+import { mapToSelectItems } from "@app/utils/editor-utils";
 
 @Component({
   standalone: true,
@@ -51,9 +52,35 @@ import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
   ],
 })
 export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
-  isNavigationApproved = false;
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((confirm: boolean) => void) | null = null;
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get isNavigationApproved(): boolean {
+    return this.lifecycle.isNavigationApproved;
+  }
+  set isNavigationApproved(val: boolean) {
+    this.lifecycle.isNavigationApproved = val;
+  }
+
+  get pendingDeactivate(): ((value: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((value: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
+
+  isEditMode = false;
+  private isPreservingEditModeOnNavigation = false;
+  private transitionToReadOnlyOnSave = false;
+  eventSelectItems: { id: string; name: string }[] = [];
+  selectedEventId = "";
+  originalEvent?: Event;
 
   editingEvent: Event = {
     name: "",
@@ -121,6 +148,12 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         }
       }),
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit(): void {
@@ -185,6 +218,35 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return true;
   }
 
+  updateEventSelectItems(): void {
+    this.eventSelectItems = mapToSelectItems(this.existingEvents);
+  }
+
+  selectEvent(event: Event): void {
+    this.editingEvent = this.cloneEvent(event);
+    this.originalEvent = this.cloneEvent(event);
+    this.selectedEventId = event.entity_id || "";
+    if (event.entity_id) {
+      this.navigationService.setLastEditedId("event", event.entity_id);
+    }
+    this.undoManager.initialize(this.editingEvent);
+  }
+
+  onSelectEventById(id: string): void {
+    if (this.isEditMode) return;
+    if (this.selectedEventId === id) return;
+    const found = this.existingEvents.find((e) => e.entity_id === id);
+    if (found) {
+      this.selectEvent(found);
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { id: found.entity_id },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    }
+  }
+
   loadData(): void {
     this.isLoading = true;
     const eventId = this.route.snapshot.queryParamMap.get("id");
@@ -196,46 +258,53 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       next: (result) => {
         this.existingEvents = result.events || [];
         this.availableRaces = result.races || [];
+        this.updateEventSelectItems();
 
-        if (eventId && eventId !== "new") {
+        if (eventId === "new") {
+          this.startNewEvent();
+        } else if (eventId) {
           const found = this.existingEvents.find(
             (e) => e.entity_id === eventId,
           );
           if (found) {
-            this.editingEvent = this.cloneEvent(found);
-            if (found.entity_id) {
-              this.navigationService.setLastEditedId("event", found.entity_id);
-            }
+            this.selectEvent(found);
+            this.isEditMode = false;
+          } else if (this.existingEvents.length > 0) {
+            this.selectEvent(this.existingEvents[0]);
+            this.isEditMode = false;
           } else {
-            this.editingEvent = {
-              name: this.generateUniqueName("New Event"),
-              description: "",
-              auto_advance_time: 0,
-              races: [],
-            };
+            this.startNewEvent();
           }
         } else {
-          this.editingEvent = {
-            name: this.generateUniqueName("New Event"),
-            description: "",
-            auto_advance_time: 0,
-            races: [],
-          };
+          const lastEdited = this.navigationService.getLastEditedId("event");
+          const found = lastEdited
+            ? this.existingEvents.find((e) => e.entity_id === lastEdited)
+            : undefined;
+          if (found) {
+            this.selectEvent(found);
+            this.isEditMode = false;
+          } else if (this.existingEvents.length > 0) {
+            this.selectEvent(this.existingEvents[0]);
+            this.isEditMode = false;
+          } else {
+            this.startNewEvent();
+          }
         }
-
-        this.undoManager.initialize(this.editingEvent);
-        this.isLoading = false;
 
         const isNew =
           this.route.snapshot.queryParamMap?.get?.("isNew") === "true" ||
-          this.route.snapshot.queryParams?.["isNew"] === "true" ||
-          !eventId ||
-          eventId === "new";
-        if (isNew && this.editingEvent) {
+          this.route.snapshot.queryParams?.["isNew"] === "true";
+        if (
+          this.isPreservingEditModeOnNavigation ||
+          (isNew && this.editingEvent)
+        ) {
+          this.isPreservingEditModeOnNavigation = false;
+          this.isEditMode = true;
           this.defaultEventName = this.editingEvent.name;
           this.focusNameInput();
         }
 
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -329,35 +398,180 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   confirmDiscard(): Promise<boolean> {
-    this.showDiscardConfirm = true;
-    this.cdr.markForCheck();
-    this.cdr.detectChanges();
-    return new Promise((resolve) => {
-      this.pendingDeactivate = resolve;
-    });
+    return this.lifecycle.confirmDiscard();
   }
 
   onConfirmDiscard(): void {
-    this.showDiscardConfirm = false;
-    this.isNavigationApproved = true;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard();
   }
 
   onCancelDiscard(): void {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
+    this.lifecycle.onCancelDiscard();
+  }
+
+  onToggleEditMode(): void {
+    if (!this.isEditMode) {
+      this.isEditMode = true;
+      this.focusNameInput();
+      return;
+    }
+
+    if (this.isSaving) {
+      this.transitionToReadOnlyOnSave = true;
+      return;
+    }
+
+    if (this.isDirtyState()) {
+      if (!this.isConfigValid()) {
+        if (this.isDuplicateName()) {
+          alert(this.translationService.translate("EE_ERR_DUPLICATE_NAME"));
+        } else if (!this.editingEvent.name?.trim()) {
+          alert(this.translationService.translate("EE_ERR_NAME_REQUIRED"));
+        } else {
+          alert(this.translationService.translate("EE_ERR_RACES_REQUIRED"));
+        }
+        return;
+      }
+      this.autoSaveEvent();
+      this.isEditMode = false;
+    } else {
+      this.isEditMode = false;
+    }
+  }
+
+  onAddNewEvent(): void {
+    if (this.isEditMode && this.isDirtyState()) {
+      this.confirmDiscard().then((confirmed) => {
+        if (confirmed) {
+          this.startNewEvent();
+        }
+      });
+    } else {
+      this.startNewEvent();
+    }
+  }
+
+  startNewEvent(): void {
+    this.isSaving = true;
+    const defaultName =
+      this.translationService.translate("EM_DEFAULT_EVENT_NAME") || "New Event";
+    const uniqueName = this.generateUniqueName(defaultName, false);
+    const newEvent: Event = {
+      name: uniqueName,
+      description: "",
+      auto_advance_time: 0,
+      races: [],
+    };
+
+    this.subscriptions.push(
+      this.dataService.createEvent(newEvent).subscribe({
+        next: (saved) => {
+          this.isSaving = false;
+          this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
+          if (saved?.entity_id) {
+            this.navigationService.setLastEditedId("event", saved.entity_id);
+          }
+          this.existingEvents.push(saved);
+          this.updateEventSelectItems();
+          this.selectEvent(saved);
+          this.defaultEventName = saved.name;
+          this.cdr.detectChanges();
+          this.focusNameInput();
+          this.router.navigate([], {
+            queryParams: { id: saved.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        },
+        error: (err) => {
+          this.logger.error("Failed to create event", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
+  }
+
+  saveAsNew(): void {
+    if (!this.editingEvent || !this.isConfigValid() || this.isSaving) return;
+    this.isSaving = true;
+
+    const uniqueName = this.generateUniqueName(this.editingEvent.name, true);
+    const newCopy: Event = {
+      ...this.cloneEvent(this.editingEvent),
+      entity_id: undefined,
+      name: uniqueName,
+    };
+
+    this.subscriptions.push(
+      this.dataService.createEvent(newCopy).subscribe({
+        next: (saved) => {
+          this.isSaving = false;
+          this.isEditMode = true;
+          this.isPreservingEditModeOnNavigation = true;
+          if (saved?.entity_id) {
+            this.navigationService.setLastEditedId("event", saved.entity_id);
+          }
+          this.existingEvents.push(saved);
+          this.updateEventSelectItems();
+          this.selectEvent(saved);
+          this.defaultEventName = saved.name;
+          this.cdr.detectChanges();
+          this.focusNameInput();
+          this.router.navigate([], {
+            queryParams: { id: saved?.entity_id },
+            queryParamsHandling: "merge",
+            replaceUrl: true,
+          });
+        },
+        error: (err) => {
+          this.logger.error("Failed to copy event", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
+  }
+
+  onDeleteEvent(): void {
+    if (!this.editingEvent?.entity_id) return;
+    if (confirm(this.translationService.translate("EE_CONFIRM_DELETE"))) {
+      this.isSaving = true;
+      const idToDelete = this.editingEvent.entity_id;
+      this.subscriptions.push(
+        this.dataService.deleteEvent(idToDelete).subscribe({
+          next: () => {
+            this.isSaving = false;
+            this.isEditMode = false;
+            this.existingEvents = this.existingEvents.filter(
+              (e) => e.entity_id !== idToDelete,
+            );
+            this.updateEventSelectItems();
+            if (this.existingEvents.length > 0) {
+              this.selectEvent(this.existingEvents[0]);
+              this.router.navigate([], {
+                relativeTo: this.route,
+                queryParams: { id: this.existingEvents[0].entity_id },
+                queryParamsHandling: "merge",
+                replaceUrl: true,
+              });
+            } else {
+              this.startNewEvent();
+            }
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            this.logger.error("Failed to delete event", err);
+            this.isSaving = false;
+            this.cdr.detectChanges();
+          },
+        }),
+      );
     }
   }
 
@@ -372,85 +586,66 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         )
       : this.dataService.createEvent(this.editingEvent);
 
-    op.subscribe({
-      next: (saved) => {
-        if (saved) {
-          if (saved.entity_id) {
-            this.editingEvent.entity_id = saved.entity_id;
-            this.navigationService.setLastEditedId("event", saved.entity_id);
+    this.subscriptions.push(
+      op.subscribe({
+        next: (saved) => {
+          if (saved) {
+            if (saved.entity_id) {
+              this.editingEvent.entity_id = saved.entity_id;
+              this.navigationService.setLastEditedId("event", saved.entity_id);
+            }
+            const idx = this.existingEvents.findIndex(
+              (e) => e.entity_id === saved.entity_id,
+            );
+            if (idx >= 0) {
+              this.existingEvents[idx] = saved;
+            } else {
+              this.existingEvents.push(saved);
+            }
+            this.updateEventSelectItems();
+            this.originalEvent = this.cloneEvent(this.editingEvent);
+            this.undoManager.resetTracking(this.editingEvent);
           }
-          this.undoManager.resetTracking(this.editingEvent);
-        }
-        this.isSaving = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.logger.error("Failed to auto-save event", err);
-        this.isSaving = false;
-        this.cdr.detectChanges();
-      },
-    });
+          this.isSaving = false;
+          if (this.transitionToReadOnlyOnSave) {
+            this.isEditMode = false;
+            this.transitionToReadOnlyOnSave = false;
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.logger.error("Failed to auto-save event", err);
+          this.isSaving = false;
+          this.cdr.detectChanges();
+        },
+      }),
+    );
   }
 
   saveEvent(): void {
     this.autoSaveEvent();
   }
 
-  saveAsNew(): void {
-    if (!this.isConfigValid() || this.isSaving) return;
-    this.isSaving = true;
-
-    const uniqueName = this.generateUniqueName(this.editingEvent.name, true);
-    const newCopy: Event = {
-      ...this.cloneEvent(this.editingEvent),
-      entity_id: undefined,
-      name: uniqueName,
-    };
-
-    this.dataService.createEvent(newCopy).subscribe({
-      next: (saved) => {
-        this.isSaving = false;
-        this.editingEvent = this.cloneEvent(saved);
-        if (saved) {
-          this.existingEvents.push(saved);
-        }
-        this.undoManager.resetTracking(this.editingEvent);
-        this.defaultEventName = saved.name;
-        this.focusNameInput();
-        if (saved?.entity_id) {
-          this.navigationService.setLastEditedId("event", saved.entity_id);
-        }
-        this.router.navigate([], {
-          queryParams: { id: saved?.entity_id },
-          queryParamsHandling: "merge",
-          replaceUrl: true,
-        });
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.logger.error("Failed to copy event", err);
-        this.isSaving = false;
-        this.cdr.detectChanges();
-      },
-    });
+  onBack(): void {
+    this.isNavigationApproved = true;
+    sessionStorage.setItem("skipIntro", "true");
+    const returnUrl = this.route.snapshot.queryParamMap.get("returnUrl");
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+      return;
+    }
+    const from = this.route.snapshot.queryParamMap.get("from");
+    if (from === "raceday-setup" || from === "raceday") {
+      this.router.navigate(["/raceday-setup"], {
+        queryParams: { skipIntro: "true" },
+      });
+      return;
+    }
+    this.router.navigate(["/raceday-setup"]);
   }
 
   cancel(): void {
-    this.isNavigationApproved = true;
-    if (this.editingEvent?.entity_id) {
-      this.navigationService.setLastEditedId(
-        "event",
-        this.editingEvent.entity_id,
-      );
-    }
-    this.router.navigate(["/event-manager"], {
-      queryParams: {
-        id: this.editingEvent?.entity_id,
-        selectedId: this.editingEvent?.entity_id,
-        from: this.route.snapshot.queryParamMap.get("from"),
-        returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
-      },
-    });
+    this.onBack();
   }
 
   getRaceId(r: any): string {

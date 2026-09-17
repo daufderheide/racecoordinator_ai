@@ -34,6 +34,15 @@ test.describe("Custom Select Visuals", () => {
     await page.waitForLoadState("networkidle");
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#race-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display closed state correctly", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -41,6 +50,8 @@ test.describe("Custom Select Visuals", () => {
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     await page.waitForSelector(
       '#track-select app-custom-option:has-text("Speedway")',
@@ -60,6 +71,8 @@ test.describe("Custom Select Visuals", () => {
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     await page.waitForSelector(
       '#track-select app-custom-option:has-text("Speedway")',
@@ -87,6 +100,8 @@ test.describe("Custom Select Visuals", () => {
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
     await page.locator(".page-container").waitFor();
+
+    await enterEditMode(page);
 
     await page.waitForSelector(
       '#track-select app-custom-option:has-text("Speedway")',
