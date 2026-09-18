@@ -3363,6 +3363,45 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).driverRankings.size).toBe(2);
       expect(component["sortedHeatDrivers"].length).toBe(2);
     });
+
+    it("should update totalHeats when heats$ emits even if sortedHeatDrivers is already populated", () => {
+      const heatsSubject = new Subject<any[]>();
+      mockRaceService.heats$ = heatsSubject.asObservable();
+      fixture.detectChanges();
+
+      (component as any).sortedHeatDrivers = [{ objectId: "hd1" }];
+      (component as any).heat = { heatNumber: 1 };
+      (component as any).totalHeats = 0;
+
+      heatsSubject.next([
+        { heatNumber: 1 },
+        { heatNumber: 2 },
+        { heatNumber: 3 },
+        { heatNumber: 4 },
+      ]);
+
+      expect((component as any).totalHeats).toBe(4);
+    });
+
+    it("should fallback track from race or raceService in initializeHeat and getLaneColor", () => {
+      const mockTrack = {
+        lanes: [
+          { background_color: "#ff0000", foreground_color: "#ffffff" },
+          { background_color: "#0000ff", foreground_color: "#ffffff" },
+        ],
+      };
+      (component as any).track = null;
+      (component as any).race = { track: mockTrack };
+      mockRaceService.getRace.and.returnValue(null);
+
+      (component as any).initializeHeat();
+
+      expect((component as any).track).toBe(mockTrack);
+
+      const hd = { laneIndex: 0 } as any;
+      const color = component.getLaneColor(hd, "background_color");
+      expect(color).toBe("#ff0000");
+    });
   });
 
   describe("onFileMenuSelect and onOptionsSelect", () => {

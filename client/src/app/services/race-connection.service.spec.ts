@@ -737,6 +737,45 @@ describe("RaceConnectionService", () => {
       expect(mockRaceService.setParticipants).toHaveBeenCalled();
       expect(mockRaceService.setHeats).toHaveBeenCalled();
       expect(mockRaceService.setCurrentHeat).toHaveBeenCalled();
+
+      const participantsOrder =
+        mockRaceService.setParticipants.calls.first().invocationOrder;
+      const heatsOrder = mockRaceService.setHeats.calls.first().invocationOrder;
+      const raceOrder = mockRaceService.setRace.calls.first().invocationOrder;
+      const currentHeatOrder =
+        mockRaceService.setCurrentHeat.calls.first().invocationOrder;
+
+      expect(participantsOrder).toBeLessThan(raceOrder);
+      expect(heatsOrder).toBeLessThan(raceOrder);
+      expect(raceOrder).toBeLessThan(currentHeatOrder);
+    }));
+
+    it("should buffer heat updates when drivers are not loaded and flush once hydrated", fakeAsync(() => {
+      const heatsSubject = new Subject<any>();
+      const driversSubject = new Subject<any>();
+      mockDataService.getHeats.and.returnValue(heatsSubject.asObservable());
+      mockDataService.getDrivers.and.returnValue(driversSubject.asObservable());
+
+      service.connect();
+      (service as any).driversLoaded = false;
+
+      const mockHeatProto = {
+        heatNumber: 1,
+        heatDrivers: [],
+      };
+
+      heatsSubject.next(mockHeatProto);
+      tick();
+
+      expect((service as any).pendingHeat).toBe(mockHeatProto);
+      expect(mockRaceService.setCurrentHeat).not.toHaveBeenCalled();
+
+      driversSubject.next([]);
+      tick();
+
+      expect((service as any).driversLoaded).toBeTrue();
+      expect((service as any).pendingHeat).toBeNull();
+      expect(mockRaceService.setCurrentHeat).toHaveBeenCalled();
     }));
 
     it("should handle error in driver loading gracefully and flush pendingUpdate", fakeAsync(() => {
