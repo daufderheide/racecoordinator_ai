@@ -1539,13 +1539,25 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     if (typeof track.hasDigitalFuel === "function") {
       return track.hasDigitalFuel();
     }
-    const hasDigital =
-      !!(track as any).has_digital_fuel ||
-      (track as any).arduino_configs?.some(
-        (conf: any) =>
-          conf.voltageConfigs && Object.keys(conf.voltageConfigs).length > 0,
+    return !!(track as any).has_digital_fuel;
+  }
+
+  getAnalogFuelTooltip(): string {
+    if (this.hasDigitalFuel) {
+      return this.translationService.translate(
+        "RE_ANALOG_FUEL_DISABLED_TOOLTIP",
       );
-    return hasDigital;
+    }
+    return "";
+  }
+
+  getDigitalFuelTooltip(): string {
+    if (!this.hasDigitalFuel) {
+      return this.translationService.translate(
+        "RE_DIGITAL_FUEL_DISABLED_TOOLTIP",
+      );
+    }
+    return "";
   }
 
   onRotationTypeChange() {
@@ -3761,12 +3773,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         },
       },
       {
-        selector: "#fuel-max-usage-input",
+        selector: "#fuel-slowest-time-input",
         title: this.translationService.translate(
-          "RE_HELP_FUEL_MAX_USAGE_TITLE",
+          "RE_HELP_FUEL_SLOWEST_TIME_TITLE",
         ),
         content: this.translationService.translate(
-          "RE_HELP_FUEL_MAX_USAGE_CONTENT",
+          "RE_HELP_FUEL_SLOWEST_TIME_CONTENT",
         ),
         position: "bottom",
         onEnter: () => {
@@ -3776,12 +3788,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         },
       },
       {
-        selector: "#fuel-slowest-time-input",
+        selector: "#fuel-max-usage-input",
         title: this.translationService.translate(
-          "RE_HELP_FUEL_SLOWEST_TIME_TITLE",
+          "RE_HELP_FUEL_MAX_USAGE_TITLE",
         ),
         content: this.translationService.translate(
-          "RE_HELP_FUEL_SLOWEST_TIME_CONTENT",
+          "RE_HELP_FUEL_MAX_USAGE_CONTENT",
         ),
         position: "bottom",
         onEnter: () => {

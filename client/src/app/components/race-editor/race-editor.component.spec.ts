@@ -673,6 +673,96 @@ describe("RaceEditorComponent", () => {
       expect(component.editingRace.digital_fuel_options.enabled).toBeFalse();
     });
 
+    it("should return correct tooltip for analog and digital fuel when track has digital fuel", () => {
+      component.tracks = [
+        new Track({
+          entity_id: "track_digital",
+          name: "Digital Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: true,
+        }),
+      ];
+      component.editingRace.track_entity_id = "track_digital";
+
+      expect(component.hasDigitalFuel).toBeTrue();
+      expect(component.getAnalogFuelTooltip()).toBe(
+        "RE_ANALOG_FUEL_DISABLED_TOOLTIP",
+      );
+      expect(component.getDigitalFuelTooltip()).toBe("");
+    });
+
+    it("should return correct tooltip for analog and digital fuel when track is analog", () => {
+      component.tracks = [
+        new Track({
+          entity_id: "track_analog",
+          name: "Analog Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: false,
+        }),
+      ];
+      component.editingRace.track_entity_id = "track_analog";
+
+      expect(component.hasDigitalFuel).toBeFalse();
+      expect(component.getAnalogFuelTooltip()).toBe("");
+      expect(component.getDigitalFuelTooltip()).toBe(
+        "RE_DIGITAL_FUEL_DISABLED_TOOLTIP",
+      );
+    });
+
+    it("should render fuel disabled tooltip in template according to track type", fakeAsync(() => {
+      component.isLoading = false;
+      component.isEditMode = true;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      Object.keys(component.sectionsExpanded).forEach((k) => {
+        (component.sectionsExpanded as any)[k] = true;
+      });
+      const track = component.tracks.find((t) => t.entity_id === "t1")!;
+      Object.defineProperty(track, "hasDigitalFuel", {
+        value: () => true,
+        configurable: true,
+      });
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      let analogTooltip = fixture.nativeElement.querySelector(
+        "#analog-fuel-disabled-tooltip",
+      );
+      let digitalTooltip = fixture.nativeElement.querySelector(
+        "#digital-fuel-disabled-tooltip",
+      );
+      expect(analogTooltip).toBeTruthy();
+      expect(analogTooltip.getAttribute("data-tooltip")).toBe(
+        "RE_ANALOG_FUEL_DISABLED_TOOLTIP",
+      );
+      expect(digitalTooltip).toBeNull();
+
+      Object.defineProperty(track, "hasDigitalFuel", {
+        value: () => false,
+        configurable: true,
+      });
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      analogTooltip = fixture.nativeElement.querySelector(
+        "#analog-fuel-disabled-tooltip",
+      );
+      digitalTooltip = fixture.nativeElement.querySelector(
+        "#digital-fuel-disabled-tooltip",
+      );
+      expect(analogTooltip).toBeNull();
+      expect(digitalTooltip).toBeTruthy();
+      expect(digitalTooltip.getAttribute("data-tooltip")).toBe(
+        "RE_DIGITAL_FUEL_DISABLED_TOOLTIP",
+      );
+    }));
+
     it("should generate valid usage path for digital fuel", () => {
       component.editingRace.digital_fuel_options = {
         enabled: true,
@@ -2195,8 +2285,8 @@ describe("RaceEditorComponent", () => {
       expect(steps[48].selector).toBe("#fuel-enabled-input");
       expect(steps[49].selector).toBe("#fuel-usage-type-select");
       expect(steps[50].selector).toBe("#fuel-fastest-time-input");
-      expect(steps[51].selector).toBe("#fuel-max-usage-input");
-      expect(steps[52].selector).toBe("#fuel-slowest-time-input");
+      expect(steps[51].selector).toBe("#fuel-slowest-time-input");
+      expect(steps[52].selector).toBe("#fuel-max-usage-input");
       expect(steps[53].selector).toBe("#fuel-min-usage-input");
       expect(steps[54].selector).toBe("#fuel-capacity-input");
       expect(steps[55].selector).toBe("#fuel-start-level-input");

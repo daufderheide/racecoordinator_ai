@@ -53,8 +53,8 @@ Race Coordinator AI unterstützt umfassende Kraftstoffsimulationen für analoge 
 
 Der Rennen-Editor bietet zwei dedizierte Konfigurationsbereiche für Kraftstoff: **Analoger Kraftstoff** und **Digitaler Kraftstoff**. Welches System verfügbar und aktiv ist, wird automatisch anhand der für das Rennen ausgewählten Strecke bestimmt:
 
-- **Analoge Strecken**: Traditionelle Slotcar-Bahnen, bei denen Fahrzeuge direkt über die Spuren versorgt werden, ohne digitale Decoder oder Fahrzeugtelemetrie. Bei Auswahl einer analogen Strecke ist der Bereich **Analoger Kraftstoff** aktiviert und der Bereich **Digitaler Kraftstoff** wird automatisch deaktiviert.
-- **Digitale Strecken**: Digitale Slotcar-Systeme (wie Carrera Digital, Scalextric Digital, Scorpius oder oXigen), bei denen die Schnittstelle digitale Telemetrie überträgt (Fahrzeug-ID, Gasstellung in Prozent, Boxengassensensoren). Bei Auswahl einer digitalen Strecke ist der Bereich **Digitaler Kraftstoff** aktiviert und der Bereich **Analoger Kraftstoff** wird automatisch deaktiviert.
+- **Analoge Strecken**: Traditionelle Slotcar-Bahnen, bei denen Fahrzeuge direkt über die Spuren versorgt werden, ohne digitale Decoder oder Fahrzeugtelemetrie. Bei Auswahl einer analogen Strecke ist der Bereich **Analoger Kraftstoff** aktiviert und der Umschalter für **Digitalen Kraftstoff** wird automatisch deaktiviert (beim Bewegen des Mauszeigers über das deaktivierte Kontrollkästchen wird ein erklärender Tooltip angezeigt).
+- **Digitale Strecken**: Digitale Slotcar-Systeme (wie Carrera Digital, Scalextric Digital, Scorpius oder oXigen), bei denen die Schnittstelle digitale Telemetrie überträgt (Fahrzeug-ID, Gasstellung in Prozent, Boxengassensensoren). Bei Auswahl einer digitalen Strecke ist der Bereich **Digitaler Kraftstoff** aktiviert und der Umschalter für **Analogen Kraftstoff** wird automatisch deaktiviert (beim Bewegen des Mauszeigers über das deaktivierte Kontrollkästchen wird ein erklärender Tooltip angezeigt).
 
 ---
 
@@ -71,9 +71,9 @@ Analoger Kraftstoff simuliert den Verbrauch auf **Rundenbasis**. Da analoge Stre
     - **Kubisch**: Der Verbrauch steigt bei schnellen Runden steil an und bestraft aggressive Rekordjagden überproportional.
     - **Benutzerdefinierte Kurve**: Ermöglicht eine punktgenaue, interaktive Formung der Verbrauchskurve direkt auf dem SVG-Graphen.
 - **Schnellste Zeit (s)**: Die schnellste erwartete Rundenzeit für Strecke und Fahrzeugklasse (in Sekunden).
-- **Max. Verbrauch**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder schneller als die **Schnellste Zeit**.
 - **Langsamste Zeit (s)**: Die langsamste Rundenzeit (in Sekunden) für minimalen Kraftstoffverbrauch.
-- **Min. Verbrauch**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder langsamer als die **Langsamste Zeit**.
+- **Max. Kraftstoffverbrauch pro schnellster Runde**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder schneller als die **Schnellste Zeit**.
+- **Min. Kraftstoffverbrauch pro langsamster Runde**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder langsamer als die **Langsamste Zeit**.
     - Für Rundenzeiten zwischen schnellster und langsamster Zeit geht der Kraftstoffverbrauch entsprechend dem gewählten **Verbrauchstyp** (Linear, Quadratisch, Kubisch oder Benutzerdefinierte Kurve) fließend über.
 - **Kapazität**: Das Gesamtvolumen des Kraftstofftanks in beliebigen Einheiten (z. B. 100).
 - **Startlevel (%)**: Der prozentuale Füllstand des Tanks zu Beginn eines Laufs (z. B. 100 % für vollen Tank oder weniger bei Sprint-/Handicap-Läufen).

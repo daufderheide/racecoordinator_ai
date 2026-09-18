@@ -829,6 +829,19 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
     if (newVal === LED_BEHAVIOR) {
       this.addLedString(25, actualPin);
     }
+
+    // If changing FROM VoltageLevel, remove voltageConfig if no pins are monitoring that lane
+    const VOLTAGE_BASE = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+    const laneCount = this.lanes()?.length || 0;
+    if (oldVal >= VOLTAGE_BASE && oldVal < VOLTAGE_BASE + laneCount) {
+      const lane = oldVal - VOLTAGE_BASE;
+      if (
+        !this.getVoltageLanes().includes(lane) &&
+        this.config()?.voltageConfigs
+      ) {
+        delete this.config()!.voltageConfigs![lane];
+      }
+    }
   }
 
   /* eslint-disable max-lines-per-function */
@@ -1809,9 +1822,10 @@ export class ArduinoEditorComponent implements OnInit, OnDestroy {
 
     // Validate Voltage Configs
     if (config.voltageConfigs) {
+      const activeVoltageLanes = new Set(this.getVoltageLanes());
       Object.keys(config.voltageConfigs).forEach((key) => {
         const laneIdx = parseInt(key, 10);
-        if (laneIdx >= laneCount) {
+        if (laneIdx >= laneCount || !activeVoltageLanes.has(laneIdx)) {
           delete config.voltageConfigs![laneIdx];
           changed = true;
         }

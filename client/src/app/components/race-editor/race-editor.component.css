@@ -978,6 +978,24 @@
   user-select: none;
 }
 
+.fuel-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+.fuel-disabled-tooltip {
+  margin-left: 10px;
+  cursor: help;
+  pointer-events: auto !important;
+}
+
+.fuel-disabled-tooltip::after {
+  width: 280px;
+  text-transform: none;
+  font-weight: 400;
+  text-align: left;
+}
+
 /* For tooltips in the config panel (right side), keep them on top if they fit better */
 .preview-panel .tooltip-icon::after {
   bottom: 125%;

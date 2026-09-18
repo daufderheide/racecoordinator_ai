@@ -1230,7 +1230,10 @@
             >
               <div class="fuel-config-section">
                 <div class="config-row fuel-enabled-row">
-                  <div class="config-section checkbox-section">
+                  <div
+                    class="config-section checkbox-section fuel-checkbox-wrapper"
+                    [title]="getAnalogFuelTooltip()"
+                  >
                     <label
                       id="fuel-enabled-input"
                       class="checkbox-container"
@@ -1249,6 +1252,21 @@
                         "RE_FUEL_ENABLED" | translate
                       }}</span>
                     </label>
+                    @if (hasDigitalFuel) {
+                      <span
+                        class="tooltip-icon fuel-disabled-tooltip"
+                        id="analog-fuel-disabled-tooltip"
+                        data-testid="analog-fuel-disabled-tooltip"
+                        [attr.data-tooltip]="
+                          'RE_ANALOG_FUEL_DISABLED_TOOLTIP' | translate
+                        "
+                        [title]="'RE_ANALOG_FUEL_DISABLED_TOOLTIP' | translate"
+                        tabindex="0"
+                        role="tooltip"
+                        aria-label="Analog fuel disabled info"
+                        >ⓘ</span
+                      >
+                    }
                   </div>
                 </div>
                 <div
@@ -1313,30 +1331,6 @@
                       />
                     </div>
                     <div class="config-section">
-                      <label>{{ "RE_FUEL_MAX_USAGE" | translate }}</label>
-                      <input
-                        id="fuel-max-usage-input"
-                        class="fuel-max-usage-input"
-                        data-testid="fuel-max-usage-input"
-                        type="number"
-                        autocomplete="off"
-                        data-dashlane-ignore="true"
-                        data-1p-ignore="true"
-                        data-lpignore="true"
-                        data-bwignore="true"
-                        data-form-type="other"
-                        [(ngModel)]="editingRace.fuel_options.max_usage"
-                        (ngModelChange)="captureState()"
-                        min="0"
-                        step="0.1"
-                        [disabled]="
-                          hasDigitalFuel || !editingRace.fuel_options.enabled
-                        "
-                      />
-                    </div>
-                  </div>
-                  <div class="config-row">
-                    <div class="config-section">
                       <label>{{ "RE_FUEL_SLOWEST_TIME" | translate }}</label>
                       <input
                         id="fuel-slowest-time-input"
@@ -1352,6 +1346,30 @@
                         [(ngModel)]="editingRace.fuel_options.slowest_time"
                         (ngModelChange)="captureState()"
                         min="0.1"
+                        step="0.1"
+                        [disabled]="
+                          hasDigitalFuel || !editingRace.fuel_options.enabled
+                        "
+                      />
+                    </div>
+                  </div>
+                  <div class="config-row">
+                    <div class="config-section">
+                      <label>{{ "RE_FUEL_MAX_USAGE" | translate }}</label>
+                      <input
+                        id="fuel-max-usage-input"
+                        class="fuel-max-usage-input"
+                        data-testid="fuel-max-usage-input"
+                        type="number"
+                        autocomplete="off"
+                        data-dashlane-ignore="true"
+                        data-1p-ignore="true"
+                        data-lpignore="true"
+                        data-bwignore="true"
+                        data-form-type="other"
+                        [(ngModel)]="editingRace.fuel_options.max_usage"
+                        (ngModelChange)="captureState()"
+                        min="0"
                         step="0.1"
                         [disabled]="
                           hasDigitalFuel || !editingRace.fuel_options.enabled
@@ -2044,7 +2062,10 @@
             >
               <div class="fuel-config-section" id="digital-fuel-section">
                 <div class="config-row fuel-enabled-row">
-                  <div class="config-section checkbox-section">
+                  <div
+                    class="config-section checkbox-section fuel-checkbox-wrapper"
+                    [title]="getDigitalFuelTooltip()"
+                  >
                     <label
                       id="digital-fuel-enabled-input"
                       class="checkbox-container"
@@ -2065,6 +2086,21 @@
                         >{{ "RE_DIGITAL_FUEL_ENABLED" | translate }}</span
                       >
                     </label>
+                    @if (!hasDigitalFuel) {
+                      <span
+                        class="tooltip-icon fuel-disabled-tooltip"
+                        id="digital-fuel-disabled-tooltip"
+                        data-testid="digital-fuel-disabled-tooltip"
+                        [attr.data-tooltip]="
+                          'RE_DIGITAL_FUEL_DISABLED_TOOLTIP' | translate
+                        "
+                        [title]="'RE_DIGITAL_FUEL_DISABLED_TOOLTIP' | translate"
+                        tabindex="0"
+                        role="tooltip"
+                        aria-label="Digital fuel disabled info"
+                        >ⓘ</span
+                      >
+                    }
                   </div>
                 </div>
                 <div

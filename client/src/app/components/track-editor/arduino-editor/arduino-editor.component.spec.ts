@@ -1782,4 +1782,37 @@ describe("ArduinoEditorComponent", () => {
       expect(component.ledStringExpanded[0]).toBeFalse();
     });
   });
+
+  describe("Voltage Configuration Cleanup", () => {
+    it("should prune orphaned voltageConfigs when pins are set to unused via setPinBehavior", () => {
+      const cfg = component.config()!;
+      cfg.voltageConfigs = { 0: 1023, 1: 512 };
+      cfg.analogIds[0] = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE;
+      cfg.analogIds[1] = PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 1;
+
+      component.setPinBehavior(
+        false,
+        0,
+        PinBehavior.BEHAVIOR_UNUSED.toString(),
+      );
+
+      expect(cfg.voltageConfigs[0]).toBeUndefined();
+      expect(cfg.voltageConfigs[1]).toBe(512);
+    });
+
+    it("should prune voltageConfigs for lanes exceeding laneCount via refreshLanes", () => {
+      const cfg = component.config()!;
+      // Track has 2 lanes (indices 0 and 1)
+      cfg.voltageConfigs = { 0: 1023, 5: 800 };
+      cfg.analogIds = [
+        PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE,
+        PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE + 5,
+      ];
+
+      (component as any).refreshLanes();
+
+      expect(cfg.voltageConfigs[0]).toBe(1023);
+      expect(cfg.voltageConfigs[5]).toBeUndefined();
+    });
+  });
 });

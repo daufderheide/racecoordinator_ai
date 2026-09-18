@@ -53,8 +53,8 @@ Race Coordinator AI admite simulaciones integrales de combustible para pistas an
 
 El editor de carreras ofrece dos secciones dedicadas a la configuración de combustible: **Combustible analógico** y **Combustible digital**. El sistema disponible y activo se determina automáticamente según la pista seleccionada para la carrera:
 
-- **Pistas analógicas**: Pistas tradicionales de slot donde los coches reciben energía directamente a través de los raíles del carril, sin decodificadores digitales ni telemetría del vehículo a la pista. Cuando se selecciona una pista analógica, la sección **Combustible analógico** queda habilitada y la sección **Combustible digital** se desactiva automáticamente.
-- **Pistas digitales**: Sistemas digitales de slot (como Carrera Digital, Scalextric Digital, Scorpius u oXigen) donde la interfaz transmite telemetría digital (identificador del coche, porcentaje de acelerador, sensores de línea de boxes). Cuando se selecciona una pista digital, la sección **Combustible digital** queda habilitada y la sección **Combustible analógico** se desactiva automáticamente.
+- **Pistas analógicas**: Pistas tradicionales de slot donde los coches reciben energía directamente a través de los raíles del carril, sin decodificadores digitales ni telemetría del vehículo a la pista. Cuando se selecciona una pista analógica, la sección **Combustible analógico** queda habilitada y la casilla de **Combustible digital** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
+- **Pistas digitales**: Sistemas digitales de slot (como Carrera Digital, Scalextric Digital, Scorpius u oXigen) donde la interfaz transmite telemetría digital (identificador del coche, porcentaje de acelerador, sensores de línea de boxes). Cuando se selecciona una pista digital, la sección **Combustible digital** queda habilitada y la casilla de **Combustible analógico** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
 
 ---
 
@@ -71,9 +71,9 @@ El combustible analógico simula el consumo **por vuelta**. Dado que las pistas 
     - **Cúbico**: El consumo aumenta vertiginosamente en vueltas rápidas, castigando drásticamente a los pilotos que arriesgan en busca de vueltas récord.
     - **Curva personalizada**: Permite moldear de forma interactiva y punto a punto la curva de consumo directamente en el gráfico SVG.
 - **Tiempo más rápido (s)**: El tiempo de vuelta más rápido esperado para la pista y categoría del coche (en segundos).
-- **Consumo máx.**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más rápido** o más veloz.
 - **Tiempo más lento (s)**: El tiempo de vuelta más lento (en segundos) para el consumo mínimo de combustible.
-- **Consumo mín.**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más lento** o más lento.
+- **Consumo máx. de combustible por vuelta más rápida**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más rápido** o más veloz.
+- **Consumo mín. de combustible por vuelta más lenta**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más lento** o más lento.
     - Para tiempos de vuelta entre el tiempo más rápido y el más lento, el consumo transiciona suavemente según el **Tipo de consumo** seleccionado (Lineal, Cuadrático, Cúbico o Curva personalizada).
 - **Capacidad**: El volumen total del depósito de combustible en unidades arbitrarias (por ejemplo, 100).
 - **Nivel inicial (%)**: Porcentaje de capacidad disponible en el depósito al comenzar una tanda (por ejemplo, 100 % para depósito lleno, o menos en tandas de sprint o hándicap).

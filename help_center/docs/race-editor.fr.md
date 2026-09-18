@@ -53,8 +53,8 @@ Race Coordinator AI prend en charge une simulation complète du carburant pour l
 
 L'éditeur de course propose deux sections dédiées à la configuration du carburant : **Carburant analogique** et **Carburant numérique**. Le système disponible et actif est déterminé automatiquement par la piste sélectionnée pour la course :
 
-- **Pistes analogiques** : Pistes de slot traditionnelles où les voitures sont alimentées directement par les rails, sans décodeurs numériques ni télémétrie embarquée. Lorsqu'une piste analogique est sélectionnée, la section **Carburant analogique** est activée et la section **Carburant numérique** est automatiquement désactivée.
-- **Pistes numériques** : Systèmes de slot numériques (tels que Carrera Digital, Scalextric Digital, Scorpius ou oXigen) où l'interface communique une télémétrie numérique (identifiant de la voiture, pourcentage d'accélérateur, capteurs de voie des stands). Lorsqu'une piste numérique est sélectionnée, la section **Carburant numérique** est activée et la section **Carburant analogique** est automatiquement désactivée.
+- **Pistes analogiques** : Pistes de slot traditionnelles où les voitures sont alimentées directement par les rails, sans décodeurs numériques ni télémétrie embarquée. Lorsqu'une piste analogique est sélectionnée, la section **Carburant analogique** est activée et la case à cocher **Carburant numérique** est automatiquement désactivée (survoler la case désactivée affiche une infobulle explicative).
+- **Pistes numériques** : Systèmes de slot numériques (tels que Carrera Digital, Scalextric Digital, Scorpius ou oXigen) où l'interface communique une télémétrie numérique (identifiant de la voiture, pourcentage d'accélérateur, capteurs de voie des stands). Lorsqu'une piste numérique est sélectionnée, la section **Carburant numérique** est activée et la case à cocher **Carburant analogique** est automatiquement désactivée (survoler la case désactivée affiche une infobulle explicative).
 
 ---
 
@@ -71,9 +71,9 @@ Le carburant analogique simule la consommation **au tour**. Les pistes analogiqu
     - **Cubique** : La consommation grimpe en flèche pour les tours ultra-rapides, sanctionnant sévèrement la recherche effrénée de records au tour.
     - **Courbe personnalisée** : Permet de modeler interactivement la courbe point par point directement sur le graphique SVG.
 - **Temps le plus rapide (s)** : Temps au tour le plus rapide attendu pour la piste et la catégorie de voiture (en secondes).
-- **Consommation max.** : Unités de carburant consommées par tour lors d'un tour égal ou plus rapide que le **Temps le plus rapide**.
 - **Temps le plus lent (s)** : Temps au tour le plus lent (en secondes) pour la consommation minimale de carburant.
-- **Consommation min.** : Unités de carburant consommées par tour lors d'un tour égal ou plus lent que le **Temps le plus lent**.
+- **Consommation max. de carburant par tour le plus rapide** : Unités de carburant consommées par tour lors d'un tour égal ou plus rapide que le **Temps le plus rapide**.
+- **Consommation min. de carburant par tour le plus lent** : Unités de carburant consommées par tour lors d'un tour égal ou plus lent que le **Temps le plus lent**.
     - Pour les temps au tour compris entre le temps le plus rapide et le plus lent, la consommation évolue de manière fluide selon le **Type d'utilisation** sélectionné (Linéaire, Quadratique, Cubique ou Courbe personnalisée).
 - **Capacité** : Volume total du réservoir de carburant en unités arbitraires (par exemple, 100).
 - **Niveau initial (%)** : Pourcentage de capacité de carburant disponible au début d'une manche (par exemple, 100 % pour un plein complet, ou moins pour les manches sprint/handicap).

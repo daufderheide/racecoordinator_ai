@@ -53,8 +53,8 @@ Race Coordinator AI supports comprehensive fuel simulation for both analog and d
 
 The race editor provides two dedicated fuel configuration sections: **Analog Fuel** and **Digital Fuel**. Which system is available and active is determined automatically by the track selected for the race:
 
-- **Analog Tracks**: Traditional slot car tracks where cars are powered directly by lane rails without digital decoders or car-to-track telemetry. When an analog track is selected, the **Analog Fuel** section is enabled and the **Digital Fuel** section is automatically disabled.
-- **Digital Tracks**: Digital slot car systems (such as Carrera Digital, Scalextric Digital, Scorpius, or oXigen) where the track interface communicates digital telemetry (car ID, throttle percentage, pit lane sensors). When a digital track is selected, the **Digital Fuel** section is enabled and the **Analog Fuel** section is automatically disabled.
+- **Analog Tracks**: Traditional slot car tracks where cars are powered directly by lane rails without digital decoders or car-to-track telemetry. When an analog track is selected, the **Analog Fuel** section is enabled and the **Digital Fuel** toggle is automatically disabled (hovering over the disabled toggle displays an explanatory tooltip).
+- **Digital Tracks**: Digital slot car systems (such as Carrera Digital, Scalextric Digital, Scorpius, or oXigen) where the track interface communicates digital telemetry (car ID, throttle percentage, pit lane sensors). When a digital track is selected, the **Digital Fuel** section is enabled and the **Analog Fuel** toggle is automatically disabled (hovering over the disabled toggle displays an explanatory tooltip).
 
 ---
 
@@ -71,9 +71,9 @@ Analog fuel simulates fuel consumption on a **per-lap basis**. Because analog tr
     - **Cubic**: Fuel consumption increases steeply for fast laps, aggressively penalizing drivers pushing for record lap times.
     - **Custom Curve**: Allows interactive, point-by-point shaping of the fuel curve directly on the SVG graph.
 - **Fastest Time (s)**: The fastest expected lap time for the track and car class (in seconds).
-- **Max Usage**: The fuel units consumed per lap when driving at or faster than the **Fastest Time**.
 - **Slowest Time (s)**: The slowest lap time (in seconds) for minimum fuel consumption.
-- **Min Usage**: The fuel units consumed per lap when driving at or slower than the **Slowest Time**.
+- **Max Fuel Usage per Fastest Lap**: The fuel units consumed per lap when driving at or faster than the **Fastest Time**.
+- **Min Fuel Usage per Slowest Lap**: The fuel units consumed per lap when driving at or slower than the **Slowest Time**.
     - For lap times between the Fastest Time and Slowest Time, fuel consumption transitions smoothly according to the selected **Fuel Usage Type** (Linear, Quadratic, Cubic, or Custom Curve).
 - **Capacity**: The total volume of the fuel tank in arbitrary fuel units (e.g., 100).
 - **Start Level (%)**: The percentage of maximum fuel capacity in the tank when a heat starts (e.g., 100% for a full tank, or less for sprint/handicap heats).
