@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.78] - 2026-09-18
+
+### 🚀 New Features
+
+- add ConverterCache and improve race update merging and track subscription handling [skip-screendiffs] ([e40924e2](https://github.com/daufderheide/racecoordinator_ai/commit/e40924e2))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.77...v1.0.0-beta.78">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.77] - 2026-09-18
 
 ### 🚀 New Features
