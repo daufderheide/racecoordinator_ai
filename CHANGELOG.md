@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.77] - 2026-09-18
+
+### 🚀 New Features
+
+- **update**: improve update banner progress and feedback during installation [skip-screendiffs] ([20fee980](https://github.com/daufderheide/racecoordinator_ai/commit/20fee980))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.76...v1.0.0-beta.77">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.76] - 2026-09-18
 
 ### 🚀 New Features
