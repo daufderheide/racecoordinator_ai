@@ -29,6 +29,10 @@
 
 @import '../shared/shared-editor-layout.css';
 
+.editor-panel {
+  padding-top: 15px;
+}
+
 .editor-section {
   margin-bottom: 20px;
   display: flex;

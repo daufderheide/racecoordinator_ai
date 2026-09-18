@@ -42,8 +42,6 @@
   padding-top: 0;
   margin-top: 0;
   margin-left: 0;
-  transform: translateZ(0);
-  will-change: transform, opacity;
   overflow: visible;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
@@ -574,8 +572,6 @@
   position: relative;
   background-color: transparent;
   padding: 24px 0 0 24px;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
 
