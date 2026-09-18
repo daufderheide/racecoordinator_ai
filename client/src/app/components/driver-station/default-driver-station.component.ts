@@ -753,9 +753,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         ? { widgetType: "countdown" }
         : { widgetType: "timer" });
 
-    const entry = asset.audioEntries?.find(
-      (e: any) => Math.abs(e.timeSeconds - timeSeconds) < 0.1,
-    );
+    const entry = asset.audioEntries?.find((e: any) => {
+      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
+      return val != null && Math.abs(Number(val) - timeSeconds) < 0.1;
+    });
     if (entry) {
       const entryType = entry.type || "preset";
       if (entryType !== "none") {
@@ -833,8 +834,14 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       );
       if (asset?.audioEntries && asset.audioEntries.length > 0) {
         return asset.audioEntries
-          .map((e: any) => Math.round(e.timeSeconds))
-          .filter((t: number) => t > 0)
+          .map((e: any) =>
+            Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+          )
+          .filter((t: number) => !isNaN(t) && t >= 0)
+          .filter(
+            (t: number, index: number, self: number[]) =>
+              self.indexOf(t) === index,
+          )
           .sort((a: number, b: number) => b - a);
       }
     }
@@ -843,9 +850,11 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
   private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
     const scoring = this.race?.heat_scoring;
-    if (!scoring || scoring.finishMethod !== FinishMethod.Lap) return;
+    const fm: any = scoring?.finishMethod ?? (scoring as any)?.finish_method;
+    const isLap = fm === FinishMethod.Lap || fm === "Lap" || fm === 1;
+    if (!scoring || !isLap) return;
 
-    const totalLaps = scoring.finishValue;
+    const totalLaps = scoring.finishValue ?? (scoring as any)?.finish_value;
     if (!totalLaps || totalLaps <= 0) return;
 
     const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;

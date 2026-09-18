@@ -5040,6 +5040,12 @@ describe("DefaultRacedayComponent", () => {
                 type: "tts",
                 text: "Final Lap",
               },
+              {
+                timeSeconds: 0,
+                name: "Leader finished",
+                type: "tts",
+                text: "Leader finished",
+              },
             ],
             url: "/api/assets/download/default_laps_left_set",
           },
@@ -5373,7 +5379,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should play laps left audio set at thresholds (20, 10, 5, 1) when heat leader completes laps", () => {
+    it("should play laps left audio set at thresholds (20, 10, 5, 1, 0) when heat leader completes laps", () => {
       const playCalloutSpy = spyOn(
         component["audioService"],
         "playCallout",
@@ -5503,6 +5509,41 @@ describe("DefaultRacedayComponent", () => {
         undefined,
         undefined,
         { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 25: 0 laps left -> "Leader finished"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 25,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Leader finished",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Second driver reaches lap 25: already played for leader -> should NOT play again
+      lapsSubject.next({
+        objectId: secondHd.objectId,
+        lapNumber: 25,
+        lapTime: 3.8,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Leader finished" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
       );
     });
 
