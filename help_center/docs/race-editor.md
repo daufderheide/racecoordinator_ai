@@ -1,27 +1,49 @@
 # Race Editor
 
-!!! note "Content Coming Soon"
-    This article is under development. Check back soon for detailed documentation.
+The **Race Editor** is the comprehensive configuration interface for designing, configuring, and testing your slot car racing formats, scoring rules, heat rotations, fuel simulations, and timer setups.
 
-## Overview
+---
 
-*Content coming soon.*
+## Overview & Auto-Saving
 
-## Race Name and Type
+The Race Editor provides a unified interface for selecting, viewing, configuring, and testing your slot car race formats:
 
-*Content coming soon.*
+- **Race Selector**: Located in the top header next to the page title, this dropdown lists all configured races and allows you to quickly switch between races.
+- **Read-Only Mode**: By default, opening the editor displays race properties, scoring rules, rotation settings, and fuel configuration in read-only mode. Form inputs, options, and settings are locked to prevent accidental modifications, while accordion sections and heat previews remain fully expandable and interactive.
+- **Edit Mode**: Clicking the **Edit** (pencil) icon on the toolbar unlocks all configuration controls, scoring methods, and fuel settings. While in Edit Mode, the race selector dropdown is locked to prevent accidental navigation away from unsaved edits.
+- **Continuous Auto-Save**: As you make changes (renaming, adjusting heat durations, changing scoring methods, modifying fuel curves), your edits are automatically saved to the server in the background without dropping out of Edit Mode.
+- **Exiting Edit Mode**: Clicking the **Done Editing** (checkmark) icon validates your changes, ensures all edits are persisted, and returns the editor to Read-Only Mode.
+- **Discarding Changes**: If you attempt to leave the editor or click Discard, the unsaved changes dialog prompts you to confirm. Discarding changes reverts all edits back to the last-saved version and restores Read-Only Mode.
 
-## Heat Rotation Format
+The editor workspace is split into two synchronized working panels:
 
-*Content coming soon.*
+- **Left Panel (Race Configuration)**: Configure general race properties, race format, scoring methods, rotation type, team settings, group options, and analog/digital fuel simulations.
+- **Right Panel (Live Heat Preview)**: Dynamically generates and displays the complete list of heats based on the active rotation type, driver count, and lane assignments, updating in real time as you adjust settings.
 
-## Scoring Options
+---
 
-*Content coming soon.*
+## Race Configuration & Options
 
-## Timer Settings
+### Race Name & Track Association
+- **Race Name**: Unique name identifying the race format.
+- **Track**: The physical track associated with this race. The selected track determines whether Analog Fuel or Digital Fuel simulation is available.
+- **Theme**: Visual UI theme applied to the race display during raceday.
 
-*Content coming soon.*
+### Heat Rotation Format
+- **Rotation Type**: Choose between standard rotations (**Round Robin**, **Ladder**, **Tournament**) or custom defined sequences.
+- **Heat Times Through**: Specifies how many times each driver cycles through the complete heat rotation.
+- **Reverse Heats**: Inverts the rotation order so drivers run heats in reverse sequence.
+
+### Scoring Options
+- **Heat Scoring**: Configure heat completion by lap count or elapsed time limit, heat ranking method (laps or lap times), and tiebreakers.
+- **Overall Scoring**: Configure overall race standings ranking method, tiebreaker rules, and dropped heats.
+- **Season Scoring**: Assign points distribution per position for season-long championships.
+
+### Timer Settings
+- **Start / Restart Delay**: Countdown lead-in seconds before race starts or restarts after a yellow flag.
+- **Minimum Lap Time**: Minimum allowable lap time (in seconds) to filter out false or glitch sensor triggers.
+- **Drift Time**: Maximum sensor trigger window to handle car drift or sliding over the finish line.
+- **Start Behind Sensor**: Enforces cars starting behind the finish sensor on lap zero.
 
 ## Fuel Settings
 
@@ -31,8 +53,8 @@ Race Coordinator AI supports comprehensive fuel simulation for both analog and d
 
 The race editor provides two dedicated fuel configuration sections: **Analog Fuel** and **Digital Fuel**. Which system is available and active is determined automatically by the track selected for the race:
 
-- **Analog Tracks**: Traditional slot car tracks where cars are powered directly by lane rails without digital decoders or car-to-track telemetry. When an analog track is selected, the **Analog Fuel** section is enabled and the **Digital Fuel** section is automatically disabled.
-- **Digital Tracks**: Digital slot car systems (such as Carrera Digital, Scalextric Digital, Scorpius, or oXigen) where the track interface communicates digital telemetry (car ID, throttle percentage, pit lane sensors). When a digital track is selected, the **Digital Fuel** section is enabled and the **Analog Fuel** section is automatically disabled.
+- **Analog Tracks**: Traditional slot car tracks where cars are powered directly by lane rails without digital decoders or car-to-track telemetry. When an analog track is selected, the **Analog Fuel** section is enabled and the **Digital Fuel** toggle is automatically disabled (hovering over the disabled toggle displays an explanatory tooltip).
+- **Digital Tracks**: Digital slot car systems (such as Carrera Digital, Scalextric Digital, Scorpius, or oXigen) where the track interface communicates digital telemetry (car ID, throttle percentage, pit lane sensors). When a digital track is selected, the **Digital Fuel** section is enabled and the **Analog Fuel** toggle is automatically disabled (hovering over the disabled toggle displays an explanatory tooltip).
 
 ---
 
@@ -49,9 +71,9 @@ Analog fuel simulates fuel consumption on a **per-lap basis**. Because analog tr
     - **Cubic**: Fuel consumption increases steeply for fast laps, aggressively penalizing drivers pushing for record lap times.
     - **Custom Curve**: Allows interactive, point-by-point shaping of the fuel curve directly on the SVG graph.
 - **Fastest Time (s)**: The fastest expected lap time for the track and car class (in seconds).
-- **Max Usage**: The fuel units consumed per lap when driving at or faster than the **Fastest Time**.
 - **Slowest Time (s)**: The slowest lap time (in seconds) for minimum fuel consumption.
-- **Min Usage**: The fuel units consumed per lap when driving at or slower than the **Slowest Time**.
+- **Max Fuel Usage per Fastest Lap**: The fuel units consumed per lap when driving at or faster than the **Fastest Time**.
+- **Min Fuel Usage per Slowest Lap**: The fuel units consumed per lap when driving at or slower than the **Slowest Time**.
     - For lap times between the Fastest Time and Slowest Time, fuel consumption transitions smoothly according to the selected **Fuel Usage Type** (Linear, Quadratic, Cubic, or Custom Curve).
 - **Capacity**: The total volume of the fuel tank in arbitrary fuel units (e.g., 100).
 - **Start Level (%)**: The percentage of maximum fuel capacity in the tank when a heat starts (e.g., 100% for a full tank, or less for sprint/handicap heats).

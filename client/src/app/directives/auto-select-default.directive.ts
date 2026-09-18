@@ -23,8 +23,11 @@ export class AutoSelectDefaultDirective {
   private el = inject(ElementRef<HTMLInputElement>);
   private hasSelectedOnFocus = false;
 
+  private isFocused = false;
+
   @HostListener("focus")
   onFocus() {
+    this.isFocused = true;
     if (!this.hasSelectedOnFocus) {
       this.trySelect();
     }
@@ -32,6 +35,7 @@ export class AutoSelectDefaultDirective {
 
   @HostListener("mouseup")
   onMouseUp() {
+    this.isFocused = true;
     if (!this.hasSelectedOnFocus) {
       this.trySelect();
     }
@@ -39,6 +43,7 @@ export class AutoSelectDefaultDirective {
 
   @HostListener("blur")
   onBlur() {
+    this.isFocused = false;
     this.hasSelectedOnFocus = false;
   }
 
@@ -56,7 +61,9 @@ export class AutoSelectDefaultDirective {
     ) {
       this.hasSelectedOnFocus = true;
       setTimeout(() => {
-        inputEl.select();
+        if (this.isFocused || document.activeElement === inputEl) {
+          inputEl.select();
+        }
       }, 0);
     }
   }

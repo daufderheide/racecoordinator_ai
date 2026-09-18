@@ -1,7 +1,9 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { Pipe, PipeTransform } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 
 import { AssetLayoutSwitcherComponent } from "./asset-layout-switcher.component";
+import { AssetLayoutSwitcherHarness } from "./testing/asset-layout-switcher.harness";
 
 @Pipe({ name: "translate", standalone: true })
 class MockTranslatePipe implements PipeTransform {
@@ -88,5 +90,25 @@ describe("AssetLayoutSwitcherComponent", () => {
 
     component.setLayout("list");
     expect(localStorage.getItem("test_asset_layout")).toBe("list");
+  });
+
+  it("should interact correctly via AssetLayoutSwitcherHarness", async () => {
+    const harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      AssetLayoutSwitcherHarness,
+    );
+    expect(await harness.getActiveMode()).toBe("medium");
+
+    await harness.setLayoutMode("list");
+    expect(await harness.getActiveMode()).toBe("list");
+    expect(component.layout()).toBe("list");
+
+    await harness.setLayoutMode("small");
+    expect(await harness.getActiveMode()).toBe("small");
+    expect(component.layout()).toBe("small");
+
+    await harness.setLayoutMode("large");
+    expect(await harness.getActiveMode()).toBe("large");
+    expect(component.layout()).toBe("large");
   });
 });

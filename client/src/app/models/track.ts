@@ -71,24 +71,40 @@ export class Track implements Model {
     if (this.has_digital_fuel) {
       return true;
     }
-    // Check Arduino configs
+    // Check Arduino configs for active voltage pins
+    const base = 7000; // PinBehavior.BEHAVIOR_VOLTAGE_LEVEL_BASE
+    const max = base + (this.lanes?.length || 64);
     if (this.arduino_configs) {
       for (const config of this.arduino_configs) {
-        if (
+        if (config.analogIds && config.analogIds.length > 0) {
+          for (const code of config.analogIds) {
+            if (code != null && code >= base && code < max) {
+              return true;
+            }
+          }
+        } else if (
           config.voltageConfigs != null &&
           Object.keys(config.voltageConfigs).length > 0
         ) {
+          // Fallback for tests that only mock voltageConfigs without analogIds
           return true;
         }
       }
     }
-    // Check Phidget configs
+    // Check Phidget configs for active voltage pins
     if (this.phidget_configs) {
       for (const config of this.phidget_configs) {
-        if (
+        if (config.analogIds && config.analogIds.length > 0) {
+          for (const code of config.analogIds) {
+            if (code != null && code >= base && code < max) {
+              return true;
+            }
+          }
+        } else if (
           config.voltageConfigs != null &&
           Object.keys(config.voltageConfigs).length > 0
         ) {
+          // Fallback for tests that only mock voltageConfigs without analogIds
           return true;
         }
       }

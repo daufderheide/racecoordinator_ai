@@ -63,6 +63,13 @@ test.describe("Race Editor Visuals", () => {
     }
   }
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#race-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display race editor for existing race", async ({ page }) => {
     // Navigate to Race Editor
     await TestSetupHelper.waitForLocalization(
@@ -88,11 +95,30 @@ test.describe("Race Editor Visuals", () => {
     await minLapInput.waitFor({ state: "visible", timeout: 10000 });
     await driftTimeInput.waitFor({ state: "visible", timeout: 10000 });
 
+    await enterEditMode(page);
+
     // Disable animations
     await TestSetupHelper.disableAnimations(page);
 
     // Screenshot the entire editor
     await expect(page).toHaveScreenshot("race-editor.png", {
+      timeout: 15000,
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display race editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/race-editor?id=r1&driverCount=4"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("race-editor-read-only.png", {
       timeout: 15000,
       maxDiffPixelRatio: 0.05,
     });
@@ -108,6 +134,8 @@ test.describe("Race Editor Visuals", () => {
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
     const harness = new RaceEditorHarnessE2e(page.locator("body"));
+
+    await enterEditMode(page);
 
     // Change name to a duplicate
     await harness.setName("Endurance Challenge");
@@ -134,6 +162,8 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
+
+    await enterEditMode(page);
 
     // Select Custom Round Robin
     await page.locator(".editor-section app-custom-select").first().click();
@@ -185,6 +215,8 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Click details - Duplication
     await harness.clickCopy();
 
@@ -217,6 +249,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -257,6 +291,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -309,6 +345,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Wait for loading to complete
 
@@ -441,6 +479,8 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Collapse sections to isolate Scoring
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Analog Fuel", false);
@@ -463,6 +503,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse sections to isolate Analog Fuel
     await ensureSectionState(page, "General", false);
@@ -494,6 +536,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
@@ -552,6 +596,8 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Ensure Fuel section is expanded
     await ensureSectionState(page, "Analog Fuel", true);
 
@@ -605,6 +651,8 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Collapse sections to isolate Teams
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
@@ -627,6 +675,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse other sections to isolate Heats
     await ensureSectionState(page, "General", false);
@@ -654,6 +704,8 @@ test.describe("Race Editor Visuals", () => {
     await expect(page.locator(".editor-panel")).toBeAttached({
       timeout: 10000,
     });
+
+    await enterEditMode(page);
 
     // Collapse sections to isolate Groups
     await ensureSectionState(page, "General", false);
@@ -690,6 +742,8 @@ test.describe("Race Editor Visuals", () => {
       timeout: 10000,
     });
 
+    await enterEditMode(page);
+
     // Collapse other sections to isolate Season Points
     await ensureSectionState(page, "General", false);
     await ensureSectionState(page, "Scoring", false);
@@ -717,6 +771,9 @@ test.describe("Race Editor Visuals", () => {
       "en",
       page.goto("/race-editor?id=r1&driverCount=4"),
     );
+
+    await enterEditMode(page);
+
     await TestSetupHelper.disableAnimations(page);
 
     await page.evaluate(() => {

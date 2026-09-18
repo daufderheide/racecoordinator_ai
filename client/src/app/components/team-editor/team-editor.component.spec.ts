@@ -20,6 +20,7 @@ import { Team } from "@app/models/team";
 import { ConnectionMonitorService } from "@app/services/connection-monitor.service";
 import { HelpService } from "@app/services/help.service";
 import { LoggerService } from "@app/services/logger.service";
+import { NavigationService } from "@app/services/navigation.service";
 import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
@@ -41,9 +42,8 @@ import {
 } from "@app/testing/unit-test-mocks";
 import { deepCopy } from "@app/utils/clone.utils";
 
-import { NavigationService } from "../../services/navigation.service";
-import { createTeamManagerDataServiceMock } from "../team-manager/testing/team-manager_helper";
 import { TeamEditorComponent } from "./team-editor.component";
+import { createTeamEditorDataServiceMock } from "./testing/team-editor_helper";
 
 @Component({
   selector: "app-image-selector",
@@ -56,26 +56,10 @@ class MockImageSelectorComponent {
   imageUrl = input<string | undefined>();
   assets = input<any[]>([]);
   size = input<string | undefined>();
+  disabled = input<boolean>(false);
   imageUrlChange = output<string>();
   uploadStarted = output<void>();
   uploadFinished = output<void>();
-}
-
-@Component({
-  selector: "app-item-selector",
-  standalone: true,
-  template: "",
-  imports: [FormsModule, DragDropModule],
-})
-class MockItemSelectorComponent {
-  items = input<any[]>([]);
-  visible = input<boolean>(false);
-  backButtonRoute = input<string | null>(null);
-  backButtonQueryParams = input<any>({});
-  title = input<string>("");
-  itemType = input<string>("image");
-  select = output<any>();
-  close = output<void>();
 }
 
 @Component({
@@ -87,8 +71,14 @@ class MockItemSelectorComponent {
 class MockEditorTitleComponent {
   titleKey = input<string>("");
   itemName = input<string | undefined>(undefined);
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input<boolean>(false);
+  showEdit = input<boolean>(false);
+  disabledEdit = input<boolean>(false);
   backRoute = input<string>("");
   backConfirm = input<boolean>(false);
+  backQueryParams = input<any>({});
   backConfirmTitle = input<string>("");
   backConfirmMessage = input<string>("");
   undoManager = input<any>();
@@ -96,8 +86,11 @@ class MockEditorTitleComponent {
   showRedo = input<boolean>(true);
   showHelp = input<boolean>(true);
   showCopy = input<boolean>(false);
+  disabledCopy = input<boolean>(false);
+  copyDisabledTooltipKey = input<string>("");
   showAdd = input<boolean>(false);
   showDelete = input<boolean>(false);
+  disabledDelete = input<boolean>(false);
   isSaving = input<boolean>(false);
   helpSteps = input<any[]>([]);
   helpTitle = input<string>("");
@@ -107,6 +100,8 @@ class MockEditorTitleComponent {
   copy = output<void>();
   add = output<void>();
   delete = output<void>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
 }
 
 @Component({
@@ -188,7 +183,6 @@ describe("TeamEditorComponent", () => {
         FormsModule,
         DragDropModule,
         TeamEditorComponent,
-        MockItemSelectorComponent,
         MockImageSelectorComponent,
         MockEditorTitleComponent,
         MockHelpOverlayComponent,
@@ -196,7 +190,7 @@ describe("TeamEditorComponent", () => {
         MockAvatarUrlPipe,
       ],
       providers: [
-        { provide: DataService, useValue: createTeamManagerDataServiceMock() },
+        { provide: DataService, useValue: createTeamEditorDataServiceMock() },
         { provide: TranslationService, useValue: mockTranslationService },
         { provide: ConnectionMonitorService, useValue: mockConnectionMonitor },
         { provide: Router, useValue: mockRouter },
@@ -229,7 +223,6 @@ describe("TeamEditorComponent", () => {
     router = TestBed.inject(Router);
     _activatedRoute = TestBed.inject(ActivatedRoute);
 
-    // Use deep copies of mock data AND set prototypes
     component.editingTeam = deepCopy(MOCK_TEAM_INSTANCES[0]);
     Object.setPrototypeOf(component.editingTeam, Team.prototype);
     component.allDrivers = JSON.parse(
@@ -258,19 +251,18 @@ describe("TeamEditorComponent", () => {
     expect(component).toBeTruthy();
   });
 
-  it("should configure editor title with team name and update reactively", () => {
+  it("should configure editor title with team selector and items", () => {
+    component.selectedTeamId = "t1";
+    component.updateTeamSelectItems();
+    fixture.detectChanges();
+
     const editorTitle = fixture.debugElement.query(
       By.directive(EditorTitleComponent),
     );
     expect(editorTitle).toBeTruthy();
     expect(editorTitle.componentInstance.titleKey()).toBe("TEM_TITLE");
-    expect(editorTitle.componentInstance.itemName()).toBe(
-      component.editingTeam?.name,
-    );
-
-    component.editingTeam!.name = "Scuderia Ferrari";
-    fixture.detectChanges();
-    expect(editorTitle.componentInstance.itemName()).toBe("Scuderia Ferrari");
+    expect(editorTitle.componentInstance.selectedId()).toBe("t1");
+    expect(component.teamSelectItems.length).toBeGreaterThan(0);
   });
 
   it("should have password manager ignore attributes on team name input field", () => {
@@ -289,22 +281,23 @@ describe("TeamEditorComponent", () => {
     component.loadData();
     component.isDirty = false;
     component.undoManager.initialize(component.editingTeam!);
-    expect(component.editingTeam?.entity_id).toBe("new");
+    expect(component.editingTeam?.entity_id).toBe("t-new-id");
+    expect(component.isEditMode).toBeTrue();
     expect(component.isDirtyState()).toBeFalse();
   });
 
-  it("should load team when valid ID is provided", () => {
+  it("should load team when valid ID is provided and remain in read-only mode", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
     expect(component.editingTeam?.entity_id).toBe("t1");
     expect(component.editingTeam?.name).toBe("Team Alpha");
+    expect(component.isEditMode).toBeFalse();
     expect(component.isDirtyState()).toBeFalse();
   });
 
   it("should toggle driver membership", fakeAsync(() => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
-    // Re-synchronize after loadData completes (mock is synchronous)
     component.isDirty = false;
     component.undoManager.initialize(component.editingTeam!);
 
@@ -383,7 +376,7 @@ describe("TeamEditorComponent", () => {
     expect(component.isNameInvalid).toBeTrue();
   });
 
-  it("should navigate back directly on back fallback if name IS invalid", () => {
+  it("should navigate back directly to raceday-setup on back fallback if name IS invalid", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
       (key: string) => {
         if (key === "id") return "t1";
@@ -397,16 +390,14 @@ describe("TeamEditorComponent", () => {
       new Team("t2", "Same Name", "", []),
     ];
     component.editingTeam!.name = "Same Name";
-    dataService.updateTeam.calls.reset(); // Suppress any auto-save from name change
+    dataService.updateTeam.calls.reset();
     component.onBackClicked();
 
     expect(dataService.updateTeam).not.toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(["/team-manager"], {
-      queryParams: { id: "t1", from: null, returnUrl: null },
-    });
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
   });
 
-  it("should save and set flag onBackClicked if name IS valid", fakeAsync(() => {
+  it("should save and navigate back onBackClicked if name IS valid", fakeAsync(() => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
       (key: string) => {
         if (key === "id") return "t1";
@@ -414,7 +405,7 @@ describe("TeamEditorComponent", () => {
       },
     );
     component.loadData();
-    flush(); // Handle loadData subscription
+    flush();
 
     component.onInputFocus();
     component.editingTeam!.name = "Unique Cool Name";
@@ -422,12 +413,10 @@ describe("TeamEditorComponent", () => {
     flush();
 
     component.onBackClicked();
-    flush(); // Handle updateTeam save subscription
+    flush();
 
     expect(dataService.updateTeam).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(["/team-manager"], {
-      queryParams: { id: "t1", from: null, returnUrl: null },
-    });
+    expect(router.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
   }));
 
   it("should set lastEditedId in NavigationService when loading team id", () => {
@@ -456,14 +445,23 @@ describe("TeamEditorComponent", () => {
     component.onBackClicked();
     flush();
 
-    expect(router.navigate).toHaveBeenCalledWith(["/team-manager"], {
-      queryParams: {
-        id: "t1",
-        from: "modify-heats",
-        returnUrl: "/default-raceday",
-      },
-    });
+    expect(router.navigateByUrl).toHaveBeenCalledWith("/default-raceday");
   }));
+
+  it("should navigate to /default-raceday with modifyHeats query param when from is modify-heats and no returnUrl", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
+      (key: string) => {
+        if (key === "from") return "modify-heats";
+        return null;
+      },
+    );
+
+    component.onBack();
+
+    expect(router.navigate).toHaveBeenCalledWith(["/default-raceday"], {
+      queryParams: { modifyHeats: "true" },
+    });
+  });
 
   it("should identify reasons why team changes could not be saved", () => {
     component.editingTeam = new Team("t1", "Team 1");
@@ -530,8 +528,171 @@ describe("TeamEditorComponent", () => {
       component.saveAsNew();
       tick(200);
 
+      expect(component.isEditMode).toBeTrue();
       expect(component.defaultTeamName).toBe("Team Red_1");
       expect(component.focusNameInput).toHaveBeenCalled();
     }));
+  });
+
+  describe("Unified Edit Mode & Auto-Save Lifecycle", () => {
+    it("should toggle edit mode on onToggleEditMode", () => {
+      component.isEditMode = false;
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeTrue();
+
+      // Calling toggle again when clean should return to read-only mode
+      component.isDirty = false;
+      component.undoManager.initialize(component.editingTeam!);
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
+    });
+
+    it("should remain in edit mode after successful autoSaveTeam", fakeAsync(() => {
+      component.isEditMode = true;
+      const team = new Team("t1", "Team Alpha", "", []);
+      component.editingTeam = team;
+      component.originalTeam = deepCopy(team);
+      component.undoManager.initialize(team);
+      component.editingTeam.name = "Team Alpha Modified";
+      component.isDirty = true;
+
+      const saveSubject = new Subject<any>();
+      dataService.updateTeam.and.returnValue(saveSubject.asObservable());
+
+      // Trigger autoSaveTeam directly
+      (component as any).autoSaveTeam();
+      expect(component.isSaving).toBeTrue();
+      expect(component.isAutoSaving).toBeTrue();
+      expect(component.isEditMode).toBeTrue();
+
+      // Resolve HTTP request
+      saveSubject.next({ entity_id: "t1" });
+      saveSubject.complete();
+      flush();
+
+      // Verify user is still in edit mode!
+      expect(component.isSaving).toBeFalse();
+      expect(component.isAutoSaving).toBeFalse();
+      expect(component.isEditMode).toBeTrue();
+    }));
+
+    it("should transition to read-only mode after in-flight save completes if done was clicked during save", fakeAsync(() => {
+      component.isEditMode = true;
+      const team = new Team("t1", "Team Alpha", "", []);
+      component.editingTeam = team;
+      component.originalTeam = deepCopy(team);
+      component.undoManager.initialize(team);
+      component.editingTeam.name = "Team Alpha In Flight";
+      component.isDirty = true;
+
+      const saveSubject = new Subject<any>();
+      dataService.updateTeam.and.returnValue(saveSubject.asObservable());
+
+      // Trigger auto-save
+      (component as any).autoSaveTeam();
+      expect(component.isSaving).toBeTrue();
+
+      // User clicks Done Editing while save is in flight
+      component.onToggleEditMode();
+      expect(component.transitionToReadOnlyOnSave).toBeTrue();
+
+      // In-flight save finishes
+      saveSubject.next({ entity_id: "t1" });
+      saveSubject.complete();
+      flush();
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.transitionToReadOnlyOnSave).toBeFalse();
+    }));
+
+    it("should select team by ID when in read-only mode", () => {
+      component.isEditMode = false;
+      component.selectedTeamId = "t1";
+      component.allTeams = [
+        new Team("t1", "Team Alpha"),
+        new Team("t2", "Team Beta"),
+      ];
+
+      component.onSelectTeamById("t2");
+
+      expect(component.selectedTeamId).toBe("t2");
+      expect(router.navigate).toHaveBeenCalledWith([], {
+        relativeTo: mockActivatedRoute,
+        queryParams: { id: "t2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    });
+
+    it("should ignore onSelectTeamById when in edit mode", () => {
+      router.navigate.calls.reset();
+      component.isEditMode = true;
+      component.selectedTeamId = "t1";
+      component.allTeams = [
+        new Team("t1", "Team Alpha"),
+        new Team("t2", "Team Beta"),
+      ];
+
+      component.onSelectTeamById("t2");
+
+      expect(component.selectedTeamId).toBe("t1");
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it("should start a new team on onAddNewTeam and enter edit mode", () => {
+      mockTranslationService.translate.and.callFake((key: string) => {
+        if (key === "TMM_DEFAULT_TEAM_NAME") return "New Team";
+        return key;
+      });
+      dataService.createTeam.and.returnValue(
+        of(new Team("new-team-id", "New Team", undefined, [])),
+      );
+      component.isEditMode = false;
+      component.onAddNewTeam();
+
+      expect(dataService.createTeam).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
+      expect(component.editingTeam?.entity_id).toBe("new-team-id");
+      expect(component.editingTeam?.name).toBe("New Team");
+      expect(component.defaultTeamName).toBe("New Team");
+      expect(component.selectedTeamId).toBe("new-team-id");
+    });
+
+    it("should delete team and select remaining team", fakeAsync(() => {
+      spyOn(window, "confirm").and.returnValue(true);
+      component.editingTeam = new Team("t1", "Team Alpha");
+      component.allTeams = [
+        new Team("t1", "Team Alpha"),
+        new Team("t2", "Team Beta"),
+      ];
+      dataService.deleteTeam.and.returnValue(of({ success: true }));
+
+      component.onDeleteTeam();
+      flush();
+
+      expect(dataService.deleteTeam).toHaveBeenCalledWith("t1");
+      expect(component.allTeams.length).toBe(1);
+      expect(component.selectedTeamId).toBe("t2");
+      expect(component.isEditMode).toBeFalse();
+    }));
+
+    it("should revert changes on onConfirmDiscard and exit edit mode", () => {
+      component.isEditMode = true;
+      const original = new Team("t1", "Original Name");
+      component.originalTeam = deepCopy(original);
+      component.editingTeam = new Team("t1", "Unsaved Name");
+
+      component.onConfirmDiscard();
+
+      expect(component.editingTeam.name).toBe("Original Name");
+      expect(component.isEditMode).toBeFalse();
+      expect(component.showDiscardConfirm).toBeFalse();
+    });
+
+    it("should close discard modal on onCancelDiscard", () => {
+      component.showDiscardConfirm = true;
+      component.onCancelDiscard();
+      expect(component.showDiscardConfirm).toBeFalse();
+    });
   });
 });

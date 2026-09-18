@@ -1,5 +1,50 @@
 # Race-editor
 
+De **Race-editor** is de centrale configuratie-interface voor het ontwerpen, configureren en testen van uw slotcar-raceformaten, scoreregels, heat-rotaties, brandstofsimulaties en timerinstellingen.
+
+---
+
+## Overzicht & Automatisch opslaan
+
+De Race-editor biedt een geïntegreerde interface voor het selecteren, bekijken, configureren en testen van uw raceformaten:
+
+- **Raceselector**: Deze dropdown bovenaan naast de paginatitel toont alle geconfigureerde races en maakt snel wisselen mogelijk.
+- **Alleen-lezenmodus**: Standaard toont de editor race-eigenschappen, scoreregels en instellingen in alleen-lezenmodus. Formuliervelden zijn vergrendeld om onbedoelde wijzigingen te voorkomen, terwijl accordeons en heat-voorbeelden interactief blijven.
+- **Bewerkingsmodus**: Door op het **Bewerken**-icoon (potlood) op de werkbalk te klikken worden alle invoervelden ontgrendeld. Tijdens het bewerken is de raceselector vergrendeld.
+- **Continu automatisch opslaan**: Alle wijzigingen worden automatisch op de achtergrond op de server opgeslagen zonder de bewerkingsmodus te verlaten.
+- **Bewerkingsmodus verlaten**: Door op het **Klaar**-icoon (vinkje) te klikken worden wijzigingen gevalideerd en keert u terug naar de alleen-lezenmodus.
+- **Wijzigingen verwerpen**: Door op Verwerpen te klikken worden alle wijzigingen hersteld naar de laatst opgeslagen versie en verlaat u de bewerkingsmodus.
+
+De werkruimte is verdeeld in twee gesynchroniseerde panelen:
+
+- **Linkerpaneel (Raceconfiguratie)**: Algemene race-eigenschappen, formaat, scoremethoden, rotatietype, groepsopties en analoge/digitale brandstofsimulatie.
+- **Rechterpaneel (Live heat-voorbeeld)**: Genereert dynamisch de volledige lijst met heats op basis van het actieve rotatietype en het aantal rijders.
+
+---
+
+## Raceconfiguratie & Opties
+
+### Racenaam & Baankoppeling
+- **Racenaam**: Unieke naam die het raceformaat identificeert.
+- **Baan**: De gekoppelde fysieke baan bepaalt of analoge of digitale brandstofsimulatie beschikbaar is.
+- **Thema**: Visueel UI-thema voor weergave op de racedag.
+
+### Heat-rotatieformaat
+- **Rotatietype**: Standaard rotaties (**Round Robin**, **Ladder**, **Toernooi**) of aangepaste reeksen.
+- **Aantal heat-cycli**: Hoe vaak elke rijder de volledige heat-rotatie doorloopt.
+- **Omgekeerde heats**: Draait de volgorde van de heats om.
+
+### Score-opties
+- **Heat-score**: Voltooiing op ronden of tijdslimiet, rangschikkingsmethode en tiebreakers.
+- **Algemene score**: Algemene rangschikkingsmethode, tiebreaker-regels en schrapresultaten.
+- **Seizoensscore**: Puntenverdeling per positie voor kampioenschappen.
+
+### Timerinstellingen
+- **Start- / Herstartvertraging**: Afteltijd in seconden voor de start.
+- **Minimale rondetijd**: Minimale tijd om valse sensortriggers te filteren.
+- **Drifttijd**: Detectievenster voor driftende auto's over de finishlijn.
+- **Starten achter sensor**: Verplicht starten achter de finishsensor in ronde nul.
+
 ## Brandstofinstellingen
 
 Race Coordinator AI ondersteunt een uitgebreide brandstofsimulatie voor zowel analoge als digitale banen, inclusief aanpasbare brandstoftankcapaciteit, startniveau, pitstopvertragingen, tanksnelheden, strafmaatregelen bij een lege tank en brandstofverbruiksmodellen.
@@ -8,8 +53,8 @@ Race Coordinator AI ondersteunt een uitgebreide brandstofsimulatie voor zowel an
 
 De race-editor bevat twee specifieke configuratiesecties voor brandstof: **Analoge brandstof** en **Digitale brandstof**. Welk systeem beschikbaar en actief is, wordt automatisch bepaald door de gekozen baan voor de race:
 
-- **Analoge banen**: Traditionele slotracebanen waar auto's rechtstreeks via de stroomrails van de sleuf worden gevoed, zonder digitale decoders of telemetrie tussen auto en baan. Wanneer een analoge baan is geselecteerd, is de sectie **Analoge brandstof** ingeschakeld en wordt de sectie **Digitale brandstof** automatisch uitgeschakeld.
-- **Digitale banen**: Digitale slotracesystemen (zoals Carrera Digital, Scalextric Digital, Scorpius of oXigen) waarbij de interface digitale telemetrie communiceert (auto-ID, gaspercentage, sensoren in de pitstraat). Wanneer een digitale baan is geselecteerd, is de sectie **Digitale brandstof** ingeschakeld en wordt de sectie **Analoge brandstof** automatisch uitgeschakeld.
+- **Analoge banen**: Traditionele slotracebanen waar auto's rechtstreeks via de stroomrails van de sleuf worden gevoed, zonder digitale decoders of telemetrie tussen auto en baan. Wanneer een analoge baan is geselecteerd, is de sectie **Analoge brandstof** ingeschakeld en wordt het selectievakje voor **Digitale brandstof** automatisch uitgeschakeld (als u de muisaanwijzer op het uitgeschakelde selectievakje plaatst, verschijnt er een verklarende tooltip).
+- **Digitale banen**: Digitale slotracesystemen (zoals Carrera Digital, Scalextric Digital, Scorpius of oXigen) waarbij de interface digitale telemetrie communiceert (auto-ID, gaspercentage, sensoren in de pitstraat). Wanneer een digitale baan is geselecteerd, is de sectie **Digitale brandstof** ingeschakeld en wordt het selectievakje voor **Analoge brandstof** automatisch uitgeschakeld (als u de muisaanwijzer op het uitgeschakelde selectievakje plaatst, verschijnt er een verklarende tooltip).
 
 ---
 
@@ -26,9 +71,9 @@ Analoge brandstof simuleert het verbruik **per ronde**. Omdat analoge banen auto
     - **Kubisch**: Het verbruik stijgt steil bij snelle ronden en straft coureurs die jagen op ronderecords agressief af.
     - **Aangepaste curve**: Maakt het mogelijk de verbruikscurve punt voor punt interactief vorm te geven op de SVG-grafiek.
 - **Snelste tijd (s)**: De snelste verwachte rondetijd voor de baan en autoklasse (in seconden).
-- **Max. verbruik**: De brandstofeenheden die per ronde worden verbruikt bij het rijden op of sneller dan de **Snelste tijd**.
 - **Langzaamste tijd (s)**: De langzaamste rondetijd (in seconden) voor minimaal brandstofverbruik.
-- **Min. verbruik**: De brandstofeenheden die per ronde worden verbruikt bij het rijden op of langzamer dan de **Langzaamste tijd**.
+- **Max. brandstofverbruik per snelste ronde**: De brandstofeenheden die per ronde worden verbruikt bij het rijden op of sneller dan de **Snelste tijd**.
+- **Min. brandstofverbruik per langzaamste ronde**: De brandstofeenheden die per ronde worden verbruikt bij het rijden op of langzamer dan de **Langzaamste tijd**.
     - Voor rondetijden tussen de snelste en langzaamste tijd verloopt het verbruik vloeiend volgens het geselecteerde **Verbruikstype** (Lineair, Kwadratisch, Kubisch of Aangepaste curve).
 - **Capaciteit**: Het totale volume van de brandstoftank in willekeurige eenheden (bijv. 100).
 - **Startniveau (%)**: Het percentage van de maximale brandstofcapaciteit bij de start van een heat (bijv. 100% voor een volle tank, of minder voor sprint-/handicap-heats).

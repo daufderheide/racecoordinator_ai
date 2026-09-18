@@ -180,7 +180,9 @@
     <div
       class="table-body"
       style="flex: 1"
-      [style.--num-lanes]="parent().track?.lanes?.length || 1"
+      [style.--num-lanes]="
+        parent().track?.lanes?.length || parent().sortedHeatDrivers?.length || 1
+      "
       cdkDropList
       [cdkDropListData]="parent().sortedHeatDrivers"
       (cdkDropListDropped)="parent().onDrop($event)"

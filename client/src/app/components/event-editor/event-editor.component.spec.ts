@@ -27,6 +27,31 @@ import { EventEditorComponent } from "./event-editor.component";
 class MockEditorTitleComponent {
   titleKey = input<string>("");
   itemName = input<string | undefined>(undefined);
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input<boolean>(false);
+  showEdit = input<boolean>(false);
+  disabledEdit = input<boolean>(false);
+  undoManager = input<any>();
+  showUndo = input<boolean>(true);
+  showRedo = input<boolean>(true);
+  showHelp = input<boolean>(true);
+  showCopy = input<boolean>(false);
+  disabledCopy = input<boolean>(false);
+  copyDisabledTooltipKey = input<string>("");
+  showAdd = input<boolean>(false);
+  showDelete = input<boolean>(false);
+  disabledDelete = input<boolean>(false);
+  isSaving = input<boolean>(false);
+  helpSteps = input<any[]>([]);
+  helpTitle = input<string>("");
+  helpRecordName = input<string | undefined>();
+  help = output<void>();
+  copy = output<void>();
+  add = output<void>();
+  delete = output<void>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
 }
 
 @Component({
@@ -57,34 +82,40 @@ describe("EventEditorComponent", () => {
   let mockDataService: any;
   let mockRouter: any;
 
-  const mockEvents: Event[] = [
-    {
-      entity_id: "evt_1",
-      name: "Existing Event",
-      description: "Description",
-      auto_advance_time: 10,
-      races: [{ raceId: "r1", maxDrivers: 0 }],
-    },
-  ];
-
-  const mockRaces = [
-    { entity_id: "r1", name: "Qualifying Heat" },
-    { entity_id: "r2", name: "Final Sprint" },
-  ];
-
   beforeEach(async () => {
+    const mockEvents: Event[] = [
+      {
+        entity_id: "evt_1",
+        name: "Existing Event",
+        description: "Description",
+        auto_advance_time: 10,
+        races: [{ raceId: "r1", maxDrivers: 0 }],
+      },
+    ];
+
+    const mockRaces = [
+      { entity_id: "r1", name: "Qualifying Heat" },
+      { entity_id: "r2", name: "Final Sprint" },
+    ];
+
     mockDataService = jasmine.createSpyObj("DataService", [
       "getEvents",
       "getRaces",
       "createEvent",
       "updateEvent",
+      "deleteEvent",
     ]);
-    mockDataService.getEvents.and.returnValue(of(mockEvents));
-    mockDataService.getRaces.and.returnValue(of(mockRaces));
+    mockDataService.getEvents.and.callFake(() =>
+      of(JSON.parse(JSON.stringify(mockEvents))),
+    );
+    mockDataService.getRaces.and.callFake(() =>
+      of(JSON.parse(JSON.stringify(mockRaces))),
+    );
     mockDataService.createEvent.and.callFake((e: Event) =>
       of({ ...e, entity_id: "evt_new" }),
     );
     mockDataService.updateEvent.and.callFake((id: string, e: Event) => of(e));
+    mockDataService.deleteEvent.and.returnValue(of({ success: true }));
 
     mockRouter = jasmine.createSpyObj("Router", ["navigate"]);
     const mockNavigationService = jasmine.createSpyObj("NavigationService", [
@@ -431,6 +462,139 @@ describe("EventEditorComponent", () => {
 
       expect(component.defaultEventName).toBe("Existing Event_1");
       expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+  });
+
+  describe("Unified Editor Architecture & Read-Only vs Edit Mode", () => {
+    it("should be in read-only mode by default when loading existing event", fakeAsync(() => {
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      expect(component.isEditMode).toBeFalse();
+
+      const nameInput = fixture.nativeElement.querySelector("#event-name");
+      expect(nameInput.disabled).toBeTrue();
+
+      const addBtn = fixture.nativeElement.querySelector("#btn-add-race");
+      expect(addBtn).toBeNull();
+
+      const removeBtn = fixture.nativeElement.querySelector(".btn-remove");
+      expect(removeBtn).toBeNull();
+    }));
+
+    it("should toggle edit mode on, enable inputs, and focus name input", () => {
+      fixture.detectChanges();
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.onToggleEditMode();
+      fixture.detectChanges();
+
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+
+      const nameInput = fixture.nativeElement.querySelector("#event-name");
+      expect(nameInput.disabled).toBeFalse();
+
+      const addBtn = fixture.nativeElement.querySelector("#btn-add-race");
+      expect(addBtn).not.toBeNull();
+    });
+
+    it("should toggle edit mode off when there are no unsaved changes", () => {
+      fixture.detectChanges();
+      component.isEditMode = true;
+      spyOn(component, "isDirtyState").and.returnValue(false);
+
+      component.onToggleEditMode();
+      expect(component.isEditMode).toBeFalse();
+    });
+
+    it("should select event by id from dropdown when not in edit mode", () => {
+      fixture.detectChanges();
+      expect(component.selectedEventId).toBe("evt_1");
+
+      const evt2: Event = {
+        entity_id: "evt_2",
+        name: "Second Event",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      component.existingEvents.push(evt2);
+      component.updateEventSelectItems();
+
+      component.onSelectEventById("evt_2");
+      expect(component.selectedEventId).toBe("evt_2");
+      expect(component.editingEvent.name).toBe("Second Event");
+      expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+        relativeTo: jasmine.any(Object),
+        queryParams: { id: "evt_2" },
+        queryParamsHandling: "merge",
+        replaceUrl: true,
+      });
+    });
+
+    it("should not switch selection via onSelectEventById when in edit mode", () => {
+      fixture.detectChanges();
+      component.isEditMode = true;
+      component.onSelectEventById("evt_2");
+      expect(component.selectedEventId).toBe("evt_1");
+    });
+
+    it("should immediately create event in DB, activate edit mode, and focus on startNewEvent", fakeAsync(() => {
+      fixture.detectChanges();
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.startNewEvent();
+      tick(200);
+
+      expect(mockDataService.createEvent).toHaveBeenCalled();
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+      expect(component.selectedEventId).toBe("evt_new");
+    }));
+
+    it("should create duplicate in DB, activate edit mode, and focus on saveAsNew", fakeAsync(() => {
+      fixture.detectChanges();
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingEvent = {
+        entity_id: "evt_1",
+        name: "Grand Prix",
+        description: "",
+        auto_advance_time: 0,
+        races: [{ raceId: "r1", maxDrivers: 0 }],
+      };
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(mockDataService.createEvent).toHaveBeenCalledWith(
+        jasmine.objectContaining({ name: "Grand Prix_1" }),
+      );
+      expect(component.isEditMode).toBeTrue();
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should prompt confirmation and delete event on onDeleteEvent", fakeAsync(() => {
+      fixture.detectChanges();
+      spyOn(window, "confirm").and.returnValue(true);
+      const evt2: Event = {
+        entity_id: "evt_2",
+        name: "Second Event",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      component.existingEvents.push(evt2);
+      component.updateEventSelectItems();
+
+      component.onDeleteEvent();
+      tick(200);
+
+      expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_1");
+      expect(
+        component.existingEvents.find((e) => e.entity_id === "evt_1"),
+      ).toBeUndefined();
+      expect(component.selectedEventId).toBe("evt_2");
     }));
   });
 });

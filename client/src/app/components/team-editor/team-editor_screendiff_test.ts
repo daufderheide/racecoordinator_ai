@@ -10,6 +10,13 @@ test.describe("Team Editor Visuals", () => {
     await TestSetupHelper.disableAnimations(page);
   });
 
+  async function enterEditMode(page: any) {
+    await page.locator("#edit-track-btn").click();
+    await expect(page.locator("#team-name-input")).toBeEnabled();
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+  }
+
   test("should display team editor", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,
@@ -20,8 +27,28 @@ test.describe("Team Editor Visuals", () => {
     await page.locator(".page-container").waitFor();
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
+    await enterEditMode(page);
+
     // Wait for settling
     await expect(page).toHaveScreenshot("team-editor-initial.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
+  test("should display team editor in read-only mode", async ({ page }) => {
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/team-editor?id=t1"),
+    );
+
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("team-editor-read-only.png", {
       animations: "disabled",
       maxDiffPixelRatio: 0.05,
     });
@@ -34,6 +61,8 @@ test.describe("Team Editor Visuals", () => {
       page.goto("/team-editor?id=t1"),
     );
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     const container = page.locator(".page-container");
     const harness = new TeamEditorHarnessE2e(container);
@@ -56,6 +85,8 @@ test.describe("Team Editor Visuals", () => {
     );
 
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     const container = page.locator(".page-container");
     const harness = new TeamEditorHarnessE2e(container);
@@ -81,6 +112,8 @@ test.describe("Team Editor Visuals", () => {
     const _harness = new TeamEditorHarnessE2e(container);
 
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await enterEditMode(page);
 
     // Click on the first available driver to assign them
     const availableDriver = page.locator(".driver-grid .driver-item").first();

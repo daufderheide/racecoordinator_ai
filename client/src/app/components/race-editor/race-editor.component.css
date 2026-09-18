@@ -27,21 +27,7 @@
   overflow: hidden;
 }
 
-/* Header style moved to app-editor-title */
-
-/* Content */
-.content-split {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  margin: 0;
-  padding: 0 30px 24px 30px;
-  transform: translateZ(0);
-  will-change: transform;
-  border-top: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
-}
+@import '../shared/shared-editor-layout.css';
 
 /* Editor Panel (Left) */
 .editor-panel {
@@ -56,8 +42,6 @@
   padding-top: 0;
   margin-top: 0;
   margin-left: 0;
-  transform: translateZ(0);
-  will-change: transform, opacity;
   overflow: visible;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
@@ -588,29 +572,8 @@
   position: relative;
   background-color: transparent;
   padding: 24px 0 0 24px;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
-/* Custom Scrollbar for Preview Panel */
-.preview-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.preview-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.preview-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.preview-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
 
 .sections-wrapper {
   flex: 1;
@@ -623,20 +586,38 @@
   width: 8px;
 }
 
-.sections-wrapper::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
+.editor-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
 }
 
-.sections-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
+.preview-panel.read-only input:not([type="button"]):not([type="submit"]),
+.preview-panel.read-only select,
+.preview-panel.read-only app-custom-select,
+.preview-panel.read-only button,
+.preview-panel.read-only .checkbox-container,
+.preview-panel.read-only .checkmark,
+.preview-panel.read-only label.checkbox-container,
+.editor-panel.read-only input:not(.driver-count-input),
+.editor-panel.read-only select,
+.editor-panel.read-only app-custom-select,
+.editor-panel.read-only .checkbox-container,
+.editor-panel.read-only .checkmark,
+.editor-panel.read-only label.checkbox-container {
+  pointer-events: none !important;
+  opacity: 0.75;
+  cursor: not-allowed !important;
 }
 
-.sections-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
+.section-header,
+.preview-panel .section-header,
+.editor-panel .section-header {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
+
 
 .section-header {
   display: flex;
@@ -993,6 +974,24 @@
   user-select: none;
 }
 
+.fuel-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+.fuel-disabled-tooltip {
+  margin-left: 10px;
+  cursor: help;
+  pointer-events: auto !important;
+}
+
+.fuel-disabled-tooltip::after {
+  width: 280px;
+  text-transform: none;
+  font-weight: 400;
+  text-align: left;
+}
+
 /* For tooltips in the config panel (right side), keep them on top if they fit better */
 .preview-panel .tooltip-icon::after {
   bottom: 125%;
@@ -1178,9 +1177,13 @@
   text-transform: uppercase;
 }
 
-.disabled {
+.disabled,
+.checkbox-container.disabled,
+.checkbox-container input:disabled ~ .checkmark,
+.checkbox-container input:disabled ~ .checkbox-label {
   opacity: 0.4;
-  pointer-events: none;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
 .graph-hover-card {

@@ -67,3 +67,35 @@
   white-space: nowrap;
   min-width: 0;
 }
+
+.editor-title-select {
+  min-width: 200px;
+  max-width: 340px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.editor-title-select ::ng-deep .custom-select-trigger {
+  min-height: 40px;
+  background-color: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.4);
+  border-radius: 6px;
+  color: #00e5ff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+}
+
+.editor-title-select ::ng-deep .custom-select-trigger:hover {
+  border-color: #00e5ff;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
+}
+
+.editor-title-select ::ng-deep .custom-select-container.disabled .custom-select-trigger {
+  opacity: 0.6;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  box-shadow: none;
+  cursor: not-allowed;
+}

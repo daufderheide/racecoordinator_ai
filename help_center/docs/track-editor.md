@@ -8,7 +8,16 @@ Race Coordinator AI features an advanced multi-interface architecture that allow
 
 ## Overview & Auto-Saving
 
-The Track Editor is split into two synchronized working areas:
+The Track Editor provides a unified interface for selecting, viewing, configuring, and testing your slot car tracks:
+
+- **Track Selector**: Located in the top header next to the page title, this dropdown lists all configured tracks and allows you to quickly switch between tracks.
+- **Read-Only Mode**: By default, opening the editor displays track properties, lane layouts, and hardware interfaces in read-only mode. Form inputs, lane management, and interface editing controls are locked to prevent accidental modifications.
+- **Edit Mode**: Clicking the **Edit** (pencil) icon on the toolbar unlocks all configuration controls, lane reordering, and hardware interface editing. While in Edit Mode, the track selector dropdown is locked to prevent accidental navigation away from unsaved edits.
+- **Continuous Auto-Save**: As you make changes (renaming, adjusting lane dimensions, reordering lanes, modifying pin assignments), your edits are automatically saved to the server in the background without dropping out of Edit Mode.
+- **Exiting Edit Mode**: Clicking the **Done Editing** (checkmark) icon validates your changes, ensures all edits are persisted, and returns the editor to Read-Only Mode.
+- **Discarding Changes**: If you attempt to leave the editor with unsaved or invalid changes, the unsaved changes dialog prompts you to confirm. Discarding changes reverts all edits back to the last-saved version and restores Read-Only Mode.
+
+The editor workspace is split into two synchronized working panels:
 
 - **Left Panel (General Track & Lane Properties)**: Configure track identification, segment counts, physical scale, and individual lane attributes (dimensions, ordering, and colors). Add new hardware interfaces from the bottom of this panel.
 - **Right Panel (Hardware Interfaces & Interactive Testing)**: Configure attached hardware controllers, map physical pins and channels to track behaviors, configure addressable RGB LED lighting strips, and test sensors and relays in real time.
@@ -253,9 +262,13 @@ When testing race formats, custom themes, rotation schedules, or Text-to-Speech 
 
 The top toolbar of the Track Editor provides essential management tools:
 
+- **Back**: Returns to the previous view or Race Day Setup.
+- **Add Track (+)**: Creates a new track template and enters Edit Mode.
+- **Duplicate Track**: Creates an exact copy of the currently selected track under a new unique name. Ideal for creating alternate configurations (e.g., standard racing vs. digital fuel layout) without rebuilding lane dimensions and pin assignments from scratch.
+- **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
+- **Delete Track**: Deletes the selected track after confirmation.
 - **Undo (`Ctrl+Z`) / Redo (`Ctrl+Y`)**: Seamlessly revert or restore changes across lane dimensions, color adjustments, pin reassignments, and interface additions.
-- **Save as New (Duplicate Track)**: Creates an exact copy of the current track under a new name. Ideal for creating alternate configurations (e.g., standard racing vs. digital fuel layout) without rebuilding lane dimensions and pin assignments from scratch.
-- **Guided Help Tour**: Click the Help button (**`?`**) in the top right to start an interactive tour highlighting every control, field, and button directly on the screen.
+- **Help (`?`)**: Opens the interactive guided tour highlighting every control, field, and button directly on the screen.
 
 ---
 

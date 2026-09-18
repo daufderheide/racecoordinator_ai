@@ -1,5 +1,50 @@
 # Editor de Carreras
 
+El **Editor de Carreras** es la interfaz de configuración completa para diseñar, configurar y probar sus formatos de carreras de slot cars, reglas de puntuación, rotaciones de mangas, simulaciones de combustible y ajustes de temporizador.
+
+---
+
+## Descripción General y Autoguardado
+
+El Editor de Carreras ofrece una interfaz unificada para seleccionar, visualizar, configurar y probar sus formatos de carrera:
+
+- **Selector de Carrera**: Ubicado en el encabezado superior junto al título de la página, este menú desplegable enumera todas las carreras configuradas y le permite cambiar rápidamente entre ellas.
+- **Modo de Solo Lectura**: De forma predeterminada, al abrir el editor se muestran las propiedades de la carrera, reglas de puntuación y opciones de configuración en modo de solo lectura. Los campos de formulario están bloqueados para evitar cambios accidentales, mientras que los acordeones y vistas previas de mangas permanecen interactivos.
+- **Modo de Edición**: Al hacer clic en el icono **Editar** (lápiz) de la barra de herramientas se desbloquean todos los controles. Durante la edición, el selector de carrera está bloqueado.
+- **Autoguardado Continuo**: Todas las modificaciones se guardan automáticamente en segundo plano en el servidor sin salir del modo de edición.
+- **Salir del Modo de Edición**: Al hacer clic en el icono **Listo** (marca de verificación) se validan los cambios y se regresa al modo de solo lectura.
+- **Descartar Cambios**: Al hacer clic en Descartar se revierten todos los cambios a la última versión guardada y se sale del modo de edición.
+
+El espacio de trabajo se divide en dos paneles sincronizados:
+
+- **Panel Izquierdo (Configuración de Carrera)**: Propiedades generales, formato de carrera, métodos de puntuación, tipo de rotación, opciones de grupo y simulación de combustible analógico/digital.
+- **Panel Derecho (Vista Previa de Mangas en Vivo)**: Genera dinámicamente la lista completa de mangas según la rotación activa y el número de pilotos.
+
+---
+
+## Configuración de Carrera y Opciones
+
+### Nombre de Carrera y Asociación de Pista
+- **Nombre de Carrera**: Nombre único que identifica el formato de carrera.
+- **Pista**: La pista física asociada determina si está disponible la simulación de combustible analógica o digital.
+- **Tema**: Tema visual de interfaz aplicado a la pantalla de carrera.
+
+### Formato de Rotación de Mangas
+- **Tipo de Rotación**: Rotaciones estándar (**Round Robin**, **Escalera**, **Torneo**) o secuencias personalizadas.
+- **Ciclos de Mangas**: Cantidad de veces que cada piloto completa la rotación entera de mangas.
+- **Mangas Invertidas**: Invierte el orden de la secuencia de mangas.
+
+### Opciones de Puntuación
+- **Puntuación de Mangas**: Finalización por vueltas o tiempo límite, método de clasificación y desempates.
+- **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
+- **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
+
+### Ajustes de Temporizador
+- **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.
+- **Tiempo Mínimo de Vuelta**: Tiempo mínimo permitido para filtrar falsos disparos de sensores.
+- **Tiempo de Drift**: Ventana de detección para deslizamientos sobre la línea de meta.
+- **Iniciar Detrás del Sensor**: Exige que los coches comiencen detrás del sensor en la vuelta cero.
+
 ## Ajustes de combustible
 
 Race Coordinator AI admite simulaciones integrales de combustible para pistas analógicas y digitales, incluyendo capacidad de combustible personalizable, nivel inicial, demoras en paradas en boxes, tasas de repostaje, penalizaciones por quedarse sin combustible y modelos de consumo de combustible.
@@ -8,8 +53,8 @@ Race Coordinator AI admite simulaciones integrales de combustible para pistas an
 
 El editor de carreras ofrece dos secciones dedicadas a la configuración de combustible: **Combustible analógico** y **Combustible digital**. El sistema disponible y activo se determina automáticamente según la pista seleccionada para la carrera:
 
-- **Pistas analógicas**: Pistas tradicionales de slot donde los coches reciben energía directamente a través de los raíles del carril, sin decodificadores digitales ni telemetría del vehículo a la pista. Cuando se selecciona una pista analógica, la sección **Combustible analógico** queda habilitada y la sección **Combustible digital** se desactiva automáticamente.
-- **Pistas digitales**: Sistemas digitales de slot (como Carrera Digital, Scalextric Digital, Scorpius u oXigen) donde la interfaz transmite telemetría digital (identificador del coche, porcentaje de acelerador, sensores de línea de boxes). Cuando se selecciona una pista digital, la sección **Combustible digital** queda habilitada y la sección **Combustible analógico** se desactiva automáticamente.
+- **Pistas analógicas**: Pistas tradicionales de slot donde los coches reciben energía directamente a través de los raíles del carril, sin decodificadores digitales ni telemetría del vehículo a la pista. Cuando se selecciona una pista analógica, la sección **Combustible analógico** queda habilitada y la casilla de **Combustible digital** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
+- **Pistas digitales**: Sistemas digitales de slot (como Carrera Digital, Scalextric Digital, Scorpius u oXigen) donde la interfaz transmite telemetría digital (identificador del coche, porcentaje de acelerador, sensores de línea de boxes). Cuando se selecciona una pista digital, la sección **Combustible digital** queda habilitada y la casilla de **Combustible analógico** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
 
 ---
 
@@ -26,9 +71,9 @@ El combustible analógico simula el consumo **por vuelta**. Dado que las pistas 
     - **Cúbico**: El consumo aumenta vertiginosamente en vueltas rápidas, castigando drásticamente a los pilotos que arriesgan en busca de vueltas récord.
     - **Curva personalizada**: Permite moldear de forma interactiva y punto a punto la curva de consumo directamente en el gráfico SVG.
 - **Tiempo más rápido (s)**: El tiempo de vuelta más rápido esperado para la pista y categoría del coche (en segundos).
-- **Consumo máx.**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más rápido** o más veloz.
 - **Tiempo más lento (s)**: El tiempo de vuelta más lento (en segundos) para el consumo mínimo de combustible.
-- **Consumo mín.**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más lento** o más lento.
+- **Consumo máx. de combustible por vuelta más rápida**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más rápido** o más veloz.
+- **Consumo mín. de combustible por vuelta más lenta**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más lento** o más lento.
     - Para tiempos de vuelta entre el tiempo más rápido y el más lento, el consumo transiciona suavemente según el **Tipo de consumo** seleccionado (Lineal, Cuadrático, Cúbico o Curva personalizada).
 - **Capacidad**: El volumen total del depósito de combustible en unidades arbitrarias (por ejemplo, 100).
 - **Nivel inicial (%)**: Porcentaje de capacidad disponible en el depósito al comenzar una tanda (por ejemplo, 100 % para depósito lleno, o menos en tandas de sprint o hándicap).

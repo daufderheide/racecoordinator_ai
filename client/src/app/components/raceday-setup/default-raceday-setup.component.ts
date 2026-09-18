@@ -1935,12 +1935,12 @@ export class DefaultRacedaySetupComponent implements OnInit {
 
   openDriverManager() {
     this.closeConfigDropdown();
-    this.router.navigate(["/driver-manager"]);
+    this.router.navigate(["/driver-editor"]);
   }
 
   openTeamManager() {
     this.closeConfigDropdown();
-    this.router.navigate(["/team-manager"]);
+    this.router.navigate(["/team-editor"]);
   }
 
   openTrackManager() {
@@ -1949,7 +1949,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       this.showTrackEditorPrompt = true;
       this.cdr.detectChanges();
     } else {
-      this.router.navigate(["/track-manager"]);
+      this.router.navigate(["/track-editor"]);
     }
   }
 
@@ -1961,7 +1961,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
           this.logger.info(
             "Race ended successfully, navigating to track manager",
           );
-          this.router.navigate(["/track-manager"]);
+          this.router.navigate(["/track-editor"]);
         } else {
           this.logger.warn("Failed to end race");
         }
@@ -2009,7 +2009,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       queryParams.driverCount = this.selectedParticipants.length;
     }
     this.closeConfigDropdown();
-    this.router.navigate(["/race-manager"], { queryParams });
+    this.router.navigate(["/race-editor"], { queryParams });
   }
 
   openEventManager() {
@@ -2017,7 +2017,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ? { id: this.selectedEvent.entity_id }
       : {};
     this.closeConfigDropdown();
-    this.router.navigate(["/event-manager"], { queryParams });
+    this.router.navigate(["/event-editor"], { queryParams });
   }
 
   onSeasonChange() {
@@ -2072,7 +2072,7 @@ export class DefaultRacedaySetupComponent implements OnInit {
       ? { id: this.selectedSeason.entity_id }
       : {};
     this.closeConfigDropdown();
-    this.router.navigate(["/season-manager"], { queryParams });
+    this.router.navigate(["/season-editor"], { queryParams });
   }
 
   toggleConfigDropdown(event: Event) {

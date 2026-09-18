@@ -3363,6 +3363,45 @@ describe("DefaultRacedayComponent", () => {
       expect((component as any).driverRankings.size).toBe(2);
       expect(component["sortedHeatDrivers"].length).toBe(2);
     });
+
+    it("should update totalHeats when heats$ emits even if sortedHeatDrivers is already populated", () => {
+      const heatsSubject = new Subject<any[]>();
+      mockRaceService.heats$ = heatsSubject.asObservable();
+      fixture.detectChanges();
+
+      (component as any).sortedHeatDrivers = [{ objectId: "hd1" }];
+      (component as any).heat = { heatNumber: 1 };
+      (component as any).totalHeats = 0;
+
+      heatsSubject.next([
+        { heatNumber: 1 },
+        { heatNumber: 2 },
+        { heatNumber: 3 },
+        { heatNumber: 4 },
+      ]);
+
+      expect((component as any).totalHeats).toBe(4);
+    });
+
+    it("should fallback track from race or raceService in initializeHeat and getLaneColor", () => {
+      const mockTrack = {
+        lanes: [
+          { background_color: "#ff0000", foreground_color: "#ffffff" },
+          { background_color: "#0000ff", foreground_color: "#ffffff" },
+        ],
+      };
+      (component as any).track = null;
+      (component as any).race = { track: mockTrack };
+      mockRaceService.getRace.and.returnValue(null);
+
+      (component as any).initializeHeat();
+
+      expect((component as any).track).toBe(mockTrack);
+
+      const hd = { laneIndex: 0 } as any;
+      const color = component.getLaneColor(hd, "background_color");
+      expect(color).toBe("#ff0000");
+    });
   });
 
   describe("onFileMenuSelect and onOptionsSelect", () => {
@@ -5001,6 +5040,12 @@ describe("DefaultRacedayComponent", () => {
                 type: "tts",
                 text: "Final Lap",
               },
+              {
+                timeSeconds: 0,
+                name: "Leader finished",
+                type: "tts",
+                text: "Leader finished",
+              },
             ],
             url: "/api/assets/download/default_laps_left_set",
           },
@@ -5334,7 +5379,7 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
-    it("should play laps left audio set at thresholds (20, 10, 5, 1) when heat leader completes laps", () => {
+    it("should play laps left audio set at thresholds (20, 10, 5, 1, 0) when heat leader completes laps", () => {
       const playCalloutSpy = spyOn(
         component["audioService"],
         "playCallout",
@@ -5464,6 +5509,41 @@ describe("DefaultRacedayComponent", () => {
         undefined,
         undefined,
         { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Leader reaches lap 25: 0 laps left -> "Leader finished"
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 25,
+        lapTime: 3.5,
+      });
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Leader finished",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+      playCalloutSpy.calls.reset();
+      component["audioService"].stopVoice();
+
+      // Second driver reaches lap 25: already played for leader -> should NOT play again
+      lapsSubject.next({
+        objectId: secondHd.objectId,
+        lapNumber: 25,
+        lapTime: 3.8,
+      });
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({ text: "Leader finished" }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
       );
     });
 

@@ -1509,13 +1509,13 @@ describe("ModifyHeatsModalComponent", () => {
       const router = TestBed.inject(Router);
       component.onManageTeams();
       expect(router.navigate).toHaveBeenCalledWith(
-        ["/team-manager"],
+        ["/team-editor"],
         jasmine.any(Object),
       );
 
       component.onManageDrivers();
       expect(router.navigate).toHaveBeenCalledWith(
-        ["/driver-manager"],
+        ["/driver-editor"],
         jasmine.any(Object),
       );
     });

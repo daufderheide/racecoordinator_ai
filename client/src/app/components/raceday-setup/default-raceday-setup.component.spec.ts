@@ -1603,10 +1603,10 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(selector).toBeTruthy();
     });
 
-    it("should navigate to event manager on openEventManager", () => {
+    it("should navigate to event editor on openEventManager", () => {
       component.openEventManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/event-manager"],
+        ["/event-editor"],
         jasmine.any(Object),
       );
     });
@@ -2244,14 +2244,14 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/asset-manager"]);
 
       component.openDriverManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"]);
 
       component.openTeamManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"]);
 
       (component as any).isRaceRunning = false;
       component.openTrackManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
       (component as any).isRaceRunning = true;
       component.openTrackManager();
@@ -2261,7 +2261,7 @@ describe("DefaultRacedaySetupComponent", () => {
         .createSpy("endRace")
         .and.returnValue(of(true));
       component.onConfirmTrackEditor();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-manager"]);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
 
       component.onCancelTrackEditor();
       expect(component.showTrackEditorPrompt).toBeFalse();
@@ -2269,13 +2269,13 @@ describe("DefaultRacedaySetupComponent", () => {
       component.selectedRace = { entity_id: "r1" } as any;
       component.selectedParticipants = [{} as any];
       component.openRaceManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: { id: "r1", driverCount: 1 },
       });
 
       component.selectedParticipants = [];
       component.openRaceManager();
-      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-editor"], {
         queryParams: { id: "r1" },
       });
 
@@ -2328,7 +2328,7 @@ describe("DefaultRacedaySetupComponent", () => {
       component.selectedEvent = { entity_id: "e1" } as any;
       component.openEventManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/event-manager"],
+        ["/event-editor"],
         jasmine.any(Object),
       );
 
@@ -2342,7 +2342,7 @@ describe("DefaultRacedaySetupComponent", () => {
 
       component.openSeasonManager();
       expect(mockRouter.navigate).toHaveBeenCalledWith(
-        ["/season-manager"],
+        ["/season-editor"],
         jasmine.any(Object),
       );
     });

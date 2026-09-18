@@ -74,9 +74,9 @@ describe("HelpLinkService", () => {
       spyOn(service, "isOnline").and.returnValue(true);
       translationServiceSpy.getCurrentLanguageValue.and.returnValue("fr");
 
-      const url = service.buildHelpUrl("track-manager", "arduino-setup");
+      const url = service.buildHelpUrl("track-editor", "arduino-setup");
       expect(url).toBe(
-        "https://daufderheide.github.io/racecoordinator_ai/fr/track-manager/#arduino-setup",
+        "https://daufderheide.github.io/racecoordinator_ai/fr/track-editor/#arduino-setup",
       );
     });
 

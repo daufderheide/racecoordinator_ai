@@ -29,6 +29,7 @@ import { TranslationService } from "@app/services/translation.service";
 export class ToolbarComponent implements OnInit {
   showAdd = input(false);
   showEdit = input(false);
+  isEditMode = input(false);
   showHelp = input(false);
   showDelete = input(false);
   showCopy = input(false);
@@ -101,7 +102,7 @@ export class ToolbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.route.queryParams.subscribe((params) => {
+    this.route?.queryParams?.subscribe((params) => {
       const forceHelp = params["help"] === "true";
       const settings = this.settingsService.getSettings();
       const helpRecName = this.helpRecordName();

@@ -1590,7 +1590,10 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceService.heats$.subscribe((heats) => {
         this.heats = heats || [];
-        if (this.sortedHeatDrivers.length === 0 || !this.heat) {
+        if (this.heats.length > 0) {
+          this.totalHeats = this.heats.length;
+        }
+        if (this.sortedHeatDrivers.length === 0 || !this.heat || !this.track) {
           this.initializeHeat();
         }
         if (!this.isDestroyed) {
@@ -1603,6 +1606,9 @@ export class DefaultRacedayComponent
       this.raceService.currentHeat$.subscribe((heat) => {
         if (heat) {
           this.heat = heat;
+          if (!this.track) {
+            this.track = this.race?.track || this.raceService.getRace()?.track;
+          }
           this.sortHeatDrivers();
           if (!this.isDestroyed) {
             this.cdr.markForCheck();
@@ -1643,8 +1649,6 @@ export class DefaultRacedayComponent
       }),
     );
 
-    this.raceConnectionService.connect();
-
     this.subscriptions.push(
       this.raceService.currentHeat$.subscribe(() => {
         this.loadRaceData();
@@ -1662,6 +1666,8 @@ export class DefaultRacedayComponent
         this.handleRaceStateChange(state);
       }),
     );
+
+    this.raceConnectionService.connect();
   }
 
   private subscribeToRaceTime() {
@@ -2067,8 +2073,14 @@ export class DefaultRacedayComponent
       );
       if (asset?.audioEntries && asset.audioEntries.length > 0) {
         return asset.audioEntries
-          .map((e: any) => Math.round(e.timeSeconds))
-          .filter((t: number) => t > 0)
+          .map((e: any) =>
+            Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+          )
+          .filter((t: number) => !isNaN(t) && t >= 0)
+          .filter(
+            (t: number, index: number, self: number[]) =>
+              self.indexOf(t) === index,
+          )
           .sort((a: number, b: number) => b - a);
       }
     }
@@ -2077,9 +2089,11 @@ export class DefaultRacedayComponent
 
   private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
     const scoring = this.race?.heat_scoring;
-    if (!scoring || scoring.finishMethod !== FinishMethod.Lap) return;
+    const fm: any = scoring?.finishMethod ?? (scoring as any)?.finish_method;
+    const isLap = fm === FinishMethod.Lap || fm === "Lap" || fm === 1;
+    if (!scoring || !isLap) return;
 
-    const totalLaps = scoring.finishValue;
+    const totalLaps = scoring.finishValue ?? (scoring as any)?.finish_value;
     if (!totalLaps || totalLaps <= 0) return;
 
     const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
@@ -2914,7 +2928,9 @@ export class DefaultRacedayComponent
       if (
         this.childWindowManagerService?.isRacePreservingRoute(nextState.url) ||
         nextState.url.includes("/modify-heats") ||
+        nextState.url.includes("/team-editor") ||
         nextState.url.includes("/team-manager") ||
+        nextState.url.includes("/driver-editor") ||
         nextState.url.includes("/driver-manager") ||
         nextState.url.includes("/ui-editor") ||
         nextState.url.includes("/driver-station") ||
@@ -3220,12 +3236,16 @@ export class DefaultRacedayComponent
   // ... existing properties ...
 
   private initializeHeat() {
-    if (!this.track) return;
+    if (!this.track) {
+      this.track = this.race?.track || this.raceService.getRace()?.track;
+    }
 
-    const heats = this.raceService.getHeats();
+    const heats = this.raceService.getHeats() || this.heats;
     if (heats && heats.length > 0) {
       this.totalHeats = heats.length;
     }
+
+    if (!this.track) return;
 
     const currentHeat = this.raceService.getCurrentHeat() || this.heat;
     if (currentHeat) {
@@ -5537,7 +5557,9 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     property: "background_color" | "foreground_color",
   ): string {
-    return this.track?.lanes?.[hd.laneIndex]?.[property] || "";
+    const track =
+      this.track || this.race?.track || this.raceService.getRace()?.track;
+    return track?.lanes?.[hd.laneIndex]?.[property] || "";
   }
 
   getDropdownIcon(color: string): string {
@@ -5985,9 +6007,10 @@ export class DefaultRacedayComponent
         ? { widgetType: "countdown" }
         : { widgetType: "timer" });
 
-    const entry = asset.audioEntries?.find(
-      (e: any) => Math.abs(e.timeSeconds - timeSeconds) < 0.1,
-    );
+    const entry = asset.audioEntries?.find((e: any) => {
+      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
+      return val != null && Math.abs(Number(val) - timeSeconds) < 0.1;
+    });
     if (entry) {
       const entryType = entry.type || "preset";
       if (entryType !== "none") {

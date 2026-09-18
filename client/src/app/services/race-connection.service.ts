@@ -102,6 +102,7 @@ export class RaceConnectionService implements OnDestroy {
 
   private driversLoaded = false;
   private pendingUpdate: IRace | null = null;
+  private pendingHeat: any = null;
   private driverSubscription?: Subscription;
 
   // Test hook or configuration
@@ -186,6 +187,7 @@ export class RaceConnectionService implements OnDestroy {
 
     this.driversLoaded = false;
     this.pendingUpdate = null;
+    this.pendingHeat = null;
     this.hasInitiallyConnected = false;
     this.lastInterfaceStatus = -1;
     this.isRaceEnded = this.raceStateSubject.value === RaceState.RACE_OVER;
@@ -497,19 +499,11 @@ export class RaceConnectionService implements OnDestroy {
     );
     this.subscriptions.push(
       this.dataService.getHeats().subscribe((heatProto) => {
-        const heat = HeatConverter.fromProto(heatProto);
-        console.log(`DEBUG FUEL (Heat Received): Started=${heat.started}`);
-        heat.heatDrivers?.forEach((hd: any) => {
-          console.log(
-            `  DEBUG FUEL: Lane ${hd.laneIndex} - Fuel: ${hd.participant?.fuelLevel}`,
-          );
-        });
-        if (heat.standings && heat.standings.length > 0) {
-          heat.standings.forEach((sid, index) => {
-            this.driverRankings.set(sid, index + 1);
-          });
+        if (!this.driversLoaded) {
+          this.pendingHeat = heatProto;
+          return;
         }
-        this.raceService.setCurrentHeat(heat);
+        this.processHeatUpdate(heatProto);
       }),
     );
 
@@ -528,6 +522,7 @@ export class RaceConnectionService implements OnDestroy {
     this.subscriptions = [];
     this.driversLoaded = false;
     this.pendingUpdate = null;
+    this.pendingHeat = null;
 
     this.raceService.clear();
 
@@ -541,6 +536,23 @@ export class RaceConnectionService implements OnDestroy {
     this.clearDisconnectedError();
     if (this.childWindowManagerService) {
       this.childWindowManagerService.closeAllWindows();
+    }
+  }
+
+  private flushPendingUpdates() {
+    if (this.pendingUpdate) {
+      const update = this.pendingUpdate;
+      const heatProto = this.pendingHeat;
+      this.pendingUpdate = null;
+      this.pendingHeat = null;
+      this.processRaceUpdate(update);
+      if (!update.currentHeat && heatProto) {
+        this.processHeatUpdate(heatProto);
+      }
+    } else if (this.pendingHeat) {
+      const heatProto = this.pendingHeat;
+      this.pendingHeat = null;
+      this.processHeatUpdate(heatProto);
     }
   }
 
@@ -558,20 +570,30 @@ export class RaceConnectionService implements OnDestroy {
           DriverConverter.register(driver);
         });
         this.driversLoaded = true;
-        if (this.pendingUpdate) {
-          this.processRaceUpdate(this.pendingUpdate);
-          this.pendingUpdate = null;
-        }
+        this.flushPendingUpdates();
       },
       error: (_err) => {
         this.driversLoaded = true;
-        if (this.pendingUpdate) {
-          this.processRaceUpdate(this.pendingUpdate);
-          this.pendingUpdate = null;
-        }
+        this.flushPendingUpdates();
       },
     });
     this.subscriptions.push(this.driverSubscription);
+  }
+
+  private processHeatUpdate(heatProto: any) {
+    const heat = HeatConverter.fromProto(heatProto);
+    console.log(`DEBUG FUEL (Heat Received): Started=${heat.started}`);
+    heat.heatDrivers?.forEach((hd: any) => {
+      console.log(
+        `  DEBUG FUEL: Lane ${hd.laneIndex} - Fuel: ${hd.participant?.fuelLevel}`,
+      );
+    });
+    if (heat.standings && heat.standings.length > 0) {
+      heat.standings.forEach((sid, index) => {
+        this.driverRankings.set(sid, index + 1);
+      });
+    }
+    this.raceService.setCurrentHeat(heat);
   }
 
   private processRaceUpdate(update: IRace) {
@@ -594,6 +616,20 @@ export class RaceConnectionService implements OnDestroy {
         this.raceStateSubject.next(RaceState.RACE_OVER);
       }
     }
+    if (update.drivers && update.drivers.length > 0) {
+      const participants = update.drivers.map((d: any) =>
+        RaceParticipantConverter.fromProto(d),
+      );
+      this.raceService.setParticipants(participants);
+    }
+
+    if (update.heats && update.heats.length > 0) {
+      const heats = update.heats.map((h: any, index: number) =>
+        HeatConverter.fromProto(h, index + 1),
+      );
+      this.raceService.setHeats(heats);
+    }
+
     if (update.race) {
       const currentRace = this.raceService.getRace();
       const newRaceId = update.race.model?.entityId;
@@ -645,20 +681,6 @@ export class RaceConnectionService implements OnDestroy {
           typeof sm === "number" ? sm : Number(sm);
       }
       this.raceService.setRace(race);
-    }
-
-    if (update.drivers && update.drivers.length > 0) {
-      const participants = update.drivers.map((d: any) =>
-        RaceParticipantConverter.fromProto(d),
-      );
-      this.raceService.setParticipants(participants);
-    }
-
-    if (update.heats && update.heats.length > 0) {
-      const heats = update.heats.map((h: any, index: number) =>
-        HeatConverter.fromProto(h, index + 1),
-      );
-      this.raceService.setHeats(heats);
     }
 
     if (update.currentHeat) {

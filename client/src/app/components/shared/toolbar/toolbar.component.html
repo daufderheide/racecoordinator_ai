@@ -76,9 +76,14 @@
       class="toolbar-btn ghost"
       (click)="onEdit()"
       [disabled]="isSaving() || disabledEdit()"
-      [title]="'TM_EDIT' | translate"
+      [title]="
+        (isEditMode() ? 'EDITOR_TOOLTIP_READ_ONLY' : 'EDITOR_TOOLTIP_EDIT')
+          | translate
+      "
     >
-      <span class="material-icons">edit</span>
+      <span class="material-icons">{{
+        isEditMode() ? "visibility" : "edit"
+      }}</span>
     </button>
   }
 

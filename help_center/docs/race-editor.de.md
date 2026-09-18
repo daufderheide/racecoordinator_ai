@@ -1,5 +1,50 @@
 # Rennen-Editor
 
+Der **Rennen-Editor** ist die zentrale Konfigurationsoberfläche zum Entwerfen, Konfigurieren und Testen Ihrer Slotcar-Rennformate, Wertungsregeln, Laufläufe, Kraftstoffsimulationen und Zeiteinstellungen.
+
+---
+
+## Übersicht & Automatisches Speichern
+
+Der Rennen-Editor bietet eine einheitliche Oberfläche zur Auswahl, Anzeige, Konfiguration und zum Testen Ihrer Rennformate:
+
+- **Rennenauswahl**: In der oberen Leiste neben dem Seitentitel listet dieses Dropdown-Menü alle konfigurierten Rennen auf und ermöglicht ein schnelles Wechseln.
+- **Schreibgeschützter Modus**: Standardmäßig zeigt der Editor Renneigenschaften, Wertungsregeln und Einstellungen im schreibgeschützten Modus an. Formularfelder sind gesperrt, während Akkordeonbereiche und Laufvorschauen interaktiv bleiben.
+- **Bearbeitungsmodus**: Ein Klick auf das **Bearbeiten**-Symbol (Stift) schaltet alle Eingabesteuerelemente frei. Während der Bearbeitung ist die Rennenauswahl gesperrt.
+- **Kontinuierliche automatische Speicherung**: Alle Änderungen werden automatisch im Hintergrund auf dem Server gespeichert, ohne den Bearbeitungsmodus zu verlassen.
+- **Bearbeitungsmodus beenden**: Ein Klick auf das **Fertig**-Symbol (Häkchen) validiert alle Änderungen und kehrt in den schreibgeschützten Modus zurück.
+- **Änderungen verwerfen**: Ein Klick auf Verwerfen stellt die zuletzt gespeicherte Version wieder her und verlässt den Bearbeitungsmodus.
+
+Der Arbeitsbereich ist in zwei synchronisierte Bereiche unterteilt:
+
+- **Linkes Bedienfeld (Rennenkonfiguration)**: Allgemeine Renneigenschaften, Format, Wertungsmethoden, Rotationstyp, Gruppeneinstellungen und analoge/digitale Kraftstoffsimulation.
+- **Rechtes Bedienfeld (Live-Laufvorschau)**: Generiert dynamisch die vollständige Liste der Läufe basierend auf dem aktiven Rotationstyp und der Fahreranzahl.
+
+---
+
+## Rennenkonfiguration & Optionen
+
+### Rennenname & Streckenzuordnung
+- **Rennenname**: Eindeutiger Name für das Rennformat.
+- **Strecke**: Die zugeordnete Strecke bestimmt die Verfügbarkeit von analogem oder digitalem Kraftstoff.
+- **Design**: Visuelles UI-Design für die Anzeige am Renntag.
+
+### Lauflauf-Format
+- **Rotationstyp**: Standard-Rotationen (**Round Robin**, **Leiter**, **Turnier**) oder benutzerdefinierte Sequenzen.
+- **Laufdurchläufe**: Wie oft jeder Fahrer die komplette Laufrotation durchläuft.
+- **Umgekehrte Läufe**: Dreht die Laufreihenfolge um.
+
+### Wertungsoptionen
+- **Laufwertung**: Abschluss nach Runden oder Zeit, Platzierungsmethode und Tiebreaker.
+- **Gesamtwertung**: Ranglistenmethode, Tiebreaker-Regeln und Streichergebnisse.
+- **Saisonwertung**: Punkteverteilung pro Position für Meisterschaften.
+
+### Zeiteinstellungen
+- **Start- / Neustartverzögerung**: Countdown-Vorlaufzeit in Sekunden.
+- **Minimale Rundenzeit**: Mindestrundenzeit zur Filterung von Fehlauslösungen.
+- **Driftzeit**: Sensor-Auslösefenster für driftende Fahrzeuge über die Ziellinie.
+- **Hinter Sensor starten**: Erzwingt den Start hinter dem Zielsensor in Runde null.
+
 ## Kraftstoffeinstellungen
 
 Race Coordinator AI unterstützt umfassende Kraftstoffsimulationen für analoge und digitale Strecken, einschließlich anpassbarer Tankkapazität, Startlevel, Boxenstoppverzögerungen, Auftankraten, Strafaktionen bei leerem Tank und Kraftstoffverbrauchsmodellen.
@@ -8,8 +53,8 @@ Race Coordinator AI unterstützt umfassende Kraftstoffsimulationen für analoge 
 
 Der Rennen-Editor bietet zwei dedizierte Konfigurationsbereiche für Kraftstoff: **Analoger Kraftstoff** und **Digitaler Kraftstoff**. Welches System verfügbar und aktiv ist, wird automatisch anhand der für das Rennen ausgewählten Strecke bestimmt:
 
-- **Analoge Strecken**: Traditionelle Slotcar-Bahnen, bei denen Fahrzeuge direkt über die Spuren versorgt werden, ohne digitale Decoder oder Fahrzeugtelemetrie. Bei Auswahl einer analogen Strecke ist der Bereich **Analoger Kraftstoff** aktiviert und der Bereich **Digitaler Kraftstoff** wird automatisch deaktiviert.
-- **Digitale Strecken**: Digitale Slotcar-Systeme (wie Carrera Digital, Scalextric Digital, Scorpius oder oXigen), bei denen die Schnittstelle digitale Telemetrie überträgt (Fahrzeug-ID, Gasstellung in Prozent, Boxengassensensoren). Bei Auswahl einer digitalen Strecke ist der Bereich **Digitaler Kraftstoff** aktiviert und der Bereich **Analoger Kraftstoff** wird automatisch deaktiviert.
+- **Analoge Strecken**: Traditionelle Slotcar-Bahnen, bei denen Fahrzeuge direkt über die Spuren versorgt werden, ohne digitale Decoder oder Fahrzeugtelemetrie. Bei Auswahl einer analogen Strecke ist der Bereich **Analoger Kraftstoff** aktiviert und der Umschalter für **Digitalen Kraftstoff** wird automatisch deaktiviert (beim Bewegen des Mauszeigers über das deaktivierte Kontrollkästchen wird ein erklärender Tooltip angezeigt).
+- **Digitale Strecken**: Digitale Slotcar-Systeme (wie Carrera Digital, Scalextric Digital, Scorpius oder oXigen), bei denen die Schnittstelle digitale Telemetrie überträgt (Fahrzeug-ID, Gasstellung in Prozent, Boxengassensensoren). Bei Auswahl einer digitalen Strecke ist der Bereich **Digitaler Kraftstoff** aktiviert und der Umschalter für **Analogen Kraftstoff** wird automatisch deaktiviert (beim Bewegen des Mauszeigers über das deaktivierte Kontrollkästchen wird ein erklärender Tooltip angezeigt).
 
 ---
 
@@ -26,9 +71,9 @@ Analoger Kraftstoff simuliert den Verbrauch auf **Rundenbasis**. Da analoge Stre
     - **Kubisch**: Der Verbrauch steigt bei schnellen Runden steil an und bestraft aggressive Rekordjagden überproportional.
     - **Benutzerdefinierte Kurve**: Ermöglicht eine punktgenaue, interaktive Formung der Verbrauchskurve direkt auf dem SVG-Graphen.
 - **Schnellste Zeit (s)**: Die schnellste erwartete Rundenzeit für Strecke und Fahrzeugklasse (in Sekunden).
-- **Max. Verbrauch**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder schneller als die **Schnellste Zeit**.
 - **Langsamste Zeit (s)**: Die langsamste Rundenzeit (in Sekunden) für minimalen Kraftstoffverbrauch.
-- **Min. Verbrauch**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder langsamer als die **Langsamste Zeit**.
+- **Max. Kraftstoffverbrauch pro schnellster Runde**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder schneller als die **Schnellste Zeit**.
+- **Min. Kraftstoffverbrauch pro langsamster Runde**: Der Kraftstoffverbrauch pro Runde beim Fahren mit oder langsamer als die **Langsamste Zeit**.
     - Für Rundenzeiten zwischen schnellster und langsamster Zeit geht der Kraftstoffverbrauch entsprechend dem gewählten **Verbrauchstyp** (Linear, Quadratisch, Kubisch oder Benutzerdefinierte Kurve) fließend über.
 - **Kapazität**: Das Gesamtvolumen des Kraftstofftanks in beliebigen Einheiten (z. B. 100).
 - **Startlevel (%)**: Der prozentuale Füllstand des Tanks zu Beginn eines Laufs (z. B. 100 % für vollen Tank oder weniger bei Sprint-/Handicap-Läufen).

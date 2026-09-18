@@ -1,4 +1,49 @@
-# Editor Gara
+# Editor di Gara
+
+L'**Editor di Gara** è l'interfaccia di configurazione completa per progettare, configurare e testare i formati di gara delle slot car, le regole di punteggio, le rotazioni delle manche, le simulazioni del carburante e le impostazioni del timer.
+
+---
+
+## Panoramica e Salvataggio Automatico
+
+L'Editor di Gara offre un'interfaccia unificata per selezionare, visualizzare, configurare e testare i formati di gara:
+
+- **Selettore di Gara**: Situato nell'intestazione superiore accanto al titolo della pagina, questo menu a discesa elenca tutte le gare configurate e consente di passare rapidamente da una all'altra.
+- **Modalità di Sola Lettura**: Per impostazione predefinita, all'apertura dell'editor vengono visualizzate le proprietà della gara, le regole di punteggio e le impostazioni in modalità di sola lettura. I campi modulo sono bloccati per prevenire modifiche accidentali, mentre le sezioni a soffietto e le anteprime delle manche rimangono interattive.
+- **Modalità di Modifica**: Facendo clic sull'icona **Modifica** (matita) sulla barra degli strumenti si sbloccano tutti i controlli. Durante la modifica, il selettore di gara è bloccato.
+- **Salvataggio Automatico Continuo**: Tutte le modifiche vengono salvate automaticamente in background sul server senza uscire dalla modalità di modifica.
+- **Uscita dalla Modalità di Modifica**: Facendo clic sull'icona **Fine** (segno di spunta) vengono convalidate le modifiche e si torna alla modalità di sola lettura.
+- **Annullamento Modifiche**: Facendo clic su Annulla vengono ripristinate tutte le modifiche all'ultima versione salvata e si esce dalla modalità di modifica.
+
+Lo spazio di lavoro è suddiviso in due pannelli sincronizzati:
+
+- **Pannello Sinistro (Configurazione Gara)**: Proprietà generali, formato di gara, metodi di punteggio, tipo di rotazione, opzioni di gruppo e simulazione carburante analogico/digitale.
+- **Pannello Destro (Anteprima Manche dal Vivo)**: Genera dinamicamente l'elenco completo delle manche in base al tipo di rotazione attivo e al numero di piloti.
+
+---
+
+## Configurazione Gara e Opzioni
+
+### Nome Gara e Associazione Pista
+- **Nome Gara**: Nome univoco che identifica il formato di gara.
+- **Pista**: La pista fisica associata determina se è disponibile la simulazione carburante analogica o digitale.
+- **Tema**: Tema grafico applicato durante la gara.
+
+### Formato di Rotazione Manche
+- **Tipo di Rotazione**: Rotazioni standard (**Round Robin**, **Scala**, **Torneo**) o sequenze personalizzate.
+- **Passaggi Manche**: Numero di volte in cui ciascun pilota ripete l'intera rotazione delle manche.
+- **Manche Inverse**: Inverte l'ordine della sequenza delle manche.
+
+### Opzioni di Punteggio
+- **Punteggio Manche**: Fine per giri o tempo limite, metodo di classifica e spareggi.
+- **Punteggio Generale**: Metodo di classifica generale, regole di spareggio e manche scartate.
+- **Punteggio Stagionale**: Distribuzione punti per posizione nei campionati.
+
+### Impostazioni Timer
+- **Ritardo Partenza / Riavvio**: Secondi di conto alla rovescia prima del via.
+- **Tempo Minimo sul Giro**: Tempo minimo consentito per filtrare letture errate dei sensori.
+- **Tempo di Deriva**: Finestra di rilevamento per le auto in sbandata sul traguardo.
+- **Partenza Dietro il Sensore**: Impone la partenza dietro il sensore al giro zero.
 
 ## Impostazioni carburante
 
@@ -8,8 +53,8 @@ Race Coordinator AI supporta una simulazione completa del carburante per piste a
 
 L'editor gara fornisce due sezioni dedicate alla configurazione del carburante: **Carburante analogico** e **Carburante digitale**. Il sistema disponibile e attivo viene determinato automaticamente dalla pista selezionata per la gara:
 
-- **Piste analogiche**: Tradizionali piste slot car in cui i modelli sono alimentati direttamente dalle rotaie della corsia, senza decoder digitali né telemetria tra auto e pista. Quando viene selezionata una pista analogica, la sezione **Carburante analogico** è abilitata e la sezione **Carburante digitale** viene automaticamente disattivata.
-- **Piste digitali**: Sistemi slot car digitali (quali Carrera Digital, Scalextric Digital, Scorpius o oXigen) in cui l'interfaccia trasmette telemetria digitale (ID vettura, percentuale acceleratore, sensori pit lane). Quando viene selezionata una pista digitale, la sezione **Carburante digitale** è abilitata e la sezione **Carburante analogico** viene automaticamente disattivata.
+- **Piste analogiche**: Tradizionali piste slot car in cui i modelli sono alimentati direttamente dalle rotaie della corsia, senza decoder digitali né telemetria tra auto e pista. Quando viene selezionata una pista analogica, la sezione **Carburante analogico** è abilitata e la casella di controllo **Carburante digitale** viene automaticamente disattivata (passando il mouse sulla casella disabilitata viene visualizzato un tooltip esplicativo).
+- **Piste digitali**: Sistemi slot car digitali (quali Carrera Digital, Scalextric Digital, Scorpius o oXigen) in cui l'interfaccia trasmette telemetria digitale (ID vettura, percentuale acceleratore, sensori pit lane). Quando viene selezionata una pista digitale, la sezione **Carburante digitale** è abilitata e la casella di controllo **Carburante analogico** viene automaticamente disattivata (passando il mouse sulla casella disabilitata viene visualizzato un tooltip esplicativo).
 
 ---
 
@@ -26,9 +71,9 @@ Il carburante analogico simula il consumo **su base giro**. Poiché le piste ana
     - **Cubico**: Il consumo cresce vertiginosamente nei giri veloci, penalizzando drasticamente chi spinge per tempi record.
     - **Curva personalizzata**: Consente di modellare interattivamente la curva punto per punto direttamente sul grafico SVG.
 - **Tempo più rapido (s)**: Il tempo sul giro più rapido previsto per la pista e la categoria di vetture (in secondi).
-- **Consumo max**: Unità di carburante consumate per giro quando si guida al **Tempo più rapido** o più veloce.
 - **Tempo più lento (s)**: Il tempo sul giro più lento (in secondi) per il consumo minimo di carburante.
-- **Consumo min**: Unità di carburante consumate per giro quando si guida al **Tempo più lento** o più lento.
+- **Consumo max di carburante per giro più rapido**: Unità di carburante consumate per giro quando si guida al **Tempo più rapido** o più veloce.
+- **Consumo min di carburante per giro più lento**: Unità di carburante consumate per giro quando si guida al **Tempo più lento** o più lento.
     - Per tempi sul giro compresi tra il tempo più rapido e quello più lento, il consumo varia gradualmente in base al **Tipo di consumo** selezionato (Lineare, Quadratico, Cubico o Curva personalizzata).
 - **Capacità**: Il volume totale del serbatoio in unità arbitrarie (ad es. 100).
 - **Livello iniziale (%)**: Percentuale di carburante disponibile nel serbatoio all'inizio di una manche (ad es. 100% per serbatoio pieno, o meno per gare sprint o con handicap).
