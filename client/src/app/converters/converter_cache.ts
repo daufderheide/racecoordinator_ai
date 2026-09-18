@@ -59,7 +59,7 @@ export class ConverterCache<T> {
     }
 
     const item = create();
-    if (id) {
+    if (id && !isReference) {
       this.cache.set(id, item);
     }
     return item;

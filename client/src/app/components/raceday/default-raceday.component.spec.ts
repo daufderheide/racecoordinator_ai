@@ -3317,6 +3317,47 @@ describe("DefaultRacedayComponent", () => {
       expect(component["sortedHeatDrivers"][1].objectId).toBe("hd2");
     });
 
+    it("should trigger dataService.updateRaceSubscription(true) when currentHeat$ emits without track", () => {
+      const currentHeatSubject = new Subject<any>();
+      mockRaceService.currentHeat$ = currentHeatSubject.asObservable();
+      fixture.detectChanges();
+
+      (component as any).track = null;
+      (component as any).race = null;
+      mockRaceService.getRace.and.returnValue(null);
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      const mockHeat = {
+        heatDrivers: [{ objectId: "hd1", laneIndex: 0, participant: {} }],
+        heatNumber: 1,
+        standings: [],
+      };
+
+      currentHeatSubject.next(mockHeat);
+
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
+    it("should re-sort heat drivers and mark change detection when selectedRace$ emits with existing heat", () => {
+      const selectedRaceSubject = new Subject<any>();
+      mockRaceService.selectedRace$ = selectedRaceSubject.asObservable();
+      fixture.detectChanges();
+
+      const mockHeat = {
+        heatDrivers: [{ objectId: "hd1", laneIndex: 0, participant: {} }],
+        heatNumber: 1,
+        standings: [],
+      };
+      (component as any).heat = mockHeat;
+      spyOn(component as any, "sortHeatDrivers").and.callThrough();
+      spyOn((component as any).cdr, "markForCheck").and.callThrough();
+
+      selectedRaceSubject.next({});
+
+      expect((component as any).sortHeatDrivers).toHaveBeenCalled();
+      expect((component as any).cdr.markForCheck).toHaveBeenCalled();
+    });
+
     it("should initialize heat and sort drivers when heats$ emits if sortedHeatDrivers is empty", () => {
       const heatsSubject = new Subject<any[]>();
       mockRaceService.heats$ = heatsSubject.asObservable();
