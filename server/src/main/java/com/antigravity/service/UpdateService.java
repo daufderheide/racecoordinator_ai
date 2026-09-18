@@ -342,6 +342,7 @@ public class UpdateService {
           new ProcessBuilder(
               "cmd.exe", "/c", "start", installerFile.getAbsolutePath(), "/SILENT", "/RESTARTAPP");
       pb.start();
+      downloadStatus = "RDS_UPDATE_STATUS_CONFIRM_PROMPT";
     } else if (isLinux) {
       File updateScript = new File("/opt/racecoordinatorai/scripts/update_app.sh");
       ProcessBuilder pb;
@@ -359,6 +360,7 @@ public class UpdateService {
                     + " -C /opt/racecoordinatorai && sudo systemctl restart racecoordinatorai");
       }
       pb.start();
+      downloadStatus = "RDS_UPDATE_STATUS_INSTALLING";
     }
   }
 
