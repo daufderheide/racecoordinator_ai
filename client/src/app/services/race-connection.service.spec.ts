@@ -824,5 +824,72 @@ describe("RaceConnectionService", () => {
       expect(mockHeat.heatDrivers[0].participant.fuelLevel).toBe(45.5);
       expect(mockHeat.heatDrivers[0].isRefueling).toBeTrue();
     });
+
+    it("should merge pending race updates when drivers are not loaded rather than overwriting", fakeAsync(() => {
+      const driversSubject = new Subject<any>();
+      mockDataService.getDrivers.and.returnValue(driversSubject.asObservable());
+
+      service.connect();
+      (service as any).driversLoaded = false;
+
+      const fullUpdate = {
+        race: { name: "Full Grand Prix", model: { entityId: "r1" } },
+        drivers: [{ name: "Driver 1" }],
+        heats: [{ heatNumber: 1 }],
+      };
+
+      const partialUpdate = {
+        currentHeat: { heatNumber: 2 },
+        state: RaceState.RACING,
+      };
+
+      raceUpdateSubject.next(fullUpdate);
+      tick();
+
+      expect((service as any).pendingUpdate.race).toBeDefined();
+      expect((service as any).pendingUpdate.drivers.length).toBe(1);
+
+      raceUpdateSubject.next(partialUpdate);
+      tick();
+
+      expect((service as any).pendingUpdate.race).toBeDefined();
+      expect((service as any).pendingUpdate.drivers.length).toBe(1);
+      expect((service as any).pendingUpdate.heats.length).toBe(1);
+      expect((service as any).pendingUpdate.currentHeat.heatNumber).toBe(2);
+      expect((service as any).pendingUpdate.state).toBe(RaceState.RACING);
+    }));
+
+    it("should trigger updateRaceSubscription(true) when heat arrives but race track is missing", () => {
+      const heatsSubject = new Subject<any>();
+      mockDataService.getHeats.and.returnValue(heatsSubject.asObservable());
+      mockRaceService.getRace.and.returnValue(null);
+
+      service.connect();
+      (service as any).driversLoaded = true;
+
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      heatsSubject.next({
+        heatNumber: 1,
+        heatDrivers: [],
+      });
+
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
+
+    it("should trigger updateRaceSubscription(true) when partial race update arrives but race track is missing", () => {
+      mockRaceService.getRace.and.returnValue(null);
+
+      service.connect();
+      (service as any).driversLoaded = true;
+
+      mockDataService.updateRaceSubscription.calls.reset();
+
+      raceUpdateSubject.next({
+        currentHeat: { heatNumber: 1 },
+      });
+
+      expect(mockDataService.updateRaceSubscription).toHaveBeenCalledWith(true);
+    });
   });
 });

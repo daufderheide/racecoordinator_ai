@@ -1606,8 +1606,19 @@ export class DefaultRacedayComponent
       this.raceService.currentHeat$.subscribe((heat) => {
         if (heat) {
           this.heat = heat;
-          if (!this.track) {
+          if (
+            !this.track ||
+            !this.track.lanes ||
+            this.track.lanes.length === 0
+          ) {
             this.track = this.race?.track || this.raceService.getRace()?.track;
+          }
+          if (
+            !this.track ||
+            !this.track.lanes ||
+            this.track.lanes.length === 0
+          ) {
+            this.dataService.updateRaceSubscription(true);
           }
           this.sortHeatDrivers();
           if (!this.isDestroyed) {
@@ -1658,6 +1669,12 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.raceService.selectedRace$.subscribe(() => {
         this.loadRaceData();
+        if (this.heat) {
+          this.sortHeatDrivers();
+        }
+        if (!this.isDestroyed) {
+          this.cdr.markForCheck();
+        }
       }),
     );
 
