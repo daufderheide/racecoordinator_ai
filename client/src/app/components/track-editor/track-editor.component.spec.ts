@@ -1038,7 +1038,7 @@ describe("TrackEditorComponent", () => {
           useLapsForSegments: false,
           lapPinPitBehavior: 0,
           digitalIds: [1000, 1001, 1002], // lap pins for lanes 0, 1, 2
-          analogIds: [],
+          analogIds: [7000, 7001, 7002],
           ledStrings: [],
           voltageConfigs: { 0: 12, 1: 14, 2: 16 },
         },
@@ -1050,6 +1050,7 @@ describe("TrackEditorComponent", () => {
       } as any;
 
       component.onLaneDropped(dropEvent);
+
       expect(component.lanes.length).toBe(3);
       expect(component.arduinoConfigs[0].digitalIds[0]).toBe(1002);
       expect(component.arduinoConfigs[0].voltageConfigs?.[2]).toBe(12);

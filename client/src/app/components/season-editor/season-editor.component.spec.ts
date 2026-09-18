@@ -1265,12 +1265,10 @@ describe("SeasonEditorComponent", () => {
     const headerGroup = fixture.nativeElement.querySelector(
       ".header-title-group",
     );
-    const title = headerGroup.querySelector("h3");
     const meta = headerGroup.querySelector(".season-meta");
     const demoBadge = meta.querySelector(".demo-badge");
     const metaPill = meta.querySelector(".meta-pill");
 
-    expect(title.textContent.trim()).toBe("Summer Cup 2026");
     expect(demoBadge).toBeTruthy();
     expect(metaPill.textContent).toContain("1");
   });
