@@ -56,7 +56,9 @@ export class AutoSelectDefaultDirective {
     ) {
       this.hasSelectedOnFocus = true;
       setTimeout(() => {
-        inputEl.select();
+        if (document.activeElement === inputEl) {
+          inputEl.select();
+        }
       }, 0);
     }
   }
