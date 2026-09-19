@@ -1467,6 +1467,38 @@ describe("RaceEditorComponent", () => {
       expect(component.sectionsExpanded.fuel_analog).toBeFalse();
       expect(component.sectionsExpanded.fuel_digital).toBeFalse();
     });
+
+    it("should collapse all sections and persist state on toggleAllSections(false)", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+
+      component.toggleAllSections(false);
+
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(
+        Object.values(component.sectionsExpanded).every((v) => !v),
+      ).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.stringMatching('"general":false'),
+      );
+    });
+
+    it("should expand all sections and persist state on toggleAllSections(true)", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+      component.toggleAllSections(false);
+      setItemSpy.calls.reset();
+
+      component.toggleAllSections(true);
+
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(
+        Object.values(component.sectionsExpanded).every(Boolean),
+      ).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.stringMatching('"general":true'),
+      );
+    });
   });
 
   describe("Driver Count Persistence", () => {

@@ -201,6 +201,32 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
+    localStorage.setItem(
+      "rc.track-editor.sections",
+      JSON.stringify(this.sectionsExpanded),
+    );
+    if (next) {
+      this.arduinoEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.bartEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.phidgetEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.trakmateEditors?.forEach((e) => e.ensureSectionsExpanded());
+    }
+  }
+
   get interfaceTabs(): EditorTab[] {
     const tabs: EditorTab[] = [];
 

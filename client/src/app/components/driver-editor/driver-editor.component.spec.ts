@@ -1123,6 +1123,16 @@ describe("DriverEditorComponent", () => {
         "DE_LABEL_FALSE_START_SOUND",
       );
     });
+
+    it("should toggle all sections and check expansion state", () => {
+      component.toggleAllSections(false);
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(component.sectionsExpanded.audio).toBeFalse();
+
+      component.toggleAllSections(true);
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(component.sectionsExpanded.audio).toBeTrue();
+    });
   });
 
   describe("guided help", () => {
@@ -1671,5 +1681,65 @@ describe("DriverEditorComponent", () => {
 
       expect(autoSaveSpy).toHaveBeenCalled();
     }));
+  });
+
+  describe("Default Driver Selection Hierarchy", () => {
+    const d1 = new Driver("d1", "Alice", "Ali");
+    const d2 = new Driver("d2", "Bob", "Bobby");
+    let navService: NavigationService;
+
+    beforeEach(() => {
+      navService = TestBed.inject(NavigationService);
+      navService.clearLastEditedId("driver");
+    });
+
+    it("should select driver specified by id when found in allDrivers", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("d2");
+      (component as any).loadDataInternal([d1, d2], []);
+
+      expect(component.selectedDriverId).toBe("d2");
+      expect(component.editingDriver?.name).toBe("Bob");
+      expect(navService.getLastEditedId("driver")).toBe("d2");
+    });
+
+    it("should fallback to last edited driver when id cannot be selected (wrong editor or non-existent)", () => {
+      navService.setLastEditedId("driver", "d2");
+      (component as any).initialLastEditedId = "d2";
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("team-99");
+      (component as any).loadDataInternal([d1, d2], []);
+
+      expect(component.selectedDriverId).toBe("d2");
+      expect(component.editingDriver?.name).toBe("Bob");
+      expect(navService.getLastEditedId("driver")).toBe("d2");
+    });
+
+    it("should fallback to first driver when id cannot be selected and there is no last edited driver", () => {
+      navService.clearLastEditedId("driver");
+      (component as any).initialLastEditedId = null;
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("team-99");
+      (component as any).loadDataInternal([d1, d2], []);
+
+      expect(component.selectedDriverId).toBe("d1");
+      expect(component.editingDriver?.name).toBe("Alice");
+      expect(navService.getLastEditedId("driver")).toBe("d1");
+    });
+
+    it("should select last edited driver when no id is provided in queryParamMap", () => {
+      navService.setLastEditedId("driver", "d2");
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+      (component as any).loadDataInternal([d1, d2], []);
+
+      expect(component.selectedDriverId).toBe("d2");
+      expect(component.editingDriver?.name).toBe("Bob");
+    });
+
+    it("should select first driver when no id is provided and there is no last edited driver", () => {
+      navService.clearLastEditedId("driver");
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+      (component as any).loadDataInternal([d1, d2], []);
+
+      expect(component.selectedDriverId).toBe("d1");
+      expect(component.editingDriver?.name).toBe("Alice");
+    });
   });
 });

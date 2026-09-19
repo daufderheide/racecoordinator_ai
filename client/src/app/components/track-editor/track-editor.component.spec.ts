@@ -1193,6 +1193,21 @@ describe("TrackEditorComponent", () => {
       expect(component.sectionsExpanded["lanes"]).toBeTrue();
     });
 
+    it("should toggle all sections and persist to localStorage", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+
+      component.toggleAllSections(false);
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(component.sectionsExpanded.lanes).toBeFalse();
+      expect(component.sectionsExpanded.interfaces).toBeFalse();
+
+      component.toggleAllSections(true);
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(component.sectionsExpanded.lanes).toBeTrue();
+      expect(component.sectionsExpanded.interfaces).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalled();
+    });
+
     it("should allow toggling arduino led string expander when in read-only mode", () => {
       component.isEditMode = false;
       const ls: any = {
