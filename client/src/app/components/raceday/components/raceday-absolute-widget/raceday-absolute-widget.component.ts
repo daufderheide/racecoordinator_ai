@@ -20,6 +20,7 @@ import { RacedayGroupLeaderboardComponent } from "@app/components/raceday/compon
 import { RacedayHeatInfoComponent } from "@app/components/raceday/components/raceday-heat-info/raceday-heat-info.component";
 import { RacedayHeatListComponent } from "@app/components/raceday/components/raceday-heat-list/raceday-heat-list.component";
 import { RacedayImageComponent } from "@app/components/raceday/components/raceday-image/raceday-image.component";
+import { RacedayLaneColumnComponent } from "@app/components/raceday/components/raceday-lane-column/raceday-lane-column.component";
 import { RacedayLaneViewComponent } from "@app/components/raceday/components/raceday-lane-view/raceday-lane-view.component";
 import { RacedayLeaderboardComponent } from "@app/components/raceday/components/raceday-leaderboard/raceday-leaderboard.component";
 import { RacedayMenuBarComponent } from "@app/components/raceday/components/raceday-menu-bar/raceday-menu-bar.component";
@@ -64,6 +65,7 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
     RacedaySeasonLeaderboardComponent,
     RacedaySeasonRaceLeaderboardComponent,
     RacedayLaneViewComponent,
+    RacedayLaneColumnComponent,
     RacedayOnDeckComponent,
     RacedayNextHeatComponent,
     RacedayHeatListComponent,

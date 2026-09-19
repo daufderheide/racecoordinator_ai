@@ -115,6 +115,10 @@ import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-wi
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
 import {
+  LaneReplicationHelper,
+  LaneReplicationOptions,
+} from "./utils/lane-replication.helper";
+import {
   FormatContext,
   RacedayFormatUtils,
 } from "./utils/raceday-format.utils";
@@ -6300,7 +6304,10 @@ export class DefaultRacedayComponent
       return;
     }
 
-    const hasLaneView = widgets.some((w: any) => w.widgetType === "lane-view");
+    const hasLaneView = widgets.some(
+      (w: any) =>
+        w.widgetType === "lane-view" || w.widgetType === "lane-column",
+    );
     const hasCountdown = widgets.some((w: any) => w.widgetType === "countdown");
     const hasTimer = widgets.some((w: any) => w.widgetType === "timer");
     const hasFlag = widgets.some((w: any) => w.widgetType === "flag");
@@ -6713,15 +6720,27 @@ export class DefaultRacedayComponent
       height = 80;
     }
 
+    const isLaneColumn = this.draggedWidgetType?.startsWith("lane-col:");
+    let laneColumnKey: string | undefined = undefined;
+    if (isLaneColumn) {
+      laneColumnKey = this.draggedWidgetType?.substring("lane-col:".length);
+      width = laneColumnKey === "lastLaps" ? 280 : 200;
+      height = laneColumnKey === "lastLaps" ? 200 : 90;
+    }
+
     const scaleX = rect.width / scalableContent.offsetWidth || 1;
     const scaleY = rect.height / scalableContent.offsetHeight || 1;
 
     let x = (event.clientX - rect.left) / scaleX - width / 2;
     let y = (event.clientY - rect.top) / scaleY;
 
+    const actualWidgetType = isLaneColumn
+      ? "lane-column"
+      : (this.draggedWidgetType as any);
+
     const newWidget: any = {
       id: "widget-" + Date.now(),
-      widgetType: this.draggedWidgetType as any,
+      widgetType: actualWidgetType,
       x: Math.round(x),
       y: Math.round(y),
       width: width,
@@ -6732,6 +6751,12 @@ export class DefaultRacedayComponent
 
     if (this.draggedWidgetType === "image") {
       newWidget.customSettings = { imageUrl: "" };
+    } else if (isLaneColumn) {
+      const registryEntry = WIDGET_REGISTRY["lane-column"];
+      newWidget.customSettings = registryEntry?.defaultSettings
+        ? registryEntry.defaultSettings()
+        : {};
+      newWidget.customSettings.columnKey = laneColumnKey;
     } else {
       const registryEntry = WIDGET_REGISTRY[this.draggedWidgetType as string];
       if (registryEntry?.defaultSettings) {
@@ -6844,6 +6869,25 @@ export class DefaultRacedayComponent
       this.widgetSelected.emit(nextWidget ? nextWidget.id : null);
     }
     this.updateAudioRelevance();
+  }
+
+  replicateLaneWidgets(
+    options: Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">,
+  ) {
+    if (!this.layout?.widgets) return;
+    const baseWidth = this.layout.baseWidth || 1920;
+    const baseHeight = this.layout.baseHeight || 1080;
+    const updated = LaneReplicationHelper.replicateLaneWidgets(
+      this.layout.widgets,
+      {
+        ...options,
+        baseWidth,
+        baseHeight,
+      },
+    );
+    this.layout.widgets = updated;
+    this.layoutChanged.emit(this.layout);
+    this.cdr.markForCheck();
   }
 
   snapToEdges(

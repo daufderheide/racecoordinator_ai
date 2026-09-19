@@ -59,6 +59,16 @@
         (change)="onSettingsChange()"
       ></app-lane-view-inspector>
     }
+    @case ("lane-column") {
+      <app-lane-column-inspector
+        [settings]="widget().customSettings"
+        [widget]="widget()"
+        [availableColumns]="availableColumns()"
+        [disableFontSizes]="widget().scaleMode === 'auto'"
+        (change)="onSettingsChange()"
+        (replicate)="replicate.emit($event)"
+      ></app-lane-column-inspector>
+    }
     @case ("on-deck") {
       <app-upcoming-inspector
         [settings]="widget().customSettings"

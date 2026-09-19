@@ -17,5 +17,19 @@ Das **Timer**-Widget zeigt die abgelaufene oder verbleibende Renn- bzw. Durchgan
 - **Sekundenbruchteile (Subsekunden)**:
   - **Unter Schwellenwert**: Zeigt Dezimalstellen (1 bis 3 Stellen) an, sobald die Zeit unter den konfigurierten Schwellenwert fällt (z. B. letzte 10 Sekunden).
   - **Immer**: Zeigt Sekundenbruchteile durchgehend während des gesamten Durchgangs an.
-  - **Nie**: Beschränkt den Timer ausschließlich auf ganze Sekunden.
 - **Live-Vorschau**: Der Inspektor bietet eine sofortige Vorschau darauf, wie die ausgewählten Einstellungen an verschiedenen Zeitpunkten formatiert werden (`> 1 hr`, `> 1 min`, `< 1 min` und `< 10s`).
+
+## Spurspalten-Widgets & Duplizierung
+
+Das **Spurspalten-Widget** ermöglicht es, einzelne Datenspalten aus der Spuransicht (wie Fahrerinfo, letzte Rundenzeit, beste Rundenzeit / persönlicher Rekord, Tankfüllstand in %, Rundenhistorie, Sektorgeschwindigkeiten, Platzierung usw.) als eigenständige modulare Karten auf der Arbeitsfläche zu platzieren.
+
+- **Bindungsmodi**:
+  - **Physische Spur**: Bindet die Karte an eine feste Spur (Spur 1 bis Spur 8). Die Karte zeigt während des gesamten Rennens die Daten dieser Spur an.
+  - **Laufplatzierung (Position)**: Bindet die Karte an einen aktuellen Rang in der Platzierung (1. Platz, 2. Platz usw.). Die Karte folgt dynamisch Positionswechseln und Überholmanövern und passt Hintergrund- und Akzentfarben an die Spur des jeweiligen Fahrers auf diesem Rang an.
+- **Ausrichtung**: Unterstützt **Vertikal** (Überschrift über dem Wert) und **Horizontal** (Überschrift und Wert nebeneinander).
+- **Farbübernahme & Anpassungen**: Karten übernehmen standardmäßig die zugewiesenen Hintergrund- und Textfarben der jeweiligen Spur (`Spurfarben verwenden`) oder können mit benutzerdefinierten Farben und Rahmen gestaltet werden.
+- **Über Spuren / Positionen duplizieren**:
+  - Anstatt Karten für jede Spur manuell zu erstellen und auszurichten, konfigurieren Sie eine einzelne Spur oder Position und klicken im Inspektor auf **Über Spuren / Positionen duplizieren...**.
+  - Wählen Sie die Ausrichtung (**Horizontal** nebeneinander oder **Vertikal** übereinander), die Gesamtanzahl der Zielspuren/-positionen (2 bis 8), den Abstandsmodus (**Automatisch an Arbeitsbereich anpassen** oder **Abstand beibehalten**) und optional das Überschreiben bestehender Widgets.
+  - Der Layout-Editor dupliziert, positioniert, nummeriert und verknüpft die Karten für alle ausgewählten Spuren/Positionen mit nur einem Klick.
+

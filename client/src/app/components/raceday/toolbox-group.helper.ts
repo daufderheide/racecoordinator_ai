@@ -1,3 +1,5 @@
+import { BASE_AVAILABLE_COLUMNS } from "@app/components/ui-editor/ui-editor-constants";
+import { LANE_VIEW_COLUMN_GROUPS } from "@app/components/ui-editor/widget-inspector-fields/lane-view-inspector/lane-view-column-group.helper";
 import { CustomWidgetDefinition } from "@app/models/custom-widget.model";
 import { WidgetType } from "@app/models/settings";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
@@ -30,6 +32,7 @@ export interface ToolboxGroup {
 
 export class ToolboxGroupHelper {
   public static readonly RC_AI_GROUP_ID = "race-coordinator-ai";
+  public static readonly LANE_COLUMNS_GROUP_ID = "lane-columns";
   public static readonly CUSTOM_ROOT_GROUP_ID = "custom-root";
 
   public static readonly RC_AI_ROOT_WIDGETS: {
@@ -281,6 +284,7 @@ export class ToolboxGroupHelper {
     groupExpandedStates: Map<string, boolean> = new Map(),
     subgroupExpandedStates: Map<string, boolean> = new Map(),
     translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
   ): ToolboxGroup[] {
     const term = (searchTerm || "").trim().toLowerCase();
     const groups: ToolboxGroup[] = [];
@@ -296,6 +300,17 @@ export class ToolboxGroupHelper {
       groups.push(rcGroup);
     }
 
+    const laneColGroup = ToolboxGroupHelper.buildLaneColumnsGroup(
+      term,
+      groupExpandedStates,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (laneColGroup) {
+      groups.push(laneColGroup);
+    }
+
     const customGroups = ToolboxGroupHelper.buildCustomGroups(
       usedWidgetTypes,
       customWidgets,
@@ -307,6 +322,110 @@ export class ToolboxGroupHelper {
     groups.push(...customGroups);
 
     return groups;
+  }
+
+  private static buildLaneColumnsGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    const cols =
+      availableColumnsList && availableColumnsList.length > 0
+        ? availableColumnsList
+        : BASE_AVAILABLE_COLUMNS;
+
+    const colMap = new Map<string, { key: string; label: string }>();
+    for (const c of cols) {
+      colMap.set(c.key, c);
+    }
+
+    const subgroups: ToolboxSubgroup[] = [];
+
+    for (const grp of LANE_VIEW_COLUMN_GROUPS) {
+      const items: ToolboxWidgetItem[] = [];
+      for (const colKey of grp.columnKeys) {
+        const col = colMap.get(colKey);
+        if (!col) continue;
+
+        const widgetItem: ToolboxWidgetItem = {
+          type: `lane-col:${col.key}`,
+          labelKey: col.label,
+          icon: "",
+        };
+
+        if (ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)) {
+          items.push(widgetItem);
+        }
+      }
+
+      if (grp.id === "media-custom") {
+        for (const col of cols) {
+          if (
+            col.key.startsWith("imageset_") &&
+            !grp.columnKeys.includes(col.key)
+          ) {
+            const widgetItem: ToolboxWidgetItem = {
+              type: `lane-col:${col.key}`,
+              labelKey: col.label,
+              icon: "",
+            };
+            if (
+              ToolboxGroupHelper.matchesSearch(widgetItem, term, translateFn)
+            ) {
+              items.push(widgetItem);
+            }
+          }
+        }
+      }
+
+      items.sort((a, b) =>
+        ToolboxGroupHelper.compareWidgets(a, b, translateFn),
+      );
+
+      if (items.length > 0) {
+        const sgId = `lane-col-sg-${grp.id}`;
+        const isSgExpanded = term
+          ? true
+          : subgroupExpandedStates.has(sgId)
+            ? subgroupExpandedStates.get(sgId)!
+            : false;
+
+        subgroups.push({
+          id: sgId,
+          nameKey: grp.nameKey,
+          icon: "folder",
+          widgets: items,
+          expanded: isSgExpanded,
+        });
+      }
+    }
+
+    const totalCount = subgroups.reduce(
+      (sum, sg) => sum + sg.widgets.length,
+      0,
+    );
+    if (totalCount === 0 && term) {
+      return null;
+    }
+
+    const isGroupExpanded = term
+      ? true
+      : groupExpandedStates.has(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID)
+        ? groupExpandedStates.get(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID)!
+        : false;
+
+    return {
+      id: ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID,
+      nameKey: "UE_TOOLBOX_GROUP_LANE_COLUMNS",
+      isBuiltIn: true,
+      icon: "folder",
+      rootWidgets: [],
+      subgroups: subgroups,
+      expanded: isGroupExpanded,
+      totalCount: totalCount,
+    };
   }
 
   private static buildRcAiGroup(

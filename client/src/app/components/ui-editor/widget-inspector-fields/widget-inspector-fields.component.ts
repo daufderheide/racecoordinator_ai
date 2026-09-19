@@ -8,6 +8,7 @@ import { CountdownInspectorComponent } from "./countdown-inspector/countdown-ins
 import { CustomWidgetInspectorComponent } from "./custom-widget-inspector/custom-widget-inspector.component";
 import { HeatListInspectorComponent } from "./heat-list-inspector/heat-list-inspector.component";
 import { ImageInspectorComponent } from "./image-inspector/image-inspector.component";
+import { LaneColumnInspectorComponent } from "./lane-column-inspector/lane-column-inspector.component";
 import { LaneViewInspectorComponent } from "./lane-view-inspector/lane-view-inspector.component";
 import { LeaderboardInspectorComponent } from "./leaderboard-inspector/leaderboard-inspector.component";
 import { MenuInspectorComponent } from "./menu-inspector/menu-inspector.component";
@@ -24,6 +25,7 @@ import { UpcomingInspectorComponent } from "./upcoming-inspector/upcoming-inspec
     CommonModule,
     LeaderboardInspectorComponent,
     LaneViewInspectorComponent,
+    LaneColumnInspectorComponent,
     RecordsInspectorComponent,
     TimerInspectorComponent,
     CountdownInspectorComponent,
@@ -43,6 +45,7 @@ export class WidgetInspectorFieldsComponent {
   availableColumns = input<{ key: string; label: string }[]>([]);
   isPracticeMode = input<boolean>(false);
   change = output<AbsoluteWidgetNode>();
+  replicate = output<any>();
 
   isCustomWidget(type: string | undefined): boolean {
     return type?.startsWith("custom:") ?? false;

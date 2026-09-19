@@ -36,5 +36,16 @@ The **Timer** widget displays the elapsed or remaining heat/race time with confi
   - **Never**: Restricts the timer to whole seconds only.
 - **Live Preview**: The inspector includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
 
+## Lane Column Widgets & Replication
 
+The **Lane Column** widget allows individual data columns from the lane view (such as Driver Info, Last Lap Time, Best Lap / Personal Record, Fuel %, Last Laps history, Sector Speeds, Position, etc.) to be placed anywhere on the canvas as independent modular cards.
 
+- **Binding Modes**:
+  - **Physical Lane**: Binds the card to a specific track lane (Lane 1 through Lane 8). The card maintains that lane's data throughout the race.
+  - **Heat Standings Position**: Binds the card to a current standings rank (1st Place, 2nd Place, etc.). The card dynamically follows position changes, leader overtakes, and adjusts its background/accent colors to match the lane of whoever is currently in that position.
+- **Orientation**: Supports **Vertical** (stacked header over value) and **Horizontal** (side-by-side header and value) layouts.
+- **Color Inheritance & Overrides**: Cards default to inheriting the assigned lane's background and foreground colors (`Use Lane Colors`), or can be given custom background, text, and border color overrides.
+- **Replicate Across Lanes / Positions**:
+  - Rather than creating and aligning cards for each lane manually, configure a single lane or position setup and click **Replicate Across Lanes / Positions...** in the inspector.
+  - Choose the layout direction (**Horizontal** side-by-side or **Vertical** stacked), total target lanes/positions (2 to 8), spacing mode (**Auto-fit to Canvas** or **Preserve Spacing**), and optionally replace existing widgets on target lanes.
+  - The layout editor automatically duplicates, repositions, re-indexes, and binds the cards across all selected lanes/positions with one click.

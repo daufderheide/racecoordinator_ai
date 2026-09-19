@@ -25,6 +25,7 @@ export type WidgetType =
   | "season-leaderboard"
   | "season-race-leaderboard"
   | "lane-view"
+  | "lane-column"
   | "on-deck"
   | "next-heat"
   | "heat-list"
@@ -66,6 +67,32 @@ export interface AbsoluteWidgetNode {
   textColor?: string;
   backgroundColor?: string;
   customSettings?: Record<string, any>;
+}
+
+export interface LaneColumnWidgetSettings {
+  columnKey: string;
+  bindingMode: "lane" | "position";
+  targetIndex: number;
+  layoutOrientation: "vertical" | "horizontal";
+  showHeader: boolean;
+  customLabel: string;
+  headerFontFamily: string;
+  headerFontSize: number;
+  headerTextColor: string;
+  headerAlignment: "start" | "center" | "end";
+  valueFontFamily: string;
+  valueFontSize: number;
+  valueTextColor: string;
+  valueAlignment: "start" | "center" | "end";
+  timeDecimalPlaces: number;
+  lapDecimalPlaces: number;
+  useLaneColors: boolean;
+  backgroundColor: string;
+  textColor: string;
+  showBorder: boolean;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
 }
 
 export type LayoutScaleMode = "letterbox" | "stretch";

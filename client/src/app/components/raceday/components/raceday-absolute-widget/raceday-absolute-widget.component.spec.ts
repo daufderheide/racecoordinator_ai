@@ -492,4 +492,16 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(component.isCountdownActive).toBeTrue();
     expect(wrapper.style.display).toBe("");
   });
+
+  it("should render app-raceday-lane-column when widgetType is lane-column", () => {
+    mockWidget.widgetType = "lane-column";
+    mockWidget.id = "widget-lane-col";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const laneColEl = fixture.nativeElement.querySelector(
+      "app-raceday-lane-column",
+    );
+    expect(laneColEl).toBeTruthy();
+  });
 });

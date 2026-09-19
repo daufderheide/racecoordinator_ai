@@ -544,6 +544,9 @@ describe("UIEditorComponent", () => {
     expect(component.getWidgetTypeLabelKey("leaderboard")).toBe(
       "UE_WIDGET_TYPE_LEADERBOARD",
     );
+    expect(component.getWidgetTypeLabelKey("lane-column")).toBe(
+      "UE_WIDGET_TYPE_LANE_COLUMN",
+    );
     expect(component.getWidgetTypeLabelKey("custom:telemetry")).toBe(
       "Live Telemetry Gauge",
     );
@@ -3978,6 +3981,51 @@ describe("UIEditorComponent", () => {
 
       const parsed = JSON.parse(customUi.layoutJson);
       expect(parsed.widgets[0].customSettings.showGap).toBeFalse();
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+    });
+
+    it("should replicate lane widgets and capture state when onReplicateLanes is called", () => {
+      spyOn(component.undoManager, "captureState");
+      const customUi: any = {
+        entity_id: "custom_ui_rep",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [
+            {
+              id: "lc-1",
+              widgetType: "lane-column",
+              x: 0,
+              y: 0,
+              width: 200,
+              height: 100,
+              zIndex: 1,
+              customSettings: {
+                bindingMode: "lane",
+                targetIndex: 0,
+                columnKey: "lastLapTime",
+              },
+            },
+          ],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_rep";
+
+      component.onReplicateLanes(
+        {
+          sourceBindingMode: "lane",
+          sourceIndex: 0,
+          direction: "horizontal",
+          targetCount: 4,
+          distributionMode: "auto-fit",
+          replaceExisting: true,
+        },
+        customUi,
+      );
+
+      const parsed = JSON.parse(customUi.layoutJson);
+      expect(parsed.widgets.length).toBe(4);
       expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 

@@ -1,0 +1,122 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.raceday-lane-column-card {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  padding: 8px 12px;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.raceday-lane-column-card.orientation-vertical {
+  flex-direction: column;
+}
+
+.raceday-lane-column-card.orientation-horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.lane-col-header {
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0.88;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.raceday-lane-column-card.orientation-vertical .lane-col-header {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.raceday-lane-column-card.orientation-horizontal .lane-col-header {
+  max-width: 50%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane-col-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.lane-col-value {
+  width: 100%;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+}
+
+.lane-col-last-laps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.last-lap-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+.last-lap-item.best-lap {
+  font-weight: bold;
+}
+
+.lane-col-image-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.lane-col-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.drift-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 5;
+}

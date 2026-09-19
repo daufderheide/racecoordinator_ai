@@ -99,4 +99,28 @@ describe("WidgetInspectorFieldsComponent", () => {
     );
     expect(inspectorEl).toBeTruthy();
   });
+
+  it("should render lane-column inspector when widget is lane-column", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        bindingMode: "lane",
+        targetIndex: 0,
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.detectChanges();
+
+    const inspectorEl = fixture.nativeElement.querySelector(
+      "app-lane-column-inspector",
+    );
+    expect(inspectorEl).toBeTruthy();
+  });
 });

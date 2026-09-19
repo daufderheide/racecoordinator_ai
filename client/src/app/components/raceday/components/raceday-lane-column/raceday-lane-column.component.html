@@ -1,0 +1,100 @@
+<div
+  class="raceday-lane-column-card"
+  [class.orientation-vertical]="layoutOrientation === 'vertical'"
+  [class.orientation-horizontal]="layoutOrientation === 'horizontal'"
+  [style.background]="backgroundColor"
+  [style.border-color]="borderColor"
+  [style.border-width.px]="
+    settings.borderWidth != null ? settings.borderWidth : 1
+  "
+  [style.border-radius.px]="
+    settings.borderRadius != null ? settings.borderRadius : 8
+  "
+  [style.border-style]="settings.showBorder !== false ? 'solid' : 'none'"
+  [style.color]="foregroundColor"
+>
+  <!-- Optional Header / Label -->
+  @if (settings.showHeader !== false) {
+    <div
+      class="lane-col-header"
+      [style.font-family]="settings.headerFontFamily || null"
+      [style.font-size.px]="settings.headerFontSize || 14"
+      [style.color]="settings.headerTextColor || foregroundColor"
+      [style.justify-content]="
+        settings.headerAlignment === 'center'
+          ? 'center'
+          : settings.headerAlignment === 'end'
+            ? 'flex-end'
+            : 'flex-start'
+      "
+    >
+      {{ headerLabel }}
+    </div>
+  }
+
+  <!-- Body Content -->
+  <div class="lane-col-body">
+    <!-- Drift Lap Badge -->
+    @if (isDriftLap()) {
+      <div
+        class="drift-indicator"
+        [style.background-color]="foregroundColor"
+        [style.color]="backgroundColor"
+      >
+        {{ "RD_DRIFT_LAP" | translate }}
+      </div>
+    }
+
+    <!-- Case 1: Last Laps List -->
+    @if (isLastLaps()) {
+      <div class="lane-col-last-laps">
+        @for (lap of getLastLaps(); track $index) {
+          <div class="last-lap-item" [class.best-lap]="lap.isBest">
+            <span class="lap-number">{{ lap.lapNumber }}.</span>
+            <span class="lap-time">{{ lap.lapTime }}</span>
+          </div>
+        }
+      </div>
+    } @else if (isImageProperty()) {
+      <!-- Case 2: Images, Avatars, QR Codes, Flags -->
+      <div class="lane-col-image-wrapper">
+        @if (getImageUrl()) {
+          <img [src]="getImageUrl()" class="lane-col-image" alt="" />
+        }
+      </div>
+    } @else if (isPacingProperty()) {
+      <!-- Case 3: Ghost Pacing -->
+      <app-raceday-ghost-pacing
+        [driverHeatData]="targetDriver || null"
+        [benchmarkType]="getPacingBenchmarkType()"
+        [personalBest]="targetDriver?.bestLapTime || 0"
+        [personalAvg]="targetDriver?.averageLapTime || 0"
+        [personalMedian]="targetDriver?.medianLapTime || 0"
+        [laneRecord]="
+          parent()?.getLaneRecordEntry?.(targetDriver?.laneIndex ?? 0)?.value ||
+          0
+        "
+        [heatLeaderBest]="parent()?.heatBestTime || 0"
+        [heatLeaderAvg]="parent()?.heatLeaderAvgTime || 0"
+        [heatLeaderMedian]="parent()?.heatLeaderMedianTime || 0"
+      ></app-raceday-ghost-pacing>
+    } @else {
+      <!-- Case 4: Formatted Text / Numerical Value -->
+      <div
+        class="lane-col-value"
+        [style.font-family]="settings.valueFontFamily || null"
+        [style.font-size.px]="settings.valueFontSize || 36"
+        [style.color]="settings.valueTextColor || foregroundColor"
+        [style.justify-content]="
+          settings.valueAlignment === 'start'
+            ? 'flex-start'
+            : settings.valueAlignment === 'end'
+              ? 'flex-end'
+              : 'center'
+        "
+      >
+        {{ formattedValue }}
+      </div>
+    }
+  </div>
+</div>

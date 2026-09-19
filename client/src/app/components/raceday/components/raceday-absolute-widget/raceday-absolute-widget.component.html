@@ -203,6 +203,12 @@
             [widget]="widget()"
           ></app-raceday-lane-view>
         }
+        @case ("lane-column") {
+          <app-raceday-lane-column
+            [parent]="parentComponent()"
+            [widget]="widget()"
+          ></app-raceday-lane-column>
+        }
         @case ("on-deck") {
           <app-raceday-on-deck
             [track]="parentComponent().track"

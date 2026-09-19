@@ -1,0 +1,402 @@
+<div class="inspector-geometry-title">
+  {{ "UE_INSPECTOR_LANE_COLUMN_SETTINGS" | translate }}
+</div>
+
+<!-- Binding Mode & Target Index -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_BINDING_MODE" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['bindingMode']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option value="lane">
+        {{ "UE_INSPECTOR_BINDING_LANE" | translate }}
+      </app-custom-option>
+      <app-custom-option value="position">
+        {{ "UE_INSPECTOR_BINDING_POSITION" | translate }}
+      </app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">
+    {{
+      (currentSettings["bindingMode"] === "position"
+        ? "UE_INSPECTOR_TARGET_POSITION"
+        : "UE_INSPECTOR_TARGET_LANE"
+      ) | translate
+    }}
+  </label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['targetIndex']"
+      (change)="onFieldChange()"
+    >
+      @for (idx of availableIndices; track idx) {
+        <app-custom-option [value]="idx">
+          {{
+            (currentSettings["bindingMode"] === "position"
+              ? "UE_INSPECTOR_POSITION_INDEX"
+              : "UE_INSPECTOR_LANE_INDEX"
+            ) | translate: { index: idx + 1 }
+          }}
+        </app-custom-option>
+      }
+    </app-custom-select>
+  </div>
+</div>
+
+<!-- Replicate Layout Action Button -->
+<div class="inspector-section">
+  <button
+    type="button"
+    class="btn btn-secondary w-100"
+    (click)="openReplicateModal()"
+  >
+    <i class="fas fa-clone me-1"></i>
+    {{ "UE_REPLICATE_BUTTON" | translate }}
+  </button>
+</div>
+
+<hr class="inspector-divider" />
+
+<!-- Column Selection -->
+<div class="inspector-section">
+  <label class="inspector-label">{{ "UE_INSPECTOR_COLUMN" | translate }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['columnKey']"
+      (change)="onFieldChange()"
+    >
+      @for (col of availableColumns(); track col.key) {
+        <app-custom-option [value]="col.key">
+          {{ col.label | translate }}
+        </app-custom-option>
+      }
+    </app-custom-select>
+  </div>
+</div>
+
+<!-- Layout Orientation -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_ORIENTATION" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['layoutOrientation']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option value="vertical">
+        {{ "UE_INSPECTOR_ORIENT_VERTICAL" | translate }}
+      </app-custom-option>
+      <app-custom-option value="horizontal">
+        {{ "UE_INSPECTOR_ORIENT_HORIZONTAL" | translate }}
+      </app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+<!-- Show Header & Custom Label -->
+<div class="inspector-section">
+  <label class="form-check-label">
+    <input
+      type="checkbox"
+      class="form-checkbox"
+      [(ngModel)]="currentSettings['showHeader']"
+      (change)="onFieldChange()"
+    />
+    <span>{{ "UE_INSPECTOR_SHOW_HEADER" | translate }}</span>
+  </label>
+</div>
+
+@if (currentSettings["showHeader"]) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_CUSTOM_LABEL" | translate
+    }}</label>
+    <input
+      type="text"
+      class="inspector-input"
+      [(ngModel)]="currentSettings['customLabel']"
+      (input)="onFieldChange()"
+      [placeholder]="'UE_INSPECTOR_LABEL_PLACEHOLDER' | translate"
+      autocomplete="off"
+      data-dashlane-ignore="true"
+      data-1p-ignore="true"
+      data-lpignore="true"
+      data-bwignore="true"
+      data-form-type="other"
+    />
+  </div>
+}
+
+<hr class="inspector-divider" />
+
+<!-- Color Settings -->
+<div class="inspector-section">
+  <label class="form-check-label">
+    <input
+      type="checkbox"
+      class="form-checkbox"
+      [(ngModel)]="currentSettings['useLaneColors']"
+      (change)="onFieldChange()"
+    />
+    <span>{{ "UE_INSPECTOR_USE_LANE_COLORS" | translate }}</span>
+  </label>
+  <div class="inspector-hint">
+    {{ "UE_INSPECTOR_USE_LANE_COLORS_DESC" | translate }}
+  </div>
+</div>
+
+@if (!currentSettings["useLaneColors"]) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BACKGROUND_COLOR" | translate
+    }}</label>
+    <input
+      type="color"
+      [(ngModel)]="currentSettings['backgroundColor']"
+      (change)="onFieldChange()"
+      class="inspector-color-input"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_TEXT_COLOR" | translate
+    }}</label>
+    <input
+      type="color"
+      [(ngModel)]="currentSettings['textColor']"
+      (change)="onFieldChange()"
+      class="inspector-color-input"
+    />
+  </div>
+}
+
+<hr class="inspector-divider" />
+
+<!-- Typography Settings -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_VALUE_FONT_FAMILY" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['valueFontFamily']"
+      (change)="onFieldChange()"
+      (click)="fontService.loadLocalFonts()"
+    >
+      <app-custom-option value="">
+        {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+      </app-custom-option>
+      @for (font of fontService.availableFonts(); track font) {
+        <app-custom-option [value]="font">{{ font }}</app-custom-option>
+      }
+    </app-custom-select>
+  </div>
+</div>
+
+<div class="inspector-section">
+  <div class="inspector-label-row">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_VALUE_FONT_SIZE" | translate
+    }}</label>
+    <span class="inspector-val-badge"
+      >{{ currentSettings["valueFontSize"] || 36 }}px</span
+    >
+  </div>
+  <input
+    type="range"
+    min="10"
+    max="120"
+    [(ngModel)]="currentSettings['valueFontSize']"
+    [disabled]="disableFontSizes()"
+    (change)="onFieldChange()"
+    class="inspector-slider"
+  />
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_VALUE_ALIGNMENT" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['valueAlignment']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option value="start">
+        {{ "UE_INSPECTOR_ALIGN_START" | translate }}
+      </app-custom-option>
+      <app-custom-option value="center">
+        {{ "UE_INSPECTOR_ALIGN_CENTER" | translate }}
+      </app-custom-option>
+      <app-custom-option value="end">
+        {{ "UE_INSPECTOR_ALIGN_END" | translate }}
+      </app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+@if (currentSettings["showHeader"]) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_HEADER_FONT_FAMILY" | translate
+    }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [(ngModel)]="currentSettings['headerFontFamily']"
+        (change)="onFieldChange()"
+        (click)="fontService.loadLocalFonts()"
+      >
+        <app-custom-option value="">
+          {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+        </app-custom-option>
+        @for (font of fontService.availableFonts(); track font) {
+          <app-custom-option [value]="font">{{ font }}</app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_HEADER_FONT_SIZE" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ currentSettings["headerFontSize"] || 14 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="8"
+      max="48"
+      [(ngModel)]="currentSettings['headerFontSize']"
+      [disabled]="disableFontSizes()"
+      (change)="onFieldChange()"
+      class="inspector-slider"
+    />
+  </div>
+}
+
+<hr class="inspector-divider" />
+
+<!-- Card & Border Styling -->
+<div class="inspector-section">
+  <label class="form-check-label">
+    <input
+      type="checkbox"
+      class="form-checkbox"
+      [(ngModel)]="currentSettings['showBorder']"
+      (change)="onFieldChange()"
+    />
+    <span>{{ "UE_INSPECTOR_SHOW_BORDER" | translate }}</span>
+  </label>
+</div>
+
+@if (currentSettings["showBorder"]) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_BORDER_COLOR" | translate
+    }}</label>
+    <input
+      type="color"
+      [(ngModel)]="currentSettings['borderColor']"
+      (change)="onFieldChange()"
+      class="inspector-color-input"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_WIDTH" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ currentSettings["borderWidth"] ?? 1 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="0"
+      max="10"
+      [(ngModel)]="currentSettings['borderWidth']"
+      (change)="onFieldChange()"
+      class="inspector-slider"
+    />
+  </div>
+
+  <div class="inspector-section">
+    <div class="inspector-label-row">
+      <label class="inspector-label">{{
+        "UE_INSPECTOR_BORDER_RADIUS" | translate
+      }}</label>
+      <span class="inspector-val-badge"
+        >{{ currentSettings["borderRadius"] ?? 8 }}px</span
+      >
+    </div>
+    <input
+      type="range"
+      min="0"
+      max="32"
+      [(ngModel)]="currentSettings['borderRadius']"
+      (change)="onFieldChange()"
+      class="inspector-slider"
+    />
+  </div>
+}
+
+<hr class="inspector-divider" />
+
+<!-- Decimals Settings -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_TIME_DECIMALS" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['timeDecimalPlaces']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option [value]="0">0</app-custom-option>
+      <app-custom-option [value]="1">1</app-custom-option>
+      <app-custom-option [value]="2">2</app-custom-option>
+      <app-custom-option [value]="3">3</app-custom-option>
+      <app-custom-option [value]="4">4</app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_LAP_DECIMALS" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['lapDecimalPlaces']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option [value]="0">0</app-custom-option>
+      <app-custom-option [value]="1">1</app-custom-option>
+      <app-custom-option [value]="2">2</app-custom-option>
+      <app-custom-option [value]="3">3</app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+<!-- Replication Modal Dialog -->
+<app-replicate-lane-dialog
+  [visible]="showReplicateModal()"
+  [bindingMode]="currentSettings['bindingMode'] || 'lane'"
+  [sourceIndex]="currentSettings['targetIndex'] ?? 0"
+  [defaultCount]="totalLanes()"
+  (confirm)="onReplicateConfirm($event)"
+  (cancel)="closeReplicateModal()"
+></app-replicate-lane-dialog>

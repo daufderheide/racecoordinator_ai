@@ -123,6 +123,7 @@ import {
   handleImportRacedayLayout,
   handleMasterVolumeChange,
   handlePageTransitionChange,
+  handleReplicateLanes,
   handleResetCurrentLayout,
   handleResetLayout,
   handleResetPracticeRacedayLayout,
@@ -583,6 +584,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onWidgetInspectorChange(widget?: any, ui?: CustomUI) {
     handleWidgetInspectorChange(this, widget, ui);
+  }
+
+  onReplicateLanes(options: any, ui?: CustomUI) {
+    handleReplicateLanes(this, options, ui);
   }
 
   onRacedayLayoutChanged(newLayout: any) {

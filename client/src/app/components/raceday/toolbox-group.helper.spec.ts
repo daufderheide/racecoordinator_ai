@@ -9,9 +9,10 @@ describe("ToolboxGroupHelper", () => {
 
     const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
 
-    expect(groups.length).toBe(1);
+    expect(groups.length).toBe(2);
     const rcAiGroup = groups[0];
     expect(rcAiGroup.id).toBe(ToolboxGroupHelper.RC_AI_GROUP_ID);
+    expect(groups[1].id).toBe(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID);
     expect(rcAiGroup.isBuiltIn).toBeTrue();
     expect(rcAiGroup.rootWidgets.length).toBe(0);
     expect(rcAiGroup.rootWidgets).toEqual([]);
@@ -114,24 +115,25 @@ describe("ToolboxGroupHelper", () => {
 
     const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
 
-    // Group order: RC AI, custom-root, then alphabetically: community-pack, sample
-    expect(groups.length).toBe(4);
+    // Group order: RC AI, Lane Columns, custom-root, then alphabetically: community-pack, sample
+    expect(groups.length).toBe(5);
     expect(groups[0].id).toBe(ToolboxGroupHelper.RC_AI_GROUP_ID);
-    expect(groups[1].id).toBe(ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID);
-    expect(groups[1].nameKey).toBe("UE_TOOLBOX_GROUP_CUSTOM_ROOT");
-    expect(groups[1].rootWidgets.length).toBe(1);
-    expect(groups[1].rootWidgets[0].type).toBe("custom:root-widget");
-
-    expect(groups[2].id).toBe("community-pack");
+    expect(groups[1].id).toBe(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID);
+    expect(groups[2].id).toBe(ToolboxGroupHelper.CUSTOM_ROOT_GROUP_ID);
+    expect(groups[2].nameKey).toBe("UE_TOOLBOX_GROUP_CUSTOM_ROOT");
     expect(groups[2].rootWidgets.length).toBe(1);
+    expect(groups[2].rootWidgets[0].type).toBe("custom:root-widget");
 
-    expect(groups[3].id).toBe("sample");
+    expect(groups[3].id).toBe("community-pack");
     expect(groups[3].rootWidgets.length).toBe(1);
-    expect(groups[3].rootWidgets[0].type).toBe("custom:sample-gauge");
-    expect(groups[3].subgroups.length).toBe(1);
-    expect(groups[3].subgroups[0].id).toBe("sample:timing");
-    expect(groups[3].subgroups[0].nameKey).toBe("timing");
-    expect(groups[3].subgroups[0].widgets[0].type).toBe("custom:sample-delta");
+
+    expect(groups[4].id).toBe("sample");
+    expect(groups[4].rootWidgets.length).toBe(1);
+    expect(groups[4].rootWidgets[0].type).toBe("custom:sample-gauge");
+    expect(groups[4].subgroups.length).toBe(1);
+    expect(groups[4].subgroups[0].id).toBe("sample:timing");
+    expect(groups[4].subgroups[0].nameKey).toBe("timing");
+    expect(groups[4].subgroups[0].widgets[0].type).toBe("custom:sample-delta");
   });
 
   it("should filter widgets across groups and subgroups by search term", () => {
@@ -335,5 +337,68 @@ describe("ToolboxGroupHelper", () => {
       "Middle Gauge",
       "Zebra Meter",
     ]);
+  });
+
+  it("should build Lane Columns group with 9 subgroups and not filter placed widgets", () => {
+    const used = new Set<string>([
+      "lane-col:lastLapTime",
+      "lane-column",
+      "timer",
+    ]);
+    const customWidgets: CustomWidgetDefinition[] = [];
+
+    const groups = ToolboxGroupHelper.buildToolboxGroups(used, customWidgets);
+    const laneColGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID,
+    );
+
+    expect(laneColGroup).toBeDefined();
+    expect(laneColGroup!.isBuiltIn).toBeTrue();
+    expect(laneColGroup!.nameKey).toBe("UE_TOOLBOX_GROUP_LANE_COLUMNS");
+    expect(laneColGroup!.subgroups.length).toBe(9);
+
+    // Verify lastLapTime is still present despite being in used
+    const lapTimesSg = laneColGroup!.subgroups.find(
+      (sg) => sg.id === "lane-col-sg-lap-times",
+    );
+    expect(lapTimesSg).toBeDefined();
+    const lastLapWidget = lapTimesSg!.widgets.find(
+      (w) => w.type === "lane-col:lastLapTime",
+    );
+    expect(lastLapWidget).toBeDefined();
+  });
+
+  it("should include custom image sets in media-custom subgroup of Lane Columns", () => {
+    const used = new Set<string>();
+    const customWidgets: CustomWidgetDefinition[] = [];
+    const availableColumns = [
+      { key: "driver.nickname", label: "RD_COL_NICKNAME" },
+      { key: "imageset_custom_gauge", label: "Custom Gauge Asset" },
+    ];
+
+    const groups = ToolboxGroupHelper.buildToolboxGroups(
+      used,
+      customWidgets,
+      "",
+      new Map(),
+      new Map(),
+      undefined,
+      availableColumns,
+    );
+
+    const laneColGroup = groups.find(
+      (g) => g.id === ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID,
+    );
+    expect(laneColGroup).toBeDefined();
+
+    const mediaCustomSg = laneColGroup!.subgroups.find(
+      (sg) => sg.id === "lane-col-sg-media-custom",
+    );
+    expect(mediaCustomSg).toBeDefined();
+    expect(
+      mediaCustomSg!.widgets.some(
+        (w) => w.type === "lane-col:imageset_custom_gauge",
+      ),
+    ).toBeTrue();
   });
 });
