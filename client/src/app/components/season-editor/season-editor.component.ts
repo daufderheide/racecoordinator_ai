@@ -560,6 +560,23 @@ export class SeasonEditorComponent
     this.updateScale();
   }
 
+  @HostListener("window:keydown", ["$event"])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if (!this.isEditMode) return;
+    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        this.onRedo();
+      } else {
+        this.onUndo();
+      }
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
+      event.preventDefault();
+      this.onRedo();
+    }
+  }
+
   private updateScale(): void {
     const targetWidth = 1600;
     const targetHeight = 900;
@@ -901,10 +918,12 @@ export class SeasonEditorComponent
   }
 
   onUndo(): void {
+    if (!this.isEditMode) return;
     this.undoManager.undo();
   }
 
   onRedo(): void {
+    if (!this.isEditMode) return;
     this.undoManager.redo();
   }
 

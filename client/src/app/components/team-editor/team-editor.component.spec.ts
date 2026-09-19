@@ -351,12 +351,44 @@ describe("TeamEditorComponent", () => {
   it("should support undo/redo for name changes", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
+    component.isEditMode = true;
 
     component.onInputFocus();
     component.editingTeam!.name = "Changed";
     component.onInputBlur();
 
     expect(component.editingTeam!.name).toBe("Changed");
+    component.undo();
+    expect(component.editingTeam!.name).toBe("Team Alpha");
+    component.redo();
+    expect(component.editingTeam!.name).toBe("Changed");
+  });
+
+  it("should disable undo/redo and keyboard shortcuts in read-only mode, and enable in edit mode", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
+    component.loadData();
+    component.isEditMode = true;
+
+    component.onInputFocus();
+    component.editingTeam!.name = "Changed";
+    component.onInputBlur();
+
+    // Read-only mode
+    component.isEditMode = false;
+
+    // Undo and redo do nothing
+    component.undo();
+    expect(component.editingTeam!.name).toBe("Changed");
+    component.redo();
+    expect(component.editingTeam!.name).toBe("Changed");
+
+    // Keydown shortcut does nothing
+    const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+    component.handleKeyboardEvent(zEvent);
+    expect(component.editingTeam!.name).toBe("Changed");
+
+    // Re-enter edit mode: undo is restored
+    component.isEditMode = true;
     component.undo();
     expect(component.editingTeam!.name).toBe("Team Alpha");
     component.redo();

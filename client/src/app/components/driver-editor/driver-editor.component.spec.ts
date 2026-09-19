@@ -472,6 +472,7 @@ describe("DriverEditorComponent", () => {
   it("should track changes and support undo/redo", () => {
     const initial = new Driver("d1", "Start", "");
     setupDriver(initial);
+    component.isEditMode = true;
 
     // 1. Capture state (simulating focus/before change)
     component.onInputFocus();
@@ -533,41 +534,71 @@ describe("DriverEditorComponent", () => {
     expect(component.isNicknameUnique()).toBeFalse();
     expect(component.isNicknameInvalid).toBeTrue();
   });
-  it("should preserve undo stack after save", () => {
+  it("should preserve undo stack after save but disable undo until edit mode is re-entered", () => {
     const driver = new Driver("d1", "Start", "StartNick");
     setupDriver(driver);
+    component.isEditMode = true;
 
-    // Make change and push to stack
+    // Make change and push to stack (triggers auto-save)
     component.editingDriver!.name = "Changed";
     component.captureState(); // Capture AFTER change
 
-    dataService.updateDriver.and.returnValue(of({ entity_id: "d1" }));
-
-    // Save
-    component.updateDriver();
-
-    // Verify stack is preserved
+    // Verify stack is preserved and data is clean after auto-save
     expect(component.undoManager.undoStackItems.length).toBe(1);
     expect(component.undoManager.undoStackItems[0].name).toBe("Start");
-
-    // Verify hasChanges matches DB (Clean)
     expect(component.isDirtyState()).toBeFalse();
 
-    // Undo
-    component.undo();
+    // Toggle out of edit mode to enter read-only mode
+    component.onToggleEditMode();
+    expect(component.isEditMode).toBeFalse();
 
-    // Verify dirty after undo (because it differs from saved 'Changed' state)
-    // Note: After save, resetTracking was called. Current state = Saved 'Changed'.
-    // Initial State = Saved 'Changed'.
-    // Stack has 'Start'.
-    // Undo -> Editing Driver = 'Start'.
-    // 'Start' != 'Changed' (Initial). So hasChanges() -> TRUE.
+    // In read-only mode, undo is disabled
+    component.undo();
+    expect(component.editingDriver!.name).toBe("Changed");
+
+    // Re-entering edit mode enables undo with preserved stack
+    component.onToggleEditMode();
+    expect(component.isEditMode).toBeTrue();
+    component.undo();
     expect(component.editingDriver!.name).toBe("Start");
+  });
+
+  it("should disable undo/redo and keyboard shortcuts in read-only mode, but preserve history for edit mode", () => {
+    const driver = new Driver("d1", "Initial", "InitNick");
+    setupDriver(driver);
+    component.isEditMode = true;
+
+    component.editingDriver!.name = "Modified";
+    component.captureState();
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+
+    // Enter read-only mode
+    component.isEditMode = false;
+
+    // Undo and redo should do nothing in read-only mode
+    component.undo();
+    expect(component.editingDriver!.name).toBe("Modified");
+    expect(component.undoManager.undoStackItems.length).toBe(1);
+
+    component.redo();
+    expect(component.editingDriver!.name).toBe("Modified");
+
+    // Keyboard event in read-only mode should do nothing
+    const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+    component.handleKeyboardEvent(zEvent);
+    expect(component.editingDriver!.name).toBe("Modified");
+
+    // Re-enter edit mode: undo is now enabled with preserved history
+    component.isEditMode = true;
+    component.undo();
+    expect(component.editingDriver!.name).toBe("Initial");
+    expect(component.undoManager.redoStackItems.length).toBe(1);
   });
 
   it("should preserve entity_id on undo (context safety)", () => {
     const driver = new Driver("d1", "Start", "StartNick");
     setupDriver(driver);
+    component.isEditMode = true;
 
     // Simulate "Save as New" causing ID change to 'd2'
     component.editingDriver!.entity_id = "d2";

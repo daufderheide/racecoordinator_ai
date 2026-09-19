@@ -379,6 +379,7 @@ export class DriverEditorComponent
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
@@ -685,9 +686,11 @@ export class DriverEditorComponent
   }
 
   undo() {
+    if (!this.isEditMode) return;
     this.undoManager.undo();
   }
   redo() {
+    if (!this.isEditMode) return;
     this.undoManager.redo();
   }
 

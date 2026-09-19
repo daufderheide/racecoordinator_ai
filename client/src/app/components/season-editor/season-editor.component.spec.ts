@@ -1602,5 +1602,49 @@ describe("SeasonEditorComponent", () => {
       ).toBeUndefined();
       expect(component.selectedSeasonId).toBe("s2");
     }));
+
+    it("should disable undo/redo and keyboard shortcuts in read-only mode, and enable in edit mode", () => {
+      const s1: Season = {
+        entity_id: "s1",
+        name: "Season One",
+        drops: 0,
+        races: [],
+      };
+      component.editingSeason = { ...s1 };
+      component.undoManager.initialize(component.editingSeason);
+      component.isEditMode = true;
+
+      component.editingSeason.name = "Modified Season";
+      component.undoManager.captureState();
+      expect(component.undoManager.canUndo()).toBeTrue();
+
+      // Read-only mode
+      component.isEditMode = false;
+
+      // onUndo does nothing in read-only mode
+      component.onUndo();
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // onRedo does nothing in read-only mode
+      component.onRedo();
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // Keydown does nothing in read-only mode
+      const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+      component.handleKeyboardEvent(zEvent);
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // Re-enter edit mode: undo is restored
+      component.isEditMode = true;
+      component.onUndo();
+      expect(component.editingSeason.name).toBe("Season One");
+
+      component.onRedo();
+      expect(component.editingSeason.name).toBe("Modified Season");
+
+      // Keydown works in edit mode
+      component.handleKeyboardEvent(zEvent);
+      expect(component.editingSeason.name).toBe("Season One");
+    });
   });
 });

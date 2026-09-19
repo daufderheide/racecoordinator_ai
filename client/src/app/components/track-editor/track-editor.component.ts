@@ -489,6 +489,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
@@ -1242,11 +1243,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   // Undo/Redo Proxies
   undo() {
+    if (!this.isEditMode) return;
     clearTimeout(this.colorDebounceTimer);
     this.colorDebounceTimer = null;
     this.undoManager.undo();
   }
   redo() {
+    if (!this.isEditMode) return;
     clearTimeout(this.colorDebounceTimer);
     this.colorDebounceTimer = null;
     this.undoManager.redo();

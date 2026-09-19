@@ -208,6 +208,61 @@ describe("ToolbarComponent", () => {
     expect(manager.redo).toHaveBeenCalled();
   });
 
+  it("should disable undo and redo in read-only mode even when stacks have items", async () => {
+    const config = {
+      clonner: (item: any) => ({ ...item }),
+      equalizer: (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b),
+      applier: () => {},
+    };
+    let state = { foo: "bar" };
+    const manager = new UndoManager<any>(config, () => state);
+    spyOn(manager, "undo").and.callThrough();
+    spyOn(manager, "redo").and.callThrough();
+
+    fixture.componentRef.setInput("showUndo", true);
+    fixture.componentRef.setInput("showRedo", true);
+    fixture.componentRef.setInput("showEdit", true);
+    fixture.componentRef.setInput("isEditMode", false);
+    fixture.componentRef.setInput("undoManager", manager);
+    fixture.detectChanges();
+
+    manager.commitState();
+    state = { foo: "baz" };
+    manager.commitState();
+    state = { foo: "qux" };
+    manager.commitState();
+    manager.undo(); // now undoStackCount > 0 and redoStackCount > 0
+
+    expect(manager.undoStackCount).toBeGreaterThan(0);
+    expect(manager.redoStackCount).toBeGreaterThan(0);
+
+    // In read-only mode, both buttons should be disabled
+    expect(component.canUndo).toBeFalse();
+    expect(component.canRedo).toBeFalse();
+    expect(await harness.isUndoDisabled()).toBeTrue();
+    expect(await harness.isRedoDisabled()).toBeTrue();
+
+    // Invocations while disabled do nothing
+    component.undo();
+    component.redo();
+    expect(manager.undo).toHaveBeenCalledTimes(1); // from manual setup only
+    expect(manager.redo).not.toHaveBeenCalled();
+
+    // When entering edit mode, buttons become enabled and functional
+    fixture.componentRef.setInput("isEditMode", true);
+    fixture.detectChanges();
+
+    expect(component.canUndo).toBeTrue();
+    expect(component.canRedo).toBeTrue();
+    expect(await harness.isUndoDisabled()).toBeFalse();
+    expect(await harness.isRedoDisabled()).toBeFalse();
+
+    await harness.clickUndo();
+    expect(manager.undo).toHaveBeenCalledTimes(2);
+    await harness.clickRedo();
+    expect(manager.redo).toHaveBeenCalledTimes(1);
+  });
+
   it("should disable buttons when isSaving is true", async () => {
     fixture.componentRef.setInput("showEdit", true);
     fixture.componentRef.setInput("showDelete", true);
