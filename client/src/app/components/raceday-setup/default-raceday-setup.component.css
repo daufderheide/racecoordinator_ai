@@ -376,7 +376,8 @@
 }
 
 .driver-item:hover,
-.driver-item.keyboard-active {
+.driver-item.keyboard-active,
+.driver-item.active {
   background: rgba(56, 189, 248, 0.15);
   border-color: #38bdf8;
   transform: translateX(4px);

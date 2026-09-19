@@ -100,6 +100,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   scale: number = 1;
   public navigateBackOnSave = false;
   defaultTeamName: string = "";
+  private initialLastEditedId: string | null = null;
 
   focusNameInput() {
     setTimeout(() => {
@@ -162,6 +163,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   ngOnInit() {
+    this.initialLastEditedId = this.navigationService.getLastEditedId("team");
     setTimeout(() => this.updateScale());
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
@@ -392,11 +394,31 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       if (found) {
         this.selectTeam(found);
         this.isEditMode = false;
-      } else if (this.allTeams.length > 0) {
-        this.selectTeam(this.allTeams[0]);
-        this.isEditMode = false;
+        this.navigationService.setLastEditedId("team", found.entity_id);
       } else {
-        this.startNewTeam();
+        const lastEdited =
+          this.initialLastEditedId && this.initialLastEditedId !== idParam
+            ? this.initialLastEditedId
+            : this.navigationService.getLastEditedId("team") !== idParam
+              ? this.navigationService.getLastEditedId("team")
+              : null;
+        const foundLast = lastEdited
+          ? this.allTeams.find((t) => t.entity_id === lastEdited)
+          : undefined;
+        if (foundLast) {
+          this.selectTeam(foundLast);
+          this.isEditMode = false;
+          this.navigationService.setLastEditedId("team", foundLast.entity_id);
+        } else if (this.allTeams.length > 0) {
+          this.selectTeam(this.allTeams[0]);
+          this.isEditMode = false;
+          this.navigationService.setLastEditedId(
+            "team",
+            this.allTeams[0].entity_id,
+          );
+        } else {
+          this.startNewTeam();
+        }
       }
     } else {
       const lastEdited = this.navigationService.getLastEditedId("team");
@@ -409,6 +431,10 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       } else if (this.allTeams.length > 0) {
         this.selectTeam(this.allTeams[0]);
         this.isEditMode = false;
+        this.navigationService.setLastEditedId(
+          "team",
+          this.allTeams[0].entity_id,
+        );
       } else {
         this.startNewTeam();
       }
@@ -441,6 +467,7 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const found = this.allTeams.find((t) => t.entity_id === id);
     if (found) {
       this.selectTeam(found);
+      this.navigationService.setLastEditedId("team", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },

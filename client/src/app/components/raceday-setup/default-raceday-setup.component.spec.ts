@@ -2926,4 +2926,175 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.selectedParticipants.length).toBe(0);
     });
   });
+
+  describe("Participant Selection & Editor Navigation", () => {
+    it("should select participant and report isParticipantSelected accurately", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      const team = new Team("t1", "Ferrari", undefined, ["d1"]);
+
+      expect(component.selectedParticipantItem).toBeNull();
+      expect(component.isParticipantSelected(driver)).toBeFalse();
+
+      component.selectParticipant(driver);
+      expect(component.selectedParticipantItem).toBe(driver);
+      expect(component.isParticipantSelected(driver)).toBeTrue();
+      expect(
+        component.isParticipantSelected(new Driver("d2", "Other", "O")),
+      ).toBeFalse();
+      expect(component.isParticipantSelected(team)).toBeFalse();
+
+      component.selectParticipant(team);
+      expect(component.selectedParticipantItem).toBe(team);
+      expect(component.isParticipantSelected(team)).toBeTrue();
+      expect(component.isParticipantSelected(driver)).toBeFalse();
+    });
+
+    it("should ensure only one driver/team is selected across available and racing lists, undoing previous selection on click", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1];
+      component.selectedParticipants = [d2];
+
+      component.selectParticipant(d1);
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+      expect(component.isParticipantSelected(d2)).toBeFalse();
+
+      component.selectParticipant(d2);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+      expect(component.isParticipantSelected(d1)).toBeFalse();
+    });
+
+    it("should update selection and undo previous selection when hovering over a driver in available or racing list", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1];
+      component.selectedParticipants = [d2];
+
+      component.onAvailableItemMouseEnter(d1, 0);
+      expect(component.selectedParticipantItem).toBe(d1);
+      expect(component.availableActiveIndex).toBe(0);
+      expect(component.isParticipantSelected(d1)).toBeTrue();
+      expect(component.isParticipantSelected(d2)).toBeFalse();
+
+      component.onRacingItemMouseEnter(d2, 0);
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.racingActiveIndex).toBe(0);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+      expect(component.isParticipantSelected(d1)).toBeFalse();
+    });
+
+    it("should navigate to driver-editor with query param when participant is selected", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      component.selectParticipant(driver);
+
+      component.openDriverManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+        queryParams: { id: "d1" },
+      });
+    });
+
+    it("should navigate to team-editor with query param when participant is selected", () => {
+      const team = new Team("t1", "Ferrari", undefined, ["d1"]);
+      component.selectParticipant(team);
+
+      component.openTeamManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"], {
+        queryParams: { id: "t1" },
+      });
+    });
+
+    it("should navigate without query params when no participant is selected", () => {
+      component.selectedParticipantItem = null;
+
+      component.openDriverManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"]);
+
+      component.openTeamManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/team-editor"]);
+    });
+
+    it("should select participant on clicking driver-item in template", () => {
+      const driver = new Driver("d1", "Dave", "D");
+      component.unselectedParticipants = [driver];
+      fixture.detectChanges();
+
+      const availItem = fixture.nativeElement.querySelector("#avail-item-0");
+      expect(availItem).toBeTruthy();
+      availItem.click();
+      fixture.detectChanges();
+
+      expect(component.selectedParticipantItem).toBe(driver);
+      expect(availItem.classList.contains("active")).toBeTrue();
+    });
+
+    it("should select participant when typing into available search query", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1, d2];
+      (component as any).selectedParticipantItem = null;
+
+      component.availableSearchQuery = "Dan";
+      component.onAvailableSearchQueryChange();
+
+      expect(component.selectedParticipantItem).toBe(d2);
+      expect(component.isParticipantSelected(d2)).toBeTrue();
+    });
+
+    it("should update selected participant when arrowing up/down in available search", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1, d2];
+      component.availableSearchQuery = "D";
+      component.onAvailableSearchQueryChange();
+      expect(component.selectedParticipantItem).toBe(d1);
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      component.onAvailableSearchKeydown(downEvent);
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+      component.onAvailableSearchKeydown(upEvent);
+      expect(component.selectedParticipantItem).toBe(d1);
+    });
+
+    it("should select participant when addActiveAvailableParticipant is invoked", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      component.unselectedParticipants = [d1];
+      component.selectedParticipants = [];
+      component.availableActiveIndex = 0;
+
+      component.addActiveAvailableParticipant();
+      expect(component.selectedParticipantItem).toBe(d1);
+    });
+
+    it("should select participant when typing into racing search query and navigating", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.selectedParticipants = [d1, d2];
+      (component as any).selectedParticipantItem = null;
+
+      component.racingSearchQuery = "Dan";
+      component.onRacingSearchQueryChange();
+      expect(component.selectedParticipantItem).toBe(d2);
+
+      const downEvent = new KeyboardEvent("keydown", { key: "ArrowDown" });
+      component.onRacingSearchKeydown(downEvent);
+      expect(component.selectedParticipantItem).toBe(d2);
+    });
+
+    it("should navigate to driver-editor with searched participant", () => {
+      const d1 = new Driver("d1", "Dave", "D");
+      const d2 = new Driver("d2", "Dan", "D");
+      component.unselectedParticipants = [d1, d2];
+      component.availableSearchQuery = "Dan";
+      component.onAvailableSearchQueryChange();
+
+      component.openDriverManager();
+      expect(mockRouter.navigate).toHaveBeenCalledWith(["/driver-editor"], {
+        queryParams: { id: "d2" },
+      });
+    });
+  });
 });
