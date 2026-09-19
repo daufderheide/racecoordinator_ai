@@ -7,10 +7,7 @@ import {
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
-import {
-  AbsoluteWidgetNode,
-  LaneColumnWidgetSettings,
-} from "@app/models/settings";
+import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
 
@@ -29,7 +26,7 @@ import { FontService } from "@app/services/font.service";
   ],
 })
 export class LaneColumnInspectorComponent {
-  settings = input.required<LaneColumnWidgetSettings>();
+  settings = input.required<any>();
   widget = input<AbsoluteWidgetNode>();
   availableColumns = input<{ key: string; label: string }[]>([]);
   disableFontSizes = input<boolean>(false);
