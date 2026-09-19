@@ -621,6 +621,30 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
+    try {
+      localStorage.setItem(
+        "race_editor_expanders",
+        JSON.stringify(this.sectionsExpanded),
+      );
+    } catch (e) {
+      this.logger.error("Error saving expander state", e);
+    }
+  }
+
   loadExpanderState() {
     try {
       const saved = localStorage.getItem("race_editor_expanders");

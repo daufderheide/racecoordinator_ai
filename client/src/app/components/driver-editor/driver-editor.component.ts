@@ -164,6 +164,23 @@ export class DriverEditorComponent
     this.saveExpanderState();
   }
 
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
+    this.saveExpanderState();
+  }
+
   saveExpanderState() {
     saveDriverStorageJson(
       "driver_editor_expanders",

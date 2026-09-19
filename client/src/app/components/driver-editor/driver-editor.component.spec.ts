@@ -1123,6 +1123,16 @@ describe("DriverEditorComponent", () => {
         "DE_LABEL_FALSE_START_SOUND",
       );
     });
+
+    it("should toggle all sections and check expansion state", () => {
+      component.toggleAllSections(false);
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(component.sectionsExpanded.audio).toBeFalse();
+
+      component.toggleAllSections(true);
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(component.sectionsExpanded.audio).toBeTrue();
+    });
   });
 
   describe("guided help", () => {

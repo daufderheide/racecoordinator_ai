@@ -401,4 +401,43 @@ describe("ToolbarComponent", () => {
       expect(component.zoomLevelChange.emit).not.toHaveBeenCalledWith(40);
     });
   });
+
+  describe("Expand / Collapse All", () => {
+    it("should render expand-collapse button when showExpandCollapse is true", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.componentRef.setInput("allExpanded", false);
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector(
+        "#expand-collapse-all-btn",
+      );
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain("unfold_more");
+    });
+
+    it("should display unfold_less icon when allExpanded is true", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.componentRef.setInput("allExpanded", true);
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector(
+        "#expand-collapse-all-btn",
+      );
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain("unfold_less");
+    });
+
+    it("should emit expandCollapse on button click", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.detectChanges();
+
+      spyOn(component.expandCollapse, "emit");
+      const btn = fixture.nativeElement.querySelector(
+        "#expand-collapse-all-btn",
+      );
+      btn.click();
+
+      expect(component.expandCollapse.emit).toHaveBeenCalled();
+    });
+  });
 });

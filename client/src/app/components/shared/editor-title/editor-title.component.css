@@ -99,3 +99,63 @@
   box-shadow: none;
   cursor: not-allowed;
 }
+
+.editor-object-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.editor-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  border-radius: 6px;
+  color: #00e5ff;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.editor-nav-btn:hover:not(:disabled) {
+  border-color: #00e5ff;
+  background: rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.editor-nav-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.editor-nav-btn:disabled {
+  opacity: 0.35;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.editor-nav-btn .material-icons {
+  font-size: 22px;
+}
+
+.editor-item-counter {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  text-shadow: none;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  margin-left: 4px;
+  user-select: none;
+  flex-shrink: 0;
+}
