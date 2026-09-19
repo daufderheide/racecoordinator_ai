@@ -6,7 +6,6 @@ import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
-import { ReplicateLaneDialogComponent } from "@app/components/ui-editor/components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { FontService } from "@app/services/font.service";
@@ -22,7 +21,6 @@ import { FontService } from "@app/services/font.service";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
-    ReplicateLaneDialogComponent,
   ],
 })
 export class LaneColumnInspectorComponent {
@@ -33,6 +31,7 @@ export class LaneColumnInspectorComponent {
   totalLanes = input<number>(4);
 
   change = output<void>();
+  requestReplicate = output<void>();
   replicate =
     output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
 
@@ -51,6 +50,7 @@ export class LaneColumnInspectorComponent {
 
   openReplicateModal(): void {
     this.showReplicateModal.set(true);
+    this.requestReplicate.emit();
   }
 
   closeReplicateModal(): void {

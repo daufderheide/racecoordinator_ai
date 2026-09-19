@@ -54,6 +54,7 @@ import { mockTTSContext } from "@app/utils/audio";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
+import { ReplicateLaneDialogComponent } from "./components/replicate-lane-dialog/replicate-lane-dialog.component";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
 import {
   ThemeTemplateModalComponent,
@@ -72,6 +73,7 @@ import {
   cancelDeleteCustomUiModal,
   cancelDeleteThemeModal,
   cloneUIEditorState,
+  confirmReplicateLanesHelper,
   DEFAULT_SECTIONS_EXPANDED,
   DirectoryController,
   downloadJsonFile,
@@ -157,6 +159,7 @@ import {
   MOCK_RACEDAY_PROPERTIES,
   openDeleteCustomUiModal,
   openDeleteThemeModal,
+  openReplicateLaneModalHelper,
   openSuccessModal,
   resolveActiveLayout,
   resolveTargetCustomUi,
@@ -199,6 +202,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     ThemeTemplateModalComponent,
     TemplateVariablesModalComponent,
     EnterPathModalComponent,
+    ReplicateLaneDialogComponent,
     CustomSelectComponent,
     CustomOptionComponent,
     AutoSelectDefaultDirective,
@@ -251,6 +255,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   showThemeTemplateModal = false;
   showTemplateVariablesModal = false;
+  showReplicateLaneModal = false;
+  replicateBindingMode: "lane" | "position" = "lane";
+  replicateSourceIndex = 0;
+  replicateDefaultCount = 4;
+  replicateTargetUi?: CustomUI;
   displayColumnSlots: any[] = [];
   get isCurrentLayoutPractice() {
     return this.activeCustomUiId === "practice_ui_layout_rc_ai";
@@ -588,6 +597,14 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onReplicateLanes(options: any, ui?: CustomUI) {
     handleReplicateLanes(this, options, ui);
+  }
+
+  openReplicateLaneModal(ui?: CustomUI): void {
+    openReplicateLaneModalHelper(this, ui);
+  }
+
+  onConfirmReplicateLanes(options: any): void {
+    confirmReplicateLanesHelper(this, options);
   }
 
   onRacedayLayoutChanged(newLayout: any) {

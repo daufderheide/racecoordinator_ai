@@ -4029,6 +4029,44 @@ describe("UIEditorComponent", () => {
       expect(component.undoManager.captureState).toHaveBeenCalled();
     });
 
+    it("should open and confirm replicate lane modal properly", () => {
+      const widget = {
+        id: "lc-1",
+        widgetType: "lane-column",
+        customSettings: {
+          bindingMode: "lane",
+          targetIndex: 0,
+        },
+      };
+      const customUi: any = {
+        entity_id: "custom_ui_rep",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [widget],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_rep";
+      component.selectedWidgetId = "lc-1";
+      component.track = { lanes: [{}, {}, {}, {}, {}, {}] };
+
+      component.openReplicateLaneModal(customUi);
+      expect(component.showReplicateLaneModal).toBeTrue();
+      expect(component.replicateBindingMode).toBe("lane");
+      expect(component.replicateSourceIndex).toBe(0);
+      expect(component.replicateDefaultCount).toBe(6);
+
+      spyOn(component, "onReplicateLanes");
+      const options = { targetCount: 6 } as any;
+      component.onConfirmReplicateLanes(options);
+      expect(component.showReplicateLaneModal).toBeFalse();
+      expect(component.onReplicateLanes).toHaveBeenCalledWith(
+        options,
+        customUi,
+      );
+    });
+
     it("should preserve collapsed column groups on lane-view widget per layout independently", () => {
       spyOn(component.undoManager, "captureState");
       const customUi1: any = {

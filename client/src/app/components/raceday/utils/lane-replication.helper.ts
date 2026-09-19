@@ -24,10 +24,10 @@ export class LaneReplicationHelper {
     const sourceWidgets = widgets.filter((w) => {
       if (w.widgetType !== "lane-column") return false;
       const mode = w.customSettings?.["bindingMode"] || "lane";
-      const targetIndex = w.customSettings?.["targetIndex"] ?? 0;
+      const targetIndex = Number(w.customSettings?.["targetIndex"] ?? 0);
       return (
         mode === options.sourceBindingMode &&
-        targetIndex === options.sourceIndex
+        targetIndex === Number(options.sourceIndex)
       );
     });
 
@@ -69,10 +69,10 @@ export class LaneReplicationHelper {
       resultWidgets = resultWidgets.filter((w) => {
         if (w.widgetType !== "lane-column") return true;
         const mode = w.customSettings?.["bindingMode"] || "lane";
-        const targetIndex = w.customSettings?.["targetIndex"] ?? 0;
+        const targetIndex = Number(w.customSettings?.["targetIndex"] ?? 0);
         if (
           mode === options.sourceBindingMode &&
-          targetIndex !== options.sourceIndex
+          targetIndex !== Number(options.sourceIndex)
         ) {
           return targetIndex >= options.targetCount;
         }

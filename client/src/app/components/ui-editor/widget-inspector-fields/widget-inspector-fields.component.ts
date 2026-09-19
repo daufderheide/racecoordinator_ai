@@ -46,6 +46,7 @@ export class WidgetInspectorFieldsComponent {
   isPracticeMode = input<boolean>(false);
   change = output<AbsoluteWidgetNode>();
   replicate = output<any>();
+  requestReplicate = output<void>();
 
   isCustomWidget(type: string | undefined): boolean {
     return type?.startsWith("custom:") ?? false;

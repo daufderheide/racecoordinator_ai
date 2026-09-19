@@ -66,6 +66,7 @@
         [availableColumns]="availableColumns()"
         [disableFontSizes]="widget().scaleMode === 'auto'"
         (change)="onSettingsChange()"
+        (requestReplicate)="requestReplicate.emit()"
         (replicate)="replicate.emit($event)"
       ></app-lane-column-inspector>
     }

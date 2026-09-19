@@ -540,6 +540,9 @@
                                   [availableColumns]="availableColumns"
                                   [isPracticeMode]="isCustomUiPractice(ui)"
                                   (change)="onWidgetInspectorChange($event, ui)"
+                                  (requestReplicate)="
+                                    openReplicateLaneModal(ui)
+                                  "
                                   (replicate)="onReplicateLanes($event, ui)"
                                 ></app-widget-inspector-fields>
                               </div>
@@ -1649,4 +1652,14 @@
     (confirm)="confirmEnterPath($event)"
     (cancel)="cancelEnterPathModal()"
   ></app-enter-path-modal>
+
+  <!-- Lane / Position Replication Modal -->
+  <app-replicate-lane-dialog
+    [visible]="showReplicateLaneModal"
+    [bindingMode]="replicateBindingMode"
+    [sourceIndex]="replicateSourceIndex"
+    [defaultCount]="replicateDefaultCount"
+    (confirm)="onConfirmReplicateLanes($event)"
+    (cancel)="showReplicateLaneModal = false"
+  ></app-replicate-lane-dialog>
 </div>

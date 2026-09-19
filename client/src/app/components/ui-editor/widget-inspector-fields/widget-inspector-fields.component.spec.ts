@@ -123,4 +123,29 @@ describe("WidgetInspectorFieldsComponent", () => {
     );
     expect(inspectorEl).toBeTruthy();
   });
+
+  it("should forward requestReplicate when lane-column inspector requests replicate", () => {
+    const laneColWidget: AbsoluteWidgetNode = {
+      id: "w-lane-col",
+      widgetType: "lane-column",
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 120,
+      zIndex: 1,
+      customSettings: {
+        columnKey: "lastLapTime",
+        bindingMode: "lane",
+        targetIndex: 0,
+      },
+    };
+    fixture.componentRef.setInput("widget", laneColWidget);
+    fixture.detectChanges();
+
+    spyOn(component.requestReplicate, "emit");
+    const laneColComp =
+      fixture.debugElement.children[0].children[0].componentInstance;
+    laneColComp.requestReplicate.emit();
+    expect(component.requestReplicate.emit).toHaveBeenCalled();
+  });
 });

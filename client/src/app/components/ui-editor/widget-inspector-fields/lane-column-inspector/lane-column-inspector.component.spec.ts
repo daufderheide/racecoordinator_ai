@@ -95,6 +95,12 @@ describe("LaneColumnInspectorComponent", () => {
     expect(component.showReplicateModal()).toBeFalse();
   });
 
+  it("should emit requestReplicate on openReplicateModal", () => {
+    spyOn(component.requestReplicate, "emit");
+    component.openReplicateModal();
+    expect(component.requestReplicate.emit).toHaveBeenCalled();
+  });
+
   it("should emit replicate options on onReplicateConfirm", () => {
     spyOn(component.replicate, "emit");
     component.openReplicateModal();

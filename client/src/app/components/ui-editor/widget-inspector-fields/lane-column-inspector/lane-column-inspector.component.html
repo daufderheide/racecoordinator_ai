@@ -390,13 +390,3 @@
     </app-custom-select>
   </div>
 </div>
-
-<!-- Replication Modal Dialog -->
-<app-replicate-lane-dialog
-  [visible]="showReplicateModal()"
-  [bindingMode]="currentSettings['bindingMode'] || 'lane'"
-  [sourceIndex]="currentSettings['targetIndex'] ?? 0"
-  [defaultCount]="totalLanes()"
-  (confirm)="onReplicateConfirm($event)"
-  (cancel)="closeReplicateModal()"
-></app-replicate-lane-dialog>

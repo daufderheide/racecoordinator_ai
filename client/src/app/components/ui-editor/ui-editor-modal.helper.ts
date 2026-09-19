@@ -83,3 +83,19 @@ export function focusUiEditorElement(id: string): void {
     if (el) (el as HTMLInputElement).focus();
   }, 150);
 }
+
+export function openReplicateLaneModalHelper(comp: any, ui?: CustomUI): void {
+  comp.replicateTargetUi = ui || comp.activeCustomUi;
+  comp.replicateBindingMode =
+    comp.currentSelectedWidget?.customSettings?.["bindingMode"] || "lane";
+  comp.replicateSourceIndex = Number(
+    comp.currentSelectedWidget?.customSettings?.["targetIndex"] ?? 0,
+  );
+  comp.replicateDefaultCount = comp.track?.lanes?.length || 4;
+  comp.showReplicateLaneModal = true;
+}
+
+export function confirmReplicateLanesHelper(comp: any, options: any): void {
+  comp.showReplicateLaneModal = false;
+  comp.onReplicateLanes(options, comp.replicateTargetUi);
+}
