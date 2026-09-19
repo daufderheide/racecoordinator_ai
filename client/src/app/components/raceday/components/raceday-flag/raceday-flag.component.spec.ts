@@ -62,4 +62,11 @@ describe("RacedayFlagComponent", () => {
 
     expect(await flagHarness.getFlagUrl()).toBe("assets/flags/fallback.png");
   });
+
+  it("should render container with panel-card and flag-panel classes", () => {
+    const cardEl = fixture.nativeElement.querySelector(
+      ".panel-card.flag-panel",
+    );
+    expect(cardEl).toBeTruthy();
+  });
 });
