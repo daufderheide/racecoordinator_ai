@@ -2985,6 +2985,141 @@ describe("DefaultRacedaySetupComponent", () => {
       expect(component.isParticipantSelected(d1)).toBeFalse();
     });
 
+    describe("mouse leave behavior on list boxes", () => {
+      it("should remove selection when mouse leaves available list box if there is no search string", () => {
+        const d1 = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [d1];
+        component.availableSearchQuery = "";
+        component.onAvailableItemMouseEnter(d1, 0);
+
+        expect(component.selectedParticipantItem).toBe(d1);
+        expect(component.isParticipantSelected(d1)).toBeTrue();
+
+        component.onAvailableListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.availableActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d1)).toBeFalse();
+      });
+
+      it("should retain selection when mouse leaves available list box if there is a search string", () => {
+        const d1 = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [d1];
+        component.availableSearchQuery = "Dave";
+        component.onAvailableItemMouseEnter(d1, 0);
+
+        component.onAvailableListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBe(d1);
+        expect(component.availableActiveIndex).toBe(0);
+        expect(component.isParticipantSelected(d1)).toBeTrue();
+      });
+
+      it("should remove selection when mouse leaves available list box if search string is whitespace only", () => {
+        const d1 = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [d1];
+        component.availableSearchQuery = "   ";
+        component.onAvailableItemMouseEnter(d1, 0);
+
+        component.onAvailableListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.availableActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d1)).toBeFalse();
+      });
+
+      it("should remove selection when mouse leaves racing list box if there is no search string", () => {
+        const d2 = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [d2];
+        component.racingSearchQuery = "";
+        component.onRacingItemMouseEnter(d2, 0);
+
+        expect(component.selectedParticipantItem).toBe(d2);
+        expect(component.isParticipantSelected(d2)).toBeTrue();
+
+        component.onRacingListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.racingActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d2)).toBeFalse();
+      });
+
+      it("should retain selection when mouse leaves racing list box if there is a search string", () => {
+        const d2 = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [d2];
+        component.racingSearchQuery = "Dan";
+        component.onRacingItemMouseEnter(d2, 0);
+
+        component.onRacingListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBe(d2);
+        expect(component.racingActiveIndex).toBe(0);
+        expect(component.isParticipantSelected(d2)).toBeTrue();
+      });
+
+      it("should remove selection when mouse leaves racing list box if search string is whitespace only", () => {
+        const d2 = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [d2];
+        component.racingSearchQuery = "   ";
+        component.onRacingItemMouseEnter(d2, 0);
+
+        component.onRacingListMouseLeave();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(component.racingActiveIndex).toBe(-1);
+        expect(component.isParticipantSelected(d2)).toBeFalse();
+      });
+
+      it("should remove selection in template when mouseleave event is dispatched on available-list with no search query", () => {
+        const driver = new Driver("d1", "Dave", "D");
+        component.unselectedParticipants = [driver];
+        component.availableSearchQuery = "";
+        fixture.detectChanges();
+
+        const availItem = fixture.nativeElement.querySelector("#avail-item-0");
+        expect(availItem).toBeTruthy();
+        availItem.dispatchEvent(new MouseEvent("mouseenter"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBe(driver);
+        expect(availItem.classList.contains("active")).toBeTrue();
+
+        const availableList =
+          fixture.nativeElement.querySelector("#available-list");
+        expect(availableList).toBeTruthy();
+        availableList.dispatchEvent(new MouseEvent("mouseleave"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(availItem.classList.contains("active")).toBeFalse();
+      });
+
+      it("should remove selection in template when mouseleave event is dispatched on selected-list with no search query", () => {
+        const driver = new Driver("d2", "Dan", "D");
+        component.selectedParticipants = [driver];
+        component.racingSearchQuery = "";
+        fixture.detectChanges();
+
+        const racingItem =
+          fixture.nativeElement.querySelector("#racing-item-0");
+        expect(racingItem).toBeTruthy();
+        racingItem.dispatchEvent(new MouseEvent("mouseenter"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBe(driver);
+        expect(racingItem.classList.contains("active")).toBeTrue();
+
+        const selectedList =
+          fixture.nativeElement.querySelector("#selected-list");
+        expect(selectedList).toBeTruthy();
+        selectedList.dispatchEvent(new MouseEvent("mouseleave"));
+        fixture.detectChanges();
+
+        expect(component.selectedParticipantItem).toBeNull();
+        expect(racingItem.classList.contains("active")).toBeFalse();
+      });
+    });
+
     it("should navigate to driver-editor with query param when participant is selected", () => {
       const driver = new Driver("d1", "Dave", "D");
       component.selectParticipant(driver);

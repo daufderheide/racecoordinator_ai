@@ -467,6 +467,7 @@
             (cdkDropListDropped)="drop($event)"
             #availScrollContainer
             cdkScrollable
+            (mouseleave)="onAvailableListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (
@@ -662,6 +663,7 @@
             #racingScrollContainer
             cdkScrollable
             (selectstart)="preventSelection($event)"
+            (mouseleave)="onRacingListMouseLeave()"
           >
             @if (!isRefreshingList) {
               @for (

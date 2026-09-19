@@ -649,6 +649,20 @@ export class DefaultRacedaySetupComponent implements OnInit {
     this.selectedParticipantItem = participant;
   }
 
+  onAvailableListMouseLeave(): void {
+    if (!this.availableSearchQuery?.trim()) {
+      this.selectedParticipantItem = null;
+      this.availableActiveIndex = -1;
+    }
+  }
+
+  onRacingListMouseLeave(): void {
+    if (!this.racingSearchQuery?.trim()) {
+      this.selectedParticipantItem = null;
+      this.racingActiveIndex = -1;
+    }
+  }
+
   isParticipantSelected(participant: Participant): boolean {
     if (!this.selectedParticipantItem) return false;
     return (
