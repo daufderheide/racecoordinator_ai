@@ -77,18 +77,26 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
     this.name = this.initialName() || "";
     const entries = this.initialEntries();
     if (entries && entries.length > 0) {
-      this.entries = entries.map((e) => ({
-        timeSeconds: e.timeSeconds,
-        url: e.url,
-        name: e.name,
-        data: e.data,
-        type: e.type || "preset",
-        text: e.text || "",
-        percentage:
-          (e as any).percentage != null
-            ? (e as any).percentage
-            : Math.round(e.timeSeconds || 0),
-      }));
+      this.entries = entries.map((e) => {
+        const val =
+          e.timeSeconds != null
+            ? e.timeSeconds
+            : (e as any).percentage != null
+              ? (e as any).percentage
+              : 0;
+        return {
+          timeSeconds: val,
+          url: e.url,
+          name: e.name,
+          data: e.data,
+          type: e.type || "preset",
+          text: e.text || "",
+          percentage:
+            (e as any).percentage != null
+              ? (e as any).percentage
+              : Math.round(val),
+        };
+      });
     } else {
       this.entries = [];
     }

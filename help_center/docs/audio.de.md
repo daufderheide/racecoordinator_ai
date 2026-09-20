@@ -191,4 +191,4 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **UI-Editor -> Audio-Einstellungen** | Gesamtlautstärke, Dringlichkeits-Timeout, Ansagen-Abstand, TTS-Stimme, Geschwindigkeit, Tonhöhe, TTS-Lautstärke, Hörprobe. |
 | **Design-Editor (Themes)** | Systemweite Ereignisse: Start-Countdown, Grüne Lampe GO, Gelbe Flagge, Restzeit, Halbzeit, Durchgangsende, Rennende, Mindestrundenzeit, Driftrunde. |
 | **Fahrer-Editor** | Fahrerspezifische Sounds: Runden-Sound, Persönlicher Bester Runden-Sound, Rennen-Beste-Runde-Sound, Rennspur-Beste-Runde-Sound, Lauf-Beste-Runde-Sound, Neuer Rennführender-Sound, Neuer Lauf-Führender-Sound, Gesamtrekord-Rundensound, Spur-Gesamtrekord-Rundensound, Boxenstopp-Sound, Kraftstoffstand-Sounds und Fehlstart-Sound. |
-| **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien mit Sofort-Hörprobe. |
+| **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien sowie Konfigurieren von Audio-Sets mit kontextabhängigen Auslösewerten (Sekunden, Runden oder Prozentsatz) mit Sofort-Hörprobe. |

@@ -327,5 +327,51 @@ describe("AudioSetEditorComponent", () => {
       expect(savedEntries[1].text).toBe("{driver.nickname} out of fuel");
       expect(savedEntries[1].name).toBe("{driver.nickname} out of fuel");
     });
+
+    it("should render help banner with title and description", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      const helpBanner = fixture.nativeElement.querySelector(
+        ".audio-set-help-banner",
+      );
+      expect(helpBanner).toBeTruthy();
+      expect(helpBanner.querySelector(".help-title").textContent).toContain(
+        "AM_AUDIO_SET_EDITOR_HELP_TITLE",
+      );
+      expect(helpBanner.querySelector(".help-desc").textContent).toContain(
+        "AM_AUDIO_SET_EDITOR_HELP_DESC",
+      );
+    });
+
+    it("should display value label and no hardcoded seconds suffix", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Entry 1",
+          timeSeconds: 10,
+          url: "url1",
+          data: new Uint8Array(),
+        },
+      ]);
+      fixture.detectChanges();
+
+      const entryTime = fixture.nativeElement.querySelector(".entry-time");
+      expect(entryTime).toBeTruthy();
+      const label = entryTime.querySelector("label");
+      expect(label.textContent.trim()).toBe("AM_AUDIO_SET_EDITOR_VALUE");
+      expect(entryTime.textContent.trim()).not.toContain("s");
+    });
+
+    it("should display updated recalc button title", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.detectChanges();
+
+      const recalcBtn = fixture.nativeElement.querySelector(".btn-recalc");
+      expect(recalcBtn).toBeTruthy();
+      expect(recalcBtn.getAttribute("title")).toBe(
+        "AM_AUDIO_SET_EDITOR_RECALC",
+      );
+    });
   });
 });

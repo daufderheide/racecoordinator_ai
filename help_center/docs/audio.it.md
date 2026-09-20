@@ -192,4 +192,4 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Editor Interfaccia -> Impostazioni Audio** | Volume principale, tempo di attesa coda urgente, spaziatura annunci, voce TTS, velocità, tonalità, volume voce e test audio. |
 | **Editor Temi** | Suoni di sistema: conto alla rovescia, luce verde, sirena bandiera gialla, tempo residuo, metà manche, fine manche, fine gara, tempo minimo e giro drift. |
 | **Editor Piloti** | Suoni specifici del pilota: Suono Giro, Suono Miglior Giro Personale, Suono Miglior Giro della Gara, Suono Miglior Giro di Corsia della Gara, Suono Miglior Giro della Manche, Suono nuovo leader della gara, Suono nuovo leader di manche, Suono Record Assoluto del Giro, Suono Record di Corsia Assoluto del Giro, Suono Entrata ai Box, Suoni Livello Carburante e Suono di Falsa Partenza. |
-| **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG con ascolto rapido dell'anteprima. |
+| **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG, e configurazione di set audio con valori di attivazione dipendenti dal contesto (secondi, giri o percentuale), con ascolto rapido dell'anteprima. |

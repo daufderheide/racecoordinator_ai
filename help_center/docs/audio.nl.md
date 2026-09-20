@@ -192,4 +192,4 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **UI Editor -> Audio-instellingen** | Hoofdvolume, time-out urgente wachtrij, tussenruimte berichten, TTS-stem, snelheid, toonhoogte, TTS-volume en testknop. |
 | **Thema Editor** | Systeemgeluiden: startaftelling, groen licht, gele vlag sirene, resterende tijd, halverwege, einde heat, einde race, minimumtijd en drift-ronde. |
 | **Rijders Editor** | Rijderspecifieke geluiden: Ronde Geluid, Persoonlijk Beste Ronde Geluid, Race Beste Ronde Geluid, Race Baan Beste Ronde Geluid, Heat Beste Ronde Geluid, Geluid nieuwe raceleider, Geluid nieuwe heatleider, Algemeen Baanrecord Ronde Geluid, Baanrecord per Spoor Ronde Geluid, Pit In Geluid, Brandstofniveau Geluiden en Valse Start Geluid. |
-| **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden met directe voorbeluistering. |
+| **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden, en het configureren van audiosets met contextafhankelijke triggerwaarden (seconden, ronden of percentage) met directe voorbeluistering. |
