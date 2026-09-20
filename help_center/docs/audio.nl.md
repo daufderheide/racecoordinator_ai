@@ -185,6 +185,35 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 
 ---
 
+## Audiosets en Triggermodi
+
+Een **Audioset** is een samengesteld audio-asset dat een verzameling geluidsbestanden of tekst-naar-spraak meldingen bevat die zijn gekoppeld aan numerieke drempelwaarden. Audiosets worden gebruikt in 5 thema-slots en bij de brandstofinstellingen:
+
+1. **Startaftelling (`audio.countdown`):** Reekstonen en hoorns voorafgaand aan de start.
+2. **Resterende seconden automatische start (`audio.auto_start`):** Gesproken meldingen voor aanvang van een heat.
+3. **Resterende seconden (`audio.seconds_left`):** Tijdsmeldingen tijdens tijdgebonden heats.
+4. **Resterende ronden (`audio.laps_left`):** Rondemeldingen tijdens rondegebonden heats.
+5. **Resterende seconden automatische doorgang (`audio.auto_advance`):** Meldingen tussen heats voor automatische doorgang.
+6. **Brandstofniveau-geluiden (`fuelLevelAudio`):** Waarschuwings-, kritieke en voltankgeluiden op basis van percentages.
+
+### Triggermodi: Resterend vs. Verstreken
+Elke vermelding in een Audioset definieert een **Triggermodus**:
+
+*   **Resterend (Aftellen):** Wordt geactiveerd naarmate de race het einde of de tijdslimiet nadert (bijv. 10 resterende ronden, 30 seconden resterend). Dit is de standaardmodus voor aftellingen.
+*   **Verstreken (Optellen):** Wordt geactiveerd naarmate de race vordert vanaf de start (bijv. 10 voltooide ronden, 30 verstreken seconden).
+
+### Dubbele triggers met identieke numerieke waarden
+Race Coordinator AI ondersteunt het configureren van twee vermeldingen in dezelfde Audioset met exact dezelfde numerieke waarde (bijv. waarde `10`):
+- Een vermelding geconfigureerd als **Verstreken** klinkt wanneer de leider 10 ronden of seconden vanaf de start bereikt.
+- Een vermelding geconfigureerd als **Resterend** klinkt wanneer de leider nog 10 ronden of seconden te gaan heeft tot de finish.
+
+### Natuurlijke raceverloop-voorvertoning
+Bij het voorbeluisteren van een Audioset in de Asset Manager of Audiokiezer worden de vermeldingen in chronologische racevolgorde afgespeeld:
+1. Alle **Verstreken** vermeldingen spelen eerst in oplopende volgorde (0 → N).
+2. Alle **Resterend** vermeldingen spelen vervolgens in aflopende aftelvolgorde (N → 0).
+
+---
+
 ## Waar Audio Wordt Geconfigureerd
 
 | Onderdeel | Wat u hier kunt instellen |
@@ -192,4 +221,4 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **UI Editor -> Audio-instellingen** | Hoofdvolume, time-out urgente wachtrij, tussenruimte berichten, TTS-stem, snelheid, toonhoogte, TTS-volume en testknop. |
 | **Thema Editor** | Systeemgeluiden: startaftelling, groen licht, gele vlag sirene, resterende tijd, halverwege, einde heat, einde race, minimumtijd en drift-ronde. |
 | **Rijders Editor** | Rijderspecifieke geluiden: Ronde Geluid, Persoonlijk Beste Ronde Geluid, Race Beste Ronde Geluid, Race Baan Beste Ronde Geluid, Heat Beste Ronde Geluid, Geluid nieuwe raceleider, Geluid nieuwe heatleider, Algemeen Baanrecord Ronde Geluid, Baanrecord per Spoor Ronde Geluid, Pit In Geluid, Brandstofniveau Geluiden en Valse Start Geluid. |
-| **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden met directe voorbeluistering. |
+| **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden, en het configureren van audiosets met contextafhankelijke triggerwaarden (seconden, ronden of percentage) met directe voorbeluistering. |

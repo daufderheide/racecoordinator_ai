@@ -60,10 +60,10 @@ public class Paused implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("Paused.restartHeat() called. Resetting current heat.");
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    race.changeState(new NotStarted());
   }
 
   @Override

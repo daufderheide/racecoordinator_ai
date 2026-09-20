@@ -185,6 +185,35 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 
 ---
 
+## Ensembles Audio et Modes de Déclenchement
+
+Un **Ensemble Audio** est une ressource composite regroupant une collection de fichiers audio ou d'annonces de synthèse vocale associées à des seuils numériques de déclenchement. Les ensembles audio sont utilisés dans 5 emplacements de thème ainsi que pour le carburant :
+
+1. **Compte à rebours de départ (`audio.countdown`) :** Bips et avertisseurs avant le départ.
+2. **Secondes restantes avant démarrage automatique (`audio.auto_start`) :** Annonces avant le lancement d'une manche.
+3. **Secondes restantes (`audio.seconds_left`) :** Annonces de temps pendant les manches au temps.
+4. **Tours restants (`audio.laps_left`) :** Annonces de tours pendant les manches au tour.
+5. **Secondes restantes avant passage automatique (`audio.auto_advance`) :** Annonces entre les manches avant l'enchaînement.
+6. **Sons de niveau de carburant (`fuelLevelAudio`) :** Alertes de réserve, niveau critique et plein selon le pourcentage.
+
+### Modes de déclenchement : Restant vs Écoulé
+Chaque entrée d'un Ensemble Audio définit un **Mode de déclenchement** :
+
+*   **Restant (Compte à rebours) :** Se déclenche à l'approche de la fin ou de la limite de temps (ex. 10 tours restants, 30 secondes restantes). C'est le mode par défaut pour les comptes à rebours.
+*   **Écoulé (Compte progressif) :** Se déclenche à mesure que la course progresse depuis le départ (ex. 10 tours accomplis, 30 secondes écoulées).
+
+### Signaux doubles avec valeurs numériques identiques
+Race Coordinator AI permet de configurer deux entrées dans le même Ensemble Audio avec exactement la même valeur numérique (ex. valeur `10`) :
+- Une entrée configurée en **Écoulé** retentira lorsque le meneur atteint 10 tours / secondes depuis le départ.
+- Une entrée configurée en **Restant** retentira lorsqu'il ne reste plus que 10 tours / secondes avant l'arrivée.
+
+### Aperçu dans l'ordre naturel de course
+Lors de la prévisualisation d'un Ensemble Audio dans le Gestionnaire de Ressources ou le Sélecteur Audio, les entrées se succèdent dans l'ordre chronologique de la course :
+1. Toutes les entrées **Écoulé** retentissent d'abord par ordre croissant (0 → N).
+2. Toutes les entrées **Restant** retentissent ensuite par ordre décroissant (N → 0).
+
+---
+
 ## Emplacements de Configuration Audio
 
 | Emplacement | Éléments Configurables |
@@ -192,4 +221,4 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Éditeur d'Interface -> Paramètres Audio** | Volume général, délai d'attente urgent, espacement des annonces, voix TTS, vitesse, tonalité, volume TTS et essai de voix. |
 | **Éditeur de Thèmes** | Événements généraux : bips de départ, feu vert, sirène de drapeau jaune, temps restant, mi-manche, fin de manche, fin de course, tour minimum et tour de drift. |
 | **Éditeur de Pilotes** | Sons spécifiques au pilote : Son de Tour, Son de Meilleur Tour Personnel, Son du Meilleur Tour de Course, Son du Meilleur Tour de Voie de Course, Son du Meilleur Tour de Manche, Son de nouveau leader de course, Son de nouveau leader de manche, Son du Record de Tour Général, Son du Record de Tour de Voie Général, Son d'Entrée aux Stands, Sons de Niveau de Carburant et Son de Faux Départ. |
-| **Gestionnaire de Ressources** | Téléchargement et gestion des fichiers WAV, MP3 et OGG avec écoute immédiate. |
+| **Gestionnaire de Ressources** | Téléchargement et gestion des fichiers WAV, MP3 et OGG, et configuration d'ensembles audio avec valeurs de déclenchement selon le contexte (secondes, tours ou pourcentage), avec écoute immédiate. |

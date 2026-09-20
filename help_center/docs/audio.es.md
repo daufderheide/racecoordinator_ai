@@ -184,6 +184,35 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 
 ---
 
+## Conjuntos de Audio y Modos de Activación
+
+Un **Conjunto de Audio** es un activo compuesto que contiene una colección de archivos de sonido o locuciones de texto a voz asignadas a umbrales numéricos específicos. Los conjuntos de audio se utilizan en 5 ranuras de tema y en ajustes de combustible:
+
+1. **Cuenta regresiva de salida (`audio.countdown`):** Tonos de secuencia y bocinas previas a la salida.
+2. **Segundos restantes de inicio automático (`audio.auto_start`):** Avisos de voz antes de comenzar una manga.
+3. **Segundos restantes (`audio.seconds_left`):** Avisos de tiempo en mangas por tiempo.
+4. **Vueltas restantes (`audio.laps_left`):** Avisos de vueltas en mangas por vueltas.
+5. **Segundos restantes de avance automático (`audio.auto_advance`):** Avisos entre mangas antes del avance automático.
+6. **Sonidos de nivel de combustible (`fuelLevelAudio`):** Avisos de advertencia, crítico y repostaje según porcentaje.
+
+### Modos de activación: Restante vs. Transcurrido
+Cada entrada de un Conjunto de Audio define un **Modo de activación**:
+
+*   **Restante (Cuenta regresiva):** Se activa a medida que la carrera se aproxima a la meta o límite de tiempo (p. ej. 10 vueltas restantes, 30 segundos restantes). Es el modo predeterminado para cuentas regresivas.
+*   **Transcurrido (Conteo ascendente):** Se activa a medida que la carrera progresa desde el inicio (p. ej. 10 vueltas completadas, 30 segundos transcurridos).
+
+### Señales duales con valores numéricos idénticos
+Race Coordinator AI permite configurar dos entradas en el mismo Conjunto de Audio con exactamente el mismo valor numérico (p. ej. valor `10`):
+- Una entrada configurada como **Transcurrido** sonará cuando el líder alcance 10 vueltas o segundos desde el inicio.
+- Otra entrada configurada como **Restante** sonará cuando falten 10 vueltas o segundos para el final.
+
+### Vista previa en orden natural de carrera
+Al previsualizar un Conjunto de Audio en el Gestor de Activos o en el Selector de Audio, las entradas se reproducen en el orden cronológico de la carrera:
+1. Todas las entradas **Transcurrido** se reproducen primero en orden ascendente (0 → N).
+2. Todas las entradas **Restante** se reproducen a continuación en orden descendente de cuenta regresiva (N → 0).
+
+---
+
 ## Dónde se Configura el Audio
 
 | Ubicación | Qué se puede configurar |
@@ -191,4 +220,4 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Editor de Interfaz -> Ajustes de Audio** | Volumen maestro, tiempo límite de cola urgente, espaciado de avisos, voz TTS, velocidad, tono, volumen TTS y botón de prueba. |
 | **Editor de Temas** | Sonidos globales: cuenta atrás, semáforo verde, bandera amarilla, tiempo restante, mitad de manga, fin de manga, fin de carrera, tiempo mínimo y vuelta de drift. |
 | **Editor de Pilotos** | Sonidos específicos del piloto: Sonido de Vuelta, Sonido de Mejor Vuelta Personal, Sonido de Mejor Vuelta de Carrera, Sonido de Mejor Vuelta de Carril de Carrera, Sonido de Mejor Vuelta de Manga, Sonido de nuevo líder de carrera, Sonido de nuevo líder de manga, Sonido de Récord de Vuelta General, Sonido de Récord de Vuelta de Carril General, Sonido de Entrada a Boxes, Sonidos de Nivel de Combustible y Sonido de Salida en Falso. |
-| **Gestor de Activos** | Subida y administración de archivos WAV, MP3 y OGG con previsualización inmediata. |
+| **Gestor de Activos** | Subida y administración de archivos WAV, MP3 y OGG, y configuración de conjuntos de audio con valores de activación según el contexto (segundos, vueltas o porcentaje), con previsualización inmediata. |
