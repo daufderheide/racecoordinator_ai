@@ -323,6 +323,9 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             state === RaceState.HEAT_OVER ||
             state === RaceState.RACE_OVER
           ) {
+            if (state === RaceState.NOT_STARTED) {
+              this.hasRacedInCurrentHeat = false;
+            }
             this.playedSecondsLeft.clear();
             this.playedSecondsElapsed.clear();
             this.playedLapsLeft.clear();

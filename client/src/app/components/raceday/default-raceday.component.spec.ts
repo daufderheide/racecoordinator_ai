@@ -1338,12 +1338,14 @@ describe("DefaultRacedayComponent", () => {
 
     it("should call restartHeat on confirm and hide dialog", () => {
       const resetSpy = spyOn((component as any).audioService, "reset");
+      (component as any).hasRacedInCurrentHeat = true;
       fixture.detectChanges();
       component.showRestartHeatConfirmation = true;
 
       component.onRestartHeatConfirm();
 
       expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect((component as any).hasRacedInCurrentHeat).toBeFalse();
       expect(resetSpy).toHaveBeenCalled();
       expect(mockDataService.restartHeat).toHaveBeenCalled();
     });
@@ -6751,6 +6753,13 @@ describe("DefaultRacedayComponent", () => {
 
       fixture.detectChanges();
 
+      if (component["race"]) {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"].fuel_options || {}),
+          enabled: true,
+        };
+      }
+
       component["assets"] = [
         {
           entity_id: "default_fuel_level",
@@ -7045,6 +7054,50 @@ describe("DefaultRacedayComponent", () => {
         expect(
           (component as any).laneFuelAudioStates.get(1)?.lastFuelLevel,
         ).toBe(90);
+      });
+
+      it("should not play any fuel audio when race is not a fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: false,
+        };
+        (component as any).resetFuelAudioTracking();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 50.5, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should not play 0% fuel audio on heat restart in non-fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: false,
+        };
+        (component as any).hasRacedInCurrentHeat = true;
+        component.showRestartHeatConfirmation = true;
+
+        component.onRestartHeatConfirm();
+
+        // Simulate carData arriving with fuel 0 after restart
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should not play 0% fuel audio on heat restart when initial fuel > 0 in fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: true,
+        };
+        (component as any).hasRacedInCurrentHeat = true;
+        component.showRestartHeatConfirmation = true;
+
+        component.onRestartHeatConfirm();
+
+        // Driver starts with 100 fuel, carData arrives before race starts
+        component["raceState"] = RaceState.NOT_STARTED;
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
       });
     });
   });

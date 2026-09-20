@@ -28,11 +28,33 @@ export class FuelAudioTracker {
 
   public getFuelCapacity(race?: Race, track?: Track): number {
     const isDigital =
-      typeof track?.hasDigitalFuel === "function" && track.hasDigitalFuel();
+      typeof track?.hasDigitalFuel === "function"
+        ? track.hasDigitalFuel()
+        : !!(
+            (track as any)?.has_digital_fuel || (track as any)?.hasDigitalFuel
+          );
     const capacity = isDigital
       ? race?.digital_fuel_options?.capacity
       : race?.fuel_options?.capacity;
     return capacity && capacity > 0 ? capacity : 100;
+  }
+
+  public isFuelRace(race?: Race, track?: Track): boolean {
+    if (!race) return false;
+    const isDigital =
+      typeof track?.hasDigitalFuel === "function"
+        ? track.hasDigitalFuel()
+        : !!(
+            (track as any)?.has_digital_fuel || (track as any)?.hasDigitalFuel
+          );
+    const fuelOptions = isDigital
+      ? race.digital_fuel_options
+      : race.fuel_options;
+    return !!(
+      fuelOptions?.enabled ||
+      (!track &&
+        (race.fuel_options?.enabled || race.digital_fuel_options?.enabled))
+    );
   }
 
   public reset(
@@ -42,16 +64,18 @@ export class FuelAudioTracker {
     track?: Track,
   ): void {
     this.laneFuelAudioStates.clear();
+    if (!this.isFuelRace(race, track)) {
+      return;
+    }
     const capacity = this.getFuelCapacity(race, track);
     if (heat?.heatDrivers) {
       heat.heatDrivers.forEach((hd, index) => {
         const lane = hd.laneIndex ?? index;
         const hasStarted = !!heat?.started || !!hasRacedInCurrentHeat;
         const initialFuel =
-          hd.participant?.fuelLevel != null &&
-          (hd.participant.fuelLevel > 0 || hasStarted)
+          hasStarted && hd.participant?.fuelLevel != null
             ? hd.participant.fuelLevel
-            : hd.initialFuelLevel != null && hd.initialFuelLevel > 0
+            : hd.initialFuelLevel != null
               ? hd.initialFuelLevel
               : (hd.participant?.fuelLevel ?? capacity);
         this.laneFuelAudioStates.set(lane, {
@@ -77,6 +101,7 @@ export class FuelAudioTracker {
     canPlayAudio: boolean = true,
   ): void {
     if (lane == null) return;
+    if (!this.isFuelRace(race, track)) return;
     const hd =
       heat?.heatDrivers?.find((d) => d.laneIndex === lane) ||
       (heat?.heatDrivers && lane < heat.heatDrivers.length
@@ -94,10 +119,9 @@ export class FuelAudioTracker {
       const capacity = this.getFuelCapacity(race, track);
       const hasStarted = !!heat?.started || !!hasRacedInCurrentHeat;
       const initialFuel =
-        hd?.participant?.fuelLevel != null &&
-        (hd.participant.fuelLevel > 0 || hasStarted)
+        hasStarted && hd?.participant?.fuelLevel != null
           ? hd.participant.fuelLevel
-          : hd?.initialFuelLevel != null && hd.initialFuelLevel > 0
+          : hd?.initialFuelLevel != null
             ? hd.initialFuelLevel
             : (hd?.participant?.fuelLevel ?? capacity);
       state = {
@@ -238,6 +262,7 @@ export class FuelAudioTracker {
   ): void {
     const fuelAudio = driver?.fuelAudio;
     if (!fuelAudio || fuelAudio.type === "none") return;
+    if (!this.isFuelRace(race, track)) return;
 
     const capacity = this.getFuelCapacity(race, track);
     const currentFuelPct =
@@ -321,7 +346,11 @@ export class FuelAudioTracker {
           state.playedThresholds.delete(100);
         }
       } else if (pct <= 0.1) {
-        if (currentFuelPct <= 0.01 && previousFuelPct > 0.01) {
+        const canPlayEmpty =
+          previousFuelPct > 0.01 ||
+          (!state.playedThresholds.has(0) &&
+            (hd?.initialFuelLevel ?? 1) <= 0.01);
+        if (currentFuelPct <= 0.01 && canPlayEmpty) {
           if (!state.playedThresholds.has(0)) {
             state.playedThresholds.add(0);
             this.playFuelThresholdAudio(entry, driver, hd, race, track, heat);
@@ -363,7 +392,10 @@ export class FuelAudioTracker {
 
     if (!isTts && !isSound) return;
 
-    if (currentFuelPct <= 0.01 && previousFuelPct > 0.01) {
+    const canPlayEmpty =
+      previousFuelPct > 0.01 ||
+      (!state.playedThresholds.has(0) && (hd?.initialFuelLevel ?? 1) <= 0.01);
+    if (currentFuelPct <= 0.01 && canPlayEmpty) {
       if (!state.playedThresholds.has(0)) {
         state.playedThresholds.add(0);
         const ttsContext = createTTSContext(

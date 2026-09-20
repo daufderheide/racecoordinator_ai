@@ -2705,6 +2705,9 @@ export class DefaultRacedayComponent
     currentFuel: number | null,
     isRefueling: boolean,
   ) {
+    if (!this.fuelAudioTracker.isFuelRace(this.race, this.track)) {
+      return;
+    }
     const canPlayAudio =
       this.raceState === RaceState.RACING ||
       this.raceState === RaceState.PAUSED;
@@ -3299,6 +3302,8 @@ export class DefaultRacedayComponent
 
   onRestartHeatConfirm() {
     this.showRestartHeatConfirmation = false;
+    this.hasRacedInCurrentHeat = false;
+    this.resetFuelAudioTracking();
     this.audioService.reset();
     this.dataService.restartHeat().subscribe(
       (success) => {
@@ -3708,7 +3713,10 @@ export class DefaultRacedayComponent
       }
 
       this.sortHeatDrivers();
-      if (this.heat?.heatDrivers) {
+      if (
+        this.heat?.heatDrivers &&
+        this.fuelAudioTracker.isFuelRace(this.race, this.track)
+      ) {
         const hasStarted = !!this.heat?.started || this.hasRacedInCurrentHeat;
         this.heat.heatDrivers.forEach((hd, index) => {
           const lane = hd.laneIndex ?? index;
@@ -6276,6 +6284,9 @@ export class DefaultRacedayComponent
         state === RaceState.HEAT_OVER ||
         state === RaceState.RACE_OVER
       ) {
+        if (state === RaceState.NOT_STARTED) {
+          this.hasRacedInCurrentHeat = false;
+        }
         this.playedSecondsLeft.clear();
         this.playedSecondsElapsed.clear();
         this.playedLapsLeft.clear();
