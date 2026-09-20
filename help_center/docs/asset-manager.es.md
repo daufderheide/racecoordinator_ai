@@ -29,3 +29,20 @@ Un **Conjunto de Audio** le permite configurar una serie de sonidos o frases hab
 *   **Porcentaje de Combustible (%):** Se utiliza en los ajustes de Piloto para **Sonidos de nivel de combustible**. Las entradas definen avisos cuando el combustible alcanza umbrales de advertencia, críticos o lleno (por ejemplo, `20%`, `10%`, `0%` vacío o `100%` lleno).
 
 En el **Editor de Conjuntos de Audio**, puede añadir entradas, seleccionar archivos de audio o escribir frases TTS (con variables de plantilla como `{driver.nickname}`), definir valores de activación y utilizar el botón **Extraer valores automáticamente de los nombres** para autocompletar valores a partir de nombres numerados (por ejemplo, `10.mp3`, `5.mp3`).
+
+### Modos de activación duales: Restante vs. Transcurrido
+
+Cada entrada de un Conjunto de Audio se puede configurar con un **Modo de activación**:
+
+*   **Restante (Cuenta regresiva):** Se activa cuando la carrera se aproxima a cero o a la meta (por ejemplo, cuando quedan 10 vueltas o 30 segundos restantes en la manga). Este es el modo predeterminado para cuentas regresivas.
+*   **Transcurrido (Conteo ascendente):** Se activa cuando la carrera progresa hacia adelante desde el inicio (por ejemplo, cuando el líder completa 10 vueltas o tras 30 segundos transcurridos en la manga).
+
+#### Señales duales con el mismo valor numérico
+Race Coordinator AI permite configurar dos entradas con exactamente el mismo valor numérico (por ejemplo, valor `10`):
+- Una entrada configurada como **Transcurrido** sonará cuando el líder alcance ese hito inicial (por ejemplo, al completar 10 vueltas).
+- Otra entrada configurada como **Restante** sonará a medida que la carrera se acerque al final (por ejemplo, cuando queden 10 vueltas).
+
+#### Vista previa de progresión natural de carrera
+Al previsualizar o reproducir automáticamente un Conjunto de Audio en el Gestor de Activos o en el Selector de Audio, los sonidos se reproducen en el orden cronológico de carrera:
+1. Todas las entradas **Transcurrido** suenan primero en orden ascendente (0 → N).
+2. Todas las entradas **Restante** suenan a continuación en orden descendente de cuenta regresiva (N → 0).

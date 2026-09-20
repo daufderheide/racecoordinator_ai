@@ -185,6 +185,35 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 
 ---
 
+## Set Audio e Modalità di Attivazione
+
+Un **Set Audio** è una risorsa audio composita contenente una raccolta di file sonori o annunci vocali associati a soglie numeriche di attivazione. I set audio sono utilizzati in 5 slot di tema e nelle impostazioni del carburante:
+
+1. **Conto alla rovescia di partenza (`audio.countdown`):** Segnali acustici e sirene prima del via.
+2. **Secondi rimanenti avvio automatico (`audio.auto_start`):** Annunci vocali prima dell'inizio della manche.
+3. **Secondi rimanenti (`audio.seconds_left`):** Annunci del tempo durante le manche a tempo.
+4. **Giri rimanenti (`audio.laps_left`):** Annunci dei giri durante le manche a giri.
+5. **Secondi rimanenti avanzamento automatico (`audio.auto_advance`):** Annunci tra le manche prima dell'avanzamento automatico.
+6. **Suoni del livello di carburante (`fuelLevelAudio`):** Avvisi di riserva, livello critico e pieno basati su percentuali.
+
+### Modalità di attivazione: Rimanente vs. Trascorso
+Ogni voce in un Set Audio definisce una **Modalità di attivazione**:
+
+*   **Rimanente (Conto alla rovescia):** Si attiva quando la gara si avvicina al traguardo o al tempo limite (es. 10 giri rimasti, 30 secondi rimasti). È la modalità predefinita per i conti alla rovescia.
+*   **Trascorso (Conteggio progressivo):** Si attiva man mano che la gara procede dalla partenza (es. 10 giri completati, 30 secondi trascorsi).
+
+### Doppi avvisi con valori numerici identici
+Race Coordinator AI consente di configurare due voci nello stesso Set Audio con esattamente lo stesso valore numerico (es. valore `10`):
+- Una voce configurata come **Trascorso** suonerà quando il leader raggiunge 10 giri o secondi dall'inizio.
+- Un'altra voce configurata come **Rimanente** suonerà quando mancano 10 giri o secondi alla conclusione.
+
+### Anteprima in ordine naturale di gara
+Durante l'anteprima di un Set Audio nel Gestore Asset o nel Selettore Audio, le voci vengono riprodotte in ordine cronologico di gara:
+1. Tutte le voci **Trascorso** vengono riprodotte per prime in ordine crescente (0 → N).
+2. Tutte le voci **Rimanente** vengono riprodotte successivamente in ordine decrescente di conto alla rovescia (N → 0).
+
+---
+
 ## Riepilogo Configurazione Audio
 
 | Sezione | Cosa è possibile configurare |

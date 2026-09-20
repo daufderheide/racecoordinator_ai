@@ -30,6 +30,23 @@ Ein **Audio-Set** ermöglicht es Ihnen, eine Reihe von Tönen oder Sprachansagen
 
 Im **Audio-Set-Editor** können Sie Einträge hinzufügen, vordefinierte Audiodateien auswählen oder TTS-Phrasen eingeben (mit Vorlagenvariablen wie `{driver.nickname}`), Auslösewerte festlegen und mit der Schaltfläche **Werte automatisch aus Namen extrahieren** Werte automatisch aus nummerierten Dateinamen übernehmen (z. B. `10.mp3`, `5.mp3`).
 
+### Duale Auslösemodi: Verbleibend vs. Abgelaufen
+
+Jeder Eintrag in einem Audio-Set kann mit einem **Auslösemodus** konfiguriert werden:
+
+*   **Verbleibend (Countdown):** Wird ausgelöst, wenn das Rennen sich dem Ende oder dem Zeitlimit nähert (z. B. 10 verbleibende Runden oder 30 Sekunden verbleibend). Dies ist der Standardmodus für Countdowns.
+*   **Abgelaufen (Vorwärtszählung):** Wird ausgelöst, wenn das Rennen vom Start aus voranschreitet (z. B. 10 absolvierte Runden oder 30 abgelaufene Sekunden im Lauf).
+
+#### Gleicher Zahlenwert für zwei Ereignisse
+Race Coordinator AI unterstützt die Konfiguration von zwei Einträgen mit exakt demselben numerischen Wert (z. B. Wert `10`):
+- Ein Eintrag als **Abgelaufen** wird abgespielt, wenn der Führende diesen Meilenstein erreicht (z. B. bei 10 gefahrenen Runden).
+- Ein Eintrag als **Verbleibend** wird abgespielt, wenn sich das Rennen dem Ziel nähert (z. B. wenn noch 10 Runden verbleiben).
+
+#### Natürliche Rennverlauf-Vorschau
+Bei der Vorschau oder automatischen Wiedergabe eines Audio-Sets im Asset Manager oder Audio-Selector werden die Sounds in natürlicher Rennreihenfolge abgespielt:
+1. Alle **Abgelaufen**-Einträge spielen zuerst in aufsteigender Reihenfolge (0 → N).
+2. Alle **Verbleibend**-Einträge spielen danach in absteigender Countdown-Reihenfolge (N → 0).
+
 ## Assets verwalten & organisieren
 
 - **Kategorie-Filterung:** Filtern Sie Ihre Asset-Liste nach Typ (Bilder, Sounds, Bildersets, Rotationen).

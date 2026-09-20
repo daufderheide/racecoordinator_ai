@@ -29,3 +29,20 @@ Um **Conjunto de Áudio** permite configurar uma sequência de sons ou avisos fa
 *   **Porcentagem de Combustível (%):** Usado nas configurações de Piloto para **Sons de nível de combustível**. As entradas definem avisos quando o nível de combustível atinge limites de aviso, crítico ou cheio (por exemplo, `20%`, `10%`, `0%` vazio ou `100%` abastecido).
 
 No **Editor de Conjuntos de Áudio**, você pode adicionar entradas, selecionar arquivos de áudio predefinidos ou escrever frases TTS (com variáveis de modelo como `{driver.nickname}`), definir valores de ativação e usar o botão **Extrair valores automaticamente dos nomes** para preencher automaticamente os valores a partir de nomes de arquivos numerados (por exemplo, `10.mp3`, `5.mp3`).
+
+### Modos de ativação duplos: Restante vs. Decorrido
+
+Cada entrada em um Conjunto de Áudio pode ser configurada com um **Modo de ativação**:
+
+*   **Restante (Contagem regressiva):** É acionado quando a corrida se aproxima de zero ou da linha de chegada (por exemplo, quando restam 10 voltas ou 30 segundos na bateria). Este é o modo padrão para contagens regressivas.
+*   **Decorrido (Contagem progressiva):** É acionado à medida que a corrida avança a partir da largada (por exemplo, quando o líder completa 10 voltas ou após 30 segundos decorridos).
+
+#### Dois avisos com o mesmo valor numérico
+O Race Coordinator AI suporta configurar duas entradas com exatamente o mesmo valor numérico (por exemplo, valor `10`):
+- Uma entrada configurada como **Decorrido** tocará quando o líder alcançar esse marco inicial (ex. aos 10 giros completados).
+- Outra entrada configurada como **Restante** tocará quando a corrida se aproximar do final (ex. quando restarem 10 giros).
+
+#### Pré-visualização na ordem natural da corrida
+Ao pré-visualizar ou reproduzir automaticamente um Conjunto de Áudio no Gerenciador de Assets ou no Seletor de Áudio, os sons são executados na ordem cronológica da corrida:
+1. Todas as entradas **Decorrido** tocam primeiro em ordem crescente (0 → N).
+2. Todas as entradas **Restante** tocam em seguida em ordem decrescente de contagem regressiva (N → 0).

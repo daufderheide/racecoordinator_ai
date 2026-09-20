@@ -29,3 +29,20 @@ Un **Ensemble Audio** vous permet de configurer une séquence de sons ou de phra
 *   **Pourcentage de Carburant (%) :** Utilisé dans les paramètres de Pilote pour les **Sons de niveau de carburant**. Les entrées définissent des annonces lorsque le niveau atteint des seuils d'avertissement, critique ou plein (par exemple, `20%`, `10%`, `0%` vide ou `100%` plein).
 
 Dans l'**Éditeur d'Ensembles Audio**, vous pouvez ajouter des entrées, choisir des fichiers audio ou rédiger des phrases TTS (avec variables de modèle comme `{driver.nickname}`), définir les valeurs et utiliser le bouton **Extraire automatiquement les valeurs des noms** pour préremplir automatiquement les valeurs depuis des fichiers numérotés (ex. `10.mp3`, `5.mp3`).
+
+### Modes de déclenchement doubles : Restant vs Écoulé
+
+Chaque entrée d'un Ensemble Audio peut être configurée avec un **Mode de déclenchement** :
+
+*   **Restant (Compte à rebours) :** Se déclenche à l'approche de zéro ou de l'arrivée (par exemple, quand il reste 10 tours ou 30 secondes dans la manche). C'est le mode par défaut pour les comptes à rebours.
+*   **Écoulé (Compte progressif) :** Se déclenche à mesure que la course progresse depuis le départ (par exemple, quand le meneur a bouclé 10 tours ou que 30 secondes se sont écoulées).
+
+#### Deux annonces avec la même valeur numérique
+Race Coordinator AI prend en charge deux entrées ayant exactement la même valeur numérique (par exemple, la valeur `10`) :
+- Une entrée configurée en **Écoulé** retentira lorsque le meneur franchira ce cap initial (ex. 10 tours parcourus).
+- Une autre entrée configurée en **Restant** retentira à l'approche de la fin de course (ex. lorsqu'il ne reste que 10 tours).
+
+#### Aperçu dans l'ordre naturel de course
+Lors de la prévisualisation ou lecture automatique d'un Ensemble Audio dans le Gestionnaire de Ressources ou le Sélecteur Audio, les sons sont joués dans l'ordre chronologique de course :
+1. Toutes les entrées **Écoulé** retentissent d'abord par ordre croissant (0 → N).
+2. Toutes les entrées **Restant** retentissent ensuite par ordre décroissant de compte à rebours (N → 0).

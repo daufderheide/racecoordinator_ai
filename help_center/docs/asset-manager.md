@@ -30,6 +30,23 @@ An **Audio Set** allows you to configure a series of sounds or spoken phrases tr
 
 Within the **Audio Set Editor**, you can add entries, select preset audio files or write TTS phrases (with template variable substitutions like `{driver.nickname}`), set trigger values, and use the **Auto-Extract Values from Names** button to automatically populate values from numbered audio filenames (e.g. `10.mp3`, `5.mp3`).
 
+### Dual Trigger Modes: Remaining vs. Elapsed
+
+Each entry in an Audio Set can be configured with a **Trigger Mode**:
+
+*   **Remaining (Count Down):** Triggers when the race is approaching zero or the finish line. For example, playing when there are 10 laps remaining, or 30 seconds left in the heat. This is the default mode for countdowns and finish approaches.
+*   **Elapsed (Count Up):** Triggers when the race is progressing forward from the start. For example, playing when the leader completes 10 laps, or when 30 seconds have elapsed into the heat.
+
+#### Same-Value Dual Cues
+Race Coordinator AI supports configuring two entries with the exact same numerical value (e.g., value `10`):
+- One entry configured as **Elapsed** will play as the heat progresses past the milestone (e.g. at 10 laps completed).
+- Another entry configured as **Remaining** will play as the race nears completion (e.g. when only 10 laps remain).
+
+#### Natural Race Progression Preview
+When previewing or auto-playing an Audio Set in the Asset Manager or Audio Selector, sounds play in natural race progression order:
+1. All **Elapsed** entries play first in ascending count-up order (0 → N).
+2. All **Remaining** entries play next in descending countdown order (N → 0).
+
 ## Managing & Organizing Assets
 
 - **Category Filtering:** Filter your asset list by type (Images, Sounds, Image Sets, Rotations).

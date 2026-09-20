@@ -54,6 +54,7 @@ message SaveAudioSetEntry {
   string type = 5;
   string text = 6;
   int32 percentage = 7;
+  string trigger_mode = 8;
 }
 
 

@@ -29,3 +29,20 @@ Met een **Audioset** kunt u een reeks geluiden of gesproken meldingen configurer
 *   **Brandstofpercentage (%):** Gebruikt in Coureur-instellingen voor **Brandstofniveau-geluiden**. Vermeldingen bepalen meldingen wanneer het brandstofniveau van de coureur waarschuwings-, kritieke of vol-drempelwaarden bereikt (bijvoorbeeld `20%`, `10%`, `0%` leeg of `100%` volgetankt).
 
 In de **Audioset-editor** kunt u vermeldingen toevoegen, vooraf ingestelde audiobestanden selecteren of TTS-zinnen schrijven (met sjabloonvariabelen zoals `{driver.nickname}`), triggerwaarden instellen en de knop **Waarden automatisch extraheren uit namen** gebruiken om waarden automatisch in te vullen op basis van genummerde bestandsnamen (bijv. `10.mp3`, `5.mp3`).
+
+### Dubbele triggermodi: Resterend vs. Verstreken
+
+Elke vermelding in een Audioset kan worden geconfigureerd met een **Triggermodus**:
+
+*   **Resterend (Aftellen):** Wordt geactiveerd naarmate de race het einde of de tijdslimiet nadert (bijvoorbeeld wanneer er nog 10 ronden of 30 seconden over zijn in de heat). Dit is de standaardmodus voor aftellingen.
+*   **Verstreken (Optellen):** Wordt geactiveerd naarmate de race vordert vanaf de start (bijvoorbeeld wanneer de leider 10 ronden voltooit of 30 seconden zijn verstreken).
+
+#### Twee meldingen met dezelfde numerieke waarde
+Race Coordinator AI ondersteunt het configureren van twee vermeldingen met exact dezelfde numerieke waarde (bijvoorbeeld waarde `10`):
+- Een vermelding geconfigureerd als **Verstreken** wordt afgespeeld wanneer de leider die vroege mijlpaal bereikt (bijv. 10 verstreken ronden).
+- Een andere vermelding geconfigureerd als **Resterend** wordt afgespeeld wanneer de race het einde nadert (bijv. wanneer er nog 10 ronden over zijn).
+
+#### Natuurlijke raceverloop-voorvertoning
+Bij het voorbeluisteren of automatisch afspelen van een Audioset in de Asset Manager of Audiokiezer worden de geluiden in natuurlijke racevolgorde afgespeeld:
+1. Alle **Verstreken** vermeldingen spelen eerst in oplopende volgorde (0 → N).
+2. Alle **Resterend** vermeldingen spelen vervolgens in aflopende aftelvolgorde (N → 0).

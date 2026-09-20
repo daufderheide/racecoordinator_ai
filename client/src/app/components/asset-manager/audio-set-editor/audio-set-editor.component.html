@@ -119,6 +119,23 @@
                 [attr.aria-label]="'AM_AUDIO_SET_EDITOR_VALUE' | translate"
               />
             </div>
+            <div class="entry-mode">
+              <label [title]="'AM_AUDIO_SET_EDITOR_HELP_DESC' | translate">{{
+                "AM_AUDIO_SET_EDITOR_TRIGGER_MODE" | translate
+              }}</label>
+              <app-custom-select
+                [(ngModel)]="entry.triggerMode"
+                [id]="'trigger-mode-' + i"
+                class="mode-select"
+              >
+                <app-custom-option value="remaining">{{
+                  "AM_TRIGGER_MODE_REMAINING" | translate
+                }}</app-custom-option>
+                <app-custom-option value="elapsed">{{
+                  "AM_TRIGGER_MODE_ELAPSED" | translate
+                }}</app-custom-option>
+              </app-custom-select>
+            </div>
             <button
               class="btn-remove"
               (click)="removeEntry(i)"

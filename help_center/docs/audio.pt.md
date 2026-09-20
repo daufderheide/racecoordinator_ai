@@ -185,6 +185,35 @@ As seguintes tabelas detalham todos os eventos de áudio no Race Coordinator AI,
 
 ---
 
+## Conjuntos de Áudio e Modos de Ativação
+
+Um **Conjunto de Áudio** é um recurso composto que contém uma coleção de ficheiros de som ou locuções de conversão de texto em fala (TTS) mapeadas para metas ou marcos numéricos específicos. Os conjuntos de áudio são utilizados em 5 slots principais do tema e nas definições de combustível do piloto:
+
+1. **Contagem Decrescente de Partida (`audio.countdown`):** Bipes de sequência e buzinas antes do início da corrida.
+2. **Segundos Restantes para Início Automático (`audio.auto_start`):** Avisos de voz antes de começar uma manga.
+3. **Segundos Restantes (`audio.seconds_left`):** Avisos de tempo durante mangas por tempo.
+4. **Voltas Restantes (`audio.laps_left`):** Avisos de voltas durante mangas por voltas.
+5. **Segundos Restantes para Avanço Automático (`audio.auto_advance`):** Avisos de voz entre mangas antes do avanço automático.
+6. **Sons de Nível de Combustível (`fuelLevelAudio`):** Alertas de aviso, crítico e reabastecido acionados em limites percentuais de combustível.
+
+### Modos de Ativação: Restante vs. Decorrido
+Cada entrada num Conjunto de Áudio define um **Modo de Ativação**:
+
+*   **Restante (Contagem Decrescente):** É ativado à medida que a corrida se aproxima da meta ou limite de tempo (ex.: 10 voltas restantes, 30 segundos restantes). Este é o modo predefinido para contagens decrescentes e marcos de conclusão.
+*   **Decorrido (Contagem Progressiva):** É ativado à medida que a corrida avança a partir do início (ex.: 10 voltas concluídas, 30 segundos decorridos desde o início da manga).
+
+### Avisos Duplos com Valores Numéricos Idênticos
+O Race Coordinator AI suporta a configuração de duas entradas no mesmo Conjunto de Áudio com exatamente o mesmo valor numérico (ex.: valor `10`):
+- Uma entrada configurada como **Decorrido** será reproduzida à medida que a manga avança além desse marco (ex.: ao completar 10 voltas).
+- Uma entrada configurada como **Restante** será reproduzida à medida que a corrida se aproxima do final (ex.: quando faltarem 10 voltas).
+
+### Pré-visualização na Ordem Natural da Corrida
+Ao pré-visualizar um Conjunto de Áudio no Gestor de Ativos ou no Seletor de Áudio do Tema, as entradas são reproduzidas sequencialmente na ordem natural de progressão da corrida:
+1. Todas as entradas em modo **Decorrido** são reproduzidas primeiro em ordem crescente (0 → N).
+2. Todas as entradas em modo **Restante** são reproduzidas em seguida em ordem decrescente de contagem regressiva (N → 0).
+
+---
+
 ## Onde Configurar o Áudio
 
 | Local | O que pode configurar |

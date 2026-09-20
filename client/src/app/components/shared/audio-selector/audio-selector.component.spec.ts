@@ -256,8 +256,8 @@ describe("AudioSelectorComponent", () => {
       name: "Set 1",
       type: "audio_set",
       audioEntries: [
-        { url: "1.mp3", timeSeconds: 1 },
-        { url: "2.mp3", timeSeconds: 2 },
+        { url: "1.mp3", timeSeconds: 1, triggerMode: "elapsed" },
+        { url: "2.mp3", timeSeconds: 2, triggerMode: "elapsed" },
       ],
     };
     fixture.componentRef.setInput("assets", [audioSet]);
@@ -285,6 +285,43 @@ describe("AudioSelectorComponent", () => {
     expect(audioSpy).toHaveBeenCalledTimes(2);
     expect(audioSpy.calls.argsFor(0)[0]).toContain("1.mp3");
     expect(audioSpy.calls.argsFor(1)[0]).toContain("2.mp3");
+  });
+
+  it("should play audio set in natural race progression order (elapsed ascending, remaining descending)", async () => {
+    const audioSet = {
+      entity_id: "set-natural",
+      name: "Natural Set",
+      type: "audio_set",
+      audioEntries: [
+        { url: "rem1.mp3", timeSeconds: 1, triggerMode: "remaining" },
+        { url: "elap10.mp3", timeSeconds: 10, triggerMode: "elapsed" },
+        { url: "rem5.mp3", timeSeconds: 5, triggerMode: "remaining" },
+        { url: "elap2.mp3", timeSeconds: 2, triggerMode: "elapsed" },
+      ],
+    };
+    fixture.componentRef.setInput("assets", [audioSet]);
+    fixture.componentRef.setInput("type", "audio_set");
+    fixture.componentRef.setInput("url", "set-natural");
+    fixture.detectChanges();
+
+    const audioSpy = (window.Audio as unknown as jasmine.Spy).and.callFake(
+      function (_url: string) {
+        setTimeout(() => {
+          if (mockAudioInstance.onended) mockAudioInstance.onended();
+        }, 0);
+        return mockAudioInstance;
+      },
+    );
+
+    component.play();
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
+    expect(audioSpy).toHaveBeenCalledTimes(4);
+    // Natural order: elapsed ascending (2 -> 10), then remaining descending (5 -> 1)
+    expect(audioSpy.calls.argsFor(0)[0]).toContain("elap2.mp3");
+    expect(audioSpy.calls.argsFor(1)[0]).toContain("elap10.mp3");
+    expect(audioSpy.calls.argsFor(2)[0]).toContain("rem5.mp3");
+    expect(audioSpy.calls.argsFor(3)[0]).toContain("rem1.mp3");
   });
 
   it("should play audio set sequentially with both preset and TTS entries", async () => {
@@ -827,14 +864,14 @@ describe("AudioSelectorComponent", () => {
       expect(component.isPlaying).toBeFalse();
     });
 
-    it("should auto-play audio_set entries sequentially upon selection", async () => {
+    it("should auto-play audio_set entries sequentially upon selection in natural order", async () => {
       const audioSet = {
         entity_id: "set-autoplay-1",
         name: "Countdown Set",
         type: "audio_set",
         audioEntries: [
-          { url: "beep1.mp3", timeSeconds: 1 },
-          { url: "beep2.mp3", timeSeconds: 2 },
+          { url: "beep1.mp3", timeSeconds: 1, triggerMode: "remaining" },
+          { url: "beep2.mp3", timeSeconds: 2, triggerMode: "remaining" },
         ],
       };
       fixture.componentRef.setInput("mode", "set");
@@ -856,8 +893,9 @@ describe("AudioSelectorComponent", () => {
 
       expect(component.isPlaying).toBeFalse();
       expect(audioSpy).toHaveBeenCalledTimes(2);
-      expect(audioSpy.calls.argsFor(0)[0]).toContain("beep1.mp3");
-      expect(audioSpy.calls.argsFor(1)[0]).toContain("beep2.mp3");
+      // Remaining countdown plays in natural descending order (2 -> 1)
+      expect(audioSpy.calls.argsFor(0)[0]).toContain("beep2.mp3");
+      expect(audioSpy.calls.argsFor(1)[0]).toContain("beep1.mp3");
     });
 
     it("should stop in-flight playback before auto-playing newly selected resource", () => {

@@ -29,3 +29,20 @@ Un **Set Audio** ti consente di configurare una serie di suoni o frasi parlate a
 *   **Percentuale Carburante (%):** Utilizzato nelle impostazioni del Pilota per i **Suoni del livello di carburante**. Le voci definiscono annunci quando il carburante raggiunge soglie di avviso, critiche o pieno (ad esempio `20%`, `10%`, `0%` vuoto o `100%` pieno).
 
 Nell'**Editor Set Audio**, puoi aggiungere voci, selezionare file audio o scrivere frasi TTS (con variabili di template come `{driver.nickname}`), impostare valori di attivazione e utilizzare il pulsante **Estrai automaticamente i valori dai nomi** per compilare automaticamente i valori dai nomi di file numerati (es. `10.mp3`, `5.mp3`).
+
+### Modalità di attivazione doppie: Rimanente vs. Trascorso
+
+Ogni voce in un Set Audio può essere configurata con una **Modalità di attivazione**:
+
+*   **Rimanente (Conto alla rovescia):** Si attiva quando la gara si avvicina a zero o al traguardo (ad esempio quando rimangono 10 giri o 30 secondi nella manche). È la modalità predefinita per i conti alla rovescia.
+*   **Trascorso (Conteggio progressivo):** Si attiva man mano che la gara procede dalla partenza (ad esempio quando il leader completa 10 giri o dopo 30 secondi trascorsi nella manche).
+
+#### Doppi avvisi con lo stesso valore numerico
+Race Coordinator AI supporta la configurazione di due voci con esattamente lo stesso valore numerico (ad esempio valore `10`):
+- Una voce configurata come **Trascorso** verrà riprodotta quando il leader raggiunge quel traguardo iniziale (ad esempio a 10 giri percorsi).
+- Un'altra voce configurata come **Rimanente** verrà riprodotta quando mancano 10 giri alla fine.
+
+#### Anteprima in ordine naturale di gara
+Durante l'anteprima o la riproduzione automatica di un Set Audio nel Gestore Asset o nel Selettore Audio, i suoni vengono eseguiti nell'ordine cronologico di gara:
+1. Tutte le voci **Trascorso** vengono eseguite per prime in ordine crescente (0 → N).
+2. Tutte le voci **Rimanente** vengono eseguite successivamente in ordine decrescente di conto alla rovescia (N → 0).

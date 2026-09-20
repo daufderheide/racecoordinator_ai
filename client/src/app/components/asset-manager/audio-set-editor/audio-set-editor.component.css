@@ -239,6 +239,22 @@
   text-align: center;
 }
 
+.entry-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.entry-mode label {
+  color: #aaa;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.mode-select {
+  min-width: 120px;
+}
+
 .btn-remove {
   background: #dc3545;
   color: #fff;

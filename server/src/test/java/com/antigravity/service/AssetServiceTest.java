@@ -1,5 +1,6 @@
 package com.antigravity.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -225,5 +226,46 @@ public class AssetServiceTest {
     // Backfill default theme and reset
     assetService.backfillDefaultTheme();
     assetService.resetAssets();
+  }
+
+  @Test
+  public void testSaveAudioSetWithTriggerModesAndBackfill() throws Exception {
+    com.antigravity.proto.SaveAudioSetEntry elapsedEntry =
+        com.antigravity.proto.SaveAudioSetEntry.newBuilder()
+            .setName("Lap 10 reached")
+            .setTimeSeconds(10)
+            .setUrl("/assets/lap10.wav")
+            .setTriggerMode("elapsed")
+            .build();
+
+    com.antigravity.proto.SaveAudioSetEntry remainingEntry =
+        com.antigravity.proto.SaveAudioSetEntry.newBuilder()
+            .setName("10 laps left")
+            .setTimeSeconds(10)
+            .setUrl("/assets/10left.wav")
+            .setTriggerMode("remaining")
+            .build();
+
+    com.antigravity.proto.SaveAudioSetEntry defaultBackfillEntry =
+        com.antigravity.proto.SaveAudioSetEntry.newBuilder()
+            .setName("5 laps left")
+            .setTimeSeconds(5)
+            .setUrl("/assets/5left.wav")
+            .build(); // No triggerMode set
+
+    AssetMessage audioSet =
+        assetService.saveAudioSet(
+            null,
+            "Dual Trigger Set",
+            java.util.Arrays.asList(elapsedEntry, remainingEntry, defaultBackfillEntry));
+    assertNotNull(audioSet);
+    assertEquals(3, audioSet.getAudioEntriesCount());
+
+    AssetMessage loaded = assetService.getAssetById(audioSet.getModel().getEntityId());
+    assertNotNull(loaded);
+    assertEquals("elapsed", loaded.getAudioEntries(0).getTriggerMode());
+    assertEquals("remaining", loaded.getAudioEntries(1).getTriggerMode());
+    // Should backfill to "remaining" when not specified
+    assertEquals("remaining", loaded.getAudioEntries(2).getTriggerMode());
   }
 }
