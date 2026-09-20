@@ -1,5 +1,22 @@
 # Changelog
 
+## [v1.0.0-beta.80] - 2026-09-20
+
+### 🐛 Bug Fixes
+
+- restrict undo, redo, and keyboard shortcuts to edit mode across all editors [skip-screendiffs] ([412a7a0b](https://github.com/daufderheide/racecoordinator_ai/commit/412a7a0b))
+- clear list selection on mouse leave when search query is empty [skip-screendiffs] ([08799436](https://github.com/daufderheide/racecoordinator_ai/commit/08799436))
+
+### ⚡ Improvements & Refactoring
+
+- remove automatic scroll to top when navigating editor items [skip-screendiffs] ([c53660e1](https://github.com/daufderheide/racecoordinator_ai/commit/c53660e1))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.79...v1.0.0-beta.80">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.79] - 2026-09-19
 
 ### 🚀 New Features
