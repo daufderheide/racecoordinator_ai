@@ -15,6 +15,12 @@ function buildGeneralHelpSteps(ctx: DriverEditorHelpContext): GuideStep[] {
       position: "center",
     },
     {
+      selector: "#editor-object-selector",
+      title: t.translate("DE_HELP_SELECTOR_TITLE"),
+      content: t.translate("DE_HELP_SELECTOR_CONTENT"),
+      position: "bottom",
+    },
+    {
       selector: "#driver-avatar-section",
       title: t.translate("DE_HELP_AVATAR_TITLE"),
       content: t.translate("DE_HELP_AVATAR_CONTENT"),

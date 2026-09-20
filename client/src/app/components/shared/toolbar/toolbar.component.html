@@ -76,9 +76,40 @@
       class="toolbar-btn ghost"
       (click)="onEdit()"
       [disabled]="isSaving() || disabledEdit()"
-      [title]="'TM_EDIT' | translate"
+      [title]="
+        (isEditMode() ? 'EDITOR_TOOLTIP_READ_ONLY' : 'EDITOR_TOOLTIP_EDIT')
+          | translate
+      "
     >
-      <span class="material-icons">edit</span>
+      <span class="material-icons">{{
+        isEditMode() ? "visibility" : "edit"
+      }}</span>
+    </button>
+  }
+
+  <!-- Expand / Collapse All -->
+  @if (showExpandCollapse()) {
+    <button
+      type="button"
+      id="expand-collapse-all-btn"
+      class="toolbar-btn ghost"
+      (click)="onExpandCollapse()"
+      [title]="
+        (allExpanded()
+          ? 'EDITOR_COLLAPSE_ALL_TOOLTIP'
+          : 'EDITOR_EXPAND_ALL_TOOLTIP'
+        ) | translate
+      "
+      [attr.aria-label]="
+        (allExpanded()
+          ? 'EDITOR_COLLAPSE_ALL_TOOLTIP'
+          : 'EDITOR_EXPAND_ALL_TOOLTIP'
+        ) | translate
+      "
+    >
+      <span class="material-icons">{{
+        allExpanded() ? "unfold_less" : "unfold_more"
+      }}</span>
     </button>
   }
 

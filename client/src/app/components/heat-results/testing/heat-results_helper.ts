@@ -16,7 +16,10 @@ export class HeatResultsHelper {
               { backgroundColor: "#10b981", foregroundColor: "#ffffff" },
             ],
           },
+          start_time_millis: 1788920640000,
         },
+        startTimeMillis: 1788920640000,
+        start_time_millis: 1788920640000,
         drivers: [
           {
             objectId: "rp1",

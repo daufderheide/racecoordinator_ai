@@ -26,6 +26,15 @@ export class EditorTitleHarnessE2e implements EditorTitleHarnessBase {
   protected get helpButtonElement() {
     return this.locator.locator(this.base.selectors.helpButton);
   }
+  protected get prevButtonElement() {
+    return this.locator.locator(this.base.selectors.prevButton);
+  }
+  protected get nextButtonElement() {
+    return this.locator.locator(this.base.selectors.nextButton);
+  }
+  protected get itemCounterElement() {
+    return this.locator.locator(this.base.selectors.itemCounter);
+  }
 
   async getTitle(): Promise<string | null> {
     if (await this.titleElement.isVisible()) {
@@ -67,5 +76,36 @@ export class EditorTitleHarnessE2e implements EditorTitleHarnessBase {
       return isDisabled !== null;
     }
     return true;
+  }
+
+  async clickPrevious(): Promise<void> {
+    await this.prevButtonElement.click();
+  }
+
+  async clickNext(): Promise<void> {
+    await this.nextButtonElement.click();
+  }
+
+  async isPreviousDisabled(): Promise<boolean> {
+    if (await this.prevButtonElement.isVisible()) {
+      const isDisabled = await this.prevButtonElement.getAttribute("disabled");
+      return isDisabled !== null;
+    }
+    return true;
+  }
+
+  async isNextDisabled(): Promise<boolean> {
+    if (await this.nextButtonElement.isVisible()) {
+      const isDisabled = await this.nextButtonElement.getAttribute("disabled");
+      return isDisabled !== null;
+    }
+    return true;
+  }
+
+  async getItemCounter(): Promise<string | null> {
+    if (await this.itemCounterElement.isVisible()) {
+      return await this.itemCounterElement.innerText();
+    }
+    return null;
   }
 }

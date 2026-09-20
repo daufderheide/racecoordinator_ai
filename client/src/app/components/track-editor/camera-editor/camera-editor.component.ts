@@ -34,6 +34,7 @@ export class CameraEditorComponent implements OnInit {
   config = model.required<CameraConfig>();
   interfaceIndex = input.required<number>();
   lanes = input.required<number>();
+  isEditMode = input<boolean>(true);
 
   change = output<void>();
   remove = output<void>();
@@ -185,6 +186,7 @@ export class CameraEditorComponent implements OnInit {
   }
 
   public onRemove(): void {
+    if (!this.isEditMode()) return;
     this.remove.emit();
   }
 }

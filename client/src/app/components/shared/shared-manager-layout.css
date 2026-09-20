@@ -35,8 +35,6 @@
   overflow: hidden;
   margin: 0;
   padding: 0 30px 24px 30px;
-  transform: translateZ(0);
-  will-change: transform;
   border-top: 1px solid rgba(56, 189, 248, 0.3);
   box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
 }
@@ -53,8 +51,6 @@
   box-shadow: none;
   margin: 0;
   padding-top: 10px;
-  transform: translateZ(0);
-  will-change: transform, opacity;
   overflow: hidden;
 }
 
@@ -137,8 +133,6 @@
   border-left: 1px solid rgba(56, 189, 248, 0.3);
   box-shadow: inset 15px 0 15px -15px rgba(0, 0, 0, 0.8);
   overflow: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
 }
 
 /* Detail Panel */

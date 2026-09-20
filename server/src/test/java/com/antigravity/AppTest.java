@@ -14,6 +14,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
+import io.javalin.http.Context;
 import java.io.File;
 import java.io.FileWriter;
 import org.junit.After;
@@ -108,5 +109,16 @@ public class AppTest {
                     name.startsWith("racecoordinator.") && name.endsWith("_session.log"));
     assertNotNull(rolledFiles);
     assertTrue("There should be exactly one rolled over file", rolledFiles.length == 1);
+  }
+
+  @Test
+  public void testApplyNoCacheHeadersSetsRequiredHeaders() {
+    Context ctx = mock(Context.class);
+
+    App.applyNoCacheHeaders(ctx);
+
+    verify(ctx).header("Cache-Control", "no-cache, no-store, must-revalidate");
+    verify(ctx).header("Pragma", "no-cache");
+    verify(ctx).header("Expires", "0");
   }
 }

@@ -2,6 +2,10 @@ import { Injectable, OnDestroy } from "@angular/core";
 import { BehaviorSubject, Observable, Subscription } from "rxjs";
 import { FinishMethod } from "@app/models/heat_scoring";
 import { IRaceTime, RaceState } from "@app/proto/antigravity";
+import {
+  formatTimerDisplay,
+  TimerFormatOptions,
+} from "@app/utils/timer-format.utils";
 
 import { RaceService } from "./race.service";
 import { RaceConnectionService } from "./race-connection.service";
@@ -21,6 +25,12 @@ export class RaceTimeService implements OnDestroy {
   private previousTime: number = 0;
   private subsecondThreshold: number = 10;
   private subsecondDecimals: number = 2;
+  private timerFormatOptions: TimerFormatOptions = {
+    format: "dynamic",
+    subsecondMode: "threshold",
+    subsecondThreshold: 10,
+    subsecondDecimals: 2,
+  };
 
   private timeSubject = new BehaviorSubject<number>(0);
   public time$: Observable<number> = this.timeSubject.asObservable();
@@ -166,9 +176,25 @@ export class RaceTimeService implements OnDestroy {
     this.notifySubscribers();
   }
 
+  setTimerFormatOptions(options: TimerFormatOptions): void {
+    this.timerFormatOptions = {
+      ...this.timerFormatOptions,
+      ...options,
+    };
+    if (options.subsecondThreshold !== undefined) {
+      this.subsecondThreshold = options.subsecondThreshold;
+    }
+    if (options.subsecondDecimals !== undefined) {
+      this.subsecondDecimals = options.subsecondDecimals;
+    }
+    this.notifySubscribers();
+  }
+
   setSubsecondSettings(threshold: number, decimals: number): void {
     this.subsecondThreshold = threshold;
     this.subsecondDecimals = decimals;
+    this.timerFormatOptions.subsecondThreshold = threshold;
+    this.timerFormatOptions.subsecondDecimals = decimals;
     this.notifySubscribers();
   }
 
@@ -225,7 +251,11 @@ export class RaceTimeService implements OnDestroy {
       time = this._autoAdvanceRemaining;
     }
 
-    if (time > this.previousTime) {
+    if (this.timerFormatOptions.subsecondMode === "always") {
+      this._timeFormat = `1.${this.subsecondDecimals}-${this.subsecondDecimals}`;
+    } else if (this.timerFormatOptions.subsecondMode === "never") {
+      this._timeFormat = "1.0-0";
+    } else if (time > this.previousTime) {
       this._timeFormat = "1.0-0";
     } else if (time < this.previousTime) {
       if (this._raceState === RaceState.STARTING) {
@@ -396,20 +426,10 @@ export class RaceTimeService implements OnDestroy {
 
     if (showDurationOnly) {
       const duration = race?.heat_scoring?.finishValue || 0;
-
-      const hoursD = Math.floor(duration / 3600);
-      const minutesD = Math.floor((duration % 3600) / 60);
-      const secondsD = Math.floor(duration % 60);
-
-      if (hoursD > 0) {
-        return `${hoursD}:${minutesD.toString().padStart(2, "0")}:${secondsD
-          .toString()
-          .padStart(2, "0")}`;
-      }
-      if (minutesD > 0) {
-        return `${minutesD}:${secondsD.toString().padStart(2, "0")}`;
-      }
-      return `${secondsD}`;
+      return formatTimerDisplay(duration, {
+        ...this.timerFormatOptions,
+        subsecondMode: "never",
+      });
     }
 
     if (
@@ -423,31 +443,36 @@ export class RaceTimeService implements OnDestroy {
     const time = this._time || 0;
 
     if ((s === RaceState.HEAT_OVER || s === RaceState.RACE_OVER) && time <= 0) {
-      return "0";
-    }
-    const hours = Math.floor(time / 3600);
-    const minutes = Math.floor((time % 3600) / 60);
-    const seconds = Math.floor(time % 60);
-
-    let base = "";
-    if (hours > 0) {
-      base = `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-    } else if (minutes > 0) {
-      base = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    } else {
-      base = `${seconds}`;
+      return formatTimerDisplay(0, {
+        ...this.timerFormatOptions,
+        subsecondMode:
+          this.timerFormatOptions.subsecondMode === "always"
+            ? "always"
+            : "never",
+      });
     }
 
     const parts = this._timeFormat.split(".");
     const fractionDigits =
       parts.length > 1 ? Number(parts[1].split("-")[1]) : 0;
 
-    if (hours === 0 && minutes === 0 && fractionDigits > 0) {
-      const formatted = time.toFixed(fractionDigits);
-      return formatted;
+    const effOptions: TimerFormatOptions = { ...this.timerFormatOptions };
+    if (fractionDigits > 0 && effOptions.subsecondMode !== "never") {
+      effOptions.subsecondDecimals = fractionDigits;
+      if (
+        effOptions.subsecondMode === "threshold" &&
+        time > (effOptions.subsecondThreshold ?? 10)
+      ) {
+        effOptions.subsecondMode = "always";
+      }
+    } else if (
+      fractionDigits === 0 &&
+      effOptions.subsecondMode === "threshold"
+    ) {
+      effOptions.subsecondDecimals = 0;
     }
 
-    return base;
+    return formatTimerDisplay(time, effOptions);
   }
 
   reset(): void {

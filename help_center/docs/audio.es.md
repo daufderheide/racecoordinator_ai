@@ -60,12 +60,13 @@ Para gestionar eventos simultáneos (pasos por vuelta, cambios de líder, bander
 3. **Cola Urgente (Urgent Queueing):** Las alertas urgentes son críticas para el control de carrera. Si llega una alerta urgente mientras otra está hablando, se encola y suena tan pronto como termine la actual.
 4. **Pausa de Cadencia (Callout Spacing):** Tras terminar un aviso hablado, se inserta una breve pausa de silencio antes de permitir el siguiente aviso no urgente, asegurando una escucha clara.
 
-### Respaldo de Hitos (Milestone Fallback)
+### Prioridad de Hitos y Respaldo (Milestone Priority & Fallback)
 
-Cuando un piloto completa una vuelta destacada:
-1. El sistema intenta reproducir la locución de voz del hito según su prioridad.
-2. Si la locución se **descarta** (por ejemplo, por una bandera amarilla activa o una pausa de cadencia), el sistema recurre al sonido de **mejor vuelta personal** o al **tono de vuelta estándar**.
-3. Si el sonido de respaldo es un efecto de sonido (SFX), suena polifónicamente, garantizando que el piloto reciba confirmación auditiva inmediata al cruzar la línea de meta.
+Cuando un piloto completa una vuelta que activa uno o más hitos (como récords de pista, mejor vuelta de manga o cambio de líder):
+
+1. **Cascada de prioridad para eventos simultáneos:** Los sonidos candidatos de hitos se evalúan en estricto orden de prioridad (Récord general -> Récord general de carril -> Nuevo líder de carrera -> Nuevo líder de manga -> Mejor vuelta de carrera -> Mejor vuelta de carril de carrera -> Mejor vuelta de manga -> Mejor vuelta personal). Si el sonido de mayor prioridad está configurado como `none` (o no configurado), el sistema pasa al siguiente sonido de mayor prioridad activado en esa vuelta y lo reproduce si está configurado.
+2. **Avisos descartados por canal ocupado:** Si una locución verbal seleccionada se **descarta** porque otra de mayor prioridad está sonando (o durante una pausa de cadencia), no se reproducirá ningún otro aviso verbal en esa vuelta. En su lugar, el sistema recurre directamente al sonido de **mejor vuelta personal** (si fue PB) o al **tono de vuelta estándar**.
+3. **Respaldo polifónico SFX:** Si el sonido de respaldo es un efecto de sonido (SFX), suena polifónicamente, garantizando que el piloto reciba confirmación auditiva inmediata al cruzar la línea de meta.
 
 ---
 
@@ -149,20 +150,20 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 
 ### Eventos de Audio del Piloto (Configurados en el Editor de Pilotos)
 
-| Ranura de Audio | Archivo / Activo Predeterminado | Tipo de Sonido | Nivel de Prioridad | Relevancia y Pantalla |
-| :--- | :--- | :--- | :---: | :--- |
-| **Sonido de Vuelta** (`lapAudio`) | `default_beep` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `low` (Peso 1 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta Personal** (`bestLapAudio`) | `default_driveby` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `normal` (Peso 2 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta de Manga** (`heatBestLapAudio`) | `default_best_heat_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta de Carril de Carrera** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Nuevo Líder de Manga** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Mejor Vuelta de Carrera** (`raceBestLapAudio`) | `default_best_race_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Récord de Carril de Carrera** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Récord Absoluto de Pista** (`overallBestLapAudio`) | `default_record_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Nuevo Líder de Carrera** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Salida en Falso / Penalización** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Entrada a Boxes** (`pitInAudio`) | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
-| **Alertas de Combustible** (`fuelAudio`: Aviso, Crítico, Vacío) | `default_fuel_level` (Conjunto de Audio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| Evento de Audio del Piloto | Cuándo se reproduce | Archivo / Activo Predeterminado | Tipo de Sonido | Nivel de Prioridad | Relevancia y Pantalla |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Sonido de Vuelta** | Se reproduce en cada vuelta regular completada (o como respaldo si el sonido de hito se descarta o no está disponible). | `default_beep` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `low` (Peso 1 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta Personal** | Se reproduce cuando el piloto logra su tiempo de vuelta más rápido de la manga o sesión actual. | `default_driveby` | **SFX** (Predefinido) / **Aviso de Voz** (TTS) | `normal` (Peso 2 en TTS; Polifónico en SFX) | `lane-view`: Suena en Pantalla Principal (si hay widget de carril) y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta de Carrera** | Se reproduce al marcar la vuelta más rápida de toda la carrera entre todas las mangas y carriles. | `default_best_race_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta de Carril de Carrera** | Se reproduce al lograr la vuelta más rápida en ese carril específico durante la carrera actual. | `default_best_race_lane_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Mejor Vuelta de Manga** | Se reproduce cuando el piloto logra la vuelta más rápida entre todos los participantes de la manga activa. | `default_best_heat_lap` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de nuevo líder de carrera** | Se reproduce cuando un piloto pasa al primer puesto de la clasificación general de la carrera. | `default_new_race_leader` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de nuevo líder de manga** | Se reproduce cuando un piloto toma el liderato en la manga activa. | `default_new_heat_leader` | **Aviso de Voz** | `normal` (Peso 2) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Récord de Vuelta General** | Se reproduce cuando se bate el récord histórico de pista entre todos los carriles y carreras anteriores. | `default_record_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Récord de Vuelta de Carril General** | Se reproduce cuando se bate el récord histórico de pista en ese carril específico. | `default_record_lane_lap` | **Aviso de Voz** | `high` (Peso 3) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Entrada a Boxes** | Se reproduce cuando el coche entra en el carril de boxes o zona de repostaje. | `default_pit_in` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonidos de Nivel de Combustible** | Se reproduce cuando el nivel de combustible baja al umbral de advertencia, crítico o vacío. | `default_fuel_level` (Conjunto de Audio) | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+| **Sonido de Salida en Falso** | Se reproduce cuando se detecta una salida en falso o infracción en la línea de salida. | `default_penalty` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 
 ### Eventos de Audio de Tema (Configurados en el Gestor de Temas)
 
@@ -171,12 +172,44 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | **Cuenta Atrás de Salida** | `audio.countdown` | **Aviso de Voz** / Conjunto de Audio | `urgent` | `countdown`: Suena en Pantalla Principal (si hay widget de cuenta atrás) y en todos los Puestos de Piloto. |
 | **Semáforo Verde / SALIDA** | `audio.countdown.green` | **Aviso de Voz** / Tono Predefinido | `urgent` | `countdown`: Suena en Pantalla Principal (si hay widget de cuenta atrás) y en todos los Puestos de Piloto. |
 | **Bandera Amarilla** | `audio.yellowflag` | **Aviso de Voz** (Sirena de Aviso) | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
+| **Segundos Restantes de Inicio Automático** | `audio.auto_start` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
 | **Segundos Restantes** | `audio.seconds_left` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
-| **Mitad de Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
+| **Vueltas Restantes** | `audio.laps_left` | **Aviso de Voz** / Conjunto de Audio | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. Anuncia las vueltas restantes del líder; un valor de 0 anuncia cuando el líder completa el recuento de vueltas (p. ej., «Líder finalizó» en carreras con permitir finalizar). |
+| **Mitad de Manga** | `audio.seconds_left.halfway` | **Aviso de Voz** | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto al alcanzar la mitad de la serie (por tiempo o cuando el líder completa la mitad de las vueltas). |
 | **Manga Terminada** | `audio.heat_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
+| **Segundos Restantes de Avance Automático** | `audio.auto_advance` | **Aviso de Voz** / Conjunto de Audio (Predeterminado: TTS) | `normal` (Peso 2) | `timer`: Suena en Pantalla Principal (si hay widget de temporizador) y en todos los Puestos de Piloto. |
 | **Carrera Terminada** | `audio.race_over` | **Aviso de Voz** | `urgent` (Peso 4) | `flag`: Suena en Pantalla Principal (si hay widget de bandera) y en todos los Puestos de Piloto. |
 | **Tiempo Mínimo de Vuelta** | `audio.min_lap_time` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
 | **Vuelta de Drift** | `audio.drift_lap` | **Aviso de Voz** | `urgent` (Peso 4) | `lane-view`: Suena en Pantalla Principal y en el Puesto de Piloto de ese carril/piloto. |
+
+---
+
+## Conjuntos de Audio y Modos de Activación
+
+Un **Conjunto de Audio** es un activo compuesto que contiene una colección de archivos de sonido o locuciones de texto a voz asignadas a umbrales numéricos específicos. Los conjuntos de audio se utilizan en 5 ranuras de tema y en ajustes de combustible:
+
+1. **Cuenta regresiva de salida (`audio.countdown`):** Tonos de secuencia y bocinas previas a la salida.
+2. **Segundos restantes de inicio automático (`audio.auto_start`):** Avisos de voz antes de comenzar una manga.
+3. **Segundos restantes (`audio.seconds_left`):** Avisos de tiempo en mangas por tiempo.
+4. **Vueltas restantes (`audio.laps_left`):** Avisos de vueltas en mangas por vueltas.
+5. **Segundos restantes de avance automático (`audio.auto_advance`):** Avisos entre mangas antes del avance automático.
+6. **Sonidos de nivel de combustible (`fuelLevelAudio`):** Avisos de advertencia, crítico y repostaje según porcentaje.
+
+### Modos de activación: Restante vs. Transcurrido
+Cada entrada de un Conjunto de Audio define un **Modo de activación**:
+
+*   **Restante (Cuenta regresiva):** Se activa a medida que la carrera se aproxima a la meta o límite de tiempo (p. ej. 10 vueltas restantes, 30 segundos restantes). Es el modo predeterminado para cuentas regresivas.
+*   **Transcurrido (Conteo ascendente):** Se activa a medida que la carrera progresa desde el inicio (p. ej. 10 vueltas completadas, 30 segundos transcurridos).
+
+### Señales duales con valores numéricos idénticos
+Race Coordinator AI permite configurar dos entradas en el mismo Conjunto de Audio con exactamente el mismo valor numérico (p. ej. valor `10`):
+- Una entrada configurada como **Transcurrido** sonará cuando el líder alcance 10 vueltas o segundos desde el inicio.
+- Otra entrada configurada como **Restante** sonará cuando falten 10 vueltas o segundos para el final.
+
+### Vista previa en orden natural de carrera
+Al previsualizar un Conjunto de Audio en el Gestor de Activos o en el Selector de Audio, las entradas se reproducen en el orden cronológico de la carrera:
+1. Todas las entradas **Transcurrido** se reproducen primero en orden ascendente (0 → N).
+2. Todas las entradas **Restante** se reproducen a continuación en orden descendente de cuenta regresiva (N → 0).
 
 ---
 
@@ -186,5 +219,5 @@ Las siguientes tablas detallan todos los eventos de audio en Race Coordinator AI
 | :--- | :--- |
 | **Editor de Interfaz -> Ajustes de Audio** | Volumen maestro, tiempo límite de cola urgente, espaciado de avisos, voz TTS, velocidad, tono, volumen TTS y botón de prueba. |
 | **Editor de Temas** | Sonidos globales: cuenta atrás, semáforo verde, bandera amarilla, tiempo restante, mitad de manga, fin de manga, fin de carrera, tiempo mínimo y vuelta de drift. |
-| **Editor de Pilotos** | Sonidos individuales de cada piloto: vuelta normal, mejor vuelta personal, mejor vuelta de manga, mejor vuelta de carrera, récords de carril y pista, cambios de líder, salida en falso, entrada a boxes y combustible. |
-| **Gestor de Activos** | Subida y administración de archivos WAV, MP3 y OGG con previsualización inmediata. |
+| **Editor de Pilotos** | Sonidos específicos del piloto: Sonido de Vuelta, Sonido de Mejor Vuelta Personal, Sonido de Mejor Vuelta de Carrera, Sonido de Mejor Vuelta de Carril de Carrera, Sonido de Mejor Vuelta de Manga, Sonido de nuevo líder de carrera, Sonido de nuevo líder de manga, Sonido de Récord de Vuelta General, Sonido de Récord de Vuelta de Carril General, Sonido de Entrada a Boxes, Sonidos de Nivel de Combustible y Sonido de Salida en Falso. |
+| **Gestor de Activos** | Subida y administración de archivos WAV, MP3 y OGG, y configuración de conjuntos de audio con valores de activación según el contexto (segundos, vueltas o porcentaje), con previsualización inmediata. |

@@ -125,3 +125,18 @@ export async function handleUpdateSampleWidgets(comp: any): Promise<void> {
     }
   }
 }
+
+export class DirectoryController {
+  constructor(private comp: any) {}
+
+  selectDirectory = () => handleSelectDirectory(this.comp);
+  resetDefault = () => handleResetDefaultDirectory(this.comp);
+  selectWidgetDirectory = () => handleSelectWidgetDirectory(this.comp);
+  resetWidgetDefault = () => handleResetWidgetDirectory(this.comp);
+  exportStarterWidgets = () => this.comp.updateSampleWidgets();
+  updateSampleWidgets = () => handleUpdateSampleWidgets(this.comp);
+  promptEnterPath = (type: "ui" | "widgets") =>
+    handlePromptEnterPath(this.comp, type);
+  cancelEnterPathModal = () => handleCancelEnterPathModal(this.comp);
+  confirmEnterPath = (path?: string) => handleConfirmEnterPath(this.comp, path);
+}

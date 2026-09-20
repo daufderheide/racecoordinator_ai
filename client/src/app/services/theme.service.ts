@@ -180,7 +180,11 @@ export class ThemeService {
     if (!config && this.activeTheme.slots?.[slotKey]) {
       const assetId = this.activeTheme.slots[slotKey];
       const isSet =
-        slotKey === "audio.countdown" || slotKey === "audio.seconds_left";
+        slotKey === "audio.countdown" ||
+        slotKey === "audio.seconds_left" ||
+        slotKey === "audio.laps_left" ||
+        slotKey === "audio.auto_start" ||
+        slotKey === "audio.auto_advance";
       config = { type: isSet ? "audio_set" : "preset", url: assetId };
     }
     if (!config) {
@@ -188,6 +192,12 @@ export class ThemeService {
         config = { type: "audio_set", url: "default_countdown" };
       } else if (slotKey === "audio.seconds_left") {
         config = { type: "audio_set", url: "default_seconds_left" };
+      } else if (slotKey === "audio.laps_left") {
+        config = { type: "audio_set", url: "default_laps_left" };
+      } else if (slotKey === "audio.auto_start") {
+        config = { type: "audio_set", url: "default_auto_start" };
+      } else if (slotKey === "audio.auto_advance") {
+        config = { type: "audio_set", url: "default_auto_advance" };
       }
     }
     return config;

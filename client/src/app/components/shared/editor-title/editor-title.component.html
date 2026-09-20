@@ -8,7 +8,62 @@
     <app-browser-navigation></app-browser-navigation>
     <h1 class="page-title">
       <span class="title-main">{{ titleKey() | translate }}</span>
-      @if (trimmedItemName()) {
+      @if (items().length > 0) {
+        <span class="item-separator">-</span>
+        <div class="editor-object-nav">
+          <button
+            type="button"
+            id="editor-prev-item-btn"
+            class="editor-nav-btn prev-item-btn"
+            [disabled]="!hasPrevious() || isEditMode()"
+            (click)="selectPrevious()"
+            [title]="'EDITOR_PREV_ITEM_TOOLTIP' | translate"
+            [attr.aria-label]="'EDITOR_PREV_ITEM_TOOLTIP' | translate"
+          >
+            <span class="material-icons">chevron_left</span>
+          </button>
+          <app-custom-select
+            id="editor-object-selector"
+            class="editor-title-select"
+            [value]="selectedId()"
+            [disabled]="isEditMode()"
+            (change)="onSelectionChange($event)"
+            [title]="
+              (isEditMode() ? 'EDITOR_LOCKED_SELECTOR_TOOLTIP' : '') | translate
+            "
+          >
+            @for (item of items(); track item.id) {
+              <app-custom-option [value]="item.id">{{
+                item.name
+              }}</app-custom-option>
+            }
+          </app-custom-select>
+          <button
+            type="button"
+            id="editor-next-item-btn"
+            class="editor-nav-btn next-item-btn"
+            [disabled]="!hasNext() || isEditMode()"
+            (click)="selectNext()"
+            [title]="'EDITOR_NEXT_ITEM_TOOLTIP' | translate"
+            [attr.aria-label]="'EDITOR_NEXT_ITEM_TOOLTIP' | translate"
+          >
+            <span class="material-icons">chevron_right</span>
+          </button>
+          @if (currentIndex() >= 0) {
+            <span
+              id="editor-item-counter"
+              class="editor-item-counter"
+              [title]="
+                'EDITOR_ITEM_COUNTER'
+                  | translate
+                    : { current: currentIndex() + 1, total: items().length }
+              "
+            >
+              {{ currentIndex() + 1 }} / {{ items().length }}
+            </span>
+          }
+        </div>
+      } @else if (trimmedItemName()) {
         <span class="item-separator">-</span>
         <span class="item-name" [title]="trimmedItemName()">{{
           trimmedItemName()
@@ -18,11 +73,17 @@
   </div>
   <div class="header-right">
     <app-toolbar
+      [showEdit]="showEdit()"
+      [disabledEdit]="disabledEdit()"
+      [isEditMode]="isEditMode()"
+      [showExpandCollapse]="showExpandCollapse()"
+      [allExpanded]="allExpanded()"
       [showUndo]="showUndo()"
       [showRedo]="showRedo()"
       [showHelp]="showHelp()"
       [showAdd]="showAdd()"
       [showDelete]="showDelete()"
+      [disabledDelete]="disabledDelete()"
       [showCopy]="showCopy()"
       [disabledCopy]="disabledCopy()"
       [copyDisabledTooltipKey]="copyDisabledTooltipKey()"
@@ -49,6 +110,8 @@
       [helpSteps]="helpSteps()"
       [helpTitle]="helpTitle()"
       [helpRecordName]="helpRecordName()"
+      (edit)="onEdit()"
+      (expandCollapse)="onExpandCollapse()"
       (help)="onHelp()"
       (copy)="onCopy()"
       (add)="onAdd()"

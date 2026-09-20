@@ -882,7 +882,21 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.currentlyPlayingAsset = asset;
     this.cdr.detectChanges();
 
-    for (const entry of asset.audioEntries) {
+    // Natural order: elapsed ascending first, then remaining descending
+    const sortedEntries = [...asset.audioEntries].sort((a, b) => {
+      const modeA = a.triggerMode || (a as any).trigger_mode || "remaining";
+      const modeB = b.triggerMode || (b as any).trigger_mode || "remaining";
+      if (modeA !== modeB) {
+        return modeA === "elapsed" ? -1 : 1;
+      }
+      const valA =
+        Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
+      const valB =
+        Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
+      return modeA === "elapsed" ? valA - valB : valB - valA;
+    });
+
+    for (const entry of sortedEntries) {
       if (this.currentlyPlayingAsset !== asset) break;
       try {
         const entryType = entry.type || "preset";
@@ -1010,11 +1024,11 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
     this.loadAssets();
   }
 
-  // Custom Rotation Editor Methods
   openNewCustomRotationEditor() {
     this.router.navigate(["/custom-rotation-editor"], {
       queryParams: {
         id: "new",
+        isNew: "true",
         from: this.route.snapshot.queryParamMap.get("from"),
         returnUrl: this.route.snapshot.queryParamMap.get("returnUrl"),
       },

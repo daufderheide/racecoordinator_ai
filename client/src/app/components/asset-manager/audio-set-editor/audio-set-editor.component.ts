@@ -10,6 +10,10 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { IAssetMessage, ISaveAudioSetEntry } from "@app/proto/antigravity";
@@ -21,7 +25,13 @@ import { TranslationService } from "@app/services/translation.service";
   selector: "app-audio-set-editor",
   templateUrl: "./audio-set-editor.component.html",
   styleUrls: ["./audio-set-editor.component.css"],
-  imports: [FormsModule, AudioSelectorComponent, TranslatePipe],
+  imports: [
+    FormsModule,
+    AudioSelectorComponent,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class AudioSetEditorComponent implements OnInit, OnDestroy {
   visible = input(false);
@@ -77,18 +87,27 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
     this.name = this.initialName() || "";
     const entries = this.initialEntries();
     if (entries && entries.length > 0) {
-      this.entries = entries.map((e) => ({
-        timeSeconds: e.timeSeconds,
-        url: e.url,
-        name: e.name,
-        data: e.data,
-        type: e.type || "preset",
-        text: e.text || "",
-        percentage:
-          (e as any).percentage != null
-            ? (e as any).percentage
-            : Math.round(e.timeSeconds || 0),
-      }));
+      this.entries = entries.map((e) => {
+        const val =
+          e.timeSeconds != null
+            ? e.timeSeconds
+            : (e as any).percentage != null
+              ? (e as any).percentage
+              : 0;
+        return {
+          timeSeconds: val,
+          url: e.url,
+          name: e.name,
+          data: e.data,
+          type: e.type || "preset",
+          text: e.text || "",
+          percentage:
+            (e as any).percentage != null
+              ? (e as any).percentage
+              : Math.round(val),
+          triggerMode: e.triggerMode || (e as any).trigger_mode || "remaining",
+        };
+      });
     } else {
       this.entries = [];
     }
@@ -249,6 +268,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
           data: existingAsset ? new Uint8Array() : bytes,
           type: "preset",
           text: "",
+          triggerMode: "remaining",
         };
         processedCount++;
         if (processedCount === fileArray.length) {
@@ -289,8 +309,17 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Sort by time descending
-    this.entries.sort((a, b) => (b.timeSeconds || 0) - (a.timeSeconds || 0));
+    // Natural order: elapsed ascending first, then remaining descending
+    this.entries.sort((a, b) => {
+      const modeA = a.triggerMode || "remaining";
+      const modeB = b.triggerMode || "remaining";
+      if (modeA !== modeB) {
+        return modeA === "elapsed" ? -1 : 1;
+      }
+      const timeA = a.timeSeconds || 0;
+      const timeB = b.timeSeconds || 0;
+      return modeA === "elapsed" ? timeA - timeB : timeB - timeA;
+    });
     this.cdr.detectChanges();
   }
 
@@ -303,6 +332,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
       data: new Uint8Array(),
       type: "preset",
       text: "",
+      triggerMode: "remaining",
     });
     this.cdr.detectChanges();
   }
@@ -344,6 +374,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
         url: e.url?.startsWith("blob:") ? "" : e.url,
         timeSeconds: timeVal,
         percentage: pct,
+        triggerMode: e.triggerMode || "remaining",
       };
     });
 

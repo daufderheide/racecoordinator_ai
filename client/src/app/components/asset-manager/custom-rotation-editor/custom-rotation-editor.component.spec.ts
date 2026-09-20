@@ -1223,8 +1223,8 @@ describe("CustomRotationEditorComponent", () => {
   describe("Layout Scale and Resize", () => {
     it("should update scale on window resize", () => {
       // Simulate window resize
-      window.innerWidth = 800;
-      window.innerHeight = 450;
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(800);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(450);
       component.onResize();
       expect(component.scale).toBe(0.5); // min(800/1600, 450/900)
     });
@@ -1524,6 +1524,57 @@ describe("CustomRotationEditorComponent", () => {
 
       // discardMessage contains bullet points
       expect(component.discardMessage).toContain("•");
+    });
+    describe("Default Name Auto-Select & Duplication", () => {
+      it("should set defaultRotationName and focus input when isNew queryParam is true", fakeAsync(() => {
+        spyOn(component, "focusNameInput").and.callThrough();
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+        spyOn(activatedRoute.snapshot.queryParamMap, "get").and.callFake(
+          (key: string) => {
+            if (key === "isNew") return "true";
+            if (key === "id") return "new";
+            return null;
+          },
+        );
+
+        (component as any).loadAssetData();
+        tick();
+
+        expect(component.defaultRotationName).toBe(component.internalAssetName);
+        expect(component.focusNameInput).toHaveBeenCalled();
+      }));
+
+      it("should duplicate rotation via saveAsNew and focus input", fakeAsync(() => {
+        spyOn(component, "focusNameInput").and.callThrough();
+        spyOn(component, "save").and.stub();
+        component.internalAssetName = "Custom Rotation 1";
+        component.allAssets = [
+          {
+            type: "custom_rotation",
+            name: "Custom Rotation 1",
+            model: { entityId: "cr1" },
+          } as any,
+        ];
+
+        component.saveAsNew();
+        tick();
+
+        expect(component.internalAssetName).toBe("Custom Rotation 2");
+        expect(component.defaultRotationName).toBe("Custom Rotation 2");
+        expect(component.internalAssetId).toBeUndefined();
+        expect(component.save).toHaveBeenCalled();
+        expect(component.focusNameInput).toHaveBeenCalled();
+      }));
+
+      it("should bind appAutoSelectDefault to asset name input in template", () => {
+        component.defaultRotationName = "New Custom Rotation 1";
+        fixture.detectChanges();
+
+        const inputEl = fixture.nativeElement.querySelector(
+          "#custom-rotation-name-input",
+        );
+        expect(inputEl).toBeTruthy();
+      });
     });
     describe("Zoom Support", () => {
       it("should update zoomLevel and bind it to the heats grid", () => {

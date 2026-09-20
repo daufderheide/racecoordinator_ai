@@ -27,6 +27,7 @@ import { ImageSelectorComponent } from "@app/components/shared/image-selector/im
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { DataService } from "@app/data.service";
+import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
 import { CustomUI } from "@app/models/custom-ui";
 import { AudioConfig } from "@app/models/driver";
@@ -50,7 +51,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTTSContext } from "@app/utils/audio";
-import { formatUnsavedChangesMessage } from "@app/utils/unsaved-changes.helper";
+import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
 
 import { EnterPathModalComponent } from "./components/enter-path-modal/enter-path-modal";
 import { TemplateVariablesModalComponent } from "./components/template-variables-modal/template-variables-modal.component";
@@ -72,6 +73,7 @@ import {
   cancelDeleteThemeModal,
   cloneUIEditorState,
   DEFAULT_SECTIONS_EXPANDED,
+  DirectoryController,
   downloadJsonFile,
   ensureWidgetSelectedHelper,
   executeCaptureState,
@@ -80,6 +82,7 @@ import {
   extractAssetId,
   fetchUiEditorData,
   findDefaultWidgetId,
+  focusUiEditorElement,
   getCanvasViewportMaxHeightHelper,
   getComponentPreviewContainerHeight,
   getComponentPreviewContainerWidth,
@@ -87,11 +90,9 @@ import {
   getCustomUiDisplayNameKey,
   getDefaultAspectRatioOptions,
   getDefaultLayoutResetData,
-  getInspectorHeightHelper,
   getLayoutAspectRatio,
   getLayoutAspectRatioOptions,
   getLayoutScaleMode,
-  getLayoutZoomHelper,
   getThemeAudioConfigForSlot,
   getThemeAudioUrl,
   getThemeDisplayNameKey,
@@ -99,14 +100,12 @@ import {
   getUnsavedReasonsHelper,
   handleAutoSaveState,
   handleCalloutSpacingChange,
-  handleCancelEnterPathModal,
   handleClearCurrentLayout,
   handleClearCustomTemplate,
   handleClearLayout,
   handleConfirmDeleteCustomUi,
   handleConfirmDeleteTheme,
   handleConfirmDiscard,
-  handleConfirmEnterPath,
   handleCreateCustomUi,
   handleCreateTheme,
   handleCustomUiSelection,
@@ -124,15 +123,10 @@ import {
   handleImportRacedayLayout,
   handleMasterVolumeChange,
   handlePageTransitionChange,
-  handlePromptEnterPath,
   handleResetCurrentLayout,
-  handleResetDefaultDirectory,
   handleResetLayout,
   handleResetPracticeRacedayLayout,
   handleResetRacedayLayout,
-  handleResetWidgetDirectory,
-  handleSelectDirectory,
-  handleSelectWidgetDirectory,
   handleSetLayoutAspectRatio,
   handleSetLayoutScaleMode,
   handleTestExport,
@@ -146,7 +140,6 @@ import {
   handleUiEditorDestroy,
   handleUiEditorHelpStep,
   handleUiEditorKeyboardShortcut,
-  handleUpdateSampleWidgets,
   handleUrgentQueueTtlChange,
   handleWidgetColorChange,
   handleWidgetInspectorChange,
@@ -157,6 +150,7 @@ import {
   isThemeDefault,
   isThemeNameDuplicate,
   isThemeNameInvalid,
+  LayoutZoomController,
   loadExpanderStateFromStorage,
   MAIN_AUDIO_SLOTS,
   MOCK_RACEDAY_PROPERTIES,
@@ -171,7 +165,6 @@ import {
   resolveThemeLamp,
   saveExpanderStateToStorage,
   scrollToThemeElement,
-  setLayoutZoomHelper,
   sortAvailableColumnsList,
   sortCustomUisForDisplay,
   sortThemesForDisplay,
@@ -207,6 +200,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
     EnterPathModalComponent,
     CustomSelectComponent,
     CustomOptionComponent,
+    AutoSelectDefaultDirective,
   ],
   schemas: [NO_ERRORS_SCHEMA],
 })
@@ -299,8 +293,23 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showDeleteUiConfirm = false;
   uiToDelete: CustomUI | null = null;
   deleteUiParams: any = {};
-  showDiscardConfirm = false;
-  private pendingDeactivate: ((result: boolean) => void) | null = null;
+  defaultThemeNames: { [id: string]: string } = {};
+  defaultUiNames: { [id: string]: string } = {};
+  lifecycle!: EditorLifecycleHelper;
+
+  get showDiscardConfirm(): boolean {
+    return this.lifecycle.showDiscardConfirm;
+  }
+  set showDiscardConfirm(val: boolean) {
+    this.lifecycle.showDiscardConfirm = val;
+  }
+
+  get pendingDeactivate(): ((result: boolean) => void) | null {
+    return this.lifecycle.pendingDeactivate;
+  }
+  set pendingDeactivate(val: ((result: boolean) => void) | null) {
+    this.lifecycle.pendingDeactivate = val;
+  }
 
   layoutAspectRatioOptions: AspectRatioOption[] =
     getDefaultAspectRatioOptions();
@@ -367,6 +376,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       },
       () => this.editingState,
     );
+
+    this.lifecycle = new EditorLifecycleHelper({
+      cdr: this.cdr,
+      translationService: this.translationService,
+      getUnsavedReasons: () => this.getUnsavedReasons(),
+    });
   }
 
   ngOnInit() {
@@ -658,33 +673,20 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return areSettingsEqual(a, b);
   }
 
-  async selectDirectory() {
-    await handleSelectDirectory(this);
-  }
-  async resetDefault() {
-    await handleResetDefaultDirectory(this);
-  }
-  async selectWidgetDirectory() {
-    await handleSelectWidgetDirectory(this);
-  }
-  async resetWidgetDefault() {
-    await handleResetWidgetDirectory(this);
-  }
-  async exportStarterWidgets() {
-    await this.updateSampleWidgets();
-  }
-  async updateSampleWidgets() {
-    await handleUpdateSampleWidgets(this);
-  }
-  promptEnterPath(type: "ui" | "widgets") {
-    handlePromptEnterPath(this, type);
-  }
-  cancelEnterPathModal() {
-    handleCancelEnterPathModal(this);
-  }
-  async confirmEnterPath(path?: string) {
-    await handleConfirmEnterPath(this, path);
-  }
+  directoryController = new DirectoryController(this);
+
+  selectDirectory = () => this.directoryController.selectDirectory();
+  resetDefault = () => this.directoryController.resetDefault();
+  selectWidgetDirectory = () =>
+    this.directoryController.selectWidgetDirectory();
+  resetWidgetDefault = () => this.directoryController.resetWidgetDefault();
+  exportStarterWidgets = () => this.directoryController.exportStarterWidgets();
+  updateSampleWidgets = () => this.directoryController.updateSampleWidgets();
+  promptEnterPath = (type: "ui" | "widgets") =>
+    this.directoryController.promptEnterPath(type);
+  cancelEnterPathModal = () => this.directoryController.cancelEnterPathModal();
+  confirmEnterPath = (path?: string) =>
+    this.directoryController.confirmEnterPath(path);
 
   save() {
     this.isSaving = true;
@@ -705,10 +707,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   get discardMessage(): string {
-    return formatUnsavedChangesMessage(
-      this.translationService,
-      this.getUnsavedReasons(),
-    );
+    return this.lifecycle.discardMessage;
   }
 
   async confirmDiscard(): Promise<boolean> {
@@ -716,19 +715,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   onConfirmDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(true);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onConfirmDiscard();
   }
 
   onCancelDiscard() {
-    this.showDiscardConfirm = false;
-    if (this.pendingDeactivate) {
-      this.pendingDeactivate(false);
-      this.pendingDeactivate = null;
-    }
+    this.lifecycle.onCancelDiscard();
   }
 
   onBack() {
@@ -974,11 +965,20 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return isThemeDefault(theme);
   }
 
+  focusUiNameInput(entityId: string): void {
+    focusUiEditorElement(`custom-ui-name-input-${entityId}`);
+  }
+
+  focusThemeNameInput(entityId: string): void {
+    focusUiEditorElement(`theme-name-input-${entityId}`);
+  }
+
   private openSuccessModal(
     params?: { title?: string; message?: string; params?: any },
     collapseThemeId: string | null = null,
+    focusThemeId: string | null = null,
   ) {
-    openSuccessModal(this, params, collapseThemeId);
+    openSuccessModal(this, params, collapseThemeId, focusThemeId);
   }
 
   async createNewTheme() {
@@ -1031,50 +1031,42 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     handleSetLayoutScaleMode(this, mode, ui);
   }
 
-  layoutZoomMap: Map<string, number> = new Map();
+  zoomController = new LayoutZoomController(this);
 
+  get layoutZoomMap(): Map<string, number> {
+    return this.zoomController.layoutZoomMap;
+  }
   getLayoutZoom(ui?: CustomUI): number {
-    return getLayoutZoomHelper(
-      this.layoutZoomMap,
-      ui?.entity_id || this.activeCustomUiId || "default",
-    );
+    return this.zoomController.getZoom(ui);
   }
   setLayoutZoom(zoom: number, ui?: CustomUI): void {
-    setLayoutZoomHelper(
-      this.layoutZoomMap,
-      ui?.entity_id || this.activeCustomUiId || "default",
-      zoom,
-    );
-    if (!this.isDestroyed) this.cdr.markForCheck();
+    this.zoomController.setZoom(zoom, ui);
   }
   stepZoom(delta: number, ui?: CustomUI): void {
-    this.setLayoutZoom(this.getLayoutZoom(ui) + delta, ui);
+    this.zoomController.step(delta, ui);
   }
   resetLayoutZoom(ui?: CustomUI): void {
-    this.setLayoutZoom(100, ui);
+    this.zoomController.reset(ui);
   }
   onZoomInput(event: Event, ui?: CustomUI): void {
-    this.setLayoutZoom(Number((event.target as HTMLInputElement).value), ui);
+    this.zoomController.onInput(event, ui);
   }
   getCanvasViewportMaxHeight(_ui?: CustomUI): number {
     return getCanvasViewportMaxHeightHelper();
   }
   getInspectorHeight(ui?: CustomUI): number {
-    return getInspectorHeightHelper(
-      this.getPreviewContainerHeight(ui),
-      this.getCanvasViewportMaxHeight(ui),
-    );
+    return this.zoomController.getInspectorHeight(ui);
   }
-  getPreviewScale(ui?: CustomUI) {
-    return `scale(${this.getPreviewScaleNumber(ui)})`;
+  getPreviewScale(ui?: CustomUI): string {
+    return this.zoomController.getPreviewScale(ui);
   }
-  getPreviewScaleNumber(ui?: CustomUI) {
+  getPreviewScaleNumber(ui?: CustomUI): number {
     return getComponentPreviewScaleNumber(this, ui);
   }
-  getPreviewContainerWidth(ui?: CustomUI) {
+  getPreviewContainerWidth(ui?: CustomUI): number {
     return getComponentPreviewContainerWidth(this, ui);
   }
-  getPreviewContainerHeight(ui?: CustomUI) {
+  getPreviewContainerHeight(ui?: CustomUI): number {
     return getComponentPreviewContainerHeight(this, ui);
   }
 

@@ -66,9 +66,11 @@
                   >
                     <input
                       type="text"
+                      [id]="'custom-ui-name-input-' + ui.entity_id"
                       [(ngModel)]="ui.name"
                       (change)="onCustomUiNameChanged(ui)"
                       class="custom-ui-name-input"
+                      [appAutoSelectDefault]="defaultUiNames[ui.entity_id]"
                       autocomplete="one-time-code"
                       data-dashlane-ignore="true"
                       data-1p-ignore="true"
@@ -618,9 +620,13 @@
                   >
                     <input
                       type="text"
+                      [id]="'theme-name-input-' + theme.entity_id"
                       [(ngModel)]="theme.name"
                       (change)="onThemeNameChanged(theme)"
                       class="theme-name-input"
+                      [appAutoSelectDefault]="
+                        defaultThemeNames[theme.entity_id]
+                      "
                       autocomplete="one-time-code"
                       data-dashlane-ignore="true"
                       data-1p-ignore="true"

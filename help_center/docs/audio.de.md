@@ -60,13 +60,13 @@ Da bei Rennen viele Ereignisse gleichzeitig eintreten (mehrere Zieldurchfahrten,
 3. **Dringlichkeits-Warteschlange (Urgent Queueing):** Dringende Ansagen (`urgent`) sind sicherheits- und rennleitungsrelevant. Läuft bereits eine dringende Ansage, wird eine neue dringende Ansage in die Warteschlange eingereiht und abgespielt, sobald die vorherige Ansage endet.
 4. **Kadenzpause (Callout Spacing):** Nach jeder beendeten Sprachansage wird eine kurze Pause eingelegt, bevor die nächste nicht-dringende Ansage beginnen darf. Dringende Alarme umgehen diese Pause sofort.
 
-### Meilenstein-Audio-Fallback
+### Meilenstein-Audio-Priorität & Fallback
 
-Wenn ein Fahrer eine Meilenstein-Runde fährt (z. B. Streckenrekord, beste Durchgangsrunde oder Führungswechsel):
+Wenn ein Fahrer eine Runde fährt, die einen oder mehrere Meilensteine auslöst (z. B. Streckenrekord, beste Durchgangsrunde oder Führungswechsel):
 
-1. Das System versucht, die Meilenstein-Sprachansage gemäß ihrer Priorität abzuspielen.
-2. Wird die Meilenstein-Ansage **verworfen** (z. B. wegen einer aktiven Sicherheitsmeldung oder Kadenzpause), ist auf `none` gestellt oder nicht vorhanden, greift das System auf die **persönliche Bestzeit-Audiodatei** (falls PB-Runde) oder den **regulären Rundenton** zurück.
-3. Ist der Fallback-Ton ein Soundeffekt (SFX), wird er polyphon über den SFX-Kanal abgespielt. So erhalten Fahrer selbst während laufender Kommentare immer eine akustische Bestätigung beim Überqueren der Ziellinie.
+1. **Prioritätskaskade bei gleichzeitigen Ereignissen:** Kandidaten-Meilensteintöne werden in strikter Prioritätsreihenfolge ausgewertet (Gesamtrekord -> Gesamt-Spurrekord -> Neuer Rennleiter -> Neuer Durchgangsleiter -> Renn-Bestzeit -> Renn-Spurbestzeit -> Durchgangs-Bestzeit -> Persönliche Bestzeit). Ist der höchstpriorisierte Ton auf `none` gestellt (oder nicht konfiguriert), geht das System zum nächsthöheren ausgelösten Ton über und spielt diesen ab, sofern konfiguriert.
+2. **Verworfene Ansagen bei belegtem Sprachkanal:** Wird eine ausgewählte Meilenstein-Sprachansage **verworfen** (z. B. weil eine höher priorisierte Ansage spricht oder während einer Kadenzpause), werden für diese Runde keine weiteren Sprachansagen versucht. Stattdessen greift das System direkt auf die **persönliche Bestzeit-Audiodatei** (falls PB-Runde) oder den **regulären Rundenton** zurück.
+3. **Polyphoner SFX-Fallback:** Ist der Fallback-Ton ein Soundeffekt (SFX), wird er polyphon über den SFX-Kanal abgespielt. So erhalten Fahrer selbst während laufender Kommentare immer eine akustische Bestätigung beim Überqueren der Ziellinie.
 
 ---
 
@@ -150,20 +150,20 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 
 ### Fahrer-Audioereignisse (Konfiguration im Fahrer-Editor)
 
-| Audio-Slot | Standard-Datei / Asset | Soundtyp | Prioritätsstufe | Relevanz & Bildschirmanzeige |
-| :--- | :--- | :--- | :---: | :--- |
-| **Rundenton** (`lapAudio`) | `default_beep` | **SFX** (Preset) / **Sprachansage** (TTS) | `low` (Gewicht 1 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Persönliche Bestzeit** (`bestLapAudio`) | `default_driveby` | **SFX** (Preset) / **Sprachansage** (TTS) | `normal` (Gewicht 2 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Durchgangsbestzeit** (`heatBestLapAudio`) | `default_best_heat_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Renn-Spurbestzeit** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Neuer Durchgangsführender** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Beste Rennrunde** (`raceBestLapAudio`) | `default_best_race_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Spur-Streckenrekord** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Gesamter Streckenrekord** (`overallBestLapAudio`) | `default_record_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Neuer Rennführender** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Fehlstart / Strafe** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Boxeneinfahrt** (`pitInAudio`) | `default_pit_in` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
-| **Kraftstoff-Warnungen** (`fuelAudio`: Warnung, Kritisch, Leer) | `default_fuel_level` (Audioset) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| Fahrer-Audioereignis | Wann abgespielt | Standard-Datei / Asset | Soundtyp | Prioritätsstufe | Relevanz & Bildschirmanzeige |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Runden-Sound** | Wird bei jeder regulären Rundenüberfahrt abgespielt (oder als Ausweichsound, wenn ein Meilenstein-Sound verworfen oder nicht verfügbar ist). | `default_beep` | **SFX** (Preset) / **Sprachansage** (TTS) | `low` (Gewicht 1 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Persönlicher Bester Runden-Sound** | Wird abgespielt, wenn der Fahrer seine persönliche Bestzeit im aktuellen Durchgang oder der Sitzung erzielt. | `default_driveby` | **SFX** (Preset) / **Sprachansage** (TTS) | `normal` (Gewicht 2 bei TTS; Polyphon bei Preset-SFX) | `lane-view`: Spielt auf der Hauptanzeige (wenn Spur-Widget vorhanden) und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Rennen-Beste-Runde-Sound** | Wird abgespielt, wenn die schnellste Rundenzeit über alle Spuren und Durchgänge des aktuellen Rennens aufgestellt wird. | `default_best_race_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Rennspur-Beste-Runde-Sound** | Wird abgespielt, wenn die schnellste Rundenzeit auf dieser spezifischen Spur im aktuellen Rennen erzielt wird. | `default_best_race_lane_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Lauf-Beste-Runde-Sound** | Wird abgespielt, wenn die schnellste Rundenzeit unter allen Fahrern im aktuellen Durchgang erzielt wird. | `default_best_heat_lap` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Neuer Rennführender-Sound** | Wird abgespielt, wenn ein Fahrer die Führung im Gesamtklassement des Rennens übernimmt. | `default_new_race_leader` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Neuer Lauf-Führender-Sound** | Wird abgespielt, wenn ein Fahrer die Führung im aktiven Durchgang übernimmt. | `default_new_heat_leader` | **Sprachansage** | `normal` (Gewicht 2) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Gesamtrekord-Rundensound** | Wird abgespielt, wenn der absolute Streckenrekord über alle Spuren und bisherigen Rennen gebrochen wird. | `default_record_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Spur-Gesamtrekord-Rundensound** | Wird abgespielt, wenn der allzeitige Streckenrekord für diese spezifische Spur gebrochen wird. | `default_record_lane_lap` | **Sprachansage** | `high` (Gewicht 3) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Boxenstopp-Sound** | Wird abgespielt, wenn das Fahrzeug in die Boxengasse oder den Tankbereich einfährt. | `default_pit_in` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Kraftstoffstand-Sounds** | Wird abgespielt, wenn der Tankfüllstand Warnung, kritisch oder leer erreicht. | `default_fuel_level` (Audioset) | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+| **Fehlstart-Sound** | Wird abgespielt, wenn ein Frühstart oder Verstoß beim Start erkannt wird. | `default_penalty` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 
 ### Design-Audioereignisse (Konfiguration im Design-Editor / Themes)
 
@@ -172,12 +172,44 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Start-Countdown** | `audio.countdown` | **Sprachansage** / Audioset | `urgent` | `countdown`: Spielt auf der Hauptanzeige (wenn Countdown-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Grüne Lampe / START** | `audio.countdown.green` | **Sprachansage** / Signalton | `urgent` | `countdown`: Spielt auf der Hauptanzeige (wenn Countdown-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Gelbe Flagge** | `audio.yellowflag` | **Sprachansage** (Warnsirene) | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Automatischer Start verbleibende Sekunden** | `audio.auto_start` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Verbleibende Sekunden** | `audio.seconds_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
-| **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Verbleibende Runden** | `audio.laps_left` | **Sprachansage** / Audioset | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. Kündigt verbleibende Runden des Führenden an; ein Wert von 0 kündigt das Erreichen der Rundenzahl durch den Führenden an (z. B. „Führender im Ziel“ bei Rennen mit Auslaufrunde). |
+| **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen beim Erreichen der Rennhälfte (nach Zeit oder wenn der Führende die halbe Rundenanzahl absolviert hat). |
 | **Durchgang beendet** | `audio.heat_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Automatisches Weiterschalten verbleibende Sekunden** | `audio.auto_advance` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Rennen beendet** | `audio.race_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Mindestrundenzeit** | `audio.min_lap_time` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
 | **Driftrunde** | `audio.drift_lap` | **Sprachansage** | `urgent` (Gewicht 4) | `lane-view`: Spielt auf der Hauptanzeige und auf der Fahrerstation für die jeweilige Spur/den Fahrer. |
+
+---
+
+## Audio-Sets & Auslösemodi
+
+Ein **Audio-Set** ist ein zusammengesetztes Audio-Asset, das eine Sammlung von Sounddateien oder Text-to-Speech-Ansagen enthält, die numerischen Auslöse-Meilensteinen zugeordnet sind. Audio-Sets werden in 5 Theme-Slots und bei Fahrer-Kraftstoffeinstellungen verwendet:
+
+1. **Start-Countdown (`audio.countdown`):** Sequenztöne und Hupen bis zum Start.
+2. **Automatischer Start verbleibende Sekunden (`audio.auto_start`):** Audioansagen vor Beginn eines Durchgangs.
+3. **Verbleibende Sekunden (`audio.seconds_left`):** Zeitansagen während zeitbasierter Durchgänge.
+4. **Verbleibende Runden (`audio.laps_left`):** Rundenansagen während rundenbasierter Durchgänge.
+5. **Automatisches Weiterschalten verbleibende Sekunden (`audio.auto_advance`):** Countdown-Ansagen zwischen den Durchgängen.
+6. **Kraftstoffstand-Sounds (`fuelLevelAudio`):** Warn-, kritische und Tanktöne bei Prozentwerten.
+
+### Auslösemodi: Verbleibend vs. Abgelaufen
+Jeder Eintrag in einem Audio-Set definiert einen **Auslösemodus**:
+
+*   **Verbleibend (Countdown):** Wird ausgelöst, wenn das Rennen sich dem Ziel oder Zeitlimit nähert (z. B. 10 verbleibende Runden, 30 Sekunden verbleibend). Dies ist der Standardmodus für Countdowns.
+*   **Abgelaufen (Vorwärtszählung):** Wird ausgelöst, wenn das Rennen vom Start aus voranschreitet (z. B. 10 absolvierte Runden, 30 abgelaufene Sekunden).
+
+### Duale Auslöser mit identischen Zahlenwerten
+Race Coordinator AI unterstützt die Konfiguration von zwei Einträgen im selben Audio-Set mit exakt demselben numerischen Wert (z. B. Wert `10`):
+- Ein Eintrag als **Abgelaufen** wird abgespielt, wenn der Führende 10 Runden / Sekunden ab Start erreicht.
+- Ein Eintrag als **Verbleibend** wird abgespielt, wenn der Führende noch 10 Runden / Sekunden vor sich hat.
+
+### Natürliche Rennverlauf-Vorschau
+Bei der Vorschau im Asset Manager oder Theme-Audio-Selector spielen die Einträge in natürlicher Rennreihenfolge ab:
+1. Alle **Abgelaufen**-Einträge spielen zuerst in aufsteigender Reihenfolge (0 → N).
+2. Alle **Verbleibend**-Einträge spielen danach in absteigender Countdown-Reihenfolge (N → 0).
 
 ---
 
@@ -187,5 +219,5 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | :--- | :--- |
 | **UI-Editor -> Audio-Einstellungen** | Gesamtlautstärke, Dringlichkeits-Timeout, Ansagen-Abstand, TTS-Stimme, Geschwindigkeit, Tonhöhe, TTS-Lautstärke, Hörprobe. |
 | **Design-Editor (Themes)** | Systemweite Ereignisse: Start-Countdown, Grüne Lampe GO, Gelbe Flagge, Restzeit, Halbzeit, Durchgangsende, Rennende, Mindestrundenzeit, Driftrunde. |
-| **Fahrer-Editor** | Fahrerspezifische Töne: Runden-Sound, persönliche Bestzeit, Durchgangsbestzeit, Renn-Spurbestzeit, Rennbestzeit, Spur-Rekord, Streckenrekord, Führungswechsel, Fehlstart, Boxenstopp, Kraftstoffstand. |
-| **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien mit Sofort-Hörprobe. |
+| **Fahrer-Editor** | Fahrerspezifische Sounds: Runden-Sound, Persönlicher Bester Runden-Sound, Rennen-Beste-Runde-Sound, Rennspur-Beste-Runde-Sound, Lauf-Beste-Runde-Sound, Neuer Rennführender-Sound, Neuer Lauf-Führender-Sound, Gesamtrekord-Rundensound, Spur-Gesamtrekord-Rundensound, Boxenstopp-Sound, Kraftstoffstand-Sounds und Fehlstart-Sound. |
+| **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien sowie Konfigurieren von Audio-Sets mit kontextabhängigen Auslösewerten (Sekunden, Runden oder Prozentsatz) mit Sofort-Hörprobe. |

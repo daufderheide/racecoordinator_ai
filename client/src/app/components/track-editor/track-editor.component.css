@@ -27,21 +27,7 @@
   overflow: hidden;
 }
 
-/* Header style moved to app-editor-title */
-
-/* Content */
-.content-split {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  margin: 0;
-  padding: 0 30px 24px 30px;
-  transform: translateZ(0);
-  will-change: transform;
-  border-top: 1px solid rgba(56, 189, 248, 0.3);
-  box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
-}
+@import '../shared/shared-editor-layout.css';
 
 /* Editor Panel */
 .editor-panel {
@@ -55,8 +41,6 @@
   box-shadow: none;
   padding-top: 0;
   margin-top: 0;
-  transform: translateZ(0);
-  will-change: transform, opacity;
   overflow: visible;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
@@ -212,6 +196,12 @@
 
 .lane-drag-handle:active {
   cursor: grabbing;
+}
+
+.lane-drag-handle.disabled {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .cdk-drag-preview {
@@ -406,29 +396,62 @@
   position: relative;
   background-color: transparent;
   padding: 24px 0 0 24px;
-  transform: translateZ(0);
-  will-change: transform;
 }
 
-/* Custom Scrollbar for Preview Panel */
-.preview-panel::-webkit-scrollbar {
-  width: 8px;
+.preview-panel.read-only .interface-container {
+  opacity: 0.95;
 }
 
-.preview-panel::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
+.preview-panel.read-only ::ng-deep .section-content {
+  pointer-events: none !important;
+  opacity: 0.85;
 }
 
-.preview-panel::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
+.preview-panel.read-only ::ng-deep input,
+.preview-panel.read-only ::ng-deep select,
+.preview-panel.read-only ::ng-deep app-custom-select,
+.preview-panel.read-only ::ng-deep button,
+.preview-panel.read-only ::ng-deep .custom-dropdown-container,
+.preview-panel.read-only ::ng-deep .dropdown-trigger,
+.preview-panel.read-only ::ng-deep .dropdown-menu,
+.preview-panel.read-only ::ng-deep .pin-selector,
+.preview-panel.read-only ::ng-deep .status-badge,
+.preview-panel.read-only ::ng-deep .checkbox-label,
+.preview-panel.read-only ::ng-deep .checkbox-container,
+.preview-panel.read-only ::ng-deep .pin-action-btn,
+.preview-panel.read-only ::ng-deep .led-strip-action-btn,
+.preview-panel.read-only ::ng-deep .test-controls,
+.preview-panel.read-only ::ng-deep .custom-pin-select,
+.preview-panel.read-only input:not([type="button"]):not([type="submit"]),
+.preview-panel.read-only select,
+.preview-panel.read-only app-custom-select,
+.preview-panel.read-only button,
+.preview-panel.read-only .custom-pin-select,
+.preview-panel.read-only .pin-action-btn,
+.preview-panel.read-only .led-strip-action-btn,
+.preview-panel.read-only .test-controls {
+  pointer-events: none !important;
+  opacity: 0.75;
+  cursor: not-allowed !important;
 }
 
-.preview-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
+.preview-panel.read-only ::ng-deep .section-header button,
+.preview-panel.read-only ::ng-deep .led-string-header button,
+.preview-panel.read-only ::ng-deep .led-string-header .clickable-link-icon {
+  pointer-events: auto !important;
+  opacity: 0.5;
+  cursor: not-allowed !important;
 }
+
+.section-header,
+.preview-panel .section-header,
+.interface-container .section-header,
+.preview-panel.read-only ::ng-deep .section-header,
+.preview-panel.read-only ::ng-deep .led-string-header {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
 
 .interface-container {
   margin-bottom: 5px;
@@ -554,78 +577,6 @@
   margin: 0;
 }
 
-/* Expander Sections added for General Section */
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 10px 30px 10px 0;
-  user-select: none;
-  transition: background-color 0.2s;
-  border-radius: 4px;
-}
-
-.section-header:hover {
-  background: rgba(148, 163, 184, 0.05);
-}
-
-.expander-icon {
-  font-size: 0.8rem;
-  color: #38bdf8;
-  transition: transform 0.2s;
-  width: 14px;
-  text-align: center;
-  display: inline-block;
-}
-
-.expander-icon.collapsed {
-  transform: rotate(-90deg);
-}
-
-.config-section {
-  margin-bottom: 10px;
-}
-
-.sections-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden !important;
-  padding-right: 5px;
-  margin-right: 5px;
-}
-
-/* Custom Scrollbar for Sections Wrapper */
-.sections-wrapper::-webkit-scrollbar {
-  width: 8px;
-}
-
-.sections-wrapper::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 4px;
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
-  border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
-}
-
-.sections-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
-}
-
-.section-content {
-  padding: 10px 0 10px 0;
-}
-
-.section-header h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  color: #ffffff;
-  font-weight: 300;
-  letter-spacing: 1px;
-}
 
 /* Interface Badges */
 .interface-badge {

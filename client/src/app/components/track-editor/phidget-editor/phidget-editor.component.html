@@ -19,6 +19,7 @@
         <div class="spacer"></div>
         <button
           class="action-btn danger small"
+          [disabled]="!isEditMode()"
           (click)="onRemove()"
           title="{{ 'PHIDGET_REMOVE_INTERFACE' | translate }}"
         >
@@ -53,6 +54,7 @@
                           <div class="com-port-row">
                             <app-custom-select
                               [id]="'device-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
                               [ngModel]="selectedDeviceKeyStr"
                               (ngModelChange)="onDeviceSelectChange($event)"
                             >
@@ -116,6 +118,7 @@
                                 [id]="
                                   'phidget-pit-behavior-' + interfaceIndex()
                                 "
+                                [disabled]="!isEditMode()"
                                 [(ngModel)]="config()!.lapPinPitBehavior"
                                 (change)="onConfigChange()"
                               >
@@ -146,6 +149,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="'phidget-nc-sensors-' + interfaceIndex()"
                               [(ngModel)]="config()!.normallyClosedLaneSensors"
                               (change)="onConfigChange()"
@@ -158,6 +162,7 @@
                           <label class="checkbox-label">
                             <input
                               type="checkbox"
+                              [disabled]="!isEditMode()"
                               [id]="'phidget-nc-relays-' + interfaceIndex()"
                               [(ngModel)]="config()!.normallyClosedRelays"
                               (change)="onConfigChange()"
@@ -223,6 +228,7 @@
                               >
                                 <div
                                   class="dropdown-trigger"
+                                  [class.disabled]="!isEditMode()"
                                   [class.open]="isPinDropdownOpen('in-' + pin)"
                                   (click)="
                                     togglePinDropdown('in-' + pin, $event)
@@ -376,6 +382,7 @@
                                   [id]="'phidget-out-status-' + pin"
                                   class="status-badge small"
                                   [class.connected]="isPinActive('out', pin)"
+                                  [class.disabled]="!isEditMode()"
                                   (click)="togglePinState('out', pin)"
                                   style="cursor: pointer"
                                 ></span>
@@ -385,6 +392,7 @@
                               >
                                 <div
                                   class="dropdown-trigger"
+                                  [class.disabled]="!isEditMode()"
                                   [class.open]="isPinDropdownOpen('out-' + pin)"
                                   (click)="
                                     togglePinDropdown('out-' + pin, $event)

@@ -1,7 +1,7 @@
 import { buildDriverEditorHelpSteps } from "./driver-editor-help.helper";
 
 describe("DriverEditorHelpHelper", () => {
-  it("should generate all 18 help steps in the expected order with onEnter callbacks", () => {
+  it("should generate all 19 help steps in the expected order with onEnter callbacks", () => {
     let audioExpanded = false;
     const mockTranslationService = {
       translate: (key: string) => `translated_${key}`,
@@ -14,12 +14,13 @@ describe("DriverEditorHelpHelper", () => {
       },
     });
 
-    expect(steps.length).toBe(18);
+    expect(steps.length).toBe(19);
     expect(steps[0].title).toBe("translated_DE_HELP_WELCOME_TITLE");
     expect(steps[0].position).toBe("center");
 
     const selectors = steps.map((s) => s.selector).filter(Boolean);
     expect(selectors).toEqual([
+      "#editor-object-selector",
       "#driver-avatar-section",
       "#driver-name-section",
       "#driver-name-nickname-link-section",

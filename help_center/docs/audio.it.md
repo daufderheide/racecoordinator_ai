@@ -60,12 +60,13 @@ Per gestire i numerosi eventi di gara simultanei, Race Coordinator AI adotta una
 3. **Coda Urgente (Urgent Queueing):** Gli avvisi urgenti riguardano la sicurezza di gara. Se un avviso urgente arriva mentre un altro sta parlando, viene accodato e riprodotto non appena il precedente finisce.
 4. **Pausa di Cadenza (Callout Spacing):** Al termine di ogni annuncio vocale, viene rispettato un breve intervallo di silenzio prima di avviare il messaggio successivo, evitando discorsi concitati.
 
-### Ripristino di Riserva (Milestone Fallback)
+### Priorità dei Traguardi e Ripristino di Riserva (Milestone Priority & Fallback)
 
-Quando un pilota realizza un giro da record o un cambio leader:
-1. Il sistema prova a pronunciare l'annuncio vocale corrispondente in base alla sua priorità.
-2. Se l'annuncio viene **scartato** (ad esempio per una bandiera gialla o per la pausa di cadenza), il sistema passa al suono di **record personale** o al **suono di giro standard**.
-3. Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
+Quando un pilota completa un giro che attiva uno o più traguardi (record di pista, miglior giro di manche o cambio leader):
+
+1. **Cascata di priorità per eventi simultanei:** I suoni dei traguardi candidati vengono valutati in stretto ordine di priorità (Record assoluto -> Record assoluto di corsia -> Nuovo leader di gara -> Nuovo leader di manche -> Miglior giro di gara -> Miglior giro di corsia di gara -> Miglior giro di manche -> Record personale). Se il suono a priorità più alta è impostato su `none` (o non configurato), il sistema passa al suono successivo a priorità più alta attivato in quel giro e lo riproduce se configurato.
+2. **Annunci scartati per canale occupato:** Se un annuncio vocale selezionato viene **scartato** perché un annuncio a priorità più alta sta parlando (o durante una pausa di cadenza), non verrà tentato nessun altro annuncio vocale per quel giro. Il sistema passa direttamente al suono di **record personale** (se giro PB) o al **suono di giro standard**.
+3. **Ripristino polifonico SFX:** Se il suono di riserva è un effetto sonoro (SFX), viene riprodotto in modalità polifonica, garantendo al pilota una risposta acustica immediata a ogni passaggio sul traguardo.
 
 ---
 
@@ -150,20 +151,20 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 
 ### Eventi Audio del Pilota (Configurati nell'Editor Piloti)
 
-| Slot Audio | File / Risorsa Predefinita | Tipo di Suono | Livello di Priorità | Rilevanza e Schermata |
-| :--- | :--- | :--- | :---: | :--- |
-| **Suono Giro** (`lapAudio`) | `default_beep` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `low` (Peso 1 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
-| **Record Personale** (`bestLapAudio`) | `default_driveby` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `normal` (Peso 2 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
-| **Miglior Giro di Manche** (`heatBestLapAudio`) | `default_best_heat_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Miglior Giro di Corsia di Gara** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Nuovo Leader di Manche** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Miglior Giro di Gara** (`raceBestLapAudio`) | `default_best_race_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Record di Corsia di Gara** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Record Assoluto di Pista** (`overallBestLapAudio`) | `default_record_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Nuovo Leader di Gara** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Falsa Partenza / Penalità** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Ingresso Box** (`pitInAudio`) | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
-| **Avvisi Carburante** (`fuelAudio`: Avviso, Critico, Esaurito) | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| Evento Audio del Pilota | Quando viene riprodotto | File / Risorsa Predefinita | Tipo di Suono | Livello di Priorità | Rilevanza e Schermata |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Suono Giro** | Riprodotto a ogni giro standard completato (o come fallback se l'annuncio di record viene scartato o non è configurato). | `default_beep` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `low` (Peso 1 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro Personale** | Riprodotto quando il pilota ottiene il proprio miglior tempo sul giro della manche o sessione corrente. | `default_driveby` | **SFX** (Predefinito) / **Annuncio Vocale** (TTS) | `normal` (Peso 2 con TTS; Polifonico con SFX) | `lane-view`: Ripreso su Schermata Principale (se presente widget corsia) e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro della Gara** | Riprodotto quando si registra il giro più veloce dell'intera gara tra tutte le manche e corsie. | `default_best_race_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro di Corsia della Gara** | Riprodotto quando si ottiene il miglior tempo su quella specifica corsia durante la gara in corso. | `default_best_race_lane_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Miglior Giro della Manche** | Riprodotto quando si ottiene il giro più veloce tra tutti i piloti nella manche attiva. | `default_best_heat_lap` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono nuovo leader della gara** | Riprodotto quando un pilota conquista il primo posto nella classifica generale della gara. | `default_new_race_leader` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono nuovo leader di manche** | Riprodotto quando un pilota passa in testa alla classifica della manche attiva. | `default_new_heat_leader` | **Annuncio Vocale** | `normal` (Peso 2) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Record Assoluto del Giro** | Riprodotto quando viene battuto il record storico assoluto della pista su qualsiasi corsia. | `default_record_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Record di Corsia Assoluto del Giro** | Riprodotto quando viene battuto il record storico della pista su quella specifica corsia. | `default_record_lane_lap` | **Annuncio Vocale** | `high` (Peso 3) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono Entrata ai Box** | Riprodotto quando l'auto entra nella corsia dei box o nell'area di rifornimento. | `default_pit_in` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suoni Livello Carburante** | Riprodotti quando il livello di carburante scende alle soglie di avviso, critico o riserva/vuoto. | `default_fuel_level` (Set Audio) | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+| **Suono di Falsa Partenza** | Riprodotto quando viene rilevata una falsa partenza o infrazione al via. | `default_penalty` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 
 ### Eventi Audio dei Temi (Configurati nell'Editor Temi)
 
@@ -172,12 +173,44 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Conto alla Rovescia di Partenza** | `audio.countdown` | **Annuncio Vocale** / Set Audio | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
 | **Luce Verde / VIA** | `audio.countdown.green` | **Annuncio Vocale** / Tono Predefinito | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
 | **Bandiera Gialla** | `audio.yellowflag` | **Annuncio Vocale** (Sirena di Avviso) | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Secondi Rimanenti Avvio Automatico** | `audio.auto_start` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
 | **Secondi Rimanenti** | `audio.seconds_left` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
-| **Metà Manche** | `audio.seconds_left.halfway` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
+| **Giri Rimanenti** | `audio.laps_left` | **Annuncio Vocale** / Set Audio | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. Annuncia i giri rimanenti per il leader; un valore pari a 0 annuncia quando il leader raggiunge il numero di giri previsti (es. "Leader al traguardo" nelle gare con consenti arrivo). |
+| **Metà Manche** | `audio.seconds_left.halfway` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota al raggiungimento della metà manche (per tempo o quando il leader completa la metà dei giri). |
 | **Manche Terminata** | `audio.heat_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
+| **Secondi Rimanenti Avanzamento Automatico** | `audio.auto_advance` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
 | **Gara Conclusa** | `audio.race_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
 | **Tempo Minimo sul Giro** | `audio.min_lap_time` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
 | **Giro Drift** | `audio.drift_lap` | **Annuncio Vocale** | `urgent` (Peso 4) | `lane-view`: Ripreso su Schermata Principale e su Postazione Pilota di quella corsia/pilota. |
+
+---
+
+## Set Audio e Modalità di Attivazione
+
+Un **Set Audio** è una risorsa audio composita contenente una raccolta di file sonori o annunci vocali associati a soglie numeriche di attivazione. I set audio sono utilizzati in 5 slot di tema e nelle impostazioni del carburante:
+
+1. **Conto alla rovescia di partenza (`audio.countdown`):** Segnali acustici e sirene prima del via.
+2. **Secondi rimanenti avvio automatico (`audio.auto_start`):** Annunci vocali prima dell'inizio della manche.
+3. **Secondi rimanenti (`audio.seconds_left`):** Annunci del tempo durante le manche a tempo.
+4. **Giri rimanenti (`audio.laps_left`):** Annunci dei giri durante le manche a giri.
+5. **Secondi rimanenti avanzamento automatico (`audio.auto_advance`):** Annunci tra le manche prima dell'avanzamento automatico.
+6. **Suoni del livello di carburante (`fuelLevelAudio`):** Avvisi di riserva, livello critico e pieno basati su percentuali.
+
+### Modalità di attivazione: Rimanente vs. Trascorso
+Ogni voce in un Set Audio definisce una **Modalità di attivazione**:
+
+*   **Rimanente (Conto alla rovescia):** Si attiva quando la gara si avvicina al traguardo o al tempo limite (es. 10 giri rimasti, 30 secondi rimasti). È la modalità predefinita per i conti alla rovescia.
+*   **Trascorso (Conteggio progressivo):** Si attiva man mano che la gara procede dalla partenza (es. 10 giri completati, 30 secondi trascorsi).
+
+### Doppi avvisi con valori numerici identici
+Race Coordinator AI consente di configurare due voci nello stesso Set Audio con esattamente lo stesso valore numerico (es. valore `10`):
+- Una voce configurata come **Trascorso** suonerà quando il leader raggiunge 10 giri o secondi dall'inizio.
+- Un'altra voce configurata come **Rimanente** suonerà quando mancano 10 giri o secondi alla conclusione.
+
+### Anteprima in ordine naturale di gara
+Durante l'anteprima di un Set Audio nel Gestore Asset o nel Selettore Audio, le voci vengono riprodotte in ordine cronologico di gara:
+1. Tutte le voci **Trascorso** vengono riprodotte per prime in ordine crescente (0 → N).
+2. Tutte le voci **Rimanente** vengono riprodotte successivamente in ordine decrescente di conto alla rovescia (N → 0).
 
 ---
 
@@ -187,5 +220,5 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | :--- | :--- |
 | **Editor Interfaccia -> Impostazioni Audio** | Volume principale, tempo di attesa coda urgente, spaziatura annunci, voce TTS, velocità, tonalità, volume voce e test audio. |
 | **Editor Temi** | Suoni di sistema: conto alla rovescia, luce verde, sirena bandiera gialla, tempo residuo, metà manche, fine manche, fine gara, tempo minimo e giro drift. |
-| **Editor Piloti** | Suoni specifici del pilota: suono giro, record personale, miglior giro di manche, miglior giro di corsia, miglior giro di gara, record di pista, cambio leader, falsa partenza, ingresso box e carburante. |
-| **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG con ascolto rapido dell'anteprima. |
+| **Editor Piloti** | Suoni specifici del pilota: Suono Giro, Suono Miglior Giro Personale, Suono Miglior Giro della Gara, Suono Miglior Giro di Corsia della Gara, Suono Miglior Giro della Manche, Suono nuovo leader della gara, Suono nuovo leader di manche, Suono Record Assoluto del Giro, Suono Record di Corsia Assoluto del Giro, Suono Entrata ai Box, Suoni Livello Carburante e Suono di Falsa Partenza. |
+| **Gestore Asset** | Caricamento e gestione dei file WAV, MP3 e OGG, e configurazione di set audio con valori di attivazione dipendenti dal contesto (secondi, giri o percentuale), con ascolto rapido dell'anteprima. |

@@ -436,13 +436,16 @@ public class DatabaseInitializer {
             FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
             100.0,
             FuelOptions.FuelUsageType.QUADRATIC,
-            4.0,
             100.0,
             10.0,
             2.0,
-            6.0,
+            3.0,
+            16.0,
+            9.0,
+            16.0 / 9.0,
             1.0,
-            1.0);
+            1.0,
+            null);
     TeamOptions teamOptions = new TeamOptions(25, 0.0, 50, 0.0, false);
     return new Race.Builder()
         .withName("Fuel Race")
@@ -563,6 +566,9 @@ public class DatabaseInitializer {
     Map<String, AudioConfig> as = new HashMap<>();
     as.put("audio.countdown", new AudioConfig("audio_set", "default_countdown", null));
     as.put("audio.seconds_left", new AudioConfig("audio_set", "default_seconds_left", null));
+    as.put("audio.laps_left", new AudioConfig("audio_set", "default_laps_left", null));
+    as.put("audio.auto_start", new AudioConfig("audio_set", "default_auto_start", null));
+    as.put("audio.auto_advance", new AudioConfig("audio_set", "default_auto_advance", null));
     as.put("audio.yellowflag", new AudioConfig("preset", "default_yellow_flag", null));
     as.put("audio.seconds_left.halfway", new AudioConfig("preset", "default_heat_half", null));
     as.put("audio.heat_over", new AudioConfig("preset", "default_heat_over", null));
@@ -585,6 +591,8 @@ public class DatabaseInitializer {
       if ("Fuel Race".equals(race.getName())) {
         hasFuelRace = true;
       }
+      boolean modified = false;
+      Race.Builder raceBuilder = new Race.Builder().from(race);
       if (race.getThemeId() == null || race.getThemeId().trim().isEmpty()) {
         String themeId = Theme.DEFAULT_THEME_ID;
         if (race.isPractice() || "Practice".equalsIgnoreCase(race.getName())) {
@@ -593,13 +601,20 @@ public class DatabaseInitializer {
             || "Fuel Race".equalsIgnoreCase(race.getName())) {
           themeId = Theme.FUEL_THEME_ID;
         }
-        Race updated = new Race.Builder().from(race).withThemeId(themeId).build();
-        raceRepo.save(updated);
+        raceBuilder.withThemeId(themeId);
+        modified = true;
         logger.info(
             "Backfilled themeId '{}' for race '{}' ({})",
             themeId,
             race.getName(),
             race.getEntityId());
+      }
+      if (race.getFuelOptions() != null) {
+        raceBuilder.withFuelOptions(race.getFuelOptions());
+        modified = true;
+      }
+      if (modified) {
+        raceRepo.save(raceBuilder.build());
       }
     }
 

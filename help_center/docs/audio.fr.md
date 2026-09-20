@@ -60,12 +60,13 @@ Face à la multiplicité des événements de course simultanés, Race Coordinato
 3. **Mise en File d'Attente Urgente (Urgent Queueing) :** Les alertes urgentes touchent à la sécurité de course. Si une alerte urgente survient pendant qu'une autre est jouée, elle est mise en file d'attente et se déclenche dès la fin de la précédente.
 4. **Pause de Cadence (Callout Spacing) :** À la fin de chaque annonce parlée, un court silence est intercalé avant d'autoriser la prochaine annonce non urgente, assurant une élocution aérée et intelligible.
 
-### Repli Automatique sur les Paliers (Milestone Fallback)
+### Priorité des Paliers & Repli Automatique (Milestone Priority & Fallback)
 
-Lorsqu'un pilote réalise un tour marquant :
-1. Le système tente de diffuser l'annonce vocale correspondante selon son niveau de priorité.
-2. Si l'annonce est **ignorée** (par exemple en raison d'un drapeau jaune ou d'une pause de cadence), le système bascule sur le son de **meilleur tour personnel** ou le son de **tour standard**.
-3. Si ce son de secours est un effet sonore (SFX), il est joué de manière polyphonique, garantissant au pilote un retour acoustique immédiat à chaque passage de ligne.
+Lorsqu'un pilote réalise un tour déclenchant un ou plusieurs paliers (record de piste, meilleur tour de manche ou changement de leader) :
+
+1. **Cascade de priorité lors d'événements simultanés :** Les annonces candidates sont évaluées selon un ordre de priorité strict (Record général -> Record général de voie -> Nouveau leader de course -> Nouveau leader de manche -> Meilleur tour de course -> Meilleur tour de voie de course -> Meilleur tour de manche -> Meilleur tour personnel). Si le son de plus haute priorité est réglé sur `none` (ou non configuré), le système passe au son suivant le plus prioritaire déclenché lors de ce tour et le joue s'il est configuré.
+2. **Annonces ignorées si canal occupé :** Si une annonce vocale sélectionnée est **ignorée** parce qu'une annonce de priorité supérieure est en cours (ou pendant une pause de cadence), aucune autre annonce vocale ne sera tentée sur ce tour. Le système bascule directement sur le son de **meilleur tour personnel** (si tour PB) ou le son de **tour standard**.
+3. **Repli polyphonique SFX :** Si ce son de secours est un effet sonore (SFX), il est joué de manière polyphonique, garantissant au pilote un retour acoustique immédiat à chaque passage de ligne.
 
 ---
 
@@ -150,20 +151,20 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 
 ### Événements Audio du Pilote (Configurés dans l'Éditeur de Pilotes)
 
-| Emplacement Audio | Fichier / Ressource par Défaut | Type de Son | Niveau de Priorité | Pertinence et Affichage |
-| :--- | :--- | :--- | :---: | :--- |
-| **Son de Tour** (`lapAudio`) | `default_beep` | **SFX** (Prédéfini) / **Annonce Vocale** (TTS) | `low` (Poids 1 en TTS; Polyphonique en SFX) | `lane-view`: Joué sur l'Écran Principal (si widget de voie présent) et sur le Poste Pilote de cette voie/pilote. |
-| **Meilleur Tour Personnel** (`bestLapAudio`) | `default_driveby` | **SFX** (Prédéfini) / **Annonce Vocale** (TTS) | `normal` (Poids 2 en TTS; Polyphonique en SFX) | `lane-view`: Joué sur l'Écran Principal (si widget de voie présent) et sur le Poste Pilote de cette voie/pilote. |
-| **Meilleur Tour en Manche** (`heatBestLapAudio`) | `default_best_heat_lap` | **Annonce Vocale** | `normal` (Poids 2) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Meilleur Tour de Voie en Course** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Annonce Vocale** | `normal` (Poids 2) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Nouveau Meneur de Manche** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Annonce Vocale** | `normal` (Poids 2) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Meilleur Tour de Course** (`raceBestLapAudio`) | `default_best_race_lap` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Record de Voie de Course** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Record Absolu de Piste** (`overallBestLapAudio`) | `default_record_lap` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Nouveau Meneur de Course** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Faux Départ / Pénalité** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Arrêt aux Stands** (`pitInAudio`) | `default_pit_in` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
-| **Alertes de Carburant** (`fuelAudio`: Alerte, Critique, Vide) | `default_fuel_level` (Ensemble Audio) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| Événement Audio du Pilote | Quand le son est joué | Fichier / Ressource par Défaut | Type de Son | Niveau de Priorité | Pertinence et Affichage |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Son de Tour** | Joué à chaque tour régulier franchi (ou en secours si un son d'étape est ignoré ou indisponible). | `default_beep` | **SFX** (Prédéfini) / **Annonce Vocale** (TTS) | `low` (Poids 1 en TTS; Polyphonique en SFX) | `lane-view`: Joué sur l'Écran Principal (si widget de voie présent) et sur le Poste Pilote de cette voie/pilote. |
+| **Son de Meilleur Tour Personnel** | Joué lorsque le pilote réalise son tour le plus rapide de la manche ou séance en cours. | `default_driveby` | **SFX** (Prédéfini) / **Annonce Vocale** (TTS) | `normal` (Poids 2 en TTS; Polyphonique en SFX) | `lane-view`: Joué sur l'Écran Principal (si widget de voie présent) et sur le Poste Pilote de cette voie/pilote. |
+| **Son du Meilleur Tour de Course** | Joué lors de l'établissement du tour le plus rapide de toute la course, toutes manches et voies confondues. | `default_best_race_lap` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son du Meilleur Tour de Voie de Course** | Joué lors du tour le plus rapide sur cette voie spécifique durant la course actuelle. | `default_best_race_lane_lap` | **Annonce Vocale** | `normal` (Poids 2) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son du Meilleur Tour de Manche** | Joué lors du tour le plus rapide parmi tous les pilotes de la manche active. | `default_best_heat_lap` | **Annonce Vocale** | `normal` (Poids 2) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son de nouveau leader de course** | Joué lorsqu'un pilote prend la première place du classement général de la course. | `default_new_race_leader` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son de nouveau leader de manche** | Joué lorsqu'un pilote prend la tête de la manche active. | `default_new_heat_leader` | **Annonce Vocale** | `normal` (Poids 2) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son du Record de Tour Général** | Joué lorsque le record historique absolu de la piste est battu sur l'ensemble des voies. | `default_record_lap` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son du Record de Tour de Voie Général** | Joué lorsque le record historique de la piste sur cette voie spécifique est battu. | `default_record_lane_lap` | **Annonce Vocale** | `high` (Poids 3) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son d'Entrée aux Stands** | Joué lorsque la voiture entre dans la voie des stands ou la zone de ravitaillement. | `default_pit_in` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Sons de Niveau de Carburant** | Joué lorsque le carburant descend aux seuils d'avertissement, critique ou vide. | `default_fuel_level` (Ensemble Audio) | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+| **Son de Faux Départ** | Joué lorsqu'un faux départ ou une infraction au départ est détecté. | `default_penalty` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 
 ### Événements Audio de Thème (Configurés dans l'Éditeur de Thèmes)
 
@@ -172,12 +173,44 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | **Compte à Rebours de Départ** | `audio.countdown` | **Annonce Vocale** / Ensemble Audio | `urgent` | `countdown`: Joué sur l'Écran Principal (si widget compte à rebours présent) et sur tous les Postes Pilote. |
 | **Feu Vert / PARTEZ** | `audio.countdown.green` | **Annonce Vocale** / Bip Prédéfini | `urgent` | `countdown`: Joué sur l'Écran Principal (si widget compte à rebours présent) et sur tous les Postes Pilote. |
 | **Drapeau Jaune** | `audio.yellowflag` | **Annonce Vocale** (Sirène d'Alerte) | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
+| **Secondes Restantes avant Démarrage Automatique** | `audio.auto_start` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
 | **Secondes Restantes** | `audio.seconds_left` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
-| **Mi-Manche** | `audio.seconds_left.halfway` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
+| **Tours Restants** | `audio.laps_left` | **Annonce Vocale** / Ensemble Audio | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. Annonce les tours restants pour le meneur ; une valeur de 0 annonce lorsque le meneur atteint le nombre de tours (par ex. « Meneur terminé » dans les courses autorisant la fin de manche). |
+| **Mi-Manche** | `audio.seconds_left.halfway` | **Annonce Vocale** | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote à la mi-course (au temps écoulé ou lorsque le meneur franchit la moitié des tours). |
 | **Manche Terminée** | `audio.heat_over` | **Annonce Vocale** | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
+| **Secondes Restantes avant Passage Automatique** | `audio.auto_advance` | **Annonce Vocale** / Ensemble Audio (Par défaut : TTS) | `normal` (Poids 2) | `timer`: Joué sur l'Écran Principal (si widget chronomètre présent) et sur tous les Postes Pilote. |
 | **Course Terminée** | `audio.race_over` | **Annonce Vocale** | `urgent` (Poids 4) | `flag`: Joué sur l'Écran Principal (si widget drapeau présent) et sur tous les Postes Pilote. |
 | **Temps au Tour Minimum** | `audio.min_lap_time` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
 | **Tour de Drift** | `audio.drift_lap` | **Annonce Vocale** | `urgent` (Poids 4) | `lane-view`: Joué sur l'Écran Principal et sur le Poste Pilote de cette voie/pilote. |
+
+---
+
+## Ensembles Audio et Modes de Déclenchement
+
+Un **Ensemble Audio** est une ressource composite regroupant une collection de fichiers audio ou d'annonces de synthèse vocale associées à des seuils numériques de déclenchement. Les ensembles audio sont utilisés dans 5 emplacements de thème ainsi que pour le carburant :
+
+1. **Compte à rebours de départ (`audio.countdown`) :** Bips et avertisseurs avant le départ.
+2. **Secondes restantes avant démarrage automatique (`audio.auto_start`) :** Annonces avant le lancement d'une manche.
+3. **Secondes restantes (`audio.seconds_left`) :** Annonces de temps pendant les manches au temps.
+4. **Tours restants (`audio.laps_left`) :** Annonces de tours pendant les manches au tour.
+5. **Secondes restantes avant passage automatique (`audio.auto_advance`) :** Annonces entre les manches avant l'enchaînement.
+6. **Sons de niveau de carburant (`fuelLevelAudio`) :** Alertes de réserve, niveau critique et plein selon le pourcentage.
+
+### Modes de déclenchement : Restant vs Écoulé
+Chaque entrée d'un Ensemble Audio définit un **Mode de déclenchement** :
+
+*   **Restant (Compte à rebours) :** Se déclenche à l'approche de la fin ou de la limite de temps (ex. 10 tours restants, 30 secondes restantes). C'est le mode par défaut pour les comptes à rebours.
+*   **Écoulé (Compte progressif) :** Se déclenche à mesure que la course progresse depuis le départ (ex. 10 tours accomplis, 30 secondes écoulées).
+
+### Signaux doubles avec valeurs numériques identiques
+Race Coordinator AI permet de configurer deux entrées dans le même Ensemble Audio avec exactement la même valeur numérique (ex. valeur `10`) :
+- Une entrée configurée en **Écoulé** retentira lorsque le meneur atteint 10 tours / secondes depuis le départ.
+- Une entrée configurée en **Restant** retentira lorsqu'il ne reste plus que 10 tours / secondes avant l'arrivée.
+
+### Aperçu dans l'ordre naturel de course
+Lors de la prévisualisation d'un Ensemble Audio dans le Gestionnaire de Ressources ou le Sélecteur Audio, les entrées se succèdent dans l'ordre chronologique de la course :
+1. Toutes les entrées **Écoulé** retentissent d'abord par ordre croissant (0 → N).
+2. Toutes les entrées **Restant** retentissent ensuite par ordre décroissant (N → 0).
 
 ---
 
@@ -187,5 +220,5 @@ Les tableaux suivants répertorient tous les événements audio dans Race Coordi
 | :--- | :--- |
 | **Éditeur d'Interface -> Paramètres Audio** | Volume général, délai d'attente urgent, espacement des annonces, voix TTS, vitesse, tonalité, volume TTS et essai de voix. |
 | **Éditeur de Thèmes** | Événements généraux : bips de départ, feu vert, sirène de drapeau jaune, temps restant, mi-manche, fin de manche, fin de course, tour minimum et tour de drift. |
-| **Éditeur de Pilotes** | Événements du pilote : bip de tour, record personnel, meilleur tour en manche, meilleur tour en course, records de piste, changements de meneur, faux départ, arrêt au stand et alertes de carburant. |
-| **Gestionnaire de Ressources** | Téléchargement et gestion des fichiers WAV, MP3 et OGG avec écoute immédiate. |
+| **Éditeur de Pilotes** | Sons spécifiques au pilote : Son de Tour, Son de Meilleur Tour Personnel, Son du Meilleur Tour de Course, Son du Meilleur Tour de Voie de Course, Son du Meilleur Tour de Manche, Son de nouveau leader de course, Son de nouveau leader de manche, Son du Record de Tour Général, Son du Record de Tour de Voie Général, Son d'Entrée aux Stands, Sons de Niveau de Carburant et Son de Faux Départ. |
+| **Gestionnaire de Ressources** | Téléchargement et gestion des fichiers WAV, MP3 et OGG, et configuration d'ensembles audio avec valeurs de déclenchement selon le contexte (secondes, tours ou pourcentage), avec écoute immédiate. |

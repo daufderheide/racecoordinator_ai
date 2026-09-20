@@ -47,6 +47,15 @@ export interface UrgentQueueItem {
   association?: AudioAssociation;
 }
 
+export interface CalloutQueueItem {
+  config: AudioConfig;
+  priority: AudioPriority;
+  context?: any;
+  resolvedUrl?: string;
+  enqueuedAt: number;
+  association?: AudioAssociation;
+}
+
 export interface ActiveVoiceCallout {
   priority: AudioPriority;
   stop: () => void;
@@ -58,6 +67,7 @@ export interface ActiveVoiceCallout {
 export class AudioService implements OnDestroy {
   private activeVoice: ActiveVoiceCallout | null = null;
   private urgentQueue: UrgentQueueItem[] = [];
+  private calloutQueue: CalloutQueueItem[] = [];
   private isSpacingCoolingDown: boolean = false;
   private spacingTimer: any = null;
   private cachedVoices: SpeechSynthesisVoice[] = [];
@@ -327,8 +337,59 @@ export class AudioService implements OnDestroy {
     return [...this.urgentQueue];
   }
 
+  getCalloutQueue(): CalloutQueueItem[] {
+    return [...this.calloutQueue];
+  }
+
   isCoolingDown(): boolean {
     return this.isSpacingCoolingDown;
+  }
+
+  /**
+   * Enqueues a callout to be played sequentially. If the channel is idle and not cooling down,
+   * it plays immediately. If busy or cooling down, it is queued to play as soon as the active voice
+   * and cadence spacing cooldown finish.
+   */
+  queueCallout(
+    config: AudioConfig | undefined,
+    priority: AudioPriority,
+    context?: any,
+    resolvedUrl?: string,
+    association?: AudioAssociation,
+  ): boolean {
+    if (!this.isSoundRelevant(association)) {
+      this.logger.debug(
+        "Dropping callout: not relevant to current UI page",
+        association,
+      );
+      return false;
+    }
+
+    if (!config || config.type === "none") return false;
+
+    if (config.type === "preset" && !(resolvedUrl || config.url?.trim())) {
+      return false;
+    }
+    if (config.type === "tts" && !config.text?.trim()) {
+      return false;
+    }
+
+    // Channel IDLE
+    if (!this.activeVoice && !this.isSpacingCoolingDown) {
+      this.executeVoiceCallout(config, priority, context, resolvedUrl);
+      return true;
+    }
+
+    // Channel BUSY or cooling down: enqueue into calloutQueue
+    this.calloutQueue.push({
+      config,
+      priority,
+      context,
+      resolvedUrl,
+      enqueuedAt: Date.now(),
+      association,
+    });
+    return true;
   }
 
   /** Stops any currently playing verbal callout and clears cooldown. */
@@ -365,12 +426,14 @@ export class AudioService implements OnDestroy {
       }
     }
     this.clearSpacingTimer();
+    this.calloutQueue = [];
   }
 
   /** Resets the entire voice callout system and purges pending urgent calls. */
   reset(): void {
     this.stopVoice();
     this.urgentQueue = [];
+    this.calloutQueue = [];
   }
 
   private executeVoiceCallout(
@@ -704,15 +767,15 @@ export class AudioService implements OnDestroy {
 
   private onVoiceCalloutEnded(): void {
     this.activeVoice = null;
-    this.processUrgentQueueOrCooldown();
+    this.processQueueOrCooldown();
   }
 
-  private processUrgentQueueOrCooldown(): void {
+  private processQueueOrCooldown(): void {
     const settings = this.settingsService.getSettings();
     const ttl = settings.urgentQueueTtl ?? 5000;
     const now = Date.now();
 
-    // Prune expired urgent items
+    // 1. Prune expired urgent items
     this.urgentQueue = this.urgentQueue.filter(
       (item) => now - item.enqueuedAt <= ttl,
     );
@@ -728,6 +791,15 @@ export class AudioService implements OnDestroy {
       return;
     }
 
+    // 2. Prune expired or non-relevant items in calloutQueue
+    const queueTtl = Math.max(ttl, 10000);
+    this.calloutQueue = this.calloutQueue.filter(
+      (item) =>
+        now - item.enqueuedAt <= queueTtl &&
+        this.isSoundRelevant(item.association),
+    );
+
+    // 3. Cadence spacing pause
     const spacing = settings.calloutSpacing ?? 500;
     if (spacing > 0) {
       this.clearSpacingTimer();
@@ -735,9 +807,36 @@ export class AudioService implements OnDestroy {
       this.spacingTimer = setTimeout(() => {
         this.isSpacingCoolingDown = false;
         this.spacingTimer = null;
+        this.processNextQueuedCallout();
       }, spacing);
     } else {
       this.isSpacingCoolingDown = false;
+      this.processNextQueuedCallout();
+    }
+  }
+
+  private processNextQueuedCallout(): void {
+    if (this.activeVoice || this.isSpacingCoolingDown) {
+      return;
+    }
+    const settings = this.settingsService.getSettings();
+    const ttl = Math.max(settings.urgentQueueTtl ?? 5000, 10000);
+    const now = Date.now();
+
+    while (this.calloutQueue.length > 0) {
+      const next = this.calloutQueue.shift()!;
+      if (
+        now - next.enqueuedAt <= ttl &&
+        this.isSoundRelevant(next.association)
+      ) {
+        this.executeVoiceCallout(
+          next.config,
+          next.priority,
+          next.context,
+          next.resolvedUrl,
+        );
+        return;
+      }
     }
   }
 

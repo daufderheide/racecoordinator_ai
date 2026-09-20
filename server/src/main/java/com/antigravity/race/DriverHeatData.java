@@ -89,7 +89,7 @@ public class DriverHeatData extends ServerToClientObject
   private double bestLapTime = 0.0f;
   private double reactionTime = -1.0;
   private double pendingLapTime = 0.0f;
-  private double initialFuelLevel = 0.0;
+  private double initialFuelLevel = 100.0;
   private double gapLeader = 0.0;
   private double gapPosition = 0.0;
   private double gapLeaderF1 = 0.0;

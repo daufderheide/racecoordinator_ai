@@ -15,6 +15,7 @@
         <div class="spacer"></div>
         <button
           class="action-btn danger small"
+          [disabled]="!isEditMode()"
           (click)="$event.stopPropagation(); onRemove()"
           title="{{ 'BART_REMOVE_INTERFACE' | translate }}"
         >
@@ -46,6 +47,7 @@
                           <div class="com-port-row">
                             <app-custom-select
                               [id]="'deviceName-' + interfaceIndex()"
+                              [disabled]="!isEditMode()"
                               [ngModel]="config().deviceName"
                               (ngModelChange)="onDeviceSelect($event)"
                             >
@@ -104,6 +106,7 @@
                           }}</label>
                           <app-custom-select
                             [id]="'lapPinPitBehavior-' + interfaceIndex()"
+                            [disabled]="!isEditMode()"
                             [(ngModel)]="config().lapPinPitBehavior"
                             (change)="onConfigChange()"
                           >
@@ -183,6 +186,7 @@
                                   '-' +
                                   interfaceIndex()
                                 "
+                                [disabled]="!isEditMode()"
                                 [(ngModel)]="config().lapPinBehaviors![$index]"
                                 (change)="onConfigChange()"
                               >

@@ -1,21 +1,150 @@
 # Editor de Carreras
 
+El **Editor de Carreras** es la interfaz de configuración completa para diseñar, configurar y probar sus formatos de carreras de slot cars, reglas de puntuación, rotaciones de mangas, simulaciones de combustible y ajustes de temporizador.
+
+---
+
+## Descripción General y Autoguardado
+
+El Editor de Carreras ofrece una interfaz unificada para seleccionar, visualizar, configurar y probar sus formatos de carrera:
+
+- **Selector de Carrera**: Ubicado en el encabezado superior junto al título de la página, este menú desplegable enumera todas las carreras configuradas y le permite cambiar rápidamente entre ellas.
+- **Modo de Solo Lectura**: De forma predeterminada, al abrir el editor se muestran las propiedades de la carrera, reglas de puntuación y opciones de configuración en modo de solo lectura. Los campos de formulario están bloqueados para evitar cambios accidentales, mientras que los acordeones y vistas previas de mangas permanecen interactivos.
+- **Modo de Edición**: Al hacer clic en el icono **Editar** (lápiz) de la barra de herramientas se desbloquean todos los controles. Durante la edición, el selector de carrera está bloqueado.
+- **Autoguardado Continuo**: Todas las modificaciones se guardan automáticamente en segundo plano en el servidor sin salir del modo de edición.
+- **Salir del Modo de Edición**: Al hacer clic en el icono **Listo** (marca de verificación) se validan los cambios y se regresa al modo de solo lectura.
+- **Descartar Cambios**: Al hacer clic en Descartar se revierten todos los cambios a la última versión guardada y se sale del modo de edición.
+
+El espacio de trabajo se divide en dos paneles sincronizados:
+
+- **Panel Izquierdo (Configuración de Carrera)**: Propiedades generales, formato de carrera, métodos de puntuación, tipo de rotación, opciones de grupo y simulación de combustible analógico/digital.
+- **Panel Derecho (Vista Previa de Mangas en Vivo)**: Genera dinámicamente la lista completa de mangas según la rotación activa y el número de pilotos.
+
+---
+
+## Configuración de Carrera y Opciones
+
+### Nombre de Carrera y Asociación de Pista
+- **Nombre de Carrera**: Nombre único que identifica el formato de carrera.
+- **Pista**: La pista física asociada determina si está disponible la simulación de combustible analógica o digital.
+- **Tema**: Tema visual de interfaz aplicado a la pantalla de carrera.
+
+### Formato de Rotación de Mangas
+- **Tipo de Rotación**: Rotaciones estándar (**Round Robin**, **Escalera**, **Torneo**) o secuencias personalizadas.
+- **Ciclos de Mangas**: Cantidad de veces que cada piloto completa la rotación entera de mangas.
+- **Mangas Invertidas**: Invierte el orden de la secuencia de mangas.
+
+### Opciones de Puntuación
+- **Puntuación de Mangas**: Finalización por vueltas o tiempo límite, método de clasificación y desempates.
+- **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
+- **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
+
+### Ajustes de Temporizador
+- **Retardo de Inicio / Reinicio**: Segundos de cuenta regresiva previa.
+- **Tiempo Mínimo de Vuelta**: Tiempo mínimo permitido para filtrar falsos disparos de sensores.
+- **Tiempo de Drift**: Ventana de detección para deslizamientos sobre la línea de meta.
+- **Iniciar Detrás del Sensor**: Exige que los coches comiencen detrás del sensor en la vuelta cero.
+
 ## Ajustes de combustible
 
 Race Coordinator AI admite simulaciones integrales de combustible para pistas analógicas y digitales, incluyendo capacidad de combustible personalizable, nivel inicial, demoras en paradas en boxes, tasas de repostaje, penalizaciones por quedarse sin combustible y modelos de consumo de combustible.
 
-### Modelos de consumo de combustible
+### Compatibilidad de pistas y selección del sistema de combustible
 
-El consumo de combustible por vuelta (analógico) o por segundo (digital) se puede regir por valores predeterminados matemáticos o por un perfil personalizado interactivo:
+El editor de carreras ofrece dos secciones dedicadas a la configuración de combustible: **Combustible analógico** y **Combustible digital**. El sistema disponible y activo se determina automáticamente según la pista seleccionada para la carrera:
 
-- **Lineal**: El consumo de combustible escala linealmente con la velocidad o la posición del gatillo.
-- **Cuadrático**: El consumo de combustible aumenta cuadráticamente en tiempos de vuelta más rápidos o niveles de aceleración más altos.
-- **Cúbico**: El consumo de combustible aumenta pronunciadamente en condiciones de velocidad extrema y acelerador a fondo.
-- **Curva personalizada**: Permite un control detallado sobre la curva de consumo arrastrando puntos de control interactivos directamente en el gráfico de uso.
+- **Pistas analógicas**: Pistas tradicionales de slot donde los coches reciben energía directamente a través de los raíles del carril, sin decodificadores digitales ni telemetría del vehículo a la pista. Cuando se selecciona una pista analógica, la sección **Combustible analógico** queda habilitada y la casilla de **Combustible digital** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
+- **Pistas digitales**: Sistemas digitales de slot (como Carrera Digital, Scalextric Digital, Scorpius u oXigen) donde la interfaz transmite telemetría digital (identificador del coche, porcentaje de acelerador, sensores de línea de boxes). Cuando se selecciona una pista digital, la sección **Combustible digital** queda habilitada y la casilla de **Combustible analógico** se desactiva automáticamente (al pasar el cursor sobre la casilla deshabilitada se muestra una información sobre herramientas explicativa).
+
+---
+
+### Simulación de combustible analógico
+
+El combustible analógico simula el consumo **por vuelta**. Dado que las pistas analógicas detectan los coches al cruzar los sensores de cronometraje de meta, el combustible se calcula y descuenta cada vez que se completa una vuelta.
+
+#### Opciones de configuración
+
+- **Habilitar combustible analógico**: Interruptor principal del seguimiento analógico. Si está desmarcado, la simulación se deshabilita para la carrera y los coches compiten sin restricciones de combustible.
+- **Tipo de consumo de combustible**: Determina la curva matemática empleada para calcular el consumo según el ritmo de vuelta:
+    - **Lineal**: El consumo escala linealmente con el tiempo de vuelta. Las vueltas más rápidas queman más combustible, mientras que las vueltas el doble de lentas consumen la mitad del combustible base.
+    - **Cuadrático**: El consumo escala con el inverso del cuadrado del tiempo de vuelta, penalizando intensamente las vueltas muy rápidas.
+    - **Cúbico**: El consumo aumenta vertiginosamente en vueltas rápidas, castigando drásticamente a los pilotos que arriesgan en busca de vueltas récord.
+    - **Curva personalizada**: Permite moldear de forma interactiva y punto a punto la curva de consumo directamente en el gráfico SVG.
+- **Tiempo más rápido (s)**: El tiempo de vuelta más rápido esperado para la pista y categoría del coche (en segundos).
+- **Tiempo más lento (s)**: El tiempo de vuelta más lento (en segundos) para el consumo mínimo de combustible.
+- **Consumo máx. de combustible por vuelta más rápida**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más rápido** o más veloz.
+- **Consumo mín. de combustible por vuelta más lenta**: Unidades de combustible consumidas por vuelta al rodar al **Tiempo más lento** o más lento.
+    - Para tiempos de vuelta entre el tiempo más rápido y el más lento, el consumo transiciona suavemente según el **Tipo de consumo** seleccionado (Lineal, Cuadrático, Cúbico o Curva personalizada).
+- **Capacidad**: El volumen total del depósito de combustible en unidades arbitrarias (por ejemplo, 100).
+- **Nivel inicial (%)**: Porcentaje de capacidad disponible en el depósito al comenzar una tanda (por ejemplo, 100 % para depósito lleno, o menos en tandas de sprint o hándicap).
+- **Tasa de repostaje (%/s)**: Velocidad de repostaje durante una parada en boxes, expresada como el porcentaje de la capacidad total del depósito repuesto por segundo.
+- **Demora en parada en boxes (s)**: Tiempo obligatorio de espera estacionaria en segundos antes de que comience el repostaje una vez que el coche entra en boxes.
+- **Restablecer combustible al inicio de la tanda**:
+    - **Marcado**: El nivel de combustible de cada piloto se restablece al **Nivel inicial** configurado al comenzar cada tanda.
+    - **Desmarcado**: El combustible restante se transfiere entre tandas a lo largo de las rotaciones, exigiendo una gestión estratégica a lo largo de toda la carrera.
+- **Acción al quedarse sin combustible**: Penalización impuesta cuando el nivel de combustible llega a 0:
+    - **No contar vueltas**: El coche continúa rodando con corriente, pero las vueltas completadas con el depósito vacío no se contabilizan hasta que entre en boxes y reposte.
+    - **Finalizar tanda**: La tanda termina de inmediato para ese coche, se corta la corriente del carril y el piloto se marca como finalizado.
+    - **Tartamudeo de potencia (Power Stutter)**: Simula fallos del motor sin combustible encendiendo y apagando rápidamente la corriente del carril.
+        - *Requiere relés por carril*: Solo se puede seleccionar si la interfaz de pista dispone de relés individuales de control de corriente por carril.
+        - **Tiempo encendido (s)**: Duración durante la cual se mantiene la corriente en cada pulso.
+        - **Tiempo apagado (s)**: Duración durante la cual se interrumpe la corriente en cada pulso.
+
+#### Paradas en boxes y tiempo de carrera en combustible analógico
+
+Para evitar que el tiempo detenido en boxes se interprete como una vuelta anormalmente lenta (lo que reduciría erróneamente el consumo calculado), Race Coordinator AI contabiliza el **tiempo acumulado de repostaje**. Todo el tiempo estacionado en el carril de boxes se descuenta de la duración de la vuelta antes de calcular el combustible:
+
+$$\text{Tiempo de carrera} = \text{Tiempo de vuelta} - \text{Tiempo acumulado de repostaje}$$
+
+#### Vistas previas gráficas (Analógico)
+
+- **Comparación simultánea multimodelo**: Los 3 modelos matemáticos predefinidos (**Lineal**, **Cuadrático** y **Cúbico**) se representan simultáneamente en ambos gráficos. El tipo seleccionado se resalta en negrita con un brillo distintivo, mientras que los otros modelos permanecen visibles como líneas de referencia atenuadas (~40 % de opacidad).
+- **Consumo de combustible por vuelta**: Muestra las unidades exactas consumidas en el espectro de tiempos de vuelta (desde Tiempo más rápido hasta Tiempo más lento). En modo Curva personalizada, los nodos interactivos y botones de restablecimiento permiten moldear la curva al instante mientras los 3 modelos base continúan visibles para referencia.
+- **Tiempo hasta parada en boxes**: Estima el tiempo total de carrera (o vueltas) antes de vaciar el depósito a un ritmo de vuelta constante en todos los modelos.
+- **Leyenda interactiva y visibilidad**: Haga clic izquierdo en cualquier curva de la leyenda para activarla o desactivarla. Al ocultar una curva se reajustan dinámicamente las escalas de los ejes para examinar con mayor detalle las curvas restantes.
+- **Tarjetas flotantes comparativas**: Al pasar el ratón por los gráficos se muestra la telemetría comparativa de todas las curvas visibles en el punto examinado, con muestras de color, valores y el indicador `(Activo)` en el modelo seleccionado.
+
+---
+
+### Simulación de combustible digital
+
+El combustible digital simula el consumo **continuamente en tiempo real** en función de la telemetría de aceleración transmitida por mandos y decodificadores digitales.
+
+#### Consumo continuo impulsado por acelerador
+
+A diferencia del analógico (que calcula el combustible en la línea de meta), el digital recalcula el consumo en cada paquete de telemetría recibido:
+
+$$\text{Combustible consumido} = \text{Uso por segundo} \times \Delta t$$
+
+Los pilotos que conducen con suavidad o levantan el gatillo en curvas consumen mucho menos combustible que quienes aceleran a fondo en las rectas.
+
+#### Opciones de configuración
+
+- **Habilitar combustible digital**: Interruptor principal del seguimiento digital.
+- **Tipo de consumo de combustible**: Modelo matemático aplicado a la aceleración ($0\,\%$ a $100\,\%$):
+    - **Lineal**: El consumo escala en proporción directa a la posición del acelerador.
+    - **Cuadrático**: El consumo crece con moderación a medio gas y se acelera hacia el acelerador a fondo.
+    - **Cúbico**: Las aceleraciones máximas consumen exponencialmente más combustible que la conducción a medio gas.
+    - **Curva personalizada**: Permite personalizar la curva de respuesta acelerador-consumo entre 0 % y 100 % de gas.
+- **Tasa de consumo**: Unidades máximas de combustible consumidas por segundo al **100 % de aceleración**.
+- **Capacidad**, **Nivel inicial (%)**, **Tasa de repostaje (%/s)**, **Demora en parada en boxes (s)**, **Restablecer combustible al inicio de la tanda**: Funcionamiento análogo a la configuración analógica.
+- **Acción al quedarse sin combustible**:
+    - **No contar vueltas**: El coche permanece operativo, pero las vueltas completadas sin combustible no se registran.
+    - **Finalizar tanda**: El piloto queda fuera de la tanda en cuanto agota el combustible.
+
+#### Vistas previas gráficas (Digital)
+
+- **Comparación simultánea multimodelo**: Representa simultáneamente las curvas de respuesta lineal, cuadrática y cúbica con el modelo seleccionado resaltado y los otros modelos visibles como referencia de fondo.
+- **Consumo de combustible digital**: Traza el porcentaje de acelerador ($0\,\%$ a $100\,\%$) frente al consumo por segundo para todos los modelos.
+- **Tiempo hasta vaciar**: Traza el porcentaje de acelerador frente a los segundos continuos de conducción hasta agotar el depósito por completo.
+- **Leyenda interactiva y escala dinámica**: Active o desactive curvas individuales haciendo clic en la leyenda, ajustando automáticamente la escala de los ejes.
+- **Tarjetas flotantes comparativas**: Al recorrer el gráfico con el cursor se muestran los valores en tiempo real de cada curva visible para esa posición del acelerador.
+
+---
 
 ### Edición interactiva de curvas personalizadas
 
-Cuando se selecciona **Curva personalizada** como tipo de consumo, los controles aparecen directamente sobre la curva SVG:
+Cuando se selecciona **Curva personalizada** como tipo de consumo (tanto en combustible analógico como digital), los controles interactivos aparecen directamente sobre la curva SVG:
 
 - **Generación inicial de la curva**: Al cambiar por primera vez a Curva personalizada, los 5 puntos iniciales se muestrean directamente del ajuste activo (Lineal, Cuadrático o Cúbico) sin saltos visuales.
 - **Arrastrar y soltar interactivo**: Haga clic y arrastre cualquier punto hacia arriba, abajo, izquierda o derecha para remodelar la curva.

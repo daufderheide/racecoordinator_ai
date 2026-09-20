@@ -60,12 +60,13 @@ Tijdens een race gebeuren er veel dingen gelijktijdig. Race Coordinator AI hante
 3. **Urgente Wachtrij (Urgent Queueing):** Urgente meldingen zijn van vitaal belang voor de raceveiligheid. Als er een urgente melding binnenkomt terwijl een andere klinkt, wacht deze in de wachtrij en speelt direct daarna af.
 4. **Pauze tussen Berichten (Callout Spacing):** Na elk gesproken bericht wordt een korte stilte ingelast voordat een volgend niet-urgent bericht mag starten.
 
-### Terugvaloptie bij Mijlpalen (Milestone Fallback)
+### Prioriteit en Terugvaloptie bij Mijlpalen (Milestone Priority & Fallback)
 
-Rijdt een deelnemer een mijlpaalronde (zoals een baanrecord of leiderswissel):
-1. Het systeem probeert de bijbehorende spraakmelding af te spelen.
-2. Wordt deze melding **genegeerd** (door een gele vlag of spraakpauze), dan valt het systeem terug op het **persoonlijk recordgeluid** of het **standaard rondesignaal**.
-3. Is dit reservegeluid een geluidseffect (SFX), dan speelt dit polyfoon af, zodat de rijder altijd direct akoestische bevestiging krijgt bij de finishlijn.
+Rijdt een deelnemer een ronde die een of meer mijlpalen activeert (zoals een baanrecord, beste ronde in de heat of leiderswissel):
+
+1. **Prioriteitscascade bij gelijktijdige gebeurtenissen:** Mijlpaalgeluiden worden beoordeeld in strikte prioriteitsvolgorde (Baanrecord -> Baanrecord per spoor -> Nieuwe raceleider -> Nieuwe heatleider -> Snelste raceronde -> Snelste raceronde per spoor -> Snelste heatronde -> Persoonlijk record). Als het geluid met de hoogste prioriteit is ingesteld op `none` (of niet geconfigureerd), gaat het systeem naar het volgende geluid met de hoogste prioriteit dat tijdens die ronde is getriggerd en speelt dat af indien geconfigureerd.
+2. **Genegeerde meldingen bij bezet spraakkanaal:** Wordt een geselecteerde spraakmelding **genegeerd** omdat een melding met hogere prioriteit klinkt (of tijdens een spraakpauze), dan worden er voor die ronde geen verdere spraakmeldingen geprobeerd. In plaats daarvan valt het systeem direct terug op het **persoonlijk recordgeluid** (indien PR-ronde) of het **standaard rondesignaal**.
+3. **Polyfone SFX-terugval:** Is dit reservegeluid een geluidseffect (SFX), dan speelt dit polyfoon af, zodat de rijder altijd direct akoestische bevestiging krijgt bij de finishlijn.
 
 ---
 
@@ -150,20 +151,20 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 
 ### Rijdersaudiogebeurtenissen (Geconfigureerd in de Rijders Editor)
 
-| Audioslot | Standaard Bestand / Asset | Geluidstype | Prioriteitsniveau | Relevantie & Schermweergave |
-| :--- | :--- | :--- | :---: | :--- |
-| **Rondetoon** (`lapAudio`) | `default_beep` | **SFX** (Preset) / **Spraakbericht** (TTS) | `low` (Gewicht 1 bij TTS; Polyfoon bij preset-SFX) | `lane-view`: Klinkt op het Hoofdscherm (indien Baan-widget aanwezig) en op het Rijdersstation van die specifieke baan/rijder. |
-| **Persoonlijk Record** (`bestLapAudio`) | `default_driveby` | **SFX** (Preset) / **Spraakbericht** (TTS) | `normal` (Gewicht 2 bij TTS; Polyfoon bij preset-SFX) | `lane-view`: Klinkt op het Hoofdscherm (indien Baan-widget aanwezig) en op het Rijdersstation van die specifieke baan/rijder. |
-| **Beste Heatronde** (`heatBestLapAudio`) | `default_best_heat_lap` | **Spraakbericht** | `normal` (Gewicht 2) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Beste Baandeelronde** (`raceLaneBestLapAudio`) | `default_best_race_lane_lap` | **Spraakbericht** | `normal` (Gewicht 2) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Nieuwe Heatleider** (`newHeatLeaderAudio`) | `default_new_heat_leader` | **Spraakbericht** | `normal` (Gewicht 2) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Beste Raceronde** (`raceBestLapAudio`) | `default_best_race_lap` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Baanvakrecord** (`overallLaneBestLapAudio`) | `default_record_lane_lap` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Absoluut Baanrecord** (`overallBestLapAudio`) | `default_record_lap` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Nieuwe Raceleider** (`newRaceLeaderAudio`) | `default_new_race_leader` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Valse Start / Straf** (`falseStartAudio` / `penaltyAudio`) | `default_penalty` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Pitstop** (`pitInAudio`) | `default_pit_in` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
-| **Brandstofwaarschuwingen** (`fuelAudio`: Waarschuwing, Kritiek, Leeg) | `default_fuel_level` (Audioset) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| Rijdersaudiogebeurtenis | Wanneer afgespeeld | Standaard Bestand / Asset | Geluidstype | Prioriteitsniveau | Relevantie & Schermweergave |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Ronde Geluid** | Wordt afgespeeld bij elke reguliere ronde (of als fallback als een mijlpaalgeluid wordt overgeslagen of niet beschikbaar is). | `default_beep` | **SFX** (Preset) / **Spraakbericht** (TTS) | `low` (Gewicht 1 bij TTS; Polyfoon bij preset-SFX) | `lane-view`: Klinkt op het Hoofdscherm (indien Baan-widget aanwezig) en op het Rijdersstation van die specifieke baan/rijder. |
+| **Persoonlijk Beste Ronde Geluid** | Wordt afgespeeld wanneer de rijder diens snelste ronde in de huidige heat of sessie neerzet. | `default_driveby` | **SFX** (Preset) / **Spraakbericht** (TTS) | `normal` (Gewicht 2 bij TTS; Polyfoon bij preset-SFX) | `lane-view`: Klinkt op het Hoofdscherm (indien Baan-widget aanwezig) en op het Rijdersstation van die specifieke baan/rijder. |
+| **Race Beste Ronde Geluid** | Wordt afgespeeld bij de snelste ronde over alle heats en sporen van de huidige race. | `default_best_race_lap` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Race Baan Beste Ronde Geluid** | Wordt afgespeeld bij de snelste ronde op dat specifieke spoor tijdens de huidige race. | `default_best_race_lane_lap` | **Spraakbericht** | `normal` (Gewicht 2) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Heat Beste Ronde Geluid** | Wordt afgespeeld bij de snelste ronde onder alle rijders in de actieve heat. | `default_best_heat_lap` | **Spraakbericht** | `normal` (Gewicht 2) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Geluid nieuwe raceleider** | Wordt afgespeeld wanneer een rijder de leiding in het algemeen raceklassement overneemt. | `default_new_race_leader` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Geluid nieuwe heatleider** | Wordt afgespeeld wanneer een rijder de leiding in de actieve heat overneemt. | `default_new_heat_leader` | **Spraakbericht** | `normal` (Gewicht 2) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Algemeen Baanrecord Ronde Geluid** | Wordt afgespeeld wanneer het absolute baanrecord over alle sporen en eerdere races wordt verbroken. | `default_record_lap` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Baanrecord per Spoor Ronde Geluid** | Wordt afgespeeld wanneer het historische baanrecord voor dat specifieke spoor wordt verbroken. | `default_record_lane_lap` | **Spraakbericht** | `high` (Gewicht 3) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Pit In Geluid** | Wordt afgespeeld wanneer de auto de pitstraat of tankzone binnenrijdt. | `default_pit_in` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Brandstofniveau Geluiden** | Wordt afgespeeld wanneer de brandstof daalt naar waarschuwings-, kritiek- of leegdrempels. | `default_fuel_level` (Audioset) | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+| **Valse Start Geluid** | Wordt afgespeeld wanneer een valse start of overtreding bij de start wordt gedetecteerd. | `default_penalty` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 
 ### Thema-audiogebeurtenissen (Geconfigureerd in de Thema Editor)
 
@@ -172,12 +173,44 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | **Startaftelling** | `audio.countdown` | **Spraakbericht** / Audioset | `urgent` | `countdown`: Klinkt op het Hoofdscherm (indien Aftel-widget aanwezig) en op alle Rijdersstations. |
 | **Groen Licht / START** | `audio.countdown.green` | **Spraakbericht** / Signaaltoon | `urgent` | `countdown`: Klinkt op het Hoofdscherm (indien Aftel-widget aanwezig) en op alle Rijdersstations. |
 | **Gele Vlag** | `audio.yellowflag` | **Spraakbericht** (Waarschuwingssirene) | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Seconden Automatische Start** | `audio.auto_start` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
 | **Resterende Seconden** | `audio.seconds_left` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
-| **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Ronden** | `audio.laps_left` | **Spraakbericht** / Audioset | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. Kondigt resterende ronden voor de leider aan; een waarde van 0 meldt wanneer de leider het aantal ronden heeft bereikt (bijv. "Leider gefinisht" in races met uitrijden toegestaan). |
+| **Halverwege** | `audio.seconds_left.halfway` | **Spraakbericht** | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations bij het bereiken van de helft van de heat (op basis van tijd of wanneer de leider de helft van het aantal ronden heeft voltooid). |
 | **Heat Beëindigd** | `audio.heat_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
+| **Resterende Seconden Automatische Doorgang** | `audio.auto_advance` | **Spraakbericht** / Audioset (Standaard: TTS) | `normal` (Gewicht 2) | `timer`: Klinkt op het Hoofdscherm (indien Timer-widget aanwezig) en op alle Rijdersstations. |
 | **Race Beëindigd** | `audio.race_over` | **Spraakbericht** | `urgent` (Gewicht 4) | `flag`: Klinkt op het Hoofdscherm (indien Vlag-widget aanwezig) en op alle Rijdersstations. |
 | **Minimale Rondetijd** | `audio.min_lap_time` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
 | **Drift-ronde** | `audio.drift_lap` | **Spraakbericht** | `urgent` (Gewicht 4) | `lane-view`: Klinkt op het Hoofdscherm en op het Rijdersstation van die specifieke baan/rijder. |
+
+---
+
+## Audiosets en Triggermodi
+
+Een **Audioset** is een samengesteld audio-asset dat een verzameling geluidsbestanden of tekst-naar-spraak meldingen bevat die zijn gekoppeld aan numerieke drempelwaarden. Audiosets worden gebruikt in 5 thema-slots en bij de brandstofinstellingen:
+
+1. **Startaftelling (`audio.countdown`):** Reekstonen en hoorns voorafgaand aan de start.
+2. **Resterende seconden automatische start (`audio.auto_start`):** Gesproken meldingen voor aanvang van een heat.
+3. **Resterende seconden (`audio.seconds_left`):** Tijdsmeldingen tijdens tijdgebonden heats.
+4. **Resterende ronden (`audio.laps_left`):** Rondemeldingen tijdens rondegebonden heats.
+5. **Resterende seconden automatische doorgang (`audio.auto_advance`):** Meldingen tussen heats voor automatische doorgang.
+6. **Brandstofniveau-geluiden (`fuelLevelAudio`):** Waarschuwings-, kritieke en voltankgeluiden op basis van percentages.
+
+### Triggermodi: Resterend vs. Verstreken
+Elke vermelding in een Audioset definieert een **Triggermodus**:
+
+*   **Resterend (Aftellen):** Wordt geactiveerd naarmate de race het einde of de tijdslimiet nadert (bijv. 10 resterende ronden, 30 seconden resterend). Dit is de standaardmodus voor aftellingen.
+*   **Verstreken (Optellen):** Wordt geactiveerd naarmate de race vordert vanaf de start (bijv. 10 voltooide ronden, 30 verstreken seconden).
+
+### Dubbele triggers met identieke numerieke waarden
+Race Coordinator AI ondersteunt het configureren van twee vermeldingen in dezelfde Audioset met exact dezelfde numerieke waarde (bijv. waarde `10`):
+- Een vermelding geconfigureerd als **Verstreken** klinkt wanneer de leider 10 ronden of seconden vanaf de start bereikt.
+- Een vermelding geconfigureerd als **Resterend** klinkt wanneer de leider nog 10 ronden of seconden te gaan heeft tot de finish.
+
+### Natuurlijke raceverloop-voorvertoning
+Bij het voorbeluisteren van een Audioset in de Asset Manager of Audiokiezer worden de vermeldingen in chronologische racevolgorde afgespeeld:
+1. Alle **Verstreken** vermeldingen spelen eerst in oplopende volgorde (0 → N).
+2. Alle **Resterend** vermeldingen spelen vervolgens in aflopende aftelvolgorde (N → 0).
 
 ---
 
@@ -187,5 +220,5 @@ De onderstaande tabellen geven een gedetailleerd overzicht van alle audiogebeurt
 | :--- | :--- |
 | **UI Editor -> Audio-instellingen** | Hoofdvolume, time-out urgente wachtrij, tussenruimte berichten, TTS-stem, snelheid, toonhoogte, TTS-volume en testknop. |
 | **Thema Editor** | Systeemgeluiden: startaftelling, groen licht, gele vlag sirene, resterende tijd, halverwege, einde heat, einde race, minimumtijd en drift-ronde. |
-| **Rijders Editor** | Rijderspecifieke geluiden: rondetoon, persoonlijk record, heatrecord, baanrecord, leiderswissel, valse start, pitstop en brandstofwaarschuwingen. |
-| **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden met directe voorbeluistering. |
+| **Rijders Editor** | Rijderspecifieke geluiden: Ronde Geluid, Persoonlijk Beste Ronde Geluid, Race Beste Ronde Geluid, Race Baan Beste Ronde Geluid, Heat Beste Ronde Geluid, Geluid nieuwe raceleider, Geluid nieuwe heatleider, Algemeen Baanrecord Ronde Geluid, Baanrecord per Spoor Ronde Geluid, Pit In Geluid, Brandstofniveau Geluiden en Valse Start Geluid. |
+| **Asset Manager** | Uploaden en beheren van WAV-, MP3- en OGG-bestanden, en het configureren van audiosets met contextafhankelijke triggerwaarden (seconden, ronden of percentage) met directe voorbeluistering. |

@@ -8,6 +8,7 @@
     [itemName]="internalAssetName"
     [undoManager]="undoManager"
     [showAdd]="true"
+    [showCopy]="true"
     [showRegenerate]="false"
     [showLaneCheck]="false"
     [showImport]="true"
@@ -16,6 +17,7 @@
     [exportTitleKey]="'AM_BTN_EXPORT_ROTATION'"
     [isSaving]="isSaving"
     (add)="addRotation()"
+    (copy)="saveAsNew()"
     (import)="fileInput.click()"
     (export)="exportRotations()"
     [showZoom]="true"
@@ -31,8 +33,10 @@
         <div class="input-group" [class.invalid]="isNameInvalid">
           <label>{{ "AM_LABEL_ASSET_NAME" | translate }}</label>
           <input
+            id="custom-rotation-name-input"
             type="text"
             [(ngModel)]="internalAssetName"
+            [appAutoSelectDefault]="defaultRotationName"
             (ngModelChange)="onInputChange()"
             (focus)="onInputFocus()"
             (blur)="onInputBlur()"

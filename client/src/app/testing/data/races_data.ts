@@ -40,11 +40,13 @@ export const MOCK_RACES = [
       enabled: false,
       capacity: 100,
       usage_type: FuelUsageType.LINEAR,
-      usage_rate: 4.0,
+      fastest_time: 3.0,
+      max_usage: 5.0,
+      slowest_time: 9.0,
+      min_usage: 3.0,
       start_level: 100,
       refuel_rate: 10,
       pit_stop_delay: 2.0,
-      reference_time: 6.0,
       out_of_fuel_action: OutOfFuelAction.POWER_STUTTER,
       power_stutter_on_time: 0.5,
       power_stutter_off_time: 1.5,
@@ -213,6 +215,11 @@ export const MOCK_RACE_INSTANCES = MOCK_RACES.map((r: any) => {
     fo.reference_time ?? 6.0,
     fo.power_stutter_on_time,
     fo.power_stutter_off_time,
+    fo.custom_curve ?? [],
+    fo.fastest_time ?? 3.0,
+    fo.max_usage ?? 5.0,
+    fo.slowest_time ?? 9.0,
+    fo.min_usage ?? 3.0,
   );
 
   const df = r.digital_fuel_options || {};

@@ -66,6 +66,10 @@ describe("CameraEditorComponent", () => {
   });
 
   it("should copy pairing URL to clipboard", async () => {
+    const originalClipboard = Object.getOwnPropertyDescriptor(
+      navigator,
+      "clipboard",
+    );
     const mockClipboard = {
       writeText: jasmine
         .createSpy("writeText")
@@ -74,12 +78,21 @@ describe("CameraEditorComponent", () => {
     Object.defineProperty(navigator, "clipboard", {
       value: mockClipboard,
       configurable: true,
+      writable: true,
     });
 
-    component.copyPairingUrl();
-    expect(mockClipboard.writeText).toHaveBeenCalledWith(
-      component.pairingUrl(),
-    );
+    try {
+      component.copyPairingUrl();
+      expect(mockClipboard.writeText).toHaveBeenCalledWith(
+        component.pairingUrl(),
+      );
+    } finally {
+      if (originalClipboard) {
+        Object.defineProperty(navigator, "clipboard", originalClipboard);
+      } else {
+        delete (navigator as any).clipboard;
+      }
+    }
   });
 
   it("should open local camera interface in new tab", () => {

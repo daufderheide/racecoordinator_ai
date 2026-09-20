@@ -417,6 +417,68 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testFuelConsumption_FourParameters_ClampingAndInterpolation() {
+    AnalogFuelOptions fuelOptions =
+        new AnalogFuelOptions(
+            true,
+            false,
+            false,
+            com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+            100.0,
+            AnalogFuelOptions.FuelUsageType.LINEAR,
+            4.0,
+            100.0,
+            10.0,
+            2.0,
+            6.0,
+            1.0,
+            1.0,
+            null,
+            3.0,
+            6.0,
+            9.0,
+            2.0);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Test Race 4 Params")
+            .withTrackEntityId("track1")
+            .withHeatRotationType(HeatRotationType.RoundRobin)
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withFuelOptions(fuelOptions)
+            .withEntityId("race4p")
+            .build();
+
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+
+    race.getCurrentHeat().getDrivers().get(0).getDriver().setFuelLevel(100.0);
+
+    // Reaction lap
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+
+    // Lap at 2.0s (faster than fastest_time 3.0s) -> clamped to max_usage (6.0)
+    executionManager.onLap(0, 2.0, 1, false, true, false);
+    assertEquals(94.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+
+    // Lap at 6.0s (halfway between 3.0s and 9.0s) -> 6.0 - 0.5 * (6.0 - 2.0) = 4.0 usage
+    executionManager.onLap(0, 6.0, 1, false, true, false);
+    assertEquals(90.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+
+    // Lap at 10.0s (slower than slowest_time 9.0s) -> clamped to min_usage (2.0)
+    executionManager.onLap(0, 10.0, 1, false, true, false);
+    assertEquals(88.0, race.getCurrentHeat().getDrivers().get(0).getDriver().getFuelLevel(), 0.001);
+  }
+
+  @Test
   public void testFuelConsumption_SubsequentLaps() {
     AnalogFuelOptions fuelOptions =
         new AnalogFuelOptions(
@@ -1547,7 +1609,7 @@ public class HeatExecutionManagerTest {
         participants.get(0).getParticipantId(), executionManager.getRaceLeaderParticipantId());
     boolean[] change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d1");
     assertTrue("Driver 1 should be new race leader", change[0]);
-    assertFalse("Driver 1 should not be new heat leader if new race leader", change[1]);
+    assertTrue("Driver 1 should also be new heat leader when taking heat lead", change[1]);
 
     // Driver 2 completes lap 1 -> Driver 1 is still leader
     prevRaceLeader = executionManager.getRaceLeaderParticipantId();
@@ -1571,7 +1633,7 @@ public class HeatExecutionManagerTest {
         participants.get(1).getParticipantId(), executionManager.getRaceLeaderParticipantId());
     change = executionManager.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
     assertTrue("Driver 2 should be new race leader", change[0]);
-    assertFalse("Driver 2 should not be marked heat leader if race leader", change[1]);
+    assertTrue("Driver 2 should also be new heat leader when taking heat lead", change[1]);
   }
 
   @Test
@@ -1617,6 +1679,19 @@ public class HeatExecutionManagerTest {
     boolean[] change = heat2Exec.evaluateLeaderChange(prevRaceLeader, prevHeatLeader, "d2");
     assertFalse("d2 should not be race leader because d1 has 3 laps", change[0]);
     assertTrue("d2 should be new heat leader because d2 leads heat 2", change[1]);
+  }
+
+  @Test
+  public void testSimultaneousRaceAndHeatLeaderChange() {
+    // Both previous leaders are null (start of race/heat)
+    executionManager.onLap(0, 1.0, 1, false, true, false); // reaction d1
+    executionManager.onLap(0, 5.0, 1, false, true, false); // lap 1 d1
+    assertEquals("d1", executionManager.getRaceLeaderParticipantId());
+    assertEquals("d1", executionManager.getHeatLeaderParticipantId());
+
+    boolean[] change = executionManager.evaluateLeaderChange(null, null, "d1");
+    assertTrue("Should be new race leader", change[0]);
+    assertTrue("Should also be new heat leader for audio cascading", change[1]);
   }
 
   @Test
@@ -1706,6 +1781,6 @@ public class HeatExecutionManagerTest {
 
     boolean[] change = teamExec.evaluateLeaderChange(null, null, dhd0.getParticipantId());
     assertTrue("Team participant taking the lead must be recognized as new race leader", change[0]);
-    assertFalse("Must not be flagged as new heat leader when it is new race leader", change[1]);
+    assertTrue("Team participant taking the lead should also be new heat leader", change[1]);
   }
 }

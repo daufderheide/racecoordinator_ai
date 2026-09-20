@@ -110,6 +110,14 @@ export class DefaultRacedaySetupHarnessE2e implements DefaultRacedaySetupHarness
     await this.unselectedDrivers.nth(index).dblclick();
   }
 
+  async clickUnselectedDriver(index: number): Promise<void> {
+    await this.unselectedDrivers.nth(index).click();
+  }
+
+  async clickSelectedDriver(index: number): Promise<void> {
+    await this.selectedDrivers.nth(index).click();
+  }
+
   async getRaceCardCount(): Promise<number> {
     await this.raceCards.first().waitFor({ state: "attached" });
     return await this.raceCards.count();

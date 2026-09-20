@@ -71,7 +71,12 @@ for (const spec of failedSpecs) {
                     const snapshotBaseName = attachment.name.replace('-actual.png', '');
                     // Find matching expected file in snapshot folder
                     const files = fs.readdirSync(snapshotDir);
-                    const matchingFiles = files.filter(f => f.startsWith(snapshotBaseName) && f.includes(projectName) && f.endsWith('.png'));
+                    const matchingFiles = files.filter(f =>
+                        (f === `${snapshotBaseName}-${projectName}-linux.png` ||
+                         f === `${snapshotBaseName}-${projectName}.png` ||
+                         f.startsWith(`${snapshotBaseName}-${projectName}-`)) &&
+                        f.endsWith('.png')
+                    );
 
                     if (matchingFiles.length === 0) {
                         const targetName = `${snapshotBaseName}-${projectName}-linux.png`;

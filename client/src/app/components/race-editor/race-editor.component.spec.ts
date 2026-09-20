@@ -41,12 +41,12 @@ import {
 import { deepCopy } from "@app/utils/clone.utils";
 
 import { NavigationService } from "../../services/navigation.service";
-import { createRaceManagerDataServiceMock } from "../race-manager/testing/race-manager_helper";
 import {
   interpolateFuelCurveClient,
   RaceEditorComponent,
 } from "./race-editor.component";
 import { RaceEditorHarness } from "./testing/race-editor.harness";
+import { createRaceEditorDataServiceMock } from "./testing/race-editor_helper";
 
 describe("RaceEditorComponent", () => {
   let component: RaceEditorComponent;
@@ -59,34 +59,41 @@ describe("RaceEditorComponent", () => {
   let roleSubject: BehaviorSubject<Role>;
   let mockAuthService: any;
 
-  beforeEach(() => {
-    mockTranslationService.translate.and.callFake((key: string) => key);
+  const mockConnectionMonitor = {
+    startMonitoring: jasmine.createSpy("startMonitoring"),
+    stopMonitoring: jasmine.createSpy("stopMonitoring"),
+    connectionState$: of("CONNECTED"),
+  };
+
+  beforeEach(async () => {
+    resetMocks();
 
     roleSubject = new BehaviorSubject<Role>(Role.ADMIN);
     mockAuthService = {
-      currentRole: Role.ADMIN,
       currentRole$: roleSubject.asObservable(),
+      get currentRole() {
+        return roleSubject.value;
+      },
+    };
+
+    const mockQueryParamMap = {
+      get: jasmine.createSpy("get").and.callFake((key: string) => {
+        if (key === "id") return "r1";
+        return null;
+      }),
+      has: (key: string) => key === "id",
+      getAll: (key: string) => (key === "id" ? ["r1"] : []),
+      keys: ["id"],
     };
 
     const mockActivatedRoute = {
       snapshot: {
-        queryParamMap: {
-          get: jasmine.createSpy("get").and.callFake((key: string) => {
-            if (key === "driverCount") return null;
-            if (key === "id") return "r1";
-            return null;
-          }),
-        },
+        queryParamMap: mockQueryParamMap,
+        queryParams: { id: "r1" },
       },
-      queryParams: of({ help: "false" }),
-      queryParamMap: of(convertToParamMap({ id: "r1" })),
+      queryParamMap: of(mockQueryParamMap as any),
+      queryParams: of({ id: "r1" }),
     };
-
-    const mockConnectionMonitor = jasmine.createSpyObj(
-      "ConnectionMonitorService",
-      ["startMonitoring", "stopMonitoring"],
-      { connectionState$: of() },
-    );
 
     const mockRaceConnectionService = jasmine.createSpyObj(
       "RaceConnectionService",
@@ -96,7 +103,7 @@ describe("RaceEditorComponent", () => {
     TestBed.configureTestingModule({
       imports: [FormsModule, RaceEditorComponent, TranslatePipe],
       providers: [
-        { provide: DataService, useValue: createRaceManagerDataServiceMock() },
+        { provide: DataService, useValue: createRaceEditorDataServiceMock() },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -363,11 +370,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -426,11 +435,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -506,11 +517,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -567,7 +580,10 @@ describe("RaceEditorComponent", () => {
       expect(component.editingRace.fuel_options?.enabled).toBeFalse();
       expect(component.editingRace.fuel_options?.capacity).toBe(100);
       expect(component.editingRace.fuel_options?.usage_type).toBe("LINEAR");
-      expect(component.editingRace.fuel_options?.usage_rate).toBe(4.0);
+      expect(component.editingRace.fuel_options?.fastest_time).toBe(3.0);
+      expect(component.editingRace.fuel_options?.max_usage).toBe(5.0);
+      expect(component.editingRace.fuel_options?.slowest_time).toBe(9.0);
+      expect(component.editingRace.fuel_options?.min_usage).toBe(3.0);
     }));
 
     it("should detect changes when fuel settings modify", () => {
@@ -577,6 +593,22 @@ describe("RaceEditorComponent", () => {
       component.editingRace.fuel_options!.enabled = false;
       expect(component.isDirtyState()).toBeFalse();
 
+      component.editingRace.fuel_options!.fastest_time = 2.5;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.fastest_time = 3.0;
+      component.editingRace.fuel_options!.max_usage = 6.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.max_usage = 5.0;
+      component.editingRace.fuel_options!.slowest_time = 10.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.slowest_time = 9.0;
+      component.editingRace.fuel_options!.min_usage = 2.0;
+      expect(component.isDirtyState()).toBeTrue();
+
+      component.editingRace.fuel_options!.min_usage = 3.0;
       component.editingRace.fuel_options!.capacity = 200;
       expect(component.isDirtyState()).toBeTrue();
     });
@@ -641,6 +673,96 @@ describe("RaceEditorComponent", () => {
       expect(component.editingRace.digital_fuel_options.enabled).toBeFalse();
     });
 
+    it("should return correct tooltip for analog and digital fuel when track has digital fuel", () => {
+      component.tracks = [
+        new Track({
+          entity_id: "track_digital",
+          name: "Digital Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: true,
+        }),
+      ];
+      component.editingRace.track_entity_id = "track_digital";
+
+      expect(component.hasDigitalFuel).toBeTrue();
+      expect(component.getAnalogFuelTooltip()).toBe(
+        "RE_ANALOG_FUEL_DISABLED_TOOLTIP",
+      );
+      expect(component.getDigitalFuelTooltip()).toBe("");
+    });
+
+    it("should return correct tooltip for analog and digital fuel when track is analog", () => {
+      component.tracks = [
+        new Track({
+          entity_id: "track_analog",
+          name: "Analog Track",
+          num_track_sections: 100,
+          lanes: [],
+          has_digital_fuel: false,
+        }),
+      ];
+      component.editingRace.track_entity_id = "track_analog";
+
+      expect(component.hasDigitalFuel).toBeFalse();
+      expect(component.getAnalogFuelTooltip()).toBe("");
+      expect(component.getDigitalFuelTooltip()).toBe(
+        "RE_DIGITAL_FUEL_DISABLED_TOOLTIP",
+      );
+    });
+
+    it("should render fuel disabled tooltip in template according to track type", fakeAsync(() => {
+      component.isLoading = false;
+      component.isEditMode = true;
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      Object.keys(component.sectionsExpanded).forEach((k) => {
+        (component.sectionsExpanded as any)[k] = true;
+      });
+      const track = component.tracks.find((t) => t.entity_id === "t1")!;
+      Object.defineProperty(track, "hasDigitalFuel", {
+        value: () => true,
+        configurable: true,
+      });
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      let analogTooltip = fixture.nativeElement.querySelector(
+        "#analog-fuel-disabled-tooltip",
+      );
+      let digitalTooltip = fixture.nativeElement.querySelector(
+        "#digital-fuel-disabled-tooltip",
+      );
+      expect(analogTooltip).toBeTruthy();
+      expect(analogTooltip.getAttribute("data-tooltip")).toBe(
+        "RE_ANALOG_FUEL_DISABLED_TOOLTIP",
+      );
+      expect(digitalTooltip).toBeNull();
+
+      Object.defineProperty(track, "hasDigitalFuel", {
+        value: () => false,
+        configurable: true,
+      });
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+
+      analogTooltip = fixture.nativeElement.querySelector(
+        "#analog-fuel-disabled-tooltip",
+      );
+      digitalTooltip = fixture.nativeElement.querySelector(
+        "#digital-fuel-disabled-tooltip",
+      );
+      expect(analogTooltip).toBeNull();
+      expect(digitalTooltip).toBeTruthy();
+      expect(digitalTooltip.getAttribute("data-tooltip")).toBe(
+        "RE_DIGITAL_FUEL_DISABLED_TOOLTIP",
+      );
+    }));
+
     it("should generate valid usage path for digital fuel", () => {
       component.editingRace.digital_fuel_options = {
         enabled: true,
@@ -687,9 +809,11 @@ describe("RaceEditorComponent", () => {
       component.editingRace.fuel_options = {
         enabled: true,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         capacity: 100,
-        reference_time: 6.0,
         custom_curve: [],
       } as any;
       component.editingRace.digital_fuel_options = {
@@ -743,8 +867,9 @@ describe("RaceEditorComponent", () => {
 
       const points = component.editingRace.fuel_options!.custom_curve;
       expect(points.length).toBe(5);
-      expect(points[0].y).toBeCloseTo(4.0, 1);
-      expect(points[2].y).toBeCloseTo(1.0, 1);
+      expect(points[0].y).toBeCloseTo(1.0, 1);
+      expect(points[2].y).toBeCloseTo(0.156, 2);
+      expect(points[4].y).toBeCloseTo(0.0, 1);
     });
 
     it("should reset digital custom curve to cubic preset on button click", () => {
@@ -766,6 +891,9 @@ describe("RaceEditorComponent", () => {
       expect(analogNodes.length).toBe(5);
       expect(analogNodes[0].svgX).toBe(0);
       expect(analogNodes[4].svgX).toBe(400);
+      // Node 0 (fastest lap) has higher fuel usage than Node 4 (slowest lap), so svgY is lower (higher up on graph)
+      expect(analogNodes[0].svgY).toBeLessThan(analogNodes[4].svgY);
+      expect(analogNodes[4].svgY).toBeLessThanOrEqual(150);
 
       component.onUsageTypeChange("digital", FuelUsageType.CUSTOM_CURVE);
       const digitalNodes = component.getDigitalControlNodes();
@@ -1044,7 +1172,7 @@ describe("RaceEditorComponent", () => {
     expect(component.isSaving).toBeFalse();
   }));
 
-  it("should propagate 'from' and 'returnUrl' when navigating back", fakeAsync(() => {
+  it("should navigate to returnUrl when navigating back", fakeAsync(() => {
     activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
       if (key === "from") return "modify-heats";
       if (key === "returnUrl") return "/default-raceday";
@@ -1058,21 +1186,13 @@ describe("RaceEditorComponent", () => {
     component.onBackClicked();
     tick();
 
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
-      queryParams: {
-        id: "r1",
-        driverCount: 12,
-        from: "modify-heats",
-        returnUrl: "/default-raceday",
-      },
-    });
+    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith("/default-raceday");
   }));
 
   it("should navigate to /raceday-setup with skipIntro when navigating back from raceday-setup", fakeAsync(() => {
     sessionStorage.clear();
     activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
       if (key === "from") return "raceday-setup";
-      if (key === "returnUrl") return "/raceday-setup";
       if (key === "id") return "r1";
       return null;
     });
@@ -1160,11 +1280,13 @@ describe("RaceEditorComponent", () => {
         out_of_fuel_action: "DO_NOT_COUNT_LAPS",
         capacity: 100,
         usage_type: FuelUsageType.LINEAR,
-        usage_rate: 4.0,
+        fastest_time: 3.0,
+        max_usage: 5.0,
+        slowest_time: 9.0,
+        min_usage: 3.0,
         start_level: 100,
         refuel_rate: 10,
         pit_stop_delay: 2.0,
-        reference_time: 6.0,
       },
       digital_fuel_options: {
         enabled: false,
@@ -1212,11 +1334,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
       }),
     );
@@ -1227,8 +1351,11 @@ describe("RaceEditorComponent", () => {
     tick(); // Handles setTimeout in loadRaces()
 
     expect(dataService.createRace).toHaveBeenCalled();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/race-manager"], {
-      queryParams: { id: "2", driverCount: 10, from: null, returnUrl: null },
+    expect(mockRouter.navigate).toHaveBeenCalledWith([], {
+      relativeTo: activatedRoute,
+      queryParams: { id: "2", driverCount: 10 },
+      queryParamsHandling: "merge",
+      replaceUrl: true,
     });
   }));
 
@@ -1340,6 +1467,38 @@ describe("RaceEditorComponent", () => {
       expect(component.sectionsExpanded.fuel_analog).toBeFalse();
       expect(component.sectionsExpanded.fuel_digital).toBeFalse();
     });
+
+    it("should collapse all sections and persist state on toggleAllSections(false)", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+
+      component.toggleAllSections(false);
+
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(
+        Object.values(component.sectionsExpanded).every((v) => !v),
+      ).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.stringMatching('"general":false'),
+      );
+    });
+
+    it("should expand all sections and persist state on toggleAllSections(true)", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+      component.toggleAllSections(false);
+      setItemSpy.calls.reset();
+
+      component.toggleAllSections(true);
+
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(
+        Object.values(component.sectionsExpanded).every(Boolean),
+      ).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.stringMatching('"general":true'),
+      );
+    });
   });
 
   describe("Driver Count Persistence", () => {
@@ -1449,11 +1608,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1503,11 +1664,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1554,11 +1717,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1600,11 +1765,13 @@ describe("RaceEditorComponent", () => {
           out_of_fuel_action: "DO_NOT_COUNT_LAPS",
           capacity: 100,
           usage_type: "LINEAR",
-          usage_rate: 4.0,
+          fastest_time: 3.0,
+          max_usage: 5.0,
+          slowest_time: 9.0,
+          min_usage: 3.0,
           start_level: 100,
           refuel_rate: 10,
           pit_stop_delay: 2.0,
-          reference_time: 6.0,
         },
         digital_fuel_options: { enabled: false },
         team_options: { require_pit_stop_change_driver: false },
@@ -1783,11 +1950,12 @@ describe("RaceEditorComponent", () => {
 
   describe("Heat Times Through and Reverse Heats", () => {
     beforeEach(fakeAsync(() => {
-      dataService.getRaces.and.returnValue(of(MOCK_RACES));
-      dataService.getTracks.and.returnValue(of(MOCK_TRACKS));
+      dataService.getRaces.and.returnValue(of(deepCopy(MOCK_RACES)));
+      dataService.getTracks.and.returnValue(of(deepCopy(MOCK_TRACKS)));
       dataService.previewHeats.and.returnValue(of({ heats: [] }));
-      component.ngOnInit();
+      fixture.detectChanges();
       tick();
+      component.isEditMode = true;
       fixture.detectChanges();
     }));
 
@@ -1859,6 +2027,30 @@ describe("RaceEditorComponent", () => {
       tick();
       expect(component.editingRace.heat_times_through).toBe(1);
     }));
+
+    it("should disable keyboard undo/redo in read-only mode, and enable in edit mode", () => {
+      const originalName = component.editingRace.name;
+      component.isEditMode = true;
+      component.editingRace.name = "Modified Race Name";
+      component.undoManager.captureState();
+      expect(component.undoManager.canUndo()).toBeTrue();
+
+      // Read-only mode: keydown is ignored
+      component.isEditMode = false;
+      const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+      component.onKeyDown(zEvent);
+      expect(component.editingRace.name).toBe("Modified Race Name");
+
+      // Edit mode: keydown executes undo
+      component.isEditMode = true;
+      component.onKeyDown(zEvent);
+      expect(component.editingRace.name).toBe(originalName);
+
+      // Edit mode: redo works via Ctrl+Y
+      const yEvent = new KeyboardEvent("keydown", { key: "y", ctrlKey: true });
+      component.onKeyDown(yEvent);
+      expect(component.editingRace.name).toBe("Modified Race Name");
+    });
 
     it("should include heatTimesThrough and reverseHeats in the payload", () => {
       component.editingRace.heat_times_through = 5;
@@ -2097,7 +2289,7 @@ describe("RaceEditorComponent", () => {
   describe("Guided Help", () => {
     it("should return complete guided help steps in expected order", () => {
       const steps = component.getHelpSteps();
-      expect(steps.length).toBe(80);
+      expect(steps.length).toBe(82);
       expect(steps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(steps[1].selector).toBe("#race-name-input");
       expect(steps[2].selector).toBe("#heat-rotation-select");
@@ -2148,38 +2340,40 @@ describe("RaceEditorComponent", () => {
       expect(steps[47].selector).toBe("#team-overall-time-limit-input");
       expect(steps[48].selector).toBe("#fuel-enabled-input");
       expect(steps[49].selector).toBe("#fuel-usage-type-select");
-      expect(steps[50].selector).toBe("#fuel-usage-rate-input");
-      expect(steps[51].selector).toBe("#fuel-reference-time-input");
-      expect(steps[52].selector).toBe("#fuel-capacity-input");
-      expect(steps[53].selector).toBe("#fuel-start-level-input");
-      expect(steps[54].selector).toBe("#fuel-refuel-rate-input");
-      expect(steps[55].selector).toBe("#fuel-pit-delay-input");
-      expect(steps[56].selector).toBe("#fuel-reset-at-start-input");
-      expect(steps[57].selector).toBe("#fuel-out-of-fuel-action-select");
-      expect(steps[58].selector).toBe("#digital-fuel-enabled-input");
-      expect(steps[59].selector).toBe("#digital-fuel-usage-type-select");
-      expect(steps[60].selector).toBe("#digital-fuel-usage-rate-input");
-      expect(steps[61].selector).toBe("#digital-fuel-capacity-input");
-      expect(steps[62].selector).toBe("#digital-fuel-start-level-input");
-      expect(steps[63].selector).toBe("#digital-fuel-refuel-rate-input");
-      expect(steps[64].selector).toBe("#digital-fuel-pit-delay-input");
-      expect(steps[65].selector).toBe("#digital-fuel-reset-at-start-input");
-      expect(steps[66].selector).toBe(
+      expect(steps[50].selector).toBe("#fuel-fastest-time-input");
+      expect(steps[51].selector).toBe("#fuel-slowest-time-input");
+      expect(steps[52].selector).toBe("#fuel-max-usage-input");
+      expect(steps[53].selector).toBe("#fuel-min-usage-input");
+      expect(steps[54].selector).toBe("#fuel-capacity-input");
+      expect(steps[55].selector).toBe("#fuel-start-level-input");
+      expect(steps[56].selector).toBe("#fuel-refuel-rate-input");
+      expect(steps[57].selector).toBe("#fuel-pit-delay-input");
+      expect(steps[58].selector).toBe("#fuel-reset-at-start-input");
+      expect(steps[59].selector).toBe("#fuel-out-of-fuel-action-select");
+      expect(steps[60].selector).toBe("#digital-fuel-enabled-input");
+      expect(steps[61].selector).toBe("#digital-fuel-usage-type-select");
+      expect(steps[62].selector).toBe("#digital-fuel-usage-rate-input");
+      expect(steps[63].selector).toBe("#digital-fuel-capacity-input");
+      expect(steps[64].selector).toBe("#digital-fuel-start-level-input");
+      expect(steps[65].selector).toBe("#digital-fuel-refuel-rate-input");
+      expect(steps[66].selector).toBe("#digital-fuel-pit-delay-input");
+      expect(steps[67].selector).toBe("#digital-fuel-reset-at-start-input");
+      expect(steps[68].selector).toBe(
         "#digital-fuel-out-of-fuel-action-select",
       );
-      expect(steps[67].selector).toBe("#season-position-points-section");
-      expect(steps[68].selector).toBe("#season-heat-position-points-section");
-      expect(steps[69].selector).toBe("#season-overall-carry-over-input");
-      expect(steps[70].selector).toBe("#season-overall-fastest-lap-input");
-      expect(steps[71].selector).toBe("#season-overall-fastest-lap-lane-input");
-      expect(steps[72].selector).toBe("#season-overall-most-laps-led-input");
-      expect(steps[73].selector).toBe("#season-overall-led-lap-input");
-      expect(steps[74].selector).toBe("#season-overall-one-bonus-input");
-      expect(steps[75].selector).toBe("#season-heat-carry-over-input");
-      expect(steps[76].selector).toBe("#season-heat-fastest-lap-input");
-      expect(steps[77].selector).toBe("#season-heat-most-laps-led-input");
-      expect(steps[78].selector).toBe("#season-heat-led-lap-input");
-      expect(steps[79].selector).toBe("#season-heat-one-bonus-input");
+      expect(steps[69].selector).toBe("#season-position-points-section");
+      expect(steps[70].selector).toBe("#season-heat-position-points-section");
+      expect(steps[71].selector).toBe("#season-overall-carry-over-input");
+      expect(steps[72].selector).toBe("#season-overall-fastest-lap-input");
+      expect(steps[73].selector).toBe("#season-overall-fastest-lap-lane-input");
+      expect(steps[74].selector).toBe("#season-overall-most-laps-led-input");
+      expect(steps[75].selector).toBe("#season-overall-led-lap-input");
+      expect(steps[76].selector).toBe("#season-overall-one-bonus-input");
+      expect(steps[77].selector).toBe("#season-heat-carry-over-input");
+      expect(steps[78].selector).toBe("#season-heat-fastest-lap-input");
+      expect(steps[79].selector).toBe("#season-heat-most-laps-led-input");
+      expect(steps[80].selector).toBe("#season-heat-led-lap-input");
+      expect(steps[81].selector).toBe("#season-heat-one-bonus-input");
     });
 
     it("should expand corresponding sections when executing onEnter hooks", () => {
@@ -2218,13 +2412,13 @@ describe("RaceEditorComponent", () => {
       steps[48].onEnter!();
       expect(component.sectionsExpanded.fuel_analog).toBeTrue();
 
-      steps[58].onEnter!();
+      steps[60].onEnter!();
       expect(component.sectionsExpanded.fuel_digital).toBeTrue();
 
-      steps[67].onEnter!();
+      steps[69].onEnter!();
       expect(component.sectionsExpanded.season_points).toBeTrue();
 
-      steps[69].onEnter!();
+      steps[71].onEnter!();
       expect(component.sectionsExpanded.season_points).toBeTrue();
     });
 
@@ -2235,7 +2429,7 @@ describe("RaceEditorComponent", () => {
       const calledSteps = (
         helpService.startGuide as jasmine.Spy
       ).calls.mostRecent().args[0];
-      expect(calledSteps.length).toBe(80);
+      expect(calledSteps.length).toBe(82);
       expect(calledSteps[0].title).toBe("RE_HELP_WELCOME_TITLE");
       expect(calledSteps[6].selector).toBe("#theme-select");
       expect(calledSteps[11].selector).toBe("#auto-advance-time-input");
@@ -2246,9 +2440,9 @@ describe("RaceEditorComponent", () => {
         "#team-pit-stop-change-driver-input",
       );
       expect(calledSteps[48].selector).toBe("#fuel-enabled-input");
-      expect(calledSteps[58].selector).toBe("#digital-fuel-enabled-input");
-      expect(calledSteps[67].selector).toBe("#season-position-points-section");
-      expect(calledSteps[69].selector).toBe("#season-overall-carry-over-input");
+      expect(calledSteps[60].selector).toBe("#digital-fuel-enabled-input");
+      expect(calledSteps[69].selector).toBe("#season-position-points-section");
+      expect(calledSteps[71].selector).toBe("#season-overall-carry-over-input");
     });
   });
 
@@ -2432,8 +2626,10 @@ describe("RaceEditorComponent", () => {
         fuel_options: {
           enabled: true,
           usage_type: FuelUsageType.LINEAR,
-          usage_rate: 5,
-          reference_time: 6,
+          fastest_time: 3.0,
+          max_usage: 6.25,
+          slowest_time: 9.0,
+          min_usage: 3.75,
           capacity: 100,
         },
         digital_fuel_options: {
@@ -2467,11 +2663,15 @@ describe("RaceEditorComponent", () => {
       expect(component.getFuelUsageTimeRange()).toBe("3s - 9s");
     });
 
-    it("should dynamically scale lap time ranges based on reference_time", () => {
-      component.editingRace.fuel_options!.reference_time = 15.0;
-      component.editingRace.fuel_options!.usage_rate = 10.0;
+    it("should dynamically scale lap time ranges based on fastest_time and slowest_time", () => {
+      component.editingRace.fuel_options!.fastest_time = 7.5;
+      component.editingRace.fuel_options!.max_usage = 40.0;
+      component.editingRace.fuel_options!.slowest_time = 22.5;
+      component.editingRace.fuel_options!.min_usage = 4.444444444444445;
       component.editingRace.fuel_options!.usage_type = FuelUsageType.QUADRATIC;
 
+      expect(component.getFuelUsageFastestTime()).toBe(7.5);
+      expect(component.getFuelUsageSlowestTime()).toBe(22.5);
       expect(component.getFuelUsageReferenceTime()).toBe(15.0);
       expect(component.getFuelUsageMinTime()).toBe(7.5);
       expect(component.getFuelUsageMaxTime()).toBe(22.5);
@@ -2606,6 +2806,180 @@ describe("RaceEditorComponent", () => {
       component.editingRace.digital_fuel_options!.usage_type =
         FuelUsageType.CUBIC;
       expect(component.getDigitalUsagePath()).toContain("M ");
+    });
+
+    it("should render all 3 standard models on analog fuel graphs simultaneously, highlighting the active type", () => {
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.LINEAR;
+      const usagePlots = component.getFuelUsagePlots();
+      expect(usagePlots.length).toBe(3);
+
+      const linearPlot = usagePlots.find((p) => p.type === "LINEAR");
+      const quadPlot = usagePlots.find((p) => p.type === "QUADRATIC");
+      const cubicPlot = usagePlots.find((p) => p.type === "CUBIC");
+
+      expect(linearPlot).toBeDefined();
+      expect(linearPlot?.isSelected).toBeTrue();
+      expect(linearPlot?.isVisible).toBeTrue();
+
+      expect(quadPlot).toBeDefined();
+      expect(quadPlot?.isSelected).toBeFalse();
+      expect(quadPlot?.isVisible).toBeTrue();
+
+      expect(cubicPlot).toBeDefined();
+      expect(cubicPlot?.isSelected).toBeFalse();
+      expect(cubicPlot?.isVisible).toBeTrue();
+
+      const pitPlots = component.getPitGraphPlots();
+      expect(pitPlots.length).toBe(3);
+      expect(pitPlots.find((p) => p.type === "LINEAR")?.isSelected).toBeTrue();
+      expect(
+        pitPlots.find((p) => p.type === "QUADRATIC")?.isSelected,
+      ).toBeFalse();
+      expect(component.getPitGraphPath()).toContain("M ");
+      expect(component.getPitGraphPath()).toContain(" L ");
+      expect(pitPlots[0].path).not.toBe("");
+      expect(pitPlots[0].path).toMatch(/^M\s+[\d.]+,150\.0/);
+    });
+
+    it("should display custom curve only when custom curve usage type is selected", () => {
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.LINEAR;
+      let usagePlots = component.getFuelUsagePlots();
+      expect(usagePlots.some((p) => p.type === "CUSTOM_CURVE")).toBeFalse();
+
+      component.editingRace.fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      usagePlots = component.getFuelUsagePlots();
+      expect(usagePlots.length).toBe(4);
+
+      const customPlot = usagePlots.find((p) => p.type === "CUSTOM_CURVE");
+      expect(customPlot).toBeDefined();
+      expect(customPlot?.isSelected).toBeTrue();
+      expect(customPlot?.isVisible).toBeTrue();
+
+      const linearPlot = usagePlots.find((p) => p.type === "LINEAR");
+      expect(linearPlot?.isSelected).toBeFalse();
+      expect(linearPlot?.isVisible).toBeTrue();
+
+      const pitPlots = component.getPitGraphPlots();
+      expect(pitPlots.length).toBe(4);
+      expect(
+        pitPlots.find((p) => p.type === "CUSTOM_CURVE")?.isSelected,
+      ).toBeTrue();
+    });
+
+    it("should support digital multi-curve fuel plots and highlighting", () => {
+      component.editingRace.digital_fuel_options!.usage_type =
+        FuelUsageType.QUADRATIC;
+
+      const dUsagePlots = component.getDigitalUsagePlots();
+      expect(dUsagePlots.length).toBe(3);
+      expect(
+        dUsagePlots.find((p) => p.type === "QUADRATIC")?.isSelected,
+      ).toBeTrue();
+      expect(
+        dUsagePlots.find((p) => p.type === "LINEAR")?.isSelected,
+      ).toBeFalse();
+      expect(dUsagePlots.some((p) => p.type === "CUSTOM_CURVE")).toBeFalse();
+
+      const dPitPlots = component.getDigitalPitPlots();
+      expect(dPitPlots.length).toBe(3);
+      expect(
+        dPitPlots.find((p) => p.type === "QUADRATIC")?.isSelected,
+      ).toBeTrue();
+
+      component.editingRace.digital_fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      const dCustomPlots = component.getDigitalUsagePlots();
+      expect(dCustomPlots.length).toBe(4);
+      expect(
+        dCustomPlots.find((p) => p.type === "CUSTOM_CURVE")?.isSelected,
+      ).toBeTrue();
+    });
+
+    it("should toggle curve visibility and dynamically rescale axes", () => {
+      component.editingRace.fuel_options!.usage_type =
+        FuelUsageType.CUSTOM_CURVE;
+      component.editingRace.fuel_options!.custom_curve = [
+        { x: 0, y: 2.0 },
+        { x: 1, y: 0.0 },
+      ];
+
+      expect(
+        component.isPlotHidden("analog_usage", FuelUsageType.CUSTOM_CURVE),
+      ).toBeFalse();
+
+      const initialYLabels = component.getFuelUsageYLabels();
+
+      component.togglePlotVisibility(
+        "analog_usage",
+        FuelUsageType.CUSTOM_CURVE,
+      );
+      expect(
+        component.isPlotHidden("analog_usage", FuelUsageType.CUSTOM_CURVE),
+      ).toBeTrue();
+
+      const plotsAfterHide = component.getFuelUsagePlots();
+      const customPlot = plotsAfterHide.find(
+        (p) => p.type === FuelUsageType.CUSTOM_CURVE,
+      );
+      expect(customPlot?.isVisible).toBeFalse();
+
+      const yLabelsAfterHide = component.getFuelUsageYLabels();
+      expect(yLabelsAfterHide).not.toEqual(initialYLabels);
+
+      component.togglePlotVisibility(
+        "analog_usage",
+        FuelUsageType.CUSTOM_CURVE,
+      );
+      expect(
+        component.isPlotHidden("analog_usage", FuelUsageType.CUSTOM_CURVE),
+      ).toBeFalse();
+      expect(
+        component
+          .getFuelUsagePlots()
+          .find((p) => p.type === FuelUsageType.CUSTOM_CURVE)?.isVisible,
+      ).toBeTrue();
+    });
+
+    it("should automatically unhide curve when user selects that usage type", () => {
+      component.togglePlotVisibility("analog_usage", "QUADRATIC");
+      expect(component.isPlotHidden("analog_usage", "QUADRATIC")).toBeTrue();
+
+      component.onUsageTypeChange("analog", FuelUsageType.QUADRATIC);
+      expect(component.isPlotHidden("analog_usage", "QUADRATIC")).toBeFalse();
+    });
+
+    it("should populate comparative multi-curve hover points for analog and digital graphs", () => {
+      component.editingRace.fuel_options!.usage_type = FuelUsageType.LINEAR;
+
+      const mockSvg = {
+        getBoundingClientRect: () => ({
+          left: 0,
+          top: 0,
+          width: 400,
+          height: 150,
+        }),
+      };
+      const mouseEvent = {
+        currentTarget: mockSvg,
+        clientX: 200,
+        clientY: 75,
+      } as any;
+
+      component.onGraphMouseMove(mouseEvent, "usage");
+      expect(component.hoveredPoint).toBeTruthy();
+      expect(component.hoveredPoint?.curvePoints).toBeDefined();
+      expect(component.hoveredPoint?.curvePoints?.length).toBe(3);
+
+      const activePoint = component.hoveredPoint?.curvePoints?.find(
+        (cp) => cp.isSelected,
+      );
+      expect(activePoint).toBeDefined();
+      expect(activePoint?.type).toBe(FuelUsageType.LINEAR);
+
+      component.onDigitalGraphMouseMove(mouseEvent, "usage");
+      expect(component.hoveredPoint).toBeTruthy();
+      expect(component.hoveredPoint?.curvePoints?.length).toBe(3);
     });
 
     it("should validate CustomRoundRobin and Custom rotation configs", () => {
@@ -2896,5 +3270,237 @@ describe("RaceEditorComponent", () => {
         "theme_a",
       ]);
     }));
+
+    it("should set defaultRaceName and focus name input when isNew is true", fakeAsync(() => {
+      activatedRoute.snapshot.queryParamMap.get.and.callFake((key: string) => {
+        if (key === "id") return "r1";
+        if (key === "isNew") return "true";
+        return null;
+      });
+      dataService.getRaces.and.returnValue(of(MOCK_RACE_INSTANCES));
+      spyOn(component, "focusNameInput").and.callThrough();
+
+      component.loadRace("r1");
+      tick(200);
+
+      expect(component.defaultRaceName).toBe(MOCK_RACE_INSTANCES[0].name);
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    it("should update defaultRaceName and focus name input on saveAsNew", fakeAsync(() => {
+      spyOn(component, "focusNameInput").and.callThrough();
+      component.editingRace = { ...MOCK_RACE_INSTANCES[0] };
+      dataService.createRace.and.returnValue(
+        of({
+          ...MOCK_RACE_INSTANCES[0],
+          entity_id: "new_race_id",
+          name: "Race 1_1",
+        }),
+      );
+
+      component.saveAsNew();
+      tick(200);
+
+      expect(component.isEditMode).toBeTrue();
+      expect(component.defaultRaceName).toBe("Race 1_1");
+      expect(component.focusNameInput).toHaveBeenCalled();
+    }));
+
+    describe("Unified Editor & Read-Only Expander tests", () => {
+      it("should sort and populate raceSelectItems via updateRaceSelectItems", () => {
+        component.allRaces = [
+          { entity_id: "r2", name: "Race 10" },
+          { entity_id: "r1", name: "Race 2" },
+          { entity_id: "r3", name: "Race 1" },
+        ];
+        component.updateRaceSelectItems();
+        expect(component.raceSelectItems).toEqual([
+          { id: "r3", name: "Race 1" },
+          { id: "r1", name: "Race 2" },
+          { id: "r2", name: "Race 10" },
+        ]);
+      });
+
+      it("should switch race on onSelectRaceById when not in edit mode", fakeAsync(() => {
+        component.allRaces = [
+          { entity_id: "r1", name: "Race 1" },
+          { entity_id: "r2", name: "Race 2" },
+        ];
+        component.isEditMode = false;
+        spyOn(component, "selectRace").and.callThrough();
+        dataService.getRaces.and.returnValue(of(component.allRaces));
+
+        component.onSelectRaceById("r2");
+        tick();
+
+        expect(component.selectRace).toHaveBeenCalledWith(
+          component.allRaces[1],
+        );
+        expect(mockRouter.navigate).toHaveBeenCalledWith(
+          [],
+          jasmine.objectContaining({
+            queryParams: { id: "r2" },
+          }),
+        );
+      }));
+
+      it("should ignore onSelectRaceById when in edit mode", () => {
+        component.allRaces = [
+          { entity_id: "r1", name: "Race 1" },
+          { entity_id: "r2", name: "Race 2" },
+        ];
+        component.isEditMode = true;
+        spyOn(component, "selectRace");
+
+        component.onSelectRaceById("r2");
+        expect(component.selectRace).not.toHaveBeenCalled();
+      });
+
+      it("should toggle edit mode and focus name input when entering edit mode", () => {
+        component.isEditMode = false;
+        spyOn(component, "focusNameInput");
+
+        component.onToggleEditMode();
+        expect(component.isEditMode).toBeTrue();
+        expect(component.focusNameInput).toHaveBeenCalled();
+      });
+
+      it("should exit edit mode without updating if not dirty", () => {
+        component.isEditMode = true;
+        spyOn(component, "isDirtyState").and.returnValue(false);
+        spyOn(component, "updateRace");
+
+        component.onToggleEditMode();
+        expect(component.isEditMode).toBeFalse();
+        expect(component.updateRace).not.toHaveBeenCalled();
+      });
+
+      it("should call updateRace when toggling edit mode off while dirty", () => {
+        component.isEditMode = true;
+        spyOn(component, "isDirtyState").and.returnValue(true);
+        spyOn(component, "isConfigValid").and.returnValue(true);
+        spyOn(component, "updateRace");
+
+        component.onToggleEditMode();
+        expect(component.updateRace).toHaveBeenCalledWith(false);
+      });
+
+      it("should revert to original race and exit edit mode on confirm discard", () => {
+        const orig = { entity_id: "r1", name: "Original Race" };
+        component.originalRace = orig;
+        component.editingRace = { entity_id: "r1", name: "Modified Race" };
+        component.isEditMode = true;
+        spyOn(component, "selectRace").and.callThrough();
+
+        component.onConfirmDiscard();
+        expect(component.showDiscardConfirm).toBeFalse();
+        expect(component.selectRace).toHaveBeenCalledWith(orig);
+        expect(component.isEditMode).toBeFalse();
+      });
+
+      it("should delete race when confirmed and select remaining race", fakeAsync(() => {
+        component.allRaces = [
+          { entity_id: "r1", name: "Race 1" },
+          { entity_id: "r2", name: "Race 2" },
+        ];
+        component.editingRace = { ...component.allRaces[0] };
+        spyOn(window, "confirm").and.returnValue(true);
+        dataService.deleteRace.and.returnValue(of(null));
+        spyOn(component, "selectRace").and.callThrough();
+
+        component.onDeleteRace();
+        tick();
+
+        expect(dataService.deleteRace).toHaveBeenCalledWith("r1");
+        expect(component.allRaces.length).toBe(1);
+        expect(component.selectRace).toHaveBeenCalledWith(
+          jasmine.objectContaining({ entity_id: "r2" }),
+        );
+        expect(component.isEditMode).toBeFalse();
+      }));
+
+      it("should allow expanders to toggle in read-only mode", () => {
+        component.isEditMode = false;
+        component.sectionsExpanded.general = true;
+
+        component.toggleSection("general");
+        expect(component.sectionsExpanded.general).toBeFalse();
+
+        component.toggleSection("general");
+        expect(component.sectionsExpanded.general).toBeTrue();
+      });
+
+      it("should start new race and create via dataService when onAddNewRace is called", () => {
+        mockTranslationService.translate.and.callFake((key: string) => {
+          if (key === "RM_DEFAULT_RACE_NAME") return "New Race";
+          return key;
+        });
+        component.isEditMode = false;
+        spyOn(component, "startNewRace").and.callThrough();
+        dataService.createRace.and.returnValue(
+          of({
+            entity_id: "new-race-id",
+            name: "New Race",
+            theme_id: "theme1",
+          }),
+        );
+
+        component.onAddNewRace();
+        expect(component.startNewRace).toHaveBeenCalled();
+        expect(dataService.createRace).toHaveBeenCalled();
+        expect(component.isEditMode).toBeTrue();
+        expect(component.editingRace?.entity_id).toBe("new-race-id");
+        expect(component.defaultRaceName).toBe("New Race");
+      });
+
+      it("should have all checkbox inputs disabled in read-only mode", fakeAsync(() => {
+        component.isEditMode = false;
+        Object.keys(component.sectionsExpanded).forEach((k) => {
+          (component.sectionsExpanded as any)[k] = true;
+        });
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        const checkboxes = fixture.nativeElement.querySelectorAll(
+          'input[type="checkbox"]',
+        );
+        expect(checkboxes.length).toBeGreaterThan(0);
+        checkboxes.forEach((cb: HTMLInputElement) => {
+          expect(cb.disabled).withContext(cb.outerHTML).toBeTrue();
+        });
+      }));
+
+      it("should have checkbox inputs enabled in edit mode", fakeAsync(() => {
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        component.isEditMode = true;
+        Object.keys(component.sectionsExpanded).forEach((k) => {
+          (component.sectionsExpanded as any)[k] = true;
+        });
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        expect(component.isEditMode).toBeTrue();
+        const practiceCb = fixture.nativeElement.querySelector(
+          "input.practice-input",
+        ) as HTMLInputElement;
+        const driftCb = fixture.nativeElement.querySelector(
+          "input.adjust-drift-laps-input",
+        ) as HTMLInputElement;
+        const reverseCb = fixture.nativeElement.querySelector(
+          "input.reverse-heats-input",
+        ) as HTMLInputElement;
+        expect(practiceCb).toBeTruthy();
+        expect(practiceCb.disabled).toBeFalse();
+        expect(driftCb).toBeTruthy();
+        expect(driftCb.disabled).toBeFalse();
+        expect(reverseCb).toBeTruthy();
+        expect(reverseCb.disabled).toBeFalse();
+      }));
+    });
   });
 });

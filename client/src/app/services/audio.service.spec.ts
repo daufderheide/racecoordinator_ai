@@ -745,4 +745,70 @@ describe("AudioService", () => {
       page2Service.ngOnDestroy();
     });
   });
+
+  describe("Sequential Callout Queueing", () => {
+    it("should play immediately if channel is idle and not cooling down", () => {
+      const config: AudioConfig = { type: "preset", url: "callout1.wav" };
+      const res = service.queueCallout(config, "normal");
+      expect(res).toBeTrue();
+      expect(service.getActiveVoice()).not.toBeNull();
+      expect(service.getCalloutQueue().length).toBe(0);
+    });
+
+    it("should enqueue callout when channel is actively speaking", () => {
+      const callout1: AudioConfig = { type: "preset", url: "callout1.wav" };
+      const callout2: AudioConfig = { type: "preset", url: "callout2.wav" };
+
+      service.playCallout(callout1, "normal");
+      const res = service.queueCallout(callout2, "normal");
+
+      expect(res).toBeTrue();
+      expect(service.getCalloutQueue().length).toBe(1);
+      expect(service.getCalloutQueue()[0].config.url).toBe("callout2.wav");
+    });
+
+    it("should play queued callout after active callout ends and cadence spacing cooldown completes", fakeAsync(() => {
+      const callout1: AudioConfig = { type: "preset", url: "callout1.wav" };
+      const callout2: AudioConfig = { type: "preset", url: "callout2.wav" };
+
+      service.playCallout(callout1, "normal");
+      service.queueCallout(callout2, "normal");
+      expect(service.getCalloutQueue().length).toBe(1);
+
+      // Finish callout1
+      mockAudioInstance.onended();
+      expect(service.isCoolingDown()).toBeTrue();
+      expect(service.getActiveVoice()).toBeNull();
+
+      // Cadence pause completes (default 500ms)
+      tick(500);
+      expect(service.isCoolingDown()).toBeFalse();
+      expect(service.getActiveVoice()).not.toBeNull();
+      expect(service.getCalloutQueue().length).toBe(0);
+
+      // Finish callout2
+      mockAudioInstance.onended();
+      tick(500);
+      expect(service.getActiveVoice()).toBeNull();
+    }));
+
+    it("should clear calloutQueue on stopVoice and reset", () => {
+      const callout1: AudioConfig = { type: "preset", url: "callout1.wav" };
+      const callout2: AudioConfig = { type: "preset", url: "callout2.wav" };
+
+      service.playCallout(callout1, "normal");
+      service.queueCallout(callout2, "normal");
+      expect(service.getCalloutQueue().length).toBe(1);
+
+      service.stopVoice();
+      expect(service.getCalloutQueue().length).toBe(0);
+
+      service.playCallout(callout1, "normal");
+      service.queueCallout(callout2, "normal");
+      expect(service.getCalloutQueue().length).toBe(1);
+
+      service.reset();
+      expect(service.getCalloutQueue().length).toBe(0);
+    });
+  });
 });

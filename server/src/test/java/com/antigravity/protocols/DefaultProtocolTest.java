@@ -130,8 +130,16 @@ public class DefaultProtocolTest {
     @Override
     public void onSegment(int lane, double segmentTime, int interfaceId, int interfaceIndex) {}
 
+    int callButtonCount = 0;
+    int lastCallButtonLane = -99;
+    int lastCallButtonInterfaceIndex = -1;
+
     @Override
-    public void onCallbutton(int lane, int interfaceIndex) {}
+    public void onCallbutton(int lane, int interfaceIndex) {
+      callButtonCount++;
+      lastCallButtonLane = lane;
+      lastCallButtonInterfaceIndex = interfaceIndex;
+    }
 
     @Override
     public void onInterfaceStatus(InterfaceStatus status, int interfaceIndex) {
@@ -361,5 +369,129 @@ public class DefaultProtocolTest {
     } finally {
       ses.shutdownNow();
     }
+  }
+
+  @Test
+  public void testHandleCallButton_InitialPress_TriggersListener() {
+    protocol.handleCallButton(-1, 1, 12);
+    assertEquals(0, listener.callButtonCount);
+
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+    assertEquals(-1, listener.lastCallButtonLane);
+    assertEquals(5, listener.lastCallButtonInterfaceIndex);
+  }
+
+  @Test
+  public void testHandleCallButton_RapidBounce_IsDebounced() {
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // Bounce open 18ms later
+    protocol.advanceTime(18);
+    protocol.handleCallButton(-1, 1, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // Bounce closed 1ms later (within 250ms debounce window)
+    protocol.advanceTime(1);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // User releases switch 150ms later
+    protocol.advanceTime(150);
+    protocol.handleCallButton(-1, 1, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // Release bounce back to 0 within 250ms of initial trigger
+    protocol.advanceTime(5);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+  }
+
+  @Test
+  public void testHandleCallButton_PressAfterDebounceWindow_TriggersListener() {
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    protocol.advanceTime(150);
+    protocol.handleCallButton(-1, 1, 12);
+
+    // Advance beyond the 250ms debounce window (150ms + 150ms = 300ms since initial trigger)
+    protocol.advanceTime(150);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(2, listener.callButtonCount);
+  }
+
+  @Test
+  public void testHandleCallButton_IndependentInterfacesDebouncedSeparately() {
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(1, 1, 13);
+
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // Different interface ID triggers immediately
+    protocol.handleCallButton(1, 0, 13);
+    assertEquals(2, listener.callButtonCount);
+    assertEquals(1, listener.lastCallButtonLane);
+
+    // Interface 12 bouncing 15ms later is debounced
+    protocol.advanceTime(15);
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(2, listener.callButtonCount);
+  }
+
+  @Test
+  public void testHandleCallButton_CustomDebounceInterval() {
+    protocol.setCallButtonDebounceMs(500);
+    assertEquals(500, protocol.getCallButtonDebounceMs());
+
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // 300ms later is now within the 500ms window
+    protocol.advanceTime(300);
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    // Release switch
+    protocol.handleCallButton(-1, 1, 12);
+    // 250ms later (total 550ms since initial trigger) exceeds 500ms debounce
+    protocol.advanceTime(250);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(2, listener.callButtonCount);
+  }
+
+  @Test
+  public void testHandleCallButton_ZeroDebounceAllowsImmediateTriggers() {
+    protocol.setCallButtonDebounceMs(0);
+    assertEquals(0, protocol.getCallButtonDebounceMs());
+
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(2, listener.callButtonCount);
+  }
+
+  @Test
+  public void testInitializeHardwareState_ClearsDebounceTimestamps() {
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(1, listener.callButtonCount);
+
+    protocol.initializeHardwareState();
+
+    // After reset, immediate transition triggers again without waiting for debounce window
+    protocol.handleCallButton(-1, 1, 12);
+    protocol.handleCallButton(-1, 0, 12);
+    assertEquals(2, listener.callButtonCount);
   }
 }

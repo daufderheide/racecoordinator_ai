@@ -146,8 +146,12 @@ describe("RacedaySetupComponent", () => {
       "skipUpdate",
       "cancelUpdate",
       "snoozeUpdate",
+      "getUpdateProgress",
     ]);
     mockUpdateService.snoozeUpdate.and.returnValue(of("OK"));
+    mockUpdateService.getUpdateProgress.and.returnValue(
+      of({ progress: 0, status: "" }),
+    );
     mockUpdateService.checkForUpdates.and.returnValue(
       of({
         updateAvailable: false,
@@ -257,7 +261,7 @@ describe("RacedaySetupComponent", () => {
     });
 
     it("should bypass splash screen if returning from a non-race screen", fakeAsync(() => {
-      mockNavigationService.getPreviousUrl.and.returnValue("/driver-manager");
+      mockNavigationService.getPreviousUrl.and.returnValue("/driver-editor");
       component.ngOnInit();
       tick(100);
       expect(component.showSplash).toBeFalse();
@@ -771,6 +775,220 @@ describe("RacedaySetupComponent", () => {
       );
       expect(component.isUpdating).toBeTrue();
     });
+
+    it("should transition to RDS_UPDATE_STATUS_CONFIRM_PROMPT and trigger reload when update completes", fakeAsync(() => {
+      component.updateResult = {
+        updateAvailable: true,
+        latestVersion: "v1.2.3",
+        releaseNotes: "",
+        downloadUrl: "http://example.com/dl",
+        releaseUrl: "http://example.com/release",
+        isWindows: true,
+      };
+
+      const reloadSpy = jasmine.createSpy("reloadApp");
+      component.reloadApp = reloadSpy;
+
+      mockUpdateService.installUpdate.and.returnValue(of(true));
+      mockUpdateService.getUpdateProgress.and.returnValue(
+        of({ progress: 100, status: "RDS_UPDATE_STATUS_LAUNCHING" }),
+      );
+      mockDataService.getServerVersion.and.returnValue(of("v1.2.3"));
+
+      component.installUpdate();
+      tick(100);
+
+      expect(component.updateProgress?.status).toBe(
+        "RDS_UPDATE_STATUS_CONFIRM_PROMPT",
+      );
+      expect(component.updateProgress?.progress).toBe(100);
+
+      tick(3000);
+
+      expect(mockDataService.getServerVersion).toHaveBeenCalled();
+      expect(component.updateProgress?.status).toBe(
+        "RDS_UPDATE_STATUS_RESTARTING",
+      );
+      expect(reloadSpy).toHaveBeenCalled();
+    }));
+
+    it("should not reload if server returns pre-update version and has not gone offline", fakeAsync(() => {
+      const reloadSpy = jasmine.createSpy("reloadApp");
+      component.reloadApp = reloadSpy;
+      component.targetUpdateVersion = "v1.2.3";
+      component.preUpdateServerVersion = "v1.0.0";
+
+      // Server is still running the old version v1.0.0
+      mockDataService.getServerVersion.and.returnValue(of("v1.0.0"));
+
+      component.waitForServerRestartAndReload(1000, 1000);
+
+      tick(1000);
+      expect(reloadSpy).not.toHaveBeenCalled();
+
+      tick(2000);
+      expect(reloadSpy).not.toHaveBeenCalled();
+
+      if (component.restartPollSubscription) {
+        component.restartPollSubscription.unsubscribe();
+      }
+    }));
+
+    it("should reload when server returns after being offline", fakeAsync(() => {
+      const reloadSpy = jasmine.createSpy("reloadApp");
+      component.reloadApp = reloadSpy;
+      component.isUpdating = true;
+      component.targetUpdateVersion = "v1.2.3";
+      component.preUpdateServerVersion = "v1.0.0";
+
+      let callCount = 0;
+      mockDataService.getServerVersion.and.callFake(() => {
+        callCount++;
+        if (callCount === 1) {
+          return throwError(() => new Error("Server offline"));
+        }
+        return of("v1.2.3");
+      });
+
+      component.waitForServerRestartAndReload(1000, 1000);
+
+      tick(1000); // call 1: offline
+      expect(component.updateProgress?.status).toBe(
+        "RDS_UPDATE_STATUS_INSTALLING",
+      );
+      expect(reloadSpy).not.toHaveBeenCalled();
+
+      tick(1000); // call 2: comes back online with new version
+      expect(reloadSpy).toHaveBeenCalled();
+    }));
+
+    it("should suppress connection loss overlay and splash reset when isUpdating is true", () => {
+      component.isUpdating = true;
+      component.updateProgress = {
+        progress: 100,
+        status: "RDS_UPDATE_STATUS_CONFIRM_PROMPT",
+      };
+
+      component.handleConnectionLoss();
+
+      expect(component.isConnectionLost).toBeFalse();
+      expect(component.updateProgress.status).toBe(
+        "RDS_UPDATE_STATUS_INSTALLING",
+      );
+    });
+
+    it("should recover pending update session from sessionStorage", () => {
+      const spyRestart = spyOn(component, "startRestartWatcher");
+      spyOn(window.sessionStorage, "getItem").and.returnValue(
+        JSON.stringify({
+          targetVersion: "v2.0.0",
+          initialVersion: "v1.0.0",
+          timestamp: Date.now(),
+        }),
+      );
+
+      component.checkPendingUpdateSession();
+
+      expect(component.isUpdating).toBeTrue();
+      expect(component.targetUpdateVersion).toBe("v2.0.0");
+      expect(component.updateProgress?.status).toBe(
+        "RDS_UPDATE_STATUS_INSTALLING",
+      );
+      expect(spyRestart).toHaveBeenCalled();
+    });
+
+    it("should return correct subtext and indeterminate progress flag", () => {
+      component.isUpdating = true;
+
+      component.updateProgress = {
+        progress: 100,
+        status: "RDS_UPDATE_STATUS_CONFIRM_PROMPT",
+      };
+      expect(component.updateSubtext).toBe("RDS_UPDATE_CONFIRM_PROMPT_INFO");
+      expect(component.isIndeterminateProgress).toBeTrue();
+      expect(component.showCancelInUpdate).toBeTrue();
+
+      component.updateProgress = {
+        progress: 100,
+        status: "RDS_UPDATE_STATUS_INSTALLING",
+      };
+      expect(component.updateSubtext).toBe("RDS_UPDATE_INSTALLING_INFO");
+      expect(component.isIndeterminateProgress).toBeTrue();
+      expect(component.showCancelInUpdate).toBeFalse();
+
+      component.updateProgress = {
+        progress: 50,
+        status: "RDS_UPDATE_STATUS_DOWNLOADING",
+      };
+      expect(component.updateSubtext).toBeNull();
+      expect(component.isIndeterminateProgress).toBeFalse();
+      expect(component.showCancelInUpdate).toBeTrue();
+    });
+
+    it("should handle timeout when server never shuts down during update", fakeAsync(() => {
+      component.isUpdating = true;
+      component.targetUpdateVersion = "v1.2.3";
+      component.preUpdateServerVersion = "v1.0.0";
+      mockDataService.getServerVersion.and.returnValue(of("v1.0.0"));
+
+      component.waitForServerRestartAndReload(1000, 1000);
+
+      // Advance past the 90-second timeout
+      tick(95000);
+
+      expect(component.updateTimedOut).toBeTrue();
+      expect(component.updateTitleTextKey).toBe("RDS_UPDATE_STATUS_TIMEOUT");
+    }));
+
+    it("should call updateService.cancelUpdate and clean up state when cancelUpdate is called", () => {
+      component.isUpdating = true;
+      component.updateProgress = {
+        progress: 50,
+        status: "RDS_UPDATE_STATUS_DOWNLOADING",
+      };
+      mockUpdateService.cancelUpdate.and.returnValue(of(true));
+
+      component.cancelUpdate();
+
+      expect(mockUpdateService.cancelUpdate).toHaveBeenCalled();
+      expect(component.isUpdating).toBeFalse();
+      expect(component.updateProgress).toBeNull();
+    });
+
+    it("should clean up update state and force check for updates when retryUpdate is called", () => {
+      const cleanupSpy = spyOn(
+        component,
+        "cleanupUpdateState",
+      ).and.callThrough();
+      const checkSpy = spyOn(component, "checkForUpdates");
+
+      component.retryUpdate();
+
+      expect(cleanupSpy).toHaveBeenCalled();
+      expect(checkSpy).toHaveBeenCalledWith(true);
+    });
+
+    it("should retry polling if server returns error during restart", fakeAsync(() => {
+      const reloadSpy = jasmine.createSpy("reloadApp");
+      component.reloadApp = reloadSpy;
+
+      let callCount = 0;
+      mockDataService.getServerVersion.and.callFake(() => {
+        callCount++;
+        if (callCount === 1) {
+          return throwError(() => new Error("Server offline"));
+        }
+        return of("v1.2.3");
+      });
+
+      component.waitForServerRestartAndReload(1000, 1000);
+
+      tick(1000);
+      expect(reloadSpy).not.toHaveBeenCalled();
+
+      tick(1000);
+      expect(reloadSpy).toHaveBeenCalled();
+    }));
 
     it("should call updateService.skipUpdate and clear result when skipVersion is called", () => {
       component.updateResult = {

@@ -3,11 +3,16 @@ import {
   ChangeDetectorRef,
   Component,
   computed,
+  HostListener,
   input,
   output,
   ViewChild,
 } from "@angular/core";
 import { BrowserNavigationComponent } from "@app/components/shared/browser-navigation/browser-navigation.component";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { ToolbarComponent } from "@app/components/shared/toolbar/toolbar.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
 import { Settings } from "@app/models/settings";
@@ -19,7 +24,13 @@ import { GuideStep } from "@app/services/help.service";
   selector: "app-editor-title",
   templateUrl: "./editor-title.component.html",
   styleUrls: ["./editor-title.component.css"],
-  imports: [ToolbarComponent, TranslatePipe, BrowserNavigationComponent],
+  imports: [
+    ToolbarComponent,
+    TranslatePipe,
+    BrowserNavigationComponent,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class EditorTitleComponent implements AfterViewChecked {
   @ViewChild(ToolbarComponent) toolbar!: ToolbarComponent;
@@ -29,6 +40,13 @@ export class EditorTitleComponent implements AfterViewChecked {
     const name = this.itemName();
     return name && name.trim() ? name.trim() : "";
   });
+  items = input<{ id: string; name: string }[]>([]);
+  selectedId = input<string | undefined>(undefined);
+  isEditMode = input(false);
+  showEdit = input(false);
+  disabledEdit = input(false);
+  showExpandCollapse = input(false);
+  allExpanded = input(false);
   undoManager = input<UndoManager<any>>();
   showUndo = input(true);
   showRedo = input(true);
@@ -38,6 +56,7 @@ export class EditorTitleComponent implements AfterViewChecked {
   copyDisabledTooltipKey = input("");
   showAdd = input(false);
   showDelete = input(false);
+  disabledDelete = input(false);
   showRegenerate = input(false);
   disabledRegenerate = input(false);
   showLaneCheck = input(false);
@@ -74,12 +93,111 @@ export class EditorTitleComponent implements AfterViewChecked {
   importRc1 = output<void>();
   export = output<void>();
   zoomLevelChange = output<number>();
+  selectedIdChange = output<string>();
+  edit = output<void>();
+  expandCollapse = output<void>();
+
+  currentIndex = computed(() => {
+    const currentId = this.selectedId();
+    const list = this.items();
+    if (!currentId || !list || list.length === 0) return -1;
+    return list.findIndex((i) => i.id === currentId);
+  });
+
+  hasPrevious = computed(() => {
+    return this.currentIndex() > 0;
+  });
+
+  hasNext = computed(() => {
+    const idx = this.currentIndex();
+    return idx >= 0 && idx < this.items().length - 1;
+  });
 
   constructor(private cdr: ChangeDetectorRef) {}
 
   ngAfterViewChecked() {
     // This can help with NG0100 when translations load late
     this.cdr.detectChanges();
+  }
+
+  onEdit() {
+    this.edit.emit();
+  }
+
+  onSelectionChange(id: string) {
+    this.selectedIdChange.emit(id);
+  }
+
+  selectPrevious() {
+    if (this.isEditMode() || !this.hasPrevious()) return;
+    const prevItem = this.items()[this.currentIndex() - 1];
+    if (prevItem) {
+      this.onSelectionChange(prevItem.id);
+    }
+  }
+
+  selectNext() {
+    if (this.isEditMode() || !this.hasNext()) return;
+    const nextItem = this.items()[this.currentIndex() + 1];
+    if (nextItem) {
+      this.onSelectionChange(nextItem.id);
+    }
+  }
+
+  onExpandCollapse() {
+    this.expandCollapse.emit();
+  }
+
+  @HostListener("window:keydown", ["$event"])
+  handleKeyDown(event: KeyboardEvent) {
+    if (this.isEditMode()) return;
+
+    // Suppress if focus is in an input or editable field
+    const activeEl = document.activeElement;
+    if (
+      activeEl &&
+      (activeEl.tagName === "INPUT" ||
+        activeEl.tagName === "TEXTAREA" ||
+        activeEl.tagName === "SELECT" ||
+        (activeEl as HTMLElement).isContentEditable)
+    ) {
+      return;
+    }
+
+    // Suppress if any modal dialog is open
+    if (document.querySelector(".modal-backdrop")) {
+      return;
+    }
+
+    // Never interfere with system shortcuts (Cmd/Ctrl)
+    if (event.metaKey || event.ctrlKey) return;
+
+    const key = event.key.toLowerCase();
+
+    // Next Object: ArrowRight, ], e
+    if (event.key === "ArrowRight" || event.key === "]" || key === "e") {
+      if (this.hasNext()) {
+        event.preventDefault();
+        this.selectNext();
+      }
+      return;
+    }
+
+    // Previous Object: ArrowLeft, [, q
+    if (event.key === "ArrowLeft" || event.key === "[" || key === "q") {
+      if (this.hasPrevious()) {
+        event.preventDefault();
+        this.selectPrevious();
+      }
+      return;
+    }
+
+    // Toggle Expand/Collapse All: x
+    if (key === "x" && this.showExpandCollapse()) {
+      event.preventDefault();
+      this.onExpandCollapse();
+      return;
+    }
   }
 
   onHelp() {

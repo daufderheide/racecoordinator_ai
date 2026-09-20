@@ -17,6 +17,7 @@
         <div class="spacer"></div>
         <button
           class="action-btn danger small"
+          [disabled]="!isEditMode()"
           (click)="$event.stopPropagation(); onRemove()"
           title="{{ 'CAMERA_EDITOR_REMOVE' | translate }}"
         >
