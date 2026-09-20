@@ -123,8 +123,7 @@ describe("DriverHeatData", () => {
   });
 
   describe("Analysis Metrics", () => {
-    it("should return null for metrics when there are no valid laps", () => {
-      expect(heatData.validLaps).toEqual([]);
+    it("should initialize metrics to null", () => {
       expect(heatData.standardDeviation).toBeNull();
       expect(heatData.consistencyScore).toBeNull();
       expect(heatData.averageTop5).toBeNull();
@@ -134,56 +133,32 @@ describe("DriverHeatData", () => {
       expect(heatData.top3Consecutive).toBeNull();
     });
 
-    it("should handle a single lap correctly", () => {
-      heatData.addLapTime(1, 5.0, 5.0, 5.0, 5.0, 1);
+    it("should store server-provided metrics and reset them to null on reset()", () => {
+      heatData.standardDeviation = 0.123;
+      heatData.consistencyScore = 97.5;
+      heatData.averageTop5 = 4.15;
+      heatData.averageTop10 = 4.25;
+      heatData.averageTop15 = 4.35;
+      heatData.top2Consecutive = 8.2;
+      heatData.top3Consecutive = 12.3;
 
-      expect(heatData.validLaps).toEqual([5.0]);
+      expect(heatData.standardDeviation).toBe(0.123);
+      expect(heatData.consistencyScore).toBe(97.5);
+      expect(heatData.averageTop5).toBe(4.15);
+      expect(heatData.averageTop10).toBe(4.25);
+      expect(heatData.averageTop15).toBe(4.35);
+      expect(heatData.top2Consecutive).toBe(8.2);
+      expect(heatData.top3Consecutive).toBe(12.3);
+
+      heatData.reset();
+
       expect(heatData.standardDeviation).toBeNull();
-      expect(heatData.consistencyScore).toBe(100);
-      expect(heatData.averageTop5).toBe(5.0);
-      expect(heatData.averageTop10).toBe(5.0);
-      expect(heatData.averageTop15).toBe(5.0);
+      expect(heatData.consistencyScore).toBeNull();
+      expect(heatData.averageTop5).toBeNull();
+      expect(heatData.averageTop10).toBeNull();
+      expect(heatData.averageTop15).toBeNull();
       expect(heatData.top2Consecutive).toBeNull();
       expect(heatData.top3Consecutive).toBeNull();
-    });
-
-    it("should compute standard deviation and consistency score accurately", () => {
-      // 4 identical laps -> std = 0, consistency = 100%
-      heatData.addLapTime(1, 5.0, 5.0, 5.0, 5.0, 1);
-      heatData.addLapTime(2, 5.0, 5.0, 5.0, 5.0, 2);
-      heatData.addLapTime(3, 5.0, 5.0, 5.0, 5.0, 3);
-      heatData.addLapTime(4, 5.0, 5.0, 5.0, 5.0, 4);
-
-      expect(heatData.standardDeviation).toBeCloseTo(0.0, 4);
-      expect(heatData.consistencyScore).toBeCloseTo(100.0, 4);
-    });
-
-    it("should calculate Top N averages and Top K consecutive laps correctly", () => {
-      // Laps: 6.0, 5.0, 4.0, 7.0, 4.5, 4.2
-      // Sorted: 4.0, 4.2, 4.5, 5.0, 6.0, 7.0
-      // Top 5: (4.0 + 4.2 + 4.5 + 5.0 + 6.0) / 5 = 23.7 / 5 = 4.74
-      // Top 2 consecutive: min(11, 9, 11, 11.5, 8.7) = 8.7
-      // Top 3 consecutive: min(15, 16, 15.5, 15.7) = 15.0
-      const times = [6.0, 5.0, 4.0, 7.0, 4.5, 4.2];
-      times.forEach((t, i) => heatData.addLapTime(i + 1, t, 0, 0, 0, i + 1));
-
-      expect(heatData.averageTop5).toBeCloseTo(4.74, 2);
-      expect(heatData.averageTop10).toBeCloseTo(
-        (6.0 + 5.0 + 4.0 + 7.0 + 4.5 + 4.2) / 6,
-        2,
-      );
-      expect(heatData.top2Consecutive).toBeCloseTo(8.7, 2);
-      expect(heatData.top3Consecutive).toBeCloseTo(15.0, 2);
-    });
-
-    it("should fallback to this.laps when lapsWithDetails is empty", () => {
-      // Manually set laps on instance without lapsWithDetails
-      (heatData as any)._lapsWithDetails = [];
-      (heatData as any).laps = [5.0, 6.0, 4.0];
-
-      expect(heatData.validLaps).toEqual([5.0, 6.0, 4.0]);
-      expect(heatData.top2Consecutive).toBe(10.0); // min(11, 10) = 10.0
-      expect(heatData.top3Consecutive).toBe(15.0);
     });
   });
 });

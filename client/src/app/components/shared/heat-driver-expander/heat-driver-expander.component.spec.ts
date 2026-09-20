@@ -63,62 +63,33 @@ describe("HeatDriverExpanderComponent Analysis Section", () => {
     expect(component.top3Consecutive).toBeNull();
   });
 
-  it("should return null for std dev and top consecutive when single lap exists", () => {
-    component.heatData = createMockHeatData([5.0]);
+  it("should return server-provided analysis metrics from heatDriver", () => {
+    const mock = createMockHeatData([5.0, 5.2, 4.8]);
+    mock.heatDriver.standardDeviation = 0.163;
+    mock.heatDriver.consistencyScore = 96.7;
+    mock.heatDriver.averageTop5 = 5.0;
+    mock.heatDriver.averageTop10 = 5.0;
+    mock.heatDriver.averageTop15 = 5.0;
+    mock.heatDriver.top2Consecutive = 10.0;
+    mock.heatDriver.top3Consecutive = 15.0;
+
+    component.heatData = mock;
     fixture.detectChanges();
 
-    expect(component.validLaps).toEqual([5.0]);
-    expect(component.standardDeviation).toBeNull();
-    expect(component.consistencyScore).toBe(100);
+    expect(component.standardDeviation).toBe(0.163);
+    expect(component.consistencyScore).toBe(96.7);
     expect(component.averageTop5).toBe(5.0);
-    expect(component.top2Consecutive).toBeNull();
-    expect(component.top3Consecutive).toBeNull();
+    expect(component.averageTop10).toBe(5.0);
+    expect(component.averageTop15).toBe(5.0);
+    expect(component.top2Consecutive).toBe(10.0);
+    expect(component.top3Consecutive).toBe(15.0);
   });
 
-  it("should correctly compute standard deviation and consistency score", () => {
-    component.heatData = createMockHeatData([5.0, 5.0, 5.0, 5.0]);
-    fixture.detectChanges();
-
-    expect(component.standardDeviation).toBeCloseTo(0.0, 4);
-    expect(component.consistencyScore).toBeCloseTo(100.0, 4);
-  });
-
-  it("should correctly compute Top N averages and Top K consecutive laps", () => {
-    // Lap times: 6.0, 5.0, 4.0, 7.0, 4.5, 4.2
-    // Sorted: 4.0, 4.2, 4.5, 5.0, 6.0, 7.0
-    // Top 5 sorted: 4.0, 4.2, 4.5, 5.0, 6.0 -> sum = 23.7 -> avg = 4.74
-    // Top 2 consecutive sliding window sums:
-    // (6+5=11), (5+4=9), (4+7=11), (7+4.5=11.5), (4.5+4.2=8.7) -> min = 8.7
-    // Top 3 consecutive sliding window sums:
-    // (6+5+4=15), (5+4+7=16), (4+7+4.5=15.5), (7+4.5+4.2=15.7) -> min = 15.0
-    component.heatData = createMockHeatData([6.0, 5.0, 4.0, 7.0, 4.5, 4.2]);
-    fixture.detectChanges();
-
-    expect(component.averageTop5).toBeCloseTo(4.74, 2);
-    expect(component.top2Consecutive).toBeCloseTo(8.7, 2);
-    expect(component.top3Consecutive).toBeCloseTo(15.0, 2);
-  });
-
-  it("should correctly compute Top 10 and Top 15 averages when 16+ laps exist", () => {
-    const laps = [
-      1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0,
-      15.0, 16.0,
-    ];
-    component.heatData = createMockHeatData(laps);
-    fixture.detectChanges();
-
-    // Top 10: 1..10 -> avg = 5.5
-    expect(component.averageTop10).toBeCloseTo(5.5, 2);
-    // Top 15: 1..15 -> avg = 8.0
-    expect(component.averageTop15).toBeCloseTo(8.0, 2);
-  });
-
-  it("should filter out zero or invalid lap times", () => {
+  it("should filter out zero or invalid lap times for validLaps", () => {
     component.heatData = createMockHeatData([5.0, 0, 4.0, 0, 6.0]);
     fixture.detectChanges();
 
     expect(component.validLaps).toEqual([5.0, 4.0, 6.0]);
-    expect(component.averageTop5).toBeCloseTo(5.0, 2);
   });
 
   it("should render Analysis table when expanded", () => {
