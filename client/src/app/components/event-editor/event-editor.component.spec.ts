@@ -596,5 +596,40 @@ describe("EventEditorComponent", () => {
       ).toBeUndefined();
       expect(component.selectedEventId).toBe("evt_2");
     }));
+
+    it("should disable keyboard undo/redo in read-only mode, and enable in edit mode", () => {
+      const evt: Event = {
+        entity_id: "evt_1",
+        name: "Original Event",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      component.editingEvent = { ...evt };
+      component.undoManager.initialize(component.editingEvent);
+      component.isEditMode = true;
+
+      component.editingEvent.name = "Modified Event";
+      component.undoManager.captureState();
+      expect(component.undoManager.canUndo()).toBeTrue();
+
+      // Read-only mode
+      component.isEditMode = false;
+
+      // Keydown does nothing in read-only mode
+      const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+      component.handleKeyboardEvent(zEvent);
+      expect(component.editingEvent.name).toBe("Modified Event");
+
+      // Re-enter edit mode: undo is restored via keydown
+      component.isEditMode = true;
+      component.handleKeyboardEvent(zEvent);
+      expect(component.editingEvent.name).toBe("Original Event");
+
+      // Redo via keydown Ctrl+Y
+      const yEvent = new KeyboardEvent("keydown", { key: "y", ctrlKey: true });
+      component.handleKeyboardEvent(yEvent);
+      expect(component.editingEvent.name).toBe("Modified Event");
+    });
   });
 });

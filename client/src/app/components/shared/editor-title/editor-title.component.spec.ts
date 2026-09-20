@@ -331,5 +331,22 @@ describe("EditorTitleComponent", () => {
       );
       expect(component.expandCollapse.emit).not.toHaveBeenCalled();
     });
+
+    it("should not scroll containers back to top when advancing or going to previous", async () => {
+      const mockContainer = document.createElement("div");
+      mockContainer.className = "sections-wrapper";
+      mockContainer.scrollTo = jasmine.createSpy("scrollTo");
+      document.body.appendChild(mockContainer);
+
+      try {
+        await harness.clickNext();
+        expect(mockContainer.scrollTo).not.toHaveBeenCalled();
+
+        component.selectPrevious();
+        expect(mockContainer.scrollTo).not.toHaveBeenCalled();
+      } finally {
+        document.body.removeChild(mockContainer);
+      }
+    });
   });
 });

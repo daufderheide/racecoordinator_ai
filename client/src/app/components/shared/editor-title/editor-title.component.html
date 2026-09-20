@@ -16,7 +16,7 @@
             id="editor-prev-item-btn"
             class="editor-nav-btn prev-item-btn"
             [disabled]="!hasPrevious() || isEditMode()"
-            (click)="selectPrevious($event)"
+            (click)="selectPrevious()"
             [title]="'EDITOR_PREV_ITEM_TOOLTIP' | translate"
             [attr.aria-label]="'EDITOR_PREV_ITEM_TOOLTIP' | translate"
           >
@@ -43,7 +43,7 @@
             id="editor-next-item-btn"
             class="editor-nav-btn next-item-btn"
             [disabled]="!hasNext() || isEditMode()"
-            (click)="selectNext($event)"
+            (click)="selectNext()"
             [title]="'EDITOR_NEXT_ITEM_TOOLTIP' | translate"
             [attr.aria-label]="'EDITOR_NEXT_ITEM_TOOLTIP' | translate"
           >

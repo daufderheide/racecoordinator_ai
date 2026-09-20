@@ -170,6 +170,23 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.updateScale();
   }
 
+  @HostListener("window:keydown", ["$event"])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if (!this.isEditMode) return;
+    if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+      event.preventDefault();
+      if (event.shiftKey) {
+        this.undoManager.redo();
+      } else {
+        this.undoManager.undo();
+      }
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
+      event.preventDefault();
+      this.undoManager.redo();
+    }
+  }
+
   private updateScale(): void {
     const baseWidth = 1600;
     const baseHeight = 900;

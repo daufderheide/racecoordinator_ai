@@ -931,14 +931,18 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   @HostListener("window:keydown", ["$event"])
   onKeyDown(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+      event.preventDefault();
       if (event.shiftKey) {
-        event.preventDefault();
         this.undoManager.redo();
       } else {
-        event.preventDefault();
         this.undoManager.undo();
       }
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
+      event.preventDefault();
+      this.undoManager.redo();
     }
   }
 

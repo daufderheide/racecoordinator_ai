@@ -128,45 +128,24 @@ export class EditorTitleComponent implements AfterViewChecked {
     this.selectedIdChange.emit(id);
   }
 
-  selectPrevious(event?: MouseEvent | KeyboardEvent) {
+  selectPrevious() {
     if (this.isEditMode() || !this.hasPrevious()) return;
     const prevItem = this.items()[this.currentIndex() - 1];
     if (prevItem) {
       this.onSelectionChange(prevItem.id);
-      if (!event?.shiftKey) {
-        this.scrollToTop();
-      }
     }
   }
 
-  selectNext(event?: MouseEvent | KeyboardEvent) {
+  selectNext() {
     if (this.isEditMode() || !this.hasNext()) return;
     const nextItem = this.items()[this.currentIndex() + 1];
     if (nextItem) {
       this.onSelectionChange(nextItem.id);
-      if (!event?.shiftKey) {
-        this.scrollToTop();
-      }
     }
   }
 
   onExpandCollapse() {
     this.expandCollapse.emit();
-  }
-
-  private scrollToTop() {
-    try {
-      const scrollContainers = document.querySelectorAll(
-        ".sections-wrapper, .editor-panel, .preview-panel, .page-container, .editor-panel-left, .editor-panel-right",
-      );
-      scrollContainers.forEach((el) => {
-        if (typeof el.scrollTo === "function") {
-          el.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      });
-    } catch {
-      // Non-browser / test environments
-    }
   }
 
   @HostListener("window:keydown", ["$event"])
@@ -199,7 +178,7 @@ export class EditorTitleComponent implements AfterViewChecked {
     if (event.key === "ArrowRight" || event.key === "]" || key === "e") {
       if (this.hasNext()) {
         event.preventDefault();
-        this.selectNext(event);
+        this.selectNext();
       }
       return;
     }
@@ -208,7 +187,7 @@ export class EditorTitleComponent implements AfterViewChecked {
     if (event.key === "ArrowLeft" || event.key === "[" || key === "q") {
       if (this.hasPrevious()) {
         event.preventDefault();
-        this.selectPrevious(event);
+        this.selectPrevious();
       }
       return;
     }
