@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.81] - 2026-09-20
+
+### 🚀 New Features
+
+- implement dual trigger audio modes with new audio management services and UI components ([0c67c703](https://github.com/daufderheide/racecoordinator_ai/commit/0c67c703))
+
+### 🐛 Bug Fixes
+
+- Prevent out of fuel audio from playing on heat restart in non-fuel races https://github.com/daufderheide/racecoordinator_ai/issues/844 [skip-screendiffs] ([2f8775b4](https://github.com/daufderheide/racecoordinator_ai/commit/2f8775b4))
+- Fixed list view spacing when there's only 1 full row and a fraction of the second row filled ([258e9154](https://github.com/daufderheide/racecoordinator_ai/commit/258e9154))
+- updated text on the audio set editor.  It now calls out laps, percent or time as possible values ([49da99e3](https://github.com/daufderheide/racecoordinator_ai/commit/49da99e3))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.80...v1.0.0-beta.81">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.80] - 2026-09-20
 
 ### 🐛 Bug Fixes
