@@ -15,15 +15,11 @@ export class DriverConverter {
   }
 
   static getEmptyDriver(): Driver {
-    return new Driver(
-      EMPTY_DRIVER_ID,
-      "Empty",
-      "",
-      undefined,
-      { type: "preset" },
-      { type: "preset" },
-      { type: "preset", url: "/assets/default_penalty_Penalty" },
-    );
+    return new Driver(EMPTY_DRIVER_ID, "Empty", "", undefined, {
+      lapAudio: { type: "preset" },
+      bestLapAudio: { type: "preset" },
+      penaltyAudio: { type: "preset", url: "/assets/default_penalty_Penalty" },
+    });
   }
 
   private static mapAudio(
@@ -104,19 +100,20 @@ export class DriverConverter {
         proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown"),
         proto.nickname || "",
         proto.avatarUrl || undefined,
-        this.mapAudio(proto.lapAudio),
-        this.mapAudio(proto.bestLapAudio),
-        this.mapAudio(proto.penaltyAudio),
-        undefined,
-        this.mapAudio(proto.overallBestLapAudio),
-        this.mapAudio(proto.overallLaneBestLapAudio),
-        this.mapAudio(proto.raceBestLapAudio),
-        this.mapAudio(proto.raceLaneBestLapAudio),
-        this.mapAudio(proto.heatBestLapAudio),
-        this.mapAudio(proto.newRaceLeaderAudio),
-        this.mapAudio(proto.newHeatLeaderAudio),
-        this.mapAudio(proto.pitInAudio),
-        this.mapAudio(proto.fuelAudio, "audio_set"),
+        {
+          lapAudio: this.mapAudio(proto.lapAudio),
+          bestLapAudio: this.mapAudio(proto.bestLapAudio),
+          penaltyAudio: this.mapAudio(proto.penaltyAudio),
+          overallBestLapAudio: this.mapAudio(proto.overallBestLapAudio),
+          overallLaneBestLapAudio: this.mapAudio(proto.overallLaneBestLapAudio),
+          raceBestLapAudio: this.mapAudio(proto.raceBestLapAudio),
+          raceLaneBestLapAudio: this.mapAudio(proto.raceLaneBestLapAudio),
+          heatBestLapAudio: this.mapAudio(proto.heatBestLapAudio),
+          newRaceLeaderAudio: this.mapAudio(proto.newRaceLeaderAudio),
+          newHeatLeaderAudio: this.mapAudio(proto.newHeatLeaderAudio),
+          pitInAudio: this.mapAudio(proto.pitInAudio),
+          fuelAudio: this.mapAudio(proto.fuelAudio, "audio_set"),
+        },
       );
     });
   }
@@ -149,19 +146,20 @@ export class DriverConverter {
       json.name || "",
       json.nickname || "",
       json.avatarUrl,
-      this.mapAudio(json.lapAudio),
-      this.mapAudio(json.bestLapAudio),
-      this.mapAudio(json.penaltyAudio),
-      undefined,
-      this.mapAudio(json.overallBestLapAudio),
-      this.mapAudio(json.overallLaneBestLapAudio),
-      this.mapAudio(json.raceBestLapAudio),
-      this.mapAudio(json.raceLaneBestLapAudio),
-      this.mapAudio(json.heatBestLapAudio),
-      this.mapAudio(json.newRaceLeaderAudio),
-      this.mapAudio(json.newHeatLeaderAudio),
-      this.mapAudio(json.pitInAudio),
-      this.mapAudio(json.fuelAudio, "audio_set"),
+      {
+        lapAudio: this.mapAudio(json.lapAudio),
+        bestLapAudio: this.mapAudio(json.bestLapAudio),
+        penaltyAudio: this.mapAudio(json.penaltyAudio),
+        overallBestLapAudio: this.mapAudio(json.overallBestLapAudio),
+        overallLaneBestLapAudio: this.mapAudio(json.overallLaneBestLapAudio),
+        raceBestLapAudio: this.mapAudio(json.raceBestLapAudio),
+        raceLaneBestLapAudio: this.mapAudio(json.raceLaneBestLapAudio),
+        heatBestLapAudio: this.mapAudio(json.heatBestLapAudio),
+        newRaceLeaderAudio: this.mapAudio(json.newRaceLeaderAudio),
+        newHeatLeaderAudio: this.mapAudio(json.newHeatLeaderAudio),
+        pitInAudio: this.mapAudio(json.pitInAudio),
+        fuelAudio: this.mapAudio(json.fuelAudio, "audio_set"),
+      },
     );
     this.cache.process(id, false, () => d);
     return d;
@@ -186,6 +184,8 @@ export class DriverConverter {
       existing.heatBestLapAudio = driver.heatBestLapAudio;
       existing.newRaceLeaderAudio = driver.newRaceLeaderAudio;
       existing.newHeatLeaderAudio = driver.newHeatLeaderAudio;
+      existing.pitInAudio = driver.pitInAudio;
+      existing.fuelAudio = driver.fuelAudio;
     } else {
       // Manually populate cache using process to ensure valid state
       // access private cache if possible, or use a workaround.

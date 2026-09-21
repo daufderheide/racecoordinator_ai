@@ -209,4 +209,73 @@ describe("DriverConverter", () => {
     expect(driverFromJSON.fuelAudio.type).toBe("audio_set");
     expect(driverFromJSON.fuelAudio.url).toBe("default_fuel_level");
   });
+
+  it("should preserve none audio configs in fromJSON without falling back to presets", () => {
+    const json = {
+      entity_id: "d_json_none",
+      name: "Silent JSON Driver",
+      nickname: "Silent",
+      lapAudio: { type: "none" },
+      bestLapAudio: { type: "none" },
+      penaltyAudio: { type: "none" },
+      overallBestLapAudio: { type: "none" },
+      overallLaneBestLapAudio: { type: "none" },
+      raceBestLapAudio: { type: "none" },
+      raceLaneBestLapAudio: { type: "none" },
+      heatBestLapAudio: { type: "none" },
+      pitInAudio: { type: "none" },
+      fuelAudio: { type: "none" },
+    };
+
+    const driver = DriverConverter.fromJSON(json);
+    expect(driver.lapAudio.type).toBe("none");
+    expect(driver.lapAudio.url).toBeUndefined();
+    expect(driver.bestLapAudio.type).toBe("none");
+    expect(driver.bestLapAudio.url).toBeUndefined();
+    expect(driver.penaltyAudio.type).toBe("none");
+    expect(driver.penaltyAudio.url).toBeUndefined();
+    expect(driver.overallBestLapAudio.type).toBe("none");
+    expect(driver.overallLaneBestLapAudio.type).toBe("none");
+    expect(driver.raceBestLapAudio.type).toBe("none");
+    expect(driver.raceLaneBestLapAudio.type).toBe("none");
+    expect(driver.heatBestLapAudio.type).toBe("none");
+    expect(driver.pitInAudio.type).toBe("none");
+    expect(driver.fuelAudio.type).toBe("none");
+  });
+
+  it("should synchronize all audio properties in register() into cached instances", () => {
+    const original = DriverConverter.fromJSON({
+      entity_id: "d_reg_test",
+      name: "Reg Test",
+      lapAudio: { type: "preset", url: "default_beep" },
+      bestLapAudio: { type: "preset", url: "default_driveby" },
+      pitInAudio: { type: "preset", url: "default_pit_in" },
+      fuelAudio: { type: "audio_set", url: "default_fuel_level" },
+    });
+
+    const updated = new Driver({
+      entity_id: "d_reg_test",
+      name: "Reg Test Updated",
+      lapAudio: { type: "none" },
+      bestLapAudio: { type: "none" },
+      penaltyAudio: { type: "none" },
+      overallBestLapAudio: { type: "none" },
+      overallLaneBestLapAudio: { type: "none" },
+      raceBestLapAudio: { type: "none" },
+      raceLaneBestLapAudio: { type: "none" },
+      heatBestLapAudio: { type: "none" },
+      newRaceLeaderAudio: { type: "none" },
+      newHeatLeaderAudio: { type: "none" },
+      pitInAudio: { type: "none" },
+      fuelAudio: { type: "none" },
+    });
+
+    DriverConverter.register(updated);
+
+    expect(original.name).toBe("Reg Test Updated");
+    expect(original.lapAudio.type).toBe("none");
+    expect(original.bestLapAudio.type).toBe("none");
+    expect(original.pitInAudio.type).toBe("none");
+    expect(original.fuelAudio.type).toBe("none");
+  });
 });

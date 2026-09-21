@@ -20,6 +20,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
@@ -293,10 +294,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }).subscribe({
       next: (result) => {
         try {
-          this.allDrivers = result.drivers.map(
-            (d) =>
-              new Driver(d.entity_id, d.name, d.nickname || "", d.avatarUrl),
-          );
+          this.allDrivers = (result.drivers as any[]).map((d: any) => {
+            const driver = DriverConverter.fromJSON(d);
+            DriverConverter.register(driver);
+            return driver;
+          });
           this.allTeams = result.teams.map(
             (t: any) =>
               new Team(

@@ -380,13 +380,23 @@ public class DatabaseTaskHandlerTest {
       org.mockito.Mockito.verify(ctxGet).json(any());
 
       // 3. Update Driver
-      io.javalin.http.Context ctxUpdate = mock(io.javalin.http.Context.class);
-      when(ctxUpdate.pathParam("id")).thenReturn("1");
-      when(ctxUpdate.body())
-          .thenReturn(
-              "{\"name\":\"Sir Lewis Hamilton\",\"nickname\":\"LH44\",\"entity_id\":\"1\"}");
-      invoke(handler, "updateDriver", ctxUpdate);
-      org.mockito.Mockito.verify(ctxUpdate).json(any());
+      com.antigravity.race.Race mockRace = mock(com.antigravity.race.Race.class);
+      com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(mockRace);
+      try {
+        io.javalin.http.Context ctxUpdate = mock(io.javalin.http.Context.class);
+        when(ctxUpdate.pathParam("id")).thenReturn("1");
+        when(ctxUpdate.body())
+            .thenReturn(
+                "{\"name\":\"Sir Lewis Hamilton\",\"nickname\":\"LH44\",\"entity_id\":\"1\"}");
+        invoke(handler, "updateDriver", ctxUpdate);
+        org.mockito.Mockito.verify(ctxUpdate).json(any());
+        org.mockito.Mockito.verify(mockRace)
+            .updateDriver(
+                org.mockito.ArgumentMatchers.argThat(
+                    d -> "1".equals(d.getEntityId()) && "Sir Lewis Hamilton".equals(d.getName())));
+      } finally {
+        com.antigravity.race.ClientSubscriptionManager.getInstance().setRace(null);
+      }
 
       // Blank Nickname Update -> 400
       io.javalin.http.Context ctxUpdateBlankNick = mock(io.javalin.http.Context.class);
