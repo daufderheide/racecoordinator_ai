@@ -37,6 +37,7 @@ export function createMockEditorData(): MockEditorData {
     start_time: "2026-06-05T12:00:00Z",
     end_time: "2026-06-05T12:03:00Z",
     heatDrivers: heatDrivers,
+    standings: heatDrivers.map((hd) => hd.objectId),
   } as unknown as Heat;
 
   const nextHeatDrivers = createMockNextHeatDrivers();

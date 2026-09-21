@@ -34,6 +34,8 @@ export class LaneColumnInspectorComponent {
   requestReplicate = output<void>();
   replicate =
     output<Omit<LaneReplicationOptions, "baseWidth" | "baseHeight">>();
+  editGrid = output<string>();
+  detachGrid = output<string>();
 
   fontService = inject(FontService);
   showReplicateModal = signal<boolean>(false);
@@ -46,6 +48,18 @@ export class LaneColumnInspectorComponent {
 
   onFieldChange(): void {
     this.change.emit();
+  }
+
+  onEditGridTemplate(): void {
+    if (this.currentSettings["gridId"]) {
+      this.editGrid.emit(this.currentSettings["gridId"]);
+    }
+  }
+
+  onDetachFromGrid(): void {
+    if (this.currentSettings["gridId"]) {
+      this.detachGrid.emit(this.currentSettings["gridId"]);
+    }
   }
 
   openReplicateModal(): void {

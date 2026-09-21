@@ -440,11 +440,16 @@
                                   [isCountdownPreviewActive]="
                                     isCountdownPreviewActive(ui)
                                   "
+                                  [gridSession]="activeGridSession"
                                   (widgetSelected)="
                                     onWidgetSelected($event, ui)
                                   "
                                   (layoutChanged)="onLayoutChanged($event, ui)"
                                   (columnsChanged)="onColumnsChanged(ui)"
+                                  (finishGrid)="finishGridSession(ui)"
+                                  (gridBoundsChange)="
+                                    onGridBoundsChange($event, ui)
+                                  "
                                 ></app-default-raceday>
                               </div>
                             </div>
@@ -544,6 +549,8 @@
                                     openReplicateLaneModal(ui)
                                   "
                                   (replicate)="onReplicateLanes($event, ui)"
+                                  (editGrid)="onEditGridTemplate($event, ui)"
+                                  (detachGrid)="onDetachGrid($event, ui)"
                                 ></app-widget-inspector-fields>
                               </div>
                             </div>

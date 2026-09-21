@@ -58,40 +58,106 @@
   width: 100%;
   height: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 .lane-col-value {
   width: 100%;
   font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.1;
+  font-size: var(--lane-col-value-font-size, 36px);
   display: flex;
   align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.lane-col-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1.1;
+}
+
+.lane-col-empty {
+  font-size: 24px;
+  font-weight: 600;
+  opacity: 0.6;
+  text-align: center;
 }
 
 .lane-col-last-laps {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.raceday-lane-column-card.orientation-horizontal .lane-col-last-laps {
+  flex-direction: row;
   flex-wrap: wrap;
   gap: 6px 12px;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
 }
 
 .last-lap-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1);
   font-family: monospace;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.raceday-lane-column-card.orientation-horizontal .last-lap-item {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.last-lap-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.raceday-lane-column-card.orientation-horizontal .last-lap-main {
+  display: inline-flex;
+  gap: 4px;
 }
 
 .last-lap-item.best-lap {
   font-weight: bold;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.last-lap-item .lap-number {
+  opacity: 0.75;
+}
+
+.last-lap-segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.lap-seg {
+  opacity: 0.9;
 }
 
 .lane-col-image-wrapper {

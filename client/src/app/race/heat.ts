@@ -10,7 +10,7 @@ export class Heat {
   readonly objectId: string;
   heatNumber: number;
   heatDrivers: DriverHeatData[];
-  readonly standings: string[];
+  standings: string[];
   started: boolean = false;
   group: number = 0;
   masterTrackCalls?: number = 0;

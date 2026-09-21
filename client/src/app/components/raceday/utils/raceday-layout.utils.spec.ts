@@ -485,6 +485,22 @@ describe("RacedayLayoutUtils", () => {
       "all",
     );
     expect(snappedAdjacent.x).toBe(300);
+
+    // Near extra snap edge guide (e.g. 500)
+    const snappedGuide = RacedayLayoutUtils.snapToEdges(
+      widgets,
+      495,
+      100,
+      100,
+      100,
+      "w2",
+      "all",
+      1920,
+      1080,
+      [500],
+      [400],
+    );
+    expect(snappedGuide.x).toBe(500);
   });
 
   describe("getDefaultColumnWidth", () => {

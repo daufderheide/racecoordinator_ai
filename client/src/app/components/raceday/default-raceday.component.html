@@ -76,6 +76,105 @@
           [isCountdownPreviewActive]="isCountdownPreviewActive()"
         ></app-raceday-absolute-widget>
       }
+
+      @if (gridSession()) {
+        <div
+          class="lane-blueprint-overlay"
+          [style.left.px]="gridSession()!.bounds.x"
+          [style.top.px]="gridSession()!.bounds.y"
+          [style.width.px]="gridSession()!.bounds.width"
+          [style.height.px]="gridSession()!.bounds.height"
+        >
+          <div
+            class="grid-resize-handle handle-nw"
+            (pointerdown)="onGridResizeStart($event, 'nw')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-n"
+            (pointerdown)="onGridResizeStart($event, 'n')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-ne"
+            (pointerdown)="onGridResizeStart($event, 'ne')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-e"
+            (pointerdown)="onGridResizeStart($event, 'e')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-se"
+            (pointerdown)="onGridResizeStart($event, 'se')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-s"
+            (pointerdown)="onGridResizeStart($event, 's')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-sw"
+            (pointerdown)="onGridResizeStart($event, 'sw')"
+          ></div>
+          <div
+            class="grid-resize-handle handle-w"
+            (pointerdown)="onGridResizeStart($event, 'w')"
+          ></div>
+
+          @for (cell of getGridCells(); track cell.laneIndex) {
+            <div
+              class="lane-blueprint-cell"
+              [class.master-cell]="cell.isMaster"
+              [style.left.px]="cell.bounds.x - gridSession()!.bounds.x"
+              [style.top.px]="cell.bounds.y - gridSession()!.bounds.y"
+              [style.width.px]="cell.bounds.width"
+              [style.height.px]="cell.bounds.height"
+            >
+              <div
+                class="lane-blueprint-badge"
+                [class.master-badge]="cell.isMaster"
+              >
+                @if (cell.isMaster) {
+                  <i class="fas fa-crown"></i>
+                  {{
+                    (gridSession()!.bindingMode === "position"
+                      ? "UE_GRID_POSITION_MASTER_BADGE"
+                      : "UE_GRID_LANE_MASTER_BADGE"
+                    ) | translate
+                  }}
+                } @else {
+                  <i class="fas fa-clone"></i>
+                  {{
+                    (gridSession()!.bindingMode === "position"
+                      ? "UE_GRID_POSITION_MIRRORED_BADGE"
+                      : "UE_GRID_LANE_MIRRORED_BADGE"
+                    ) | translate: { index: cell.laneIndex + 1 }
+                  }}
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="lane-blueprint-toolbar">
+          <div class="lane-blueprint-title">
+            <i class="fas fa-layer-group me-1"></i>
+            {{
+              (gridSession()!.bindingMode === "position"
+                ? "UE_GRID_POSITION_MODE_TITLE"
+                : "UE_GRID_MODE_TITLE"
+              ) | translate: { count: gridSession()!.totalLanes }
+            }}
+          </div>
+          <div class="lane-blueprint-actions">
+            <button
+              type="button"
+              class="btn btn-sm btn-primary"
+              (click)="finishGrid.emit()"
+            >
+              <i class="fas fa-check me-1"></i>
+              {{ "UE_GRID_MODE_DONE" | translate }}
+            </button>
+          </div>
+        </div>
+      }
     </div>
 
     @if (!heat && errorMessage) {

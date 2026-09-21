@@ -4060,11 +4060,100 @@ describe("UIEditorComponent", () => {
       spyOn(component, "onReplicateLanes");
       const options = { targetCount: 6 } as any;
       component.onConfirmReplicateLanes(options);
-      expect(component.showReplicateLaneModal).toBeFalse();
       expect(component.onReplicateLanes).toHaveBeenCalledWith(
         options,
         customUi,
       );
+    });
+
+    it("should use maxTrackLanes for replicateDefaultCount when greater than track lanes", () => {
+      const widget = {
+        id: "lc-1",
+        widgetType: "lane-column",
+        customSettings: { bindingMode: "lane", targetIndex: 0 },
+      };
+      const customUi: any = {
+        entity_id: "custom_ui_rep2",
+        layoutJson: JSON.stringify({ widgets: [widget] }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_rep2";
+      component.selectedWidgetId = "lc-1";
+      component.track = { lanes: [{}, {}, {}] }; // 3 lanes
+      component.maxTrackLanes = 8; // 8 max lanes across all tracks
+
+      component.openReplicateLaneModal(customUi);
+      expect(component.replicateDefaultCount).toBe(8);
+    });
+
+    it("should handle grid session lifecycle (finish, cancel, edit, detach)", () => {
+      spyOn(component.undoManager, "captureState");
+      const widget = {
+        id: "lc-1",
+        widgetType: "lane-column",
+        customSettings: {
+          gridId: "test-grid-spec",
+          gridLane: 0,
+        },
+      };
+      const customUi: any = {
+        entity_id: "custom_ui_grid",
+        layoutJson: JSON.stringify({
+          baseWidth: 1920,
+          baseHeight: 1080,
+          widgets: [widget],
+        }),
+      };
+      component.displayCustomUIs = [customUi];
+      component.activeCustomUiId = "custom_ui_grid";
+
+      component.startGridSession(
+        {
+          sourceBindingMode: "lane",
+          sourceIndex: 0,
+          direction: "horizontal",
+          targetCount: 4,
+          distributionMode: "auto-fit",
+          replaceExisting: false,
+        },
+        customUi,
+      );
+      expect(component.activeGridSession).toBeDefined();
+      expect(component.activeGridSession?.totalLanes).toBe(4);
+
+      component.finishGridSession(customUi);
+      expect(component.activeGridSession).toBeNull();
+      expect(component.undoManager.captureState).toHaveBeenCalled();
+
+      // Edit grid test
+      component.onEditGridTemplate("test-grid-spec", customUi);
+      expect(component.activeGridSession?.gridId).toBe("test-grid-spec");
+
+      // Detach grid test
+      component.onDetachGrid("test-grid-spec", customUi);
+      expect(component.activeGridSession).toBeNull();
+      const parsed = JSON.parse(customUi.layoutJson);
+      expect(parsed.widgets[0].customSettings?.gridId).toBeUndefined();
+
+      // Resize grid bounds test
+      component.activeGridSession = {
+        gridId: "test-grid-spec",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal",
+        sourceLaneIndex: 0,
+        bindingMode: "lane",
+      };
+      component.onGridBoundsChange(
+        { x: 50, y: 50, width: 900, height: 500 },
+        customUi,
+      );
+      expect(component.activeGridSession.bounds).toEqual({
+        x: 50,
+        y: 50,
+        width: 900,
+        height: 500,
+      });
     });
 
     it("should preserve collapsed column groups on lane-view widget per layout independently", () => {

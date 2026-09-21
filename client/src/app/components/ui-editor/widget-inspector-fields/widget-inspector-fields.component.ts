@@ -47,6 +47,8 @@ export class WidgetInspectorFieldsComponent {
   change = output<AbsoluteWidgetNode>();
   replicate = output<any>();
   requestReplicate = output<void>();
+  editGrid = output<string>();
+  detachGrid = output<string>();
 
   isCustomWidget(type: string | undefined): boolean {
     return type?.startsWith("custom:") ?? false;

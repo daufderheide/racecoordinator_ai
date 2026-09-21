@@ -4,7 +4,7 @@ app-raceday-track-name {
   height: 100%;
 }
 
-.info-section {
+app-raceday-track-name .info-section {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,7 +12,7 @@ app-raceday-track-name {
   box-sizing: border-box;
 }
 
-.label-text {
+app-raceday-track-name .label-text {
   font-size: var(--header-label-font-size, 13px);
   font-weight: 600;
   text-transform: uppercase;
@@ -22,7 +22,7 @@ app-raceday-track-name {
   font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
 
-.value-text {
+app-raceday-track-name .value-text {
   font-size: var(--header-value-font-size, 18px);
   font-weight: 700;
   color: #f8fafc;
@@ -31,14 +31,14 @@ app-raceday-track-name {
 }
 
 @media print {
-  :host-context(body.print-no-background) .info-section {
+  :host-context(body.print-no-background) app-raceday-track-name .info-section {
     background: #ffffff !important;
     background-color: #ffffff !important;
     border-color: #cbd5e1 !important;
   }
 
-  :host-context(body.print-no-background) .label-text,
-  :host-context(body.print-no-background) .value-text {
+  :host-context(body.print-no-background) app-raceday-track-name .label-text,
+  :host-context(body.print-no-background) app-raceday-track-name .value-text {
     color: #0f172a !important;
     text-shadow: none !important;
   }

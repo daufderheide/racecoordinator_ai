@@ -91,7 +91,8 @@ export function openReplicateLaneModalHelper(comp: any, ui?: CustomUI): void {
   comp.replicateSourceIndex = Number(
     comp.currentSelectedWidget?.customSettings?.["targetIndex"] ?? 0,
   );
-  comp.replicateDefaultCount = comp.track?.lanes?.length || 4;
+  comp.replicateDefaultCount =
+    Math.max(comp.maxTrackLanes || 0, comp.track?.lanes?.length || 0) || 4;
   comp.showReplicateLaneModal = true;
 }
 

@@ -1,3 +1,4 @@
+import { LaneGridReplicationHelper } from "@app/components/raceday/utils/lane-grid-replication.helper";
 import {
   LaneReplicationHelper,
   LaneReplicationOptions,
@@ -193,6 +194,37 @@ export function handleWidgetInspectorChange(
     const idx = layout.widgets.findIndex((w: any) => w.id === targetWidget.id);
     if (idx !== -1) {
       layout.widgets[idx] = targetWidget;
+    }
+
+    const gridId = targetWidget.customSettings?.["gridId"];
+    const newBindingMode = targetWidget.customSettings?.["bindingMode"];
+    if (gridId && newBindingMode) {
+      if (comp.activeGridSession && comp.activeGridSession.gridId === gridId) {
+        comp.activeGridSession.bindingMode = newBindingMode;
+      }
+      for (const w of layout.widgets) {
+        if (
+          w.customSettings?.["gridId"] === gridId &&
+          w.id !== targetWidget.id
+        ) {
+          if (!w.customSettings) w.customSettings = {};
+          w.customSettings["bindingMode"] = newBindingMode;
+        }
+      }
+    }
+
+    if (
+      comp.activeGridSession &&
+      LaneGridReplicationHelper.isMasterWidget(
+        targetWidget,
+        comp.activeGridSession,
+      )
+    ) {
+      layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+        targetWidget,
+        comp.activeGridSession,
+        layout.widgets,
+      );
     }
     updateLayoutOnModel(
       layout,

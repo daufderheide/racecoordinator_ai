@@ -10289,4 +10289,53 @@ describe("DefaultRacedayComponent", () => {
       );
     });
   });
+
+  describe("Grid Session Blueprint Resizing", () => {
+    it("should handle onGridResizeStart and emit gridBoundsChange on pointermove", () => {
+      const session = {
+        gridId: "test-grid-resize",
+        bounds: { x: 100, y: 100, width: 800, height: 400 },
+        totalLanes: 4,
+        direction: "horizontal" as const,
+        sourceLaneIndex: 0,
+        bindingMode: "lane" as const,
+      };
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      fixture.componentRef.setInput("uiScale", 1);
+      fixture.componentRef.setInput("gridSession", session);
+      fixture.detectChanges();
+      component.layout = { baseWidth: 1920, baseHeight: 1080, widgets: [] };
+
+      const emitSpy = spyOn(component.gridBoundsChange, "emit");
+
+      const pointerDownEvent = new PointerEvent("pointerdown", {
+        clientX: 900,
+        clientY: 300,
+      });
+      component.onGridResizeStart(pointerDownEvent, "e");
+
+      const moveEvent = new PointerEvent("pointermove", {
+        clientX: 950,
+        clientY: 300,
+      });
+      document.dispatchEvent(moveEvent);
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          x: 100,
+          y: 100,
+          width: 850,
+          height: 400,
+        }),
+      );
+
+      const upEvent = new PointerEvent("pointerup");
+      document.dispatchEvent(upEvent);
+
+      // Verify listeners removed after pointerup
+      emitSpy.calls.reset();
+      document.dispatchEvent(moveEvent);
+      expect(emitSpy).not.toHaveBeenCalled();
+    });
+  });
 });

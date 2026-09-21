@@ -109,6 +109,16 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     return !this.isSelected && !this.isCountdownPreviewActive();
   }
 
+  get isGridMirrored(): boolean {
+    const session = this.parentComponent()?.gridSession?.();
+    if (!session) return false;
+    const s = this.widget().customSettings;
+    return (
+      s?.["gridId"] === session.gridId &&
+      Number(s?.["gridLane"] ?? s?.["targetIndex"]) !== session.sourceLaneIndex
+    );
+  }
+
   get computedZIndex(): number {
     const w = this.widget();
     if (!this.isCustomizing() && w.widgetType === "menu-bar") {
@@ -143,7 +153,7 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
   }
 
   onResizeStart(event: PointerEvent, handle: string) {
-    if (!this.isCustomizing()) return;
+    if (!this.isCustomizing() || this.isGridMirrored) return;
     event.preventDefault();
     event.stopPropagation();
 
@@ -213,6 +223,16 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       this.isResizing = false;
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      if (this.parentComponent().gridSession?.()) {
+        const session = this.parentComponent().gridSession();
+        if (
+          this.widget().customSettings?.["gridId"] === session.gridId &&
+          Number(this.widget().customSettings?.["gridLane"]) ===
+            session.sourceLaneIndex
+        ) {
+          this.parentComponent().onMasterWidgetModified?.(this.widget());
+        }
+      }
       if (this.parentComponent().layoutChanged) {
         this.parentComponent().layoutChanged.emit(
           this.parentComponent().layout,
@@ -226,7 +246,7 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
 
   // Handle dragging manually to support snapping better than cdkDrag might out of the box
   onDragStart(event: PointerEvent) {
-    if (!this.isCustomizing()) return;
+    if (!this.isCustomizing() || this.isGridMirrored) return;
     // Don't drag if clicking a resize handle
     if ((event.target as HTMLElement).classList.contains("resize-handle"))
       return;
@@ -277,6 +297,16 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     const onPointerUp = () => {
       document.removeEventListener("pointermove", onPointerMove);
       document.removeEventListener("pointerup", onPointerUp);
+      if (this.parentComponent().gridSession?.()) {
+        const session = this.parentComponent().gridSession();
+        if (
+          this.widget().customSettings?.["gridId"] === session.gridId &&
+          Number(this.widget().customSettings?.["gridLane"]) ===
+            session.sourceLaneIndex
+        ) {
+          this.parentComponent().onMasterWidgetModified?.(this.widget());
+        }
+      }
       if (this.parentComponent().layoutChanged) {
         this.parentComponent().layoutChanged.emit(
           this.parentComponent().layout,
@@ -297,7 +327,12 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
 
   bringToFront() {
     if (this.parentComponent() && this.parentComponent().bringToFront) {
-      this.parentComponent().bringToFront(this.widget().id);
+      const masterId = this.widget().customSettings?.["gridMasterId"];
+      if (this.isGridMirrored && masterId) {
+        this.parentComponent().bringToFront(masterId);
+      } else {
+        this.parentComponent().bringToFront(this.widget().id);
+      }
     }
   }
 

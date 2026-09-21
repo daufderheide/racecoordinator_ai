@@ -1,4 +1,5 @@
 <div
+  #cardElement
   class="raceday-lane-column-card"
   [class.orientation-vertical]="layoutOrientation === 'vertical'"
   [class.orientation-horizontal]="layoutOrientation === 'horizontal'"
@@ -19,7 +20,7 @@
       class="lane-col-header"
       [style.font-family]="settings.headerFontFamily || null"
       [style.font-size.px]="settings.headerFontSize || 14"
-      [style.color]="settings.headerTextColor || foregroundColor"
+      [style.color]="effectiveHeaderTextColor"
       [style.justify-content]="
         settings.headerAlignment === 'center'
           ? 'center'
@@ -47,12 +48,25 @@
 
     <!-- Case 1: Last Laps List -->
     @if (isLastLaps()) {
-      <div class="lane-col-last-laps">
-        @for (lap of getLastLaps(); track $index) {
-          <div class="last-lap-item" [class.best-lap]="lap.isBest">
-            <span class="lap-number">{{ lap.lapNumber }}.</span>
-            <span class="lap-time">{{ lap.lapTime }}</span>
-          </div>
+      <div class="lane-col-last-laps" #lastLapsContainer>
+        @if (getLastLaps().length === 0) {
+          <div class="lane-col-empty">--</div>
+        } @else {
+          @for (lap of getVisibleLastLaps(); track lap.lapNumber) {
+            <div class="last-lap-item" [class.best-lap]="lap.isBest">
+              <div class="last-lap-main">
+                <span class="lap-number">{{ lap.lapNumber }}.</span>
+                <span class="lap-time">{{ lap.lapTime }}</span>
+              </div>
+              @if (lap.segments.length > 0) {
+                <div class="last-lap-segments">
+                  @for (seg of lap.segments; track $index) {
+                    <span class="lap-seg">S{{ $index + 1 }}: {{ seg }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
         }
       </div>
     } @else if (isImageProperty()) {
@@ -83,8 +97,7 @@
       <div
         class="lane-col-value"
         [style.font-family]="settings.valueFontFamily || null"
-        [style.font-size.px]="settings.valueFontSize || 36"
-        [style.color]="settings.valueTextColor || foregroundColor"
+        [style.color]="effectiveValueTextColor"
         [style.justify-content]="
           settings.valueAlignment === 'start'
             ? 'flex-start'
@@ -93,7 +106,7 @@
               : 'center'
         "
       >
-        {{ formattedValue }}
+        <span class="lane-col-text">{{ formattedValue }}</span>
       </div>
     }
   </div>

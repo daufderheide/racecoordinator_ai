@@ -368,57 +368,71 @@
   </div>
 
   @if (isCustomizing() && !isCountdownGhost) {
-    <div class="customizing-widget-overlay">
-      <div
-        class="widget-header-drag"
-        (pointerdown)="onDragStart($event)"
-        title="Drag to reposition widget"
-      >
-        <span class="widget-label">{{ widget().widgetType }}</span>
-        <span class="material-icons grab-icon">drag_indicator</span>
+    @if (!isGridMirrored) {
+      <div class="customizing-widget-overlay">
+        <div
+          class="widget-header-drag"
+          (pointerdown)="onDragStart($event)"
+          title="Drag to reposition widget"
+        >
+          <span class="widget-label">{{ widget().widgetType }}</span>
+          <span class="material-icons grab-icon">drag_indicator</span>
+        </div>
+
+        <button
+          class="widget-remove-btn"
+          (click)="removeWidget($event)"
+          title="Remove widget"
+        >
+          ×
+        </button>
       </div>
 
-      <button
-        class="widget-remove-btn"
-        (click)="removeWidget($event)"
-        title="Remove widget"
+      <!-- 8-way resize handles -->
+      <div
+        class="resize-handle n"
+        (pointerdown)="onResizeStart($event, 'n')"
+      ></div>
+      <div
+        class="resize-handle e"
+        (pointerdown)="onResizeStart($event, 'e')"
+      ></div>
+      <div
+        class="resize-handle s"
+        (pointerdown)="onResizeStart($event, 's')"
+      ></div>
+      <div
+        class="resize-handle w"
+        (pointerdown)="onResizeStart($event, 'w')"
+      ></div>
+      <div
+        class="resize-handle ne"
+        (pointerdown)="onResizeStart($event, 'ne')"
+      ></div>
+      <div
+        class="resize-handle nw"
+        (pointerdown)="onResizeStart($event, 'nw')"
+      ></div>
+      <div
+        class="resize-handle se"
+        (pointerdown)="onResizeStart($event, 'se')"
+      ></div>
+      <div
+        class="resize-handle sw"
+        (pointerdown)="onResizeStart($event, 'sw')"
+      ></div>
+    } @else {
+      <div
+        class="mirrored-widget-indicator"
+        [title]="'UE_GRID_MASTER_HINT' | translate"
       >
-        ×
-      </button>
-    </div>
-
-    <!-- 8-way resize handles -->
-    <div
-      class="resize-handle n"
-      (pointerdown)="onResizeStart($event, 'n')"
-    ></div>
-    <div
-      class="resize-handle e"
-      (pointerdown)="onResizeStart($event, 'e')"
-    ></div>
-    <div
-      class="resize-handle s"
-      (pointerdown)="onResizeStart($event, 's')"
-    ></div>
-    <div
-      class="resize-handle w"
-      (pointerdown)="onResizeStart($event, 'w')"
-    ></div>
-    <div
-      class="resize-handle ne"
-      (pointerdown)="onResizeStart($event, 'ne')"
-    ></div>
-    <div
-      class="resize-handle nw"
-      (pointerdown)="onResizeStart($event, 'nw')"
-    ></div>
-    <div
-      class="resize-handle se"
-      (pointerdown)="onResizeStart($event, 'se')"
-    ></div>
-    <div
-      class="resize-handle sw"
-      (pointerdown)="onResizeStart($event, 'sw')"
-    ></div>
+        <i class="fas fa-link me-1"></i>
+        <span>{{
+          "UE_GRID_LANE_MIRRORED_BADGE"
+            | translate
+              : { index: (widget().customSettings?.["gridLane"] || 0) + 1 }
+        }}</span>
+      </div>
+    }
   }
 </div>

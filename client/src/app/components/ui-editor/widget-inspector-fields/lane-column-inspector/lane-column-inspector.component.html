@@ -2,6 +2,58 @@
   {{ "UE_INSPECTOR_LANE_COLUMN_SETTINGS" | translate }}
 </div>
 
+@if (currentSettings["gridId"]) {
+  <div class="inspector-section grid-indicator-card">
+    <div class="grid-card-header">
+      <span class="grid-card-title">
+        <i class="fas fa-layer-group me-1"></i>
+        {{
+          (currentSettings["bindingMode"] === "position"
+            ? "UE_GRID_POSITION_INSPECTOR_TITLE"
+            : "UE_GRID_INSPECTOR_TITLE"
+          )
+            | translate
+              : { count: currentSettings["gridTotalLanes"] || totalLanes() }
+        }}
+      </span>
+      <span class="grid-card-badge">
+        {{
+          (currentSettings["bindingMode"] === "position"
+            ? "UE_GRID_POSITION_MIRRORED_BADGE"
+            : "UE_GRID_LANE_MIRRORED_BADGE"
+          )
+            | translate
+              : {
+                  index:
+                    (currentSettings["gridLane"] != null
+                      ? currentSettings["gridLane"]
+                      : currentSettings["targetIndex"]) + 1,
+                }
+        }}
+      </span>
+    </div>
+    <div class="grid-card-actions">
+      <button
+        type="button"
+        class="btn btn-sm btn-primary w-100 grid-edit-btn"
+        (click)="onEditGridTemplate()"
+      >
+        <i class="fas fa-edit me-1"></i>
+        {{ "UE_GRID_EDIT_TEMPLATE" | translate }}
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-secondary w-100 grid-detach-btn"
+        (click)="onDetachFromGrid()"
+      >
+        <i class="fas fa-unlink me-1"></i>
+        {{ "UE_GRID_DETACH" | translate }}
+      </button>
+    </div>
+  </div>
+  <hr class="inspector-divider" />
+}
+
 <!-- Binding Mode & Target Index -->
 <div class="inspector-section">
   <label class="inspector-label">{{

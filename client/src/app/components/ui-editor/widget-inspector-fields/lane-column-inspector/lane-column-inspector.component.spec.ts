@@ -144,4 +144,85 @@ describe("LaneColumnInspectorComponent", () => {
     );
     expect(colorInputs.length).toBeGreaterThanOrEqual(2);
   });
+
+  it("should format target lane options with 1-based lane numbers", () => {
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (key === "UE_INSPECTOR_LANE_INDEX") {
+          return `Lane ${params?.index}`;
+        }
+        return key;
+      },
+    );
+    mockSettings.bindingMode = "lane";
+    fixture.detectChanges();
+
+    const options = fixture.debugElement.queryAll(By.css("app-custom-option"));
+    const optionTexts = options.map((opt) =>
+      opt.nativeElement.textContent.trim(),
+    );
+    expect(optionTexts).toContain("Lane 1");
+    expect(optionTexts).toContain("Lane 2");
+    expect(optionTexts).toContain("Lane 8");
+    expect(optionTexts).not.toContain("Lane 0");
+    expect(optionTexts).not.toContain("Lane {index}");
+  });
+
+  it("should format target position options with 1-based position numbers", () => {
+    mockTranslationService.translate.and.callFake(
+      (key: string, params?: any) => {
+        if (key === "UE_INSPECTOR_POSITION_INDEX") {
+          return `Position ${params?.index}`;
+        }
+        return key;
+      },
+    );
+    mockSettings.bindingMode = "position";
+    fixture.detectChanges();
+
+    const options = fixture.debugElement.queryAll(By.css("app-custom-option"));
+    const optionTexts = options.map((opt) =>
+      opt.nativeElement.textContent.trim(),
+    );
+    expect(optionTexts).toContain("Position 1");
+    expect(optionTexts).toContain("Position 2");
+    expect(optionTexts).toContain("Position 8");
+    expect(optionTexts).not.toContain("Position 0");
+    expect(optionTexts).not.toContain("Position {index}");
+  });
+
+  it("should display grid indicator card when widget has gridId", () => {
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+      gridId: "grid-12345",
+      gridLane: 0,
+      gridTotalLanes: 4,
+    });
+    fixture.detectChanges();
+
+    const card = fixture.debugElement.query(By.css(".grid-indicator-card"));
+    expect(card).toBeTruthy();
+
+    spyOn(component.editGrid, "emit");
+    const editBtn = fixture.debugElement.query(By.css(".grid-edit-btn"));
+    expect(editBtn).toBeTruthy();
+    editBtn.triggerEventHandler("click", null);
+    expect(component.editGrid.emit).toHaveBeenCalledWith("grid-12345");
+
+    spyOn(component.detachGrid, "emit");
+    const detachBtn = fixture.debugElement.query(By.css(".grid-detach-btn"));
+    expect(detachBtn).toBeTruthy();
+    detachBtn.triggerEventHandler("click", null);
+    expect(component.detachGrid.emit).toHaveBeenCalledWith("grid-12345");
+  });
+
+  it("should not display grid indicator card when widget does not have gridId", () => {
+    fixture.componentRef.setInput("settings", {
+      ...mockSettings,
+    });
+    fixture.detectChanges();
+
+    const card = fixture.debugElement.query(By.css(".grid-indicator-card"));
+    expect(card).toBeNull();
+  });
 });

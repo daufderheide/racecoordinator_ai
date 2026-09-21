@@ -116,4 +116,37 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
   });
+
+  it("should synchronize bindingMode across grid widgets when inspector changes bindingMode", () => {
+    const {
+      handleWidgetInspectorChange,
+    } = require("./ui-editor-widget.helper");
+    const targetWidget = {
+      id: "w1",
+      customSettings: { gridId: "grid-abc", bindingMode: "position" },
+    };
+    const widget2 = {
+      id: "w2",
+      customSettings: { gridId: "grid-abc", bindingMode: "lane" },
+    };
+    const layout = { widgets: [targetWidget, widget2] };
+    const comp = {
+      isSaving: false,
+      activeCustomUi: { entity_id: "ui1" },
+      currentSelectedWidget: targetWidget,
+      activeGridSession: { gridId: "grid-abc", bindingMode: "lane" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleWidgetInspectorChange(comp, targetWidget);
+
+    expect(widget2.customSettings.bindingMode).toBe("position");
+    expect(comp.activeGridSession.bindingMode).toBe("position");
+    expect(comp.captureState).toHaveBeenCalled();
+  });
 });

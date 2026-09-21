@@ -380,4 +380,156 @@ app-default-raceday {
   }
 }
 
+/* Lane Blueprint Overlay & Toolbar */
+.lane-blueprint-overlay {
+  position: absolute;
+  pointer-events: none;
+  border: 2px dashed #3b82f6;
+  border-radius: 8px;
+  z-index: 50;
+  box-sizing: border-box;
+  background: rgba(59, 130, 246, 0.04);
+}
 
+.lane-blueprint-cell {
+  position: absolute;
+  border: 1px dashed rgba(59, 130, 246, 0.35);
+  box-sizing: border-box;
+}
+
+.lane-blueprint-cell.master-cell {
+  border: 2px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.lane-blueprint-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lane-blueprint-badge.master-badge {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.lane-blueprint-toolbar {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #0f172a;
+  border: 1px solid #3b82f6;
+  border-radius: 24px;
+  padding: 6px 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+}
+
+.lane-blueprint-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+}
+
+.lane-blueprint-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lane-blueprint-toolbar .btn-outline-info {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.lane-blueprint-toolbar .btn-outline-info:hover {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+/* Grid Perimeter Resize Handles */
+.grid-resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #3b82f6;
+  border: 2px solid #ffffff;
+  border-radius: 3px;
+  pointer-events: auto;
+  z-index: 60;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.grid-resize-handle:hover {
+  background: #60a5fa;
+  transform: scale(1.25);
+}
+
+.grid-resize-handle.handle-nw {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.grid-resize-handle.handle-n {
+  top: -6px;
+  left: calc(50% - 6px);
+  cursor: ns-resize;
+}
+
+.grid-resize-handle.handle-ne {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.grid-resize-handle.handle-e {
+  top: calc(50% - 6px);
+  right: -6px;
+  cursor: ew-resize;
+}
+
+.grid-resize-handle.handle-se {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
+
+.grid-resize-handle.handle-s {
+  bottom: -6px;
+  left: calc(50% - 6px);
+  cursor: ns-resize;
+}
+
+.grid-resize-handle.handle-sw {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.grid-resize-handle.handle-w {
+  top: calc(50% - 6px);
+  left: -6px;
+  cursor: ew-resize;
+}

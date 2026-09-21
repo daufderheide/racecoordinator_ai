@@ -101,6 +101,7 @@ describe("TranslationService", () => {
       HELLO: "Hello World",
       GREET_PARAM: "Hello {{name}}!",
       SPACED_PARAM: "Count: {{ count }} items",
+      SINGLE_BRACE_PARAM: "Lane {index}",
     });
 
     service.getTranslationsLoaded().subscribe((loaded) => {
@@ -112,6 +113,9 @@ describe("TranslationService", () => {
         );
         expect(service.translate("SPACED_PARAM", { count: 5 })).toBe(
           "Count: 5 items",
+        );
+        expect(service.translate("SINGLE_BRACE_PARAM", { index: 1 })).toBe(
+          "Lane 1",
         );
         done();
       }

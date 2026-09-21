@@ -15,6 +15,10 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, NavigationStart, Router } from "@angular/router";
 import { Subscription } from "rxjs";
 import { DefaultRacedayComponent } from "@app/components/raceday/default-raceday.component";
+import {
+  LaneGridBounds,
+  LaneGridSession,
+} from "@app/components/raceday/utils/lane-grid-replication.helper";
 import { AcknowledgementModalComponent } from "@app/components/shared/acknowledgement-modal/acknowledgement-modal.component";
 import { AudioSelectorComponent } from "@app/components/shared/audio-selector/audio-selector.component";
 import { ConfirmationModalComponent } from "@app/components/shared/confirmation-modal/confirmation-modal.component";
@@ -60,6 +64,13 @@ import {
   ThemeTemplateModalComponent,
   ThemeTemplateType,
 } from "./components/theme-template-modal/theme-template-modal";
+import {
+  handleDetachGrid,
+  handleEditGridTemplate,
+  handleFinishGridSession,
+  handleStartGridSession,
+  handleUpdateGridBounds,
+} from "./ui-editor-grid.helper";
 import {
   acknowledgeSuccessModal,
   applyLoadedUiEditorData,
@@ -125,7 +136,6 @@ import {
   handleImportRacedayLayout,
   handleMasterVolumeChange,
   handlePageTransitionChange,
-  handleReplicateLanes,
   handleResetCurrentLayout,
   handleResetLayout,
   handleResetPracticeRacedayLayout,
@@ -256,6 +266,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   showThemeTemplateModal = false;
   showTemplateVariablesModal = false;
   showReplicateLaneModal = false;
+  activeGridSession: LaneGridSession | null = null;
+  maxTrackLanes = 0;
   replicateBindingMode: "lane" | "position" = "lane";
   replicateSourceIndex = 0;
   replicateDefaultCount = 4;
@@ -596,7 +608,27 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   onReplicateLanes(options: any, ui?: CustomUI) {
-    handleReplicateLanes(this, options, ui);
+    this.startGridSession(options, ui);
+  }
+
+  startGridSession(options: any, ui?: CustomUI): void {
+    handleStartGridSession(this, options, ui);
+  }
+
+  finishGridSession(ui?: CustomUI): void {
+    handleFinishGridSession(this, ui);
+  }
+
+  onGridBoundsChange(bounds: LaneGridBounds, ui?: CustomUI): void {
+    handleUpdateGridBounds(this, bounds, ui);
+  }
+
+  onEditGridTemplate(gridId: string, ui?: CustomUI): void {
+    handleEditGridTemplate(this, gridId, ui);
+  }
+
+  onDetachGrid(gridId: string, ui?: CustomUI): void {
+    handleDetachGrid(this, gridId, ui);
   }
 
   openReplicateLaneModal(ui?: CustomUI): void {
@@ -654,42 +686,22 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.captureState();
   }
 
-  resetLayout(ui: CustomUI) {
-    handleResetLayout(this, ui);
-  }
-  clearLayout(ui: CustomUI) {
-    handleClearLayout(this, ui);
-  }
-  clearCurrentLayout() {
-    handleClearCurrentLayout(this);
-  }
-  resetRacedayLayout() {
-    handleResetRacedayLayout(this);
-  }
-  resetPracticeRacedayLayout() {
-    handleResetPracticeRacedayLayout(this);
-  }
-  exportLayout(ui: CustomUI) {
-    handleExportLayout(this, ui);
-  }
-  downloadJson(data: any, filename: string) {
+  resetLayout = (ui: CustomUI) => handleResetLayout(this, ui);
+  clearLayout = (ui: CustomUI) => handleClearLayout(this, ui);
+  clearCurrentLayout = () => handleClearCurrentLayout(this);
+  resetRacedayLayout = () => handleResetRacedayLayout(this);
+  resetPracticeRacedayLayout = () => handleResetPracticeRacedayLayout(this);
+  exportLayout = (ui: CustomUI) => handleExportLayout(this, ui);
+  downloadJson = (data: any, filename: string) =>
     downloadJsonFile(data, filename);
-  }
-  exportRacedayLayout() {
-    handleExportRacedayLayout(this);
-  }
-  exportPracticeRacedayLayout() {
-    handleExportPracticeRacedayLayout(this);
-  }
-  onImportLayout(event: Event, ui: CustomUI) {
+  exportRacedayLayout = () => handleExportRacedayLayout(this);
+  exportPracticeRacedayLayout = () => handleExportPracticeRacedayLayout(this);
+  onImportLayout = (event: Event, ui: CustomUI) =>
     handleImportLayout(this, event, ui);
-  }
-  onImportRacedayLayout(event: Event) {
+  onImportRacedayLayout = (event: Event) =>
     handleImportRacedayLayout(this, event);
-  }
-  onImportPracticeRacedayLayout(event: Event) {
+  onImportPracticeRacedayLayout = (event: Event) =>
     handleImportPracticeRacedayLayout(this, event);
-  }
 
   areSettingsEqual(a: Settings, b: Settings) {
     return areSettingsEqual(a, b);
@@ -744,7 +756,10 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.lifecycle.onCancelDiscard();
   }
 
-  onBack() {
+  async onBack() {
+    if (this.hasChanges()) {
+      await this.autoSaveState();
+    }
     this.isNavigationApproved = true;
     this.router.navigate([this.backTargetUrl()], {
       queryParams: this.backQueryParams(),
@@ -954,21 +969,11 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
-  async createNewCustomUi() {
-    await handleCreateCustomUi(this);
-  }
-  async onDuplicateCustomUi(ui: CustomUI) {
-    await handleDuplicateCustomUi(this, ui);
-  }
-  onDeleteCustomUi(ui: CustomUI) {
-    openDeleteCustomUiModal(this, ui);
-  }
-  cancelDeleteCustomUi() {
-    cancelDeleteCustomUiModal(this);
-  }
-  async confirmDeleteCustomUi() {
-    await handleConfirmDeleteCustomUi(this);
-  }
+  createNewCustomUi = () => handleCreateCustomUi(this);
+  onDuplicateCustomUi = (ui: CustomUI) => handleDuplicateCustomUi(this, ui);
+  onDeleteCustomUi = (ui: CustomUI) => openDeleteCustomUiModal(this, ui);
+  cancelDeleteCustomUi = () => cancelDeleteCustomUiModal(this);
+  confirmDeleteCustomUi = () => handleConfirmDeleteCustomUi(this);
   onCustomUiNameChanged(_ui: CustomUI) {
     this.captureState();
     this.refreshDisplayProperties();
@@ -1003,9 +1008,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     openSuccessModal(this, params, collapseThemeId, focusThemeId);
   }
 
-  async createNewTheme() {
-    await handleCreateTheme(this);
-  }
+  createNewTheme = () => handleCreateTheme(this);
   async onConfirmThemeTemplate(_templateType: ThemeTemplateType) {
     this.showThemeTemplateModal = false;
     await this.createNewTheme();
@@ -1015,43 +1018,26 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.refreshDisplayProperties();
     this.cdr.markForCheck();
   }
-  async onDuplicateTheme(theme: Theme) {
-    await handleDuplicateTheme(this, theme);
-  }
-  onDeleteTheme(theme: Theme) {
-    openDeleteThemeModal(this, theme);
-  }
-  async onConfirmDeleteTheme() {
-    await handleConfirmDeleteTheme(this);
-  }
-  onCancelDeleteTheme() {
-    cancelDeleteThemeModal(this);
-  }
-  onSuccessModalAcknowledge() {
-    acknowledgeSuccessModal(this);
-  }
-  onDetachTheme() {
-    handleDetachTheme(this);
-  }
+  onDuplicateTheme = (theme: Theme) => handleDuplicateTheme(this, theme);
+  onDeleteTheme = (theme: Theme) => openDeleteThemeModal(this, theme);
+  onConfirmDeleteTheme = () => handleConfirmDeleteTheme(this);
+  onCancelDeleteTheme = () => cancelDeleteThemeModal(this);
+  onSuccessModalAcknowledge = () => acknowledgeSuccessModal(this);
+  onDetachTheme = () => handleDetachTheme(this);
 
-  getLayoutAspectRatio(ui?: CustomUI): string {
-    return getLayoutAspectRatio(this.getLayout(ui));
-  }
-  getLayoutAspectRatioOptions(ui?: CustomUI): AspectRatioOption[] {
-    return getLayoutAspectRatioOptions(
+  getLayoutAspectRatio = (ui?: CustomUI) =>
+    getLayoutAspectRatio(this.getLayout(ui));
+  getLayoutAspectRatioOptions = (ui?: CustomUI) =>
+    getLayoutAspectRatioOptions(
       this.layoutAspectRatioOptions,
       this.getLayout(ui),
     );
-  }
-  setLayoutAspectRatio(ratio: string, ui?: CustomUI): void {
+  setLayoutAspectRatio = (ratio: string, ui?: CustomUI) =>
     handleSetLayoutAspectRatio(this, ratio, ui);
-  }
-  getLayoutScaleMode(ui?: CustomUI): LayoutScaleMode {
-    return getLayoutScaleMode(this.getLayout(ui));
-  }
-  setLayoutScaleMode(mode: LayoutScaleMode, ui?: CustomUI): void {
+  getLayoutScaleMode = (ui?: CustomUI) =>
+    getLayoutScaleMode(this.getLayout(ui));
+  setLayoutScaleMode = (mode: LayoutScaleMode, ui?: CustomUI) =>
     handleSetLayoutScaleMode(this, mode, ui);
-  }
 
   zoomController = new LayoutZoomController(this);
 

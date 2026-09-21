@@ -68,6 +68,8 @@
         (change)="onSettingsChange()"
         (requestReplicate)="requestReplicate.emit()"
         (replicate)="replicate.emit($event)"
+        (editGrid)="editGrid.emit($event)"
+        (detachGrid)="detachGrid.emit($event)"
       ></app-lane-column-inspector>
     }
     @case ("on-deck") {

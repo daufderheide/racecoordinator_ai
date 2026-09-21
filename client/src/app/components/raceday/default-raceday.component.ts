@@ -50,7 +50,12 @@ import {
 import { Race } from "@app/models/race";
 import { RaceParticipant } from "@app/models/race_participant";
 import { Role } from "@app/models/role";
-import { LayoutConfig, Settings, WidgetType } from "@app/models/settings";
+import {
+  AbsoluteWidgetNode,
+  LayoutConfig,
+  Settings,
+  WidgetType,
+} from "@app/models/settings";
 import { THEME_SLOT_KEYS } from "@app/models/theme";
 import { Track } from "@app/models/track";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -123,6 +128,12 @@ import { AddLapSectionsDialogComponent } from "./components/add-lap-sections-dia
 import { RacedayAbsoluteWidgetComponent } from "./components/raceday-absolute-widget/raceday-absolute-widget.component";
 import { RacedayModalsComponent } from "./components/raceday-modals/raceday-modals.component";
 import { ToolboxGroup, ToolboxGroupHelper } from "./toolbox-group.helper";
+import {
+  GridResizeHandle,
+  LaneGridBounds,
+  LaneGridReplicationHelper,
+  LaneGridSession,
+} from "./utils/lane-grid-replication.helper";
 import {
   LaneReplicationHelper,
   LaneReplicationOptions,
@@ -881,7 +892,7 @@ export class DefaultRacedayComponent
     });
   }
 
-  protected driverRankings = new Map<string, number>();
+  public driverRankings = new Map<string, number>();
   protected isInterfaceConnected: boolean = false;
   protected draggingLane: number | null = null;
   protected isDragging: boolean = false;
@@ -907,7 +918,10 @@ export class DefaultRacedayComponent
   activeCustomUi = input<CustomUI | null>(null);
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
+  gridSession = input<LaneGridSession | null>(null);
   widgetSelected = output<string | null>();
+  finishGrid = output<void>();
+  gridBoundsChange = output<LaneGridBounds>();
 
   get visualScale(): number {
     return this.isUIEditorMode() ? this.uiScale() : this.scale;
@@ -2781,6 +2795,14 @@ export class DefaultRacedayComponent
               this.driverRankings.set(u.objectId, u.rank || 0);
             }
           });
+          if (this.heat?.heatDrivers) {
+            const sortedByRank = [...this.heat.heatDrivers].sort((a, b) => {
+              const rankA = this.driverRankings.get(a.objectId) ?? 999;
+              const rankB = this.driverRankings.get(b.objectId) ?? 999;
+              return rankA - rankB;
+            });
+            this.heat.standings = sortedByRank.map((hd) => hd.objectId);
+          }
         }
         this.sortHeatDrivers();
       }),
@@ -3177,6 +3199,14 @@ export class DefaultRacedayComponent
     this.heatBestNickname = "Peach";
     this.heatBestTime = 2.012;
     this.recordData = mockData.recordData;
+
+    this.driverRankings.clear();
+    if (this.heat?.heatDrivers) {
+      this.heat.heatDrivers.forEach((hd, index) => {
+        this.driverRankings.set(hd.objectId, index + 1);
+      });
+      this.heat.standings = this.heat.heatDrivers.map((hd) => hd.objectId);
+    }
 
     this.sortHeatDrivers();
     this.updateLeaderboardEntries();
@@ -7289,6 +7319,17 @@ export class DefaultRacedayComponent
     if (!this.layout.widgets) this.layout.widgets = [];
     this.layout.widgets.push(newWidget);
 
+    if (this.gridSession()) {
+      const session = this.gridSession()!;
+      if (isLaneColumn || actualWidgetType === "lane-column") {
+        this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+          newWidget,
+          session,
+          this.layout.widgets,
+        );
+      }
+    }
+
     this.draggedWidgetType = null;
     this.layoutChanged.emit(this.layout);
     this.widgetSelected.emit(newWidget.id);
@@ -7310,6 +7351,17 @@ export class DefaultRacedayComponent
 
     const targetWidget = this.layout.widgets.find((w: any) => w.id === id);
     if (!targetWidget) return;
+
+    if (this.gridSession() && targetWidget.customSettings?.["gridMasterId"]) {
+      const masterId = targetWidget.customSettings["gridMasterId"];
+      const masterWidget = this.layout.widgets.find(
+        (w: any) => w.id === masterId,
+      );
+      if (masterWidget) {
+        this.bringToFront(masterId);
+        return;
+      }
+    }
 
     if (targetWidget.widgetType === "countdown") {
       const otherWidgets = this.layout.widgets.filter((w: any) => w.id !== id);
@@ -7378,7 +7430,16 @@ export class DefaultRacedayComponent
 
   removeWidget(id: string) {
     if (!this.layout?.widgets) return;
-    this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    if (this.gridSession()) {
+      this.layout.widgets =
+        LaneGridReplicationHelper.removeMasterWidgetFromLanes(
+          id,
+          this.gridSession()!,
+          this.layout.widgets,
+        );
+    } else {
+      this.layout.widgets = this.layout.widgets.filter((w: any) => w.id !== id);
+    }
     this.layoutChanged.emit(this.layout);
     if (this.selectedWidgetId() === id) {
       const laneView = this.layout.widgets.find(
@@ -7409,6 +7470,98 @@ export class DefaultRacedayComponent
     this.cdr.markForCheck();
   }
 
+  getGridDividers(): number[] {
+    const s = this.gridSession();
+    return s ? LaneGridReplicationHelper.computeGridDividers(s) : [];
+  }
+
+  getGridCells(): {
+    bounds: LaneGridBounds;
+    laneIndex: number;
+    isMaster: boolean;
+  }[] {
+    const s = this.gridSession();
+    if (!s) return [];
+    const cells: {
+      bounds: LaneGridBounds;
+      laneIndex: number;
+      isMaster: boolean;
+    }[] = [];
+    for (let k = 0; k < s.totalLanes; k++) {
+      cells.push({
+        bounds: LaneGridReplicationHelper.computeLaneCellBounds(s, k),
+        laneIndex: k,
+        isMaster: k === s.sourceLaneIndex,
+      });
+    }
+    return cells;
+  }
+
+  onGridResizeStart(event: PointerEvent, handle: GridResizeHandle): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const session = this.gridSession();
+    if (!session) return;
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const initialBounds = { ...session.bounds };
+    const scale = this.visualScale || 1;
+    const baseWidth = this.layout?.baseWidth || 1920;
+    const baseHeight = this.layout?.baseHeight || 1080;
+
+    const nonGridWidgets = (this.layout?.widgets || []).filter(
+      (w) => w.customSettings?.["gridId"] !== session.gridId,
+    );
+    const snapEdgesX: number[] = [0, baseWidth];
+    const snapEdgesY: number[] = [0, baseHeight];
+    for (const w of nonGridWidgets) {
+      snapEdgesX.push(w.x, w.x + w.width);
+      snapEdgesY.push(w.y, w.y + w.height);
+    }
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = (moveEvent.clientX - startX) / scale;
+      const deltaY = (moveEvent.clientY - startY) / scale;
+
+      const newBounds = LaneGridReplicationHelper.resizeGridBounds(
+        initialBounds,
+        handle,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+        100,
+        60,
+        snapEdgesX,
+        snapEdgesY,
+        8,
+      );
+
+      this.gridBoundsChange.emit(newBounds);
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+    };
+
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+  }
+
+  onMasterWidgetModified(widget: AbsoluteWidgetNode): void {
+    const session = this.gridSession();
+    if (!session || !this.layout?.widgets) return;
+    this.layout.widgets = LaneGridReplicationHelper.syncMasterWidgetToLanes(
+      widget,
+      session,
+      this.layout.widgets,
+    );
+    this.layoutChanged.emit(this.layout);
+    this.cdr.markForCheck();
+  }
+
   snapToEdges(
     x: number,
     y: number,
@@ -7419,6 +7572,20 @@ export class DefaultRacedayComponent
     layoutWidth: number = 1920,
     layoutHeight: number = 1080,
   ): { x: number; y: number; w: number; h: number } {
+    const extraX: number[] = [];
+    const extraY: number[] = [];
+    const s = this.gridSession();
+    if (s) {
+      extraX.push(s.bounds.x, s.bounds.x + s.bounds.width);
+      extraY.push(s.bounds.y, s.bounds.y + s.bounds.height);
+      const dividers = LaneGridReplicationHelper.computeGridDividers(s);
+      if (s.direction === "horizontal") {
+        extraX.push(...dividers);
+      } else {
+        extraY.push(...dividers);
+      }
+    }
+
     return RacedayLayoutUtils.snapToEdges(
       this.layout?.widgets || [],
       x,
@@ -7429,6 +7596,8 @@ export class DefaultRacedayComponent
       handle,
       layoutWidth,
       layoutHeight,
+      extraX,
+      extraY,
     );
   }
 

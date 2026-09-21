@@ -167,13 +167,21 @@
 }
 
 /* Auto-scale for simple headers: race-name, heat-info, track-name */
-.widget-wrapper.scale-auto .value-text {
+.widget-wrapper.scale-auto app-raceday-race-name .value-text,
+.widget-wrapper.scale-auto app-raceday-heat-info .value-text,
+.widget-wrapper.scale-auto app-raceday-track-name .value-text,
+.widget-wrapper.scale-auto app-raceday-event-name .value-text,
+.widget-wrapper.scale-auto app-raceday-season-name .value-text {
   font-size: var(
     --header-value-font-size,
     calc(80cqh * var(--widget-scale-factor, 1))
   ) !important;
 }
-.widget-wrapper.scale-auto .label-text {
+.widget-wrapper.scale-auto app-raceday-race-name .label-text,
+.widget-wrapper.scale-auto app-raceday-heat-info .label-text,
+.widget-wrapper.scale-auto app-raceday-track-name .label-text,
+.widget-wrapper.scale-auto app-raceday-event-name .label-text,
+.widget-wrapper.scale-auto app-raceday-season-name .label-text {
   font-size: var(
     --header-label-font-size,
     calc(55cqh * var(--widget-scale-factor, 1))
@@ -227,10 +235,18 @@
   font-size: var(--widget-font-size);
   line-height: 1 !important;
 }
-.widget-wrapper.scale-fixed .value-text {
+.widget-wrapper.scale-fixed app-raceday-race-name .value-text,
+.widget-wrapper.scale-fixed app-raceday-heat-info .value-text,
+.widget-wrapper.scale-fixed app-raceday-track-name .value-text,
+.widget-wrapper.scale-fixed app-raceday-event-name .value-text,
+.widget-wrapper.scale-fixed app-raceday-season-name .value-text {
   font-size: var(--widget-font-size);
 }
-.widget-wrapper.scale-fixed .label-text,
+.widget-wrapper.scale-fixed app-raceday-race-name .label-text,
+.widget-wrapper.scale-fixed app-raceday-heat-info .label-text,
+.widget-wrapper.scale-fixed app-raceday-track-name .label-text,
+.widget-wrapper.scale-fixed app-raceday-event-name .label-text,
+.widget-wrapper.scale-fixed app-raceday-season-name .label-text,
 .widget-wrapper.scale-fixed .status-label,
 .widget-wrapper.scale-fixed .warmup-label {
   font-size: calc(0.6 * var(--widget-font-size));
@@ -639,4 +655,22 @@
   flex-direction: column;
   gap: 2px;
   font-size: 13px;
+}
+
+.mirrored-widget-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(37, 99, 235, 0.85);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }

@@ -10,7 +10,13 @@ import { ReplicateLaneDialogComponent } from "./replicate-lane-dialog.component"
   standalone: true,
 })
 class MockTranslatePipe implements PipeTransform {
-  transform(key: string, _params?: any): string {
+  transform(key: string, params?: any): string {
+    if (key === "UE_REPLICATE_LANES_DESC") {
+      return `Duplicate all widgets currently configured for Lane ${params?.index} across other lanes.`;
+    }
+    if (key === "UE_REPLICATE_POSITIONS_DESC") {
+      return `Duplicate all widgets currently configured for Position ${params?.index} across other standings positions.`;
+    }
     return key;
   }
 }
@@ -57,6 +63,26 @@ describe("ReplicateLaneDialogComponent", () => {
       By.css("#replicate-lane-modal-content"),
     );
     expect(modalContent).toBeTruthy();
+  });
+
+  it("should display 1-based index in description message", () => {
+    fixture.componentRef.setInput("visible", true);
+    fixture.componentRef.setInput("bindingMode", "lane");
+    fixture.componentRef.setInput("sourceIndex", 0);
+    fixture.detectChanges();
+
+    const desc = fixture.debugElement.query(By.css(".modal-message"));
+    expect(desc.nativeElement.textContent).toContain("Lane 1");
+    expect(desc.nativeElement.textContent).not.toContain("Lane 0");
+    expect(desc.nativeElement.textContent).not.toContain("Lane {index}");
+
+    fixture.componentRef.setInput("bindingMode", "position");
+    fixture.componentRef.setInput("sourceIndex", 2);
+    fixture.detectChanges();
+
+    expect(desc.nativeElement.textContent).toContain("Position 3");
+    expect(desc.nativeElement.textContent).not.toContain("Position 2");
+    expect(desc.nativeElement.textContent).not.toContain("Position {index}");
   });
 
   it("should update targetCount when defaultCount changes while visible", () => {
