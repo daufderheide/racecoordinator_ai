@@ -425,3 +425,25 @@
   flex: 1;
   font-size: 0.8rem;
 }
+
+.qr-help-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.qr-help-link {
+  color: #38bdf8;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qr-help-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}

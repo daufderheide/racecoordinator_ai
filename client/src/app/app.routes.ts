@@ -177,6 +177,12 @@ export const routes: Routes = [
     data: { animation: "CameraInterfacePage" },
   },
   {
+    path: "camera_interface",
+    component: CameraInterfaceComponent,
+    title: "Camera Interface",
+    data: { animation: "CameraInterfacePage" },
+  },
+  {
     path: "driver-station/:lane",
     component: DriverStationComponent,
     title: "Driver Station",

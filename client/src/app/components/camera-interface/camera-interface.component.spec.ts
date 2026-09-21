@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject } from "rxjs";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CameraVisionService } from "@app/services/camera-vision.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { CameraInterfaceComponent } from "./camera-interface.component";
@@ -13,12 +14,14 @@ describe("CameraInterfaceComponent", () => {
   let mockCameraVisionService: jasmine.SpyObj<CameraVisionService>;
   let mockRouter: jasmine.SpyObj<Router>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
 
   const isConnected$ = new BehaviorSubject<boolean>(false);
   const batteryLevel$ = new BehaviorSubject<number>(0.9);
   const fps$ = new BehaviorSubject<number>(60);
 
   beforeEach(async () => {
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
     mockCameraVisionService = jasmine.createSpyObj(
       "CameraVisionService",
       [
@@ -52,6 +55,7 @@ describe("CameraInterfaceComponent", () => {
         { provide: CameraVisionService, useValue: mockCameraVisionService },
         { provide: Router, useValue: mockRouter },
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -81,7 +85,99 @@ describe("CameraInterfaceComponent", () => {
     expect(component.serverUrl).toBe("ws://127.0.0.1:8080/api/interface-data");
     expect(component.interfaceIndex).toBe(1);
     expect(component.numLanes).toBe(4);
+    expect(mockCameraVisionService.connect).toHaveBeenCalledWith(
+      "ws://127.0.0.1:8080/api/interface-data",
+      1,
+    );
     expect(mockCameraVisionService.requestWakeLock).toHaveBeenCalled();
+  });
+
+  it("should set error when navigator.mediaDevices is missing", async () => {
+    const originalMediaDevices = navigator.mediaDevices;
+    try {
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: undefined,
+        configurable: true,
+        writable: true,
+      });
+      await component.startCameraStream();
+      expect(component.cameraErrorMessage()).toBe(
+        "CAMERA_ERROR_INSECURE_OR_UNSUPPORTED",
+      );
+    } finally {
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: originalMediaDevices,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it("should set error when camera permission is denied", async () => {
+    const originalMediaDevices = navigator.mediaDevices;
+    try {
+      const mockMediaDevices = {
+        getUserMedia: jasmine
+          .createSpy("getUserMedia")
+          .and.rejectWith({ name: "NotAllowedError" }),
+      };
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: mockMediaDevices,
+        configurable: true,
+        writable: true,
+      });
+      await component.startCameraStream();
+      expect(component.cameraErrorMessage()).toBe(
+        "CAMERA_ERROR_PERMISSION_DENIED",
+      );
+    } finally {
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: originalMediaDevices,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it("should fallback to basic video constraint if ideal constraints fail", async () => {
+    const originalMediaDevices = navigator.mediaDevices;
+    const fakeStream = {
+      getTracks: () => [{ stop: jasmine.createSpy("stop") }],
+    } as any;
+    try {
+      let callCount = 0;
+      const mockMediaDevices = {
+        getUserMedia: jasmine
+          .createSpy("getUserMedia")
+          .and.callFake((_constraints: any) => {
+            callCount++;
+            if (callCount === 1) {
+              return Promise.reject({ name: "OverconstrainedError" });
+            }
+            return Promise.resolve(fakeStream);
+          }),
+      };
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: mockMediaDevices,
+        configurable: true,
+        writable: true,
+      });
+      await component.startCameraStream();
+      expect(mockMediaDevices.getUserMedia).toHaveBeenCalledTimes(2);
+      expect(component.cameraErrorMessage()).toBeNull();
+    } finally {
+      Object.defineProperty(navigator, "mediaDevices", {
+        value: originalMediaDevices,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  it("should fallback to default server URL when server query param is absent", () => {
+    (component as any).route.snapshot.queryParams = {};
+    (component as any).readQueryParams();
+    expect(component.serverUrl).toContain("/api/interface-data");
   });
 
   it("should reset gates to default matching numLanes", () => {
@@ -214,5 +310,22 @@ describe("CameraInterfaceComponent", () => {
     expect(resizedGate.widthPct).toBeGreaterThan(0.1);
 
     component.onPointerUp();
+  });
+
+  it("should delegate to HelpLinkService when openHelp is called", () => {
+    component.openHelp();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
+  });
+
+  it("should render learn more button on error and invoke openHelp on click", () => {
+    component.cameraErrorMessage.set("CAMERA_ERROR_INSECURE_OR_UNSUPPORTED");
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const learnMoreBtn = compiled.querySelector(
+      "#cameraErrorLearnMoreBtn",
+    ) as HTMLButtonElement;
+    expect(learnMoreBtn).toBeTruthy();
+    learnMoreBtn.click();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
   });
 });

@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { of, throwError } from "rxjs";
+import { DataService } from "@app/data.service";
 import { CameraConfig } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { CameraEditorComponent } from "./camera-editor.component";
@@ -9,6 +12,8 @@ describe("CameraEditorComponent", () => {
   let component: CameraEditorComponent;
   let fixture: ComponentFixture<CameraEditorComponent>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
+  let mockDataService: jasmine.SpyObj<DataService>;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
 
   const initialConfig: CameraConfig = {
     name: "Camera 1",
@@ -19,15 +24,23 @@ describe("CameraEditorComponent", () => {
   };
 
   beforeEach(async () => {
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
     mockTranslationService.translate.and.callFake((key: string) => key);
 
+    mockDataService = jasmine.createSpyObj("DataService", ["getServerIp"], {
+      currentServerPort: 7070,
+    });
+    mockDataService.getServerIp.and.returnValue(of("192.168.1.188"));
+
     await TestBed.configureTestingModule({
       imports: [CameraEditorComponent, TranslatePipe],
       providers: [
         { provide: TranslationService, useValue: mockTranslationService },
+        { provide: DataService, useValue: mockDataService },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
       ],
     }).compileComponents();
 
@@ -38,12 +51,50 @@ describe("CameraEditorComponent", () => {
     fixture.componentRef.setInput("lanes", 4);
   });
 
-  it("should create component and initialize gates", () => {
+  it("should create component and initialize gates with server IP and /camera_interface", () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
     expect(component.config().gates.length).toBe(4);
+    expect(component.pairingUrl()).toContain("192.168.1.188");
+    expect(component.pairingUrl()).toContain("/camera_interface");
+    expect(component.pairingUrl()).toContain(
+      encodeURIComponent("ws://192.168.1.188:7070/api/interface-data"),
+    );
     expect(component.pairingUrl()).toContain("interface=0");
     expect(component.pairingUrl()).toContain("lanes=4");
+  });
+
+  it("should fallback when getServerIp returns error or empty", () => {
+    mockDataService.getServerIp.and.returnValue(
+      throwError(() => new Error("Network error")),
+    );
+    component.ngOnInit();
+    expect(component.pairingUrl()).toContain("/camera_interface");
+    expect(component.pairingUrl()).toContain("interface=0");
+    expect(component.pairingUrl()).toContain("lanes=4");
+  });
+
+  it("should ensure server IP during openQrModal if initially unset", async () => {
+    mockDataService.getServerIp.and.returnValue(of("192.168.1.250"));
+    (component as any).serverIp = "";
+    await component.openQrModal();
+    expect(component.pairingUrl()).toContain("192.168.1.250");
+    expect(component.pairingUrl()).toContain("/camera_interface");
+    expect(component.showQrModal()).toBe(true);
+  });
+
+  it("should include password manager ignore attributes on pairing link input", async () => {
+    await component.openQrModal();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const input = compiled.querySelector(".link-input") as HTMLInputElement;
+    expect(input).toBeTruthy();
+    expect(input.getAttribute("autocomplete")).toBe("off");
+    expect(input.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(input.getAttribute("data-1p-ignore")).toBe("true");
+    expect(input.getAttribute("data-lpignore")).toBe("true");
+    expect(input.getAttribute("data-bwignore")).toBe("true");
+    expect(input.getAttribute("data-form-type")).toBe("other");
   });
 
   it("should reset gates to default matching lane count", () => {
@@ -98,7 +149,12 @@ describe("CameraEditorComponent", () => {
   it("should open local camera interface in new tab", () => {
     spyOn(window, "open");
     component.openLocalInterface();
-    expect(window.open).toHaveBeenCalledWith(component.pairingUrl(), "_blank");
+    expect(window.open).toHaveBeenCalledWith(
+      component.getLocalInterfaceUrl(),
+      "_blank",
+    );
+    expect(component.getLocalInterfaceUrl()).toContain("/camera_interface");
+    expect(component.getLocalInterfaceUrl()).toContain(window.location.origin);
   });
 
   it("should emit change output on config change", () => {
@@ -197,5 +253,33 @@ describe("CameraEditorComponent", () => {
 
     expect(component.config().gates[0].gateType).toBe(2);
     expect(component.change.emit).toHaveBeenCalled();
+  });
+
+  it("should delegate to HelpLinkService when openHelp is called", () => {
+    component.openHelp();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
+  });
+
+  it("should call openHelp when Learn More button is clicked in pairing card", () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const learnMoreBtn = compiled.querySelector(
+      "#cameraLearnMoreBtn",
+    ) as HTMLButtonElement;
+    expect(learnMoreBtn).toBeTruthy();
+    learnMoreBtn.click();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
+  });
+
+  it("should call openHelp when help link is clicked in QR modal", async () => {
+    await component.openQrModal();
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const modalHelpLink = compiled.querySelector(
+      "#cameraModalHelpLink",
+    ) as HTMLAnchorElement;
+    expect(modalHelpLink).toBeTruthy();
+    modalHelpLink.click();
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
   });
 });

@@ -230,7 +230,18 @@ Draadloze verbinding met Policar BART Bluetooth Low Energy (BLE) sensorbruggen e
 
 ---
 
-### 5. Demo- / Simulatie-Interface
+### 5. Camerainterface (Mobiele Webcamera)
+
+De **Camerainterface** transformeert elke smartphone, tablet of webcam in een optische hogesnelheids-tijdwaarnemingsbrug via lokale wifi, zonder dat er apps geïnstalleerd hoeven te worden.
+
+- **Zero-Install Web-App**: Monteer de telefoon boven de start/finishlijn en scan de QR-code om direct te starten.
+- **Interactieve SVG-Poorten**: Instelbare detectiezones met gevoeligheidsschuifregelaars per baan en automatische Auto-Snap kalibratie.
+- **Hoge Beeldsnelheid**: Ondersteunt 30 en 60 FPS videostreams met bewegingsdetectie op subframe-niveau.
+- **Configuratie op Mobiele Browsers**: Lees gedetailleerde instructies over beveiligingsflags en HTTPS in de [Installatiehandleiding voor mobiele webcamera](camera-setup.md).
+
+---
+
+### 6. Demo- / Simulatie-Interface
 
 Ideaal om raceformats, rotaties, thema's, audio-oproepen en schermen te testen zonder aangesloten hardware.
 

@@ -47,6 +47,7 @@ export class TrackEditorHelper {
       "getSystemState",
       "getPhidgetDevices",
       "endRace",
+      "getServerIp",
     ]);
     mock.endRace = jasmine.createSpy("endRace").and.returnValue(of(true));
     mock.getPhidgetDevices = jasmine
@@ -87,6 +88,9 @@ export class TrackEditorHelper {
     mock.getSystemState = jasmine
       .createSpy("getSystemState")
       .and.returnValue(of(null));
+    mock.getServerIp = jasmine
+      .createSpy("getServerIp")
+      .and.returnValue(of("127.0.0.1"));
 
     mock.getTracks.and.callFake(() => of(deepCopy(MOCK_TRACK_INSTANCES)));
     mock.deleteTrack.and.returnValue(of(true));

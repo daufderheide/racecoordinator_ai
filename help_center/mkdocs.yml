@@ -56,6 +56,7 @@ nav:
     - Release Notes & Changelog: changelog.md
     - Installation: installation.md
     - Arduino UNO Q Setup: arduino-uno-q.md
+    - Mobile Camera Setup: camera-setup.md
   - Configuration:
     - Race Day Setup: raceday-setup.md
     - Driver Editor: driver-editor.md

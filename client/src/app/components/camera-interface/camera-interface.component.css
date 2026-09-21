@@ -493,3 +493,62 @@ input:checked + .slider:before {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+.camera-error-card {
+  width: 100%;
+  max-width: 440px;
+  background: #1e1b2e;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: scaleIn 0.2s ease-out;
+  text-align: center;
+}
+
+.error-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-icon {
+  font-size: 32px;
+}
+
+.error-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #f87171;
+}
+
+.error-desc {
+  margin: 0;
+  font-size: 14px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.error-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 4px;
+}

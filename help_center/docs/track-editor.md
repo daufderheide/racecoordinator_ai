@@ -249,7 +249,18 @@ The **BART** interface connects wirelessly to Policar BART Bluetooth Low Energy 
 
 ---
 
-### 5. Demo / Simulation Interface
+### 5. Camera Interface (Mobile Web Camera)
+
+The **Camera Interface** transforms any smartphone, tablet, or web camera into a high-speed optical timing gantry over local Wi-Fi without installing native apps.
+
+- **Zero-Install Web App**: Mount a phone over the finish line and scan the QR code to launch the real-time optical timing interface.
+- **Interactive SVG Gates**: Configurable detection zones with per-lane sensitivity sliders and auto-snap calibration.
+- **High Frame Rate**: Supports 30 FPS and 60 FPS video feeds with sub-frame motion vectoring.
+- **Mobile Browser Setup**: For detailed instructions on browser security, Android Chrome flags, and iOS HTTPS configuration, see the [Mobile Camera Setup Guide](camera-setup.md).
+
+---
+
+### 6. Demo / Simulation Interface
 
 When testing race formats, custom themes, rotation schedules, or Text-to-Speech audio callouts without physical track hardware attached, you can run races in **Demo Mode**.
 

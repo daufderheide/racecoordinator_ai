@@ -15,6 +15,7 @@ import { Subscription } from "rxjs";
 import { LaneDetectionGate } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CameraVisionService } from "@app/services/camera-vision.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 
 interface DragState {
   type: "move" | "resize";
@@ -52,6 +53,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   gates = signal<LaneDetectionGate[]>([]);
   selectedGateIndex = signal<number | null>(null);
   lastTriggeredLane = signal<number | null>(null);
+  cameraErrorMessage = signal<string | null>(null);
 
   // Auto-Snap wizard state
   isAutoSnapping = signal<boolean>(false);
@@ -79,6 +81,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef,
+    private helpLinkService: HelpLinkService,
   ) {}
 
   ngOnInit(): void {
@@ -86,6 +89,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     this.initSettings();
     this.initSubscriptions();
     this.loadGates();
+    this.connectToServer();
     this.startCameraStream();
     this.cameraVisionService.requestWakeLock();
   }
@@ -116,7 +120,11 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     } else {
       const loc = window.location;
       const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
-      this.serverUrl = `${wsProtocol}//${loc.hostname}:${loc.port || (loc.protocol === "https:" ? "443" : "8080")}/api/interface-data`;
+      const port =
+        loc.port === "4200"
+          ? "7070"
+          : loc.port || (loc.protocol === "https:" ? "443" : "7070");
+      this.serverUrl = `${wsProtocol}//${loc.hostname}:${port}/api/interface-data`;
     }
   }
 
@@ -190,26 +198,58 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
 
   public async startCameraStream(): Promise<void> {
     this.stopCameraStream();
+
+    if (
+      typeof navigator === "undefined" ||
+      !navigator?.mediaDevices?.getUserMedia
+    ) {
+      this.cameraErrorMessage.set("CAMERA_ERROR_INSECURE_OR_UNSUPPORTED");
+      return;
+    }
+
     try {
       const constraints: MediaStreamConstraints = {
         video: {
-          facingMode: this.facingMode(),
+          facingMode: { ideal: this.facingMode() },
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
         audio: false,
       };
-      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      try {
+        this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (constraintErr: any) {
+        if (
+          constraintErr?.name === "NotAllowedError" ||
+          constraintErr?.name === "PermissionDeniedError"
+        ) {
+          throw constraintErr;
+        }
+        // Fallback to basic video constraint for desktop webcams lacking environment facingMode
+        this.stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
+
+      this.cameraErrorMessage.set(null);
       if (this.videoElementRef?.nativeElement) {
         this.videoElementRef.nativeElement.srcObject = this.stream;
         this.videoElementRef.nativeElement.onloadedmetadata = () => {
-          this.videoElementRef.nativeElement.play();
-          this.connectToServer();
+          this.videoElementRef.nativeElement.play().catch(() => {});
           this.startProcessingLoop();
         };
       }
-    } catch {
-      // Camera permission denied or device not found
+    } catch (err: any) {
+      if (
+        err?.name === "NotAllowedError" ||
+        err?.name === "PermissionDeniedError"
+      ) {
+        this.cameraErrorMessage.set("CAMERA_ERROR_PERMISSION_DENIED");
+      } else {
+        this.cameraErrorMessage.set("CAMERA_ERROR_NOT_FOUND");
+      }
     }
   }
 
@@ -485,5 +525,9 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
 
   public goBack(): void {
     this.router.navigate(["/"]);
+  }
+
+  public openHelp(): void {
+    this.helpLinkService.openHelp("camera-setup");
   }
 }

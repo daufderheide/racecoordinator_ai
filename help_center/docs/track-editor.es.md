@@ -230,7 +230,18 @@ Conexión inalámbrica a puentes de cronometraje y transpondedores Policar BART 
 
 ---
 
-### 5. Interfaz Demo / Simulación
+### 5. Interfaz de Cámara (Cámara Web Móvil)
+
+La **Interfaz de Cámara** transforma cualquier teléfono inteligente, tableta o cámara web en un puente de cronometraje óptico de alta velocidad a través de la red Wi-Fi local, sin instalar aplicaciones.
+
+- **Aplicación Web Sin Instalación**: Monte el teléfono sobre la línea de meta y escanee el código QR para iniciar el cronometraje óptico en tiempo real.
+- **Puertas SVG Interactivas**: Zonas de detección configurables con controles de sensibilidad por carril y calibración automática Auto-Snap.
+- **Alta Tasa de Cuadros**: Admite vídeo a 30 y 60 FPS con detección vectorial de movimiento en subcuadros.
+- **Configuración en Navegadores Móviles**: Consulte instrucciones detalladas sobre opciones de seguridad y HTTPS en la [Guía de Configuración de Cámara Web Móvil](camera-setup.md).
+
+---
+
+### 6. Interfaz Demo / Simulación
 
 Permite probar formatos de carrera, rotaciones, temas, anuncios de audio y marcadores sin hardware físico conectado.
 

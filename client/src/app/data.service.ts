@@ -135,6 +135,10 @@ export class DataService {
     return this.baseUrl;
   }
 
+  public get currentServerPort(): number {
+    return this.serverPort;
+  }
+
   private get driversUrl(): string {
     return `${this.baseUrl}/api/drivers`;
   }

@@ -143,6 +143,7 @@ export const mockDataService = {
   setConnectionIntent: jasmine.createSpy("setConnectionIntent"),
   socketConnected$: of(true),
   serverUrl: "http://localhost:7070",
+  currentServerPort: 7070,
 };
 
 export const mockTranslationService = {

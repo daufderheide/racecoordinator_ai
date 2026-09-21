@@ -577,6 +577,11 @@ describe("DataService", () => {
     expect(service["raceDataSocket"]).toBeUndefined();
   });
 
+  it("should return currentServerPort", () => {
+    service["serverPort"] = 7070;
+    expect(service.currentServerPort).toBe(7070);
+  });
+
   it("should set connection intent property", () => {
     service.setConnectionIntent("preview");
     expect(service["connectionIntent"]).toBe("preview");

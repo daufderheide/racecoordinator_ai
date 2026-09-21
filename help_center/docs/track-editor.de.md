@@ -234,7 +234,18 @@ Drahtlose Anbindung an Policar BART Bluetooth Low Energy (BLE) Zeitmessbrücken 
 
 ---
 
-### 5. Demo- / Simulations-Schnittstelle
+### 5. Kameraschnittstelle (Mobile Webkamera)
+
+Die **Kameraschnittstelle** verwandelt jedes Smartphone, Tablet oder jede Webcam in eine optische Hochgeschwindigkeits-Zeitmessbrücke über lokales WLAN – ganz ohne App-Installation.
+
+- **Zero-Install Web-App**: Smartphone über der Ziellinie montieren, QR-Code scannen und sofort starten.
+- **Interaktive SVG-Gates**: Konfigurierbare Erfassungsbereiche mit Empfindlichkeitsreglern pro Spur und Auto-Snap-Kalibrierung.
+- **Hohe Bildwiederholrate**: Unterstützt 30 und 60 FPS Videoübertragung mit Bewegungserkennung im Sub-Frame-Bereich.
+- **Einrichtung mobiler Browser**: Eine ausführliche Anleitung zu Sicherheitsflags und HTTPS finden Sie in der [Einrichtungsanleitung für mobile Webkameras](camera-setup.md).
+
+---
+
+### 6. Demo- / Simulations-Schnittstelle
 
 Für Tests von Rennformaten, Rotationen, Themes, Audioansagen und Leaderboards ohne angeschlossene Hardware steht der **Demo-Modus** bereit.
 

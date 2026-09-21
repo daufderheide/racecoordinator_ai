@@ -230,7 +230,18 @@ Ligação sem fios a pontes de cronometragem e transponders Policar BART Bluetoo
 
 ---
 
-### 5. Interface Demonstração / Simulação
+### 5. Interface de Câmera (Câmera Web Móvel)
+
+A **Interface de Câmera** transforma qualquer smartphone, tablet ou webcam em uma ponte óptica de cronometragem de alta velocidade pela rede Wi-Fi local, sem necessidade de instalar aplicativos.
+
+- **Aplicativo Web Sem Instalação**: Monte o telefone sobre a linha de chegada e escaneie o código QR para iniciar o cronometragem óptica em tempo real.
+- **Portas SVG Interativas**: Zonas de detecção configuráveis com controle de sensibilidade por fenda e calibração automática Auto-Snap.
+- **Alta Taxa de Quadros**: Suporta transmissões em 30 e 60 FPS com análise vetorial de movimento sub-frame.
+- **Configuração em Navegadores Móveis**: Consulte instruções completas sobre flags de segurança e HTTPS no [Guia de Configuração da Câmera Web Móvel](camera-setup.md).
+
+---
+
+### 6. Interface Demonstração / Simulação
 
 Permite testar formatos de prova, rotações, temas visuais, mensagens de voz e classificações sem necessidade de ligar hardware.
 

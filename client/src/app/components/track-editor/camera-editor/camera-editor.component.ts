@@ -10,12 +10,15 @@ import {
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import * as QRCode from "qrcode";
+import { firstValueFrom, timeout } from "rxjs";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
+import { DataService } from "@app/data.service";
 import { CameraConfig } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
+import { HelpLinkService } from "@app/services/help-link.service";
 
 @Component({
   selector: "app-camera-editor",
@@ -51,12 +54,40 @@ export class CameraEditorComponent implements OnInit {
     gates: true,
   };
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  private serverIp = "";
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private dataService: DataService,
+    private helpLinkService: HelpLinkService,
+  ) {}
 
   ngOnInit(): void {
     this.loadSectionsState();
     this.ensureGates();
     this.generatePairingUrl();
+    this.fetchServerIp();
+  }
+
+  private fetchServerIp(): void {
+    if (
+      !this.dataService ||
+      typeof this.dataService.getServerIp !== "function"
+    ) {
+      this.generatePairingUrl();
+      return;
+    }
+    this.dataService.getServerIp().subscribe({
+      next: (ip) => {
+        if (ip && ip !== "Unknown") {
+          this.serverIp = ip.trim();
+        }
+        this.generatePairingUrl();
+      },
+      error: () => {
+        this.generatePairingUrl();
+      },
+    });
   }
 
   toggleSection(section: keyof typeof this.sectionsExpanded): void {
@@ -133,20 +164,62 @@ export class CameraEditorComponent implements OnInit {
     }
   }
 
+  private resolveHost(): string {
+    const loc = window.location;
+    if (
+      this.serverIp &&
+      this.serverIp !== "Unknown" &&
+      this.serverIp !== "127.0.0.1" &&
+      this.serverIp !== "localhost"
+    ) {
+      return this.serverIp;
+    }
+    if (
+      loc.hostname &&
+      loc.hostname !== "localhost" &&
+      loc.hostname !== "127.0.0.1"
+    ) {
+      return loc.hostname;
+    }
+    if (this.serverIp && this.serverIp !== "Unknown") {
+      return this.serverIp;
+    }
+    return loc.hostname || "localhost";
+  }
+
   public generatePairingUrl(): void {
     const loc = window.location;
-    const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
-    const wsHost = loc.hostname;
-    const wsPort = loc.port || (loc.protocol === "https:" ? "443" : "8080");
-    const wsUrl = `${wsProtocol}//${wsHost}:${wsPort}/api/interface-data`;
+    const host = this.resolveHost();
+    const clientPort = loc.port ? `:${loc.port}` : "";
+    const clientBase = `${loc.protocol}//${host}${clientPort}`;
 
-    const url = `${loc.origin}/camera-interface?server=${encodeURIComponent(
+    const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
+    const wsPort = this.dataService?.currentServerPort || 7070;
+    const wsUrl = `${wsProtocol}//${host}:${wsPort}/api/interface-data`;
+
+    const url = `${clientBase}/camera_interface?server=${encodeURIComponent(
       wsUrl,
     )}&interface=${this.interfaceIndex()}&lanes=${this.lanes()}`;
     this.pairingUrl.set(url);
   }
 
   public async openQrModal(): Promise<void> {
+    if (
+      !this.serverIp &&
+      this.dataService &&
+      typeof this.dataService.getServerIp === "function"
+    ) {
+      try {
+        const ip = await firstValueFrom(
+          this.dataService.getServerIp().pipe(timeout(2000)),
+        );
+        if (ip && ip !== "Unknown") {
+          this.serverIp = ip.trim();
+        }
+      } catch {
+        // Fall back to hostname
+      }
+    }
     this.generatePairingUrl();
     try {
       const dataUrl = await QRCode.toDataURL(this.pairingUrl(), {
@@ -177,8 +250,19 @@ export class CameraEditorComponent implements OnInit {
     }
   }
 
+  public getLocalInterfaceUrl(): string {
+    const loc = window.location;
+    const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
+    const wsPort = this.dataService?.currentServerPort || 7070;
+    const wsUrl = `${wsProtocol}//${loc.hostname}:${wsPort}/api/interface-data`;
+
+    return `${loc.origin}/camera_interface?server=${encodeURIComponent(
+      wsUrl,
+    )}&interface=${this.interfaceIndex()}&lanes=${this.lanes()}`;
+  }
+
   public openLocalInterface(): void {
-    window.open(this.pairingUrl(), "_blank");
+    window.open(this.getLocalInterfaceUrl(), "_blank");
   }
 
   public onConfigChange(): void {
@@ -188,5 +272,9 @@ export class CameraEditorComponent implements OnInit {
   public onRemove(): void {
     if (!this.isEditMode()) return;
     this.remove.emit();
+  }
+
+  public openHelp(): void {
+    this.helpLinkService.openHelp("camera-setup");
   }
 }

@@ -230,7 +230,18 @@ Liaison sans fil avec les ponts de détection et transpondeurs Policar BART Blue
 
 ---
 
-### 5. Interface Démo / Simulation
+### 5. Interface Caméra (Caméra Web Mobile)
+
+L'**Interface Caméra** transforme n'importe quel smartphone, tablette ou webcam en pont de chronométrage optique haute vitesse via le réseau Wi-Fi local, sans aucune installation d'application.
+
+- **Application Web Sans Installation** : Fixez le téléphone au-dessus de la ligne d'arrivée et scannez le QR code pour démarrer le chronométrage optique en temps réel.
+- **Portes SVG Interactives** : Zones de détection ajustables avec réglage individuel de la sensibilité par voie et calibrage automatique Auto-Snap.
+- **Cadence d'Images Élevée** : Prise en charge des flux 30 et 60 FPS avec analyse de mouvement sub-frame.
+- **Configuration sur Navigateurs Mobiles** : Pour les instructions détaillées sur les drapeaux de sécurité et HTTPS, consultez le [Guide de Configuration de la Caméra Web Mobile](camera-setup.md).
+
+---
+
+### 6. Interface Démo / Simulation
 
 Permet de tester vos formats de course, rotations, thèmes visuels, annonces vocales et classements sans aucun matériel raccordé.
 

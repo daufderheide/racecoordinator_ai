@@ -230,7 +230,18 @@ Connessione wireless a ponti di cronometraggio e transponder Policar BART Blueto
 
 ---
 
-### 5. Interfaccia Demo / Simulazione
+### 5. Interfaccia Telecamera (Web Camera Mobile)
+
+L'**Interfaccia Telecamera** trasforma qualsiasi smartphone, tablet o webcam in un ponte di cronometraggio ottico ad alta velocità tramite Wi-Fi locale, senza installare app native.
+
+- **Web App Zero Installazioni**: Posizionare lo smartphone sopra il traguardo e scansionare il codice QR per avviare il rilevamento ottico in tempo reale.
+- **Varchi SVG Interattivi**: Aree di rilevamento regolabili con slider di sensibilità per singola corsia e calibrazione guidata Auto-Snap.
+- **Frequenza Elevata di Fotogrammi**: Supporto a flussi video a 30 e 60 FPS con analisi sub-frame del movimento.
+- **Configurazione Browser Mobile**: Consultare le istruzioni dettagliate su flag e HTTPS nella [Guida alla Configurazione della Web Camera Mobile](camera-setup.md).
+
+---
+
+### 6. Interfaccia Demo / Simulazione
 
 Ideale per collaudare formati di gara, rotazioni, temi, annunci audio e tabelloni senza collegare alcun hardware fisico.
 

@@ -284,4 +284,34 @@
       </div>
     </div>
   }
+
+  <!-- Camera Error Overlay Banner -->
+  @if (cameraErrorMessage()) {
+    <div class="modal-backdrop error-backdrop">
+      <div class="camera-error-card">
+        <div class="error-header">
+          <span class="error-icon">📷⚠️</span>
+          <h3>{{ "CAMERA_ERROR_TITLE" | translate }}</h3>
+        </div>
+        <p class="error-desc">{{ cameraErrorMessage()! | translate }}</p>
+        @if (cameraErrorMessage() === "CAMERA_ERROR_INSECURE_OR_UNSUPPORTED") {
+          <p class="error-hint">
+            {{ "CAMERA_ERROR_INSECURE_HINT" | translate }}
+          </p>
+        }
+        <div class="error-actions">
+          <button class="btn btn-primary" (click)="startCameraStream()">
+            {{ "CAMERA_RETRY" | translate }}
+          </button>
+          <button
+            class="btn btn-secondary"
+            (click)="openHelp()"
+            id="cameraErrorLearnMoreBtn"
+          >
+            {{ "CAMERA_LEARN_MORE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

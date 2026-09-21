@@ -116,6 +116,14 @@
                         >
                           💻 {{ "CAMERA_EDITOR_TEST_LOCAL" | translate }}
                         </button>
+
+                        <button
+                          class="btn btn-secondary"
+                          (click)="openHelp()"
+                          id="cameraLearnMoreBtn"
+                        >
+                          ℹ️ {{ "CAMERA_LEARN_MORE" | translate }}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -319,6 +327,12 @@
               <input
                 type="text"
                 readonly
+                autocomplete="off"
+                data-dashlane-ignore="true"
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
                 [value]="pairingUrl()"
                 class="form-control link-input"
               />
@@ -330,6 +344,17 @@
                   ) | translate
                 }}
               </button>
+            </div>
+
+            <div class="qr-help-container">
+              <a
+                href="javascript:void(0)"
+                (click)="openHelp()"
+                class="qr-help-link"
+                id="cameraModalHelpLink"
+              >
+                {{ "CAMERA_LEARN_MORE_SETUP" | translate }} ↗
+              </a>
             </div>
           </div>
 
