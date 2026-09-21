@@ -432,6 +432,54 @@ public class Race implements ProtocolListener {
     return drivers;
   }
 
+  public synchronized void updateDriver(Driver updatedDriver) {
+    if (updatedDriver == null || updatedDriver.getEntityId() == null) {
+      return;
+    }
+    String id = updatedDriver.getEntityId();
+    if (drivers != null) {
+      for (RaceParticipant rp : drivers) {
+        if (rp.getDriver() != null && id.equals(rp.getDriver().getEntityId())) {
+          rp.setDriver(updatedDriver);
+        }
+        if (rp.getTeamDrivers() != null) {
+          for (int i = 0; i < rp.getTeamDrivers().size(); i++) {
+            Driver td = rp.getTeamDrivers().get(i);
+            if (td != null && id.equals(td.getEntityId())) {
+              rp.getTeamDrivers().set(i, updatedDriver);
+            }
+          }
+        }
+      }
+    }
+    if (heats != null) {
+      for (Heat heat : heats) {
+        updateHeatDrivers(heat, id, updatedDriver);
+      }
+    }
+    if (currentHeat != null) {
+      updateHeatDrivers(currentHeat, id, updatedDriver);
+    }
+  }
+
+  private void updateHeatDrivers(Heat heat, String id, Driver updatedDriver) {
+    if (heat == null || heat.getDrivers() == null) {
+      return;
+    }
+    for (DriverHeatData dhd : heat.getDrivers()) {
+      if (dhd != null) {
+        if (dhd.getActualDriver() != null && id.equals(dhd.getActualDriver().getEntityId())) {
+          dhd.setActualDriver(updatedDriver);
+        }
+        if (dhd.getDriver() != null
+            && dhd.getDriver().getDriver() != null
+            && id.equals(dhd.getDriver().getDriver().getEntityId())) {
+          dhd.getDriver().setDriver(updatedDriver);
+        }
+      }
+    }
+  }
+
   public String getSeasonEntityId() {
     return seasonEntityId;
   }

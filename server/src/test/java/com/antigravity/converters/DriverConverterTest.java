@@ -367,4 +367,46 @@ public class DriverConverterTest {
     assertEquals(driver.getPitInAudio().getUrl(), copy.getPitInAudio().getUrl());
     assertEquals(driver.getFuelAudio().getUrl(), copy.getFuelAudio().getUrl());
   }
+
+  @Test
+  public void testToProto_WithNoneAudioConfig_DoesNotInjectDefaultUrls() {
+    com.antigravity.models.AudioConfig noneAudio =
+        new com.antigravity.models.AudioConfig("none", null, null);
+    Driver driver =
+        new Driver.Builder()
+            .withName("Silent Driver")
+            .withNickname("Silent")
+            .withEntityId("d_silent")
+            .withLapAudio(noneAudio)
+            .withBestLapAudio(noneAudio)
+            .withPenaltyAudio(noneAudio)
+            .withOverallBestLapAudio(noneAudio)
+            .withOverallLaneBestLapAudio(noneAudio)
+            .withRaceBestLapAudio(noneAudio)
+            .withRaceLaneBestLapAudio(noneAudio)
+            .withHeatBestLapAudio(noneAudio)
+            .withNewRaceLeaderAudio(noneAudio)
+            .withNewHeatLeaderAudio(noneAudio)
+            .withPitInAudio(noneAudio)
+            .withFuelAudio(noneAudio)
+            .build();
+
+    DriverModel proto = DriverConverter.toProto(driver, new HashSet<>());
+    assertNotNull(proto);
+
+    assertEquals("none", proto.getLapAudio().getType());
+    assertEquals("", proto.getLapAudio().getUrl());
+
+    assertEquals("none", proto.getBestLapAudio().getType());
+    assertEquals("", proto.getBestLapAudio().getUrl());
+
+    assertEquals("none", proto.getOverallBestLapAudio().getType());
+    assertEquals("", proto.getOverallBestLapAudio().getUrl());
+
+    assertEquals("none", proto.getHeatBestLapAudio().getType());
+    assertEquals("", proto.getHeatBestLapAudio().getUrl());
+
+    assertEquals("none", proto.getRaceBestLapAudio().getType());
+    assertEquals("", proto.getRaceBestLapAudio().getUrl());
+  }
 }
