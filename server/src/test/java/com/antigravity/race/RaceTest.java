@@ -2889,6 +2889,55 @@ public class RaceTest {
 
       assertEquals(75.0, parts.get(0).getFuelLevel(), 0.001);
     }
+
+    @Test
+    public void testNonFuelRaceDoesNotZeroOutFuelOnReset() {
+      AnalogFuelOptions disabledFuelOptions =
+          new AnalogFuelOptions(
+              false,
+              true,
+              null,
+              com.antigravity.models.FuelOptions.OutOfFuelAction.DO_NOT_COUNT_LAPS,
+              100.0,
+              AnalogFuelOptions.FuelUsageType.LINEAR,
+              4.0,
+              100.0,
+              20.0,
+              1.0,
+              6.0);
+
+      Race nonFuelModel =
+          new Race.Builder()
+              .withName("Non-Fuel Race")
+              .withFuelOptions(disabledFuelOptions)
+              .withAutoStartTime(60.0)
+              .withTrackEntityId("track1")
+              .withHeatRotationType(HeatRotationType.RoundRobin)
+              .withHeatScoring(race.getRaceModel().getHeatScoring())
+              .withOverallScoring(new OverallScoring())
+              .build();
+
+      List<RaceParticipant> parts = new ArrayList<>();
+      parts.add(new RaceParticipant(new Driver("D1", "d1", "1", "1")));
+      parts.get(0).setFuelLevel(100.0);
+
+      com.antigravity.race.Race nonFuelRace =
+          new com.antigravity.race.Race.Builder()
+              .model(nonFuelModel)
+              .drivers(parts)
+              .track(race.getTrack())
+              .isDemoMode(true)
+              .build();
+
+      DriverHeatData dhd = nonFuelRace.getCurrentHeat().getDrivers().get(0);
+      assertEquals(100.0, dhd.getInitialFuelLevel(), 0.001);
+      assertEquals(100.0, parts.get(0).getFuelLevel(), 0.001);
+
+      nonFuelRace.resetCurrentHeat();
+
+      assertEquals(100.0, parts.get(0).getFuelLevel(), 0.001);
+      assertEquals(100.0, dhd.getInitialFuelLevel(), 0.001);
+    }
   }
 
   // =========================================================================

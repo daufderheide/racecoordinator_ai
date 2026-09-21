@@ -351,12 +351,44 @@ describe("TeamEditorComponent", () => {
   it("should support undo/redo for name changes", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
     component.loadData();
+    component.isEditMode = true;
 
     component.onInputFocus();
     component.editingTeam!.name = "Changed";
     component.onInputBlur();
 
     expect(component.editingTeam!.name).toBe("Changed");
+    component.undo();
+    expect(component.editingTeam!.name).toBe("Team Alpha");
+    component.redo();
+    expect(component.editingTeam!.name).toBe("Changed");
+  });
+
+  it("should disable undo/redo and keyboard shortcuts in read-only mode, and enable in edit mode", () => {
+    mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t1");
+    component.loadData();
+    component.isEditMode = true;
+
+    component.onInputFocus();
+    component.editingTeam!.name = "Changed";
+    component.onInputBlur();
+
+    // Read-only mode
+    component.isEditMode = false;
+
+    // Undo and redo do nothing
+    component.undo();
+    expect(component.editingTeam!.name).toBe("Changed");
+    component.redo();
+    expect(component.editingTeam!.name).toBe("Changed");
+
+    // Keydown shortcut does nothing
+    const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+    component.handleKeyboardEvent(zEvent);
+    expect(component.editingTeam!.name).toBe("Changed");
+
+    // Re-enter edit mode: undo is restored
+    component.isEditMode = true;
     component.undo();
     expect(component.editingTeam!.name).toBe("Team Alpha");
     component.redo();
@@ -693,6 +725,71 @@ describe("TeamEditorComponent", () => {
       component.showDiscardConfirm = true;
       component.onCancelDiscard();
       expect(component.showDiscardConfirm).toBeFalse();
+    });
+  });
+
+  describe("Default Team Selection Hierarchy", () => {
+    const t1 = new Team("t1", "Team Alpha");
+    const t2 = new Team("t2", "Team Beta");
+    let navService: NavigationService;
+
+    beforeEach(() => {
+      navService = TestBed.inject(NavigationService);
+      navService.clearLastEditedId("team");
+      component.allTeams = [t1, t2];
+    });
+
+    it("should select team specified by id when found in allTeams", () => {
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue("t2");
+      (component as any).loadDataInternal([]);
+
+      expect(component.selectedTeamId).toBe("t2");
+      expect(component.editingTeam?.name).toBe("Team Beta");
+      expect(navService.getLastEditedId("team")).toBe("t2");
+    });
+
+    it("should fallback to last edited team when id cannot be selected (wrong editor or non-existent)", () => {
+      navService.setLastEditedId("team", "t2");
+      (component as any).initialLastEditedId = "t2";
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(
+        "driver-99",
+      );
+      (component as any).loadDataInternal([]);
+
+      expect(component.selectedTeamId).toBe("t2");
+      expect(component.editingTeam?.name).toBe("Team Beta");
+      expect(navService.getLastEditedId("team")).toBe("t2");
+    });
+
+    it("should fallback to first team when id cannot be selected and there is no last edited team", () => {
+      navService.clearLastEditedId("team");
+      (component as any).initialLastEditedId = null;
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(
+        "driver-99",
+      );
+      (component as any).loadDataInternal([]);
+
+      expect(component.selectedTeamId).toBe("t1");
+      expect(component.editingTeam?.name).toBe("Team Alpha");
+      expect(navService.getLastEditedId("team")).toBe("t1");
+    });
+
+    it("should select last edited team when no id is provided in queryParamMap", () => {
+      navService.setLastEditedId("team", "t2");
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+      (component as any).loadDataInternal([]);
+
+      expect(component.selectedTeamId).toBe("t2");
+      expect(component.editingTeam?.name).toBe("Team Beta");
+    });
+
+    it("should select first team when no id is provided and there is no last edited team", () => {
+      navService.clearLastEditedId("team");
+      mockActivatedRoute.snapshot.queryParamMap.get.and.returnValue(null);
+      (component as any).loadDataInternal([]);
+
+      expect(component.selectedTeamId).toBe("t1");
+      expect(component.editingTeam?.name).toBe("Team Alpha");
     });
   });
 });

@@ -9,6 +9,9 @@ export abstract class EditorTitleHarnessBase {
     undoButton: "app-toolbar .undo",
     redoButton: "app-toolbar .redo",
     helpButton: "app-toolbar #help-track-btn",
+    prevButton: "#editor-prev-item-btn",
+    nextButton: "#editor-next-item-btn",
+    itemCounter: "#editor-item-counter",
   };
 
   /** Gets the title text */
@@ -31,4 +34,19 @@ export abstract class EditorTitleHarnessBase {
 
   /** Checks if redo is disabled */
   abstract isRedoDisabled(): Promise<boolean>;
+
+  /** Clicks the previous item button */
+  abstract clickPrevious(): Promise<void>;
+
+  /** Clicks the next item button */
+  abstract clickNext(): Promise<void>;
+
+  /** Checks if the previous item button is disabled */
+  abstract isPreviousDisabled(): Promise<boolean>;
+
+  /** Checks if the next item button is disabled */
+  abstract isNextDisabled(): Promise<boolean>;
+
+  /** Gets the item counter text */
+  abstract getItemCounter(): Promise<string | null>;
 }

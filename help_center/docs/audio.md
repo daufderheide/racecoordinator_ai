@@ -219,6 +219,35 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 
 ---
 
+## Multi-Sound Audio Sets & Trigger Modes
+
+An **Audio Set** is a composite audio asset containing a collection of sound files or Text-to-Speech callouts mapped to numerical trigger milestones. Audio sets are utilized across 5 primary theme slots and driver fuel settings:
+
+1. **Start Countdown (`audio.countdown`):** Sequence beeps and horns counting down to race start.
+2. **Auto-Start Seconds Left (`audio.auto_start`):** Audio callouts counting down before a heat begins.
+3. **Remaining Seconds (`audio.seconds_left`):** Time announcements during timed heats.
+4. **Laps Left (`audio.laps_left`):** Lap announcements during lap-based heats.
+5. **Auto-Advance Seconds Left (`audio.auto_advance`):** Audio callouts counting down between heats before automatically advancing.
+6. **Driver Fuel Level Sounds (`fuelLevelAudio`):** Warning, critical, and refueled alerts triggered at fuel percentage thresholds.
+
+### Trigger Modes: Remaining vs. Elapsed
+Each entry in an Audio Set defines a **Trigger Mode**:
+
+*   **Remaining (Count Down):** Triggers as the race approaches the finish or time limit (e.g. 10 laps left, 30 seconds remaining). This is the default mode for countdowns and finish milestones.
+*   **Elapsed (Count Up):** Triggers as the race progresses forward from the start (e.g. 10 laps completed, 30 seconds elapsed into the heat).
+
+### Dual Cues with Identical Numeric Values
+Race Coordinator AI supports configuring two entries in the same Audio Set with the exact same numeric value (e.g., value `10`):
+- An entry configured as **Elapsed** will play as the heat progresses past that milestone (e.g. at 10 laps completed).
+- An entry configured as **Remaining** will play as the race nears completion (e.g. when 10 laps remain).
+
+### Natural Race Progression Preview
+When previewing an Audio Set in the Asset Manager or Theme Audio Selector, entries play sequentially in natural race progression order:
+1. All **Elapsed** entries play first in ascending count-up order (0 → N).
+2. All **Remaining** entries play next in descending countdown order (N → 0).
+
+---
+
 ## Where Audio is Configured
 
 Here is a quick summary of where different audio features are configured across Race Coordinator AI:
@@ -228,4 +257,4 @@ Here is a quick summary of where different audio features are configured across 
 | **UI Editor -> Audio Settings** | Master volume, Urgent queue timeout (TTL), Callout spacing cadence pause, TTS voice selection, speech speed (rate), speech pitch, TTS volume, and voice preview test. |
 | **Theme Editor** | System-wide event sounds: start countdown sequence beeps, green lamp GO tone, yellow flag caution sirens, halfway callout, remaining seconds callout, heat finished sound, race finished sound, minimum lap time violation sound, and drift lap violation sound. |
 | **Driver Editor** | Driver-specific sounds: lap sound, personal best lap sound, race best lap sound, race lane best lap sound, heat best lap sound, new race leader sound, new heat leader sound, overall record lap sound, overall lane record lap sound, pit in sound, fuel level sounds, and false start sound. |
-| **Asset Manager** | Uploading and organizing custom WAV, MP3, and OGG audio files. Clicking an uploaded audio file instantly plays a preview. |
+| **Asset Manager** | Uploading and organizing custom WAV, MP3, and OGG audio files, and configuring multi-sound Audio Sets with context-dependent trigger values (seconds, laps, or percentage). Clicking an uploaded audio file instantly plays a preview. |

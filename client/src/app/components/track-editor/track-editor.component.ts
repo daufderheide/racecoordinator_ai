@@ -201,6 +201,32 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     );
   }
 
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
+    localStorage.setItem(
+      "rc.track-editor.sections",
+      JSON.stringify(this.sectionsExpanded),
+    );
+    if (next) {
+      this.arduinoEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.bartEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.phidgetEditors?.forEach((e) => e.ensureSectionsExpanded());
+      this.trakmateEditors?.forEach((e) => e.ensureSectionsExpanded());
+    }
+  }
+
   get interfaceTabs(): EditorTab[] {
     const tabs: EditorTab[] = [];
 
@@ -463,6 +489,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
@@ -1216,11 +1243,13 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   // Undo/Redo Proxies
   undo() {
+    if (!this.isEditMode) return;
     clearTimeout(this.colorDebounceTimer);
     this.colorDebounceTimer = null;
     this.undoManager.undo();
   }
   redo() {
+    if (!this.isEditMode) return;
     clearTimeout(this.colorDebounceTimer);
     this.colorDebounceTimer = null;
     this.undoManager.redo();

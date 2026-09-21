@@ -30,6 +30,8 @@ export class ToolbarComponent implements OnInit {
   showAdd = input(false);
   showEdit = input(false);
   isEditMode = input(false);
+  showExpandCollapse = input(false);
+  allExpanded = input(false);
   showHelp = input(false);
   showDelete = input(false);
   showCopy = input(false);
@@ -126,6 +128,7 @@ export class ToolbarComponent implements OnInit {
 
   add = output<void>();
   edit = output<void>();
+  expandCollapse = output<void>();
   copy = output<void>();
   help = output<void>();
   delete = output<void>();
@@ -157,6 +160,10 @@ export class ToolbarComponent implements OnInit {
 
   onActivate() {
     this.activate.emit();
+  }
+
+  onExpandCollapse() {
+    this.expandCollapse.emit();
   }
 
   onImport() {
@@ -359,18 +366,30 @@ export class ToolbarComponent implements OnInit {
   }
 
   undo() {
+    if (!this.canUndo) {
+      return;
+    }
     this.undoManager()?.undo();
   }
 
   redo() {
+    if (!this.canRedo) {
+      return;
+    }
     this.undoManager()?.redo();
   }
 
   get canUndo(): boolean {
+    if (this.showEdit() && !this.isEditMode()) {
+      return false;
+    }
     return (this.undoManager()?.undoStackCount ?? 0) > 0;
   }
 
   get canRedo(): boolean {
+    if (this.showEdit() && !this.isEditMode()) {
+      return false;
+    }
     return (this.undoManager()?.redoStackCount ?? 0) > 0;
   }
 }

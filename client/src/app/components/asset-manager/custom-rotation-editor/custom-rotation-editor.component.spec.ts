@@ -1223,8 +1223,8 @@ describe("CustomRotationEditorComponent", () => {
   describe("Layout Scale and Resize", () => {
     it("should update scale on window resize", () => {
       // Simulate window resize
-      window.innerWidth = 800;
-      window.innerHeight = 450;
+      spyOnProperty(window, "innerWidth", "get").and.returnValue(800);
+      spyOnProperty(window, "innerHeight", "get").and.returnValue(450);
       component.onResize();
       expect(component.scale).toBe(0.5); // min(800/1600, 450/900)
     });

@@ -208,6 +208,61 @@ describe("ToolbarComponent", () => {
     expect(manager.redo).toHaveBeenCalled();
   });
 
+  it("should disable undo and redo in read-only mode even when stacks have items", async () => {
+    const config = {
+      clonner: (item: any) => ({ ...item }),
+      equalizer: (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b),
+      applier: () => {},
+    };
+    let state = { foo: "bar" };
+    const manager = new UndoManager<any>(config, () => state);
+    spyOn(manager, "undo").and.callThrough();
+    spyOn(manager, "redo").and.callThrough();
+
+    fixture.componentRef.setInput("showUndo", true);
+    fixture.componentRef.setInput("showRedo", true);
+    fixture.componentRef.setInput("showEdit", true);
+    fixture.componentRef.setInput("isEditMode", false);
+    fixture.componentRef.setInput("undoManager", manager);
+    fixture.detectChanges();
+
+    manager.commitState();
+    state = { foo: "baz" };
+    manager.commitState();
+    state = { foo: "qux" };
+    manager.commitState();
+    manager.undo(); // now undoStackCount > 0 and redoStackCount > 0
+
+    expect(manager.undoStackCount).toBeGreaterThan(0);
+    expect(manager.redoStackCount).toBeGreaterThan(0);
+
+    // In read-only mode, both buttons should be disabled
+    expect(component.canUndo).toBeFalse();
+    expect(component.canRedo).toBeFalse();
+    expect(await harness.isUndoDisabled()).toBeTrue();
+    expect(await harness.isRedoDisabled()).toBeTrue();
+
+    // Invocations while disabled do nothing
+    component.undo();
+    component.redo();
+    expect(manager.undo).toHaveBeenCalledTimes(1); // from manual setup only
+    expect(manager.redo).not.toHaveBeenCalled();
+
+    // When entering edit mode, buttons become enabled and functional
+    fixture.componentRef.setInput("isEditMode", true);
+    fixture.detectChanges();
+
+    expect(component.canUndo).toBeTrue();
+    expect(component.canRedo).toBeTrue();
+    expect(await harness.isUndoDisabled()).toBeFalse();
+    expect(await harness.isRedoDisabled()).toBeFalse();
+
+    await harness.clickUndo();
+    expect(manager.undo).toHaveBeenCalledTimes(2);
+    await harness.clickRedo();
+    expect(manager.redo).toHaveBeenCalledTimes(1);
+  });
+
   it("should disable buttons when isSaving is true", async () => {
     fixture.componentRef.setInput("showEdit", true);
     fixture.componentRef.setInput("showDelete", true);
@@ -399,6 +454,45 @@ describe("ToolbarComponent", () => {
       fixture.componentRef.setInput("zoomLevel", 50);
       component.onZoomOut();
       expect(component.zoomLevelChange.emit).not.toHaveBeenCalledWith(40);
+    });
+  });
+
+  describe("Expand / Collapse All", () => {
+    it("should render expand-collapse button when showExpandCollapse is true", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.componentRef.setInput("allExpanded", false);
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector(
+        "#expand-collapse-all-btn",
+      );
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain("unfold_more");
+    });
+
+    it("should display unfold_less icon when allExpanded is true", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.componentRef.setInput("allExpanded", true);
+      fixture.detectChanges();
+
+      const btn = fixture.nativeElement.querySelector(
+        "#expand-collapse-all-btn",
+      );
+      expect(btn).toBeTruthy();
+      expect(btn.textContent).toContain("unfold_less");
+    });
+
+    it("should emit expandCollapse on button click", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.detectChanges();
+
+      spyOn(component.expandCollapse, "emit");
+      const btn = fixture.nativeElement.querySelector(
+        "#expand-collapse-all-btn",
+      );
+      btn.click();
+
+      expect(component.expandCollapse.emit).toHaveBeenCalled();
     });
   });
 });

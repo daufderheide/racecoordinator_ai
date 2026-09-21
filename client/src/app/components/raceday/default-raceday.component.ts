@@ -104,9 +104,18 @@ import { RaceTimeService } from "@app/services/race-time.service";
 import { SettingsService } from "@app/services/settings.service";
 import { ThemeService } from "@app/services/theme.service";
 import { TranslationService } from "@app/services/translation.service";
-import { createTTSContext, dispatchLapAudio } from "@app/utils/audio";
+import {
+  createTTSContext,
+  dispatchLapAudio,
+  isAudioConfigured,
+  resolveLapAudio,
+} from "@app/utils/audio";
 import { saveFileAs } from "@app/utils/file-download.utils";
 import { FuelAudioTracker } from "@app/utils/fuel-audio-tracker";
+import {
+  arbitrateLapAudioCandidates,
+  LapAudioCandidate,
+} from "@app/utils/lap-audio-arbitrator";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 import { AnchorPoint, ColumnDefinition } from "./column_definition";
@@ -715,9 +724,13 @@ export class DefaultRacedayComponent
 
   private previousTime: number = 0;
   private playedSecondsLeft = new Set<number>();
+  private playedSecondsElapsed = new Set<number>();
   private playedLapsLeft = new Set<number>();
+  private playedLapsElapsed = new Set<number>();
   private playedAutoStart = new Set<number>();
+  private playedAutoStartElapsed = new Set<number>();
   private playedAutoAdvance = new Set<number>();
+  private playedAutoAdvanceElapsed = new Set<number>();
   private previousAutoStartRemaining = 0;
   private previousAutoAdvanceRemaining = 0;
   private leaderLaps = 0;
@@ -1726,6 +1739,7 @@ export class DefaultRacedayComponent
           this.checkAutoStartCallouts(this.autoStartRemaining, prevAutoStart);
         } else if (this.autoStartRemaining <= 0) {
           this.playedAutoStart.clear();
+          this.playedAutoStartElapsed.clear();
         }
         this.previousAutoStartRemaining = this.autoStartRemaining;
 
@@ -1753,6 +1767,7 @@ export class DefaultRacedayComponent
           );
         } else if (this.autoAdvanceRemaining <= 0) {
           this.playedAutoAdvance.clear();
+          this.playedAutoAdvanceElapsed.clear();
         }
         this.previousAutoAdvanceRemaining = this.autoAdvanceRemaining;
 
@@ -1974,9 +1989,108 @@ export class DefaultRacedayComponent
     const isBestLap = lap.lapTime === lap.bestLapTime;
     const ttsContext = createTTSContext(driver as any, driverData as any);
 
-    this.checkHalfwayPoint(lap, driverData, ttsContext);
-    this.checkLapsLeftCallouts(lap, driverData);
-    this.handleLapAudio(lap, driver, isBestLap, ttsContext, driverData);
+    const hd =
+      driverData ||
+      this.heat?.heatDrivers?.find(
+        (d) =>
+          d.objectId === lap.objectId ||
+          d.driver?.entity_id === driver?.entity_id ||
+          d.laneIndex === lap.lane,
+      );
+    const association: AudioAssociation = {
+      widgetType: "lane-view",
+      laneIndex: hd?.laneIndex,
+      driverId:
+        driver?.entity_id || (driver as any)?.id || (driver as any)?.objectId,
+    };
+
+    if (lap.type === LapType.FALSE_START) {
+      const audio = driver.falseStartAudio || driver.penaltyAudio;
+      if (
+        audio?.type &&
+        audio.type !== "none" &&
+        ((audio.type === "tts" && audio.text?.trim()) ||
+          (audio.type !== "tts" && audio.url?.trim()))
+      ) {
+        this.audioService.playCallout(
+          audio,
+          "urgent",
+          ttsContext,
+          undefined,
+          association,
+        );
+      }
+      this.handleLapHighlight(lap);
+      return;
+    }
+
+    if (lap.type === LapType.MIN_LAP_TIME) {
+      if ((lap.lapTime ?? 0) > 0.25) {
+        this.playThemedSound(THEME_SLOT_KEYS.AUDIO_MIN_LAP_TIME, ttsContext);
+      }
+      this.handleLapHighlight(lap);
+      return;
+    }
+
+    if (lap.isDrift) {
+      this.playThemedSound(THEME_SLOT_KEYS.AUDIO_DRIFT_LAP, ttsContext);
+      this.handleLapHighlight(lap);
+      return;
+    }
+
+    // 1. Collect candidate callouts for this lap event
+    const candidates: (LapAudioCandidate | null)[] = [];
+
+    const milestoneCandidate = this.resolveLapMilestoneCandidate(
+      lap,
+      driver,
+      isBestLap,
+      ttsContext,
+      association,
+    );
+    if (milestoneCandidate) {
+      candidates.push(milestoneCandidate);
+    }
+
+    const lapsLeftCandidate = this.resolveLapsLeftCandidate(lap, driverData);
+    if (lapsLeftCandidate) {
+      candidates.push(lapsLeftCandidate);
+    }
+
+    const halfwayCandidate = this.resolveHalfwayCandidate(lap, driverData);
+    if (halfwayCandidate) {
+      candidates.push(halfwayCandidate);
+    }
+
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum > this.leaderLaps) {
+      this.leaderLaps = lapNum;
+    }
+
+    // 2. Arbitrate candidates: highest priority wins; lower priorities dropped; equals queued
+    const arbitration = arbitrateLapAudioCandidates(candidates);
+
+    let played = false;
+    if (arbitration.winner) {
+      played = this.dispatchLapCandidate(arbitration.winner, false);
+      for (const queued of arbitration.toQueue) {
+        this.dispatchLapCandidate(queued, true);
+      }
+    }
+
+    // 3. Fallback to lap sound if no milestone or verbal candidate played (or dropped by active urgent priority)
+    if (!played) {
+      this.dispatchLapFallbackSfx(
+        driver,
+        isBestLap,
+        ttsContext,
+        association,
+        arbitration.winner?.id === "milestone"
+          ? arbitration.winner.config
+          : undefined,
+      );
+    }
+
     this.handleLapHighlight(lap);
   }
 
@@ -1986,7 +2100,7 @@ export class DefaultRacedayComponent
     isBestLap: boolean,
     ttsContext: any,
     explicitDriverData?: DriverHeatData,
-  ) {
+  ): void {
     const isDriverHeatData =
       driverOrData &&
       typeof driverOrData === "object" &&
@@ -2054,34 +2168,171 @@ export class DefaultRacedayComponent
     }
   }
 
-  private checkHalfwayPoint(
+  private dispatchLapCandidate(
+    candidate: LapAudioCandidate,
+    queue: boolean,
+  ): boolean {
+    if (candidate.id === "halfway") {
+      if (queue) {
+        return this.audioService.queueCallout(
+          candidate.config,
+          candidate.priority,
+          candidate.context,
+          candidate.resolvedUrl,
+          candidate.association,
+        );
+      } else {
+        this.playThemedSound(
+          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+          candidate.context,
+          candidate.association,
+        );
+        return true;
+      }
+    }
+
+    if (candidate.isVoice) {
+      if (queue) {
+        return this.audioService.queueCallout(
+          candidate.config,
+          candidate.priority,
+          candidate.context,
+          candidate.resolvedUrl,
+          candidate.association,
+        );
+      } else {
+        const result = this.audioService.playCallout(
+          candidate.config,
+          candidate.priority,
+          candidate.context,
+          candidate.resolvedUrl,
+          candidate.association,
+        );
+        return result !== false;
+      }
+    } else {
+      this.audioService.playSfx(candidate.config.url, candidate.association);
+      return true;
+    }
+  }
+
+  private dispatchLapFallbackSfx(
+    driver: any,
+    isBestLap: boolean,
+    ttsContext: any,
+    association: AudioAssociation,
+    specialAudioConfig?: any,
+  ): void {
+    if (!driver) return;
+    let fallbackAudio = isBestLap ? driver.bestLapAudio : driver.lapAudio;
+    if (
+      specialAudioConfig &&
+      specialAudioConfig === fallbackAudio &&
+      fallbackAudio === driver.bestLapAudio
+    ) {
+      fallbackAudio = driver.lapAudio;
+    }
+
+    if (
+      (!specialAudioConfig || specialAudioConfig !== fallbackAudio) &&
+      isAudioConfigured(fallbackAudio)
+    ) {
+      if (fallbackAudio.type === "tts") {
+        this.audioService.playCallout(
+          fallbackAudio,
+          isBestLap ? "normal" : "low",
+          ttsContext,
+          undefined,
+          association,
+        );
+      } else {
+        this.audioService.playSfx(fallbackAudio.url, association);
+      }
+    }
+  }
+
+  private resolveLapMilestoneCandidate(
+    lap: any,
+    driver: any,
+    isBestLap: boolean,
+    ttsContext: any,
+    association: AudioAssociation,
+  ): LapAudioCandidate | null {
+    if (!driver) return null;
+    const specialAudio = resolveLapAudio(
+      driver,
+      lap.recordTier,
+      isBestLap,
+      lap.isNewRaceLeader,
+      lap.isNewHeatLeader,
+    );
+
+    if (specialAudio && isAudioConfigured(specialAudio.config)) {
+      return {
+        id: "milestone",
+        config: specialAudio.config,
+        priority: specialAudio.priority,
+        context: ttsContext,
+        resolvedUrl: undefined,
+        association,
+        isVoice: specialAudio.isVoice,
+      };
+    }
+    return null;
+  }
+
+  private resolveHalfwayCandidate(
     lap: any,
     driverData?: DriverHeatData,
-    ttsContext?: any,
-  ) {
+  ): LapAudioCandidate | null {
     const scoring = this.race?.heat_scoring;
     const fm: any = scoring?.finishMethod ?? (scoring as any)?.finish_method;
     const isLap = fm === FinishMethod.Lap || fm === "Lap" || fm === 1;
     if (!scoring || !isLap || this.playedHalfway) {
-      return;
+      return null;
     }
 
     const totalLaps = scoring.finishValue;
-    if (!totalLaps || totalLaps <= 1) return;
+    if (!totalLaps || totalLaps <= 1) return null;
 
     const halfwayLaps = totalLaps / 2;
     const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
     if (lapNum > this.leaderLaps && lapNum >= halfwayLaps) {
-      this.playThemedSound(
-        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
-        ttsContext,
-        { widgetType: "timer" },
-      );
       this.playedHalfway = true;
+      const config = this.themeService.resolveAudioConfig(
+        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
+      );
+      if (config && config.type === "none") {
+        return null;
+      }
+      const playableUrl = config?.url ? this.getFullUrl(config.url) : undefined;
+      return {
+        id: "halfway",
+        config: config || { type: "preset" },
+        priority: "normal",
+        context: undefined,
+        resolvedUrl: playableUrl,
+        association: { widgetType: "timer" },
+        isVoice: true,
+      };
+    }
+    return null;
+  }
+
+  private checkHalfwayPoint(lap: any, driverData?: DriverHeatData) {
+    const candidate = this.resolveHalfwayCandidate(lap, driverData);
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum > this.leaderLaps) {
+      this.leaderLaps = lapNum;
+    }
+    if (candidate) {
+      this.dispatchLapCandidate(candidate, false);
     }
   }
 
-  private getLapsLeftThresholds(): number[] {
+  private getLapsThresholds(
+    triggerMode: "remaining" | "elapsed" = "remaining",
+  ): number[] {
     const config = this.themeService.resolveAudioConfig(
       THEME_SLOT_KEYS.AUDIO_LAPS_LEFT,
     );
@@ -2093,59 +2344,133 @@ export class DefaultRacedayComponent
           a._id === config.url,
       );
       if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        return asset.audioEntries
-          .map((e: any) =>
-            Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
-          )
-          .filter((t: number) => !isNaN(t) && t >= 0)
-          .filter(
-            (t: number, index: number, self: number[]) =>
-              self.indexOf(t) === index,
-          )
-          .sort((a: number, b: number) => b - a);
+        const filtered = asset.audioEntries.filter((e: any) => {
+          const mode = e.triggerMode || e.trigger_mode || "remaining";
+          return mode === triggerMode;
+        });
+        if (filtered.length > 0) {
+          return filtered
+            .map((e: any) =>
+              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+            )
+            .filter((t: number) => !isNaN(t) && t >= 0)
+            .filter(
+              (t: number, index: number, self: number[]) =>
+                self.indexOf(t) === index,
+            )
+            .sort((a: number, b: number) =>
+              triggerMode === "elapsed" ? a - b : b - a,
+            );
+        }
       }
     }
-    return [20, 10, 5, 1];
+    return triggerMode === "remaining" ? [20, 10, 5, 1] : [];
   }
 
-  private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
+  private getLapsLeftThresholds(): number[] {
+    return this.getLapsThresholds("remaining");
+  }
+
+  private resolveLapsLeftCandidate(
+    lap: any,
+    driverData: DriverHeatData,
+  ): LapAudioCandidate | null {
     const scoring = this.race?.heat_scoring;
     const fm: any = scoring?.finishMethod ?? (scoring as any)?.finish_method;
     const isLap = fm === FinishMethod.Lap || fm === "Lap" || fm === 1;
-    if (!scoring || !isLap) return;
+    if (!scoring || !isLap) return null;
 
     const totalLaps = scoring.finishValue ?? (scoring as any)?.finish_value;
-    if (!totalLaps || totalLaps <= 0) return;
+    if (!totalLaps || totalLaps <= 0) return null;
 
     const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
     if (lapNum <= this.leaderLaps) {
-      return;
+      return null;
     }
 
     const previousLeaderLaps = this.leaderLaps;
-    this.leaderLaps = lapNum;
+    const currentLeaderLaps = lapNum;
 
     const previousLapsLeft = totalLaps - previousLeaderLaps;
-    const currentLapsLeft = totalLaps - this.leaderLaps;
+    const currentLapsLeft = totalLaps - currentLeaderLaps;
 
-    const thresholds = this.getLapsLeftThresholds();
-    for (const threshold of thresholds) {
+    // Remaining thresholds (e.g. 20 laps to go, 10 laps to go, 1 lap to go)
+    const remainingThresholds = this.getLapsThresholds("remaining");
+    for (const threshold of remainingThresholds) {
       if (
         previousLapsLeft > threshold &&
         currentLapsLeft <= threshold &&
         !this.playedLapsLeft.has(threshold)
       ) {
+        this.playedLapsLeft.add(threshold);
         if (Math.abs(threshold - totalLaps) < 0.1) continue;
 
-        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_LAPS_LEFT, threshold, {
-          widgetType: "timer",
-        });
-        this.playedLapsLeft.add(threshold);
+        const entry = this.getAudioFromSetEntry(
+          THEME_SLOT_KEYS.AUDIO_LAPS_LEFT,
+          threshold,
+          "remaining",
+        );
+        if (entry) {
+          return {
+            id: "laps_left",
+            config: entry.config,
+            priority: "normal",
+            context: undefined,
+            resolvedUrl: entry.playableUrl,
+            association: { widgetType: "timer" },
+            isVoice: true,
+          };
+        }
       }
+    }
+
+    // Elapsed thresholds (e.g. Leader reached lap 10, lap 25, lap 50)
+    const elapsedThresholds = this.getLapsThresholds("elapsed");
+    for (const threshold of elapsedThresholds) {
+      if (
+        previousLeaderLaps < threshold &&
+        currentLeaderLaps >= threshold &&
+        !this.playedLapsElapsed.has(threshold)
+      ) {
+        this.playedLapsElapsed.add(threshold);
+        if (threshold <= 0) continue;
+
+        const entry = this.getAudioFromSetEntry(
+          THEME_SLOT_KEYS.AUDIO_LAPS_LEFT,
+          threshold,
+          "elapsed",
+        );
+        if (entry) {
+          return {
+            id: "laps_elapsed",
+            config: entry.config,
+            priority: "normal",
+            context: undefined,
+            resolvedUrl: entry.playableUrl,
+            association: { widgetType: "timer" },
+            isVoice: true,
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
+    const candidate = this.resolveLapsLeftCandidate(lap, driverData);
+    const lapNum = lap?.lapNumber ?? driverData?.lapCount ?? 0;
+    if (lapNum > this.leaderLaps) {
+      this.leaderLaps = lapNum;
+    }
+    if (candidate) {
+      this.dispatchLapCandidate(candidate, false);
     }
   }
 
-  private getAutoStartThresholds(): number[] {
+  private getAutoStartThresholds(
+    triggerMode: "remaining" | "elapsed" = "remaining",
+  ): number[] {
     const config = this.themeService.resolveAudioConfig(
       THEME_SLOT_KEYS.AUDIO_AUTO_START,
     );
@@ -2157,20 +2482,32 @@ export class DefaultRacedayComponent
           a._id === config.url,
       );
       if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        return asset.audioEntries
-          .map((e: any) => Math.round(e.timeSeconds))
-          .filter((t: number) => t > 0)
-          .sort((a: number, b: number) => b - a);
+        const filtered = asset.audioEntries.filter((e: any) => {
+          const mode = e.triggerMode || e.trigger_mode || "remaining";
+          return mode === triggerMode;
+        });
+        if (filtered.length > 0) {
+          return filtered
+            .map((e: any) => Math.round(e.timeSeconds))
+            .filter((t: number) => t > 0)
+            .sort((a: number, b: number) =>
+              triggerMode === "elapsed" ? a - b : b - a,
+            );
+        }
       }
     }
-    return [600, 300, 180, 60, 30, 10];
+    return triggerMode === "remaining" ? [600, 300, 180, 60, 30, 10] : [];
   }
 
   private checkAutoStartCallouts(currentTime: number, previousTime: number) {
     if (previousTime <= 0) return;
     const totalDuration = this.race?.auto_start_time ?? 0;
-    const thresholds = this.getAutoStartThresholds();
-    for (const threshold of thresholds) {
+    const previousElapsed = totalDuration - previousTime;
+    const currentElapsed = totalDuration - currentTime;
+
+    // Remaining thresholds
+    const remainingThresholds = this.getAutoStartThresholds("remaining");
+    for (const threshold of remainingThresholds) {
       if (
         previousTime > threshold &&
         currentTime <= threshold &&
@@ -2180,15 +2517,45 @@ export class DefaultRacedayComponent
           continue;
         }
 
-        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_AUTO_START, threshold, {
-          widgetType: "timer",
-        });
+        this.playAudioFromSet(
+          THEME_SLOT_KEYS.AUDIO_AUTO_START,
+          threshold,
+          { widgetType: "timer" },
+          "remaining",
+        );
         this.playedAutoStart.add(threshold);
+      }
+    }
+
+    // Elapsed thresholds
+    const elapsedThresholds = this.getAutoStartThresholds("elapsed");
+    for (const threshold of elapsedThresholds) {
+      if (
+        previousElapsed < threshold &&
+        currentElapsed >= threshold &&
+        !this.playedAutoStartElapsed.has(threshold)
+      ) {
+        if (
+          threshold <= 0 ||
+          (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1)
+        ) {
+          continue;
+        }
+
+        this.playAudioFromSet(
+          THEME_SLOT_KEYS.AUDIO_AUTO_START,
+          threshold,
+          { widgetType: "timer" },
+          "elapsed",
+        );
+        this.playedAutoStartElapsed.add(threshold);
       }
     }
   }
 
-  private getAutoAdvanceThresholds(): number[] {
+  private getAutoAdvanceThresholds(
+    triggerMode: "remaining" | "elapsed" = "remaining",
+  ): number[] {
     const config = this.themeService.resolveAudioConfig(
       THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
     );
@@ -2200,13 +2567,21 @@ export class DefaultRacedayComponent
           a._id === config.url,
       );
       if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        return asset.audioEntries
-          .map((e: any) => Math.round(e.timeSeconds))
-          .filter((t: number) => t > 0)
-          .sort((a: number, b: number) => b - a);
+        const filtered = asset.audioEntries.filter((e: any) => {
+          const mode = e.triggerMode || e.trigger_mode || "remaining";
+          return mode === triggerMode;
+        });
+        if (filtered.length > 0) {
+          return filtered
+            .map((e: any) => Math.round(e.timeSeconds))
+            .filter((t: number) => t > 0)
+            .sort((a: number, b: number) =>
+              triggerMode === "elapsed" ? a - b : b - a,
+            );
+        }
       }
     }
-    return [600, 300, 180, 60, 30, 10];
+    return triggerMode === "remaining" ? [600, 300, 180, 60, 30, 10] : [];
   }
 
   private checkAutoAdvanceCallouts(currentTime: number, previousTime: number) {
@@ -2215,8 +2590,12 @@ export class DefaultRacedayComponent
       (this.race as any)?.auto_advance_time ??
       (this.race as any)?.auto_advance_remaining_seconds ??
       0;
-    const thresholds = this.getAutoAdvanceThresholds();
-    for (const threshold of thresholds) {
+    const previousElapsed = totalDuration - previousTime;
+    const currentElapsed = totalDuration - currentTime;
+
+    // Remaining thresholds
+    const remainingThresholds = this.getAutoAdvanceThresholds("remaining");
+    for (const threshold of remainingThresholds) {
       if (
         previousTime > threshold &&
         currentTime <= threshold &&
@@ -2226,10 +2605,38 @@ export class DefaultRacedayComponent
           continue;
         }
 
-        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE, threshold, {
-          widgetType: "timer",
-        });
+        this.playAudioFromSet(
+          THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
+          threshold,
+          { widgetType: "timer" },
+          "remaining",
+        );
         this.playedAutoAdvance.add(threshold);
+      }
+    }
+
+    // Elapsed thresholds
+    const elapsedThresholds = this.getAutoAdvanceThresholds("elapsed");
+    for (const threshold of elapsedThresholds) {
+      if (
+        previousElapsed < threshold &&
+        currentElapsed >= threshold &&
+        !this.playedAutoAdvanceElapsed.has(threshold)
+      ) {
+        if (
+          threshold <= 0 ||
+          (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1)
+        ) {
+          continue;
+        }
+
+        this.playAudioFromSet(
+          THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
+          threshold,
+          { widgetType: "timer" },
+          "elapsed",
+        );
+        this.playedAutoAdvanceElapsed.add(threshold);
       }
     }
   }
@@ -2302,6 +2709,9 @@ export class DefaultRacedayComponent
     currentFuel: number | null,
     isRefueling: boolean,
   ) {
+    if (!this.fuelAudioTracker.isFuelRace(this.race, this.track)) {
+      return;
+    }
     const canPlayAudio =
       this.raceState === RaceState.RACING ||
       this.raceState === RaceState.PAUSED;
@@ -2896,6 +3306,8 @@ export class DefaultRacedayComponent
 
   onRestartHeatConfirm() {
     this.showRestartHeatConfirmation = false;
+    this.hasRacedInCurrentHeat = false;
+    this.resetFuelAudioTracking();
     this.audioService.reset();
     this.dataService.restartHeat().subscribe(
       (success) => {
@@ -3148,9 +3560,13 @@ export class DefaultRacedayComponent
         this.previousTime = 0;
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
+        this.playedSecondsElapsed.clear();
         this.playedLapsLeft.clear();
+        this.playedLapsElapsed.clear();
         this.playedAutoStart.clear();
+        this.playedAutoStartElapsed.clear();
         this.playedAutoAdvance.clear();
+        this.playedAutoAdvanceElapsed.clear();
         this.previousAutoStartRemaining = 0;
         this.previousAutoAdvanceRemaining = 0;
         this.leaderLaps = 0;
@@ -3193,9 +3609,13 @@ export class DefaultRacedayComponent
         this.previousTime = this.time;
         this.timeFormat = "1.0-0";
         this.playedSecondsLeft.clear();
+        this.playedSecondsElapsed.clear();
         this.playedLapsLeft.clear();
+        this.playedLapsElapsed.clear();
         this.playedAutoStart.clear();
+        this.playedAutoStartElapsed.clear();
         this.playedAutoAdvance.clear();
+        this.playedAutoAdvanceElapsed.clear();
         this.previousAutoStartRemaining = 0;
         this.previousAutoAdvanceRemaining = 0;
         this.leaderLaps = 0;
@@ -3297,7 +3717,10 @@ export class DefaultRacedayComponent
       }
 
       this.sortHeatDrivers();
-      if (this.heat?.heatDrivers) {
+      if (
+        this.heat?.heatDrivers &&
+        this.fuelAudioTracker.isFuelRace(this.race, this.track)
+      ) {
         const hasStarted = !!this.heat?.started || this.hasRacedInCurrentHeat;
         this.heat.heatDrivers.forEach((hd, index) => {
           const lane = hd.laneIndex ?? index;
@@ -5865,10 +6288,17 @@ export class DefaultRacedayComponent
         state === RaceState.HEAT_OVER ||
         state === RaceState.RACE_OVER
       ) {
+        if (state === RaceState.NOT_STARTED) {
+          this.hasRacedInCurrentHeat = false;
+        }
         this.playedSecondsLeft.clear();
+        this.playedSecondsElapsed.clear();
         this.playedLapsLeft.clear();
+        this.playedLapsElapsed.clear();
         this.playedAutoStart.clear();
+        this.playedAutoStartElapsed.clear();
         this.playedAutoAdvance.clear();
+        this.playedAutoAdvanceElapsed.clear();
         this.previousAutoStartRemaining = 0;
         this.previousAutoAdvanceRemaining = 0;
         this.leaderLaps = 0;
@@ -6003,16 +6433,16 @@ export class DefaultRacedayComponent
     }
   }
 
-  private playAudioFromSet(
+  private getAudioFromSetEntry(
     slotKey: string,
     timeSeconds: number,
-    association?: AudioAssociation,
-  ) {
+    triggerMode: string = "remaining",
+  ): { config: AudioConfig; playableUrl?: string } | null {
     const config = this.themeService.resolveAudioConfig(slotKey);
-    if (!config || config.type !== "audio_set") return;
+    if (!config || config.type !== "audio_set") return null;
 
     const assetId = config.url;
-    if (!assetId) return;
+    if (!assetId) return null;
 
     const asset = (this.assets || []).find(
       (a) =>
@@ -6020,48 +6450,71 @@ export class DefaultRacedayComponent
         a.entity_id === assetId ||
         a._id === assetId,
     );
-    if (!asset || asset.type !== "audio_set") return;
+    if (!asset || asset.type !== "audio_set") return null;
 
+    const entry = asset.audioEntries?.find((e: any) => {
+      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
+      const mode = e.triggerMode || e.trigger_mode || "remaining";
+      return (
+        val != null &&
+        Math.abs(Number(val) - timeSeconds) < 0.1 &&
+        mode === triggerMode
+      );
+    });
+    if (!entry) return null;
+
+    const entryType = entry.type || "preset";
+    if (entryType === "none") return null;
+
+    const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
+    return {
+      config: {
+        type: entryType,
+        url: playableUrl,
+        text: entry.text || undefined,
+      },
+      playableUrl,
+    };
+  }
+
+  private playAudioFromSet(
+    slotKey: string,
+    timeSeconds: number,
+    association?: AudioAssociation,
+    triggerMode: string = "remaining",
+  ) {
     const defaultAssoc =
       association ??
       (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
         ? { widgetType: "countdown" }
         : { widgetType: "timer" });
 
-    const entry = asset.audioEntries?.find((e: any) => {
-      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
-      return val != null && Math.abs(Number(val) - timeSeconds) < 0.1;
-    });
-    if (entry) {
-      const entryType = entry.type || "preset";
-      if (entryType !== "none") {
-        const playableUrl = entry.url ? this.getFullUrl(entry.url) : undefined;
-        if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
-          if (entryType === "tts") {
-            this.audioService.playCallout(
-              { type: "tts", text: entry.text },
-              "normal",
-              undefined,
-              undefined,
-              defaultAssoc,
-            );
-          } else {
-            this.audioService.playSfx(playableUrl, defaultAssoc);
-          }
-        } else {
-          const entryConfig: AudioConfig = {
-            type: entryType,
-            url: playableUrl,
-            text: entry.text || undefined,
-          };
+    const entryItem = this.getAudioFromSetEntry(
+      slotKey,
+      timeSeconds,
+      triggerMode,
+    );
+    if (entryItem) {
+      if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
+        if (entryItem.config.type === "tts") {
           this.audioService.playCallout(
-            entryConfig,
+            { type: "tts", text: entryItem.config.text },
             "normal",
             undefined,
-            playableUrl,
+            undefined,
             defaultAssoc,
           );
+        } else {
+          this.audioService.playSfx(entryItem.playableUrl, defaultAssoc);
         }
+      } else {
+        this.audioService.playCallout(
+          entryItem.config,
+          "normal",
+          undefined,
+          entryItem.playableUrl,
+          defaultAssoc,
+        );
       }
     }
   }
@@ -6172,12 +6625,52 @@ export class DefaultRacedayComponent
     );
   }
 
+  private getSecondsLeftThresholds(
+    triggerMode: "remaining" | "elapsed" = "remaining",
+  ): number[] {
+    const config = this.themeService.resolveAudioConfig(
+      THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
+    );
+    if (config?.url) {
+      const asset = (this.assets || []).find(
+        (a) =>
+          a.model?.entityId === config.url ||
+          a.entity_id === config.url ||
+          a._id === config.url,
+      );
+      if (asset?.audioEntries && asset.audioEntries.length > 0) {
+        const filtered = asset.audioEntries.filter((e: any) => {
+          const mode = e.triggerMode || e.trigger_mode || "remaining";
+          return mode === triggerMode;
+        });
+        if (filtered.length > 0) {
+          return filtered
+            .map((e: any) =>
+              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
+            )
+            .filter((t: number) => !isNaN(t) && t >= 0)
+            .filter(
+              (t: number, index: number, self: number[]) =>
+                self.indexOf(t) === index,
+            )
+            .sort((a: number, b: number) =>
+              triggerMode === "elapsed" ? a - b : b - a,
+            );
+        }
+      }
+    }
+    return triggerMode === "remaining"
+      ? [300, 240, 180, 120, 60, 30, 25, 20, 15, 10, 5]
+      : [];
+  }
+
   private checkAudioCallouts(currentTime: number, previousTime: number) {
     const scoring = this.race?.heat_scoring;
     if (!scoring || scoring.finishMethod !== FinishMethod.Timed) return;
 
     const totalDuration = scoring.finishValue;
-    const thresholds = [300, 240, 180, 120, 60, 30, 25, 20, 15, 10, 5];
+    const previousElapsed = totalDuration - previousTime;
+    const currentElapsed = totalDuration - currentTime;
 
     // Halfway logic
     const halfwayThreshold = totalDuration / 2;
@@ -6194,8 +6687,9 @@ export class DefaultRacedayComponent
       this.playedHalfway = true;
     }
 
-    // Standard thresholds
-    for (const threshold of thresholds) {
+    // Remaining thresholds
+    const remainingThresholds = this.getSecondsLeftThresholds("remaining");
+    for (const threshold of remainingThresholds) {
       if (
         previousTime > threshold &&
         currentTime <= threshold &&
@@ -6204,10 +6698,35 @@ export class DefaultRacedayComponent
         // Rule: Don't play if it's the start time of the heat
         if (Math.abs(threshold - totalDuration) < 0.1) continue;
 
-        this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT, threshold, {
-          widgetType: "timer",
-        });
+        this.playAudioFromSet(
+          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
+          threshold,
+          { widgetType: "timer" },
+          "remaining",
+        );
         this.playedSecondsLeft.add(threshold);
+      }
+    }
+
+    // Elapsed thresholds
+    const elapsedThresholds = this.getSecondsLeftThresholds("elapsed");
+    for (const threshold of elapsedThresholds) {
+      if (
+        previousElapsed < threshold &&
+        currentElapsed >= threshold &&
+        !this.playedSecondsElapsed.has(threshold)
+      ) {
+        if (threshold <= 0 || Math.abs(threshold - totalDuration) < 0.1) {
+          continue;
+        }
+
+        this.playAudioFromSet(
+          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
+          threshold,
+          { widgetType: "timer" },
+          "elapsed",
+        );
+        this.playedSecondsElapsed.add(threshold);
       }
     }
   }

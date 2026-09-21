@@ -421,6 +421,11 @@ public class AssetService {
       audioNode.put("type", type);
       audioNode.put("text", text);
       audioNode.put("percentage", entry.getPercentage());
+      String triggerMode = entry.getTriggerMode();
+      if (triggerMode == null || triggerMode.trim().isEmpty()) {
+        triggerMode = "remaining";
+      }
+      audioNode.put("trigger_mode", triggerMode);
       audioArray.add(audioNode);
     }
 
@@ -524,6 +529,10 @@ public class AssetService {
                 .setType(audio.has("type") ? audio.get("type").asText() : "")
                 .setText(audio.has("text") ? audio.get("text").asText() : "")
                 .setPercentage(audio.has("percentage") ? audio.get("percentage").asInt() : 0)
+                .setTriggerMode(
+                    audio.has("trigger_mode") && !audio.get("trigger_mode").asText().isEmpty()
+                        ? audio.get("trigger_mode").asText()
+                        : "remaining")
                 .build());
       }
     }

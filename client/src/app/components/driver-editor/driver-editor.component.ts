@@ -142,6 +142,7 @@ export class DriverEditorComponent
 
   // Driver Data
   allDrivers: Driver[] = [];
+  private initialLastEditedId: string | null = null;
 
   // Assets for presets
   avatarAssets: any[] = [];
@@ -160,6 +161,23 @@ export class DriverEditorComponent
 
   toggleSection(section: keyof typeof this.sectionsExpanded) {
     this.sectionsExpanded[section] = !this.sectionsExpanded[section];
+    this.saveExpanderState();
+  }
+
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
     this.saveExpanderState();
   }
 
@@ -253,6 +271,7 @@ export class DriverEditorComponent
   }
 
   ngOnInit() {
+    this.initialLastEditedId = this.navigationService.getLastEditedId("driver");
     this.updateScale();
     this.connectionMonitor.startMonitoring();
     this.monitorConnection();
@@ -360,6 +379,7 @@ export class DriverEditorComponent
 
   @HostListener("window:keydown", ["$event"])
   handleKeyboardEvent(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
       event.preventDefault();
       if (event.shiftKey) {
@@ -606,11 +626,31 @@ export class DriverEditorComponent
       if (found) {
         this.selectDriver(found);
         this.isEditMode = false;
-      } else if (this.allDrivers.length > 0) {
-        this.selectDriver(this.allDrivers[0]);
-        this.isEditMode = false;
+        this.navigationService.setLastEditedId("driver", found.entity_id);
       } else {
-        this.startNewDriver();
+        const lastEdited =
+          this.initialLastEditedId && this.initialLastEditedId !== idParam
+            ? this.initialLastEditedId
+            : this.navigationService.getLastEditedId("driver") !== idParam
+              ? this.navigationService.getLastEditedId("driver")
+              : null;
+        const foundLast = lastEdited
+          ? this.allDrivers.find((d) => d.entity_id === lastEdited)
+          : undefined;
+        if (foundLast) {
+          this.selectDriver(foundLast);
+          this.isEditMode = false;
+          this.navigationService.setLastEditedId("driver", foundLast.entity_id);
+        } else if (this.allDrivers.length > 0) {
+          this.selectDriver(this.allDrivers[0]);
+          this.isEditMode = false;
+          this.navigationService.setLastEditedId(
+            "driver",
+            this.allDrivers[0].entity_id,
+          );
+        } else {
+          this.startNewDriver();
+        }
       }
     } else {
       const lastEdited = this.navigationService.getLastEditedId("driver");
@@ -623,6 +663,10 @@ export class DriverEditorComponent
       } else if (this.allDrivers.length > 0) {
         this.selectDriver(this.allDrivers[0]);
         this.isEditMode = false;
+        this.navigationService.setLastEditedId(
+          "driver",
+          this.allDrivers[0].entity_id,
+        );
       } else {
         this.startNewDriver();
       }
@@ -642,9 +686,11 @@ export class DriverEditorComponent
   }
 
   undo() {
+    if (!this.isEditMode) return;
     this.undoManager.undo();
   }
   redo() {
+    if (!this.isEditMode) return;
     this.undoManager.redo();
   }
 
@@ -740,6 +786,7 @@ export class DriverEditorComponent
     const found = this.allDrivers.find((d) => d.entity_id === id);
     if (found) {
       this.selectDriver(found);
+      this.navigationService.setLastEditedId("driver", found.entity_id);
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { id: found.entity_id },

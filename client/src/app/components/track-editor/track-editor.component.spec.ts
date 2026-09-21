@@ -1004,6 +1004,7 @@ describe("TrackEditorComponent", () => {
       component.editingTrack = track1;
       component.trackName = "Original Track";
       component.undoManager.initialize(track1);
+      component.isEditMode = true;
 
       component.editingTrack = track2;
       component.trackName = "Renamed Track";
@@ -1016,6 +1017,48 @@ describe("TrackEditorComponent", () => {
 
       component.redo();
       expect(component.trackName).toBe("Renamed Track");
+    });
+
+    it("should disable undo/redo and keyboard shortcuts in read-only mode, but preserve history for edit mode", () => {
+      const track1 = new Track({
+        entity_id: "t1",
+        name: "Original Track",
+        lanes: [],
+      });
+      const track2 = new Track({
+        entity_id: "t1",
+        name: "Renamed Track",
+        lanes: [],
+      });
+      component.editingTrack = track1;
+      component.trackName = "Original Track";
+      component.undoManager.initialize(track1);
+      component.isEditMode = true;
+
+      component.editingTrack = track2;
+      component.trackName = "Renamed Track";
+      (component.undoManager as any).commitChange();
+      expect(component.undoManager.canUndo()).toBeTrue();
+
+      // Enter read-only mode
+      component.isEditMode = false;
+
+      // In read-only mode, undo and redo are disabled
+      component.undo();
+      expect(component.trackName).toBe("Renamed Track");
+
+      component.redo();
+      expect(component.trackName).toBe("Renamed Track");
+
+      // Keydown shortcut in read-only mode is ignored
+      const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+      component.handleKeyboardEvent(zEvent);
+      expect(component.trackName).toBe("Renamed Track");
+
+      // Re-entering edit mode enables undo with preserved history
+      component.isEditMode = true;
+      component.undo();
+      expect(component.trackName).toBe("Original Track");
     });
 
     it("should handle lane drop reordering and update Arduino pin configurations", () => {
@@ -1191,6 +1234,21 @@ describe("TrackEditorComponent", () => {
       expect(component.sectionsExpanded["lanes"]).toBeFalse();
       component.toggleSection("lanes");
       expect(component.sectionsExpanded["lanes"]).toBeTrue();
+    });
+
+    it("should toggle all sections and persist to localStorage", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+
+      component.toggleAllSections(false);
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(component.sectionsExpanded.lanes).toBeFalse();
+      expect(component.sectionsExpanded.interfaces).toBeFalse();
+
+      component.toggleAllSections(true);
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(component.sectionsExpanded.lanes).toBeTrue();
+      expect(component.sectionsExpanded.interfaces).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalled();
     });
 
     it("should allow toggling arduino led string expander when in read-only mode", () => {

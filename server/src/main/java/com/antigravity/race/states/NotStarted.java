@@ -142,11 +142,11 @@ public class NotStarted implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("NotStarted.restartHeat() called. Resetting current heat.");
+    // Re-enter NotStarted state to restart the auto-start timer if configured
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    // Re-enter NotStarted state to restart the auto-start timer if configured
-    race.changeState(new NotStarted());
   }
 
   @Override

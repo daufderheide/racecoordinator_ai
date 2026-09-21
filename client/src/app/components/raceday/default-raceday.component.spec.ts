@@ -1338,12 +1338,14 @@ describe("DefaultRacedayComponent", () => {
 
     it("should call restartHeat on confirm and hide dialog", () => {
       const resetSpy = spyOn((component as any).audioService, "reset");
+      (component as any).hasRacedInCurrentHeat = true;
       fixture.detectChanges();
       component.showRestartHeatConfirmation = true;
 
       component.onRestartHeatConfirm();
 
       expect(component.showRestartHeatConfirmation).toBeFalse();
+      expect((component as any).hasRacedInCurrentHeat).toBeFalse();
       expect(resetSpy).toHaveBeenCalled();
       expect(mockDataService.restartHeat).toHaveBeenCalled();
     });
@@ -6505,6 +6507,15 @@ describe("DefaultRacedayComponent", () => {
 
     beforeEach(() => {
       mockThemeService = TestBed.inject(ThemeService);
+      component["playedSecondsLeft"]?.clear();
+      component["playedSecondsElapsed"]?.clear();
+      component["playedLapsLeft"]?.clear();
+      component["playedLapsElapsed"]?.clear();
+      component["playedAutoStart"]?.clear();
+      component["playedAutoStartElapsed"]?.clear();
+      component["playedAutoAdvance"]?.clear();
+      component["playedAutoAdvanceElapsed"]?.clear();
+      component["leaderLaps"] = 0;
       component["assets"] = [
         {
           entity_id: "audio-set-1",
@@ -6566,6 +6577,159 @@ describe("DefaultRacedayComponent", () => {
       );
     });
 
+    it("should disambiguate elapsed vs remaining entries sharing the exact same numeric value", () => {
+      component["assets"] = [
+        {
+          entity_id: "dual-time-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 30,
+              triggerMode: "remaining",
+              url: "/assets/30_remaining.mp3",
+            },
+            {
+              timeSeconds: 30,
+              triggerMode: "elapsed",
+              url: "/assets/30_elapsed.mp3",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "dual-time-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Timed,
+          finishValue: 600,
+        },
+      } as any;
+
+      const playCalloutSpy = spyOn(component["audioService"], "playCallout");
+
+      // At 30s elapsed: previous time 571 (29s elapsed), current time 569 (31s elapsed)
+      (component as any).checkAudioCallouts(569, 571);
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/30_elapsed.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/30_elapsed.mp3"),
+        jasmine.anything(),
+      );
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/30_remaining.mp3"),
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // At 30s remaining: previous time 31, current time 29
+      (component as any).checkAudioCallouts(29, 31);
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/30_remaining.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/30_remaining.mp3"),
+        jasmine.anything(),
+      );
+    });
+
+    it("should disambiguate elapsed vs remaining laps left entries sharing the exact same numeric value", () => {
+      component["assets"] = [
+        {
+          entity_id: "dual-lap-set",
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 10,
+              triggerMode: "remaining",
+              url: "/assets/10_laps_remaining.mp3",
+            },
+            {
+              timeSeconds: 10,
+              triggerMode: "elapsed",
+              url: "/assets/10_laps_elapsed.mp3",
+            },
+          ],
+        },
+      ];
+
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "dual-lap-set",
+      });
+
+      component["race"] = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 50,
+        },
+      } as any;
+
+      component["leaderLaps"] = 0;
+      const playCalloutSpy = spyOn(component["audioService"], "playCallout");
+
+      // Leader reaches lap 10 (10 elapsed, 40 remaining)
+      (component as any).checkLapsLeftCallouts(
+        { lapNumber: 10 },
+        { lapCount: 10 },
+      );
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/10_laps_elapsed.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/10_laps_elapsed.mp3"),
+        jasmine.anything(),
+      );
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/10_laps_remaining.mp3"),
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+
+      playCalloutSpy.calls.reset();
+
+      // Leader reaches lap 40 (40 elapsed, 10 remaining)
+      (component as any).checkLapsLeftCallouts(
+        { lapNumber: 40 },
+        { lapCount: 40 },
+      );
+
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          url: jasmine.stringMatching("/assets/10_laps_remaining.mp3"),
+        }),
+        "normal",
+        undefined,
+        jasmine.stringMatching("/assets/10_laps_remaining.mp3"),
+        jasmine.anything(),
+      );
+    });
+
     it("should not play if entry for time is not found", () => {
       mockThemeService.resolveAudioConfig.and.returnValue({
         type: "audio_set",
@@ -6588,6 +6752,13 @@ describe("DefaultRacedayComponent", () => {
       ).and.callThrough();
 
       fixture.detectChanges();
+
+      if (component["race"]) {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"].fuel_options || {}),
+          enabled: true,
+        };
+      }
 
       component["assets"] = [
         {
@@ -6883,6 +7054,50 @@ describe("DefaultRacedayComponent", () => {
         expect(
           (component as any).laneFuelAudioStates.get(1)?.lastFuelLevel,
         ).toBe(90);
+      });
+
+      it("should not play any fuel audio when race is not a fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: false,
+        };
+        (component as any).resetFuelAudioTracking();
+
+        carDataSubject.next({ lane: 0, fuelLevel: 50.0, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 50.5, isRefueling: true });
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should not play 0% fuel audio on heat restart in non-fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: false,
+        };
+        (component as any).hasRacedInCurrentHeat = true;
+        component.showRestartHeatConfirmation = true;
+
+        component.onRestartHeatConfirm();
+
+        // Simulate carData arriving with fuel 0 after restart
+        carDataSubject.next({ lane: 0, fuelLevel: 0.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
+      });
+
+      it("should not play 0% fuel audio on heat restart when initial fuel > 0 in fuel race", () => {
+        (component["race"] as any).fuel_options = {
+          ...(component["race"]?.fuel_options || {}),
+          enabled: true,
+        };
+        (component as any).hasRacedInCurrentHeat = true;
+        component.showRestartHeatConfirmation = true;
+
+        component.onRestartHeatConfirm();
+
+        // Driver starts with 100 fuel, carData arrives before race starts
+        component["raceState"] = RaceState.NOT_STARTED;
+        carDataSubject.next({ lane: 0, fuelLevel: 100.0, isRefueling: false });
+        expect(playCalloutSpy).not.toHaveBeenCalled();
       });
     });
   });
@@ -9866,6 +10081,211 @@ describe("DefaultRacedayComponent", () => {
           laneIndex: 2,
           driverId: "driver-123",
         },
+      );
+    });
+  });
+
+  describe("Simultaneous Lap Audio Arbitration (Option 2)", () => {
+    let mockThemeService: any;
+
+    beforeEach(() => {
+      mockThemeService = TestBed.inject(ThemeService);
+    });
+
+    it("should play higher priority candidate (e.g. new race leader - high) and drop lower priority candidate (e.g. laps left - normal) on Lap 1", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const queueCalloutSpy = spyOn(
+        audioService,
+        "queueCallout",
+      ).and.callThrough();
+
+      const mockAssets = [
+        {
+          _id: "default_laps_left_set",
+          model: { entityId: "default_laps_left_set" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 20,
+              type: "tts",
+              text: "20 laps to go",
+              triggerMode: "remaining",
+            },
+          ],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+      component["assets"] = mockAssets as any;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 21,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+      leaderHd.driver.newRaceLeaderAudio = {
+        type: "tts",
+        text: "New Race Leader",
+      };
+
+      // Lap 1: 21 - 1 = 20 laps left (triggers "20 laps to go" - normal)
+      // AND driver becomes new race leader (triggers "New Race Leader" - high)
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+        bestLapTime: 3.5,
+        isNewRaceLeader: true,
+      });
+
+      // Higher priority "New Race Leader" (high) must play immediately
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "New Race Leader",
+        }),
+        "high",
+        jasmine.any(Object),
+        undefined,
+        jasmine.objectContaining({ widgetType: "lane-view" }),
+      );
+
+      // Lower priority "20 laps to go" (normal) must NOT be played or queued
+      expect(playCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          text: "20 laps to go",
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+      expect(queueCalloutSpy).not.toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          text: "20 laps to go",
+        }),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+        jasmine.anything(),
+      );
+    });
+
+    it("should play first candidate immediately and queue equal priority second candidate when both trigger on same lap", () => {
+      const audioService = (component as any).audioService as AudioService;
+      const playCalloutSpy = spyOn(
+        audioService,
+        "playCallout",
+      ).and.callThrough();
+      const queueCalloutSpy = spyOn(
+        audioService,
+        "queueCallout",
+      ).and.callThrough();
+
+      const mockAssets = [
+        {
+          _id: "default_laps_left_set",
+          model: { entityId: "default_laps_left_set" },
+          type: "audio_set",
+          audioEntries: [
+            {
+              timeSeconds: 5,
+              type: "tts",
+              text: "5 laps to go",
+              triggerMode: "remaining",
+            },
+          ],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      mockDataService.loadedAssets = mockAssets;
+      component["assets"] = mockAssets as any;
+
+      mockThemeService.resolveAudioConfig.and.callFake((key: string) => {
+        if (key === THEME_SLOT_KEYS.AUDIO_LAPS_LEFT) {
+          return { type: "audio_set", url: "default_laps_left_set" };
+        }
+        if (key === THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY) {
+          return { type: "tts", text: "Halfway" };
+        }
+        return null;
+      });
+
+      const race = {
+        ...MOCK_RACES[0],
+        heat_scoring: {
+          finishMethod: FinishMethod.Lap,
+          finishValue: 10,
+        },
+        track: component["track"],
+      } as any;
+      component["race"] = race;
+      mockRaceService.getRace.and.returnValue(race);
+
+      fixture.detectChanges();
+      component["raceState"] = RaceState.RACING;
+
+      const leaderHd = component["heat"]!.heatDrivers[0];
+
+      // Lap 1 first to set leaderLaps = 1
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 1,
+        lapTime: 3.5,
+      });
+      playCalloutSpy.calls.reset();
+      queueCalloutSpy.calls.reset();
+
+      // Lap 5: 10 / 2 = 5 (halfway - normal) AND 10 - 5 = 5 (5 laps to go - normal)
+      lapsSubject.next({
+        objectId: leaderHd.objectId,
+        lapNumber: 5,
+        lapTime: 3.5,
+      });
+
+      // First normal priority candidate ("5 laps to go") plays immediately
+      expect(playCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "5 laps to go",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
+      );
+
+      // Second equal priority candidate ("Halfway") is queued sequentially
+      expect(queueCalloutSpy).toHaveBeenCalledWith(
+        jasmine.objectContaining({
+          type: "tts",
+          text: "Halfway",
+        }),
+        "normal",
+        undefined,
+        undefined,
+        { widgetType: "timer" },
       );
     });
   });

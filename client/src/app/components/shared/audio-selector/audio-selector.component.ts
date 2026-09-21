@@ -408,7 +408,21 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     this.isPlaying = true;
     this.cdr.detectChanges();
 
-    for (const entry of entries) {
+    // Natural order: elapsed ascending first, then remaining descending
+    const sortedEntries = [...entries].sort((a, b) => {
+      const modeA = a.triggerMode || a.trigger_mode || "remaining";
+      const modeB = b.triggerMode || b.trigger_mode || "remaining";
+      if (modeA !== modeB) {
+        return modeA === "elapsed" ? -1 : 1;
+      }
+      const valA =
+        Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
+      const valB =
+        Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
+      return modeA === "elapsed" ? valA - valB : valB - valA;
+    });
+
+    for (const entry of sortedEntries) {
       if (!this.isPlaying || this.currentPlaybackId !== playbackId) break;
       try {
         const entryType = entry.type || "preset";

@@ -400,6 +400,7 @@ public class AssetDefaultsInitializer {
                 .setName(spec[1])
                 .setUrl(url)
                 .setType("preset")
+                .setTriggerMode("remaining")
                 .build());
       }
     }
@@ -435,6 +436,7 @@ public class AssetDefaultsInitializer {
                 .setName(spec[1])
                 .setUrl(url)
                 .setType("preset")
+                .setTriggerMode("remaining")
                 .build());
       }
     }
@@ -473,6 +475,7 @@ public class AssetDefaultsInitializer {
               .setType("tts")
               .setText(spec[2])
               .setPercentage(Integer.parseInt(spec[3]))
+              .setTriggerMode("remaining")
               .build());
     }
     if (assetService.getAssetById("default_auto_start") == null && !autoStartEntries.isEmpty()) {
@@ -503,6 +506,7 @@ public class AssetDefaultsInitializer {
               .setType("tts")
               .setText(spec[2])
               .setPercentage(Integer.parseInt(spec[3]))
+              .setTriggerMode("remaining")
               .build());
     }
     if (assetService.getAssetById("default_auto_advance") == null
@@ -533,6 +537,7 @@ public class AssetDefaultsInitializer {
               .setType("tts")
               .setText(spec[2])
               .setPercentage(Integer.parseInt(spec[3]))
+              .setTriggerMode("remaining")
               .build());
     }
     if (assetService.getAssetById("default_laps_left") == null && !lapsLeftEntries.isEmpty()) {
@@ -562,6 +567,7 @@ public class AssetDefaultsInitializer {
                 .setUrl(url)
                 .setType("preset")
                 .setPercentage(Integer.parseInt(spec[3]))
+                .setTriggerMode("remaining")
                 .build());
       }
     }

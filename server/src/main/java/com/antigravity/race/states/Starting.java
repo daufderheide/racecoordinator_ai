@@ -138,10 +138,10 @@ public class Starting implements IRaceState {
   @Override
   public void restartHeat(Race race) {
     logger.info("Starting.restartHeat() called. Resetting current heat.");
+    race.changeState(new NotStarted());
     race.resetCurrentHeat();
     race.setAutoStartFired(false);
     race.setAutoAdvanceFired(false);
-    race.changeState(new NotStarted());
   }
 
   @Override

@@ -621,6 +621,30 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }
   }
 
+  areAllSectionsExpanded(): boolean {
+    return Object.values(this.sectionsExpanded).every(Boolean);
+  }
+
+  toggleAllSections(forcedState?: boolean) {
+    const next =
+      forcedState !== undefined ? forcedState : !this.areAllSectionsExpanded();
+    (
+      Object.keys(this.sectionsExpanded) as Array<
+        keyof typeof this.sectionsExpanded
+      >
+    ).forEach((key) => {
+      this.sectionsExpanded[key] = next;
+    });
+    try {
+      localStorage.setItem(
+        "race_editor_expanders",
+        JSON.stringify(this.sectionsExpanded),
+      );
+    } catch (e) {
+      this.logger.error("Error saving expander state", e);
+    }
+  }
+
   loadExpanderState() {
     try {
       const saved = localStorage.getItem("race_editor_expanders");
@@ -907,14 +931,18 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   @HostListener("window:keydown", ["$event"])
   onKeyDown(event: KeyboardEvent) {
+    if (!this.isEditMode) return;
     if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+      event.preventDefault();
       if (event.shiftKey) {
-        event.preventDefault();
         this.undoManager.redo();
       } else {
-        event.preventDefault();
         this.undoManager.undo();
       }
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key === "y") {
+      event.preventDefault();
+      this.undoManager.redo();
     }
   }
 

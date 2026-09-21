@@ -184,6 +184,35 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 
 ---
 
+## Audio-Sets & Auslösemodi
+
+Ein **Audio-Set** ist ein zusammengesetztes Audio-Asset, das eine Sammlung von Sounddateien oder Text-to-Speech-Ansagen enthält, die numerischen Auslöse-Meilensteinen zugeordnet sind. Audio-Sets werden in 5 Theme-Slots und bei Fahrer-Kraftstoffeinstellungen verwendet:
+
+1. **Start-Countdown (`audio.countdown`):** Sequenztöne und Hupen bis zum Start.
+2. **Automatischer Start verbleibende Sekunden (`audio.auto_start`):** Audioansagen vor Beginn eines Durchgangs.
+3. **Verbleibende Sekunden (`audio.seconds_left`):** Zeitansagen während zeitbasierter Durchgänge.
+4. **Verbleibende Runden (`audio.laps_left`):** Rundenansagen während rundenbasierter Durchgänge.
+5. **Automatisches Weiterschalten verbleibende Sekunden (`audio.auto_advance`):** Countdown-Ansagen zwischen den Durchgängen.
+6. **Kraftstoffstand-Sounds (`fuelLevelAudio`):** Warn-, kritische und Tanktöne bei Prozentwerten.
+
+### Auslösemodi: Verbleibend vs. Abgelaufen
+Jeder Eintrag in einem Audio-Set definiert einen **Auslösemodus**:
+
+*   **Verbleibend (Countdown):** Wird ausgelöst, wenn das Rennen sich dem Ziel oder Zeitlimit nähert (z. B. 10 verbleibende Runden, 30 Sekunden verbleibend). Dies ist der Standardmodus für Countdowns.
+*   **Abgelaufen (Vorwärtszählung):** Wird ausgelöst, wenn das Rennen vom Start aus voranschreitet (z. B. 10 absolvierte Runden, 30 abgelaufene Sekunden).
+
+### Duale Auslöser mit identischen Zahlenwerten
+Race Coordinator AI unterstützt die Konfiguration von zwei Einträgen im selben Audio-Set mit exakt demselben numerischen Wert (z. B. Wert `10`):
+- Ein Eintrag als **Abgelaufen** wird abgespielt, wenn der Führende 10 Runden / Sekunden ab Start erreicht.
+- Ein Eintrag als **Verbleibend** wird abgespielt, wenn der Führende noch 10 Runden / Sekunden vor sich hat.
+
+### Natürliche Rennverlauf-Vorschau
+Bei der Vorschau im Asset Manager oder Theme-Audio-Selector spielen die Einträge in natürlicher Rennreihenfolge ab:
+1. Alle **Abgelaufen**-Einträge spielen zuerst in aufsteigender Reihenfolge (0 → N).
+2. Alle **Verbleibend**-Einträge spielen danach in absteigender Countdown-Reihenfolge (N → 0).
+
+---
+
 ## Wo Audio konfiguriert wird
 
 | Bereich | Einstellmöglichkeiten |
@@ -191,4 +220,4 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **UI-Editor -> Audio-Einstellungen** | Gesamtlautstärke, Dringlichkeits-Timeout, Ansagen-Abstand, TTS-Stimme, Geschwindigkeit, Tonhöhe, TTS-Lautstärke, Hörprobe. |
 | **Design-Editor (Themes)** | Systemweite Ereignisse: Start-Countdown, Grüne Lampe GO, Gelbe Flagge, Restzeit, Halbzeit, Durchgangsende, Rennende, Mindestrundenzeit, Driftrunde. |
 | **Fahrer-Editor** | Fahrerspezifische Sounds: Runden-Sound, Persönlicher Bester Runden-Sound, Rennen-Beste-Runde-Sound, Rennspur-Beste-Runde-Sound, Lauf-Beste-Runde-Sound, Neuer Rennführender-Sound, Neuer Lauf-Führender-Sound, Gesamtrekord-Rundensound, Spur-Gesamtrekord-Rundensound, Boxenstopp-Sound, Kraftstoffstand-Sounds und Fehlstart-Sound. |
-| **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien mit Sofort-Hörprobe. |
+| **Asset Manager** | Hochladen und Verwalten von WAV-, MP3- und OGG-Dateien sowie Konfigurieren von Audio-Sets mit kontextabhängigen Auslösewerten (Sekunden, Runden oder Prozentsatz) mit Sofort-Hörprobe. |

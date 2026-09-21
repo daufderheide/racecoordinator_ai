@@ -1467,6 +1467,38 @@ describe("RaceEditorComponent", () => {
       expect(component.sectionsExpanded.fuel_analog).toBeFalse();
       expect(component.sectionsExpanded.fuel_digital).toBeFalse();
     });
+
+    it("should collapse all sections and persist state on toggleAllSections(false)", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+
+      component.toggleAllSections(false);
+
+      expect(component.areAllSectionsExpanded()).toBeFalse();
+      expect(
+        Object.values(component.sectionsExpanded).every((v) => !v),
+      ).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.stringMatching('"general":false'),
+      );
+    });
+
+    it("should expand all sections and persist state on toggleAllSections(true)", () => {
+      const setItemSpy = spyOn(localStorage, "setItem");
+      component.toggleAllSections(false);
+      setItemSpy.calls.reset();
+
+      component.toggleAllSections(true);
+
+      expect(component.areAllSectionsExpanded()).toBeTrue();
+      expect(
+        Object.values(component.sectionsExpanded).every(Boolean),
+      ).toBeTrue();
+      expect(setItemSpy).toHaveBeenCalledWith(
+        "race_editor_expanders",
+        jasmine.stringMatching('"general":true'),
+      );
+    });
   });
 
   describe("Driver Count Persistence", () => {
@@ -1995,6 +2027,30 @@ describe("RaceEditorComponent", () => {
       tick();
       expect(component.editingRace.heat_times_through).toBe(1);
     }));
+
+    it("should disable keyboard undo/redo in read-only mode, and enable in edit mode", () => {
+      const originalName = component.editingRace.name;
+      component.isEditMode = true;
+      component.editingRace.name = "Modified Race Name";
+      component.undoManager.captureState();
+      expect(component.undoManager.canUndo()).toBeTrue();
+
+      // Read-only mode: keydown is ignored
+      component.isEditMode = false;
+      const zEvent = new KeyboardEvent("keydown", { key: "z", ctrlKey: true });
+      component.onKeyDown(zEvent);
+      expect(component.editingRace.name).toBe("Modified Race Name");
+
+      // Edit mode: keydown executes undo
+      component.isEditMode = true;
+      component.onKeyDown(zEvent);
+      expect(component.editingRace.name).toBe(originalName);
+
+      // Edit mode: redo works via Ctrl+Y
+      const yEvent = new KeyboardEvent("keydown", { key: "y", ctrlKey: true });
+      component.onKeyDown(yEvent);
+      expect(component.editingRace.name).toBe("Modified Race Name");
+    });
 
     it("should include heatTimesThrough and reverseHeats in the payload", () => {
       component.editingRace.heat_times_through = 5;
