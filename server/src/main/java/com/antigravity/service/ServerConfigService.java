@@ -1,6 +1,5 @@
 package com.antigravity.service;
 
-import com.antigravity.App;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -137,20 +136,11 @@ public class ServerConfigService {
   }
 
   public static String getDefaultUpdateChannel() {
-    return getDefaultUpdateChannel(App.SERVER_VERSION);
+    return "BETA";
   }
 
   public static String getDefaultUpdateChannel(String version) {
-    if (version == null) {
-      return "PRODUCTION";
-    }
-    String lower = version.toLowerCase();
-    if (lower.contains("alpha") || lower.equals("0.0.0_dev")) {
-      return "ALPHA";
-    } else if (lower.contains("beta")) {
-      return "BETA";
-    }
-    return "PRODUCTION";
+    return "BETA";
   }
 
   public void setUpdateChannel(String channel) {
@@ -214,7 +204,7 @@ public class ServerConfigService {
 
     public String directorPassword = "RC AI Director";
     public String skippedUpdateVersion;
-    public String updateChannel = "ALPHA";
+    public String updateChannel = "BETA";
     public String snoozedUpdateVersion;
     public long snoozedUpdateUntil = 0L;
   }
