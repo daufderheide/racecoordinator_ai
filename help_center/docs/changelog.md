@@ -1,5 +1,21 @@
 # Changelog
 
+## [v1.0.0-beta.83] - 2026-09-21
+
+### 🚀 New Features
+
+- Changed default auto-update to be beta only feat: Added learn more for the various beta settings.  The goal is to encourage users to run beta's when they're available. ([7af86b5b](https://github.com/daufderheide/racecoordinator_ai/commit/7af86b5b))
+
+### ⚡ Improvements & Refactoring
+
+- introduce Driver model and converter with refactored audio configurations ([c87cf657](https://github.com/daufderheide/racecoordinator_ai/commit/c87cf657))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.82...v1.0.0-beta.83">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.82] - 2026-09-21
 
 ### 🐛 Bug Fixes
