@@ -10,11 +10,13 @@ import com.antigravity.proto.CurrentRecords;
 import com.antigravity.proto.OverallRecords;
 import com.antigravity.proto.RecordData;
 import com.antigravity.race.ClientSubscriptionManager;
+import com.antigravity.race.DriverAnalysisSummary;
 import com.antigravity.race.DriverHeatData;
 import com.antigravity.race.DriverHeatData.LapData;
 import com.antigravity.race.Heat;
 import com.antigravity.race.Race;
 import com.antigravity.race.RaceParticipant;
+import com.antigravity.race.RaceStatisticsUtils;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.RacePredictionService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -81,7 +83,20 @@ public class CsvExporter {
   private String doExport() {
     StringBuilder sb = new StringBuilder();
 
-    // Section 0: Race Record Data
+    appendRecordDataSection(sb);
+    appendTrackSection(sb);
+    appendRaceConfigSection(sb);
+    appendRaceStatsSection(sb);
+    appendPredictionsSection(sb);
+    appendStandingsSection(sb);
+    appendDriverStatisticsSection(sb);
+    appendHeatListSection(sb);
+    appendHeatsSection(sb);
+
+    return sb.toString();
+  }
+
+  private void appendRecordDataSection(StringBuilder sb) {
     sb.append("#Section,Race Record Data\n\n");
     RecordData recordData = race != null ? race.getRecordData() : null;
     if (recordData != null) {
@@ -104,36 +119,89 @@ public class CsvExporter {
             sb, "Lane Records (Current Race) Highest Scores", current.getLaneHighestScoreList());
       }
     }
+  }
 
-    // Section 1: Track Information
+  private void appendTrackSection(StringBuilder sb) {
     sb.append("#Section,Track Information\n\n");
     Track track = race != null ? race.getTrack() : null;
     if (track != null) {
       appendTable(sb, "Track Properties", Collections.singletonList(track));
     }
+  }
 
-    // Section 2: Race Configuration
+  private void appendRaceConfigSection(StringBuilder sb) {
     sb.append("#Section,Race Configuration\n\n");
     if (race != null && race.getRaceModel() != null) {
       appendTable(sb, "Race Model", Collections.singletonList(race.getRaceModel()));
     }
+  }
 
-    // Section 3: Race Statistics
+  private void appendRaceStatsSection(StringBuilder sb) {
     sb.append("#Section,Race Statistics\n\n");
     if (race != null && race.getStatistics() != null) {
       appendTable(sb, "Race Stats", Collections.singletonList(race.getStatistics()));
     }
+  }
 
-    // Section 4: Race Predictions
-    appendPredictionsSection(sb);
-
-    // Section 5: Overall Standings
+  private void appendStandingsSection(StringBuilder sb) {
     sb.append("#Section,Overall Standings\n\n");
     if (race != null && race.getDrivers() != null && !race.getDrivers().isEmpty()) {
       appendTable(sb, "Standings", race.getDrivers());
     }
+  }
 
-    // Section 5: Heat List
+  private void appendDriverStatisticsSection(StringBuilder sb) {
+    if (race == null || race.getDrivers() == null || race.getDrivers().isEmpty()) {
+      return;
+    }
+    List<Heat> runHeats = race.getHeats() != null ? race.getHeats() : Collections.emptyList();
+    List<RaceParticipant> driversCopy = new ArrayList<>();
+    for (RaceParticipant rp : race.getDrivers()) {
+      if (rp != null && !rp.isEmptyParticipant()) {
+        driversCopy.add(rp);
+      }
+    }
+    if (driversCopy.isEmpty()) {
+      return;
+    }
+
+    List<DriverAnalysisSummary> driverSummaries = new ArrayList<>();
+    List<String> driverSheetNames = new ArrayList<>();
+    RaceStatisticsUtils.prepareExportData(
+        race, driversCopy, runHeats, driverSummaries, driverSheetNames);
+
+    List<DriverStatisticRow> statRows = new ArrayList<>();
+    for (DriverAnalysisSummary summary : driverSummaries) {
+      if (summary.getLaneStats() != null) {
+        for (DriverAnalysisSummary.LaneStats ls : summary.getLaneStats()) {
+          DriverStatisticRow row = new DriverStatisticRow();
+          row.driverName = summary.getDriverName();
+          row.laneName = ls.getLaneName();
+          row.laneNumber = ls.getLaneNumber();
+          row.totalLaps = ls.getTotalLaps();
+          row.totalTime = ls.getTotalTime();
+          row.averageLapTime = ls.getAverageLapTime();
+          row.medianLapTime = ls.getMedianLapTime();
+          row.bestLapTime = ls.getBestLapTime();
+          row.standardDeviation = ls.getStandardDeviation();
+          row.consistencyScore = ls.getConsistencyScore();
+          row.averageTop5 = ls.getAverageTop5();
+          row.averageTop10 = ls.getAverageTop10();
+          row.averageTop15 = ls.getAverageTop15();
+          row.top2Consecutive = ls.getTop2Consecutive();
+          row.top3Consecutive = ls.getTop3Consecutive();
+          statRows.add(row);
+        }
+      }
+    }
+
+    if (!statRows.isEmpty()) {
+      sb.append("#Section,Driver Statistics\n\n");
+      appendTable(sb, "Driver Statistics", statRows);
+    }
+  }
+
+  private void appendHeatListSection(StringBuilder sb) {
     sb.append("#Section,Heat List\n\n");
     List<Heat> heats = race != null ? race.getHeats() : null;
     if (heats != null) {
@@ -169,9 +237,11 @@ public class CsvExporter {
         appendTable(sb, "Heat List", heatListRows);
       }
     }
+  }
 
-    // Section 6: Heats
+  private void appendHeatsSection(StringBuilder sb) {
     sb.append("#Section,Heats\n\n");
+    List<Heat> heats = race != null ? race.getHeats() : null;
     if (heats != null) {
       for (int hIdx = 0; hIdx < heats.size(); hIdx++) {
         Heat heat = heats.get(hIdx);
@@ -197,8 +267,6 @@ public class CsvExporter {
         }
       }
     }
-
-    return sb.toString();
   }
 
   private void appendTable(StringBuilder sb, String tableName, List<?> objects) {
@@ -455,6 +523,84 @@ public class CsvExporter {
 
     public String getTeamName() {
       return teamName;
+    }
+  }
+
+  public static class DriverStatisticRow {
+    public String driverName;
+    public String laneName;
+    public int laneNumber;
+    public double totalLaps;
+    public double totalTime;
+    public double averageLapTime;
+    public double medianLapTime;
+    public double bestLapTime;
+    public double standardDeviation;
+    public double consistencyScore;
+    public double averageTop5;
+    public double averageTop10;
+    public double averageTop15;
+    public double top2Consecutive;
+    public double top3Consecutive;
+
+    public String getDriverName() {
+      return driverName;
+    }
+
+    public String getLaneName() {
+      return laneName;
+    }
+
+    public int getLaneNumber() {
+      return laneNumber;
+    }
+
+    public double getTotalLaps() {
+      return totalLaps;
+    }
+
+    public double getTotalTime() {
+      return totalTime;
+    }
+
+    public double getAverageLapTime() {
+      return averageLapTime;
+    }
+
+    public double getMedianLapTime() {
+      return medianLapTime;
+    }
+
+    public double getBestLapTime() {
+      return bestLapTime;
+    }
+
+    public double getStandardDeviation() {
+      return standardDeviation;
+    }
+
+    public double getConsistencyScore() {
+      return consistencyScore;
+    }
+
+    public double getAverageTop5() {
+      return averageTop5;
+    }
+
+    public double getAverageTop10() {
+      return averageTop10;
+    }
+
+    public double getAverageTop15() {
+      return averageTop15;
+    }
+
+    public double getTop2Consecutive() {
+      return top2Consecutive;
+    }
+
+    public double getTop3Consecutive() {
+      return top3Consecutive;
     }
   }
 

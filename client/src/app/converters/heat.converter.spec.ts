@@ -412,4 +412,40 @@ describe("HeatConverter", () => {
     expect(driverData.initialFuelLevel).toBe(100.0);
     expect(driverData.participant.fuelLevel).toBe(42.0);
   });
+
+  it("should populate analysis metrics from proto", () => {
+    const proto: IHeat = {
+      objectId: "heat_analysis",
+      heatNumber: 1,
+      heatDrivers: [
+        {
+          objectId: "hd_analysis",
+          driver: {
+            objectId: "p_analysis",
+            driver: { name: "Analysis Driver" },
+          },
+          laps: [{ lapTime: 4.1 }, { lapTime: 4.2 }, { lapTime: 4.3 }],
+          consistencyScore: 98.5,
+          standardDeviation: 0.125,
+          averageTop_5: 4.12,
+          averageTop_10: 4.22,
+          averageTop_15: 4.32,
+          top_2Consecutive: 8.24,
+          top_3Consecutive: 12.36,
+        },
+      ],
+    };
+
+    const heat = HeatConverter.fromProto(proto);
+    expect(heat.heatDrivers.length).toBe(1);
+    const driverData = heat.heatDrivers[0];
+
+    expect(driverData.consistencyScore).toBe(98.5);
+    expect(driverData.standardDeviation).toBe(0.125);
+    expect(driverData.averageTop5).toBe(4.12);
+    expect(driverData.averageTop10).toBe(4.22);
+    expect(driverData.averageTop15).toBe(4.32);
+    expect(driverData.top2Consecutive).toBe(8.24);
+    expect(driverData.top3Consecutive).toBe(12.36);
+  });
 });

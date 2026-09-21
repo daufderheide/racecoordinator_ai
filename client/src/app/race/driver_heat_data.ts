@@ -48,6 +48,13 @@ export class DriverHeatData {
   public isFinished: boolean = false;
   public trackCalls: number = 0;
   public initialFuelLevel: number = 0;
+  public consistencyScore: number | null = null;
+  public standardDeviation: number | null = null;
+  public averageTop5: number | null = null;
+  public averageTop10: number | null = null;
+  public averageTop15: number | null = null;
+  public top2Consecutive: number | null = null;
+  public top3Consecutive: number | null = null;
 
   constructor(
     objectId: string,
@@ -92,6 +99,13 @@ export class DriverHeatData {
     this.lapsLed = 0;
     this.isFinished = false;
     this.trackCalls = 0;
+    this.consistencyScore = null;
+    this.standardDeviation = null;
+    this.averageTop5 = null;
+    this.averageTop10 = null;
+    this.averageTop15 = null;
+    this.top2Consecutive = null;
+    this.top3Consecutive = null;
   }
 
   addLapTime(
@@ -311,98 +325,5 @@ export class DriverHeatData {
       return this._lapsWithDetails.map((l) => l.time).filter((t) => t > 0);
     }
     return (this.laps || []).filter((t) => t > 0);
-  }
-
-  get standardDeviation(): number | null {
-    const laps = this.validLaps;
-    if (laps.length <= 1) return null;
-    const mean = laps.reduce((a, b) => a + b, 0) / laps.length;
-    const variance =
-      laps.reduce((sum, t) => sum + Math.pow(t - mean, 2), 0) /
-      (laps.length - 1);
-    return Math.sqrt(variance);
-  }
-
-  get consistencyScore(): number | null {
-    const laps = this.validLaps;
-    if (laps.length === 0) return null;
-    const mean = laps.reduce((a, b) => a + b, 0) / laps.length;
-    if (mean <= 0) return null;
-    const std = laps.length <= 1 ? 0 : (this.standardDeviation ?? 0);
-    const cons = Math.max(0, 1 - std / mean);
-    return cons * 100;
-  }
-
-  get averageTop5(): number | null {
-    return this.calculateAverageTopN(5);
-  }
-
-  get averageTop10(): number | null {
-    return this.calculateAverageTopN(10);
-  }
-
-  get averageTop15(): number | null {
-    return this.calculateAverageTopN(15);
-  }
-
-  get top2Consecutive(): number | null {
-    return this.calculateTopKConsecutive(2);
-  }
-
-  get top3Consecutive(): number | null {
-    return this.calculateTopKConsecutive(3);
-  }
-
-  private calculateAverageTopN(n: number): number | null {
-    const laps = this.validLaps;
-    if (laps.length === 0) return null;
-    const sorted = [...laps].sort((a, b) => a - b);
-    const topN = sorted.slice(0, n);
-    return topN.reduce((a, b) => a + b, 0) / topN.length;
-  }
-
-  private calculateTopKConsecutive(k: number): number | null {
-    const lapsWithDetails = this._lapsWithDetails;
-    if (lapsWithDetails && lapsWithDetails.length >= k) {
-      const times = lapsWithDetails.map((l) => l.time);
-      let minSum = Infinity;
-      for (let i = 0; i <= times.length - k; i++) {
-        let valid = true;
-        let sum = 0;
-        for (let j = 0; j < k; j++) {
-          const t = times[i + j];
-          if (!t || t <= 0) {
-            valid = false;
-            break;
-          }
-          sum += t;
-        }
-        if (valid && sum < minSum) {
-          minSum = sum;
-        }
-      }
-      return minSum === Infinity ? null : minSum;
-    }
-    if (this.laps && this.laps.length >= k) {
-      const times = this.laps;
-      let minSum = Infinity;
-      for (let i = 0; i <= times.length - k; i++) {
-        let valid = true;
-        let sum = 0;
-        for (let j = 0; j < k; j++) {
-          const t = times[i + j];
-          if (!t || t <= 0) {
-            valid = false;
-            break;
-          }
-          sum += t;
-        }
-        if (valid && sum < minSum) {
-          minSum = sum;
-        }
-      }
-      return minSum === Infinity ? null : minSum;
-    }
-    return null;
   }
 }

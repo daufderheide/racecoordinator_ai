@@ -211,4 +211,58 @@ public class DriverHeatDataTest {
     assertEquals("t_team_girls", teamRp.getParticipantId());
     assertEquals("t_team_girls", teamDhd.getParticipantId());
   }
+
+  @Test
+  public void testAnalysisMetricsWithZeroAndSingleLap() {
+    Driver driverModel = new Driver("Test", "Test");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    // Zero laps
+    assertEquals(0, dhd.getValidLapTimes().size());
+    assertEquals(0.0, dhd.getStandardDeviation(), 0.001);
+    assertEquals(0.0, dhd.getConsistencyScore(), 0.001);
+    assertEquals(0.0, dhd.getAverageTop5(), 0.001);
+    assertEquals(0.0, dhd.getTop2Consecutive(), 0.001);
+
+    // Single lap
+    dhd.addLap(5.0, false, true);
+    assertEquals(1, dhd.getValidLapTimes().size());
+    assertEquals(0.0, dhd.getStandardDeviation(), 0.001);
+    assertEquals(100.0, dhd.getConsistencyScore(), 0.001);
+    assertEquals(5.0, dhd.getAverageTop5(), 0.001);
+    assertEquals(0.0, dhd.getTop2Consecutive(), 0.001);
+  }
+
+  @Test
+  public void testAnalysisMetricsWithMultipleLaps() {
+    Driver driverModel = new Driver("Test", "Test");
+    RaceParticipant driver = new RaceParticipant(driverModel);
+    DriverHeatData dhd = new DriverHeatData(driver);
+
+    // Identical laps: stdDev = 0, consistency = 100%
+    dhd.addLap(5.0, false, true);
+    dhd.addLap(5.0, false, true);
+    dhd.addLap(5.0, false, true);
+    dhd.addLap(5.0, false, true);
+
+    assertEquals(0.0, dhd.getStandardDeviation(), 0.001);
+    assertEquals(100.0, dhd.getConsistencyScore(), 0.001);
+    assertEquals(10.0, dhd.getTop2Consecutive(), 0.001);
+    assertEquals(15.0, dhd.getTop3Consecutive(), 0.001);
+
+    // Add laps with variation: 6.0, 5.0, 4.0, 7.0, 4.5, 4.2
+    DriverHeatData varied = new DriverHeatData(driver);
+    double[] times = {6.0, 5.0, 4.0, 7.0, 4.5, 4.2};
+    for (double t : times) {
+      varied.addLap(t, false, true);
+    }
+    // avg = (6.0+5.0+4.0+7.0+4.5+4.2)/6 = 30.7/6 = 5.1166667
+    // best = 4.0
+    assertEquals(4.0, varied.getBestLapTime(), 0.001);
+    assertEquals(5.117, varied.getAverageLapTime(), 0.001);
+    assertEquals(4.74, varied.getAverageTop5(), 0.01);
+    assertEquals(8.7, varied.getTop2Consecutive(), 0.01);
+    assertEquals(15.0, varied.getTop3Consecutive(), 0.01);
+  }
 }
