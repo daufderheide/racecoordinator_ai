@@ -5160,6 +5160,56 @@ export class DefaultRacedayComponent
       (document.activeElement.tagName === "INPUT" ||
         document.activeElement.tagName === "TEXTAREA");
 
+    if (this.isLayoutCustomizing && !this.isUIEditorMode() && !inInputField) {
+      if (event.key === "Delete" || event.key === "Backspace") {
+        const selId = this.selectedWidgetId();
+        if (selId) {
+          event.preventDefault();
+          this.removeWidget(selId);
+          return;
+        }
+      }
+      if (
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight"
+      ) {
+        const selId = this.selectedWidgetId();
+        if (selId && this.layout?.widgets) {
+          const widget = this.layout.widgets.find((w: any) => w.id === selId);
+          if (widget) {
+            event.preventDefault();
+            const step = event.shiftKey ? 10 : 1;
+            const dx =
+              event.key === "ArrowLeft"
+                ? -step
+                : event.key === "ArrowRight"
+                  ? step
+                  : 0;
+            const dy =
+              event.key === "ArrowUp"
+                ? -step
+                : event.key === "ArrowDown"
+                  ? step
+                  : 0;
+            const baseWidth = this.layout.baseWidth || 1920;
+            const baseHeight = this.layout.baseHeight || 1080;
+            widget.x = Math.max(
+              0,
+              Math.min(baseWidth - widget.width, widget.x + dx),
+            );
+            widget.y = Math.max(
+              0,
+              Math.min(baseHeight - widget.height, widget.y + dy),
+            );
+            this.layoutChanged.emit(this.layout);
+            return;
+          }
+        }
+      }
+    }
+
     // Space bar
     if (event.code === "Space") {
       // Don't trigger if typing in an input field
@@ -7238,11 +7288,16 @@ export class DefaultRacedayComponent
     let x = (event.clientX - rect.left) / scaleX - width / 2;
     let y = (event.clientY - rect.top) / scaleY;
 
+    const baseWidth = this.layout?.baseWidth || 1920;
+    const baseHeight = this.layout?.baseHeight || 1080;
+    const clampedX = Math.max(0, Math.min(baseWidth - width, Math.round(x)));
+    const clampedY = Math.max(0, Math.min(baseHeight - height, Math.round(y)));
+
     const newWidget: any = {
       id: "widget-" + Date.now(),
       widgetType: this.draggedWidgetType as any,
-      x: Math.round(x),
-      y: Math.round(y),
+      x: clampedX,
+      y: clampedY,
       width: width,
       height: height,
       zIndex: this.getNextZIndex(),

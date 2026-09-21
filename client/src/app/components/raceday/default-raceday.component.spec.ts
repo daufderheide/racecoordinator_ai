@@ -1233,6 +1233,112 @@ describe("DefaultRacedayComponent", () => {
         expect(mockEvent.preventDefault).not.toHaveBeenCalled();
         expect(mockDataService.resetLaneHeatData).not.toHaveBeenCalled();
       });
+
+      describe("Layout Customizing Keyboard Shortcuts", () => {
+        beforeEach(() => {
+          component.isLayoutCustomizing = true;
+          component.layout = {
+            baseWidth: 1920,
+            baseHeight: 1080,
+            widgets: [
+              {
+                id: "widget-1",
+                widgetType: "timer",
+                x: 100,
+                y: 100,
+                width: 200,
+                height: 100,
+              },
+            ],
+          } as any;
+          (component as any).selectedWidgetId = () => "widget-1";
+        });
+
+        it("should remove selected widget on Delete key", () => {
+          spyOn(component, "removeWidget");
+          const event = new KeyboardEvent("keydown", { key: "Delete" });
+          spyOn(event, "preventDefault");
+
+          component["handleKeyboardEvent"](event);
+
+          expect(event.preventDefault).toHaveBeenCalled();
+          expect(component.removeWidget).toHaveBeenCalledWith("widget-1");
+        });
+
+        it("should remove selected widget on Backspace key", () => {
+          spyOn(component, "removeWidget");
+          const event = new KeyboardEvent("keydown", { key: "Backspace" });
+          spyOn(event, "preventDefault");
+
+          component["handleKeyboardEvent"](event);
+
+          expect(event.preventDefault).toHaveBeenCalled();
+          expect(component.removeWidget).toHaveBeenCalledWith("widget-1");
+        });
+
+        it("should nudge selected widget with arrow keys and clamp within boundaries", () => {
+          spyOn(component.layoutChanged, "emit");
+          const widget = component.layout.widgets[0];
+
+          // ArrowRight by 1px
+          const rightEvent = new KeyboardEvent("keydown", {
+            key: "ArrowRight",
+          });
+          spyOn(rightEvent, "preventDefault");
+          component["handleKeyboardEvent"](rightEvent);
+          expect(rightEvent.preventDefault).toHaveBeenCalled();
+          expect(widget.x).toBe(101);
+          expect(component.layoutChanged.emit).toHaveBeenCalledWith(
+            component.layout,
+          );
+
+          // Shift + ArrowDown by 10px
+          const downEvent = new KeyboardEvent("keydown", {
+            key: "ArrowDown",
+            shiftKey: true,
+          });
+          spyOn(downEvent, "preventDefault");
+          component["handleKeyboardEvent"](downEvent);
+          expect(downEvent.preventDefault).toHaveBeenCalled();
+          expect(widget.y).toBe(110);
+
+          // ArrowLeft by 1px
+          const leftEvent = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+          spyOn(leftEvent, "preventDefault");
+          component["handleKeyboardEvent"](leftEvent);
+          expect(widget.x).toBe(100);
+
+          // ArrowUp by 1px
+          const upEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+          spyOn(upEvent, "preventDefault");
+          component["handleKeyboardEvent"](upEvent);
+          expect(widget.y).toBe(109);
+
+          // Clamp at bounds: set to 0,0 and arrow up/left
+          widget.x = 0;
+          widget.y = 0;
+          component["handleKeyboardEvent"](upEvent);
+          component["handleKeyboardEvent"](leftEvent);
+          expect(widget.x).toBe(0);
+          expect(widget.y).toBe(0);
+        });
+
+        it("should not trigger Delete or nudge when typing in an input field", () => {
+          spyOn(component, "removeWidget");
+          const input = document.createElement("input");
+          document.body.appendChild(input);
+          input.focus();
+
+          const event = new KeyboardEvent("keydown", { key: "Delete" });
+          spyOn(event, "preventDefault");
+          component["handleKeyboardEvent"](event);
+
+          expect(event.preventDefault).not.toHaveBeenCalled();
+          expect(component.removeWidget).not.toHaveBeenCalled();
+
+          document.body.removeChild(input);
+        });
+      });
     });
 
     it("should call updateHeatUserLaps on confirm in menu mode", () => {
@@ -8620,6 +8726,57 @@ describe("DefaultRacedayComponent", () => {
       expect(droppedWidget.widgetType).toBe("heat-list");
       expect(droppedWidget.width).toBe(384);
       expect(droppedWidget.height).toBe(400);
+    });
+
+    it("should clamp dropped widget coordinates within canvas boundaries", () => {
+      const element = document.createElement("div");
+      spyOnProperty(element, "offsetWidth", "get").and.returnValue(1920);
+      spyOnProperty(element, "offsetHeight", "get").and.returnValue(1080);
+      spyOn(element, "getBoundingClientRect").and.returnValue({
+        left: 0,
+        top: 0,
+        width: 1920,
+        height: 1080,
+      } as DOMRect);
+
+      spyOn(component["el"].nativeElement, "querySelector").and.returnValue(
+        element,
+      );
+
+      component.isLayoutCustomizing = true;
+      component.draggedWidgetType = "timer";
+      component.layout = {
+        baseWidth: 1920,
+        baseHeight: 1080,
+        widgets: [],
+      } as any;
+
+      // Drop beyond top/left boundary (negative client coordinates)
+      const eventNegative = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: -100,
+        clientY: -50,
+      } as any;
+      component.onCanvasDrop(eventNegative);
+
+      expect(component.layout.widgets.length).toBe(1);
+      expect(component.layout.widgets[0].x).toBe(0);
+      expect(component.layout.widgets[0].y).toBe(0);
+
+      // Drop beyond bottom/right boundary
+      component.layout.widgets = [];
+      component.draggedWidgetType = "timer";
+      const eventPastBounds = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        clientX: 3000,
+        clientY: 2000,
+      } as any;
+      component.onCanvasDrop(eventPastBounds);
+
+      expect(component.layout.widgets.length).toBe(1);
+      const dropped = component.layout.widgets[0];
+      expect(dropped.x).toBe(1920 - dropped.width);
+      expect(dropped.y).toBe(1080 - dropped.height);
     });
   });
 

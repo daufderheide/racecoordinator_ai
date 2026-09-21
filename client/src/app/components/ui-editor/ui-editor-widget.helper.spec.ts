@@ -116,4 +116,105 @@ describe("ui-editor-widget.helper", () => {
     expect(comp.captureState).toHaveBeenCalled();
     expect(comp.cdr.markForCheck).toHaveBeenCalled();
   });
+
+  it("should handle removing selected widget", () => {
+    const { handleRemoveSelectedWidget } = require("./ui-editor-widget.helper");
+    const layout = {
+      widgets: [
+        { id: "w1", widgetType: "flag" },
+        { id: "w2", widgetType: "lane-view" },
+      ],
+    };
+    const comp = {
+      selectedWidgetId: "w1",
+      activeCustomUi: { entity_id: "ui1" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      onLayoutChanged: jasmine.createSpy("onLayoutChanged"),
+    };
+
+    handleRemoveSelectedWidget(comp);
+    expect(comp.selectedWidgetId).toBe("w2");
+    expect(comp.onLayoutChanged).toHaveBeenCalledWith(
+      { widgets: [{ id: "w2", widgetType: "lane-view" }] },
+      comp.activeCustomUi,
+    );
+  });
+
+  it("should handle nudging selected widget within bounds", () => {
+    const { handleNudgeSelectedWidget } = require("./ui-editor-widget.helper");
+    const widget = { id: "w1", x: 10, y: 20, width: 100, height: 100 };
+    const layout = { widgets: [widget] };
+    const comp = {
+      selectedWidgetId: "w1",
+      activeCustomUi: { entity_id: "ui1" },
+      getLayout: jasmine.createSpy("getLayout").and.returnValue(layout),
+      getLayoutBaseWidth: jasmine
+        .createSpy("getLayoutBaseWidth")
+        .and.returnValue(1920),
+      getLayoutBaseHeight: jasmine
+        .createSpy("getLayoutBaseHeight")
+        .and.returnValue(1080),
+      onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+    };
+
+    handleNudgeSelectedWidget(comp, 5, -10);
+    expect(widget.x).toBe(15);
+    expect(widget.y).toBe(10);
+    expect(comp.onWidgetInspectorChange).toHaveBeenCalledWith(
+      widget,
+      comp.activeCustomUi,
+    );
+  });
+
+  it("should clamp dimension and position changes", () => {
+    const {
+      handleWidgetXChange,
+      handleWidgetYChange,
+      handleWidgetWidthChange,
+      handleWidgetHeightChange,
+    } = require("./ui-editor-widget.helper");
+    const widget = { id: "w1", x: 10, y: 10, width: 100, height: 100 };
+    const comp = {
+      getLayoutBaseWidth: jasmine
+        .createSpy("getLayoutBaseWidth")
+        .and.returnValue(1000),
+      getLayoutBaseHeight: jasmine
+        .createSpy("getLayoutBaseHeight")
+        .and.returnValue(800),
+      onWidgetInspectorChange: jasmine.createSpy("onWidgetInspectorChange"),
+    };
+
+    handleWidgetXChange(comp, -50, widget);
+    expect(widget.x).toBe(0);
+
+    handleWidgetYChange(comp, 9999, widget);
+    expect(widget.y).toBe(700);
+
+    handleWidgetWidthChange(comp, 20, widget);
+    expect(widget.width).toBe(50); // min 50
+
+    handleWidgetHeightChange(comp, 5, widget);
+    expect(widget.height).toBe(20); // min 20
+  });
+
+  it("should handle layout change and set default widget selection", () => {
+    const { handleLayoutChanged } = require("./ui-editor-widget.helper");
+    const newLayout = {
+      widgets: [{ id: "w1", widgetType: "lane-view" }],
+    };
+    const comp = {
+      isSaving: false,
+      editingSettings: new Settings(),
+      isCurrentLayoutPractice: false,
+      parsedLayouts: new Map(),
+      selectedWidgetId: null as string | null,
+      captureState: jasmine.createSpy("captureState"),
+      cdr: { markForCheck: jasmine.createSpy("markForCheck") },
+    };
+
+    handleLayoutChanged(comp, newLayout);
+    expect(comp.selectedWidgetId).toBe("w1");
+    expect(comp.captureState).toHaveBeenCalled();
+    expect(comp.cdr.markForCheck).toHaveBeenCalled();
+  });
 });

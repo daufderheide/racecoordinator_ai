@@ -16,9 +16,223 @@
       as="image"
       href="assets/images/progress_bar_fill.png"
     />
+    <style>
+      #rc-unsupported-browser-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999999;
+        background-color: #0b0f19;
+        color: #f1f5f9;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-align: center;
+        -webkit-align-items: center;
+        -ms-flex-align: center;
+        align-items: center;
+        -webkit-box-pack: center;
+        -webkit-justify-content: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+      }
+      .rc-unsupported-card {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        max-width: 540px;
+        width: 100%;
+        padding: 32px 24px;
+        text-align: center;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+        box-sizing: border-box;
+      }
+      .rc-unsupported-icon {
+        font-size: 44px;
+        line-height: 1;
+        margin-bottom: 16px;
+        display: inline-block;
+      }
+      .rc-unsupported-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 12px 0;
+        color: #f8fafc;
+      }
+      .rc-unsupported-desc {
+        font-size: 15px;
+        line-height: 1.5;
+        color: #cbd5e1;
+        margin: 0 0 20px 0;
+      }
+      .rc-unsupported-reqs {
+        background-color: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 14px 16px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #94a3b8;
+        text-align: left;
+      }
+    </style>
   </head>
 
   <body>
     <app-root></app-root>
+    <noscript>
+      <div
+        id="rc-unsupported-browser-overlay"
+        role="alert"
+        aria-live="assertive"
+      >
+        <div class="rc-unsupported-card">
+          <div class="rc-unsupported-icon">&#9888;&#65039;</div>
+          <h1 class="rc-unsupported-title">JavaScript Required</h1>
+          <p class="rc-unsupported-desc">
+            Race Coordinator AI requires JavaScript and a modern web browser to
+            run. Please enable JavaScript or use a supported browser.
+          </p>
+          <div class="rc-unsupported-reqs">
+            Supported: Google Chrome, Microsoft Edge, Mozilla Firefox, or Safari
+            on Android 9+, iOS 14+, Windows 10+, macOS, or Linux.
+          </div>
+        </div>
+      </div>
+    </noscript>
+    <script>
+      (function () {
+        var translations = {
+          en: {
+            title: "Browser Not Supported",
+            desc: "Race Coordinator AI requires a modern web browser to run. Your browser or operating system version is out of date and cannot load this application.",
+            reqs: "Supported: Google Chrome, Microsoft Edge, Mozilla Firefox, or Safari on Android 9+, iOS 14+, Windows 10+, macOS, or Linux.",
+          },
+          de: {
+            title: "Browser nicht unterstützt",
+            desc: "Race Coordinator AI erfordert einen modernen Webbrowser. Ihr Browser oder Betriebssystem ist veraltet und kann diese Anwendung nicht laden.",
+            reqs: "Unterstützt: Google Chrome, Microsoft Edge, Mozilla Firefox oder Safari unter Android 9+, iOS 14+, Windows 10+, macOS oder Linux.",
+          },
+          es: {
+            title: "Navegador no compatible",
+            desc: "Race Coordinator AI requiere un navegador web moderno para funcionar. La versión de su navegador o sistema operativo está desactualizada y no puede cargar esta aplicación.",
+            reqs: "Compatible con: Google Chrome, Microsoft Edge, Mozilla Firefox o Safari en Android 9+, iOS 14+, Windows 10+, macOS o Linux.",
+          },
+          fr: {
+            title: "Navigateur non pris en charge",
+            desc: "Race Coordinator AI nécessite un navigateur Web moderne pour fonctionner. La version de votre navigateur ou de votre système d'exploitation est obsolète et ne peut pas charger cette application.",
+            reqs: "Pris en charge : Google Chrome, Microsoft Edge, Mozilla Firefox ou Safari sous Android 9+, iOS 14+, Windows 10+, macOS ou Linux.",
+          },
+          it: {
+            title: "Browser non supportato",
+            desc: "Race Coordinator AI richiede un browser Web moderno per funzionare. La versione del browser o del sistema operativo è obsoleta e non può caricare questa applicazione.",
+            reqs: "Supportati: Google Chrome, Microsoft Edge, Mozilla Firefox o Safari su Android 9+, iOS 14+, Windows 10+, macOS o Linux.",
+          },
+          nl: {
+            title: "Browser niet ondersteund",
+            desc: "Race Coordinator AI vereist een moderne webbrowser. De versie van uw browser of besturingssysteem is verouderd en kan deze toepassing niet laden.",
+            reqs: "Ondersteund: Google Chrome, Microsoft Edge, Mozilla Firefox of Safari op Android 9+, iOS 14+, Windows 10+, macOS of Linux.",
+          },
+          pt: {
+            title: "Navegador não suportado",
+            desc: "O Race Coordinator AI requer um navegador web moderno para funcionar. A versão do seu navegador ou sistema operacional está desatualizada e não pode carregar este aplicativo.",
+            reqs: "Suportados: Google Chrome, Microsoft Edge, Mozilla Firefox ou Safari no Android 9+, iOS 14+, Windows 10+, macOS ou Linux.",
+          },
+        };
+
+        function renderBanner() {
+          if (document.getElementById("rc-unsupported-browser-overlay")) return;
+          var lang = (navigator.language || navigator.userLanguage || "en")
+            .substring(0, 2)
+            .toLowerCase();
+          var t = translations[lang] || translations.en;
+
+          var overlay = document.createElement("div");
+          overlay.id = "rc-unsupported-browser-overlay";
+          overlay.setAttribute("role", "alert");
+          overlay.setAttribute("aria-live", "assertive");
+          overlay.innerHTML =
+            '<div class="rc-unsupported-card">' +
+            '<div class="rc-unsupported-icon">&#9888;&#65039;</div>' +
+            '<h1 class="rc-unsupported-title">' +
+            t.title +
+            "</h1>" +
+            '<p class="rc-unsupported-desc">' +
+            t.desc +
+            "</p>" +
+            '<div class="rc-unsupported-reqs">' +
+            t.reqs +
+            "</div>" +
+            "</div>";
+
+          if (document.body) {
+            document.body.appendChild(overlay);
+          } else {
+            window.onload = function () {
+              document.body.appendChild(overlay);
+            };
+          }
+        }
+
+        window.rcRenderUnsupportedBrowserBanner = renderBanner;
+
+        var isSupported = true;
+        try {
+          if (
+            typeof Promise === "undefined" ||
+            typeof Symbol === "undefined" ||
+            typeof Map === "undefined" ||
+            typeof Set === "undefined" ||
+            typeof BigInt === "undefined" ||
+            typeof queueMicrotask === "undefined" ||
+            typeof globalThis === "undefined" ||
+            !window.CSS ||
+            !window.CSS.supports ||
+            !window.CSS.supports("color", "var(--rc-test)")
+          ) {
+            isSupported = false;
+          }
+          if (isSupported) {
+            new Function(
+              "var a = window?.location?.href; var b = null ?? 1; class C { #x = 1; }",
+            );
+          }
+        } catch (e) {
+          isSupported = false;
+        }
+
+        if (!isSupported) {
+          renderBanner();
+        } else {
+          if (window.addEventListener) {
+            window.addEventListener("error", function (event) {
+              var msg = event && event.message ? event.message : "";
+              if (
+                msg.indexOf("SyntaxError") !== -1 ||
+                msg.indexOf("Unexpected token") !== -1
+              ) {
+                var appRoot = document.querySelector("app-root");
+                if (!appRoot || appRoot.children.length === 0) {
+                  renderBanner();
+                }
+              }
+            });
+          }
+        }
+      })();
+    </script>
+    <script nomodule>
+      if (window.rcRenderUnsupportedBrowserBanner) {
+        window.rcRenderUnsupportedBrowserBanner();
+      }
+    </script>
   </body>
 </html>
