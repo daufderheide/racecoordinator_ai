@@ -1014,6 +1014,8 @@ export class AssetManagerComponent implements OnInit, OnDestroy {
         (entry as any).percentage != null
           ? (entry as any).percentage
           : Math.round(entry.timeSeconds || 0),
+      triggerMode:
+        entry.triggerMode || (entry as any).trigger_mode || "remaining",
     }));
     this.showAudioSetEditor = true;
     this.cdr.detectChanges();

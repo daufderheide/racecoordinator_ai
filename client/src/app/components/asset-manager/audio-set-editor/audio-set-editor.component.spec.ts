@@ -281,6 +281,7 @@ describe("AudioSetEditorComponent", () => {
       expect(component.entries.length).toBe(1);
       expect(component.entries[0].name).toBe("countdown.mp3");
       expect(component.entries[0].url).toBe("/assets/audio/123_countdown.mp3");
+      expect(component.entries[0].triggerMode).toBe("remaining");
     });
 
     it("should cleanup blob URLs on destroy", () => {
@@ -364,6 +365,56 @@ describe("AudioSetEditorComponent", () => {
       expect((component.entries[0] as any).percentage).toBe(10);
       expect((component.entries[1] as any).percentage).toBe(0);
       expect(component.entries[1].text).toBe("{driver.nickname} out of fuel");
+    });
+
+    it("should preserve triggerMode when mapping initialEntries in resetForm and default to remaining when omitted", () => {
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Elapsed Entry",
+          timeSeconds: 15,
+          triggerMode: "elapsed",
+          url: "elap.wav",
+          data: new Uint8Array(),
+        } as any,
+        {
+          name: "Default Entry",
+          timeSeconds: 5,
+          // triggerMode omitted
+          url: "rem.wav",
+          data: new Uint8Array(),
+        } as any,
+      ]);
+      fixture.detectChanges();
+      component.resetForm();
+
+      expect(component.entries[0].triggerMode).toBe("elapsed");
+      expect(component.entries[1].triggerMode).toBe("remaining");
+    });
+
+    it("should save triggerMode to the value it was set to when edited", () => {
+      fixture.componentRef.setInput("visible", true);
+      fixture.componentRef.setInput("initialName", "Editable Set");
+      fixture.componentRef.setInput("initialEntries", [
+        {
+          name: "Lap 10",
+          timeSeconds: 10,
+          triggerMode: "remaining",
+          url: "lap10.wav",
+          data: new Uint8Array(),
+        } as any,
+      ]);
+      fixture.detectChanges();
+
+      expect(component.entries[0].triggerMode).toBe("remaining");
+
+      // User changes mode to elapsed
+      component.entries[0].triggerMode = "elapsed";
+      mockDataService.saveAudioSet.and.returnValue(of({} as any));
+
+      component.onSave();
+
+      const callArgs = mockDataService.saveAudioSet.calls.mostRecent().args;
+      expect(callArgs[1][0].triggerMode).toBe("elapsed");
     });
 
     it("should include synchronized percentage and name for TTS entries in onSave", () => {
