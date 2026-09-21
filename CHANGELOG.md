@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.82] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- Fixed audio set "mode" save issue.  I think this was just a display problem in the audio set ([41415f3b](https://github.com/daufderheide/racecoordinator_ai/commit/41415f3b))
+- move consistency calculations to the server ([79b8957a](https://github.com/daufderheide/racecoordinator_ai/commit/79b8957a))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.81...v1.0.0-beta.82">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.81] - 2026-09-20
 
 ### 🚀 New Features
