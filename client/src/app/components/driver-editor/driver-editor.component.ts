@@ -16,6 +16,7 @@ import { EditorSectionComponent } from "@app/components/shared/editor-section/ed
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
@@ -43,6 +44,7 @@ import {
   DriverAudioSlot,
   generateUniqueDriverName,
   generateUniqueDriverNickname,
+  getAudioSlotFallbackName,
   getDriverUnsavedReasons,
   isDriverNameUnique,
   isDriverNicknameUnique,
@@ -762,6 +764,10 @@ export class DriverEditorComponent
     this.cdr.markForCheck();
   }
 
+  getAudioSlotFallbackName(slot: DriverAudioSlot): string {
+    return getAudioSlotFallbackName(slot);
+  }
+
   selectDriver(driver: Driver) {
     this.selectedDriver = driver;
     this.editingDriver = cloneDriver(driver);
@@ -920,6 +926,7 @@ export class DriverEditorComponent
       ...driverToSend,
       entity_id: result.entity_id || driverToSend.entity_id,
     });
+    DriverConverter.register(savedDriver);
 
     if (wasNew || isSaveAsNew) {
       this.isEditMode = true;
@@ -1014,7 +1021,11 @@ export class DriverEditorComponent
   private refreshDriverList() {
     this.dataService.getDrivers().subscribe({
       next: (drivers) => {
-        this.allDrivers = drivers.map((d) => toDriver(d));
+        this.allDrivers = drivers.map((d) => {
+          const driver = toDriver(d);
+          DriverConverter.register(driver);
+          return driver;
+        });
         this.updateDriverSelectItems();
         this.cdr.detectChanges();
       },

@@ -4,6 +4,20 @@
 
 O Editor de Interface permite criar layouts personalizados para o dia de corrida, configurar colunas da classificação dos pilotos, personalizar efeitos sonoros e imagens de temas e carregar [Widgets Personalizados](custom-widgets.md) modulares.
 
+## Configuração de layout e colunas
+
+- Arraste e solte widgets da paleta no ecrã.
+- Redimensione, reposicione e alinhe widgets de acordo com a resolução do ecrã. Todos os widgets permanecem delimitados dentro do ecrã.
+- **Controlos do Inspetor de Widgets**:
+  - **Posição e tamanho**: Posicione e dimensione com precisão o widget selecionado utilizando os campos numéricos **X**, **Y**, **Largura** e **Altura**.
+  - **Excluir widget**: Clique no ícone do lixo no cabeçalho do inspetor ou no botão **Excluir widget** na barra lateral.
+- **Atalhos de teclado**:
+  - <kbd>Delete</kbd> ou <kbd>Backspace</kbd>: Remove o widget selecionado do layout.
+  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Move o widget selecionado 1px (ou 10px mantendo <kbd>Shift</kbd> pressionado).
+  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Desfazer a ação anterior.
+  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>: Refazer.
+- Configure ordem de colunas, visibilidade, âncoras e preferências de largura.
+
 ## Configuração do Widget de Cronómetro
 
 O widget **Cronómetro** exibe o tempo decorrido ou restante da manga/corrida com estilos de apresentação configuráveis:

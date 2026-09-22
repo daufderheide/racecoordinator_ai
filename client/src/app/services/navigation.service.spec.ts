@@ -81,6 +81,16 @@ describe("NavigationService", () => {
     expect(service.getPreviousUrl()).toBe("/page2");
   });
 
+  it("should track last history URL correctly", () => {
+    expect(service.getLastHistoryUrl()).toBeNull();
+
+    routerEvents.next(new NavigationEnd(1, "/page1", "/page1"));
+    expect(service.getLastHistoryUrl()).toBe("/page1");
+
+    routerEvents.next(new NavigationEnd(2, "/page2", "/page2"));
+    expect(service.getLastHistoryUrl()).toBe("/page2");
+  });
+
   describe("Browser Back/Forward History Tracking", () => {
     it("should initially not allow going back or forward", () => {
       service.resetHistory();

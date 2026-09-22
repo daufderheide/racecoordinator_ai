@@ -103,6 +103,13 @@ public class HeatConverter {
         .setLapsLed(data.getLapsLed())
         .setIsFinished(data.isFinished())
         .setTrackCalls(data.getTrackCalls())
+        .setConsistencyScore(data.getConsistencyScore())
+        .setStandardDeviation(data.getStandardDeviation())
+        .setAverageTop5(data.getAverageTop5())
+        .setAverageTop10(data.getAverageTop10())
+        .setAverageTop15(data.getAverageTop15())
+        .setTop2Consecutive(data.getTop2Consecutive())
+        .setTop3Consecutive(data.getTop3Consecutive())
         .build();
   }
 }

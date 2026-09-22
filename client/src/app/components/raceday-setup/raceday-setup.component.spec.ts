@@ -60,9 +60,11 @@ describe("RacedaySetupComponent", () => {
     };
     mockNavigationService = jasmine.createSpyObj("NavigationService", [
       "getPreviousUrl",
+      "getLastHistoryUrl",
       "getDirection",
     ]);
     mockNavigationService.getPreviousUrl.and.returnValue(null);
+    mockNavigationService.getLastHistoryUrl.and.returnValue(null);
     mockFileSystemService = jasmine.createSpyObj("FileSystemService", [
       "selectCustomFolder",
       "hasCustomFiles",
@@ -308,7 +310,7 @@ describe("RacedaySetupComponent", () => {
       expect(sessionStorage.getItem("skipIntro")).toBeNull();
     }));
 
-    it("should NOT bypass splash screen if returning from a race screen", fakeAsync(() => {
+    it("should NOT bypass splash screen if returning from a race screen without skipIntro", fakeAsync(() => {
       mockNavigationService.getPreviousUrl.and.returnValue("/raceday");
       component.ngOnInit();
       tick(100);
@@ -316,6 +318,46 @@ describe("RacedaySetupComponent", () => {
       expect(component.minTimeElapsed).toBeFalse();
       tick(5000);
       expect(component.showSplash).toBeFalse();
+    }));
+
+    it("should bypass splash screen if returning from a race screen when skipIntro is in sessionStorage", fakeAsync(() => {
+      mockNavigationService.getPreviousUrl.and.returnValue("/raceday");
+      sessionStorage.setItem("skipIntro", "true");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
+    }));
+
+    it("should bypass splash screen when router.url indicates returning from an editor", fakeAsync(() => {
+      (mockRouter as any).url = "/driver-editor";
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
+    }));
+
+    it("should NOT bypass splash screen when router.url indicates returning from a race screen without skipIntro", fakeAsync(() => {
+      (mockRouter as any).url = "/raceday";
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeTrue();
+      expect(component.minTimeElapsed).toBeFalse();
+      tick(5000);
+      expect(component.showSplash).toBeFalse();
+    }));
+
+    it("should bypass splash screen when getLastHistoryUrl indicates returning from an editor", fakeAsync(() => {
+      (mockRouter as any).url = "/raceday-setup";
+      mockNavigationService.getLastHistoryUrl.and.returnValue("/track-editor");
+      component.ngOnInit();
+      tick(100);
+      expect(component.showSplash).toBeFalse();
+      expect(component.minTimeElapsed).toBeTrue();
+      expect(component.connectionVerified).toBeTrue();
     }));
 
     it("should fetch and update server IP address on init", fakeAsync(() => {

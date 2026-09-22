@@ -4,6 +4,20 @@
 
 El Editor de Interfaz le permite diseñar diseños de pantalla personalizados para el día de la carrera, configurar columnas de clasificación de pilotos, personalizar efectos de sonido y gráficos de temas y cargar [Widgets personalizados](custom-widgets.md) modulares.
 
+## Configuración de diseño y columnas
+
+- Arrastre y suelte widgets desde la paleta hacia el lienzo.
+- Cambie el tamaño, reposicione y alinee widgets para adaptarse a su resolución. Todos los widgets están delimitados para no salirse del lienzo.
+- **Controles del Inspector de Widgets**:
+  - **Posición y tamaño**: Ajuste con precisión la posición y dimensiones del widget seleccionado mediante los campos numéricos **X**, **Y**, **Ancho** y **Altura**.
+  - **Eliminar widget**: Haga clic en el icono de papelera en el encabezado del inspector o en el botón **Eliminar widget** en la barra lateral.
+- **Atajos de teclado**:
+  - <kbd>Supr</kbd> o <kbd>Retroceso</kbd>: Elimina el widget seleccionado del diseño.
+  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Desplaza el widget seleccionado 1px (o 10px manteniendo pulsada <kbd>Mayús</kbd>).
+  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Deshacer la acción anterior.
+  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Mayús</kbd>+<kbd>Z</kbd>: Rehacer.
+- Configure orden de columnas, visibilidad, anclajes y anchos preferidos.
+
 ## Configuración del Widget de Temporizador
 
 El widget **Temporizador** muestra el tiempo transcurrido o restante de la manga/carrera con estilos de presentación configurables:

@@ -199,9 +199,9 @@ public class UpdateService {
   }
 
   static boolean matchesChannel(JsonNode node, String channel) {
-    if (channel == null || channel.equalsIgnoreCase("ALPHA")) {
+    if ("ALPHA".equalsIgnoreCase(channel)) {
       return true;
-    } else if (channel.equalsIgnoreCase("BETA")) {
+    } else if (channel == null || channel.equalsIgnoreCase("BETA")) {
       return isBeta(node) || isProduction(node);
     } else if (channel.equalsIgnoreCase("PRODUCTION")) {
       return isProduction(node);

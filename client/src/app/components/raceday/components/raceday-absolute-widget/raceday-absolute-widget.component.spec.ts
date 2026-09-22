@@ -181,6 +181,73 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(mockParent.layoutChanged.emit).toHaveBeenCalled();
   });
 
+  it("should clamp widget dragging so it cannot be dragged off the top or left of canvas (y >= 0, x >= 0)", () => {
+    const target = document.createElement("div");
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 200,
+      clientY: 200,
+    });
+    Object.defineProperty(fakeStartEvent, "target", { value: target });
+
+    component.onDragStart(fakeStartEvent);
+
+    // Drag way off the top-left (-500, -500)
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: -500,
+      clientY: -500,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().x).toBe(0);
+    expect(component.widget().y).toBe(0);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
+  it("should clamp widget dragging so it cannot exceed maximum canvas dimensions", () => {
+    const target = document.createElement("div");
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 50,
+      clientY: 50,
+    });
+    Object.defineProperty(fakeStartEvent, "target", { value: target });
+
+    component.onDragStart(fakeStartEvent);
+
+    // Drag far beyond canvas boundaries
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 5000,
+      clientY: 5000,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().x).toBe(1920 - component.widget().width);
+    expect(component.widget().y).toBe(1080 - component.widget().height);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
+  it("should clamp North handle resizing so y does not become negative", () => {
+    const fakeStartEvent = new PointerEvent("pointerdown", {
+      clientX: 100,
+      clientY: 100,
+    });
+
+    component.onResizeStart(fakeStartEvent, "n");
+
+    // Move pointer way upwards (-500)
+    const fakeMoveEvent = new PointerEvent("pointermove", {
+      clientX: 100,
+      clientY: -500,
+    });
+    document.dispatchEvent(fakeMoveEvent);
+
+    expect(component.widget().y).toBeGreaterThanOrEqual(0);
+    expect(component.widget().height).toBeGreaterThanOrEqual(50);
+
+    document.dispatchEvent(new PointerEvent("pointerup"));
+  });
+
   it("should not start dragging if clicking resize handle or button", () => {
     const resizeHandle = document.createElement("div");
     resizeHandle.className = "resize-handle";

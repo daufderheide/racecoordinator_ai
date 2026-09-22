@@ -94,7 +94,6 @@ import {
   executeTestTtsVoice,
   extractAssetId,
   fetchUiEditorData,
-  findDefaultWidgetId,
   focusUiEditorElement,
   getCanvasViewportMaxHeightHelper,
   getComponentPreviewContainerHeight,
@@ -134,8 +133,11 @@ import {
   handleImportLayout,
   handleImportPracticeRacedayLayout,
   handleImportRacedayLayout,
+  handleLayoutChanged,
   handleMasterVolumeChange,
+  handleNudgeSelectedWidget,
   handlePageTransitionChange,
+  handleRemoveSelectedWidget,
   handleResetCurrentLayout,
   handleResetLayout,
   handleResetPracticeRacedayLayout,
@@ -155,8 +157,12 @@ import {
   handleUiEditorKeyboardShortcut,
   handleUrgentQueueTtlChange,
   handleWidgetColorChange,
+  handleWidgetHeightChange,
   handleWidgetInspectorChange,
   handleWidgetSelection,
+  handleWidgetWidthChange,
+  handleWidgetXChange,
+  handleWidgetYChange,
   initAvailableVoices,
   isCustomUiDefault,
   isCustomUiNameInvalid,
@@ -186,7 +192,6 @@ import {
   toggleThemeExpander,
   toggleUiExpander,
   UIEditorState,
-  updateLayoutOnModel,
 } from "./ui-editor-helpers";
 import { WidgetInspectorFieldsComponent } from "./widget-inspector-fields/widget-inspector-fields.component";
 
@@ -463,6 +468,8 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       event,
       () => this.undo(),
       () => this.redo(),
+      () => this.removeSelectedWidget(),
+      (dx, dy) => this.nudgeSelectedWidget(dx, dy),
     );
   }
 
@@ -583,24 +590,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   onLayoutChanged(newLayout: any, ui?: CustomUI) {
-    if (this.isSaving) return;
-    updateLayoutOnModel(
-      newLayout,
-      ui,
-      this.editingSettings,
-      this.isCurrentLayoutPractice,
-      this.parsedLayouts,
-    );
-    const widgets = newLayout?.widgets || [];
-    if (
-      widgets.length > 0 &&
-      (!this.selectedWidgetId ||
-        !widgets.some((w: any) => w.id === this.selectedWidgetId))
-    ) {
-      this.selectedWidgetId = findDefaultWidgetId(newLayout);
-    }
-    this.captureState();
-    this.cdr.markForCheck();
+    handleLayoutChanged(this, newLayout, ui);
   }
 
   onWidgetInspectorChange(widget?: any, ui?: CustomUI) {
@@ -637,6 +627,30 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
   onConfirmReplicateLanes(options: any): void {
     confirmReplicateLanesHelper(this, options);
+  }
+
+  removeSelectedWidget(ui?: CustomUI) {
+    handleRemoveSelectedWidget(this, ui);
+  }
+
+  nudgeSelectedWidget(dx: number, dy: number, ui?: CustomUI) {
+    handleNudgeSelectedWidget(this, dx, dy, ui);
+  }
+
+  onWidgetXChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetXChange(this, value, widget, ui);
+  }
+
+  onWidgetYChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetYChange(this, value, widget, ui);
+  }
+
+  onWidgetWidthChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetWidthChange(this, value, widget, ui);
+  }
+
+  onWidgetHeightChange(value: any, widget: any, ui?: CustomUI) {
+    handleWidgetHeightChange(this, value, widget, ui);
   }
 
   onRacedayLayoutChanged(newLayout: any) {

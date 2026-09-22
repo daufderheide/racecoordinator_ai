@@ -4,6 +4,7 @@ import {
   ElementRef,
   HostListener,
   input,
+  OnDestroy,
   OnInit,
   output,
   ViewEncapsulation,
@@ -11,12 +12,14 @@ import {
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { UpdateChannel, UpdateService } from "@app/services/update.service";
 
 export interface ChannelOption {
   id: UpdateChannel;
   labelKey: string;
+  tooltipKey: string;
 }
 
 @Component({
@@ -27,26 +30,46 @@ export interface ChannelOption {
   styleUrl: "./update-selector.component.css",
   encapsulation: ViewEncapsulation.None,
 })
-export class UpdateSelectorComponent implements OnInit {
+export class UpdateSelectorComponent implements OnInit, OnDestroy {
   wrapperClass = input<string>("menu-item");
   itemClass = input<string>("menu-item");
   checkForUpdatesRequested = output<void>();
   channelSelected = output<UpdateChannel>();
 
-  currentChannel: UpdateChannel = "ALPHA";
+  currentChannel: UpdateChannel = "BETA";
   isUpdateDropdownOpen = false;
   readonly isChannelSelectionEnabled = true;
 
+  activeTooltipChannel: UpdateChannel | null = null;
+  private tooltipTimeoutId: any = null;
+
   readonly channels: ChannelOption[] = [
-    { id: "PRODUCTION", labelKey: "RDS_UPDATE_CHANNEL_PRODUCTION" },
-    { id: "BETA", labelKey: "RDS_UPDATE_CHANNEL_BETA" },
-    { id: "ALPHA", labelKey: "RDS_UPDATE_CHANNEL_ALPHA" },
-    { id: "DISABLED", labelKey: "RDS_UPDATE_CHANNEL_DISABLED" },
+    {
+      id: "PRODUCTION",
+      labelKey: "RDS_UPDATE_CHANNEL_PRODUCTION",
+      tooltipKey: "RDS_UPDATE_TOOLTIP_PRODUCTION",
+    },
+    {
+      id: "BETA",
+      labelKey: "RDS_UPDATE_CHANNEL_BETA",
+      tooltipKey: "RDS_UPDATE_TOOLTIP_BETA",
+    },
+    {
+      id: "ALPHA",
+      labelKey: "RDS_UPDATE_CHANNEL_ALPHA",
+      tooltipKey: "RDS_UPDATE_TOOLTIP_ALPHA",
+    },
+    {
+      id: "DISABLED",
+      labelKey: "RDS_UPDATE_CHANNEL_DISABLED",
+      tooltipKey: "RDS_UPDATE_TOOLTIP_DISABLED",
+    },
   ];
 
   constructor(
     private updateService: UpdateService,
     private authService: AuthService,
+    private helpLinkService: HelpLinkService,
     private elementRef: ElementRef,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
@@ -70,6 +93,10 @@ export class UpdateSelectorComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    this.clearTooltip();
+  }
+
   toggleDropdown(event: Event) {
     event.stopPropagation();
     this.isUpdateDropdownOpen = !this.isUpdateDropdownOpen;
@@ -77,11 +104,14 @@ export class UpdateSelectorComponent implements OnInit {
       window.dispatchEvent(
         new CustomEvent("rc-submenu-opened", { detail: this }),
       );
+    } else {
+      this.clearTooltip();
     }
     this.cdr.markForCheck();
   }
 
   closeDropdown() {
+    this.clearTooltip();
     this.isUpdateDropdownOpen = false;
     this.cdr.markForCheck();
   }
@@ -109,6 +139,53 @@ export class UpdateSelectorComponent implements OnInit {
       },
     });
     this.cdr.markForCheck();
+  }
+
+  onChannelHover(channel: UpdateChannel) {
+    if (this.tooltipTimeoutId) {
+      clearTimeout(this.tooltipTimeoutId);
+      this.tooltipTimeoutId = null;
+    }
+    this.activeTooltipChannel = channel;
+    this.cdr.markForCheck();
+  }
+
+  onChannelLeave(channel: UpdateChannel) {
+    if (this.tooltipTimeoutId) {
+      clearTimeout(this.tooltipTimeoutId);
+    }
+    this.tooltipTimeoutId = setTimeout(() => {
+      if (this.activeTooltipChannel === channel) {
+        this.activeTooltipChannel = null;
+        this.cdr.markForCheck();
+      }
+    }, 150);
+  }
+
+  onTooltipEnter(channel: UpdateChannel) {
+    if (this.tooltipTimeoutId) {
+      clearTimeout(this.tooltipTimeoutId);
+      this.tooltipTimeoutId = null;
+    }
+    this.activeTooltipChannel = channel;
+  }
+
+  onTooltipLeave(channel: UpdateChannel) {
+    this.onChannelLeave(channel);
+  }
+
+  private clearTooltip() {
+    if (this.tooltipTimeoutId) {
+      clearTimeout(this.tooltipTimeoutId);
+      this.tooltipTimeoutId = null;
+    }
+    this.activeTooltipChannel = null;
+  }
+
+  openLearnMore(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.helpLinkService.openHelp("downloads", "release-channels");
   }
 
   @HostListener("window:rc-submenu-opened", ["$event"])

@@ -152,6 +152,89 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     this.widgetSub?.unsubscribe();
   }
 
+  private calculateResizedBounds(
+    handle: string,
+    deltaX: number,
+    deltaY: number,
+    baseWidth: number,
+    baseHeight: number,
+  ): { x: number; y: number; width: number; height: number } {
+    let newW = this.resizeStartWidth;
+    let newH = this.resizeStartHeight;
+    let newX = this.resizeStartX;
+    let newY = this.resizeStartY;
+
+    if (handle.includes("e")) newW += deltaX;
+    if (handle.includes("w")) {
+      newW -= deltaX;
+      newX += deltaX;
+    }
+    if (handle.includes("s")) newH += deltaY;
+    if (handle.includes("n")) {
+      newH -= deltaY;
+      newY += deltaY;
+    }
+
+    if (newW < 50) {
+      if (handle.includes("w")) newX -= 50 - newW;
+      newW = 50;
+    }
+    if (newH < 50) {
+      if (handle.includes("n")) newY -= 50 - newH;
+      newH = 50;
+    }
+
+    if (newX < 0) {
+      if (handle.includes("w")) newW += newX;
+      newX = 0;
+    }
+    if (newY < 0) {
+      if (handle.includes("n")) newH += newY;
+      newY = 0;
+    }
+    if (newX + newW > baseWidth) {
+      newW = baseWidth - newX;
+    }
+    if (newY + newH > baseHeight) {
+      newH = baseHeight - newY;
+    }
+
+    if (newW < 50) {
+      if (handle.includes("w")) newX -= 50 - newW;
+      newW = 50;
+    }
+    if (newH < 50) {
+      if (handle.includes("n")) newY -= 50 - newH;
+      newH = 50;
+    }
+
+    let snapped = { x: newX, y: newY, w: newW, h: newH };
+    if (this.parentComponent().snapToEdges) {
+      snapped = this.parentComponent().snapToEdges(
+        newX,
+        newY,
+        newW,
+        newH,
+        this.widget().id,
+        handle,
+        baseWidth,
+        baseHeight,
+      );
+    }
+
+    const clampedX = Math.max(0, Math.min(baseWidth - 50, snapped.x));
+    const clampedY = Math.max(0, Math.min(baseHeight - 50, snapped.y));
+    const clampedW = Math.max(50, Math.min(baseWidth - clampedX, snapped.w));
+    const clampedH = Math.max(50, Math.min(baseHeight - clampedY, snapped.h));
+
+    return {
+      x: clampedX,
+      y: clampedY,
+      width: clampedW,
+      height: clampedH,
+    };
+  }
+
   onResizeStart(event: PointerEvent, handle: string) {
     if (!this.isCustomizing() || this.isGridMirrored) return;
     event.preventDefault();
@@ -171,50 +254,21 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       const scale = this.parentComponent().visualScale || 1;
       const deltaX = (moveEvent.clientX - this.startPointerX) / scale;
       const deltaY = (moveEvent.clientY - this.startPointerY) / scale;
+      const baseWidth = this.parentComponent().layout?.baseWidth || 1920;
+      const baseHeight = this.parentComponent().layout?.baseHeight || 1080;
 
-      let newW = this.resizeStartWidth;
-      let newH = this.resizeStartHeight;
-      let newX = this.resizeStartX;
-      let newY = this.resizeStartY;
+      const bounds = this.calculateResizedBounds(
+        handle,
+        deltaX,
+        deltaY,
+        baseWidth,
+        baseHeight,
+      );
 
-      if (handle.includes("e")) newW += deltaX;
-      if (handle.includes("w")) {
-        newW -= deltaX;
-        newX += deltaX;
-      }
-      if (handle.includes("s")) newH += deltaY;
-      if (handle.includes("n")) {
-        newH -= deltaY;
-        newY += deltaY;
-      }
-
-      if (newW < 50) {
-        if (handle.includes("w")) newX -= 50 - newW;
-        newW = 50;
-      }
-      if (newH < 50) {
-        if (handle.includes("n")) newY -= 50 - newH;
-        newH = 50;
-      }
-
-      let snapped = { x: newX, y: newY, w: newW, h: newH };
-      if (this.parentComponent().snapToEdges) {
-        snapped = this.parentComponent().snapToEdges(
-          newX,
-          newY,
-          newW,
-          newH,
-          this.widget().id,
-          handle,
-          this.parentComponent().layout?.baseWidth || 1920,
-          this.parentComponent().layout?.baseHeight || 1080,
-        );
-      }
-
-      this.widget().x = snapped.x;
-      this.widget().y = snapped.y;
-      this.widget().width = snapped.w;
-      this.widget().height = snapped.h;
+      this.widget().x = bounds.x;
+      this.widget().y = bounds.y;
+      this.widget().width = bounds.width;
+      this.widget().height = bounds.height;
 
       this.cdr.detectChanges();
     };
@@ -270,27 +324,32 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
       let newX = initialWidgetX + deltaX;
       let newY = initialWidgetY + deltaY;
 
+      const baseWidth = this.parentComponent().layout?.baseWidth || 1920;
+      const baseHeight = this.parentComponent().layout?.baseHeight || 1080;
+      const w = this.widget().width;
+      const h = this.widget().height;
+
       let snapped = {
         x: newX,
         y: newY,
-        w: this.widget().width,
-        h: this.widget().height,
+        w: w,
+        h: h,
       };
       if (this.parentComponent().snapToEdges) {
         snapped = this.parentComponent().snapToEdges(
           newX,
           newY,
-          this.widget().width,
-          this.widget().height,
+          w,
+          h,
           this.widget().id,
           "all",
-          this.parentComponent().layout?.baseWidth || 1920,
-          this.parentComponent().layout?.baseHeight || 1080,
+          baseWidth,
+          baseHeight,
         );
       }
 
-      this.widget().x = snapped.x;
-      this.widget().y = snapped.y;
+      this.widget().x = Math.max(0, Math.min(baseWidth - w, snapped.x));
+      this.widget().y = Math.max(0, Math.min(baseHeight - h, snapped.y));
       this.cdr.detectChanges();
     };
 

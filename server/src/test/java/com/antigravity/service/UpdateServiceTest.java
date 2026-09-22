@@ -534,4 +534,16 @@ public class UpdateServiceTest {
     assertTrue("Newer version v1.0.2 should bypass snooze of v1.0.1", result.updateAvailable);
     assertEquals("v1.0.2", result.latestVersion);
   }
+
+  @Test
+  public void testMatchesChannel_NullDefaultsToBeta() throws Exception {
+    JsonNode alphaNode = mapper.readTree("{\"tag_name\": \"v1.0.0-alpha.1\"}");
+    JsonNode betaNode = mapper.readTree("{\"tag_name\": \"v1.0.0-beta.1\"}");
+    JsonNode prodNode = mapper.readTree("{\"tag_name\": \"v1.0.0\"}");
+
+    // Null channel should default to BETA (matching beta and production, but not alpha)
+    assertFalse(UpdateService.matchesChannel(alphaNode, null));
+    assertTrue(UpdateService.matchesChannel(betaNode, null));
+    assertTrue(UpdateService.matchesChannel(prodNode, null));
+  }
 }

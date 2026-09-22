@@ -87,44 +87,9 @@ public class DatabaseInitializer {
             .filter(a -> a.getName().toLowerCase().contains("helmet"))
             .collect(Collectors.toList());
 
-    AssetMessage beepSound =
-        allAssets.stream()
-            .filter(
-                a ->
-                    "default_beep".equals(a.getModel().getEntityId())
-                        || "Lap Beep".equalsIgnoreCase(a.getName())
-                        || a.getName().toLowerCase().contains("beep"))
-            .findFirst()
-            .orElse(null);
-
-    AssetMessage drivebySound =
-        allAssets.stream()
-            .filter(
-                a ->
-                    "default_driveby".equals(a.getModel().getEntityId())
-                        || "Lap Driveby".equalsIgnoreCase(a.getName())
-                        || a.getName().toLowerCase().contains("driveby"))
-            .findFirst()
-            .orElse(null);
-
-    AssetMessage penaltySound =
-        allAssets.stream()
-            .filter(
-                a ->
-                    "default_penalty".equals(a.getModel().getEntityId())
-                        || "Penalty".equalsIgnoreCase(a.getName())
-                        || a.getName().toLowerCase().contains("penalty"))
-            .findFirst()
-            .orElse(null);
-
-    String lapSoundUrl = beepSound != null ? beepSound.getUrl() : "/assets/default_beep_beep.wav";
-    String bestLapSoundUrl =
-        drivebySound != null ? drivebySound.getUrl() : "/assets/default_driveby_driveby.wav";
-    String penaltySoundUrl =
-        penaltySound != null ? penaltySound.getUrl() : "/assets/default_penalty_penalty.wav";
-    AudioConfig lapAudio = new AudioConfig("preset", lapSoundUrl, null);
-    AudioConfig bestLapAudio = new AudioConfig("preset", bestLapSoundUrl, null);
-    AudioConfig penaltyAudio = new AudioConfig("preset", penaltySoundUrl, null);
+    AudioConfig lapAudio = new AudioConfig("preset", "default_beep", null);
+    AudioConfig bestLapAudio = new AudioConfig("preset", "default_driveby", null);
+    AudioConfig penaltyAudio = new AudioConfig("preset", "default_penalty", null);
 
     List<Driver> initialDrivers = new ArrayList<>();
     initialDrivers.add(
@@ -239,6 +204,8 @@ public class DatabaseInitializer {
         .withRaceBestLapAudio(new AudioConfig("preset", "default_best_race_lap", ""))
         .withRaceLaneBestLapAudio(new AudioConfig("preset", "default_best_race_lane_lap", ""))
         .withHeatBestLapAudio(new AudioConfig("preset", "default_best_heat_lap", ""))
+        .withNewRaceLeaderAudio(new AudioConfig("preset", "default_new_race_leader", ""))
+        .withNewHeatLeaderAudio(new AudioConfig("preset", "default_new_heat_leader", ""))
         .withPitInAudio(new AudioConfig("preset", "default_pit_in", ""))
         .withFuelAudio(new AudioConfig("audio_set", "default_fuel_level", ""))
         .withEntityId(sequenceId)
@@ -269,6 +236,8 @@ public class DatabaseInitializer {
             || !json.contains("pitInAudio")
             || !json.contains("fuelAudio")
             || !json.contains("overallBestLapAudio")
+            || !json.contains("newRaceLeaderAudio")
+            || !json.contains("newHeatLeaderAudio")
             || (json.contains("fuelAudio") && json.contains("\"type\":\"preset\""))
             || (json.contains("fuelAudio") && json.contains("\"type\": \"preset\""))) {
           needsUpdateIds.add(rs.getString("entity_id"));
@@ -282,6 +251,18 @@ public class DatabaseInitializer {
       boolean needsUpdate = needsUpdateIds.contains(driver.getEntityId());
       Driver.Builder builder = Driver.Builder.from(driver);
 
+      if (isAudioConfigMissing(driver.getLapAudio())) {
+        builder.withLapAudio(new AudioConfig("preset", "default_beep", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getBestLapAudio())) {
+        builder.withBestLapAudio(new AudioConfig("preset", "default_driveby", ""));
+        needsUpdate = true;
+      }
+      if (isAudioConfigMissing(driver.getPenaltyAudio())) {
+        builder.withPenaltyAudio(new AudioConfig("preset", "default_penalty", ""));
+        needsUpdate = true;
+      }
       if (isAudioConfigMissing(driver.getOverallBestLapAudio())) {
         builder.withOverallBestLapAudio(new AudioConfig("preset", "default_record_lap", ""));
         needsUpdate = true;

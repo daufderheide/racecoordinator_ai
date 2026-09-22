@@ -1,4 +1,5 @@
 import { Driver } from "@app/models/driver";
+import { getDefaultAudioName } from "@app/utils/audio";
 
 export type DriverAudioSlot =
   | "lap"
@@ -66,6 +67,11 @@ export function getAudioSlotInfo(slot: DriverAudioSlot): {
   }
 }
 
+export function getAudioSlotFallbackName(slot: DriverAudioSlot): string {
+  const { defaultUrl } = getAudioSlotInfo(slot);
+  return getDefaultAudioName(defaultUrl) || "Default";
+}
+
 export function mapSoundType(
   type: string | undefined,
   defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
@@ -80,95 +86,72 @@ export function mapSoundType(
 }
 
 export function toDriver(d: any): Driver {
-  return new Driver(
-    d.entity_id,
-    d.name,
-    d.nickname || "",
-    d.avatarUrl,
-    {
+  return new Driver(d.entity_id, d.name, d.nickname || "", d.avatarUrl, {
+    lapAudio: {
       type: mapSoundType(d.lapAudio?.type || d.lapSoundType),
       url: d.lapAudio?.url || d.lapSoundUrl,
       text: d.lapAudio?.text || d.lapSoundText,
     },
-    {
+    bestLapAudio: {
       type: mapSoundType(d.bestLapAudio?.type || d.bestLapSoundType),
       url: d.bestLapAudio?.url || d.bestLapSoundUrl,
       text: d.bestLapAudio?.text || d.bestLapSoundText,
     },
-    {
+    penaltyAudio: {
       type: mapSoundType(d.penaltyAudio?.type || d.penaltySoundType),
       url: d.penaltyAudio?.url || d.penaltySoundUrl,
       text: d.penaltyAudio?.text || d.penaltySoundText,
     },
-    undefined,
-    {
+    overallBestLapAudio: {
       type: mapSoundType(d.overallBestLapAudio?.type),
       url: d.overallBestLapAudio?.url,
       text: d.overallBestLapAudio?.text,
     },
-    {
+    overallLaneBestLapAudio: {
       type: mapSoundType(d.overallLaneBestLapAudio?.type),
       url: d.overallLaneBestLapAudio?.url,
       text: d.overallLaneBestLapAudio?.text,
     },
-    {
+    raceBestLapAudio: {
       type: mapSoundType(d.raceBestLapAudio?.type),
       url: d.raceBestLapAudio?.url,
       text: d.raceBestLapAudio?.text,
     },
-    {
+    raceLaneBestLapAudio: {
       type: mapSoundType(d.raceLaneBestLapAudio?.type),
       url: d.raceLaneBestLapAudio?.url,
       text: d.raceLaneBestLapAudio?.text,
     },
-    {
+    heatBestLapAudio: {
       type: mapSoundType(d.heatBestLapAudio?.type),
       url: d.heatBestLapAudio?.url,
       text: d.heatBestLapAudio?.text,
     },
-    {
+    newRaceLeaderAudio: {
       type: mapSoundType(d.newRaceLeaderAudio?.type),
       url: d.newRaceLeaderAudio?.url,
       text: d.newRaceLeaderAudio?.text,
     },
-    {
+    newHeatLeaderAudio: {
       type: mapSoundType(d.newHeatLeaderAudio?.type),
       url: d.newHeatLeaderAudio?.url,
       text: d.newHeatLeaderAudio?.text,
     },
-    {
+    pitInAudio: {
       type: mapSoundType(d.pitInAudio?.type),
       url: d.pitInAudio?.url,
       text: d.pitInAudio?.text,
     },
-    {
+    fuelAudio: {
       type: mapSoundType(d.fuelAudio?.type, "audio_set"),
       url: d.fuelAudio?.url || "default_fuel_level",
       text: d.fuelAudio?.text,
     },
-  );
+  });
 }
 
 export function createNewDriverTemplate(): Driver {
-  return new Driver(
-    "new",
-    "",
-    "",
-    "",
-    { type: "preset", url: "default_beep" },
-    { type: "preset", url: "default_driveby" },
-    { type: "preset", url: "default_penalty" },
-    undefined,
-    { type: "preset", url: "default_record_lap" },
-    { type: "preset", url: "default_record_lane_lap" },
-    { type: "preset", url: "default_best_race_lap" },
-    { type: "preset", url: "default_best_race_lane_lap" },
-    { type: "preset", url: "default_best_heat_lap" },
-    { type: "preset", url: "default_new_race_leader" },
-    { type: "preset", url: "default_new_heat_leader" },
-    { type: "preset", url: "default_pit_in" },
-    { type: "audio_set", url: "default_fuel_level" },
-  );
+  return Driver.createDefault("new", "", "");
 }
 
 export function cloneDriver(driver: Driver): Driver {
@@ -177,23 +160,38 @@ export function cloneDriver(driver: Driver): Driver {
     driver.name,
     driver.nickname,
     driver.avatarUrl,
-    driver.lapAudio ? { ...driver.lapAudio } : undefined,
-    driver.bestLapAudio ? { ...driver.bestLapAudio } : undefined,
-    driver.penaltyAudio ? { ...driver.penaltyAudio } : undefined,
-    undefined,
-    driver.overallBestLapAudio ? { ...driver.overallBestLapAudio } : undefined,
-    driver.overallLaneBestLapAudio
-      ? { ...driver.overallLaneBestLapAudio }
-      : undefined,
-    driver.raceBestLapAudio ? { ...driver.raceBestLapAudio } : undefined,
-    driver.raceLaneBestLapAudio
-      ? { ...driver.raceLaneBestLapAudio }
-      : undefined,
-    driver.heatBestLapAudio ? { ...driver.heatBestLapAudio } : undefined,
-    driver.newRaceLeaderAudio ? { ...driver.newRaceLeaderAudio } : undefined,
-    driver.newHeatLeaderAudio ? { ...driver.newHeatLeaderAudio } : undefined,
-    driver.pitInAudio ? { ...driver.pitInAudio } : undefined,
-    driver.fuelAudio ? { ...driver.fuelAudio } : undefined,
+    {
+      lapAudio: driver.lapAudio ? { ...driver.lapAudio } : undefined,
+      bestLapAudio: driver.bestLapAudio
+        ? { ...driver.bestLapAudio }
+        : undefined,
+      penaltyAudio: driver.penaltyAudio
+        ? { ...driver.penaltyAudio }
+        : undefined,
+      overallBestLapAudio: driver.overallBestLapAudio
+        ? { ...driver.overallBestLapAudio }
+        : undefined,
+      overallLaneBestLapAudio: driver.overallLaneBestLapAudio
+        ? { ...driver.overallLaneBestLapAudio }
+        : undefined,
+      raceBestLapAudio: driver.raceBestLapAudio
+        ? { ...driver.raceBestLapAudio }
+        : undefined,
+      raceLaneBestLapAudio: driver.raceLaneBestLapAudio
+        ? { ...driver.raceLaneBestLapAudio }
+        : undefined,
+      heatBestLapAudio: driver.heatBestLapAudio
+        ? { ...driver.heatBestLapAudio }
+        : undefined,
+      newRaceLeaderAudio: driver.newRaceLeaderAudio
+        ? { ...driver.newRaceLeaderAudio }
+        : undefined,
+      newHeatLeaderAudio: driver.newHeatLeaderAudio
+        ? { ...driver.newHeatLeaderAudio }
+        : undefined,
+      pitInAudio: driver.pitInAudio ? { ...driver.pitInAudio } : undefined,
+      fuelAudio: driver.fuelAudio ? { ...driver.fuelAudio } : undefined,
+    },
   );
 }
 

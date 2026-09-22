@@ -470,6 +470,17 @@
                             >
                               <div class="inspector-header">
                                 <h2>{{ "UE_INSPECTOR_TITLE" | translate }}</h2>
+                                <button
+                                  type="button"
+                                  class="inspector-delete-btn"
+                                  (click)="removeSelectedWidget(ui)"
+                                  [title]="'UE_BTN_DELETE_WIDGET' | translate"
+                                  [attr.aria-label]="
+                                    'UE_BTN_DELETE_WIDGET' | translate
+                                  "
+                                >
+                                  <span class="material-icons">delete</span>
+                                </button>
                               </div>
 
                               <div class="inspector-body">
@@ -535,6 +546,140 @@
                                     </div>
                                   </div>
                                 }
+
+                                <!-- Position & Size Section -->
+                                <div class="inspector-geometry-title">
+                                  {{ "UE_INSPECTOR_GEOMETRY" | translate }}
+                                </div>
+                                <div class="inspector-row-grid">
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_POS_X" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-x"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.x"
+                                      (ngModelChange)="
+                                        onWidgetXChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="0"
+                                      [max]="
+                                        getLayoutBaseWidth(ui) -
+                                        currentSelectedWidget.width
+                                      "
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_POS_Y" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-y"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.y"
+                                      (ngModelChange)="
+                                        onWidgetYChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="0"
+                                      [max]="
+                                        getLayoutBaseHeight(ui) -
+                                        currentSelectedWidget.height
+                                      "
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                </div>
+                                <div class="inspector-row-grid">
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_WIDTH" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-w"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.width"
+                                      (ngModelChange)="
+                                        onWidgetWidthChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="50"
+                                      [max]="getLayoutBaseWidth(ui)"
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                  <div class="inspector-section">
+                                    <label class="inspector-label">{{
+                                      "UE_INSPECTOR_HEIGHT" | translate
+                                    }}</label>
+                                    <input
+                                      id="inspector-pos-h"
+                                      type="number"
+                                      class="inspector-input"
+                                      [ngModel]="currentSelectedWidget.height"
+                                      (ngModelChange)="
+                                        onWidgetHeightChange(
+                                          $event,
+                                          currentSelectedWidget,
+                                          ui
+                                        )
+                                      "
+                                      min="20"
+                                      [max]="getLayoutBaseHeight(ui)"
+                                      autocomplete="off"
+                                      data-dashlane-ignore="true"
+                                      data-1p-ignore="true"
+                                      data-lpignore="true"
+                                      data-bwignore="true"
+                                      data-form-type="other"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div
+                                  class="inspector-section"
+                                  style="margin-top: 4px"
+                                >
+                                  <button
+                                    type="button"
+                                    class="delete-widget-btn"
+                                    (click)="removeSelectedWidget(ui)"
+                                    [title]="'UE_BTN_DELETE_WIDGET' | translate"
+                                  >
+                                    <span class="material-icons">delete</span>
+                                    {{ "UE_BTN_DELETE_WIDGET" | translate }}
+                                  </button>
+                                </div>
 
                                 <hr class="inspector-divider" />
 

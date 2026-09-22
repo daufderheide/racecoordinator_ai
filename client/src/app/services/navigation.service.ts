@@ -152,6 +152,12 @@ export class NavigationService implements OnDestroy {
     return this.previousUrl;
   }
 
+  public getLastHistoryUrl(): string | null {
+    return this.history.length > 0
+      ? this.history[this.history.length - 1]
+      : null;
+  }
+
   public canGoBack(): boolean {
     return this.canGoBack$.value;
   }

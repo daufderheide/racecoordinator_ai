@@ -17,17 +17,58 @@
       <div class="menu-dropdown-divider"></div>
       @for (ch of channels; track ch.id) {
         <div
-          [class]="itemClass()"
+          [class]="itemClass() + ' channel-option-row'"
           [class.selected]="currentChannel === ch.id"
           [class.disabled]="!isChannelSelectionEnabled || !isAdmin"
           [title]="!isAdmin ? ('RDS_UPDATE_ADMIN_REQUIRED' | translate) : ''"
           (click)="selectChannel(ch.id, $event)"
+          (mouseenter)="onChannelHover(ch.id)"
+          (mouseleave)="onChannelLeave(ch.id)"
           [attr.data-testid]="'channel-' + ch.id.toLowerCase()"
         >
           <span class="check-slot">{{
             currentChannel === ch.id ? "✓" : ""
           }}</span>
-          <span>{{ ch.labelKey | translate }}</span>
+          <span class="channel-label">{{ ch.labelKey | translate }}</span>
+          <span
+            class="channel-info-icon"
+            (click)="openLearnMore($event)"
+            [attr.aria-label]="'RDS_UPDATE_LEARN_MORE' | translate"
+            data-testid="channel-info-icon"
+            >ℹ</span
+          >
+
+          @if (activeTooltipChannel === ch.id) {
+            <div
+              class="channel-tooltip"
+              (click)="$event.stopPropagation()"
+              (mouseenter)="onTooltipEnter(ch.id)"
+              (mouseleave)="onTooltipLeave(ch.id)"
+              data-testid="channel-tooltip"
+            >
+              <div class="channel-tooltip-title">
+                {{ ch.labelKey | translate }}
+              </div>
+              <div class="channel-tooltip-body">
+                {{ ch.tooltipKey | translate }}
+              </div>
+              @if (!isAdmin) {
+                <div class="channel-tooltip-admin-warning">
+                  ⚠️ {{ "RDS_UPDATE_ADMIN_REQUIRED" | translate }}
+                </div>
+              }
+              <div class="channel-tooltip-footer">
+                <a
+                  class="channel-learn-more-link"
+                  (click)="openLearnMore($event)"
+                  href="javascript:void(0)"
+                  data-testid="channel-learn-more-link"
+                >
+                  {{ "RDS_UPDATE_LEARN_MORE" | translate }} →
+                </a>
+              </div>
+            </div>
+          }
         </div>
       }
     </div>

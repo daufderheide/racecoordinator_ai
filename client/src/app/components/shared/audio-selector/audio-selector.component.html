@@ -135,12 +135,18 @@
     <div class="audio-controls readonly-controls">
       <div class="dm-select readonly-text">
         {{
-          effectiveType() === "preset" || effectiveType() === "audio_set"
+          effectiveType() === "none" ||
+          effectiveType() === "preset" ||
+          effectiveType() === "audio_set"
             ? selectedAssetName()
-            : effectiveText() || "---"
+            : effectiveText() || ("AS_OPTION_NONE" | translate)
         }}
       </div>
-      <button class="btn-play" (click)="play()">
+      <button
+        class="btn-play"
+        [disabled]="effectiveType() === 'none'"
+        (click)="play()"
+      >
         @if (!isPlaying) {
           <span>▶ {{ "AS_BTN_PLAY" | translate }}</span>
         }

@@ -105,6 +105,14 @@
     background: rgba(0, 255, 255, 0.2);
 }
 
+.btn-play:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: rgba(0, 255, 255, 0.3);
+    color: rgba(0, 255, 255, 0.5);
+    background: rgba(0, 255, 255, 0.05);
+}
+
 .readonly-controls .dm-select {
     flex: 1;
     min-width: 0;

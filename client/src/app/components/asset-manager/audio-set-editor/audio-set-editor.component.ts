@@ -218,6 +218,7 @@ export class AudioSetEditorComponent implements OnInit, OnDestroy {
       data: new Uint8Array(),
       type: "preset",
       text: "",
+      triggerMode: "remaining",
     });
     this.recalculateTimes();
     this.cdr.detectChanges();

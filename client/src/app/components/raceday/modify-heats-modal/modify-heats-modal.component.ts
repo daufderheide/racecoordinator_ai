@@ -27,6 +27,7 @@ import {
   UndoEventType,
   UndoManager,
 } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { HeatConverter } from "@app/converters/heat.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
@@ -293,18 +294,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
       teams: this.dataService.getTeams(),
     }).subscribe({
       next: (result: any) => {
-        this.allDrivers = (result.drivers as any[]).map(
-          (d) =>
-            new Driver(
-              d.entity_id || d.entityId || d.id || "",
-              d.name || "",
-              d.nickname || "",
-              d.avatarUrl || undefined,
-              d.lapAudio,
-              d.bestLapAudio,
-              d.penaltyAudio,
-            ),
-        );
+        this.allDrivers = (result.drivers as any[]).map((d) => {
+          const driver = DriverConverter.fromJSON(d);
+          DriverConverter.register(driver);
+          return driver;
+        });
         this.allTeams = (result.teams as any[]).map(
           (t) =>
             new Team(

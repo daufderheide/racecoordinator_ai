@@ -4,6 +4,20 @@
 
 L'Éditeur d'Interface vous permet de concevoir des mises en page de jour de course personnalisées, de configurer les colonnes du classement des pilotes, de personnaliser les effets sonores et les images des thèmes et de charger des [Widgets personnalisés](custom-widgets.md) modulaires.
 
+## Configuration de la mise en page et des colonnes
+
+- Glissez-déposez des widgets depuis la palette sur le canevas.
+- Redimensionnez, repositionnez et alignez les widgets selon votre résolution. Tous les widgets restent délimités à l'intérieur du canevas.
+- **Contrôles de l'Inspecteur de Widgets** :
+  - **Position & Taille** : Positionnez et dimensionnez avec précision le widget sélectionné à l'aide des entrées numériques **X**, **Y**, **Largeur** et **Hauteur**.
+  - **Supprimer le widget** : Cliquez sur l'icône de corbeille dans l'en-tête de l'inspecteur ou sur le bouton **Supprimer le widget** dans la barre latérale.
+- **Raccourcis clavier** :
+  - <kbd>Suppr</kbd> ou <kbd>Retour arrière</kbd> : Supprime le widget sélectionné de la mise en page.
+  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> : Déplace le widget sélectionné de 1px (ou 10px en maintenant <kbd>Maj</kbd>).
+  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd> : Annuler l'action précédente.
+  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Maj</kbd>+<kbd>Z</kbd> : Rétablir.
+- Configurez l'ordre des colonnes, la visibilité, les ancres et les préférences de largeur.
+
 ## Configuration du Widget Minuteur
 
 Le widget **Minuteur** affiche le temps écoulé ou restant de la manche/course avec des styles de présentation configurables :

@@ -4542,5 +4542,196 @@ describe("UIEditorComponent", () => {
         done();
       }, 200);
     });
+
+    describe("Widget Inspector Geometry & Deletion", () => {
+      let testCustomUi: any;
+
+      beforeEach(() => {
+        testCustomUi = {
+          entity_id: "custom_ui_test",
+          layoutJson: JSON.stringify({
+            baseWidth: 1920,
+            baseHeight: 1080,
+            widgets: [
+              {
+                id: "w_lane",
+                widgetType: "lane-view",
+                x: 0,
+                y: 0,
+                width: 800,
+                height: 600,
+              },
+              {
+                id: "w_timer",
+                widgetType: "timer",
+                x: 100,
+                y: 200,
+                width: 300,
+                height: 150,
+              },
+            ],
+          }),
+        };
+        component.displayCustomUIs = [testCustomUi];
+        component.activeCustomUiId = "custom_ui_test";
+        component.selectedWidgetId = "w_timer";
+      });
+
+      it("should do nothing when removeSelectedWidget is called with no selected widget", () => {
+        spyOn(component, "onLayoutChanged");
+        component.selectedWidgetId = null;
+        component.removeSelectedWidget();
+        expect(component.onLayoutChanged).not.toHaveBeenCalled();
+      });
+
+      it("should remove the selected widget and select the lane-view fallback", () => {
+        spyOn(component, "onLayoutChanged");
+        component.removeSelectedWidget();
+
+        expect(component.onLayoutChanged).toHaveBeenCalled();
+        const updatedLayout = (
+          component.onLayoutChanged as jasmine.Spy
+        ).calls.mostRecent().args[0];
+        expect(updatedLayout.widgets.length).toBe(1);
+        expect(updatedLayout.widgets[0].id).toBe("w_lane");
+        expect(component.selectedWidgetId).toBe("w_lane");
+      });
+
+      it("should do nothing when nudgeSelectedWidget is called with invalid widget id", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        component.selectedWidgetId = "non_existent";
+        component.nudgeSelectedWidget(10, 10);
+        expect(component.onWidgetInspectorChange).not.toHaveBeenCalled();
+      });
+
+      it("should nudge widget position and clamp within canvas boundaries", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        component.nudgeSelectedWidget(50, -50);
+
+        const widget = component.selectedWidget;
+        expect(widget.x).toBe(150);
+        expect(widget.y).toBe(150);
+        expect(component.onWidgetInspectorChange).toHaveBeenCalledWith(
+          widget,
+          testCustomUi,
+        );
+
+        // Nudge beyond max bounds
+        component.nudgeSelectedWidget(3000, 3000);
+        expect(widget.x).toBe(1920 - 300);
+        expect(widget.y).toBe(1080 - 150);
+
+        // Nudge again beyond max bounds - position doesn't change, onWidgetInspectorChange not called again
+        (component.onWidgetInspectorChange as jasmine.Spy).calls.reset();
+        component.nudgeSelectedWidget(10, 10);
+        expect(component.onWidgetInspectorChange).not.toHaveBeenCalled();
+      });
+
+      it("should clamp onWidgetXChange between 0 and baseWidth - width", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+
+        component.onWidgetXChange(250, widget, testCustomUi);
+        expect(widget.x).toBe(250);
+
+        // Negative clamp
+        component.onWidgetXChange(-50, widget, testCustomUi);
+        expect(widget.x).toBe(0);
+
+        // Max bounds clamp
+        component.onWidgetXChange(2500, widget, testCustomUi);
+        expect(widget.x).toBe(1920 - 300);
+
+        // NaN fallback
+        component.onWidgetXChange("invalid", widget, testCustomUi);
+        expect(widget.x).toBe(0);
+      });
+
+      it("should clamp onWidgetYChange between 0 and baseHeight - height", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+
+        component.onWidgetYChange(350, widget, testCustomUi);
+        expect(widget.y).toBe(350);
+
+        // Negative clamp
+        component.onWidgetYChange(-100, widget, testCustomUi);
+        expect(widget.y).toBe(0);
+
+        // Max bounds clamp
+        component.onWidgetYChange(2000, widget, testCustomUi);
+        expect(widget.y).toBe(1080 - 150);
+
+        // NaN fallback
+        component.onWidgetYChange("invalid", widget, testCustomUi);
+        expect(widget.y).toBe(0);
+      });
+
+      it("should clamp onWidgetWidthChange between 50 and baseWidth - x", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+        widget.x = 100;
+
+        component.onWidgetWidthChange(400, widget, testCustomUi);
+        expect(widget.width).toBe(400);
+
+        // Below min clamp (50)
+        component.onWidgetWidthChange(10, widget, testCustomUi);
+        expect(widget.width).toBe(50);
+
+        // Beyond max bounds (1920 - 100 = 1820)
+        component.onWidgetWidthChange(2500, widget, testCustomUi);
+        expect(widget.width).toBe(1820);
+
+        // NaN fallback
+        component.onWidgetWidthChange("invalid", widget, testCustomUi);
+        expect(widget.width).toBe(50);
+      });
+
+      it("should clamp onWidgetHeightChange between 20 and baseHeight - y", () => {
+        spyOn(component, "onWidgetInspectorChange");
+        const widget = component.selectedWidget;
+        widget.y = 100;
+
+        component.onWidgetHeightChange(250, widget, testCustomUi);
+        expect(widget.height).toBe(250);
+
+        // Below min clamp (20)
+        component.onWidgetHeightChange(5, widget, testCustomUi);
+        expect(widget.height).toBe(20);
+
+        // Beyond max bounds (1080 - 100 = 980)
+        component.onWidgetHeightChange(2000, widget, testCustomUi);
+        expect(widget.height).toBe(980);
+
+        // NaN fallback
+        component.onWidgetHeightChange("invalid", widget, testCustomUi);
+        expect(widget.height).toBe(50);
+      });
+
+      it("should include password manager ignore attributes on inspector geometry inputs", () => {
+        component.sectionsExpanded["customUIs"] = true;
+        component.sectionsExpanded["ui_" + testCustomUi.entity_id] = true;
+        fixture.detectChanges();
+        const xInput = fixture.nativeElement.querySelector("#inspector-pos-x");
+        const yInput = fixture.nativeElement.querySelector("#inspector-pos-y");
+        const wInput = fixture.nativeElement.querySelector("#inspector-pos-w");
+        const hInput = fixture.nativeElement.querySelector("#inspector-pos-h");
+
+        expect(xInput).toBeTruthy();
+        expect(yInput).toBeTruthy();
+        expect(wInput).toBeTruthy();
+        expect(hInput).toBeTruthy();
+
+        for (const input of [xInput, yInput, wInput, hInput]) {
+          expect(input.getAttribute("autocomplete")).toBe("off");
+          expect(input.getAttribute("data-dashlane-ignore")).toBe("true");
+          expect(input.getAttribute("data-1p-ignore")).toBe("true");
+          expect(input.getAttribute("data-lpignore")).toBe("true");
+          expect(input.getAttribute("data-bwignore")).toBe("true");
+          expect(input.getAttribute("data-form-type")).toBe("other");
+        }
+      });
+    });
   });
 });

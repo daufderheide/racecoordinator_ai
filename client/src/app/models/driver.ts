@@ -10,7 +10,92 @@ export interface AudioConfig {
   text?: string;
 }
 
+export interface DriverAudioConfig {
+  lapAudio?: AudioConfig;
+  bestLapAudio?: AudioConfig;
+  penaltyAudio?: AudioConfig;
+  falseStartAudio?: AudioConfig;
+  overallBestLapAudio?: AudioConfig;
+  overallLaneBestLapAudio?: AudioConfig;
+  raceBestLapAudio?: AudioConfig;
+  raceLaneBestLapAudio?: AudioConfig;
+  heatBestLapAudio?: AudioConfig;
+  newRaceLeaderAudio?: AudioConfig;
+  newHeatLeaderAudio?: AudioConfig;
+  pitInAudio?: AudioConfig;
+  fuelAudio?: AudioConfig;
+}
+
+export interface DriverInit extends DriverAudioConfig {
+  entity_id: string;
+  name: string;
+  nickname?: string;
+  avatarUrl?: string;
+}
+
 export const EMPTY_DRIVER_ID = "EMPTY_LANE";
+
+export function sanitizeDriverAudio(
+  audio?: AudioConfig,
+  defaultUrl: string = "default_beep",
+  defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
+): AudioConfig {
+  if (!audio || !audio.type) {
+    return { type: defaultType, url: defaultUrl };
+  }
+  let type = audio.type;
+  if (defaultType === "audio_set" && type === "preset") {
+    type = "audio_set";
+  }
+  if (type === "none") {
+    return { type: "none", url: undefined, text: undefined };
+  }
+  if (type === "tts") {
+    return { type: "tts", url: undefined, text: audio.text || "" };
+  }
+  const cleanUrl =
+    audio.url && audio.url.trim() !== "" ? audio.url.trim() : defaultUrl;
+  return {
+    type,
+    url: cleanUrl,
+    text: undefined,
+  };
+}
+
+function resolveAudioConfig(
+  audioOrLap?: DriverAudioConfig | AudioConfig,
+  bestLapAudio?: AudioConfig,
+  penaltyAudio?: AudioConfig,
+  falseStartAudio?: AudioConfig,
+  overallBestLapAudio?: AudioConfig,
+  overallLaneBestLapAudio?: AudioConfig,
+  raceBestLapAudio?: AudioConfig,
+  raceLaneBestLapAudio?: AudioConfig,
+  heatBestLapAudio?: AudioConfig,
+  newRaceLeaderAudio?: AudioConfig,
+  newHeatLeaderAudio?: AudioConfig,
+  pitInAudio?: AudioConfig,
+  fuelAudio?: AudioConfig,
+): DriverAudioConfig {
+  if (audioOrLap && typeof audioOrLap === "object" && !("type" in audioOrLap)) {
+    return audioOrLap as DriverAudioConfig;
+  }
+  return {
+    lapAudio: audioOrLap as AudioConfig | undefined,
+    bestLapAudio,
+    penaltyAudio,
+    falseStartAudio,
+    overallBestLapAudio,
+    overallLaneBestLapAudio,
+    raceBestLapAudio,
+    raceLaneBestLapAudio,
+    heatBestLapAudio,
+    newRaceLeaderAudio,
+    newHeatLeaderAudio,
+    pitInAudio,
+    fuelAudio,
+  };
+}
 
 export class Driver implements Model {
   entity_id: string;
@@ -30,6 +115,14 @@ export class Driver implements Model {
   pitInAudio: AudioConfig;
   fuelAudio: AudioConfig;
 
+  constructor(init: DriverInit);
+  constructor(
+    entity_id: string,
+    name: string,
+    nickname?: string,
+    avatarUrl?: string,
+    audio?: DriverAudioConfig,
+  );
   constructor(
     entity_id: string,
     name: string,
@@ -48,77 +141,111 @@ export class Driver implements Model {
     newHeatLeaderAudio?: AudioConfig,
     pitInAudio?: AudioConfig,
     fuelAudio?: AudioConfig,
+  );
+  constructor(
+    entity_idOrInit: string | DriverInit,
+    name?: string,
+    nickname?: string,
+    avatarUrl?: string,
+    audioOrLap?: DriverAudioConfig | AudioConfig,
+    bestLapAudio?: AudioConfig,
+    penaltyAudio?: AudioConfig,
+    falseStartAudio?: AudioConfig,
+    overallBestLapAudio?: AudioConfig,
+    overallLaneBestLapAudio?: AudioConfig,
+    raceBestLapAudio?: AudioConfig,
+    raceLaneBestLapAudio?: AudioConfig,
+    heatBestLapAudio?: AudioConfig,
+    newRaceLeaderAudio?: AudioConfig,
+    newHeatLeaderAudio?: AudioConfig,
+    pitInAudio?: AudioConfig,
+    fuelAudio?: AudioConfig,
   ) {
-    this.entity_id = entity_id;
-    this.name = name;
-    this.nickname = nickname;
-    this.avatarUrl = avatarUrl;
+    let audioConfig: DriverAudioConfig | undefined;
 
-    const sanitizeAudio = (
-      audio?: AudioConfig,
-      defaultUrl: string = "default_beep",
-      defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
-    ): AudioConfig => {
-      if (!audio || !audio.type) {
-        return { type: defaultType, url: defaultUrl };
-      }
-      let type = audio.type;
-      if (defaultType === "audio_set" && type === "preset") {
-        type = "audio_set";
-      }
-      if (type === "none") {
-        return { type: "none", url: undefined, text: undefined };
-      }
-      if (type === "tts") {
-        return { type: "tts", url: undefined, text: audio.text || "" };
-      }
-      return {
-        type,
-        url: audio.url || defaultUrl,
-        text: undefined,
-      };
-    };
+    if (typeof entity_idOrInit === "object" && entity_idOrInit !== null) {
+      this.entity_id = entity_idOrInit.entity_id;
+      this.name = entity_idOrInit.name;
+      this.nickname = entity_idOrInit.nickname || "";
+      this.avatarUrl = entity_idOrInit.avatarUrl;
+      audioConfig = entity_idOrInit;
+    } else {
+      this.entity_id = entity_idOrInit;
+      this.name = name || "";
+      this.nickname = nickname || "";
+      this.avatarUrl = avatarUrl;
+      audioConfig = resolveAudioConfig(
+        audioOrLap,
+        bestLapAudio,
+        penaltyAudio,
+        falseStartAudio,
+        overallBestLapAudio,
+        overallLaneBestLapAudio,
+        raceBestLapAudio,
+        raceLaneBestLapAudio,
+        heatBestLapAudio,
+        newRaceLeaderAudio,
+        newHeatLeaderAudio,
+        pitInAudio,
+        fuelAudio,
+      );
+    }
 
-    this.lapAudio = sanitizeAudio(lapAudio, "default_beep");
-    this.bestLapAudio = sanitizeAudio(bestLapAudio, "default_driveby");
-    this.penaltyAudio = sanitizeAudio(
-      falseStartAudio || penaltyAudio,
+    this.lapAudio = sanitizeDriverAudio(audioConfig?.lapAudio, "default_beep");
+    this.bestLapAudio = sanitizeDriverAudio(
+      audioConfig?.bestLapAudio,
+      "default_driveby",
+    );
+    this.penaltyAudio = sanitizeDriverAudio(
+      audioConfig?.falseStartAudio || audioConfig?.penaltyAudio,
       "default_penalty",
     );
-    this.overallBestLapAudio = sanitizeAudio(
-      overallBestLapAudio,
+    this.overallBestLapAudio = sanitizeDriverAudio(
+      audioConfig?.overallBestLapAudio,
       "default_record_lap",
     );
-    this.overallLaneBestLapAudio = sanitizeAudio(
-      overallLaneBestLapAudio,
+    this.overallLaneBestLapAudio = sanitizeDriverAudio(
+      audioConfig?.overallLaneBestLapAudio,
       "default_record_lane_lap",
     );
-    this.raceBestLapAudio = sanitizeAudio(
-      raceBestLapAudio,
+    this.raceBestLapAudio = sanitizeDriverAudio(
+      audioConfig?.raceBestLapAudio,
       "default_best_race_lap",
     );
-    this.raceLaneBestLapAudio = sanitizeAudio(
-      raceLaneBestLapAudio,
+    this.raceLaneBestLapAudio = sanitizeDriverAudio(
+      audioConfig?.raceLaneBestLapAudio,
       "default_best_race_lane_lap",
     );
-    this.heatBestLapAudio = sanitizeAudio(
-      heatBestLapAudio,
+    this.heatBestLapAudio = sanitizeDriverAudio(
+      audioConfig?.heatBestLapAudio,
       "default_best_heat_lap",
     );
-    this.newRaceLeaderAudio = sanitizeAudio(
-      newRaceLeaderAudio,
+    this.newRaceLeaderAudio = sanitizeDriverAudio(
+      audioConfig?.newRaceLeaderAudio,
       "default_new_race_leader",
     );
-    this.newHeatLeaderAudio = sanitizeAudio(
-      newHeatLeaderAudio,
+    this.newHeatLeaderAudio = sanitizeDriverAudio(
+      audioConfig?.newHeatLeaderAudio,
       "default_new_heat_leader",
     );
-    this.pitInAudio = sanitizeAudio(pitInAudio, "default_pit_in");
-    this.fuelAudio = sanitizeAudio(
-      fuelAudio,
+    this.pitInAudio = sanitizeDriverAudio(
+      audioConfig?.pitInAudio,
+      "default_pit_in",
+    );
+    this.fuelAudio = sanitizeDriverAudio(
+      audioConfig?.fuelAudio,
       "default_fuel_level",
       "audio_set",
     );
+  }
+
+  static createDefault(
+    entity_id: string,
+    name: string,
+    nickname: string = "",
+    avatarUrl?: string,
+  ): Driver {
+    return new Driver(entity_id, name, nickname, avatarUrl);
   }
 
   get falseStartAudio(): AudioConfig {

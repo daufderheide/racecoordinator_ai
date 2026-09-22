@@ -1,9 +1,15 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 import { By } from "@angular/platform-browser";
 import { of, throwError } from "rxjs";
 import { Role } from "@app/models/role";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AuthService } from "@app/services/auth.service";
+import { HelpLinkService } from "@app/services/help-link.service";
 import { LoggerService } from "@app/services/logger.service";
 import { TranslationService } from "@app/services/translation.service";
 import { UpdateChannel, UpdateService } from "@app/services/update.service";
@@ -14,6 +20,7 @@ describe("UpdateSelectorComponent", () => {
   let component: UpdateSelectorComponent;
   let fixture: ComponentFixture<UpdateSelectorComponent>;
   let mockUpdateService: jasmine.SpyObj<UpdateService>;
+  let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
   let mockAuthService: any;
   let mockLogger: jasmine.SpyObj<LoggerService>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
@@ -25,10 +32,12 @@ describe("UpdateSelectorComponent", () => {
     ]);
     mockUpdateService.getUpdateConfig.and.returnValue(
       of({
-        channel: "ALPHA" as UpdateChannel,
+        channel: "BETA" as UpdateChannel,
       }),
     );
     mockUpdateService.setUpdateChannel.and.returnValue(of("OK"));
+
+    mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
 
     mockAuthService = {
       currentRole: Role.ADMIN,
@@ -48,6 +57,7 @@ describe("UpdateSelectorComponent", () => {
       imports: [UpdateSelectorComponent, TranslatePipe],
       providers: [
         { provide: UpdateService, useValue: mockUpdateService },
+        { provide: HelpLinkService, useValue: mockHelpLinkService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: LoggerService, useValue: mockLogger },
         { provide: TranslationService, useValue: mockTranslationService },
@@ -62,7 +72,7 @@ describe("UpdateSelectorComponent", () => {
   it("should create and load initial update channel config", () => {
     expect(component).toBeTruthy();
     expect(mockUpdateService.getUpdateConfig).toHaveBeenCalled();
-    expect(component.currentChannel).toBe("ALPHA");
+    expect(component.currentChannel).toBe("BETA");
   });
 
   it("should toggle dropdown when clicking container", () => {
@@ -109,9 +119,9 @@ describe("UpdateSelectorComponent", () => {
     const event = new MouseEvent("click");
     spyOn(event, "stopPropagation");
 
-    component.selectChannel("BETA", event);
+    component.selectChannel("ALPHA", event);
 
-    expect(component.currentChannel).toBe("ALPHA"); // Unchanged
+    expect(component.currentChannel).toBe("BETA"); // Unchanged
     expect(component.channelSelected.emit).not.toHaveBeenCalled();
     expect(mockUpdateService.setUpdateChannel).not.toHaveBeenCalled();
   });
@@ -124,12 +134,12 @@ describe("UpdateSelectorComponent", () => {
     const event = new MouseEvent("click");
     spyOn(event, "stopPropagation");
 
-    component.selectChannel("BETA", event);
+    component.selectChannel("ALPHA", event);
 
-    expect(component.currentChannel).toBe("BETA");
+    expect(component.currentChannel).toBe("ALPHA");
     expect(component.isUpdateDropdownOpen).toBeFalse();
-    expect(component.channelSelected.emit).toHaveBeenCalledWith("BETA");
-    expect(mockUpdateService.setUpdateChannel).toHaveBeenCalledWith("BETA");
+    expect(component.channelSelected.emit).toHaveBeenCalledWith("ALPHA");
+    expect(mockUpdateService.setUpdateChannel).toHaveBeenCalledWith("ALPHA");
   });
 
   it("should NOT allow non-admin (VIEWER) to select a channel even if isChannelSelectionEnabled is true", () => {
@@ -140,9 +150,9 @@ describe("UpdateSelectorComponent", () => {
     const event = new MouseEvent("click");
     spyOn(event, "stopPropagation");
 
-    component.selectChannel("BETA", event);
+    component.selectChannel("ALPHA", event);
 
-    expect(component.currentChannel).toBe("ALPHA"); // Unchanged
+    expect(component.currentChannel).toBe("BETA"); // Unchanged
     expect(component.channelSelected.emit).not.toHaveBeenCalled();
     expect(mockUpdateService.setUpdateChannel).not.toHaveBeenCalled();
   });
@@ -155,9 +165,9 @@ describe("UpdateSelectorComponent", () => {
     const event = new MouseEvent("click");
     spyOn(event, "stopPropagation");
 
-    component.selectChannel("BETA", event);
+    component.selectChannel("ALPHA", event);
 
-    expect(component.currentChannel).toBe("ALPHA"); // Unchanged
+    expect(component.currentChannel).toBe("BETA"); // Unchanged
     expect(component.channelSelected.emit).not.toHaveBeenCalled();
     expect(mockUpdateService.setUpdateChannel).not.toHaveBeenCalled();
   });
@@ -169,7 +179,7 @@ describe("UpdateSelectorComponent", () => {
     );
 
     const event = new MouseEvent("click");
-    component.selectChannel("BETA", event);
+    component.selectChannel("ALPHA", event);
 
     expect(mockLogger.error).toHaveBeenCalled();
   });
@@ -231,5 +241,121 @@ describe("UpdateSelectorComponent", () => {
       new CustomEvent("rc-submenu-opened", { detail: component }),
     );
     expect(component.isUpdateDropdownOpen).toBeTrue();
+  });
+
+  it("should show channel tooltip on hover and hide on leave after debounce", fakeAsync(() => {
+    component.isUpdateDropdownOpen = true;
+    fixture.detectChanges();
+
+    component.onChannelHover("BETA");
+    fixture.detectChanges();
+
+    expect(component.activeTooltipChannel).toBe("BETA");
+    const tooltipEl = fixture.debugElement.query(
+      By.css('[data-testid="channel-tooltip"]'),
+    );
+    expect(tooltipEl).toBeTruthy();
+
+    const titleEl = tooltipEl.query(By.css(".channel-tooltip-title"));
+    expect(titleEl.nativeElement.textContent).toContain(
+      "RDS_UPDATE_CHANNEL_BETA",
+    );
+
+    const bodyEl = tooltipEl.query(By.css(".channel-tooltip-body"));
+    expect(bodyEl.nativeElement.textContent).toContain(
+      "RDS_UPDATE_TOOLTIP_BETA",
+    );
+
+    // Leave channel
+    component.onChannelLeave("BETA");
+    expect(component.activeTooltipChannel).toBe("BETA"); // Still visible during debounce
+
+    tick(150);
+    fixture.detectChanges();
+    expect(component.activeTooltipChannel).toBeNull();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="channel-tooltip"]')),
+    ).toBeNull();
+  }));
+
+  it("should keep tooltip open when hovering over the tooltip itself", fakeAsync(() => {
+    component.isUpdateDropdownOpen = true;
+    component.onChannelHover("PRODUCTION");
+    fixture.detectChanges();
+
+    expect(component.activeTooltipChannel).toBe("PRODUCTION");
+
+    // Enter tooltip element
+    component.onTooltipEnter("PRODUCTION");
+    tick(200);
+    fixture.detectChanges();
+    expect(component.activeTooltipChannel).toBe("PRODUCTION");
+
+    // Leave tooltip
+    component.onTooltipLeave("PRODUCTION");
+    tick(150);
+    fixture.detectChanges();
+    expect(component.activeTooltipChannel).toBeNull();
+  }));
+
+  it("should display admin warning in tooltip when user is not an admin", () => {
+    mockAuthService.currentRole = Role.VIEWER;
+    component.isUpdateDropdownOpen = true;
+    component.onChannelHover("BETA");
+    fixture.detectChanges();
+
+    const warningEl = fixture.debugElement.query(
+      By.css(".channel-tooltip-admin-warning"),
+    );
+    expect(warningEl).toBeTruthy();
+    expect(warningEl.nativeElement.textContent).toContain(
+      "RDS_UPDATE_ADMIN_REQUIRED",
+    );
+  });
+
+  it("should call helpLinkService.openHelp with downloads and release-channels when clicking Learn More link", () => {
+    component.isUpdateDropdownOpen = true;
+    component.onChannelHover("BETA");
+    fixture.detectChanges();
+
+    const learnMoreLink = fixture.debugElement.query(
+      By.css('[data-testid="channel-learn-more-link"]'),
+    );
+    expect(learnMoreLink).toBeTruthy();
+
+    const event = new MouseEvent("click");
+    spyOn(event, "stopPropagation");
+    spyOn(event, "preventDefault");
+
+    component.openLearnMore(event);
+
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith(
+      "downloads",
+      "release-channels",
+    );
+    expect(event.stopPropagation).toHaveBeenCalled();
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  it("should call helpLinkService.openHelp when clicking info icon and not select channel", () => {
+    component.isUpdateDropdownOpen = true;
+    fixture.detectChanges();
+
+    const infoIcon = fixture.debugElement.query(
+      By.css('[data-testid="channel-beta"] [data-testid="channel-info-icon"]'),
+    );
+    expect(infoIcon).toBeTruthy();
+
+    const event = new MouseEvent("click");
+    spyOn(event, "stopPropagation");
+    spyOn(event, "preventDefault");
+
+    infoIcon.triggerEventHandler("click", event);
+
+    expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith(
+      "downloads",
+      "release-channels",
+    );
+    expect(mockUpdateService.setUpdateChannel).not.toHaveBeenCalled();
   });
 });
