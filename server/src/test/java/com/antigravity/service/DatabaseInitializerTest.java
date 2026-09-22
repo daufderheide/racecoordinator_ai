@@ -98,12 +98,46 @@ public class DatabaseInitializerTest {
     }
 
     for (Driver d : drivers) {
+      assertNotNull("Driver should have lapAudio", d.getLapAudio());
+      assertTrue("Lap audio should be beep sound", d.getLapAudio().getUrl().contains("beep"));
+      assertNotNull("Driver should have bestLapAudio", d.getBestLapAudio());
+      assertTrue(
+          "Best lap audio should be driveby sound",
+          d.getBestLapAudio().getUrl().contains("driveby"));
+      assertNotNull("Driver should have penaltyAudio", d.getPenaltyAudio());
+      assertTrue(
+          "Penalty audio should be penalty sound",
+          d.getPenaltyAudio().getUrl().contains("penalty"));
+      assertNotNull("Driver should have overallBestLapAudio", d.getOverallBestLapAudio());
+      assertEquals("default_record_lap", d.getOverallBestLapAudio().getUrl());
+      assertNotNull("Driver should have newRaceLeaderAudio", d.getNewRaceLeaderAudio());
+      assertEquals("default_new_race_leader", d.getNewRaceLeaderAudio().getUrl());
+      assertNotNull("Driver should have newHeatLeaderAudio", d.getNewHeatLeaderAudio());
+      assertEquals("default_new_heat_leader", d.getNewHeatLeaderAudio().getUrl());
       assertNotNull("Driver should have pitInAudio", d.getPitInAudio());
       assertEquals("default_pit_in", d.getPitInAudio().getUrl());
       assertEquals("preset", d.getPitInAudio().getType());
       assertNotNull("Driver should have fuelAudio", d.getFuelAudio());
       assertEquals("default_fuel_level", d.getFuelAudio().getUrl());
       assertEquals("audio_set", d.getFuelAudio().getType());
+    }
+  }
+
+  @Test
+  public void testResetDriversDirectlySetsCanonicalPresetIds() {
+    initializer.resetDrivers(context);
+    SqliteRepository<Driver> driverRepo = new SqliteRepository<>(context, "drivers", Driver.class);
+    List<Driver> drivers = driverRepo.findAll();
+    assertTrue("Should initialize drivers", drivers.size() > 0);
+    for (Driver d : drivers) {
+      assertEquals("default_beep", d.getLapAudio().getUrl());
+      assertEquals("default_driveby", d.getBestLapAudio().getUrl());
+      assertEquals("default_penalty", d.getPenaltyAudio().getUrl());
+      assertEquals("default_record_lap", d.getOverallBestLapAudio().getUrl());
+      assertEquals("default_new_race_leader", d.getNewRaceLeaderAudio().getUrl());
+      assertEquals("default_new_heat_leader", d.getNewHeatLeaderAudio().getUrl());
+      assertEquals("default_pit_in", d.getPitInAudio().getUrl());
+      assertEquals("default_fuel_level", d.getFuelAudio().getUrl());
     }
   }
 

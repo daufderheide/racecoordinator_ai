@@ -1,4 +1,5 @@
 import { Driver } from "@app/models/driver";
+import { getDefaultAudioName } from "@app/utils/audio";
 
 export type DriverAudioSlot =
   | "lap"
@@ -64,6 +65,11 @@ export function getAudioSlotInfo(slot: DriverAudioSlot): {
         defaultUrl: "default_fuel_level",
       };
   }
+}
+
+export function getAudioSlotFallbackName(slot: DriverAudioSlot): string {
+  const { defaultUrl } = getAudioSlotInfo(slot);
+  return getDefaultAudioName(defaultUrl) || "Default";
 }
 
 export function mapSoundType(

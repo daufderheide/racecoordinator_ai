@@ -1,4 +1,8 @@
-import { Driver, EMPTY_DRIVER_ID } from "@app/models/driver";
+import {
+  Driver,
+  EMPTY_DRIVER_ID,
+  sanitizeDriverAudio,
+} from "@app/models/driver";
 import { IDriverModel } from "@app/proto/antigravity";
 
 import { ConverterCache } from "./converter_cache";
@@ -47,6 +51,58 @@ export class DriverConverter {
     };
   }
 
+  private static updateDriverAudio(target: Driver, source: any): void {
+    target.lapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.lapAudio),
+      "default_beep",
+    );
+    target.bestLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.bestLapAudio),
+      "default_driveby",
+    );
+    target.penaltyAudio = sanitizeDriverAudio(
+      this.mapAudio(source.falseStartAudio || source.penaltyAudio),
+      "default_penalty",
+    );
+    target.overallBestLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.overallBestLapAudio),
+      "default_record_lap",
+    );
+    target.overallLaneBestLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.overallLaneBestLapAudio),
+      "default_record_lane_lap",
+    );
+    target.raceBestLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.raceBestLapAudio),
+      "default_best_race_lap",
+    );
+    target.raceLaneBestLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.raceLaneBestLapAudio),
+      "default_best_race_lane_lap",
+    );
+    target.heatBestLapAudio = sanitizeDriverAudio(
+      this.mapAudio(source.heatBestLapAudio),
+      "default_best_heat_lap",
+    );
+    target.newRaceLeaderAudio = sanitizeDriverAudio(
+      this.mapAudio(source.newRaceLeaderAudio),
+      "default_new_race_leader",
+    );
+    target.newHeatLeaderAudio = sanitizeDriverAudio(
+      this.mapAudio(source.newHeatLeaderAudio),
+      "default_new_heat_leader",
+    );
+    target.pitInAudio = sanitizeDriverAudio(
+      this.mapAudio(source.pitInAudio),
+      "default_pit_in",
+    );
+    target.fuelAudio = sanitizeDriverAudio(
+      this.mapAudio(source.fuelAudio, "audio_set"),
+      "default_fuel_level",
+      "audio_set",
+    );
+  }
+
   static fromProto(proto: IDriverModel): Driver {
     if (!proto) {
       return this.getEmptyDriver();
@@ -76,20 +132,7 @@ export class DriverConverter {
           proto.name || (finalId === EMPTY_DRIVER_ID ? "Empty" : "Unknown");
         cached.nickname = proto.nickname || "";
         cached.avatarUrl = proto.avatarUrl || undefined;
-        cached.lapAudio = this.mapAudio(proto.lapAudio);
-        cached.bestLapAudio = this.mapAudio(proto.bestLapAudio);
-        cached.penaltyAudio = this.mapAudio(proto.penaltyAudio);
-        cached.overallBestLapAudio = this.mapAudio(proto.overallBestLapAudio);
-        cached.overallLaneBestLapAudio = this.mapAudio(
-          proto.overallLaneBestLapAudio,
-        );
-        cached.raceBestLapAudio = this.mapAudio(proto.raceBestLapAudio);
-        cached.raceLaneBestLapAudio = this.mapAudio(proto.raceLaneBestLapAudio);
-        cached.heatBestLapAudio = this.mapAudio(proto.heatBestLapAudio);
-        cached.newRaceLeaderAudio = this.mapAudio(proto.newRaceLeaderAudio);
-        cached.newHeatLeaderAudio = this.mapAudio(proto.newHeatLeaderAudio);
-        cached.pitInAudio = this.mapAudio(proto.pitInAudio);
-        cached.fuelAudio = this.mapAudio(proto.fuelAudio, "audio_set");
+        this.updateDriverAudio(cached, proto as any);
         return cached;
       }
     }
@@ -125,20 +168,7 @@ export class DriverConverter {
       cached.name = json.name || "";
       cached.nickname = json.nickname || "";
       cached.avatarUrl = json.avatarUrl;
-      cached.lapAudio = this.mapAudio(json.lapAudio);
-      cached.bestLapAudio = this.mapAudio(json.bestLapAudio);
-      cached.penaltyAudio = this.mapAudio(json.penaltyAudio);
-      cached.overallBestLapAudio = this.mapAudio(json.overallBestLapAudio);
-      cached.overallLaneBestLapAudio = this.mapAudio(
-        json.overallLaneBestLapAudio,
-      );
-      cached.raceBestLapAudio = this.mapAudio(json.raceBestLapAudio);
-      cached.raceLaneBestLapAudio = this.mapAudio(json.raceLaneBestLapAudio);
-      cached.heatBestLapAudio = this.mapAudio(json.heatBestLapAudio);
-      cached.newRaceLeaderAudio = this.mapAudio(json.newRaceLeaderAudio);
-      cached.newHeatLeaderAudio = this.mapAudio(json.newHeatLeaderAudio);
-      cached.pitInAudio = this.mapAudio(json.pitInAudio);
-      cached.fuelAudio = this.mapAudio(json.fuelAudio, "audio_set");
+      this.updateDriverAudio(cached, json);
       return cached;
     }
     const d = new Driver(

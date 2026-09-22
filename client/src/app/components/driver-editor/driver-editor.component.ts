@@ -44,6 +44,7 @@ import {
   DriverAudioSlot,
   generateUniqueDriverName,
   generateUniqueDriverNickname,
+  getAudioSlotFallbackName,
   getDriverUnsavedReasons,
   isDriverNameUnique,
   isDriverNicknameUnique,
@@ -761,6 +762,10 @@ export class DriverEditorComponent
     }
     this.captureState();
     this.cdr.markForCheck();
+  }
+
+  getAudioSlotFallbackName(slot: DriverAudioSlot): string {
+    return getAudioSlotFallbackName(slot);
   }
 
   selectDriver(driver: Driver) {

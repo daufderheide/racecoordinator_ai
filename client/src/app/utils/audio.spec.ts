@@ -1,6 +1,7 @@
 import {
   createTTSContext,
   dispatchLapAudio,
+  getDefaultAudioName,
   getLapAudioConfig,
   interpolate,
   mockTTSContext,
@@ -1018,6 +1019,60 @@ describe("playSound Utility", () => {
         undefined,
         association,
       );
+    });
+  });
+
+  describe("getDefaultAudioName", () => {
+    it("should resolve human-readable names for default preset IDs", () => {
+      expect(getDefaultAudioName("default_beep")).toBe("Lap Beep");
+      expect(getDefaultAudioName("default_driveby")).toBe("Lap Driveby");
+      expect(getDefaultAudioName("default_penalty")).toBe("Penalty");
+      expect(getDefaultAudioName("default_record_lap")).toBe(
+        "Overall Record Lap",
+      );
+      expect(getDefaultAudioName("default_record_lane_lap")).toBe(
+        "Overall Lane Record Lap",
+      );
+      expect(getDefaultAudioName("default_best_race_lap")).toBe(
+        "Race Best Lap",
+      );
+      expect(getDefaultAudioName("default_best_race_lane_lap")).toBe(
+        "Race Lane Best Lap",
+      );
+      expect(getDefaultAudioName("default_best_heat_lap")).toBe(
+        "Heat Best Lap",
+      );
+      expect(getDefaultAudioName("default_new_race_leader")).toBe(
+        "New Race Leader",
+      );
+      expect(getDefaultAudioName("default_new_heat_leader")).toBe(
+        "New Heat Leader",
+      );
+      expect(getDefaultAudioName("default_pit_in")).toBe("Pit In");
+      expect(getDefaultAudioName("default_fuel_level")).toBe(
+        "Default Fuel Level",
+      );
+    });
+
+    it("should resolve human-readable names for asset URLs matching default files", () => {
+      expect(getDefaultAudioName("/assets/default_beep_beep.wav")).toBe(
+        "Lap Beep",
+      );
+      expect(getDefaultAudioName("/assets/default_driveby_driveby.wav")).toBe(
+        "Lap Driveby",
+      );
+      expect(
+        getDefaultAudioName("/assets/default_record_lap_Overall_Record_Lap"),
+      ).toBe("Overall Record Lap");
+      expect(getDefaultAudioName("/assets/default_pit_in_Pit_In")).toBe(
+        "Pit In",
+      );
+    });
+
+    it("should return undefined for unknown IDs or empty strings", () => {
+      expect(getDefaultAudioName("custom_sound")).toBeUndefined();
+      expect(getDefaultAudioName("")).toBeUndefined();
+      expect(getDefaultAudioName(undefined as any)).toBeUndefined();
     });
   });
 });
