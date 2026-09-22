@@ -62,6 +62,52 @@ test.describe("Driver Editor Visuals", () => {
     });
   });
 
+  test("should display driver editor with newly created driver", async ({
+    page,
+  }) => {
+    let currentDrivers = [...MOCK_DRIVERS];
+    await page.route("**/api/drivers", async (route) => {
+      if (route.request().method() === "POST") {
+        const postData = route.request().postDataJSON();
+        const newDriver = { ...postData, entity_id: "d-new" };
+        currentDrivers.push(newDriver);
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(newDriver),
+        });
+      } else {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(currentDrivers),
+        });
+      }
+    });
+
+    await TestSetupHelper.waitForLocalization(
+      page,
+      "en",
+      page.goto("/driver-editor?id=d1"),
+    );
+    await page.locator(".page-container").waitFor();
+    await page.locator(".loader-overlay").waitFor({ state: "hidden" });
+
+    await page.locator("#add-item-btn").click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector("#driver-name-input") as HTMLInputElement)
+          ?.value === "New Driver",
+    );
+    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await TestSetupHelper.disableAnimations(page);
+
+    await expect(page).toHaveScreenshot("driver-editor-new.png", {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.05,
+    });
+  });
+
   test("should support undo and redo operations", async ({ page }) => {
     await TestSetupHelper.waitForLocalization(
       page,

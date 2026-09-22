@@ -77,4 +77,25 @@ public class DriverTest {
     assertEquals("audio_set", driver.getFuelAudio().getType());
     assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
   }
+
+  @Test
+  public void testBlankPresetUrlsFallbackToDefaults() {
+    Driver driver =
+        new Driver.Builder()
+            .withName("Dave")
+            .withLapAudio(new AudioConfig("preset", "", ""))
+            .withBestLapAudio(new AudioConfig("preset", "   ", ""))
+            .withPenaltyAudio(new AudioConfig("preset", "", ""))
+            .withOverallBestLapAudio(new AudioConfig("preset", "", ""))
+            .withPitInAudio(new AudioConfig("preset", "  ", ""))
+            .withFuelAudio(new AudioConfig("audio_set", "", ""))
+            .build();
+
+    assertEquals("default_beep", driver.getLapAudio().getUrl());
+    assertEquals("default_driveby", driver.getBestLapAudio().getUrl());
+    assertEquals("default_penalty", driver.getPenaltyAudio().getUrl());
+    assertEquals("default_record_lap", driver.getOverallBestLapAudio().getUrl());
+    assertEquals("default_pit_in", driver.getPitInAudio().getUrl());
+    assertEquals("default_fuel_level", driver.getFuelAudio().getUrl());
+  }
 }

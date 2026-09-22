@@ -96,6 +96,7 @@ export class DefaultHeatResultsComponent implements OnInit, OnDestroy {
   }
 
   exitReview(): void {
+    sessionStorage.setItem("skipIntro", "true");
     this.router.navigate(["/"]);
   }
 

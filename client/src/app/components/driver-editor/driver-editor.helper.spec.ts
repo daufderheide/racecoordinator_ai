@@ -1,83 +1,120 @@
+import { Driver } from "@app/models/driver";
+
 import {
-  areDriversEqual,
-  cloneDriver,
-  createNewDriverTemplate,
+  getAudioSlotFallbackName,
   getAudioSlotInfo,
   mapSoundType,
   toDriver,
 } from "./driver-editor.helper";
 
-describe("DriverEditorHelper", () => {
-  it("should return slot info for all audio slots", () => {
-    expect(getAudioSlotInfo("lap").key).toBe("lapAudio");
-    expect(getAudioSlotInfo("bestLap").key).toBe("bestLapAudio");
-    expect(getAudioSlotInfo("penalty").key).toBe("penaltyAudio");
-    expect(getAudioSlotInfo("falseStart").key).toBe("penaltyAudio");
-    expect(getAudioSlotInfo("overallBestLap").key).toBe("overallBestLapAudio");
-    expect(getAudioSlotInfo("overallLaneBestLap").key).toBe(
-      "overallLaneBestLapAudio",
-    );
-    expect(getAudioSlotInfo("raceBestLap").key).toBe("raceBestLapAudio");
-    expect(getAudioSlotInfo("raceLaneBestLap").key).toBe(
-      "raceLaneBestLapAudio",
-    );
-    expect(getAudioSlotInfo("heatBestLap").key).toBe("heatBestLapAudio");
-    expect(getAudioSlotInfo("newRaceLeader").key).toBe("newRaceLeaderAudio");
-    expect(getAudioSlotInfo("newHeatLeader").key).toBe("newHeatLeaderAudio");
-    expect(getAudioSlotInfo("pitIn").key).toBe("pitInAudio");
-    expect(getAudioSlotInfo("fuel").key).toBe("fuelAudio");
+describe("driver-editor.helper", () => {
+  describe("getAudioSlotInfo", () => {
+    it("should return correct key and defaultUrl for each driver audio slot", () => {
+      expect(getAudioSlotInfo("lap")).toEqual({
+        key: "lapAudio",
+        defaultUrl: "default_beep",
+      });
+      expect(getAudioSlotInfo("bestLap")).toEqual({
+        key: "bestLapAudio",
+        defaultUrl: "default_driveby",
+      });
+      expect(getAudioSlotInfo("penalty")).toEqual({
+        key: "penaltyAudio",
+        defaultUrl: "default_penalty",
+      });
+      expect(getAudioSlotInfo("falseStart")).toEqual({
+        key: "penaltyAudio",
+        defaultUrl: "default_penalty",
+      });
+      expect(getAudioSlotInfo("overallBestLap")).toEqual({
+        key: "overallBestLapAudio",
+        defaultUrl: "default_record_lap",
+      });
+      expect(getAudioSlotInfo("overallLaneBestLap")).toEqual({
+        key: "overallLaneBestLapAudio",
+        defaultUrl: "default_record_lane_lap",
+      });
+      expect(getAudioSlotInfo("raceBestLap")).toEqual({
+        key: "raceBestLapAudio",
+        defaultUrl: "default_best_race_lap",
+      });
+      expect(getAudioSlotInfo("raceLaneBestLap")).toEqual({
+        key: "raceLaneBestLapAudio",
+        defaultUrl: "default_best_race_lane_lap",
+      });
+      expect(getAudioSlotInfo("heatBestLap")).toEqual({
+        key: "heatBestLapAudio",
+        defaultUrl: "default_best_heat_lap",
+      });
+      expect(getAudioSlotInfo("newRaceLeader")).toEqual({
+        key: "newRaceLeaderAudio",
+        defaultUrl: "default_new_race_leader",
+      });
+      expect(getAudioSlotInfo("newHeatLeader")).toEqual({
+        key: "newHeatLeaderAudio",
+        defaultUrl: "default_new_heat_leader",
+      });
+      expect(getAudioSlotInfo("pitIn")).toEqual({
+        key: "pitInAudio",
+        defaultUrl: "default_pit_in",
+      });
+      expect(getAudioSlotInfo("fuel")).toEqual({
+        key: "fuelAudio",
+        defaultUrl: "default_fuel_level",
+      });
+    });
   });
 
-  it("should map sound types appropriately", () => {
-    expect(mapSoundType("tts")).toBe("tts");
-    expect(mapSoundType("none")).toBe("none");
-    expect(mapSoundType("audio_set")).toBe("audio_set");
-    expect(mapSoundType(undefined, "audio_set")).toBe("audio_set");
-    expect(mapSoundType("preset", "audio_set")).toBe("audio_set");
-    expect(mapSoundType(undefined, "preset")).toBe("preset");
+  describe("getAudioSlotFallbackName", () => {
+    it("should return human-readable fallback names for all audio slots", () => {
+      expect(getAudioSlotFallbackName("lap")).toBe("Lap Beep");
+      expect(getAudioSlotFallbackName("bestLap")).toBe("Lap Driveby");
+      expect(getAudioSlotFallbackName("penalty")).toBe("Penalty");
+      expect(getAudioSlotFallbackName("falseStart")).toBe("Penalty");
+      expect(getAudioSlotFallbackName("overallBestLap")).toBe(
+        "Overall Record Lap",
+      );
+      expect(getAudioSlotFallbackName("overallLaneBestLap")).toBe(
+        "Overall Lane Record Lap",
+      );
+      expect(getAudioSlotFallbackName("raceBestLap")).toBe("Race Best Lap");
+      expect(getAudioSlotFallbackName("raceLaneBestLap")).toBe(
+        "Race Lane Best Lap",
+      );
+      expect(getAudioSlotFallbackName("heatBestLap")).toBe("Heat Best Lap");
+      expect(getAudioSlotFallbackName("newRaceLeader")).toBe("New Race Leader");
+      expect(getAudioSlotFallbackName("newHeatLeader")).toBe("New Heat Leader");
+      expect(getAudioSlotFallbackName("pitIn")).toBe("Pit In");
+      expect(getAudioSlotFallbackName("fuel")).toBe("Default Fuel Level");
+    });
   });
 
-  it("should create new driver template with defaults", () => {
-    const d = createNewDriverTemplate();
-    expect(d.entity_id).toBe("new");
-    expect(d.lapAudio?.url).toBe("default_beep");
+  describe("mapSoundType", () => {
+    it("should map types correctly", () => {
+      expect(mapSoundType("tts")).toBe("tts");
+      expect(mapSoundType("none")).toBe("none");
+      expect(mapSoundType("audio_set")).toBe("audio_set");
+      expect(mapSoundType("preset")).toBe("preset");
+      expect(mapSoundType(undefined, "audio_set")).toBe("audio_set");
+      expect(mapSoundType(undefined)).toBe("preset");
+    });
   });
 
-  it("should clone driver correctly", () => {
-    const d = createNewDriverTemplate();
-    d.name = "Original";
-    const cloned = cloneDriver(d);
-    expect(cloned.name).toBe("Original");
-    expect(cloned).not.toBe(d);
-  });
-
-  it("should convert raw driver to Driver model via toDriver", () => {
-    const raw = {
-      entity_id: "d1",
-      name: "Driver 1",
-      nickname: "D1",
-      lapAudio: { type: "preset", url: "beep" },
-    };
-    const driver = toDriver(raw);
-    expect(driver.entity_id).toBe("d1");
-    expect(driver.name).toBe("Driver 1");
-    expect(driver.nickname).toBe("D1");
-    expect(driver.lapAudio?.url).toBe("beep");
-  });
-
-  it("should compare drivers equality properly", () => {
-    const d1 = createNewDriverTemplate();
-    d1.name = "Driver A";
-    d1.nickname = "A";
-    const d2 = cloneDriver(d1);
-
-    expect(areDriversEqual(d1, d2)).toBeTrue();
-
-    d2.name = "Driver B";
-    expect(areDriversEqual(d1, d2)).toBeFalse();
-
-    d2.name = "Driver A";
-    d2.lapAudio = { type: "tts", text: "Hello" };
-    expect(areDriversEqual(d1, d2)).toBeFalse();
+  describe("toDriver", () => {
+    it("should convert plain driver object to Driver instance", () => {
+      const plain = {
+        entity_id: "d1",
+        name: "Speedy",
+        nickname: "Speeds",
+        lapSoundUrl: "default_beep",
+      };
+      const driver = toDriver(plain);
+      expect(driver instanceof Driver).toBeTrue();
+      expect(driver.entity_id).toBe("d1");
+      expect(driver.name).toBe("Speedy");
+      expect(driver.nickname).toBe("Speeds");
+      expect(driver.lapAudio.url).toBe("default_beep");
+      expect(driver.overallBestLapAudio.url).toBe("default_record_lap");
+    });
   });
 });

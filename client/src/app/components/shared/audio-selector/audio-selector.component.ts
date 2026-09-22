@@ -20,6 +20,7 @@ import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import {
+  getDefaultAudioName,
   interpolate,
   mockTTSContext,
   playSound,
@@ -34,34 +35,39 @@ import {
   imports: [FormsModule, ItemSelectorComponent, TranslatePipe],
 })
 export class AudioSelectorComponent implements OnChanges, OnDestroy {
-  label = input("Audio");
-  type = input<"preset" | "tts" | "none" | "audio_set">("preset");
-  typeChange = output<"preset" | "tts" | "none" | "audio_set">();
-  mode = input<"single" | "set">("single");
-  readonly = input(false);
-
-  url = input<string | undefined>();
-  urlChange = output<string | undefined>();
-
-  assetId = input<string>();
-  fallbackName = input<string | null>();
-
-  text = input<string | undefined>();
-  textChange = output<string | undefined>();
-
-  assetSelected = output<any>();
-
+  label = input<string>("");
   assets = input<any[]>([]);
+  type = input<"preset" | "tts" | "none" | "audio_set">("preset");
+  url = input<string | undefined>(undefined);
+  text = input<string | undefined>(undefined);
+  assetId = input<string | undefined>(undefined);
+  readonly = input<boolean>(false);
+  mode = input<"single" | "set">("single");
+  backButtonRoute = input<string | null>(null);
+  backButtonQueryParams = input<any>({});
+  fallbackName = input<string | null | undefined>(undefined);
+  context = input<any>(undefined);
+  ttsVoice = input<string | undefined>(undefined);
+  ttsRate = input<number | undefined>(undefined);
+  ttsPitch = input<number | undefined>(undefined);
+  ttsVolume = input<number | undefined>(undefined);
+  masterVolume = input<number | undefined>(undefined);
 
-  context = input<any>();
-
-  ttsVoice = input<string | undefined>();
-  ttsRate = input<number | undefined>();
-  ttsPitch = input<number | undefined>();
-  ttsVolume = input<number | undefined>();
-  masterVolume = input<number | undefined>();
+  typeChange = output<"preset" | "tts" | "none" | "audio_set">();
+  urlChange = output<string | undefined>();
+  textChange = output<string | undefined>();
+  assetSelected = output<any>();
+  change = output<{
+    type: "preset" | "tts" | "none" | "audio_set";
+    url?: string;
+    text?: string;
+  }>();
 
   showItemSelector = false;
+  isPlaying = false;
+  private currentAudio: HTMLAudioElement | null = null;
+  private previewAudio: HTMLAudioElement | null = null;
+  private currentPlaybackId = 0;
   isDragging = false;
   dragCounter = 0;
   isUploading = false;
@@ -156,25 +162,52 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       const id = a.model?.entityId || a.entity_id || a.id;
       if (id && (id === lookupValue || id === targetIdOrUrl)) return true;
       if (normalize(a.url) === normalizedLookup) return true;
+      if (
+        id &&
+        typeof lookupValue === "string" &&
+        a.url &&
+        a.url.startsWith(`/assets/${lookupValue}_`)
+      )
+        return true;
+      if (
+        typeof lookupValue === "string" &&
+        lookupValue.startsWith("/assets/") &&
+        id &&
+        lookupValue.startsWith(`/assets/${id}_`)
+      )
+        return true;
       return false;
     });
   });
 
   selectedAssetName = computed(() => {
     if (this.effectiveType() === "none") {
-      return this.translationService
-        ? this.translationService.translate("AS_OPTION_NONE")
-        : "None";
+      return (
+        (this.translationService
+          ? this.translationService.translate("AS_OPTION_NONE")
+          : null) || "None"
+      );
     }
 
     const asset = this.selectedAsset();
 
     if (!asset) {
+      if (
+        this.effectiveType() === "preset" ||
+        this.effectiveType() === "audio_set"
+      ) {
+        const defaultName = getDefaultAudioName(
+          this.assetId() || this.effectiveUrl(),
+        );
+        if (defaultName) return defaultName;
+      }
       const fallback = this.fallbackName();
       if (fallback) return fallback;
-      return this.translationService
-        ? this.translationService.translate("AS_SELECT_SOUND")
-        : "Select Sound...";
+      return (
+        (this.translationService
+          ? this.translationService.translate("AS_SELECT_SOUND")
+          : null) || "Select Sound..."
+      );
     }
 
     const fallback = this.fallbackName();
@@ -183,7 +216,8 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       fallback ||
       (this.translationService
         ? this.translationService.translate("AS_UNKNOWN_ASSET")
-        : "Unknown Asset")
+        : null) ||
+      "Unknown Asset"
     );
   });
 
@@ -285,11 +319,6 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     this.selectResolvedAsset(asset);
     this.closeItemSelector();
   }
-
-  isPlaying = false;
-  private currentAudio: HTMLAudioElement | null = null;
-  private previewAudio: HTMLAudioElement | null = null;
-  private currentPlaybackId = 0;
 
   onPlayPreview(item: any) {
     if (this.isPlaying) {

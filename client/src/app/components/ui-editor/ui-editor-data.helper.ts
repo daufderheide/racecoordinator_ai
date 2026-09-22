@@ -377,14 +377,59 @@ export function handleUiEditorKeyboardShortcut(
   event: KeyboardEvent,
   onUndo: () => void,
   onRedo: () => void,
+  onDelete?: () => void,
+  onNudge?: (dx: number, dy: number) => void,
 ): void {
   if ((event.metaKey || event.ctrlKey) && event.key === "z") {
     event.preventDefault();
     if (event.shiftKey) onRedo();
     else onUndo();
+    return;
   }
   if ((event.metaKey || event.ctrlKey) && event.key === "y") {
     event.preventDefault();
     onRedo();
+    return;
+  }
+
+  const target = event.target as HTMLElement | null;
+  const isInputField =
+    target &&
+    (target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable ||
+      target.tagName === "SELECT");
+
+  if (isInputField) {
+    return;
+  }
+
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (onDelete) {
+      event.preventDefault();
+      onDelete();
+    }
+    return;
+  }
+
+  if (
+    event.key === "ArrowUp" ||
+    event.key === "ArrowDown" ||
+    event.key === "ArrowLeft" ||
+    event.key === "ArrowRight"
+  ) {
+    if (onNudge) {
+      event.preventDefault();
+      const step = event.shiftKey ? 10 : 1;
+      const dx =
+        event.key === "ArrowLeft"
+          ? -step
+          : event.key === "ArrowRight"
+            ? step
+            : 0;
+      const dy =
+        event.key === "ArrowUp" ? -step : event.key === "ArrowDown" ? step : 0;
+      onNudge(dx, dy);
+    }
   }
 }

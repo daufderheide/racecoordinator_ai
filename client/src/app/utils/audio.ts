@@ -323,6 +323,124 @@ export function dispatchLapAudio(
   }
 }
 
+export const DEFAULT_AUDIO_URLS: Record<string, string> = {
+  default_beep: "/assets/default_beep_Lap_Beep",
+  default_chimes: "/assets/default_chimes_Lap_Chimes",
+  default_driveby: "/assets/default_driveby_Lap_Driveby",
+  default_penalty: "/assets/default_penalty_Penalty",
+  default_false_start: "/assets/default_penalty_Penalty",
+  default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
+  default_record_lap: "/assets/default_record_lap_Overall_Record_Lap",
+  default_record_lane_lap:
+    "/assets/default_record_lane_lap_Overall_Lane_Record_Lap",
+  default_best_race_lap: "/assets/default_best_race_lap_Race_Best_Lap",
+  default_best_race_lane_lap:
+    "/assets/default_best_race_lane_lap_Race_Lane_Best_Lap",
+  default_best_heat_lap: "/assets/default_best_heat_lap_Heat_Best_Lap",
+  default_new_race_leader: "/assets/default_new_race_leader_New_Race_Leader",
+  default_new_heat_leader: "/assets/default_new_heat_leader_New_Heat_Leader",
+  default_pit_in: "/assets/default_pit_in_Pit_In",
+  default_fuel_empty: "/assets/default_fuel_empty_Fuel_Empty",
+  default_fuel_low: "/assets/default_fuel_low_Fuel_Low",
+  default_fuel_full: "/assets/default_fuel_full_Fuel_Full",
+  default_fuel_level: "/assets/default_best_heat_lap_Heat_Best_Lap",
+  default_countdown_go: "/assets/default_countdown_go_Countdown_Go",
+  default_countdown_1: "/assets/default_countdown_1_Countdown_1",
+  default_countdown_2: "/assets/default_countdown_2_Countdown_2",
+  default_countdown_3: "/assets/default_countdown_3_Countdown_3",
+  default_countdown_4: "/assets/default_countdown_4_Countdown_4",
+  default_countdown_5: "/assets/default_countdown_5_Countdown_5",
+  default_heat_half: "/assets/default_heat_half_Seconds_Left_--_Halfway",
+  default_heat_over: "/assets/default_heat_over_Heat_Over",
+  default_race_over: "/assets/default_race_over_Race_Over",
+};
+
+export const DEFAULT_AUDIO_NAMES: Record<string, string> = {
+  default_beep: "Lap Beep",
+  default_chimes: "Lap Chimes",
+  default_driveby: "Lap Driveby",
+  default_penalty: "Penalty",
+  default_false_start: "Penalty",
+  default_yellow_flag: "Yellow Flag",
+  default_record_lap: "Overall Record Lap",
+  default_record_lane_lap: "Overall Lane Record Lap",
+  default_best_race_lap: "Race Best Lap",
+  default_best_race_lane_lap: "Race Lane Best Lap",
+  default_best_heat_lap: "Heat Best Lap",
+  default_new_race_leader: "New Race Leader",
+  default_new_heat_leader: "New Heat Leader",
+  default_pit_in: "Pit In",
+  default_fuel_empty: "Fuel Empty",
+  default_fuel_low: "Fuel Low",
+  default_fuel_full: "Fuel Full",
+  default_fuel_level: "Default Fuel Level",
+  default_countdown: "Default Countdown",
+  default_countdown_go: "Countdown Go",
+  default_countdown_1: "Countdown 1",
+  default_countdown_2: "Countdown 2",
+  default_countdown_3: "Countdown 3",
+  default_countdown_4: "Countdown 4",
+  default_countdown_5: "Countdown 5",
+  default_seconds_left: "Default Seconds Left",
+  default_seconds_left_300: "Seconds Left -- 5 Minutes",
+  default_seconds_left_240: "Seconds Left -- 4 Minutes",
+  default_seconds_left_180: "Seconds Left -- 3 Minutes",
+  default_seconds_left_120: "Seconds Left -- 2 Minutes",
+  default_seconds_left_60: "Seconds Left -- 1 Minute",
+  default_seconds_left_30: "Seconds Left -- 30 Seconds",
+  default_seconds_left_25: "Seconds Left -- 25 Seconds",
+  default_seconds_left_20: "Seconds Left -- 20 Seconds",
+  default_seconds_left_15: "Seconds Left -- 15 Seconds",
+  default_seconds_left_10: "Seconds Left -- 10 Seconds",
+  default_seconds_left_5: "Seconds Left -- 5 Seconds",
+  default_heat_half: "Seconds Left -- Halfway",
+  default_heat_over: "Heat Over",
+  default_race_over: "Race Over",
+};
+
+/** Resolves a human-readable display name for a default preset ID or asset path. */
+export function getDefaultAudioName(
+  idOrUrl: string | undefined,
+): string | undefined {
+  if (!idOrUrl) return undefined;
+
+  const trimmed = idOrUrl.trim();
+  if (DEFAULT_AUDIO_NAMES[trimmed]) {
+    return DEFAULT_AUDIO_NAMES[trimmed];
+  }
+
+  // Check reverse lookup in DEFAULT_AUDIO_URLS
+  for (const [key, url] of Object.entries(DEFAULT_AUDIO_URLS)) {
+    if (url === trimmed || trimmed.endsWith(url)) {
+      return DEFAULT_AUDIO_NAMES[key];
+    }
+  }
+
+  // Handle legacy filenames like /assets/default_beep_beep.wav or /assets/default_beep_Lap_Beep
+  if (trimmed.includes("default_beep")) return "Lap Beep";
+  if (trimmed.includes("default_chimes")) return "Lap Chimes";
+  if (trimmed.includes("default_driveby")) return "Lap Driveby";
+  if (
+    trimmed.includes("default_penalty") ||
+    trimmed.includes("default_false_start")
+  )
+    return "Penalty";
+  if (trimmed.includes("default_record_lane_lap"))
+    return "Overall Lane Record Lap";
+  if (trimmed.includes("default_record_lap")) return "Overall Record Lap";
+  if (trimmed.includes("default_best_race_lane_lap"))
+    return "Race Lane Best Lap";
+  if (trimmed.includes("default_best_race_lap")) return "Race Best Lap";
+  if (trimmed.includes("default_best_heat_lap")) return "Heat Best Lap";
+  if (trimmed.includes("default_new_race_leader")) return "New Race Leader";
+  if (trimmed.includes("default_new_heat_leader")) return "New Heat Leader";
+  if (trimmed.includes("default_pit_in")) return "Pit In";
+  if (trimmed.includes("default_fuel_level")) return "Default Fuel Level";
+  if (trimmed.includes("default_yellow_flag")) return "Yellow Flag";
+
+  return undefined;
+}
+
 /** Resolves an audio URL or asset ID to a fully qualified URL for playback. */
 export function resolveAudioUrl(
   url: string | undefined,
@@ -335,29 +453,8 @@ export function resolveAudioUrl(
   if (url.startsWith("/")) {
     return `${serverUrl}${url}`;
   }
-  const defaultUrls: Record<string, string> = {
-    default_beep: "/assets/default_beep_Lap_Beep",
-    default_chimes: "/assets/default_chimes_Lap_Chimes",
-    default_driveby: "/assets/default_driveby_Lap_Driveby",
-    default_penalty: "/assets/default_penalty_Penalty",
-    default_false_start: "/assets/default_penalty_Penalty",
-    default_yellow_flag: "/assets/default_yellow_flag_Yellow_Flag",
-    default_record_lap: "/assets/default_record_lap_Overall_Record_Lap",
-    default_record_lane_lap:
-      "/assets/default_record_lane_lap_Overall_Lane_Record_Lap",
-    default_best_race_lap: "/assets/default_best_race_lap_Race_Best_Lap",
-    default_best_race_lane_lap:
-      "/assets/default_best_race_lane_lap_Race_Lane_Best_Lap",
-    default_best_heat_lap: "/assets/default_best_heat_lap_Heat_Best_Lap",
-    default_new_race_leader: "/assets/default_new_race_leader_New_Race_Leader",
-    default_new_heat_leader: "/assets/default_new_heat_leader_New_Heat_Leader",
-    default_pit_in: "/assets/default_pit_in_Pit_In",
-    default_fuel_empty: "/assets/default_fuel_empty_Fuel_Empty",
-    default_fuel_low: "/assets/default_fuel_low_Fuel_Low",
-    default_fuel_full: "/assets/default_fuel_full_Fuel_Full",
-  };
-  if (defaultUrls[url]) {
-    return `${serverUrl}${defaultUrls[url]}`;
+  if (DEFAULT_AUDIO_URLS[url]) {
+    return `${serverUrl}${DEFAULT_AUDIO_URLS[url]}`;
   }
   return `${serverUrl}/api/assets/download/${url}`;
 }

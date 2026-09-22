@@ -409,4 +409,33 @@ public class DriverConverterTest {
     assertEquals("none", proto.getRaceBestLapAudio().getType());
     assertEquals("", proto.getRaceBestLapAudio().getUrl());
   }
+
+  @Test
+  public void testToProto_WithEmptyPresetUrl_FallsBackToDefaultPreset() {
+    com.antigravity.models.AudioConfig emptyUrlPreset =
+        new com.antigravity.models.AudioConfig("preset", "", null);
+    Driver driver =
+        new Driver.Builder()
+            .withName("Preset Driver")
+            .withLapAudio(emptyUrlPreset)
+            .withBestLapAudio(emptyUrlPreset)
+            .withOverallBestLapAudio(emptyUrlPreset)
+            .withPitInAudio(emptyUrlPreset)
+            .build();
+
+    DriverModel proto = DriverConverter.toProto(driver, new HashSet<>());
+    assertNotNull(proto);
+
+    assertEquals("preset", proto.getLapAudio().getType());
+    assertEquals("default_beep", proto.getLapAudio().getUrl());
+
+    assertEquals("preset", proto.getBestLapAudio().getType());
+    assertEquals("default_driveby", proto.getBestLapAudio().getUrl());
+
+    assertEquals("preset", proto.getOverallBestLapAudio().getType());
+    assertEquals("default_record_lap", proto.getOverallBestLapAudio().getUrl());
+
+    assertEquals("preset", proto.getPitInAudio().getType());
+    assertEquals("default_pit_in", proto.getPitInAudio().getUrl());
+  }
 }

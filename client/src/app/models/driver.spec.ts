@@ -1,4 +1,4 @@
-import { Driver, EMPTY_DRIVER_ID } from "./driver";
+import { Driver, EMPTY_DRIVER_ID, sanitizeDriverAudio } from "./driver";
 
 describe("Driver Model", () => {
   it("should identify EMPTY_DRIVER_ID correctly", () => {
@@ -203,6 +203,75 @@ describe("Driver Model", () => {
     expect(driver.overallBestLapAudio).toEqual({
       type: "preset",
       url: "default_record_lap",
+    });
+  });
+
+  it("should fall back to default URLs when preset has empty string or whitespace url", () => {
+    const driver = new Driver({
+      entity_id: "d_blank_urls",
+      name: "Blank URLs",
+      lapAudio: { type: "preset", url: "" },
+      bestLapAudio: { type: "preset", url: "   " },
+      overallBestLapAudio: { type: "preset", url: "" },
+      pitInAudio: { type: "preset", url: "  " },
+      fuelAudio: { type: "audio_set", url: "" },
+    });
+
+    expect(driver.lapAudio.type).toBe("preset");
+    expect(driver.lapAudio.url).toBe("default_beep");
+    expect(driver.bestLapAudio.type).toBe("preset");
+    expect(driver.bestLapAudio.url).toBe("default_driveby");
+    expect(driver.overallBestLapAudio.type).toBe("preset");
+    expect(driver.overallBestLapAudio.url).toBe("default_record_lap");
+    expect(driver.pitInAudio.type).toBe("preset");
+    expect(driver.pitInAudio.url).toBe("default_pit_in");
+    expect(driver.fuelAudio.type).toBe("audio_set");
+    expect(driver.fuelAudio.url).toBe("default_fuel_level");
+  });
+
+  describe("sanitizeDriverAudio", () => {
+    it("should return preset with default URL if config is undefined or type is missing", () => {
+      expect(sanitizeDriverAudio(undefined, "default_beep")).toEqual({
+        type: "preset",
+        url: "default_beep",
+      });
+      expect(sanitizeDriverAudio({} as any, "default_beep")).toEqual({
+        type: "preset",
+        url: "default_beep",
+      });
+    });
+
+    it("should preserve none type without url", () => {
+      expect(sanitizeDriverAudio({ type: "none" })).toEqual({
+        type: "none",
+        url: undefined,
+        text: undefined,
+      });
+    });
+
+    it("should preserve tts type with text", () => {
+      expect(sanitizeDriverAudio({ type: "tts", text: "Hello" })).toEqual({
+        type: "tts",
+        url: undefined,
+        text: "Hello",
+      });
+    });
+
+    it("should replace empty or whitespace preset url with defaultUrl", () => {
+      expect(
+        sanitizeDriverAudio({ type: "preset", url: "" }, "default_beep"),
+      ).toEqual({
+        type: "preset",
+        url: "default_beep",
+        text: undefined,
+      });
+      expect(
+        sanitizeDriverAudio({ type: "preset", url: "   " }, "default_beep"),
+      ).toEqual({
+        type: "preset",
+        url: "default_beep",
+        text: undefined,
+      });
     });
   });
 });

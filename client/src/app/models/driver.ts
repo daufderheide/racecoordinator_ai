@@ -35,7 +35,7 @@ export interface DriverInit extends DriverAudioConfig {
 
 export const EMPTY_DRIVER_ID = "EMPTY_LANE";
 
-function sanitizeDriverAudio(
+export function sanitizeDriverAudio(
   audio?: AudioConfig,
   defaultUrl: string = "default_beep",
   defaultType: "preset" | "tts" | "none" | "audio_set" = "preset",
@@ -53,9 +53,11 @@ function sanitizeDriverAudio(
   if (type === "tts") {
     return { type: "tts", url: undefined, text: audio.text || "" };
   }
+  const cleanUrl =
+    audio.url && audio.url.trim() !== "" ? audio.url.trim() : defaultUrl;
   return {
     type,
-    url: audio.url || defaultUrl,
+    url: cleanUrl,
     text: undefined,
   };
 }

@@ -4,6 +4,20 @@
 
 L'Editor di Interfaccia consente di progettare layout personalizzati per il giorno della gara, configurare le colonne della classifica dei piloti, personalizzare gli effetti sonori e la grafica del tema e caricare [Widget personalizzati](custom-widgets.md) modulari.
 
+## Configurazione layout e colonne
+
+- Trascina e rilascia i widget dalla tavolozza sull'area di lavoro.
+- Ridimensiona, riposiziona e allinea i widget in base alla risoluzione dello schermo. Tutti i widget rimangono delimitati all'interno dell'area di lavoro.
+- **Controlli dell'Ispettore Widget**:
+  - **Posizione e dimensioni**: Posiziona e dimensiona con precisione il widget selezionato tramite i campi numerici **X**, **Y**, **Larghezza** e **Altezza**.
+  - **Elimina widget**: Fai clic sull'icona del cestino nell'intestazione dell'ispettore o sul pulsante **Elimina widget** nella barra laterale.
+- **Scorciatoie da tastiera**:
+  - <kbd>Canc</kbd> o <kbd>Backspace</kbd>: Rimuove il widget selezionato dal layout.
+  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Sposta il widget selezionato di 1px (o 10px tenendo premuto <kbd>Maiusc</kbd>).
+  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Annulla l'azione precedente.
+  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Maiusc</kbd>+<kbd>Z</kbd>: Ripristina.
+- Configura l'ordine delle colonne, la visibilità, gli ancoraggi e le preferenze di larghezza.
+
 ## Configurazione del Widget Cronometro
 
 Il widget **Cronometro** mostra il tempo trascorso o rimanente della manche/gara con stili di visualizzazione configurabili:

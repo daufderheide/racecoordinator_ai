@@ -34,6 +34,7 @@ class MockAudioSelectorComponent {
   text = input<any>();
   textChange = output<any>();
   assets = input<any[]>([]);
+  fallbackName = input<string | null | undefined>();
   backButtonRoute = input<string | null>(null);
   backButtonQueryParams = input<any>({});
   context = input<any>();

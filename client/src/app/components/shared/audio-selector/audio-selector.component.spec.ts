@@ -74,6 +74,12 @@ describe("AudioSelectorComponent", () => {
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
+    mockTranslationService.translate.and.callFake((k: string) => {
+      if (k === "AS_SELECT_SOUND") return "Select Sound...";
+      if (k === "AS_OPTION_NONE") return "None";
+      if (k === "AS_UNKNOWN_ASSET") return "Unknown Asset";
+      return k;
+    });
     mockDataService.serverUrl = "http://localhost:8080";
 
     await TestBed.configureTestingModule({
@@ -1101,6 +1107,89 @@ describe("AudioSelectorComponent", () => {
       });
 
       expect(component.effectiveText()).toBe("Server updated text");
+    });
+  });
+
+  describe("selectedAssetName and default presets", () => {
+    it("should resolve default sound name when assets list is empty", () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", "default_record_lap");
+      fixture.componentRef.setInput("assets", []);
+      fixture.detectChanges();
+
+      expect(component.selectedAssetName()).toBe("Overall Record Lap");
+    });
+
+    it("should resolve default sound name for asset file URL", () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput(
+        "url",
+        "/assets/default_record_lap_Overall_Record_Lap",
+      );
+      fixture.componentRef.setInput("assets", []);
+      fixture.detectChanges();
+
+      expect(component.selectedAssetName()).toBe("Overall Record Lap");
+    });
+
+    it("should resolve fallbackName when provided and sound is not recognized", () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", "custom_unknown_id");
+      fixture.componentRef.setInput("fallbackName", "Custom Fallback");
+      fixture.componentRef.setInput("assets", []);
+      fixture.detectChanges();
+
+      expect(component.selectedAssetName()).toBe("Custom Fallback");
+    });
+
+    it("should resolve fallbackName when url is empty or undefined", () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", undefined);
+      fixture.componentRef.setInput("fallbackName", "Lap Beep");
+      fixture.componentRef.setInput("assets", []);
+      fixture.detectChanges();
+
+      expect(component.selectedAssetName()).toBe("Lap Beep");
+    });
+
+    it("should fallback to Select Sound... when no asset, default, or fallback matches", () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", "unknown_sound");
+      fixture.componentRef.setInput("fallbackName", undefined);
+      fixture.componentRef.setInput("assets", []);
+      fixture.detectChanges();
+
+      expect(component.selectedAssetName()).toBe("Select Sound...");
+    });
+
+    it("should display None in readonly mode when type is none and disable play button", () => {
+      fixture.componentRef.setInput("readonly", true);
+      fixture.componentRef.setInput("type", "none");
+      fixture.componentRef.setInput("url", undefined);
+      fixture.detectChanges();
+
+      const textEl = fixture.nativeElement.querySelector(".readonly-text");
+      expect(textEl).toBeTruthy();
+      expect(textEl.textContent.trim()).toBe("None");
+
+      const playBtn = fixture.nativeElement.querySelector(".btn-play");
+      expect(playBtn).toBeTruthy();
+      expect(playBtn.disabled).toBeTrue();
+    });
+
+    it("should display asset name in readonly mode when type is preset and enable play button", () => {
+      fixture.componentRef.setInput("readonly", true);
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", "default_beep");
+      fixture.detectChanges();
+
+      const textEl = fixture.nativeElement.querySelector(".readonly-text");
+      expect(textEl).toBeTruthy();
+      expect(textEl.textContent.trim()).toBe("Lap Beep");
+
+      const playBtn = fixture.nativeElement.querySelector(".btn-play");
+      expect(playBtn).toBeTruthy();
+      expect(playBtn.disabled).toBeFalse();
     });
   });
 });

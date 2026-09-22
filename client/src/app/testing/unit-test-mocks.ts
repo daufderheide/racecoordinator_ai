@@ -213,6 +213,10 @@ export const mockNavigationService = {
   canGoForward$: of(false),
   goBack: jasmine.createSpy("goBack"),
   goForward: jasmine.createSpy("goForward"),
+  getPreviousUrl: jasmine.createSpy("getPreviousUrl").and.returnValue(null),
+  getLastHistoryUrl: jasmine
+    .createSpy("getLastHistoryUrl")
+    .and.returnValue(null),
 };
 
 export const mockLoggerService = jasmine.createSpyObj("LoggerService", [

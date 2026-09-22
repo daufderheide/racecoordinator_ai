@@ -278,4 +278,46 @@ describe("DriverConverter", () => {
     expect(original.pitInAudio.type).toBe("none");
     expect(original.fuelAudio.type).toBe("none");
   });
+
+  it("should sanitize audio and supply default URLs on in-place cache updates in fromProto", () => {
+    const proto1: IDriverModel = {
+      model: { entityId: "d_cache_sanitize" },
+      name: "Cache Sanitize Driver",
+      lapAudio: { type: "preset", url: "default_beep" },
+    };
+    const driver = DriverConverter.fromProto(proto1);
+    expect(driver.lapAudio.url).toBe("default_beep");
+
+    // Proto update arrives with empty preset url
+    const proto2: IDriverModel = {
+      model: { entityId: "d_cache_sanitize" },
+      name: "Cache Sanitize Driver",
+      lapAudio: { type: "preset", url: "" },
+      overallBestLapAudio: { type: "preset", url: "" },
+    };
+    DriverConverter.fromProto(proto2);
+    expect(driver.lapAudio.url).toBe("default_beep");
+    expect(driver.overallBestLapAudio.url).toBe("default_record_lap");
+  });
+
+  it("should sanitize audio and supply default URLs on in-place cache updates in fromJSON", () => {
+    const json1 = {
+      entity_id: "d_json_cache_sanitize",
+      name: "JSON Cache Sanitize",
+      lapAudio: { type: "preset", url: "default_beep" },
+    };
+    const driver = DriverConverter.fromJSON(json1);
+    expect(driver.lapAudio.url).toBe("default_beep");
+
+    // JSON update arrives with empty preset url
+    const json2 = {
+      entity_id: "d_json_cache_sanitize",
+      name: "JSON Cache Sanitize",
+      lapAudio: { type: "preset", url: "" },
+      pitInAudio: { type: "preset", url: "   " },
+    };
+    DriverConverter.fromJSON(json2);
+    expect(driver.lapAudio.url).toBe("default_beep");
+    expect(driver.pitInAudio.url).toBe("default_pit_in");
+  });
 });

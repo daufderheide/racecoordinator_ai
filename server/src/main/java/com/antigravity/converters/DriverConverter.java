@@ -56,8 +56,8 @@ public class DriverConverter {
     String url = "";
     if ("none".equalsIgnoreCase(type)) {
       url = "";
-    } else if (config != null && config.getUrl() != null) {
-      url = config.getUrl();
+    } else if (config != null && config.getUrl() != null && !config.getUrl().trim().isEmpty()) {
+      url = config.getUrl().trim();
     } else if (!"tts".equalsIgnoreCase(type) && defaultUrl != null) {
       url = defaultUrl;
     }

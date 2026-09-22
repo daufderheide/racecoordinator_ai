@@ -1496,6 +1496,56 @@
   color: #ef4444;
 }
 
+.inspector-delete-btn {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.inspector-delete-btn:hover {
+  color: #991b1b;
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.inspector-delete-btn .material-icons {
+  font-size: 20px;
+}
+
+.delete-widget-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 12px;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delete-widget-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+.delete-widget-btn .material-icons {
+  font-size: 16px;
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;

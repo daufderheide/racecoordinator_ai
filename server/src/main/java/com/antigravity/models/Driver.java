@@ -80,19 +80,35 @@ public class Driver extends Model {
     this.fuelAudio = defaultSetAudio(fuelAudio, "default_fuel_level");
   }
 
+  private static AudioConfig sanitizePresetAudio(AudioConfig config, String defaultPreset) {
+    if (config == null) {
+      return new AudioConfig("preset", defaultPreset, "");
+    }
+    String type = config.getType();
+    if (type == null || type.trim().isEmpty() || "preset".equalsIgnoreCase(type)) {
+      String url = config.getUrl();
+      if (url == null || url.trim().isEmpty()) {
+        return new AudioConfig("preset", defaultPreset, config.getText());
+      }
+      return new AudioConfig("preset", url.trim(), config.getText());
+    }
+    return config;
+  }
+
   private static AudioConfig defaultPresetAudio(AudioConfig config, String defaultPreset) {
-    return config != null ? config : new AudioConfig("preset", defaultPreset, "");
+    return sanitizePresetAudio(config, defaultPreset);
   }
 
   private static AudioConfig defaultSetAudio(AudioConfig config, String defaultSet) {
     if (config != null) {
       if ("preset".equalsIgnoreCase(config.getType())
           || config.getType() == null
-          || config.getType().trim().isEmpty()) {
+          || config.getType().trim().isEmpty()
+          || "audio_set".equalsIgnoreCase(config.getType())) {
         return new AudioConfig(
             "audio_set",
             config.getUrl() != null && !config.getUrl().trim().isEmpty()
-                ? config.getUrl()
+                ? config.getUrl().trim()
                 : defaultSet,
             config.getText());
       }
@@ -104,10 +120,11 @@ public class Driver extends Model {
   private static AudioConfig resolveAudio(
       AudioConfig config, String url, String type, String text, String defaultPreset) {
     if (config != null) {
-      return config;
+      return sanitizePresetAudio(config, defaultPreset);
     }
     if (url != null || type != null || text != null) {
-      return new AudioConfig(type, url, text);
+      AudioConfig created = new AudioConfig(type, url, text);
+      return sanitizePresetAudio(created, defaultPreset);
     }
     return new AudioConfig("preset", defaultPreset, "");
   }
@@ -115,14 +132,15 @@ public class Driver extends Model {
   private static AudioConfig resolvePenaltyAudio(
       AudioConfig config, String url, String type, String text) {
     if (config != null) {
-      return config;
+      return sanitizePresetAudio(config, "default_penalty");
     }
     if (url != null || type != null || text != null) {
       String actualUrl =
           "default_penalty".equals(url) || "/assets/default_penalty_penalty.wav".equals(url)
               ? "default_penalty"
               : url;
-      return new AudioConfig(type, actualUrl, text);
+      AudioConfig created = new AudioConfig(type, actualUrl, text);
+      return sanitizePresetAudio(created, "default_penalty");
     }
     return new AudioConfig("preset", "default_penalty", "");
   }
