@@ -22,6 +22,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import {
   ActivatedRoute,
   NavigationStart,
@@ -837,6 +838,8 @@ export class DefaultRacedayComponent
   private audioService: AudioService;
   private childWindowManagerService: ChildWindowManagerService;
   private dateTimeFormatService: DateTimeFormatService;
+  private sanitizer?: DomSanitizer =
+    inject(DomSanitizer, { optional: true }) ?? undefined;
 
   constructor(
     private el: ElementRef,
@@ -4796,27 +4799,46 @@ export class DefaultRacedayComponent
     this.columnsChanged.emit();
   }
 
+  private canAcceptAnchorDrop(): boolean {
+    const isEditing = this.isUIEditorMode() || this.isLayoutCustomizing;
+    if (!isEditing) return false;
+    return (
+      !this.draggedWidgetType || this.draggedWidgetType.startsWith("lane-col:")
+    );
+  }
+
   onAnchorDragOver(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    if (event.dataTransfer) {
+      const allowed = event.dataTransfer.effectAllowed;
+      event.dataTransfer.dropEffect = allowed === "move" ? "move" : "copy";
+    }
   }
 
   onAnchorDragEnter(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    (event.target as HTMLElement).classList.add("drag-over");
+    ((event.currentTarget || event.target) as HTMLElement).classList.add(
+      "drag-over",
+    );
   }
 
   onAnchorDragLeave(event: DragEvent) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
-    (event.target as HTMLElement).classList.remove("drag-over");
+    if (!this.canAcceptAnchorDrop()) return;
+    ((event.currentTarget || event.target) as HTMLElement).classList.remove(
+      "drag-over",
+    );
   }
 
   onAnchorDrop(event: DragEvent, colData: ColumnDefinition, anchor: string) {
-    if (!this.isUIEditorMode() || this.draggedWidgetType) return;
+    if (!this.canAcceptAnchorDrop()) return;
     event.preventDefault();
-    (event.target as HTMLElement).classList.remove("drag-over");
+    ((event.currentTarget || event.target) as HTMLElement).classList.remove(
+      "drag-over",
+    );
+
+    let droppedKey: string | undefined;
 
     if (event.dataTransfer) {
       try {
@@ -4824,26 +4846,52 @@ export class DefaultRacedayComponent
         if (dataStr) {
           const data = JSON.parse(dataStr);
           if (data.type === "new-column" && data.key) {
-            const settings = this.editingSettings();
-            if (!settings) return;
-            const layouts = { ...(this.currentColumnLayouts || {}) };
-            if (!layouts[colData.propertyName]) {
-              layouts[colData.propertyName] = {
-                "center-center": colData.propertyName,
-              };
-            } else {
-              layouts[colData.propertyName] = {
-                ...layouts[colData.propertyName],
-              };
-            }
-            layouts[colData.propertyName][anchor as AnchorPoint] = data.key;
-            this.currentColumnLayouts = layouts;
-            this.loadColumns();
-            this.cdr.markForCheck();
-            this.columnsChanged.emit();
+            droppedKey = data.key;
+          } else if (data.key) {
+            droppedKey = data.key;
           }
         }
       } catch (e) {}
+
+      if (!droppedKey) {
+        const text = event.dataTransfer.getData("text/plain");
+        if (text) {
+          if (text.startsWith("lane-col:")) {
+            droppedKey = text.substring("lane-col:".length);
+          } else {
+            droppedKey = text;
+          }
+        }
+      }
+    }
+
+    if (!droppedKey && this.draggedWidgetType?.startsWith("lane-col:")) {
+      droppedKey = this.draggedWidgetType.substring("lane-col:".length);
+    }
+
+    if (this.draggedWidgetType) {
+      this.draggedWidgetType = null;
+    }
+
+    if (droppedKey) {
+      const settings =
+        this.editingSettings() || this.settingsService.getSettings();
+      if (!settings) return;
+      const layouts = { ...(this.currentColumnLayouts || {}) };
+      if (!layouts[colData.propertyName]) {
+        layouts[colData.propertyName] = {
+          "center-center": colData.propertyName,
+        };
+      } else {
+        layouts[colData.propertyName] = {
+          ...layouts[colData.propertyName],
+        };
+      }
+      layouts[colData.propertyName][anchor as AnchorPoint] = droppedKey;
+      this.currentColumnLayouts = layouts;
+      this.loadColumns();
+      this.cdr.markForCheck();
+      this.columnsChanged.emit();
     }
   }
 
@@ -6021,6 +6069,7 @@ export class DefaultRacedayComponent
     hd: DriverHeatData,
     column?: ColumnDefinition,
     anchor?: string,
+    widgetSettings?: any,
   ): string {
     const laneViewWidget = this.currentRacedayLayout?.widgets?.find(
       (w: any) => w.widgetType === "lane-view",
@@ -6034,7 +6083,7 @@ export class DefaultRacedayComponent
       getFlagUrl: (flag) => this.getFlagUrl(flag),
       getFullUrl: (url) => this.getFullUrl(url),
       getImageSetUrl: (hd, prop) => this.getImageUrl(prop, hd),
-      laneViewWidgetSettings: laneViewWidget?.customSettings,
+      laneViewWidgetSettings: widgetSettings || laneViewWidget?.customSettings,
       getDriverOverallRanking: (hd) => this.getDriverOverallRanking(hd),
       getDriverGroupRanking: (hd) => this.getDriverGroupRanking(hd),
       getLaneQrCodeUrl: (laneIndex) => this.getLaneQrCodeUrl(laneIndex),
@@ -6079,10 +6128,13 @@ export class DefaultRacedayComponent
     return `${entry.anchor}-${entry.property}`;
   }
 
-  getDropdownArrowBg(hd: DriverHeatData): string {
+  getDropdownArrowBg(hd: DriverHeatData): SafeStyle | string {
     const color =
       this.track?.lanes?.[hd.laneIndex]?.foreground_color || "#ffffff";
-    return this.getDropdownIcon(color);
+    const icon = this.getDropdownIcon(color);
+    return this.sanitizer
+      ? this.sanitizer.bypassSecurityTrustStyle(icon)
+      : icon;
   }
 
   getLaneColor(
@@ -6133,10 +6185,10 @@ export class DefaultRacedayComponent
     if (this.isUIEditorMode() || this.isLayoutCustomizing) {
       return false;
     }
-    if (col.propertyName !== "lapCount") {
-      return false;
-    }
-    if (this.heat && this.heat.started === false) {
+    if (
+      col.propertyName !== "lapCount" &&
+      col.propertyName !== "physicalLapCount"
+    ) {
       return false;
     }
     return true;
@@ -6611,7 +6663,10 @@ export class DefaultRacedayComponent
     if (this.isLayoutCustomizing || this.isUIEditorMode()) {
       return;
     }
-    if (col.propertyName === "lapCount") {
+    if (
+      col.propertyName === "lapCount" ||
+      col.propertyName === "physicalLapCount"
+    ) {
       if (event.shiftKey) {
         event.preventDefault();
         this.updateUserLaps(hd, this.LAP_ADJUSTMENT_AMOUNT);
@@ -6619,6 +6674,9 @@ export class DefaultRacedayComponent
         event.preventDefault();
         this.updateUserLaps(hd, -this.LAP_ADJUSTMENT_AMOUNT);
       } else {
+        if (!this.track) {
+          this.track = this.race?.track || this.raceService.getRace()?.track;
+        }
         this.selectedHeatDriver = hd;
         this.isMenuModeForAddLap = false;
         this.showAddLapSectionsDialog = true;
@@ -7255,7 +7313,7 @@ export class DefaultRacedayComponent
   onToolboxDragStart(event: DragEvent, type: string) {
     this.draggedWidgetType = type;
     if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.effectAllowed = "all";
       event.dataTransfer.setData("text/plain", type);
     }
   }

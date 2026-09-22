@@ -125,9 +125,19 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
   height: 100%;
   z-index: 2;
+  box-sizing: border-box !important;
+  padding-right: 8px !important;
+  background-origin: content-box !important;
+}
+
+:host(.open),
+:host(.teammate-select.open),
+:host(.teammate-select:has(.custom-select-container.open)) {
+  z-index: 10000 !important;
 }
 
 :host(.teammate-select) .custom-select-container {
@@ -144,4 +154,30 @@
   border: none;
   background: transparent;
 }
+
+:host(.teammate-select) .custom-select-dropdown {
+  min-width: 180px;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: normal;
+  text-align: left;
+  white-space: normal;
+  color: #f1f5f9 !important;
+  z-index: 10000;
+}
+
+:host(.teammate-select) .custom-select-option {
+  color: #f1f5f9 !important;
+}
+
+:host(.teammate-select) .custom-select-option:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+:host(.teammate-select) .custom-select-option.selected {
+  background-color: #1e40af !important;
+  color: #ffffff !important;
+}
+
 

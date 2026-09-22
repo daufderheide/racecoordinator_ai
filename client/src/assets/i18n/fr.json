@@ -2212,6 +2212,8 @@
   "HL_SUMMARY_MEDIAN_LAP": "Tr Médian",
   "UE_INSPECTOR_HEIGHT": "Hauteur",
   "UE_INSPECTOR_IMAGE_SELECT": "Paramètres d'image",
+  "UE_INSPECTOR_INSET_NONE": "-- Aucun --",
+  "UE_INSPECTOR_INSETS_POSITIONS": "Positions des encarts",
   "UE_INSPECTOR_LANE_VIEW_ADD_COLUMN_PLACEHOLDER": "Sélectionnez une colonne à ajouter...",
   "UE_INSPECTOR_LANE_VIEW_AVAILABLE_COLUMNS": "Colonnes Disponibles",
   "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION": "Paramètres des Colonnes",

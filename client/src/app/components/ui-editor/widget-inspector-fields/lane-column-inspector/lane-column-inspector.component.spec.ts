@@ -225,4 +225,48 @@ describe("LaneColumnInspectorComponent", () => {
     const card = fixture.debugElement.query(By.css(".grid-indicator-card"));
     expect(card).toBeNull();
   });
+
+  it("should get and set anchor values in settings.insets and emit change", () => {
+    spyOn(component.change, "emit");
+
+    expect(component.getAnchorValue("top-left")).toBe("");
+
+    component.setAnchorValue("top-left", "driver.nickname");
+    expect(component.getAnchorValue("top-left")).toBe("driver.nickname");
+    expect(component.currentSettings.insets["top-left"]).toBe(
+      "driver.nickname",
+    );
+    expect(component.change.emit).toHaveBeenCalled();
+
+    // Deleting value when empty string is passed
+    component.setAnchorValue("top-left", "");
+    expect(component.getAnchorValue("top-left")).toBe("");
+    expect(component.currentSettings.insets["top-left"]).toBeUndefined();
+  });
+
+  it("should reset inset text color override and emit change", () => {
+    spyOn(component.change, "emit");
+    component.currentSettings.insetTextColor = "#ff0000";
+
+    component.resetInsetTextColor();
+    expect(component.currentSettings.insetTextColor).toBeUndefined();
+    expect(component.change.emit).toHaveBeenCalled();
+  });
+
+  it("should render 8 anchor position options with UE_INSPECTOR_INSET_NONE", () => {
+    fixture.detectChanges();
+    expect(component.ANCHOR_POSITIONS.length).toBe(8);
+
+    const anchorKeys = component.ANCHOR_POSITIONS.map((p) => p.key);
+    expect(anchorKeys).toEqual([
+      "top-left",
+      "top-center",
+      "top-right",
+      "center-left",
+      "center-right",
+      "bottom-left",
+      "bottom-center",
+      "bottom-right",
+    ]);
+  });
 });

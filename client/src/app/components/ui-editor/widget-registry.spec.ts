@@ -106,5 +106,8 @@ describe("WIDGET_REGISTRY", () => {
     expect(laneColumnSettings["useLaneColors"]).toBe(true);
     expect(laneColumnSettings["showBorder"]).toBe(true);
     expect(laneColumnSettings["borderRadius"]).toBe(8);
+    expect(laneColumnSettings["insets"]).toEqual({});
+    expect(laneColumnSettings["insetTimeDecimalPlaces"]).toBe(3);
+    expect(laneColumnSettings["insetLapDecimalPlaces"]).toBe(2);
   });
 });

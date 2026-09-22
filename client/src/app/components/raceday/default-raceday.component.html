@@ -441,11 +441,13 @@
 <app-login-dialog [visible]="showLoginModal" (close)="showLoginModal = false">
 </app-login-dialog>
 
-@if (showAddLapSectionsDialog && track) {
+@if (showAddLapSectionsDialog && (track || race.track)) {
   <app-add-lap-sections-dialog
     [visible]="showAddLapSectionsDialog"
     [driverHeatData]="selectedHeatDriver"
-    [numTrackSections]="track ? track.num_track_sections : 100"
+    [numTrackSections]="
+      track || race.track ? (track || race.track)!.num_track_sections : 100
+    "
     [laneBg]="
       selectedHeatDriver
         ? getLaneColor(selectedHeatDriver, 'background_color')
@@ -459,7 +461,7 @@
     [isAutoSegments]="isAutoSegments"
     [isMenuMode]="isMenuModeForAddLap"
     [heats]="heats"
-    [track]="track"
+    [track]="track || race.track"
     [currentHeatNumber]="heat?.heatNumber ?? 0"
     (confirm)="onAddLapSectionsConfirm($event)"
     (cancel)="showAddLapSectionsDialog = false"

@@ -3,7 +3,7 @@
   [class.disabled]="disabled()"
   [class.open]="isOpen"
 >
-  <div class="custom-select-trigger" (click)="toggleOpen()">
+  <div class="custom-select-trigger" (click)="toggleOpen($event)">
     <span class="selected-text">
       @if (selectedLabel) {
         {{ selectedLabel }}

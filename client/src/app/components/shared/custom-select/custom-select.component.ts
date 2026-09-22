@@ -49,6 +49,7 @@ export class CustomOptionComponent {
   host: {
     "[attr.id]": "id()",
     "[attr.data-value]": "value()",
+    "[class.open]": "isOpen",
   },
   providers: [
     {
@@ -130,13 +131,17 @@ export class CustomSelectComponent
 
   setDisabledState(_isDisabled: boolean): void {}
 
-  toggleOpen() {
+  toggleOpen(event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
     if (this.disabled()) return;
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.onTouch();
       this.updateSelectedLabel();
     }
+    this.cdr.markForCheck();
   }
 
   selectOption(option: CustomOptionComponent, event: Event) {
@@ -146,12 +151,14 @@ export class CustomSelectComponent
     this.onChange(this.value());
     this.change.emit(this.value());
     this.isOpen = false;
+    this.cdr.markForCheck();
   }
 
   @HostListener("document:click", ["$event"])
   onDocumentClick(event: Event) {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.isOpen = false;
+      this.cdr.markForCheck();
     }
   }
 }

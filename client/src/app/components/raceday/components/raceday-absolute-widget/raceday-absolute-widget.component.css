@@ -3,6 +3,10 @@
   box-sizing: border-box;
 }
 
+.widget-wrapper:has(.custom-select-container.open) {
+  z-index: 9999 !important;
+}
+
 .widget-wrapper.edit-mode {
   outline: 1px dashed rgba(59, 130, 246, 0.4);
   background-color: rgba(59, 130, 246, 0.02);

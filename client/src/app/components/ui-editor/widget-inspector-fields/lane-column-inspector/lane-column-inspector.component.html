@@ -442,3 +442,143 @@
     </app-custom-select>
   </div>
 </div>
+
+<hr class="inspector-divider" />
+
+<!-- Lane Inset Data Settings Section -->
+<div class="inspector-geometry-title">
+  {{ "UE_INSPECTOR_LANE_VIEW_INSET_DATA_SECTION" | translate }}
+</div>
+
+<!-- Inset Typography -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_FONT_FAMILY" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['insetFontFamily']"
+      (change)="onFieldChange()"
+      (click)="fontService.loadLocalFonts()"
+    >
+      <app-custom-option value="">
+        {{ "UE_INSPECTOR_FONT_THEME_DEFAULT" | translate }}
+      </app-custom-option>
+      @for (font of fontService.availableFonts(); track font) {
+        <app-custom-option [value]="font">{{ font }}</app-custom-option>
+      }
+    </app-custom-select>
+  </div>
+</div>
+
+<div class="inspector-section">
+  <div class="inspector-label-row">
+    <label class="inspector-label">{{
+      "UE_INSPECTOR_FONT_SIZE" | translate
+    }}</label>
+    <span class="inspector-val-badge"
+      >{{ currentSettings["insetFontSize"] || 12 }}px</span
+    >
+  </div>
+  <input
+    type="range"
+    min="8"
+    max="36"
+    [(ngModel)]="currentSettings['insetFontSize']"
+    [disabled]="disableFontSizes()"
+    (change)="onFieldChange()"
+    class="inspector-slider"
+  />
+</div>
+
+<!-- Inset Text Color (override) -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_TEXT_COLOR" | translate
+  }}</label>
+  <div class="d-flex align-items-center gap-2">
+    <input
+      type="color"
+      [ngModel]="currentSettings['insetTextColor'] || '#ffffff'"
+      (ngModelChange)="
+        currentSettings['insetTextColor'] = $event; onFieldChange()
+      "
+      class="inspector-color-input"
+    />
+    @if (currentSettings["insetTextColor"]) {
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary"
+        (click)="resetInsetTextColor()"
+        title="Reset"
+      >
+        <i class="fas fa-undo"></i>
+      </button>
+    }
+  </div>
+</div>
+
+<!-- Inset Time Decimal Places -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_TIME_DECIMALS" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['insetTimeDecimalPlaces']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option [value]="0">0</app-custom-option>
+      <app-custom-option [value]="1">1</app-custom-option>
+      <app-custom-option [value]="2">2</app-custom-option>
+      <app-custom-option [value]="3">3</app-custom-option>
+      <app-custom-option [value]="4">4</app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+<!-- Inset Lap Decimal Places -->
+<div class="inspector-section">
+  <label class="inspector-label">{{
+    "UE_INSPECTOR_LAP_DECIMALS" | translate
+  }}</label>
+  <div class="select-container select-sm">
+    <app-custom-select
+      [(ngModel)]="currentSettings['insetLapDecimalPlaces']"
+      (change)="onFieldChange()"
+    >
+      <app-custom-option [value]="0">0</app-custom-option>
+      <app-custom-option [value]="1">1</app-custom-option>
+      <app-custom-option [value]="2">2</app-custom-option>
+      <app-custom-option [value]="3">3</app-custom-option>
+    </app-custom-select>
+  </div>
+</div>
+
+<!-- Inset Positions (8 positions) -->
+<div class="inspector-section-header mt-3">
+  <label class="inspector-label font-weight-bold">{{
+    "UE_INSPECTOR_INSETS_POSITIONS" | translate
+  }}</label>
+</div>
+
+@for (pos of ANCHOR_POSITIONS; track pos.key) {
+  <div class="inspector-section">
+    <label class="inspector-label">{{ pos.labelKey | translate }}</label>
+    <div class="select-container select-sm">
+      <app-custom-select
+        [ngModel]="getAnchorValue(pos.key)"
+        (ngModelChange)="setAnchorValue(pos.key, $event)"
+      >
+        <app-custom-option value="">
+          {{ "UE_INSPECTOR_INSET_NONE" | translate }}
+        </app-custom-option>
+        @for (col of availableColumns(); track col.key) {
+          <app-custom-option [value]="col.key">
+            {{ col.label | translate }}
+          </app-custom-option>
+        }
+      </app-custom-select>
+    </div>
+  </div>
+}

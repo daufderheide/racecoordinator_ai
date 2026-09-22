@@ -7392,11 +7392,27 @@ describe("DefaultRacedayComponent", () => {
       expect(component.formatValue("physicalLapCount", 1, hdEmpty)).toBe("--");
     });
 
-    it("should not treat physicalLapCount column as clickable for add lap sections", () => {
+    it("should treat physicalLapCount column as clickable for add lap sections", () => {
       const hd: any = { laneIndex: 0 };
       const col: any = { propertyName: "physicalLapCount" };
       (component as any).heat = { started: true } as any;
-      expect(component.isLapCountColumnClickable(hd, col)).toBeFalse();
+      expect(component.isLapCountColumnClickable(hd, col)).toBeTrue();
+    });
+
+    it("should treat lapCount column as clickable even when heat has not started yet", () => {
+      const hd: any = { laneIndex: 0 };
+      const col: any = { propertyName: "lapCount" };
+      (component as any).heat = { started: false } as any;
+      expect(component.isLapCountColumnClickable(hd, col)).toBeTrue();
+    });
+
+    it("should return sanitized dropdown arrow background", () => {
+      const hd: any = { laneIndex: 0 };
+      (component as any).track = {
+        lanes: [{ foreground_color: "#ffffff" }],
+      };
+      const bg = component.getDropdownArrowBg(hd);
+      expect(bg).toBeTruthy();
     });
 
     it("should call updateUserLaps with current + 0.25 on shift+click", () => {
@@ -8103,6 +8119,58 @@ describe("DefaultRacedayComponent", () => {
         "lastLapTime",
       );
       expect((component as any).columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should drop lane-col toolbox item into anchor slot on onAnchorDrop", () => {
+      spyOn((component as any).columnsChanged, "emit");
+      const element = document.createElement("div");
+      component.draggedWidgetType = "lane-col:participant.team.name";
+      const event = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        target: element,
+        dataTransfer: {
+          getData: jasmine
+            .createSpy("getData")
+            .and.callFake((format: string) => {
+              if (format === "text/plain")
+                return "lane-col:participant.team.name";
+              return "";
+            }),
+        },
+      } as any;
+
+      const colData = { propertyName: "driver.nickname" } as any;
+
+      component.onAnchorDrop(event, colData, "top-center");
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(mockSettings.columnLayouts["driver.nickname"]["top-center"]).toBe(
+        "participant.team.name",
+      );
+      expect(component.draggedWidgetType).toBeNull();
+      expect((component as any).columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should set effectAllowed to all in onToolboxDragStart", () => {
+      const dataTransfer = {
+        effectAllowed: "",
+        setData: jasmine.createSpy("setData"),
+      };
+      const event = {
+        dataTransfer,
+      } as any;
+
+      component.onToolboxDragStart(event, "lane-col:participant.team.name");
+
+      expect(component.draggedWidgetType).toBe(
+        "lane-col:participant.team.name",
+      );
+      expect(dataTransfer.effectAllowed).toBe("all");
+      expect(dataTransfer.setData).toHaveBeenCalledWith(
+        "text/plain",
+        "lane-col:participant.team.name",
+      );
     });
 
     it("should delete anchor value on deleteAnchor", () => {

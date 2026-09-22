@@ -1,8 +1,12 @@
 <div
   #cardElement
   class="raceday-lane-column-card"
+  [class.clickable-lap-card]="isLapCountClickable"
+  [class.clickable-team-card]="isTeamDriverSwapActive"
   [class.orientation-vertical]="layoutOrientation === 'vertical'"
   [class.orientation-horizontal]="layoutOrientation === 'horizontal'"
+  [attr.title]="cardTooltip"
+  (click)="onCardClick($event)"
   [style.background]="backgroundColor"
   [style.border-color]="borderColor"
   [style.border-width.px]="
@@ -46,67 +50,481 @@
       </div>
     }
 
-    <!-- Case 1: Last Laps List -->
-    @if (isLastLaps()) {
-      <div class="lane-col-last-laps" #lastLapsContainer>
-        @if (getLastLaps().length === 0) {
-          <div class="lane-col-empty">--</div>
-        } @else {
-          @for (lap of getVisibleLastLaps(); track lap.lapNumber) {
-            <div class="last-lap-item" [class.best-lap]="lap.isBest">
-              <div class="last-lap-main">
-                <span class="lap-number">{{ lap.lapNumber }}.</span>
-                <span class="lap-time">{{ lap.lapTime }}</span>
-              </div>
-              @if (lap.segments.length > 0) {
-                <div class="last-lap-segments">
-                  @for (seg of lap.segments; track $index) {
-                    <span class="lap-seg">S{{ $index + 1 }}: {{ seg }}</span>
+    <!-- 3x3 Drop Zones overlay for editing -->
+    @if (isUIEditorMode) {
+      <div class="anchor-drop-grid">
+        <div
+          class="drop-zone tl"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'top-left')"
+        >
+          @if (hasAnchorValue("top-left")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('top-left', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone tc"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'top-center')"
+        >
+          @if (hasAnchorValue("top-center")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('top-center', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone tr"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'top-right')"
+        >
+          @if (hasAnchorValue("top-right")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('top-right', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone cl"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'center-left')"
+        >
+          @if (hasAnchorValue("center-left")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('center-left', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone cc"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'center-center')"
+        ></div>
+        <div
+          class="drop-zone cr"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'center-right')"
+        >
+          @if (hasAnchorValue("center-right")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('center-right', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone bl"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'bottom-left')"
+        >
+          @if (hasAnchorValue("bottom-left")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('bottom-left', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone bc"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'bottom-center')"
+        >
+          @if (hasAnchorValue("bottom-center")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('bottom-center', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+        <div
+          class="drop-zone br"
+          (dragover)="onAnchorDragOver($event)"
+          (dragenter)="onAnchorDragEnter($event)"
+          (dragleave)="onAnchorDragLeave($event)"
+          (drop)="onAnchorDrop($event, 'bottom-right')"
+        >
+          @if (hasAnchorValue("bottom-right")) {
+            <button
+              class="delete-anchor-btn"
+              (click)="deleteAnchor('bottom-right', $event)"
+              title="Remove item"
+            >
+              ×
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Insets Top Row -->
+    @if (hasTopInsets()) {
+      <div
+        class="lane-col-insets-row lane-col-insets-top"
+        [style.font-family]="settings.insetFontFamily || null"
+        [style.font-size.px]="settings.insetFontSize || 12"
+        [style.color]="effectiveInsetTextColor"
+      >
+        <div
+          class="inset-cell tl"
+          [class.clickable-lap-cell]="isInsetLapCount('top-left')"
+          [attr.title]="
+            isInsetLapCount('top-left')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('top-left', $event)"
+        >
+          @if (hasInset("top-left")) {
+            @if (isImageProperty(getInsetKey("top-left")!)) {
+              <img
+                [src]="getInsetImageUrl('top-left')"
+                class="lane-col-inset-image"
+                alt=""
+              />
+            } @else {
+              <span>{{ getInsetValue("top-left") }}</span>
+            }
+          }
+        </div>
+        <div
+          class="inset-cell tc"
+          [class.clickable-lap-cell]="isInsetLapCount('top-center')"
+          [attr.title]="
+            isInsetLapCount('top-center')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('top-center', $event)"
+        >
+          @if (hasInset("top-center")) {
+            @if (isImageProperty(getInsetKey("top-center")!)) {
+              <img
+                [src]="getInsetImageUrl('top-center')"
+                class="lane-col-inset-image"
+                alt=""
+              />
+            } @else {
+              <span>{{ getInsetValue("top-center") }}</span>
+            }
+          }
+        </div>
+        <div
+          class="inset-cell tr"
+          [class.clickable-lap-cell]="isInsetLapCount('top-right')"
+          [attr.title]="
+            isInsetLapCount('top-right')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('top-right', $event)"
+        >
+          @if (hasInset("top-right")) {
+            @if (isImageProperty(getInsetKey("top-right")!)) {
+              <img
+                [src]="getInsetImageUrl('top-right')"
+                class="lane-col-inset-image"
+                alt=""
+              />
+            } @else {
+              <span>{{ getInsetValue("top-right") }}</span>
+            }
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Main Content Row -->
+    <div class="lane-col-main-row">
+      @if (hasInset("center-left")) {
+        <div
+          class="inset-cell cl"
+          [class.clickable-lap-cell]="isInsetLapCount('center-left')"
+          [attr.title]="
+            isInsetLapCount('center-left')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('center-left', $event)"
+          [style.font-family]="settings.insetFontFamily || null"
+          [style.font-size.px]="settings.insetFontSize || 12"
+          [style.color]="effectiveInsetTextColor"
+        >
+          @if (isImageProperty(getInsetKey("center-left")!)) {
+            <img
+              [src]="getInsetImageUrl('center-left')"
+              class="lane-col-inset-image"
+              alt=""
+            />
+          } @else {
+            <span>{{ getInsetValue("center-left") }}</span>
+          }
+        </div>
+      }
+
+      <div class="lane-col-main-content">
+        <!-- Case 1: Last Laps List -->
+        @if (isLastLaps()) {
+          <div class="lane-col-last-laps" #lastLapsContainer>
+            @if (getLastLaps().length === 0) {
+              <div class="lane-col-empty">--</div>
+            } @else {
+              @for (lap of getVisibleLastLaps(); track lap.lapNumber) {
+                <div class="last-lap-item" [class.best-lap]="lap.isBest">
+                  <div class="last-lap-main">
+                    <span class="lap-number">{{ lap.lapNumber }}.</span>
+                    <span class="lap-time">{{ lap.lapTime }}</span>
+                  </div>
+                  @if (lap.segments.length > 0) {
+                    <div class="last-lap-segments">
+                      @for (seg of lap.segments; track $index) {
+                        <span class="lap-seg"
+                          >S{{ $index + 1 }}: {{ seg }}</span
+                        >
+                      }
+                    </div>
                   }
                 </div>
               }
-            </div>
+            }
+          </div>
+        } @else if (isImageProperty()) {
+          <!-- Case 2: Images, Avatars, QR Codes, Flags -->
+          <div class="lane-col-image-wrapper">
+            @if (getImageUrl()) {
+              <img [src]="getImageUrl()" class="lane-col-image" alt="" />
+            }
+          </div>
+        } @else if (isPacingProperty()) {
+          <!-- Case 3: Ghost Pacing -->
+          <app-raceday-ghost-pacing
+            [driverHeatData]="targetDriver || null"
+            [benchmarkType]="getPacingBenchmarkType()"
+            [personalBest]="targetDriver?.bestLapTime || 0"
+            [personalAvg]="targetDriver?.averageLapTime || 0"
+            [personalMedian]="targetDriver?.medianLapTime || 0"
+            [laneRecord]="
+              parent()?.getLaneRecordEntry?.(targetDriver?.laneIndex ?? 0)
+                ?.value || 0
+            "
+            [heatLeaderBest]="parent()?.heatBestTime || 0"
+            [heatLeaderAvg]="parent()?.heatLeaderAvgTime || 0"
+            [heatLeaderMedian]="parent()?.heatLeaderMedianTime || 0"
+          ></app-raceday-ghost-pacing>
+        } @else {
+          <!-- Case 4: Formatted Text / Numerical Value -->
+          <div
+            class="lane-col-value"
+            [style.font-family]="settings.valueFontFamily || null"
+            [style.color]="effectiveValueTextColor"
+            [style.justify-content]="
+              settings.valueAlignment === 'start'
+                ? 'flex-start'
+                : settings.valueAlignment === 'end'
+                  ? 'flex-end'
+                  : 'center'
+            "
+          >
+            <span class="lane-col-text">{{ formattedValue }}</span>
+          </div>
+
+          <!-- Teammate Driver Swap Overlay -->
+          @if (isTeamDriverSwapActive) {
+            <app-custom-select
+              class="teammate-select"
+              [style.background-image]="
+                parent()?.getDropdownArrowBg?.(targetDriver)
+              "
+              [style.background-position]="
+                parent()?.race?.practice ? 'right top' : 'right center'
+              "
+              [disabled]="parent()?.isDriverSwapDisabled?.(targetDriver)"
+              [ngModel]="
+                targetDriver?.actualDriver?.entity_id ||
+                $any(targetDriver?.driver)?.entity_id
+              "
+              (change)="onTeammateChange($event)"
+              style="background-repeat: no-repeat"
+            >
+              @for (
+                tm of parent()?.getTeammates?.(targetDriver);
+                track $any(tm).entity_id || $any(tm).id
+              ) {
+                <app-custom-option [value]="$any(tm).entity_id || $any(tm).id">
+                  {{
+                    columnKey === "driver.nickname"
+                      ? $any(tm).nickname || $any(tm).name
+                      : $any(tm).name
+                  }}
+                  @if (!parent()?.race?.practice) {
+                    {{
+                      parent()?.getDriverStats?.(
+                        targetDriver,
+                        $any(tm).entity_id || $any(tm).id
+                      )
+                    }}
+                  }
+                </app-custom-option>
+              }
+            </app-custom-select>
+          }
+
+          <!-- Practice Mode Lane Reset Button -->
+          @if (isPracticeLaneResetActive) {
+            <button
+              class="material-icons reset-lane-btn lane-col-reset-btn"
+              title="{{ 'RD_RESET_LANE_TOOLTIP' | translate }}"
+              (click)="onResetLane($event)"
+            >
+              refresh
+            </button>
           }
         }
       </div>
-    } @else if (isImageProperty()) {
-      <!-- Case 2: Images, Avatars, QR Codes, Flags -->
-      <div class="lane-col-image-wrapper">
-        @if (getImageUrl()) {
-          <img [src]="getImageUrl()" class="lane-col-image" alt="" />
-        }
-      </div>
-    } @else if (isPacingProperty()) {
-      <!-- Case 3: Ghost Pacing -->
-      <app-raceday-ghost-pacing
-        [driverHeatData]="targetDriver || null"
-        [benchmarkType]="getPacingBenchmarkType()"
-        [personalBest]="targetDriver?.bestLapTime || 0"
-        [personalAvg]="targetDriver?.averageLapTime || 0"
-        [personalMedian]="targetDriver?.medianLapTime || 0"
-        [laneRecord]="
-          parent()?.getLaneRecordEntry?.(targetDriver?.laneIndex ?? 0)?.value ||
-          0
-        "
-        [heatLeaderBest]="parent()?.heatBestTime || 0"
-        [heatLeaderAvg]="parent()?.heatLeaderAvgTime || 0"
-        [heatLeaderMedian]="parent()?.heatLeaderMedianTime || 0"
-      ></app-raceday-ghost-pacing>
-    } @else {
-      <!-- Case 4: Formatted Text / Numerical Value -->
+
+      @if (hasInset("center-right")) {
+        <div
+          class="inset-cell cr"
+          [class.clickable-lap-cell]="isInsetLapCount('center-right')"
+          [attr.title]="
+            isInsetLapCount('center-right')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('center-right', $event)"
+          [style.font-family]="settings.insetFontFamily || null"
+          [style.font-size.px]="settings.insetFontSize || 12"
+          [style.color]="effectiveInsetTextColor"
+        >
+          @if (isImageProperty(getInsetKey("center-right")!)) {
+            <img
+              [src]="getInsetImageUrl('center-right')"
+              class="lane-col-inset-image"
+              alt=""
+            />
+          } @else {
+            <span>{{ getInsetValue("center-right") }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Insets Bottom Row -->
+    @if (hasBottomInsets()) {
       <div
-        class="lane-col-value"
-        [style.font-family]="settings.valueFontFamily || null"
-        [style.color]="effectiveValueTextColor"
-        [style.justify-content]="
-          settings.valueAlignment === 'start'
-            ? 'flex-start'
-            : settings.valueAlignment === 'end'
-              ? 'flex-end'
-              : 'center'
-        "
+        class="lane-col-insets-row lane-col-insets-bottom"
+        [style.font-family]="settings.insetFontFamily || null"
+        [style.font-size.px]="settings.insetFontSize || 12"
+        [style.color]="effectiveInsetTextColor"
       >
-        <span class="lane-col-text">{{ formattedValue }}</span>
+        <div
+          class="inset-cell bl"
+          [class.clickable-lap-cell]="isInsetLapCount('bottom-left')"
+          [attr.title]="
+            isInsetLapCount('bottom-left')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('bottom-left', $event)"
+        >
+          @if (hasInset("bottom-left")) {
+            @if (isImageProperty(getInsetKey("bottom-left")!)) {
+              <img
+                [src]="getInsetImageUrl('bottom-left')"
+                class="lane-col-inset-image"
+                alt=""
+              />
+            } @else {
+              <span>{{ getInsetValue("bottom-left") }}</span>
+            }
+          }
+        </div>
+        <div
+          class="inset-cell bc"
+          [class.clickable-lap-cell]="isInsetLapCount('bottom-center')"
+          [attr.title]="
+            isInsetLapCount('bottom-center')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('bottom-center', $event)"
+        >
+          @if (hasInset("bottom-center")) {
+            @if (isImageProperty(getInsetKey("bottom-center")!)) {
+              <img
+                [src]="getInsetImageUrl('bottom-center')"
+                class="lane-col-inset-image"
+                alt=""
+              />
+            } @else {
+              <span>{{ getInsetValue("bottom-center") }}</span>
+            }
+          }
+        </div>
+        <div
+          class="inset-cell br"
+          [class.clickable-lap-cell]="isInsetLapCount('bottom-right')"
+          [attr.title]="
+            isInsetLapCount('bottom-right')
+              ? ('RD_LAP_COLUMN_TOOLTIP' | translate)
+              : null
+          "
+          (click)="onInsetClick('bottom-right', $event)"
+        >
+          @if (hasInset("bottom-right")) {
+            @if (isImageProperty(getInsetKey("bottom-right")!)) {
+              <img
+                [src]="getInsetImageUrl('bottom-right')"
+                class="lane-col-inset-image"
+                alt=""
+              />
+            } @else {
+              <span>{{ getInsetValue("bottom-right") }}</span>
+            }
+          }
+        </div>
       </div>
     }
   </div>

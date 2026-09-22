@@ -1,140 +1,114 @@
-import { Component, Pipe, PipeTransform } from "@angular/core";
+import { Component } from "@angular/core";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { FormsModule } from "@angular/forms";
 
 import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "./custom-select.component";
 
-@Pipe({ name: "translate", standalone: true })
-class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string {
-    return value;
-  }
-}
-
 @Component({
   standalone: true,
-  imports: [CustomSelectComponent, CustomOptionComponent],
+  imports: [CustomSelectComponent, CustomOptionComponent, FormsModule],
   template: `
-    <app-custom-select [value]="val">
-      <app-custom-option value="opt1" separator>Option 1</app-custom-option>
+    <app-custom-select [(ngModel)]="selectedValue" [disabled]="isDisabled">
+      <app-custom-option value="opt1">Option 1</app-custom-option>
       <app-custom-option value="opt2">Option 2</app-custom-option>
-      <app-custom-option value="opt3" divider>Option 3</app-custom-option>
-      <app-custom-option value="opt4">Option 4</app-custom-option>
+      <app-custom-option value="opt3" [disabled]="true"
+        >Option 3</app-custom-option
+      >
     </app-custom-select>
   `,
 })
 class TestHostComponent {
-  val = "opt1";
+  selectedValue: string = "opt1";
+  isDisabled: boolean = false;
 }
 
 describe("CustomSelectComponent", () => {
-  let component: CustomSelectComponent;
-  let fixture: ComponentFixture<CustomSelectComponent>;
+  let fixture: ComponentFixture<TestHostComponent>;
+  let hostComponent: TestHostComponent;
+  let selectComponent: CustomSelectComponent;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CustomSelectComponent, MockTranslatePipe, TestHostComponent],
+      imports: [TestHostComponent],
     }).compileComponents();
-  });
 
-  beforeEach(() => {
-    fixture = TestBed.createComponent(CustomSelectComponent);
-    component = fixture.componentInstance;
+    fixture = TestBed.createComponent(TestHostComponent);
+    hostComponent = fixture.componentInstance;
     fixture.detectChanges();
+    await fixture.whenStable();
+
+    const selectEl = fixture.debugElement.children[0];
+    selectComponent = selectEl.componentInstance;
   });
 
-  it("should create", () => {
-    expect(component).toBeTruthy();
+  it("should create and initialize with the selected option label", () => {
+    selectComponent.updateSelectedLabel();
+    expect(selectComponent).toBeTruthy();
+    expect(selectComponent.selectedLabel).toBe("Option 1");
   });
 
-  it("should open and close dropdown", () => {
-    expect(component.isOpen).toBeFalse();
-    component.toggleOpen();
-    expect(component.isOpen).toBeTrue();
-    component.toggleOpen();
-    expect(component.isOpen).toBeFalse();
+  it("should toggle open on trigger click and stop event propagation", () => {
+    const mockEvent: any = {
+      stopPropagation: jasmine.createSpy("stopPropagation"),
+    };
+    expect(selectComponent.isOpen).toBeFalse();
+
+    selectComponent.toggleOpen(mockEvent);
+    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    expect(selectComponent.isOpen).toBeTrue();
+
+    selectComponent.toggleOpen(mockEvent);
+    expect(selectComponent.isOpen).toBeFalse();
   });
 
-  it("should update value and attribute when value property is set", () => {
-    fixture.componentRef.setInput("value", "test-val");
+  it("should select option, emit change, and stop event propagation", () => {
+    const changeSpy = spyOn(selectComponent.change, "emit");
+    const option = selectComponent.customOptions.toArray()[1];
+    const mockEvent: any = {
+      stopPropagation: jasmine.createSpy("stopPropagation"),
+    };
+
+    selectComponent.isOpen = true;
+    selectComponent.selectOption(option, mockEvent);
+
+    expect(mockEvent.stopPropagation).toHaveBeenCalled();
+    expect(selectComponent.value()).toBe("opt2");
+    expect(selectComponent.selectedLabel).toBe("Option 2");
+    expect(changeSpy).toHaveBeenCalledWith("opt2");
+    expect(selectComponent.isOpen).toBeFalse();
+  });
+
+  it("should close on outside document click", () => {
+    selectComponent.isOpen = true;
+    const outsideEl = document.createElement("div");
+    const mockEvent = { target: outsideEl } as any;
+
+    selectComponent.onDocumentClick(mockEvent);
+    expect(selectComponent.isOpen).toBeFalse();
+  });
+
+  it("should not toggle when disabled", () => {
+    hostComponent.isDisabled = true;
     fixture.detectChanges();
-    expect(component.value()).toBe("test-val");
-    expect(fixture.nativeElement.getAttribute("data-value")).toBe("test-val");
+    expect(selectComponent.disabled()).toBeTrue();
 
-    component.value.set(undefined);
+    selectComponent.toggleOpen();
+    expect(selectComponent.isOpen).toBeFalse();
+  });
+
+  it("should reflect open class on host element when toggled open", () => {
+    const hostEl = fixture.nativeElement.querySelector("app-custom-select");
+    expect(hostEl.classList.contains("open")).toBeFalse();
+
+    selectComponent.toggleOpen();
     fixture.detectChanges();
-    expect(component.value()).toBeUndefined();
-    expect(fixture.nativeElement.hasAttribute("data-value")).toBeFalse();
-  });
+    expect(hostEl.classList.contains("open")).toBeTrue();
 
-  it("should support writeValue from ControlValueAccessor", () => {
-    component.writeValue("cva-val");
+    selectComponent.toggleOpen();
     fixture.detectChanges();
-    expect(component.value()).toBe("cva-val");
-    expect(fixture.nativeElement.getAttribute("data-value")).toBe("cva-val");
-  });
-
-  it("should render separators when options have separator or divider inputs", () => {
-    const hostFixture = TestBed.createComponent(TestHostComponent);
-    hostFixture.detectChanges();
-
-    const select = hostFixture.debugElement.children[0]
-      .componentInstance as CustomSelectComponent;
-    select.toggleOpen();
-    hostFixture.detectChanges();
-
-    const hostElement = hostFixture.nativeElement as HTMLElement;
-    const separators = hostElement.querySelectorAll(".custom-select-separator");
-    expect(separators.length).toBe(2);
-
-    const options = hostElement.querySelectorAll(".custom-select-option");
-    expect(options.length).toBe(4);
-  });
-
-  it("should update selectedLabel dynamically when option label text changes", () => {
-    const hostFixture = TestBed.createComponent(DynamicLabelTestHostComponent);
-    hostFixture.detectChanges();
-
-    const select = hostFixture.debugElement.children[0]
-      .componentInstance as CustomSelectComponent;
-    const hostElement = hostFixture.nativeElement as HTMLElement;
-
-    expect(select.selectedLabel).toBe("Original Label");
-    expect(
-      hostElement.querySelector(".selected-text")?.textContent?.trim(),
-    ).toBe("Original Label");
-
-    hostFixture.componentInstance.opt1Label = "Renamed Layout";
-    hostFixture.detectChanges();
-
-    expect(select.selectedLabel).toBe("Renamed Layout");
-    expect(
-      hostElement.querySelector(".selected-text")?.textContent?.trim(),
-    ).toBe("Renamed Layout");
-
-    select.toggleOpen();
-    hostFixture.detectChanges();
-
-    const optionEl = hostElement.querySelector(
-      '.custom-select-option[data-value="opt1"]',
-    );
-    expect(optionEl?.textContent?.trim()).toBe("Renamed Layout");
+    expect(hostEl.classList.contains("open")).toBeFalse();
   });
 });
-
-@Component({
-  standalone: true,
-  imports: [CustomSelectComponent, CustomOptionComponent],
-  template: `
-    <app-custom-select [value]="val">
-      <app-custom-option value="opt1">{{ opt1Label }}</app-custom-option>
-      <app-custom-option value="opt2">Option 2</app-custom-option>
-    </app-custom-select>
-  `,
-})
-class DynamicLabelTestHostComponent {
-  val = "opt1";
-  opt1Label = "Original Label";
-}

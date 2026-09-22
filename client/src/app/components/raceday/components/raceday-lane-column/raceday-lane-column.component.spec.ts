@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
+import { Role } from "@app/models/role";
 import {
   AbsoluteWidgetNode,
   LaneColumnWidgetSettings,
@@ -76,6 +77,16 @@ describe("RacedayLaneColumnComponent", () => {
         `http://localhost/dv-qr-${lane}.png`,
       getDriverVisualPosition: (hd: DriverHeatData) =>
         hd.objectId === "driver-2" ? 0 : 1,
+      authService: { currentRole: Role.DIRECTOR },
+      onCellClick: jasmine.createSpy("onCellClick"),
+      resetLane: jasmine.createSpy("resetLane"),
+      onTeammateChange: jasmine.createSpy("onTeammateChange"),
+      isNameProperty: (prop: string) =>
+        prop === "driver.name" || prop === "driver.nickname",
+      isTeam: () => true,
+      isDriverSwapDisabled: () => false,
+      getTeammates: () => [{ entity_id: "tm-1", name: "Teammate One" }],
+      getDropdownArrowBg: () => "none",
     };
 
     await TestBed.configureTestingModule({
@@ -604,5 +615,563 @@ describe("RacedayLaneColumnComponent", () => {
       expect(numSize).toBeLessThan(36);
       expect(numSize).toBeGreaterThanOrEqual(10);
     }
+  });
+
+  describe("Insets and Anchor Drop Zones", () => {
+    it("should render top, center, and bottom insets", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.nickname",
+            "top-center": "driver.name",
+            "top-right": "lapCount",
+            "center-left": "lapCount",
+            "center-right": "lapCount",
+            "bottom-left": "lapCount",
+            "bottom-center": "driver.nickname",
+            "bottom-right": "lastLapTime",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.hasTopInsets()).toBeTrue();
+      expect(component.hasBottomInsets()).toBeTrue();
+      expect(component.hasInset("top-left")).toBeTrue();
+      expect(component.hasInset("center-left")).toBeTrue();
+      expect(component.hasInset("bottom-right")).toBeTrue();
+
+      const topRow = fixture.nativeElement.querySelector(
+        ".lane-col-insets-top",
+      );
+      const bottomRow = fixture.nativeElement.querySelector(
+        ".lane-col-insets-bottom",
+      );
+      const clCell = fixture.nativeElement.querySelector(".inset-cell.cl");
+      const crCell = fixture.nativeElement.querySelector(".inset-cell.cr");
+
+      expect(topRow).toBeTruthy();
+      expect(bottomRow).toBeTruthy();
+      expect(clCell).toBeTruthy();
+      expect(crCell).toBeTruthy();
+    });
+
+    it("should render image insets when inset key is an image property", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.avatarUrl",
+            "bottom-right": "flag",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.getInsetImageUrl("top-left")).toBe(
+        "http://localhost/avatar1.png",
+      );
+      expect(component.getInsetImageUrl("bottom-right")).toBe(
+        "http://localhost/green-flag.png",
+      );
+
+      const imgs = fixture.nativeElement.querySelectorAll(
+        ".lane-col-inset-image",
+      );
+      expect(imgs.length).toBe(2);
+      expect(imgs[0].src).toContain("avatar1.png");
+      expect(imgs[1].src).toContain("green-flag.png");
+    });
+
+    it("should apply custom inset typography and text color", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          useLaneColors: false,
+          insetFontFamily: "Courier New",
+          insetFontSize: 16,
+          insetTextColor: "#abcdef",
+          insets: {
+            "top-left": "driver.nickname",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.effectiveInsetTextColor).toBe("#abcdef");
+      const topRow = fixture.nativeElement.querySelector(
+        ".lane-col-insets-top",
+      );
+      expect(topRow.style.fontFamily).toContain("Courier New");
+      expect(topRow.style.fontSize).toBe("16px");
+      expect(topRow.style.color).toBe("rgb(171, 205, 239)");
+    });
+
+    it("should render 3x3 drop zones in UI Editor mode", () => {
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          insets: {
+            "top-left": "driver.nickname",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isUIEditorMode).toBeTrue();
+      const grid = fixture.nativeElement.querySelector(".anchor-drop-grid");
+      expect(grid).toBeTruthy();
+
+      const dropZones = fixture.nativeElement.querySelectorAll(".drop-zone");
+      expect(dropZones.length).toBe(9);
+
+      // top-left has a value, so it should render a delete button
+      const deleteBtn =
+        fixture.nativeElement.querySelector(".delete-anchor-btn");
+      expect(deleteBtn).toBeTruthy();
+    });
+
+    it("should handle dragover, dragenter, dragleave, and drop events on drop zones", () => {
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({ columnKey: "lastLapTime", insets: {} });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          dropEffect: "",
+          getData: jasmine.createSpy("getData").and.callFake((type: string) => {
+            if (type === "application/json") {
+              return JSON.stringify({
+                type: "new-column",
+                key: "driver.nickname",
+              });
+            }
+            return "";
+          }),
+        },
+        target: {
+          classList: {
+            add: jasmine.createSpy("add"),
+            remove: jasmine.createSpy("remove"),
+          },
+        },
+      };
+
+      component.onAnchorDragOver(mockEvent);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      expect(mockEvent.dataTransfer.dropEffect).toBe("copy");
+
+      component.onAnchorDragEnter(mockEvent);
+      expect(mockEvent.target.classList.add).toHaveBeenCalledWith("drag-over");
+
+      component.onAnchorDragLeave(mockEvent);
+      expect(mockEvent.target.classList.remove).toHaveBeenCalledWith(
+        "drag-over",
+      );
+
+      component.onAnchorDrop(mockEvent, "top-left");
+      expect(component.settings.insets?.["top-left"]).toBe("driver.nickname");
+    });
+
+    it("should accept text/plain lane-col:<key> on drop", () => {
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({ columnKey: "lastLapTime", insets: {} });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.callFake((type: string) => {
+            if (type === "text/plain") return "lane-col:bestLapTime";
+            return "";
+          }),
+        },
+        target: {
+          classList: { remove: jasmine.createSpy("remove") },
+        },
+      };
+
+      component.onAnchorDrop(mockEvent, "bottom-center");
+      expect(component.settings.insets?.["bottom-center"]).toBe("bestLapTime");
+    });
+
+    it("should update primary columnKey when dropped on center-center", () => {
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({ columnKey: "lastLapTime", insets: {} });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.callFake((type: string) => {
+            if (type === "text/plain") return "lapCount";
+            return "";
+          }),
+        },
+        target: {
+          classList: { remove: jasmine.createSpy("remove") },
+        },
+      };
+
+      component.onAnchorDrop(mockEvent, "center-center");
+      expect(component.settings.columnKey).toBe("lapCount");
+    });
+
+    it("should match dropEffect to move when effectAllowed is move", () => {
+      mockParent.isUIEditorMode = () => true;
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.detectChanges();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          effectAllowed: "move",
+          dropEffect: "none",
+        },
+      };
+
+      component.onAnchorDragOver(mockEvent);
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      expect(mockEvent.dataTransfer.dropEffect).toBe("move");
+    });
+
+    it("should accept parent draggedWidgetType and clear it on drop", () => {
+      mockParent.isUIEditorMode = () => false;
+      mockParent.isLayoutCustomizing = true;
+      mockParent.draggedWidgetType = "lane-col:participant.team.name";
+      mockParent.layout = { widgets: [] };
+      mockParent.layoutChanged = { emit: jasmine.createSpy("emit") };
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({ columnKey: "driver.nickname", insets: {} });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+        dataTransfer: {
+          getData: jasmine.createSpy("getData").and.returnValue(""),
+        },
+        target: {
+          classList: { remove: jasmine.createSpy("remove") },
+        },
+      };
+
+      component.onAnchorDrop(mockEvent, "top-center");
+      expect(component.settings.insets?.["top-center"]).toBe(
+        "participant.team.name",
+      );
+      expect(mockParent.draggedWidgetType).toBeNull();
+      expect(mockParent.layoutChanged.emit).toHaveBeenCalledWith(
+        mockParent.layout,
+      );
+    });
+
+    it("should delete anchor value and notify parent", () => {
+      mockParent.isUIEditorMode = () => true;
+      mockParent.columnsChanged = { emit: jasmine.createSpy("emit") };
+      fixture.componentRef.setInput("parent", mockParent);
+      const widget = createWidget({
+        columnKey: "lastLapTime",
+        insets: { "top-left": "driver.nickname" },
+      });
+      fixture.componentRef.setInput("widget", widget);
+      fixture.detectChanges();
+
+      const mockClickEvent = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      } as any;
+
+      component.deleteAnchor("top-left", mockClickEvent);
+      expect(mockClickEvent.stopPropagation).toHaveBeenCalled();
+      expect(component.settings.insets?.["top-left"]).toBeUndefined();
+      expect(mockParent.columnsChanged.emit).toHaveBeenCalled();
+    });
+
+    it("should adjust fitText headroom when insets are present", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "driver.nickname",
+          valueFontSize: 36,
+          insetFontSize: 14,
+          insets: {
+            "top-left": "driver.name",
+            "bottom-left": "lapCount",
+            "center-left": "flag",
+            "center-right": "qrCode",
+          },
+        }),
+      );
+      fixture.detectChanges();
+
+      const cardEl = component.cardRef()?.nativeElement;
+      if (cardEl) {
+        Object.defineProperty(cardEl, "clientWidth", {
+          value: 120,
+          configurable: true,
+        });
+        Object.defineProperty(cardEl, "clientHeight", {
+          value: 60,
+          configurable: true,
+        });
+      }
+      spyOnProperty(component, "formattedValue", "get").and.returnValue(
+        "A Name",
+      );
+      component.fitContent();
+
+      if (cardEl) {
+        const fontSizeVar = cardEl.style.getPropertyValue(
+          "--lane-col-value-font-size",
+        );
+        expect(fontSizeVar).toBeTruthy();
+        const numSize = parseInt(fontSizeVar, 10);
+        expect(numSize).toBeLessThan(36);
+        expect(numSize).toBeGreaterThanOrEqual(10);
+      }
+    });
+  });
+
+  describe("Interactive Column Actions", () => {
+    it("should recognize lapCount column as clickable and trigger onCellClick on card click", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "lapCount", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isLapCountClickable).toBeTrue();
+      expect(component.cardTooltip).toBe("RD_LAP_COLUMN_TOOLTIP");
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+
+      component.onCardClick(mockEvent);
+      expect(mockParent.onCellClick).toHaveBeenCalledWith(
+        mockDrivers[0],
+        jasmine.objectContaining({ propertyName: "lapCount" }),
+        mockEvent,
+      );
+
+      // Active even when heat is unstarted (e.g. auto-starting countdown)
+      mockParent.heat = { started: false, heatDrivers: mockDrivers };
+      expect(component.isLapCountClickable).toBeTrue();
+
+      // Inactive in UI editor mode
+      mockParent.isUIEditorMode = () => true;
+      expect(component.isLapCountClickable).toBeFalse();
+    });
+
+    it("should trigger onCellClick when clicking an inset configured with lapCount", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "lastLapTime",
+          targetIndex: 0,
+          insets: { "top-right": "lapCount", "top-left": "driver.name" },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isInsetLapCount("top-right")).toBeTrue();
+      expect(component.isInsetLapCount("top-left")).toBeFalse();
+
+      const mockEvent: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+
+      component.onInsetClick("top-right", mockEvent);
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockParent.onCellClick).toHaveBeenCalledWith(
+        mockDrivers[0],
+        jasmine.objectContaining({ propertyName: "lapCount" }),
+        mockEvent,
+      );
+    });
+
+    it("should activate teammate driver swap for name properties and call onTeammateChange", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "driver.nickname", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+      expect(component.cardTooltip).toBe("RD_TEAM_DRIVER_TOOLTIP");
+
+      component.onTeammateChange("tm-1");
+      expect(mockParent.onTeammateChange).toHaveBeenCalledWith(
+        mockDrivers[0],
+        "tm-1",
+      );
+
+      // Inactive for VIEWER role
+      mockParent.authService.currentRole = Role.VIEWER;
+      expect(component.isTeamDriverSwapActive).toBeFalse();
+
+      // Inactive for non-name column
+      mockParent.authService.currentRole = Role.DIRECTOR;
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "lastLapTime", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+      expect(component.isTeamDriverSwapActive).toBeFalse();
+    });
+
+    it("should recognize physicalLapCount column and insets as clickable for add lap sections", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({
+          columnKey: "physicalLapCount",
+          targetIndex: 0,
+          insets: { "bottom-right": "physicalLapCount" },
+        }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isLapCountClickable).toBeTrue();
+      expect(component.isInsetLapCount("bottom-right")).toBeTrue();
+
+      const cardEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      component.onCardClick(cardEvent);
+      expect(mockParent.onCellClick).toHaveBeenCalledWith(
+        mockDrivers[0],
+        jasmine.objectContaining({ propertyName: "physicalLapCount" }),
+        cardEvent,
+      );
+
+      const insetEvent: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      component.onInsetClick("bottom-right", insetEvent);
+      expect(insetEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockParent.onCellClick).toHaveBeenCalledWith(
+        mockDrivers[0],
+        jasmine.objectContaining({ propertyName: "physicalLapCount" }),
+        insetEvent,
+      );
+    });
+
+    it("should toggle teammate select open when clicking team card", () => {
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "driver.name", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+      const select = component.teammateSelect();
+      expect(select).toBeTruthy();
+      const toggleSpy = spyOn(select!, "toggleOpen");
+
+      const mockEvent: any = {
+        preventDefault: jasmine.createSpy("preventDefault"),
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      component.onCardClick(mockEvent);
+      expect(toggleSpy).toHaveBeenCalledWith(mockEvent);
+    });
+
+    it("should activate practice lane reset button in practice mode and trigger resetLane", () => {
+      mockParent.race = { practice: true };
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "driver.name", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isPracticeLaneResetActive).toBeTrue();
+      const resetBtn = fixture.nativeElement.querySelector(
+        ".lane-col-reset-btn",
+      );
+      expect(resetBtn).toBeTruthy();
+
+      const mockEvent: any = {
+        stopPropagation: jasmine.createSpy("stopPropagation"),
+      };
+      component.onResetLane(mockEvent);
+      expect(mockEvent.stopPropagation).toHaveBeenCalled();
+      expect(mockParent.resetLane).toHaveBeenCalledWith(0, mockEvent);
+
+      // Also active on laneNumber
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "laneNumber", targetIndex: 1 }),
+      );
+      fixture.detectChanges();
+      expect(component.isPracticeLaneResetActive).toBeTrue();
+
+      // Inactive when not in practice mode
+      mockParent.race = { practice: false };
+      expect(component.isPracticeLaneResetActive).toBeFalse();
+
+      // Inactive for VIEWER role
+      mockParent.race = { practice: true };
+      mockParent.authService.currentRole = Role.VIEWER;
+      expect(component.isPracticeLaneResetActive).toBeFalse();
+    });
+
+    it("should delegate to parent helper methods when available", () => {
+      mockParent.isLapCountColumnClickable = jasmine
+        .createSpy("isLapCountColumnClickable")
+        .and.returnValue(true);
+      mockParent.isTeamDriverSwapActive = jasmine
+        .createSpy("isTeamDriverSwapActive")
+        .and.returnValue(true);
+
+      fixture.componentRef.setInput("parent", mockParent);
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "lapCount", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isLapCountClickable).toBeTrue();
+      expect(mockParent.isLapCountColumnClickable).toHaveBeenCalled();
+
+      fixture.componentRef.setInput(
+        "widget",
+        createWidget({ columnKey: "driver.nickname", targetIndex: 0 }),
+      );
+      fixture.detectChanges();
+
+      expect(component.isTeamDriverSwapActive).toBeTrue();
+      expect(mockParent.isTeamDriverSwapActive).toHaveBeenCalled();
+    });
   });
 });

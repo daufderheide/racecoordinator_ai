@@ -2212,6 +2212,8 @@
   "HL_SUMMARY_MEDIAN_LAP": "V. Mediana",
   "UE_INSPECTOR_HEIGHT": "Alto",
   "UE_INSPECTOR_IMAGE_SELECT": "Ajustes de imagen",
+  "UE_INSPECTOR_INSET_NONE": "-- Ninguno --",
+  "UE_INSPECTOR_INSETS_POSITIONS": "Posiciones de inserción",
   "UE_INSPECTOR_LANE_VIEW_ADD_COLUMN_PLACEHOLDER": "Seleccione una columna para agregar...",
   "UE_INSPECTOR_LANE_VIEW_AVAILABLE_COLUMNS": "Columnas Disponibles",
   "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION": "Ajustes de Columnas",

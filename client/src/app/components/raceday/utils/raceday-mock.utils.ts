@@ -591,10 +591,9 @@ function createMockRaceParticipants(): RaceParticipant[] {
       gap_position: index === 0 ? 0 : 1.5,
       fuelLevel: Math.max(0, 100 - index * 4),
       seed: rank,
-      team:
-        index === 0
-          ? { name: char.team, driverIds: [`d${rank}`, "d2", "d3"] }
-          : undefined,
+      team: char.team
+        ? { name: char.team, driverIds: [`d${rank}`] }
+        : undefined,
     } as unknown as RaceParticipant;
   });
 }

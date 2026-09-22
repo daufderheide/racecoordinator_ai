@@ -87,6 +87,12 @@ export interface LaneColumnWidgetSettings {
   timeDecimalPlaces: number;
   lapDecimalPlaces: number;
   useLaneColors: boolean;
+  insets?: Record<string, string>;
+  insetFontFamily?: string;
+  insetFontSize?: number;
+  insetTextColor?: string;
+  insetTimeDecimalPlaces?: number;
+  insetLapDecimalPlaces?: number;
   backgroundColor: string;
   textColor: string;
   showBorder: boolean;

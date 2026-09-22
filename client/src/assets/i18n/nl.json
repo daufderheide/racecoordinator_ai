@@ -2212,6 +2212,8 @@
   "HL_SUMMARY_MEDIAN_LAP": "Mediaan R.",
   "UE_INSPECTOR_HEIGHT": "Hoogte",
   "UE_INSPECTOR_IMAGE_SELECT": "Afbeeldingsinstellingen",
+  "UE_INSPECTOR_INSET_NONE": "-- Geen --",
+  "UE_INSPECTOR_INSETS_POSITIONS": "Inzetposities",
   "UE_INSPECTOR_LANE_VIEW_ADD_COLUMN_PLACEHOLDER": "Selecteer een kolom om toe te voegen...",
   "UE_INSPECTOR_LANE_VIEW_AVAILABLE_COLUMNS": "Beschikbare Kolommen",
   "UE_INSPECTOR_LANE_VIEW_COLUMNS_SECTION": "Kolom Instellingen",

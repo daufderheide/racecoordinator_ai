@@ -57,6 +57,45 @@ select {
   z-index: 1000;
 }
 
+/* Teammate select overlay in custom-select */
+app-custom-select.teammate-select,
+.teammate-select {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-right: 8px !important;
+  background-origin: content-box !important;
+}
+
+/* Allow custom-select dropdowns to overflow clipped table cells, rows, and widgets */
+.body-cell:has(app-custom-select.open),
+.body-cell:has(.custom-select-container.open),
+.table-row:has(app-custom-select.open),
+.table-row:has(.custom-select-container.open),
+.bottom-section .table-body:has(app-custom-select.open),
+.bottom-section .table-body:has(.custom-select-container.open),
+.widget-wrapper:has(app-custom-select.open),
+.widget-wrapper:has(.custom-select-container.open),
+.raceday-lane-column-card:has(app-custom-select.open),
+.raceday-lane-column-card:has(.custom-select-container.open) {
+  overflow: visible !important;
+  z-index: 10000 !important;
+}
+
+.raceday-lane-column-card:has(app-custom-select.open) .lane-col-body,
+.raceday-lane-column-card:has(app-custom-select.open) .lane-col-main-row,
+.raceday-lane-column-card:has(app-custom-select.open) .lane-col-main-content,
+.raceday-lane-column-card:has(.custom-select-container.open) .lane-col-body,
+.raceday-lane-column-card:has(.custom-select-container.open) .lane-col-main-row,
+.raceday-lane-column-card:has(.custom-select-container.open) .lane-col-main-content {
+  overflow: visible !important;
+}
+
+.modal-backdrop {
+  z-index: 99999 !important;
+}
+
+
 /* Global Baseline for Dropdown & Menu Items */
 .dropdown-item,
 .menu-dropdown-item,

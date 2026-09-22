@@ -48,23 +48,27 @@
   box-shadow: inset 0 15px 15px -15px rgba(0, 0, 0, 0.8);
 }
 
-.sections-wrapper::-webkit-scrollbar {
+.sections-wrapper::-webkit-scrollbar,
+.raceday-canvas-viewport::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
-.sections-wrapper::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
+.sections-wrapper::-webkit-scrollbar-track,
+.raceday-canvas-viewport::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
   border-radius: 4px;
 }
 
-.sections-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.5);
+.sections-wrapper::-webkit-scrollbar-thumb,
+.raceday-canvas-viewport::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.45);
   border-radius: 4px;
-  border: 1px solid rgba(15, 23, 42, 0.2);
 }
 
-.sections-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.8);
+.sections-wrapper::-webkit-scrollbar-thumb:hover,
+.raceday-canvas-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.75);
 }
 
 .config-section {
@@ -882,25 +886,6 @@
   box-sizing: border-box;
 }
 
-.raceday-canvas-viewport::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.raceday-canvas-viewport::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
-  border-radius: 4px;
-}
-
-.raceday-canvas-viewport::-webkit-scrollbar-thumb {
-  background: rgba(56, 189, 248, 0.4);
-  border-radius: 4px;
-}
-
-.raceday-canvas-viewport::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.7);
-}
-
 .zoom-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -1496,17 +1481,21 @@
   color: #ef4444;
 }
 
+.inspector-delete-btn,
+.delete-widget-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
 .inspector-delete-btn {
   background: transparent;
   border: none;
   color: #dc2626;
-  cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
 }
 
 .inspector-delete-btn:hover {
@@ -1519,9 +1508,6 @@
 }
 
 .delete-widget-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 6px;
   width: 100%;
   padding: 6px 12px;
@@ -1531,8 +1517,6 @@
   font-size: 12px;
   font-weight: 700;
   border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
 }
 
 .delete-widget-btn:hover {
