@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.84] - 2026-09-22
+
+### 🚀 New Features
+
+- add browser incompatibility dialog with detection utilities, translations, and updated documentation ([4a33fb05](https://github.com/daufderheide/racecoordinator_ai/commit/4a33fb05))
+
+### 🐛 Bug Fixes
+
+- reduce how often the user sees the splashscreen [skip-screendiffs] ([9ea91d18](https://github.com/daufderheide/racecoordinator_ai/commit/9ea91d18))
+- Fix "select sound" issues causing configuration to appear to be set to no sound but still play the default sounds ([ad983e49](https://github.com/daufderheide/racecoordinator_ai/commit/ad983e49))
+- Fix issue with widgets going out of bounds in the layout editor and then not being able to be selected or moved again.  Now they are restricted the canvas and we've added deletion controls on the widget inspector ([20b613bf](https://github.com/daufderheide/racecoordinator_ai/commit/20b613bf))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.83...v1.0.0-beta.84">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.83] - 2026-09-21
 
 ### 🚀 New Features
