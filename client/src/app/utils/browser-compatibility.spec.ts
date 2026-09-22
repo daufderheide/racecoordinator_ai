@@ -44,6 +44,9 @@ describe("BrowserCompatibility", () => {
             `Missing BROWSER_UNSUPPORTED_REQUIREMENTS in ${lang}.json`,
           )
           .toBeDefined();
+        expect((json as any).BROWSER_UNSUPPORTED_LEARN_MORE)
+          .withContext(`Missing BROWSER_UNSUPPORTED_LEARN_MORE in ${lang}.json`)
+          .toBeDefined();
 
         expect(
           (json as any).BROWSER_UNSUPPORTED_TITLE.trim().length,
@@ -53,6 +56,9 @@ describe("BrowserCompatibility", () => {
         ).toBeGreaterThan(0);
         expect(
           (json as any).BROWSER_UNSUPPORTED_REQUIREMENTS.trim().length,
+        ).toBeGreaterThan(0);
+        expect(
+          (json as any).BROWSER_UNSUPPORTED_LEARN_MORE.trim().length,
         ).toBeGreaterThan(0);
       });
     });
@@ -76,11 +82,16 @@ describe("BrowserCompatibility", () => {
       expect(result.title).toBe("Browser Not Supported");
       expect(result.desc).toContain("Race Coordinator AI requires");
       expect(result.reqs).toContain("Android 9+");
+      expect(result.reqs).toContain("Windows 7+");
+      expect(result.learnMore).toBe("Learn more about browser compatibility");
     });
 
     it("should return localized translations for supported languages", () => {
       expect(getBrowserUnsupportedTranslations("de").title).toBe(
         "Browser nicht unterstützt",
+      );
+      expect(getBrowserUnsupportedTranslations("de").learnMore).toBe(
+        "Mehr über Browserkompatibilität erfahren",
       );
       expect(getBrowserUnsupportedTranslations("es-MX").title).toBe(
         "Navegador no compatible",
@@ -102,6 +113,7 @@ describe("BrowserCompatibility", () => {
     it("should fall back to English for unknown languages", () => {
       const result = getBrowserUnsupportedTranslations("ja-JP");
       expect(result.title).toBe("Browser Not Supported");
+      expect(result.learnMore).toBe("Learn more about browser compatibility");
     });
   });
 
@@ -160,6 +172,20 @@ describe("BrowserCompatibility", () => {
       expect(el?.querySelector(".rc-unsupported-reqs")?.textContent).toContain(
         "Android 9+",
       );
+      expect(el?.querySelector(".rc-unsupported-reqs")?.textContent).toContain(
+        "Windows 7+",
+      );
+      const link = el?.querySelector(
+        ".rc-unsupported-learn-more",
+      ) as HTMLAnchorElement;
+      expect(link).not.toBeNull();
+      expect(link?.textContent).toContain(
+        "Learn more about browser compatibility",
+      );
+      expect(link?.getAttribute("href")).toContain(
+        "troubleshooting/#browser-compatibility",
+      );
+      expect(link?.getAttribute("target")).toBe("_blank");
     });
 
     it("should render localized overlay according to specified language", () => {
@@ -169,6 +195,15 @@ describe("BrowserCompatibility", () => {
       );
       expect(el?.querySelector(".rc-unsupported-desc")?.textContent).toContain(
         "Race Coordinator AI erfordert einen modernen Webbrowser",
+      );
+      const link = el?.querySelector(
+        ".rc-unsupported-learn-more",
+      ) as HTMLAnchorElement;
+      expect(link?.textContent).toContain(
+        "Mehr über Browserkompatibilität erfahren",
+      );
+      expect(link?.getAttribute("href")).toContain(
+        "/de/troubleshooting/#browser-compatibility",
       );
     });
 

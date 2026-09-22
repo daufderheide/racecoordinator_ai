@@ -2,6 +2,7 @@ export interface BrowserUnsupportedTranslations {
   title: string;
   desc: string;
   reqs: string;
+  learnMore: string;
 }
 
 export const BROWSER_UNSUPPORTED_TRANSLATIONS: Record<
@@ -11,37 +12,44 @@ export const BROWSER_UNSUPPORTED_TRANSLATIONS: Record<
   en: {
     title: "Browser Not Supported",
     desc: "Race Coordinator AI requires a modern web browser to run. Your browser or operating system version is out of date and cannot load this application.",
-    reqs: "Supported: Google Chrome, Microsoft Edge, Mozilla Firefox, or Safari on Android 9+, iOS 14+, Windows 10+, macOS, or Linux.",
+    reqs: "Supported: Google Chrome, Microsoft Edge, Mozilla Firefox, or Safari on Android 9+, iOS 14+, Windows 7+, macOS, or Linux.",
+    learnMore: "Learn more about browser compatibility",
   },
   de: {
     title: "Browser nicht unterstützt",
     desc: "Race Coordinator AI erfordert einen modernen Webbrowser. Ihr Browser oder Betriebssystem ist veraltet und kann diese Anwendung nicht laden.",
-    reqs: "Unterstützt: Google Chrome, Microsoft Edge, Mozilla Firefox oder Safari unter Android 9+, iOS 14+, Windows 10+, macOS oder Linux.",
+    reqs: "Unterstützt: Google Chrome, Microsoft Edge, Mozilla Firefox oder Safari unter Android 9+, iOS 14+, Windows 7+, macOS oder Linux.",
+    learnMore: "Mehr über Browserkompatibilität erfahren",
   },
   es: {
     title: "Navegador no compatible",
     desc: "Race Coordinator AI requiere un navegador web moderno para funcionar. La versión de su navegador o sistema operativo está desactualizada y no puede cargar esta aplicación.",
-    reqs: "Compatible con: Google Chrome, Microsoft Edge, Mozilla Firefox o Safari en Android 9+, iOS 14+, Windows 10+, macOS o Linux.",
+    reqs: "Compatible con: Google Chrome, Microsoft Edge, Mozilla Firefox o Safari en Android 9+, iOS 14+, Windows 7+, macOS o Linux.",
+    learnMore: "Más información sobre la compatibilidad del navegador",
   },
   fr: {
     title: "Navigateur non pris en charge",
     desc: "Race Coordinator AI nécessite un navigateur Web moderne pour fonctionner. La version de votre navigateur ou de votre système d'exploitation est obsolète et ne peut pas charger cette application.",
-    reqs: "Pris en charge : Google Chrome, Microsoft Edge, Mozilla Firefox ou Safari sous Android 9+, iOS 14+, Windows 10+, macOS ou Linux.",
+    reqs: "Pris en charge : Google Chrome, Microsoft Edge, Mozilla Firefox ou Safari sous Android 9+, iOS 14+, Windows 7+, macOS ou Linux.",
+    learnMore: "En savoir plus sur la compatibilité du navigateur",
   },
   it: {
     title: "Browser non supportato",
     desc: "Race Coordinator AI richiede un browser Web moderno per funzionare. La versione del browser o del sistema operativo è obsoleta e non può caricare questa applicazione.",
-    reqs: "Supportati: Google Chrome, Microsoft Edge, Mozilla Firefox o Safari su Android 9+, iOS 14+, Windows 10+, macOS o Linux.",
+    reqs: "Supportati: Google Chrome, Microsoft Edge, Mozilla Firefox o Safari su Android 9+, iOS 14+, Windows 7+, macOS o Linux.",
+    learnMore: "Ulteriori informazioni sulla compatibilità del browser",
   },
   nl: {
     title: "Browser niet ondersteund",
     desc: "Race Coordinator AI vereist een moderne webbrowser. De versie van uw browser of besturingssysteem is verouderd en kan deze toepassing niet laden.",
-    reqs: "Ondersteund: Google Chrome, Microsoft Edge, Mozilla Firefox of Safari op Android 9+, iOS 14+, Windows 10+, macOS of Linux.",
+    reqs: "Ondersteund: Google Chrome, Microsoft Edge, Mozilla Firefox of Safari op Android 9+, iOS 14+, Windows 7+, macOS of Linux.",
+    learnMore: "Meer informatie over browsercompatibiliteit",
   },
   pt: {
     title: "Navegador não suportado",
     desc: "O Race Coordinator AI requer um navegador web moderno para funcionar. A versão do seu navegador ou sistema operacional está desatualizada e não pode carregar este aplicativo.",
-    reqs: "Suportados: Google Chrome, Microsoft Edge, Mozilla Firefox ou Safari no Android 9+, iOS 14+, Windows 10+, macOS ou Linux.",
+    reqs: "Suportados: Google Chrome, Microsoft Edge, Mozilla Firefox ou Safari no Android 9+, iOS 14+, Windows 7+, macOS ou Linux.",
+    learnMore: "Saiba mais sobre a compatibilidade do navegador",
   },
 };
 
@@ -111,6 +119,14 @@ export function renderUnsupportedBrowserBanner(
     lang || targetDoc.defaultView?.navigator?.language || "en";
   const t = getBrowserUnsupportedTranslations(effectiveLang);
 
+  const normLang = (effectiveLang || "en").substring(0, 2).toLowerCase();
+  const helpUrl =
+    normLang === "en"
+      ? "https://daufderheide.github.io/racecoordinator_ai/troubleshooting/#browser-compatibility"
+      : "https://daufderheide.github.io/racecoordinator_ai/" +
+        normLang +
+        "/troubleshooting/#browser-compatibility";
+
   const overlay = targetDoc.createElement("div");
   overlay.id = "rc-unsupported-browser-overlay";
   overlay.setAttribute("role", "alert");
@@ -126,6 +142,13 @@ export function renderUnsupportedBrowserBanner(
     "</p>" +
     '<div class="rc-unsupported-reqs">' +
     t.reqs +
+    "</div>" +
+    '<div class="rc-unsupported-actions">' +
+    '<a class="rc-unsupported-learn-more" href="' +
+    helpUrl +
+    '" target="_blank" rel="noopener noreferrer">' +
+    t.learnMore +
+    " &rarr;</a>" +
     "</div>" +
     "</div>";
 
