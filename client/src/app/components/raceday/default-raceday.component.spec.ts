@@ -536,11 +536,24 @@ describe("DefaultRacedayComponent", () => {
     expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(false);
   });
 
-  it("should pass force=true to disconnect when navigating to raceday-setup", () => {
+  it("should pass force=true to disconnect when navigating to raceday-setup and set skipIntro if race not ended", () => {
+    sessionStorage.removeItem("skipIntro");
     (mockRouter as any).url = "/raceday-setup";
+    component.raceHasEnded = false;
     fixture.detectChanges();
     fixture.destroy();
     expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(sessionStorage.getItem("skipIntro")).toBe("true");
+  });
+
+  it("should not set skipIntro on destroy when navigating to raceday-setup if race has ended", () => {
+    sessionStorage.removeItem("skipIntro");
+    (mockRouter as any).url = "/raceday-setup";
+    fixture.detectChanges();
+    component.raceHasEnded = true;
+    fixture.destroy();
+    expect(mockRaceConnectionService.disconnect).toHaveBeenCalledWith(true);
+    expect(sessionStorage.getItem("skipIntro")).toBeNull();
   });
 
   it("should update countdown timers when raceTime$ emits", () => {
@@ -3941,12 +3954,14 @@ describe("DefaultRacedayComponent", () => {
       expect(result).toBeTrue();
     });
 
-    it("should show exit confirmation and return observable when navigating elsewhere", (done) => {
+    it("should show exit confirmation, set skipIntro, and return observable when navigating elsewhere", (done) => {
+      sessionStorage.removeItem("skipIntro");
       const nextState = { url: "/home" } as any;
       const result = component.canDeactivate(nextState) as any;
       expect(component.showExitConfirmation).toBeTrue();
       result.subscribe((val: boolean) => {
         expect(val).toBeTrue();
+        expect(sessionStorage.getItem("skipIntro")).toBe("true");
         done();
       });
       component.onExitConfirm();
@@ -7630,7 +7645,8 @@ describe("DefaultRacedayComponent", () => {
       expect(component.ackModalButtonText).toBe("RD_RACE_ENDED_BTN_OK");
     });
 
-    it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true", () => {
+    it("should redirect to /raceday-setup and set forceExit to true on acknowledging the modal when raceHasEnded is true without setting skipIntro", () => {
+      sessionStorage.removeItem("skipIntro");
       fixture.detectChanges();
       component.raceHasEnded = true;
       component.showAckModal = true;
@@ -7641,6 +7657,7 @@ describe("DefaultRacedayComponent", () => {
       expect(component.showAckModal).toBeFalse();
       expect(component.forceExit).toBeTrue();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/raceday-setup"]);
+      expect(sessionStorage.getItem("skipIntro")).toBeNull();
     });
 
     it("should show exit confirmation modal on canDeactivate under normal conditions", () => {

@@ -3215,6 +3215,13 @@ export class DefaultRacedayComponent
       destUrl = currentNav.extractedUrl.toString();
     }
     const isNavigatingToSetup = destUrl.includes("raceday-setup");
+    if (
+      isNavigatingToSetup &&
+      !this.raceHasEnded &&
+      this.raceState !== RaceState.RACE_OVER
+    ) {
+      sessionStorage.setItem("skipIntro", "true");
+    }
     this.raceConnectionService.disconnect(isNavigatingToSetup);
 
     this.subscriptions.forEach((sub) => sub.unsubscribe());
@@ -3247,6 +3254,7 @@ export class DefaultRacedayComponent
   }
 
   onExitConfirm() {
+    sessionStorage.setItem("skipIntro", "true");
     this.showExitConfirmation = false;
     this.deactivateSubject.next(true);
   }

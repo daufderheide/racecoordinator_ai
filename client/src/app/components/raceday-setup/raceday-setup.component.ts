@@ -239,6 +239,12 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     for (let i = 1; i <= 29; i++) {
       this.quoteKeys.push(`RDS_QUOTE_${i}`);
     }
+
+    if (this.shouldSkipIntro()) {
+      this.showSplash = false;
+      this.minTimeElapsed = true;
+      this.connectionVerified = true;
+    }
   }
 
   @HostListener("window:resize")
@@ -274,11 +280,24 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
     this.container.clear();
     this.checkPendingUpdateSession();
 
+    const skipIntro = this.shouldSkipIntro();
+    if (skipIntro) {
+      this.showSplash = false;
+      this.minTimeElapsed = true;
+      this.connectionVerified = true;
+      sessionStorage.removeItem("skipIntro");
+      if (this.authService.currentRole !== Role.VIEWER) {
+        this.loadDefaultComponent();
+        this.hasLoadedSetupComponent = true;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    }
+
     this.initSocketSubscriptions();
     this.initTranslationSubscriptions();
     this.loadServerSettings();
 
-    const skipIntro = this.shouldSkipIntro();
     await this.processSplashScreen(skipIntro);
 
     this.connectionMonitor.startMonitoring();
@@ -338,9 +357,9 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
   }
 
   private shouldSkipIntro(): boolean {
-    const prevUrl = this.navigationService.getPreviousUrl();
+    const priorUrl = this.getPriorUrl();
     let isReturningFromNonRaceScreen = false;
-    if (prevUrl) {
+    if (priorUrl) {
       const raceScreens = [
         "/raceday",
         "/default-raceday",
@@ -349,11 +368,11 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
         "/race-results",
         "/driver-results",
       ];
-      const normalizedPrevUrl = prevUrl.split("?")[0];
+      const normalizedPriorUrl = priorUrl.split("?")[0];
       const isRaceScreen = raceScreens.some(
         (screen) =>
-          normalizedPrevUrl === screen ||
-          normalizedPrevUrl.startsWith(screen + "/"),
+          normalizedPriorUrl === screen ||
+          normalizedPriorUrl.startsWith(screen + "/"),
       );
       if (!isRaceScreen) {
         isReturningFromNonRaceScreen = true;
@@ -367,6 +386,26 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
       sessionStorage.getItem("skipIntro") === "true" ||
       isReturningFromNonRaceScreen
     );
+  }
+
+  private getPriorUrl(): string | null {
+    const routerUrl = this.router?.url ? this.router.url.split("?")[0] : null;
+    if (routerUrl && routerUrl !== "/raceday-setup" && routerUrl !== "/") {
+      return routerUrl;
+    }
+
+    const lastHistory = this.navigationService?.getLastHistoryUrl?.()
+      ? this.navigationService.getLastHistoryUrl()!.split("?")[0]
+      : null;
+    if (
+      lastHistory &&
+      lastHistory !== "/raceday-setup" &&
+      lastHistory !== "/"
+    ) {
+      return lastHistory;
+    }
+
+    return this.navigationService?.getPreviousUrl?.() || null;
   }
 
   private async processSplashScreen(skipIntro: boolean): Promise<void> {
@@ -428,6 +467,26 @@ export class RacedaySetupComponent implements OnInit, OnDestroy {
 
     if (!isViewer) {
       if (this.hasLoadedSetupComponent) {
+        try {
+          if (
+            await this.fileSystem.hasCustomFiles(
+              "raceday-setup.component.html",
+              "raceday-setup",
+            )
+          ) {
+            this.container.clear();
+            await this.loadCustomComponent("raceday-setup");
+            this.cdr.detectChanges();
+          } else if (
+            await this.fileSystem.hasCustomFiles("raceday-setup.component.html")
+          ) {
+            this.container.clear();
+            await this.loadCustomComponent();
+            this.cdr.detectChanges();
+          }
+        } catch (e: any) {
+          this.logger.error("Failed to check custom component override", e);
+        }
         return;
       }
       this.hasLoadedSetupComponent = true;

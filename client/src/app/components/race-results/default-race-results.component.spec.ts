@@ -1233,9 +1233,11 @@ describe("DefaultRaceResultsComponent", () => {
       expect(component.isReviewingPastRace).toBeTrue();
     });
 
-    it("should navigate to root on exitReview", () => {
+    it("should navigate to root on exitReview and set skipIntro in sessionStorage", () => {
+      sessionStorage.removeItem("skipIntro");
       component.exitReview();
       expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
+      expect(sessionStorage.getItem("skipIntro")).toBe("true");
     });
 
     it("should navigate to heat results on navigateToHeatResults", () => {
