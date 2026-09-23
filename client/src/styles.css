@@ -91,11 +91,6 @@ app-custom-select.teammate-select,
   overflow: visible !important;
 }
 
-.modal-backdrop {
-  z-index: 99999 !important;
-}
-
-
 /* Global Baseline for Dropdown & Menu Items */
 .dropdown-item,
 .menu-dropdown-item,
@@ -505,7 +500,7 @@ app-custom-select.teammate-select,
   pointer-events: none;
 }
 
-.layout-customizer-toolbox-wrapper > * {
+.layout-customizer-toolbox-wrapper>* {
   pointer-events: auto;
 }
 
@@ -814,12 +809,12 @@ app-custom-select.teammate-select,
 }
 
 /* Tree branch line for root widgets connecting to parent vertical line */
-.toolbox-group-content > .toolbox-widget-item {
+.toolbox-group-content>.toolbox-widget-item {
   position: relative;
   margin-left: 8px;
 }
 
-.toolbox-group-content > .toolbox-widget-item::before {
+.toolbox-group-content>.toolbox-widget-item::before {
   content: '';
   position: absolute;
   left: -17px;
@@ -882,4 +877,3 @@ app-custom-select.teammate-select,
 .toolbox-btn:active {
   transform: scale(0.98);
 }
-
