@@ -273,5 +273,43 @@ describe("Driver Model", () => {
         text: undefined,
       });
     });
+
+    it("should preserve both url and text across none, tts, and preset types", () => {
+      expect(
+        sanitizeDriverAudio({
+          type: "none",
+          url: "beep.wav",
+          text: "Best Lap",
+        }),
+      ).toEqual({
+        type: "none",
+        url: "beep.wav",
+        text: "Best Lap",
+      });
+
+      expect(
+        sanitizeDriverAudio({
+          type: "tts",
+          url: "beep.wav",
+          text: "Best Lap",
+        }),
+      ).toEqual({
+        type: "tts",
+        url: "beep.wav",
+        text: "Best Lap",
+      });
+
+      expect(
+        sanitizeDriverAudio({
+          type: "preset",
+          url: "beep.wav",
+          text: "Best Lap",
+        }),
+      ).toEqual({
+        type: "preset",
+        url: "beep.wav",
+        text: "Best Lap",
+      });
+    });
   });
 });

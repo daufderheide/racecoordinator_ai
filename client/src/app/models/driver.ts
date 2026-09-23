@@ -47,18 +47,16 @@ export function sanitizeDriverAudio(
   if (defaultType === "audio_set" && type === "preset") {
     type = "audio_set";
   }
-  if (type === "none") {
-    return { type: "none", url: undefined, text: undefined };
-  }
-  if (type === "tts") {
-    return { type: "tts", url: undefined, text: audio.text || "" };
-  }
   const cleanUrl =
-    audio.url && audio.url.trim() !== "" ? audio.url.trim() : defaultUrl;
+    audio.url && audio.url.trim() !== ""
+      ? audio.url.trim()
+      : type === "preset" || type === "audio_set"
+        ? defaultUrl
+        : audio.url;
   return {
     type,
     url: cleanUrl,
-    text: undefined,
+    text: audio.text,
   };
 }
 

@@ -54,11 +54,11 @@ public class DriverConverter {
       type = "audio_set";
     }
     String url = "";
-    if ("none".equalsIgnoreCase(type)) {
-      url = "";
-    } else if (config != null && config.getUrl() != null && !config.getUrl().trim().isEmpty()) {
+    if (config != null && config.getUrl() != null && !config.getUrl().trim().isEmpty()) {
       url = config.getUrl().trim();
-    } else if (!"tts".equalsIgnoreCase(type) && defaultUrl != null) {
+    } else if (!"tts".equalsIgnoreCase(type)
+        && !"none".equalsIgnoreCase(type)
+        && defaultUrl != null) {
       url = defaultUrl;
     }
     String text = config != null && config.getText() != null ? config.getText() : "";

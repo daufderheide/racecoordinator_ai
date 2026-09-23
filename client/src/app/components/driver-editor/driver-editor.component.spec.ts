@@ -895,12 +895,11 @@ describe("DriverEditorComponent", () => {
         of({ ...d, entity_id: id }),
       );
 
-      // 1. Change type to none
+      // 1. Change type to none (preserves previous preset url)
       component.isEditMode = true;
       component.onAudioTypeChange("lap", "none");
       expect(component.editingDriver!.lapAudio.type).toBe("none");
-      expect(component.editingDriver!.lapAudio.url).toBeUndefined();
-      expect(component.editingDriver!.lapAudio.text).toBeUndefined();
+      expect(component.editingDriver!.lapAudio.url).toBe("default_beep");
       expect(dataService.updateDriver).toHaveBeenCalled();
       expect(component.isSaving).toBeFalse();
       expect(component.isDirtyState()).toBeFalse();
@@ -1005,6 +1004,45 @@ describe("DriverEditorComponent", () => {
 
       component.onToggleEditMode();
       expect(component.isEditMode).toBeFalse();
+    }));
+
+    it("should preserve preset and TTS values when toggling between types in driver editor", fakeAsync(() => {
+      const driver = new Driver("d1", "ValidName", "ValidNick");
+      setupDriver(driver);
+      dataService.updateDriver.and.callFake((id: string, d: any) =>
+        of({ ...d, entity_id: id }),
+      );
+
+      component.isEditMode = true;
+
+      // 1. Set custom preset URL
+      component.onAudioUrlChange("lap", "car_horn.wav");
+      expect(component.editingDriver!.lapAudio.url).toBe("car_horn.wav");
+
+      // 2. Switch to TTS and enter text
+      component.onAudioTypeChange("lap", "tts");
+      component.onAudioTextChange("lap", "Best Lap Ever");
+      expect(component.editingDriver!.lapAudio.type).toBe("tts");
+      expect(component.editingDriver!.lapAudio.text).toBe("Best Lap Ever");
+      expect(component.editingDriver!.lapAudio.url).toBe("car_horn.wav");
+
+      // 3. Switch to None
+      component.onAudioTypeChange("lap", "none");
+      expect(component.editingDriver!.lapAudio.type).toBe("none");
+      expect(component.editingDriver!.lapAudio.text).toBe("Best Lap Ever");
+      expect(component.editingDriver!.lapAudio.url).toBe("car_horn.wav");
+
+      // 4. Switch back to TTS -> text is preserved
+      component.onAudioTypeChange("lap", "tts");
+      expect(component.editingDriver!.lapAudio.type).toBe("tts");
+      expect(component.editingDriver!.lapAudio.text).toBe("Best Lap Ever");
+      expect(component.editingDriver!.lapAudio.url).toBe("car_horn.wav");
+
+      // 5. Switch back to Preset -> preset url is preserved
+      component.onAudioTypeChange("lap", "preset");
+      expect(component.editingDriver!.lapAudio.type).toBe("preset");
+      expect(component.editingDriver!.lapAudio.url).toBe("car_horn.wav");
+      expect(component.editingDriver!.lapAudio.text).toBe("Best Lap Ever");
     }));
 
     it("should consider drivers equal when audio is none regardless of url, and when tts matches text", () => {
