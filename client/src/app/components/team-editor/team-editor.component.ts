@@ -38,7 +38,11 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
+import {
+  getNextSelectionAfterDelete,
+  isEntityNameUnique,
+  mapToSelectItems,
+} from "@app/utils/editor-utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 @Component({
@@ -590,15 +594,19 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         next: () => {
           this.isSaving = false;
           this.isEditMode = false;
+          const nextTeam = getNextSelectionAfterDelete(
+            this.allTeams,
+            idToDelete,
+          );
           this.allTeams = this.allTeams.filter(
             (t) => t.entity_id !== idToDelete,
           );
           this.updateTeamSelectItems();
-          if (this.allTeams.length > 0) {
-            this.selectTeam(this.allTeams[0]);
+          if (nextTeam) {
+            this.selectTeam(nextTeam);
             this.router.navigate([], {
               relativeTo: this.route,
-              queryParams: { id: this.allTeams[0].entity_id },
+              queryParams: { id: nextTeam.entity_id },
               queryParamsHandling: "merge",
               replaceUrl: true,
             });

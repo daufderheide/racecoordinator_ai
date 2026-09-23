@@ -413,6 +413,43 @@ describe("DriverEditorComponent", () => {
     expect(component.editingDriver?.name).toBe("Next Driver");
   });
 
+  it("should auto-select next driver in alphabetical order, or previous if last was deleted", () => {
+    spyOn(window, "confirm").and.returnValue(true);
+    dataService.deleteDriver.and.returnValue(of({}));
+
+    const driverA = new Driver("d1", "Driver A", "");
+    const driverB = new Driver("d2", "Driver B", "");
+    const driverC = new Driver("d3", "Driver C", "");
+
+    setupDriver(driverB);
+    component.allDrivers = [driverA, driverB, driverC];
+
+    // Delete B -> C should be selected
+    component.deleteDriver();
+    expect(dataService.deleteDriver).toHaveBeenCalledWith("d2");
+    expect(component.selectedDriverId).toBe("d3");
+    expect(component.editingDriver?.name).toBe("Driver C");
+
+    // Delete C -> A should be selected (since C was the last in list)
+    component.deleteDriver();
+    expect(dataService.deleteDriver).toHaveBeenCalledWith("d3");
+    expect(component.selectedDriverId).toBe("d1");
+    expect(component.editingDriver?.name).toBe("Driver A");
+  });
+
+  it("should start new driver if last remaining driver is deleted", () => {
+    spyOn(window, "confirm").and.returnValue(true);
+    dataService.deleteDriver.and.returnValue(of({}));
+    spyOn(component, "startNewDriver").and.callThrough();
+
+    const driverA = new Driver("d1", "Driver A", "");
+    setupDriver(driverA);
+    component.allDrivers = [driverA];
+
+    component.deleteDriver();
+    expect(component.startNewDriver).toHaveBeenCalled();
+  });
+
   it("should propagate 'returnUrl' when navigating back", () => {
     mockActivatedRoute.snapshot.queryParamMap.get.and.callFake(
       (key: string) => {

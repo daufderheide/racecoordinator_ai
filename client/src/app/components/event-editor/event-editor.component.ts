@@ -33,7 +33,10 @@ import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { mapToSelectItems } from "@app/utils/editor-utils";
+import {
+  getNextSelectionAfterDelete,
+  mapToSelectItems,
+} from "@app/utils/editor-utils";
 
 @Component({
   standalone: true,
@@ -565,15 +568,19 @@ export class EventEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           next: () => {
             this.isSaving = false;
             this.isEditMode = false;
+            const nextEvent = getNextSelectionAfterDelete(
+              this.existingEvents,
+              idToDelete,
+            );
             this.existingEvents = this.existingEvents.filter(
               (e) => e.entity_id !== idToDelete,
             );
             this.updateEventSelectItems();
-            if (this.existingEvents.length > 0) {
-              this.selectEvent(this.existingEvents[0]);
+            if (nextEvent) {
+              this.selectEvent(nextEvent);
               this.router.navigate([], {
                 relativeTo: this.route,
-                queryParams: { id: this.existingEvents[0].entity_id },
+                queryParams: { id: nextEvent.entity_id },
                 queryParamsHandling: "merge",
                 replaceUrl: true,
               });

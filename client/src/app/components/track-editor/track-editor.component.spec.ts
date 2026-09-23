@@ -1556,6 +1556,29 @@ describe("TrackEditorComponent", () => {
       expect(component.isEditMode).toBeFalse();
     });
 
+    it("should auto-select next track in alphabetical order, or previous if last was deleted", () => {
+      const trackA = new Track({ entity_id: "t1", name: "Track A", lanes: [] });
+      const trackB = new Track({ entity_id: "t2", name: "Track B", lanes: [] });
+      const trackC = new Track({ entity_id: "t3", name: "Track C", lanes: [] });
+
+      component.allTracks = [trackA, trackB, trackC];
+      component.selectTrack(trackB);
+      spyOn(window, "confirm").and.returnValue(true);
+      dataService.deleteTrack.and.returnValue(of(true));
+
+      // Delete B -> C is selected
+      component.deleteTrack();
+      expect(dataService.deleteTrack).toHaveBeenCalledWith("t2");
+      expect(component.selectedTrackId).toBe("t3");
+      expect(component.editingTrack?.name).toBe("Track C");
+
+      // Delete C -> A is selected
+      component.deleteTrack();
+      expect(dataService.deleteTrack).toHaveBeenCalledWith("t3");
+      expect(component.selectedTrackId).toBe("t1");
+      expect(component.editingTrack?.name).toBe("Track A");
+    });
+
     it("should stay in edit mode during continuous auto-save", fakeAsync(() => {
       component.isEditMode = true;
       component.trackName = "Auto Saved Track";
