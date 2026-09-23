@@ -84,6 +84,9 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     undefined,
   );
   localText = signal<string | undefined>(undefined);
+  private savedPresetUrl: string | undefined = undefined;
+  private savedPresetAsset: any | null = null;
+  private savedTtsText: string | undefined = undefined;
 
   effectiveUrl = computed(() => {
     return this.localUrl() ?? this.url();
@@ -236,13 +239,22 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.localType.set(undefined);
     }
     if (changes["text"]) {
-      this.localText.set(undefined);
+      const textVal = this.text();
+      if (textVal !== undefined && textVal !== "") {
+        this.savedTtsText = textVal;
+      }
+      if (textVal !== undefined) {
+        this.localText.set(undefined);
+      }
     }
     if (changes["url"] || changes["assetId"]) {
       const currentUrlVal = this.url();
       const currentAssetIdVal = this.assetId();
+      if (currentUrlVal || currentAssetIdVal) {
+        this.savedPresetUrl = currentAssetIdVal || currentUrlVal;
+      }
       const local = this.localSelectedAsset();
-      if (local) {
+      if (local && (currentUrlVal || currentAssetIdVal)) {
         const localId =
           local.model?.entityId || local.entity_id || local.id || local.url;
         if (
@@ -269,23 +281,70 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     if (this.isPlaying) {
       this.stop();
     }
-    this.localType.set(newType);
-    if (newType === "none" || newType === "tts") {
-      this.localSelectedAsset.set(null);
-      this.localUrl.set(undefined);
+
+    const currentUrl = this.effectiveUrl() || this.assetId();
+    if (currentUrl) {
+      this.savedPresetUrl = currentUrl;
     }
+    const currentAsset = this.selectedAsset() || this.localSelectedAsset();
+    if (currentAsset) {
+      this.savedPresetAsset = currentAsset;
+    }
+    const currentText = this.effectiveText();
+    if (currentText !== undefined && currentText !== "") {
+      this.savedTtsText = currentText;
+    }
+
+    this.localType.set(newType);
+
+    if (newType === "preset" || newType === "audio_set") {
+      const restoreUrl = this.effectiveUrl() || this.savedPresetUrl;
+      if (restoreUrl) {
+        this.localUrl.set(restoreUrl);
+        if (this.savedPresetAsset) {
+          this.localSelectedAsset.set(this.savedPresetAsset);
+          this.assetSelected.emit(this.savedPresetAsset);
+        }
+        this.urlChange.emit(restoreUrl);
+      }
+    } else if (newType === "tts") {
+      const restoreText = this.effectiveText() ?? this.savedTtsText;
+      if (restoreText !== undefined) {
+        this.localText.set(restoreText);
+        this.textChange.emit(restoreText);
+      }
+    }
+
     if (newType) {
       this.typeChange.emit(newType);
+      this.change.emit({
+        type: newType,
+        url: this.effectiveUrl(),
+        text: this.effectiveText(),
+      });
     }
   }
 
   onUrlChange(newUrl: string) {
+    this.localUrl.set(newUrl);
+    this.savedPresetUrl = newUrl;
     this.urlChange.emit(newUrl);
+    this.change.emit({
+      type: this.effectiveType(),
+      url: newUrl,
+      text: this.effectiveText(),
+    });
   }
 
   onTextChange(newText: string) {
     this.localText.set(newText);
+    this.savedTtsText = newText;
     this.textChange.emit(newText);
+    this.change.emit({
+      type: this.effectiveType(),
+      url: this.effectiveUrl(),
+      text: newText,
+    });
   }
 
   openItemSelector() {
@@ -755,6 +814,8 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     const val =
       asset?.model?.entityId || asset?.entity_id || asset?.url || asset?.id;
     this.localUrl.set(val);
+    this.savedPresetUrl = val;
+    this.savedPresetAsset = asset;
 
     this.localAssets.update((prev) => {
       const id = asset.model?.entityId || asset.entity_id || asset.id;

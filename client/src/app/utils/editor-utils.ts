@@ -66,6 +66,48 @@ export function mapToSelectItems<T extends NamedEntity>(
 }
 
 /**
+ * Determines the next entity to select after deleting an entity from a collection.
+ * Sorts the collection in natural alphabetical order by name (with ID tie-breaker).
+ * If the deleted item is not the last in the list, selects the next item.
+ * If the deleted item is the last item in the list, selects the previous item.
+ * Returns null if the collection has 1 or fewer items or is null/undefined.
+ *
+ * @param collection The collection of entities before deletion.
+ * @param deletedId The ID of the entity being deleted.
+ * @returns The next entity to select, or null if no entities remain.
+ */
+export function getNextSelectionAfterDelete<T extends NamedEntity>(
+  collection: T[] | null | undefined,
+  deletedId: string,
+): T | null {
+  if (!collection || collection.length <= 1) {
+    return null;
+  }
+
+  const sorted = collection.slice().sort((a, b) => {
+    const cmp = naturalSortCompare(a.name || "", b.name || "");
+    if (cmp !== 0) return cmp;
+    const idA = a.entity_id ?? a.id ?? "";
+    const idB = b.entity_id ?? b.id ?? "";
+    return idA.localeCompare(idB);
+  });
+
+  const index = sorted.findIndex(
+    (item) => (item.entity_id ?? item.id) === deletedId,
+  );
+
+  if (index === -1) {
+    return sorted[0] ?? null;
+  }
+
+  if (index < sorted.length - 1) {
+    return sorted[index + 1];
+  } else {
+    return sorted[index - 1];
+  }
+}
+
+/**
  * Manages expander section state persistence in localStorage with error resilience.
  */
 export class ExpanderStateManager<T extends Record<string, boolean>> {

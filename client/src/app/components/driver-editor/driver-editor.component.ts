@@ -35,6 +35,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { createTTSContext, mockTTSContext } from "@app/utils/audio";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
+import { getNextSelectionAfterDelete } from "@app/utils/editor-utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 import {
@@ -1042,15 +1043,19 @@ export class DriverEditorComponent
         next: () => {
           this.isSaving = false;
           this.isEditMode = false;
+          const nextDriver = getNextSelectionAfterDelete(
+            this.allDrivers,
+            idToDelete,
+          );
           this.allDrivers = this.allDrivers.filter(
             (d) => d.entity_id !== idToDelete,
           );
           this.updateDriverSelectItems();
-          if (this.allDrivers.length > 0) {
-            this.selectDriver(this.allDrivers[0]);
+          if (nextDriver) {
+            this.selectDriver(nextDriver);
             this.router.navigate([], {
               relativeTo: this.route,
-              queryParams: { id: this.allDrivers[0].entity_id },
+              queryParams: { id: nextDriver.entity_id },
               queryParamsHandling: "merge",
               replaceUrl: true,
             });

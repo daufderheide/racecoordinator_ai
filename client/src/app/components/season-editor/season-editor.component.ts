@@ -30,7 +30,11 @@ import { NavigationService } from "@app/services/navigation.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
+import {
+  getNextSelectionAfterDelete,
+  isEntityNameUnique,
+  mapToSelectItems,
+} from "@app/utils/editor-utils";
 
 import {
   areSeasonsEqual,
@@ -768,15 +772,19 @@ export class SeasonEditorComponent
           next: () => {
             this.isSaving = false;
             this.isEditMode = false;
+            const nextSeason = getNextSelectionAfterDelete(
+              this.existingSeasons,
+              idToDelete,
+            );
             this.existingSeasons = this.existingSeasons.filter(
               (s) => s.entity_id !== idToDelete,
             );
             this.updateSeasonSelectItems();
-            if (this.existingSeasons.length > 0) {
-              this.selectSeason(this.existingSeasons[0]);
+            if (nextSeason) {
+              this.selectSeason(nextSeason);
               this.router.navigate([], {
                 relativeTo: this.route,
-                queryParams: { id: this.existingSeasons[0].entity_id },
+                queryParams: { id: nextSeason.entity_id },
                 queryParamsHandling: "merge",
                 replaceUrl: true,
               });

@@ -334,12 +334,7 @@ export function updateDriverAudioType(
   const audio = driver[key] as any;
   if (audio) {
     audio.type = type;
-    if (type === "none") {
-      audio.url = undefined;
-      audio.text = undefined;
-    } else if (type === "tts") {
-      audio.url = undefined;
-    } else if (!audio.url) {
+    if ((type === "preset" || type === "audio_set") && !audio.url) {
       audio.url = defaultUrl;
     }
   }

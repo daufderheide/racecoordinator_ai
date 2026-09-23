@@ -4345,6 +4345,32 @@ describe("UIEditorComponent", () => {
       );
     });
 
+    it("should render Custom UI Settings and Audio Settings sections inside config-row", () => {
+      component.sectionsExpanded["config"] = true;
+      component.sectionsExpanded["audioSettings"] = true;
+      fixture.detectChanges();
+
+      const configRow = fixture.nativeElement.querySelector(".config-row");
+      expect(configRow).toBeTruthy();
+
+      const customUiSection = configRow.querySelector(
+        '.config-section[data-section="config"]',
+      );
+      expect(customUiSection).toBeTruthy();
+
+      const audioSettingsSection = configRow.querySelector(
+        '.config-section[data-section="audioSettings"]',
+      );
+      expect(audioSettingsSection).toBeTruthy();
+    });
+
+    it("should allow long TTS voice strings without error", () => {
+      const longVoice =
+        "Microsoft Server Speech Text to Speech Voice (en-US, AriaNeural) (en-US)";
+      component.onTtsVoiceChange(longVoice);
+      expect(component.editingSettings.ttsVoice).toBe(longVoice);
+    });
+
     it("should focus custom UI and theme name inputs", (done) => {
       const uiInput = document.createElement("input");
       uiInput.id = "custom-ui-name-input-ui_123";

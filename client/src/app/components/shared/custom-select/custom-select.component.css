@@ -39,6 +39,7 @@
   color: #94a3b8;
   margin-left: 8px;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .custom-select-container.open .dropdown-icon {
@@ -49,6 +50,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .custom-select-dropdown {

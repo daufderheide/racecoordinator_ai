@@ -56,7 +56,11 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
+import {
+  getNextSelectionAfterDelete,
+  isEntityNameUnique,
+  mapToSelectItems,
+} from "@app/utils/editor-utils";
 
 import {
   calculateAnalogPitHover,
@@ -459,15 +463,19 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         next: () => {
           this.isSaving = false;
           this.isEditMode = false;
+          const nextRace = getNextSelectionAfterDelete(
+            this.allRaces,
+            idToDelete,
+          );
           this.allRaces = this.allRaces.filter(
             (r) => r.entity_id !== idToDelete,
           );
           this.updateRaceSelectItems();
-          if (this.allRaces.length > 0) {
-            this.selectRace(this.allRaces[0]);
+          if (nextRace) {
+            this.selectRace(nextRace);
             this.router.navigate([], {
               relativeTo: this.route,
-              queryParams: { id: this.allRaces[0].entity_id },
+              queryParams: { id: nextRace.entity_id },
               queryParamsHandling: "merge",
               replaceUrl: true,
             });

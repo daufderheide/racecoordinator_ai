@@ -1603,6 +1603,47 @@ describe("SeasonEditorComponent", () => {
       expect(component.selectedSeasonId).toBe("s2");
     }));
 
+    it("should auto-select next season in alphabetical order, or previous if last was deleted", fakeAsync(() => {
+      const dataService = TestBed.inject(DataService);
+      const sA: Season = {
+        entity_id: "s1",
+        name: "Season A",
+        drops: 0,
+        races: [],
+      };
+      const sB: Season = {
+        entity_id: "s2",
+        name: "Season B",
+        drops: 0,
+        races: [],
+      };
+      const sC: Season = {
+        entity_id: "s3",
+        name: "Season C",
+        drops: 0,
+        races: [],
+      };
+
+      component.existingSeasons = [sA, sB, sC];
+      component.selectSeason(sB);
+      spyOn(window, "confirm").and.returnValue(true);
+      spyOn(dataService, "deleteSeason").and.returnValue(of({}));
+
+      // Delete B -> C is selected
+      component.onDeleteSeason();
+      tick(200);
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s2");
+      expect(component.selectedSeasonId).toBe("s3");
+      expect(component.editingSeason?.name).toBe("Season C");
+
+      // Delete C -> A is selected
+      component.onDeleteSeason();
+      tick(200);
+      expect(dataService.deleteSeason).toHaveBeenCalledWith("s3");
+      expect(component.selectedSeasonId).toBe("s1");
+      expect(component.editingSeason?.name).toBe("Season A");
+    }));
+
     it("should disable undo/redo and keyboard shortcuts in read-only mode, and enable in edit mode", () => {
       const s1: Season = {
         entity_id: "s1",
