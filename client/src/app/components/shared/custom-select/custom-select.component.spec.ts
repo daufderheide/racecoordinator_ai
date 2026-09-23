@@ -153,7 +153,7 @@ describe("CustomSelectComponent", () => {
     expect(scrollSpy).toHaveBeenCalled();
   });
 
-  it("should fallback to scrollIntoView when dropdown clientHeight is 0", fakeAsync(() => {
+  it("should not set scrollTop when dropdown is not scrollable (scrollHeight <= clientHeight)", fakeAsync(() => {
     const hostFixture = TestBed.createComponent(TestHostComponent);
     hostFixture.componentInstance.val = "opt3";
     hostFixture.detectChanges();
@@ -168,23 +168,31 @@ describe("CustomSelectComponent", () => {
     const dropdown = hostElement.querySelector(
       ".custom-select-dropdown",
     ) as HTMLElement;
-    const selectedEl = hostElement.querySelector(
-      ".custom-select-option.selected",
-    ) as HTMLElement;
 
-    Object.defineProperty(dropdown, "clientHeight", {
-      value: 0,
+    let assignedScrollTop = 0;
+    Object.defineProperty(dropdown, "scrollTop", {
+      get: () => assignedScrollTop,
+      set: (val: number) => {
+        assignedScrollTop = val;
+      },
       configurable: true,
     });
-    const scrollIntoViewSpy = spyOn(selectedEl, "scrollIntoView");
+    Object.defineProperty(dropdown, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+    Object.defineProperty(dropdown, "scrollHeight", {
+      value: 150,
+      configurable: true,
+    });
 
     select.scrollToSelectedOption();
     tick(10);
 
-    expect(scrollIntoViewSpy).toHaveBeenCalledWith({ block: "nearest" });
+    expect(assignedScrollTop).toBe(0);
   }));
 
-  it("should center selected option when dropdown has clientHeight > 0", fakeAsync(() => {
+  it("should center selected option when dropdown is scrollable (scrollHeight > clientHeight)", fakeAsync(() => {
     const hostFixture = TestBed.createComponent(TestHostComponent);
     hostFixture.componentInstance.val = "opt3";
     hostFixture.detectChanges();
@@ -213,6 +221,10 @@ describe("CustomSelectComponent", () => {
     });
     Object.defineProperty(dropdown, "clientHeight", {
       value: 200,
+      configurable: true,
+    });
+    Object.defineProperty(dropdown, "scrollHeight", {
+      value: 600,
       configurable: true,
     });
     Object.defineProperty(selectedEl, "offsetTop", {

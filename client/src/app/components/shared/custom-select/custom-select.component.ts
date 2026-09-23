@@ -153,16 +153,26 @@ export class CustomSelectComponent
         ".custom-select-option.selected",
       ) as HTMLElement | null;
 
-      if (dropdown && selectedEl) {
-        if (dropdown.clientHeight > 0) {
+      if (!dropdown || !selectedEl) return;
+
+      const doScroll = () => {
+        if (!this.isOpen) return;
+        if (
+          dropdown.clientHeight > 0 &&
+          dropdown.scrollHeight > dropdown.clientHeight
+        ) {
           const targetScroll =
             selectedEl.offsetTop -
             dropdown.clientHeight / 2 +
             selectedEl.offsetHeight / 2;
           dropdown.scrollTop = Math.max(0, targetScroll);
-        } else {
-          selectedEl.scrollIntoView({ block: "nearest" });
         }
+      };
+
+      if (dropdown.clientHeight > 0) {
+        doScroll();
+      } else {
+        requestAnimationFrame(() => doScroll());
       }
     }, 0);
   }
