@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.85] - 2026-09-23
+
+### 🚀 New Features
+
+- Auto scroll selected element into view for the custom selector pulldown ([57817b69](https://github.com/daufderheide/racecoordinator_ai/commit/57817b69))
+- add getNextSelectionAfterDelete utility and update editors to maintain selection state on delete ([23f7127e](https://github.com/daufderheide/racecoordinator_ai/commit/23f7127e))
+- preserve audio url and text when switching between audio types [skip-screendiffs] ([a514e4ec](https://github.com/daufderheide/racecoordinator_ai/commit/a514e4ec))
+
+### 🐛 Bug Fixes
+
+- only scroll custom select dropdown when scrollHeight exceeds clientHeight ([04f453b9](https://github.com/daufderheide/racecoordinator_ai/commit/04f453b9))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.84...v1.0.0-beta.85">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.84] - 2026-09-22
 
 ### 🚀 New Features
