@@ -4,7 +4,7 @@
   [class.open]="isOpen"
 >
   <div class="custom-select-trigger" (click)="toggleOpen()">
-    <span class="selected-text">
+    <span class="selected-text" [title]="selectedLabel || ''">
       @if (selectedLabel) {
         {{ selectedLabel }}
       } @else {
