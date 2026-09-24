@@ -94,12 +94,19 @@ test.describe("Driver Editor Visuals", () => {
     await page.locator(".loader-overlay").waitFor({ state: "hidden" });
 
     await page.locator("#add-item-btn").click();
-    await page.waitForFunction(
-      () =>
-        (document.querySelector("#driver-name-input") as HTMLInputElement)
-          ?.value === "New Driver",
-    );
-    await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+    await page.waitForFunction(() => {
+      const input = document.querySelector(
+        "#driver-name-input",
+      ) as HTMLInputElement;
+      return (
+        input &&
+        input.value === "New Driver" &&
+        document.activeElement === input &&
+        input.selectionStart === 0 &&
+        input.selectionEnd === input.value.length
+      );
+    });
+    await page.mouse.move(0, 0);
     await TestSetupHelper.disableAnimations(page);
 
     await expect(page).toHaveScreenshot("driver-editor-new.png", {
