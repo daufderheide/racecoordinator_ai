@@ -212,6 +212,9 @@ public class Racing implements IRaceState {
                 Set<Integer> finishedLanes = executionManager.getFinishedLanes();
                 if (isTimed) {
                   if (!isInfiniteTimed && race.getRaceTime() <= 0) {
+                    if (allowFinish == AllowFinish.SingleLapAutoSegments) {
+                      executionManager.capturePartialLapTimes();
+                    }
                     race.resetRaceTime();
                     if (allowFinish == AllowFinish.None
                         || allowFinish == AllowFinish.NoneAutoSegments) {

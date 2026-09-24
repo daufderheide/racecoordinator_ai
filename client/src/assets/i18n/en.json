@@ -1162,6 +1162,7 @@
   "RE_AF_NONE": "Do not allow finish",
   "RE_AF_NONE_AUTO_SEGMENTS": "Do not allow finish (auto segments)",
   "RE_AF_SINGLE_LAP": "Allow Finish (single lap)",
+  "RE_AF_SINGLE_LAP_AUTO_SEGMENTS": "Allow Finish (single lap) (auto segments)",
   "RE_ALLOW_FINISH": "Allow Finish",
   "RE_ANALOG_FUEL_DISABLED_TOOLTIP": "Analog fuel is disabled because the selected track has digital fuel hardware configured. Use Digital Fuel instead or configure an analog track.",
   "RE_ANALOG_FUEL_HEADER": "Analog Fuel",

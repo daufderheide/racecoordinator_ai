@@ -1427,6 +1427,39 @@ describe("RaceEditorComponent", () => {
     expect(dataService.updateRace).toHaveBeenCalled();
   }));
 
+  it("should trigger autoSaveRace when allow_finish is modified", fakeAsync(async () => {
+    await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      RaceEditorHarness,
+    );
+
+    component.editingRace.name = "Allow Finish Test";
+    component.editingRace.entity_id = "1";
+    component.editingRace.heat_scoring = {
+      finish_method: "Lap",
+      finish_value: 10,
+      heat_ranking: "LAP_COUNT",
+      heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+      allow_finish: "None",
+    };
+    component.originalRace = deepCopy(component.editingRace);
+    component.undoManager.initialize(component.editingRace!);
+
+    dataService.updateRace.and.returnValue(of({}));
+
+    // Modify allow_finish
+    component.editingRace.heat_scoring.allow_finish = "SingleLapAutoSegments";
+    component.captureState();
+    fixture.detectChanges();
+    tick();
+
+    expect(dataService.updateRace).toHaveBeenCalled();
+    const [id, payload] = dataService.updateRace.calls.mostRecent().args;
+    expect(id).toBe("1");
+    expect(payload.heat_scoring.allow_finish).toBe("SingleLapAutoSegments");
+    expect(payload.heat_scoring.allowFinish).toBe("SingleLapAutoSegments");
+  }));
+
   describe("Expander State Save/Load", () => {
     beforeEach(() => {
       localStorage.clear();

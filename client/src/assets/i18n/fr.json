@@ -1162,6 +1162,7 @@
   "RE_AF_NONE": "Ne pas autoriser l'arrivée",
   "RE_AF_NONE_AUTO_SEGMENTS": "Ne pas autoriser l'arrivée (segments automatiques)",
   "RE_AF_SINGLE_LAP": "Autoriser l'arrivée (un tour)",
+  "RE_AF_SINGLE_LAP_AUTO_SEGMENTS": "Autoriser l'arrivée (un tour) (segments automatiques)",
   "RE_ALLOW_FINISH": "Autoriser l'arrivée",
   "RE_ANALOG_FUEL_DISABLED_TOOLTIP": "Le carburant analogique est désactivé car la piste sélectionnée est configurée avec du matériel de carburant numérique. Utilisez le carburant numérique ou configurez une piste analogique.",
   "RE_ANALOG_FUEL_HEADER": "Carburant analogique",

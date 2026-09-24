@@ -1162,6 +1162,7 @@
   "RE_AF_NONE": "Finish niet toestaan",
   "RE_AF_NONE_AUTO_SEGMENTS": "Finish niet toestaan (automatische segmenten)",
   "RE_AF_SINGLE_LAP": "Finish Toestaan (enkele ronde)",
+  "RE_AF_SINGLE_LAP_AUTO_SEGMENTS": "Finish Toestaan (enkele ronde) (automatische segmenten)",
   "RE_ALLOW_FINISH": "Finish Toestaan",
   "RE_ANALOG_FUEL_DISABLED_TOOLTIP": "Analoge brandstof is uitgeschakeld omdat het geselecteerde circuit digitale brandstofhardware heeft geconfigureerd. Gebruik in plaats daarvan digitale brandstof of configureer een analoog circuit.",
   "RE_ANALOG_FUEL_HEADER": "Analoge brandstof",

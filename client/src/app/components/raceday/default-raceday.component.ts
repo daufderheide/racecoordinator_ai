@@ -520,9 +520,8 @@ export class DefaultRacedayComponent
   }
 
   protected get isAutoSegments(): boolean {
-    return (
-      (this.race?.heat_scoring?.allowFinish as string) === "NoneAutoSegments"
-    );
+    const af = this.race?.heat_scoring?.allowFinish as string;
+    return af === "NoneAutoSegments" || af === "SingleLapAutoSegments";
   }
 
   protected getTimerFormatOptions(): TimerFormatOptions {

@@ -1061,6 +1061,49 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     };
   }
 
+  private normalizeHeatScoring(heatScoring: any): any {
+    if (!heatScoring) {
+      return {
+        finish_method: "Lap",
+        finish_value: 10,
+        heat_ranking: "LAP_COUNT",
+        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
+        allow_finish: "None",
+        finishMethod: "Lap",
+        finishValue: 10,
+        heatRanking: "LAP_COUNT",
+        heatRankingTiebreaker: "FASTEST_LAP_TIME",
+        allowFinish: "None",
+      };
+    }
+    const finishMethod =
+      heatScoring.finish_method ?? heatScoring.finishMethod ?? "Lap";
+    const finishValue =
+      heatScoring.finish_value ?? heatScoring.finishValue ?? 10;
+    const heatRanking =
+      heatScoring.heat_ranking ?? heatScoring.heatRanking ?? "LAP_COUNT";
+    const heatRankingTiebreaker =
+      heatScoring.heat_ranking_tiebreaker ??
+      heatScoring.heatRankingTiebreaker ??
+      "FASTEST_LAP_TIME";
+    const allowFinish =
+      heatScoring.allow_finish ?? heatScoring.allowFinish ?? "None";
+
+    return {
+      ...deepCopy(heatScoring),
+      finish_method: finishMethod,
+      finish_value: finishValue,
+      heat_ranking: heatRanking,
+      heat_ranking_tiebreaker: heatRankingTiebreaker,
+      allow_finish: allowFinish,
+      finishMethod: finishMethod,
+      finishValue: finishValue,
+      heatRanking: heatRanking,
+      heatRankingTiebreaker: heatRankingTiebreaker,
+      allowFinish: allowFinish,
+    };
+  }
+
   private normalizeRace(race: any): any {
     const normalized = {
       ...deepCopy(race),
@@ -1084,13 +1127,9 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         overall_time_limit: 0.0,
         require_pit_stop_change_driver: false,
       },
-      heat_scoring: race.heat_scoring || {
-        finish_method: "Lap",
-        finish_value: 10,
-        heat_ranking: "LAP_COUNT",
-        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        allow_finish: "None",
-      },
+      heat_scoring: this.normalizeHeatScoring(
+        race.heat_scoring || race.heatScoring,
+      ),
       overall_scoring: race.overall_scoring || {
         dropped_heats: 0,
         ranking_method: "LAP_COUNT",
@@ -1342,13 +1381,7 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       track_entity_id: trackId,
       theme_id: themeId,
       heat_rotation_type: "RoundRobin",
-      heat_scoring: {
-        finish_method: "Lap",
-        finish_value: 10,
-        heat_ranking: "LAP_COUNT",
-        heat_ranking_tiebreaker: "FASTEST_LAP_TIME",
-        allow_finish: "None",
-      },
+      heat_scoring: this.normalizeHeatScoring(null),
       overall_scoring: {
         dropped_heats: 0,
         ranking_method: "LAP_COUNT",
@@ -1514,11 +1547,35 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.enforceFuelRules();
     this.syncSelectedCustomRotationAsset();
     this.syncHeatPositionPoints();
+    this.syncHeatScoringProperties();
     this.undoManager.captureState();
     // Regenerate heats when rotation type changes (even for new races)
     if (this.driverCount > 0) {
       this.loadHeats();
     }
+  }
+
+  private syncHeatScoringProperties() {
+    if (!this.editingRace?.heat_scoring) return;
+    const hs = this.editingRace.heat_scoring;
+    const allowFinish = hs.allow_finish ?? hs.allowFinish ?? "None";
+    hs.allow_finish = allowFinish;
+    hs.allowFinish = allowFinish;
+    const finishMethod = hs.finish_method ?? hs.finishMethod ?? "Lap";
+    hs.finish_method = finishMethod;
+    hs.finishMethod = finishMethod;
+    const finishValue = hs.finish_value ?? hs.finishValue ?? 10;
+    hs.finish_value = finishValue;
+    hs.finishValue = finishValue;
+    const heatRanking = hs.heat_ranking ?? hs.heatRanking ?? "LAP_COUNT";
+    hs.heat_ranking = heatRanking;
+    hs.heatRanking = heatRanking;
+    const tiebreaker =
+      hs.heat_ranking_tiebreaker ??
+      hs.heatRankingTiebreaker ??
+      "FASTEST_LAP_TIME";
+    hs.heat_ranking_tiebreaker = tiebreaker;
+    hs.heatRankingTiebreaker = tiebreaker;
   }
 
   private validateHeatConfigurations() {
@@ -2872,6 +2929,12 @@ export class RaceEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     const payload = deepCopy(race);
     payload["@id"] = 1;
     delete payload.track;
+    if (payload.heat_scoring) {
+      const allowFinish =
+        payload.heat_scoring.allow_finish ?? payload.heat_scoring.allowFinish;
+      payload.heat_scoring.allow_finish = allowFinish;
+      payload.heat_scoring.allowFinish = allowFinish;
+    }
     return payload;
   }
 

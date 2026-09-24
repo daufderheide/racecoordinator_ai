@@ -36,6 +36,12 @@ O espaço de trabalho é dividido em dois painéis sincronizados:
 
 ### Opções de Pontuação
 - **Pontuação da Bateria**: Conclusão por voltas ou tempo limite, método de classificação e desempates.
+  - **Permitir terminar**: Defina como os carros completam suas voltas quando o líder finaliza ou o tempo expira:
+    - *Não permitir finalizar*: A bateria termina imediatamente.
+    - *Permitir terminar*: Todos os pilotos continuam até cumprirem os requisitos.
+    - *Permitir terminar (uma volta)*: Os pilotos podem concluir sua volta atual; essa volta conta no total.
+    - *Não permitir finalizar (segmentos automáticos)*: A bateria termina imediatamente e frações de volta são estimadas usando a mediana.
+    - *Permitir terminar (uma volta) (segmentos automáticos)*: Os pilotos concluem a volta na pista; a volta não conta como inteira, mas a fração é calculada pelo tempo antes do fim dividido pelo tempo da volta (`pctTraveled = partialLapTime / lapTime`).
 - **Pontuação Geral**: Método de classificação geral, regras de desempate e baterias descartadas.
 - **Pontuação da Temporada**: Distribuição de pontos por posição para campeonatos.
 

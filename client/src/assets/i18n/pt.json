@@ -1162,6 +1162,7 @@
   "RE_AF_NONE": "Não permitir finalizar",
   "RE_AF_NONE_AUTO_SEGMENTS": "Não permitir finalizar (segmentos automáticos)",
   "RE_AF_SINGLE_LAP": "Permitir terminar (uma volta)",
+  "RE_AF_SINGLE_LAP_AUTO_SEGMENTS": "Permitir terminar (uma volta) (segmentos automáticos)",
   "RE_ALLOW_FINISH": "Permitir terminar",
   "RE_ANALOG_FUEL_DISABLED_TOOLTIP": "O combustível analógico está desativado porque a pista selecionada possui hardware de combustível digital configurado. Use combustível digital ou configure uma pista analógica.",
   "RE_ANALOG_FUEL_HEADER": "Combustível analógico",

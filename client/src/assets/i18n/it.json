@@ -1162,6 +1162,7 @@
   "RE_AF_NONE": "Non consentire l'arrivo",
   "RE_AF_NONE_AUTO_SEGMENTS": "Non consentire l'arrivo (segmenti automatici)",
   "RE_AF_SINGLE_LAP": "Consenti arrivo (un giro)",
+  "RE_AF_SINGLE_LAP_AUTO_SEGMENTS": "Consenti arrivo (un giro) (segmenti automatici)",
   "RE_ALLOW_FINISH": "Consenti arrivo",
   "RE_ANALOG_FUEL_DISABLED_TOOLTIP": "Il carburante analogico è disabilitato perché la pista selezionata ha hardware per carburante digitale configurato. Utilizzare il carburante digitale o configurare una pista analogica.",
   "RE_ANALOG_FUEL_HEADER": "Carburante analogico",

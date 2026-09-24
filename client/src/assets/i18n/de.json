@@ -1162,6 +1162,7 @@
   "RE_AF_NONE": "Sofort beenden",
   "RE_AF_NONE_AUTO_SEGMENTS": "Zieleinlauf nicht erlauben (Auto-Segmente)",
   "RE_AF_SINGLE_LAP": "Eine weitere Runde",
+  "RE_AF_SINGLE_LAP_AUTO_SEGMENTS": "Eine weitere Runde (Auto-Segmente)",
   "RE_ALLOW_FINISH": "Zielerlaubnis",
   "RE_ANALOG_FUEL_DISABLED_TOOLTIP": "Analoger Kraftstoff ist deaktiviert, da die ausgewählte Strecke über digitale Kraftstoff-Hardware verfügt. Verwenden Sie stattdessen digitalen Kraftstoff oder konfigurieren Sie eine analoge Strecke.",
   "RE_ANALOG_FUEL_HEADER": "Analoger Kraftstoff",

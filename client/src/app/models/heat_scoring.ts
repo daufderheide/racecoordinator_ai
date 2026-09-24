@@ -20,6 +20,7 @@ export enum AllowFinish {
   AF_ALLOW = "Allow",
   AF_SINGLE_LAP = "SingleLap",
   AF_NONE_AUTO_SEGMENTS = "NoneAutoSegments",
+  AF_SINGLE_LAP_AUTO_SEGMENTS = "SingleLapAutoSegments",
 }
 
 export class HeatScoring {
