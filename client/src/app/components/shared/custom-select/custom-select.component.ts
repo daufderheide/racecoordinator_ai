@@ -49,6 +49,8 @@ export class CustomOptionComponent {
   host: {
     "[attr.id]": "id()",
     "[attr.data-value]": "value()",
+    "[class.open]": "isOpen",
+    "[attr.data-open]": "isOpen",
   },
   providers: [
     {
@@ -72,6 +74,8 @@ export class CustomSelectComponent
   customOptions!: QueryList<CustomOptionComponent>;
 
   isOpen = false;
+  openUpward = false;
+  openRightAligned = false;
   value = model<any>(undefined);
   selectedLabel: string = "";
 
@@ -137,9 +141,25 @@ export class CustomSelectComponent
     if (this.disabled()) return;
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
+      this.checkDropdownPosition();
       this.onTouch();
       this.updateSelectedLabel();
       this.scrollToSelectedOption();
+    }
+  }
+
+  private checkDropdownPosition(): void {
+    try {
+      const el = this.elementRef.nativeElement as HTMLElement;
+      const rect = el.getBoundingClientRect();
+      const dropdownHeight = 250;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      this.openUpward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      this.openRightAligned = rect.left + 350 > window.innerWidth;
+    } catch {
+      this.openUpward = false;
+      this.openRightAligned = false;
     }
   }
 
@@ -184,6 +204,13 @@ export class CustomSelectComponent
     this.onChange(this.value());
     this.change.emit(this.value());
     this.isOpen = false;
+  }
+
+  @HostListener("keydown.escape")
+  onEscape() {
+    if (this.isOpen) {
+      this.isOpen = false;
+    }
   }
 
   @HostListener("document:click", ["$event"])

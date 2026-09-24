@@ -115,15 +115,16 @@
               [style.background-image]="getDropdownArrowBg(hd)"
               (change)="onTeammateChange(hd, $event)"
               [disabled]="isEditMode()"
-              [ngModel]="
-                hd.actualDriver?.entity_id || $any(hd.driver).entity_id
-              "
+              [ngModel]="hd.actualDriver?.entity_id || hd.driver.entity_id"
               style="
                 background-repeat: no-repeat;
                 background-position: right center;
               "
             >
-              @for (tm of getTeammates(hd); track tm) {
+              @for (
+                tm of getTeammates(hd);
+                track $any(tm).entity_id || $any(tm).id
+              ) {
                 <app-custom-option [value]="$any(tm).entity_id || $any(tm).id">
                   {{ tm.nickname || tm.name }}
                   {{ getDriverStats(hd, $any(tm).entity_id || $any(tm).id) }}

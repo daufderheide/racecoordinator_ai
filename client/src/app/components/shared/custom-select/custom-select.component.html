@@ -15,7 +15,11 @@
   </div>
 
   @if (isOpen) {
-    <div class="custom-select-dropdown">
+    <div
+      class="custom-select-dropdown"
+      [class.open-upward]="openUpward"
+      [class.align-right]="openRightAligned"
+    >
       @for (option of customOptions; track option.value() ?? $index) {
         <div
           class="custom-select-option"

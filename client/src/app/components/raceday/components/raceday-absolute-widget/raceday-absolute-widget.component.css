@@ -146,8 +146,13 @@
 }
 
 .widget-wrapper:has(app-raceday-menu-bar),
-.widget-content:has(app-raceday-menu-bar) {
+.widget-content:has(app-raceday-menu-bar),
+.widget-wrapper:has(app-custom-select.open),
+.widget-content:has(app-custom-select.open),
+.widget-wrapper:has(.custom-select-container.open),
+.widget-content:has(.custom-select-container.open) {
   overflow: visible !important;
+  z-index: 1000 !important;
 }
 
 /* Selected state outline */

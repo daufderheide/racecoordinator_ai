@@ -162,6 +162,38 @@ describe("RacedayLaneViewComponent", () => {
     expect(mockParent.onTeammateChange).toHaveBeenCalled();
   });
 
+  it("should open teammate dropdown and display options with driver stats", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const selectEl = rowEl.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl).toBeTruthy();
+
+    const trigger = selectEl.querySelector(
+      ".custom-select-trigger",
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(selectEl.classList.contains("open")).toBeTrue();
+    const dropdown = selectEl.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    expect(dropdown).toBeTruthy();
+
+    const options = selectEl.querySelectorAll(".custom-select-option");
+    expect(options.length).toBe(2);
+    expect(options[0].textContent).toContain("Rocket");
+    expect(options[0].textContent).toContain("(Heat: 0 Laps)");
+    expect(options[1].textContent).toContain("Chuck");
+    expect(options[1].textContent).toContain("(Heat: 0 Laps)");
+
+    (options[1] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(mockParent.onTeammateChange).toHaveBeenCalled();
+    expect(selectEl.classList.contains("open")).toBeFalse();
+  });
+
   it("should trigger parent onCellClick on cell click", async () => {
     await harness.clickCell(0, 1);
     expect(mockParent.onCellClick).toHaveBeenCalled();

@@ -384,7 +384,8 @@
                             [disabled]="parent().isDriverSwapDisabled(hd)"
                             [ngModel]="
                               hd.actualDriver?.entity_id ||
-                              $any(hd.driver).entity_id
+                              hd.driver?.entity_id ||
+                              $any(hd.driver)?.entity_id
                             "
                             (change)="parent().onTeammateChange(hd, $event)"
                             style="background-repeat: no-repeat"

@@ -6109,7 +6109,8 @@ export class DefaultRacedayComponent
 
   isTeam(hd: DriverHeatData | any): boolean {
     return (
-      !!(hd?.participant?.team || hd?.driver?.team) || !!this.race?.practice
+      !!(hd?.participant?.team || hd?.driver?.team || (hd as any)?.team) ||
+      !!this.race?.practice
     );
   }
 
@@ -6139,8 +6140,9 @@ export class DefaultRacedayComponent
             raceDrivers.push(d);
           }
         }
-        if (p.team && p.team.driverIds) {
-          p.team.driverIds.forEach((id: string) => {
+        const tDriverIds = p.team?.driverIds || (p.team as any)?.driver_ids;
+        if (p.team && tDriverIds) {
+          tDriverIds.forEach((id: string) => {
             const d = this.allDrivers.find((d) => (d.entity_id || d.id) === id);
             if (
               d &&
@@ -6156,9 +6158,10 @@ export class DefaultRacedayComponent
 
       return [emptyDriver, ...raceDrivers];
     }
-    const team = hd.participant?.team || hd.driver?.team;
-    if (team && team.driverIds) {
-      return team.driverIds
+    const team = hd?.participant?.team || hd?.driver?.team || (hd as any)?.team;
+    const driverIds = team?.driverIds || (team as any)?.driver_ids;
+    if (team && driverIds) {
+      return driverIds
         .map((id: string) =>
           this.allDrivers.find((d) => (d.entity_id || d.id) === id),
         )
