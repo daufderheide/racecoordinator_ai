@@ -145,19 +145,64 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
         this.batteryLevel.set(battery);
       }),
     );
+
+    if (this.route?.queryParams) {
+      this.subscriptions.push(
+        this.route.queryParams.subscribe((params) => {
+          if (!params) return;
+          const newInterface =
+            params["interface"] !== undefined ? Number(params["interface"]) : 0;
+          const newLanes =
+            params["lanes"] !== undefined
+              ? Math.max(1, Number(params["lanes"]))
+              : 4;
+          const lanesChanged = this.numLanes !== newLanes;
+          const interfaceChanged = this.interfaceIndex !== newInterface;
+          this.interfaceIndex = newInterface;
+          this.numLanes = newLanes;
+          if (lanesChanged || interfaceChanged) {
+            this.loadGates();
+          }
+        }),
+      );
+    }
   }
 
   public connectToServer(): void {
     this.cameraVisionService.connect(this.serverUrl, this.interfaceIndex);
   }
 
-  private loadGates(): void {
-    const storageKey = `rc_cam_gates_${this.interfaceIndex}`;
-    const saved = localStorage.getItem(storageKey);
+  public loadGates(): void {
+    const storageKey = `rc_cam_gates_${this.interfaceIndex}_${this.numLanes}`;
+    let saved = localStorage.getItem(storageKey);
+    if (!saved) {
+      // Check legacy un-suffixed key for backwards compatibility
+      const legacyKey = `rc_cam_gates_${this.interfaceIndex}`;
+      const legacySaved = localStorage.getItem(legacyKey);
+      if (legacySaved) {
+        try {
+          const parsed = JSON.parse(legacySaved);
+          if (
+            Array.isArray(parsed) &&
+            parsed.length === this.numLanes &&
+            parsed.every((g) => g.laneIndex >= 0 && g.laneIndex < this.numLanes)
+          ) {
+            saved = legacySaved;
+          }
+        } catch {
+          // Ignore invalid JSON
+        }
+      }
+    }
+
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === this.numLanes &&
+          parsed.every((g) => g.laneIndex >= 0 && g.laneIndex < this.numLanes)
+        ) {
           this.gates.set(parsed);
           return;
         }
@@ -169,7 +214,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   public saveGates(): void {
-    const storageKey = `rc_cam_gates_${this.interfaceIndex}`;
+    const storageKey = `rc_cam_gates_${this.interfaceIndex}_${this.numLanes}`;
     localStorage.setItem(storageKey, JSON.stringify(this.gates()));
   }
 

@@ -1388,6 +1388,57 @@ describe("TrackEditorComponent", () => {
       expect(initSpy).not.toHaveBeenCalled();
     });
 
+    it("should synchronize camera config gates when lanes are removed, added, or reordered", () => {
+      // Add lanes up to 4
+      component.addLane();
+      component.addLane();
+      expect(component.lanes.length).toBe(4);
+      component.addCameraConfig();
+      expect(component.cameraConfigs[0].gates.length).toBe(4);
+      expect(component.cameraConfigs[0].gates[0].laneIndex).toBe(0);
+      expect(component.cameraConfigs[0].gates[1].laneIndex).toBe(1);
+      expect(component.cameraConfigs[0].gates[2].laneIndex).toBe(2);
+      expect(component.cameraConfigs[0].gates[3].laneIndex).toBe(3);
+
+      // Remove Lane 1 (index 1)
+      component.removeLane(1);
+      expect(component.lanes.length).toBe(3);
+      expect(component.cameraConfigs[0].gates.length).toBe(3);
+      expect(component.cameraConfigs[0].gates[0].laneIndex).toBe(0);
+      expect(component.cameraConfigs[0].gates[1].laneIndex).toBe(1);
+      expect(component.cameraConfigs[0].gates[2].laneIndex).toBe(2);
+
+      // Remove another lane (index 2) -> leaves 2 lanes
+      component.removeLane(2);
+      expect(component.lanes.length).toBe(2);
+      expect(component.cameraConfigs[0].gates.length).toBe(2);
+      expect(component.cameraConfigs[0].gates[0].laneIndex).toBe(0);
+      expect(component.cameraConfigs[0].gates[1].laneIndex).toBe(1);
+
+      // Add a lane back -> 3 lanes
+      component.addLane();
+      expect(component.lanes.length).toBe(3);
+      expect(component.cameraConfigs[0].gates.length).toBe(3);
+      expect(component.cameraConfigs[0].gates[2].laneIndex).toBe(2);
+
+      // Reorder lanes (drop 0 to 2)
+      component.onLaneDropped({
+        previousIndex: 0,
+        currentIndex: 2,
+        item: {} as any,
+        container: {} as any,
+        previousContainer: {} as any,
+        isPointerOverContainer: true,
+        distance: { x: 0, y: 0 },
+        dropPoint: { x: 0, y: 0 },
+        event: new MouseEvent("drop"),
+      });
+      expect(component.cameraConfigs[0].gates.length).toBe(3);
+      expect(component.cameraConfigs[0].gates[0].laneIndex).toBe(0);
+      expect(component.cameraConfigs[0].gates[1].laneIndex).toBe(1);
+      expect(component.cameraConfigs[0].gates[2].laneIndex).toBe(2);
+    });
+
     it("should display LHS interface buttons in alphabetical order", () => {
       fixture.detectChanges();
       const compiled = fixture.nativeElement as HTMLElement;

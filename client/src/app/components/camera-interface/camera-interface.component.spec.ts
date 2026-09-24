@@ -328,4 +328,106 @@ describe("CameraInterfaceComponent", () => {
     learnMoreBtn.click();
     expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
   });
+
+  it("should reset gates to default when saved localStorage gates count does not match numLanes", () => {
+    component.interfaceIndex = 0;
+    component.numLanes = 2;
+    // Simulate legacy or mismatched 4-lane gates in localStorage
+    const mismatchedGates = [
+      {
+        laneIndex: 0,
+        gateType: 0,
+        xPct: 0.1,
+        yPct: 0.38,
+        widthPct: 0.18,
+        heightPct: 0.25,
+        sensitivity: 0.5,
+      },
+      {
+        laneIndex: 1,
+        gateType: 0,
+        xPct: 0.3,
+        yPct: 0.38,
+        widthPct: 0.18,
+        heightPct: 0.25,
+        sensitivity: 0.5,
+      },
+      {
+        laneIndex: 2,
+        gateType: 0,
+        xPct: 0.5,
+        yPct: 0.38,
+        widthPct: 0.18,
+        heightPct: 0.25,
+        sensitivity: 0.5,
+      },
+      {
+        laneIndex: 3,
+        gateType: 0,
+        xPct: 0.7,
+        yPct: 0.38,
+        widthPct: 0.18,
+        heightPct: 0.25,
+        sensitivity: 0.5,
+      },
+    ];
+    localStorage.setItem("rc_cam_gates_0", JSON.stringify(mismatchedGates));
+    localStorage.removeItem("rc_cam_gates_0_2");
+
+    component.loadGates();
+
+    expect(component.gates().length).toBe(2);
+    expect(component.gates()[0].laneIndex).toBe(0);
+    expect(component.gates()[1].laneIndex).toBe(1);
+
+    localStorage.removeItem("rc_cam_gates_0");
+    localStorage.removeItem("rc_cam_gates_0_2");
+  });
+
+  it("should load saved gates when localStorage key matches interfaceIndex and numLanes", () => {
+    component.interfaceIndex = 0;
+    component.numLanes = 2;
+    const customGates = [
+      {
+        laneIndex: 0,
+        gateType: 0,
+        xPct: 0.15,
+        yPct: 0.4,
+        widthPct: 0.3,
+        heightPct: 0.2,
+        sensitivity: 0.8,
+      },
+      {
+        laneIndex: 1,
+        gateType: 0,
+        xPct: 0.55,
+        yPct: 0.4,
+        widthPct: 0.3,
+        heightPct: 0.2,
+        sensitivity: 0.8,
+      },
+    ];
+    localStorage.setItem("rc_cam_gates_0_2", JSON.stringify(customGates));
+
+    component.loadGates();
+
+    expect(component.gates().length).toBe(2);
+    expect(component.gates()[0].xPct).toBe(0.15);
+    expect(component.gates()[1].xPct).toBe(0.55);
+
+    localStorage.removeItem("rc_cam_gates_0_2");
+  });
+
+  it("should save gates using key suffixed with interfaceIndex and numLanes", () => {
+    component.interfaceIndex = 2;
+    component.numLanes = 3;
+    component.resetGatesToDefault();
+
+    const saved = localStorage.getItem("rc_cam_gates_2_3");
+    expect(saved).toBeTruthy();
+    const parsed = JSON.parse(saved!);
+    expect(parsed.length).toBe(3);
+
+    localStorage.removeItem("rc_cam_gates_2_3");
+  });
 });

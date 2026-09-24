@@ -1613,6 +1613,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       new Lane(this.generateId(), "black", "#ffffff", 100),
     ]; // Default white lane with black text
     this.sectionsExpanded.lanes = true;
+    this.updateCameraConfigsOnLaneAddition();
     this.captureState();
   }
 
@@ -1797,6 +1798,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       config.voltageConfigs = updateVoltageConfigs(config.voltageConfigs);
     });
     this.phidgetConfigs = [...this.phidgetConfigs];
+    this.updateCameraConfigsOnLaneOrderChange(prevIndex, currIndex);
   }
 
   private updateInterfaceConfigsOnLaneDeletion(deletedLaneIndex: number) {
@@ -1935,6 +1937,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       config.voltageConfigs = updateVoltageConfigs(config.voltageConfigs);
     });
     this.phidgetConfigs = [...this.phidgetConfigs];
+    this.updateCameraConfigsOnLaneDeletion(deletedLaneIndex);
   }
 
   private colorDebounceTimer: any = null;
@@ -2177,6 +2180,68 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       });
     }
     return gates;
+  }
+
+  private updateCameraConfigsOnLaneAddition(): void {
+    if (!this.cameraConfigs || this.cameraConfigs.length === 0) return;
+    const laneIndex = this.lanes.length - 1;
+    const gateWidth = 0.8 / this.lanes.length;
+    this.cameraConfigs.forEach((config) => {
+      if (config.gates) {
+        config.gates.push({
+          laneIndex,
+          gateType: 0,
+          xPct: 0.1 + laneIndex * gateWidth,
+          yPct: 0.38,
+          widthPct: gateWidth * 0.9,
+          heightPct: 0.25,
+          sensitivity: 0.5,
+        });
+      }
+    });
+    this.cameraConfigs = [...this.cameraConfigs];
+  }
+
+  private updateCameraConfigsOnLaneDeletion(deletedLaneIndex: number): void {
+    if (!this.cameraConfigs || this.cameraConfigs.length === 0) return;
+    this.cameraConfigs.forEach((config) => {
+      if (config.gates) {
+        config.gates = config.gates
+          .filter((g) => g.laneIndex !== deletedLaneIndex)
+          .map((g) => ({
+            ...g,
+            laneIndex:
+              g.laneIndex > deletedLaneIndex ? g.laneIndex - 1 : g.laneIndex,
+          }));
+      }
+    });
+    this.cameraConfigs = [...this.cameraConfigs];
+  }
+
+  private updateCameraConfigsOnLaneOrderChange(
+    prevIndex: number,
+    currIndex: number,
+  ): void {
+    if (!this.cameraConfigs || this.cameraConfigs.length === 0) return;
+    this.cameraConfigs.forEach((config) => {
+      if (config.gates) {
+        config.gates.forEach((gate) => {
+          if (gate.laneIndex === prevIndex) {
+            gate.laneIndex = currIndex;
+          } else if (prevIndex < currIndex) {
+            if (gate.laneIndex > prevIndex && gate.laneIndex <= currIndex) {
+              gate.laneIndex -= 1;
+            }
+          } else {
+            if (gate.laneIndex >= currIndex && gate.laneIndex < prevIndex) {
+              gate.laneIndex += 1;
+            }
+          }
+        });
+        config.gates.sort((a, b) => a.laneIndex - b.laneIndex);
+      }
+    });
+    this.cameraConfigs = [...this.cameraConfigs];
   }
 
   addCameraConfig() {

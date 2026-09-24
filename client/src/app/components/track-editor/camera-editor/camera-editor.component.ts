@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  effect,
   input,
   model,
   OnInit,
@@ -60,7 +61,20 @@ export class CameraEditorComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private dataService: DataService,
     private helpLinkService: HelpLinkService,
-  ) {}
+  ) {
+    effect(
+      () => {
+        const laneCount = this.lanes();
+        this.interfaceIndex();
+        const current = this.config();
+        if (!current.gates || current.gates.length !== laneCount) {
+          this.resetGatesToDefault(false);
+        }
+        this.generatePairingUrl();
+      },
+      { allowSignalWrites: true },
+    );
+  }
 
   ngOnInit(): void {
     this.loadSectionsState();

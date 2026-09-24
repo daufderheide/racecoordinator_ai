@@ -282,4 +282,17 @@ describe("CameraEditorComponent", () => {
     modalHelpLink.click();
     expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
   });
+
+  it("should reactively update gates and pairingUrl when lanes input signal changes", () => {
+    fixture.detectChanges();
+    expect(component.config().gates.length).toBe(4);
+    expect(component.pairingUrl()).toContain("lanes=4");
+
+    fixture.componentRef.setInput("lanes", 2);
+    fixture.detectChanges();
+
+    expect(component.config().gates.length).toBe(2);
+    expect(component.pairingUrl()).toContain("lanes=2");
+    expect(component.getLocalInterfaceUrl()).toContain("lanes=2");
+  });
 });
