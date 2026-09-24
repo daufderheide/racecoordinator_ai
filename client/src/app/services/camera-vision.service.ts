@@ -165,6 +165,9 @@ export class CameraVisionService {
   private startSyncAndHeartbeat(interfaceIndex: number): void {
     this.stopSyncAndHeartbeat();
     this.sendPing();
+    if (typeof window !== "undefined" && (window as any).isPlaywright) {
+      return;
+    }
     this.pingIntervalId = setInterval(() => this.sendPing(), 3000);
     this.heartbeatIntervalId = setInterval(() => {
       this.sendHeartbeat(interfaceIndex);

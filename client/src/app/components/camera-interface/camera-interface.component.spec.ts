@@ -1,3 +1,4 @@
+import { TestbedHarnessEnvironment } from "@angular/cdk/testing/testbed";
 import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { ActivatedRoute, Router } from "@angular/router";
 import { BehaviorSubject } from "rxjs";
@@ -7,10 +8,12 @@ import { HelpLinkService } from "@app/services/help-link.service";
 import { TranslationService } from "@app/services/translation.service";
 
 import { CameraInterfaceComponent } from "./camera-interface.component";
+import { CameraInterfaceHarness } from "./testing/camera-interface.harness";
 
 describe("CameraInterfaceComponent", () => {
   let component: CameraInterfaceComponent;
   let fixture: ComponentFixture<CameraInterfaceComponent>;
+  let harness: CameraInterfaceHarness;
   let mockCameraVisionService: jasmine.SpyObj<CameraVisionService>;
   let mockRouter: jasmine.SpyObj<Router>;
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
@@ -73,6 +76,10 @@ describe("CameraInterfaceComponent", () => {
 
     fixture = TestBed.createComponent(CameraInterfaceComponent);
     component = fixture.componentInstance;
+    harness = await TestbedHarnessEnvironment.harnessForFixture(
+      fixture,
+      CameraInterfaceHarness,
+    );
   });
 
   afterEach(() => {
@@ -141,9 +148,12 @@ describe("CameraInterfaceComponent", () => {
 
   it("should fallback to basic video constraint if ideal constraints fail", async () => {
     const originalMediaDevices = navigator.mediaDevices;
-    const fakeStream = {
-      getTracks: () => [{ stop: jasmine.createSpy("stop") }],
-    } as any;
+    const fakeStream =
+      typeof MediaStream !== "undefined"
+        ? new MediaStream()
+        : ({
+            getTracks: () => [{ stop: jasmine.createSpy("stop") }],
+          } as any);
     try {
       let callCount = 0;
       const mockMediaDevices = {
@@ -229,9 +239,86 @@ describe("CameraInterfaceComponent", () => {
     expect(component.startCameraStream).toHaveBeenCalled();
   });
 
-  it("should navigate back on goBack()", () => {
+  it("should navigate to track editor on goBack() when standalone without history or opener", () => {
     component.goBack();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(["/"]);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(["/track-editor"]);
+  });
+
+  it("should emit close output on goBack() when isModal is true", () => {
+    fixture.componentRef.setInput("isModal", true);
+    fixture.detectChanges();
+    spyOn(component.close, "emit");
+    component.goBack();
+    expect(component.close.emit).toHaveBeenCalled();
+    expect(mockRouter.navigate).not.toHaveBeenCalled();
+  });
+
+  it("should close window on goBack() when window.opener is open", () => {
+    spyOn(window, "close");
+    const originalOpener = window.opener;
+    try {
+      (window as any).opener = { closed: false };
+      component.goBack();
+      expect(window.close).toHaveBeenCalled();
+    } finally {
+      (window as any).opener = originalOpener;
+    }
+  });
+
+  it("should call history.back on goBack() when browser history exists", () => {
+    spyOn(window.history, "back");
+    const originalLength = window.history.length;
+    try {
+      Object.defineProperty(window.history, "length", {
+        value: 3,
+        configurable: true,
+      });
+      component.goBack();
+      expect(window.history.back).toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window.history, "length", {
+        value: originalLength,
+        configurable: true,
+      });
+    }
+  });
+
+  it("should load gates from initialGates when isModal is true", () => {
+    fixture.componentRef.setInput("isModal", true);
+    fixture.componentRef.setInput("modalNumLanes", 2);
+    fixture.componentRef.setInput("modalInterfaceIndex", 1);
+    const mockGates = [
+      {
+        laneIndex: 0,
+        gateType: 0,
+        xPct: 0.12,
+        yPct: 0.35,
+        widthPct: 0.25,
+        heightPct: 0.2,
+        sensitivity: 0.6,
+      },
+      {
+        laneIndex: 1,
+        gateType: 0,
+        xPct: 0.52,
+        yPct: 0.35,
+        widthPct: 0.25,
+        heightPct: 0.2,
+        sensitivity: 0.6,
+      },
+    ];
+    fixture.componentRef.setInput("initialGates", mockGates);
+    component.ngOnInit();
+    expect(component.numLanes).toBe(2);
+    expect(component.interfaceIndex).toBe(1);
+    expect(component.gates().length).toBe(2);
+    expect(component.gates()[0].xPct).toBe(0.12);
+  });
+
+  it("should emit gatesChange when saveGates is called", () => {
+    spyOn(component.gatesChange, "emit");
+    component.saveGates();
+    expect(component.gatesChange.emit).toHaveBeenCalledWith(component.gates());
   });
 
   it("should handle auto-snap wizard lifecycle", () => {
@@ -429,5 +516,99 @@ describe("CameraInterfaceComponent", () => {
     expect(parsed.length).toBe(3);
 
     localStorage.removeItem("rc_cam_gates_2_3");
+  });
+
+  describe("CameraInterfaceHarness interactions", () => {
+    it("should query HUD buttons and click back via harness", async () => {
+      fixture.detectChanges();
+      expect(await harness.isBackVisible()).toBeTrue();
+      expect(await harness.isDoneVisible()).toBeFalse();
+      expect(await harness.isAutoSnapVisible()).toBeTrue();
+      expect(await harness.isFlipVisible()).toBeTrue();
+      expect(await harness.isSettingsVisible()).toBeTrue();
+
+      spyOn(component, "goBack");
+      await harness.clickBack();
+      expect(component.goBack).toHaveBeenCalled();
+    });
+
+    it("should show done button and handle click in modal mode via harness", async () => {
+      fixture.componentRef.setInput("isModal", true);
+      fixture.detectChanges();
+
+      expect(await harness.isDoneVisible()).toBeTrue();
+      spyOn(component.close, "emit");
+
+      await harness.clickDone();
+      expect(component.close.emit).toHaveBeenCalled();
+    });
+
+    it("should report status, fps, battery and gate count via harness", async () => {
+      isConnected$.next(true);
+      component.fps.set(45);
+      component.batteryLevel.set(0.92);
+      component.resetGatesToDefault();
+      fixture.detectChanges();
+
+      expect(await harness.isConnected()).toBeTrue();
+      expect(await harness.getStatusText()).toBe("CAMERA_CONNECTED");
+      expect(await harness.getFpsText()).toContain("45 FPS");
+      expect(await harness.getBatteryText()).toContain("92%");
+      expect(await harness.getGateCount()).toBe(4);
+    });
+
+    it("should open and close settings drawer via harness", async () => {
+      fixture.detectChanges();
+      expect(await harness.isSettingsOpen()).toBeFalse();
+
+      await harness.clickSettings();
+      fixture.detectChanges();
+      expect(await harness.isSettingsOpen()).toBeTrue();
+
+      await harness.closeSettings();
+      fixture.detectChanges();
+      expect(await harness.isSettingsOpen()).toBeFalse();
+    });
+
+    it("should toggle auto-snap wizard and handle cancel and skip via harness", async () => {
+      fixture.detectChanges();
+      expect(await harness.isAutoSnapOpen()).toBeFalse();
+
+      await harness.clickAutoSnap();
+      fixture.detectChanges();
+      expect(await harness.isAutoSnapOpen()).toBeTrue();
+
+      spyOn(component, "skipAutoSnapLane");
+      await harness.clickAutoSnapSkip();
+      expect(component.skipAutoSnapLane).toHaveBeenCalled();
+
+      await harness.clickAutoSnapCancel();
+      fixture.detectChanges();
+      expect(await harness.isAutoSnapOpen()).toBeFalse();
+    });
+
+    it("should display camera error overlay and trigger retry and help via harness", async () => {
+      component.cameraErrorMessage.set("CAMERA_ERROR_PERMISSION_DENIED");
+      fixture.detectChanges();
+
+      expect(await harness.isErrorVisible()).toBeTrue();
+
+      spyOn(component, "startCameraStream");
+      await harness.clickErrorRetry();
+      expect(component.startCameraStream).toHaveBeenCalled();
+
+      await harness.clickErrorLearnMore();
+      expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
+    });
+
+    it("should toggle camera facing mode via harness flip button", async () => {
+      fixture.detectChanges();
+      spyOn(component, "startCameraStream");
+      component.facingMode.set("environment");
+
+      await harness.clickFlip();
+      expect(component.facingMode()).toBe("user");
+      expect(component.startCameraStream).toHaveBeenCalled();
+    });
   });
 });

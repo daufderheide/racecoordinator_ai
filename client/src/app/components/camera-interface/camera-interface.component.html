@@ -70,10 +70,13 @@
       <button
         class="hud-btn back-btn"
         (click)="goBack()"
-        [title]="'CAMERA_BACK' | translate"
-        aria-label="Back"
+        [title]="(isModal() ? 'CAMERA_CLOSE' : 'CAMERA_BACK') | translate"
+        [attr.aria-label]="
+          (isModal() ? 'CAMERA_CLOSE' : 'CAMERA_BACK') | translate
+        "
+        id="cameraHudBackBtn"
       >
-        <span class="btn-icon">‹</span>
+        <span class="btn-icon">{{ isModal() ? "✕" : "‹" }}</span>
       </button>
 
       <div class="status-pill" [class.online]="isConnected()">
@@ -96,10 +99,23 @@
     </div>
 
     <div class="hud-right">
+      @if (isModal()) {
+        <button
+          class="hud-btn action-pill done-btn"
+          (click)="goBack()"
+          [title]="'CAMERA_DONE' | translate"
+          id="cameraModalDoneBtn"
+        >
+          <span class="btn-icon">✓</span>
+          <span class="btn-label">{{ "CAMERA_DONE" | translate }}</span>
+        </button>
+      }
+
       <button
         class="hud-btn action-pill"
         (click)="startAutoSnap()"
         [title]="'CAMERA_AUTO_SNAP' | translate"
+        id="cameraAutoSnapBtn"
       >
         <span class="btn-icon">⚡</span>
         <span class="btn-label">{{ "CAMERA_AUTO_SNAP" | translate }}</span>
@@ -110,6 +126,7 @@
         (click)="toggleCamera()"
         [title]="'CAMERA_FLIP' | translate"
         aria-label="Flip Camera"
+        id="cameraFlipBtn"
       >
         🔄
       </button>
@@ -119,6 +136,7 @@
         (click)="showSettings.set(true)"
         [title]="'CAMERA_SETTINGS' | translate"
         aria-label="Settings"
+        id="cameraSettingsBtn"
       >
         ⚙️
       </button>

@@ -146,15 +146,37 @@ describe("CameraEditorComponent", () => {
     }
   });
 
-  it("should open local camera interface in new tab", () => {
-    spyOn(window, "open");
+  it("should open local camera interface in modal overlay", () => {
+    expect(component.showTestModal()).toBe(false);
     component.openLocalInterface();
-    expect(window.open).toHaveBeenCalledWith(
-      component.getLocalInterfaceUrl(),
-      "_blank",
-    );
+    expect(component.showTestModal()).toBe(true);
+
+    component.closeTestModal();
+    expect(component.showTestModal()).toBe(false);
+  });
+
+  it("should generate local interface url and local ws url correctly", () => {
+    expect(component.getLocalWsUrl()).toContain("/api/interface-data");
     expect(component.getLocalInterfaceUrl()).toContain("/camera_interface");
     expect(component.getLocalInterfaceUrl()).toContain(window.location.origin);
+  });
+
+  it("should update gates and emit change when modal gates change", () => {
+    spyOn(component.change, "emit");
+    const updatedGates = [
+      {
+        laneIndex: 0,
+        gateType: 1,
+        xPct: 0.2,
+        yPct: 0.3,
+        widthPct: 0.2,
+        heightPct: 0.3,
+        sensitivity: 0.7,
+      },
+    ];
+    component.onGatesUpdatedFromModal(updatedGates);
+    expect(component.config().gates[0].xPct).toBe(0.2);
+    expect(component.change.emit).toHaveBeenCalled();
   });
 
   it("should emit change output on config change", () => {

@@ -1,7 +1,7 @@
 :host {
   display: block;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background-color: #0b0f19;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -156,6 +156,18 @@
   width: 38px;
   padding: 0;
   font-size: 16px;
+}
+
+.hud-btn.done-btn {
+  background: rgba(0, 255, 102, 0.2);
+  border-color: rgba(0, 255, 102, 0.5);
+  color: #00ff66;
+}
+
+.hud-btn.done-btn:hover {
+  background: rgba(0, 255, 102, 0.35);
+  border-color: #00ff66;
+  box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
 }
 
 .action-pill {

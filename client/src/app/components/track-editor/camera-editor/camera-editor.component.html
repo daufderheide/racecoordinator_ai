@@ -366,5 +366,28 @@
         </div>
       </div>
     }
+
+    <!-- Local Camera Test & Calibration Modal -->
+    @if (showTestModal()) {
+      <div
+        class="camera-test-modal-backdrop"
+        (click)="closeTestModal()"
+        (keydown.escape)="closeTestModal()"
+        tabindex="0"
+        id="cameraTestModal"
+      >
+        <div class="camera-test-modal-card" (click)="$event.stopPropagation()">
+          <app-camera-interface
+            [isModal]="true"
+            [initialGates]="config().gates"
+            [modalInterfaceIndex]="interfaceIndex()"
+            [modalNumLanes]="lanes()"
+            [modalServerUrl]="getLocalWsUrl()"
+            (gatesChange)="onGatesUpdatedFromModal($event)"
+            (close)="closeTestModal()"
+          ></app-camera-interface>
+        </div>
+      </div>
+    }
   </div>
 }

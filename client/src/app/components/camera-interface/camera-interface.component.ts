@@ -4,8 +4,10 @@ import {
   Component,
   ElementRef,
   HostListener,
+  input,
   OnDestroy,
   OnInit,
+  output,
   signal,
   ViewChild,
 } from "@angular/core";
@@ -39,6 +41,16 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   @ViewChild("videoElement") videoElementRef!: ElementRef<HTMLVideoElement>;
   @ViewChild("analysisCanvas") canvasElementRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild("overlaySvg") overlaySvgRef!: ElementRef<SVGSVGElement>;
+
+  // Modal / embedded usage inputs & outputs
+  isModal = input<boolean>(false);
+  initialGates = input<LaneDetectionGate[] | null>(null);
+  modalInterfaceIndex = input<number | null>(null);
+  modalNumLanes = input<number | null>(null);
+  modalServerUrl = input<string | null>(null);
+
+  gatesChange = output<LaneDetectionGate[]>();
+  close = output<void>();
 
   // Routing & connection info
   serverUrl = "";
@@ -109,7 +121,25 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   private readQueryParams(): void {
-    const params = this.route.snapshot.queryParams;
+    if (this.isModal()) {
+      const modalIdx = this.modalInterfaceIndex();
+      this.interfaceIndex =
+        modalIdx !== null && modalIdx !== undefined ? modalIdx : 0;
+      const modalLanes = this.modalNumLanes();
+      this.numLanes =
+        modalLanes !== null && modalLanes !== undefined
+          ? Math.max(1, modalLanes)
+          : 4;
+      const modalUrl = this.modalServerUrl();
+      if (modalUrl) {
+        this.serverUrl = modalUrl;
+      } else {
+        this.serverUrl = this.resolveDefaultServerUrl();
+      }
+      return;
+    }
+
+    const params = this.route?.snapshot?.queryParams || {};
     this.interfaceIndex =
       params["interface"] !== undefined ? Number(params["interface"]) : 0;
     this.numLanes =
@@ -118,14 +148,18 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     if (params["server"]) {
       this.serverUrl = params["server"];
     } else {
-      const loc = window.location;
-      const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
-      const port =
-        loc.port === "4200"
-          ? "7070"
-          : loc.port || (loc.protocol === "https:" ? "443" : "7070");
-      this.serverUrl = `${wsProtocol}//${loc.hostname}:${port}/api/interface-data`;
+      this.serverUrl = this.resolveDefaultServerUrl();
     }
+  }
+
+  private resolveDefaultServerUrl(): string {
+    const loc = window.location;
+    const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
+    const port =
+      loc.port === "4200"
+        ? "7070"
+        : loc.port || (loc.protocol === "https:" ? "443" : "7070");
+    return `${wsProtocol}//${loc.hostname}:${port}/api/interface-data`;
   }
 
   private initSettings(): void {
@@ -146,7 +180,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       }),
     );
 
-    if (this.route?.queryParams) {
+    if (!this.isModal() && this.route?.queryParams) {
       this.subscriptions.push(
         this.route.queryParams.subscribe((params) => {
           if (!params) return;
@@ -173,6 +207,15 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   public loadGates(): void {
+    if (
+      this.isModal() &&
+      this.initialGates() &&
+      this.initialGates()!.length === this.numLanes
+    ) {
+      this.gates.set(JSON.parse(JSON.stringify(this.initialGates()!)));
+      return;
+    }
+
     const storageKey = `rc_cam_gates_${this.interfaceIndex}_${this.numLanes}`;
     let saved = localStorage.getItem(storageKey);
     if (!saved) {
@@ -216,6 +259,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   public saveGates(): void {
     const storageKey = `rc_cam_gates_${this.interfaceIndex}_${this.numLanes}`;
     localStorage.setItem(storageKey, JSON.stringify(this.gates()));
+    this.gatesChange.emit(this.gates());
   }
 
   public resetGatesToDefault(): void {
@@ -243,6 +287,11 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
 
   public async startCameraStream(): Promise<void> {
     this.stopCameraStream();
+
+    if (typeof window !== "undefined" && (window as any).isPlaywright) {
+      this.cameraErrorMessage.set(null);
+      return;
+    }
 
     if (
       typeof navigator === "undefined" ||
@@ -313,6 +362,9 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   private startProcessingLoop(): void {
+    if (typeof window !== "undefined" && (window as any).isPlaywright) {
+      return;
+    }
     const process = () => {
       this.animFrameId = requestAnimationFrame(process);
       this.calculateFps();
@@ -569,7 +621,21 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   public goBack(): void {
-    this.router.navigate(["/"]);
+    if (this.isModal()) {
+      this.close.emit();
+      return;
+    }
+    if (typeof window !== "undefined") {
+      if (window.opener && !window.opener.closed) {
+        window.close();
+        return;
+      }
+      if (window.history && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+    }
+    this.router.navigate(["/track-editor"]);
   }
 
   public openHelp(): void {

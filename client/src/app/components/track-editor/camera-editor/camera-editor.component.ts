@@ -12,12 +12,13 @@ import {
 import { FormsModule } from "@angular/forms";
 import * as QRCode from "qrcode";
 import { firstValueFrom, timeout } from "rxjs";
+import { CameraInterfaceComponent } from "@app/components/camera-interface/camera-interface.component";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
 } from "@app/components/shared/custom-select/custom-select.component";
 import { DataService } from "@app/data.service";
-import { CameraConfig } from "@app/models/camera_config";
+import { CameraConfig, LaneDetectionGate } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { HelpLinkService } from "@app/services/help-link.service";
 
@@ -32,6 +33,7 @@ import { HelpLinkService } from "@app/services/help-link.service";
     TranslatePipe,
     CustomSelectComponent,
     CustomOptionComponent,
+    CameraInterfaceComponent,
   ],
 })
 export class CameraEditorComponent implements OnInit {
@@ -46,6 +48,7 @@ export class CameraEditorComponent implements OnInit {
   qrCodeDataUrl = signal<string | null>(null);
   pairingUrl = signal<string>("");
   showQrModal = signal<boolean>(false);
+  showTestModal = signal<boolean>(false);
   copySuccess = signal<boolean>(false);
 
   sectionsExpanded = {
@@ -264,11 +267,16 @@ export class CameraEditorComponent implements OnInit {
     }
   }
 
-  public getLocalInterfaceUrl(): string {
+  public getLocalWsUrl(): string {
     const loc = window.location;
     const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
     const wsPort = this.dataService?.currentServerPort || 7070;
-    const wsUrl = `${wsProtocol}//${loc.hostname}:${wsPort}/api/interface-data`;
+    return `${wsProtocol}//${loc.hostname}:${wsPort}/api/interface-data`;
+  }
+
+  public getLocalInterfaceUrl(): string {
+    const loc = window.location;
+    const wsUrl = this.getLocalWsUrl();
 
     return `${loc.origin}/camera_interface?server=${encodeURIComponent(
       wsUrl,
@@ -276,7 +284,20 @@ export class CameraEditorComponent implements OnInit {
   }
 
   public openLocalInterface(): void {
-    window.open(this.getLocalInterfaceUrl(), "_blank");
+    this.showTestModal.set(true);
+  }
+
+  public closeTestModal(): void {
+    this.showTestModal.set(false);
+  }
+
+  public onGatesUpdatedFromModal(updatedGates: LaneDetectionGate[]): void {
+    if (!updatedGates || !Array.isArray(updatedGates)) return;
+    this.config.set({
+      ...this.config(),
+      gates: [...updatedGates],
+    });
+    this.onConfigChange();
   }
 
   public onConfigChange(): void {
