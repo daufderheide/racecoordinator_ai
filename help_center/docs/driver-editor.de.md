@@ -20,6 +20,7 @@ Die obere Symbolleiste bietet folgende Aktionen:
 - **Fahrer hinzufügen (+)**: Erstellt eine neue Fahrervorlage und wechselt in den Bearbeitungsmodus.
 - **Fahrer kopieren**: Dupliziert das aktuell ausgewählte Fahrerprofil in eine neue Vorlage.
 - **Bearbeiten / Fertig**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um.
+- **Alle erweitern / reduzieren**: Erweitert oder reduziert alle Akkordeon-Abschnitte auf einmal.
 - **Fahrer löschen**: Löscht das ausgewählte Fahrerprofil nach Bestätigung.
 - **Hilfe (?)**: Startet die interaktive Einführungstour für die Bereiche des Editors.
 

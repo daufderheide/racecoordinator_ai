@@ -1839,6 +1839,8 @@
   "TOOLBAR_HELP_DELETE_TITLE": "Delete",
   "TOOLBAR_HELP_EDIT_CONTENT": "Select this button to edit the selected item.",
   "TOOLBAR_HELP_EDIT_TITLE": "Edit",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT": "Select this button to expand or collapse all sections at once.",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE": "Expand / Collapse All",
   "TOOLBAR_HELP_EXPORT_CONTENT": "Click here to export the selected database to a .zip file.",
   "TOOLBAR_HELP_EXPORT_TITLE": "Export Database",
   "TOOLBAR_HELP_HELP_CONTENT": "Select this button to show this guided help at any time.",

@@ -247,6 +247,7 @@ La barre d'outils supérieure de l'Éditeur de Circuits propose les outils de ge
 - **Ajouter un Circuit (+)** : Crée un nouveau modèle de circuit et active le mode édition.
 - **Dupliquer le Circuit** : Crée une copie conforme sous un nouveau nom unique, idéal pour tester des variantes sans altérer le circuit principal.
 - **Modifier / Terminer l'Édition** : Bascule entre le mode lecture seule et le mode édition. En quittant le mode édition, les modifications sont validées et enregistrées.
+- **Tout développer / réduire** : Développe ou réduit toutes les sections de configuration et panneaux d'interfaces en une seule fois.
 - **Supprimer le Circuit** : Supprime le circuit sélectionné après confirmation.
 - **Annuler (`Ctrl+Z`) / Rétablir (`Ctrl+Y`)** : Historique complet pour rétablir facilement tout changement.
 - **Aide (`?`)** : Lance une visite interactive guidée de chaque élément à l'écran.

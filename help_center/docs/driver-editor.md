@@ -20,6 +20,7 @@ The top toolbar provides the following actions:
 - **Add Driver (+)**: Creates a new driver template and enters Edit Mode.
 - **Copy Driver**: Duplicates the currently selected driver profile into a new driver template.
 - **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
+- **Expand / Collapse All**: Expands or collapses all accordion sections at once.
 - **Delete Driver**: Deletes the selected driver profile after confirmation.
 - **Help (?)**: Opens the interactive guided tour highlighting each section of the editor.
 

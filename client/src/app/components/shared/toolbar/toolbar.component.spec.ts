@@ -495,4 +495,83 @@ describe("ToolbarComponent", () => {
       expect(component.expandCollapse.emit).toHaveBeenCalled();
     });
   });
+
+  describe("getToolbarHelpSteps", () => {
+    it("should include expand-collapse-all-btn step when showExpandCollapse is true", () => {
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.detectChanges();
+
+      const steps = component.getToolbarHelpSteps();
+      const step = steps.find((s) => s.targetId === "expand-collapse-all-btn");
+
+      expect(step).toBeDefined();
+      expect(step?.title).toBe("TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE");
+      expect(step?.content).toBe("TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT");
+      expect(step?.position).toBe("bottom");
+    });
+
+    it("should NOT include expand-collapse-all-btn step when showExpandCollapse is false", () => {
+      fixture.componentRef.setInput("showExpandCollapse", false);
+      fixture.detectChanges();
+
+      const steps = component.getToolbarHelpSteps();
+      const step = steps.find((s) => s.targetId === "expand-collapse-all-btn");
+
+      expect(step).toBeUndefined();
+    });
+
+    it("should place expand-collapse-all-btn step between edit-track-btn and copy-item-btn", () => {
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.componentRef.setInput("showCopy", true);
+      fixture.detectChanges();
+
+      const steps = component.getToolbarHelpSteps();
+      const targetIds = steps.map((s) => s.targetId);
+
+      const editIdx = targetIds.indexOf("edit-track-btn");
+      const expandCollapseIdx = targetIds.indexOf("expand-collapse-all-btn");
+      const copyIdx = targetIds.indexOf("copy-item-btn");
+
+      expect(editIdx).toBeGreaterThanOrEqual(0);
+      expect(expandCollapseIdx).toBe(editIdx + 1);
+      expect(copyIdx).toBe(expandCollapseIdx + 1);
+    });
+
+    it("should return all toolbar help steps in correct order when all actions are enabled", () => {
+      fixture.componentRef.setInput("showActivate", true);
+      fixture.componentRef.setInput("showUndo", true);
+      fixture.componentRef.setInput("showRedo", true);
+      fixture.componentRef.setInput("showEdit", true);
+      fixture.componentRef.setInput("showExpandCollapse", true);
+      fixture.componentRef.setInput("showCopy", true);
+      fixture.componentRef.setInput("showAdd", true);
+      fixture.componentRef.setInput("showDelete", true);
+      fixture.componentRef.setInput("showImport", true);
+      fixture.componentRef.setInput("showExport", true);
+      fixture.componentRef.setInput("showReset", true);
+      fixture.componentRef.setInput("showAnalytics", true);
+      fixture.componentRef.setInput("showHelp", true);
+      fixture.detectChanges();
+
+      const steps = component.getToolbarHelpSteps();
+      const targetIds = steps.map((s) => s.targetId);
+
+      expect(targetIds).toEqual([
+        "activate-item-btn",
+        "undo-btn",
+        "redo-btn",
+        "edit-track-btn",
+        "expand-collapse-all-btn",
+        "copy-item-btn",
+        "add-item-btn",
+        "delete-track-btn",
+        "import-btn",
+        "export-btn",
+        "reset-btn",
+        "analytics-btn",
+        "help-track-btn",
+      ]);
+    });
+  });
 });

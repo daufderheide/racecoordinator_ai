@@ -20,6 +20,7 @@ La barra de herramientas superior proporciona las siguientes acciones:
 - **Añadir Piloto (+)**: Crea una nueva plantilla de piloto y entra en el modo de edición.
 - **Copiar Piloto**: Duplica el perfil del piloto seleccionado en una nueva plantilla.
 - **Editar / Terminar Edición**: Alterna entre el modo de solo lectura y el modo de edición.
+- **Expandir / Contraer todo**: Expande o contrae todas las secciones de acordeón a la vez.
 - **Eliminar Piloto**: Elimina el perfil del piloto seleccionado tras su confirmación.
 - **Ayuda (?)**: Abre la guía interactiva que explica cada sección del editor.
 

@@ -20,6 +20,7 @@ De bovenste werkbalk biedt de volgende opties:
 - **Coureur toevoegen (+)**: Maakt een nieuw coureurprofiel aan en activeert de bewerkingsmodus.
 - **Coureur kopiëren**: Dupliceert het geselecteerde profiel naar een nieuwe sjabloon.
 - **Bewerken / Klaar**: Schakelt tussen alleen-lezen modus en bewerkingsmodus.
+- **Alles uitvouwen / samenvouwen**: Vouwt alle accordeonsecties in één keer uit of samen.
 - **Coureur verwijderen**: Verwijdert het geselecteerde coureurprofiel na bevestiging.
 - **Help (?)**: Start de interactieve rondleiding door de verschillende onderdelen van de editor.
 

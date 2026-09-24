@@ -1839,6 +1839,8 @@
   "TOOLBAR_HELP_DELETE_TITLE": "Excluir",
   "TOOLBAR_HELP_EDIT_CONTENT": "Selecione este botão para editar o item selecionado.",
   "TOOLBAR_HELP_EDIT_TITLE": "Editar",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT": "Selecione este botão para expandir ou recolher todas as seções de uma vez.",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE": "Expandir / Recolher tudo",
   "TOOLBAR_HELP_EXPORT_CONTENT": "Clique aqui para exportar o banco de dados selecionado para um arquivo .zip.",
   "TOOLBAR_HELP_EXPORT_TITLE": "Exportar Banco de Dados",
   "TOOLBAR_HELP_HELP_CONTENT": "Selecione este botão para mostrar esta ajuda guiada a qualquer momento.",

@@ -1839,6 +1839,8 @@
   "TOOLBAR_HELP_DELETE_TITLE": "Elimina",
   "TOOLBAR_HELP_EDIT_CONTENT": "Seleziona questo pulsante per modificare l'elemento selezionato.",
   "TOOLBAR_HELP_EDIT_TITLE": "Modifica",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT": "Seleziona questo pulsante per espandere o comprimere tutte le sezioni contemporaneamente.",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE": "Espandi / Comprimi tutto",
   "TOOLBAR_HELP_EXPORT_CONTENT": "Fai clic qui per esportare il database selezionato in un file .zip.",
   "TOOLBAR_HELP_EXPORT_TITLE": "Esporta Database",
   "TOOLBAR_HELP_HELP_CONTENT": "Seleziona questo pulsante per mostrare questo aiuto guidato in qualsiasi momento.",

@@ -1839,6 +1839,8 @@
   "TOOLBAR_HELP_DELETE_TITLE": "Verwijderen",
   "TOOLBAR_HELP_EDIT_CONTENT": "Selecteer deze knop om het geselecteerde item te bewerken.",
   "TOOLBAR_HELP_EDIT_TITLE": "Bewerken",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT": "Selecteer deze knop om alle secties tegelijk uit te vouwen of samen te vouwen.",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE": "Alles uitvouwen / samenvouwen",
   "TOOLBAR_HELP_EXPORT_CONTENT": "Klik hier om de geselecteerde database te exporteren naar een .zip-bestand.",
   "TOOLBAR_HELP_EXPORT_TITLE": "Database Exporteren",
   "TOOLBAR_HELP_HELP_CONTENT": "Selecteer deze knop om deze rondleiding op elk gewenst moment te tonen.",

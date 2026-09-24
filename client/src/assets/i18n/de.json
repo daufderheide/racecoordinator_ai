@@ -1839,6 +1839,8 @@
   "TOOLBAR_HELP_DELETE_TITLE": "Löschen",
   "TOOLBAR_HELP_EDIT_CONTENT": "Wählen Sie diese Schaltfläche, um das ausgewählte Element zu bearbeiten.",
   "TOOLBAR_HELP_EDIT_TITLE": "Bearbeiten",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT": "Wählen Sie diese Schaltfläche, um alle Abschnitte auf einmal zu erweitern oder zu reduzieren.",
+  "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE": "Alle erweitern / reduzieren",
   "TOOLBAR_HELP_EXPORT_CONTENT": "Klicken Sie hier, um die ausgewählte Datenbank in eine .zip-Datei zu exportieren.",
   "TOOLBAR_HELP_EXPORT_TITLE": "Datenbank exportieren",
   "TOOLBAR_HELP_HELP_CONTENT": "Wählen Sie diese Schaltfläche, um diese geführte Hilfe jederzeit anzuzeigen.",

@@ -266,6 +266,7 @@ The top toolbar of the Track Editor provides essential management tools:
 - **Add Track (+)**: Creates a new track template and enters Edit Mode.
 - **Duplicate Track**: Creates an exact copy of the currently selected track under a new unique name. Ideal for creating alternate configurations (e.g., standard racing vs. digital fuel layout) without rebuilding lane dimensions and pin assignments from scratch.
 - **Edit / Done Editing**: Toggles between Read-Only Mode and Edit Mode. When exiting Edit Mode, changes are validated and persisted.
+- **Expand / Collapse All**: Expands or collapses all configuration sections and hardware interface panels at once.
 - **Delete Track**: Deletes the selected track after confirmation.
 - **Undo (`Ctrl+Z`) / Redo (`Ctrl+Y`)**: Seamlessly revert or restore changes across lane dimensions, color adjustments, pin reassignments, and interface additions.
 - **Help (`?`)**: Opens the interactive guided tour highlighting every control, field, and button directly on the screen.
