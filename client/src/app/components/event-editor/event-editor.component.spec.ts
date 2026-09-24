@@ -597,6 +597,49 @@ describe("EventEditorComponent", () => {
       expect(component.selectedEventId).toBe("evt_2");
     }));
 
+    it("should auto-select next event in alphabetical order, or previous if last was deleted", fakeAsync(() => {
+      const evtA: Event = {
+        entity_id: "evt_1",
+        name: "Event A",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      const evtB: Event = {
+        entity_id: "evt_2",
+        name: "Event B",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+      const evtC: Event = {
+        entity_id: "evt_3",
+        name: "Event C",
+        description: "",
+        auto_advance_time: 0,
+        races: [],
+      };
+
+      component.existingEvents = [evtA, evtB, evtC];
+      component.selectEvent(evtB);
+      spyOn(window, "confirm").and.returnValue(true);
+      mockDataService.deleteEvent.and.returnValue(of({ success: true }));
+
+      // Delete B -> C is selected
+      component.onDeleteEvent();
+      tick(200);
+      expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_2");
+      expect(component.selectedEventId).toBe("evt_3");
+      expect(component.editingEvent?.name).toBe("Event C");
+
+      // Delete C -> A is selected
+      component.onDeleteEvent();
+      tick(200);
+      expect(mockDataService.deleteEvent).toHaveBeenCalledWith("evt_3");
+      expect(component.selectedEventId).toBe("evt_1");
+      expect(component.editingEvent?.name).toBe("Event A");
+    }));
+
     it("should disable keyboard undo/redo in read-only mode, and enable in edit mode", () => {
       const evt: Event = {
         entity_id: "evt_1",

@@ -708,6 +708,31 @@ describe("TeamEditorComponent", () => {
       expect(component.isEditMode).toBeFalse();
     }));
 
+    it("should auto-select next team in alphabetical order, or previous if last was deleted", fakeAsync(() => {
+      spyOn(window, "confirm").and.returnValue(true);
+      const teamA = new Team("t1", "Team A");
+      const teamB = new Team("t2", "Team B");
+      const teamC = new Team("t3", "Team C");
+
+      component.allTeams = [teamA, teamB, teamC];
+      component.selectTeam(teamB);
+      dataService.deleteTeam.and.returnValue(of({ success: true }));
+
+      // Delete B -> C is selected
+      component.onDeleteTeam();
+      flush();
+      expect(dataService.deleteTeam).toHaveBeenCalledWith("t2");
+      expect(component.selectedTeamId).toBe("t3");
+      expect(component.editingTeam?.name).toBe("Team C");
+
+      // Delete C -> A is selected
+      component.onDeleteTeam();
+      flush();
+      expect(dataService.deleteTeam).toHaveBeenCalledWith("t3");
+      expect(component.selectedTeamId).toBe("t1");
+      expect(component.editingTeam?.name).toBe("Team A");
+    }));
+
     it("should revert changes on onConfirmDiscard and exit edit mode", () => {
       component.isEditMode = true;
       const original = new Team("t1", "Original Name");

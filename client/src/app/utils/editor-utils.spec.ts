@@ -1,5 +1,6 @@
 import {
   ExpanderStateManager,
+  getNextSelectionAfterDelete,
   isEntityNameUnique,
   mapToSelectItems,
   NamedEntity,
@@ -93,6 +94,104 @@ describe("editor-utils", () => {
       ];
       const result = mapToSelectItems(items);
       expect(result).toEqual([{ id: "", name: "" }]);
+    });
+  });
+
+  describe("getNextSelectionAfterDelete", () => {
+    it("should return null for null, undefined, empty, or single-item collection", () => {
+      expect(getNextSelectionAfterDelete(null, "1")).toBeNull();
+      expect(getNextSelectionAfterDelete(undefined, "1")).toBeNull();
+      expect(getNextSelectionAfterDelete([], "1")).toBeNull();
+      expect(
+        getNextSelectionAfterDelete([{ entity_id: "1", name: "Solo" }], "1"),
+      ).toBeNull();
+    });
+
+    it("should select the next item in alphabetical order when deleting a middle item", () => {
+      const drivers: NamedEntity[] = [
+        { entity_id: "1", name: "Driver A" },
+        { entity_id: "2", name: "Driver B" },
+        { entity_id: "3", name: "Driver C" },
+      ];
+      // User example: Driver A, B and C. If B is deleted, C is selected.
+      const selected = getNextSelectionAfterDelete(drivers, "2");
+      expect(selected).toEqual({ entity_id: "3", name: "Driver C" });
+    });
+
+    it("should select the previous item if the deleted item was the last in alphabetical order", () => {
+      const drivers: NamedEntity[] = [
+        { entity_id: "1", name: "Driver A" },
+        { entity_id: "3", name: "Driver C" },
+      ];
+      // User example: If C is then deleted, A would be selected.
+      const selected = getNextSelectionAfterDelete(drivers, "3");
+      expect(selected).toEqual({ entity_id: "1", name: "Driver A" });
+    });
+
+    it("should select the next item when the first item is deleted", () => {
+      const items: NamedEntity[] = [
+        { entity_id: "1", name: "Driver A" },
+        { entity_id: "2", name: "Driver B" },
+        { entity_id: "3", name: "Driver C" },
+      ];
+      const selected = getNextSelectionAfterDelete(items, "1");
+      expect(selected).toEqual({ entity_id: "2", name: "Driver B" });
+    });
+
+    it("should correctly sort unsorted input before computing next selection", () => {
+      const unsorted: NamedEntity[] = [
+        { entity_id: "3", name: "Driver C" },
+        { entity_id: "1", name: "Driver A" },
+        { entity_id: "2", name: "Driver B" },
+      ];
+      // B deleted: alphabetical order is A, B, C -> next is C
+      const selected = getNextSelectionAfterDelete(unsorted, "2");
+      expect(selected).toEqual({ entity_id: "3", name: "Driver C" });
+    });
+
+    it("should use natural alphanumeric sorting for numbered names", () => {
+      const tracks: NamedEntity[] = [
+        { entity_id: "t1", name: "Track 1" },
+        { entity_id: "t2", name: "Track 2" },
+        { entity_id: "t10", name: "Track 10" },
+      ];
+      // Track 2 deleted: next in natural sort is Track 10
+      const nextAfter2 = getNextSelectionAfterDelete(tracks, "t2");
+      expect(nextAfter2).toEqual({ entity_id: "t10", name: "Track 10" });
+
+      // Track 10 deleted: it was the last in natural sort -> previous is Track 2
+      const nextAfter10 = getNextSelectionAfterDelete(tracks, "t10");
+      expect(nextAfter10).toEqual({ entity_id: "t2", name: "Track 2" });
+    });
+
+    it("should support entities using 'id' property instead of 'entity_id'", () => {
+      const items: NamedEntity[] = [
+        { id: "x1", name: "Alpha" },
+        { id: "x2", name: "Beta" },
+        { id: "x3", name: "Gamma" },
+      ];
+      const selected = getNextSelectionAfterDelete(items, "x2");
+      expect(selected).toEqual({ id: "x3", name: "Gamma" });
+    });
+
+    it("should fall back to first item if deletedId is not found", () => {
+      const items: NamedEntity[] = [
+        { entity_id: "1", name: "Alpha" },
+        { entity_id: "2", name: "Beta" },
+      ];
+      const selected = getNextSelectionAfterDelete(items, "non-existent");
+      expect(selected).toEqual({ entity_id: "1", name: "Alpha" });
+    });
+
+    it("should break ties with entity ID if names are identical", () => {
+      const items: NamedEntity[] = [
+        { entity_id: "id-b", name: "Same Name" },
+        { entity_id: "id-a", name: "Same Name" },
+        { entity_id: "id-c", name: "Same Name" },
+      ];
+      // Sorted order by id: id-a, id-b, id-c
+      const selected = getNextSelectionAfterDelete(items, "id-b");
+      expect(selected).toEqual({ entity_id: "id-c", name: "Same Name" });
     });
   });
 

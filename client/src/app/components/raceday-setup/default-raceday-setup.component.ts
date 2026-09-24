@@ -34,6 +34,7 @@ import { RaceHistoryDialogComponent } from "@app/components/shared/race-history-
 import { RacingRosterDialogComponent } from "@app/components/shared/racing-roster-dialog/racing-roster-dialog.component";
 import { SeasonSummaryComponent } from "@app/components/shared/season-summary/season-summary.component";
 import { UpdateSelectorComponent } from "@app/components/shared/update-selector/update-selector.component";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { Driver } from "@app/models/driver";
 import { Event as EventModel } from "@app/models/event";
@@ -278,48 +279,11 @@ export class DefaultRacedaySetupComponent implements OnInit {
       seasons: this.dataService.getSeasons(),
     }).subscribe({
       next: (result) => {
-        const drivers = (result.drivers as any).map(
-          (d: any) =>
-            new Driver(
-              d.entity_id,
-              d.name || "",
-              d.nickname || "",
-              d.avatarUrl || undefined,
-              {
-                type:
-                  d.lapAudio?.type ||
-                  (d.lapSoundType === "tts"
-                    ? "tts"
-                    : d.lapSoundType === "none"
-                      ? "none"
-                      : "preset"),
-                url: d.lapAudio?.url || d.lapSoundUrl,
-                text: d.lapAudio?.text || d.lapSoundText,
-              },
-              {
-                type:
-                  d.bestLapAudio?.type ||
-                  (d.bestLapSoundType === "tts"
-                    ? "tts"
-                    : d.bestLapSoundType === "none"
-                      ? "none"
-                      : "preset"),
-                url: d.bestLapAudio?.url || d.bestLapSoundUrl,
-                text: d.bestLapAudio?.text || d.bestLapSoundText,
-              },
-              {
-                type:
-                  d.penaltyAudio?.type ||
-                  (d.penaltySoundType === "tts"
-                    ? "tts"
-                    : d.penaltySoundType === "none"
-                      ? "none"
-                      : "preset"),
-                url: d.penaltyAudio?.url || d.penaltySoundUrl,
-                text: d.penaltyAudio?.text || d.penaltySoundText,
-              },
-            ),
-        );
+        const drivers = (result.drivers as any[]).map((d: any) => {
+          const driver = DriverConverter.fromJSON(d);
+          DriverConverter.register(driver);
+          return driver;
+        });
         const teams = (result.teams as any).map(
           (t: any) =>
             new Team(

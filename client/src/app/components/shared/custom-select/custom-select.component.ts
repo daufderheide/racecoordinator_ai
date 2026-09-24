@@ -92,6 +92,9 @@ export class CustomSelectComponent
     this.updateSelectedLabel();
     this.customOptions.changes.subscribe(() => {
       this.updateSelectedLabel();
+      if (this.isOpen) {
+        this.scrollToSelectedOption();
+      }
     });
   }
 
@@ -136,7 +139,42 @@ export class CustomSelectComponent
     if (this.isOpen) {
       this.onTouch();
       this.updateSelectedLabel();
+      this.scrollToSelectedOption();
     }
+  }
+
+  scrollToSelectedOption(): void {
+    setTimeout(() => {
+      if (!this.isOpen) return;
+      const dropdown = this.elementRef.nativeElement.querySelector(
+        ".custom-select-dropdown",
+      ) as HTMLElement | null;
+      const selectedEl = dropdown?.querySelector(
+        ".custom-select-option.selected",
+      ) as HTMLElement | null;
+
+      if (!dropdown || !selectedEl) return;
+
+      const doScroll = () => {
+        if (!this.isOpen) return;
+        if (
+          dropdown.clientHeight > 0 &&
+          dropdown.scrollHeight > dropdown.clientHeight
+        ) {
+          const targetScroll =
+            selectedEl.offsetTop -
+            dropdown.clientHeight / 2 +
+            selectedEl.offsetHeight / 2;
+          dropdown.scrollTop = Math.max(0, targetScroll);
+        }
+      };
+
+      if (dropdown.clientHeight > 0) {
+        doScroll();
+      } else {
+        requestAnimationFrame(() => doScroll());
+      }
+    }, 0);
   }
 
   selectOption(option: CustomOptionComponent, event: Event) {

@@ -10,6 +10,7 @@ import com.antigravity.models.Season;
 import com.antigravity.models.SeasonStandingItem;
 import com.antigravity.models.Team;
 import com.antigravity.models.Track;
+import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.race.SeasonStandingsCalculator;
 import com.antigravity.repository.SqliteRepository;
 import com.antigravity.service.DatabaseService;
@@ -177,6 +178,11 @@ public class DatabaseTaskHandler {
       }
 
       driverRepository.replace(id, driver);
+      com.antigravity.race.Race activeRace = // fqn-collision
+          ClientSubscriptionManager.getInstance().getRace();
+      if (activeRace != null) {
+        activeRace.updateDriver(driver);
+      }
       ctx.json(driver);
     } catch (Exception e) {
       logger.error("Error updating driver", e);

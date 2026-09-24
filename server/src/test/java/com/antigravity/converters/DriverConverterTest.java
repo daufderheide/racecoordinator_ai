@@ -367,4 +367,108 @@ public class DriverConverterTest {
     assertEquals(driver.getPitInAudio().getUrl(), copy.getPitInAudio().getUrl());
     assertEquals(driver.getFuelAudio().getUrl(), copy.getFuelAudio().getUrl());
   }
+
+  @Test
+  public void testToProto_WithNoneAudioConfig_DoesNotInjectDefaultUrls() {
+    com.antigravity.models.AudioConfig noneAudio =
+        new com.antigravity.models.AudioConfig("none", null, null);
+    Driver driver =
+        new Driver.Builder()
+            .withName("Silent Driver")
+            .withNickname("Silent")
+            .withEntityId("d_silent")
+            .withLapAudio(noneAudio)
+            .withBestLapAudio(noneAudio)
+            .withPenaltyAudio(noneAudio)
+            .withOverallBestLapAudio(noneAudio)
+            .withOverallLaneBestLapAudio(noneAudio)
+            .withRaceBestLapAudio(noneAudio)
+            .withRaceLaneBestLapAudio(noneAudio)
+            .withHeatBestLapAudio(noneAudio)
+            .withNewRaceLeaderAudio(noneAudio)
+            .withNewHeatLeaderAudio(noneAudio)
+            .withPitInAudio(noneAudio)
+            .withFuelAudio(noneAudio)
+            .build();
+
+    DriverModel proto = DriverConverter.toProto(driver, new HashSet<>());
+    assertNotNull(proto);
+
+    assertEquals("none", proto.getLapAudio().getType());
+    assertEquals("", proto.getLapAudio().getUrl());
+
+    assertEquals("none", proto.getBestLapAudio().getType());
+    assertEquals("", proto.getBestLapAudio().getUrl());
+
+    assertEquals("none", proto.getOverallBestLapAudio().getType());
+    assertEquals("", proto.getOverallBestLapAudio().getUrl());
+
+    assertEquals("none", proto.getHeatBestLapAudio().getType());
+    assertEquals("", proto.getHeatBestLapAudio().getUrl());
+
+    assertEquals("none", proto.getRaceBestLapAudio().getType());
+    assertEquals("", proto.getRaceBestLapAudio().getUrl());
+  }
+
+  @Test
+  public void testToProto_WithEmptyPresetUrl_FallsBackToDefaultPreset() {
+    com.antigravity.models.AudioConfig emptyUrlPreset =
+        new com.antigravity.models.AudioConfig("preset", "", null);
+    Driver driver =
+        new Driver.Builder()
+            .withName("Preset Driver")
+            .withLapAudio(emptyUrlPreset)
+            .withBestLapAudio(emptyUrlPreset)
+            .withOverallBestLapAudio(emptyUrlPreset)
+            .withPitInAudio(emptyUrlPreset)
+            .build();
+
+    DriverModel proto = DriverConverter.toProto(driver, new HashSet<>());
+    assertNotNull(proto);
+
+    assertEquals("preset", proto.getLapAudio().getType());
+    assertEquals("default_beep", proto.getLapAudio().getUrl());
+
+    assertEquals("preset", proto.getBestLapAudio().getType());
+    assertEquals("default_driveby", proto.getBestLapAudio().getUrl());
+
+    assertEquals("preset", proto.getOverallBestLapAudio().getType());
+    assertEquals("default_record_lap", proto.getOverallBestLapAudio().getUrl());
+
+    assertEquals("preset", proto.getPitInAudio().getType());
+    assertEquals("default_pit_in", proto.getPitInAudio().getUrl());
+  }
+
+  @Test
+  public void testToProto_PreservesUrlAndTextAcrossTypes() {
+    com.antigravity.models.AudioConfig noneWithSavedValues =
+        new com.antigravity.models.AudioConfig("none", "custom_beep", "TTS Text");
+    com.antigravity.models.AudioConfig ttsWithSavedPreset =
+        new com.antigravity.models.AudioConfig("tts", "custom_driveby", "Nice Lap");
+    com.antigravity.models.AudioConfig presetWithSavedTts =
+        new com.antigravity.models.AudioConfig("preset", "custom_record", "Record Lap!");
+
+    Driver driver =
+        new Driver.Builder()
+            .withName("MultiAudio Driver")
+            .withLapAudio(noneWithSavedValues)
+            .withBestLapAudio(ttsWithSavedPreset)
+            .withOverallBestLapAudio(presetWithSavedTts)
+            .build();
+
+    DriverModel proto = DriverConverter.toProto(driver, new HashSet<>());
+    assertNotNull(proto);
+
+    assertEquals("none", proto.getLapAudio().getType());
+    assertEquals("custom_beep", proto.getLapAudio().getUrl());
+    assertEquals("TTS Text", proto.getLapAudio().getText());
+
+    assertEquals("tts", proto.getBestLapAudio().getType());
+    assertEquals("custom_driveby", proto.getBestLapAudio().getUrl());
+    assertEquals("Nice Lap", proto.getBestLapAudio().getText());
+
+    assertEquals("preset", proto.getOverallBestLapAudio().getType());
+    assertEquals("custom_record", proto.getOverallBestLapAudio().getUrl());
+    assertEquals("Record Lap!", proto.getOverallBestLapAudio().getText());
+  }
 }

@@ -53,10 +53,14 @@ public class DriverConverter {
     if ("audio_set".equals(defaultType) && "preset".equals(type)) {
       type = "audio_set";
     }
-    String url =
-        config != null && config.getUrl() != null
-            ? config.getUrl()
-            : (defaultUrl != null ? defaultUrl : "");
+    String url = "";
+    if (config != null && config.getUrl() != null && !config.getUrl().trim().isEmpty()) {
+      url = config.getUrl().trim();
+    } else if (!"tts".equalsIgnoreCase(type)
+        && !"none".equalsIgnoreCase(type)
+        && defaultUrl != null) {
+      url = defaultUrl;
+    }
     String text = config != null && config.getText() != null ? config.getText() : "";
     return AudioConfig.newBuilder().setType(type).setUrl(url).setText(text).build();
   }

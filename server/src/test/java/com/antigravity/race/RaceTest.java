@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.AnalogFuelOptions;
+import com.antigravity.models.AudioConfig;
 import com.antigravity.models.Driver;
 import com.antigravity.models.HeatRotationType;
 import com.antigravity.models.HeatScoring;
@@ -160,6 +161,97 @@ public class RaceTest {
       Theme theme2 = new Theme("Theme 2", false, new java.util.HashMap<>(), null, "theme-2", null);
       race.setTheme(theme2);
       assertEquals(theme2, race.getTheme());
+    }
+
+    @Test
+    public void testUpdateDriver_NullOrEmptyId_DoesNotThrow() {
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+      Track track = mock(Track.class);
+
+      List<Heat> heats = new ArrayList<>();
+      heats.add(mock(Heat.class));
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .databaseContext(dbContext)
+              .heats(heats)
+              .isDemoMode(true)
+              .build();
+
+      race.updateDriver(null);
+      race.updateDriver(new Driver.Builder().build());
+      assertNotNull(race);
+    }
+
+    @Test
+    public void testUpdateDriver_UpdatesParticipantsAndHeats() {
+      Race model = mock(Race.class);
+      when(model.getHeatRotationType()).thenReturn(HeatRotationType.RoundRobin);
+      when(model.getOverallScoring()).thenReturn(new OverallScoring());
+      Track track = mock(Track.class);
+
+      Driver originalDriver =
+          new Driver.Builder()
+              .withEntityId("driver_1")
+              .withName("Driver One")
+              .withNickname("D1")
+              .withLapAudio(new AudioConfig("preset", "default_beep", "none"))
+              .build();
+
+      RaceParticipant participant = new RaceParticipant(originalDriver);
+      List<RaceParticipant> participants = new ArrayList<>();
+      participants.add(participant);
+
+      Team team =
+          new Team("Test Team", null, Collections.singletonList("driver_1"), "team_1", null);
+      RaceParticipant teamParticipant = new RaceParticipant(team);
+      List<Driver> teamDrivers = new ArrayList<>();
+      teamDrivers.add(originalDriver);
+      teamParticipant.setTeamDrivers(teamDrivers);
+      participants.add(teamParticipant);
+
+      DriverHeatData dhd = new DriverHeatData(participant, originalDriver);
+      List<DriverHeatData> heatDrivers = new ArrayList<>();
+      heatDrivers.add(dhd);
+
+      Heat heat = new Heat(1, heatDrivers, new HeatScoring(), false);
+      List<Heat> heats = new ArrayList<>();
+      heats.add(heat);
+
+      com.antigravity.race.Race race =
+          new com.antigravity.race.Race.Builder()
+              .model(model)
+              .track(track)
+              .databaseContext(dbContext)
+              .drivers(participants)
+              .heats(heats)
+              .isDemoMode(true)
+              .build();
+
+      Driver updatedDriver =
+          new Driver.Builder()
+              .withEntityId("driver_1")
+              .withName("Driver One Updated")
+              .withNickname("D1 Updated")
+              .withLapAudio(new AudioConfig("none", "", "none"))
+              .withBestLapAudio(new AudioConfig("none", "", "none"))
+              .build();
+
+      race.updateDriver(updatedDriver);
+
+      assertEquals("Driver One Updated", participant.getDriver().getName());
+      assertEquals("none", participant.getDriver().getLapAudio().getType());
+      assertEquals("none", participant.getDriver().getBestLapAudio().getType());
+
+      assertEquals("Driver One Updated", teamParticipant.getTeamDrivers().get(0).getName());
+      assertEquals("none", teamParticipant.getTeamDrivers().get(0).getLapAudio().getType());
+
+      assertEquals("Driver One Updated", dhd.getActualDriver().getName());
+      assertEquals("none", dhd.getActualDriver().getLapAudio().getType());
+      assertEquals("Driver One Updated", dhd.getDriver().getDriver().getName());
     }
   }
 

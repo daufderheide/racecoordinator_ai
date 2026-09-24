@@ -1148,18 +1148,25 @@ describe("AssetManagerComponent", () => {
       ]);
     });
 
-    it("should preserve percentage when opening audio set editor", () => {
+    it("should preserve percentage and triggerMode when opening audio set editor", () => {
       const asset: any = {
         id: "set-1",
         name: "Fuel Set",
         audioEntries: [
-          { timeSeconds: 10, percentage: 10, url: "low.wav", name: "Low" },
+          {
+            timeSeconds: 10,
+            percentage: 10,
+            url: "low.wav",
+            name: "Low",
+            triggerMode: "elapsed",
+          },
           {
             timeSeconds: 0,
             percentage: 0,
             text: "{driver.nickname} out of fuel",
             type: "tts",
             name: "Empty",
+            // triggerMode omitted, should default to "remaining"
           },
         ],
       };
@@ -1170,9 +1177,13 @@ describe("AssetManagerComponent", () => {
       expect((component.editingAudioAssetEntries[0] as any).percentage).toBe(
         10,
       );
+      expect(component.editingAudioAssetEntries[0].triggerMode).toBe("elapsed");
       expect((component.editingAudioAssetEntries[1] as any).percentage).toBe(0);
       expect(component.editingAudioAssetEntries[1].text).toBe(
         "{driver.nickname} out of fuel",
+      );
+      expect(component.editingAudioAssetEntries[1].triggerMode).toBe(
+        "remaining",
       );
     });
   });

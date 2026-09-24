@@ -241,41 +241,42 @@
   font-family: inherit;
 }
 
-.editor-section input:focus,
-.editor-section select:focus {
+.editor-section input:focus {
   border-color: #38bdf8;
   outline: none;
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
-}
-
-.editor-section select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-color: rgba(15, 23, 42, 0.5);
-  background-image: url("data:image/svg+xml;base64,PHN2ZyBmaWxsPScjOTRhM2I4JyBoZWlnaHQ9JzI0JyB2aWV3Qm94PScwIDAgMjQgMjQnIHdpZHRoPScyNCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48cGF0aCBkPSdNNyAxMGw1IDUgNS01eicvPjwvc3ZnPg==");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 20px 20px;
-  padding-right: 32px;
-  cursor: pointer;
-  color-scheme: dark;
 }
 
 
 
 .config-row {
   display: flex;
-  gap: 40px;
+  gap: 100px;
   flex-wrap: wrap;
 }
 
 .config-row.single-column {
-  max-width: 800px;
+  max-width: none;
 }
 
 .config-row .config-section {
   flex: 1;
+}
+
+.config-row .config-section[data-section="config"] {
+  flex: 0 0 840px;
+  width: 840px;
+  min-width: 840px;
+  max-width: 840px;
+  box-sizing: border-box;
+}
+
+.config-row .config-section[data-section="audioSettings"] {
+  flex: 0 0 500px;
+  width: 500px;
+  min-width: 500px;
+  max-width: 500px;
+  box-sizing: border-box;
 }
 
 .panel {
@@ -299,17 +300,17 @@
 
 
 .template-selector {
-  margin-top: 30px;
+  margin-top: 22px;
 }
 
 .directory-selector {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .directory-selector + .directory-selector {
-  margin-top: 30px;
+  margin-top: 22px;
 }
 
 .directory-selector label {
@@ -324,7 +325,7 @@
   background: rgba(15, 23, 42, 0.3);
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 6px;
-  padding: 12px 15px;
+  padding: 10px 14px;
   min-height: 20px;
 }
 
@@ -344,6 +345,14 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.directory-actions .btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .template-reupload-hint {
@@ -659,42 +668,6 @@
 .select-container {
   position: relative;
   width: 100%;
-}
-
-.select-container select {
-  width: 100%;
-  background: rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 6px;
-  padding: 12px 15px;
-  color: #f8fafc;
-  font-size: 14px;
-  appearance: none;
-  cursor: pointer;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.select-container select:hover {
-  border-color: rgba(56, 189, 248, 0.6);
-  background: rgba(15, 23, 42, 0.8);
-}
-
-.select-container select:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-}
-
-.select-container::after {
-  content: 'expand_more';
-  font-family: 'Material Icons';
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #000;
-  pointer-events: none;
-  font-size: 20px;
 }
 
 .force-fit-selector {
@@ -1496,6 +1469,56 @@
   color: #ef4444;
 }
 
+.inspector-delete-btn {
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.inspector-delete-btn:hover {
+  color: #991b1b;
+  background: rgba(220, 38, 38, 0.15);
+}
+
+.inspector-delete-btn .material-icons {
+  font-size: 20px;
+}
+
+.delete-widget-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 12px;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  color: #991b1b;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.delete-widget-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35);
+}
+
+.delete-widget-btn .material-icons {
+  font-size: 16px;
+}
+
 .inspector-section {
   display: flex;
   flex-direction: column;
@@ -1600,11 +1623,6 @@
   color: #475569;
   font-size: 12px;
   font-style: italic;
-}
-
-.select-container.select-sm select {
-  padding: 6px 10px;
-  font-size: 13px;
 }
 
 .inspector-slider {

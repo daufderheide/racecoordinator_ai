@@ -17,7 +17,15 @@ For complete widget development details, see the [Custom Widgets Guide](custom-w
 ## Layout & Column Configuration
 
 - Drag and drop widgets from the palette onto the canvas.
-- Resize, reposition, and align widgets to match your screen resolution.
+- Resize, reposition, and align widgets to match your screen resolution. All widgets are bounded to prevent dragging or resizing past the canvas frame.
+- **Widget Inspector Controls**:
+  - **Position & Size**: Precisely position and dimension the selected widget using the **X**, **Y**, **Width**, and **Height** numeric inputs.
+  - **Delete Widget**: Click the trash icon in the inspector header or the **Delete Widget** button in the inspector sidebar to remove the selected widget.
+- **Keyboard Shortcuts**:
+  - <kbd>Delete</kbd> or <kbd>Backspace</kbd>: Removes the selected widget from the layout.
+  - <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>: Nudges the selected widget by 1px (or 10px holding <kbd>Shift</kbd>).
+  - <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Cmd</kbd>+<kbd>Z</kbd>: Undo previous action (including widget deletions and nudges).
+  - <kbd>Ctrl</kbd>+<kbd>Y</kbd> / <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd>: Redo previous action.
 - Configure column order, column visibility, anchors, and width preferences.
 
 ## Timer Widget Configuration

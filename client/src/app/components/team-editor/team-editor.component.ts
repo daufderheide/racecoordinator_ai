@@ -20,6 +20,7 @@ import { ConfirmationModalComponent } from "@app/components/shared/confirmation-
 import { EditorTitleComponent } from "@app/components/shared/editor-title/editor-title.component";
 import { ImageSelectorComponent } from "@app/components/shared/image-selector/image-selector.component";
 import { UndoManager } from "@app/components/shared/undo-redo-controls/undo-manager";
+import { DriverConverter } from "@app/converters/driver.converter";
 import { DataService } from "@app/data.service";
 import { AutoSelectDefaultDirective } from "@app/directives/auto-select-default.directive";
 import { DirtyComponent } from "@app/interfaces/dirty-component";
@@ -37,7 +38,11 @@ import { RaceConnectionService } from "@app/services/race-connection.service";
 import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
+import {
+  getNextSelectionAfterDelete,
+  isEntityNameUnique,
+  mapToSelectItems,
+} from "@app/utils/editor-utils";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
 
 @Component({
@@ -293,10 +298,11 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     }).subscribe({
       next: (result) => {
         try {
-          this.allDrivers = result.drivers.map(
-            (d) =>
-              new Driver(d.entity_id, d.name, d.nickname || "", d.avatarUrl),
-          );
+          this.allDrivers = (result.drivers as any[]).map((d: any) => {
+            const driver = DriverConverter.fromJSON(d);
+            DriverConverter.register(driver);
+            return driver;
+          });
           this.allTeams = result.teams.map(
             (t: any) =>
               new Team(
@@ -588,15 +594,19 @@ export class TeamEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         next: () => {
           this.isSaving = false;
           this.isEditMode = false;
+          const nextTeam = getNextSelectionAfterDelete(
+            this.allTeams,
+            idToDelete,
+          );
           this.allTeams = this.allTeams.filter(
             (t) => t.entity_id !== idToDelete,
           );
           this.updateTeamSelectItems();
-          if (this.allTeams.length > 0) {
-            this.selectTeam(this.allTeams[0]);
+          if (nextTeam) {
+            this.selectTeam(nextTeam);
             this.router.navigate([], {
               relativeTo: this.route,
-              queryParams: { id: this.allTeams[0].entity_id },
+              queryParams: { id: nextTeam.entity_id },
               queryParamsHandling: "merge",
               replaceUrl: true,
             });

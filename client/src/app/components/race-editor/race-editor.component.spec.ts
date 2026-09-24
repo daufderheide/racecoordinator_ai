@@ -3419,6 +3419,31 @@ describe("RaceEditorComponent", () => {
         expect(component.isEditMode).toBeFalse();
       }));
 
+      it("should auto-select next race in alphabetical order, or previous if last was deleted", fakeAsync(() => {
+        const raceA = { entity_id: "r1", name: "Race A" } as Race;
+        const raceB = { entity_id: "r2", name: "Race B" } as Race;
+        const raceC = { entity_id: "r3", name: "Race C" } as Race;
+
+        component.allRaces = [raceA, raceB, raceC];
+        component.selectRace(raceB);
+        spyOn(window, "confirm").and.returnValue(true);
+        dataService.deleteRace.and.returnValue(of(null));
+
+        // Delete B -> C is selected
+        component.onDeleteRace();
+        tick();
+        expect(dataService.deleteRace).toHaveBeenCalledWith("r2");
+        expect(component.selectedRaceId).toBe("r3");
+        expect(component.editingRace?.name).toBe("Race C");
+
+        // Delete C -> A is selected
+        component.onDeleteRace();
+        tick();
+        expect(dataService.deleteRace).toHaveBeenCalledWith("r3");
+        expect(component.selectedRaceId).toBe("r1");
+        expect(component.editingRace?.name).toBe("Race A");
+      }));
+
       it("should allow expanders to toggle in read-only mode", () => {
         component.isEditMode = false;
         component.sectionsExpanded.general = true;

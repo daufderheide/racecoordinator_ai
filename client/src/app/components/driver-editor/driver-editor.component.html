@@ -159,6 +159,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('lap')"
                     [assets]="soundAssets"
                     [type]="editingDriver.lapAudio.type"
                     (typeChange)="onAudioTypeChange('lap', $event)"
@@ -177,6 +178,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_PERSONAL_BEST_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('bestLap')"
                     [assets]="soundAssets"
                     [type]="editingDriver.bestLapAudio.type"
                     (typeChange)="onAudioTypeChange('bestLap', $event)"
@@ -203,6 +205,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_RACE_BEST_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('raceBestLap')"
                     [assets]="soundAssets"
                     [type]="editingDriver.raceBestLapAudio.type"
                     (typeChange)="onAudioTypeChange('raceBestLap', $event)"
@@ -221,6 +224,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_RACE_LANE_BEST_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('raceLaneBestLap')"
                     [assets]="soundAssets"
                     [type]="editingDriver.raceLaneBestLapAudio.type"
                     (typeChange)="onAudioTypeChange('raceLaneBestLap', $event)"
@@ -239,6 +243,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_HEAT_BEST_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('heatBestLap')"
                     [assets]="soundAssets"
                     [type]="editingDriver.heatBestLapAudio.type"
                     (typeChange)="onAudioTypeChange('heatBestLap', $event)"
@@ -257,6 +262,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_NEW_RACE_LEADER_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('newRaceLeader')"
                     [assets]="soundAssets"
                     [type]="editingDriver.newRaceLeaderAudio.type"
                     (typeChange)="onAudioTypeChange('newRaceLeader', $event)"
@@ -275,6 +281,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_NEW_HEAT_LEADER_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('newHeatLeader')"
                     [assets]="soundAssets"
                     [type]="editingDriver.newHeatLeaderAudio.type"
                     (typeChange)="onAudioTypeChange('newHeatLeader', $event)"
@@ -301,6 +308,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_OVERALL_BEST_LAP_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('overallBestLap')"
                     [assets]="soundAssets"
                     [type]="editingDriver.overallBestLapAudio.type"
                     (typeChange)="onAudioTypeChange('overallBestLap', $event)"
@@ -322,6 +330,9 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_OVERALL_LANE_BEST_LAP_SOUND' | translate"
+                    [fallbackName]="
+                      getAudioSlotFallbackName('overallLaneBestLap')
+                    "
                     [assets]="soundAssets"
                     [type]="editingDriver.overallLaneBestLapAudio.type"
                     (typeChange)="
@@ -352,6 +363,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_PIT_IN_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('pitIn')"
                     [assets]="soundAssets"
                     [type]="editingDriver.pitInAudio.type"
                     (typeChange)="onAudioTypeChange('pitIn', $event)"
@@ -371,6 +383,7 @@
                     mode="set"
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_FUEL_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('fuel')"
                     [assets]="soundAssets"
                     [type]="editingDriver.fuelAudio.type"
                     (typeChange)="onAudioTypeChange('fuel', $event)"
@@ -389,6 +402,7 @@
                   <app-audio-selector
                     [readonly]="!isEditMode"
                     [label]="'DE_LABEL_FALSE_START_SOUND' | translate"
+                    [fallbackName]="getAudioSlotFallbackName('falseStart')"
                     [assets]="soundAssets"
                     [type]="editingDriver.penaltyAudio.type"
                     (typeChange)="onAudioTypeChange('falseStart', $event)"

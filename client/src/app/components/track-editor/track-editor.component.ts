@@ -69,7 +69,11 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { deepCopy } from "@app/utils/clone.utils";
 import { EditorLifecycleHelper } from "@app/utils/editor-lifecycle.helper";
-import { isEntityNameUnique, mapToSelectItems } from "@app/utils/editor-utils";
+import {
+  getNextSelectionAfterDelete,
+  isEntityNameUnique,
+  mapToSelectItems,
+} from "@app/utils/editor-utils";
 
 @Component({
   standalone: true,
@@ -909,15 +913,19 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         next: () => {
           this.isSaving = false;
           this.isEditMode = false;
+          const nextTrack = getNextSelectionAfterDelete(
+            this.allTracks,
+            idToDelete,
+          );
           this.allTracks = this.allTracks.filter(
             (t) => t.entity_id !== idToDelete,
           );
           this.updateTrackSelectItems();
-          if (this.allTracks.length > 0) {
-            this.selectTrack(this.allTracks[0]);
+          if (nextTrack) {
+            this.selectTrack(nextTrack);
             this.router.navigate([], {
               relativeTo: this.route,
-              queryParams: { id: this.allTracks[0].entity_id },
+              queryParams: { id: nextTrack.entity_id },
               queryParamsHandling: "merge",
               replaceUrl: true,
             });

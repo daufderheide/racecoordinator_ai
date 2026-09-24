@@ -4,6 +4,7 @@ import { Theme } from "@app/models/theme";
 
 import {
   ensureDefaultCustomUis,
+  handleUiEditorKeyboardShortcut,
   normalizeLoadedThemes,
   processLoadedEditorData,
 } from "./ui-editor-data.helper";
@@ -198,5 +199,156 @@ describe("ui-editor-data.helper", () => {
     expect(
       loadedThemes.find((t) => t.entity_id === "custom_theme_1")?.name,
     ).toBe("My Custom Theme");
+  });
+
+  describe("handleUiEditorKeyboardShortcut", () => {
+    let onUndo: jasmine.Spy;
+    let onRedo: jasmine.Spy;
+    let onDelete: jasmine.Spy;
+    let onNudge: jasmine.Spy;
+
+    beforeEach(() => {
+      onUndo = jasmine.createSpy("onUndo");
+      onRedo = jasmine.createSpy("onRedo");
+      onDelete = jasmine.createSpy("onDelete");
+      onNudge = jasmine.createSpy("onNudge");
+    });
+
+    it("should trigger undo on Ctrl+Z and redo on Ctrl+Shift+Z", () => {
+      const undoEvent = new KeyboardEvent("keydown", {
+        key: "z",
+        ctrlKey: true,
+      });
+      spyOn(undoEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        undoEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(undoEvent.preventDefault).toHaveBeenCalled();
+      expect(onUndo).toHaveBeenCalled();
+      expect(onRedo).not.toHaveBeenCalled();
+
+      const redoEvent = new KeyboardEvent("keydown", {
+        key: "z",
+        ctrlKey: true,
+        shiftKey: true,
+      });
+      spyOn(redoEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        redoEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(redoEvent.preventDefault).toHaveBeenCalled();
+      expect(onRedo).toHaveBeenCalled();
+    });
+
+    it("should trigger redo on Ctrl+Y", () => {
+      const redoEvent = new KeyboardEvent("keydown", {
+        key: "y",
+        ctrlKey: true,
+      });
+      spyOn(redoEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        redoEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(redoEvent.preventDefault).toHaveBeenCalled();
+      expect(onRedo).toHaveBeenCalled();
+    });
+
+    it("should trigger onDelete on Delete or Backspace when not in input", () => {
+      const delEvent = new KeyboardEvent("keydown", { key: "Delete" });
+      spyOn(delEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        delEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(delEvent.preventDefault).toHaveBeenCalled();
+      expect(onDelete).toHaveBeenCalled();
+
+      const backspaceEvent = new KeyboardEvent("keydown", { key: "Backspace" });
+      spyOn(backspaceEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        backspaceEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(backspaceEvent.preventDefault).toHaveBeenCalled();
+      expect(onDelete).toHaveBeenCalledTimes(2);
+    });
+
+    it("should NOT trigger onDelete or onNudge when focused on input/textarea", () => {
+      const input = document.createElement("input");
+      const delEvent = new KeyboardEvent("keydown", { key: "Delete" });
+      Object.defineProperty(delEvent, "target", { value: input });
+      spyOn(delEvent, "preventDefault");
+
+      handleUiEditorKeyboardShortcut(
+        delEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(delEvent.preventDefault).not.toHaveBeenCalled();
+      expect(onDelete).not.toHaveBeenCalled();
+
+      const arrowEvent = new KeyboardEvent("keydown", { key: "ArrowUp" });
+      Object.defineProperty(arrowEvent, "target", { value: input });
+      spyOn(arrowEvent, "preventDefault");
+
+      handleUiEditorKeyboardShortcut(
+        arrowEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(arrowEvent.preventDefault).not.toHaveBeenCalled();
+      expect(onNudge).not.toHaveBeenCalled();
+    });
+
+    it("should trigger onNudge with 1px step on Arrow keys and 10px on Shift+Arrow", () => {
+      const leftEvent = new KeyboardEvent("keydown", { key: "ArrowLeft" });
+      spyOn(leftEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        leftEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(leftEvent.preventDefault).toHaveBeenCalled();
+      expect(onNudge).toHaveBeenCalledWith(-1, 0);
+
+      const shiftDownEvent = new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        shiftKey: true,
+      });
+      spyOn(shiftDownEvent, "preventDefault");
+      handleUiEditorKeyboardShortcut(
+        shiftDownEvent,
+        onUndo,
+        onRedo,
+        onDelete,
+        onNudge,
+      );
+      expect(shiftDownEvent.preventDefault).toHaveBeenCalled();
+      expect(onNudge).toHaveBeenCalledWith(0, 10);
+    });
   });
 });

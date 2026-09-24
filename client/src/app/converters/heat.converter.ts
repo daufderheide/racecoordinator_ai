@@ -53,6 +53,18 @@ export class HeatConverter {
       index,
       actualDriver,
     );
+
+    this.populateScalarProperties(hd, dProto);
+    this.populateAnalysisMetrics(hd, dProto);
+    this.populateLapsAndSegments(hd, dProto);
+
+    return hd;
+  }
+
+  private static populateScalarProperties(
+    hd: DriverHeatData,
+    dProto: any,
+  ): void {
     hd.gapLeader = dProto.gapLeader || 0;
     hd.gapPosition = dProto.gapPosition || 0;
     hd.gapLeaderF1 = dProto.gapLeaderF1 || 0;
@@ -72,6 +84,7 @@ export class HeatConverter {
     hd.trackCalls = dProto.trackCalls ?? (dProto as any).track_calls ?? 0;
     hd.initialFuelLevel =
       dProto.initialFuelLevel ?? (dProto as any).initial_fuel_level ?? 0;
+
     if (
       hd.participant &&
       (hd.participant.fuelLevel == null ||
@@ -80,6 +93,62 @@ export class HeatConverter {
     ) {
       hd.participant.fuelLevel = hd.initialFuelLevel;
     }
+  }
+
+  private static populateAnalysisMetrics(
+    hd: DriverHeatData,
+    dProto: any,
+  ): void {
+    const rawLaps = dProto.laps || [];
+    const hasLaps = rawLaps.length > 0;
+
+    hd.consistencyScore = hasLaps
+      ? (dProto.consistencyScore ?? (dProto as any).consistency_score ?? null)
+      : null;
+    hd.standardDeviation =
+      rawLaps.length > 1
+        ? (dProto.standardDeviation ??
+          (dProto as any).standard_deviation ??
+          null)
+        : null;
+    hd.averageTop5 = hasLaps
+      ? ((dProto as any).averageTop5 ??
+        dProto.averageTop_5 ??
+        (dProto as any).average_top_5 ??
+        null)
+      : null;
+    hd.averageTop10 = hasLaps
+      ? ((dProto as any).averageTop10 ??
+        dProto.averageTop_10 ??
+        (dProto as any).average_top_10 ??
+        null)
+      : null;
+    hd.averageTop15 = hasLaps
+      ? ((dProto as any).averageTop15 ??
+        dProto.averageTop_15 ??
+        (dProto as any).average_top_15 ??
+        null)
+      : null;
+    hd.top2Consecutive =
+      rawLaps.length >= 2
+        ? ((dProto as any).top2Consecutive ??
+          dProto.top_2Consecutive ??
+          (dProto as any).top_2_consecutive ??
+          null)
+        : null;
+    hd.top3Consecutive =
+      rawLaps.length >= 3
+        ? ((dProto as any).top3Consecutive ??
+          dProto.top_3Consecutive ??
+          (dProto as any).top_3_consecutive ??
+          null)
+        : null;
+  }
+
+  private static populateLapsAndSegments(
+    hd: DriverHeatData,
+    dProto: any,
+  ): void {
     if (dProto.laps) {
       dProto.laps.forEach((lap: any, i: number) => {
         const time =
@@ -122,8 +191,6 @@ export class HeatConverter {
         hd.addSegmentTime(i, seg);
       });
     }
-
-    return hd;
   }
 
   static fromProto(proto: IHeat, heatNumber: number = -1): Heat {

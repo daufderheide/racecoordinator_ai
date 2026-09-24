@@ -46,5 +46,12 @@ message DriverHeatData {
   int32 laps_led = 26;
   bool is_finished = 27;
   int32 track_calls = 28;
+  double consistency_score = 29;
+  double standard_deviation = 30;
+  double average_top_5 = 31;
+  double average_top_10 = 32;
+  double average_top_15 = 33;
+  double top_2_consecutive = 34;
+  double top_3_consecutive = 35;
 }
 

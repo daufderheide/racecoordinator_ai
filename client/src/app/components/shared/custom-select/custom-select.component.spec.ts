@@ -1,5 +1,10 @@
 import { Component, Pipe, PipeTransform } from "@angular/core";
-import { ComponentFixture, TestBed } from "@angular/core/testing";
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from "@angular/core/testing";
 
 import {
   CustomOptionComponent,
@@ -121,7 +126,153 @@ describe("CustomSelectComponent", () => {
       '.custom-select-option[data-value="opt1"]',
     );
     expect(optionEl?.textContent?.trim()).toBe("Renamed Layout");
+    expect(
+      hostElement.querySelector(".selected-text")?.getAttribute("title"),
+    ).toBe("Renamed Layout");
   });
+
+  it("should set title attribute on .selected-text matching selectedLabel", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+
+    const hostElement = hostFixture.nativeElement as HTMLElement;
+    const selectedTextEl = hostElement.querySelector(".selected-text");
+    expect(selectedTextEl?.getAttribute("title")).toBe("Option 1");
+  });
+
+  it("should invoke scrollToSelectedOption on toggleOpen", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.val = "opt3";
+    hostFixture.detectChanges();
+
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+    const scrollSpy = spyOn(select, "scrollToSelectedOption");
+
+    select.toggleOpen();
+    expect(scrollSpy).toHaveBeenCalled();
+  });
+
+  it("should not set scrollTop when dropdown is not scrollable (scrollHeight <= clientHeight)", fakeAsync(() => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.val = "opt3";
+    hostFixture.detectChanges();
+
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    const hostElement = hostFixture.nativeElement as HTMLElement;
+    const dropdown = hostElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+
+    let assignedScrollTop = 0;
+    Object.defineProperty(dropdown, "scrollTop", {
+      get: () => assignedScrollTop,
+      set: (val: number) => {
+        assignedScrollTop = val;
+      },
+      configurable: true,
+    });
+    Object.defineProperty(dropdown, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+    Object.defineProperty(dropdown, "scrollHeight", {
+      value: 150,
+      configurable: true,
+    });
+
+    select.scrollToSelectedOption();
+    tick(10);
+
+    expect(assignedScrollTop).toBe(0);
+  }));
+
+  it("should center selected option when dropdown is scrollable (scrollHeight > clientHeight)", fakeAsync(() => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.val = "opt3";
+    hostFixture.detectChanges();
+
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    const hostElement = hostFixture.nativeElement as HTMLElement;
+    const dropdown = hostElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    const selectedEl = hostElement.querySelector(
+      ".custom-select-option.selected",
+    ) as HTMLElement;
+
+    let assignedScrollTop = 0;
+    Object.defineProperty(dropdown, "scrollTop", {
+      get: () => assignedScrollTop,
+      set: (val: number) => {
+        assignedScrollTop = val;
+      },
+      configurable: true,
+    });
+    Object.defineProperty(dropdown, "clientHeight", {
+      value: 200,
+      configurable: true,
+    });
+    Object.defineProperty(dropdown, "scrollHeight", {
+      value: 600,
+      configurable: true,
+    });
+    Object.defineProperty(selectedEl, "offsetTop", {
+      value: 350,
+      configurable: true,
+    });
+    Object.defineProperty(selectedEl, "offsetHeight", {
+      value: 40,
+      configurable: true,
+    });
+
+    select.scrollToSelectedOption();
+    tick(10);
+
+    // targetScroll = 350 - 200/2 + 40/2 = 350 - 100 + 20 = 270
+    expect(assignedScrollTop).toBe(270);
+  }));
+
+  it("should not scroll if closed before timer executes", fakeAsync(() => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.componentInstance.val = "opt3";
+    hostFixture.detectChanges();
+
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    const hostElement = hostFixture.nativeElement as HTMLElement;
+    const dropdown = hostElement.querySelector(
+      ".custom-select-dropdown",
+    ) as HTMLElement;
+    const selectedEl = hostElement.querySelector(
+      ".custom-select-option.selected",
+    ) as HTMLElement;
+
+    Object.defineProperty(dropdown, "clientHeight", {
+      value: 0,
+      configurable: true,
+    });
+    const scrollIntoViewSpy = spyOn(selectedEl, "scrollIntoView");
+
+    select.isOpen = false;
+    tick(10);
+
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+  }));
 });
 
 @Component({
