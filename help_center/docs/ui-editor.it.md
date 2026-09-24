@@ -4,6 +4,16 @@
 
 L'Editor di Interfaccia consente di progettare layout personalizzati per il giorno della gara, configurare le colonne della classifica dei piloti, personalizzare gli effetti sonori e la grafica del tema e caricare [Widget personalizzati](custom-widgets.md) modulari.
 
+## Widget personalizzati e cartella dei widget
+
+È possibile aggiungere widget personalizzati ai layout di interfaccia personalizzati:
+- **Cartella dei widget personalizzati**: Imposta la cartella locale dei widget nella sezione **Interfaccia personalizzata** in fondo all'editor.
+- **Aggiorna widget di esempio**: Fai clic su **Aggiorna widget di esempio** per generare o aggiornare widget di esempio pronti all'uso in una cartella `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
+- **Gruppi della casella degli strumenti dei widget**: La casella degli strumenti organizza i widget in gruppi (**Race Coordinator AI**, **Radice personalizzata** e cartelle personalizzate come **sample**) con sottogruppi nidificati (come **Azioni** e **Dati della manche** con sottocartelle categorizzate) e un filtro di ricerca istantaneo.
+- **Ispettore dinamico**: Quando un widget personalizzato viene selezionato nell'area di disegno, le sue proprietà personalizzate (colori, soglie, levette, campi di testo) appaiono dinamicamente nell'Ispettore widget.
+
+Per tutti i dettagli sullo sviluppo dei widget, consulta la [Guida ai widget personalizzati](custom-widgets.md).
+
 ## Configurazione layout e colonne
 
 - Trascina e rilascia i widget dalla tavolozza sull'area di lavoro.

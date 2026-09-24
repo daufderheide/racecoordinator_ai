@@ -359,12 +359,94 @@
                               }}
                             </span>
                             <span class="toolbox-subgroup-badge">{{
-                              sg.widgets.length
+                              sg.totalCount !== undefined
+                                ? sg.totalCount
+                                : sg.widgets.length
                             }}</span>
                           </div>
 
                           @if (sg.expanded) {
-                            <div class="toolbox-subgroup-content">
+                            <div
+                              class="toolbox-subgroup-content"
+                              [class.has-nested-subgroups]="
+                                sg.subgroups && sg.subgroups.length > 0
+                              "
+                            >
+                              <!-- Nested Subfolders (Tier 3) -->
+                              @if (sg.subgroups && sg.subgroups.length > 0) {
+                                @for (
+                                  childSg of sg.subgroups;
+                                  track childSg.id
+                                ) {
+                                  <div
+                                    class="toolbox-subgroup-section tier3-subgroup"
+                                  >
+                                    <div
+                                      class="toolbox-subgroup-header tier3-subgroup-header"
+                                      (click)="
+                                        toggleToolboxSubgroup(childSg.id)
+                                      "
+                                      [class.expanded]="childSg.expanded"
+                                    >
+                                      <span
+                                        class="material-icons toolbox-folder-icon subfolder-icon"
+                                      >
+                                        {{
+                                          childSg.expanded
+                                            ? "folder_open"
+                                            : "folder"
+                                        }}
+                                      </span>
+                                      <span
+                                        class="toolbox-subgroup-title tier3-subgroup-title"
+                                      >
+                                        {{
+                                          group.isBuiltIn
+                                            ? (childSg.nameKey | translate)
+                                            : childSg.nameKey
+                                        }}
+                                      </span>
+                                      <span class="toolbox-subgroup-badge">{{
+                                        childSg.widgets.length
+                                      }}</span>
+                                    </div>
+
+                                    @if (childSg.expanded) {
+                                      <div
+                                        class="toolbox-subgroup-content tier3-subgroup-content"
+                                      >
+                                        @for (
+                                          w of childSg.widgets;
+                                          track w.type
+                                        ) {
+                                          <div
+                                            class="toolbox-widget-item nested-widget-item tier3-widget-item"
+                                            draggable="true"
+                                            (dragstart)="
+                                              onToolboxDragStart($event, w.type)
+                                            "
+                                            [title]="
+                                              w.type.startsWith('custom:')
+                                                ? w.labelKey
+                                                : (w.labelKey | translate)
+                                            "
+                                          >
+                                            <span class="toolbox-widget-label">
+                                              {{
+                                                w.type.startsWith("custom:")
+                                                  ? w.labelKey
+                                                  : (w.labelKey | translate)
+                                              }}
+                                            </span>
+                                          </div>
+                                        }
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                              }
+
+                              <!-- Direct widgets in this Subgroup -->
                               @for (w of sg.widgets; track w.type) {
                                 <div
                                   class="toolbox-widget-item nested-widget-item"

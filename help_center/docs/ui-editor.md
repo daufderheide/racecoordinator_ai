@@ -9,7 +9,7 @@ The UI Editor allows you to design custom raceday layouts, configure driver lead
 Custom widgets can be added to your Custom UI layouts:
 - **Custom Widgets Folder**: Set your local widgets folder in the **Custom UI** section at the bottom of the editor.
 - **Update Sample Widgets**: Click **Update Sample Widgets** to generate or update ready-to-use sample widgets in a `sample/` folder (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
-- **Widget Toolbox Groups**: The Widget Toolbox organizes widgets into high-level groups (**Race Coordinator AI**, **Custom Root**, and custom folders like **sample**) with nested sub-groups (such as **Actions**) and an instant search filter.
+- **Widget Toolbox Groups**: The Widget Toolbox organizes widgets into groups (**Race Coordinator AI**, **Custom Root**, and custom folders like **sample**) with nested sub-groups (such as **Actions** and **Heat Data** with categorized subfolders) and an instant search filter.
 - **Dynamic Inspector**: When a custom widget is selected on the canvas, its custom properties (colors, thresholds, toggles, text fields) appear dynamically in the Widget Inspector.
 
 For complete widget development details, see the [Custom Widgets Guide](custom-widgets.md).

@@ -792,6 +792,65 @@ app-custom-select.teammate-select,
   background: rgba(0, 0, 0, 0.22);
 }
 
+.toolbox-subgroup-content.has-nested-subgroups {
+  margin-left: 8px;
+  padding: 4px 2px 6px 4px;
+}
+
+.toolbox-subgroup-section.tier3-subgroup {
+  margin: 3px 0 3px 0;
+}
+
+.toolbox-subgroup-header.tier3-subgroup-header {
+  font-size: 10.5px;
+  padding: 4px 5px;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid rgba(0, 0, 0, 0.45);
+  position: relative;
+}
+
+.toolbox-subgroup-header.tier3-subgroup-header:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Tree branch line connecting dashed vertical line to tier-3 subfolder header, visibly crossing the vertical line */
+.toolbox-subgroup-header.tier3-subgroup-header::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  width: 16px;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.tier3-subgroup-title {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.2px !important;
+}
+
+.toolbox-subgroup-header.tier3-subgroup-header .subfolder-icon {
+  font-size: 14px !important;
+}
+
+.toolbox-subgroup-header.tier3-subgroup-header .toolbox-subgroup-badge {
+  font-size: 9px;
+  padding: 1px 3px;
+}
+
+.tier3-subgroup-content {
+  padding: 3px 2px 4px 6px;
+  margin-left: 6px;
+  gap: 3px;
+}
+
+.tier3-widget-item {
+  padding: 5px 8px !important;
+  font-size: 11.5px !important;
+}
+
 .toolbox-widget-item {
   display: flex;
   align-items: center;

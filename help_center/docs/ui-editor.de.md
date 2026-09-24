@@ -4,6 +4,16 @@
 
 Mit dem UI-Editor können Sie benutzerdefinierte Renntag-Layouts erstellen, Fahrerranglisten-Spalten anpassen, Soundeffekte und Grafiken des Designs ändern und modulare [Benutzerdefinierte Widgets](custom-widgets.md) laden.
 
+## Benutzerdefinierte Widgets & Widget-Ordner
+
+Benutzerdefinierte Widgets können zu Ihren Custom-UI-Layouts hinzugefügt werden:
+- **Ordner für benutzerdefinierte Widgets**: Legen Sie Ihren lokalen Widget-Ordner im Bereich **Benutzerdefinierte Benutzeroberfläche** unten im Editor fest.
+- **Beispiel-Widgets aktualisieren**: Klicken Sie auf **Beispiel-Widgets aktualisieren**, um einsatzbereite Beispiel-Widgets in einem `sample/`-Ordner zu erstellen oder zu aktualisieren (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
+- **Widget-Toolbox-Gruppen**: Die Widget-Toolbox organisiert Widgets in übergeordnete Gruppen (**Race Coordinator AI**, **Benutzerdefinierte Wurzel** und eigene Ordner wie **sample**) mit verschachtelten Untergruppen (wie **Aktionen** und **Durchgangsdaten** mit kategorisierten Unterordnern) und einem Sofort-Suchfilter.
+- **Dynamischer Inspektor**: Wenn ein benutzerdefiniertes Widget auf der Arbeitsfläche ausgewählt ist, erscheinen seine individuellen Eigenschaften (Farben, Schwellenwerte, Schalter, Textfelder) dynamisch im Widget-Inspektor.
+
+Ausführliche Informationen zur Entwicklung finden Sie im [Leitfaden für benutzerdefinierte Widgets](custom-widgets.md).
+
 ## Layout- und Spaltenkonfiguration
 
 - Ziehen Sie Widgets aus der Palette per Drag & Drop auf die Leinwand.

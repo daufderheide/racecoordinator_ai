@@ -16,7 +16,9 @@ export interface ToolboxSubgroup {
   nameKey: string;
   icon?: string;
   widgets: ToolboxWidgetItem[];
+  subgroups?: ToolboxSubgroup[];
   expanded?: boolean;
+  totalCount?: number;
 }
 
 export interface ToolboxGroup {
@@ -32,7 +34,8 @@ export interface ToolboxGroup {
 
 export class ToolboxGroupHelper {
   public static readonly RC_AI_GROUP_ID = "race-coordinator-ai";
-  public static readonly LANE_COLUMNS_GROUP_ID = "lane-columns";
+  public static readonly HEAT_DATA_GROUP_ID = "heat-data";
+  public static readonly LANE_COLUMNS_GROUP_ID = "heat-data";
   public static readonly CUSTOM_ROOT_GROUP_ID = "custom-root";
 
   public static readonly RC_AI_ROOT_WIDGETS: {
@@ -295,20 +298,10 @@ export class ToolboxGroupHelper {
       groupExpandedStates,
       subgroupExpandedStates,
       translateFn,
+      availableColumnsList,
     );
     if (rcGroup) {
       groups.push(rcGroup);
-    }
-
-    const laneColGroup = ToolboxGroupHelper.buildLaneColumnsGroup(
-      term,
-      groupExpandedStates,
-      subgroupExpandedStates,
-      translateFn,
-      availableColumnsList,
-    );
-    if (laneColGroup) {
-      groups.push(laneColGroup);
     }
 
     const customGroups = ToolboxGroupHelper.buildCustomGroups(
@@ -324,13 +317,12 @@ export class ToolboxGroupHelper {
     return groups;
   }
 
-  private static buildLaneColumnsGroup(
+  public static buildHeatDataSubgroup(
     term: string,
-    groupExpandedStates: Map<string, boolean>,
     subgroupExpandedStates: Map<string, boolean>,
     translateFn?: (key: string) => string,
     availableColumnsList?: { key: string; label: string }[],
-  ): ToolboxGroup | null {
+  ): ToolboxSubgroup | null {
     const cols =
       availableColumnsList && availableColumnsList.length > 0
         ? availableColumnsList
@@ -402,6 +394,11 @@ export class ToolboxGroupHelper {
       }
     }
 
+    // Alphabetize the 9 category subfolders inside Heat Data
+    subgroups.sort((a, b) =>
+      ToolboxGroupHelper.compareSubgroups(a, b, translateFn),
+    );
+
     const totalCount = subgroups.reduce(
       (sum, sg) => sum + sg.widgets.length,
       0,
@@ -412,20 +409,74 @@ export class ToolboxGroupHelper {
 
     const isGroupExpanded = term
       ? true
-      : groupExpandedStates.has(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID)
-        ? groupExpandedStates.get(ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID)!
-        : false;
+      : subgroupExpandedStates.has(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)
+        ? subgroupExpandedStates.get(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)!
+        : subgroupExpandedStates.has("lane-columns")
+          ? subgroupExpandedStates.get("lane-columns")!
+          : false;
 
     return {
-      id: ToolboxGroupHelper.LANE_COLUMNS_GROUP_ID,
-      nameKey: "UE_TOOLBOX_GROUP_LANE_COLUMNS",
-      isBuiltIn: true,
+      id: ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+      nameKey: "UE_TOOLBOX_GROUP_HEAT_DATA",
       icon: "folder",
-      rootWidgets: [],
+      widgets: [],
       subgroups: subgroups,
       expanded: isGroupExpanded,
       totalCount: totalCount,
     };
+  }
+
+  public static buildHeatDataGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    const sg = ToolboxGroupHelper.buildHeatDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (!sg) return null;
+    const isGroupExpanded = term
+      ? true
+      : groupExpandedStates.has(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)
+        ? groupExpandedStates.get(ToolboxGroupHelper.HEAT_DATA_GROUP_ID)!
+        : groupExpandedStates.has("lane-columns")
+          ? groupExpandedStates.get("lane-columns")!
+          : (sg.expanded ?? false);
+
+    return {
+      id: ToolboxGroupHelper.HEAT_DATA_GROUP_ID,
+      nameKey: "UE_TOOLBOX_GROUP_HEAT_DATA",
+      isBuiltIn: true,
+      icon: "folder",
+      rootWidgets: [],
+      subgroups: sg.subgroups || [],
+      expanded: isGroupExpanded,
+      totalCount: sg.totalCount || 0,
+    };
+  }
+
+  /**
+   * @deprecated Use buildHeatDataGroup instead.
+   */
+  public static buildLaneColumnsGroup(
+    term: string,
+    groupExpandedStates: Map<string, boolean>,
+    subgroupExpandedStates: Map<string, boolean>,
+    translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
+  ): ToolboxGroup | null {
+    return ToolboxGroupHelper.buildHeatDataGroup(
+      term,
+      groupExpandedStates,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
   }
 
   private static buildRcAiGroup(
@@ -434,6 +485,7 @@ export class ToolboxGroupHelper {
     groupExpandedStates: Map<string, boolean>,
     subgroupExpandedStates: Map<string, boolean>,
     translateFn?: (key: string) => string,
+    availableColumnsList?: { key: string; label: string }[],
   ): ToolboxGroup | null {
     const rcRootWidgets: ToolboxWidgetItem[] =
       ToolboxGroupHelper.RC_AI_ROOT_WIDGETS.filter(
@@ -476,9 +528,29 @@ export class ToolboxGroupHelper {
       }
     }
 
+    const heatDataSubgroup = ToolboxGroupHelper.buildHeatDataSubgroup(
+      term,
+      subgroupExpandedStates,
+      translateFn,
+      availableColumnsList,
+    );
+    if (heatDataSubgroup) {
+      rcSubgroups.push(heatDataSubgroup);
+    }
+
+    // Alphabetize the subgroups within Race Coordinator AI
+    rcSubgroups.sort((a, b) =>
+      ToolboxGroupHelper.compareSubgroups(a, b, translateFn),
+    );
+
     const rcTotalCount =
       rcRootWidgets.length +
-      rcSubgroups.reduce((sum, sg) => sum + sg.widgets.length, 0);
+      rcSubgroups.reduce(
+        (sum, sg) =>
+          sum +
+          (sg.totalCount !== undefined ? sg.totalCount : sg.widgets.length),
+        0,
+      );
 
     if (rcTotalCount === 0 && term) {
       return null;
@@ -636,6 +708,51 @@ export class ToolboxGroupHelper {
       expanded: isGroupExpanded,
       totalCount: groupTotal,
     };
+  }
+
+  private static readonly SUBGROUP_FALLBACK_LABELS: Record<string, string> = {
+    UE_TOOLBOX_SUBGROUP_ACTIONS: "Actions",
+    UE_TOOLBOX_GROUP_HEAT_DATA: "Heat Data",
+    UE_TOOLBOX_GROUP_LANE_COLUMNS: "Heat Data",
+    UE_TOOLBOX_SUBGROUP_MEDIA_CHROME: "Media & Graphics",
+    UE_TOOLBOX_SUBGROUP_STANDINGS_HEATS: "Standings & Heats",
+    UE_TOOLBOX_SUBGROUP_TITLES_INFO: "Titles & Info",
+    UE_COL_GROUP_ANALYSIS: "Driver Analysis & Consistency",
+    UE_COL_GROUP_DRIVER_TEAM: "Driver & Team",
+    UE_COL_GROUP_GAPS: "Gaps & Intervals",
+    UE_COL_GROUP_LAP_TIMES: "Lap Times & Records",
+    UE_COL_GROUP_LAPS_STANDINGS: "Laps & Standings",
+    UE_COL_GROUP_MEDIA_CUSTOM: "QR Codes & Media",
+    UE_COL_GROUP_PACING: "Pacing",
+    UE_COL_GROUP_PREDICTIONS: "Predictions",
+    UE_COL_GROUP_TELEMETRY: "Telemetry, Fuel & Speed",
+  };
+
+  private static compareSubgroups(
+    a: ToolboxSubgroup,
+    b: ToolboxSubgroup,
+    translateFn?: (key: string) => string,
+  ): number {
+    const labelA = ToolboxGroupHelper.getSubgroupDisplayLabel(a, translateFn);
+    const labelB = ToolboxGroupHelper.getSubgroupDisplayLabel(b, translateFn);
+    const cmp = naturalSortCompare(labelA, labelB);
+    if (cmp !== 0) return cmp;
+    return naturalSortCompare(a.id, b.id);
+  }
+
+  private static getSubgroupDisplayLabel(
+    sg: ToolboxSubgroup,
+    translateFn?: (key: string) => string,
+  ): string {
+    if (translateFn) {
+      const translated = translateFn(sg.nameKey);
+      if (translated && translated !== sg.nameKey) return translated;
+    }
+    return (
+      ToolboxGroupHelper.SUBGROUP_FALLBACK_LABELS[sg.nameKey] ||
+      sg.nameKey ||
+      sg.id
+    );
   }
 
   private static compareWidgets(

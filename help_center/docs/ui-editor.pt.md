@@ -4,6 +4,16 @@
 
 O Editor de Interface permite criar layouts personalizados para o dia de corrida, configurar colunas da classificação dos pilotos, personalizar efeitos sonoros e imagens de temas e carregar [Widgets Personalizados](custom-widgets.md) modulares.
 
+## Widgets personalizados e pasta de widgets
+
+Widgets personalizados podem ser adicionados aos seus layouts de interface personalizados:
+- **Pasta de widgets personalizados**: Defina a sua pasta local de widgets na seção **Interface personalizada** na parte inferior do editor.
+- **Atualizar widgets de amostra**: Clique em **Atualizar widgets de amostra** para gerar ou atualizar widgets de amostra prontos a usar numa pasta `sample/` (`sample-telemetry-gauge`, `sample-lap-delta`, `sample-sponsor-banner`, `sample-detailed-leaderboard`).
+- **Grupos da caixa de ferramentas de widgets**: A caixa de ferramentas organiza os widgets em grupos (**Race Coordinator AI**, **Raiz personalizada** e pastas personalizadas como **sample**) com subgrupos aninhados (como **Ações** e **Dados da manga** com subpastas categorizadas) e um filtro de pesquisa instantâneo.
+- **Inspetor dinâmico**: Quando um widget personalizado é selecionado na tela, as suas propriedades personalizadas (cores, limites, seletores, campos de texto) aparecem dinamicamente no Inspetor de widgets.
+
+Para mais detalhes sobre o desenvolvimento de widgets, consulte o [Guia de widgets personalizados](custom-widgets.md).
+
 ## Configuração de layout e colunas
 
 - Arraste e solte widgets da paleta no ecrã.

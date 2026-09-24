@@ -9836,7 +9836,10 @@ describe("DefaultRacedayComponent", () => {
       const rcAiGroup = groups.find((g) => g.id === "race-coordinator-ai");
       expect(rcAiGroup).toBeDefined();
       expect(rcAiGroup?.rootWidgets.length).toBe(0);
-      expect(rcAiGroup?.subgroups.length).toBe(4);
+      expect(rcAiGroup?.subgroups.length).toBe(5);
+      const heatData = rcAiGroup?.subgroups.find((s) => s.id === "heat-data");
+      expect(heatData).toBeDefined();
+      expect(heatData?.subgroups?.length).toBe(9);
       const standings = rcAiGroup?.subgroups.find(
         (s) => s.id === "standings-heats",
       );
