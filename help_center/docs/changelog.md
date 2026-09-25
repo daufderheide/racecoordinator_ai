@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.0.0-beta.87] - 2026-09-25
+
+### 🚀 New Features
+
+- implement global form security utility to prevent password manager and autofill interference [skip-screendiffs] ([8553370e](https://github.com/daufderheide/racecoordinator_ai/commit/8553370e))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.86...v1.0.0-beta.87">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.86] - 2026-09-25
 
 ### 🚀 New Features
