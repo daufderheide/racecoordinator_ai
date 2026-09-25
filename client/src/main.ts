@@ -10,6 +10,9 @@ import {
   isBrowserSupported,
   renderUnsupportedBrowserBanner,
 } from "@app/utils/browser-compatibility";
+import { initGlobalFormSecurity } from "@app/utils/form-security";
+
+initGlobalFormSecurity();
 
 import { AppComponent } from "./app/app.component";
 import { routes } from "./app/app.routes";

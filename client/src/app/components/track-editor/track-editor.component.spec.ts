@@ -229,10 +229,12 @@ describe("TrackEditorComponent", () => {
     const nameEl = fixture.nativeElement.querySelector("#track-name-input");
     expect(nameEl).toBeTruthy();
     expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-dashlane-disabled-on-field")).toBe("true");
     expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
     expect(nameEl.getAttribute("data-lpignore")).toBe("true");
     expect(nameEl.getAttribute("data-bwignore")).toBe("true");
     expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("data-field-type")).toBe("other");
     expect(nameEl.getAttribute("autocomplete")).toBe("off");
   });
 
