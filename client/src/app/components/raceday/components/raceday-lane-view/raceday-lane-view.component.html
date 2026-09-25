@@ -351,12 +351,24 @@
                               : widget()?.customSettings?.['insetTextColor']) ||
                             parent().getLaneColor(hd, 'foreground_color')
                           "
+                          [style.background-image]="
+                            (parent().authService.currentRole$ | async) ===
+                            parent().Role.VIEWER
+                              ? 'none'
+                              : parent().getDropdownArrowBg(hd)
+                          "
+                          [style.background-position]="
+                            parent().race?.practice
+                              ? 'right 4px top 4px'
+                              : 'right 4px center'
+                          "
                           [style.padding-right]="
                             (parent().authService.currentRole$ | async) ===
                             parent().Role.VIEWER
                               ? '0px'
-                              : '44px'
+                              : '28px'
                           "
+                          style="background-repeat: no-repeat"
                         >
                           {{
                             entry.property === "driver.nickname"
@@ -373,14 +385,6 @@
                         ) {
                           <app-custom-select
                             class="teammate-select"
-                            [style.background-image]="
-                              parent().getDropdownArrowBg(hd)
-                            "
-                            [style.background-position]="
-                              parent().race?.practice
-                                ? 'right top'
-                                : 'right center'
-                            "
                             [disabled]="parent().isDriverSwapDisabled(hd)"
                             [ngModel]="
                               hd.actualDriver?.entity_id ||
@@ -388,7 +392,6 @@
                               $any(hd.driver)?.entity_id
                             "
                             (change)="parent().onTeammateChange(hd, $event)"
-                            style="background-repeat: no-repeat"
                           >
                             @for (
                               tm of parent().getTeammates(hd);

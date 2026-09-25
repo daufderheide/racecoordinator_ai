@@ -100,7 +100,8 @@ describe("RacedayLaneViewComponent", () => {
       isDriverSwapDisabled: (_hd: any) => false,
       onTeammateChange: jasmine.createSpy("onTeammateChange"),
       getTeammates: (_hd: any) => teammates,
-      getDropdownArrowBg: (_hd: any) => "",
+      getDropdownArrowBg: (_hd: any) =>
+        'url("data:image/svg+xml;utf8,<svg></svg>")',
       getDriverStats: (_hd: any, _id: string) => " (Heat: 0 Laps)",
       formatColumnValue: (hd: any, col: any, prop: string) => {
         if (prop === "driver.nickname") return hd.driver.nickname;
@@ -192,6 +193,18 @@ describe("RacedayLaneViewComponent", () => {
     fixture.detectChanges();
     expect(mockParent.onTeammateChange).toHaveBeenCalled();
     expect(selectEl.classList.contains("open")).toBeFalse();
+  });
+
+  it("should display pulldown marker background image on teammate display name in resting state", () => {
+    const rowEl = fixture.nativeElement.querySelector(".table-row");
+    const nameEl = rowEl.querySelector(".teammate-display-name") as HTMLElement;
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.style.backgroundImage).toContain("url(");
+
+    const selectEl = rowEl.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl.style.backgroundImage).toBeFalsy();
   });
 
   it("should trigger parent onCellClick on cell click", async () => {

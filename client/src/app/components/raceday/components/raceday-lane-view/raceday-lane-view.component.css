@@ -379,20 +379,18 @@
   font-weight: bold;
   cursor: pointer;
   appearance: none;
-  padding-right: 44px;
-  background-repeat: no-repeat;
-  background-position: right center;
   width: 100%;
+  max-width: 100%;
   text-align: inherit;
   outline: none;
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   height: 100%;
   z-index: 2;
+  box-sizing: border-box;
 }
-
-
 
 .teammate-display-name {
   pointer-events: none;
@@ -406,9 +404,11 @@
   line-height: 1.1;
   word-break: break-word;
   overflow: hidden;
-  padding-right: 44px;
+  padding-right: 28px;
   /* Space for the arrow */
   box-sizing: border-box;
+  background-repeat: no-repeat;
+  background-position: right 4px center;
 }
 
 .drift-indicator {

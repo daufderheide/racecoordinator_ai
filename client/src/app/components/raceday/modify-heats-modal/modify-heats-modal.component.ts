@@ -47,6 +47,7 @@ import { SettingsService } from "@app/services/settings.service";
 import { TranslationService } from "@app/services/translation.service";
 import { checkLaneEquality } from "@app/utils/lane-equality";
 import { naturalSortCompare } from "@app/utils/sorting.utils";
+import { TeammateUtils } from "@app/utils/teammate.utils";
 
 import { ModifyHeatsService } from "./modify-heats.service";
 import {
@@ -516,17 +517,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected isTeamLane(dhd: DriverHeatData): boolean {
-    return !!dhd.participant?.team;
+    return TeammateUtils.isTeam(dhd);
   }
 
   protected getTeammates(dhd: DriverHeatData): Driver[] {
-    if (!dhd.participant || !dhd.participant.team) return [];
-    const team = dhd.participant.team;
-    const driverIds = team.driverIds || (team as any).driver_ids || [];
-    return this.allDrivers.filter((d) => {
-      const id = d.entity_id;
-      return driverIds.includes(id);
-    });
+    return TeammateUtils.getTeammates(dhd, this.allDrivers);
   }
 
   protected getDropdownArrowBg(color: string): SafeStyle {
@@ -578,52 +573,11 @@ export class ModifyHeatsModalComponent implements OnInit, OnDestroy {
   }
 
   protected getDriverStats(hd: DriverHeatData, driverId: string): string {
-    if (!hd || !driverId) return "";
-    let heatLaps = 0;
-    let heatTime = 0;
-    let overallLaps = 0;
-    let overallTime = 0;
-
-    const hLabel = this.translationService.translate("RD_STATS_HEAT_ABBR");
-    const lLabel = this.translationService.translate("RD_STATS_LAP_ABBR");
-    const tLabel = this.translationService.translate("RD_STATS_TOTAL_ABBR");
-
-    if (hd.lapsWithDetails) {
-      hd.lapsWithDetails.forEach((l: any) => {
-        if (l.driverId === driverId) {
-          heatLaps++;
-          heatTime += l.time;
-        }
-      });
-    }
-
-    if (this.localHeats) {
-      this.localHeats.forEach((h: any) => {
-        if (h.heatDrivers) {
-          h.heatDrivers.forEach((d_hd: any) => {
-            if (d_hd.lapsWithDetails) {
-              d_hd.lapsWithDetails.forEach((l: any) => {
-                if (l.driverId === driverId) {
-                  overallLaps++;
-                  overallTime += l.time;
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-
-    const formatTime = (t: number) => {
-      if (t >= 60) {
-        const m = Math.floor(t / 60);
-        const s = (t % 60).toFixed(1).padStart(4, "0");
-        return `${m}:${s}`;
-      }
-      return `${t.toFixed(1)}s`;
-    };
-
-    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
+    return TeammateUtils.getDriverStats(hd, driverId, this.localHeats, {
+      heatAbbr: this.translationService.translate("RD_STATS_HEAT_ABBR"),
+      lapAbbr: this.translationService.translate("RD_STATS_LAP_ABBR"),
+      totalAbbr: this.translationService.translate("RD_STATS_TOTAL_ABBR"),
+    });
   }
 
   // eslint-disable-next-line max-lines-per-function
