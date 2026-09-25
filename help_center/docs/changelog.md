@@ -1,5 +1,23 @@
 # Changelog
 
+## [v1.0.0-beta.86] - 2026-09-25
+
+### 🚀 New Features
+
+- add SingleLapAutoSegments allow finish auto-segements option for races ([592908e1](https://github.com/daufderheide/racecoordinator_ai/commit/592908e1))
+- add expand and collapse  toolbar guided help with translations and documentation [skip-screendiffs] ([bdd25065](https://github.com/daufderheide/racecoordinator_ai/commit/bdd25065))
+
+### 🐛 Bug Fixes
+
+- base auto-calculated lap segments on driver median lap time.  This unifies allow finish single lap and do not allow finish calculations ([a5fc76c0](https://github.com/daufderheide/racecoordinator_ai/commit/a5fc76c0))
+- Fixed team dropdown on the raceday page [skip-screendiffs] ([83569001](https://github.com/daufderheide/racecoordinator_ai/commit/83569001))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.85...v1.0.0-beta.86">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.85] - 2026-09-23
 
 ### 🚀 New Features
