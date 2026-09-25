@@ -1652,6 +1652,37 @@ describe("DefaultRacedayComponent", () => {
     });
   });
 
+  describe("getDropdownArrowBg and getDropdownIcon", () => {
+    it("should return sanitized SafeStyle for lane color", () => {
+      component["track"] = {
+        lanes: [
+          { foreground_color: "#ff0000" },
+          { foreground_color: "#00ff00" },
+        ],
+      } as any;
+
+      const mockHd = { laneIndex: 0 } as any;
+      const bg = component.getDropdownArrowBg(mockHd);
+      expect(bg).toBeTruthy();
+      expect(String(bg)).toContain("url(");
+      expect(String(bg)).toContain("%23ff0000");
+    });
+
+    it("should fallback to #ffffff when lane foreground_color is missing", () => {
+      component["track"] = { lanes: [] } as any;
+      const mockHd = { laneIndex: 5 } as any;
+      const bg = component.getDropdownArrowBg(mockHd);
+      expect(bg).toBeTruthy();
+      expect(String(bg)).toContain("%23ffffff");
+    });
+
+    it("should cache dropdown icon by color", () => {
+      const bg1 = component.getDropdownIcon("#123456");
+      const bg2 = component.getDropdownIcon("#123456");
+      expect(bg1).toBe(bg2);
+    });
+  });
+
   describe("getTeammates", () => {
     it("should return teammates in the exact order defined by team.driverIds", () => {
       component["allDrivers"] = [

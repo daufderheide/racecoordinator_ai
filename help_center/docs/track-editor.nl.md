@@ -247,6 +247,7 @@ De bovenste werkbalk van de Baan-Editor biedt essentiële beheertools:
 - **Baan toevoegen (+)**: Maakt een nieuw baansjabloon aan en activeert de bewerkingsmodus.
 - **Baan dupliceren**: Maakt een identieke kopie onder een unieke naam om variaties te testen zonder vanaf nul te beginnen.
 - **Bewerken / Bewerken voltooien**: Schakelt tussen alleen-lezen modus en bewerkingsmodus. Bij het verlaten van de bewerkingsmodus worden wijzigingen gevalideerd en opgeslagen.
+- **Alles uitvouwen / samenvouwen**: Vouwt alle configuratiesecties en hardware-interfacepanelen in één keer uit of samen.
 - **Baan verwijderen**: Verwijdert de geselecteerde baan na bevestiging.
 - **Ongedaan Maken (`Ctrl+Z`) / Opnieuw (`Ctrl+Y`)**: Eenvoudig herstellen van afmetingen, kleuren of pinnen.
 - **Help (`?`)**: Start een interactieve rondleiding langs alle bedieningselementen op het scherm.

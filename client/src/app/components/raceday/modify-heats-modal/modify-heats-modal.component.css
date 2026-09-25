@@ -290,6 +290,12 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
+.heat-card:has(.custom-select-container.open),
+.heat-card:has(app-custom-select.open) {
+  overflow: visible !important;
+  z-index: 1000 !important;
+}
+
 .heat-card:hover {
   border-color: rgba(56, 189, 248, 0.45);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);

@@ -195,4 +195,66 @@ describe("RacedayHeatDriversComponent", () => {
     expect(badgeEl).toBeTruthy();
     expect(badgeEl.textContent.trim()).toBe("L1");
   });
+
+  it("should render teammate select and open dropdown with options when team is active", () => {
+    const mockParent = {
+      isEmptyDriver: (_hd: any) => false,
+      isTeam: (_hd: any) => true,
+      authService: { currentRole: "ADMIN" },
+      Role: { VIEWER: "VIEWER" },
+      getTeammates: (_hd: any) => [
+        { entity_id: "d1", name: "Driver 1", nickname: "Rocket" },
+        { entity_id: "d2", name: "Driver 2", nickname: "Chuck" },
+      ],
+      getDriverStats: (_hd: any, _id: string) => " (Heat: 0 Laps)",
+      getDropdownIcon: () => 'url("data:image/svg+xml;utf8,<svg></svg>")',
+      onNextHeatTeammateChange: jasmine.createSpy("onNextHeatTeammateChange"),
+    };
+
+    componentRef.setInput("parent", mockParent as any);
+    componentRef.setInput("type", "next-heat");
+    componentRef.setInput("currentHeat", { heatNumber: 1, heatDrivers: [] });
+    componentRef.setInput("heats", [
+      { heatNumber: 1, heatDrivers: [] },
+      {
+        heatNumber: 2,
+        heatDrivers: [
+          {
+            driver: { entity_id: "d1", name: "Driver 1", nickname: "Rocket" },
+            laneIndex: 0,
+            participant: { team: { name: "Team 1" } },
+          },
+        ],
+      },
+    ]);
+    fixture.detectChanges();
+
+    const nameEl = fixture.nativeElement.querySelector(
+      ".teammate-display-name",
+    ) as HTMLElement;
+    expect(nameEl).toBeTruthy();
+    expect(nameEl.style.backgroundImage).toContain("url(");
+
+    const selectEl = fixture.nativeElement.querySelector(
+      "app-custom-select.teammate-select",
+    ) as HTMLElement;
+    expect(selectEl).toBeTruthy();
+    expect(selectEl.style.backgroundImage).toBeFalsy();
+
+    const trigger = selectEl.querySelector(
+      ".custom-select-trigger",
+    ) as HTMLElement;
+    trigger.click();
+    fixture.detectChanges();
+
+    expect(selectEl.classList.contains("open")).toBeTrue();
+    const options = selectEl.querySelectorAll(".custom-select-option");
+    expect(options.length).toBe(2);
+    expect(options[0].textContent).toContain("Rocket");
+    expect(options[1].textContent).toContain("Chuck");
+
+    (options[1] as HTMLElement).click();
+    fixture.detectChanges();
+    expect(mockParent.onNextHeatTeammateChange).toHaveBeenCalled();
+  });
 });

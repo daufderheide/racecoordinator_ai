@@ -20,6 +20,7 @@ A barra de ferramentas superior oferece as seguintes ações:
 - **Adicionar Piloto (+)**: Cria um novo modelo de piloto e entra no modo de edição.
 - **Copiar Piloto**: Duplica o perfil do piloto selecionado.
 - **Editar / Concluir**: Alterna entre modo somente leitura e modo de edição.
+- **Expandir / Recolher tudo**: Expande ou recolhe todas as seções acordeão de uma vez.
 - **Excluir Piloto**: Remove o perfil do piloto selecionado após confirmação.
 - **Ajuda (?)**: Inicia o tour guiado interativo sobre as seções do editor.
 

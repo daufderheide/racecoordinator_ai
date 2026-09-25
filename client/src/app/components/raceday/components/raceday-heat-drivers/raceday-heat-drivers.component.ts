@@ -12,6 +12,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { SafeStyle } from "@angular/platform-browser";
 import {
   CustomOptionComponent,
   CustomSelectComponent,
@@ -318,7 +319,7 @@ export class RacedayHeatDriversComponent implements AfterViewInit, OnDestroy {
     return this.parent()?.getTeammates(hd) ?? [];
   }
 
-  getDropdownArrowBg(_hd: DriverHeatData): string {
+  getDropdownArrowBg(_hd: DriverHeatData): SafeStyle | string {
     if (!this.parent()) return "";
     const color = this.widget()?.customSettings?.["laneTextColor"] || "#f8fafc";
     return this.parent().getDropdownIcon(color);

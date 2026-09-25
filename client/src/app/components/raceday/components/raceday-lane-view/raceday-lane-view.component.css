@@ -106,6 +106,17 @@
   user-select: none;
 }
 
+.bottom-section .table-row:has(.custom-select-container.open),
+.bottom-section .table-row:has(app-custom-select.open) {
+  z-index: 1000 !important;
+}
+
+.bottom-section .body-cell:has(.custom-select-container.open),
+.bottom-section .body-cell:has(app-custom-select.open) {
+  overflow: visible !important;
+  z-index: 1000 !important;
+}
+
 /* Anchor Alignment Classes */
 .anchor-top-left {
   position: absolute;
@@ -363,27 +374,23 @@
 .teammate-select {
   background-color: transparent !important;
   border: none;
-  color: transparent !important;
-  /* Hide text in the closed select */
   font-family: inherit;
   font-size: inherit;
   font-weight: bold;
   cursor: pointer;
   appearance: none;
-  padding-right: 44px;
-  background-repeat: no-repeat;
-  background-position: right center;
   width: 100%;
+  max-width: 100%;
   text-align: inherit;
   outline: none;
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   height: 100%;
   z-index: 2;
+  box-sizing: border-box;
 }
-
-
 
 .teammate-display-name {
   pointer-events: none;
@@ -397,9 +404,11 @@
   line-height: 1.1;
   word-break: break-word;
   overflow: hidden;
-  padding-right: 44px;
+  padding-right: 28px;
   /* Space for the arrow */
   box-sizing: border-box;
+  background-repeat: no-repeat;
+  background-position: right 4px center;
 }
 
 .drift-indicator {

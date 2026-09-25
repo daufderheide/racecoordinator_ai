@@ -247,6 +247,7 @@ A barra de ferramentas superior do Editor de Pistas disponibiliza ferramentas es
 - **Adicionar Pista (+)**: Cria um novo modelo de pista e entra no modo de edição.
 - **Duplicar Pista**: Cria uma cópia exata com outro nome único, ideal para testar configurações sem alterar a original.
 - **Editar / Concluir Edição**: Alterna entre o modo somente leitura e o modo de edição. Ao sair do modo de edição, as alterações são validadas e gravadas.
+- **Expandir / Recolher tudo**: Expande ou recolhe todas as seções de configuração e painéis de interfaces de uma vez.
 - **Eliminar Pista**: Elimina a pista selecionada após confirmação.
 - **Anular (`Ctrl+Z`) / Refazer (`Ctrl+Y`)**: Reversão imediata de qualquer alteração nas calhas, cores ou pinos.
 - **Ajuda (`?`)**: Inicia uma visita guiada interativa no ecrã demonstrando todos os comandos.

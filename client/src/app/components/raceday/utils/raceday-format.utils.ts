@@ -69,8 +69,12 @@ export class RacedayFormatUtils {
       af === AllowFinish.AF_SINGLE_LAP ||
       af === "SingleLap" ||
       af === "AF_SINGLE_LAP" ||
+      af === AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS ||
+      af === "SingleLapAutoSegments" ||
+      af === "AF_SINGLE_LAP_AUTO_SEGMENTS" ||
       af === 1 ||
-      af === 2
+      af === 2 ||
+      af === 4
     );
   }
 

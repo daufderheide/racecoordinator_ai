@@ -251,6 +251,7 @@ Die obere Symbolleiste des Strecken-Editors bietet wichtige Steuerungsfunktionen
 - **Strecke hinzufügen (+)**: Erstellt eine neue Streckenvorlage und öffnet den Bearbeitungsmodus.
 - **Strecke duplizieren**: Erstellt eine exakte Kopie der aktuellen Strecke unter einem neuen Namen, ideal zum Testen alternativer Einstellungen.
 - **Bearbeiten / Bearbeitung abschließen**: Schaltet zwischen schreibgeschütztem Modus und Bearbeitungsmodus um. Beim Verlassen des Bearbeitungsmodus werden Änderungen validiert und gespeichert.
+- **Alle erweitern / reduzieren**: Erweitert oder reduziert alle Konfigurationsabschnitte und Hardware-Schnittstellen auf einmal.
 - **Strecke löschen**: Löscht die ausgewählte Strecke nach Sicherheitsbestätigung.
 - **Rückgängig (`Ctrl+Z`) / Wiederholen (`Ctrl+Y`)**: Schritthafte Wiederherstellung aller Spur-, Farb- und Pin-Änderungen.
 - **Hilfe (`?`)**: Startet einen interaktiven geführten Rundgang über alle Elemente der Seite.

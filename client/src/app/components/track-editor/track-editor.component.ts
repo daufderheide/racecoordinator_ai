@@ -1522,6 +1522,22 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         position: "bottom",
       },
       {
+        targetId: "edit-track-btn",
+        title: this.translationService.translate("TOOLBAR_HELP_EDIT_TITLE"),
+        content: this.translationService.translate("TOOLBAR_HELP_EDIT_CONTENT"),
+        position: "bottom",
+      },
+      {
+        targetId: "expand-collapse-all-btn",
+        title: this.translationService.translate(
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE",
+        ),
+        content: this.translationService.translate(
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT",
+        ),
+        position: "bottom",
+      },
+      {
         targetId: "copy-item-btn",
         title: this.translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
         content: this.translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),

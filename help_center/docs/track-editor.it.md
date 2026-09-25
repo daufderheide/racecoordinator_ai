@@ -247,6 +247,7 @@ La barra degli strumenti superiore dell'Editor dei Tracciati fornisce strumenti 
 - **Aggiungi Tracciato (+)**: Crea un nuovo modello di tracciato ed entra in modalità modifica.
 - **Duplica Tracciato**: Crea una copia esatta con un nuovo nome univoco, perfetta per testare configurazioni alternative senza ripartire da zero.
 - **Modifica / Fine Modifica**: Passa dalla modalità sola lettura alla modalità modifica e viceversa. Uscendo dalla modalità modifica, le modifiche vengono convalidate e salvate.
+- **Espandi / Comprimi tutto**: Espande o comprime tutte le sezioni di configurazione e i pannelli delle interfacce contemporaneamente.
 - **Elimina Tracciato**: Elimina il tracciato selezionato previa conferma.
 - **Annulla (`Ctrl+Z`) / Ripristina (`Ctrl+Y`)**: Ripristina con facilità qualsiasi modifica a corsie, colori o pin.
 - **Guida (`?`)**: Avvia un tour guidato interattivo a video su tutti i comandi.

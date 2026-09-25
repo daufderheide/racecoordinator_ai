@@ -198,133 +198,148 @@ export class ToolbarComponent implements OnInit {
     this.edit.emit();
   }
 
-  // eslint-disable-next-line max-lines-per-function
-  getToolbarHelpSteps(): GuideStep[] {
-    const defaultSteps: GuideStep[] = [];
+  private createGuideStep(
+    targetId: string,
+    titleKey: string,
+    contentKey: string,
+  ): GuideStep {
+    return {
+      targetId,
+      title: this.translationService.translate(titleKey),
+      content: this.translationService.translate(contentKey),
+      position: "bottom",
+    };
+  }
 
+  private getActionHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [];
     if (this.showActivate()) {
-      defaultSteps.push({
-        targetId: "activate-item-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_ACTIVATE_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "activate-item-btn",
+          "TOOLBAR_HELP_ACTIVATE_TITLE",
           "TOOLBAR_HELP_ACTIVATE_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showUndo()) {
-      defaultSteps.push({
-        targetId: "undo-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_UNDO_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_UNDO_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "undo-btn",
+          "TOOLBAR_HELP_UNDO_TITLE",
+          "TOOLBAR_HELP_UNDO_CONTENT",
+        ),
+      );
     }
-
     if (this.showRedo()) {
-      defaultSteps.push({
-        targetId: "redo-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_REDO_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_REDO_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "redo-btn",
+          "TOOLBAR_HELP_REDO_TITLE",
+          "TOOLBAR_HELP_REDO_CONTENT",
+        ),
+      );
     }
-
     if (this.showEdit()) {
-      defaultSteps.push({
-        targetId: "edit-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_EDIT_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_EDIT_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "edit-track-btn",
+          "TOOLBAR_HELP_EDIT_TITLE",
+          "TOOLBAR_HELP_EDIT_CONTENT",
+        ),
+      );
     }
-
+    if (this.showExpandCollapse()) {
+      steps.push(
+        this.createGuideStep(
+          "expand-collapse-all-btn",
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_TITLE",
+          "TOOLBAR_HELP_EXPAND_COLLAPSE_CONTENT",
+        ),
+      );
+    }
     if (this.showCopy()) {
-      defaultSteps.push({
-        targetId: "copy-item-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_COPY_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_COPY_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "copy-item-btn",
+          "TOOLBAR_HELP_COPY_TITLE",
+          "TOOLBAR_HELP_COPY_CONTENT",
+        ),
+      );
     }
-
     if (this.showAdd()) {
-      defaultSteps.push({
-        targetId: "add-item-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_ADD_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_ADD_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "add-item-btn",
+          "TOOLBAR_HELP_ADD_TITLE",
+          "TOOLBAR_HELP_ADD_CONTENT",
+        ),
+      );
     }
-
     if (this.showDelete()) {
-      defaultSteps.push({
-        targetId: "delete-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_DELETE_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "delete-track-btn",
+          "TOOLBAR_HELP_DELETE_TITLE",
           "TOOLBAR_HELP_DELETE_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
+    return steps;
+  }
 
+  private getDataAndUtilityHelpSteps(): GuideStep[] {
+    const steps: GuideStep[] = [];
     if (this.showImport()) {
-      defaultSteps.push({
-        targetId: "import-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_IMPORT_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "import-btn",
+          "TOOLBAR_HELP_IMPORT_TITLE",
           "TOOLBAR_HELP_IMPORT_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showExport()) {
-      defaultSteps.push({
-        targetId: "export-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_EXPORT_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "export-btn",
+          "TOOLBAR_HELP_EXPORT_TITLE",
           "TOOLBAR_HELP_EXPORT_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showReset()) {
-      defaultSteps.push({
-        targetId: "reset-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_RESET_TITLE"),
-        content: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "reset-btn",
+          "TOOLBAR_HELP_RESET_TITLE",
           "TOOLBAR_HELP_RESET_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showAnalytics()) {
-      defaultSteps.push({
-        targetId: "analytics-btn",
-        title: this.translationService.translate(
+      steps.push(
+        this.createGuideStep(
+          "analytics-btn",
           "TOOLBAR_HELP_ANALYTICS_TITLE",
-        ),
-        content: this.translationService.translate(
           "TOOLBAR_HELP_ANALYTICS_CONTENT",
         ),
-        position: "bottom",
-      });
+      );
     }
-
     if (this.showHelp()) {
-      defaultSteps.push({
-        targetId: "help-track-btn",
-        title: this.translationService.translate("TOOLBAR_HELP_HELP_TITLE"),
-        content: this.translationService.translate("TOOLBAR_HELP_HELP_CONTENT"),
-        position: "bottom",
-      });
+      steps.push(
+        this.createGuideStep(
+          "help-track-btn",
+          "TOOLBAR_HELP_HELP_TITLE",
+          "TOOLBAR_HELP_HELP_CONTENT",
+        ),
+      );
     }
+    return steps;
+  }
 
-    return defaultSteps;
+  getToolbarHelpSteps(): GuideStep[] {
+    return [...this.getActionHelpSteps(), ...this.getDataAndUtilityHelpSteps()];
   }
 
   onHelp() {

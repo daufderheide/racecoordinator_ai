@@ -1001,6 +1001,18 @@ describe("RacedayFormatUtils", () => {
           heat_scoring: { allowFinish: AllowFinish.AF_SINGLE_LAP },
         } as any),
       ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: {
+            allowFinish: AllowFinish.AF_SINGLE_LAP_AUTO_SEGMENTS,
+          },
+        } as any),
+      ).toBeTrue();
+      expect(
+        RacedayFormatUtils.isAllowFinish({
+          heat_scoring: { allow_finish: "SingleLapAutoSegments" },
+        } as any),
+      ).toBeTrue();
     });
 
     it("should return flag URL based on value when flag is valid", () => {

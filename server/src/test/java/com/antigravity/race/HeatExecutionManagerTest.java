@@ -327,6 +327,275 @@ public class HeatExecutionManagerTest {
   }
 
   @Test
+  public void testTimedRace_AllowFinish_SingleLapAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Timed Race SingleLapAutoSegments")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_timed_sl_auto")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    assertTrue("Master power should be ON while racing", race.isMainPower());
+    assertTrue("Lane 0 power should be ON", race.isLanePower(0));
+    assertTrue("Lane 1 power should be ON", race.isLanePower(1));
+
+    // Laps during active countdown (raceTime > 0)
+    race.addRaceTime(30.0f); // 30s remaining
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Driver 0 reaction (1.0)
+    executionManager.onLap(1, 1.0, 1, false, true, false); // Driver 1 reaction (1.0)
+    executionManager.onLap(
+        0, 5.0, 1, false, true,
+        false); // Driver 0 Lap 1 (5.0 + 1.0 reaction = 6.0 effective, median = 6.0)
+    executionManager.onLap(
+        1, 3.0, 1, false, true,
+        false); // Driver 1 Lap 1 (3.0 + 1.0 reaction = 4.0 effective, median = 4.0)
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+    assertEquals(1, d0.getLapCount());
+    assertEquals(1, d1.getLapCount());
+
+    // Both drivers race for 3.0s on their next lap before time expires
+    executionManager.processTicker(3.0f);
+    assertEquals(3.0, executionManager.getTimeSinceLastLap()[0], 0.001);
+    assertEquals(3.0, executionManager.getTimeSinceLastLap()[1], 0.001);
+
+    // Time expires: raceTime <= 0
+    race.resetRaceTime();
+    assertEquals(0.0f, race.getRaceTime(), 0.001f);
+    race.broadcastFlag(com.antigravity.proto.RaceFlag.CHECKERED);
+
+    assertTrue(
+        "Master power must remain ON when time expires in SingleLapAutoSegments",
+        race.isMainPower());
+    assertTrue("Lane 0 power must remain ON for finishing lap", race.isLanePower(0));
+    assertTrue("Lane 1 power must remain ON for finishing lap", race.isLanePower(1));
+
+    // Driver 0 crosses finish line with 8.0s lapTime: partial=3.0, median=6.0 -> 3.0 / 6.0 = 0.5
+    // auto laps
+    boolean lapCounted0 = executionManager.onLap(0, 8.0, 2, false, true, false);
+    assertFalse("Single lap should NOT count as full lap", lapCounted0);
+    assertEquals("Lap count should remain 1", 1, d0.getLapCount());
+    assertEquals("Auto calculated laps should be 0.5", 0.5, d0.getAutoCalculatedLaps(), 0.001);
+    assertEquals("Adjusted lap count should be 1.5", 1.5, d0.getAdjustedLapCount(), 0.001);
+    assertTrue(
+        "Driver 0 should be marked finished", executionManager.getFinishedLanes().contains(0));
+    assertFalse("Lane 0 power should be OFF after Driver 0 finishes", race.isLanePower(0));
+    assertTrue("Lane 1 power must remain ON for Driver 1", race.isLanePower(1));
+    assertTrue("Master power must remain ON while Driver 1 still racing", race.isMainPower());
+    assertFalse("Heat should still be in Racing state", race.getState() instanceof HeatOver);
+
+    // Driver 1 crosses finish line with 7.0s lapTime: partial=3.0, median=4.0 -> 3.0 / 4.0 = 0.75
+    // auto laps
+    boolean lapCounted1 = executionManager.onLap(1, 7.0, 2, false, true, false);
+    assertFalse("Single lap should NOT count as full lap", lapCounted1);
+    assertEquals("Lap count should remain 1", 1, d1.getLapCount());
+    assertEquals("Auto calculated laps should be 0.75", 0.75, d1.getAutoCalculatedLaps(), 0.001);
+    assertEquals("Adjusted lap count should be 1.75", 1.75, d1.getAdjustedLapCount(), 0.001);
+    assertTrue(
+        "Driver 1 should be marked finished", executionManager.getFinishedLanes().contains(1));
+
+    // All drivers finished
+    assertTrue(
+        "Heat should transition to HeatOver once all active drivers finish",
+        race.getState() instanceof HeatOver);
+    assertFalse("Master power must be OFF when all drivers finished", race.isMainPower());
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
+  }
+
+  @Test
+  public void testLapRace_AllowFinish_SingleLapAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Lap,
+            3L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Lap Race SingleLapAutoSegments")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_lap_sl_auto")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.updatePowerForFlag(com.antigravity.proto.RaceFlag.GREEN);
+
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+
+    // Driver 0 reaction + Driver 1 reaction
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+
+    // Driver 1 completes Lap 1 (1.0 reaction + 4.0 lap = 5.0 effective lap time, median = 5.0)
+    executionManager.onLap(1, 4.0, 1, false, true, false);
+    assertEquals(1, d1.getLapCount());
+
+    // Both drivers race; Driver 1 has been on lap 2 for 2.0s
+    executionManager.processTicker(2.0f);
+
+    // Driver 0 completes 3 full laps (Leader finishes winning lap)
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 1
+    executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 2
+    boolean leaderFinalLap = executionManager.onLap(0, 5.0, 1, false, true, false); // Lap 3
+
+    assertTrue("Leader's winning lap should count", leaderFinalLap);
+    assertEquals(3, d0.getLapCount());
+    assertEquals(0.0, d0.getAutoCalculatedLaps(), 0.001);
+    assertTrue(executionManager.getFinishedLanes().contains(0));
+    assertFalse("Leader lane power should be OFF", race.isLanePower(0));
+    assertTrue("Lane 1 power should be ON for single lap", race.isLanePower(1));
+    assertFalse("Heat should not end until Driver 1 finishes", race.getState() instanceof HeatOver);
+
+    // Driver 1 now completes their single lap with 7.0s lapTime: partial=2.0s, median=5.0s -> 0.4
+    boolean driver1SingleLap = executionManager.onLap(1, 7.0, 1, false, true, false);
+    assertFalse("Driver 1 single lap should NOT count as full lap", driver1SingleLap);
+    assertEquals("Driver 1 lap count should stay at 1", 1, d1.getLapCount());
+    assertEquals(
+        "Driver 1 auto calculated laps should be 0.4", 0.4, d1.getAutoCalculatedLaps(), 0.001);
+    assertEquals("Driver 1 adjusted lap count should be 1.4", 1.4, d1.getAdjustedLapCount(), 0.001);
+    assertTrue(
+        "Driver 1 should be marked finished", executionManager.getFinishedLanes().contains(1));
+
+    assertTrue(
+        "Heat should end after Driver 1 completes their single lap",
+        race.getState() instanceof HeatOver);
+    assertFalse("Master power should be OFF", race.isMainPower());
+    assertFalse("Lane 0 power should be OFF", race.isLanePower(0));
+    assertFalse("Lane 1 power should be OFF", race.isLanePower(1));
+  }
+
+  @Test
+  public void testSingleLapAutoSegments_BoundaryLimits() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("Boundary Test")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_boundary")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // First triggers set reaction time
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+    executionManager.onLap(1, 1.0, 1, false, true, false);
+
+    // Prior laps: Driver 0 completes lap in 8.0s (median = 8.0s), Driver 1 in 5.0s (median = 5.0s)
+    executionManager.onLap(0, 8.0, 1, false, true, false);
+    executionManager.onLap(1, 5.0, 1, false, true, false);
+
+    // Expire time
+    race.resetRaceTime();
+    executionManager.setPartialLapTime(0, 10.0);
+
+    // Case 1: partial >= median (e.g. partial=10.0, median=8.0) -> capped at 0.99
+    executionManager.onLap(0, 8.0, 1, false, true, false);
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    assertEquals(0.99, d0.getAutoCalculatedLaps(), 0.001);
+
+    // Case 2: partial <= 0 -> 0.0
+    executionManager.setPartialLapTime(1, 0.0);
+    executionManager.onLap(1, 5.0, 1, false, true, false);
+    DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
+    assertEquals(0.0, d1.getAutoCalculatedLaps(), 0.001);
+  }
+
+  @Test
+  public void testSingleLapAutoSegments_NoPriorLaps_ZeroAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("No Prior Laps Test")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_no_prior")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // Reaction time
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+
+    // Expire time without completing any laps (median == 0.0)
+    race.resetRaceTime();
+    executionManager.setPartialLapTime(0, 5.0);
+
+    // Driver 0 finishes single lap
+    executionManager.onLap(0, 6.0, 1, false, true, false);
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    assertEquals(
+        "Should get 0.0 auto laps when median is 0", 0.0, d0.getAutoCalculatedLaps(), 0.001);
+  }
+
+  @Test
   public void testMinLapTime_AccumulatesLaps() {
     double minLapTime = 10.0;
     Race raceModel =

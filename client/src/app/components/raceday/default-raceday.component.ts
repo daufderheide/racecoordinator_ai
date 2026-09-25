@@ -22,6 +22,7 @@ import {
   ViewEncapsulation,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { DomSanitizer, SafeStyle } from "@angular/platform-browser";
 import {
   ActivatedRoute,
   NavigationStart,
@@ -70,6 +71,7 @@ import {
   RacePredictionService,
 } from "@app/services/race-prediction.service";
 import { DriverMatchingUtils } from "@app/utils/driver-matching.utils";
+import { TeammateUtils } from "@app/utils/teammate.utils";
 import {
   formatTimerDisplay,
   TimerFormatOptions,
@@ -520,9 +522,8 @@ export class DefaultRacedayComponent
   }
 
   protected get isAutoSegments(): boolean {
-    return (
-      (this.race?.heat_scoring?.allowFinish as string) === "NoneAutoSegments"
-    );
+    const af = this.race?.heat_scoring?.allowFinish as string;
+    return af === "NoneAutoSegments" || af === "SingleLapAutoSegments";
   }
 
   protected getTimerFormatOptions(): TimerFormatOptions {
@@ -891,7 +892,8 @@ export class DefaultRacedayComponent
     return this.fuelAudioTracker.getStates();
   }
 
-  private dropdownIconCache = new Map<string, string>();
+  private sanitizer = inject(DomSanitizer, { optional: true });
+  private dropdownIconCache = new Map<string, SafeStyle | string>();
   private deactivateSubject = new Subject<boolean>();
   private livePredictionSubject = new Subject<void>();
 
@@ -6045,9 +6047,9 @@ export class DefaultRacedayComponent
     return `${entry.anchor}-${entry.property}`;
   }
 
-  getDropdownArrowBg(hd: DriverHeatData): string {
+  getDropdownArrowBg(hd: DriverHeatData): SafeStyle | string {
     const color =
-      this.track?.lanes?.[hd.laneIndex]?.foreground_color || "#ffffff";
+      this.track?.lanes?.[hd?.laneIndex]?.foreground_color || "#ffffff";
     return this.getDropdownIcon(color);
   }
 
@@ -6057,18 +6059,20 @@ export class DefaultRacedayComponent
   ): string {
     const track =
       this.track || this.race?.track || this.raceService.getRace()?.track;
-    return track?.lanes?.[hd.laneIndex]?.[property] || "";
+    return track?.lanes?.[hd?.laneIndex]?.[property] || "";
   }
 
-  getDropdownIcon(color: string): string {
+  getDropdownIcon(color: string): SafeStyle | string {
     if (this.dropdownIconCache.has(color)) {
       return this.dropdownIconCache.get(color)!;
     }
-    // Use an inline SVG with the correct fill color
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"><path fill="${color}" d="M4 8l8 8 8-8z"/></svg>`;
-    const url = `url("data:image/svg+xml;charset=US-ASCII,${encodeURIComponent(svg)}")`;
-    this.dropdownIconCache.set(color, url);
-    return url;
+    const encodedColor = encodeURIComponent(color);
+    const svg = `data:image/svg+xml;utf8,<svg fill="%23${encodedColor.replace(/^%23/, "")}" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>`;
+    const safeStyle = this.sanitizer
+      ? this.sanitizer.bypassSecurityTrustStyle(`url('${svg}')`)
+      : `url('${svg}')`;
+    this.dropdownIconCache.set(color, safeStyle);
+    return safeStyle;
   }
 
   isNameProperty(property: string): boolean {
@@ -6109,63 +6113,15 @@ export class DefaultRacedayComponent
   }
 
   isTeam(hd: DriverHeatData | any): boolean {
-    return (
-      !!(hd?.participant?.team || hd?.driver?.team) || !!this.race?.practice
-    );
+    return TeammateUtils.isTeam(hd, !!this.race?.practice);
   }
 
   getTeammates(hd: DriverHeatData | any): any[] {
-    if (this.race?.practice) {
-      const emptyDriver = {
-        name: this.translationService.translate("RD_EMPTY_LANE"),
-        nickname: "",
-        entity_id: "EMPTY_LANE",
-        id: "EMPTY_LANE",
-      };
-
-      const raceDrivers: any[] = [];
-      this.participants.forEach((p) => {
-        if (p.driver && p.driver.entity_id !== "EMPTY_LANE") {
-          const d = this.allDrivers.find(
-            (d) =>
-              (d.entity_id || d.id) ===
-              (p.driver?.entity_id || (p as any).driverId),
-          );
-          if (
-            d &&
-            !raceDrivers.find(
-              (rd) => (rd.entity_id || rd.id) === (d.entity_id || d.id),
-            )
-          ) {
-            raceDrivers.push(d);
-          }
-        }
-        if (p.team && p.team.driverIds) {
-          p.team.driverIds.forEach((id: string) => {
-            const d = this.allDrivers.find((d) => (d.entity_id || d.id) === id);
-            if (
-              d &&
-              !raceDrivers.find(
-                (rd) => (rd.entity_id || rd.id) === (d.entity_id || d.id),
-              )
-            ) {
-              raceDrivers.push(d);
-            }
-          });
-        }
-      });
-
-      return [emptyDriver, ...raceDrivers];
-    }
-    const team = hd.participant?.team || hd.driver?.team;
-    if (team && team.driverIds) {
-      return team.driverIds
-        .map((id: string) =>
-          this.allDrivers.find((d) => (d.entity_id || d.id) === id),
-        )
-        .filter((d: any) => !!d);
-    }
-    return [];
+    return TeammateUtils.getTeammates(hd, this.allDrivers, {
+      isPractice: !!this.race?.practice,
+      participants: this.participants,
+      emptyLaneLabel: this.translationService.translate("RD_EMPTY_LANE"),
+    });
   }
 
   onTeammateChange(hd: DriverHeatData, event: any) {
@@ -6245,53 +6201,16 @@ export class DefaultRacedayComponent
   }
 
   getDriverStats(hd: any, driverId: string): string {
-    if (!hd || !driverId) return "";
-    let heatLaps = 0;
-    let heatTime = 0;
-    let overallLaps = 0;
-    let overallTime = 0;
-
-    const hLabel = this.translationService.translate("RD_STATS_HEAT_ABBR");
-    const lLabel = this.translationService.translate("RD_STATS_LAP_ABBR");
-    const tLabel = this.translationService.translate("RD_STATS_TOTAL_ABBR");
-
-    if (hd.lapsWithDetails) {
-      hd.lapsWithDetails.forEach((l: any) => {
-        if (l.driverId === driverId) {
-          heatLaps++;
-          heatTime += l.time;
-        }
-      });
-    }
-
-    const heats = this.raceService.getHeats();
-    if (heats) {
-      heats.forEach((h: any) => {
-        if (h.heatDrivers) {
-          h.heatDrivers.forEach((d_hd: any) => {
-            if (d_hd.lapsWithDetails) {
-              d_hd.lapsWithDetails.forEach((l: any) => {
-                if (l.driverId === driverId) {
-                  overallLaps++;
-                  overallTime += l.time;
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-
-    const formatTime = (t: number) => {
-      if (t >= 60) {
-        const m = Math.floor(t / 60);
-        const s = (t % 60).toFixed(1).padStart(4, "0");
-        return `${m}:${s}`;
-      }
-      return `${t.toFixed(1)}s`;
-    };
-
-    return `(${hLabel}: ${heatLaps} ${lLabel} / ${formatTime(heatTime)}, ${tLabel}: ${overallLaps} ${lLabel} / ${formatTime(overallTime)})`;
+    return TeammateUtils.getDriverStats(
+      hd,
+      driverId,
+      this.raceService.getHeats(),
+      {
+        heatAbbr: this.translationService.translate("RD_STATS_HEAT_ABBR"),
+        lapAbbr: this.translationService.translate("RD_STATS_LAP_ABBR"),
+        totalAbbr: this.translationService.translate("RD_STATS_TOTAL_ABBR"),
+      },
+    );
   }
 
   private handleRaceStateChange(state: RaceState) {

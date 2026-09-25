@@ -20,6 +20,7 @@ La barra degli strumenti superiore offre le seguenti azioni:
 - **Aggiungi Pilota (+)**: Crea un nuovo profilo pilota ed entra in modalità modifica.
 - **Copia Pilota**: Duplica il profilo del pilota selezionato.
 - **Modifica / Fine Modifica**: Alterna tra modalità sola lettura e modalità modifica.
+- **Espandi / Comprimi tutto**: Espande o comprime tutte le sezioni a soffietto contemporaneamente.
 - **Elimina Pilota**: Rimuove il profilo del pilota selezionato previa conferma.
 - **Guida (?)**: Avvia il tour guidato interattivo che illustra le sezioni dell'editor.
 

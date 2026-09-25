@@ -20,6 +20,7 @@ La barre d'outils supérieure offre les actions suivantes :
 - **Ajouter un pilote (+)** : Crée un nouveau profil et bascule en mode édition.
 - **Copier le pilote** : Duplique le profil du pilote sélectionné.
 - **Modifier / Terminer** : Alterne entre le mode lecture seule et le mode édition.
+- **Tout développer / réduire** : Développe ou réduit toutes les sections accordéon en une seule fois.
 - **Supprimer le pilote** : Supprime le profil après confirmation.
 - **Aide (?)** : Ouvre le guide interactif présentant les différentes sections.
 

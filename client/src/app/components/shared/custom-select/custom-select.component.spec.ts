@@ -273,6 +273,112 @@ describe("CustomSelectComponent", () => {
 
     expect(scrollIntoViewSpy).not.toHaveBeenCalled();
   }));
+
+  it("should open upward when space below is tight and space above is larger", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 500,
+      bottom: 540,
+      left: 100,
+      right: 200,
+      width: 100,
+      height: 40,
+    } as DOMRect);
+
+    // Mock window innerHeight so spaceBelow = 600 - 540 = 60 (< 250) and spaceAbove = 500 (> 60)
+    spyOnProperty(window, "innerHeight", "get").and.returnValue(600);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openUpward).toBeTrue();
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    );
+    expect(dropdown.classList.contains("open-upward")).toBeTrue();
+  });
+
+  it("should align right when element is near right edge of viewport", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+    const selectEl = hostFixture.nativeElement.querySelector(
+      "app-custom-select",
+    ) as HTMLElement;
+
+    // rect.left + 350 > window.innerWidth (700 + 350 = 1050 > 1000)
+    spyOn(selectEl, "getBoundingClientRect").and.returnValue({
+      top: 100,
+      bottom: 140,
+      left: 700,
+      right: 800,
+      width: 100,
+      height: 40,
+    } as DOMRect);
+    spyOnProperty(window, "innerWidth", "get").and.returnValue(1000);
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    expect(select.openRightAligned).toBeTrue();
+    const dropdown = hostFixture.nativeElement.querySelector(
+      ".custom-select-dropdown",
+    );
+    expect(dropdown.classList.contains("align-right")).toBeTrue();
+  });
+
+  it("should close dropdown when Escape key is pressed", () => {
+    component.isOpen = true;
+    fixture.detectChanges();
+
+    component.onEscape();
+    expect(component.isOpen).toBeFalse();
+  });
+
+  it("should close dropdown when clicking outside element", () => {
+    component.isOpen = true;
+    fixture.detectChanges();
+
+    const outsideElement = document.createElement("div");
+    document.body.appendChild(outsideElement);
+
+    component.onDocumentClick({
+      target: outsideElement,
+    } as unknown as MouseEvent);
+    expect(component.isOpen).toBeFalse();
+
+    document.body.removeChild(outsideElement);
+  });
+
+  it("should select option and close dropdown on option click", () => {
+    const hostFixture = TestBed.createComponent(TestHostComponent);
+    hostFixture.detectChanges();
+    const select = hostFixture.debugElement.children[0]
+      .componentInstance as CustomSelectComponent;
+
+    select.toggleOpen();
+    hostFixture.detectChanges();
+
+    const option2 = hostFixture.nativeElement.querySelector(
+      '.custom-select-option[data-value="opt2"]',
+    ) as HTMLElement;
+    expect(option2).toBeTruthy();
+
+    option2.click();
+    hostFixture.detectChanges();
+
+    expect(select.isOpen).toBeFalse();
+    expect(select.value()).toBe("opt2");
+    expect(select.selectedLabel).toBe("Option 2");
+  });
 });
 
 @Component({

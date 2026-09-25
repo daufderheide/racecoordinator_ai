@@ -2111,6 +2111,12 @@ export class TestSetupHelper {
         ) {
           r.heatScoring.allowFinish = 3;
         } else if (
+          r.heatScoring.allowFinish === "SingleLapAutoSegments" ||
+          r.heatScoring.allowFinish === "AF_SINGLE_LAP_AUTO_SEGMENTS" ||
+          r.heatScoring.allowFinish === 4
+        ) {
+          r.heatScoring.allowFinish = 4;
+        } else if (
           r.heatScoring.allowFinish === "None" ||
           r.heatScoring.allowFinish === "AF_NONE" ||
           r.heatScoring.allowFinish === 0
