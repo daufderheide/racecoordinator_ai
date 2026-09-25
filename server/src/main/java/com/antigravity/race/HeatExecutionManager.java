@@ -1206,9 +1206,10 @@ public class HeatExecutionManager {
     }
     double partial =
         (partialLapTimes != null && lane < partialLapTimes.length) ? partialLapTimes[lane] : 0.0;
+    double median = driverData.getMedianLapTime();
     double pctTraveled = 0.0;
-    if (finalLapTime > 0) {
-      pctTraveled = partial / finalLapTime;
+    if (median > 0) {
+      pctTraveled = partial / median;
     }
     if (pctTraveled >= 1.0) {
       pctTraveled = 0.99;
@@ -1221,11 +1222,12 @@ public class HeatExecutionManager {
     driverData.setFinished(true);
     driverData.setFlag(race.getState().getLaneFlagType(race, lane));
     logger.info(
-        "Driver {} finished single lap (auto segments) on lane {}: partial={}s, lap={}s, autoLaps={}",
+        "Driver {} finished single lap (auto segments) on lane {}: partial={}s, lap={}s, median={}s, autoLaps={}",
         driverData.getDriver().getDriver().getName(),
         lane,
         partial,
         finalLapTime,
+        median,
         pctTraveled);
 
     race.setLanePower(false, lane);

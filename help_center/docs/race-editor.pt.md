@@ -40,8 +40,8 @@ O espaço de trabalho é dividido em dois painéis sincronizados:
     - *Não permitir finalizar*: A bateria termina imediatamente.
     - *Permitir terminar*: Todos os pilotos continuam até cumprirem os requisitos.
     - *Permitir terminar (uma volta)*: Os pilotos podem concluir sua volta atual; essa volta conta no total.
-    - *Não permitir finalizar (segmentos automáticos)*: A bateria termina imediatamente e frações de volta são estimadas usando a mediana.
-    - *Permitir terminar (uma volta) (segmentos automáticos)*: Os pilotos concluem a volta na pista; a volta não conta como inteira, mas a fração é calculada pelo tempo antes do fim dividido pelo tempo da volta (`pctTraveled = partialLapTime / lapTime`).
+    - *Não permitir finalizar (segmentos automáticos)*: A bateria termina imediatamente e o crédito de volta parcial é calculado a partir do tempo decorrido na volta atual dividido pelo tempo de volta mediano do piloto (`autoSegments = timeSinceLastLap / medianLapTime`, limitado a 0,99).
+    - *Permitir terminar (uma volta) (segmentos automáticos)*: Os pilotos concluem a volta na pista; a volta não conta como uma volta inteira, mas a fração é calculada a partir do tempo de corrida antes do término dividido pelo tempo de volta mediano do piloto (`autoSegments = partialLapTime / medianLapTime`, limitado a 0,99).
 - **Pontuação Geral**: Método de classificação geral, regras de desempate e baterias descartadas.
 - **Pontuação da Temporada**: Distribuição de pontos por posição para campeonatos.
 

@@ -362,10 +362,14 @@ public class HeatExecutionManagerTest {
 
     // Laps during active countdown (raceTime > 0)
     race.addRaceTime(30.0f); // 30s remaining
-    executionManager.onLap(0, 1.0, 1, false, true, false); // Driver 0 reaction
-    executionManager.onLap(1, 1.0, 1, false, true, false); // Driver 1 reaction
-    executionManager.onLap(0, 5.0, 1, false, true, false); // Driver 0 Lap 1
-    executionManager.onLap(1, 5.2, 1, false, true, false); // Driver 1 Lap 1
+    executionManager.onLap(0, 1.0, 1, false, true, false); // Driver 0 reaction (1.0)
+    executionManager.onLap(1, 1.0, 1, false, true, false); // Driver 1 reaction (1.0)
+    executionManager.onLap(
+        0, 5.0, 1, false, true,
+        false); // Driver 0 Lap 1 (5.0 + 1.0 reaction = 6.0 effective, median = 6.0)
+    executionManager.onLap(
+        1, 3.0, 1, false, true,
+        false); // Driver 1 Lap 1 (3.0 + 1.0 reaction = 4.0 effective, median = 4.0)
 
     DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
     DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
@@ -388,8 +392,9 @@ public class HeatExecutionManagerTest {
     assertTrue("Lane 0 power must remain ON for finishing lap", race.isLanePower(0));
     assertTrue("Lane 1 power must remain ON for finishing lap", race.isLanePower(1));
 
-    // Driver 0 crosses finish line with 6.0s lapTime: partial=3.0, lap=6.0 -> 0.5 auto laps
-    boolean lapCounted0 = executionManager.onLap(0, 6.0, 2, false, true, false);
+    // Driver 0 crosses finish line with 8.0s lapTime: partial=3.0, median=6.0 -> 3.0 / 6.0 = 0.5
+    // auto laps
+    boolean lapCounted0 = executionManager.onLap(0, 8.0, 2, false, true, false);
     assertFalse("Single lap should NOT count as full lap", lapCounted0);
     assertEquals("Lap count should remain 1", 1, d0.getLapCount());
     assertEquals("Auto calculated laps should be 0.5", 0.5, d0.getAutoCalculatedLaps(), 0.001);
@@ -401,8 +406,9 @@ public class HeatExecutionManagerTest {
     assertTrue("Master power must remain ON while Driver 1 still racing", race.isMainPower());
     assertFalse("Heat should still be in Racing state", race.getState() instanceof HeatOver);
 
-    // Driver 1 crosses finish line with 4.0s lapTime: partial=3.0, lap=4.0 -> 0.75 auto laps
-    boolean lapCounted1 = executionManager.onLap(1, 4.0, 2, false, true, false);
+    // Driver 1 crosses finish line with 7.0s lapTime: partial=3.0, median=4.0 -> 3.0 / 4.0 = 0.75
+    // auto laps
+    boolean lapCounted1 = executionManager.onLap(1, 7.0, 2, false, true, false);
     assertFalse("Single lap should NOT count as full lap", lapCounted1);
     assertEquals("Lap count should remain 1", 1, d1.getLapCount());
     assertEquals("Auto calculated laps should be 0.75", 0.75, d1.getAutoCalculatedLaps(), 0.001);
@@ -455,8 +461,8 @@ public class HeatExecutionManagerTest {
     executionManager.onLap(0, 1.0, 1, false, true, false);
     executionManager.onLap(1, 1.0, 1, false, true, false);
 
-    // Driver 1 completes Lap 1
-    executionManager.onLap(1, 5.0, 1, false, true, false);
+    // Driver 1 completes Lap 1 (1.0 reaction + 4.0 lap = 5.0 effective lap time, median = 5.0)
+    executionManager.onLap(1, 4.0, 1, false, true, false);
     assertEquals(1, d1.getLapCount());
 
     // Both drivers race; Driver 1 has been on lap 2 for 2.0s
@@ -475,8 +481,8 @@ public class HeatExecutionManagerTest {
     assertTrue("Lane 1 power should be ON for single lap", race.isLanePower(1));
     assertFalse("Heat should not end until Driver 1 finishes", race.getState() instanceof HeatOver);
 
-    // Driver 1 now completes their single lap with 5.0s lapTime: partial=2.0s, lap=5.0s -> 0.4
-    boolean driver1SingleLap = executionManager.onLap(1, 5.0, 1, false, true, false);
+    // Driver 1 now completes their single lap with 7.0s lapTime: partial=2.0s, median=5.0s -> 0.4
+    boolean driver1SingleLap = executionManager.onLap(1, 7.0, 1, false, true, false);
     assertFalse("Driver 1 single lap should NOT count as full lap", driver1SingleLap);
     assertEquals("Driver 1 lap count should stay at 1", 1, d1.getLapCount());
     assertEquals(
@@ -526,11 +532,15 @@ public class HeatExecutionManagerTest {
     executionManager.onLap(0, 1.0, 1, false, true, false);
     executionManager.onLap(1, 1.0, 1, false, true, false);
 
+    // Prior laps: Driver 0 completes lap in 8.0s (median = 8.0s), Driver 1 in 5.0s (median = 5.0s)
+    executionManager.onLap(0, 8.0, 1, false, true, false);
+    executionManager.onLap(1, 5.0, 1, false, true, false);
+
     // Expire time
     race.resetRaceTime();
     executionManager.setPartialLapTime(0, 10.0);
 
-    // Case 1: partial >= lapTime (e.g. partial=10.0, lap=8.0) -> capped at 0.99
+    // Case 1: partial >= median (e.g. partial=10.0, median=8.0) -> capped at 0.99
     executionManager.onLap(0, 8.0, 1, false, true, false);
     DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
     assertEquals(0.99, d0.getAutoCalculatedLaps(), 0.001);
@@ -540,6 +550,49 @@ public class HeatExecutionManagerTest {
     executionManager.onLap(1, 5.0, 1, false, true, false);
     DriverHeatData d1 = race.getCurrentHeat().getDrivers().get(1);
     assertEquals(0.0, d1.getAutoCalculatedLaps(), 0.001);
+  }
+
+  @Test
+  public void testSingleLapAutoSegments_NoPriorLaps_ZeroAutoSegments() {
+    heatScoring =
+        new HeatScoring(
+            HeatScoring.FinishMethod.Timed,
+            60L,
+            HeatScoring.HeatRanking.LAP_COUNT,
+            HeatScoring.HeatRankingTiebreaker.FASTEST_LAP_TIME,
+            HeatScoring.AllowFinish.SingleLapAutoSegments);
+
+    Race raceModel =
+        new Race.Builder()
+            .withName("No Prior Laps Test")
+            .withTrackEntityId("track1")
+            .withHeatScoring(heatScoring)
+            .withOverallScoring(new OverallScoring())
+            .withEntityId("race_no_prior")
+            .build();
+    race =
+        new com.antigravity.race.Race.Builder()
+            .model(raceModel)
+            .drivers(participants)
+            .track(track)
+            .isDemoMode(true)
+            .build();
+    executionManager = race.getHeatExecutionManager();
+    executionManager.initialize(track.getLanes().size());
+    race.changeState(new com.antigravity.race.states.Racing());
+
+    // Reaction time
+    executionManager.onLap(0, 1.0, 1, false, true, false);
+
+    // Expire time without completing any laps (median == 0.0)
+    race.resetRaceTime();
+    executionManager.setPartialLapTime(0, 5.0);
+
+    // Driver 0 finishes single lap
+    executionManager.onLap(0, 6.0, 1, false, true, false);
+    DriverHeatData d0 = race.getCurrentHeat().getDrivers().get(0);
+    assertEquals(
+        "Should get 0.0 auto laps when median is 0", 0.0, d0.getAutoCalculatedLaps(), 0.001);
   }
 
   @Test

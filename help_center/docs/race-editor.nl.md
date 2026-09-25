@@ -40,8 +40,8 @@ De werkruimte is verdeeld in twee gesynchroniseerde panelen:
     - *Finish niet toestaan*: Heat eindigt onmiddellijk.
     - *Finish Toestaan*: Alle coureurs rijden door tot de heat-doelen zijn bereikt.
     - *Finish Toestaan (enkele ronde)*: Coureurs mogen hun huidige ronde afmaken; die telt mee voor het totaal.
-    - *Finish niet toestaan (automatische segmenten)*: Heat eindigt meteen en deeltijd wordt geschat op basis van de mediaan-rondetijd.
-    - *Finish Toestaan (enkele ronde) (automatische segmenten)*: Coureurs maken hun ronde op de baan af; de ronde telt niet als volle ronde, maar als percentage berekend uit de rijtijd voor het einde gedeeld door de rondetijd (`pctTraveled = partialLapTime / lapTime`).
+    - *Finish niet toestaan (automatische segmenten)*: Heat eindigt meteen en deeltijdtegoed wordt berekend uit de verstreken tijd in de huidige ronde gedeeld door de mediaan-rondetijd van de coureur (`autoSegments = timeSinceLastLap / medianLapTime`, met een maximum van 0,99).
+    - *Finish Toestaan (enkele ronde) (automatische segmenten)*: Coureurs maken hun ronde op de baan af; de ronde telt niet als volle ronde, maar als percentage berekend uit de rijtijd voor het einde gedeeld door de mediaan-rondetijd van de coureur (`autoSegments = partialLapTime / medianLapTime`, met een maximum van 0,99).
 - **Algemene score**: Algemene rangschikkingsmethode, tiebreaker-regels en schrapresultaten.
 - **Seizoensscore**: Puntenverdeling per positie voor kampioenschappen.
 

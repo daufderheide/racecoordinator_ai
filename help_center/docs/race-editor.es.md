@@ -40,8 +40,8 @@ El espacio de trabajo se divide en dos paneles sincronizados:
     - *No permitir finalizar*: La manga finaliza inmediatamente.
     - *Permitir terminar*: Todos los pilotos continúan hasta completar los requisitos.
     - *Permitir terminar (una vuelta)*: Los pilotos pueden terminar su vuelta actual; esa vuelta cuenta en el total.
-    - *No permitir terminar (segmentos automáticos)*: La manga termina de inmediato y las fracciones de vuelta se calculan mediante el tiempo mediano.
-    - *Permitir terminar (una vuelta) (segmentos automáticos)*: Los pilotos terminan su vuelta en pista; la vuelta no cuenta entera, sino que se calcula el porcentaje recorrido según el tiempo antes del fin dividido por el tiempo de la vuelta (`pctTraveled = partialLapTime / lapTime`).
+    - *No permitir terminar (segmentos automáticos)*: La manga termina de inmediato y la fracción de vuelta se calcula a partir del tiempo transcurrido en la vuelta actual dividido por el tiempo de vuelta mediano del piloto (`autoSegments = timeSinceLastLap / medianLapTime`, con un límite de 0,99).
+    - *Permitir terminar (una vuelta) (segmentos automáticos)*: Los pilotos terminan su vuelta en pista; la vuelta no cuenta como una vuelta completa, sino que la fracción de vuelta se calcula a partir del tiempo transcurrido antes del final dividido por el tiempo de vuelta mediano del piloto (`autoSegments = partialLapTime / medianLapTime`, con un límite de 0,99).
 - **Puntuación General**: Método de clasificación general, reglas de desempate y mangas descartadas.
 - **Puntuación de Temporada**: Distribución de puntos por posición para campeonatos.
 
