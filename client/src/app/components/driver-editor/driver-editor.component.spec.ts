@@ -281,10 +281,12 @@ describe("DriverEditorComponent", () => {
     const nameEl = fixture.nativeElement.querySelector("#driver-name-input");
     expect(nameEl).toBeTruthy();
     expect(nameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nameEl.getAttribute("data-dashlane-disabled-on-field")).toBe("true");
     expect(nameEl.getAttribute("data-1p-ignore")).toBe("true");
     expect(nameEl.getAttribute("data-lpignore")).toBe("true");
     expect(nameEl.getAttribute("data-bwignore")).toBe("true");
     expect(nameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nameEl.getAttribute("data-field-type")).toBe("other");
     expect(nameEl.getAttribute("autocomplete")).toBe("off");
 
     const nicknameEl = fixture.nativeElement.querySelector(
@@ -292,10 +294,14 @@ describe("DriverEditorComponent", () => {
     );
     expect(nicknameEl).toBeTruthy();
     expect(nicknameEl.getAttribute("data-dashlane-ignore")).toBe("true");
+    expect(nicknameEl.getAttribute("data-dashlane-disabled-on-field")).toBe(
+      "true",
+    );
     expect(nicknameEl.getAttribute("data-1p-ignore")).toBe("true");
     expect(nicknameEl.getAttribute("data-lpignore")).toBe("true");
     expect(nicknameEl.getAttribute("data-bwignore")).toBe("true");
     expect(nicknameEl.getAttribute("data-form-type")).toBe("other");
+    expect(nicknameEl.getAttribute("data-field-type")).toBe("other");
     expect(nicknameEl.getAttribute("autocomplete")).toBe("off");
   });
 

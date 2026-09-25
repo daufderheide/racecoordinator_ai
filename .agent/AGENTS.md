@@ -128,17 +128,20 @@ Whenever a new configuration setting, property, or field is added, modified, or 
 - **Do not rabbit hole into ad-hoc name parsing**: If the domain model or protobufs lack the necessary IDs or structure to resolve an entity cleanly, do not paper over it with heuristic string parsing or complex fallback chains. Address that structure directly at the model/data layer in an explicit follow-up change.
 
 ## Form Text Inputs (Prevent Password Manager & Autofill Hijacking)
-- **Disable password manager autofill on all text inputs**: Non-credential text inputs across the application (e.g. entity names, nicknames, descriptions, search bars, filter inputs, configuration fields) must never trigger password manager popups, autofill prompts, or extension icons (such as Dashlane, 1Password, LastPass, Bitwarden).
-- **Mandatory attributes**: Every text input (`<input type="text">` or general text/search field) must include the following attributes:
+- **Global Autofill & Password Manager Protection**: Non-credential text inputs across the application (e.g. entity names, nicknames, descriptions, search bars, filter inputs, configuration fields) must never trigger password manager popups, autofill prompts, or extension icons (such as Dashlane, 1Password, LastPass, Bitwarden).
+- **Enforced globally at runtime & in tests**: Protection is applied globally at application boot (`index.html`, `main.ts`, and `unit-test-mocks.ts` via `client/src/app/utils/form-security.ts`). The global observer automatically stamps every non-credential input and textarea with the required attributes:
   ```html
   autocomplete="off"
   data-dashlane-ignore="true"
+  data-dashlane-disabled-on-field="true"
   data-1p-ignore="true"
   data-lpignore="true"
   data-bwignore="true"
   data-form-type="other"
+  data-field-type="other"
   ```
-- **Automated tests**: Unit tests for forms with text inputs should assert the presence of these ignore attributes (e.g., verifying `data-dashlane-ignore="true"` and `autocomplete="off"`).
+- **Templates remain clean**: Individual HTML templates do NOT need to hardcode these 8 attributes on inputs; the global system automatically secures all current and future inputs.
+- **Avoid name attributes with credential keywords**: Non-credential inputs must not use `name` attributes containing keywords like `name`, `username`, `password`, `email`, or `identity` (e.g. do not use `name="trackNameInput"`, `name="driverNameInput"`, etc.), which trigger browser and password manager heuristic scanners. In Angular templates, `[(ngModel)]` does not require `name` attributes outside of `<form>`.
 
 ## Unified Template Variable & Telemetry Binding Rule
 - **Single Syntax & Naming Standard**: All variable expressions across Excel export templates (Jxls), Raceday UI custom widgets (`CustomWidgetBaseComponent`), and Text-to-Speech (TTS) audio callouts MUST adhere to unified variable naming and syntax.
