@@ -52,7 +52,7 @@ export class ServerFileSystemService {
         ),
       );
     } catch (err) {
-      this.logger.debug("Failed to get server directories", err);
+      this.logger.warn("Failed to get server directories", err);
       return { isLocalhost: false };
     }
   }
@@ -121,7 +121,7 @@ export class ServerFileSystemService {
         )) || []
       );
     } catch (err) {
-      this.logger.debug("Failed to list widgets from server", err);
+      this.logger.warn("Failed to list widgets from server", err);
       return [];
     }
   }
@@ -182,7 +182,7 @@ export class ServerFileSystemService {
         ),
       );
     } catch (err) {
-      this.logger.debug("Failed to check custom UI files on server", err);
+      this.logger.warn("Failed to check custom UI files on server", err);
       return { exists: false, files: [] };
     }
   }

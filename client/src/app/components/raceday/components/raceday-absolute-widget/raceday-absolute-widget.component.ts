@@ -36,6 +36,7 @@ import { RacedayTrackNameComponent } from "@app/components/raceday/components/ra
 import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { CustomWidgetService } from "@app/services/custom-widget.service";
+import { LoggerService } from "@app/services/logger.service";
 
 @Component({
   standalone: true,
@@ -79,7 +80,8 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
   selectedWidgetId = input<string | null>(null);
   isCountdownPreviewActive = input<boolean>(false);
 
-  private customWidgetService = inject(CustomWidgetService);
+  private customWidgetService = inject(CustomWidgetService, { optional: true });
+  private logger = inject(LoggerService, { optional: true });
   private widgetSub?: Subscription;
 
   get isSelected(): boolean {
@@ -132,6 +134,22 @@ export class RacedayAbsoluteWidgetComponent implements OnInit, OnDestroy {
     if (this.customWidgetService?.customWidgets$) {
       this.widgetSub = this.customWidgetService.customWidgets$.subscribe(() => {
         this.cdr.markForCheck();
+      });
+    }
+    const type = this.widget()?.widgetType;
+    if (
+      this.isCustomWidget(type) &&
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.logger?.info(
+        `RacedayAbsoluteWidget: Custom widget '${type}' requested but 0 widgets currently loaded in CustomWidgetService. Triggering reload...`,
+      );
+      this.customWidgetService.reloadCustomWidgets().catch((err) => {
+        this.logger?.warn(
+          "RacedayAbsoluteWidget: Error reloading custom widgets",
+          err,
+        );
       });
     }
   }

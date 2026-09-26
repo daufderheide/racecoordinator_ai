@@ -628,5 +628,11 @@ describe("FileSystemService", () => {
         undefined,
       );
     });
+
+    it("should resolve ensureServerDirectoriesInitialized when initServerDirectories completes", async () => {
+      await expectAsync(
+        service.ensureServerDirectoriesInitialized(),
+      ).toBeResolved();
+    });
   });
 });
