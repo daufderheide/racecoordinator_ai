@@ -91,7 +91,7 @@ describe("CameraVisionService", () => {
     expect(mockWs.close).toHaveBeenCalled();
   });
 
-  it("should detect motion envelope in calibration frame", () => {
+  it("should detect motion envelope in calibration frame with null background", () => {
     const video = document.createElement("video");
     const canvas = document.createElement("canvas");
     Object.defineProperty(video, "videoWidth", { value: 640 });
@@ -115,6 +115,151 @@ describe("CameraVisionService", () => {
     );
     expect(envelope).toBeNull();
     expect(currentBg.length).toBeGreaterThan(0);
+  });
+
+  it("should detect motion envelope and preserve background when car motion occurs", () => {
+    const video = document.createElement("video");
+    const canvas = document.createElement("canvas");
+    Object.defineProperty(video, "videoWidth", { value: 640 });
+    Object.defineProperty(video, "videoHeight", { value: 480 });
+
+    const bg = new Uint8ClampedArray(320 * 180 * 4);
+    const framePixels = new Uint8ClampedArray(320 * 180 * 4);
+
+    // Simulate car motion in a 20x30 region (x: 50..69, y: 40..69)
+    for (let y = 40; y < 70; y++) {
+      for (let x = 50; x < 70; x++) {
+        const idx = (y * 320 + x) * 4;
+        framePixels[idx] = 200;
+        framePixels[idx + 1] = 200;
+        framePixels[idx + 2] = 200;
+        framePixels[idx + 3] = 255;
+      }
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      spyOn(ctx, "drawImage");
+      spyOn(ctx, "getImageData").and.returnValue({
+        data: framePixels,
+        width: 320,
+        height: 180,
+        colorSpace: "srgb",
+      });
+    }
+
+    const { envelope, currentBg } = service.detectMotionEnvelope(
+      video,
+      canvas,
+      bg,
+    );
+    expect(envelope).not.toBeNull();
+    expect(envelope!.minX).toBeCloseTo(50 / 320, 3);
+    expect(envelope!.maxX).toBeCloseTo(70 / 320, 3);
+    expect(envelope!.minY).toBeCloseTo(40 / 180, 3);
+    expect(envelope!.maxY).toBeCloseTo(70 / 180, 3);
+    expect(envelope!.density).toBeGreaterThan(0);
+
+    // Verify moving pixel region was not assimilated into background
+    const motionIdx = (50 * 320 + 50) * 4;
+    expect(currentBg[motionIdx]).toBe(0);
+  });
+
+  it("should reject scattered camera sensor noise across the frame", () => {
+    const video = document.createElement("video");
+    const canvas = document.createElement("canvas");
+    Object.defineProperty(video, "videoWidth", { value: 640 });
+    Object.defineProperty(video, "videoHeight", { value: 480 });
+
+    const bg = new Uint8ClampedArray(320 * 180 * 4);
+    const framePixels = new Uint8ClampedArray(320 * 180 * 4);
+
+    // Scatter 150 random high-diff pixels throughout the 320x180 frame
+    // so no single 10x10 block receives more than 2 noise pixels
+    for (let i = 0; i < 150; i++) {
+      const x = (i * 37) % 320;
+      const y = (i * 29) % 180;
+      const idx = (y * 320 + x) * 4;
+      framePixels[idx] = 180;
+      framePixels[idx + 1] = 180;
+      framePixels[idx + 2] = 180;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      spyOn(ctx, "drawImage");
+      spyOn(ctx, "getImageData").and.returnValue({
+        data: framePixels,
+        width: 320,
+        height: 180,
+        colorSpace: "srgb",
+      });
+    }
+
+    const { envelope } = service.detectMotionEnvelope(video, canvas, bg);
+    // Must be rejected as sensor noise
+    expect(envelope).toBeNull();
+  });
+
+  it("should ignore minor noise blips below threshold in calibration", () => {
+    const video = document.createElement("video");
+    const canvas = document.createElement("canvas");
+    Object.defineProperty(video, "videoWidth", { value: 640 });
+    Object.defineProperty(video, "videoHeight", { value: 480 });
+
+    const bg = new Uint8ClampedArray(320 * 180 * 4);
+    const framePixels = new Uint8ClampedArray(320 * 180 * 4);
+
+    // Only 10 pixels modified (below 40 pixel threshold)
+    for (let i = 0; i < 10; i++) {
+      const idx = i * 4;
+      framePixels[idx] = 200;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      spyOn(ctx, "drawImage");
+      spyOn(ctx, "getImageData").and.returnValue({
+        data: framePixels,
+        width: 320,
+        height: 180,
+        colorSpace: "srgb",
+      });
+    }
+
+    const { envelope } = service.detectMotionEnvelope(video, canvas, bg);
+    expect(envelope).toBeNull();
+  });
+
+  it("should re-seed background and suppress envelope on global lighting shift", () => {
+    const video = document.createElement("video");
+    const canvas = document.createElement("canvas");
+    Object.defineProperty(video, "videoWidth", { value: 640 });
+    Object.defineProperty(video, "videoHeight", { value: 480 });
+
+    const bg = new Uint8ClampedArray(320 * 180 * 4);
+    const framePixels = new Uint8ClampedArray(320 * 180 * 4);
+    // Fill entire screen with high contrast (room light turned on)
+    framePixels.fill(220);
+
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      spyOn(ctx, "drawImage");
+      spyOn(ctx, "getImageData").and.returnValue({
+        data: framePixels,
+        width: 320,
+        height: 180,
+        colorSpace: "srgb",
+      });
+    }
+
+    const { envelope, currentBg } = service.detectMotionEnvelope(
+      video,
+      canvas,
+      bg,
+    );
+    expect(envelope).toBeNull();
+    expect(currentBg[0]).toBe(220);
   });
 
   it("should process frame across detection gates", () => {

@@ -36,6 +36,7 @@ describe("CameraInterfaceComponent", () => {
         "setHapticEnabled",
         "processFrame",
         "detectMotionEnvelope",
+        "sendGatesUpdate",
       ],
       {
         isConnected$,
@@ -315,17 +316,75 @@ describe("CameraInterfaceComponent", () => {
     expect(component.gates()[0].xPct).toBe(0.12);
   });
 
-  it("should emit gatesChange when saveGates is called", () => {
+  it("should emit gatesChange, sendGatesUpdate, and show toast when saveGates is called", () => {
     spyOn(component.gatesChange, "emit");
+    spyOn(window, "fetch").and.returnValue(Promise.resolve(new Response()));
     component.saveGates();
     expect(component.gatesChange.emit).toHaveBeenCalledWith(component.gates());
+    expect(mockCameraVisionService.sendGatesUpdate).toHaveBeenCalledWith(
+      component.interfaceIndex,
+      component.gates(),
+    );
+    expect(component.showSavedToast()).toBe(true);
+    expect(window.fetch).toHaveBeenCalledWith(
+      "/api/camera/gates",
+      jasmine.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("should trigger saveGates when clicking save button in HUD", async () => {
+    spyOn(component, "saveGates");
+    fixture.detectChanges();
+    expect(await harness.isSaveGatesVisible()).toBe(true);
+    await harness.clickSaveGates();
+    expect(component.saveGates).toHaveBeenCalled();
+  });
+
+  it("should load gates from query param when provided", () => {
+    const customGates = [
+      {
+        laneIndex: 0,
+        xPct: 0.15,
+        yPct: 0.25,
+        widthPct: 0.35,
+        heightPct: 0.45,
+        sensitivity: 0.7,
+        type: "lap",
+      },
+      {
+        laneIndex: 1,
+        xPct: 0.55,
+        yPct: 0.25,
+        widthPct: 0.35,
+        heightPct: 0.45,
+        sensitivity: 0.7,
+        type: "lap",
+      },
+    ];
+    (component as any).route = {
+      snapshot: {
+        queryParams: {
+          lanes: "2",
+          interface: "0",
+          gates: JSON.stringify(customGates),
+        },
+      },
+    };
+    (component as any).readQueryParams();
+    (component as any).loadGates();
+    expect(component.gates().length).toBe(2);
+    expect(component.gates()[0].xPct).toBe(0.15);
   });
 
   it("should handle auto-snap wizard lifecycle", () => {
     component.numLanes = 2;
     component.startAutoSnap();
     expect(component.isAutoSnapping()).toBe(true);
+    expect(component.autoSnapStage()).toBe("zone");
     expect(component.autoSnapLane()).toBe(0);
+
+    component.startCarCalibration();
+    expect(component.autoSnapStage()).toBe("car");
 
     component.skipAutoSnapLane();
     expect(component.autoSnapLane()).toBe(1);
@@ -336,6 +395,306 @@ describe("CameraInterfaceComponent", () => {
     component.startAutoSnap();
     component.cancelAutoSnap();
     expect(component.isAutoSnapping()).toBe(false);
+  });
+
+  it("should initialize finish line zone and calculate dividers and previews based on numLanes", () => {
+    component.numLanes = 3;
+    component.resetGatesToDefault();
+    component.startAutoSnap();
+
+    expect(component.isAutoSnapping()).toBeTrue();
+    expect(component.autoSnapStage()).toBe("zone");
+
+    const zone = component.finishLineZone();
+    expect(zone).toBeDefined();
+    expect(zone.widthPct).toBeGreaterThan(0.5);
+
+    const dividers = component.zoneLaneDividers();
+    expect(dividers.length).toBe(2);
+
+    const previews = component.zoneLanePreviews();
+    expect(previews.length).toBe(3);
+    expect(previews[0].laneIndex).toBe(0);
+    expect(previews[1].laneIndex).toBe(1);
+    expect(previews[2].laneIndex).toBe(2);
+    expect(previews[0].centerX).toBeLessThan(previews[1].centerX);
+    expect(previews[1].centerX).toBeLessThan(previews[2].centerX);
+  });
+
+  it("should auto-split finish line zone into evenly spaced non-overlapping lane gates (columns)", () => {
+    component.numLanes = 2;
+    component.startAutoSnap();
+    component.splitOrientation.set("columns");
+    component.finishLineZone.set({
+      xPct: 0.2,
+      yPct: 0.3,
+      widthPct: 0.6,
+      heightPct: 0.25,
+    });
+
+    spyOn(component, "saveGates");
+    component.applyAutoSplit();
+
+    expect(component.isAutoSnapping()).toBeFalse();
+    expect(component.saveGates).toHaveBeenCalled();
+
+    const gates = component.gates();
+    expect(gates.length).toBe(2);
+    expect(gates[0].laneIndex).toBe(0);
+    expect(gates[0].xPct).toBeCloseTo(0.215, 3);
+    expect(gates[0].widthPct).toBeCloseTo(0.27, 3);
+    expect(gates[0].yPct).toBe(0.3);
+    expect(gates[0].heightPct).toBe(0.25);
+
+    expect(gates[1].laneIndex).toBe(1);
+    expect(gates[1].xPct).toBeCloseTo(0.515, 3);
+    expect(gates[1].widthPct).toBeCloseTo(0.27, 3);
+  });
+
+  it("should auto-split finish line zone into horizontal lane rows when orientation is rows", () => {
+    component.numLanes = 2;
+    component.startAutoSnap();
+    component.splitOrientation.set("rows");
+    component.finishLineZone.set({
+      xPct: 0.2,
+      yPct: 0.3,
+      widthPct: 0.15,
+      heightPct: 0.6,
+    });
+
+    spyOn(component, "saveGates");
+    component.applyAutoSplit();
+
+    expect(component.isAutoSnapping()).toBeFalse();
+    expect(component.saveGates).toHaveBeenCalled();
+
+    const gates = component.gates();
+    expect(gates.length).toBe(2);
+    expect(gates[0].laneIndex).toBe(0);
+    expect(gates[0].xPct).toBe(0.2);
+    expect(gates[0].widthPct).toBe(0.15);
+    expect(gates[0].yPct).toBeCloseTo(0.315, 3);
+    expect(gates[0].heightPct).toBeCloseTo(0.27, 3);
+
+    expect(gates[1].laneIndex).toBe(1);
+    expect(gates[1].xPct).toBe(0.2);
+    expect(gates[1].widthPct).toBe(0.15);
+    expect(gates[1].yPct).toBeCloseTo(0.615, 3);
+    expect(gates[1].heightPct).toBeCloseTo(0.27, 3);
+  });
+
+  it("should transition to car calibration and pass active lane sub-ROI to detectMotionEnvelope", () => {
+    component.numLanes = 2;
+    component.startAutoSnap();
+    component.finishLineZone.set({
+      xPct: 0.1,
+      yPct: 0.2,
+      widthPct: 0.8,
+      heightPct: 0.4,
+    });
+
+    component.startCarCalibration();
+    expect(component.autoSnapStage()).toBe("car");
+
+    const fakeVideo = document.createElement("video");
+    const fakeCanvas = document.createElement("canvas");
+    mockCameraVisionService.detectMotionEnvelope.and.returnValue({
+      envelope: null,
+      currentBg: new Uint8ClampedArray(10),
+    });
+
+    (component as any).processAutoSnapFrame(fakeVideo, fakeCanvas);
+
+    expect(mockCameraVisionService.detectMotionEnvelope).toHaveBeenCalledWith(
+      fakeVideo,
+      fakeCanvas,
+      null,
+      jasmine.objectContaining({
+        xPct: 0.1,
+        yPct: 0.2,
+        widthPct: 0.4,
+        heightPct: 0.4,
+      }),
+    );
+  });
+
+  it("should handle drawing, dragging and 4-corner resizing of finish line zone", () => {
+    component.startAutoSnap();
+    const fakeSvg = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "svg",
+    );
+    spyOn(fakeSvg, "getBoundingClientRect").and.returnValue({
+      width: 1000,
+      height: 500,
+      top: 0,
+      left: 0,
+      right: 1000,
+      bottom: 500,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    });
+    component.overlaySvgRef = { nativeElement: fakeSvg };
+
+    // 1. Draw new zone by dragging on SVG canvas
+    const drawDown = new MouseEvent("mousedown", {
+      clientX: 100,
+      clientY: 100,
+    });
+    component.onSvgPointerDown(drawDown);
+
+    const drawMove = new MouseEvent("mousemove", {
+      clientX: 300,
+      clientY: 400,
+    });
+    component.onPointerMove(drawMove);
+    expect(component.finishLineZone().xPct).toBeCloseTo(0.1, 2);
+    expect(component.finishLineZone().yPct).toBeCloseTo(0.2, 2);
+    expect(component.finishLineZone().widthPct).toBeCloseTo(0.2, 2);
+    expect(component.finishLineZone().heightPct).toBeCloseTo(0.6, 2);
+    component.onPointerUp();
+
+    // 2. Drag move the zone
+    const downEvent = new MouseEvent("mousedown", {
+      clientX: 200,
+      clientY: 250,
+    });
+    component.onZonePointerDown(downEvent);
+
+    const moveEvent = new MouseEvent("mousemove", {
+      clientX: 250,
+      clientY: 275,
+    });
+    component.onPointerMove(moveEvent);
+
+    expect(component.finishLineZone().xPct).toBeCloseTo(0.15, 2);
+    expect(component.finishLineZone().yPct).toBeCloseTo(0.25, 2);
+    component.onPointerUp();
+
+    // 3. Resize via south-east ('se') corner
+    const resizeDownSe = new MouseEvent("mousedown", {
+      clientX: 350,
+      clientY: 425,
+    });
+    component.onZoneResizePointerDown("se", resizeDownSe);
+
+    const resizeMoveSe = new MouseEvent("mousemove", {
+      clientX: 400,
+      clientY: 475,
+    });
+    component.onPointerMove(resizeMoveSe);
+
+    expect(component.finishLineZone().widthPct).toBeCloseTo(0.25, 2);
+    expect(component.finishLineZone().heightPct).toBeCloseTo(0.7, 2);
+    component.onPointerUp();
+
+    // 4. Resize via north-west ('nw') corner
+    const resizeDownNw = new MouseEvent("mousedown", {
+      clientX: 150,
+      clientY: 125,
+    });
+    component.onZoneResizePointerDown("nw", resizeDownNw);
+
+    const resizeMoveNw = new MouseEvent("mousemove", {
+      clientX: 100,
+      clientY: 100,
+    });
+    component.onPointerMove(resizeMoveNw);
+    expect(component.finishLineZone().xPct).toBeCloseTo(0.1, 2);
+    component.onPointerUp();
+  });
+
+  it("should accumulate motion frames, snap gate, and advance lane after 4 frames", () => {
+    jasmine.clock().install();
+    try {
+      component.numLanes = 2;
+      component.resetGatesToDefault();
+      component.startAutoSnap();
+      component.finishLineZone.set({
+        xPct: 0.1,
+        yPct: 0.2,
+        widthPct: 0.8,
+        heightPct: 0.4,
+      });
+      component.splitOrientation.set("columns");
+
+      expect(component.autoSnapLane()).toBe(0);
+      expect(component.autoSnapFrames()).toBe(0);
+
+      const fakeVideo = document.createElement("video");
+      const fakeCanvas = document.createElement("canvas");
+
+      mockCameraVisionService.detectMotionEnvelope.and.returnValue({
+        envelope: {
+          minX: 0.15,
+          maxX: 0.25,
+          minY: 0.25,
+          maxY: 0.35,
+          density: 0.02,
+        },
+        currentBg: new Uint8ClampedArray(10),
+      });
+
+      // Simulate 3 motion frames
+      for (let i = 0; i < 3; i++) {
+        (component as any).processAutoSnapFrame(fakeVideo, fakeCanvas);
+      }
+      expect(component.autoSnapFrames()).toBe(3);
+      expect(component.autoSnapLane()).toBe(0);
+
+      // 4th frame triggers gate application and starts lane transition
+      (component as any).processAutoSnapFrame(fakeVideo, fakeCanvas);
+      expect(component.autoSnapFrames()).toBe(4);
+
+      const lane0Gate = component.gates()[0];
+      expect(lane0Gate).toBeDefined();
+      expect(lane0Gate.xPct).toBeCloseTo(0.11, 2);
+      expect(lane0Gate.widthPct).toBeCloseTo(0.38, 2);
+      expect(lane0Gate.yPct).toBe(0.2);
+      expect(lane0Gate.heightPct).toBe(0.4);
+
+      // Advance clock past the 800ms transition timeout
+      jasmine.clock().tick(801);
+      expect(component.autoSnapLane()).toBe(1);
+      expect(component.autoSnapFrames()).toBe(0);
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  it("should reset autoSnapFrames if motion stops and idle timer expires", () => {
+    jasmine.clock().install();
+    try {
+      component.numLanes = 2;
+      component.startAutoSnap();
+
+      const fakeVideo = document.createElement("video");
+      const fakeCanvas = document.createElement("canvas");
+
+      mockCameraVisionService.detectMotionEnvelope.and.returnValue({
+        envelope: {
+          minX: 0.15,
+          maxX: 0.25,
+          minY: 0.35,
+          maxY: 0.55,
+          density: 0.02,
+        },
+        currentBg: new Uint8ClampedArray(10),
+      });
+
+      // 2 motion frames
+      for (let i = 0; i < 2; i++) {
+        (component as any).processAutoSnapFrame(fakeVideo, fakeCanvas);
+      }
+      expect(component.autoSnapFrames()).toBe(2);
+
+      // Fast forward past the 2500ms idle timer
+      jasmine.clock().tick(2501);
+      expect(component.autoSnapFrames()).toBe(0);
+    } finally {
+      jasmine.clock().uninstall();
+    }
   });
 
   it("should handle pointer interactions for dragging and resizing gates", () => {
@@ -570,13 +929,18 @@ describe("CameraInterfaceComponent", () => {
       expect(await harness.isSettingsOpen()).toBeFalse();
     });
 
-    it("should toggle auto-snap wizard and handle cancel and skip via harness", async () => {
+    it("should toggle auto-snap wizard and handle cancel, calibrate, and auto-split via harness", async () => {
       fixture.detectChanges();
       expect(await harness.isAutoSnapOpen()).toBeFalse();
 
       await harness.clickAutoSnap();
       fixture.detectChanges();
       expect(await harness.isAutoSnapOpen()).toBeTrue();
+      expect(await harness.isFinishLineZoneVisible()).toBeTrue();
+
+      await harness.clickCalibrateCar();
+      fixture.detectChanges();
+      expect(component.autoSnapStage()).toBe("car");
 
       spyOn(component, "skipAutoSnapLane");
       await harness.clickAutoSnapSkip();
@@ -584,6 +948,28 @@ describe("CameraInterfaceComponent", () => {
 
       await harness.clickAutoSnapCancel();
       fixture.detectChanges();
+      expect(await harness.isAutoSnapOpen()).toBeFalse();
+
+      // Open again to test Auto-Split and orientation toggles
+      await harness.clickAutoSnap();
+      fixture.detectChanges();
+      expect(await harness.isAutoSnapOpen()).toBeTrue();
+
+      expect(await harness.isSplitRowsSelected()).toBeFalse();
+      await harness.clickSplitRows();
+      fixture.detectChanges();
+      expect(component.splitOrientation()).toBe("rows");
+      expect(await harness.isSplitRowsSelected()).toBeTrue();
+
+      await harness.clickSplitCols();
+      fixture.detectChanges();
+      expect(component.splitOrientation()).toBe("columns");
+      expect(await harness.isSplitColsSelected()).toBeTrue();
+
+      spyOn(component, "applyAutoSplit").and.callThrough();
+      await harness.clickAutoSplit();
+      fixture.detectChanges();
+      expect(component.applyAutoSplit).toHaveBeenCalled();
       expect(await harness.isAutoSnapOpen()).toBeFalse();
     });
 
@@ -609,6 +995,41 @@ describe("CameraInterfaceComponent", () => {
       await harness.clickFlip();
       expect(component.facingMode()).toBe("user");
       expect(component.startCameraStream).toHaveBeenCalled();
+    });
+
+    it("should load available video devices and allow device selection", async () => {
+      const mockDevices: MediaDeviceInfo[] = [
+        {
+          deviceId: "cam-1",
+          kind: "videoinput",
+          label: "USB Camera 1",
+          groupId: "group-1",
+          toJSON: () => ({}),
+        },
+        {
+          deviceId: "cam-2",
+          kind: "videoinput",
+          label: "Built-in Camera",
+          groupId: "group-2",
+          toJSON: () => ({}),
+        },
+      ];
+
+      spyOn(navigator.mediaDevices, "enumerateDevices").and.returnValue(
+        Promise.resolve(mockDevices),
+      );
+      spyOn(component, "startCameraStream");
+
+      await component.loadAvailableDevices();
+      expect(component.availableDevices().length).toBe(2);
+
+      component.selectDevice("cam-2");
+      expect(component.selectedDeviceId()).toBe("cam-2");
+      expect(component.startCameraStream).toHaveBeenCalled();
+
+      // toggleCamera when multiple devices exist cycles to the other device
+      component.toggleCamera();
+      expect(component.selectedDeviceId()).toBe("cam-1");
     });
   });
 });

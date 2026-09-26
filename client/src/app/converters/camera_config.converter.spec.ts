@@ -10,6 +10,7 @@ describe("CameraConfigConverter", () => {
       interfaceIndex: 2,
       targetFps: 60,
       autoDetectLanes: true,
+      connectionType: "remote",
       gates: [
         {
           laneIndex: 0,
@@ -28,6 +29,7 @@ describe("CameraConfigConverter", () => {
     expect(model.interfaceIndex).toBe(2);
     expect(model.targetFps).toBe(60);
     expect(model.autoDetectLanes).toBe(true);
+    expect(model.connectionType).toBe("remote");
     expect(model.gates.length).toBe(1);
     expect(model.gates[0].laneIndex).toBe(0);
     expect(model.gates[0].xPct).toBe(0.1);
@@ -45,6 +47,7 @@ describe("CameraConfigConverter", () => {
     expect(model.interfaceIndex).toBe(0);
     expect(model.targetFps).toBe(60);
     expect(model.autoDetectLanes).toBe(false);
+    expect(model.connectionType).toBe("local");
     expect(model.gates).toEqual([]);
   });
 
@@ -54,6 +57,7 @@ describe("CameraConfigConverter", () => {
       interfaceIndex: 1,
       targetFps: 30,
       autoDetectLanes: false,
+      connectionType: "remote",
       gates: [
         {
           laneIndex: 1,
@@ -72,6 +76,7 @@ describe("CameraConfigConverter", () => {
     expect(proto.interfaceIndex).toBe(1);
     expect(proto.targetFps).toBe(30);
     expect(proto.autoDetectLanes).toBe(false);
+    expect(proto.connectionType).toBe("remote");
     expect(proto.gates?.length).toBe(1);
     expect(proto.gates?.[0].laneIndex).toBe(1);
     expect(proto.gates?.[0].xPct).toBe(0.25);

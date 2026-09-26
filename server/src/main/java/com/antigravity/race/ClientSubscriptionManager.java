@@ -3,6 +3,7 @@ package com.antigravity.race;
 import com.antigravity.auth.AuthService;
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.proto.CallbuttonEvent;
+import com.antigravity.proto.CameraGatesUpdateEvent;
 import com.antigravity.proto.CameraHeartbeatEvent;
 import com.antigravity.proto.InterfaceEvent;
 import com.antigravity.proto.InterfaceStatus;
@@ -19,6 +20,7 @@ import com.antigravity.protocols.DefaultProtocol;
 import com.antigravity.protocols.IProtocol;
 import com.antigravity.protocols.ProtocolDelegate;
 import com.antigravity.protocols.camera.CameraWebSocketProtocol;
+import com.antigravity.protocols.camera.LaneDetectionGate;
 import com.antigravity.race.states.RaceOver;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.LogReplayService;
@@ -27,6 +29,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import io.javalin.websocket.WsContext;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +54,8 @@ public class ClientSubscriptionManager {
   private final Set<WsContext> interfaceSubscribers =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final Map<Integer, CameraWebSocketProtocol> cameraProtocols = new ConcurrentHashMap<>();
+  private final Map<Integer, List<com.antigravity.proto.LaneDetectionGate>> // fqn-collision
+      latestCameraGates = new ConcurrentHashMap<>();
   private final ScheduledExecutorService scheduler =
       Executors.newSingleThreadScheduledExecutor(
           r -> {
@@ -681,6 +686,8 @@ public class ClientSubscriptionManager {
       handlePitInEvent(event.getPitIn());
     } else if (event.hasPitOut()) {
       handlePitOutEvent(event.getPitOut());
+    } else if (event.hasCameraGatesUpdate()) {
+      handleCameraGatesUpdate(event.getCameraGatesUpdate());
     }
 
     broadcastInterfaceEvent(event);
@@ -751,6 +758,59 @@ public class ClientSubscriptionManager {
     CameraWebSocketProtocol proto = cameraProtocols.get(pitOut.getInterfaceIndex());
     if (proto != null) {
       proto.onIncomingPitOut(pitOut.getLane());
+    }
+  }
+
+  public List<com.antigravity.proto.LaneDetectionGate> // fqn-collision
+      getLatestCameraGates(int interfaceIndex) {
+    List<com.antigravity.proto.LaneDetectionGate> gates = // fqn-collision
+        latestCameraGates.get(interfaceIndex);
+    if (gates != null) {
+      return Collections.unmodifiableList(gates);
+    }
+    CameraWebSocketProtocol proto = cameraProtocols.get(interfaceIndex);
+    if (proto != null && proto.getConfig() != null && proto.getConfig().gates != null) {
+      List<com.antigravity.proto.LaneDetectionGate> protoGates = // fqn-collision
+          new java.util.ArrayList<>();
+      for (LaneDetectionGate g : proto.getConfig().gates) {
+        protoGates.add(
+            com.antigravity.proto.LaneDetectionGate.newBuilder() // fqn-collision
+                .setLaneIndex(g.laneIndex)
+                .setXPct(g.xPct)
+                .setYPct(g.yPct)
+                .setWidthPct(g.widthPct)
+                .setHeightPct(g.heightPct)
+                .setGateType(g.gateType)
+                .setSensitivity(g.sensitivity)
+                .build());
+      }
+      return protoGates;
+    }
+    return Collections.emptyList();
+  }
+
+  public void handleCameraGatesUpdate(CameraGatesUpdateEvent event) {
+    if (event == null) {
+      return;
+    }
+    int iface = event.getInterfaceIndex();
+    latestCameraGates.put(iface, new java.util.ArrayList<>(event.getGatesList()));
+    CameraWebSocketProtocol proto = cameraProtocols.get(iface);
+    if (proto != null && proto.getConfig() != null) {
+      List<LaneDetectionGate> newGates = new java.util.ArrayList<>();
+      for (com.antigravity.proto.LaneDetectionGate g : // fqn-collision
+          event.getGatesList()) {
+        newGates.add(
+            new LaneDetectionGate(
+                g.getLaneIndex(),
+                g.getXPct(),
+                g.getYPct(),
+                g.getWidthPct(),
+                g.getHeightPct(),
+                g.getGateType(),
+                g.getSensitivity()));
+      }
+      proto.getConfig().gates = newGates;
     }
   }
 }

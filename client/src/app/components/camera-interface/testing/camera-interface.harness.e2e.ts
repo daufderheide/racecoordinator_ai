@@ -30,6 +30,12 @@ export class CameraInterfaceHarnessE2e implements CameraInterfaceHarnessBase {
   private get autoSnapBtn() {
     return this.locator.locator(this.base.selectors.autoSnapBtn);
   }
+  private get saveGatesBtn() {
+    return this.locator.locator(this.base.selectors.saveGatesBtn);
+  }
+  private get savedToast() {
+    return this.locator.locator(this.base.selectors.savedToast);
+  }
   private get flipBtn() {
     return this.locator.locator(this.base.selectors.flipBtn);
   }
@@ -53,6 +59,21 @@ export class CameraInterfaceHarnessE2e implements CameraInterfaceHarnessBase {
   }
   private get autoSnapSkipBtn() {
     return this.locator.locator(this.base.selectors.autoSnapSkipBtn);
+  }
+  private get autoSplitBtn() {
+    return this.locator.locator(this.base.selectors.autoSplitBtn);
+  }
+  private get calibrateCarBtn() {
+    return this.locator.locator(this.base.selectors.calibrateCarBtn);
+  }
+  private get splitRowsBtn() {
+    return this.locator.locator(this.base.selectors.splitRowsBtn);
+  }
+  private get splitColsBtn() {
+    return this.locator.locator(this.base.selectors.splitColsBtn);
+  }
+  private get finishLineZoneGroup() {
+    return this.locator.locator(this.base.selectors.finishLineZoneGroup);
   }
   private get cameraErrorCard() {
     return this.locator.locator(this.base.selectors.cameraErrorCard);
@@ -114,8 +135,52 @@ export class CameraInterfaceHarnessE2e implements CameraInterfaceHarnessBase {
     await this.autoSnapCard.waitFor({ state: "visible" });
   }
 
+  async isSaveGatesVisible(): Promise<boolean> {
+    return await this.saveGatesBtn.isVisible();
+  }
+
+  async clickSaveGates(): Promise<void> {
+    await this.saveGatesBtn.click();
+  }
+
+  async isSavedToastVisible(): Promise<boolean> {
+    return await this.savedToast.isVisible();
+  }
+
   async isAutoSnapOpen(): Promise<boolean> {
     return await this.autoSnapCard.isVisible();
+  }
+
+  async isFinishLineZoneVisible(): Promise<boolean> {
+    return await this.finishLineZoneGroup.isVisible();
+  }
+
+  async clickAutoSplit(): Promise<void> {
+    await this.autoSplitBtn.click();
+  }
+
+  async clickCalibrateCar(): Promise<void> {
+    await this.calibrateCarBtn.click();
+  }
+
+  async clickSplitRows(): Promise<void> {
+    await this.splitRowsBtn.click();
+  }
+
+  async clickSplitCols(): Promise<void> {
+    await this.splitColsBtn.click();
+  }
+
+  async isSplitRowsSelected(): Promise<boolean> {
+    if ((await this.splitRowsBtn.count()) === 0) return false;
+    const classes = (await this.splitRowsBtn.getAttribute("class")) || "";
+    return classes.includes("active");
+  }
+
+  async isSplitColsSelected(): Promise<boolean> {
+    if ((await this.splitColsBtn.count()) === 0) return false;
+    const classes = (await this.splitColsBtn.getAttribute("class")) || "";
+    return classes.includes("active");
   }
 
   async clickAutoSnapCancel(): Promise<void> {

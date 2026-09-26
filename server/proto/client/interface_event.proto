@@ -5,6 +5,8 @@ option java_package = "com.antigravity.proto";
 option java_multiple_files = true;
 option java_outer_classname = "InterfaceEventProto";
 
+import "client/camera_config.proto";
+
 enum InterfaceStatus {
   CONNECTED = 0;
   DISCONNECTED = 1;
@@ -24,7 +26,13 @@ message InterfaceEvent {
     CameraHeartbeatEvent camera_heartbeat = 9;
     TimeSyncPing time_sync_ping = 10;
     TimeSyncPong time_sync_pong = 11;
+    CameraGatesUpdateEvent camera_gates_update = 12;
   }
+}
+
+message CameraGatesUpdateEvent {
+  int32 interface_index = 1;
+  repeated LaneDetectionGate gates = 2;
 }
 
 message PitInEvent {

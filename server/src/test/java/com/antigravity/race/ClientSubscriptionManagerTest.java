@@ -13,8 +13,10 @@ import static org.mockito.Mockito.when;
 
 import com.antigravity.context.DatabaseContext;
 import com.antigravity.models.Track;
+import com.antigravity.proto.CameraGatesUpdateEvent;
 import com.antigravity.proto.CameraHeartbeatEvent;
 import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.LaneDetectionGate;
 import com.antigravity.proto.LapEvent;
 import com.antigravity.proto.PitInEvent;
 import com.antigravity.proto.PitOutEvent;
@@ -406,8 +408,16 @@ public class ClientSubscriptionManagerTest {
     org.junit.Assert.assertTrue(message, condition);
   }
 
+  private static void assertTrue(boolean condition) {
+    org.junit.Assert.assertTrue(condition);
+  }
+
   private static void assertFalse(String message, boolean condition) {
     org.junit.Assert.assertFalse(message, condition);
+  }
+
+  private static void assertFalse(boolean condition) {
+    org.junit.Assert.assertFalse(condition);
   }
 
   @Test
@@ -891,6 +901,57 @@ public class ClientSubscriptionManagerTest {
 
       manager.handleIncomingInterfaceEvent(wsContext, pitOut);
       assertFalse(protocol.isLaneInPits(0));
+    } finally {
+      protocol.close();
+    }
+  }
+
+  @Test
+  public void testHandleCameraGatesUpdateEvent() {
+    WsContext wsContext = mock(WsContext.class);
+    CameraConfig config = new CameraConfig();
+    config.name = "Cam 1";
+    config.interfaceIndex = 0;
+    CameraWebSocketProtocol protocol = new CameraWebSocketProtocol(config, 2);
+    protocol.setInterfaceIndex(0);
+    protocol.open();
+    try {
+      LaneDetectionGate gate0 =
+          LaneDetectionGate.newBuilder()
+              .setLaneIndex(0)
+              .setXPct(0.15f)
+              .setYPct(0.35f)
+              .setWidthPct(0.25f)
+              .setHeightPct(0.20f)
+              .setGateType(0)
+              .setSensitivity(0.6f)
+              .build();
+      LaneDetectionGate gate1 =
+          LaneDetectionGate.newBuilder()
+              .setLaneIndex(1)
+              .setXPct(0.45f)
+              .setYPct(0.35f)
+              .setWidthPct(0.25f)
+              .setHeightPct(0.20f)
+              .setGateType(0)
+              .setSensitivity(0.6f)
+              .build();
+
+      CameraGatesUpdateEvent gatesUpdate =
+          CameraGatesUpdateEvent.newBuilder()
+              .setInterfaceIndex(0)
+              .addGates(gate0)
+              .addGates(gate1)
+              .build();
+
+      InterfaceEvent event = InterfaceEvent.newBuilder().setCameraGatesUpdate(gatesUpdate).build();
+
+      manager.handleIncomingInterfaceEvent(wsContext, event);
+
+      assertEquals(2, manager.getLatestCameraGates(0).size());
+      assertEquals(0.15f, manager.getLatestCameraGates(0).get(0).getXPct(), 0.001f);
+      assertEquals(2, protocol.getConfig().gates.size());
+      assertEquals(0.45f, protocol.getConfig().gates.get(1).xPct, 0.001f);
     } finally {
       protocol.close();
     }

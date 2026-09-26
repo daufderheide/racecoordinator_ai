@@ -9,14 +9,22 @@ export abstract class CameraInterfaceHarnessBase {
     batteryMetric: ".hud-center .metric-pill:nth-child(2)",
     doneBtn: "#cameraModalDoneBtn",
     autoSnapBtn: "#cameraAutoSnapBtn",
+    saveGatesBtn: "#cameraSaveGatesBtn",
+    savedToast: "#cameraSavedToast",
     flipBtn: "#cameraFlipBtn",
     settingsBtn: "#cameraSettingsBtn",
     settingsCard: ".settings-card",
     settingsCloseBtn: ".settings-card .close-btn",
     settingsDoneBtn: ".settings-card .card-footer button",
     autoSnapCard: ".auto-snap-card",
-    autoSnapCancelBtn: ".auto-snap-card .btn-secondary",
-    autoSnapSkipBtn: ".auto-snap-card .btn-primary",
+    autoSnapCancelBtn: "#btnCancelAutoSnap, #btnCancelAutoSnapCar",
+    autoSnapSkipBtn: "#btnSkipLane",
+    autoSplitBtn: "#btnAutoSplit",
+    calibrateCarBtn: "#btnCalibrateCar",
+    splitRowsBtn: "#btnSplitRows",
+    splitColsBtn: "#btnSplitCols",
+    finishLineZoneGroup: ".finish-line-zone-group",
+    finishLineZoneRect: ".finish-line-zone-rect",
     autoSnapTitle: ".auto-snap-card h3",
     cameraErrorCard: ".camera-error-card",
     cameraErrorRetryBtn: ".camera-error-card .btn-primary",
@@ -36,7 +44,17 @@ export abstract class CameraInterfaceHarnessBase {
   abstract getBatteryText(): Promise<string>;
   abstract isAutoSnapVisible(): Promise<boolean>;
   abstract clickAutoSnap(): Promise<void>;
+  abstract isSaveGatesVisible(): Promise<boolean>;
+  abstract clickSaveGates(): Promise<void>;
+  abstract isSavedToastVisible(): Promise<boolean>;
   abstract isAutoSnapOpen(): Promise<boolean>;
+  abstract isFinishLineZoneVisible(): Promise<boolean>;
+  abstract clickAutoSplit(): Promise<void>;
+  abstract clickCalibrateCar(): Promise<void>;
+  abstract clickSplitRows(): Promise<void>;
+  abstract clickSplitCols(): Promise<void>;
+  abstract isSplitRowsSelected(): Promise<boolean>;
+  abstract isSplitColsSelected(): Promise<boolean>;
   abstract clickAutoSnapCancel(): Promise<void>;
   abstract clickAutoSnapSkip(): Promise<void>;
   abstract isFlipVisible(): Promise<boolean>;

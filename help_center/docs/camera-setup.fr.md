@@ -95,11 +95,50 @@ Apple WebKit imposant le contexte sécurisé sur tous les navigateurs iOS sans p
 6. Accédez à l'URL HTTPS depuis Safari ou Chrome sur iOS.
 
 ### Méthode 2 : Tunnel HTTPS sécurisé (Test rapide)
-1. Lancez **ngrok** sur votre ordinateur :
+Pour tester un iPhone sans certificats SSL locaux, un tunnel HTTPS fournit une adresse publique fiable :
+
+#### Option A : LocalTunnel (Sans inscription)
+Lancez directement sans créer de compte :
+```bash
+npx -y localtunnel --port 4200
+```
+Ouvrez le lien `https://...loca.lt` généré sur votre iPhone.
+
+#### Option B : Tunnel SSH intégré (Sans installation ni inscription)
+Utilisez la commande SSH native :
+```bash
+ssh -R 80:localhost:4200 localhost.run
+```
+Copiez l'adresse `https://...` affichée dans votre terminal sur votre iPhone.
+
+#### Option C : ngrok (Compte gratuit requis)
+ngrok nécessite un compte et un jeton d'authentification :
+1. Créez un compte gratuit sur [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup).
+2. Configurez votre jeton :
    ```bash
-   ngrok http 4200
+   npx ngrok config add-authtoken <VOTRE_JETON>
    ```
-2. Ouvrez l'URL `https://...` fournie sur votre iPhone. Comme le certificat SSL est public et valide, iOS autorise immédiatement l'accès à la caméra.
+3. Lancez le tunnel :
+   ```bash
+   npx ngrok http 4200
+   ```
+4. Ouvrez l'adresse `https://...ngrok-free.app` sur votre iPhone.
+
+### Méthode 3 : Continuité sur l'appareil photo Apple sans fil (macOS + iPhone)
+Si votre ordinateur de course principal est un Mac et que vous souhaitez utiliser un iPhone comme caméra de piste, vous pouvez tirer parti de la fonctionnalité native **Continuité sur l'appareil photo (Continuity Camera)** d'Apple. Cela fonctionne **entièrement sans fil**, sans câble branché :
+
+1. **Vérifier l'identifiant Apple et la connectivité sans fil** :
+   - Assurez-vous que le Mac et l'iPhone sont connectés avec le même identifiant Apple (authentification à deux facteurs active).
+   - Activez le **Wi-Fi** et le **Bluetooth** sur les deux appareils.
+   - Sur l'iPhone, vérifiez dans **Réglages** > **Général** > **AirPlay et Continuité** que l'option **Appareil photo Continuité** est activée.
+2. **Installer l'iPhone sur la piste** :
+   - Positionnez l'iPhone horizontalement au-dessus de la ligne d'arrivée, caméra arrière orientée vers le bas.
+   - Verrouillez l'écran de l'iPhone. Aucun câble n'est requis (un câble est utile uniquement pour maintenir la charge pendant les longues sessions).
+3. **Lancer l'interface localement sur le Mac** :
+   - Dans l'Éditeur de Piste sur le Mac, cliquez sur **Tester sur cet appareil** (ou ouvrez `http://localhost:4200/camera_interface`).
+   - `localhost` étant un contexte sécurisé, le navigateur du Mac autorise l'accès à la caméra sans certificat SSL ni drapeau.
+   - Sélectionnez la **Caméra iPhone** dans les réglages de caméra du navigateur ou de macOS. macOS établit la liaison vidéo sans fil automatiquement.
+4. **Portée sans fil** : La Continuité sur l'appareil photo fonctionne par liaison directe pair-à-pair (portée d'environ 10 mètres dans la même pièce). Si le Mac se trouve dans une autre pièce éloignée, utilisez la **Méthode 1 (HTTPS local)**, la **Méthode 2 (Tunnel HTTPS)** ou un appareil Android connecté au Wi-Fi standard.
 
 ---
 

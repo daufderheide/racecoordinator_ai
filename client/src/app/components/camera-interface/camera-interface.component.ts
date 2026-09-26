@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import {
   ChangeDetectorRef,
   Component,
+  computed,
   ElementRef,
   HostListener,
   input,
@@ -14,28 +15,48 @@ import {
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
+import {
+  CustomOptionComponent,
+  CustomSelectComponent,
+} from "@app/components/shared/custom-select/custom-select.component";
 import { LaneDetectionGate } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
-import { CameraVisionService } from "@app/services/camera-vision.service";
+import {
+  CameraVisionService,
+  RegionOfInterest,
+} from "@app/services/camera-vision.service";
 import { HelpLinkService } from "@app/services/help-link.service";
 
-interface DragState {
-  type: "move" | "resize";
-  gateIndex: number;
-  startX: number;
-  startY: number;
-  origX: number;
-  origY: number;
-  origW: number;
-  origH: number;
-}
+import {
+  computeActiveLaneSubRoi,
+  computeAutoSnapGate,
+  computeAutoSplitGates,
+  computeDefaultGates,
+  computeGateDrag,
+  computeInitialFinishLineZone,
+  computeZoneDraw,
+  computeZoneLaneDividers,
+  computeZoneLanePreviews,
+  computeZoneMove,
+  computeZoneResize,
+  DragState,
+  extractPointerCoords,
+  parseGatesParam,
+  resolveDefaultServerUrl,
+} from "./camera-interface.utils";
 
 @Component({
   selector: "app-camera-interface",
   templateUrl: "./camera-interface.component.html",
   styleUrls: ["./camera-interface.component.css"],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslatePipe,
+    CustomSelectComponent,
+    CustomOptionComponent,
+  ],
 })
 export class CameraInterfaceComponent implements OnInit, OnDestroy {
   @ViewChild("videoElement") videoElementRef!: ElementRef<HTMLVideoElement>;
@@ -66,12 +87,65 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   selectedGateIndex = signal<number | null>(null);
   lastTriggeredLane = signal<number | null>(null);
   cameraErrorMessage = signal<string | null>(null);
+  availableDevices = signal<MediaDeviceInfo[]>([]);
+  selectedDeviceId = signal<string | null>(null);
 
   // Auto-Snap wizard state
   isAutoSnapping = signal<boolean>(false);
+  autoSnapStage = signal<"zone" | "car">("zone");
   autoSnapLane = signal<number>(0);
   autoSnapFrames = signal<number>(0);
+  finishLineZone = signal<RegionOfInterest>({
+    xPct: 0.1,
+    yPct: 0.35,
+    widthPct: 0.8,
+    heightPct: 0.3,
+  });
+
+  splitOrientation = signal<"auto" | "rows" | "columns">("auto");
+
+  isRowSplit = computed<boolean>(() => {
+    const orientation = this.splitOrientation();
+    if (orientation === "rows") return true;
+    if (orientation === "columns") return false;
+    const zone = this.finishLineZone();
+    return zone.heightPct > zone.widthPct;
+  });
+
+  zoneLaneDividers = computed<
+    { x1: number; y1: number; x2: number; y2: number }[]
+  >(() => {
+    return computeZoneLaneDividers(
+      this.finishLineZone(),
+      this.numLanes,
+      this.isRowSplit(),
+    );
+  });
+
+  zoneLanePreviews = computed<
+    { laneIndex: number; centerX: number; centerY: number }[]
+  >(() => {
+    return computeZoneLanePreviews(
+      this.finishLineZone(),
+      this.numLanes,
+      this.isRowSplit(),
+    );
+  });
+
   private autoSnapBg: Uint8ClampedArray | null = null;
+  private autoSnapAccumulatedEnvelope: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  } | null = null;
+  private isAutoSnapTransitioning = false;
+  private autoSnapTransitionTimeout: ReturnType<typeof setTimeout> | null =
+    null;
+  private autoSnapIdleTimer: ReturnType<typeof setTimeout> | null = null;
+  public showSavedToast = signal<boolean>(false);
+  private toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private queryGates: LaneDetectionGate[] | null = null;
 
   // Settings drawer state
   showSettings = signal<boolean>(false);
@@ -118,6 +192,10 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     if (this.flashTimeoutId) {
       clearTimeout(this.flashTimeoutId);
     }
+    if (this.toastTimeoutId) {
+      clearTimeout(this.toastTimeoutId);
+    }
+    this.clearAutoSnapTimers();
   }
 
   private readQueryParams(): void {
@@ -134,7 +212,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       if (modalUrl) {
         this.serverUrl = modalUrl;
       } else {
-        this.serverUrl = this.resolveDefaultServerUrl();
+        this.serverUrl = resolveDefaultServerUrl(window.location);
       }
       return;
     }
@@ -144,22 +222,13 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       params["interface"] !== undefined ? Number(params["interface"]) : 0;
     this.numLanes =
       params["lanes"] !== undefined ? Math.max(1, Number(params["lanes"])) : 4;
+    this.queryGates = parseGatesParam(params["gates"], this.numLanes);
 
     if (params["server"]) {
       this.serverUrl = params["server"];
     } else {
-      this.serverUrl = this.resolveDefaultServerUrl();
+      this.serverUrl = resolveDefaultServerUrl(window.location);
     }
-  }
-
-  private resolveDefaultServerUrl(): string {
-    const loc = window.location;
-    const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
-    const port =
-      loc.port === "4200"
-        ? "7070"
-        : loc.port || (loc.protocol === "https:" ? "443" : "7070");
-    return `${wsProtocol}//${loc.hostname}:${port}/api/interface-data`;
   }
 
   private initSettings(): void {
@@ -216,42 +285,22 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.queryGates && this.queryGates.length === this.numLanes) {
+      this.gates.set(JSON.parse(JSON.stringify(this.queryGates)));
+      return;
+    }
+
     const storageKey = `rc_cam_gates_${this.interfaceIndex}_${this.numLanes}`;
     let saved = localStorage.getItem(storageKey);
     if (!saved) {
-      // Check legacy un-suffixed key for backwards compatibility
       const legacyKey = `rc_cam_gates_${this.interfaceIndex}`;
-      const legacySaved = localStorage.getItem(legacyKey);
-      if (legacySaved) {
-        try {
-          const parsed = JSON.parse(legacySaved);
-          if (
-            Array.isArray(parsed) &&
-            parsed.length === this.numLanes &&
-            parsed.every((g) => g.laneIndex >= 0 && g.laneIndex < this.numLanes)
-          ) {
-            saved = legacySaved;
-          }
-        } catch {
-          // Ignore invalid JSON
-        }
-      }
+      saved = localStorage.getItem(legacyKey);
     }
 
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (
-          Array.isArray(parsed) &&
-          parsed.length === this.numLanes &&
-          parsed.every((g) => g.laneIndex >= 0 && g.laneIndex < this.numLanes)
-        ) {
-          this.gates.set(parsed);
-          return;
-        }
-      } catch {
-        // Fall back to defaults
-      }
+    const parsed = parseGatesParam(saved, this.numLanes);
+    if (parsed) {
+      this.gates.set(parsed);
+      return;
     }
     this.resetGatesToDefault();
   }
@@ -260,27 +309,42 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     const storageKey = `rc_cam_gates_${this.interfaceIndex}_${this.numLanes}`;
     localStorage.setItem(storageKey, JSON.stringify(this.gates()));
     this.gatesChange.emit(this.gates());
+    this.cameraVisionService.sendGatesUpdate(this.interfaceIndex, this.gates());
+    this.syncGatesToRestApi();
+    this.showSaveToast();
+  }
+
+  private syncGatesToRestApi(): void {
+    if (typeof fetch === "function") {
+      fetch("/api/camera/gates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          interfaceIndex: this.interfaceIndex,
+          gates: this.gates(),
+        }),
+      }).catch(() => {
+        // Ignore network failure; WebSocket is primary
+      });
+    }
+  }
+
+  public showSaveToast(): void {
+    this.showSavedToast.set(true);
+    if (this.toastTimeoutId) {
+      clearTimeout(this.toastTimeoutId);
+    }
+    this.toastTimeoutId = setTimeout(() => {
+      this.showSavedToast.set(false);
+      this.cdr.markForCheck();
+    }, 2500);
   }
 
   public resetGatesToDefault(): void {
-    const newGates: LaneDetectionGate[] = [];
-    const laneCount = this.numLanes;
-    const gateWidth = 0.8 / laneCount;
-    const gateHeight = 0.25;
-    const y = 0.38;
-
-    for (let i = 0; i < laneCount; i++) {
-      const x = 0.1 + i * gateWidth;
-      newGates.push({
-        laneIndex: i,
-        gateType: 0,
-        xPct: x,
-        yPct: y,
-        widthPct: gateWidth * 0.9,
-        heightPct: gateHeight,
-        sensitivity: this.globalSensitivity(),
-      });
-    }
+    const newGates = computeDefaultGates(
+      this.numLanes,
+      this.globalSensitivity(),
+    );
     this.gates.set(newGates);
     this.saveGates();
   }
@@ -302,12 +366,16 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     }
 
     try {
+      const videoConstraints: MediaTrackConstraints = this.selectedDeviceId()
+        ? { deviceId: { exact: this.selectedDeviceId()! } }
+        : {
+            facingMode: { ideal: this.facingMode() },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          };
+
       const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: this.facingMode() },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+        video: videoConstraints,
         audio: false,
       };
 
@@ -328,6 +396,7 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       }
 
       this.cameraErrorMessage.set(null);
+      this.loadAvailableDevices();
       if (this.videoElementRef?.nativeElement) {
         this.videoElementRef.nativeElement.srcObject = this.stream;
         this.videoElementRef.nativeElement.onloadedmetadata = () => {
@@ -347,6 +416,32 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     }
   }
 
+  public async loadAvailableDevices(): Promise<void> {
+    if (
+      typeof navigator === "undefined" ||
+      !navigator?.mediaDevices?.enumerateDevices
+    ) {
+      return;
+    }
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter((d) => d.kind === "videoinput");
+      this.availableDevices.set(videoInputs);
+    } catch {
+      // Ignore
+    }
+  }
+
+  public selectDevice(deviceId: string): void {
+    if (this.selectedDeviceId() === deviceId) return;
+    this.selectedDeviceId.set(deviceId);
+    if (this.stream) {
+      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+    }
+    this.startCameraStream();
+  }
+
   public stopCameraStream(): void {
     if (this.stream) {
       this.stream.getTracks().forEach((t) => t.stop());
@@ -355,6 +450,14 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   public toggleCamera(): void {
+    const devices = this.availableDevices();
+    if (devices.length > 1) {
+      const currentId = this.selectedDeviceId();
+      const currentIndex = devices.findIndex((d) => d.deviceId === currentId);
+      const nextIndex = (currentIndex + 1) % devices.length;
+      this.selectDevice(devices[nextIndex].deviceId);
+      return;
+    }
     const nextMode =
       this.facingMode() === "environment" ? "user" : "environment";
     this.facingMode.set(nextMode);
@@ -380,7 +483,9 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       }
 
       if (this.isAutoSnapping()) {
-        this.processAutoSnapFrame(video, canvas);
+        if (this.autoSnapStage() === "car") {
+          this.processAutoSnapFrame(video, canvas);
+        }
         return;
       }
 
@@ -424,18 +529,72 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
 
   // --- Auto-Snap Calibration Wizard ---
   public startAutoSnap(): void {
+    this.clearAutoSnapTimers();
+    this.isAutoSnapTransitioning = false;
+    this.autoSnapStage.set("zone");
     this.isAutoSnapping.set(true);
     this.autoSnapLane.set(0);
     this.autoSnapFrames.set(0);
     this.autoSnapBg = null;
+    this.autoSnapAccumulatedEnvelope = null;
+    this.initFinishLineZone();
+  }
+
+  private initFinishLineZone(): void {
+    this.finishLineZone.set(computeInitialFinishLineZone(this.gates()));
+  }
+
+  public setSplitOrientation(orientation: "rows" | "columns"): void {
+    this.splitOrientation.set(orientation);
+  }
+
+  public getActiveLaneSubRoi(): RegionOfInterest {
+    return computeActiveLaneSubRoi(
+      this.finishLineZone(),
+      this.numLanes,
+      this.autoSnapLane(),
+      this.isRowSplit(),
+    );
+  }
+
+  public applyAutoSplit(): void {
+    const newGates = computeAutoSplitGates(
+      this.finishLineZone(),
+      this.numLanes,
+      this.isRowSplit(),
+      this.globalSensitivity(),
+    );
+    this.gates.set(newGates);
+    this.saveGates();
+    this.finishAutoSnap();
+  }
+
+  public startCarCalibration(): void {
+    this.clearAutoSnapTimers();
+    this.isAutoSnapTransitioning = false;
+    this.autoSnapStage.set("car");
+    this.autoSnapLane.set(0);
+    this.autoSnapFrames.set(0);
+    this.autoSnapBg = null;
+    this.autoSnapAccumulatedEnvelope = null;
   }
 
   public cancelAutoSnap(): void {
+    this.clearAutoSnapTimers();
+    this.isAutoSnapTransitioning = false;
     this.isAutoSnapping.set(false);
+    this.autoSnapStage.set("zone");
     this.autoSnapBg = null;
+    this.autoSnapAccumulatedEnvelope = null;
   }
 
   public skipAutoSnapLane(): void {
+    this.clearAutoSnapTimers();
+    this.isAutoSnapTransitioning = false;
+    this.advanceAutoSnapLane();
+  }
+
+  private advanceAutoSnapLane(): void {
     const nextLane = this.autoSnapLane() + 1;
     if (nextLane >= this.numLanes) {
       this.finishAutoSnap();
@@ -443,6 +602,19 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
       this.autoSnapLane.set(nextLane);
       this.autoSnapFrames.set(0);
       this.autoSnapBg = null;
+      this.autoSnapAccumulatedEnvelope = null;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private clearAutoSnapTimers(): void {
+    if (this.autoSnapTransitionTimeout) {
+      clearTimeout(this.autoSnapTransitionTimeout);
+      this.autoSnapTransitionTimeout = null;
+    }
+    if (this.autoSnapIdleTimer) {
+      clearTimeout(this.autoSnapIdleTimer);
+      this.autoSnapIdleTimer = null;
     }
   }
 
@@ -450,37 +622,61 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     video: HTMLVideoElement,
     canvas: HTMLCanvasElement,
   ): void {
+    if (this.isAutoSnapTransitioning) {
+      return;
+    }
+
+    const laneSubRoi = this.getActiveLaneSubRoi();
     const { envelope, currentBg } =
       this.cameraVisionService.detectMotionEnvelope(
         video,
         canvas,
         this.autoSnapBg,
+        laneSubRoi,
       );
     this.autoSnapBg = currentBg;
 
-    if (envelope && envelope.density > 20) {
+    if (envelope) {
+      if (this.autoSnapIdleTimer) {
+        clearTimeout(this.autoSnapIdleTimer);
+      }
+      this.autoSnapIdleTimer = setTimeout(() => {
+        if (this.isAutoSnapping() && !this.isAutoSnapTransitioning) {
+          this.autoSnapFrames.set(0);
+          this.autoSnapAccumulatedEnvelope = null;
+          this.cdr.markForCheck();
+        }
+      }, 2500);
+
       const currentCount = this.autoSnapFrames() + 1;
       this.autoSnapFrames.set(currentCount);
 
-      if (currentCount >= 15) {
-        this.applyAutoSnapGate(this.autoSnapLane(), envelope);
-        this.skipAutoSnapLane();
+      if (currentCount >= 4) {
+        if (this.autoSnapIdleTimer) {
+          clearTimeout(this.autoSnapIdleTimer);
+          this.autoSnapIdleTimer = null;
+        }
+        this.applyAutoSnapGate(this.autoSnapLane());
+        this.isAutoSnapTransitioning = true;
+        this.autoSnapTransitionTimeout = setTimeout(() => {
+          this.isAutoSnapTransitioning = false;
+          this.autoSnapTransitionTimeout = null;
+          this.advanceAutoSnapLane();
+        }, 800);
       }
     }
   }
 
-  private applyAutoSnapGate(lane: number, envelope: any): void {
+  private applyAutoSnapGate(lane: number): void {
+    const updatedGate = computeAutoSnapGate(
+      this.getActiveLaneSubRoi(),
+      this.isRowSplit(),
+      lane,
+      this.globalSensitivity(),
+    );
+
     const currentGates = [...this.gates()];
     const gateIndex = currentGates.findIndex((g) => g.laneIndex === lane);
-    const updatedGate: LaneDetectionGate = {
-      laneIndex: lane,
-      gateType: 0,
-      xPct: Math.max(0, envelope.minX - 0.03),
-      yPct: Math.max(0, envelope.minY - 0.05),
-      widthPct: Math.min(1.0, envelope.maxX - envelope.minX + 0.06),
-      heightPct: Math.min(1.0, envelope.maxY - envelope.minY + 0.1),
-      sensitivity: this.globalSensitivity(),
-    };
 
     if (gateIndex >= 0) {
       currentGates[gateIndex] = updatedGate;
@@ -492,8 +688,12 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
   }
 
   public finishAutoSnap(): void {
+    this.clearAutoSnapTimers();
+    this.isAutoSnapTransitioning = false;
     this.isAutoSnapping.set(false);
+    this.autoSnapStage.set("zone");
     this.autoSnapBg = null;
+    this.autoSnapAccumulatedEnvelope = null;
   }
 
   // --- Touch & Mouse Gate Editing ---
@@ -506,12 +706,10 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     index: number,
     event: MouseEvent | TouchEvent,
   ): void {
+    if (event.cancelable) event.preventDefault();
     event.stopPropagation();
     this.selectedGateIndex.set(index);
-    const clientX =
-      "touches" in event ? event.touches[0].clientX : event.clientX;
-    const clientY =
-      "touches" in event ? event.touches[0].clientY : event.clientY;
+    const { clientX, clientY } = extractPointerCoords(event);
     const gate = this.gates()[index];
 
     this.dragState = {
@@ -530,12 +728,10 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     index: number,
     event: MouseEvent | TouchEvent,
   ): void {
+    if (event.cancelable) event.preventDefault();
     event.stopPropagation();
     this.selectedGateIndex.set(index);
-    const clientX =
-      "touches" in event ? event.touches[0].clientX : event.clientX;
-    const clientY =
-      "touches" in event ? event.touches[0].clientY : event.clientY;
+    const { clientX, clientY } = extractPointerCoords(event);
     const gate = this.gates()[index];
 
     this.dragState = {
@@ -550,53 +746,186 @@ export class CameraInterfaceComponent implements OnInit, OnDestroy {
     };
   }
 
+  public onSvgPointerDown(event: MouseEvent | TouchEvent): void {
+    if (
+      !this.isAutoSnapping() ||
+      this.autoSnapStage() !== "zone" ||
+      !this.overlaySvgRef
+    ) {
+      return;
+    }
+    if (event.cancelable) event.preventDefault();
+    const rect = this.overlaySvgRef.nativeElement.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const { clientX, clientY } = extractPointerCoords(event);
+
+    const clickXPct = Math.max(
+      0,
+      Math.min(1.0, (clientX - rect.left) / rect.width),
+    );
+    const clickYPct = Math.max(
+      0,
+      Math.min(1.0, (clientY - rect.top) / rect.height),
+    );
+
+    this.dragState = {
+      type: "zone-draw",
+      startX: clientX,
+      startY: clientY,
+      origX: clickXPct,
+      origY: clickYPct,
+      origW: 0,
+      origH: 0,
+    };
+  }
+
+  public onZonePointerDown(event: MouseEvent | TouchEvent): void {
+    if (event.cancelable) event.preventDefault();
+    event.stopPropagation();
+    const { clientX, clientY } = extractPointerCoords(event);
+    const zone = this.finishLineZone();
+
+    this.dragState = {
+      type: "zone-move",
+      startX: clientX,
+      startY: clientY,
+      origX: zone.xPct,
+      origY: zone.yPct,
+      origW: zone.widthPct,
+      origH: zone.heightPct,
+    };
+  }
+
+  public onZoneResizePointerDown(
+    corner: "nw" | "ne" | "sw" | "se",
+    event: MouseEvent | TouchEvent,
+  ): void {
+    if (event.cancelable) event.preventDefault();
+    event.stopPropagation();
+    const { clientX, clientY } = extractPointerCoords(event);
+    const zone = this.finishLineZone();
+
+    this.dragState = {
+      type: "zone-resize",
+      corner,
+      startX: clientX,
+      startY: clientY,
+      origX: zone.xPct,
+      origY: zone.yPct,
+      origW: zone.widthPct,
+      origH: zone.heightPct,
+    };
+  }
+
   @HostListener("window:mousemove", ["$event"])
   @HostListener("window:touchmove", ["$event"])
   public onPointerMove(event: MouseEvent | TouchEvent): void {
     if (!this.dragState || !this.overlaySvgRef) return;
+    if (event.cancelable) event.preventDefault();
     const rect = this.overlaySvgRef.nativeElement.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
 
-    const clientX =
-      "touches" in event ? event.touches[0].clientX : event.clientX;
-    const clientY =
-      "touches" in event ? event.touches[0].clientY : event.clientY;
+    const { clientX, clientY } = extractPointerCoords(event);
     const deltaXPct = (clientX - this.dragState.startX) / rect.width;
     const deltaYPct = (clientY - this.dragState.startY) / rect.height;
 
+    if (this.dragState.type === "zone-draw") {
+      this.handleZoneDraw(clientX, clientY, rect);
+      return;
+    }
+
+    if (this.dragState.type === "zone-move") {
+      this.handleZoneMove(deltaXPct, deltaYPct);
+      return;
+    }
+
+    if (this.dragState.type === "zone-resize") {
+      this.handleZoneResize(deltaXPct, deltaYPct);
+      return;
+    }
+
+    if (this.dragState.gateIndex === undefined) return;
     const currentGates = [...this.gates()];
     const gate = { ...currentGates[this.dragState.gateIndex] };
-
-    if (this.dragState.type === "move") {
-      gate.xPct = Math.max(
-        0,
-        Math.min(1.0 - gate.widthPct, this.dragState.origX + deltaXPct),
-      );
-      gate.yPct = Math.max(
-        0,
-        Math.min(1.0 - gate.heightPct, this.dragState.origY + deltaYPct),
-      );
-    } else {
-      gate.widthPct = Math.max(
-        0.05,
-        Math.min(1.0 - gate.xPct, this.dragState.origW + deltaXPct),
-      );
-      gate.heightPct = Math.max(
-        0.05,
-        Math.min(1.0 - gate.yPct, this.dragState.origH + deltaYPct),
-      );
-    }
+    const updated = computeGateDrag(
+      this.dragState.type as "move" | "resize",
+      this.dragState.origX,
+      this.dragState.origY,
+      this.dragState.origW,
+      this.dragState.origH,
+      deltaXPct,
+      deltaYPct,
+    );
+    gate.xPct = updated.xPct;
+    gate.yPct = updated.yPct;
+    gate.widthPct = updated.widthPct;
+    gate.heightPct = updated.heightPct;
 
     currentGates[this.dragState.gateIndex] = gate;
     this.gates.set(currentGates);
+  }
+
+  private handleZoneDraw(
+    clientX: number,
+    clientY: number,
+    rect: DOMRect,
+  ): void {
+    if (!this.dragState) return;
+    this.finishLineZone.set(
+      computeZoneDraw(
+        this.dragState.startX,
+        this.dragState.startY,
+        clientX,
+        clientY,
+        rect,
+      ),
+    );
+  }
+
+  private handleZoneMove(deltaXPct: number, deltaYPct: number): void {
+    if (!this.dragState) return;
+    const { xPct, yPct } = computeZoneMove(
+      this.dragState.origX,
+      this.dragState.origY,
+      this.dragState.origW,
+      this.dragState.origH,
+      deltaXPct,
+      deltaYPct,
+    );
+    this.finishLineZone.set({
+      ...this.finishLineZone(),
+      xPct,
+      yPct,
+    });
+  }
+
+  private handleZoneResize(deltaXPct: number, deltaYPct: number): void {
+    if (!this.dragState) return;
+    const corner = this.dragState.corner || "se";
+    this.finishLineZone.set(
+      computeZoneResize(
+        corner,
+        this.dragState.origX,
+        this.dragState.origY,
+        this.dragState.origW,
+        this.dragState.origH,
+        deltaXPct,
+        deltaYPct,
+      ),
+    );
   }
 
   @HostListener("window:mouseup")
   @HostListener("window:touchend")
   public onPointerUp(): void {
     if (this.dragState) {
+      const isGateDrag =
+        this.dragState.type === "move" || this.dragState.type === "resize";
       this.dragState = null;
-      this.saveGates();
+      if (isGateDrag) {
+        this.saveGates();
+      }
     }
   }
 

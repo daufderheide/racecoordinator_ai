@@ -17,6 +17,7 @@ export class CameraConfigConverter {
         gateType: g.gateType ?? 0,
         sensitivity: g.sensitivity ?? 0.5,
       })),
+      connectionType: (proto.connectionType as "local" | "remote") || "local",
     };
   }
 
@@ -35,6 +36,7 @@ export class CameraConfigConverter {
         gateType: g.gateType,
         sensitivity: g.sensitivity,
       })),
+      connectionType: config.connectionType || "local",
     };
   }
 }

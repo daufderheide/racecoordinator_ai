@@ -33,6 +33,7 @@ public class CameraConfigConverterTest {
     config.interfaceIndex = 2;
     config.targetFps = 60;
     config.autoDetectLanes = true;
+    config.connectionType = "remote";
 
     LaneDetectionGate gate1 = new LaneDetectionGate();
     gate1.laneIndex = 0;
@@ -59,6 +60,7 @@ public class CameraConfigConverterTest {
     assertEquals(2, proto.getInterfaceIndex());
     assertEquals(60, proto.getTargetFps());
     assertTrue(proto.getAutoDetectLanes());
+    assertEquals("remote", proto.getConnectionType());
     assertEquals(2, proto.getGatesCount());
     assertEquals(0, proto.getGates(0).getLaneIndex());
     assertEquals(0.15f, proto.getGates(0).getXPct(), 0.001f);
@@ -71,11 +73,25 @@ public class CameraConfigConverterTest {
     assertEquals(2, roundTrip.interfaceIndex);
     assertEquals(60, roundTrip.targetFps);
     assertTrue(roundTrip.autoDetectLanes);
+    assertEquals("remote", roundTrip.connectionType);
     assertEquals(2, roundTrip.gates.size());
     assertEquals(0, roundTrip.gates.get(0).laneIndex);
     assertEquals(0.15f, roundTrip.gates.get(0).xPct, 0.001f);
     assertEquals(LaneDetectionGate.TYPE_LAP, roundTrip.gates.get(0).gateType);
     assertEquals(LaneDetectionGate.TYPE_PIT_IN, roundTrip.gates.get(1).gateType);
     assertEquals(0.70f, roundTrip.gates.get(1).sensitivity, 0.001f);
+  }
+
+  @Test
+  public void testDefaultConnectionTypeWhenEmptyOrNull() {
+    CameraConfig config = new CameraConfig();
+    config.connectionType = null;
+    CameraInterfaceConfig proto = CameraConfigConverter.toProto(config);
+    assertEquals("local", proto.getConnectionType());
+
+    CameraConfig fromEmpty =
+        CameraConfigConverter.fromProto(
+            CameraInterfaceConfig.newBuilder().setConnectionType("").build());
+    assertEquals("local", fromEmpty.connectionType);
   }
 }

@@ -95,11 +95,50 @@ Dado que Apple WebKit impone el requisito de contexto seguro en todos los navega
 6. Abra Safari o Chrome en iOS e ingrese a su dirección segura (`https://...`).
 
 ### Método 2: Túnel Seguro HTTPS (Prueba Rápida)
-1. Inicie **ngrok** en su ordenador:
+Para probar un iPhone sin instalar certificados SSL locales, un túnel HTTPS genera una dirección pública de confianza:
+
+#### Opción A: LocalTunnel (Sin registro)
+Ejecute directamente en la terminal sin crear cuenta:
+```bash
+npx -y localtunnel --port 4200
+```
+Abra el enlace `https://...loca.lt` generado en su iPhone.
+
+#### Opción B: Túnel SSH integrado (Sin instalación ni registro)
+Utilice el comando SSH nativo del sistema:
+```bash
+ssh -R 80:localhost:4200 localhost.run
+```
+Copie la dirección `https://...` mostrada en la terminal a su iPhone.
+
+#### Opción C: ngrok (Requiere cuenta gratuita)
+ngrok exige una cuenta y un token de autenticación:
+1. Regístrese gratis en [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup).
+2. Configure su token:
    ```bash
-   ngrok http 4200
+   npx ngrok config add-authtoken <SU_TOKEN>
    ```
-2. Abra la dirección `https://...` generada en su iPhone. Al contar con un certificado SSL válido internacionalmente, iOS solicitará permiso de cámara inmediatamente.
+3. Inicie el túnel:
+   ```bash
+   npx ngrok http 4200
+   ```
+4. Abra la dirección `https://...ngrok-free.app` en su iPhone.
+
+### Método 3: Cámara de Continuidad Inalámbrica de Apple (macOS + iPhone)
+Si su ordenador principal es un Mac y desea utilizar un iPhone como cámara de pista, puede aprovechar la función integrada **Cámara de Continuidad (Continuity Camera)** de Apple. Funciona **completamente sin cables**:
+
+1. **Comprobar ID de Apple y conectividad inalámbrica**:
+   - Asegúrese de que el Mac y el iPhone hayan iniciado sesión con el mismo ID de Apple (autenticación de doble factor activa).
+   - Mantenga **Wi-Fi** y **Bluetooth** encendidos en ambos dispositivos.
+   - En el iPhone, verifique en **Ajustes** > **General** > **AirPlay y Continuidad** que la opción **Cámara de Continuidad** esté activada.
+2. **Montar el iPhone sobre la pista**:
+   - Fije el iPhone horizontalmente sobre la línea de meta con la cámara trasera orientada hacia abajo.
+   - Bloquee la pantalla del iPhone. Funciona de manera inalámbrica (solo necesita cable si desea mantener la batería cargada durante eventos largos).
+3. **Iniciar la interfaz localmente en el Mac**:
+   - En el Editor de Pistas del Mac, haga clic en **Probar en este dispositivo** (o abra `http://localhost:4200/camera_interface`).
+   - Al ser `localhost` un contexto seguro, el navegador del Mac permite el acceso a la cámara sin certificados SSL ni flags.
+   - Seleccione la **Cámara del iPhone** en los ajustes de cámara del navegador o de macOS. El sistema establecerá el enlace de vídeo inalámbrico de forma automática.
+4. **Alcance inalámbrico**: La Cámara de Continuidad funciona mediante conexión directa punto a punto (alcance típico de unos 10 metros en la misma sala). Si el Mac se encuentra en otra habitación lejana, utilice el **Método 1 (HTTPS local)**, el **Método 2 (Túnel HTTPS)** o un móvil Android conectado al Wi-Fi de la casa.
 
 ---
 

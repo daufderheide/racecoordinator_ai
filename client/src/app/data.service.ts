@@ -104,6 +104,15 @@ import { SettingsService } from "@app/services/settings.service";
 
 import { BartConfigConverter } from "./converters/bart_config.converter";
 
+export interface CameraTunnelStatus {
+  active: boolean;
+  url: string | null;
+  localIp: string;
+  port: number;
+  provider: string;
+  error?: string | null;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -128,7 +137,12 @@ export class DataService {
   }
 
   private get baseUrl(): string {
-    return `${this.serverProtocol}://${this.serverIp}:${this.serverPort}`;
+    const portPart =
+      (this.serverProtocol === "https" && this.serverPort === 443) ||
+      (this.serverProtocol === "http" && this.serverPort === 80)
+        ? ""
+        : `:${this.serverPort}`;
+    return `${this.serverProtocol}://${this.serverIp}${portPart}`;
   }
 
   public get serverUrl(): string {
@@ -166,18 +180,26 @@ export class DataService {
     private ngZone: NgZone,
     private logger: LoggerService,
   ) {
+    const isHttpsTunnel =
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      (!window.location.port || window.location.port === "443");
+
     if (typeof window !== "undefined" && window.location.hostname) {
       this.serverIp = window.location.hostname;
       if (window.location.port && window.location.port !== "4200") {
         this.serverPort = parseInt(window.location.port, 10);
+      } else if (isHttpsTunnel) {
+        this.serverPort = 443;
       }
     }
     const settings = this.settingsService.getSettings();
-    if (settings.serverIp) {
+    if (settings.serverIp && !isHttpsTunnel) {
       this.serverIp = settings.serverIp;
     }
     if (
       settings.serverPort &&
+      !isHttpsTunnel &&
       (typeof window === "undefined" ||
         !window.location.port ||
         window.location.port === "4200")
@@ -222,6 +244,27 @@ export class DataService {
     return this.http.get(`${this.baseUrl}/api/server-ip`, {
       responseType: "text",
     });
+  }
+
+  getCameraTunnelStatus(): Observable<CameraTunnelStatus> {
+    return this.http.get<CameraTunnelStatus>(
+      `${this.baseUrl}/api/camera-tunnel/status`,
+    );
+  }
+
+  startCameraTunnel(port?: number): Observable<CameraTunnelStatus> {
+    const payload = port ? { port } : {};
+    return this.http.post<CameraTunnelStatus>(
+      `${this.baseUrl}/api/camera-tunnel/start`,
+      payload,
+    );
+  }
+
+  stopCameraTunnel(): Observable<CameraTunnelStatus> {
+    return this.http.post<CameraTunnelStatus>(
+      `${this.baseUrl}/api/camera-tunnel/stop`,
+      {},
+    );
   }
 
   setServerLogLevel(level: string): Observable<any> {
@@ -1715,7 +1758,12 @@ export class DataService {
     }
 
     const token = localStorage.getItem("director_token");
-    let wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/race-data`;
+    const portPart =
+      (this.wsProtocol === "wss" && this.serverPort === 443) ||
+      (this.wsProtocol === "ws" && this.serverPort === 80)
+        ? ""
+        : `:${this.serverPort}`;
+    let wsUrl = `${this.wsProtocol}://${this.serverIp}${portPart}/api/race-data`;
     const params = [];
     if (token) params.push(`token=${token}`);
     if (this.connectionIntent) params.push(`intent=${this.connectionIntent}`);
@@ -1774,7 +1822,12 @@ export class DataService {
       } catch (e) {}
     }
 
-    const wsUrl = `${this.wsProtocol}://${this.serverIp}:${this.serverPort}/api/interface-data`;
+    const portPart =
+      (this.wsProtocol === "wss" && this.serverPort === 443) ||
+      (this.wsProtocol === "ws" && this.serverPort === 80)
+        ? ""
+        : `:${this.serverPort}`;
+    const wsUrl = `${this.wsProtocol}://${this.serverIp}${portPart}/api/interface-data`;
     this.logger.debug(`Connecting to Interface WebSocket: ${wsUrl}`);
     this.interfaceDataSocket = new WebSocket(wsUrl);
     this.interfaceDataSocket.binaryType = "arraybuffer";

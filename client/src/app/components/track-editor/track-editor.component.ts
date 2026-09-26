@@ -434,6 +434,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
           }
           const currentId = this.editingTrack?.entity_id;
           if (
+            this.isEditMode &&
             currentId &&
             nextId !== currentId &&
             this.hasChanges() &&
@@ -673,6 +674,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.editingTrack = this.cloneTrack(track);
     this.originalTrack = this.cloneTrack(track);
     this.selectedTrackId = track.entity_id;
+    this.isDirty = false;
     this.applyTrackToState(this.editingTrack);
   }
 
@@ -848,6 +850,17 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
         if (!ls.ledLaneColorOverrides) ls.ledLaneColorOverrides = [];
       }
     }
+
+    if (this.cameraConfigs) {
+      for (const config of this.cameraConfigs) {
+        if (!config.gates || config.gates.length !== this.lanes.length) {
+          config.gates = this.createDefaultCameraGates(this.lanes.length);
+        }
+        if (!config.connectionType) {
+          config.connectionType = "local";
+        }
+      }
+    }
   }
 
   onSelectTrackById(id: string) {
@@ -1003,7 +1016,14 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       ? JSON.parse(JSON.stringify(track.bart_configs))
       : [];
     const cameraCopy = track.camera_configs
-      ? JSON.parse(JSON.stringify(track.camera_configs))
+      ? track.camera_configs.map((cc) => ({
+          ...JSON.parse(JSON.stringify(cc)),
+          gates:
+            cc.gates && cc.gates.length === track.lanes.length
+              ? JSON.parse(JSON.stringify(cc.gates))
+              : this.createDefaultCameraGates(track.lanes.length),
+          connectionType: cc.connectionType || "local",
+        }))
       : [];
     return new Track({
       entity_id: track.entity_id,
@@ -1039,7 +1059,12 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       : [];
     const phConfigs = this.phidgetConfigs ? deepCopy(this.phidgetConfigs) : [];
     const bConfigs = this.bartConfigs ? deepCopy(this.bartConfigs) : [];
-    const camConfigs = this.cameraConfigs ? deepCopy(this.cameraConfigs) : [];
+    const camConfigs = this.cameraConfigs
+      ? this.cameraConfigs.map((cc) => ({
+          ...deepCopy(cc),
+          connectionType: cc.connectionType || "local",
+        }))
+      : [];
     return new Track({
       entity_id: this.editingTrack.entity_id,
       name: this.trackName,
@@ -1119,8 +1144,10 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
 
     // Check Camera Configs equality
     if (
-      JSON.stringify(t1.camera_configs || []) !==
-      JSON.stringify(t2.camera_configs || [])
+      !this.areCameraConfigsEqual(
+        t1.camera_configs || [],
+        t2.camera_configs || [],
+      )
     ) {
       return false;
     }
@@ -1297,6 +1324,48 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     return true;
   }
 
+  private areCameraConfigsEqual(
+    cams1: CameraConfig[],
+    cams2: CameraConfig[],
+  ): boolean {
+    if (cams1.length !== cams2.length) return false;
+
+    for (let c = 0; c < cams1.length; c++) {
+      const cam1 = cams1[c];
+      const cam2 = cams2[c];
+
+      if (
+        cam1.name !== cam2.name ||
+        cam1.interfaceIndex !== cam2.interfaceIndex ||
+        cam1.targetFps !== cam2.targetFps ||
+        cam1.autoDetectLanes !== cam2.autoDetectLanes ||
+        (cam1.connectionType || "local") !== (cam2.connectionType || "local")
+      ) {
+        return false;
+      }
+
+      const g1 = cam1.gates || [];
+      const g2 = cam2.gates || [];
+      if (g1.length !== g2.length) return false;
+      for (let i = 0; i < g1.length; i++) {
+        if (
+          g1[i].laneIndex !== g2[i].laneIndex ||
+          (g1[i].gateType ?? 0) !== (g2[i].gateType ?? 0) ||
+          Math.abs(g1[i].xPct - g2[i].xPct) > 0.0001 ||
+          Math.abs(g1[i].yPct - g2[i].yPct) > 0.0001 ||
+          Math.abs(g1[i].widthPct - g2[i].widthPct) > 0.0001 ||
+          Math.abs(g1[i].heightPct - g2[i].heightPct) > 0.0001 ||
+          Math.abs((g1[i].sensitivity ?? 0.5) - (g2[i].sensitivity ?? 0.5)) >
+            0.0001
+        ) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   // Undo/Redo Proxies
   undo() {
     if (!this.isEditMode) return;
@@ -1326,7 +1395,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   }
 
   hasChanges(): boolean {
-    return this.isDirtyState();
+    return this.isEditMode && this.isDirtyState();
   }
 
   getUnsavedReasons(): string[] {
@@ -2251,6 +2320,7 @@ export class TrackEditorComponent implements OnInit, OnDestroy, DirtyComponent {
       targetFps: 60,
       autoDetectLanes: false,
       gates: this.createDefaultCameraGates(this.lanes.length),
+      connectionType: "local",
     });
     this.cameraConfigs = [...this.cameraConfigs];
     this.captureState();

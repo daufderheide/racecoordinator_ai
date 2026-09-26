@@ -79,6 +79,7 @@ public class TrackConverterTest {
     cam.name = "My Webcam";
     cam.targetFps = 60;
     cam.interfaceIndex = 3;
+    cam.connectionType = "remote";
 
     Track track =
         new Track.Builder()
@@ -94,5 +95,6 @@ public class TrackConverterTest {
     assertEquals("My Webcam", proto.getCameraConfigs(0).getName());
     assertEquals(60, proto.getCameraConfigs(0).getTargetFps());
     assertEquals(3, proto.getCameraConfigs(0).getInterfaceIndex());
+    assertEquals("remote", proto.getCameraConfigs(0).getConnectionType());
   }
 }

@@ -9,58 +9,179 @@
   <svg
     #overlaySvg
     class="gate-overlay"
+    [class.drawing-mode]="isAutoSnapping() && autoSnapStage() === 'zone'"
     viewBox="0 0 1000 1000"
     preserveAspectRatio="none"
+    (mousedown)="onSvgPointerDown($event)"
+    (touchstart)="onSvgPointerDown($event)"
   >
-    @for (gate of gates(); track gate.laneIndex; let i = $index) {
-      <g
-        class="gate-group"
-        [class.active]="lastTriggeredLane() === gate.laneIndex"
-        [class.selected]="selectedGateIndex() === i"
-      >
-        <!-- Gate Area Box -->
+    <!-- Finish Line Zone Master Rectangle (Stage 1) -->
+    @if (isAutoSnapping() && autoSnapStage() === "zone") {
+      <g class="finish-line-zone-group">
+        <!-- Master Zone Box -->
         <rect
-          [attr.x]="gate.xPct * 1000"
-          [attr.y]="gate.yPct * 1000"
-          [attr.width]="gate.widthPct * 1000"
-          [attr.height]="gate.heightPct * 1000"
-          class="gate-rect"
-          (mousedown)="onGatePointerDown(i, $event)"
-          (touchstart)="onGatePointerDown(i, $event)"
+          [attr.x]="finishLineZone().xPct * 1000"
+          [attr.y]="finishLineZone().yPct * 1000"
+          [attr.width]="finishLineZone().widthPct * 1000"
+          [attr.height]="finishLineZone().heightPct * 1000"
+          class="finish-line-zone-rect"
+          (mousedown)="onZonePointerDown($event)"
+          (touchstart)="onZonePointerDown($event)"
         />
 
-        <!-- Gate Label Plate -->
-        <rect
-          [attr.x]="gate.xPct * 1000"
-          [attr.y]="gate.yPct * 1000 - 28"
-          width="90"
-          height="24"
-          rx="4"
-          class="label-plate"
-        />
-
-        <!-- Gate Label Text -->
-        <text
-          [attr.x]="gate.xPct * 1000 + 45"
-          [attr.y]="gate.yPct * 1000 - 12"
-          text-anchor="middle"
-          class="gate-label"
-        >
-          {{ "CAMERA_EDITOR_LANE" | translate }} {{ gate.laneIndex + 1 }}
-        </text>
-
-        <!-- Resize Handle (bottom-right corner) -->
-        @if (selectedGateIndex() === i) {
-          <circle
-            [attr.cx]="(gate.xPct + gate.widthPct) * 1000"
-            [attr.cy]="(gate.yPct + gate.heightPct) * 1000"
-            r="16"
-            class="resize-handle"
-            (mousedown)="onResizePointerDown(i, $event)"
-            (touchstart)="onResizePointerDown(i, $event)"
+        <!-- Lane Preview Dividers -->
+        @for (div of zoneLaneDividers(); track $index) {
+          <line
+            [attr.x1]="div.x1 * 1000"
+            [attr.y1]="div.y1 * 1000"
+            [attr.x2]="div.x2 * 1000"
+            [attr.y2]="div.y2 * 1000"
+            class="zone-divider-line"
           />
         }
+
+        <!-- Lane Preview Labels -->
+        @for (preview of zoneLanePreviews(); track preview.laneIndex) {
+          <text
+            [attr.x]="preview.centerX * 1000"
+            [attr.y]="preview.centerY * 1000 + 5"
+            text-anchor="middle"
+            class="zone-lane-preview-text"
+          >
+            {{ "CAMERA_EDITOR_LANE" | translate }} {{ preview.laneIndex + 1 }}
+          </text>
+        }
+
+        <!-- Zone Header Plate -->
+        <rect
+          [attr.x]="finishLineZone().xPct * 1000"
+          [attr.y]="finishLineZone().yPct * 1000 - 28"
+          width="150"
+          height="24"
+          rx="4"
+          class="zone-header-plate"
+        />
+
+        <!-- Zone Header Label -->
+        <text
+          [attr.x]="finishLineZone().xPct * 1000 + 75"
+          [attr.y]="finishLineZone().yPct * 1000 - 12"
+          text-anchor="middle"
+          class="zone-header-text"
+        >
+          {{ "CAMERA_FINISH_LINE_ZONE_LABEL" | translate }}
+        </text>
+
+        <!-- 4 Corner Resize Handles -->
+        <circle
+          [attr.cx]="finishLineZone().xPct * 1000"
+          [attr.cy]="finishLineZone().yPct * 1000"
+          r="16"
+          class="zone-resize-handle nwse"
+          (mousedown)="onZoneResizePointerDown('nw', $event)"
+          (touchstart)="onZoneResizePointerDown('nw', $event)"
+        />
+        <circle
+          [attr.cx]="(finishLineZone().xPct + finishLineZone().widthPct) * 1000"
+          [attr.cy]="finishLineZone().yPct * 1000"
+          r="16"
+          class="zone-resize-handle nesw"
+          (mousedown)="onZoneResizePointerDown('ne', $event)"
+          (touchstart)="onZoneResizePointerDown('ne', $event)"
+        />
+        <circle
+          [attr.cx]="finishLineZone().xPct * 1000"
+          [attr.cy]="
+            (finishLineZone().yPct + finishLineZone().heightPct) * 1000
+          "
+          r="16"
+          class="zone-resize-handle nesw"
+          (mousedown)="onZoneResizePointerDown('sw', $event)"
+          (touchstart)="onZoneResizePointerDown('sw', $event)"
+        />
+        <circle
+          [attr.cx]="(finishLineZone().xPct + finishLineZone().widthPct) * 1000"
+          [attr.cy]="
+            (finishLineZone().yPct + finishLineZone().heightPct) * 1000
+          "
+          r="16"
+          class="zone-resize-handle nwse"
+          (mousedown)="onZoneResizePointerDown('se', $event)"
+          (touchstart)="onZoneResizePointerDown('se', $event)"
+        />
       </g>
+    }
+
+    <!-- Zone Boundary Outline & Active Calibrating Lane Highlight (during Car Calibration stage) -->
+    @if (isAutoSnapping() && autoSnapStage() === "car") {
+      <rect
+        [attr.x]="finishLineZone().xPct * 1000"
+        [attr.y]="finishLineZone().yPct * 1000"
+        [attr.width]="finishLineZone().widthPct * 1000"
+        [attr.height]="finishLineZone().heightPct * 1000"
+        class="zone-boundary-outline"
+      />
+      <rect
+        [attr.x]="getActiveLaneSubRoi().xPct * 1000"
+        [attr.y]="getActiveLaneSubRoi().yPct * 1000"
+        [attr.width]="getActiveLaneSubRoi().widthPct * 1000"
+        [attr.height]="getActiveLaneSubRoi().heightPct * 1000"
+        class="calibrating-lane-rect"
+      />
+    }
+
+    <!-- Individual Lane Gates (hidden during Zone stage to avoid clutter) -->
+    @if (!isAutoSnapping() || autoSnapStage() === "car") {
+      @for (gate of gates(); track gate.laneIndex; let i = $index) {
+        <g
+          class="gate-group"
+          [class.active]="lastTriggeredLane() === gate.laneIndex"
+          [class.selected]="selectedGateIndex() === i"
+        >
+          <!-- Gate Area Box -->
+          <rect
+            [attr.x]="gate.xPct * 1000"
+            [attr.y]="gate.yPct * 1000"
+            [attr.width]="gate.widthPct * 1000"
+            [attr.height]="gate.heightPct * 1000"
+            class="gate-rect"
+            (mousedown)="onGatePointerDown(i, $event)"
+            (touchstart)="onGatePointerDown(i, $event)"
+          />
+
+          <!-- Gate Label Plate -->
+          <rect
+            [attr.x]="gate.xPct * 1000"
+            [attr.y]="gate.yPct * 1000 - 28"
+            width="90"
+            height="24"
+            rx="4"
+            class="label-plate"
+          />
+
+          <!-- Gate Label Text -->
+          <text
+            [attr.x]="gate.xPct * 1000 + 45"
+            [attr.y]="gate.yPct * 1000 - 12"
+            text-anchor="middle"
+            class="gate-label"
+          >
+            {{ "CAMERA_EDITOR_LANE" | translate }} {{ gate.laneIndex + 1 }}
+          </text>
+
+          <!-- Resize Handle (bottom-right corner) -->
+          @if (selectedGateIndex() === i) {
+            <circle
+              [attr.cx]="(gate.xPct + gate.widthPct) * 1000"
+              [attr.cy]="(gate.yPct + gate.heightPct) * 1000"
+              r="16"
+              class="resize-handle"
+              (mousedown)="onResizePointerDown(i, $event)"
+              (touchstart)="onResizePointerDown(i, $event)"
+            />
+          }
+        </g>
+      }
     }
   </svg>
 
@@ -112,6 +233,16 @@
       }
 
       <button
+        class="hud-btn action-pill save-btn"
+        (click)="saveGates()"
+        [title]="'CAMERA_SAVE_GATES' | translate"
+        id="cameraSaveGatesBtn"
+      >
+        <span class="btn-icon">💾</span>
+        <span class="btn-label">{{ "CAMERA_SAVE_GATES" | translate }}</span>
+      </button>
+
+      <button
         class="hud-btn action-pill"
         (click)="startAutoSnap()"
         [title]="'CAMERA_AUTO_SNAP' | translate"
@@ -143,47 +274,135 @@
     </div>
   </header>
 
-  <!-- Auto-Snap Wizard Modal Overlay -->
+  <!-- Save Confirmation Toast Notification -->
+  @if (showSavedToast()) {
+    <div class="saved-toast" id="cameraSavedToast">
+      <span class="toast-icon">✓</span>
+      <span class="toast-text">{{
+        "CAMERA_GATES_SAVED_TOAST" | translate
+      }}</span>
+    </div>
+  }
+
+  <!-- Auto-Snap Wizard Floating Overlay -->
   @if (isAutoSnapping()) {
-    <div class="modal-backdrop">
-      <div class="auto-snap-card">
-        <div class="card-header">
-          <span class="wizard-step-tag">
+    <div class="auto-snap-overlay">
+      @if (autoSnapStage() === "zone") {
+        <div class="auto-snap-card finish-line-card">
+          <div class="card-header">
+            <span class="wizard-step-tag">
+              {{ "CAMERA_AUTO_SNAP_STEP_ZONE" | translate }}
+            </span>
+            <h3>{{ "CAMERA_FINISH_LINE_TITLE" | translate }}</h3>
+          </div>
+
+          <p class="wizard-instruction">
+            {{ "CAMERA_FINISH_LINE_INSTRUCTION" | translate }}
+          </p>
+
+          <p class="draw-hint">
+            💡 {{ "CAMERA_FINISH_LINE_DRAW_HINT" | translate }}
+          </p>
+
+          <!-- Split Orientation Selector -->
+          <div class="split-mode-row">
+            <span class="split-mode-label"
+              >{{ "CAMERA_SPLIT_MODE" | translate }}:</span
+            >
+            <div class="split-pill-group">
+              <button
+                type="button"
+                class="split-pill"
+                [class.active]="isRowSplit()"
+                (click)="setSplitOrientation('rows')"
+                id="btnSplitRows"
+              >
+                ⬍ {{ "CAMERA_SPLIT_ROWS" | translate }}
+              </button>
+              <button
+                type="button"
+                class="split-pill"
+                [class.active]="!isRowSplit()"
+                (click)="setSplitOrientation('columns')"
+                id="btnSplitCols"
+              >
+                ⬄ {{ "CAMERA_SPLIT_COLUMNS" | translate }}
+              </button>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button
+              class="btn btn-secondary"
+              (click)="cancelAutoSnap()"
+              id="btnCancelAutoSnap"
+            >
+              {{ "CAMERA_CANCEL" | translate }}
+            </button>
+            <button
+              class="btn btn-secondary"
+              (click)="startCarCalibration()"
+              id="btnCalibrateCar"
+            >
+              {{ "CAMERA_CALIBRATE_WITH_CAR" | translate }}
+            </button>
+            <button
+              class="btn btn-primary"
+              (click)="applyAutoSplit()"
+              id="btnAutoSplit"
+            >
+              {{ "CAMERA_AUTO_SPLIT" | translate }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="auto-snap-card">
+          <div class="card-header">
+            <span class="wizard-step-tag">
+              {{
+                "CAMERA_AUTO_SNAP_STEP"
+                  | translate: { step: autoSnapLane() + 1, total: numLanes }
+              }}
+            </span>
+            <h3>{{ "CAMERA_AUTO_SNAP_TITLE" | translate }}</h3>
+          </div>
+
+          <p class="wizard-instruction">
             {{
-              "CAMERA_AUTO_SNAP_STEP"
-                | translate: { step: autoSnapLane() + 1, total: numLanes }
+              "CAMERA_AUTO_SNAP_INSTRUCTION"
+                | translate: { lane: autoSnapLane() + 1 }
             }}
-          </span>
-          <h3>{{ "CAMERA_AUTO_SNAP_TITLE" | translate }}</h3>
-        </div>
+          </p>
 
-        <p class="wizard-instruction">
-          {{
-            "CAMERA_AUTO_SNAP_INSTRUCTION"
-              | translate: { lane: autoSnapLane() + 1 }
-          }}
-        </p>
+          <!-- Motion Activity Gauge -->
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              [style.width.%]="(autoSnapFrames() / 4) * 100"
+            ></div>
+          </div>
+          <div class="progress-label">
+            {{ "CAMERA_CALIBRATING" | translate }} ({{ autoSnapFrames() }}/4)
+          </div>
 
-        <!-- Motion Activity Gauge -->
-        <div class="progress-track">
-          <div
-            class="progress-fill"
-            [style.width.%]="(autoSnapFrames() / 15) * 100"
-          ></div>
+          <div class="card-actions">
+            <button
+              class="btn btn-secondary"
+              (click)="cancelAutoSnap()"
+              id="btnCancelAutoSnapCar"
+            >
+              {{ "CAMERA_CANCEL" | translate }}
+            </button>
+            <button
+              class="btn btn-primary"
+              (click)="skipAutoSnapLane()"
+              id="btnSkipLane"
+            >
+              {{ "CAMERA_SKIP_LANE" | translate }}
+            </button>
+          </div>
         </div>
-        <div class="progress-label">
-          {{ "CAMERA_CALIBRATING" | translate }} ({{ autoSnapFrames() }}/15)
-        </div>
-
-        <div class="card-actions">
-          <button class="btn btn-secondary" (click)="cancelAutoSnap()">
-            {{ "CAMERA_CANCEL" | translate }}
-          </button>
-          <button class="btn btn-primary" (click)="skipAutoSnapLane()">
-            {{ "CAMERA_SKIP_LANE" | translate }}
-          </button>
-        </div>
-      </div>
+      }
     </div>
   }
 
@@ -242,6 +461,31 @@
               <span class="slider"></span>
             </label>
           </div>
+
+          <!-- Camera Device Selection (when multiple cameras detected) -->
+          @if (availableDevices().length > 1) {
+            <div class="setting-row">
+              <div class="setting-info">
+                <span class="setting-title">{{
+                  "CAMERA_DEVICE_SELECT" | translate
+                }}</span>
+                <span class="setting-desc">{{
+                  "CAMERA_DEVICE_SELECT_DESC" | translate
+                }}</span>
+              </div>
+              <app-custom-select
+                id="cameraDeviceSelect"
+                [ngModel]="selectedDeviceId()"
+                (ngModelChange)="selectDevice($event)"
+              >
+                @for (device of availableDevices(); track device.deviceId) {
+                  <app-custom-option [value]="device.deviceId">
+                    {{ device.label || ("CAMERA_DEVICE_DEFAULT" | translate) }}
+                  </app-custom-option>
+                }
+              </app-custom-select>
+            </div>
+          }
 
           <!-- Sensitivity Slider -->
           <div class="setting-row-vertical">

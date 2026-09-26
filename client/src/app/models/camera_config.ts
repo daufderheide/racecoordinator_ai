@@ -14,4 +14,5 @@ export interface CameraConfig {
   targetFps: number;
   autoDetectLanes: boolean;
   gates: LaneDetectionGate[];
+  connectionType?: "local" | "remote";
 }

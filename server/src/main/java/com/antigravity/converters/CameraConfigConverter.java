@@ -17,7 +17,11 @@ public class CameraConfigConverter {
             .setName(config.name != null ? config.name : "")
             .setInterfaceIndex(config.interfaceIndex)
             .setTargetFps(config.targetFps)
-            .setAutoDetectLanes(config.autoDetectLanes);
+            .setAutoDetectLanes(config.autoDetectLanes)
+            .setConnectionType(
+                (config.connectionType != null && !config.connectionType.trim().isEmpty())
+                    ? config.connectionType.trim()
+                    : "local");
 
     if (config.gates != null) {
       for (LaneDetectionGate gate : config.gates) {
@@ -47,6 +51,11 @@ public class CameraConfigConverter {
     config.interfaceIndex = protoConfig.getInterfaceIndex();
     config.targetFps = protoConfig.getTargetFps() > 0 ? protoConfig.getTargetFps() : 60;
     config.autoDetectLanes = protoConfig.getAutoDetectLanes();
+    config.connectionType =
+        (protoConfig.getConnectionType() != null
+                && !protoConfig.getConnectionType().trim().isEmpty())
+            ? protoConfig.getConnectionType().trim()
+            : "local";
 
     List<LaneDetectionGate> gates = new ArrayList<>();
     if (protoConfig.getGatesList() != null) {

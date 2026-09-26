@@ -12,10 +12,13 @@ import com.antigravity.handlers.CustomUITaskHandler;
 import com.antigravity.handlers.DatabaseTaskHandler;
 import com.antigravity.handlers.SettingsTaskHandler;
 import com.antigravity.handlers.ThemeTaskHandler;
+import com.antigravity.proto.CameraGatesUpdateEvent;
 import com.antigravity.proto.InterfaceEvent;
+import com.antigravity.proto.LaneDetectionGate;
 import com.antigravity.proto.RaceSubscriptionRequest;
 import com.antigravity.race.ClientSubscriptionManager;
 import com.antigravity.service.AssetService;
+import com.antigravity.service.CameraTunnelService;
 import com.antigravity.service.DatabaseService;
 import com.antigravity.service.ServerConfigService;
 import com.antigravity.service.UpdateService;
@@ -337,6 +340,23 @@ public class App {
             }
           });
 
+      io.javalin.http.Handler spaHandler =
+          ctx -> {
+            Path indexPath = Paths.get(staticFilePath, "index.html");
+            if (Files.exists(indexPath)) {
+              applyNoCacheHeaders(ctx);
+              ctx.status(200);
+              ctx.contentType("text/html");
+              ctx.result(new String(Files.readAllBytes(indexPath)));
+            } else {
+              logger.error("SPA Fallback: index.html not found at {}", indexPath.toAbsolutePath());
+              ctx.status(404).result("index.html not found");
+            }
+          };
+
+      app.get("/camera_interface", spaHandler);
+      app.get("/camera-interface", spaHandler);
+
       app.error(
           404,
           ctx -> {
@@ -345,6 +365,7 @@ public class App {
               Path indexPath = Paths.get(staticFilePath, "index.html");
               if (Files.exists(indexPath)) {
                 applyNoCacheHeaders(ctx);
+                ctx.status(200);
                 ctx.contentType("text/html");
                 ctx.result(new String(Files.readAllBytes(indexPath)));
               } else {
@@ -409,6 +430,76 @@ public class App {
       new CustomDirectoryTaskHandler(app, configService);
 
       UpdateService updateService = new UpdateService(SERVER_VERSION, configService);
+
+      app.get(
+          "/api/camera/gates",
+          ctx -> {
+            int interfaceIndex = 0;
+            String ifaceParam = ctx.queryParam("interface");
+            if (ifaceParam != null) {
+              try {
+                interfaceIndex = Integer.parseInt(ifaceParam);
+              } catch (NumberFormatException e) {
+                // Default to 0
+              }
+            }
+            List<LaneDetectionGate> protoGates =
+                ClientSubscriptionManager.getInstance().getLatestCameraGates(interfaceIndex);
+            List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+            for (LaneDetectionGate g : protoGates) {
+              java.util.Map<String, Object> gateMap = new java.util.HashMap<>();
+              gateMap.put("laneIndex", g.getLaneIndex());
+              gateMap.put("xPct", g.getXPct());
+              gateMap.put("yPct", g.getYPct());
+              gateMap.put("widthPct", g.getWidthPct());
+              gateMap.put("heightPct", g.getHeightPct());
+              gateMap.put("gateType", g.getGateType());
+              gateMap.put("sensitivity", g.getSensitivity());
+              result.add(gateMap);
+            }
+            ctx.status(200).json(result);
+          });
+
+      app.post(
+          "/api/camera/gates",
+          ctx -> {
+            try {
+              ObjectMapper mapper = new ObjectMapper();
+              com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(ctx.body());
+              int interfaceIndex =
+                  root.has("interfaceIndex") ? root.get("interfaceIndex").asInt(0) : 0;
+              com.fasterxml.jackson.databind.JsonNode gatesNode = root.get("gates");
+              if (gatesNode != null && gatesNode.isArray()) {
+                CameraGatesUpdateEvent.Builder builder = CameraGatesUpdateEvent.newBuilder();
+                builder.setInterfaceIndex(interfaceIndex);
+                for (com.fasterxml.jackson.databind.JsonNode gn : gatesNode) {
+                  LaneDetectionGate.Builder gb = LaneDetectionGate.newBuilder();
+                  gb.setLaneIndex(gn.has("laneIndex") ? gn.get("laneIndex").asInt(0) : 0);
+                  gb.setXPct((float) (gn.has("xPct") ? gn.get("xPct").asDouble(0.1) : 0.1));
+                  gb.setYPct((float) (gn.has("yPct") ? gn.get("yPct").asDouble(0.38) : 0.38));
+                  gb.setWidthPct(
+                      (float) (gn.has("widthPct") ? gn.get("widthPct").asDouble(0.2) : 0.2));
+                  gb.setHeightPct(
+                      (float) (gn.has("heightPct") ? gn.get("heightPct").asDouble(0.25) : 0.25));
+                  gb.setGateType(gn.has("gateType") ? gn.get("gateType").asInt(0) : 0);
+                  gb.setSensitivity(
+                      (float) (gn.has("sensitivity") ? gn.get("sensitivity").asDouble(0.5) : 0.5));
+                  builder.addGates(gb.build());
+                }
+                CameraGatesUpdateEvent updateEvent = builder.build();
+                ClientSubscriptionManager.getInstance().handleCameraGatesUpdate(updateEvent);
+                InterfaceEvent broadcastEv =
+                    InterfaceEvent.newBuilder().setCameraGatesUpdate(updateEvent).build();
+                ClientSubscriptionManager.getInstance().broadcastInterfaceEvent(broadcastEv);
+                ctx.status(200).json(java.util.Collections.singletonMap("success", true));
+              } else {
+                ctx.status(400).result("Missing gates array");
+              }
+            } catch (Exception e) {
+              logger.error("Failed to parse POST /api/camera/gates", e);
+              ctx.status(500).result("Error updating gates");
+            }
+          });
 
       app.get(
           "/api/update/config",
@@ -545,6 +636,7 @@ public class App {
 
       app.get("/api/version", ctx -> ctx.result(SERVER_VERSION));
       app.get("/api/server-ip", ctx -> ctx.result(getLocalIpAddress()));
+      CameraTunnelService.registerRoutes(app, CameraTunnelService.getInstance());
 
       if (!headless) {
         openBrowser("http://localhost:" + serverPort);
@@ -662,7 +754,11 @@ public class App {
     }
   }
 
-  /* package */ static String getLocalIpAddress() {
+  public static int getServerPort() {
+    return serverPort;
+  }
+
+  public static String getLocalIpAddress() {
     try {
       Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
       while (interfaces.hasMoreElements()) {

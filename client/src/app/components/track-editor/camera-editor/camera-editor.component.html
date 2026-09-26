@@ -81,7 +81,7 @@
               }
             </div>
 
-            <!-- Mobile Pairing Section -->
+            <!-- Camera Connection Mode & Setup Section -->
             <div class="config-section">
               <div class="section-header" (click)="toggleSection('pairing')">
                 <span
@@ -89,44 +89,128 @@
                   [class.collapsed]="!sectionsExpanded.pairing"
                   >▼</span
                 >
-                <h4>{{ "CAMERA_EDITOR_PAIRING_TITLE" | translate }}</h4>
+                <h4>{{ "CAMERA_HEADER" | translate }}</h4>
               </div>
 
               @if (sectionsExpanded.pairing) {
                 <div class="section-content">
-                  <div class="editor-card pairing-card">
-                    <div class="card-body">
-                      <p class="pairing-desc">
-                        {{ "CAMERA_EDITOR_PAIRING_DESC" | translate }}
-                      </p>
+                  <!-- Segmented Connection Mode Selector -->
+                  <div class="connection-mode-selector">
+                    <button
+                      type="button"
+                      class="mode-btn"
+                      [class.active]="
+                        (config().connectionType || 'local') === 'local'
+                      "
+                      (click)="setConnectionType('local')"
+                      id="btnModeLocal"
+                    >
+                      <span class="mode-icon">💻</span>
+                      <span class="mode-details">
+                        <span class="mode-title">{{
+                          "CAMERA_MODE_LOCAL" | translate
+                        }}</span>
+                        <span class="mode-desc">{{
+                          "CAMERA_MODE_LOCAL_SUBTITLE" | translate
+                        }}</span>
+                      </span>
+                    </button>
 
-                      <div class="pairing-actions">
-                        <button
-                          class="btn btn-primary"
-                          (click)="openQrModal()"
-                          id="pairCameraBtn"
-                        >
-                          📱 {{ "CAMERA_EDITOR_SHOW_QR" | translate }}
-                        </button>
+                    <button
+                      type="button"
+                      class="mode-btn"
+                      [class.active]="config().connectionType === 'remote'"
+                      (click)="setConnectionType('remote')"
+                      id="btnModeRemote"
+                    >
+                      <span class="mode-icon">📱</span>
+                      <span class="mode-details">
+                        <span class="mode-title">{{
+                          "CAMERA_MODE_REMOTE" | translate
+                        }}</span>
+                        <span class="mode-desc">{{
+                          "CAMERA_MODE_REMOTE_SUBTITLE" | translate
+                        }}</span>
+                      </span>
+                    </button>
+                  </div>
 
-                        <button
-                          class="btn btn-secondary"
-                          (click)="openLocalInterface()"
-                          id="testCameraBtn"
-                        >
-                          💻 {{ "CAMERA_EDITOR_TEST_LOCAL" | translate }}
-                        </button>
+                  <!-- Mode 1: Connected to Track PC -->
+                  @if ((config().connectionType || "local") === "local") {
+                    <div class="editor-card setup-card local-setup-card">
+                      <div class="card-body">
+                        <div class="setup-header">
+                          <p class="setup-desc">
+                            {{ "CAMERA_LOCAL_CARD_DESC" | translate }}
+                          </p>
+                        </div>
 
-                        <button
-                          class="btn btn-secondary"
-                          (click)="openHelp()"
-                          id="cameraLearnMoreBtn"
-                        >
-                          ℹ️ {{ "CAMERA_LEARN_MORE" | translate }}
-                        </button>
+                        <div class="setup-actions">
+                          <button
+                            class="btn btn-primary"
+                            (click)="openLocalInterface()"
+                            id="openCameraBtn"
+                          >
+                            💻 {{ "CAMERA_LOCAL_OPEN_CALIBRATE" | translate }}
+                          </button>
+
+                          <button
+                            class="btn btn-secondary"
+                            (click)="openStandaloneWindow()"
+                            id="openStandaloneBtn"
+                          >
+                            ↗ {{ "CAMERA_LOCAL_OPEN_WINDOW" | translate }}
+                          </button>
+
+                          <button
+                            class="btn btn-secondary"
+                            (click)="openHelp()"
+                            id="cameraLocalHelpBtn"
+                          >
+                            ℹ️ {{ "CAMERA_LEARN_MORE" | translate }}
+                          </button>
+                        </div>
+
+                        <div class="local-tip-box">
+                          <span class="tip-icon">✨</span>
+                          <span class="tip-text">{{
+                            "CAMERA_LOCAL_NO_NETWORK_HINT" | translate
+                          }}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  }
+
+                  <!-- Mode 2: Remote Mobile Device -->
+                  @if (config().connectionType === "remote") {
+                    <div class="editor-card setup-card remote-setup-card">
+                      <div class="card-body">
+                        <div class="setup-header">
+                          <p class="setup-desc">
+                            {{ "CAMERA_REMOTE_CARD_DESC" | translate }}
+                          </p>
+                        </div>
+
+                        <div class="setup-actions">
+                          <button
+                            class="btn btn-primary"
+                            (click)="openQrModal()"
+                            id="pairCameraBtn"
+                          >
+                            📱 {{ "CAMERA_REMOTE_SHOW_QR" | translate }}
+                          </button>
+
+                          <button
+                            class="btn btn-secondary"
+                            (click)="openHelp()"
+                            id="cameraRemoteHelpBtn"
+                          >
+                            ℹ️ {{ "CAMERA_LEARN_MORE" | translate }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
@@ -309,56 +393,99 @@
           </div>
 
           <div class="modal-body">
-            @if (qrCodeDataUrl()) {
-              <div class="qr-container">
-                <img
-                  [src]="qrCodeDataUrl()"
-                  alt="Pairing QR Code"
-                  class="qr-image"
+            @if (tunnelLoading()) {
+              <div class="tunnel-loading-container">
+                <div class="spinner"></div>
+                <p class="tunnel-loading-text">
+                  {{ "CAMERA_TUNNEL_STARTING" | translate }}
+                </p>
+              </div>
+            } @else {
+              <!-- Badge indicating connection mode -->
+              <div class="tunnel-status-badge-container">
+                @if (tunnelActive()) {
+                  <span class="badge badge-success">
+                    🔒 {{ "CAMERA_TUNNEL_ACTIVE_BADGE" | translate }}
+                  </span>
+                } @else {
+                  <span class="badge badge-info">
+                    📶 {{ "CAMERA_WIFI_BADGE" | translate }}
+                  </span>
+                }
+              </div>
+
+              @if (qrCodeDataUrl()) {
+                <div class="qr-container">
+                  <img
+                    [src]="qrCodeDataUrl()"
+                    alt="Pairing QR Code"
+                    class="qr-image"
+                  />
+                </div>
+              }
+
+              <p class="qr-instruction">
+                {{ "CAMERA_EDITOR_QR_INSTRUCTION" | translate }}
+              </p>
+
+              <div class="copy-link-container">
+                <input
+                  type="text"
+                  readonly
+                  autocomplete="off"
+                  data-dashlane-ignore="true"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                  [value]="pairingUrl()"
+                  class="form-control link-input"
                 />
+                <button class="btn btn-secondary" (click)="copyPairingUrl()">
+                  {{
+                    (copySuccess()
+                      ? "CAMERA_EDITOR_COPIED"
+                      : "CAMERA_EDITOR_COPY"
+                    ) | translate
+                  }}
+                </button>
+              </div>
+
+              <div class="tunnel-switch-container">
+                <button
+                  type="button"
+                  class="tunnel-switch-btn"
+                  (click)="toggleTunnelMode()"
+                  id="toggleTunnelModeBtn"
+                >
+                  {{
+                    (tunnelActive()
+                      ? "CAMERA_SWITCH_TO_WIFI"
+                      : "CAMERA_SWITCH_TO_SECURE"
+                    ) | translate
+                  }}
+                </button>
+              </div>
+
+              <div class="qr-help-container">
+                <a
+                  href="javascript:void(0)"
+                  (click)="openHelp()"
+                  class="qr-help-link"
+                  id="cameraModalHelpLink"
+                >
+                  {{ "CAMERA_LEARN_MORE_SETUP" | translate }} ↗
+                </a>
               </div>
             }
-
-            <p class="qr-instruction">
-              {{ "CAMERA_EDITOR_QR_INSTRUCTION" | translate }}
-            </p>
-
-            <div class="copy-link-container">
-              <input
-                type="text"
-                readonly
-                autocomplete="off"
-                data-dashlane-ignore="true"
-                data-1p-ignore="true"
-                data-lpignore="true"
-                data-bwignore="true"
-                data-form-type="other"
-                [value]="pairingUrl()"
-                class="form-control link-input"
-              />
-              <button class="btn btn-secondary" (click)="copyPairingUrl()">
-                {{
-                  (copySuccess()
-                    ? "CAMERA_EDITOR_COPIED"
-                    : "CAMERA_EDITOR_COPY"
-                  ) | translate
-                }}
-              </button>
-            </div>
-
-            <div class="qr-help-container">
-              <a
-                href="javascript:void(0)"
-                (click)="openHelp()"
-                class="qr-help-link"
-                id="cameraModalHelpLink"
-              >
-                {{ "CAMERA_LEARN_MORE_SETUP" | translate }} ↗
-              </a>
-            </div>
           </div>
 
           <div class="modal-footer">
+            @if (syncedFromRemote()) {
+              <div class="qr-synced-banner" id="qrSyncedBanner">
+                ✓ {{ "CAMERA_GATES_SYNCED" | translate }}
+              </div>
+            }
             <button class="btn btn-primary full-width" (click)="closeQrModal()">
               {{ "CAMERA_DONE" | translate }}
             </button>

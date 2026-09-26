@@ -1,5 +1,6 @@
 package com.antigravity.protocols.camera;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,12 +14,31 @@ public class LaneDetectionGate {
   public static final int TYPE_PIT_IN = 2;
   public static final int TYPE_PIT_OUT = 3;
 
+  @JsonProperty("laneIndex")
+  @JsonAlias("lane_index")
   public int laneIndex;
+
+  @JsonProperty("xPct")
+  @JsonAlias("x_pct")
   public float xPct;
+
+  @JsonProperty("yPct")
+  @JsonAlias("y_pct")
   public float yPct;
+
+  @JsonProperty("widthPct")
+  @JsonAlias("width_pct")
   public float widthPct;
+
+  @JsonProperty("heightPct")
+  @JsonAlias("height_pct")
   public float heightPct;
+
+  @JsonProperty("gateType")
+  @JsonAlias("gate_type")
   public int gateType;
+
+  @JsonProperty("sensitivity")
   public float sensitivity;
 
   public LaneDetectionGate() {
@@ -33,12 +53,12 @@ public class LaneDetectionGate {
 
   @JsonCreator
   public LaneDetectionGate(
-      @JsonProperty("laneIndex") Integer laneIndex,
-      @JsonProperty("xPct") Float xPct,
-      @JsonProperty("yPct") Float yPct,
-      @JsonProperty("widthPct") Float widthPct,
-      @JsonProperty("heightPct") Float heightPct,
-      @JsonProperty("gateType") Integer gateType,
+      @JsonProperty("laneIndex") @JsonAlias("lane_index") Integer laneIndex,
+      @JsonProperty("xPct") @JsonAlias("x_pct") Float xPct,
+      @JsonProperty("yPct") @JsonAlias("y_pct") Float yPct,
+      @JsonProperty("widthPct") @JsonAlias("width_pct") Float widthPct,
+      @JsonProperty("heightPct") @JsonAlias("height_pct") Float heightPct,
+      @JsonProperty("gateType") @JsonAlias("gate_type") Integer gateType,
       @JsonProperty("sensitivity") Float sensitivity) {
     this.laneIndex = laneIndex != null ? laneIndex : 0;
     this.xPct = xPct != null ? xPct : 0.0f;

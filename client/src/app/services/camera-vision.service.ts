@@ -18,6 +18,13 @@ export interface CalibrationMotion {
   density: number;
 }
 
+export interface RegionOfInterest {
+  xPct: number;
+  yPct: number;
+  widthPct: number;
+  heightPct: number;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -245,6 +252,29 @@ export class CameraVisionService {
     this.ws.send(InterfaceEvent.encode(lap).finish());
   }
 
+  public sendGatesUpdate(
+    interfaceIndex: number,
+    gates: LaneDetectionGate[],
+  ): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    const protoGates = gates.map((g) => ({
+      laneIndex: g.laneIndex,
+      xPct: g.xPct,
+      yPct: g.yPct,
+      widthPct: g.widthPct,
+      heightPct: g.heightPct,
+      gateType: g.gateType ?? 0,
+      sensitivity: g.sensitivity ?? 0.5,
+    }));
+    const updateEvent = InterfaceEvent.create({
+      cameraGatesUpdate: {
+        interfaceIndex,
+        gates: protoGates,
+      },
+    });
+    this.ws.send(InterfaceEvent.encode(updateEvent).finish());
+  }
+
   // --- Computer Vision & Motion Detection ---
   public processFrame(
     video: HTMLVideoElement,
@@ -383,11 +413,17 @@ export class CameraVisionService {
     video: HTMLVideoElement,
     canvas: HTMLCanvasElement,
     bgPixels: Uint8ClampedArray | null,
+    roi?: RegionOfInterest | null,
   ): { envelope: CalibrationMotion | null; currentBg: Uint8ClampedArray } {
-    const vidW = video.videoWidth;
-    const vidH = video.videoHeight;
-    canvas.width = Math.min(320, vidW);
-    canvas.height = Math.min(180, vidH);
+    const vidW = video.videoWidth || 640;
+    const vidH = video.videoHeight || 480;
+    if (vidH > vidW) {
+      canvas.width = 180;
+      canvas.height = 320;
+    } else {
+      canvas.width = 320;
+      canvas.height = 180;
+    }
 
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) {
@@ -407,53 +443,218 @@ export class CameraVisionService {
       return { envelope: null, currentBg: newBg };
     }
 
-    let minX = canvas.width;
-    let maxX = 0;
-    let minY = canvas.height;
-    let maxY = 0;
-    let diffCount = 0;
+    return this.analyzeCalibrationGrid(
+      pixels,
+      bgPixels,
+      canvas.width,
+      canvas.height,
+      roi,
+    );
+  }
 
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        const idx = (y * canvas.width + x) * 4;
+  private analyzeCalibrationGrid(
+    pixels: Uint8ClampedArray,
+    bgPixels: Uint8ClampedArray,
+    width: number,
+    height: number,
+    roi?: RegionOfInterest | null,
+  ): { envelope: CalibrationMotion | null; currentBg: Uint8ClampedArray } {
+    const blockSize = 10;
+    const cols = Math.ceil(width / blockSize);
+    const rows = Math.ceil(height / blockSize);
+    const { blockCounts, totalDiff } = this.computeBlockDifferences(
+      pixels,
+      bgPixels,
+      width,
+      height,
+      blockSize,
+      cols,
+      roi,
+    );
+
+    const stats = this.findActiveBlockBounds(blockCounts, cols, rows);
+    const totalBlocks = cols * rows;
+
+    if (stats.activeCount < 2) {
+      this.adaptBackgroundAll(pixels, bgPixels);
+      return { envelope: null, currentBg: bgPixels };
+    }
+
+    const boxW = (stats.maxBx - stats.minBx + 1) * blockSize;
+    const boxH = (stats.maxBy - stats.minBy + 1) * blockSize;
+
+    // Reject motion that spans large portions of the screen (global lighting shift or large movement)
+    if (
+      boxW > width * 0.85 ||
+      boxH > height * 0.9 ||
+      stats.activeCount > totalBlocks * 0.5
+    ) {
+      if (stats.activeCount > totalBlocks * 0.5) {
+        bgPixels.set(pixels);
+      }
+      return { envelope: null, currentBg: bgPixels };
+    }
+
+    this.adaptBackgroundInactive(
+      pixels,
+      bgPixels,
+      blockCounts,
+      width,
+      height,
+      blockSize,
+      cols,
+      rows,
+    );
+
+    let minX = Math.max(0, (stats.minBx * blockSize) / width);
+    let maxX = Math.min(1.0, ((stats.maxBx + 1) * blockSize) / width);
+    let minY = Math.max(0, (stats.minBy * blockSize) / height);
+    let maxY = Math.min(1.0, ((stats.maxBy + 1) * blockSize) / height);
+
+    if (roi) {
+      minX = Math.max(roi.xPct, minX);
+      maxX = Math.min(roi.xPct + roi.widthPct, maxX);
+      minY = Math.max(roi.yPct, minY);
+      maxY = Math.min(roi.yPct + roi.heightPct, maxY);
+    }
+
+    return {
+      envelope: {
+        minX,
+        maxX,
+        minY,
+        maxY,
+        density: totalDiff / (width * height),
+      },
+      currentBg: bgPixels,
+    };
+  }
+
+  private computeBlockDifferences(
+    pixels: Uint8ClampedArray,
+    bgPixels: Uint8ClampedArray,
+    width: number,
+    height: number,
+    blockSize: number,
+    cols: number,
+    roi?: RegionOfInterest | null,
+  ): { blockCounts: Uint16Array; totalDiff: number } {
+    const rows = Math.ceil(height / blockSize);
+    const blockCounts = new Uint16Array(cols * rows);
+    let totalDiff = 0;
+
+    const roiMinX = roi ? Math.floor(roi.xPct * width) : 0;
+    const roiMaxX = roi ? Math.ceil((roi.xPct + roi.widthPct) * width) : width;
+    const roiMinY = roi ? Math.floor(roi.yPct * height) : 0;
+    const roiMaxY = roi
+      ? Math.ceil((roi.yPct + roi.heightPct) * height)
+      : height;
+
+    for (let y = 0; y < height; y++) {
+      if (y < roiMinY || y >= roiMaxY) continue;
+      const by = Math.floor(y / blockSize);
+      const rowOffset = y * width;
+      for (let x = 0; x < width; x++) {
+        if (x < roiMinX || x >= roiMaxX) continue;
+        const idx = (rowOffset + x) * 4;
         const diff =
           (Math.abs(pixels[idx] - bgPixels[idx]) +
             Math.abs(pixels[idx + 1] - bgPixels[idx + 1]) +
             Math.abs(pixels[idx + 2] - bgPixels[idx + 2])) /
           3;
 
-        bgPixels[idx] = Math.round(0.95 * bgPixels[idx] + 0.05 * pixels[idx]);
-        bgPixels[idx + 1] = Math.round(
-          0.95 * bgPixels[idx + 1] + 0.05 * pixels[idx + 1],
-        );
-        bgPixels[idx + 2] = Math.round(
-          0.95 * bgPixels[idx + 2] + 0.05 * pixels[idx + 2],
-        );
-
-        if (diff > 25) {
-          diffCount++;
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
+        if (diff > 30) {
+          totalDiff++;
+          const bx = Math.floor(x / blockSize);
+          blockCounts[by * cols + bx]++;
         }
       }
     }
+    return { blockCounts, totalDiff };
+  }
 
-    const density = diffCount / (canvas.width * canvas.height);
-    if (density > 0.04 && maxX > minX && maxY > minY) {
-      return {
-        envelope: {
-          minX: minX / canvas.width,
-          maxX: maxX / canvas.width,
-          minY: minY / canvas.height,
-          maxY: maxY / canvas.height,
-          density,
-        },
-        currentBg: bgPixels,
-      };
+  private findActiveBlockBounds(
+    blockCounts: Uint16Array,
+    cols: number,
+    rows: number,
+  ): {
+    activeCount: number;
+    minBx: number;
+    maxBx: number;
+    minBy: number;
+    maxBy: number;
+  } {
+    let minBx = cols;
+    let maxBx = -1;
+    let minBy = rows;
+    let maxBy = -1;
+    let activeCount = 0;
+
+    for (let by = 0; by < rows; by++) {
+      for (let bx = 0; bx < cols; bx++) {
+        const b = by * cols + bx;
+        if (blockCounts[b] >= 18) {
+          activeCount++;
+          if (bx < minBx) minBx = bx;
+          if (bx > maxBx) maxBx = bx;
+          if (by < minBy) minBy = by;
+          if (by > maxBy) maxBy = by;
+        }
+      }
     }
-    return { envelope: null, currentBg: bgPixels };
+    return { activeCount, minBx, maxBx, minBy, maxBy };
+  }
+
+  private adaptBackgroundAll(
+    pixels: Uint8ClampedArray,
+    bgPixels: Uint8ClampedArray,
+  ): void {
+    for (let i = 0; i < pixels.length; i += 4) {
+      bgPixels[i] = Math.round(0.95 * bgPixels[i] + 0.05 * pixels[i]);
+      bgPixels[i + 1] = Math.round(
+        0.95 * bgPixels[i + 1] + 0.05 * pixels[i + 1],
+      );
+      bgPixels[i + 2] = Math.round(
+        0.95 * bgPixels[i + 2] + 0.05 * pixels[i + 2],
+      );
+    }
+  }
+
+  private adaptBackgroundInactive(
+    pixels: Uint8ClampedArray,
+    bgPixels: Uint8ClampedArray,
+    blockCounts: Uint16Array,
+    width: number,
+    height: number,
+    blockSize: number,
+    cols: number,
+    rows: number,
+  ): void {
+    for (let by = 0; by < rows; by++) {
+      for (let bx = 0; bx < cols; bx++) {
+        if (blockCounts[by * cols + bx] < 18) {
+          const startY = by * blockSize;
+          const endY = Math.min(height, startY + blockSize);
+          const startX = bx * blockSize;
+          const endX = Math.min(width, startX + blockSize);
+          for (let y = startY; y < endY; y++) {
+            const rowOffset = y * width;
+            for (let x = startX; x < endX; x++) {
+              const idx = (rowOffset + x) * 4;
+              bgPixels[idx] = Math.round(
+                0.95 * bgPixels[idx] + 0.05 * pixels[idx],
+              );
+              bgPixels[idx + 1] = Math.round(
+                0.95 * bgPixels[idx + 1] + 0.05 * pixels[idx + 1],
+              );
+              bgPixels[idx + 2] = Math.round(
+                0.95 * bgPixels[idx + 2] + 0.05 * pixels[idx + 2],
+              );
+            }
+          }
+        }
+      }
+    }
   }
 
   // --- Feedback ---

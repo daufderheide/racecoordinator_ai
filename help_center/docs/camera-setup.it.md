@@ -89,8 +89,50 @@ Poiché Apple WebKit impone il contesto sicuro senza possibilità di eccezioni t
 6. Aprire Safari o Chrome su iOS e connettersi all'indirizzo sicuro `https://...`.
 
 ### Metodo 2: Tunnel HTTPS Sicuro (Test Rapido)
-1. Avviare **ngrok** sul computer principale: `ngrok http 4200`
-2. Aprire l'URL `https://...` generato sul proprio iPhone. Essendo dotato di certificato valido a livello globale, iOS richiederà subito l'autorizzazione all'uso della fotocamera.
+Per testare un iPhone senza installare certificati SSL locali, un tunnel HTTPS fornisce un indirizzo pubblico affidabile:
+
+#### Opzione A: LocalTunnel (Nessuna registrazione richiesta)
+Eseguire direttamente dal terminale senza creare un account:
+```bash
+npx -y localtunnel --port 4200
+```
+Aprire il link generato `https://...loca.lt` sul proprio iPhone.
+
+#### Opzione B: Tunnel SSH nativo (Nessuna installazione né registrazione)
+Utilizzare il comando SSH già incluso nel sistema:
+```bash
+ssh -R 80:localhost:4200 localhost.run
+```
+Copiare l'indirizzo `https://...` mostrato nel terminale e aprirlo sull'iPhone.
+
+#### Opzione C: ngrok (Richiede account gratuito)
+ngrok richiede un account e un token di autenticazione:
+1. Registrarsi gratuitamente su [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup).
+2. Aggiungere il token:
+   ```bash
+   npx ngrok config add-authtoken <IL_TUO_TOKEN>
+   ```
+3. Avviare il tunnel:
+   ```bash
+   npx ngrok http 4200
+   ```
+4. Aprire l'URL `https://...ngrok-free.app` sul proprio iPhone.
+
+### Metodo 3: Fotocamera Continuity Wireless di Apple (macOS + iPhone)
+Se il computer principale è un Mac e si desidera usare un iPhone come fotocamera da pista, è possibile sfruttare la funzione integrata **Fotocamera Continuity (Continuity Camera)** di Apple. Funziona **completamente senza fili**, senza bisogno di cavi:
+
+1. **Verificare Apple ID e connettività wireless**:
+   - Assicurarsi che Mac e iPhone abbiano effettuato l'accesso con lo stesso Apple ID (con autenticazione a due fattori).
+   - Tenere attivi **Wi-Fi** e **Bluetooth** su entrambi i dispositivi.
+   - Sull'iPhone, verificare in **Impostazioni** > **Generali** > **AirPlay e Continuity** che **Fotocamera Continuity** sia attiva.
+2. **Montare l'iPhone sulla pista**:
+   - Posizionare l'iPhone orizzontalmente sopra la linea del traguardo con la fotocamera posteriore rivolta verso il basso.
+   - Bloccare lo schermo dell'iPhone. Non serve alcun cavo (un cavo è utile solo per mantenere la ricarica durante sessioni prolungate).
+3. **Avviare l'interfaccia localmente sul Mac**:
+   - Nell'Editor Tracciato sul Mac, fare clic su **Prova su questo dispositivo** (oppure aprire `http://localhost:4200/camera_interface`).
+   - Essendo `localhost` un contesto protetto, il browser consente l'accesso alla fotocamera senza certificati SSL né flag.
+   - Nelle impostazioni video del browser o di macOS, selezionare la **Fotocamera iPhone**. Il flusso video wireless verrà agganciato automaticamente.
+4. **Portata wireless**: La Fotocamera Continuity utilizza un collegamento diretto peer-to-peer (portata tipica circa 10 metri nella stessa stanza). Se il Mac si trova in un'altra stanza lontana, utilizzare il **Metodo 1 (HTTPS locale)**, il **Metodo 2 (Tunnel HTTPS)** o uno smartphone Android tramite la rete Wi-Fi normale.
 
 ---
 

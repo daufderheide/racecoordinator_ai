@@ -89,8 +89,50 @@ Omdat Apple WebKit de beveiligde context afdwingt op alle browsers op iOS zonder
 6. Open Safari of Chrome op iOS en navigeer naar het HTTPS-adres.
 
 ### Methode 2: Veilige HTTPS-tunnel (Snelste voor testen)
-1. Start **ngrok** op uw hoofdcomputer: `ngrok http 4200`
-2. Open de gegenereerde `https://...`-URL op uw iPhone. Omdat dit een officieel vertrouwd SSL-certificaat bevat, vraagt iOS direct om cameratoegang.
+Om een iPhone zonder lokale SSL-certificaten te testen, genereert een HTTPS-tunnel een openbaar vertrouwde HTTPS-verbinding:
+
+#### Optie A: LocalTunnel (Geen registratie vereist)
+Start direct via de terminal zonder account:
+```bash
+npx -y localtunnel --port 4200
+```
+Open de gegenereerde `https://...loca.lt`-koppeling op uw iPhone.
+
+#### Optie B: Ingebouwde SSH-tunnel (Geen installatie of registratie)
+Gebruik het standaard SSH-commando op het systeem:
+```bash
+ssh -R 80:localhost:4200 localhost.run
+```
+Kopieer het getoonde `https://...`-adres naar uw iPhone.
+
+#### Optie C: ngrok (Gratis account vereist)
+ngrok vereist een account en autorisatietoken:
+1. Maak een gratis account aan op [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup).
+2. Voeg uw token toe:
+   ```bash
+   npx ngrok config add-authtoken <UW_TOKEN>
+   ```
+3. Start de tunnel:
+   ```bash
+   npx ngrok http 4200
+   ```
+4. Open de gegenereerde `https://...ngrok-free.app`-koppeling op uw iPhone.
+
+### Methode 3: Draadloze Apple Continuïteitscamera (macOS + iPhone)
+Als uw hoofdcomputer een Mac is en u een iPhone als baancamera wilt gebruiken, kunt u gebruikmaken van Apples ingebouwde **Continuïteitscamera (Continuity Camera)**. Dit werkt **volledig draadloos**, zonder dat er een kabel aangesloten hoeft te zijn:
+
+1. **Apple ID en draadloze verbinding controleren**:
+   - Zorg dat Mac en iPhone zijn ingelogd met dezelfde Apple ID (met twee-factor-authenticatie).
+   - Schakel **Wifi** en **Bluetooth** in op beide apparaten.
+   - Controleer op de iPhone onder **Instellingen** > **Algemeen** > **AirPlay en Continuïteit** of **Continuïteitscamera** is ingeschakeld.
+2. **iPhone boven de baan monteren**:
+   - Plaats de iPhone liggend boven de start/finishlijn met de achtercamera omlaag gericht.
+   - Vergrendel het scherm van de iPhone. Er is geen kabel nodig (een laadkabel is alleen handig bij lange races).
+3. **Interface lokaal starten op de Mac**:
+   - Klik in de Baanbewerker op de Mac op **Testen op dit apparaat** (of open `http://localhost:4200/camera_interface`).
+   - Omdat `localhost` een beveiligde context is, staat de browser cameratoegang direct toe zonder SSL-certificaten of flags.
+   - Selecteer in de camerabesturing van uw browser of macOS uw **iPhone-camera**. macOS brengt de draadloze videoverbinding automatisch tot stand.
+4. **Draadloos bereik**: Continuïteitscamera werkt via een directe peer-to-peer-verbinding (bereik ca. 10 meter in dezelfde ruimte). Bevindt de Mac zich in een andere kamer, gebruik dan **Methode 1 (lokale HTTPS)**, **Methode 2 (HTTPS-tunnel)** of een Android-apparaat via uw reguliere wifi.
 
 ---
 

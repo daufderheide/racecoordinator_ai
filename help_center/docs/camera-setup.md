@@ -108,15 +108,50 @@ This approach creates a locally trusted SSL certificate on your local network.
 6. Open Safari or Chrome on your iOS device and navigate to your secure URL (`https://192.168.1.150:8443`). Camera permissions will be prompted normally.
 
 ### Method 2: Secure HTTPS Tunnel (Fastest for Testing)
-If you want to test an iPhone without installing local certificates, use a secure tunnel utility:
+If you want to test an iPhone without installing local SSL certificates, use a secure HTTPS tunnel to provide a publicly trusted HTTPS address:
 
-1. Install and launch **ngrok**:
+#### Option A: LocalTunnel (No Signup Required)
+Run directly in your terminal without creating an account:
+```bash
+npx -y localtunnel --port 4200
+```
+Open the generated `https://...loca.lt` link on your iPhone.
+
+#### Option B: Built-in SSH Tunnel (Zero Install, Zero Signup)
+macOS includes native SSH tunneling out of the box:
+```bash
+ssh -R 80:localhost:4200 localhost.run
+```
+Copy the `https://...` address displayed in your terminal and open it on your iPhone.
+
+#### Option C: ngrok (Free Account Required)
+ngrok requires a free account and authentication token:
+1. Sign up for a free account at [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup).
+2. Add your authentication token:
    ```bash
-   ngrok http 4200
+   npx ngrok config add-authtoken <YOUR_AUTHTOKEN>
    ```
-2. Copy the generated public `https://` forwarding URL (e.g., `https://your-tunnel-id.ngrok-free.app`).
-3. Open the link on your iPhone in Safari or Chrome.
-4. Because the connection uses a globally trusted HTTPS certificate, iOS prompts for camera access immediately.
+3. Launch the tunnel:
+   ```bash
+   npx ngrok http 4200
+   ```
+4. Open the generated `https://...ngrok-free.app` URL on your iPhone. Because it provides a trusted SSL certificate, iOS will prompt for camera access immediately.
+
+### Method 3: Wireless Apple Continuity Camera (macOS + iPhone)
+If your primary race computer is a Mac and you want to use an iPhone as your track camera, you can use Apple's built-in **Continuity Camera**. This works **completely wirelessly** without needing a cable plugged in or installing third-party apps:
+
+1. **Verify Apple ID & Wireless Connectivity**:
+   - Ensure both your Mac and iPhone are signed in with the same Apple ID using Two-Factor Authentication.
+   - Make sure **Wi-Fi** and **Bluetooth** are turned **ON** on both your Mac and iPhone.
+   - On your iPhone, verify that **Settings** > **General** > **AirPlay & Continuity** > **Continuity Camera** is toggled **ON** (enabled by default on iOS 16+).
+2. **Mount the iPhone**:
+   - Mount your iPhone on a bridge or stand over the track in landscape orientation with the rear camera facing down at the start/finish line.
+   - Lock the iPhone screen. It operates completely untethered (a cable is only required if you want to keep the phone charged during long race sessions).
+3. **Launch the Interface Locally on your Mac**:
+   - In Race Coordinator AI on your Mac, navigate to **Track Editor** > **Camera Configuration** and click **Test on this Device** (or open `http://localhost:4200/camera_interface`).
+   - Because `localhost` is recognized as a Secure Context, your Mac's browser allows camera access without any SSL certificates or flags.
+   - When prompted for camera input (or in your browser/macOS camera settings), select your **iPhone Camera**. macOS automatically connects wirelessly and streams video directly from the phone.
+4. **Range Consideration**: Continuity Camera communicates via direct peer-to-peer Wi-Fi and Bluetooth between your Mac and iPhone (effective within normal room range, approximately 30 feet / 10 meters). If your Mac is located farther away in another room beyond direct wireless range, use **Method 1 (Local HTTPS)**, **Method 2 (HTTPS Tunnel)**, or an Android device over your standard Wi-Fi network.
 
 ---
 

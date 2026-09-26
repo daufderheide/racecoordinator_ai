@@ -465,7 +465,7 @@
           ) {
             <div class="interface-container" [id]="'interface-camera-' + i">
               <app-camera-editor
-                [config]="config"
+                [(config)]="cameraConfigs[i]"
                 [lanes]="lanes.length"
                 [isEditMode]="isEditMode"
                 [interfaceIndex]="

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { of, throwError } from "rxjs";
+import { of, Subject, throwError } from "rxjs";
 import { DataService } from "@app/data.service";
 import { CameraConfig } from "@app/models/camera_config";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
@@ -14,6 +14,7 @@ describe("CameraEditorComponent", () => {
   let mockTranslationService: jasmine.SpyObj<TranslationService>;
   let mockDataService: jasmine.SpyObj<DataService>;
   let mockHelpLinkService: jasmine.SpyObj<HelpLinkService>;
+  let interfaceEventsSubject: Subject<any>;
 
   const initialConfig: CameraConfig = {
     name: "Camera 1",
@@ -24,16 +25,45 @@ describe("CameraEditorComponent", () => {
   };
 
   beforeEach(async () => {
+    interfaceEventsSubject = new Subject<any>();
     mockHelpLinkService = jasmine.createSpyObj("HelpLinkService", ["openHelp"]);
     mockTranslationService = jasmine.createSpyObj("TranslationService", [
       "translate",
     ]);
     mockTranslationService.translate.and.callFake((key: string) => key);
 
-    mockDataService = jasmine.createSpyObj("DataService", ["getServerIp"], {
-      currentServerPort: 7070,
-    });
+    mockDataService = jasmine.createSpyObj(
+      "DataService",
+      [
+        "getServerIp",
+        "startCameraTunnel",
+        "getCameraTunnelStatus",
+        "getInterfaceEvents",
+      ],
+      {
+        currentServerPort: 7070,
+      },
+    );
+    mockDataService.getInterfaceEvents.and.returnValue(interfaceEventsSubject);
     mockDataService.getServerIp.and.returnValue(of("192.168.1.188"));
+    mockDataService.startCameraTunnel.and.returnValue(
+      of({
+        active: true,
+        url: "https://secure-tunnel.loca.lt",
+        localIp: "192.168.1.188",
+        port: 7070,
+        provider: "localtunnel",
+      }),
+    );
+    mockDataService.getCameraTunnelStatus.and.returnValue(
+      of({
+        active: true,
+        url: "https://secure-tunnel.loca.lt",
+        localIp: "192.168.1.188",
+        port: 7070,
+        provider: "localtunnel",
+      }),
+    );
 
     await TestBed.configureTestingModule({
       imports: [CameraEditorComponent, TranslatePipe],
@@ -75,6 +105,8 @@ describe("CameraEditorComponent", () => {
   });
 
   it("should ensure server IP during openQrModal if initially unset", async () => {
+    fixture.detectChanges();
+    component.useDirectWifi.set(true);
     mockDataService.getServerIp.and.returnValue(of("192.168.1.250"));
     (component as any).serverIp = "";
     await component.openQrModal();
@@ -282,18 +314,83 @@ describe("CameraEditorComponent", () => {
     expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
   });
 
-  it("should call openHelp when Learn More button is clicked in pairing card", () => {
+  it("should call openHelp when Learn More button is clicked in setup card", () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     const learnMoreBtn = compiled.querySelector(
-      "#cameraLearnMoreBtn",
+      "#cameraLocalHelpBtn",
     ) as HTMLButtonElement;
     expect(learnMoreBtn).toBeTruthy();
     learnMoreBtn.click();
     expect(mockHelpLinkService.openHelp).toHaveBeenCalledWith("camera-setup");
   });
 
+  it("should switch connection mode between local and remote", () => {
+    fixture.detectChanges();
+    spyOn(component.change, "emit");
+
+    component.setConnectionType("remote");
+    fixture.detectChanges();
+    expect(component.config().connectionType).toBe("remote");
+    expect(component.change.emit).toHaveBeenCalled();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const pairBtn = compiled.querySelector(
+      "#pairCameraBtn",
+    ) as HTMLButtonElement;
+    expect(pairBtn).toBeTruthy();
+
+    const localBtn = compiled.querySelector(
+      "#btnModeLocal",
+    ) as HTMLButtonElement;
+    localBtn.click();
+    fixture.detectChanges();
+    expect(component.config().connectionType).toBe("local");
+  });
+
+  it("should open standalone window with local interface URL", () => {
+    spyOn(window, "open");
+    component.openStandaloneWindow();
+    expect(window.open).toHaveBeenCalledWith(
+      component.getLocalInterfaceUrl(),
+      "_blank",
+    );
+  });
+
+  it("should start tunnel and render secure QR code when openQrModal is called", async () => {
+    fixture.detectChanges();
+    await component.openQrModal();
+    fixture.detectChanges();
+
+    expect(mockDataService.startCameraTunnel).toHaveBeenCalled();
+    expect(component.tunnelActive()).toBe(true);
+    expect(component.tunnelUrl()).toBe("https://secure-tunnel.loca.lt");
+    expect(component.pairingUrl()).toContain(
+      "https://secure-tunnel.loca.lt/camera_interface",
+    );
+    expect(component.qrCodeDataUrl()).toBeTruthy();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector(".badge-success")).toBeTruthy();
+  });
+
+  it("should toggle tunnel mode between secure tunnel and direct local Wi-Fi", async () => {
+    fixture.detectChanges();
+    await component.openQrModal();
+    expect(component.tunnelActive()).toBe(true);
+
+    await component.toggleTunnelMode();
+    expect(component.useDirectWifi()).toBe(true);
+    expect(component.tunnelActive()).toBe(false);
+    expect(component.pairingUrl()).toContain("192.168.1.188");
+
+    await component.toggleTunnelMode();
+    expect(component.useDirectWifi()).toBe(false);
+    expect(component.tunnelActive()).toBe(true);
+  });
+
   it("should call openHelp when help link is clicked in QR modal", async () => {
+    fixture.detectChanges();
     await component.openQrModal();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
@@ -316,5 +413,127 @@ describe("CameraEditorComponent", () => {
     expect(component.config().gates.length).toBe(2);
     expect(component.pairingUrl()).toContain("lanes=2");
     expect(component.getLocalInterfaceUrl()).toContain("lanes=2");
+  });
+
+  it("should synchronize gates from remote CameraGatesUpdateEvent", () => {
+    fixture.detectChanges();
+    let changeEmitted = false;
+    component.change.subscribe(() => {
+      changeEmitted = true;
+    });
+
+    const newGates = [
+      {
+        laneIndex: 0,
+        xPct: 0.1,
+        yPct: 0.2,
+        widthPct: 0.3,
+        heightPct: 0.4,
+        sensitivity: 0.85,
+        type: "lap",
+      },
+      {
+        laneIndex: 1,
+        xPct: 0.5,
+        yPct: 0.2,
+        widthPct: 0.3,
+        heightPct: 0.4,
+        sensitivity: 0.85,
+        type: "lap",
+      },
+    ];
+
+    interfaceEventsSubject.next({
+      cameraGatesUpdate: {
+        interfaceIndex: 0,
+        gates: newGates,
+      },
+    });
+
+    expect(component.syncedFromRemote()).toBe(true);
+    expect(changeEmitted).toBe(true);
+    expect(component.config().gates.length).toBe(2);
+    expect(component.config().gates[0].xPct).toBe(0.1);
+  });
+
+  it("should ignore CameraGatesUpdateEvent for a different interfaceIndex", () => {
+    fixture.detectChanges();
+    const originalGates = component.config().gates;
+
+    interfaceEventsSubject.next({
+      cameraGatesUpdate: {
+        interfaceIndex: 99,
+        gates: [],
+      },
+    });
+
+    expect(component.syncedFromRemote()).toBe(false);
+    expect(component.config().gates).toBe(originalGates);
+  });
+
+  it("should include gates query param in pairing URL", () => {
+    fixture.detectChanges();
+    expect(component.pairingUrl()).toContain("&gates=");
+    expect(component.getLocalInterfaceUrl()).toContain("&gates=");
+  });
+
+  it("should switch connection mode to remote, emit change, and update mode button active states", () => {
+    fixture.detectChanges();
+    let changeEmitted = false;
+    component.change.subscribe(() => {
+      changeEmitted = true;
+    });
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const btnRemote = compiled.querySelector(
+      "#btnModeRemote",
+    ) as HTMLButtonElement;
+    expect(btnRemote).toBeTruthy();
+    btnRemote.click();
+    fixture.detectChanges();
+
+    expect(changeEmitted).toBe(true);
+    expect(component.config().connectionType).toBe("remote");
+    expect(btnRemote.classList.contains("active")).toBe(true);
+
+    const btnLocal = compiled.querySelector(
+      "#btnModeLocal",
+    ) as HTMLButtonElement;
+    expect(btnLocal.classList.contains("active")).toBe(false);
+  });
+
+  it("should switch connection mode back to local, emit change, and update active state", () => {
+    fixture.componentRef.setInput("config", {
+      ...initialConfig,
+      connectionType: "remote",
+    });
+    fixture.detectChanges();
+
+    let changeEmitted = false;
+    component.change.subscribe(() => {
+      changeEmitted = true;
+    });
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const btnLocal = compiled.querySelector(
+      "#btnModeLocal",
+    ) as HTMLButtonElement;
+    btnLocal.click();
+    fixture.detectChanges();
+
+    expect(changeEmitted).toBe(true);
+    expect(component.config().connectionType).toBe("local");
+    expect(btnLocal.classList.contains("active")).toBe(true);
+  });
+
+  it("should not emit change or mutate config when clicking already active connection mode", () => {
+    fixture.detectChanges();
+    let changeCount = 0;
+    component.change.subscribe(() => {
+      changeCount++;
+    });
+
+    component.setConnectionType("local");
+    expect(changeCount).toBe(0);
   });
 });

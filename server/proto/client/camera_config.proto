@@ -21,4 +21,5 @@ message CameraInterfaceConfig {
   int32 target_fps = 3;             // Default: 60
   bool auto_detect_lanes = 4;
   repeated LaneDetectionGate gates = 5;
+  string connection_type = 6; // "local" (default) or "remote"
 }

@@ -1226,6 +1226,120 @@ describe("TrackEditorComponent", () => {
       expect(component.cameraConfigs.length).toBe(1);
     }));
 
+    it("should detect camera config connectionType changes and save remote connection type", fakeAsync(() => {
+      const mockTrack = new Track({
+        entity_id: "track-cam-1",
+        name: "Cam Track",
+        lanes: [new Lane("lane-1", "#000000", "#ff0000", 50)],
+        camera_configs: [
+          {
+            name: "CAM1",
+            interfaceIndex: 0,
+            targetFps: 60,
+            autoDetectLanes: false,
+            gates: [
+              {
+                laneIndex: 0,
+                gateType: 0,
+                xPct: 0.1,
+                yPct: 0.38,
+                widthPct: 0.72,
+                heightPct: 0.25,
+                sensitivity: 0.5,
+              },
+            ],
+            connectionType: "local",
+          },
+        ],
+      });
+      dataService.getTracks.and.returnValue(of([mockTrack]));
+      dataService.updateTrack.and.callFake((_id: string, payload: any) =>
+        of(payload),
+      );
+
+      component.selectTrack(mockTrack);
+      tick();
+
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.cameraConfigs[0].connectionType).toBe("local");
+
+      // Change connection type to remote
+      component.cameraConfigs[0].connectionType = "remote";
+      component.onCameraConfigChange();
+      tick();
+
+      expect(dataService.updateTrack).toHaveBeenCalled();
+      const updatedPayload = dataService.updateTrack.calls.mostRecent().args[1];
+      expect(updatedPayload.camera_configs[0].connectionType).toBe("remote");
+    }));
+
+    it("should keep view mode clean and not trigger unsaved changes when selecting camera track", fakeAsync(() => {
+      component.isEditMode = false;
+      const cameraTrack = new Track({
+        entity_id: "cam-track-view",
+        name: "Camera Track View",
+        lanes: [
+          new Lane("l1", "#ff0000", "black", 50),
+          new Lane("l2", "#ffffff", "black", 50),
+        ],
+        camera_configs: [
+          {
+            name: "Camera 1",
+            interfaceIndex: 0,
+            targetFps: 60,
+            autoDetectLanes: false,
+            gates: [
+              {
+                laneIndex: 0,
+                xPct: 0.1,
+                yPct: 0.38,
+                widthPct: 0.18,
+                heightPct: 0.25,
+                gateType: 0,
+                sensitivity: 0.5,
+              },
+              {
+                laneIndex: 1,
+                xPct: 0.3,
+                yPct: 0.38,
+                widthPct: 0.18,
+                heightPct: 0.25,
+                gateType: 0,
+                sensitivity: 0.5,
+              },
+              {
+                laneIndex: 2,
+                xPct: 0.5,
+                yPct: 0.38,
+                widthPct: 0.18,
+                heightPct: 0.25,
+                gateType: 0,
+                sensitivity: 0.5,
+              },
+              {
+                laneIndex: 3,
+                xPct: 0.7,
+                yPct: 0.38,
+                widthPct: 0.18,
+                heightPct: 0.25,
+                gateType: 0,
+                sensitivity: 0.5,
+              },
+            ],
+            connectionType: "local",
+          },
+        ],
+      });
+      component.allTracks = [MOCK_TRACK_INSTANCES[0], cameraTrack];
+      component.onSelectTrackById("cam-track-view");
+      tick();
+
+      expect(component.isEditMode).toBeFalse();
+      expect(component.isDirtyState()).toBeFalse();
+      expect(component.hasChanges()).toBeFalse();
+      expect(component.showDiscardConfirm).toBeFalse();
+    }));
+
     it("should toggle sections correctly", () => {
       component.sectionsExpanded["lanes"] = true;
       component.toggleSection("lanes");

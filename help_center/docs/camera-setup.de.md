@@ -106,12 +106,50 @@ Erstellt ein lokal vertrauenswürdiges SSL-Zertifikat in Ihrem Heimnetzwerk.
 6. Öffnen Sie Safari oder Chrome auf dem iPhone und rufen Sie die HTTPS-Adresse auf (`https://192.168.1.150:8443`).
 
 ### Methode 2: Sicherer HTTPS-Tunnel (Schnellste Testmethode)
-1. Starten Sie **ngrok** auf Ihrem Haupt-PC:
+Um ein iPhone ohne lokale SSL-Zertifikate zu testen, stellt ein HTTPS-Tunnel eine öffentlich vertrauenswürdige HTTPS-Adresse bereit:
+
+#### Option A: LocalTunnel (Keine Registrierung erforderlich)
+Starten Sie das Tool direkt ohne Konto:
+```bash
+npx -y localtunnel --port 4200
+```
+Öffnen Sie den generierten `https://...loca.lt`-Link auf Ihrem iPhone.
+
+#### Option B: Integrierter SSH-Tunnel (Keine Installation, keine Registrierung)
+Nutzen Sie den systemweiten SSH-Befehl:
+```bash
+ssh -R 80:localhost:4200 localhost.run
+```
+Kopieren Sie die im Terminal angezeigte `https://...`-Adresse auf Ihr iPhone.
+
+#### Option C: ngrok (Kostenloses Konto erforderlich)
+ngrok verlangt ein kostenloses Konto und einen Autorisierungs-Token:
+1. Registrieren Sie sich kostenlos unter [dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup).
+2. Hinterlegen Sie Ihren Token:
    ```bash
-   ngrok http 4200
+   npx ngrok config add-authtoken <IHR_TOKEN>
    ```
-2. Rufen Sie die generierte `https://...`-Adresse auf Ihrem iPhone auf.
-3. Da ngrok ein weltweit gültiges SSL-Zertifikat verwendet, fragt iOS sofort nach der Kameraberechtigung.
+3. Tunnel starten:
+   ```bash
+   npx ngrok http 4200
+   ```
+4. Öffnen Sie die generierte `https://...ngrok-free.app`-Adresse auf Ihrem iPhone.
+
+### Methode 3: Drahtlose Apple Integrationskamera (macOS + iPhone)
+Wenn Ihr Hauptcomputer ein Mac ist und Sie ein iPhone als Streckenkamera verwenden möchten, können Sie Apples integrierte **Integrationskamera (Continuity Camera)** nutzen. Dies funktioniert **vollständig drahtlos**, ohne dass ein Kabel angeschlossen sein muss:
+
+1. **Apple-ID und drahtlose Verbindung prüfen**:
+   - Stellen Sie sicher, dass Mac und iPhone mit derselben Apple-ID angemeldet sind (Zwei-Faktor-Authentifizierung aktiv).
+   - Aktivieren Sie **WLAN** und **Bluetooth** auf beiden Geräten.
+   - Prüfen Sie auf dem iPhone unter **Einstellungen** > **Allgemein** > **AirPlay & Continuity**, dass **Integrationskamera** aktiviert ist.
+2. **iPhone an der Bahn montieren**:
+   - Befestigen Sie das iPhone quer über der Start/Ziel-Linie, sodass die Rückkamera nach unten zeigt.
+   - Sperren Sie den iPhone-Bildschirm. Es wird kein Kabel benötigt (ein Ladekabel ist nur bei längeren Rennveranstaltungen ratsam).
+3. **Schnittstelle lokal auf dem Mac starten**:
+   - Klicken Sie im Strecken-Editor auf **Auf diesem Gerät testen** (oder öffnen Sie `http://localhost:4200/camera_interface`).
+   - Da `localhost` ein sicherer Kontext ist, erlaubt der Mac-Browser den Kamerazugriff ohne Zertifikate oder Flags.
+   - Wählen Sie in den Kameraeinstellungen Ihres Browsers oder von macOS Ihre **iPhone-Kamera** aus. macOS stellt die drahtlose Videoverbindung automatisch her.
+4. **Reichweite**: Die Integrationskamera nutzt eine direkte Peer-to-Peer-Verbindung (Reichweite ca. 10 Meter im selben Raum). Befindet sich der Mac in einem anderen Raum, nutzen Sie **Methode 1 (lokales HTTPS)**, **Methode 2 (Tunnel)** oder ein Android-Gerät über das normale WLAN.
 
 ---
 

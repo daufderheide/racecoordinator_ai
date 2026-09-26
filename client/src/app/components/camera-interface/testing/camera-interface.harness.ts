@@ -29,6 +29,12 @@ export class CameraInterfaceHarness
   protected getAutoSnapBtn = this.locatorForOptional(
     CameraInterfaceHarnessBase.selectors.autoSnapBtn,
   );
+  protected getSaveGatesBtn = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.saveGatesBtn,
+  );
+  protected getSavedToastEl = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.savedToast,
+  );
   protected getFlipBtn = this.locatorForOptional(
     CameraInterfaceHarnessBase.selectors.flipBtn,
   );
@@ -52,6 +58,21 @@ export class CameraInterfaceHarness
   );
   protected getAutoSnapSkipBtn = this.locatorForOptional(
     CameraInterfaceHarnessBase.selectors.autoSnapSkipBtn,
+  );
+  protected getAutoSplitBtn = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.autoSplitBtn,
+  );
+  protected getCalibrateCarBtn = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.calibrateCarBtn,
+  );
+  protected getSplitRowsBtn = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.splitRowsBtn,
+  );
+  protected getSplitColsBtn = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.splitColsBtn,
+  );
+  protected getFinishLineZoneGroup = this.locatorForOptional(
+    CameraInterfaceHarnessBase.selectors.finishLineZoneGroup,
   );
   protected getCameraErrorCard = this.locatorForOptional(
     CameraInterfaceHarnessBase.selectors.cameraErrorCard,
@@ -119,8 +140,65 @@ export class CameraInterfaceHarness
     }
   }
 
+  async isSaveGatesVisible(): Promise<boolean> {
+    return (await this.getSaveGatesBtn()) !== null;
+  }
+
+  async clickSaveGates(): Promise<void> {
+    const btn = await this.getSaveGatesBtn();
+    if (btn) {
+      await btn.click();
+    }
+  }
+
+  async isSavedToastVisible(): Promise<boolean> {
+    return (await this.getSavedToastEl()) !== null;
+  }
+
   async isAutoSnapOpen(): Promise<boolean> {
     return (await this.getAutoSnapCard()) !== null;
+  }
+
+  async isFinishLineZoneVisible(): Promise<boolean> {
+    return (await this.getFinishLineZoneGroup()) !== null;
+  }
+
+  async clickAutoSplit(): Promise<void> {
+    const btn = await this.getAutoSplitBtn();
+    if (btn) {
+      await btn.click();
+    }
+  }
+
+  async clickCalibrateCar(): Promise<void> {
+    const btn = await this.getCalibrateCarBtn();
+    if (btn) {
+      await btn.click();
+    }
+  }
+
+  async clickSplitRows(): Promise<void> {
+    const btn = await this.getSplitRowsBtn();
+    if (btn) {
+      await btn.click();
+    }
+  }
+
+  async clickSplitCols(): Promise<void> {
+    const btn = await this.getSplitColsBtn();
+    if (btn) {
+      await btn.click();
+    }
+  }
+
+  async isSplitRowsSelected(): Promise<boolean> {
+    const btn = await this.getSplitRowsBtn();
+    return btn ? await btn.hasClass("active") : false;
+  }
+
+  async isSplitColsSelected(): Promise<boolean> {
+    const btn = await this.getSplitColsBtn();
+    return btn ? await btn.hasClass("active") : false;
   }
 
   async clickAutoSnapCancel(): Promise<void> {

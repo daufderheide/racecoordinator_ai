@@ -26,7 +26,8 @@ public class HeatScoring {
     None,
     Allow,
     SingleLap,
-    NoneAutoSegments
+    NoneAutoSegments,
+    SingleLapAutoSegments
   }
 
   @JsonProperty("finish_method")
