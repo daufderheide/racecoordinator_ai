@@ -66,7 +66,9 @@ describe("AudioSelectorComponent", () => {
       "uploadAsset",
       "computeFileHash",
       "findAssetByHash",
+      "listAssets",
     ]);
+    mockDataService.listAssets.and.returnValue(of([]));
     mockDataService.computeFileHash.and.returnValue(
       Promise.resolve("audio-hash-1234"),
     );
@@ -1304,6 +1306,204 @@ describe("AudioSelectorComponent", () => {
       // Switch to Preset -> restores default_beep
       component.onTypeChange("preset");
       expect(component.effectiveUrl()).toBe("default_beep");
+    });
+  });
+
+  describe("Audio set selection and prefix collision handling", () => {
+    it("should resolve default_countdown to Default Countdown audio set instead of default_countdown_go preset", () => {
+      const mockAssets = [
+        {
+          id: "default_countdown_go",
+          name: "Countdown Go",
+          type: "audio",
+          url: "/assets/default_countdown_go_Countdown_Go",
+        },
+        {
+          id: "default_countdown",
+          name: "Default Countdown",
+          type: "audio_set",
+          url: "/assets/default_countdown_5_Countdown_5",
+          audioEntries: [
+            {
+              url: "/assets/default_countdown_5_Countdown_5",
+              timeSeconds: 5,
+              name: "Countdown 5",
+              type: "preset",
+            },
+            {
+              url: "/assets/default_countdown_go_Countdown_Go",
+              timeSeconds: 0,
+              name: "Countdown Go",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("mode", "set");
+      fixture.componentRef.setInput("type", "audio_set");
+      fixture.componentRef.setInput("url", "default_countdown");
+      fixture.componentRef.setInput("assetId", "default_countdown");
+      fixture.componentRef.setInput("assets", mockAssets);
+      fixture.detectChanges();
+
+      expect(component.selectedAsset()?.name).toBe("Default Countdown");
+      expect(component.selectedAsset()?.id).toBe("default_countdown");
+      expect(component.selectedAssetName()).toBe("Default Countdown");
+    });
+
+    it("should resolve default_seconds_left to Default Seconds Left audio set instead of default_seconds_left_300 preset", () => {
+      const mockAssets = [
+        {
+          id: "default_seconds_left_300",
+          name: "Seconds Left -- 5 Minutes",
+          type: "audio",
+          url: "/assets/default_seconds_left_300_Seconds_Left_--_5_Minutes",
+        },
+        {
+          id: "default_seconds_left",
+          name: "Default Seconds Left",
+          type: "audio_set",
+          url: "/assets/default_seconds_left_300_Seconds_Left_--_5_Minutes",
+          audioEntries: [
+            {
+              url: "/assets/default_seconds_left_300_Seconds_Left_--_5_Minutes",
+              timeSeconds: 300,
+              name: "5 Minutes",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("mode", "set");
+      fixture.componentRef.setInput("type", "audio_set");
+      fixture.componentRef.setInput("url", "default_seconds_left");
+      fixture.componentRef.setInput("assetId", "default_seconds_left");
+      fixture.componentRef.setInput("assets", mockAssets);
+      fixture.detectChanges();
+
+      expect(component.selectedAsset()?.name).toBe("Default Seconds Left");
+      expect(component.selectedAsset()?.id).toBe("default_seconds_left");
+      expect(component.selectedAssetName()).toBe("Default Seconds Left");
+    });
+
+    it("should play audio set entries when play() is called in audio_set mode", async () => {
+      const mockAssets = [
+        {
+          id: "default_countdown",
+          name: "Default Countdown",
+          type: "audio_set",
+          url: "/assets/default_countdown_5_Countdown_5",
+          audioEntries: [
+            {
+              url: "/assets/default_countdown_5_Countdown_5",
+              timeSeconds: 5,
+              name: "Countdown 5",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("mode", "set");
+      fixture.componentRef.setInput("type", "audio_set");
+      fixture.componentRef.setInput("url", "default_countdown");
+      fixture.componentRef.setInput("assets", mockAssets);
+      fixture.detectChanges();
+
+      const playUrlSpy = spyOn<any>(component, "playUrl").and.returnValue(
+        Promise.resolve(),
+      );
+
+      await (component as any).playAudioSet();
+
+      expect(playUrlSpy).toHaveBeenCalledWith(
+        "/assets/default_countdown_5_Countdown_5",
+      );
+    });
+
+    it("should support snake_case audio_entries and time_seconds", async () => {
+      const mockAssets = [
+        {
+          id: "default_countdown",
+          name: "Default Countdown",
+          type: "audio_set",
+          url: "/assets/default_countdown_5_Countdown_5",
+          audio_entries: [
+            {
+              url: "/assets/default_countdown_1_Countdown_1",
+              time_seconds: 1,
+              name: "Countdown 1",
+              type: "preset",
+            },
+          ],
+        },
+      ];
+
+      fixture.componentRef.setInput("mode", "set");
+      fixture.componentRef.setInput("type", "audio_set");
+      fixture.componentRef.setInput("url", "default_countdown");
+      fixture.componentRef.setInput("assets", mockAssets);
+      fixture.detectChanges();
+
+      const playUrlSpy = spyOn<any>(component, "playUrl").and.returnValue(
+        Promise.resolve(),
+      );
+
+      await (component as any).playAudioSet();
+
+      expect(playUrlSpy).toHaveBeenCalledWith(
+        "/assets/default_countdown_1_Countdown_1",
+      );
+    });
+
+    it("should fall back to selectedAsset url or assetId in playStandard when effectiveUrl is empty", async () => {
+      fixture.componentRef.setInput("type", "preset");
+      fixture.componentRef.setInput("url", "");
+      fixture.componentRef.setInput("assetId", "default_yellow_flag");
+      fixture.detectChanges();
+
+      const playUrlSpy = spyOn<any>(component, "playUrl").and.returnValue(
+        Promise.resolve(),
+      );
+
+      await (component as any).playStandard();
+
+      expect(playUrlSpy).toHaveBeenCalledWith("default_yellow_flag");
+    });
+
+    it("should fetch assets from dataService if not loaded in playAudioSet", async () => {
+      const mockAssets = [
+        {
+          id: "default_countdown",
+          name: "Default Countdown",
+          type: "audio_set",
+          audio_entries: [
+            {
+              url: "/assets/default_countdown_1_Countdown_1",
+              time_seconds: 1,
+            },
+          ],
+        },
+      ];
+      mockDataService.listAssets.and.returnValue(of(mockAssets));
+      fixture.componentRef.setInput("mode", "set");
+      fixture.componentRef.setInput("type", "audio_set");
+      fixture.componentRef.setInput("url", "default_countdown");
+      fixture.componentRef.setInput("assets", []);
+      fixture.detectChanges();
+
+      const playUrlSpy = spyOn<any>(component, "playUrl").and.returnValue(
+        Promise.resolve(),
+      );
+
+      await (component as any).playAudioSet();
+
+      expect(mockDataService.listAssets).toHaveBeenCalled();
+      expect(playUrlSpy).toHaveBeenCalledWith(
+        "/assets/default_countdown_1_Countdown_1",
+      );
     });
   });
 });

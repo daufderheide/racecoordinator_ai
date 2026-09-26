@@ -156,31 +156,69 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       if (apiIndex !== -1) {
         return u.substring(apiIndex);
       }
+      const assetsIndex = u.indexOf("/assets/");
+      if (assetsIndex !== -1) {
+        return u.substring(assetsIndex);
+      }
       return u;
     };
 
     const normalizedLookup = normalize(lookupValue);
 
-    return this.allAvailableAssets().find((a) => {
-      const id = a.model?.entityId || a.entity_id || a.id;
-      if (id && (id === lookupValue || id === targetIdOrUrl)) return true;
-      if (normalize(a.url) === normalizedLookup) return true;
+    const matchInList = (list: any[]) => {
+      // 1. Exact ID match (highest priority)
+      let match = list.find((a) => {
+        const id = a.model?.entityId || a.entity_id || a.id;
+        return id && (id === lookupValue || id === targetIdOrUrl);
+      });
+      if (match) return match;
+
+      // 2. Exact URL match
+      match = list.find(
+        (a) =>
+          (a.url && a.url === lookupValue) ||
+          (a.url && normalize(a.url) === normalizedLookup),
+      );
+      if (match) return match;
+
+      // 3. Fallback: filename match when lookupValue starts with /assets/
       if (
-        id &&
-        typeof lookupValue === "string" &&
-        a.url &&
-        a.url.startsWith(`/assets/${lookupValue}_`)
-      )
-        return true;
+        typeof normalizedLookup === "string" &&
+        normalizedLookup.startsWith("/assets/")
+      ) {
+        const pathPart = normalizedLookup.substring("/assets/".length);
+        match = list.find((a) => {
+          const id = a.model?.entityId || a.entity_id || a.id;
+          return id && (pathPart === id || pathPart.startsWith(`${id}_`));
+        });
+        if (match) return match;
+      }
+
+      // 4. Fallback: asset URL begins with /assets/<lookupValue>_ (only if asset ID matches lookupValue or has no conflicting ID)
       if (
-        typeof lookupValue === "string" &&
-        lookupValue.startsWith("/assets/") &&
-        id &&
-        lookupValue.startsWith(`/assets/${id}_`)
-      )
-        return true;
-      return false;
-    });
+        typeof normalizedLookup === "string" &&
+        !normalizedLookup.startsWith("/assets/")
+      ) {
+        match = list.find((a) => {
+          const id = a.model?.entityId || a.entity_id || a.id;
+          return (
+            a.url &&
+            a.url.startsWith(`/assets/${normalizedLookup}_`) &&
+            (!id || id === normalizedLookup)
+          );
+        });
+        if (match) return match;
+      }
+
+      return null;
+    };
+
+    // Prioritize mode-filtered assets (e.g. only audio sets when mode is "set")
+    const filteredMatch = matchInList(this.filteredAssets());
+    if (filteredMatch) return filteredMatch;
+
+    // Fall back to searching all available assets
+    return matchInList(this.allAvailableAssets());
   });
 
   selectedAssetName = computed(() => {
@@ -387,12 +425,13 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.previewAudio.pause();
       this.previewAudio = null;
     }
+    const previewEntries = item.audioEntries || item.audio_entries;
     if (
       item.type === "audio_set" &&
-      item.audioEntries &&
-      item.audioEntries.length > 0
+      previewEntries &&
+      previewEntries.length > 0
     ) {
-      this.playAudioSetEntries(item.audioEntries);
+      this.playAudioSetEntries(previewEntries);
       return;
     }
     const playContext = this.context() || mockTTSContext();
@@ -484,11 +523,43 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   private async playAudioSet() {
-    const asset = this.selectedAsset();
-    if (!asset || !asset.audioEntries || asset.audioEntries.length === 0) {
+    let asset = this.selectedAsset();
+    let entries = asset?.audioEntries || asset?.audio_entries;
+    if (!asset || !entries || entries.length === 0) {
+      if (
+        this.dataService?.listAssets &&
+        (!this.dataService.loadedAssets ||
+          this.dataService.loadedAssets.length === 0)
+      ) {
+        try {
+          const { firstValueFrom } = await import("rxjs");
+          const loadedAssets = await firstValueFrom(
+            this.dataService.listAssets(),
+          );
+          const lookupValue = this.assetId() || this.effectiveUrl();
+          if (lookupValue) {
+            asset = (loadedAssets || []).find((a: any) => {
+              const id = a.model?.entityId || a.entity_id || a.id;
+              return (
+                id === lookupValue ||
+                a.url === lookupValue ||
+                (typeof a.url === "string" &&
+                  a.url.startsWith(`/assets/${lookupValue}_`))
+              );
+            });
+            entries = asset?.audioEntries || asset?.audio_entries;
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    }
+    if (!asset || !entries || entries.length === 0) {
+      this.isPlaying = false;
+      this.cdr.detectChanges();
       return;
     }
-    await this.playAudioSetEntries(asset.audioEntries);
+    await this.playAudioSetEntries(entries);
   }
 
   private async playAudioSetEntries(entries: any[]) {
@@ -504,9 +575,21 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         return modeA === "elapsed" ? -1 : 1;
       }
       const valA =
-        Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
+        Number(
+          a.timeSeconds != null
+            ? a.timeSeconds
+            : a.time_seconds != null
+              ? a.time_seconds
+              : a.percentage,
+        ) || 0;
       const valB =
-        Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
+        Number(
+          b.timeSeconds != null
+            ? b.timeSeconds
+            : b.time_seconds != null
+              ? b.time_seconds
+              : b.percentage,
+        ) || 0;
       return modeA === "elapsed" ? valA - valB : valB - valA;
     });
 
@@ -535,14 +618,17 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     this.cdr.detectChanges();
 
     if (this.effectiveType() === "preset") {
-      this.playUrl(this.effectiveUrl())
+      const urlToPlay =
+        this.effectiveUrl() || this.selectedAsset()?.url || this.assetId();
+      this.playUrl(urlToPlay)
         .then(() => {
           if (this.currentPlaybackId === playbackId) {
             this.isPlaying = false;
             this.cdr.detectChanges();
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          this.logger.error("Error playing standard preset audio", err);
           if (this.currentPlaybackId === playbackId) {
             this.isPlaying = false;
             this.cdr.detectChanges();

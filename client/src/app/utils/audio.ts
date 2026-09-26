@@ -350,6 +350,28 @@ export const DEFAULT_AUDIO_URLS: Record<string, string> = {
   default_countdown_3: "/assets/default_countdown_3_Countdown_3",
   default_countdown_4: "/assets/default_countdown_4_Countdown_4",
   default_countdown_5: "/assets/default_countdown_5_Countdown_5",
+  default_seconds_left_300:
+    "/assets/default_seconds_left_300_Seconds_Left_--_5_Minutes",
+  default_seconds_left_240:
+    "/assets/default_seconds_left_240_Seconds_Left_--_4_Minutes",
+  default_seconds_left_180:
+    "/assets/default_seconds_left_180_Seconds_Left_--_3_Minutes",
+  default_seconds_left_120:
+    "/assets/default_seconds_left_120_Seconds_Left_--_2_Minutes",
+  default_seconds_left_60:
+    "/assets/default_seconds_left_60_Seconds_Left_--_1_Minute",
+  default_seconds_left_30:
+    "/assets/default_seconds_left_30_Seconds_Left_--_30_Seconds",
+  default_seconds_left_25:
+    "/assets/default_seconds_left_25_Seconds_Left_--_25_Seconds",
+  default_seconds_left_20:
+    "/assets/default_seconds_left_20_Seconds_Left_--_20_Seconds",
+  default_seconds_left_15:
+    "/assets/default_seconds_left_15_Seconds_Left_--_15_Seconds",
+  default_seconds_left_10:
+    "/assets/default_seconds_left_10_Seconds_Left_--_10_Seconds",
+  default_seconds_left_5:
+    "/assets/default_seconds_left_5_Seconds_Left_--_5_Seconds",
   default_heat_half: "/assets/default_heat_half_Seconds_Left_--_Halfway",
   default_heat_over: "/assets/default_heat_over_Heat_Over",
   default_race_over: "/assets/default_race_over_Race_Over",
@@ -393,6 +415,9 @@ export const DEFAULT_AUDIO_NAMES: Record<string, string> = {
   default_seconds_left_15: "Seconds Left -- 15 Seconds",
   default_seconds_left_10: "Seconds Left -- 10 Seconds",
   default_seconds_left_5: "Seconds Left -- 5 Seconds",
+  default_laps_left: "Default Laps Left",
+  default_auto_start: "Default Auto Start",
+  default_auto_advance: "Default Auto Advance",
   default_heat_half: "Seconds Left -- Halfway",
   default_heat_over: "Heat Over",
   default_race_over: "Race Over",
@@ -436,6 +461,11 @@ export function getDefaultAudioName(
   if (trimmed.includes("default_new_heat_leader")) return "New Heat Leader";
   if (trimmed.includes("default_pit_in")) return "Pit In";
   if (trimmed.includes("default_fuel_level")) return "Default Fuel Level";
+  if (trimmed.includes("default_auto_start")) return "Default Auto Start";
+  if (trimmed.includes("default_auto_advance")) return "Default Auto Advance";
+  if (trimmed.includes("default_laps_left")) return "Default Laps Left";
+  if (trimmed.includes("default_countdown")) return "Default Countdown";
+  if (trimmed.includes("default_seconds_left")) return "Default Seconds Left";
   if (trimmed.includes("default_yellow_flag")) return "Yellow Flag";
 
   return undefined;
@@ -450,13 +480,24 @@ export function resolveAudioUrl(
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
+  const base = serverUrl.endsWith("/") ? serverUrl.slice(0, -1) : serverUrl;
   if (url.startsWith("/")) {
-    return `${serverUrl}${url}`;
+    return `${base}${url}`;
   }
   if (DEFAULT_AUDIO_URLS[url]) {
-    return `${serverUrl}${DEFAULT_AUDIO_URLS[url]}`;
+    return `${base}${DEFAULT_AUDIO_URLS[url]}`;
   }
-  return `${serverUrl}/api/assets/download/${url}`;
+  for (const defaultUrl of Object.values(DEFAULT_AUDIO_URLS)) {
+    if (
+      defaultUrl === `/${url}` ||
+      defaultUrl === url ||
+      defaultUrl === `/assets/${url}` ||
+      defaultUrl.endsWith(`/${url}`)
+    ) {
+      return `${base}${defaultUrl}`;
+    }
+  }
+  return `${base}/api/assets/download/${url}`;
 }
 
 export interface PlaySoundOptions {

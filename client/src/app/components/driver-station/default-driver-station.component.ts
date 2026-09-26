@@ -720,8 +720,14 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     );
     if (!asset || asset.type !== "audio_set") return null;
 
-    const entry = asset.audioEntries?.find((e: any) => {
-      const val = e.timeSeconds != null ? e.timeSeconds : e.percentage;
+    const entries = asset.audioEntries || asset.audio_entries;
+    const entry = entries?.find((e: any) => {
+      const val =
+        e.timeSeconds != null
+          ? e.timeSeconds
+          : e.time_seconds != null
+            ? e.time_seconds
+            : e.percentage;
       const mode = e.triggerMode || e.trigger_mode || "remaining";
       return (
         val != null &&

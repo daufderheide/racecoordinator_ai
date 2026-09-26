@@ -614,6 +614,27 @@ describe("playSound Utility", () => {
       expect(resolveAudioUrl("default_fuel_full", "http://server")).toBe(
         "http://server/assets/default_fuel_full_Fuel_Full",
       );
+      expect(resolveAudioUrl("default_seconds_left_60", "http://server")).toBe(
+        "http://server/assets/default_seconds_left_60_Seconds_Left_--_1_Minute",
+      );
+      expect(
+        resolveAudioUrl(
+          "/api/assets/download/default_yellow_flag",
+          "http://server",
+        ),
+      ).toBe("http://server/api/assets/download/default_yellow_flag");
+      expect(
+        resolveAudioUrl(
+          "http://localhost:7070/api/assets/download/default_yellow_flag",
+          "http://server",
+        ),
+      ).toBe("http://localhost:7070/api/assets/download/default_yellow_flag");
+      expect(
+        resolveAudioUrl("default_yellow_flag_Yellow_Flag", "http://server"),
+      ).toBe("http://server/assets/default_yellow_flag_Yellow_Flag");
+      expect(resolveAudioUrl("default_yellow_flag", "http://server/")).toBe(
+        "http://server/assets/default_yellow_flag_Yellow_Flag",
+      );
     });
 
     it("should return undefined if no special record or best lap is achieved", () => {
@@ -1051,6 +1072,21 @@ describe("playSound Utility", () => {
       expect(getDefaultAudioName("default_pit_in")).toBe("Pit In");
       expect(getDefaultAudioName("default_fuel_level")).toBe(
         "Default Fuel Level",
+      );
+      expect(getDefaultAudioName("default_countdown")).toBe(
+        "Default Countdown",
+      );
+      expect(getDefaultAudioName("default_seconds_left")).toBe(
+        "Default Seconds Left",
+      );
+      expect(getDefaultAudioName("default_auto_start")).toBe(
+        "Default Auto Start",
+      );
+      expect(getDefaultAudioName("default_auto_advance")).toBe(
+        "Default Auto Advance",
+      );
+      expect(getDefaultAudioName("default_laps_left")).toBe(
+        "Default Laps Left",
       );
     });
 

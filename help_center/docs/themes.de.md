@@ -11,8 +11,8 @@ Designs ermöglichen die Anpassung systemweiter Soundeffekte und Sprachansagen f
 - **Grüne Lampe / START:** Signalton beim Umschalten der Startampel auf Grün (`audio.countdown.green`).
 - **Gelbe Flagge:** Warnsirenen während einer Gelbphase (`audio.yellowflag`).
 - **Automatischer Start verbleibende Sekunden:** Countdown-Ansagen für die verbleibende Zeit bis zum automatischen Start eines Durchgangs (`audio.auto_start`).
-- **Verbleibende Sekunden:** Zeitansagen vor Durchgangsende (`audio.seconds_left`).
-- **Verbleibende Runden:** Rundenansagen für den Führenden vor Durchgangsende (`audio.laps_left`).
+- **Heat-Zeit (Verbleibende Sekunden):** Zeitansagen vor Durchgangsende (`audio.seconds_left`).
+- **Führender-Rundenzahl (Verbleibende Runden):** Rundenansagen für den Führenden vor Durchgangsende (`audio.laps_left`).
 - **Rennhälfte:** Ansage beim Erreichen der Halbzeit eines Durchgangs – sowohl für zeitbasierte Rennen (Halbzeit der Dauer) als auch für rundenbasierte Rennen (sobald der Führende die Hälfte der Runden absolviert hat) (`audio.seconds_left.halfway`).
 - **Durchgang & Rennen beendet:** Signale für das Ende eines Durchgangs (`audio.heat_over`) oder des Rennens (`audio.race_over`).
 - **Automatisches Weiterschalten verbleibende Sekunden:** Countdown-Ansagen für die verbleibende Zeit bis zum automatischen Weiterschalten zum nächsten Durchgang (`audio.auto_advance`).

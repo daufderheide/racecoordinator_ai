@@ -173,8 +173,8 @@ Die folgenden Referenztabellen listen alle Audioereignisse in Race Coordinator A
 | **Grüne Lampe / START** | `audio.countdown.green` | **Sprachansage** / Signalton | `urgent` | `countdown`: Spielt auf der Hauptanzeige (wenn Countdown-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Gelbe Flagge** | `audio.yellowflag` | **Sprachansage** (Warnsirene) | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Automatischer Start verbleibende Sekunden** | `audio.auto_start` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
-| **Verbleibende Sekunden** | `audio.seconds_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
-| **Verbleibende Runden** | `audio.laps_left` | **Sprachansage** / Audioset | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. Kündigt verbleibende Runden des Führenden an; ein Wert von 0 kündigt das Erreichen der Rundenzahl durch den Führenden an (z. B. „Führender im Ziel“ bei Rennen mit Auslaufrunde). |
+| **Heat-Zeit / Verbleibende Sekunden** | `audio.seconds_left` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
+| **Führender-Rundenzahl / Verbleibende Runden** | `audio.laps_left` | **Sprachansage** / Audioset | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. Kündigt verbleibende Runden des Führenden an; ein Wert von 0 kündigt das Erreichen der Rundenzahl durch den Führenden an (z. B. „Führender im Ziel“ bei Rennen mit Auslaufrunde). |
 | **Rennhälfte** | `audio.seconds_left.halfway` | **Sprachansage** | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen beim Erreichen der Rennhälfte (nach Zeit oder wenn der Führende die halbe Rundenanzahl absolviert hat). |
 | **Durchgang beendet** | `audio.heat_over` | **Sprachansage** | `urgent` (Gewicht 4) | `flag`: Spielt auf der Hauptanzeige (wenn Flaggen-Widget vorhanden) und auf allen Fahrerstationen. |
 | **Automatisches Weiterschalten verbleibende Sekunden** | `audio.auto_advance` | **Sprachansage** / Audioset (Standard: TTS) | `normal` (Gewicht 2) | `timer`: Spielt auf der Hauptanzeige (wenn Timer-Widget vorhanden) und auf allen Fahrerstationen. |
@@ -190,8 +190,8 @@ Ein **Audio-Set** ist ein zusammengesetztes Audio-Asset, das eine Sammlung von S
 
 1. **Start-Countdown (`audio.countdown`):** Sequenztöne und Hupen bis zum Start.
 2. **Automatischer Start verbleibende Sekunden (`audio.auto_start`):** Audioansagen vor Beginn eines Durchgangs.
-3. **Verbleibende Sekunden (`audio.seconds_left`):** Zeitansagen während zeitbasierter Durchgänge.
-4. **Verbleibende Runden (`audio.laps_left`):** Rundenansagen während rundenbasierter Durchgänge.
+3. **Heat-Zeit / Verbleibende Sekunden (`audio.seconds_left`):** Zeitansagen während zeitbasierter Durchgänge.
+4. **Führender-Rundenzahl / Verbleibende Runden (`audio.laps_left`):** Rundenansagen während rundenbasierter Durchgänge.
 5. **Automatisches Weiterschalten verbleibende Sekunden (`audio.auto_advance`):** Countdown-Ansagen zwischen den Durchgängen.
 6. **Kraftstoffstand-Sounds (`fuelLevelAudio`):** Warn-, kritische und Tanktöne bei Prozentwerten.
 

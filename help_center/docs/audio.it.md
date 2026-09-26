@@ -174,8 +174,8 @@ Le seguenti tabelle descrivono in dettaglio tutti gli eventi audio in Race Coord
 | **Luce Verde / VIA** | `audio.countdown.green` | **Annuncio Vocale** / Tono Predefinito | `urgent` | `countdown`: Ripreso su Schermata Principale (se presente widget conto alla rovescia) e su tutte le Postazioni Pilota. |
 | **Bandiera Gialla** | `audio.yellowflag` | **Annuncio Vocale** (Sirena di Avviso) | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
 | **Secondi Rimanenti Avvio Automatico** | `audio.auto_start` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
-| **Secondi Rimanenti** | `audio.seconds_left` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
-| **Giri Rimanenti** | `audio.laps_left` | **Annuncio Vocale** / Set Audio | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. Annuncia i giri rimanenti per il leader; un valore pari a 0 annuncia quando il leader raggiunge il numero di giri previsti (es. "Leader al traguardo" nelle gare con consenti arrivo). |
+| **Tempo Manche / Secondi Rimanenti** | `audio.seconds_left` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
+| **Conteggio Giri Leader / Giri Rimanenti** | `audio.laps_left` | **Annuncio Vocale** / Set Audio | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. Annuncia i giri rimanenti per il leader; un valore pari a 0 annuncia quando il leader raggiunge il numero di giri previsti (es. "Leader al traguardo" nelle gare con consenti arrivo). |
 | **Metà Manche** | `audio.seconds_left.halfway` | **Annuncio Vocale** | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota al raggiungimento della metà manche (per tempo o quando il leader completa la metà dei giri). |
 | **Manche Terminata** | `audio.heat_over` | **Annuncio Vocale** | `urgent` (Peso 4) | `flag`: Ripreso su Schermata Principale (se presente widget bandiera) e su tutte le Postazioni Pilota. |
 | **Secondi Rimanenti Avanzamento Automatico** | `audio.auto_advance` | **Annuncio Vocale** / Set Audio (Predefinito: TTS) | `normal` (Peso 2) | `timer`: Ripreso su Schermata Principale (se presente widget timer) e su tutte le Postazioni Pilota. |
@@ -191,8 +191,8 @@ Un **Set Audio** è una risorsa audio composita contenente una raccolta di file 
 
 1. **Conto alla rovescia di partenza (`audio.countdown`):** Segnali acustici e sirene prima del via.
 2. **Secondi rimanenti avvio automatico (`audio.auto_start`):** Annunci vocali prima dell'inizio della manche.
-3. **Secondi rimanenti (`audio.seconds_left`):** Annunci del tempo durante le manche a tempo.
-4. **Giri rimanenti (`audio.laps_left`):** Annunci dei giri durante le manche a giri.
+3. **Tempo manche / Secondi rimanenti (`audio.seconds_left`):** Annunci del tempo durante le manche a tempo.
+4. **Conteggio giri leader / Giri rimanenti (`audio.laps_left`):** Annunci dei giri durante le manche a giri.
 5. **Secondi rimanenti avanzamento automatico (`audio.auto_advance`):** Annunci tra le manche prima dell'avanzamento automatico.
 6. **Suoni del livello di carburante (`fuelLevelAudio`):** Avvisi di riserva, livello critico e pieno basati su percentuali.
 

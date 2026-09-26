@@ -19,11 +19,14 @@ export function getThemeUrlForAsset(
   dataService: DataService,
 ): string | undefined {
   if (!asset) return undefined;
+  if (asset.url) {
+    return asset.url;
+  }
   const assetId = asset.model?.entityId || asset.entity_id;
   if (assetId) {
     return dataService.getAssetUrl(assetId);
   }
-  return asset.url || undefined;
+  return undefined;
 }
 
 export function getThemeAssetForSlot(
@@ -118,17 +121,41 @@ export function getThemeAudioConfigForSlot(
     slot === "audio.laps_left" ||
     slot === "audio.auto_start" ||
     slot === "audio.auto_advance";
-  const defaultAssetId = isSet
-    ? slot === "audio.countdown"
-      ? "default_countdown"
-      : slot === "audio.seconds_left"
-        ? "default_seconds_left"
-        : slot === "audio.laps_left"
-          ? "default_laps_left"
-          : slot === "audio.auto_start"
-            ? "default_auto_start"
-            : "default_auto_advance"
-    : undefined;
+
+  if (slot === "audio.min_lap_time") {
+    const ttsConfig: AudioConfig = {
+      type: "tts",
+      text: "Min lap time for {driver.nickname}",
+    };
+    theme.audio_slots[slot] = ttsConfig;
+    return ttsConfig;
+  }
+
+  if (slot === "audio.drift_lap") {
+    const ttsConfig: AudioConfig = {
+      type: "tts",
+      text: "Drift lap for {driver.nickname}",
+    };
+    theme.audio_slots[slot] = ttsConfig;
+    return ttsConfig;
+  }
+
+  let defaultAssetId: string | undefined;
+  if (isSet) {
+    if (slot === "audio.countdown") defaultAssetId = "default_countdown";
+    else if (slot === "audio.seconds_left")
+      defaultAssetId = "default_seconds_left";
+    else if (slot === "audio.laps_left") defaultAssetId = "default_laps_left";
+    else if (slot === "audio.auto_start") defaultAssetId = "default_auto_start";
+    else if (slot === "audio.auto_advance")
+      defaultAssetId = "default_auto_advance";
+  } else {
+    if (slot === "audio.yellowflag") defaultAssetId = "default_yellow_flag";
+    else if (slot === "audio.seconds_left.halfway")
+      defaultAssetId = "default_heat_half";
+    else if (slot === "audio.heat_over") defaultAssetId = "default_heat_over";
+    else if (slot === "audio.race_over") defaultAssetId = "default_race_over";
+  }
 
   const fallbackConfig: AudioConfig = {
     type: isSet ? "audio_set" : "preset",
@@ -147,13 +174,13 @@ export function getThemeAudioUrl(
 ): string | undefined {
   const config = getThemeAudioConfigForSlot(slot, theme);
   if (config.type === "preset" && config.url) {
-    const asset = assets.find(
+    const asset = (assets || []).find(
       (a) =>
         a.model?.entityId === config.url ||
         a.entity_id === config.url ||
         a.url === config.url,
     );
-    return getThemeUrlForAsset(asset, dataService);
+    return getThemeUrlForAsset(asset, dataService) || config.url;
   }
   return config.url;
 }

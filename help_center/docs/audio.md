@@ -208,8 +208,8 @@ The following reference tables detail all audio events in Race Coordinator AI, t
 | **Green Lamp / GO** | `audio.countdown.green` | **Voice Callout** / Preset Tone | `urgent` | `countdown`: Plays on Main Raceday (if Countdown widget is present) and on all Driver Stations. |
 | **Yellow Flag** | `audio.yellowflag` | **Voice Callout** (Warning Siren) | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
 | **Auto-Start Seconds Left** | `audio.auto_start` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
-| **Remaining Seconds** | `audio.seconds_left` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
-| **Laps Left** | `audio.laps_left` | **Voice Callout** / Audio Set | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. Announces remaining laps for the heat leader; setting an entry to 0 announces when the leader completes the lap count (e.g., "Leader Finished" in allow-finish races). |
+| **Heat Time / Remaining Seconds** | `audio.seconds_left` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
+| **Leader Lap Count / Laps Left** | `audio.laps_left` | **Voice Callout** / Audio Set | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. Announces remaining laps for the heat leader; setting an entry to 0 announces when the leader completes the lap count (e.g., "Leader Finished" in allow-finish races). |
 | **Halfway** | `audio.seconds_left.halfway` | **Voice Callout** | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations when reaching halfway in timed races or when the leader reaches half the lap count in lap-based races. |
 | **Heat Finished** | `audio.heat_over` | **Voice Callout** | `urgent` (Weight 4) | `flag`: Plays on Main Raceday (if Flag widget is present) and on all Driver Stations. |
 | **Auto-Advance Seconds Left** | `audio.auto_advance` | **Voice Callout** / Audio Set (Default: TTS) | `normal` (Weight 2) | `timer`: Plays on Main Raceday (if Timer widget is present) and on all Driver Stations. |
@@ -225,8 +225,8 @@ An **Audio Set** is a composite audio asset containing a collection of sound fil
 
 1. **Start Countdown (`audio.countdown`):** Sequence beeps and horns counting down to race start.
 2. **Auto-Start Seconds Left (`audio.auto_start`):** Audio callouts counting down before a heat begins.
-3. **Remaining Seconds (`audio.seconds_left`):** Time announcements during timed heats.
-4. **Laps Left (`audio.laps_left`):** Lap announcements during lap-based heats.
+3. **Heat Time / Remaining Seconds (`audio.seconds_left`):** Time announcements during timed heats.
+4. **Leader Lap Count / Laps Left (`audio.laps_left`):** Lap announcements during lap-based heats.
 5. **Auto-Advance Seconds Left (`audio.auto_advance`):** Audio callouts counting down between heats before automatically advancing.
 6. **Driver Fuel Level Sounds (`fuelLevelAudio`):** Warning, critical, and refueled alerts triggered at fuel percentage thresholds.
 

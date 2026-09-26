@@ -17,6 +17,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -247,7 +248,8 @@ public class DatabaseContext {
     }
 
     DatabaseContext targetContext = new DatabaseContext(targetDbName, configService, dataRoot);
-    new AssetService(targetContext, dataRoot + targetDbName + "/assets").backfillDefaults();
+    new AssetService(targetContext, Paths.get(dataRoot, targetDbName, "assets").toString())
+        .backfillDefaults();
   }
 
   public synchronized void deleteDatabase(String dbName) {
@@ -304,7 +306,8 @@ public class DatabaseContext {
       if (is != null) {
         logger.info("Restoring database '{}' from factory_default.zip resource", dbName);
         importDatabase(dbName, is);
-        new AssetService(this, dataRoot + dbName + "/assets").backfillDefaults();
+        switchDatabase(dbName);
+        new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
         DatabaseService.getInstance().backfillDrivers(this);
         DatabaseService.getInstance().backfillCustomUIs(this);
         return;
@@ -314,7 +317,7 @@ public class DatabaseContext {
     }
 
     switchDatabase(dbName);
-    new AssetService(this, dataRoot + dbName + "/assets").resetAssets();
+    new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).resetAssets();
     DatabaseService.getInstance().resetToFactory(this);
   }
 
@@ -663,7 +666,7 @@ public class DatabaseContext {
       }
     }
 
-    new AssetService(this, dataRoot + dbName + "/assets").backfillDefaults();
+    new AssetService(this, Paths.get(dataRoot, dbName, "assets").toString()).backfillDefaults();
   }
 
   public static class DatabaseStats {
