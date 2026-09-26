@@ -322,6 +322,32 @@ public class AssetDefaultsInitializer {
     return null;
   }
 
+  public static String getDefaultFilename(String nameOrId) {
+    if (nameOrId == null || nameOrId.trim().isEmpty()) {
+      return null;
+    }
+    String key = nameOrId.trim().toLowerCase();
+    for (DefaultAsset asset : DEFAULT_IMAGE_ASSETS) {
+      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
+        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return asset.id + "_" + safeName;
+      }
+    }
+    for (FuelDefaultAsset asset : DEFAULT_FUEL_IMAGE_ASSETS) {
+      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
+        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return asset.id + "_" + safeName;
+      }
+    }
+    for (DefaultAsset asset : DEFAULT_AUDIO_ASSETS) {
+      if (asset.id.equalsIgnoreCase(key) || asset.filename.equalsIgnoreCase(key)) {
+        String safeName = asset.displayName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        return asset.id + "_" + safeName;
+      }
+    }
+    return null;
+  }
+
   public AssetDefaultsInitializer(AssetService assetService, DatabaseContext databaseContext) {
     this.assetService = assetService;
     this.databaseContext = databaseContext;

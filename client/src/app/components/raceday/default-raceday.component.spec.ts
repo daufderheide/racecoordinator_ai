@@ -6675,6 +6675,7 @@ describe("DefaultRacedayComponent", () => {
           audioEntries: [
             { timeSeconds: 0, url: "/assets/go.mp3" },
             { timeSeconds: 3, url: "/assets/3.mp3" },
+            { timeSeconds: 5, url: "/assets/5.mp3" },
             { timeSeconds: 30, url: "/assets/30_seconds.mp3" },
           ],
         },
@@ -6692,6 +6693,56 @@ describe("DefaultRacedayComponent", () => {
 
       expect(window.Audio).toHaveBeenCalledWith(
         jasmine.stringMatching("/assets/3.mp3"),
+      );
+    });
+
+    it("should not latch lastPlayedCountdownSecond if countdown audio fails to resolve or play", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      component["assets"] = []; // Assets not loaded yet
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = -1;
+
+      component["updateCountdownLamps"](5.0);
+
+      expect(component["lastPlayedCountdownSecond"]).toBe(-1);
+    });
+
+    it("should latch lastPlayedCountdownSecond when countdown sound successfully plays", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      component["showCountdownOverlay"] = true;
+      component["countdownTotalLamps"] = 5;
+      component["lastPlayedCountdownSecond"] = -1;
+
+      component["updateCountdownLamps"](5.0);
+
+      expect(component["lastPlayedCountdownSecond"]).toBe(5);
+    });
+
+    it("should preload countdown audio entries across seconds 0 through 5", () => {
+      mockThemeService.resolveAudioConfig.and.returnValue({
+        type: "audio_set",
+        url: "audio-set-1",
+      });
+      const audioService = (component as any).audioService;
+      spyOn(audioService, "preload").and.callThrough();
+
+      (component as any).preloadCountdownAudio();
+
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/go.mp3"),
+      );
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/3.mp3"),
+      );
+      expect(audioService.preload).toHaveBeenCalledWith(
+        jasmine.stringMatching("/assets/5.mp3"),
       );
     });
 

@@ -12,8 +12,10 @@ import {
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import { firstValueFrom } from "rxjs";
 import { ItemSelectorComponent } from "@app/components/shared/item-selector/item-selector.component";
 import { DataService } from "@app/data.service";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AudioService } from "@app/services/audio.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -24,7 +26,9 @@ import {
   interpolate,
   mockTTSContext,
   playSound,
+  releaseUtterance,
   resolveAudioUrl,
+  retainUtterance,
 } from "@app/utils/audio";
 
 @Component({
@@ -67,6 +71,8 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   isPlaying = false;
   private currentAudio: HTMLAudioElement | null = null;
   private previewAudio: HTMLAudioElement | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private ttsSafetyTimeout: any = null;
   private currentPlaybackId = 0;
   isDragging = false;
   dragCounter = 0;
@@ -124,9 +130,21 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   filteredAssets = computed(() => {
     const assets = this.allAvailableAssets();
     if (this.mode() === "set") {
-      return assets.filter((a) => a.type === "audio_set");
+      return assets.filter(
+        (a) =>
+          normalizeAssetType(a.type) === AssetType.AUDIO_SET ||
+          a.type === "audio_set" ||
+          (a.audioEntries && a.audioEntries.length > 0) ||
+          (a.audio_entries && a.audio_entries.length > 0),
+      );
     }
-    return assets.filter((a) => a.type !== "audio_set");
+    return assets.filter(
+      (a) =>
+        normalizeAssetType(a.type) !== AssetType.AUDIO_SET &&
+        a.type !== "audio_set" &&
+        (!a.audioEntries || a.audioEntries.length === 0) &&
+        (!a.audio_entries || a.audio_entries.length === 0),
+    );
   });
 
   selectedAsset = computed(() => {
@@ -156,31 +174,69 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       if (apiIndex !== -1) {
         return u.substring(apiIndex);
       }
+      const assetsIndex = u.indexOf("/assets/");
+      if (assetsIndex !== -1) {
+        return u.substring(assetsIndex);
+      }
       return u;
     };
 
     const normalizedLookup = normalize(lookupValue);
 
-    return this.allAvailableAssets().find((a) => {
-      const id = a.model?.entityId || a.entity_id || a.id;
-      if (id && (id === lookupValue || id === targetIdOrUrl)) return true;
-      if (normalize(a.url) === normalizedLookup) return true;
+    const matchInList = (list: any[]) => {
+      // 1. Exact ID match (highest priority)
+      let match = list.find((a) => {
+        const id = a.model?.entityId || a.entity_id || a.id;
+        return id && (id === lookupValue || id === targetIdOrUrl);
+      });
+      if (match) return match;
+
+      // 2. Exact URL match
+      match = list.find(
+        (a) =>
+          (a.url && a.url === lookupValue) ||
+          (a.url && normalize(a.url) === normalizedLookup),
+      );
+      if (match) return match;
+
+      // 3. Fallback: filename match when lookupValue starts with /assets/
       if (
-        id &&
-        typeof lookupValue === "string" &&
-        a.url &&
-        a.url.startsWith(`/assets/${lookupValue}_`)
-      )
-        return true;
+        typeof normalizedLookup === "string" &&
+        normalizedLookup.startsWith("/assets/")
+      ) {
+        const pathPart = normalizedLookup.substring("/assets/".length);
+        match = list.find((a) => {
+          const id = a.model?.entityId || a.entity_id || a.id;
+          return id && (pathPart === id || pathPart.startsWith(`${id}_`));
+        });
+        if (match) return match;
+      }
+
+      // 4. Fallback: asset URL begins with /assets/<lookupValue>_ (only if asset ID matches lookupValue or has no conflicting ID)
       if (
-        typeof lookupValue === "string" &&
-        lookupValue.startsWith("/assets/") &&
-        id &&
-        lookupValue.startsWith(`/assets/${id}_`)
-      )
-        return true;
-      return false;
-    });
+        typeof normalizedLookup === "string" &&
+        !normalizedLookup.startsWith("/assets/")
+      ) {
+        match = list.find((a) => {
+          const id = a.model?.entityId || a.entity_id || a.id;
+          return (
+            a.url &&
+            a.url.startsWith(`/assets/${normalizedLookup}_`) &&
+            (!id || id === normalizedLookup)
+          );
+        });
+        if (match) return match;
+      }
+
+      return null;
+    };
+
+    // Prioritize mode-filtered assets (e.g. only audio sets when mode is "set")
+    const filteredMatch = matchInList(this.filteredAssets());
+    if (filteredMatch) return filteredMatch;
+
+    // Fall back to searching all available assets
+    return matchInList(this.allAvailableAssets());
   });
 
   selectedAssetName = computed(() => {
@@ -387,12 +443,13 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.previewAudio.pause();
       this.previewAudio = null;
     }
+    const previewEntries = item.audioEntries || item.audio_entries;
     if (
       item.type === "audio_set" &&
-      item.audioEntries &&
-      item.audioEntries.length > 0
+      previewEntries &&
+      previewEntries.length > 0
     ) {
-      this.playAudioSetEntries(item.audioEntries);
+      this.playAudioSetEntries(previewEntries);
       return;
     }
     const playContext = this.context() || mockTTSContext();
@@ -446,22 +503,53 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.previewAudio.pause();
       this.previewAudio = null;
     }
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (this.ttsSafetyTimeout) {
+      clearTimeout(this.ttsSafetyTimeout);
+      this.ttsSafetyTimeout = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch {
+        // ignore
+      }
     }
     this.cdr.detectChanges();
   }
 
-  private playTTSPromise(text: string | undefined): Promise<void> {
+  private playTTSPromise(
+    text: string | undefined,
+    skipCancel = false,
+  ): Promise<void> {
     return new Promise((resolve) => {
-      if (!text || !window.speechSynthesis) {
+      if (!text || typeof window === "undefined" || !window.speechSynthesis) {
         resolve();
         return;
       }
-      window.speechSynthesis.cancel();
+      if (
+        !skipCancel &&
+        (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+      ) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          // ignore
+        }
+      }
       const playContext = this.context() || mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      this.activeUtterance = utterance;
+      retainUtterance(utterance);
       if (this.audioService) {
         this.audioService.applyTtsSettingsToUtterance(
           utterance,
@@ -474,21 +562,97 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       } else {
         this.applyFallbackTtsSettings(utterance);
       }
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
+
+      let finished = false;
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        releaseUtterance(utterance);
+        if (this.ttsSafetyTimeout) {
+          clearTimeout(this.ttsSafetyTimeout);
+          this.ttsSafetyTimeout = null;
+        }
+        if (this.activeUtterance === utterance) {
+          this.activeUtterance = null;
+        }
+        resolve();
+      };
+
+      utterance.onend = () => done();
+      utterance.onerror = (e: any) => {
+        this.logger.warn(
+          "TTS error for utterance:",
+          interpolatedText,
+          e?.error,
+        );
+        done();
+      };
+
+      const wordCount = interpolatedText.trim().split(/\s+/).length;
+      const dynamicTimeout = Math.max(3000, wordCount * 500 + 2000);
+      this.ttsSafetyTimeout = setTimeout(() => done(), dynamicTimeout);
+
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        this.logger.error("Failed to speak utterance", err);
+        done();
       }
-      window.speechSynthesis.speak(utterance);
     });
   }
 
   private async playAudioSet() {
-    const asset = this.selectedAsset();
-    if (!asset || !asset.audioEntries || asset.audioEntries.length === 0) {
+    let asset = this.selectedAsset();
+    let entries = asset?.audioEntries || asset?.audio_entries;
+    if (!asset || !entries || entries.length === 0) {
+      const lookupValue = this.assetId() || this.effectiveUrl();
+      if (lookupValue && this.dataService?.loadedAssets) {
+        const loadedAssets = this.dataService.loadedAssets;
+        asset = (loadedAssets || []).find((a: any) => {
+          const id = a.model?.entityId || a.entity_id || a.id;
+          return (
+            id === lookupValue ||
+            a.url === lookupValue ||
+            (typeof a.url === "string" &&
+              a.url.startsWith(`/assets/${lookupValue}_`))
+          );
+        });
+        entries = asset?.audioEntries || asset?.audio_entries;
+      }
+      if (
+        (!asset || !entries || entries.length === 0) &&
+        this.dataService?.listAssets
+      ) {
+        try {
+          const loadedAssets = await firstValueFrom(
+            this.dataService.listAssets(),
+          );
+          if (lookupValue) {
+            asset = (loadedAssets || []).find((a: any) => {
+              const id = a.model?.entityId || a.entity_id || a.id;
+              return (
+                id === lookupValue ||
+                a.url === lookupValue ||
+                (typeof a.url === "string" &&
+                  a.url.startsWith(`/assets/${lookupValue}_`))
+              );
+            });
+            entries = asset?.audioEntries || asset?.audio_entries;
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    }
+    if (!asset || !entries || entries.length === 0) {
+      this.isPlaying = false;
+      this.cdr.detectChanges();
       return;
     }
-    await this.playAudioSetEntries(asset.audioEntries);
+    await this.playAudioSetEntries(entries);
   }
 
   private async playAudioSetEntries(entries: any[]) {
@@ -504,9 +668,21 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         return modeA === "elapsed" ? -1 : 1;
       }
       const valA =
-        Number(a.timeSeconds != null ? a.timeSeconds : a.percentage) || 0;
+        Number(
+          a.timeSeconds != null
+            ? a.timeSeconds
+            : a.time_seconds != null
+              ? a.time_seconds
+              : a.percentage,
+        ) || 0;
       const valB =
-        Number(b.timeSeconds != null ? b.timeSeconds : b.percentage) || 0;
+        Number(
+          b.timeSeconds != null
+            ? b.timeSeconds
+            : b.time_seconds != null
+              ? b.time_seconds
+              : b.percentage,
+        ) || 0;
       return modeA === "elapsed" ? valA - valB : valB - valA;
     });
 
@@ -517,7 +693,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         if (entryType === "preset") {
           await this.playUrl(entry.url);
         } else if (entryType === "tts") {
-          await this.playTTSPromise(entry.text);
+          await this.playTTSPromise(entry.text, true);
         }
       } catch (e) {
         this.logger.error("Error playing audio set entry", e);
@@ -535,14 +711,17 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     this.cdr.detectChanges();
 
     if (this.effectiveType() === "preset") {
-      this.playUrl(this.effectiveUrl())
+      const urlToPlay =
+        this.effectiveUrl() || this.selectedAsset()?.url || this.assetId();
+      this.playUrl(urlToPlay)
         .then(() => {
           if (this.currentPlaybackId === playbackId) {
             this.isPlaying = false;
             this.cdr.detectChanges();
           }
         })
-        .catch(() => {
+        .catch((err) => {
+          this.logger.error("Error playing standard preset audio", err);
           if (this.currentPlaybackId === playbackId) {
             this.isPlaying = false;
             this.cdr.detectChanges();
@@ -558,13 +737,16 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     return new Promise((resolve, reject) => {
       const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
-      const masterVol =
+      const rawMasterVol =
         this.masterVolume() !== undefined
           ? this.masterVolume()!
           : (this.audioService?.getMasterVolume() ??
             this.settingsService?.getSettings().masterVolume ??
             100);
-      audio.volume = Math.max(0, Math.min(1, masterVol / 100));
+      const parsedMasterVol = Number(rawMasterVol);
+      const effMasterVol =
+        !isNaN(parsedMasterVol) && parsedMasterVol >= 0 ? parsedMasterVol : 100;
+      audio.volume = Math.max(0, Math.min(1, effMasterVol / 100));
       this.currentAudio = audio;
       audio.onended = () => {
         if (this.currentAudio === audio) {
@@ -588,19 +770,32 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   private playTTS(text: string | undefined) {
-    if (!text || !window.speechSynthesis) {
+    if (!text || typeof window === "undefined" || !window.speechSynthesis) {
       this.isPlaying = false;
       this.cdr.detectChanges();
       return;
     }
 
     const playbackId = this.currentPlaybackId;
-    window.speechSynthesis.cancel();
+
+    if (this.ttsSafetyTimeout) {
+      clearTimeout(this.ttsSafetyTimeout);
+      this.ttsSafetyTimeout = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance = null;
+    }
 
     const playContext = this.context() || mockTTSContext();
     const interpolatedText = interpolate(text, playContext);
 
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    this.activeUtterance = utterance;
+    retainUtterance(utterance);
+
     if (this.audioService) {
       this.audioService.applyTtsSettingsToUtterance(
         utterance,
@@ -614,23 +809,40 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.applyFallbackTtsSettings(utterance);
     }
 
-    utterance.onend = () => {
-      if (this.currentPlaybackId === playbackId) {
-        this.isPlaying = false;
-        this.cdr.detectChanges();
+    const cleanup = () => {
+      releaseUtterance(utterance);
+      if (this.ttsSafetyTimeout) {
+        clearTimeout(this.ttsSafetyTimeout);
+        this.ttsSafetyTimeout = null;
       }
-    };
-    utterance.onerror = () => {
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
       if (this.currentPlaybackId === playbackId) {
         this.isPlaying = false;
         this.cdr.detectChanges();
       }
     };
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
+    utterance.onend = () => cleanup();
+    utterance.onerror = (e: any) => {
+      this.logger.warn("TTS error for utterance:", interpolatedText, e?.error);
+      cleanup();
+    };
+
+    const wordCount = interpolatedText.trim().split(/\s+/).length;
+    const dynamicTimeout = Math.max(3000, wordCount * 500 + 2000);
+    this.ttsSafetyTimeout = setTimeout(() => cleanup(), dynamicTimeout);
+
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      this.logger.error("Failed to speak utterance", err);
+      cleanup();
     }
-    window.speechSynthesis.speak(utterance);
   }
 
   private applyFallbackTtsSettings(utterance: SpeechSynthesisUtterance): void {
@@ -664,11 +876,20 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         // Ignored
       }
     }
+    if (!utterance.lang) {
+      utterance.lang = "en-US";
+    }
     if (rate != null) utterance.rate = Math.max(0.1, Math.min(10, rate));
     if (pitch != null) utterance.pitch = Math.max(0, Math.min(2, pitch));
-    const masterVol = Math.max(0, Math.min(1, masterVolume / 100));
-    const ttsVol = Math.max(0, Math.min(1, volume / 100));
-    utterance.volume = masterVol * ttsVol;
+    const effMaster =
+      typeof masterVolume === "number" && !isNaN(masterVolume)
+        ? masterVolume
+        : 100;
+    const effTts = typeof volume === "number" && !isNaN(volume) ? volume : 100;
+    const masterVol = Math.max(0, Math.min(1, effMaster / 100));
+    const ttsVol = Math.max(0, Math.min(1, effTts / 100));
+    const finalVol = masterVol * ttsVol;
+    utterance.volume = isNaN(finalVol) ? 1.0 : finalVol;
   }
 
   // Drag & Drop

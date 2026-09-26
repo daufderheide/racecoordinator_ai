@@ -47,9 +47,12 @@ describe("AudioService", () => {
     mockAudioInstance = {
       play: jasmine.createSpy("play").and.returnValue(Promise.resolve()),
       pause: jasmine.createSpy("pause"),
+      load: jasmine.createSpy("load"),
       currentTime: 0,
       onended: null as any,
       onerror: null as any,
+      paused: true,
+      ended: false,
     };
     originalAudio = window.Audio;
     (window as any).Audio = jasmine
@@ -212,6 +215,55 @@ describe("AudioService", () => {
       expect(mockAudioInstance.volume).toBe(0.75);
       expect(mockAudioInstance.play).toHaveBeenCalled();
       expect(service.getActiveVoice()).toBeNull();
+    });
+  });
+
+  describe("preload", () => {
+    it("should do nothing if url is empty or undefined", () => {
+      service.preload("");
+      service.preload(undefined);
+      expect((window as any).Audio).not.toHaveBeenCalled();
+    });
+
+    it("should create Audio instance, set preload to auto and call load", () => {
+      const audio = service.preload("default_countdown_5");
+      expect((window as any).Audio).toHaveBeenCalledWith(
+        "http://localhost:7070/assets/default_countdown_5_Countdown_5",
+      );
+      expect(mockAudioInstance.load).toHaveBeenCalled();
+      expect(audio).toBe(mockAudioInstance as any);
+    });
+
+    it("should return cached Audio instance without re-instantiating", () => {
+      service.preload("default_countdown_5");
+      (window as any).Audio.calls.reset();
+      const cached = service.preload("default_countdown_5");
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(cached).toBe(mockAudioInstance as any);
+    });
+
+    it("should reuse preloaded audio instance in playSfx when paused", () => {
+      service.preload("default_countdown_5");
+      (window as any).Audio.calls.reset();
+      mockAudioInstance.paused = true;
+      mockAudioInstance.currentTime = 5;
+
+      const played = service.playSfx("default_countdown_5");
+      expect((window as any).Audio).not.toHaveBeenCalled();
+      expect(played).toBe(mockAudioInstance as any);
+      expect(mockAudioInstance.currentTime).toBe(0);
+      expect(mockAudioInstance.play).toHaveBeenCalled();
+    });
+
+    it("should clear preloaded audio cache on reset", () => {
+      service.preload("default_countdown_5");
+      service.reset();
+      (window as any).Audio.calls.reset();
+
+      service.preload("default_countdown_5");
+      expect((window as any).Audio).toHaveBeenCalledWith(
+        "http://localhost:7070/assets/default_countdown_5_Countdown_5",
+      );
     });
   });
 

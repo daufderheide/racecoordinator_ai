@@ -6,6 +6,7 @@ import { provideRouter, withRouterConfig } from "@angular/router";
 import { authInterceptor } from "@app/services/auth.interceptor";
 import { LoggerService } from "@app/services/logger.service";
 import { RaceService } from "@app/services/race.service";
+import { initGlobalAudioUnlocker } from "@app/utils/audio";
 import {
   isBrowserSupported,
   renderUnsupportedBrowserBanner,
@@ -13,6 +14,7 @@ import {
 import { initGlobalFormSecurity } from "@app/utils/form-security";
 
 initGlobalFormSecurity();
+initGlobalAudioUnlocker();
 
 import { AppComponent } from "./app/app.component";
 import { routes } from "./app/app.routes";
