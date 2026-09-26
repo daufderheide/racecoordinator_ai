@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.88] - 2026-09-26
+
+### 🐛 Bug Fixes
+
+- improve TTS playback reliability [skip-screendiffs] ([d8e299fb](https://github.com/daufderheide/racecoordinator_ai/commit/d8e299fb))
+- Fixed deafult countdown and seconds left audio. fix: Renamed seconds left and laps left to be more clear as to what they are [skip-screendiffs] ([f12a979b](https://github.com/daufderheide/racecoordinator_ai/commit/f12a979b))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.87...v1.0.0-beta.88">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.87] - 2026-09-25
 
 ### 🚀 New Features
