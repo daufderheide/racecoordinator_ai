@@ -1,5 +1,18 @@
 # Changelog
 
+## [v1.0.0-beta.89] - 2026-09-26
+
+### 🐛 Bug Fixes
+
+- hardened custom widget loading, including a fallback mechanism and production client logging [skip-screendiffs] ([a0cab938](https://github.com/daufderheide/racecoordinator_ai/commit/a0cab938))
+- add translation and unit tests for unavailable custom widgets ([e71030a8](https://github.com/daufderheide/racecoordinator_ai/commit/e71030a8))
+
+<details>
+<summary>🔍 <b>Full Commit History</b></summary>
+
+<p>View full commit comparison on <a href="https://github.com/daufderheide/racecoordinator_ai/compare/v1.0.0-beta.88...v1.0.0-beta.89">GitHub</a></p>
+</details>
+
 ## [v1.0.0-beta.88] - 2026-09-26
 
 ### 🐛 Bug Fixes
