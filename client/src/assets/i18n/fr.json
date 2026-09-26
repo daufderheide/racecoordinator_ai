@@ -2285,6 +2285,7 @@
   "UE_LABEL_COUNTDOWN_AUDIO": "Ensemble Audio de Compte à Rebours",
   "UE_LABEL_COUNTDOWN_GO": "PARTEZ",
   "UE_LABEL_CUSTOM_UI": "Disposition de l'interface",
+  "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE": "Widget personnalisé indisponible",
   "UE_LABEL_DEFAULT_FUEL_UI": "RaceCoordinator AI (Carburant)",
   "UE_LABEL_DEFAULT_PRACTICE_UI": "RaceCoordinator AI (Entraînement)",
   "UE_LABEL_DEFAULT_RACEDAY_UI": "RaceCoordinator AI",

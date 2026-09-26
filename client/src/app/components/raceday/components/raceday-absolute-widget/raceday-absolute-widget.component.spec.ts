@@ -4,6 +4,13 @@ import { AbsoluteWidgetNode } from "@app/models/settings";
 import { TranslationService } from "@app/services/translation.service";
 import { mockTranslationService } from "@app/testing/unit-test-mocks";
 
+import deJson from "../../../../../assets/i18n/de.json";
+import enJson from "../../../../../assets/i18n/en.json";
+import esJson from "../../../../../assets/i18n/es.json";
+import frJson from "../../../../../assets/i18n/fr.json";
+import itJson from "../../../../../assets/i18n/it.json";
+import nlJson from "../../../../../assets/i18n/nl.json";
+import ptJson from "../../../../../assets/i18n/pt.json";
 import { RacedayAbsoluteWidgetComponent } from "./raceday-absolute-widget.component";
 import { RacedayAbsoluteWidgetHarness } from "./testing/raceday-absolute-widget.harness";
 
@@ -558,5 +565,75 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     fixture.detectChanges();
     expect(component.isCountdownActive).toBeTrue();
     expect(wrapper.style.display).toBe("");
+  });
+
+  describe("UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE localization", () => {
+    const i18nFiles = [
+      { lang: "en", json: enJson },
+      { lang: "de", json: deJson },
+      { lang: "es", json: esJson },
+      { lang: "fr", json: frJson },
+      { lang: "it", json: itJson },
+      { lang: "nl", json: nlJson },
+      { lang: "pt", json: ptJson },
+    ];
+
+    it("should be defined and non-empty in all 7 supported language files", () => {
+      i18nFiles.forEach(({ lang, json }) => {
+        const val = (json as Record<string, string>)[
+          "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE"
+        ];
+        expect(val)
+          .withContext(
+            `Missing UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE in ${lang}.json`,
+          )
+          .toBeDefined();
+        expect(val.trim().length)
+          .withContext(
+            `Empty UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE in ${lang}.json`,
+          )
+          .toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe("Custom widget rendering", () => {
+    it("should render missing placeholder with translated fallback when custom widget component is unavailable", () => {
+      mockWidget.widgetType = "custom:missing-widget";
+      mockWidget.id = "custom-1";
+      fixture.componentRef.setInput("widget", { ...mockWidget });
+      fixture.detectChanges();
+
+      const placeholder = fixture.nativeElement.querySelector(
+        ".custom-widget-missing-placeholder",
+      );
+      expect(placeholder).toBeTruthy();
+
+      const title = placeholder.querySelector("strong");
+      expect(title?.textContent?.trim()).toBe("missing-widget");
+
+      const message = placeholder.querySelector("span:not(.material-icons)");
+      expect(message?.textContent?.trim()).toBe(
+        "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE",
+      );
+    });
+
+    it("should render custom widget error message when error is present", () => {
+      mockWidget.widgetType = "custom:broken-widget";
+      mockWidget.id = "custom-2";
+      spyOn(component, "getCustomWidgetError").and.returnValue(
+        "Syntax error in template",
+      );
+      fixture.componentRef.setInput("widget", { ...mockWidget });
+      fixture.detectChanges();
+
+      const placeholder = fixture.nativeElement.querySelector(
+        ".custom-widget-missing-placeholder",
+      );
+      expect(placeholder).toBeTruthy();
+
+      const message = placeholder.querySelector("span:not(.material-icons)");
+      expect(message?.textContent?.trim()).toBe("Syntax error in template");
+    });
   });
 });
