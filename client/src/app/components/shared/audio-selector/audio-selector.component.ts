@@ -12,8 +12,10 @@ import {
 } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormsModule } from "@angular/forms";
+import { firstValueFrom } from "rxjs";
 import { ItemSelectorComponent } from "@app/components/shared/item-selector/item-selector.component";
 import { DataService } from "@app/data.service";
+import { AssetType, normalizeAssetType } from "@app/models/asset";
 import { TranslatePipe } from "@app/pipes/translate.pipe";
 import { AudioService } from "@app/services/audio.service";
 import { LoggerService } from "@app/services/logger.service";
@@ -24,7 +26,9 @@ import {
   interpolate,
   mockTTSContext,
   playSound,
+  releaseUtterance,
   resolveAudioUrl,
+  retainUtterance,
 } from "@app/utils/audio";
 
 @Component({
@@ -67,6 +71,8 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   isPlaying = false;
   private currentAudio: HTMLAudioElement | null = null;
   private previewAudio: HTMLAudioElement | null = null;
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private ttsSafetyTimeout: any = null;
   private currentPlaybackId = 0;
   isDragging = false;
   dragCounter = 0;
@@ -124,9 +130,21 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   filteredAssets = computed(() => {
     const assets = this.allAvailableAssets();
     if (this.mode() === "set") {
-      return assets.filter((a) => a.type === "audio_set");
+      return assets.filter(
+        (a) =>
+          normalizeAssetType(a.type) === AssetType.AUDIO_SET ||
+          a.type === "audio_set" ||
+          (a.audioEntries && a.audioEntries.length > 0) ||
+          (a.audio_entries && a.audio_entries.length > 0),
+      );
     }
-    return assets.filter((a) => a.type !== "audio_set");
+    return assets.filter(
+      (a) =>
+        normalizeAssetType(a.type) !== AssetType.AUDIO_SET &&
+        a.type !== "audio_set" &&
+        (!a.audioEntries || a.audioEntries.length === 0) &&
+        (!a.audio_entries || a.audio_entries.length === 0),
+    );
   });
 
   selectedAsset = computed(() => {
@@ -485,22 +503,53 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.previewAudio.pause();
       this.previewAudio = null;
     }
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+    if (this.ttsSafetyTimeout) {
+      clearTimeout(this.ttsSafetyTimeout);
+      this.ttsSafetyTimeout = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+      } catch {
+        // ignore
+      }
     }
     this.cdr.detectChanges();
   }
 
-  private playTTSPromise(text: string | undefined): Promise<void> {
+  private playTTSPromise(
+    text: string | undefined,
+    skipCancel = false,
+  ): Promise<void> {
     return new Promise((resolve) => {
-      if (!text || !window.speechSynthesis) {
+      if (!text || typeof window === "undefined" || !window.speechSynthesis) {
         resolve();
         return;
       }
-      window.speechSynthesis.cancel();
+      if (
+        !skipCancel &&
+        (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+      ) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          // ignore
+        }
+      }
       const playContext = this.context() || mockTTSContext();
       const interpolatedText = interpolate(text, playContext);
       const utterance = new SpeechSynthesisUtterance(interpolatedText);
+      this.activeUtterance = utterance;
+      retainUtterance(utterance);
       if (this.audioService) {
         this.audioService.applyTtsSettingsToUtterance(
           utterance,
@@ -513,12 +562,45 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       } else {
         this.applyFallbackTtsSettings(utterance);
       }
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
+
+      let finished = false;
+      const done = () => {
+        if (finished) return;
+        finished = true;
+        releaseUtterance(utterance);
+        if (this.ttsSafetyTimeout) {
+          clearTimeout(this.ttsSafetyTimeout);
+          this.ttsSafetyTimeout = null;
+        }
+        if (this.activeUtterance === utterance) {
+          this.activeUtterance = null;
+        }
+        resolve();
+      };
+
+      utterance.onend = () => done();
+      utterance.onerror = (e: any) => {
+        this.logger.warn(
+          "TTS error for utterance:",
+          interpolatedText,
+          e?.error,
+        );
+        done();
+      };
+
+      const wordCount = interpolatedText.trim().split(/\s+/).length;
+      const dynamicTimeout = Math.max(3000, wordCount * 500 + 2000);
+      this.ttsSafetyTimeout = setTimeout(() => done(), dynamicTimeout);
+
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utterance);
+      } catch (err) {
+        this.logger.error("Failed to speak utterance", err);
+        done();
       }
-      window.speechSynthesis.speak(utterance);
     });
   }
 
@@ -526,17 +608,28 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     let asset = this.selectedAsset();
     let entries = asset?.audioEntries || asset?.audio_entries;
     if (!asset || !entries || entries.length === 0) {
+      const lookupValue = this.assetId() || this.effectiveUrl();
+      if (lookupValue && this.dataService?.loadedAssets) {
+        const loadedAssets = this.dataService.loadedAssets;
+        asset = (loadedAssets || []).find((a: any) => {
+          const id = a.model?.entityId || a.entity_id || a.id;
+          return (
+            id === lookupValue ||
+            a.url === lookupValue ||
+            (typeof a.url === "string" &&
+              a.url.startsWith(`/assets/${lookupValue}_`))
+          );
+        });
+        entries = asset?.audioEntries || asset?.audio_entries;
+      }
       if (
-        this.dataService?.listAssets &&
-        (!this.dataService.loadedAssets ||
-          this.dataService.loadedAssets.length === 0)
+        (!asset || !entries || entries.length === 0) &&
+        this.dataService?.listAssets
       ) {
         try {
-          const { firstValueFrom } = await import("rxjs");
           const loadedAssets = await firstValueFrom(
             this.dataService.listAssets(),
           );
-          const lookupValue = this.assetId() || this.effectiveUrl();
           if (lookupValue) {
             asset = (loadedAssets || []).find((a: any) => {
               const id = a.model?.entityId || a.entity_id || a.id;
@@ -600,7 +693,7 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         if (entryType === "preset") {
           await this.playUrl(entry.url);
         } else if (entryType === "tts") {
-          await this.playTTSPromise(entry.text);
+          await this.playTTSPromise(entry.text, true);
         }
       } catch (e) {
         this.logger.error("Error playing audio set entry", e);
@@ -644,13 +737,16 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
     return new Promise((resolve, reject) => {
       const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
       const audio = new Audio(playableUrl);
-      const masterVol =
+      const rawMasterVol =
         this.masterVolume() !== undefined
           ? this.masterVolume()!
           : (this.audioService?.getMasterVolume() ??
             this.settingsService?.getSettings().masterVolume ??
             100);
-      audio.volume = Math.max(0, Math.min(1, masterVol / 100));
+      const parsedMasterVol = Number(rawMasterVol);
+      const effMasterVol =
+        !isNaN(parsedMasterVol) && parsedMasterVol >= 0 ? parsedMasterVol : 100;
+      audio.volume = Math.max(0, Math.min(1, effMasterVol / 100));
       this.currentAudio = audio;
       audio.onended = () => {
         if (this.currentAudio === audio) {
@@ -674,19 +770,32 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
   }
 
   private playTTS(text: string | undefined) {
-    if (!text || !window.speechSynthesis) {
+    if (!text || typeof window === "undefined" || !window.speechSynthesis) {
       this.isPlaying = false;
       this.cdr.detectChanges();
       return;
     }
 
     const playbackId = this.currentPlaybackId;
-    window.speechSynthesis.cancel();
+
+    if (this.ttsSafetyTimeout) {
+      clearTimeout(this.ttsSafetyTimeout);
+      this.ttsSafetyTimeout = null;
+    }
+    if (this.activeUtterance) {
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance = null;
+    }
 
     const playContext = this.context() || mockTTSContext();
     const interpolatedText = interpolate(text, playContext);
 
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    this.activeUtterance = utterance;
+    retainUtterance(utterance);
+
     if (this.audioService) {
       this.audioService.applyTtsSettingsToUtterance(
         utterance,
@@ -700,23 +809,40 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
       this.applyFallbackTtsSettings(utterance);
     }
 
-    utterance.onend = () => {
-      if (this.currentPlaybackId === playbackId) {
-        this.isPlaying = false;
-        this.cdr.detectChanges();
+    const cleanup = () => {
+      releaseUtterance(utterance);
+      if (this.ttsSafetyTimeout) {
+        clearTimeout(this.ttsSafetyTimeout);
+        this.ttsSafetyTimeout = null;
       }
-    };
-    utterance.onerror = () => {
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
       if (this.currentPlaybackId === playbackId) {
         this.isPlaying = false;
         this.cdr.detectChanges();
       }
     };
 
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
+    utterance.onend = () => cleanup();
+    utterance.onerror = (e: any) => {
+      this.logger.warn("TTS error for utterance:", interpolatedText, e?.error);
+      cleanup();
+    };
+
+    const wordCount = interpolatedText.trim().split(/\s+/).length;
+    const dynamicTimeout = Math.max(3000, wordCount * 500 + 2000);
+    this.ttsSafetyTimeout = setTimeout(() => cleanup(), dynamicTimeout);
+
+    try {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (err) {
+      this.logger.error("Failed to speak utterance", err);
+      cleanup();
     }
-    window.speechSynthesis.speak(utterance);
   }
 
   private applyFallbackTtsSettings(utterance: SpeechSynthesisUtterance): void {
@@ -750,11 +876,20 @@ export class AudioSelectorComponent implements OnChanges, OnDestroy {
         // Ignored
       }
     }
+    if (!utterance.lang) {
+      utterance.lang = "en-US";
+    }
     if (rate != null) utterance.rate = Math.max(0.1, Math.min(10, rate));
     if (pitch != null) utterance.pitch = Math.max(0, Math.min(2, pitch));
-    const masterVol = Math.max(0, Math.min(1, masterVolume / 100));
-    const ttsVol = Math.max(0, Math.min(1, volume / 100));
-    utterance.volume = masterVol * ttsVol;
+    const effMaster =
+      typeof masterVolume === "number" && !isNaN(masterVolume)
+        ? masterVolume
+        : 100;
+    const effTts = typeof volume === "number" && !isNaN(volume) ? volume : 100;
+    const masterVol = Math.max(0, Math.min(1, effMaster / 100));
+    const ttsVol = Math.max(0, Math.min(1, effTts / 100));
+    const finalVol = masterVol * ttsVol;
+    utterance.volume = isNaN(finalVol) ? 1.0 : finalVol;
   }
 
   // Drag & Drop

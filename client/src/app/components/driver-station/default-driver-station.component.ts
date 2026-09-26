@@ -39,6 +39,7 @@ import { FuelAudioTracker } from "@app/utils/fuel-audio-tracker";
 import { ViewerRaceEndedHandler } from "@app/utils/viewer-race-ended-handler";
 
 import { DriverStationLapAudioHandler } from "./driver-station-lap-audio-handler";
+import { DriverStationTimeAudioHandler } from "./driver-station-time-audio-handler";
 
 @Component({
   standalone: true,
@@ -137,6 +138,15 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
       getDriverData: () => this.driverData,
       getLaneIndex: () => this.laneIndex,
     });
+    this.timeAudioHandler = new DriverStationTimeAudioHandler({
+      themeService: this.themeService,
+      getRace: () => this.race,
+      getAssets: () => this.assets,
+      playThemedSound: (slotKey, context, association) =>
+        this.playThemedSound(slotKey, context, association),
+      playAudioFromSet: (slotKey, timeSeconds, association, triggerMode) =>
+        this.playAudioFromSet(slotKey, timeSeconds, association, triggerMode),
+    });
     effect(() => {
       const val = this.inputLaneIndex();
       if (val !== undefined) {
@@ -158,19 +168,32 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   protected hasRacedInCurrentHeat: boolean = false;
   private fuelAudioTracker: FuelAudioTracker;
   private lapAudioHandler: DriverStationLapAudioHandler;
+  private timeAudioHandler: DriverStationTimeAudioHandler;
   private lastPlayedCountdownSecond: number = -1;
-  private playedSecondsLeft = new Set<number>();
-  private playedSecondsElapsed = new Set<number>();
+  private get playedSecondsLeft() {
+    return this.timeAudioHandler.playedSecondsLeft;
+  }
+  private get playedSecondsElapsed() {
+    return this.timeAudioHandler.playedSecondsElapsed;
+  }
   private get playedLapsLeft() {
     return this.lapAudioHandler.playedLapsLeft;
   }
   private get playedLapsElapsed() {
     return this.lapAudioHandler.playedLapsElapsed;
   }
-  private playedAutoStart = new Set<number>();
-  private playedAutoStartElapsed = new Set<number>();
-  private playedAutoAdvance = new Set<number>();
-  private playedAutoAdvanceElapsed = new Set<number>();
+  private get playedAutoStart() {
+    return this.timeAudioHandler.playedAutoStart;
+  }
+  private get playedAutoStartElapsed() {
+    return this.timeAudioHandler.playedAutoStartElapsed;
+  }
+  private get playedAutoAdvance() {
+    return this.timeAudioHandler.playedAutoAdvance;
+  }
+  private get playedAutoAdvanceElapsed() {
+    return this.timeAudioHandler.playedAutoAdvanceElapsed;
+  }
   private previousAutoStartRemaining = 0;
   private previousAutoAdvanceRemaining = 0;
   private get leaderLaps() {
@@ -180,10 +203,13 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     this.lapAudioHandler.leaderLaps = v;
   }
   private get playedHalfway() {
-    return this.lapAudioHandler.playedHalfway;
+    return (
+      this.lapAudioHandler.playedHalfway || this.timeAudioHandler.playedHalfway
+    );
   }
   private set playedHalfway(v: boolean) {
     this.lapAudioHandler.playedHalfway = v;
+    this.timeAudioHandler.playedHalfway = v;
   }
   private previousRaceState: RaceState = RaceState.UNKNOWN_STATE;
   private assets: any[] = [];
@@ -208,14 +234,24 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
 
     if (this.dataService.loadedAssets) {
       this.assets = this.dataService.loadedAssets;
+      this.preloadCountdownAudio();
     }
     this.subscriptions.push(
       this.dataService.listAssets().subscribe({
         next: (assets) => {
           this.assets = assets || [];
+          this.preloadCountdownAudio();
         },
       }),
     );
+
+    if (this.themeService.activeTheme$) {
+      this.subscriptions.push(
+        this.themeService.activeTheme$.subscribe(() => {
+          this.preloadCountdownAudio();
+        }),
+      );
+    }
 
     this.route.params.subscribe((params) => {
       if (this.inputLaneIndex() !== undefined) {
@@ -283,12 +319,14 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             currentSecond >= 1 &&
             currentSecond !== this.lastPlayedCountdownSecond
           ) {
-            this.lastPlayedCountdownSecond = currentSecond;
-            this.playAudioFromSet(
+            const played = this.playAudioFromSet(
               THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
               currentSecond,
               { widgetType: "countdown" },
             );
+            if (played) {
+              this.lastPlayedCountdownSecond = currentSecond;
+            }
           }
         } else if (this.raceState === RaceState.RACING) {
           this.checkRaceTimeAnnouncements(this.time);
@@ -326,18 +364,10 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             if (state === RaceState.NOT_STARTED) {
               this.hasRacedInCurrentHeat = false;
             }
-            this.playedSecondsLeft.clear();
-            this.playedSecondsElapsed.clear();
-            this.playedLapsLeft.clear();
-            this.playedLapsElapsed.clear();
-            this.playedAutoStart.clear();
-            this.playedAutoStartElapsed.clear();
-            this.playedAutoAdvance.clear();
-            this.playedAutoAdvanceElapsed.clear();
+            this.timeAudioHandler.reset();
+            this.lapAudioHandler.reset();
             this.previousAutoStartRemaining = 0;
             this.previousAutoAdvanceRemaining = 0;
-            this.leaderLaps = 0;
-            this.playedHalfway = false;
             this.fuelAudioTracker.reset(
               this.heat,
               this.hasRacedInCurrentHeat,
@@ -463,6 +493,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private loadRaceData() {
     this.race = this.raceService.getRace();
     if (this.race) {
+      this.preloadCountdownAudio();
       this.track = this.race.track;
       this.heat = this.raceService.getCurrentHeat();
       if (this.heat) {
@@ -706,6 +737,12 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     timeSeconds: number,
     triggerMode: string = "remaining",
   ): { config: AudioConfig; playableUrl?: string } | null {
+    if (
+      !this.themeService ||
+      typeof this.themeService.resolveAudioConfig !== "function"
+    ) {
+      return null;
+    }
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (!config || config.type !== "audio_set") return null;
 
@@ -756,7 +793,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     timeSeconds: number,
     association?: AudioAssociation,
     triggerMode: string = "remaining",
-  ) {
+  ): boolean {
     const defaultAssoc =
       association ??
       (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
@@ -771,7 +808,7 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
     if (entryItem) {
       if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
         if (entryItem.config.type === "tts") {
-          this.audioService.playCallout(
+          return this.audioService.playCallout(
             { type: "tts", text: entryItem.config.text },
             "normal",
             undefined,
@@ -779,10 +816,13 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
             defaultAssoc,
           );
         } else {
-          this.audioService.playSfx(entryItem.playableUrl, defaultAssoc);
+          return !!this.audioService.playSfx(
+            entryItem.playableUrl,
+            defaultAssoc,
+          );
         }
       } else {
-        this.audioService.playCallout(
+        return this.audioService.playCallout(
           entryItem.config,
           "normal",
           undefined,
@@ -791,98 +831,37 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
         );
       }
     }
+    return false;
+  }
+
+  private preloadCountdownAudio(): void {
+    if (
+      !this.assets ||
+      this.assets.length === 0 ||
+      !this.audioService ||
+      typeof this.audioService.preload !== "function"
+    ) {
+      return;
+    }
+    for (let second = 0; second <= 5; second++) {
+      const item = this.getAudioFromSetEntry(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        second,
+      );
+      if (item?.playableUrl && item.config.type !== "tts") {
+        this.audioService.preload(item.playableUrl);
+      }
+    }
   }
 
   private getSecondsLeftThresholds(
     triggerMode: "remaining" | "elapsed" = "remaining",
   ): number[] {
-    const config = this.themeService.resolveAudioConfig(
-      THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
-    );
-    if (config?.url) {
-      const asset = (this.assets || []).find(
-        (a) =>
-          a.model?.entityId === config.url ||
-          a.entity_id === config.url ||
-          a._id === config.url,
-      );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
-          const mode = e.triggerMode || e.trigger_mode || "remaining";
-          return mode === triggerMode;
-        });
-        if (filtered.length > 0) {
-          return filtered
-            .map((e: any) =>
-              Math.round(e.timeSeconds != null ? e.timeSeconds : e.percentage),
-            )
-            .filter((t: number) => !isNaN(t) && t >= 0)
-            .filter(
-              (t: number, index: number, self: number[]) =>
-                self.indexOf(t) === index,
-            )
-            .sort((a: number, b: number) =>
-              triggerMode === "elapsed" ? a - b : b - a,
-            );
-        }
-      }
-    }
-    return triggerMode === "remaining"
-      ? [300, 240, 180, 120, 60, 30, 25, 20, 15, 10, 5]
-      : [];
+    return this.timeAudioHandler.getSecondsLeftThresholds(triggerMode);
   }
 
   private checkRaceTimeAnnouncements(currentTime: number) {
-    const scoring = this.race?.heat_scoring;
-    if (!scoring || scoring.finishMethod !== FinishMethod.Timed) return;
-
-    const totalDuration = scoring.finishValue;
-    if (totalDuration <= 0) return;
-
-    const halfwayThreshold = totalDuration / 2;
-    if (currentTime <= halfwayThreshold && !this.playedHalfway) {
-      this.playThemedSound(
-        THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT_HALFWAY,
-        undefined,
-        { widgetType: "timer" },
-      );
-      this.playedHalfway = true;
-    }
-
-    // Remaining thresholds
-    const remainingThresholds = this.getSecondsLeftThresholds("remaining");
-    for (const threshold of remainingThresholds) {
-      if (currentTime <= threshold && !this.playedSecondsLeft.has(threshold)) {
-        if (Math.abs(threshold - totalDuration) < 0.1) continue;
-
-        this.playAudioFromSet(
-          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
-          threshold,
-          { widgetType: "timer" },
-          "remaining",
-        );
-        this.playedSecondsLeft.add(threshold);
-      }
-    }
-
-    // Elapsed thresholds
-    const elapsed = totalDuration - currentTime;
-    const elapsedThresholds = this.getSecondsLeftThresholds("elapsed");
-    for (const threshold of elapsedThresholds) {
-      if (elapsed >= threshold && !this.playedSecondsElapsed.has(threshold)) {
-        if (threshold <= 0 || Math.abs(threshold - totalDuration) < 0.1) {
-          continue;
-        }
-
-        this.playAudioFromSet(
-          THEME_SLOT_KEYS.AUDIO_SECONDS_LEFT,
-          threshold,
-          { widgetType: "timer" },
-          "elapsed",
-        );
-        this.playedSecondsElapsed.add(threshold);
-      }
-    }
+    this.timeAudioHandler.checkRaceTimeAnnouncements(currentTime);
   }
 
   private checkLapsLeftCallouts(lap: any, driverData: DriverHeatData) {
@@ -892,180 +871,33 @@ export class DefaultDriverStationComponent implements OnInit, OnDestroy {
   private getAutoStartThresholds(
     triggerMode: "remaining" | "elapsed" = "remaining",
   ): number[] {
-    const config = this.themeService.resolveAudioConfig(
-      THEME_SLOT_KEYS.AUDIO_AUTO_START,
-    );
-    if (config?.url) {
-      const asset = (this.assets || []).find(
-        (a) =>
-          a.model?.entityId === config.url ||
-          a.entity_id === config.url ||
-          a._id === config.url,
-      );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
-          const mode = e.triggerMode || e.trigger_mode || "remaining";
-          return mode === triggerMode;
-        });
-        if (filtered.length > 0) {
-          return filtered
-            .map((e: any) => Math.round(e.timeSeconds))
-            .filter((t: number) => t > 0)
-            .sort((a: number, b: number) =>
-              triggerMode === "elapsed" ? a - b : b - a,
-            );
-        }
-      }
-    }
-    return triggerMode === "remaining" ? [600, 300, 180, 60, 30, 10] : [];
+    return this.timeAudioHandler.getAutoStartThresholds(triggerMode);
   }
 
   private checkAutoStartAnnouncements(
     currentTime: number,
     previousTime: number,
   ) {
-    if (previousTime <= 0) return;
-    const totalDuration = this.race?.auto_start_time ?? 0;
-    const previousElapsed = totalDuration - previousTime;
-    const currentElapsed = totalDuration - currentTime;
-
-    // Remaining thresholds
-    const remainingThresholds = this.getAutoStartThresholds("remaining");
-    for (const threshold of remainingThresholds) {
-      if (
-        previousTime > threshold &&
-        currentTime <= threshold &&
-        !this.playedAutoStart.has(threshold)
-      ) {
-        if (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1) {
-          continue;
-        }
-
-        this.playAudioFromSet(
-          THEME_SLOT_KEYS.AUDIO_AUTO_START,
-          threshold,
-          { widgetType: "timer" },
-          "remaining",
-        );
-        this.playedAutoStart.add(threshold);
-      }
-    }
-
-    // Elapsed thresholds
-    const elapsedThresholds = this.getAutoStartThresholds("elapsed");
-    for (const threshold of elapsedThresholds) {
-      if (
-        previousElapsed < threshold &&
-        currentElapsed >= threshold &&
-        !this.playedAutoStartElapsed.has(threshold)
-      ) {
-        if (
-          threshold <= 0 ||
-          (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1)
-        ) {
-          continue;
-        }
-
-        this.playAudioFromSet(
-          THEME_SLOT_KEYS.AUDIO_AUTO_START,
-          threshold,
-          { widgetType: "timer" },
-          "elapsed",
-        );
-        this.playedAutoStartElapsed.add(threshold);
-      }
-    }
+    this.timeAudioHandler.checkAutoStartAnnouncements(
+      currentTime,
+      previousTime,
+    );
   }
 
   private getAutoAdvanceThresholds(
     triggerMode: "remaining" | "elapsed" = "remaining",
   ): number[] {
-    const config = this.themeService.resolveAudioConfig(
-      THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
-    );
-    if (config?.url) {
-      const asset = (this.assets || []).find(
-        (a) =>
-          a.model?.entityId === config.url ||
-          a.entity_id === config.url ||
-          a._id === config.url,
-      );
-      if (asset?.audioEntries && asset.audioEntries.length > 0) {
-        const filtered = asset.audioEntries.filter((e: any) => {
-          const mode = e.triggerMode || e.trigger_mode || "remaining";
-          return mode === triggerMode;
-        });
-        if (filtered.length > 0) {
-          return filtered
-            .map((e: any) => Math.round(e.timeSeconds))
-            .filter((t: number) => t > 0)
-            .sort((a: number, b: number) =>
-              triggerMode === "elapsed" ? a - b : b - a,
-            );
-        }
-      }
-    }
-    return triggerMode === "remaining" ? [600, 300, 180, 60, 30, 10] : [];
+    return this.timeAudioHandler.getAutoAdvanceThresholds(triggerMode);
   }
 
   private checkAutoAdvanceAnnouncements(
     currentTime: number,
     previousTime: number,
   ) {
-    if (previousTime <= 0) return;
-    const totalDuration =
-      (this.race as any)?.auto_advance_time ??
-      (this.race as any)?.auto_advance_remaining_seconds ??
-      0;
-    const previousElapsed = totalDuration - previousTime;
-    const currentElapsed = totalDuration - currentTime;
-
-    // Remaining thresholds
-    const remainingThresholds = this.getAutoAdvanceThresholds("remaining");
-    for (const threshold of remainingThresholds) {
-      if (
-        previousTime > threshold &&
-        currentTime <= threshold &&
-        !this.playedAutoAdvance.has(threshold)
-      ) {
-        if (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1) {
-          continue;
-        }
-
-        this.playAudioFromSet(
-          THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
-          threshold,
-          { widgetType: "timer" },
-          "remaining",
-        );
-        this.playedAutoAdvance.add(threshold);
-      }
-    }
-
-    // Elapsed thresholds
-    const elapsedThresholds = this.getAutoAdvanceThresholds("elapsed");
-    for (const threshold of elapsedThresholds) {
-      if (
-        previousElapsed < threshold &&
-        currentElapsed >= threshold &&
-        !this.playedAutoAdvanceElapsed.has(threshold)
-      ) {
-        if (
-          threshold <= 0 ||
-          (totalDuration > 0 && Math.abs(threshold - totalDuration) < 0.1)
-        ) {
-          continue;
-        }
-
-        this.playAudioFromSet(
-          THEME_SLOT_KEYS.AUDIO_AUTO_ADVANCE,
-          threshold,
-          { widgetType: "timer" },
-          "elapsed",
-        );
-        this.playedAutoAdvanceElapsed.add(threshold);
-      }
-    }
+    this.timeAudioHandler.checkAutoAdvanceAnnouncements(
+      currentTime,
+      previousTime,
+    );
   }
 
   private handleLapEvent(lap: any, driverData: DriverHeatData): void {

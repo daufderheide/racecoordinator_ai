@@ -3,7 +3,12 @@ import { DataService } from "@app/data.service";
 import { AudioConfig } from "@app/models/driver";
 import { LoggerService } from "@app/services/logger.service";
 import { SettingsService } from "@app/services/settings.service";
-import { interpolate, resolveAudioUrl } from "@app/utils/audio";
+import {
+  interpolate,
+  releaseUtterance,
+  resolveAudioUrl,
+  retainUtterance,
+} from "@app/utils/audio";
 
 export type AudioPriority = "low" | "normal" | "high" | "urgent";
 
@@ -75,6 +80,7 @@ export class AudioService implements OnDestroy {
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private safetyTimeout: any = null;
   private relevanceFilter: AudioRelevanceFilter | null = null;
+  private preloadedAudioMap = new Map<string, HTMLAudioElement>();
 
   constructor(
     private dataService: DataService,
@@ -203,6 +209,29 @@ export class AudioService implements OnDestroy {
   }
 
   /**
+   * Preloads an audio file into the browser cache to eliminate playback latency.
+   */
+  preload(url: string | undefined): HTMLAudioElement | void {
+    if (!url) return;
+    const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
+    if (!playableUrl) return;
+    if (this.preloadedAudioMap.has(playableUrl)) {
+      return this.preloadedAudioMap.get(playableUrl);
+    }
+    try {
+      const audio = new Audio(playableUrl);
+      audio.preload = "auto";
+      if (typeof audio.load === "function") {
+        audio.load();
+      }
+      this.preloadedAudioMap.set(playableUrl, audio);
+      return audio;
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
    * Plays a non-verbal sound effect (SFX) polyphonically.
    * SFX sounds play immediately without blocking or preempting other sounds.
    */
@@ -220,7 +249,20 @@ export class AudioService implements OnDestroy {
     }
     const playableUrl = resolveAudioUrl(url, this.dataService.serverUrl);
     this.logger.debug("Playing SFX from URL:", playableUrl);
-    const audio = new Audio(playableUrl);
+
+    let audio: HTMLAudioElement;
+    const cached = this.preloadedAudioMap.get(playableUrl);
+    if (cached && (cached.paused || cached.ended)) {
+      audio = cached;
+      try {
+        audio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+    } else {
+      audio = new Audio(playableUrl);
+    }
+
     const settings = this.settingsService.getSettings();
     let finalVolume = Math.max(
       0,
@@ -421,6 +463,9 @@ export class AudioService implements OnDestroy {
     if (typeof window !== "undefined" && window.speechSynthesis) {
       try {
         window.speechSynthesis.cancel();
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
       } catch {
         // ignore
       }
@@ -434,6 +479,7 @@ export class AudioService implements OnDestroy {
     this.stopVoice();
     this.urgentQueue = [];
     this.calloutQueue = [];
+    this.preloadedAudioMap.clear();
   }
 
   private executeVoiceCallout(
@@ -564,8 +610,15 @@ export class AudioService implements OnDestroy {
       return;
     }
 
-    window.speechSynthesis.cancel();
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
+    }
     const utterance = new SpeechSynthesisUtterance(interpolatedText);
+    retainUtterance(utterance);
     this.activeUtterance = utterance;
     this.applyTtsSettingsToUtterance(utterance);
     let ended = false;
@@ -573,6 +626,7 @@ export class AudioService implements OnDestroy {
     const cleanup = () => {
       if (ended) return;
       ended = true;
+      releaseUtterance(utterance);
       utterance.onend = null;
       utterance.onerror = null;
       if (this.safetyTimeout) {
@@ -640,8 +694,32 @@ export class AudioService implements OnDestroy {
     if (!text || typeof window === "undefined" || !window.speechSynthesis) {
       return;
     }
-    window.speechSynthesis.cancel();
+    if (this.activeUtterance) {
+      releaseUtterance(this.activeUtterance);
+      this.activeUtterance.onend = null;
+      this.activeUtterance.onerror = null;
+      this.activeUtterance = null;
+    }
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
     const utterance = new SpeechSynthesisUtterance(text);
+    retainUtterance(utterance);
+    this.activeUtterance = utterance;
+    utterance.onend = () => {
+      releaseUtterance(utterance);
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
+    };
+    utterance.onerror = () => {
+      releaseUtterance(utterance);
+      if (this.activeUtterance === utterance) {
+        this.activeUtterance = null;
+      }
+    };
     this.applyTtsSettingsToUtterance(
       utterance,
       voiceName,
@@ -754,15 +832,24 @@ export class AudioService implements OnDestroy {
         }
       }
     }
+    if (!utterance.lang) {
+      utterance.lang = "en-US";
+    }
     if (rate != null) {
       utterance.rate = Math.max(0.1, Math.min(10, rate));
     }
     if (pitch != null) {
       utterance.pitch = Math.max(0, Math.min(2, pitch));
     }
-    const masterVol = Math.max(0, Math.min(1, (masterVolume ?? 100) / 100));
-    const ttsVol = Math.max(0, Math.min(1, (volume ?? 100) / 100));
-    utterance.volume = masterVol * ttsVol;
+    const effMaster =
+      typeof masterVolume === "number" && !isNaN(masterVolume)
+        ? masterVolume
+        : 100;
+    const effTts = typeof volume === "number" && !isNaN(volume) ? volume : 100;
+    const masterVol = Math.max(0, Math.min(1, effMaster / 100));
+    const ttsVol = Math.max(0, Math.min(1, effTts / 100));
+    const finalVol = masterVol * ttsVol;
+    utterance.volume = isNaN(finalVol) ? 1.0 : finalVol;
   }
 
   private onVoiceCalloutEnded(): void {

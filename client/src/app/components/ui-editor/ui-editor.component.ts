@@ -212,6 +212,7 @@ export { BASE_AVAILABLE_COLUMNS, UIEditorState } from "./ui-editor-constants";
 export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
   private isDestroyed = false;
   private dataSubscription: Subscription | null = null;
+  private translationSubscription: Subscription | null = null;
   private helpSubscription: Subscription | null = null;
   isLoading = true;
   isSaving = false;
@@ -398,7 +399,7 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.raceConnectionService.connect();
 
     this.undoManager?.stateCommitted$.subscribe(() => this.autoSaveState());
-    this.dataSubscription = this.translationService
+    this.translationSubscription = this.translationService
       .getTranslationsLoaded()
       .subscribe((loaded) => {
         if (loaded) {

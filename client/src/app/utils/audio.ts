@@ -529,6 +529,171 @@ function getSavedAudioSettings(): PlaySoundOptions {
   return {};
 }
 
+const activeUtterances = new Set<SpeechSynthesisUtterance>();
+
+export function retainUtterance(utterance: SpeechSynthesisUtterance): void {
+  activeUtterances.add(utterance);
+}
+
+export function releaseUtterance(
+  utterance: SpeechSynthesisUtterance | null | undefined,
+): void {
+  if (utterance) {
+    activeUtterances.delete(utterance);
+  }
+}
+
+let globalAudioUnlocked = false;
+
+/**
+ * Initializes global user gesture listeners to unlock web audio and speech synthesis.
+ * Unlocks the Web Audio AudioContext and ensures SpeechSynthesis is not in a paused state.
+ */
+export function initGlobalAudioUnlocker(): void {
+  if (typeof window === "undefined" || globalAudioUnlocked) return;
+
+  const unlock = () => {
+    try {
+      if (window.speechSynthesis && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+      const AudioCtx =
+        window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") {
+          ctx.resume().catch(() => {});
+        }
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        setTimeout(() => {
+          if (ctx.state !== "closed") {
+            ctx.close().catch(() => {});
+          }
+        }, 100);
+      }
+    } catch {
+      // ignore
+    }
+
+    globalAudioUnlocked = true;
+    window.removeEventListener("click", unlock, true);
+    window.removeEventListener("keydown", unlock, true);
+    window.removeEventListener("touchstart", unlock, true);
+    window.removeEventListener("pointerdown", unlock, true);
+  };
+
+  window.addEventListener("click", unlock, { capture: true, once: false });
+  window.addEventListener("keydown", unlock, { capture: true, once: false });
+  window.addEventListener("touchstart", unlock, { capture: true, once: false });
+  window.addEventListener("pointerdown", unlock, {
+    capture: true,
+    once: false,
+  });
+}
+
+function playPresetAudio(
+  url: string,
+  serverUrl: string,
+  masterVolume: number,
+  logger?: LoggerService,
+): HTMLAudioElement {
+  const playableUrl = resolveAudioUrl(url, serverUrl);
+  if (logger) logger.debug("Playing audio from URL:", playableUrl);
+  const audio = new Audio(playableUrl);
+  audio.volume = Math.max(0, Math.min(1, masterVolume / 100));
+  audio.play().catch((err) => {
+    if (logger) logger.error("Error playing sound", err);
+  });
+  return audio;
+}
+
+function playTtsAudio(
+  text: string,
+  data: any,
+  options: {
+    ttsVoice?: string;
+    ttsRate?: number;
+    ttsPitch?: number;
+    ttsVolume?: number;
+    masterVolume?: number;
+  },
+  logger?: LoggerService,
+): void {
+  let interpolatedText = text;
+  if (data) {
+    interpolatedText = interpolate(text, data);
+  }
+
+  if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
+    logger.debug("Playing TTS:", interpolatedText);
+  }
+  if (!window.speechSynthesis) {
+    if (logger) logger.warn("Text-to-speech not supported in this browser.");
+    return;
+  }
+
+  try {
+    window.speechSynthesis.cancel();
+  } catch {
+    // ignore
+  }
+  const utterance = new SpeechSynthesisUtterance(interpolatedText);
+  retainUtterance(utterance);
+  utterance.onend = () => releaseUtterance(utterance);
+  utterance.onerror = () => releaseUtterance(utterance);
+  if (!utterance.lang) {
+    utterance.lang = "en-US";
+  }
+  if (
+    options.ttsVoice &&
+    typeof window.speechSynthesis.getVoices === "function"
+  ) {
+    try {
+      const voices = window.speechSynthesis.getVoices() || [];
+      const trimmed = options.ttsVoice.trim().toLowerCase();
+      const match = voices.find(
+        (v) =>
+          v.name === options.ttsVoice ||
+          v.voiceURI === options.ttsVoice ||
+          (v.name && v.name.trim().toLowerCase() === trimmed) ||
+          (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
+      );
+      if (match) {
+        utterance.voice = match;
+      }
+    } catch {
+      // Ignored
+    }
+  }
+  if (options.ttsRate != null) {
+    utterance.rate = Math.max(0.1, Math.min(10, options.ttsRate));
+  }
+  if (options.ttsPitch != null) {
+    utterance.pitch = Math.max(0, Math.min(2, options.ttsPitch));
+  }
+  const effMaster =
+    typeof options.masterVolume === "number" && !isNaN(options.masterVolume)
+      ? options.masterVolume
+      : 100;
+  const effTts =
+    typeof options.ttsVolume === "number" && !isNaN(options.ttsVolume)
+      ? options.ttsVolume
+      : 100;
+  const masterVol = Math.max(0, Math.min(1, effMaster / 100));
+  const ttsVol = Math.max(0, Math.min(1, effTts / 100));
+  const finalVol = masterVol * ttsVol;
+  utterance.volume = isNaN(finalVol) ? 1.0 : finalVol;
+
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
+  }
+  window.speechSynthesis.speak(utterance);
+}
+
 /** Plays a sound based on the provided configuration. */
 export function playSound(
   type: "preset" | "tts" | "none" | "audio_set" | undefined,
@@ -545,76 +710,22 @@ export function playSound(
     options?.masterVolume !== undefined
       ? options.masterVolume
       : (saved.masterVolume ?? 100);
-  const ttsVoice =
-    options?.ttsVoice !== undefined ? options.ttsVoice : saved.ttsVoice;
-  const ttsRate =
-    options?.ttsRate !== undefined ? options.ttsRate : (saved.ttsRate ?? 1.0);
-  const ttsPitch =
-    options?.ttsPitch !== undefined
-      ? options.ttsPitch
-      : (saved.ttsPitch ?? 1.0);
-  const ttsVolume =
-    options?.ttsVolume !== undefined
-      ? options.ttsVolume
-      : (saved.ttsVolume ?? 100);
 
   if (type === "preset" && url) {
-    const playableUrl = resolveAudioUrl(url, serverUrl);
-    if (logger) logger.debug("Playing audio from URL:", playableUrl);
-    const audio = new Audio(playableUrl);
-    audio.volume = Math.max(0, Math.min(1, masterVolume / 100));
-    audio.play().catch((err) => {
-      if (logger) logger.error("Error playing sound", err);
-    });
-    return audio;
+    return playPresetAudio(url, serverUrl, masterVolume, logger);
   } else if (type === "tts" && text) {
-    let interpolatedText = text;
-    if (data) {
-      interpolatedText = interpolate(text, data);
-    }
-
-    if (!(window as any).SUPPRESS_AUDIO_LOGS && logger) {
-      logger.debug("Playing TTS:", interpolatedText);
-    }
-    if (window.speechSynthesis) {
-      // Cancel any current speech
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(interpolatedText);
-      if (ttsVoice && typeof window.speechSynthesis.getVoices === "function") {
-        try {
-          const voices = window.speechSynthesis.getVoices() || [];
-          const trimmed = ttsVoice.trim().toLowerCase();
-          const match = voices.find(
-            (v) =>
-              v.name === ttsVoice ||
-              v.voiceURI === ttsVoice ||
-              (v.name && v.name.trim().toLowerCase() === trimmed) ||
-              (v.voiceURI && v.voiceURI.trim().toLowerCase() === trimmed),
-          );
-          if (match) {
-            utterance.voice = match;
-          }
-        } catch {
-          // Ignored
-        }
-      }
-      if (ttsRate != null) {
-        utterance.rate = Math.max(0.1, Math.min(10, ttsRate));
-      }
-      if (ttsPitch != null) {
-        utterance.pitch = Math.max(0, Math.min(2, ttsPitch));
-      }
-      const masterVol = Math.max(0, Math.min(1, masterVolume / 100));
-      const ttsVol = Math.max(0, Math.min(1, ttsVolume / 100));
-      utterance.volume = masterVol * ttsVol;
-
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      }
-      window.speechSynthesis.speak(utterance);
-    } else {
-      if (logger) logger.warn("Text-to-speech not supported in this browser.");
-    }
+    playTtsAudio(
+      text,
+      data,
+      {
+        ttsVoice: options?.ttsVoice ?? saved.ttsVoice,
+        ttsRate: options?.ttsRate ?? saved.ttsRate ?? 1.0,
+        ttsPitch: options?.ttsPitch ?? saved.ttsPitch ?? 1.0,
+        ttsVolume: options?.ttsVolume ?? saved.ttsVolume ?? 100,
+        masterVolume,
+      },
+      logger,
+    );
   } else {
     if (logger) logger.debug("No sound to play (missing type, url, or text)");
   }

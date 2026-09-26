@@ -1454,6 +1454,7 @@ export class DefaultRacedayComponent
     this.subscriptions.push(
       this.themeService.activeTheme$.subscribe(() => {
         this.updateRacedayLayout();
+        this.preloadCountdownAudio();
       }),
     );
 
@@ -1513,6 +1514,7 @@ export class DefaultRacedayComponent
             next: (assets) => {
               this.assets = assets || [];
               this.loadColumns();
+              this.preloadCountdownAudio();
               if (!this.isDestroyed) {
                 this.cdr.markForCheck();
               }
@@ -3547,6 +3549,7 @@ export class DefaultRacedayComponent
 
       this.race = race;
       this.track = race.track;
+      this.preloadCountdownAudio();
 
       const isEnded =
         this.raceHasEnded ||
@@ -6399,10 +6402,16 @@ export class DefaultRacedayComponent
       currentSecond >= 1 &&
       currentSecond !== this.lastPlayedCountdownSecond
     ) {
-      this.lastPlayedCountdownSecond = currentSecond;
-      this.playAudioFromSet(THEME_SLOT_KEYS.AUDIO_COUNTDOWN, currentSecond, {
-        widgetType: "countdown",
-      });
+      const played = this.playAudioFromSet(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        currentSecond,
+        {
+          widgetType: "countdown",
+        },
+      );
+      if (played) {
+        this.lastPlayedCountdownSecond = currentSecond;
+      }
     }
   }
 
@@ -6411,6 +6420,12 @@ export class DefaultRacedayComponent
     timeSeconds: number,
     triggerMode: string = "remaining",
   ): { config: AudioConfig; playableUrl?: string } | null {
+    if (
+      !this.themeService ||
+      typeof this.themeService.resolveAudioConfig !== "function"
+    ) {
+      return null;
+    }
     const config = this.themeService.resolveAudioConfig(slotKey);
     if (!config || config.type !== "audio_set") return null;
 
@@ -6461,7 +6476,7 @@ export class DefaultRacedayComponent
     timeSeconds: number,
     association?: AudioAssociation,
     triggerMode: string = "remaining",
-  ) {
+  ): boolean {
     const defaultAssoc =
       association ??
       (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN
@@ -6476,7 +6491,7 @@ export class DefaultRacedayComponent
     if (entryItem) {
       if (slotKey === THEME_SLOT_KEYS.AUDIO_COUNTDOWN) {
         if (entryItem.config.type === "tts") {
-          this.audioService.playCallout(
+          return this.audioService.playCallout(
             { type: "tts", text: entryItem.config.text },
             "normal",
             undefined,
@@ -6484,16 +6499,40 @@ export class DefaultRacedayComponent
             defaultAssoc,
           );
         } else {
-          this.audioService.playSfx(entryItem.playableUrl, defaultAssoc);
+          return !!this.audioService.playSfx(
+            entryItem.playableUrl,
+            defaultAssoc,
+          );
         }
       } else {
-        this.audioService.playCallout(
+        return this.audioService.playCallout(
           entryItem.config,
           "normal",
           undefined,
           entryItem.playableUrl,
           defaultAssoc,
         );
+      }
+    }
+    return false;
+  }
+
+  private preloadCountdownAudio(): void {
+    if (
+      !this.assets ||
+      this.assets.length === 0 ||
+      !this.audioService ||
+      typeof this.audioService.preload !== "function"
+    ) {
+      return;
+    }
+    for (let second = 0; second <= 5; second++) {
+      const item = this.getAudioFromSetEntry(
+        THEME_SLOT_KEYS.AUDIO_COUNTDOWN,
+        second,
+      );
+      if (item?.playableUrl && item.config.type !== "tts") {
+        this.audioService.preload(item.playableUrl);
       }
     }
   }
