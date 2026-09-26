@@ -2284,6 +2284,7 @@
   "UE_LABEL_COUNTDOWN_AUDIO": "Countdown Audio-Set",
   "UE_LABEL_COUNTDOWN_GO": "LOS",
   "UE_LABEL_CUSTOM_UI": "UI-Layout",
+  "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE": "Benutzerdefiniertes Widget nicht verfügbar",
   "UE_LABEL_DEFAULT_FUEL_UI": "RaceCoordinator AI (Kraftstoff)",
   "UE_LABEL_DEFAULT_PRACTICE_UI": "RaceCoordinator AI (Training)",
   "UE_LABEL_DEFAULT_RACEDAY_UI": "RaceCoordinator AI",

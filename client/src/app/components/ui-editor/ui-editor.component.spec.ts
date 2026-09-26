@@ -2096,6 +2096,30 @@ describe("UIEditorComponent", () => {
   });
 
   describe("custom export template actions and DOM rendering", () => {
+    let originalShowSaveFilePicker: any;
+    let mockWritable: any;
+    let mockHandle: any;
+
+    beforeEach(() => {
+      originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+      mockWritable = {
+        write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+        close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+      };
+      mockHandle = {
+        createWritable: jasmine
+          .createSpy("createWritable")
+          .and.returnValue(Promise.resolve(mockWritable)),
+      };
+      (window as any).showSaveFilePicker = jasmine
+        .createSpy("showSaveFilePicker")
+        .and.returnValue(Promise.resolve(mockHandle));
+    });
+
+    afterEach(() => {
+      (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+    });
+
     it("should clear custom template and capture state", () => {
       component.editingSettings.customExportTemplateBase64 = "data:test";
       component.editingSettings.customExportTemplateName = "test.xlsx";
@@ -2209,48 +2233,42 @@ describe("UIEditorComponent", () => {
     });
 
     it("should download default template when no custom template is selected", fakeAsync(() => {
-      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
-      spyOn(window.URL, "revokeObjectURL").and.stub();
       component.editingSettings.customExportTemplateBase64 = undefined;
       component.downloadTemplate();
       tick();
       expect(mockDataService.downloadDefaultExportTemplate).toHaveBeenCalled();
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
     }));
 
     it("should download selected custom template directly when custom template is present", fakeAsync(() => {
-      const originalPicker = (window as any).showSaveFilePicker;
       delete (window as any).showSaveFilePicker;
-      try {
-        const createUrlSpy = spyOn(
-          window.URL,
-          "createObjectURL",
-        ).and.returnValue("blob:mock-url");
-        spyOn(window.URL, "revokeObjectURL").and.stub();
-        mockDataService.downloadDefaultExportTemplate.calls.reset();
-        component.editingSettings.customExportTemplateBase64 =
-          "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
-        component.editingSettings.customExportTemplateName =
-          "my_custom_template.xlsx";
-        component.downloadTemplate();
-        tick();
-        expect(
-          mockDataService.downloadDefaultExportTemplate,
-        ).not.toHaveBeenCalled();
-        expect(createUrlSpy).toHaveBeenCalled();
-      } finally {
-        (window as any).showSaveFilePicker = originalPicker;
-      }
+      const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+      const createUrlSpy = spyOn(window.URL, "createObjectURL").and.returnValue(
+        "blob:mock-url",
+      );
+      spyOn(window.URL, "revokeObjectURL").and.stub();
+      mockDataService.downloadDefaultExportTemplate.calls.reset();
+      component.editingSettings.customExportTemplateBase64 =
+        "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,dGVzdA==";
+      component.editingSettings.customExportTemplateName =
+        "my_custom_template.xlsx";
+      component.downloadTemplate();
+      tick();
+      expect(
+        mockDataService.downloadDefaultExportTemplate,
+      ).not.toHaveBeenCalled();
+      expect(createUrlSpy).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
     }));
 
     it("should trigger test export with custom template", fakeAsync(() => {
-      spyOn(window.URL, "createObjectURL").and.returnValue("blob:mock-url");
-      spyOn(window.URL, "revokeObjectURL").and.stub();
       component.editingSettings.customExportTemplateBase64 = "custom-base64";
       component.testExport();
       tick();
       expect(mockDataService.testExportXls).toHaveBeenCalledWith(
         "custom-base64",
       );
+      expect((window as any).showSaveFilePicker).toHaveBeenCalled();
     }));
   });
 

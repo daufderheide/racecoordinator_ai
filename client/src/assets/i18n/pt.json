@@ -2284,6 +2284,7 @@
   "UE_LABEL_COUNTDOWN_AUDIO": "Conjunto de Áudio de Contagem Regressiva",
   "UE_LABEL_COUNTDOWN_GO": "VAI",
   "UE_LABEL_CUSTOM_UI": "Layout de interface",
+  "UE_LABEL_CUSTOM_WIDGET_UNAVAILABLE": "Widget personalizado indisponível",
   "UE_LABEL_DEFAULT_FUEL_UI": "RaceCoordinator AI (Combustível)",
   "UE_LABEL_DEFAULT_PRACTICE_UI": "RaceCoordinator AI (Treino)",
   "UE_LABEL_DEFAULT_RACEDAY_UI": "RaceCoordinator AI",

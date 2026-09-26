@@ -1280,19 +1280,65 @@ describe("DefaultRaceResultsComponent", () => {
       expect(component.showAddLapSectionsDialog).toBeFalse();
     });
 
-    it("should export CSV for past race using exportRaceHistoryToCsv", async () => {
-      (component as any).race = { historyRecordId: "hist_123", is_demo: true };
-      await component.exportCsv();
-      expect(mockDataService.exportRaceHistoryToCsv).toHaveBeenCalledWith(
-        "hist_123",
-        true,
-      );
-    });
+    describe("exportCsv", () => {
+      let originalShowSaveFilePicker: any;
+      let mockWritable: any;
+      let mockHandle: any;
 
-    it("should export CSV for live race using exportRaceToCsv", async () => {
-      (component as any).race = {};
-      await component.exportCsv();
-      expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
+      beforeEach(() => {
+        originalShowSaveFilePicker = (window as any).showSaveFilePicker;
+        mockWritable = {
+          write: jasmine.createSpy("write").and.returnValue(Promise.resolve()),
+          close: jasmine.createSpy("close").and.returnValue(Promise.resolve()),
+        };
+        mockHandle = {
+          createWritable: jasmine
+            .createSpy("createWritable")
+            .and.returnValue(Promise.resolve(mockWritable)),
+        };
+        (window as any).showSaveFilePicker = jasmine
+          .createSpy("showSaveFilePicker")
+          .and.returnValue(Promise.resolve(mockHandle));
+      });
+
+      afterEach(() => {
+        (window as any).showSaveFilePicker = originalShowSaveFilePicker;
+      });
+
+      it("should export CSV for past race using exportRaceHistoryToCsv", async () => {
+        (component as any).race = {
+          historyRecordId: "hist_123",
+          is_demo: true,
+        };
+        await component.exportCsv();
+        expect(mockDataService.exportRaceHistoryToCsv).toHaveBeenCalledWith(
+          "hist_123",
+          true,
+        );
+        expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+        expect(mockWritable.write).toHaveBeenCalledWith("history csv data");
+        expect(mockWritable.close).toHaveBeenCalled();
+      });
+
+      it("should export CSV for live race using exportRaceToCsv", async () => {
+        (component as any).race = {};
+        await component.exportCsv();
+        expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
+        expect((window as any).showSaveFilePicker).toHaveBeenCalled();
+        expect(mockWritable.write).toHaveBeenCalled();
+        expect(mockWritable.close).toHaveBeenCalled();
+      });
+
+      it("should fallback to anchor download when showSaveFilePicker is not available", async () => {
+        delete (window as any).showSaveFilePicker;
+        const clickSpy = spyOn(HTMLAnchorElement.prototype, "click");
+
+        (component as any).race = {};
+        await component.exportCsv();
+
+        expect(mockDataService.exportRaceToCsv).toHaveBeenCalled();
+        expect(clickSpy).toHaveBeenCalled();
+      });
     });
   });
 });

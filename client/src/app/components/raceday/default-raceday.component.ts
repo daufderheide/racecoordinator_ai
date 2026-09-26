@@ -1390,6 +1390,13 @@ export class DefaultRacedayComponent
     this.updateScale();
 
     if (
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.customWidgetService.reloadCustomWidgets().catch(() => {});
+    }
+
+    if (
       typeof window !== "undefined" &&
       window.visualViewport &&
       typeof window.visualViewport.addEventListener === "function"

@@ -396,6 +396,12 @@ export class UIEditorComponent implements OnInit, OnDestroy, DirtyComponent {
     this.updateScale();
     this.loadExpanderState();
     this.loadData();
+    if (
+      this.customWidgetService &&
+      this.customWidgetService.getCustomWidgets().length === 0
+    ) {
+      this.customWidgetService.reloadCustomWidgets().catch(() => {});
+    }
     this.raceConnectionService.connect();
 
     this.undoManager?.stateCommitted$.subscribe(() => this.autoSaveState());
