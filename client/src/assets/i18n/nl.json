@@ -2529,6 +2529,7 @@
   "UE_WIDGET_TYPE_ACTION_SKIP_RACE": "Race overslaan",
   "UE_WIDGET_TYPE_ACTION_START_RESUME": "Heat starten/hervatten",
   "UE_WIDGET_TYPE_BRANDING": "Branding Image",
+  "UE_WIDGET_TYPE_CAMERA_QR": "Camera QR-code",
   "UE_WIDGET_TYPE_COUNTDOWN": "Aftellen",
   "UE_WIDGET_TYPE_DRIVER_HEATS": "Driver Heats",
   "UE_WIDGET_TYPE_DRIVER_HEAT_METRICS": "Driver Heat Metrics",

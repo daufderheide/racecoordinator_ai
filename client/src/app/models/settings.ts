@@ -16,6 +16,7 @@ export type WidgetType =
   | "track-name"
   | "branding"
   | "qr"
+  | "camera-qr"
   | "flag"
   | "timer"
   | "countdown"

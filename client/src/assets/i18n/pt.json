@@ -2529,6 +2529,7 @@
   "UE_WIDGET_TYPE_ACTION_SKIP_RACE": "Pular corrida",
   "UE_WIDGET_TYPE_ACTION_START_RESUME": "Iniciar/retomar bateria",
   "UE_WIDGET_TYPE_BRANDING": "Branding Image",
+  "UE_WIDGET_TYPE_CAMERA_QR": "Código QR da câmara",
   "UE_WIDGET_TYPE_COUNTDOWN": "Contagem regressiva",
   "UE_WIDGET_TYPE_DRIVER_HEATS": "Driver Heats",
   "UE_WIDGET_TYPE_DRIVER_HEAT_METRICS": "Driver Heat Metrics",

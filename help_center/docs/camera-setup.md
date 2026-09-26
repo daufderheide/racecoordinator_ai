@@ -212,3 +212,18 @@ To ensure accurate lap detection:
 5. **Sensitivity Tuning**:
    - Open **Settings** (gear icon) on the camera interface.
    - Adjust the **Sensitivity** slider (default 50%). Lower sensitivity reduces false triggers from ambient light; higher sensitivity detects smaller or faster cars.
+
+---
+
+## Raceday Camera QR Code Widget
+
+You can also place a scannable **Camera QR Code** widget directly onto your active Raceday layout using the [UI Editor](ui-editor.md):
+
+1. Open **UI Editor** and locate **Camera QR Code** under the **Media & Chrome** toolbox group.
+2. Drag the widget onto your Raceday layout and position it conveniently for drivers or race marshals.
+3. **Live Raceday Display**:
+   - The widget displays the live pairing QR code right on the screen during practice, qualifying, or race heats.
+   - Anyone can scan the QR code with their smartphone camera to immediately open and connect the optical lap timing interface.
+4. **Interactive Modal**:
+   - Clicking the widget in live mode opens a dialog displaying an enlarged QR code, direct URL with one-click clipboard copy, and a local test launcher.
+

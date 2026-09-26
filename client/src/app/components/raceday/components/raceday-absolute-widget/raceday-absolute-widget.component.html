@@ -139,6 +139,12 @@
             [qrCodeUrl]="parentComponent().qrCodeUrl"
           ></app-raceday-qr>
         }
+        @case ("camera-qr") {
+          <app-raceday-camera-qr
+            [qrCodeUrl]="parentComponent().cameraQrCodeUrl"
+            [pairingUrl]="parentComponent().cameraPairingUrl"
+          ></app-raceday-camera-qr>
+        }
         @case ("flag") {
           <app-raceday-flag
             [currentFlagUrl]="parentComponent().getCurrentFlagUrl()"

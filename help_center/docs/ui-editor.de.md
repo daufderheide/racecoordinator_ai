@@ -33,3 +33,12 @@ Das **Timer**-Widget zeigt die abgelaufene oder verbleibende Renn- bzw. Durchgan
   - **Immer**: Zeigt Sekundenbruchteile durchgehend während des gesamten Durchgangs an.
   - **Nie**: Beschränkt den Timer ausschließlich auf ganze Sekunden.
 - **Live-Vorschau**: Der Inspektor bietet eine sofortige Vorschau darauf, wie die ausgewählten Einstellungen an verschiedenen Zeitpunkten formatiert werden (`> 1 hr`, `> 1 min`, `< 1 min` und `< 10s`).
+
+## Kamera-QR-Code-Widget
+
+Das **Kamera-QR-Code**-Widget (in der Palette **Medien & Chrome**) zeigt einen scannbaren Kopplungs-QR-Code direkt auf Ihrer Renntagsansicht an:
+
+- **Sofortige Mobilkopplung**: Ermöglicht Streckenposten und Fahrern, ein Mobilgerät zur optischen Rundenerkennung zu verbinden, ohne in den Strecken-Editor wechseln zu müssen.
+- **Interaktive Details**: Ein Klick auf das Widget im Live-Modus öffnet einen Dialog mit vergrößertem QR-Code, direkter URL, Kopierschaltfläche und lokalem Test-Button.
+- **Netzwerkauflösung**: Stellt je nach Konfiguration dynamisch entweder eine sichere Cloudflare-HTTPS-Tunnel-URL oder Ihre lokale Netzwerk-IP und den Port bereit.
+

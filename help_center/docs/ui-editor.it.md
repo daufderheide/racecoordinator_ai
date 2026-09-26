@@ -33,3 +33,12 @@ Il widget **Cronometro** mostra il tempo trascorso o rimanente della manche/gara
   - **Sempre**: Mostra le frazioni di secondo costantemente per l'intera manche.
   - **Mai**: Limita il cronometro esclusivamente ai secondi interi.
 - **Anteprima dal vivo**: L'ispettore include un'anteprima istantanea che dimostra come le opzioni selezionate vengono visualizzate a vari intervalli di gara (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+
+## Widget Codice QR fotocamera
+
+Il widget **Codice QR fotocamera** (disponibile nel gruppo **Media & Chrome**) visualizza un codice QR di associazione direttamente sulla schermata di gara:
+
+- **Associazione mobile immediata**: Consente a commissari e piloti di collegare la fotocamera dello smartphone per il rilevamento ottico dei giri senza dover aprire l'Editor tracciato.
+- **Dettagli interattivi**: Facendo clic sul widget nella schermata di gara attiva viene aperta una finestra modale con il codice QR ingrandito, l'URL completo, il pulsante di copia e il test locale.
+- **Risoluzione di rete dinamica**: Fornisce automaticamente un URL sicuro tramite tunnel HTTPS Cloudflare o l'IP e la porta della rete locale in base alla configurazione.
+

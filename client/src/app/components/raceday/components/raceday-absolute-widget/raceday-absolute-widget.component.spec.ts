@@ -438,6 +438,20 @@ describe("RacedayAbsoluteWidgetComponent", () => {
     expect(nextHeat).toBeTruthy();
   });
 
+  it("should render camera-qr widget when widgetType is camera-qr", () => {
+    mockWidget.widgetType = "camera-qr";
+    mockParent.cameraQrCodeUrl = "data:image/svg+xml;base64,mock";
+    mockParent.cameraPairingUrl =
+      "http://localhost:4200/camera_interface?interface=0";
+    fixture.componentRef.setInput("widget", { ...mockWidget });
+    fixture.detectChanges();
+
+    const cameraQr = fixture.nativeElement.querySelector(
+      "app-raceday-camera-qr",
+    );
+    expect(cameraQr).toBeTruthy();
+  });
+
   it("should render on-deck widget with custom settings in fixed scale mode", () => {
     mockWidget.widgetType = "on-deck";
     mockWidget.scaleMode = "fixed";

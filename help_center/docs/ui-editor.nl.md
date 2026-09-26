@@ -33,3 +33,12 @@ De **Timer**-widget toont de verstreken of resterende heat-/racetijd in verschil
   - **Altijd**: Toont continu decimalen gedurende de hele heat.
   - **Nooit**: Beperkt de timer uitsluitend tot hele seconden.
 - **Live Voorbeeld**: De inspecteur bevat een direct voorbeeld waarin te zien is hoe de geselecteerde opmaak eruitziet op verschillende meetpunten (`> 1 hr`, `> 1 min`, `< 1 min` en `< 10s`).
+
+## Camera QR-code widget
+
+De widget **Camera QR-code** (beschikbaar in de groep **Media & Chrome**) toont een scannbare koppelings-QR-code rechtstreeks op uw racedagscherm:
+
+- **Directe mobiele koppeling**: Hiermee kunnen baancommissarissen en coureurs een smartphone verbinden voor optische rondetijdwaarneming zonder naar de Baaneditor te hoeven navigeren.
+- **Interactieve details**: Door in live-modus op de widget te klikken opent een modaal venster met de vergrote QR-code, volledige URL, kopieerknop en lokale testknop.
+- **Flexibele netwerkdetectie**: Biedt automatisch een beveiligde Cloudflare HTTPS-tunnel-URL of het lokale IP-adres en poort op basis van uw configuratie.
+

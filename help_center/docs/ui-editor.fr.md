@@ -33,3 +33,12 @@ Le widget **Minuteur** affiche le temps écoulé ou restant de la manche/course 
   - **Toujours** : Affiche les fractions de seconde en continu pendant toute la manche.
   - **Jamais** : Limite le minuteur uniquement aux secondes entières.
 - **Aperçu en direct** : L'inspecteur comprend un aperçu en direct immédiat montrant la mise en forme aux différents points de passage de la course (`> 1 hr`, `> 1 min`, `< 1 min` et `< 10s`).
+
+## Widget Code QR de la caméra
+
+Le widget **Code QR de la caméra** (disponible dans la palette **Médias & Chrome**) affiche un code QR d'appairage directement sur votre écran de course :
+
+- **Appairage mobile instantané** : Permet aux commissaires et aux pilotes de connecter la caméra d'un smartphone pour le chronométrage optique sans passer par l'Éditeur de piste.
+- **Détails interactifs** : Cliquer sur le widget en direct ouvre une boîte de dialogue modale avec le code QR agrandi, l'URL complète, le bouton de copie et le lanceur de test local.
+- **Résolution réseau adaptative** : Fournit dynamiquement soit une URL sécurisée via tunnel Cloudflare HTTPS, soit l'adresse IP et le port du réseau local en fonction de votre configuration.
+

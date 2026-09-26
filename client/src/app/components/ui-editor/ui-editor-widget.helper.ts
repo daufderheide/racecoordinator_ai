@@ -40,6 +40,7 @@ export function applyWidgetDefaultSettings(widget: any): boolean {
   if (
     widget.widgetType === "branding" ||
     widget.widgetType === "qr" ||
+    widget.widgetType === "camera-qr" ||
     widget.widgetType === "flag"
   ) {
     if (widget.scaleMode !== "auto") {

@@ -191,3 +191,18 @@ Falls die Kamera unter macOS trotz Bestätigung nicht startet:
 2. **Vibrationsschutz**: Verwenden Sie eine feste Halterung, um Fehlauslösungen durch Erschütterungen zu vermeiden.
 3. **Beleuchtung**: Sorgen Sie für gleichmäßige Ausleuchtung ohne Schattenwurf oder flackernde Leuchtstoffröhren.
 4. **Bildwiederholrate**: Wählen Sie im Strecken-Editor **60 FPS** für zuverlässige Erfassung bei hohen Geschwindigkeiten.
+
+---
+
+## Raceday Kamera-QR-Code-Widget
+
+Sie können ein scannbares **Kamera-QR-Code**-Widget auch direkt über den [UI-Editor](ui-editor.de.md) auf Ihrer aktiven Renntagsansicht platzieren:
+
+1. Öffnen Sie den **UI-Editor** und suchen Sie **Kamera-QR-Code** in der Toolbox-Gruppe **Medien & Chrome**.
+2. Ziehen Sie das Widget auf das Renntags-Layout und positionieren Sie es passend für Fahrer oder Streckenposten.
+3. **Live-Renntagsanzeige**:
+   - Das Widget blendet den aktuellen Kopplungs-QR-Code direkt während des Trainings oder Rennens ein.
+   - Jeder Teilnehmer kann den Code mit der Smartphone-Kamera scannen, um die Zeitmess-Oberfläche zu öffnen.
+4. **Interaktives Dialogfenster**:
+   - Ein Klick auf das Widget im Live-Modus öffnet einen Dialog mit vergrößertem QR-Code, direkter URL, Kopierschaltfläche und lokalem Test-Button.
+

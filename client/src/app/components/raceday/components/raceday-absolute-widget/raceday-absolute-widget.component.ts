@@ -13,6 +13,7 @@ import {
 import { Subscription } from "rxjs";
 import { RacedayActionButtonComponent } from "@app/components/raceday/components/raceday-action-button/raceday-action-button.component";
 import { RacedayBrandingComponent } from "@app/components/raceday/components/raceday-branding/raceday-branding.component";
+import { RacedayCameraQrComponent } from "@app/components/raceday/components/raceday-camera-qr/raceday-camera-qr.component";
 import { RacedayCountdownComponent } from "@app/components/raceday/components/raceday-countdown/raceday-countdown.component";
 import { RacedayEventNameComponent } from "@app/components/raceday/components/raceday-event-name/raceday-event-name.component";
 import { RacedayFlagComponent } from "@app/components/raceday/components/raceday-flag/raceday-flag.component";
@@ -56,6 +57,7 @@ import { CustomWidgetService } from "@app/services/custom-widget.service";
     RacedayTrackNameComponent,
     RacedayBrandingComponent,
     RacedayQrComponent,
+    RacedayCameraQrComponent,
     RacedayFlagComponent,
     RacedayTimerComponent,
     RacedayRecordsComponent,

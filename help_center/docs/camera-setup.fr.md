@@ -180,3 +180,18 @@ Si la caméra ne s'active pas sous macOS même après confirmation :
 2. **Stabilité** : Utilisez une fixation rigide pour éviter les faux déclenchements causés par les vibrations de la piste.
 3. **Éclairage** : Assurez une lumière constante sans reflets ni ombres projetées par les pilotes.
 4. **Cadence d'images** : Choisissez **60 FPS** pour assurer la détection parfaite des bolides à grande vitesse.
+
+---
+
+## Widget Code QR de la caméra pour le jour de course
+
+Vous pouvez également ajouter un widget interactif **Code QR de la caméra** directement sur votre écran de course via l'[Éditeur d'interface](ui-editor.fr.md) :
+
+1. Ouvrez l'**Éditeur d'interface** et localisez **Code QR de la caméra** dans la palette **Médias & Chrome**.
+2. Glissez-déposez le widget sur votre disposition d'affichage de course.
+3. **Affichage en direct** :
+   - Le widget présente le code QR d'appairage en temps réel pendant les essais ou les manches.
+   - Les participants peuvent flasher le code avec leur smartphone pour lancer l'interface de détection optique.
+4. **Boîte de dialogue interactive** :
+   - Cliquer sur le widget en direct ouvre une fenêtre modale avec le code QR agrandi, l'URL directe, la copie dans le presse-papiers et le bouton de test local.
+

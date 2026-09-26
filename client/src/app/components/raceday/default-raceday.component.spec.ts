@@ -9724,16 +9724,48 @@ describe("DefaultRacedayComponent", () => {
       expect(unused).toContain("action-open-season-results");
       expect(unused).toContain("action-open-prediction-results");
       expect(unused).toContain("heat-list");
+      expect(unused).toContain("camera-qr");
 
       component.layout = {
         widgets: [
           { widgetType: "action-master-power-on" } as any,
           { widgetType: "action-master-power-off" } as any,
+          { widgetType: "camera-qr" } as any,
         ],
       } as any;
       const updatedUnused = component.getUnusedWidgets();
       expect(updatedUnused).not.toContain("action-master-power-on");
       expect(updatedUnused).not.toContain("action-master-power-off");
+      expect(updatedUnused).not.toContain("camera-qr");
+    });
+
+    it("should generate camera QR code in UI editor mode and live mode", async () => {
+      // In UI editor mode
+      fixture.componentRef.setInput("isUIEditorMode", true);
+      component.generateCameraQrCode();
+      expect(component.cameraPairingUrl).toContain("/camera_interface");
+      expect(component.cameraQrCodeUrl).toContain("data:image/svg+xml");
+
+      // In live mode
+      fixture.componentRef.setInput("isUIEditorMode", false);
+      (component as any).track = {
+        entity_id: "track-1",
+        name: "Test Track",
+        lanes: [{ lane_number: 1 }, { lane_number: 2 }] as any,
+        camera_configs: [
+          {
+            name: "Main Cam",
+            interfaceIndex: 0,
+            targetFps: 60,
+            autoDetectLanes: false,
+            gates: [],
+          },
+        ],
+      } as any;
+      component.generateCameraQrCode();
+      expect(component.cameraPairingUrl).toContain("/camera_interface");
+      expect(component.cameraPairingUrl).toContain("interface=0");
+      expect(component.cameraPairingUrl).toContain("lanes=2");
     });
 
     it("should include custom widgets in getUnusedWidgets and format labels", () => {

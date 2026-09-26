@@ -2530,6 +2530,7 @@
   "UE_WIDGET_TYPE_ACTION_SKIP_RACE": "Saltar carrera",
   "UE_WIDGET_TYPE_ACTION_START_RESUME": "Iniciar/reanudar manga",
   "UE_WIDGET_TYPE_BRANDING": "Branding Image",
+  "UE_WIDGET_TYPE_CAMERA_QR": "Código QR de cámara",
   "UE_WIDGET_TYPE_COUNTDOWN": "Cuenta regresiva",
   "UE_WIDGET_TYPE_DRIVER_HEATS": "Driver Heats",
   "UE_WIDGET_TYPE_DRIVER_HEAT_METRICS": "Driver Heat Metrics",

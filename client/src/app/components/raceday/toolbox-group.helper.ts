@@ -256,6 +256,11 @@ export class ToolboxGroupHelper {
           labelKey: "UE_WIDGET_TYPE_BRANDING",
         },
         {
+          type: "camera-qr",
+          icon: "",
+          labelKey: "UE_WIDGET_TYPE_CAMERA_QR",
+        },
+        {
           type: "image",
           icon: "",
           labelKey: "UE_WIDGET_TYPE_IMAGE",

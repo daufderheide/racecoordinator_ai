@@ -180,3 +180,18 @@ Si la cámara no se inicializa en macOS tras haber concedido los permisos:
 2. **Evitar Vibraciones**: Emplee un soporte rígido para evitar falsos positivos producidos por las sacudidas de los coches.
 3. **Iluminación**: Asegure una luz uniforme y constante en todos los carriles, evitando sombras de los participantes.
 4. **Tasa de Cuadros**: Seleccione **60 FPS** en la configuración de la cámara para detectar coches a máxima velocidad con total precisión.
+
+---
+
+## Widget de código QR de cámara para el día de carrera
+
+También puede añadir un widget interactivo con el **código QR de la cámara** directamente en la pantalla de carrera a través del [Editor de interfaz](ui-editor.es.md):
+
+1. Abra el **Editor de interfaz** y localice **Código QR de cámara** en el grupo de herramientas **Medios y Chrome**.
+2. Arrastre el widget a la plantilla de carrera y colóquelo donde resulte visible para los pilotos o comisarios.
+3. **Visualización en directo**:
+   - El widget muestra el código QR de emparejamiento directamente en pantalla durante las mangas o entrenamientos.
+   - Cualquier participante puede escanear el código QR con su móvil para abrir la interfaz de cronometraje óptico.
+4. **Ventana modal interactiva**:
+   - Al hacer clic en el widget en modo carrera, se abre un cuadro de diálogo con el código QR ampliado, enlace directo, botón de copia y acceso de prueba local.
+

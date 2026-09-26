@@ -42,9 +42,10 @@ describe("ToolboxGroupHelper", () => {
     expect(titlesSg?.widgets.map((w) => w.type)).toContain("heat-info");
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
-    expect(mediaSg?.widgets.length).toBe(4);
+    expect(mediaSg?.widgets.length).toBe(5);
+    expect(mediaSg?.widgets.map((w) => w.type)).toContain("camera-qr");
 
-    expect(rcAiGroup.totalCount).toBe(40);
+    expect(rcAiGroup.totalCount).toBe(41);
   });
 
   it("should exclude used widgets from root and subgroups", () => {
@@ -81,9 +82,9 @@ describe("ToolboxGroupHelper", () => {
 
     const mediaSg = rcAiGroup.subgroups.find((sg) => sg.id === "media-chrome");
     expect(mediaSg?.widgets.find((w) => w.type === "branding")).toBeUndefined();
-    expect(mediaSg?.widgets.length).toBe(3);
+    expect(mediaSg?.widgets.length).toBe(4);
 
-    expect(rcAiGroup.totalCount).toBe(36);
+    expect(rcAiGroup.totalCount).toBe(37);
   });
 
   it("should organize custom widgets into groups, subgroups, and custom-root", () => {

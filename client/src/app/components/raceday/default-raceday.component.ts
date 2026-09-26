@@ -351,6 +351,8 @@ export class DefaultRacedayComponent
   protected groupParticipants: RaceParticipant[] = [];
   protected currentGroup: number = 0;
   protected qrCodeUrl?: string;
+  public cameraQrCodeUrl?: string;
+  public cameraPairingUrl?: string;
   protected serverUrlBase: string = window?.location?.origin || "";
   protected laneQrCodeCache = new Map<number, string>();
   protected driverViewQrCodeCache = new Map<string, string>();
@@ -1658,6 +1660,7 @@ export class DefaultRacedayComponent
               .then((dataUrl) => {
                 this.qrCodeUrl = dataUrl;
                 this.generateAllLaneQrCodes();
+                this.generateCameraQrCode();
                 if (!this.isDestroyed) {
                   this.cdr.markForCheck();
                 }
@@ -3157,6 +3160,11 @@ export class DefaultRacedayComponent
     this.qrCodeUrl =
       "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><rect x='30' y='30' width='20' height='20' fill='black'/></svg>";
 
+    this.cameraPairingUrl =
+      "http://localhost:4200/camera_interface?server=ws%3A%2F%2Flocalhost%3A7070%2Fapi%2Finterface-data&interface=0&lanes=4";
+    this.cameraQrCodeUrl =
+      "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><circle cx='40' cy='40' r='8' fill='%230284c7'/></svg>";
+
     // Populate mock lane QR codes for UI Editor
     this.laneQrCodeCache.clear();
     for (let i = 0; i < (this.track?.lanes?.length || 8); i++) {
@@ -3683,6 +3691,9 @@ export class DefaultRacedayComponent
   private initializeHeat() {
     if (!this.track) {
       this.track = this.race?.track || this.raceService.getRace()?.track;
+      if (this.track) {
+        this.generateCameraQrCode();
+      }
     }
 
     const heats = this.raceService.getHeats() || this.heats;
@@ -4013,6 +4024,93 @@ export class DefaultRacedayComponent
           this.logger.error("Lane QR Code generation failed", err),
         );
     });
+  }
+
+  public generateCameraQrCode(): void {
+    if (this.isUIEditorMode()) {
+      this.cameraPairingUrl =
+        "http://localhost:4200/camera_interface?server=ws%3A%2F%2Flocalhost%3A7070%2Fapi%2Finterface-data&interface=0&lanes=4";
+      this.cameraQrCodeUrl =
+        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><rect width='80' height='80' fill='white'/><rect x='10' y='10' width='20' height='20' fill='black'/><rect x='50' y='10' width='20' height='20' fill='black'/><rect x='10' y='50' width='20' height='20' fill='black'/><rect x='40' y='40' width='10' height='10' fill='black'/><circle cx='40' cy='40' r='8' fill='%230284c7'/></svg>";
+      return;
+    }
+
+    const track =
+      this.track || this.race?.track || this.raceService.getRace()?.track;
+    const cameraConfig = track?.camera_configs?.[0];
+    const lanesCount = track?.lanes?.length || 4;
+    const ifaceIdx = cameraConfig?.interfaceIndex ?? 0;
+    let gatesParam = "";
+    if (cameraConfig?.gates && cameraConfig.gates.length > 0) {
+      gatesParam = `&gates=${encodeURIComponent(JSON.stringify(cameraConfig.gates))}`;
+    }
+
+    const loc =
+      typeof window !== "undefined"
+        ? window.location
+        : { protocol: "http:", hostname: "localhost", port: "4200" };
+    const host = this.serverUrlBase
+      ? new URL(this.serverUrlBase).hostname
+      : loc.hostname;
+    const clientPort = loc.port ? `:${loc.port}` : "";
+    const clientBase = `${loc.protocol}//${host}${clientPort}`;
+    const wsProtocol = loc.protocol === "https:" ? "wss:" : "ws:";
+    const wsPort = this.dataService?.currentServerPort || 7070;
+    const wsUrl = `${wsProtocol}//${host}:${wsPort}/api/interface-data`;
+    const localPairingUrl = `${clientBase}/camera_interface?server=${encodeURIComponent(
+      wsUrl,
+    )}&interface=${ifaceIdx}&lanes=${lanesCount}${gatesParam}`;
+
+    if (typeof this.dataService?.getCameraTunnelStatus === "function") {
+      this.dataService.getCameraTunnelStatus().subscribe({
+        next: (tunnel) => {
+          let url = localPairingUrl;
+          if (tunnel && tunnel.active && tunnel.url) {
+            const tunnelWsUrl =
+              tunnel.url.replace(/^http/, "ws") + "/api/interface-data";
+            url = `${tunnel.url}/camera_interface?server=${encodeURIComponent(
+              tunnelWsUrl,
+            )}&interface=${ifaceIdx}&lanes=${lanesCount}${gatesParam}`;
+          }
+          this.cameraPairingUrl = url;
+          QRCode.toDataURL(url, { margin: 1 })
+            .then((dataUrl) => {
+              this.cameraQrCodeUrl = dataUrl;
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            })
+            .catch((err) => {
+              this.logger.error("Camera QR Code generation failed", err);
+            });
+        },
+        error: () => {
+          this.cameraPairingUrl = localPairingUrl;
+          QRCode.toDataURL(localPairingUrl, { margin: 1 })
+            .then((dataUrl) => {
+              this.cameraQrCodeUrl = dataUrl;
+              if (!this.isDestroyed) {
+                this.cdr.markForCheck();
+              }
+            })
+            .catch((err) => {
+              this.logger.error("Camera QR Code generation failed", err);
+            });
+        },
+      });
+    } else {
+      this.cameraPairingUrl = localPairingUrl;
+      QRCode.toDataURL(localPairingUrl, { margin: 1 })
+        .then((dataUrl) => {
+          this.cameraQrCodeUrl = dataUrl;
+          if (!this.isDestroyed) {
+            this.cdr.markForCheck();
+          }
+        })
+        .catch((err) => {
+          this.logger.error("Camera QR Code generation failed", err);
+        });
+    }
   }
 
   getLaneQrCodeUrl(laneIndex: number): string {
@@ -7002,6 +7100,7 @@ export class DefaultRacedayComponent
       "track-name",
       "branding",
       "qr",
+      "camera-qr",
       "flag",
       "timer",
       "records",

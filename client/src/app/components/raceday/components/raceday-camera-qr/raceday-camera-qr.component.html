@@ -1,0 +1,74 @@
+@if (qrCodeUrl()) {
+  <div
+    class="camera-qr-card"
+    [title]="'CAMERA_EDITOR_PAIRING_TITLE' | translate"
+    (click)="openModal()"
+  >
+    <img [src]="qrCodeUrl()" alt="Camera QR Code" class="camera-qr-img" />
+    <div class="camera-icon-badge" title="Webcam Interface">
+      <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+        <path
+          d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"
+        />
+      </svg>
+    </div>
+  </div>
+}
+
+@if (showModal() && pairingUrl()) {
+  <div class="camera-qr-modal-backdrop" (click)="closeModal()">
+    <div class="camera-qr-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">
+          {{ "CAMERA_EDITOR_PAIRING_TITLE" | translate }}
+        </h3>
+        <button class="close-btn" (click)="closeModal()" aria-label="Close">
+          ✕
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (qrCodeUrl()) {
+          <div class="modal-qr-container">
+            <img
+              [src]="qrCodeUrl()"
+              alt="Camera QR Code"
+              class="modal-qr-img"
+            />
+          </div>
+        }
+
+        <p class="modal-desc">
+          {{ "CAMERA_EDITOR_QR_INSTRUCTION" | translate }}
+        </p>
+
+        <div class="modal-link-row">
+          <input
+            type="text"
+            readonly
+            autocomplete="off"
+            data-dashlane-ignore="true"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
+            [value]="pairingUrl()"
+            class="modal-link-input"
+          />
+          <button class="btn btn-copy" (click)="copyLink()">
+            {{
+              (copied() ? "CAMERA_EDITOR_COPIED" : "CAMERA_EDITOR_COPY")
+                | translate
+            }}
+          </button>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-test" (click)="openTest()">
+            {{ "CAMERA_EDITOR_TEST_LOCAL" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

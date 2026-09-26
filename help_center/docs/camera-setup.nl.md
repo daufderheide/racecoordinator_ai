@@ -174,3 +174,18 @@ Als de camera op macOS niet start, zelfs na het toestaan van de melding:
 2. **Trillingsvrij**: Zorg voor een stevige houder om valse detecties door baantrillingen te voorkomen.
 3. **Verlichting**: Zorg voor egale verlichting zonder flikkerende TL-buizen of slagschaduwen.
 4. **Beeldsnelheid**: Selecteer **60 FPS** in de cameraconfiguratie voor nauwkeurige detectie bij hoge snelheden.
+
+---
+
+## Raceday Camera QR-code widget
+
+U kunt ook rechtstreeks een scannbare **Camera QR-code** widget op uw actieve racedagscherm plaatsen via de [UI Editor](ui-editor.nl.md):
+
+1. Open de **UI Editor** en selecteer **Camera QR-code** onder de toolgroep **Media & Chrome**.
+2. Sleep de widget naar uw gewenste positie op het racedagscherm.
+3. **Live weergave op racedag**:
+   - De widget toont de actieve koppelings-QR-code direct op het scherm tijdens races of trainingen.
+   - Iedereen kan de code scannen met zijn telefooncamera om direct verbinding te maken met de optische tijdwaarneming.
+4. **Interactief dialoogvenster**:
+   - Door in live-modus op de widget te klikken, opent een modaal venster met vergrote QR-code, directe URL, kopieerknop en lokale testknop.
+

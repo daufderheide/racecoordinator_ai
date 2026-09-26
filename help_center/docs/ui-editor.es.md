@@ -33,3 +33,12 @@ El widget **Temporizador** muestra el tiempo transcurrido o restante de la manga
   - **Siempre**: Muestra fracciones de segundo continuamente durante toda la manga.
   - **Nunca**: Limita el temporizador exclusivamente a segundos enteros.
 - **Vista previa**: El inspector incluye una vista previa en tiempo real que demuestra cómo se muestran las opciones seleccionadas en distintos puntos de la carrera (`> 1 hr`, `> 1 min`, `< 1 min` y `< 10s`).
+
+## Widget de código QR de cámara
+
+El widget **Código QR de cámara** (disponible en la paleta **Medios y Chrome**) muestra un código QR de emparejamiento directamente en la pantalla de carrera:
+
+- **Emparejamiento móvil directo**: Permite a comisarios y pilotos conectar la cámara de un dispositivo móvil para la detección óptica de vueltas sin salir al Editor de pistas.
+- **Detalles interactivos**: Al hacer clic en el widget en modo directo se abre una ventana modal con el código QR ampliado, URL completa, botón de copia y acceso de prueba local.
+- **Resolución de red adaptativa**: Proporciona dinámicamente una URL mediante túnel seguro HTTPS de Cloudflare o la IP y puerto de la red local según la configuración activa.
+

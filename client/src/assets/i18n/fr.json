@@ -2530,6 +2530,7 @@
   "UE_WIDGET_TYPE_ACTION_SKIP_RACE": "Passer la course",
   "UE_WIDGET_TYPE_ACTION_START_RESUME": "Démarrer/reprendre la manche",
   "UE_WIDGET_TYPE_BRANDING": "Branding Image",
+  "UE_WIDGET_TYPE_CAMERA_QR": "Code QR de la caméra",
   "UE_WIDGET_TYPE_COUNTDOWN": "Compte à rebours",
   "UE_WIDGET_TYPE_DRIVER_HEATS": "Driver Heats",
   "UE_WIDGET_TYPE_DRIVER_HEAT_METRICS": "Driver Heat Metrics",

@@ -33,3 +33,12 @@ O widget **Cronómetro** exibe o tempo decorrido ou restante da manga/corrida co
   - **Sempre**: Exibe frações de segundo continuamente durante toda a manga.
   - **Nunca**: Limita o cronómetro exclusivamente a segundos inteiros.
 - **Pré-visualização**: O inspetor inclui uma pré-visualização instantânea que demonstra a formatação das opções selecionadas em diferentes fases da corrida (`> 1 hr`, `> 1 min`, `< 1 min` e `< 10s`).
+
+## Widget Código QR da câmara
+
+O widget **Código QR da câmara** (disponível no grupo **Multimédia e Chrome**) apresenta um código QR de emparelhamento diretamente na sua interface de corrida:
+
+- **Emparelhamento móvel imediato**: Permite que comissários de pista e pilotos liguem a câmara de um dispositivo móvel para contagem ótica de voltas sem aceder ao Editor de pistas.
+- **Detalhes interativos**: Clicar no widget em direto abre uma janela modal com o código QR ampliado, URL completo, botão para copiar e botão de teste local.
+- **Resolução de rede flexível**: Disponibiliza de forma dinâmica um URL seguro através de túnel Cloudflare HTTPS ou o endereço IP e porta da rede local conforme a configuração em vigor.
+

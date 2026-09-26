@@ -174,3 +174,18 @@ Se la telecamera non si avvia su macOS anche dopo aver concesso l'accesso:
 2. **Assenza di Vibrazioni**: Utilizzare un supporto rigido per evitare false rilevazioni causate dalle vibrazioni delle piste.
 3. **Illuminazione Costante**: Evitare zone d'ombra o luci fluorescenti sfarfallanti.
 4. **Frequenza di Fotogrammi**: Impostare **60 FPS** per una cattura precisa anche a velocità elevate.
+
+---
+
+## Widget Codice QR fotocamera per la schermata di gara
+
+È possibile posizionare un widget interattivo con il **Codice QR fotocamera** direttamente sulla schermata di gara utilizzando l'[Editor interfaccia](ui-editor.it.md):
+
+1. Aprire l'**Editor interfaccia** e individuare **Codice QR fotocamera** nel gruppo di strumenti **Media & Chrome**.
+2. Trascinare il widget sul layout di gara nella posizione desiderata.
+3. **Visualizzazione in tempo reale**:
+   - Il widget visualizza il codice QR di associazione direttamente durante le prove o le batterie di gara.
+   - Chiunque può inquadrare il codice con lo smartphone per connettere istantaneamente il sistema di cronometraggio.
+4. **Finestra modale interattiva**:
+   - Cliccando sul widget in modalità gara viene aperta una finestra con il codice QR ingrandito, l'URL diretto, il pulsante di copia negli appunti e il test locale.
+

@@ -44,5 +44,14 @@ The **Timer** widget displays the elapsed or remaining heat/race time with confi
   - **Never**: Restricts the timer to whole seconds only.
 - **Live Preview**: The inspector includes an instant live preview demonstrating how the selected options format across different race time checkpoints (`> 1 hr`, `> 1 min`, `< 1 min`, and `< 10s`).
 
+## Camera QR Code Widget
+
+The **Camera QR Code** widget (found under the **Media & Chrome** toolbox palette) displays a scannable pairing QR code directly on your Raceday screen:
+
+- **Instant Mobile Pairing**: Enables track marshals and drivers to connect a mobile device camera for optical lap detection without navigating to the Track Editor.
+- **Interactive Details**: Clicking the widget on the live Raceday screen opens a modal dialog with an enlarged QR code, direct URL, one-click clipboard copying, and a local test launcher.
+- **Network Resolution**: Dynamically provides either a secure Cloudflare HTTPS tunnel URL or your local network IP and port based on your current setup.
+
+
 
 
